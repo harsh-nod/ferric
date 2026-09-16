@@ -16,15 +16,15 @@ use fe2o3_service_host::{
 use ferric_spec::Identity;
 
 use crate::{
-    m1_completion_output_shape_v1, AddresslessM1PhysicalBufferRecipeV1,
-    AddresslessM1PhysicalKernargRecipeV1, BoundM1CompletionOutputV1,
-    BoundM1FullStepWorkspaceSubleases, M1CompletionOutputErrorV1, M1CompletionOutputShapeV1,
-    M1DirectDiagnosticChoicesErrorV1, M1FullStepWorkspaceDispatchRangeError,
-    M1FullStepWorkspaceSubleaseBindingError, M1FullStepWorkspaceSubleaseOwners,
-    M1PartitionedModelMemoryKvPoolV1, M1PhysicalBufferRecipeErrorV1, M1PhysicalBufferRecipeRowV1,
-    M1PhysicalBufferSentinelV1, M1PhysicalBufferSourceV1, M1PhysicalProgramV1,
-    M1QualificationLogitsErrorV1, M1SpeculativeDiagnosticChoicesErrorV1, M1StepDispatchIntent,
-    ModelMemoryDispatchRangeErrorV1,
+    AddresslessM1PhysicalBufferRecipeV1, AddresslessM1PhysicalKernargRecipeV1,
+    BoundM1CompletionOutputV1, BoundM1FullStepWorkspaceSubleases, M1CompletionOutputErrorV1,
+    M1CompletionOutputShapeV1, M1DirectDiagnosticChoicesErrorV1,
+    M1FullStepWorkspaceDispatchRangeError, M1FullStepWorkspaceSubleaseBindingError,
+    M1FullStepWorkspaceSubleaseOwners, M1PartitionedModelMemoryKvPoolV1,
+    M1PhysicalBufferRecipeErrorV1, M1PhysicalBufferRecipeRowV1, M1PhysicalBufferSentinelV1,
+    M1PhysicalBufferSourceV1, M1PhysicalProgramV1, M1QualificationLogitsErrorV1,
+    M1SpeculativeDiagnosticChoicesErrorV1, M1StepDispatchIntent, ModelMemoryDispatchRangeErrorV1,
+    m1_completion_output_shape_v1,
 };
 
 /// Owner-checked physical-buffer binding format.
@@ -338,6 +338,11 @@ pub enum M1PhysicalBufferBindingErrorV1 {
     QualificationLogitsIntent,
     /// The physical recipe did not retain exactly the two target logits bindings.
     QualificationLogitsSources { expected: usize, actual: usize },
+    /// The opt-in final-RMS substitution differs from exact target segment 4.
+    EngineeringFinalRmsSources {
+        expected: [usize; 2],
+        actual: [usize; 2],
+    },
     /// The qualification logits owner rejected shape or allocation revalidation.
     QualificationLogitsRange { error: M1QualificationLogitsErrorV1 },
     /// Direct target choices were attached to a non-direct physical recipe.
@@ -506,6 +511,19 @@ pub fn bind_m1_physical_buffer_ranges_v1(
                 ));
             }
         };
+    let engineering_final_rms_ranges =
+        match preflight_engineering_final_rms(&recipe, &completion_output, &partitioned_memory) {
+            Ok(ranges) => ranges,
+            Err(error) => {
+                return Err(failure(
+                    error,
+                    recipe,
+                    workspace_owners,
+                    partitioned_memory,
+                    completion_output,
+                ));
+            }
+        };
     let speculative_diagnostic_choices_ranges = match preflight_speculative_diagnostic_choices(
         &recipe,
         &completion_output,
@@ -549,6 +567,7 @@ pub fn bind_m1_physical_buffer_ranges_v1(
         completion_binding,
         direct_diagnostic_choices_range,
         qualification_logits_range,
+        engineering_final_rms_ranges,
         speculative_diagnostic_choices_ranges,
     };
     match resolve_rows(&kernargs, &source_rows, &resolution) {
@@ -737,7 +756,7 @@ fn preflight_direct_diagnostic_choices(
         M1StepDispatchIntent::TargetOnly(selection) => (selection, 0),
         M1StepDispatchIntent::PairedPrefill(selection) => (selection, 1),
         M1StepDispatchIntent::SpeculativeRound(_) | M1StepDispatchIntent::DraftCatchup(_) => {
-            return Err(M1PhysicalBufferBindingErrorV1::DirectDiagnosticChoicesIntent)
+            return Err(M1PhysicalBufferBindingErrorV1::DirectDiagnosticChoicesIntent);
         }
     };
     if selection != choices.shape().selection() {
@@ -818,6 +837,69 @@ fn engineering_s1_k4_logits_source_isolation(
         })
     });
     (count, exact)
+}
+
+fn final_rms_workspace_index(source: M1PhysicalBufferSourceV1) -> Option<usize> {
+    use ferric_build::M1StepWorkspaceRangeRole;
+    match source {
+        M1PhysicalBufferSourceV1::Workspace {
+            workspace: crate::M1FullStepWorkspaceRole::Target,
+            range: M1StepWorkspaceRangeRole::ResidualHidden,
+        } => Some(0),
+        M1PhysicalBufferSourceV1::Workspace {
+            workspace: crate::M1FullStepWorkspaceRole::Target,
+            range: M1StepWorkspaceRangeRole::FinalNormalized,
+        } => Some(1),
+        _ => None,
+    }
+}
+
+fn engineering_final_rms_source_isolation(
+    recipe: &AddresslessM1PhysicalBufferRecipeV1,
+    selection: ferric_spec::Qwen3PlanSelection,
+) -> ([usize; 2], bool) {
+    let mut counts = [0; 2];
+    let exact = recipe.rows().iter().all(|row| {
+        row.buffers().iter().all(|buffer| {
+            if let Some(index) = final_rms_workspace_index(buffer.source()) {
+                counts[index] += 1;
+                row.segment_index() == 4 && row.selection() == selection
+            } else {
+                true
+            }
+        })
+    });
+    (counts, exact)
+}
+
+fn preflight_engineering_final_rms(
+    recipe: &AddresslessM1PhysicalBufferRecipeV1,
+    output: &BoundM1CompletionOutputV1,
+    memory: &M1PartitionedModelMemoryKvPoolV1,
+) -> Result<Option<[ServiceHostDispatchRangeV1; 2]>, M1PhysicalBufferBindingErrorV1> {
+    let Some(logits) = output
+        .engineering_s1_k4_logits()
+        .filter(|logits| logits.captures_final_rms())
+    else {
+        return Ok(None);
+    };
+    // This repeats the full owner/intent check before deriving any extra range.
+    preflight_engineering_s1_k4_logits(recipe, output, memory)?;
+    let expected = [
+        4 * ferric_spec::Qwen3ModelRole::Target8B.layers() as usize + 2,
+        2,
+    ];
+    let (actual, exact) =
+        engineering_final_rms_source_isolation(recipe, logits.shape().selection());
+    if actual != expected || !exact {
+        return Err(M1PhysicalBufferBindingErrorV1::EngineeringFinalRmsSources {
+            expected,
+            actual,
+        });
+    }
+    logits
+        .final_rms_workspace_ranges()
+        .map_err(|error| M1PhysicalBufferBindingErrorV1::QualificationLogitsRange { error })
 }
 
 fn direct_diagnostic_choice_source_isolation(
@@ -1083,6 +1165,7 @@ struct SourceResolutionContextV1<'a> {
     completion_binding: CompletionOutputBindingRangeV1,
     direct_diagnostic_choices_range: Option<ServiceHostDispatchRangeV1>,
     qualification_logits_range: Option<ServiceHostDispatchRangeV1>,
+    engineering_final_rms_ranges: Option<[ServiceHostDispatchRangeV1; 2]>,
     speculative_diagnostic_choices_ranges: Option<SpeculativeDiagnosticChoiceRangesV1>,
 }
 
@@ -1498,6 +1581,15 @@ fn resolve_production_ordinary_source(
     source: M1PhysicalBufferSourceV1,
 ) -> Result<ResolvedM1PhysicalBufferRangeV1, M1PhysicalBufferBindingErrorV1> {
     let dispatch_index = row.dispatch_index();
+    if let (Some(ranges), Some(index)) = (
+        context.engineering_final_rms_ranges,
+        final_rms_workspace_index(source),
+    ) {
+        if row.segment_index() != 4 || row.selection() != context.completion_shape.selection() {
+            return Err(M1PhysicalBufferBindingErrorV1::QualificationLogitsIntent);
+        }
+        return Ok(ResolvedM1PhysicalBufferRangeV1::HostVisible(ranges[index]));
+    }
     match source {
         M1PhysicalBufferSourceV1::Workspace { workspace, range }
             if workspace == crate::M1FullStepWorkspaceRole::Target
@@ -1716,27 +1808,28 @@ mod tests {
     use fe2o3_service_host::ServiceAllocationErrorV1;
     use ferric_build::{KvCacheComponent, M1StepWorkspaceRangeRole};
     use ferric_spec::{
-        Identity, Qwen3ExecutionMode, Qwen3ModelRole, Qwen3PlanBucket, Qwen3TensorKind,
-        QWEN3_NO_LAYER,
+        Identity, QWEN3_NO_LAYER, Qwen3ExecutionMode, Qwen3ModelRole, Qwen3PlanBucket,
+        Qwen3TensorKind,
     };
 
     use super::{
-        direct_diagnostic_choice_source_isolation, first_materialization_requirement,
-        qualification_logits_source_isolation, resolve_rows_with_backend, sentinel_geometry,
+        BindingRowMetadata, M1PhysicalBufferBindingErrorV1, M1PhysicalBufferResolutionBackendV1,
+        SpeculativeDiagnosticChoiceSourceRouteV1, direct_diagnostic_choice_source_isolation,
+        first_materialization_requirement, qualification_logits_source_isolation,
+        resolve_rows_with_backend, sentinel_geometry,
         speculative_diagnostic_choice_source_isolation,
         speculative_diagnostic_draft_choice_geometry, validate_argument_ordinal,
         validate_completion_output_intent, validate_completion_output_shape,
-        validate_row_metadata_entry, BindingRowMetadata, M1PhysicalBufferBindingErrorV1,
-        M1PhysicalBufferResolutionBackendV1, SpeculativeDiagnosticChoiceSourceRouteV1,
+        validate_row_metadata_entry,
     };
     use crate::physical_buffer_recipe::tests::{complete_intents, exact_inputs};
     use crate::{
+        AddresslessM1PhysicalBufferRecipeV1, M1FullStepWorkspaceDispatchRangeError,
+        M1FullStepWorkspaceRole, M1PhysicalBufferAccessV1, M1PhysicalBufferRecipeRowV1,
+        M1PhysicalBufferSentinelV1, M1PhysicalBufferSourceV1, M1PhysicalProgramV1,
+        M1StepDispatchIntent, M1StepDispatchStage, M1StepWorkspaceDispatchRangeError,
         derive_m1_physical_buffer_recipe_v1, m1_completion_output_shape_v1,
-        m1_speculative_diagnostic_choices_shape_v1, AddresslessM1PhysicalBufferRecipeV1,
-        M1FullStepWorkspaceDispatchRangeError, M1FullStepWorkspaceRole, M1PhysicalBufferAccessV1,
-        M1PhysicalBufferRecipeRowV1, M1PhysicalBufferSentinelV1, M1PhysicalBufferSourceV1,
-        M1PhysicalProgramV1, M1StepDispatchIntent, M1StepDispatchStage,
-        M1StepWorkspaceDispatchRangeError,
+        m1_speculative_diagnostic_choices_shape_v1,
     };
 
     #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -2114,6 +2207,39 @@ mod tests {
     }
 
     #[test]
+    fn engineering_final_rms_sources_are_exact_target_segment_four_only() {
+        let selection = target(
+            Qwen3ExecutionMode::Speculative,
+            Qwen3PlanBucket::SpeculativeS1K4C8192,
+        );
+        let recipe = exact_recipe(M1StepDispatchIntent::SpeculativeRound(selection), 211);
+        assert_eq!(
+            super::engineering_final_rms_source_isolation(&recipe, selection),
+            ([146, 2], true)
+        );
+        let other = target(
+            Qwen3ExecutionMode::Speculative,
+            Qwen3PlanBucket::SpeculativeS1K8C8192,
+        );
+        assert!(!super::engineering_final_rms_source_isolation(&recipe, other).1);
+        let prefill = target(Qwen3ExecutionMode::Prefill, Qwen3PlanBucket::PrefillS1T128);
+        let ordinary = exact_recipe(M1StepDispatchIntent::TargetOnly(prefill), 210);
+        assert!(!super::engineering_final_rms_source_isolation(&ordinary, prefill).1);
+        for source in [
+            M1PhysicalBufferSourceV1::Workspace {
+                workspace: M1FullStepWorkspaceRole::Draft,
+                range: M1StepWorkspaceRangeRole::ResidualHidden,
+            },
+            M1PhysicalBufferSourceV1::Workspace {
+                workspace: M1FullStepWorkspaceRole::Target,
+                range: M1StepWorkspaceRangeRole::NormalizedHidden,
+            },
+        ] {
+            assert_eq!(super::final_rms_workspace_index(source), None);
+        }
+    }
+
+    #[test]
     fn every_serving_direct_shape_isolates_exact_target_choice_sources() {
         for (case, intent) in [
             M1StepDispatchIntent::PairedPrefill(target(
@@ -2230,9 +2356,11 @@ mod tests {
                 })
                 .collect::<Vec<_>>();
             assert_eq!(routed_choices.len(), 2);
-            assert!(routed_choices
-                .iter()
-                .all(|buffer| buffer.route == TestResolutionRouteV1::HostVisible));
+            assert!(
+                routed_choices
+                    .iter()
+                    .all(|buffer| buffer.route == TestResolutionRouteV1::HostVisible)
+            );
             assert_eq!(
                 backend.diagnostic_routes,
                 vec![SpeculativeDiagnosticChoiceSourceRouteV1::DirectTargetWholeHost; 2]

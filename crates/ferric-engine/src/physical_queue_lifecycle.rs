@@ -23,7 +23,7 @@ use fe2o3_service_host::{
     ServiceQualificationFaultedQueueSessionV1, ServiceQualificationQueueFaultPointV1,
 };
 use ferric_spec::completion::CompletionEpoch;
-use ferric_spec::{Qwen3ExecutionMode, M1_MAX_ACTIVE_SEQUENCES};
+use ferric_spec::{M1_MAX_ACTIVE_SEQUENCES, Qwen3ExecutionMode};
 
 use crate::completed_readback_join::{
     check_m1_completed_output_v1, check_m1_qualification_completed_output_v1,
@@ -33,26 +33,26 @@ use crate::observed_completion::{
     observe_m1_completed_output_v1, observe_m1_guarded_completed_output_v1,
 };
 use crate::qualification_logits::{
-    observe_m1_qualification_logits_v1, M1QualificationFinalRowChoicesV1,
+    M1QualificationFinalRowChoicesV1, observe_m1_qualification_logits_v1,
 };
 use crate::speculative_diagnostic_choices::{
     m1_speculative_diagnostic_is_s1_k4_selection_v1, observe_m1_speculative_diagnostic_choices_v1,
 };
 use crate::{
-    preflight_m1_completion_canary_v1, validate_m1_completion_canary_readback_v1,
     BoundM1DirectDiagnosticChoicesV1, CompletionWireExpectation, CompletionWireSemanticExpectation,
-    Engine, ExactCompletion, Gfx942DeviceBinding, M1CheckedCompletionOutputV1,
-    M1CompletedOutputCheckErrorV1, M1CompletionCanaryErrorV1, M1DirectDiagnosticChoicesErrorV1,
-    M1FullStepKvReservationCustodyV1, M1ObservedCompletionImageErrorV1,
-    M1ObservedCompletionImageV1, M1ObservedDirectDiagnosticChoicesV1,
-    M1ObservedQualificationLogitsV1, M1ObservedSpeculativeDiagnosticChoicesV1,
-    M1PhysicalDispatchRecipeRowV1, M1PhysicalFixedBatchCaseV1, M1PhysicalFixedBatchCustodyV1,
-    M1PhysicalFixedBatchShapeV1, M1PhysicalFixedBatchV1, M1PhysicalQueueBatchCustodyV1,
-    M1PrepublicationBatchV1, M1PrepublicationStepCustodyV1, M1QualificationLogitsErrorV1,
-    M1ScheduledDispatchV1, M1SpeculativeDiagnosticChoicesErrorV1,
-    M1ValidatedQualificationContextStepV1, M1_PAIRED_PREFILL_FIXED_BATCH_PACKETS_V1,
-    M1_SPECULATIVE_K16_FIXED_BATCH_PACKETS_V1, M1_SPECULATIVE_K4_FIXED_BATCH_PACKETS_V1,
-    M1_SPECULATIVE_K8_FIXED_BATCH_PACKETS_V1, M1_TARGET_ONLY_FIXED_BATCH_PACKETS_V1,
+    Engine, ExactCompletion, Gfx942DeviceBinding, M1_PAIRED_PREFILL_FIXED_BATCH_PACKETS_V1,
+    M1_SPECULATIVE_K4_FIXED_BATCH_PACKETS_V1, M1_SPECULATIVE_K8_FIXED_BATCH_PACKETS_V1,
+    M1_SPECULATIVE_K16_FIXED_BATCH_PACKETS_V1, M1_TARGET_ONLY_FIXED_BATCH_PACKETS_V1,
+    M1CheckedCompletionOutputV1, M1CompletedOutputCheckErrorV1, M1CompletionCanaryErrorV1,
+    M1DirectDiagnosticChoicesErrorV1, M1FullStepKvReservationCustodyV1,
+    M1ObservedCompletionImageErrorV1, M1ObservedCompletionImageV1,
+    M1ObservedDirectDiagnosticChoicesV1, M1ObservedQualificationLogitsV1,
+    M1ObservedSpeculativeDiagnosticChoicesV1, M1PhysicalDispatchRecipeRowV1,
+    M1PhysicalFixedBatchCaseV1, M1PhysicalFixedBatchCustodyV1, M1PhysicalFixedBatchShapeV1,
+    M1PhysicalFixedBatchV1, M1PhysicalQueueBatchCustodyV1, M1PrepublicationBatchV1,
+    M1PrepublicationStepCustodyV1, M1QualificationLogitsErrorV1, M1ScheduledDispatchV1,
+    M1SpeculativeDiagnosticChoicesErrorV1, M1ValidatedQualificationContextStepV1,
+    preflight_m1_completion_canary_v1, validate_m1_completion_canary_readback_v1,
 };
 
 /// Stable identity of Ferric's M1 completion-progress liveness policy.
@@ -1481,7 +1481,7 @@ impl M1ObservedCompletionOutputV1 {
                     error: M1DirectDiagnosticObservationErrorV1::NotDirectShape,
                     completion: Box::new(self),
                     partial_choices: Box::new([]),
-                }))
+                }));
             }
         };
         let (live, generation) = match prepared {
@@ -1491,7 +1491,7 @@ impl M1ObservedCompletionOutputV1 {
                     error,
                     completion: Box::new(self),
                     partial_choices: Box::new([]),
-                }))
+                }));
             }
         };
         let mut readbacks = Vec::new();
@@ -1528,7 +1528,7 @@ impl M1ObservedCompletionOutputV1 {
                         error: M1DirectDiagnosticObservationErrorV1::Queue { lane, source },
                         completion: Box::new(self),
                         partial_choices: readbacks.into_boxed_slice(),
-                    }))
+                    }));
                 }
             }
         }
@@ -1564,7 +1564,7 @@ impl M1ObservedCompletionOutputV1 {
                     error: M1DirectDiagnosticObservationErrorV1::Choices(error),
                     completion: Box::new(self),
                     partial_choices: partial_choices.into_boxed_slice(),
-                }))
+                }));
             }
         };
         Ok(M1ObservedDirectDiagnosticOutputV1 {
@@ -1742,7 +1742,7 @@ impl M1ObservedCompletionOutputV1 {
                         completion: Box::new(self),
                         partial_choices: Box::new([]),
                     },
-                }))
+                }));
             }
         };
         let (backend, choices, engineering_logits) = match observe_m1_diagnostic_choice_ranges_v1(
@@ -3304,7 +3304,7 @@ fn read_m1_diagnostic_choice_ranges_v1<B: M1DiagnosticChoiceReadBackendV1>(
                 error,
                 partial,
                 backend,
-            })
+            });
         }
     };
     partial.retain(target);
@@ -3339,7 +3339,7 @@ impl M1DiagnosticChoiceObservationBackendV1 for M1ProductionDiagnosticChoiceRead
         {
             return Err(M1SpeculativeDiagnosticObservationErrorV1::NotSpeculativeK4);
         }
-        Ok(Some(logits.retained_host_dispatch_range()))
+        Ok(Some(logits.retained_capture_range()))
     }
 
     fn observe_engineering_logits(
@@ -3369,6 +3369,7 @@ impl M1DiagnosticChoiceObservationBackendV1 for M1ProductionDiagnosticChoiceRead
             range,
             self.generation,
             copy,
+            logits.captures_final_rms(),
         )
         .map_err(|(error, copy)| {
             (
@@ -3408,7 +3409,7 @@ impl M1DiagnosticChoiceObservationBackendV1 for M1ProductionDiagnosticChoiceRead
                     M1SpeculativeDiagnosticObservationErrorV1::NotSpeculativeShape,
                     draft,
                     target,
-                )))
+                )));
             }
         };
         let Some(owner) = owner else {
@@ -4370,7 +4371,7 @@ impl M1ObservedQualificationOutputV1 {
                         source: M1CompletedOutputCheckErrorV1::QualificationFinalLogits(source),
                     },
                     observed: Box::new(self),
-                })
+                });
             }
         };
         let Self {
@@ -4444,7 +4445,7 @@ impl M1ObservedQualificationOutputV1 {
                         source: M1CompletedOutputCheckErrorV1::QualificationFinalLogits(source),
                     },
                     observed: Box::new(self),
-                })
+                });
             }
         };
         let Self {
@@ -5915,7 +5916,7 @@ impl M1StructuralDraftCatchupPublishedV1 {
             Err(error) => {
                 return Err(M1StructuralDraftCatchupQueueFailureV1::new((
                     error, custody, step, storage,
-                )))
+                )));
             }
         };
         let output = case.custody.completion_output();
@@ -5942,7 +5943,7 @@ impl M1StructuralDraftCatchupPublishedV1 {
             Err(error) => {
                 return Err(M1StructuralDraftCatchupQueueFailureV1::new((
                     error, case, storage,
-                )))
+                )));
             }
         };
         let output_shape = output.shape();
@@ -5987,7 +5988,7 @@ impl M1StructuralDraftCatchupPublishedV1 {
             Err(error) => {
                 return Err(M1StructuralDraftCatchupQueueFailureV1::new((
                     error, case, parent,
-                )))
+                )));
             }
         };
         if let Err(error) =
@@ -6208,13 +6209,15 @@ fn wait_with_completion_progress_policy_core<const N: usize, P, C, E>(
                 // custody. No published owner remains to terminalize with wait(0),
                 // so this lower-layer invariant is checked in debug builds and
                 // Ready wins the liveness-threshold boundary in all builds.
-                debug_assert!(validate_completion_progress_observation(
-                    progress,
-                    expected_packet_count,
-                    true,
-                    completed_count_high_water,
-                )
-                .is_ok());
+                debug_assert!(
+                    validate_completion_progress_observation(
+                        progress,
+                        expected_packet_count,
+                        true,
+                        completed_count_high_water,
+                    )
+                    .is_ok()
+                );
                 return Ok(session);
             }
         };
@@ -6843,7 +6846,7 @@ fn observe_case<const N: usize>(
                 return Err(Box::new(ObserveCaseFailureV1::SnapshotReadFailed {
                     error: M1CompletionObservationErrorV1::Queue(error),
                     case,
-                }))
+                }));
             }
         };
         let readback = match validate_m1_completion_canary_readback_v1(canary, range, readback) {
@@ -6853,7 +6856,7 @@ fn observe_case<const N: usize>(
                     error: M1CompletionObservationErrorV1::Canary(error),
                     case,
                     readback,
-                }))
+                }));
             }
         };
         let scheduled = case.step.scheduled_dispatch();
@@ -6869,7 +6872,7 @@ fn observe_case<const N: usize>(
                     error: M1CompletionObservationErrorV1::Image(error),
                     case,
                     readback: (*readback).into_readback(),
-                }))
+                }));
             }
         };
         return Ok(Box::new(M1ObservedCompletionCaseV1 { case, image }));
@@ -6881,7 +6884,7 @@ fn observe_case<const N: usize>(
             return Err(Box::new(ObserveCaseFailureV1::BeforeCopy {
                 error: M1CompletionObservationErrorV1::Queue(error),
                 case,
-            }))
+            }));
         }
     };
     if readback.offset_bytes() != range.offset_bytes() {
@@ -6914,7 +6917,7 @@ fn observe_case<const N: usize>(
                     error: M1CompletionObservationErrorV1::Image(error),
                     case,
                     readback,
-                }))
+                }));
             }
         };
     Ok(Box::new(M1ObservedCompletionCaseV1 { case, image }))
@@ -7343,7 +7346,7 @@ fn finish_qualification_observation(
                     M1QualificationObservationErrorV1::Logits(error),
                     completion,
                     readbacks,
-                )))
+                )));
             }
         };
         let row_range = match full_range.checked_subrange(
@@ -7359,7 +7362,7 @@ fn finish_qualification_observation(
                     ),
                     completion,
                     readbacks,
-                )))
+                )));
             }
         };
         let request = case.case.lower.completed_read_request(row_range);
@@ -7370,7 +7373,7 @@ fn finish_qualification_observation(
                     M1QualificationObservationErrorV1::Queue { lane, source },
                     completion,
                     readbacks,
-                )))
+                )));
             }
         }
     }
@@ -7387,7 +7390,7 @@ fn finish_qualification_observation(
                 M1QualificationObservationErrorV1::Logits(error),
                 completion,
                 readbacks,
-            )))
+            )));
         }
     };
     Ok(M1ObservedQualificationOutputV1 {
@@ -7906,8 +7909,8 @@ mod tests {
         use std::{
             fmt,
             sync::{
-                atomic::{AtomicUsize, Ordering},
                 Arc,
+                atomic::{AtomicUsize, Ordering},
             },
         };
         struct Retained(Arc<AtomicUsize>);
@@ -7945,21 +7948,21 @@ mod tests {
     }
 
     use super::{
-        checked_completion_progress_total_scan_bound, m1_completion_progress_total_scan_bound_v1,
-        read_m1_diagnostic_choice_ranges_v1, validate_completion_progress_observation,
-        validate_generic_observed_semantics, wait_with_completion_progress_policy,
-        wait_with_completion_progress_policy_core, CompletionProgressPollV1,
-        CompletionProgressWaitFailureV1, CompletionWireSemanticExpectation,
+        CompletionProgressPollV1, CompletionProgressWaitFailureV1,
+        CompletionWireSemanticExpectation, M1_COMPLETION_PROGRESS_MAX_CONSECUTIVE_STALLED_SCANS_V1,
         M1CompletedOutputCheckErrorV1, M1CompletionEvidenceJoinAuthorityV1,
         M1CompletionProgressObservationV1, M1CompletionProgressWaitDiagnosticV1,
         M1CompletionProgressWaitTerminalReasonV1, M1DiagnosticChoiceCopyCustodyV1,
         M1DiagnosticChoiceReadBackendV1, M1PhysicalFixedBatchShapeV1,
         M1PhysicalQueueCreateFailureClassV1, M1PhysicalQueuePhaseV1,
-        M1_COMPLETION_PROGRESS_MAX_CONSECUTIVE_STALLED_SCANS_V1,
+        checked_completion_progress_total_scan_bound, m1_completion_progress_total_scan_bound_v1,
+        read_m1_diagnostic_choice_ranges_v1, validate_completion_progress_observation,
+        validate_generic_observed_semantics, wait_with_completion_progress_policy,
+        wait_with_completion_progress_policy_core,
     };
     use super::{
-        observe_m1_diagnostic_choice_ranges_v1, retain_all_m1_diagnostic_choice_copies,
         M1DiagnosticChoiceObservationBackendV1, M1DiagnosticChoiceValidationFailureV1,
+        observe_m1_diagnostic_choice_ranges_v1, retain_all_m1_diagnostic_choice_copies,
     };
     use crate::Engine;
     use std::cell::{Cell, RefCell};
@@ -8630,22 +8633,26 @@ mod tests {
             ),
             Err(M1CompletedOutputCheckErrorV1::SpeculativeDiagnosticCaptureRequiresEvidence)
         ));
-        assert!(validate_generic_observed_semantics(
-            M1CompletionEvidenceJoinAuthorityV1::Generic,
-            false,
-            false,
-            false,
-            &direct,
-        )
-        .is_ok());
-        assert!(validate_generic_observed_semantics(
-            M1CompletionEvidenceJoinAuthorityV1::DirectDiagnostic,
-            false,
-            true,
-            false,
-            &direct,
-        )
-        .is_ok());
+        assert!(
+            validate_generic_observed_semantics(
+                M1CompletionEvidenceJoinAuthorityV1::Generic,
+                false,
+                false,
+                false,
+                &direct,
+            )
+            .is_ok()
+        );
+        assert!(
+            validate_generic_observed_semantics(
+                M1CompletionEvidenceJoinAuthorityV1::DirectDiagnostic,
+                false,
+                true,
+                false,
+                &direct,
+            )
+            .is_ok()
+        );
         assert!(matches!(
             validate_generic_observed_semantics(
                 M1CompletionEvidenceJoinAuthorityV1::DirectDiagnostic,
@@ -8656,14 +8663,16 @@ mod tests {
             ),
             Err(M1CompletedOutputCheckErrorV1::DirectDiagnosticCaptureRequiresEvidence)
         ));
-        assert!(validate_generic_observed_semantics(
-            M1CompletionEvidenceJoinAuthorityV1::SpeculativeDiagnostic,
-            false,
-            false,
-            true,
-            &direct,
-        )
-        .is_ok());
+        assert!(
+            validate_generic_observed_semantics(
+                M1CompletionEvidenceJoinAuthorityV1::SpeculativeDiagnostic,
+                false,
+                false,
+                true,
+                &direct,
+            )
+            .is_ok()
+        );
         assert!(matches!(
             validate_generic_observed_semantics(
                 M1CompletionEvidenceJoinAuthorityV1::SpeculativeDiagnostic,

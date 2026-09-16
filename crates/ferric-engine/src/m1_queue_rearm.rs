@@ -32,23 +32,25 @@ use fe2o3_service_host::{
 };
 use ferric_build::{AddresslessM1StepWorkspacePlan, M1StepWorkspaceRange};
 use ferric_spec::{
-    completion::CompletionEpoch, scheduling::RequestState, Qwen3ExecutionMode, Qwen3PlanSelection,
-    RequestId, M1_KV_PAGE_TOKENS, M1_MAX_ACTIVE_SEQUENCES,
+    M1_KV_PAGE_TOKENS, M1_MAX_ACTIVE_SEQUENCES, Qwen3ExecutionMode, Qwen3PlanSelection, RequestId,
+    completion::CompletionEpoch, scheduling::RequestState,
 };
 
 use crate::physical_buffer_bindings::{
-    speculative_diagnostic_choice_source_route, SpeculativeDiagnosticChoiceSourceRouteV1,
+    SpeculativeDiagnosticChoiceSourceRouteV1, speculative_diagnostic_choice_source_route,
 };
 use crate::physical_fixed_batch::M1PhysicalQueueBatchRearmPartsV1;
 use crate::step_workspace_subleases::{
-    bind_queue_replaced_m1_step_workspace, M1QueueReplacedWorkspaceBindingFailureV1,
+    M1QueueReplacedWorkspaceBindingFailureV1, bind_queue_replaced_m1_step_workspace,
 };
 use crate::{
-    prepare_m1_scheduled_workspace_images_v1, ActiveDeviceKvCache,
-    AddresslessM1FullStepWorkspaceComposition, AddresslessM1PhysicalBufferRecipeV1,
-    BoundM1StepWorkspaceSubleases, ContentBoundM1ProgramCatalogV1, Engine, EngineError,
-    Gfx942DeviceBinding, LogicalRunnerDeclaration, M1BoundPhysicalBufferRowV1,
-    M1CompletedKvPageReleaseCountsV1, M1ExactDispatchErrorV1,
+    ActiveDeviceKvCache, AddresslessM1FullStepWorkspaceComposition,
+    AddresslessM1PhysicalBufferRecipeV1, BoundM1StepWorkspaceSubleases,
+    ContentBoundM1ProgramCatalogV1, Engine, EngineError, Gfx942DeviceBinding,
+    LogicalRunnerDeclaration, M1_PAIRED_PREFILL_FIXED_BATCH_PACKETS_V1,
+    M1_SPECULATIVE_K4_FIXED_BATCH_PACKETS_V1, M1_SPECULATIVE_K8_FIXED_BATCH_PACKETS_V1,
+    M1_SPECULATIVE_K16_FIXED_BATCH_PACKETS_V1, M1_TARGET_ONLY_FIXED_BATCH_PACKETS_V1,
+    M1BoundPhysicalBufferRowV1, M1CompletedKvPageReleaseCountsV1, M1ExactDispatchErrorV1,
     M1FiniteSpeculativeRolloverOutputPortfolioStateV1, M1FullStepKvWorkspaceTablesV1,
     M1FullStepWorkspaceImagesV1, M1FullStepWorkspaceInputKind, M1FullStepWorkspacePlans,
     M1FullStepWorkspaceRole, M1FullStepWorkspaceSubleaseOwners, M1InitializedWorkspaceSlotV1,
@@ -60,9 +62,7 @@ use crate::{
     M1PreparedScheduledWorkspaceImagesV1, M1PrepublicationStepCustodyV1, M1ReleasedCompletedStepV1,
     M1ReleasedDeviceKvMemberV1, M1ReleasedTerminalDeviceKvMemberV1, M1ScheduledDispatchV1,
     M1ServingBatchPlanV1, M1ServingPlanV1, M1ServingQueueActionV1,
-    M1ServingQueuedPairedPrefillNewWindowV1, M1_PAIRED_PREFILL_FIXED_BATCH_PACKETS_V1,
-    M1_SPECULATIVE_K16_FIXED_BATCH_PACKETS_V1, M1_SPECULATIVE_K4_FIXED_BATCH_PACKETS_V1,
-    M1_SPECULATIVE_K8_FIXED_BATCH_PACKETS_V1, M1_TARGET_ONLY_FIXED_BATCH_PACKETS_V1,
+    M1ServingQueuedPairedPrefillNewWindowV1, prepare_m1_scheduled_workspace_images_v1,
 };
 
 /// Stable rejection before a fresh workspace replacement begins.
@@ -2861,6 +2861,7 @@ enum RearmRangeRequestV1 {
     FreshWorkspace(M1FullStepWorkspaceRole, M1StepWorkspaceRange),
     RetainedCompletionOutput,
     RetainedQualificationLogits,
+    RetainedEngineeringFinalRms { workspace: usize },
     RetainedDirectDiagnosticChoices,
     RetainedSpeculativeDraftChoices,
     RetainedSpeculativeDraftChoice { iteration: u8 },
@@ -2883,10 +2884,21 @@ enum RetainedSemanticCaptureRangesV1<T> {
         draft_rows: [Option<T>; crate::M1_SPECULATIVE_DIAGNOSTIC_MAX_DRAFT_TOKENS_V1],
         target: T,
         engineering_logits: Option<T>,
+        engineering_final_rms: Option<[T; 2]>,
     },
 }
 
 impl<T> RetainedSemanticCaptureRangesV1<T> {
+    const fn captured_final_rms(&self) -> Option<&[T; 2]> {
+        match self {
+            Self::SpeculativeDiagnostic {
+                engineering_final_rms,
+                ..
+            } => engineering_final_rms.as_ref(),
+            _ => None,
+        }
+    }
+
     const fn captured_logits(&self) -> Option<&T> {
         match self {
             Self::Qualification { logits } => Some(logits),
@@ -2932,12 +2944,14 @@ impl<T> RetainedCaptureRangesV1<T> {
                 draft_rows,
                 target,
                 engineering_logits,
+                engineering_final_rms,
             } => RetainedSemanticCaptureRangesV1::SpeculativeDiagnostic {
                 draft: map(draft),
                 draft_tokens,
                 draft_rows: draft_rows.map(|row| row.map(&mut map)),
                 target: map(target),
                 engineering_logits: engineering_logits.map(&mut map),
+                engineering_final_rms: engineering_final_rms.map(|ranges| ranges.map(&mut map)),
             },
         };
         RetainedCaptureRangesV1 {
@@ -2965,20 +2979,36 @@ fn retained_capture_range_request(
     .ok()?;
     match diagnostic_route {
         SpeculativeDiagnosticChoiceSourceRouteV1::DirectTargetWholeHost => {
-            return Some(RearmRangeRequestV1::RetainedDirectDiagnosticChoices)
+            return Some(RearmRangeRequestV1::RetainedDirectDiagnosticChoices);
         }
         SpeculativeDiagnosticChoiceSourceRouteV1::DraftWholeHost => {
-            return Some(RearmRangeRequestV1::RetainedSpeculativeDraftChoices)
+            return Some(RearmRangeRequestV1::RetainedSpeculativeDraftChoices);
         }
         SpeculativeDiagnosticChoiceSourceRouteV1::TargetWholeHost => {
-            return Some(RearmRangeRequestV1::RetainedSpeculativeTargetChoices)
+            return Some(RearmRangeRequestV1::RetainedSpeculativeTargetChoices);
         }
         SpeculativeDiagnosticChoiceSourceRouteV1::DraftScalarHost { iteration, .. } => {
-            return Some(RearmRangeRequestV1::RetainedSpeculativeDraftChoice { iteration })
+            return Some(RearmRangeRequestV1::RetainedSpeculativeDraftChoice { iteration });
         }
         SpeculativeDiagnosticChoiceSourceRouteV1::OrdinaryDevice => {}
     }
     match source {
+        M1PhysicalBufferSourceV1::Workspace {
+            workspace: M1FullStepWorkspaceRole::Target,
+            range,
+        } if semantic.captured_final_rms().is_some()
+            && matches!(
+                range,
+                ferric_build::M1StepWorkspaceRangeRole::ResidualHidden
+                    | ferric_build::M1StepWorkspaceRangeRole::FinalNormalized
+            ) =>
+        {
+            Some(RearmRangeRequestV1::RetainedEngineeringFinalRms {
+                workspace: usize::from(
+                    range == ferric_build::M1StepWorkspaceRangeRole::FinalNormalized,
+                ),
+            })
+        }
         M1PhysicalBufferSourceV1::Workspace { workspace, range }
             if semantic.captured_logits().is_some()
                 && workspace == M1FullStepWorkspaceRole::Target
@@ -2990,6 +3020,24 @@ fn retained_capture_range_request(
             Some(RearmRangeRequestV1::RetainedCompletionOutput)
         }
         _ => None,
+    }
+}
+
+fn validate_engineering_final_rms_request(
+    request: RearmRangeRequestV1,
+    segment: u8,
+    selection: Qwen3PlanSelection,
+) -> Result<(), ()> {
+    match request {
+        RearmRangeRequestV1::RetainedEngineeringFinalRms { workspace }
+            if workspace >= 2
+                || segment != 4
+                || crate::qualification_logits::m1_engineering_s1_k4_logits_shape_v1(selection)
+                    .is_err() =>
+        {
+            Err(())
+        }
+        _ => Ok(()),
     }
 }
 
@@ -3094,6 +3142,7 @@ fn resolve_fresh_workspace_range(
 struct RearmRangeSelectionV1 {
     completion_output_sources: usize,
     qualification_logits_sources: usize,
+    engineering_final_rms_sources: [usize; 2],
     direct_diagnostic_sources: usize,
     speculative_draft_sources: usize,
     speculative_draft_scalar_sources: usize,
@@ -3114,6 +3163,7 @@ impl RearmRangeSelectionV1 {
             RetainedSemanticCaptureRangesV1::SpeculativeDiagnostic {
                 draft_tokens,
                 engineering_logits,
+                engineering_final_rms,
                 ..
             } => RetainedSemanticCaptureRangesV1::SpeculativeDiagnostic {
                 draft: (),
@@ -3125,11 +3175,17 @@ impl RearmRangeSelectionV1 {
                 } else {
                     None
                 },
+                engineering_final_rms: if engineering_final_rms.is_some() {
+                    Some([(); 2])
+                } else {
+                    None
+                },
             },
         };
         Self {
             completion_output_sources: 0,
             qualification_logits_sources: 0,
+            engineering_final_rms_sources: [0; 2],
             direct_diagnostic_sources: 0,
             speculative_draft_sources: 0,
             speculative_draft_scalar_sources: 0,
@@ -3158,6 +3214,20 @@ impl RearmRangeSelectionV1 {
                 self.qualification_logits_sources += 1;
                 let previous = previous.semantic.captured_logits().ok_or(())?;
                 let retained = retained.semantic.captured_logits().ok_or(())?;
+                (old == *previous).then_some(*retained).ok_or(())
+            }
+            RearmRangeRequestV1::RetainedEngineeringFinalRms { workspace } => {
+                let previous = previous
+                    .semantic
+                    .captured_final_rms()
+                    .and_then(|ranges| ranges.get(workspace))
+                    .ok_or(())?;
+                let retained = retained
+                    .semantic
+                    .captured_final_rms()
+                    .and_then(|ranges| ranges.get(workspace))
+                    .ok_or(())?;
+                self.engineering_final_rms_sources[workspace] += 1;
                 (old == *previous).then_some(*retained).ok_or(())
             }
             RearmRangeRequestV1::RetainedDirectDiagnosticChoices => {
@@ -3243,6 +3313,16 @@ impl RearmRangeSelectionV1 {
                 self.qualification_logits_sources += 1;
                 retained.semantic.captured_logits().copied().ok_or(())
             }
+            RearmRangeRequestV1::RetainedEngineeringFinalRms { workspace } => {
+                let range = retained
+                    .semantic
+                    .captured_final_rms()
+                    .and_then(|ranges| ranges.get(workspace))
+                    .copied()
+                    .ok_or(())?;
+                self.engineering_final_rms_sources[workspace] += 1;
+                Ok(range)
+            }
             RearmRangeRequestV1::RetainedDirectDiagnosticChoices => {
                 self.direct_diagnostic_sources += 1;
                 let RetainedSemanticCaptureRangesV1::DirectDiagnostic { choices } =
@@ -3287,6 +3367,17 @@ impl RearmRangeSelectionV1 {
     }
 
     fn validate(self) -> Result<(), ()> {
+        let expected_rms = if self.semantic.captured_final_rms().is_some() {
+            if self.semantic.captured_logits().is_none() {
+                return Err(());
+            }
+            [
+                4 * ferric_spec::Qwen3ModelRole::Target8B.layers() as usize + 2,
+                2,
+            ]
+        } else {
+            [0; 2]
+        };
         let expected = match self.semantic {
             RetainedSemanticCaptureRangesV1::Ordinary => (0, 0, 0, 0, 0),
             RetainedSemanticCaptureRangesV1::Qualification { .. } => (2, 0, 0, 0, 0),
@@ -3304,6 +3395,7 @@ impl RearmRangeSelectionV1 {
             ),
         };
         (self.completion_output_sources == 1
+            && self.engineering_final_rms_sources == expected_rms
             && self.qualification_logits_sources == expected.0
             && self.direct_diagnostic_sources == expected.1
             && self.speculative_draft_sources == expected.2
@@ -3404,6 +3496,11 @@ fn rebuild_bound_rows_core(
                 composition,
                 &retained_capture.ranges.semantic,
             )?;
+            validate_engineering_final_rms_request(
+                request,
+                source.segment_index(),
+                source.selection(),
+            )?;
             let fresh = match request {
                 RearmRangeRequestV1::FreshWorkspace(workspace, requested) => {
                     Some(ServiceDispatchRangeV1::Device(
@@ -3412,6 +3509,7 @@ fn rebuild_bound_rows_core(
                 }
                 RearmRangeRequestV1::RetainedCompletionOutput
                 | RearmRangeRequestV1::RetainedQualificationLogits
+                | RearmRangeRequestV1::RetainedEngineeringFinalRms { .. }
                 | RearmRangeRequestV1::RetainedDirectDiagnosticChoices
                 | RearmRangeRequestV1::RetainedSpeculativeDraftChoices
                 | RearmRangeRequestV1::RetainedSpeculativeDraftChoice { .. }
@@ -3598,6 +3696,11 @@ fn build_rollover_bound_rows_core(
                 composition,
                 &retained_capture.ranges.semantic,
             )?;
+            validate_engineering_final_rms_request(
+                request,
+                source_row.segment_index(),
+                source_row.selection(),
+            )?;
             let fresh = match request {
                 RearmRangeRequestV1::FreshWorkspace(workspace, range) => {
                     Some(ServiceDispatchRangeV1::Device(
@@ -3611,6 +3714,7 @@ fn build_rollover_bound_rows_core(
                 )?),
                 RearmRangeRequestV1::RetainedCompletionOutput
                 | RearmRangeRequestV1::RetainedQualificationLogits
+                | RearmRangeRequestV1::RetainedEngineeringFinalRms { .. }
                 | RearmRangeRequestV1::RetainedDirectDiagnosticChoices
                 | RearmRangeRequestV1::RetainedSpeculativeDraftChoices
                 | RearmRangeRequestV1::RetainedSpeculativeDraftChoice { .. }
@@ -4346,7 +4450,7 @@ impl M1RearmedRecycledQueueV1 {
                     carry,
                     queue_observation,
                     device,
-                }))
+                }));
             }
         };
         match observed.check_completion(expectations) {
@@ -4392,7 +4496,7 @@ impl M1RearmedRecycledQueueV1 {
                     carry,
                     queue_observation,
                     device,
-                }))
+                }));
             }
         };
         let diagnostic = match observed.observe_direct_diagnostic_choices() {
@@ -4403,7 +4507,7 @@ impl M1RearmedRecycledQueueV1 {
                     carry,
                     queue_observation,
                     device,
-                }))
+                }));
             }
         };
         let joined = match diagnostic.check_completion() {
@@ -4414,7 +4518,7 @@ impl M1RearmedRecycledQueueV1 {
                     carry,
                     queue_observation,
                     device,
-                }))
+                }));
             }
         };
         let (readback, choices) = joined.into_parts();
@@ -7595,7 +7699,7 @@ impl M1RearmedQualifiedCompletedReadbackV1 {
                     custody: M1RearmedQualifiedCompletionPreflightCustodyV1::Readback(Box::new(
                         self,
                     )),
-                }))
+                }));
             }
         };
         let Self { readback, evidence } = self;
@@ -10132,6 +10236,11 @@ pub(crate) fn retained_host_capture_ranges(
             target: choices.retained_target_range(),
             engineering_logits: engineering
                 .map(crate::BoundM1QualificationLogitsV1::retained_host_dispatch_range),
+            engineering_final_rms: engineering
+                .map(crate::BoundM1QualificationLogitsV1::final_rms_workspace_ranges)
+                .transpose()
+                .map_err(|_| ())?
+                .flatten(),
         },
         _ => return Err(()),
     };
@@ -13064,8 +13173,8 @@ mod tests {
     use ferric_spec::{Identity, Qwen3ModelRole, Qwen3PlanBucket};
     use stats_alloc::Region;
     use std::sync::{
-        atomic::{AtomicUsize, Ordering},
         Arc,
+        atomic::{AtomicUsize, Ordering},
     };
 
     #[test]
@@ -13189,6 +13298,7 @@ mod tests {
                     }
                     RearmRangeRequestV1::RetainedCompletionOutput
                     | RearmRangeRequestV1::RetainedQualificationLogits
+                    | RearmRangeRequestV1::RetainedEngineeringFinalRms { .. }
                     | RearmRangeRequestV1::RetainedDirectDiagnosticChoices
                     | RearmRangeRequestV1::RetainedSpeculativeDraftChoices
                     | RearmRangeRequestV1::RetainedSpeculativeDraftChoice { .. }
@@ -13466,6 +13576,7 @@ mod tests {
                 draft_rows,
                 target,
                 engineering_logits: None,
+                engineering_final_rms: None,
             },
         }
     }
@@ -14064,6 +14175,11 @@ mod tests {
                         recipe.workspace_composition(),
                         &retained.semantic,
                     )?;
+                    validate_engineering_final_rms_request(
+                        request,
+                        row.segment_index(),
+                        row.selection(),
+                    )?;
                     let fresh = match request {
                         RearmRangeRequestV1::FreshWorkspace(workspace, range) => {
                             Some(Range::Workspace {
@@ -14175,6 +14291,104 @@ mod tests {
         }
 
         #[test]
+        fn engineering_final_rms_rollover_routes_exact_target_workspaces_only() {
+            let target = selection(
+                Qwen3ExecutionMode::Speculative,
+                Qwen3PlanBucket::SpeculativeS1K4C8192,
+            );
+            let recipe = recipe(crate::M1StepDispatchIntent::SpeculativeRound(target));
+            let saved = recipe
+                .rows()
+                .iter()
+                .flat_map(M1PhysicalBufferRecipeRowV1::buffers)
+                .map(|buffer| (buffer.source(), Range::Retained(buffer.source())))
+                .collect::<Vec<_>>();
+            let mut ordinary =
+                speculative_capture_ranges(101, 201, 4, 211, 301).map(Range::Capture);
+            let RetainedSemanticCaptureRangesV1::SpeculativeDiagnostic {
+                engineering_logits, ..
+            } = &mut ordinary.semantic
+            else {
+                unreachable!()
+            };
+            *engineering_logits = Some(Range::Capture(401));
+            let mut extended = ordinary;
+            let RetainedSemanticCaptureRangesV1::SpeculativeDiagnostic {
+                engineering_final_rms,
+                ..
+            } = &mut extended.semantic
+            else {
+                unreachable!()
+            };
+            *engineering_final_rms = Some([Range::Capture(501), Range::Capture(601)]);
+            let before = route(&recipe, &saved, &ordinary, 11).unwrap();
+            let after = route(&recipe, &saved, &extended, 11).unwrap();
+            let mut counts = [0; 2];
+            for ((source, old), (same_source, new)) in roster(&recipe, &before)
+                .into_iter()
+                .zip(roster(&recipe, &after))
+            {
+                assert_eq!(source, same_source);
+                let index = match source {
+                    M1PhysicalBufferSourceV1::Workspace {
+                        workspace: M1FullStepWorkspaceRole::Target,
+                        range: ferric_build::M1StepWorkspaceRangeRole::ResidualHidden,
+                    } => Some(0),
+                    M1PhysicalBufferSourceV1::Workspace {
+                        workspace: M1FullStepWorkspaceRole::Target,
+                        range: ferric_build::M1StepWorkspaceRangeRole::FinalNormalized,
+                    } => Some(1),
+                    _ => None,
+                };
+                if let Some(index) = index {
+                    assert!(matches!(old, Range::Workspace { .. }));
+                    assert_eq!(new, Range::Capture([501, 601][index]));
+                    counts[index] += 1;
+                } else {
+                    assert_eq!(old, new);
+                }
+            }
+            assert_eq!(counts, [146, 2]);
+            for workspace in 0..2 {
+                let request = RearmRangeRequestV1::RetainedEngineeringFinalRms { workspace };
+                assert!(validate_engineering_final_rms_request(request, 4, target).is_ok());
+                assert!(validate_engineering_final_rms_request(request, 3, target).is_err());
+                assert!(
+                    validate_engineering_final_rms_request(
+                        request,
+                        4,
+                        Qwen3PlanSelection {
+                            role: Qwen3ModelRole::Draft06B,
+                            ..target
+                        }
+                    )
+                    .is_err()
+                );
+                assert!(
+                    validate_engineering_final_rms_request(
+                        request,
+                        4,
+                        selection(Qwen3ExecutionMode::Prefill, Qwen3PlanBucket::PrefillS1T128)
+                    )
+                    .is_err()
+                );
+                let mut count = RearmRangeSelectionV1::new(&ordinary.semantic);
+                assert!(count.select_fresh(request, None, ordinary).is_err());
+                let mut count = RearmRangeSelectionV1::new(&extended.semantic);
+                assert!(
+                    count
+                        .select(request, Range::Capture(999), None, extended, extended)
+                        .is_err()
+                );
+            }
+            assert!(
+                RearmRangeSelectionV1::new(&extended.semantic)
+                    .validate()
+                    .is_err()
+            );
+        }
+
+        #[test]
         fn structural_catchup_routes_all_425_rows_and_restores_saved_speculative_ranges() {
             let parent = selection(
                 Qwen3ExecutionMode::Speculative,
@@ -14268,9 +14482,11 @@ mod tests {
                                 &capture.semantic,
                             )
                             .unwrap();
-                            assert!(RearmRangeSelectionV1::new(&capture.semantic)
-                                .select_fresh::<Range>(request, None, capture)
-                                .is_err());
+                            assert!(
+                                RearmRangeSelectionV1::new(&capture.semantic)
+                                    .select_fresh::<Range>(request, None, capture)
+                                    .is_err()
+                            );
                         }
                         Range::Retained(key) => {
                             assert_eq!(key, source);
@@ -14329,12 +14545,14 @@ mod tests {
                     }
                 ) && *bound == choices[0].1
             }));
-            assert!(requested_workspace_range(
-                M1PhysicalBufferSourceV1::DraftCatchupChoices(choices[0].0),
-                speculative.workspace_composition(),
-                &ordinary.semantic,
-            )
-            .is_err());
+            assert!(
+                requested_workspace_range(
+                    M1PhysicalBufferSourceV1::DraftCatchupChoices(choices[0].0),
+                    speculative.workspace_composition(),
+                    &ordinary.semantic,
+                )
+                .is_err()
+            );
 
             // Maintenance omits target model/KV sources; restoration needs the saved roster.
             let missing_target = saved
@@ -14349,9 +14567,11 @@ mod tests {
                     )
                 })
                 .unwrap();
-            assert!(!maintenance
-                .iter()
-                .any(|(source, _)| *source == missing_target.0));
+            assert!(
+                !maintenance
+                    .iter()
+                    .any(|(source, _)| *source == missing_target.0)
+            );
             assert!(route(&speculative, &maintenance, &diagnostic, 13).is_err());
             let mut inconsistent = saved.clone();
             let duplicate = inconsistent
@@ -14409,6 +14629,7 @@ mod tests {
                                 old_token
                             }
                             RearmRangeRequestV1::RetainedQualificationLogits
+                            | RearmRangeRequestV1::RetainedEngineeringFinalRms { .. }
                             | RearmRangeRequestV1::RetainedSpeculativeDraftChoices
                             | RearmRangeRequestV1::RetainedSpeculativeDraftChoice { .. }
                             | RearmRangeRequestV1::RetainedSpeculativeTargetChoices => {
@@ -14495,15 +14716,17 @@ mod tests {
             .map(|(_, buffer)| buffer)
             .expect("direct choice source exists");
         hostile_choice.range = 999_999;
-        assert!(rebuild_bound_row_ranges(
-            source_rows,
-            &hostile,
-            composition,
-            generation_one_capture,
-            generation_two_capture,
-            |workspace, _| Ok((workspace, 30_000)),
-        )
-        .is_err());
+        assert!(
+            rebuild_bound_row_ranges(
+                source_rows,
+                &hostile,
+                composition,
+                generation_one_capture,
+                generation_two_capture,
+                |workspace, _| Ok((workspace, 30_000)),
+            )
+            .is_err()
+        );
     }
 
     #[test]
@@ -14644,6 +14867,7 @@ mod tests {
                             RearmRangeRequestV1::RetainedCompletionOutput => retained_compact,
                             RearmRangeRequestV1::RetainedQualificationLogits => retained_logits,
                             RearmRangeRequestV1::RetainedDirectDiagnosticChoices
+                            | RearmRangeRequestV1::RetainedEngineeringFinalRms { .. }
                             | RearmRangeRequestV1::RetainedSpeculativeDraftChoices
                             | RearmRangeRequestV1::RetainedSpeculativeDraftChoice { .. }
                             | RearmRangeRequestV1::RetainedSpeculativeTargetChoices => {
@@ -14723,6 +14947,7 @@ mod tests {
                         assert_eq!(second.range, retained_logits);
                     }
                     RearmRangeRequestV1::RetainedDirectDiagnosticChoices
+                    | RearmRangeRequestV1::RetainedEngineeringFinalRms { .. }
                     | RearmRangeRequestV1::RetainedSpeculativeDraftChoices
                     | RearmRangeRequestV1::RetainedSpeculativeDraftChoice { .. }
                     | RearmRangeRequestV1::RetainedSpeculativeTargetChoices => {
@@ -14756,54 +14981,61 @@ mod tests {
             }
         }
         assert!(substituted);
-        assert!(rebuild_bound_row_ranges(
-            source_rows,
-            &hostile,
-            composition,
-            retained,
-            retained,
-            |workspace, _| Ok((workspace, 30_000)),
-        )
-        .is_err());
+        assert!(
+            rebuild_bound_row_ranges(
+                source_rows,
+                &hostile,
+                composition,
+                retained,
+                retained,
+                |workspace, _| Ok((workspace, 30_000)),
+            )
+            .is_err()
+        );
 
         let mut substituted_role = false;
-        assert!(rebuild_bound_row_ranges(
-            source_rows,
-            &generation_one,
-            composition,
-            retained,
-            retained,
-            |workspace, _| {
-                substituted_role = true;
-                let hostile = match workspace {
-                    M1FullStepWorkspaceRole::Draft => M1FullStepWorkspaceRole::Target,
-                    M1FullStepWorkspaceRole::Target => M1FullStepWorkspaceRole::Draft,
-                };
-                Ok((hostile, 40_000))
-            },
-        )
-        .is_err());
+        assert!(
+            rebuild_bound_row_ranges(
+                source_rows,
+                &generation_one,
+                composition,
+                retained,
+                retained,
+                |workspace, _| {
+                    substituted_role = true;
+                    let hostile = match workspace {
+                        M1FullStepWorkspaceRole::Draft => M1FullStepWorkspaceRole::Target,
+                        M1FullStepWorkspaceRole::Target => M1FullStepWorkspaceRole::Draft,
+                    };
+                    Ok((hostile, 40_000))
+                },
+            )
+            .is_err()
+        );
         assert!(substituted_role);
 
         let mut retained_logits_seen = 0;
-        assert!(rebuild_bound_row_ranges_with_requests(
-            source_rows,
-            &old_rows,
-            retained,
-            retained,
-            |source| {
-                let request = requested_workspace_range(source, composition, &retained.semantic)?;
-                if request == RearmRangeRequestV1::RetainedQualificationLogits {
-                    retained_logits_seen += 1;
-                    if retained_logits_seen == 2 {
-                        return Ok(RearmRangeRequestV1::Unchanged);
+        assert!(
+            rebuild_bound_row_ranges_with_requests(
+                source_rows,
+                &old_rows,
+                retained,
+                retained,
+                |source| {
+                    let request =
+                        requested_workspace_range(source, composition, &retained.semantic)?;
+                    if request == RearmRangeRequestV1::RetainedQualificationLogits {
+                        retained_logits_seen += 1;
+                        if retained_logits_seen == 2 {
+                            return Ok(RearmRangeRequestV1::Unchanged);
+                        }
                     }
-                }
-                Ok(request)
-            },
-            |workspace, _| Ok((workspace, 50_000)),
-        )
-        .is_err());
+                    Ok(request)
+                },
+                |workspace, _| Ok((workspace, 50_000)),
+            )
+            .is_err()
+        );
         assert_eq!(retained_logits_seen, 2);
 
         let mut too_many_old = old_rows.clone();
@@ -14823,25 +15055,28 @@ mod tests {
         }
         assert!(rewrote_fresh_range);
         let mut injected_extra_logits = false;
-        assert!(rebuild_bound_row_ranges_with_requests(
-            source_rows,
-            &too_many_old,
-            retained,
-            retained,
-            |source| {
-                let request = requested_workspace_range(source, composition, &retained.semantic)?;
-                if !injected_extra_logits
-                    && matches!(request, RearmRangeRequestV1::FreshWorkspace(_, _))
-                {
-                    injected_extra_logits = true;
-                    Ok(RearmRangeRequestV1::RetainedQualificationLogits)
-                } else {
-                    Ok(request)
-                }
-            },
-            |workspace, _| Ok((workspace, 60_000)),
-        )
-        .is_err());
+        assert!(
+            rebuild_bound_row_ranges_with_requests(
+                source_rows,
+                &too_many_old,
+                retained,
+                retained,
+                |source| {
+                    let request =
+                        requested_workspace_range(source, composition, &retained.semantic)?;
+                    if !injected_extra_logits
+                        && matches!(request, RearmRangeRequestV1::FreshWorkspace(_, _))
+                    {
+                        injected_extra_logits = true;
+                        Ok(RearmRangeRequestV1::RetainedQualificationLogits)
+                    } else {
+                        Ok(request)
+                    }
+                },
+                |workspace, _| Ok((workspace, 60_000)),
+            )
+            .is_err()
+        );
         assert!(injected_extra_logits);
     }
 

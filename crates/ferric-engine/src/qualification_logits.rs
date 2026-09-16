@@ -7,6 +7,10 @@
 //! remains initialized and any missing final write fails closed. Completed
 //! observation narrows that allocation to one final live BF16 row per scheduled
 //! lane.
+//!
+//! The separate engineering S1/K4 diagnostic can additionally opt into two
+//! appended final-RMS workspaces. That mode retains one complete owned readback
+//! and exposes only active row 3; it grants no qualification authority.
 
 use core::fmt;
 
@@ -14,8 +18,8 @@ use fe2o3_service_host::{
     HostDownloadRoleV1, HostVisibleAllocationV1, ServiceAllocationErrorV1, ServiceAllocationKeyV1,
     ServiceAllocationSessionV1, ServiceCompletedReadbackV1, ServiceHostDispatchRangeV1,
 };
-use ferric_build::{m1_step_workspace_requirements, M1StepWorkspaceRangeRole};
-use ferric_spec::{Qwen3ModelRole, Qwen3PlanSelection, TokenId, QWEN3_VOCABULARY_SIZE};
+use ferric_build::{M1StepWorkspaceRangeRole, m1_step_workspace_requirements};
+use ferric_spec::{QWEN3_VOCABULARY_SIZE, Qwen3ModelRole, Qwen3PlanSelection, TokenId};
 use sha2::{Digest, Sha256};
 
 use crate::BoundM1CompletionOutputV1;
@@ -29,6 +33,10 @@ pub const M1_QUALIFICATION_LOGITS_ELEMENT_BYTES_V1: u64 = 2;
 pub const M1_QUALIFICATION_LOGITS_ALIGNMENT_V1: u64 = 2;
 
 const M1_QUALIFICATION_UNWRITTEN_BF16_V1: u16 = 0x7fc0;
+const ENGINEERING_S1_K4_LOGITS_BYTES: usize = 5 * QWEN3_VOCABULARY_SIZE as usize * 2;
+const ENGINEERING_FINAL_RMS_ROW_BYTES: u64 = 4096 * 2;
+const ENGINEERING_FINAL_RMS_WORKSPACE_BYTES: u64 = 5 * ENGINEERING_FINAL_RMS_ROW_BYTES;
+const ENGINEERING_FINAL_RMS_ACTIVE_INDEX: u64 = 3;
 
 /// Exact target workspace shape retained by qualification logits capture.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -272,6 +280,8 @@ pub struct BoundM1QualificationLogitsV1 {
     shape: M1QualificationLogitsShapeV1,
     key: QualificationLogitsAllocationKeyV1,
     dispatch_range: ServiceHostDispatchRangeV1,
+    capture_range: ServiceHostDispatchRangeV1,
+    final_rms: bool,
 }
 
 impl BoundM1QualificationLogitsV1 {
@@ -287,6 +297,35 @@ impl BoundM1QualificationLogitsV1 {
         self.dispatch_range
     }
 
+    pub(crate) const fn retained_capture_range(&self) -> ServiceHostDispatchRangeV1 {
+        self.capture_range
+    }
+
+    pub(crate) const fn captures_final_rms(&self) -> bool {
+        self.final_rms
+    }
+
+    pub(crate) fn final_rms_workspace_ranges(
+        &self,
+    ) -> Result<Option<[ServiceHostDispatchRangeV1; 2]>, M1QualificationLogitsErrorV1> {
+        if !self.final_rms {
+            return Ok(None);
+        }
+        let offsets = engineering_final_rms_workspace_offsets(self.shape)?;
+        Ok(Some([
+            self.capture_range.checked_subrange(
+                offsets[0],
+                ENGINEERING_FINAL_RMS_WORKSPACE_BYTES,
+                2,
+            )?,
+            self.capture_range.checked_subrange(
+                offsets[1],
+                ENGINEERING_FINAL_RMS_WORKSPACE_BYTES,
+                2,
+            )?,
+        ]))
+    }
+
     pub(crate) fn host_dispatch_range(
         &self,
         allocations: &ServiceAllocationSessionV1,
@@ -299,14 +338,14 @@ impl BoundM1QualificationLogitsV1 {
                 actual: selection,
             });
         }
-        validate_key_geometry(self.key, self.shape)?;
-        let typed = allocations.range(
-            self.key,
-            0,
-            self.shape.extent_bytes,
-            M1_QUALIFICATION_LOGITS_ALIGNMENT_V1,
-        )?;
-        let range = allocations.host_dispatch_range(typed)?;
+        let extent = engineering_capture_extent(self.shape, self.final_rms)?;
+        validate_key_geometry(self.key, extent)?;
+        let typed = allocations.range(self.key, 0, extent, M1_QUALIFICATION_LOGITS_ALIGNMENT_V1)?;
+        let capture = allocations.host_dispatch_range(typed)?;
+        if capture != self.capture_range {
+            return Err(M1QualificationLogitsErrorV1::DispatchRangeDrift);
+        }
+        let range = capture.checked_subrange(0, self.shape.extent_bytes, 2)?;
         if range != self.dispatch_range {
             return Err(M1QualificationLogitsErrorV1::DispatchRangeDrift);
         }
@@ -392,23 +431,29 @@ pub(crate) fn allocate_m1_qualification_logits_v1(
     allocations: &mut ServiceAllocationSessionV1,
     selection: Qwen3PlanSelection,
 ) -> Result<BoundM1QualificationLogitsV1, M1QualificationLogitsErrorV1> {
+    allocate_logits_capture(allocations, selection, false)
+}
+
+fn allocate_logits_capture(
+    allocations: &mut ServiceAllocationSessionV1,
+    selection: Qwen3PlanSelection,
+    final_rms: bool,
+) -> Result<BoundM1QualificationLogitsV1, M1QualificationLogitsErrorV1> {
     let shape = m1_qualification_logits_shape_v1(selection)?;
-    let requested =
-        usize::try_from(shape.extent_bytes).map_err(|_| M1QualificationLogitsErrorV1::Overflow)?;
+    let extent = engineering_capture_extent(shape, final_rms)?;
+    let requested = usize::try_from(extent).map_err(|_| M1QualificationLogitsErrorV1::Overflow)?;
     let initialized = qualification_logits_initial_image(requested)?;
     let key = allocations.allocate_initialized_host_visible::<HostDownloadRoleV1>(initialized)?;
-    validate_key_geometry(key, shape)?;
-    let typed = allocations.range(
-        key,
-        0,
-        shape.extent_bytes,
-        M1_QUALIFICATION_LOGITS_ALIGNMENT_V1,
-    )?;
-    let dispatch_range = allocations.host_dispatch_range(typed)?;
+    validate_key_geometry(key, extent)?;
+    let typed = allocations.range(key, 0, extent, M1_QUALIFICATION_LOGITS_ALIGNMENT_V1)?;
+    let capture_range = allocations.host_dispatch_range(typed)?;
+    let dispatch_range = capture_range.checked_subrange(0, shape.extent_bytes, 2)?;
     Ok(BoundM1QualificationLogitsV1 {
         shape,
         key,
         dispatch_range,
+        capture_range,
+        final_rms,
     })
 }
 
@@ -471,6 +516,7 @@ pub fn m1_engineering_s1_k4_logits_shape_v1(
 pub(crate) fn attach_m1_engineering_s1_k4_logits_v1(
     allocations: &mut ServiceAllocationSessionV1,
     completion: BoundM1CompletionOutputV1,
+    final_rms: bool,
 ) -> Result<BoundM1CompletionOutputV1, Box<M1QualificationLogitsAllocationFailureV1>> {
     let result =
         m1_engineering_s1_k4_logits_shape_v1(completion.shape().selection()).and_then(|_| {
@@ -483,7 +529,7 @@ pub(crate) fn attach_m1_engineering_s1_k4_logits_v1(
             {
                 return Err(M1QualificationLogitsErrorV1::AlreadyEnabled);
             }
-            allocate_m1_qualification_logits_v1(allocations, completion.shape().selection())
+            allocate_logits_capture(allocations, completion.shape().selection(), final_rms)
         });
     match result {
         Ok(logits) => Ok(completion.attach_engineering_s1_k4_logits(logits)),
@@ -509,6 +555,8 @@ pub struct M1ObservedEngineeringS1K4LogitsV1 {
     readback: ServiceCompletedReadbackV1,
     raw_sha256: [u8; 32],
     choices: [TokenId; 5],
+    final_rms: bool,
+    capture_sha256: [u8; 32],
 }
 
 impl M1ObservedEngineeringS1K4LogitsV1 {
@@ -533,7 +581,47 @@ impl M1ObservedEngineeringS1K4LogitsV1 {
 
     #[must_use]
     pub fn raw_bytes(&self) -> &[u8] {
-        self.readback.bytes()
+        &self.readback.bytes()[..ENGINEERING_S1_K4_LOGITS_BYTES]
+    }
+
+    /// SHA-256 of the actual complete owned copy, including unpublished RMS rows.
+    #[must_use]
+    pub const fn completed_readback_sha256(&self) -> &[u8; 32] {
+        &self.capture_sha256
+    }
+
+    /// Exact complete copied extent, not merely the published logits prefix.
+    #[must_use]
+    pub fn completed_readback_extent_bytes(&self) -> usize {
+        self.readback.bytes().len()
+    }
+
+    /// Final RMS input and output for target active row 3 only, when opted in.
+    #[must_use]
+    pub fn final_rms_row_bytes(&self) -> Option<[&[u8]; 2]> {
+        if !self.final_rms {
+            return None;
+        }
+        let offsets = engineering_final_rms_row_offsets(self.shape).ok()?;
+        let row = |offset: u64| {
+            let start = usize::try_from(offset).ok()?;
+            let bytes = usize::try_from(ENGINEERING_FINAL_RMS_ROW_BYTES).ok()?;
+            self.readback.bytes().get(start..start.checked_add(bytes)?)
+        };
+        Some([row(offsets[0])?, row(offsets[1])?])
+    }
+
+    /// Allocation-relative completed-copy coordinates of the two published rows.
+    #[must_use]
+    pub fn final_rms_row_offsets(&self) -> Option<[u64; 2]> {
+        if !self.final_rms {
+            return None;
+        }
+        let offsets = engineering_final_rms_row_offsets(self.shape).ok()?;
+        Some([
+            self.offset_bytes().checked_add(offsets[0])?,
+            self.offset_bytes().checked_add(offsets[1])?,
+        ])
     }
 
     #[must_use]
@@ -558,6 +646,76 @@ impl M1ObservedEngineeringS1K4LogitsV1 {
 pub enum M1EngineeringS1K4LogitsErrorV1 {
     Geometry(M1QualificationLogitsErrorV1),
     Values(M1QualificationFinalLogitsErrorV1),
+    /// One final-RMS workspace element is nonfinite or retains its unwritten sentinel.
+    FinalRmsNonFinite {
+        workspace: usize,
+        element: usize,
+    },
+}
+
+fn engineering_final_rms_workspace_offsets(
+    shape: M1QualificationLogitsShapeV1,
+) -> Result<[u64; 2], M1QualificationLogitsErrorV1> {
+    if m1_engineering_s1_k4_logits_shape_v1(shape.selection)? != shape {
+        return Err(M1QualificationLogitsErrorV1::InvalidTargetSelection {
+            selection: shape.selection,
+        });
+    }
+    let requirements = m1_step_workspace_requirements(shape.selection).map_err(|_| {
+        M1QualificationLogitsErrorV1::InvalidTargetSelection {
+            selection: shape.selection,
+        }
+    })?;
+    for role in [
+        M1StepWorkspaceRangeRole::ResidualHidden,
+        M1StepWorkspaceRangeRole::FinalNormalized,
+    ] {
+        let actual = requirements
+            .range(role)
+            .ok_or(M1QualificationLogitsErrorV1::InvalidTargetSelection {
+                selection: shape.selection,
+            })?
+            .byte_len();
+        if actual != ENGINEERING_FINAL_RMS_WORKSPACE_BYTES {
+            return Err(M1QualificationLogitsErrorV1::WorkspaceExtent {
+                expected: ENGINEERING_FINAL_RMS_WORKSPACE_BYTES,
+                actual,
+            });
+        }
+    }
+    let second = shape
+        .extent_bytes
+        .checked_add(ENGINEERING_FINAL_RMS_WORKSPACE_BYTES)
+        .ok_or(M1QualificationLogitsErrorV1::Overflow)?;
+    Ok([shape.extent_bytes, second])
+}
+
+fn engineering_final_rms_row_offsets(
+    shape: M1QualificationLogitsShapeV1,
+) -> Result<[u64; 2], M1QualificationLogitsErrorV1> {
+    let [input, output] = engineering_final_rms_workspace_offsets(shape)?;
+    let row = ENGINEERING_FINAL_RMS_ACTIVE_INDEX * ENGINEERING_FINAL_RMS_ROW_BYTES;
+    Ok([
+        input
+            .checked_add(row)
+            .ok_or(M1QualificationLogitsErrorV1::Overflow)?,
+        output
+            .checked_add(row)
+            .ok_or(M1QualificationLogitsErrorV1::Overflow)?,
+    ])
+}
+
+fn engineering_capture_extent(
+    shape: M1QualificationLogitsShapeV1,
+    final_rms: bool,
+) -> Result<u64, M1QualificationLogitsErrorV1> {
+    if !final_rms {
+        return Ok(shape.extent_bytes);
+    }
+    let offsets = engineering_final_rms_workspace_offsets(shape)?;
+    offsets[1]
+        .checked_add(ENGINEERING_FINAL_RMS_WORKSPACE_BYTES)
+        .ok_or(M1QualificationLogitsErrorV1::Overflow)
 }
 
 fn engineering_s1_k4_row_bounds(
@@ -582,6 +740,17 @@ fn validate_engineering_s1_k4_logits(
     coordinates: M1QualificationLogitsRowCoordinatesV1,
     bytes: &[u8],
 ) -> Result<[TokenId; 5], M1EngineeringS1K4LogitsErrorV1> {
+    validate_engineering_s1_k4_capture(shape, offset, generation, coordinates, bytes, false)
+}
+
+fn validate_engineering_s1_k4_capture(
+    shape: M1QualificationLogitsShapeV1,
+    offset: u64,
+    generation: u64,
+    coordinates: M1QualificationLogitsRowCoordinatesV1,
+    bytes: &[u8],
+    final_rms: bool,
+) -> Result<[TokenId; 5], M1EngineeringS1K4LogitsErrorV1> {
     let geometry = || -> Result<(), M1QualificationLogitsErrorV1> {
         if m1_engineering_s1_k4_logits_shape_v1(shape.selection)? != shape {
             return Err(M1QualificationLogitsErrorV1::InvalidTargetSelection {
@@ -602,12 +771,11 @@ fn validate_engineering_s1_k4_logits(
                 actual: coordinates.offset_bytes,
             });
         }
-        if coordinates.extent_bytes != shape.extent_bytes
-            || u64::try_from(bytes.len()).ok() != Some(shape.extent_bytes)
-        {
+        let extent = engineering_capture_extent(shape, final_rms)?;
+        if coordinates.extent_bytes != extent || u64::try_from(bytes.len()).ok() != Some(extent) {
             return Err(M1QualificationLogitsErrorV1::RowExtent {
                 lane: 0,
-                expected: shape.extent_bytes,
+                expected: extent,
                 actual: coordinates.extent_bytes,
             });
         }
@@ -621,6 +789,29 @@ fn validate_engineering_s1_k4_logits(
         *choice = lowest_id_finite_bf16_argmax(&bytes[start..end], index)
             .map_err(M1EngineeringS1K4LogitsErrorV1::Values)?;
     }
+    if final_rms {
+        let offsets = engineering_final_rms_workspace_offsets(shape)
+            .map_err(M1EngineeringS1K4LogitsErrorV1::Geometry)?;
+        for (workspace, offset) in offsets.into_iter().enumerate() {
+            let start = usize::try_from(offset).map_err(|_| {
+                M1EngineeringS1K4LogitsErrorV1::Geometry(M1QualificationLogitsErrorV1::Overflow)
+            })?;
+            let end = usize::try_from(ENGINEERING_FINAL_RMS_WORKSPACE_BYTES)
+                .ok()
+                .and_then(|extent| start.checked_add(extent))
+                .ok_or(M1EngineeringS1K4LogitsErrorV1::Geometry(
+                    M1QualificationLogitsErrorV1::Overflow,
+                ))?;
+            for (element, value) in bytes[start..end].chunks_exact(2).enumerate() {
+                if u16::from_le_bytes([value[0], value[1]]) & 0x7f80 == 0x7f80 {
+                    return Err(M1EngineeringS1K4LogitsErrorV1::FinalRmsNonFinite {
+                        workspace,
+                        element,
+                    });
+                }
+            }
+        }
+    }
     Ok(choices)
 }
 
@@ -629,6 +820,7 @@ pub(crate) fn observe_m1_engineering_s1_k4_logits_v1(
     range: ServiceHostDispatchRangeV1,
     generation: u64,
     readback: ServiceCompletedReadbackV1,
+    final_rms: bool,
 ) -> Result<
     M1ObservedEngineeringS1K4LogitsV1,
     (M1EngineeringS1K4LogitsErrorV1, ServiceCompletedReadbackV1),
@@ -638,18 +830,32 @@ pub(crate) fn observe_m1_engineering_s1_k4_logits_v1(
         offset_bytes: readback.offset_bytes(),
         extent_bytes: u64::try_from(readback.bytes().len()).unwrap_or(u64::MAX),
     };
-    match validate_engineering_s1_k4_logits(
-        shape,
-        range.offset_bytes(),
-        generation,
-        coordinates,
-        readback.bytes(),
-    ) {
+    let validation = if final_rms {
+        validate_engineering_s1_k4_capture(
+            shape,
+            range.offset_bytes(),
+            generation,
+            coordinates,
+            readback.bytes(),
+            true,
+        )
+    } else {
+        validate_engineering_s1_k4_logits(
+            shape,
+            range.offset_bytes(),
+            generation,
+            coordinates,
+            readback.bytes(),
+        )
+    };
+    match validation {
         Ok(choices) => Ok(M1ObservedEngineeringS1K4LogitsV1 {
             shape,
-            raw_sha256: Sha256::digest(readback.bytes()).into(),
+            raw_sha256: Sha256::digest(&readback.bytes()[..ENGINEERING_S1_K4_LOGITS_BYTES]).into(),
+            capture_sha256: Sha256::digest(readback.bytes()).into(),
             readback,
             choices,
+            final_rms,
         }),
         Err(error) => Err((error, readback)),
     }
@@ -657,11 +863,11 @@ pub(crate) fn observe_m1_engineering_s1_k4_logits_v1(
 
 fn validate_key_geometry(
     key: QualificationLogitsAllocationKeyV1,
-    shape: M1QualificationLogitsShapeV1,
+    extent: u64,
 ) -> Result<(), M1QualificationLogitsErrorV1> {
-    if key.extent_bytes() != shape.extent_bytes {
+    if key.extent_bytes() != extent {
         return Err(M1QualificationLogitsErrorV1::AllocationExtent {
-            expected: shape.extent_bytes,
+            expected: extent,
             actual: key.extent_bytes(),
         });
     }
@@ -993,11 +1199,13 @@ pub(crate) mod tests {
                     .is_err()
             );
         }
-        assert!(m1_engineering_s1_k4_logits_shape_v1(Qwen3PlanSelection {
-            role: Qwen3ModelRole::Draft06B,
-            ..exact
-        })
-        .is_err());
+        assert!(
+            m1_engineering_s1_k4_logits_shape_v1(Qwen3PlanSelection {
+                role: Qwen3ModelRole::Draft06B,
+                ..exact
+            })
+            .is_err()
+        );
     }
 
     #[test]
@@ -1045,14 +1253,10 @@ pub(crate) mod tests {
                 Err(M1EngineeringS1K4LogitsErrorV1::Geometry(_))
             ));
         }
-        assert!(validate_engineering_s1_k4_logits(
-            shape,
-            64,
-            9,
-            coordinates,
-            &bytes[..bytes.len() - 2]
-        )
-        .is_err());
+        assert!(
+            validate_engineering_s1_k4_logits(shape, 64, 9, coordinates, &bytes[..bytes.len() - 2])
+                .is_err()
+        );
         for index in 0..5 {
             let mut missing = bytes.clone();
             let (start, end) = engineering_s1_k4_row_bounds(shape, index).unwrap();
@@ -1064,6 +1268,118 @@ pub(crate) mod tests {
             assert!(
                 matches!(validate_engineering_s1_k4_logits(shape, 64, 9, coordinates, &missing), Err(M1EngineeringS1K4LogitsErrorV1::Values(M1QualificationFinalLogitsErrorV1::NonFinite { lane, token: 0 })) if lane == index)
             );
+        }
+    }
+
+    #[test]
+    fn engineering_final_rms_layout_is_disjoint_aligned_and_opt_in_only() {
+        let shape = m1_engineering_s1_k4_logits_shape_v1(Qwen3PlanSelection {
+            role: Qwen3ModelRole::Target8B,
+            mode: Qwen3ExecutionMode::Speculative,
+            bucket: Qwen3PlanBucket::SpeculativeS1K4C8192,
+        })
+        .unwrap();
+        assert_eq!(engineering_capture_extent(shape, false).unwrap(), 1_519_360);
+        assert_eq!(engineering_capture_extent(shape, true).unwrap(), 1_601_280);
+        assert_eq!(
+            engineering_final_rms_workspace_offsets(shape).unwrap(),
+            [1_519_360, 1_560_320]
+        );
+        assert_eq!(
+            engineering_final_rms_row_offsets(shape).unwrap(),
+            [1_543_936, 1_584_896]
+        );
+        let offsets = engineering_final_rms_workspace_offsets(shape).unwrap();
+        assert_eq!(offsets[0], shape.extent_bytes());
+        assert_eq!(
+            offsets[0] + ENGINEERING_FINAL_RMS_WORKSPACE_BYTES,
+            offsets[1]
+        );
+        assert_eq!(
+            offsets[1] + ENGINEERING_FINAL_RMS_WORKSPACE_BYTES,
+            engineering_capture_extent(shape, true).unwrap()
+        );
+        assert!(offsets.iter().all(|offset| offset.is_multiple_of(2)));
+        for bucket in TARGET_ONLY_BUCKETS {
+            let ordinary = m1_qualification_logits_shape_v1(selection(bucket)).unwrap();
+            assert_eq!(
+                engineering_capture_extent(ordinary, false).unwrap(),
+                ordinary.extent_bytes()
+            );
+            assert!(engineering_capture_extent(ordinary, true).is_err());
+        }
+    }
+
+    #[test]
+    fn engineering_final_rms_copy_rejects_extent_generation_and_missing_writes() {
+        let shape = m1_engineering_s1_k4_logits_shape_v1(Qwen3PlanSelection {
+            role: Qwen3ModelRole::Target8B,
+            mode: Qwen3ExecutionMode::Speculative,
+            bucket: Qwen3PlanBucket::SpeculativeS1K4C8192,
+        })
+        .unwrap();
+        let extent = engineering_capture_extent(shape, true).unwrap();
+        let bytes = vec![0; usize::try_from(extent).unwrap()];
+        let coordinates = M1QualificationLogitsRowCoordinatesV1 {
+            dispatch_generation: 9,
+            offset_bytes: 64,
+            extent_bytes: extent,
+        };
+        assert_eq!(
+            validate_engineering_s1_k4_capture(shape, 64, 9, coordinates, &bytes, true).unwrap(),
+            [0; 5]
+        );
+        assert!(validate_engineering_s1_k4_logits(shape, 64, 9, coordinates, &bytes).is_err());
+        for wrong in [
+            M1QualificationLogitsRowCoordinatesV1 {
+                dispatch_generation: 8,
+                ..coordinates
+            },
+            M1QualificationLogitsRowCoordinatesV1 {
+                offset_bytes: 66,
+                ..coordinates
+            },
+            M1QualificationLogitsRowCoordinatesV1 {
+                extent_bytes: shape.extent_bytes(),
+                ..coordinates
+            },
+        ] {
+            assert!(validate_engineering_s1_k4_capture(shape, 64, 9, wrong, &bytes, true).is_err());
+        }
+        assert!(
+            validate_engineering_s1_k4_capture(
+                shape,
+                64,
+                9,
+                coordinates,
+                &bytes[..bytes.len() - 2],
+                true
+            )
+            .is_err()
+        );
+        for (workspace, offset) in engineering_final_rms_workspace_offsets(shape)
+            .unwrap()
+            .into_iter()
+            .enumerate()
+        {
+            for element in [
+                0,
+                usize::try_from(ENGINEERING_FINAL_RMS_WORKSPACE_BYTES / 2 - 1).unwrap(),
+            ] {
+                for sentinel in [0x7fc0_u16, 0x7f80, 0xff80] {
+                    let mut missing = bytes.clone();
+                    set_bf16(
+                        &mut missing[usize::try_from(offset).unwrap()..],
+                        element,
+                        sentinel,
+                    );
+                    assert!(
+                        matches!(validate_engineering_s1_k4_capture(shape, 64, 9, coordinates, &missing, true),
+                        Err(M1EngineeringS1K4LogitsErrorV1::FinalRmsNonFinite { workspace: actual_workspace, element: actual_element })
+                        if actual_workspace == workspace && actual_element == element)
+                    );
+                }
+            }
         }
     }
 
@@ -1195,9 +1511,11 @@ pub(crate) mod tests {
                     .unwrap(),
                 shape.extent_bytes() - shape.row_bytes()
             );
-            assert!(last_first
-                .checked_add(shape.row_bytes())
-                .is_some_and(|end| end <= shape.extent_bytes()));
+            assert!(
+                last_first
+                    .checked_add(shape.row_bytes())
+                    .is_some_and(|end| end <= shape.extent_bytes())
+            );
         }
     }
 

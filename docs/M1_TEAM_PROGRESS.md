@@ -5,6 +5,125 @@ receipt. The 33 M1 roadmap gates remain open.
 
 ## Current Checkpoint
 
+### Final-RMS Intermediate Capture Candidate
+
+An explicit `--mfma13 --capture-m5-final-rms DIRECTORY` candidate extends the
+existing engineering M5 readback with target-segment-4 `ResidualHidden` and
+`FinalNormalized` workspaces. The original logits dispatch range remains
+1,519,360 bytes; the opt-in completed copy is 1,601,280 bytes. Only the two
+8,192-byte intermediate rows at active index 3, sequence position 131, are
+exported, alongside the original transcript and five logits rows. The sidecar
+binds generation, input token, allocation offsets, exact capture-transcript
+bytes and payload hashes. The full-copy digest is recorded but cannot be
+independently reproduced from the selected-row export.
+
+Independent review caught and corrected the initially missing finite-rollover
+routing. The candidate now covers that live path as well as ordinary binding,
+preserves existing default/protected-route behavior, and adds seven Rust
+regressions. The rollover regression exercises the production request,
+segment-validation and range-selection helpers through the existing synthetic
+host route; it is not execution of the full KFD binding core. The first native
+host build stopped before tests on an unqualified `Qwen3ModelRole` reference in
+the new rollover code. The failure is retained and the reference is corrected.
+The second host build reaches linking, then stops with SIGXFSZ: its launcher
+incorrectly applies the 64 MiB log budget to all compiler output files. That
+failure is retained separately. The existing tested stream-only limiter fixes
+the scope without changing compiler profiles or disk, memory, CPU and time
+limits. The third build produces the actual test executable; its test launcher
+rejects an underscore in a phase name. The fourth continuation rejects a root
+metadata feature-mode mismatch against the unchanged dependency policy.
+
+The fifth continuation uses the exact third-build source and executable,
+correct phase names, root-default metadata and all-feature verifier metadata.
+Its normal inventory reports exactly 19 new unverified functions and no
+removals. All 169 selected Rust tests pass: 103 across five engine modules,
+three protected/default-route guards, 25 adapter tests and 38 source-policy
+tests. All seven new capture regressions are explicitly observed passing.
+Strict engine Clippy then rejects two remaining constant-size narrowing casts;
+the run remains failed, and adapter Clippy is unlaunched. Checked conversions
+and range-end arithmetic now replace those casts, with corrected-source
+validation completed by the separate sixth run below. All 213 retained fifth-run files match ledger
+`3e5939de509630d6affc4c05a961ffff50b6fb67f44ea0b5efc2bbd76a57de89`.
+No native final-RMS or GPU result exists yet.
+
+The sixth run builds the corrected source afresh and passes all 25 phases:
+formatting, all 169 selected Rust tests, both strict Clippy checks, the normal
+source inventory, generation and validation. Generated coverage adds exactly
+19 explicitly unverified functions, with no deletions, verified promotions,
+module or TCB changes. The exact remote formatting and generated inventory
+are integrated. All 1,494 retained payload hashes pass independent local
+checks; ledger is
+`245234bb0c5dc5388918422338dabcc8363334cd3751f93c43ab02bf7b191eb6`.
+The third-run test executable is preserved separately before shared-target
+reuse; neither its historical producer nor any earlier failed run is relabeled.
+This run uses fe2o3 `2d3ffbed`, not newly observed main `90bef1db`.
+
+The separate reference entrypoint hooks the real final normalization on the
+independent full 133-token forward and requires byte-identical logits and both
+intermediate rows across two runs. The initial 24 CPU-only protocol tests pass
+on mi300x: 12 new cases, four unchanged M5 cases and eight ranking cases.
+Review subsequently finds a nested transcript generation that could accept an
+integer-equivalent float. The additive reader now requires canonical type/value
+equality, and a separate corrected-source run passes all 25 tests, including
+the new hostile regression. Its input ledger is
+`ccb514eeb1b85819af1ae2880d9abdd34452eef61e3f8d2d714ed55641d911ee`;
+all 43 retained payloads match ledger
+`39381a81fbae96cc7b0c307a79aafccf4645e4e8b876412a41c5a0d5d23407d0`.
+The full-model hooked reference has not run. The initial input ledger remains
+`5ce81555ea6401cd97e9ea7997d0d8548fa82789a179c437ad0895a1adcdf180`;
+all 25 retained files match ledger
+`290a89919b010e121a0804924321b0bb8a1d27dcbab4e0e5dc49a7419e7e60be`.
+The initial cleanup stopped on a file-use command error before deletion; that
+failure remains retained. A separately reviewed cleanup logs all 75 explicit
+file/directory operands, obtains exit 1 with empty output from the scoped
+file-use check, and repeats both hash/ownership/roster checks. It then removes
+only the two completed protocol stages, reclaiming 488 KiB. Host build stages
+and caches remain for declared follow-on work; no system-wide non-use is claimed.
+
+These changes add diagnostic visibility, not a kernel arithmetic correction,
+numerical acceptance, causal attribution, performance measurement or gate
+closure. Protected-runtime qualification remains unavailable: no
+administrator-managed isolated installation is known to be available, and
+shared host libraries remain untouched.
+
+### Matching 2d3 Compiler Tools
+
+The completed build matches integrated fe2o3 pin `2d3ffbed`. Exact reviewed
+compiler-cache retirement on mi300x removes
+282 paths / 270 inode groups and reclaims 1,241,568 KiB, reducing the owned
+compiler stage from 9,783,172 to 8,541,604 KiB. No model, private compiler tool,
+source tree, vendor tree or retained result is deleted. Full before/after
+checks preserve all unselected target files and protected inputs.
+
+The retirement uses the original limited, owned-tmpfs visibility policy:
+known sd-pam/SSH inspection gaps and unrelated mount devices remain explicitly
+recorded, not promoted to system-wide non-use. Fresh scoped inode/path scans
+find no matches; separate `fuser` returns 1 with empty output. The retained
+inventory SHA is
+`2346e8cfb3bbf04ca08692bb9863ef016a1701e163f40e2f0d8a35645f08b553`;
+the actual apply record is
+`b710ae1cf984b5e15ecef78c2c35ecae1ede94b9c2bcea97dbb498d088ce8682`.
+All 19 inventory and 15 apply records pass independent local hash checks.
+The pinned Pliron commit is seeded through a bounded, local-file Git fetch
+from the existing metadata cache: five new loose objects, 28 KiB, with no
+network fetch or existing object/ref/config replacement. All 33 retained seed
+records match their custody ledger. Matching compiler tool builds now pass all
+six phases under the original limits. The CLI, linker proxy, backend and
+extractor each have an actual fresh, non-test producer from canonical
+`2d3ffbed` source, with the backend bound to the newly built CLI. All 5,119
+source files and 26 protected inputs remain unchanged. Independent hash checks
+cover all 21 external records and 93 archived payloads; archive SHA-256 is
+`7f7e7f9e35928ddf502c57db7b27036d19272dd259435d88e0660e6e1b8a358a`.
+These are compiler tools, not new Ferric kernels, GPU execution or compiler
+qualification. Old native results retain their actual `7f90d187` identity.
+
+A later read-only upstream check observes main `90bef1db`: 12 commits and 13
+changed files in backend projection logic and tests. Runtime/KFD/device,
+toolchain, Pliron `cc902cc8`, LLVM-worker source and all 53 existing compiler
+vendor manifests are unchanged. Actual updated dependency graphs, pins, tools
+and emission are still required before new native work. The completed `2d3`
+tools and tests are not relabeled as `90bef` or as current-main validation.
+
 ### Retained M5 Ranking Diagnostic
 
 A new CPU-only diagnostic replays the exact retained `011e0aca` / `7f90d187`
@@ -64,16 +183,18 @@ files, reference venv and shared jobs are untouched.
 
 ### Upstream Tracking And Build Policy
 
-The latest read-only `ls-remote` observation of fe2o3 `main` is
-`2d3ffbedd6dc2dd51d777ede70e26329370bcf77`. The merged history after the
+At the completed dependency-adoption checkpoint, the observed fe2o3 `main` was
+`2d3ffbedd6dc2dd51d777ede70e26329370bcf77`; the later `90bef1db` observation
+and pending adoption are recorded above. The merged history after the
 previous observation includes helper argument/result/call and slice
 correspondence, authenticated context flow, semantic import and debug storage.
 The full `7f90d187`-to-`2d3ffbed` diff changes 155 files; it is not merely a
 diagnostic-only increment. KFD, runtime, device implementation, toolchain and
 LLVM-worker implementation remain unchanged in this source comparison. The
-latest pin is now integrated after the bounded adoption checks below; matching
-compiler-tool builds, emission and native validation have not run. Existing
-results retain their original compiler pin.
+`2d3` pin is integrated after the bounded adoption checks below, and matching
+compiler-tool builds subsequently pass as recorded above. Matching emission
+and native validation have not run. Existing results retain their original
+compiler pin.
 
 The exact 80-file dependency/policy update changes 30 manifests, 30 locks and
 20 policy/inventory files. Pliron moves to

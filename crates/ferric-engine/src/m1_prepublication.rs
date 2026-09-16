@@ -9,17 +9,15 @@ use core::fmt;
 
 use ferric_build::AddresslessM1StepWorkspacePlan;
 use ferric_spec::{
-    Identity, Qwen3ExecutionMode, Qwen3ModelRole, Qwen3PlanBucket, Qwen3PlanSelection, RequestId,
-    StepPlan, ValidatedM1StepInputs, M1_MAX_ACTIVE_SEQUENCES,
+    Identity, M1_MAX_ACTIVE_SEQUENCES, Qwen3ExecutionMode, Qwen3ModelRole, Qwen3PlanBucket,
+    Qwen3PlanSelection, RequestId, StepPlan, ValidatedM1StepInputs,
 };
 
 use crate::physical_fixed_batch::{
-    build_m1_authenticated_physical_packet_batch_v1, M1AuthenticatedPhysicalPacketBatchV1,
+    M1AuthenticatedPhysicalPacketBatchV1, build_m1_authenticated_physical_packet_batch_v1,
 };
 use crate::{
-    bind_m1_physical_buffer_ranges_v1, build_m1_physical_fixed_batch_v1,
-    compose_m1_step_workspace_image_v1, AddresslessM1PhysicalBufferRecipeV1,
-    BoundM1CompletionOutputV1, BoundM1KvWorkspaceTableV1,
+    AddresslessM1PhysicalBufferRecipeV1, BoundM1CompletionOutputV1, BoundM1KvWorkspaceTableV1,
     BoundM1SpeculativeDraftKvRoundWorkspaceTableV1, ComposedM1FullStepWorkspaceSetV1,
     ComposedM1StepWorkspaceImageV1, ContentBoundM1ProgramCatalogV1, Gfx942DeviceBinding,
     InitializedM1FullStepWorkspaceAllocationFailureV1,
@@ -31,7 +29,8 @@ use crate::{
     M1PhysicalFixedBatchBuildFailureV1, M1PhysicalFixedBatchShapeV1, M1PhysicalFixedBatchV1,
     M1ScheduledDispatchV1, M1SpeculativeDraftKvRoundReservationCustodyV1,
     M1StepWorkspaceImageCompositionFailureV1, M1StepWorkspaceImageCompositionOutcomeV1,
-    PendingDeviceKvStepWrite,
+    PendingDeviceKvStepWrite, bind_m1_physical_buffer_ranges_v1, build_m1_physical_fixed_batch_v1,
+    compose_m1_step_workspace_image_v1,
 };
 
 const MAX_LANES: usize = M1_MAX_ACTIVE_SEQUENCES as usize;
@@ -636,6 +635,19 @@ impl M1AllocatedScheduledStepV1 {
             .reserve_engineering_s1_k4_logits_output()
     }
 
+    /// Opts into the existing engineering logits copy plus final-RMS row 3.
+    /// The two full target workspaces use owned host-visible storage in this
+    /// diagnostic mode only; no qualification or completion authority is added.
+    ///
+    /// # Errors
+    /// Rejects repeated reservation or allocation failure with existing custody.
+    pub fn reserve_engineering_s1_k4_final_rms_output(
+        &mut self,
+    ) -> Result<(), crate::M1FiniteSpeculativeRolloverOutputReserveErrorV1> {
+        self.partitioned_memory
+            .reserve_engineering_s1_k4_final_rms_output()
+    }
+
     /// Attaches qualification logits without permitting another device allocation.
     ///
     /// # Errors
@@ -875,7 +887,7 @@ fn prepare_m1_scheduled_workspace_images_core_v1(
                 scheduled: Box::new(scheduled),
                 plans: Box::new(plans),
                 tables: Box::new(tables),
-            }))
+            }));
         }
     };
     let (outcomes, kv) = compose_all(plans, tables, storage);
@@ -1237,7 +1249,7 @@ pub fn build_m1_prepublication_batch_v1(
                 failure: Box::new(failure),
                 step: Box::new(step),
                 catalog: Box::new(catalog),
-            })
+            });
         }
     };
     let batch = match build_m1_physical_fixed_batch_v1(catalog, bindings) {
@@ -1246,7 +1258,7 @@ pub fn build_m1_prepublication_batch_v1(
             return Err(M1PrepublicationBatchBuildFailureV1::FixedBatch {
                 failure: Box::new(failure),
                 step: Box::new(step),
-            })
+            });
         }
     };
     Ok(M1PrepublicationBatchV1 { batch, step })
@@ -1984,7 +1996,7 @@ mod tests {
     };
     use ferric_spec::completion::CompletionEpoch;
     use ferric_spec::{
-        validate_m1_step_inputs, Identity, M1StepInputCandidate, M1StepInputValidationOutcome,
+        Identity, M1StepInputCandidate, M1StepInputValidationOutcome, validate_m1_step_inputs,
     };
 
     use super::*;
@@ -2213,12 +2225,14 @@ mod tests {
         let (draft, k) = speculative_draft_selection(speculative_target).unwrap();
         assert_eq!(draft.bucket, Qwen3PlanBucket::DecodeS1C8192);
         assert_eq!(k, 16);
-        assert!(speculative_draft_selection(selection(
-            Qwen3ModelRole::Target8B,
-            Qwen3ExecutionMode::Decode,
-            Qwen3PlanBucket::DecodeS1C8192,
-        ))
-        .is_none());
+        assert!(
+            speculative_draft_selection(selection(
+                Qwen3ModelRole::Target8B,
+                Qwen3ExecutionMode::Decode,
+                Qwen3PlanBucket::DecodeS1C8192,
+            ))
+            .is_none()
+        );
 
         let request = RequestId::new(0, 1);
         let epoch = CompletionEpoch::new(1);

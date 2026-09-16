@@ -113,6 +113,7 @@ struct SmokeArguments<'a> {
     resident_limit: Option<u32>,
     program_strategy: M1PhysicalProgramStrategyV1,
     m5_capture: Option<&'a Path>,
+    final_rms_capture: bool,
 }
 
 fn parse_arguments(arguments: &[OsString]) -> SmokeResult<SmokeArguments<'_>> {
@@ -122,8 +123,10 @@ fn parse_arguments(arguments: &[OsString]) -> SmokeResult<SmokeArguments<'_>> {
         }
         _ => (M1PhysicalProgramStrategyV1::LegacyScalar12, arguments),
     };
-    let (m5_capture, positional) = match positional {
-        [flag, directory, remaining @ ..] if flag == "--capture-m5" => {
+    let (m5_capture, final_rms_capture, positional) = match positional {
+        [flag, directory, remaining @ ..]
+            if flag == "--capture-m5" || flag == "--capture-m5-final-rms" =>
+        {
             if program_strategy != M1PhysicalProgramStrategyV1::AttributedMfma13
                 || directory.is_empty()
                 || directory.as_encoded_bytes().starts_with(b"--")
@@ -133,9 +136,13 @@ fn parse_arguments(arguments: &[OsString]) -> SmokeResult<SmokeArguments<'_>> {
                         .to_owned(),
                 );
             }
-            (Some(Path::new(directory)), remaining)
+            (
+                Some(Path::new(directory)),
+                flag == "--capture-m5-final-rms",
+                remaining,
+            )
         }
-        _ => (None, positional),
+        _ => (None, false, positional),
     };
     let (base, resident_limit) = match positional {
         [prepacked_root, observation_root, gpu_unique_id, prompt] =>
@@ -176,6 +183,7 @@ fn parse_arguments(arguments: &[OsString]) -> SmokeResult<SmokeArguments<'_>> {
         resident_limit,
         program_strategy,
         m5_capture,
+        final_rms_capture,
     })
 }
 
@@ -205,6 +213,7 @@ fn run(arguments: &[OsString]) -> SmokeResult<()> {
         resident_limit,
         program_strategy,
         m5_capture,
+        final_rms_capture,
     } = parse_arguments(arguments)?;
     let diagnostics = EngineeringStartupDiagnosticsV1::from_process_environment();
     let deadline = std::time::Instant::now() + std::time::Duration::from_mins(15);
@@ -249,7 +258,13 @@ fn run(arguments: &[OsString]) -> SmokeResult<()> {
             limit,
             deadline,
         ),
-        None => execute_and_report(initialized, facts, &diagnostics, m5_capture),
+        None => execute_and_report(
+            initialized,
+            facts,
+            &diagnostics,
+            m5_capture,
+            final_rms_capture,
+        ),
     }
 }
 
@@ -258,6 +273,7 @@ fn execute_and_report(
     facts: AdmittedEngineeringArtifactFacts,
     diagnostics: &EngineeringStartupDiagnosticsV1,
     m5_capture: Option<&Path>,
+    final_rms_capture: bool,
 ) -> SmokeResult<()> {
     let AdmittedEngineeringArtifactFacts {
         observation: facts,
@@ -393,7 +409,9 @@ fn execute_and_report(
         "allocate paired-prefill workspaces",
     );
     require_or_abort(
-        if m5_capture.is_some() {
+        if final_rms_capture {
+            allocated.reserve_engineering_s1_k4_final_rms_output()
+        } else if m5_capture.is_some() {
             allocated.reserve_engineering_s1_k4_logits_output()
         } else {
             allocated.reserve_s1_k4_rollover_output()
@@ -770,7 +788,12 @@ fn execute_and_report(
     });
     validate_report(&report, program_strategy)?;
     if let Some(directory) = m5_capture {
-        engineering_m5_capture::publish(directory, &report, &speculative_choices)?;
+        engineering_m5_capture::publish(
+            directory,
+            &report,
+            &speculative_choices,
+            final_rms_capture,
+        )?;
     } else if speculative_choices.engineering_s1_k4_logits().is_some() {
         return Err("unrequested engineering logits capture was attached".to_owned());
     }
@@ -1323,6 +1346,7 @@ mod strategy_tests {
         ]);
         let parsed = parse_arguments(&values).unwrap();
         assert_eq!(parsed.m5_capture, Some(Path::new("/tmp/new-capture")));
+        assert!(!parsed.final_rms_capture);
         assert_eq!(parsed.resident_limit, None);
         assert_eq!(
             parsed.program_strategy,
@@ -1355,6 +1379,67 @@ mod strategy_tests {
                 "123",
                 "prompt",
                 "32",
+            ]),
+        ] {
+            assert!(parse_arguments(&values).is_err());
+        }
+    }
+
+    #[test]
+    fn final_rms_capture_requires_explicit_mfma_and_nonresident_opt_in() {
+        let values = arguments(&[
+            "--mfma13",
+            "--capture-m5-final-rms",
+            "/tmp/rms-capture",
+            "snapshot",
+            "observation",
+            "123",
+            "prompt",
+        ]);
+        let parsed = parse_arguments(&values).unwrap();
+        assert!(parsed.final_rms_capture);
+        assert_eq!(parsed.m5_capture, Some(Path::new("/tmp/rms-capture")));
+        assert_eq!(parsed.resident_limit, None);
+        let ordinary = arguments(&["--mfma13", "snapshot", "observation", "123", "prompt"]);
+        assert!(!parse_arguments(&ordinary).unwrap().final_rms_capture);
+        for values in [
+            arguments(&[
+                "--capture-m5-final-rms",
+                "/tmp/rms-capture",
+                "snapshot",
+                "observation",
+                "123",
+                "prompt",
+            ]),
+            arguments(&[
+                "--mfma13",
+                "--capture-m5-final-rms",
+                "",
+                "snapshot",
+                "observation",
+                "123",
+                "prompt",
+            ]),
+            arguments(&[
+                "--mfma13",
+                "--capture-m5-final-rms",
+                "/tmp/rms-capture",
+                "snapshot",
+                "observation",
+                "123",
+                "prompt",
+                "32",
+            ]),
+            arguments(&[
+                "--mfma13",
+                "--capture-m5",
+                "/tmp/old",
+                "--capture-m5-final-rms",
+                "/tmp/new",
+                "snapshot",
+                "observation",
+                "123",
+                "prompt",
             ]),
         ] {
             assert!(parse_arguments(&values).is_err());
