@@ -42,8 +42,28 @@ correspondence, authenticated context flow, semantic import and debug storage.
 The full `7f90d187`-to-`2d3ffbed` diff changes 155 files; it is not merely a
 diagnostic-only increment. KFD, runtime, device implementation, toolchain and
 LLVM-worker implementation remain unchanged in this source comparison. The
-latest-pin transition is in progress; matching tools, emission and native
-validation have not run. Existing results retain their original compiler pin.
+latest pin is now integrated after the bounded adoption checks below; matching
+compiler-tool builds, emission and native validation have not run. Existing
+results retain their original compiler pin.
+
+The exact 80-file dependency/policy update changes 30 manifests, 30 locks and
+20 policy/inventory files. Pliron moves to
+`cc902cc8c669b5de2b292ae8638d9e8311bc735b` in 29 of those locks; no package,
+dependency-edge, registry-version or feature repair is required. All 47 mi300x
+adoption phases pass: formatting, 32 locked dependency graphs, fresh normal
+and test source-gate producers, all 47 source-gate tests, and four genuinely
+generated dependency inventories. The runtime inventory and historical
+property-binder pin remain unchanged. This is dependency/source-policy
+adoption, not validation of all changed compiler behavior or GPU execution.
+
+Adoption archive SHA-256 is
+`348fda9f93919ad9ed64cd30a9e85157fe2a7e2fca838270b5b0d7ad59b2ff0f`
+(20,681,093 bytes). All 1,610 members, 1,609 payload hashes/sizes and 12
+external records are checked. The integrated 80 files match the actual final
+source census exactly; the generated patch SHA-256 is
+`3f53c7b61497bb1df3a984a3d6fca4423cd1ac078919a4b76ed0a693733ddc15`.
+No fe2o3 source edit or push, protected-runtime result or M1 gate closure is
+claimed.
 
 The preceding read-only `ls-remote` observation was
 `ec2b88cfb050cb954a426f9968b8a73e1688ad37`, two commits after `d5424f5b`.
