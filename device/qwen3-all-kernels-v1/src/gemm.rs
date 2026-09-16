@@ -837,6 +837,8 @@ pub fn ferric_qwen3_token_embedding_bf16_copy_v1(
 
 #[cfg(test)]
 mod tests {
+    extern crate std;
+
     use super::*;
 
     #[test]
