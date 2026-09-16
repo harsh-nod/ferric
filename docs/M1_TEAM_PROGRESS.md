@@ -177,6 +177,14 @@ attribution: a fresh compiler349 proof has not run.
 The fully downloaded and independently verified host and proof archives have
 SHA-256 `f125c669bc7113de2e96304ef0a21db31a0bc89fda044588fcf7e5ce81178065`
 and `c263b3acd0a6c58a8da0da8184677df58c82d9071eda7844cebe70a37d505f86`.
+After confirming the fresh349 proof has no dependency on the old111 host
+target, that one reproducible cache is removed. All 1,284 retained source,
+control and evidence payloads are rechecked first, including the actual test
+executable; all old process groups are absent. A 3,283-entry owned-file census
+and 52 diagnostic-free no-use batches pass, with no external hardlinks.
+The cleanup reclaims 1,427,656,704 allocated bytes and leaves all non-target
+evidence unchanged. Receipt SHA-256:
+`7a889c67a7330ca7e440f563377a6433df9d6f33617b9ed180cdeddd55bff6b3`.
 
 The M5 engineering candidate `cf8dd23e` implements one-shot readback of all
 five real S1/K4 target logit rows and a separate canonical full-prefix
@@ -225,7 +233,20 @@ scratch cleanup above rejects all diagnostic output and uses the supported
 absolute-path invocation. The original check failure remains recorded under
 `.codex-tmp/ferric-compiler111-tools-v1/REMOTE_ARCHIVE_COPY_REMOVAL.md`.
 
-The dated dependency checkpoint is now public at static Pages commit
+The newer dated native/numerical/proof checkpoint is public at static Pages
+commit `3e41846e069abe80bbf49a048cd7e731fe2363cc`, built and validated only
+on mi300x from separate site source `4c206bfc`. R14 passes all five QA phases,
+the 320--1440 width sweep, eight viewports and 64 screenshots. Its 11,338,223-byte
+archive has SHA-256
+`56ea79d0d73790347d975378e1c256b034e1fab66879f88ffa5da63d42073bdf`;
+all 134 members and 133 payload hashes/sizes pass independent local checks.
+Static-only deployment run `35072403884` succeeds; all seven canonical and
+seven cache-busted live assets match the exact 633,233-byte artifact. Only
+prebuilt assets and workflow hash/size/comment pins change. GitHub runs no
+build or test. This dated snapshot precedes the combined M5 host integration
+above and does not upgrade numerical, serving or performance qualification.
+
+The preceding dated dependency checkpoint was published at static Pages commit
 `bcc6d1badafd7d6bd1641c3c867cffd6cd7e63d2`, from separate Pages source
 `012d7af8`. All five mi300x QA phases pass, including the 320--1440 width sweep,
 eight viewports and 64 screenshots. The retained 11,313,074-byte archive has
@@ -1074,7 +1095,7 @@ the fresh device census found all eight mi300x GPUs at 100 percent busy.
 | Compiler / Kernels | Published core-only `111722028` has zero GitHub runs/checks. Its 13-root MFMA13 engineering emission and replay pass. A separate 349 output-ABI candidate passes three unit tests but fails the ordinary-source positive at the next store-mapping boundary. The narrow resolver successor is rebased onto main `9af22bb5` for remote validation, not published or adopted by Ferric. | Resolve and validate the generic compiler boundary; rebase and retest before any core-only main push with CI skipped. Kernel emission is not numerical qualification. |
 | Runtime / Integration | Exact `2bfce38b`/`111722028` native32 completes 20 speculative rounds, full-accept catch-up and clean teardown. The current111 prefill comparison matches the next token but has max absolute logit error 0.125. Combined M5/catch-up source `568882e2` passes 21 host349 phases and is integrated privately at `6b5322dc`. | Investigate numerical differences, execute actual five-position comparison, broaden continuation/fault coverage and obtain matched TTFT/TPOT/throughput measurements. |
 | Verification | Exact `a9fad31b`/111 verifies the production catch-up transition, one selected method with zero errors. All nine actual-body mutations fail intended postconditions; source restoration and dependency checks pass and the complete campaign is retained. The exact proof source is integrated and host-tested on349. | Obtain fresh focused Verus evidence on the combined source and adopted compiler; prove outer queue/caller and physical KV composition separately. |
-| Integration / Pages | Private integration adopts 349 after its separate source-gate campaign. Public static `bcc6d1b` still covers the earlier 111 dependency checkpoint; the parallel Pages lane is preparing a dated native/numerical/proof update. Completed prefill scratch cleanup reclaims 350,568,448 bytes after retention. | Validate and deploy only prebuilt static assets; preserve truthful historical scopes and remove only completed owned stages/worktrees. |
+| Integration / Pages | Private integration now includes the host-tested M5/catch-up source on349. Public static `3e41846` reports the dated native/numerical/proof checkpoint; all 14 live asset checks match mi300x QA. Completed prefill scratch and obsolete111 host-cache cleanup reclaim 350,568,448 and 1,427,656,704 bytes after retention. | Keep dated public scopes truthful, deploy only validated prebuilt assets and remove only completed owned stages/worktrees. |
 
 The upstream freshness audit found no service-host, KFD or runtime source changes
 from Ferric's old `4f6f65ce` pin through published `e3c359fb`. The coherent
