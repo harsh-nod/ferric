@@ -525,7 +525,10 @@ pub(crate) fn bind_content_bound_m1_program_catalog_from_uniform_artifact_with_s
         .map_err(M1PhysicalProgramCatalogErrorV1::AggregateInspection)?;
     if !aggregate_roster_matches(
         strategy,
-        inspection.kernels().iter().map(|kernel| kernel.name()),
+        inspection
+            .kernels()
+            .iter()
+            .map(fe2o3_hsaco::InspectedKernel::name),
     ) {
         return Err(M1PhysicalProgramCatalogErrorV1::AggregateRoster(strategy));
     }
