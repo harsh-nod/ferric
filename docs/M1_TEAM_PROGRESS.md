@@ -5,6 +5,37 @@ receipt. The 33 M1 roadmap gates remain open.
 
 ## Current Checkpoint
 
+Private integration `5bcf44ed` now pins freshly fetched fe2o3 main `55d9bfe5`
+across all 80 active pin-bearing files. Upstream adds enum SSA edge transport
+and authenticated-downcast fixes, plus tutorial source-binding corrections;
+the compiler lockfile and device/host/KFD trees are unchanged from e3. The
+combined MFMA source passes all 32 locked/offline graphs and 42 freshly built
+source-gate tests on mi300x. Cargo regenerates exactly the missing normal
+`ferric-engine -> fe2o3-hsaco` edge in four standalone locks. The three scoped
+and combined dependency inventories change only their compiler revision; the
+runtime inventory is byte-identical.
+
+The first source-gate run genuinely reports 41 passes and one failure: its
+marker-order fixture anchor now occurs in both rosters. Fixture successor
+`358cf5e7` independently mutates each named roster and requires that roster's
+exact rejection, preserving the one-occurrence guard and production validator.
+The failing executable and raw result remain retained alongside the new pass.
+Full precheck evidence contains 54 terminal phases (53 passes, that one preserved
+failure), source and four actual executable copies. Its 31,509,791-byte archive
+has SHA-256 `e41df61f2fdd34aed60b545d7c0d0f4eab46c278d6c906a758f6098599b4ba99`;
+all 1,670 payload hashes and all 1,145 final local source hashes pass independent
+checks. This is dependency/source-gate validation, not full engine, Verus,
+compiler-tool, kernel-emission or GPU validation. The 37-phase combined host
+campaign is being frozen against exact source `5bcf44ed`.
+
+The dated Pages R5-R6 snapshot is deployed at public static-only commit
+`f3cb38aa`; all seven live assets match the mi300x-validated artifact. Fresh QA
+passes 1,121 widths and eight viewports after a scoped paragraph-wrapping fix.
+GitHub performed only artifact admission and deployment, with no build/test or
+protection changes. Private source `2e1fa34a` was not pushed; its completed
+worktree is removed and its branch/evidence remain. No newer native result is
+implied by that dated snapshot.
+
 Private integration `07d718a6` brings the six existing MFMA feature commits
 onto the current compiler-pinned source: the BF16 K16 device kernel, separate
 thirteen-program roster, distinct numerical profiles, strategy propagation
@@ -13,8 +44,8 @@ admission. LegacyScalar12 remains the default and single-row decode retains
 its scalar/vectorized path. No fe2o3 files are changed by this Ferric feature.
 The 24-file replay preserves current e3 pins, newer runtime hardening and both
 page-return proof files. Its temporary worktree is removed; the candidate
-branch remains. This integration has not yet run host tests, refreshed its
-dependency inventories, emitted a current-source image or run on a GPU.
+branch remains. Its successor's dependency and source-gate checks are described
+above; full host tests, current-source emission and GPU execution remain pending.
 The source359e host controls remain a separate, not-yet-launched campaign and
 must not be treated as validation of this larger feature.
 
@@ -63,13 +94,14 @@ The full 13,891,856-byte source/result archive is retained locally at SHA-256
 `e4334c6b7db87c97b494d8c70b0d1d7a8c86c6201b5780f5bbf9e916ac31ba48`.
 This is a host delta, not a new release-tool, emission, strict Clippy or GPU result.
 
-The separate current-source tool campaign now passes all four build/copy phases:
+The separate e3-source tool campaign passes all four build/copy phases:
 release CLI and linker proxy, then debug0 backend and extractor. Actual Cargo
 producers are fresh, the backend binds the new CLI digest, source before/after
 checks pass and earlier tool copies remain unchanged. Complete binaries, source
 and raw phase evidence are retained locally in the 54,958,415-byte archive at
 SHA-256 `996fb0367b417e7e6ab99b91e1e74dfce48b07c14210154dd70d54efefc22e0f`.
-This does not establish current-source kernel emission or numerical GPU results.
+This does not establish kernel emission or numerical GPU results, and these
+tools are not relabeled as the newer `55d9bfe5` source.
 
 Scoped cleanup reclaimed 602,424 KiB from ten retained compiler test executables
 and four obsolete tool copies, then 1,737,320 KiB from 349 obsolete runtime
@@ -374,10 +406,10 @@ the fresh device census found all eight mi300x GPUs at 100 percent busy.
 
 | Team | Current Work | Next Evidence Required |
 | --- | --- | --- |
-| Compiler / Kernels | `e3c359fb` is published on fe2o3 main after fresh fetch/rebase. R12 passes 19 host phases, 1,030 Rust tests and nine policy tests. All four current-source tool build/copy phases pass with complete binary retention. The approved skip marker produced no observed GitHub workflow or check run. | Current-source kernel emission and numerical GPU qualification. |
-| Runtime / Integration | The coherent e3 dependency overlay passes 42 phases, 32 graph checks and 38 source-gate tests. `359e4e12` also includes the new actual batch consumer and three regressions, not yet compiled/tested. Older source47 host/proof results remain separately attributed. | Current-source host suite and caller/whole-roster composition; idle admitted GPU for native validation. |
-| Verification | Nine actual source47 helper bodies and six ledger negatives have retained proof evidence. The new actual batch-loop contracts are implemented but unverified. | Verify the new consumer with genuine current-e3 dependencies; outer-caller completeness and native completion custody. |
-| Integration / Pages | R4 snapshot deployed through the approved static-only branch; all seven live assets match remote QA. Main and environment protections are preserved. | Update the site with later independently validated results; retain deployment and cleanup evidence. |
+| Compiler / Kernels | Our e3 push retains zero observed GitHub workflow/check runs. Main subsequently advances to `55d9bfe5`, now pinned in Ferric. Existing complete tool results remain attributed to e3. The upstream delta has no runtime/API/dependency change. | Focused enum-lowering regressions, rebuilt 55 tools, current-source emission and numerical GPU qualification. |
+| Runtime / Integration | `5bcf44ed` combines MFMA and the actual batch consumer with current 55 pins. All 32 graph checks and 42 source-gate tests pass; four standalone lock edges are repaired. Older source47 host/proof results remain separately attributed. | Execute the frozen 37-phase current-source host suite; caller/whole-roster composition and admitted native validation. |
+| Verification | Nine actual source47 helper bodies and six ledger negatives have retained proof evidence. Pinned Verus supports the actual batch iterator/projections; suffix normalization and frame preservation remain unvalidated obligations. | Verify the consumer with genuine current-55 dependencies after host validation; outer-caller completeness and native completion custody. |
+| Integration / Pages | R5-R6 is deployed through the approved static-only branch; all seven live assets match 1,121-width remote QA. Main and environment protections are unchanged. Completed private worktree is removed. | Later independently validated checkpoints and bounded remote stage cleanup; failed QA evidence remains protected. |
 
 The upstream freshness audit found no service-host, KFD or runtime source changes
 from Ferric's old `4f6f65ce` pin through published `e3c359fb`. The coherent
