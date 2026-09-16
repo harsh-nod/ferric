@@ -5,6 +5,249 @@ receipt. The 33 M1 roadmap gates remain open.
 
 ## Current Checkpoint
 
+### Upstream Tracking And Build Policy
+
+The latest read-only fetch of fe2o3 `main` is
+`e7aff682c054e152c2256dae1da63ecfcce12fe3`, four commits beyond the
+`7f90d187` snapshot below. The changes cover tutorial CPU-reference tooling,
+selected binding-host tests and opt-in numeric race-preflight diagnostics;
+the diff contains no KFD or device-kernel changes. The completed release and
+matching emission remain pinned to `7f90d187`; their results must
+not be described as validation of the newer main. Updating and validating the
+new pin remains pending.
+
+Independent object review confirms that every Cargo manifest/lock, declared
+dependency edge, Cargo target and the LLVM-worker subtree is unchanged. The
+next adoption can reuse the existing 80-file pin roster, but still requires
+actual locked metadata and regenerated inventories, focused race-resource and
+CLI-selection regressions, and matching rebuilt tools/release/emission. This
+is a source-impact assessment, not a validation result for `e7aff682`.
+
+All builds and tests remain on `mi300x`. Any authorized fe2o3 push is rebased
+onto current main and uses `[skip ci]`; no GitHub build/test is authorized.
+No new fe2o3 push was needed for this checkpoint.
+
+### RMSNorm Boundary Candidate
+
+Private candidate `a0851a28cddfaeaf877147dfc8e5a5408730e328` adds BF16 RNE
+normalization before the weight multiplication in all three device arithmetic
+copies and the separate typed graph. Reduction order, epsilon, residual-input
+semantics, ABI and fixture tolerances are unchanged. Independent integer-RNE
+regressions cover the retained reference witness, signed zero, even ties and
+intermediate narrowing overflow; the typed-graph test follows the actual
+output-store dataflow through both narrowing boundaries. Source-copy and wave
+tail equivalence checks remain intact.
+
+Read-only source review found no blocker. Remote-only Rust 1.97.1 formatting
+passed for all eight changed Rust files, with two mechanical hunks integrated
+and all eight hashes checked. The first mi300x host campaign on exact
+`a0851a28`/`1fad` completed 104 tests with zero failures or ignored tests:
+24 standalone RMSNorm tests and 40 aggregate tests each for gfx942 and gfx950.
+Their receipts retain 14 fresh test ELFs. The campaign then stopped with exit
+125 at its 2 GiB owned-stage limit while compiling batch32, before its tests
+ran. Wave, typed-graph and all scoped strict Clippy selections were unlaunched.
+Control after-checks pass; the final source checker did not run because its
+resource guard rejected the over-limit stage. This is not a complete suite pass.
+
+Terminal retention completed separately without changing that failure status.
+The 68,507,344-byte archive has SHA-256
+`8cd9393e9aa036cef5737b38b37d4f242bfa2c2d7e0e0bede45370611248d201`;
+all 116 members and 115 payload hashes and sizes were checked after transfer.
+No native improvement, numerical qualification or gate closure is claimed.
+Existing formal RMS properties model initialized-byte effects, not the rounding
+formula; their unchanged status is
+not numerical evidence.
+
+The compiler team separately fetched then-current `7f90d187702a3059a40c7cfd21576c6eec6c9684`.
+Private candidate `f77236cb046f0c59b0881352ac41546bac5a358e` stages its adoption
+across exactly 80 active pin files: 30 manifests, 30 locks and 20 policies or
+inventories. Besides the revision, 28 locks add the actual macro-to-frontend
+dependency edge; verifier inventories add that declaration and resolved edge
+plus the upstream kernel-context contract test target. Runtime inventory,
+historical property-binder pin and the RMSNorm implementation are unchanged.
+All 47 mi300x adoption phases pass, including 32 locked graphs, 42 fresh
+source-gate tests and four actual inventory derivations. The final 1,148 source
+hashes and tracked-file roster match exact `f77236cb`. The 20,554,306-byte archive
+has SHA-256
+`8b9f59a09b6d092326a2d9894c8392967437d283e8b14fbb3fd825ebb28e5a17`;
+all 1,608 members and 1,607 payload hashes and sizes pass independent local
+checks. Matching emission is recorded below; subsequent native/reference
+evidence remains pending. Historical `a0cc9929`/`1fad` results below keep their
+original scope; dependency adoption does not relabel them.
+
+All six matching `7f90d187` compiler-tool phases subsequently pass on mi300x.
+The CLI, linker proxy, backend and extractor have actual fresh Cargo producers;
+the backend's build-script record binds the new CLI. All 5,060 compiler source
+files and protected historical inputs are unchanged. The 61,196,208-byte archive
+has SHA-256
+`ff18c3e8883c4182d320dfd96ce32a028dc3886a1c6ab0bb9c5f6d989dbe6806`;
+all 91 members and 90 payload hashes and sizes pass independent local checks.
+This establishes matching engineering tools, not full compiler qualification,
+kernel emission or a GPU result.
+
+The second six-selection host campaign on exact `f77236cb`/`7f90d187` stayed
+within its 4 GiB limit but exited 101: 130 tests passed, one failed, and none
+were ignored. Standalone, both aggregate targets, and the first Batch32 tests
+passed. Batch32's full source-equivalence comparison rejected a function-level
+lint allowance present in aggregate but expressed at module level in Batch32.
+Wave, typed-graph and strict Clippy selections remained unlaunched. Source and
+control after-checks pass. The 79,581,966-byte archive has SHA-256
+`ab78c758da71b45e9aa4209982d036726f3ec7e373bf2319d6ec2beb886dfd41`;
+all 128 members and 127 payload hashes are independently checked locally.
+
+Private successor `d70491b25a3a121400a552cf4a5829be1ad20206` aligns that
+allowance in the Batch32 source; arithmetic and the equivalence assertion are
+unchanged. Its canonical archive differs from `f77236cb` in exactly that one
+file; all 80 adoption pin files remain byte-identical. The 47 adoption phases
+retain their original attribution.
+
+The R3 host rerun on exact `d70491b2`/`7f90d187` passes all six test selections:
+167 tests, zero failures or ignores, and 21 fresh Ferric test executables.
+The formerly failing Batch32 equivalence assertion passes unchanged. The
+campaign still exits 101: its first strict Clippy selection rejects an existing
+`print_literal` pattern in the standalone RMSNorm build script, before the
+remaining five Clippy selections launch. Source, frozen controls and R2
+non-target preservation after-checks pass; combined R2/R3 allocation stays
+below 4 GiB. The 94,103,785-byte archive has SHA-256
+`da97cd3db2ee3fa93fb858a63583d7eaaeed3ad3e72d155828272e65bdb77b78`;
+all 191 members and 190 payload hashes pass independent local checks. This is
+a complete scoped test pass, not a complete host campaign or Clippy pass.
+
+Private successor `dfd951cee375684ca46878f367d2498981d9633d` inlines the same
+host-only binding string in that build script. Emitted bytes, managed-build
+guards, kernel mathematics and test assertions are unchanged. Its focused R4
+campaign passes formatting, build-script parity in all four managed-variable
+modes and the standalone 24 tests with four fresh test executables. The
+campaign exits 101 at its first strict Clippy selection: a redundant borrow
+in `tests/source_contract.rs` triggers `needless_borrows_for_generic_args`.
+The other five Clippy selections remain unlaunched. Source, controls and
+predecessor preservation after-checks pass. The 27,083,593-byte retained archive
+has SHA-256
+`928d7d3ae4eeeaf90fecc39317f2ec5633d5461d03c0dbdd70eed5774d75f2fd`;
+all 123 members and 122 payload hashes and sizes pass independent local checks.
+The other 143 tests keep their `d70491b2` attribution; no result is relabeled.
+
+Private successor `011e0acaafb42de5d936fa27d7b5ad5eadc561eb` removes only that
+redundant test-helper borrow. Mathematics, assertions and the build script
+are unchanged. Its focused R5 host campaign passes all 17 phases: the 24
+standalone tests, four fresh executables, all six strict Clippy selections
+and source/control/predecessor preservation checks. No failure continuation
+is used. The other 143 tests remain attributed to `d70491b2`, and build-script
+parity remains at `dfd951ce`. The 25,049,968-byte archive has SHA-256
+`44279c3d8d91934895cba4c88b4bb0d389a119a9b66fb135b4be91210c00a2f1`;
+all 186 members and 185 payload hashes and sizes pass independent local checks.
+The upload's tool-reported exit 1 and written receipt 0 are both retained;
+separate remote exact-byte and syntax admission passes before the single
+campaign launch. No transfer retry or status relabeling occurs. This is scoped
+host validation, not a numerical, native, serving or performance result.
+
+The matching optimized release on exact `011e0aca`/`7f90d187` passes all six
+mi300x phases and source/control after-checks. Its normal no-feature,
+opt3/debug0 Cargo executable is fresh. The retained 14,254,640-byte ELF has
+SHA-256
+`92f8f02850d315c8d15e2a8db6251c809308737a9b1e9c93fb14f473006c2113`;
+the producer receipt is
+`7e1aba39b2f4401f23abc3ba016b969da814b1739465915ebe2d3de8e4eed6d9`.
+All 1,148 source files remain unchanged. Owned-stage allocation stays below
+the unchanged 2 GiB limit, ending at 1,086,236 KiB. The 11,981,936-byte archive
+has SHA-256
+`dfed78d8d1b6fa34bb8755a014710833702141e0585729c23cec6e98f4e072d0`;
+all 210 members and 209 payload hashes and sizes pass independent local
+checks. All remote release/retention sessions are closed. Matching kernel
+emission is recorded below; native/reference validation remains pending. The
+newer upstream `e7aff682` is not adopted or validated by this release.
+
+The separate `7f90d187` vendor formation also passes on mi300x: 198 packages,
+53 refreshed compiler packages, 143 preserved registry packages and two
+preserved Pliron packages. Both earlier vendor trees remain unchanged. All
+outer, inner, normalizer, campaign and preservation statuses are zero; all
+396 journal records form exact intent/completion pairs. The actual receipt is
+`9dcc48d0f31508e8dc723b8f398dc344a9aabb93f62063a3c6d14c6de3174975`.
+All 62 retained raw/control/owner files, 11,724,862 bytes, pass independent
+hash/size checks, under custody roster
+`e4558c9fb8a606d14e49c2c7bcf0a4d38f9a27d46645969592faff76a2513751`.
+Final compiler-stage allocation is 9,777,816 KiB, cache 9,733,856 KiB and
+formation evidence 11,312 KiB. Existing bounds were not raised. This is a
+dependency-preparation result, not kernel emission or native validation.
+
+The matching MFMA13 emission on exact `011e0aca`/`7f90d187` passes all 13
+mi300x phases, including fresh offline metadata, source/control after-checks,
+inspection and exact compiler replay. The gfx942:xnack- code-object-v6 image
+contains all 13 expected entries and descriptors; disassembly confirms the
+BF16 MFMA instruction. Its 113,192-byte HSACO has SHA-256
+`6b360b04f672e569191b0e381a41b32ba993405281c8926106ea9218eb8440e4`;
+inspection SHA-256 is
+`60d66d619ce95c5fee4238798c1ada410f2bb0e6f43868a9d7fd75eb747f3ef1`.
+All owned phase process groups are absent after completion. Final compiler
+stage allocation is 9,783,040 KiB, with the cache unchanged at 9,733,856 KiB;
+no resource bound was raised. The 2,046,894-byte archive has SHA-256
+`422d9149ccb7d2a7c73a1f59fdbdc081211c0e2dcdd6e9a40e0356e2d3104cd2`;
+all 175 members and 174 payload hashes and sizes pass independent local
+checks. This is engineering image evidence only: no GPU dispatch, numerical
+result, serving qualification or performance improvement is claimed.
+
+One subsequent native capture attempt passes initial GPU4 admission but stops
+with exit 126 when the unchanged shared-GPU guard observes 349,642,752 bytes
+allocated by a process outside the owned group. The retained stable process
+identity reports a different UID and process group. Only Ferric's owned group
+is terminated, and its absence is checked; no foreign signal, reset or retry
+occurs. Last startup diagnostics reach KFD binding at about 84.20 seconds,
+before completed memory initialization. No logits, capture-pass, process-exit
+or GPU-restoration receipt is produced. Post-exit GPU memory is 49,152 bytes
+above the initial baseline, so restoration is not claimed.
+
+Failure retention preserves that outcome: the 4,476,331-byte archive has
+SHA-256
+`f69e81901b8da8900198a1b23e89ac2817dffee2c2d1ac9d28350726f5b76d3e`;
+all 46 members and 45 payload hashes and sizes pass independent local checks.
+The receipt records campaign 126, null process exit, absent owned group and
+`capture_pass_validated:false`. The independent reference remains unlaunched;
+there is no new numerical or performance result.
+
+A separate read-only survey of the user-offered `mi350-2` succeeds. It observes
+one KFD gfx950 GPU, 0% busy with 19,314,954,240 bytes already allocated; this
+is not exclusive availability. No device is opened or workload launched.
+The frozen M5 image and smoke executable both require gfx942, so this host is
+not a drop-in replacement. Any gfx950 adaptation still builds on mi300x.
+
+Read-only source review of this checkpoint also confirms that target and
+draft weights request device-local VRAM allocation once during initialization;
+step arguments reuse retained device subranges. The S1/K4 composition contains
+2,242 physical dispatch packets in one publication: four 424-packet draft
+forwards, a 545-packet target verification and token assembly. Draft M=1 GEMMs
+still use the scalar reference path, while target M=5 uses 16-by-16 MFMA tiles.
+These are source-derived profiling priorities, not measured bottlenecks or
+speedups. Native validation and GPU timing remain the next measurement steps.
+
+Separately, exact owned compiler-cache cleanup removes 279 obsolete paths
+covering 273 inodes and reclaims 1,449,496 KiB. All nonselected target entries,
+sources, vendor trees, copied tools and retained evidence pass after-checks.
+The original 2 GiB headroom goal is not met. The successful tool build uses a
+smaller staged allocation plan. A separately inventoried cleanup then retires
+eight aliases of four redundant new target binaries, reclaiming 206,528 KiB.
+All distinct working tool copies, protected inputs, three source trees, two
+historical vendor trees and retained evidence are unchanged. The exact eight
+intent/completion pairs and all 19 raw records pass independent local checks.
+Compiler-stage allocation is 9,533,132 KiB. No vendor admission follows merely
+from this cleanup; its fresh capacity and source checks remain required.
+
+Local cleanup also removes exactly 52 unpacked duplicate test ELFs from the
+three retained RMSNorm campaigns, reclaiming 1,174,810,624 allocated bytes.
+Every file matched its retained manifest and had a fresh empty in-use check;
+all three archives, receipts and manifests were rehashed unchanged afterward.
+Source snapshots, logs and structured test receipts remain available. This
+removes duplicate local storage, not evidence from the retained archives.
+
+Separate remote cleanup retires exactly the 21 archived R3 test executables
+from the reusable R2 target, reclaiming 449,528 KiB. The 2,630 protected records,
+all 21 copied R3 executables and sources are unchanged. All 4,075 nonselected
+target entries, including 633 directories, pass preservation checks with only
+the reviewed parent-directory metadata exception. Fresh visible-process checks
+find no selected use; incomplete system-wide visibility remains explicit.
+Combined R2/R3/R4 allocation is 3,267,472 KiB, below the unchanged 4 GiB limit.
+All 31 raw cleanup records and the exact 21 intent/completion pairs are retained
+and independently checked. This makes room for R4; it is not a test result.
+
 ### Published Compiler And Current Adoption
 
 The current published compiler correction is fe2o3
@@ -114,12 +357,13 @@ Comparison SHA-256 is
 `e4e46d68e521a1391d09cb44f3eac03f12ee2b5d50429225f339d3ad0ac7eec6`.
 There is no new TTFT, TPOT, throughput or serving-qualification claim.
 
-Read-only source review identifies a concrete early rounding-boundary candidate:
-Ferric RMSNorm keeps normalization and weight multiplication in FP32 until its
+Read-only review of the `a0cc9929` baseline identified the rounding-boundary
+candidate implemented above: its RMSNorm kept normalization and weight
+multiplication in FP32 until the
 final BF16 store, whereas the retained pinned-reference diagnostic narrows
-normalization before multiplication. The current RMSNorm source is unchanged
-from that diagnostic. This is not yet established as the cause of the actual
-five-row differences. No numerical kernel change is included in this checkpoint.
+normalization before multiplication. That baseline source was unchanged from
+the diagnostic. This is not yet established as the cause of the actual five-row
+differences; the later arithmetic candidate has no native comparison yet.
 
 A subsequent upstream fetch observes `86248cd74453f8c6fbf19e08a5b6cbfce3fc42cb`,
 five commits after `1fad`. The 63-file change introduces kernel-context
@@ -128,9 +372,10 @@ entry generation and frontend authentication, including a new
 change is present in this delta, and Ferric's device sources contain no
 `KernelContext` or reserved issuer use. The collector nevertheless adds checks
 over reachable calls, so source inspection alone does not establish full
-compatibility. This newer head is not yet adopted. Running build/emission
-checkpoints remain frozen on `a0cc9929`/`1fad`; no result is relabeled as a test
-of `86248cd7`.
+compatibility. That intermediate head was not separately adopted; the later
+`7f90d187` adoption above includes it. These historical build/emission checkpoints
+remain attributed to `a0cc9929`/`1fad`; no result is relabeled as a test of the
+newer compiler.
 
 After separate inventory and no-use checks, exactly 41 superseded single-link
 debug rlibs are removed from the owned compiler cache, reclaiming 528,704 KiB.
