@@ -25,15 +25,38 @@ failure), source and four actual executable copies. Its 31,509,791-byte archive
 has SHA-256 `e41df61f2fdd34aed60b545d7c0d0f4eab46c278d6c906a758f6098599b4ba99`;
 all 1,670 payload hashes and all 1,145 final local source hashes pass independent
 checks. This is dependency/source-gate validation, not full engine, Verus,
-compiler-tool, kernel-emission or GPU validation. The 37-phase combined host
-campaign is being frozen against exact source `5bcf44ed`.
+compiler-tool, kernel-emission or GPU validation.
+
+The combined host R1 campaign on exact source `5bcf44ed` completes 17 substantive
+phases and all 20 before/after source checks successfully. Its six test suites
+report 1,141 passes, zero failures and 14 ignored: Qwen 81, engine 740,
+qualification capture 85, adapter library 110, adapter capture 87, and source
+policy 38. The actual batch-return regressions and new MFMA strategy tests pass.
+The next phase, the gfx942 aggregate library test build, fails with E0433 because
+the new row-coverage test uses `std::vec!` without importing `std` in a `no_std`
+crate. Nineteen later phases remain unlaunched; the campaign remains exit 101,
+not a full host pass. All source, native executable and control after-checks pass.
+Its 105,926,364-byte archive has SHA-256
+`60cbb48043e2647f0b392b77a19984627fb48386d812a8d8339ba56a9d321d44`;
+all 513 payload hashes, the exact 514-member roster and all six actual test
+executable bytes are independently retained and checked locally.
+
+Successor `f9def4c0` adds only a test-module `extern crate std;` plus spacing;
+production kernel bodies are unchanged. Its architecture tests and four strict
+Clippy phases are not yet rerun. The runtime stage is 9,912,728 KiB, below its
+10 GiB cap but without the required 1 GiB pre-build reserve. Scoped obsolete-cache
+review and a separate continuation are being prepared; build guards are unchanged.
+Current-source Verus, compiler tools, emission and GPU numerical validation remain
+pending. The prepared proof gate remains disabled, and all 33 M1 gates stay open.
 
 The dated Pages R5-R6 snapshot is deployed at public static-only commit
 `f3cb38aa`; all seven live assets match the mi300x-validated artifact. Fresh QA
 passes 1,121 widths and eight viewports after a scoped paragraph-wrapping fix.
 GitHub performed only artifact admission and deployment, with no build/test or
 protection changes. Private source `2e1fa34a` was not pushed; its completed
-worktree is removed and its branch/evidence remain. No newer native result is
+worktree is removed and its branch/evidence remain. Separate verified cleanup
+removes three completed owned remote Pages directories, reclaiming 51,144 KiB;
+the earlier failed QA directories remain preserved. No newer native result is
 implied by that dated snapshot.
 
 Private integration `07d718a6` brings the six existing MFMA feature commits
@@ -45,7 +68,8 @@ its scalar/vectorized path. No fe2o3 files are changed by this Ferric feature.
 The 24-file replay preserves current e3 pins, newer runtime hardening and both
 page-return proof files. Its temporary worktree is removed; the candidate
 branch remains. Its successor's dependency and source-gate checks are described
-above; full host tests, current-source emission and GPU execution remain pending.
+above; the partial host result and test-only successor are described there too.
+Complete architecture checks, current-source emission and GPU execution remain pending.
 The source359e host controls remain a separate, not-yet-launched campaign and
 must not be treated as validation of this larger feature.
 
@@ -64,9 +88,10 @@ Candidate `8af1e52b`, included in these successors, moves the actual page-return
 batch loop into a contracted ledger consumer and adds three host regressions.
 The contracts state per-ticket correspondence, unique role/index returns,
 remaining-ticket preservation, exact generation advancement and frames for
-untouched entries. The existing forward zip truncation is preserved. Host
-compilation/tests and Verus verification of this candidate are pending;
-outer-caller completeness and native completion custody remain unproved.
+untouched entries. The existing forward zip truncation is preserved. The combined
+source `5bcf44ed` now passes host compilation and all three new regressions within
+its 740-pass engine suite. Verus verification of the actual batch consumer remains
+pending; outer-caller completeness and native completion custody remain unproved.
 
 The latest runtime executable is source `00ac6a22`, still pinned to fe2o3
 `4f6f65ce`. Its optimized build and six successor host phases pass. The full
@@ -106,7 +131,7 @@ tools are not relabeled as the newer `55d9bfe5` source.
 Scoped cleanup reclaimed 602,424 KiB from ten retained compiler test executables
 and four obsolete tool copies, then 1,737,320 KiB from 349 obsolete runtime
 library artifacts. All selected bytes were archived, downloaded and hash-checked
-before separate deletion. Runtime stage allocation is now 7,766,132 KiB; current
+before separate deletion. Runtime stage allocation then was 7,766,132 KiB; current
 sources, all 213 dep-info files, proof inputs and the frozen native executable
 are unchanged. Failed retention attempts remain documented. The runtime retry
 accepted only an independently audited exact lock-timestamp transition, not a
