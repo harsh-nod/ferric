@@ -1,5 +1,8 @@
 #![forbid(unsafe_code)]
-//! Addressless Qwen3 decode planning for the gfx950 megakernel work.
+//! Engineering-only addressless Qwen3 decode planning.
+//!
+//! This isolated host tool is outside Ferric's verified production workspace
+//! and authenticated Verus release source closure. Tests are not proof.
 //!
 //! These records describe a model graph; they do not authenticate model bytes,
 //! prove numerics, admit GPU resources, or authorize loading or launching code.

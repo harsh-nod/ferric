@@ -1,7 +1,6 @@
 [workspace]
 members = [
     "crates/ferric-engine",
-    "crates/ferric-megakernel",
     "crates/ferric-spec",
 ]
 resolver = "2"

@@ -585,7 +585,7 @@ pub struct RequestDeclaration {
 /// Private fields preserve the structural checks for the borrow's lifetime.
 ///
 /// ```compile_fail
-/// use ferric_megakernel::{
+/// use ferric_megakernel_planner::{
 ///     DeclaredDecodePlan, DeclaredStepBinding, RequestDeclaration,
 /// };
 /// fn forge<'a>(

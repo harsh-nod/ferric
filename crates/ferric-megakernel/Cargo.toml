@@ -1,9 +1,0 @@
-[package]
-name = "ferric-megakernel"
-version.workspace = true
-edition.workspace = true
-rust-version.workspace = true
-description = "Addressless finite Qwen3 decode plans for Ferric"
-
-[lints]
-workspace = true

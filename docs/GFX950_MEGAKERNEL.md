@@ -45,10 +45,13 @@ per-step inputs. Shape support in a planner does not mean executable support.
 
 ## Current Implementation Boundary
 
-`crates/ferric-megakernel` is an addressless **declared** model-plan component.
+`tools/megakernel-planner` is an isolated addressless **declared** model-plan tool.
 It validates graph structure and bounded workspace declarations. Caller-supplied
 identity bytes do not authenticate weights, model revisions, numerical policy,
 or code. The crate has no GPU dispatch or production admission constructor.
+It is outside the production workspace and Verus-qualified release closure,
+like the repository's existing separate host tooling. Promoting its logic into
+the runtime requires actual strict Verus coverage, not disabling that gate.
 
 `qualification/gfx950-megakernel` checks engineering measurement records,
 artifact-file digests, workload comparability, samples, and ablations. It does
@@ -137,9 +140,12 @@ Run the workspace tests, including the planner, with the pinned Rust toolchain:
 
 ```sh
 cargo test --workspace --locked
-cargo clippy -p ferric-megakernel --all-targets -- -D warnings
+cargo test --manifest-path tools/megakernel-planner/Cargo.toml --locked
+cargo clippy --manifest-path tools/megakernel-planner/Cargo.toml --all-targets --locked -- -D warnings
 python3 -m unittest discover -s qualification/gfx950-megakernel -p 'test_*.py'
 ```
+
+The planner tests are separate engineering checks, not runtime proof coverage.
 
 For device execution, follow the admitted fe2o3 runner's documented build and
 lifecycle. Do not relabel a gfx942 receipt or bypass a failed platform check.

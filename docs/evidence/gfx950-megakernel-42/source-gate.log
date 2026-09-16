@@ -1,0 +1,2 @@
+PASS: generated compiler-rooted coverage manifest at /home/harmenon/ferric-gfx950-42/evidence/VERIFIED_MODULES.generated
+PASS: compiler-rooted source coverage matched (11 modules, 123 executable bodies)

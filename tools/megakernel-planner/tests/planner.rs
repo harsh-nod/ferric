@@ -1,4 +1,4 @@
-use ferric_megakernel::{
+use ferric_megakernel_planner::{
     declare_decode_plan, validate_declaration, DeclaredIdentityBindings, DecodePlanDeclaration,
     DecodeShape, Operation, PlanError, PlanResourceLimits, Qwen3Model, RequestDeclaration,
     ScalarType, Storage, TensorRole,

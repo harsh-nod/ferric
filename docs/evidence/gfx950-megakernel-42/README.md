@@ -14,8 +14,10 @@ changes in this PR; the issue links the exact resulting commits. Checksums in
 ## Passing Checks
 
 - `ferric-baseline-tests.log`: unmodified public-main workspace, 39 CPU tests.
-- `ferric-integrated-tests.log`: workspace plus the declared planner.
+- `ferric-integrated-tests.log`: the unchanged qualified runtime workspace, 39 tests.
 - `ferric-clippy.log`: strict workspace/all-target Clippy.
+- `planner-tests.log` / `planner-clippy.log`: isolated engineering tool, 20 tests
+  and one compile-fail doctest; no Verus coverage or runtime release authority.
 - `qualification-tests.log`: synthetic measurement-validator unit tests.
 - `kfd-default-tests.log`: default KFD regression tests.
 - `kfd-engineering-tests.log`: engineering-feature KFD regression tests.
