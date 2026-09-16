@@ -3185,7 +3185,13 @@ fn observe_m1_diagnostic_choice_ranges_v1<B: M1DiagnosticChoiceObservationBacken
         Ok(choices) => Ok((backend, choices, logits)),
         Err(rejected) => {
             let (error, draft, target) = *rejected;
-            Err(failure(backend, error, draft, target, logits.map(B::into_logits_copy)))
+            Err(failure(
+                backend,
+                error,
+                draft,
+                target,
+                logits.map(B::into_logits_copy),
+            ))
         }
     }
 }
@@ -3342,16 +3348,34 @@ impl M1DiagnosticChoiceObservationBackendV1 for M1ProductionDiagnosticChoiceRead
         copy: Self::Readback,
     ) -> Result<Self::Logits, (Self::Error, Self::Readback)> {
         let M1ObservedCompletionOutputV1::SpeculativeK4(case) = &self.completion else {
-            return Err((M1SpeculativeDiagnosticObservationErrorV1::NotSpeculativeK4, copy));
+            return Err((
+                M1SpeculativeDiagnosticObservationErrorV1::NotSpeculativeK4,
+                copy,
+            ));
         };
-        let Some(logits) = case.case.custody.completion_output().engineering_s1_k4_logits() else {
-            return Err((M1SpeculativeDiagnosticObservationErrorV1::CaptureNotEnabled, copy));
+        let Some(logits) = case
+            .case
+            .custody
+            .completion_output()
+            .engineering_s1_k4_logits()
+        else {
+            return Err((
+                M1SpeculativeDiagnosticObservationErrorV1::CaptureNotEnabled,
+                copy,
+            ));
         };
         crate::qualification_logits::observe_m1_engineering_s1_k4_logits_v1(
-            logits.shape(), range, self.generation, copy,
-        ).map_err(|(error, copy)| (
-            M1SpeculativeDiagnosticObservationErrorV1::EngineeringLogits(error), copy,
-        ))
+            logits.shape(),
+            range,
+            self.generation,
+            copy,
+        )
+        .map_err(|(error, copy)| {
+            (
+                M1SpeculativeDiagnosticObservationErrorV1::EngineeringLogits(error),
+                copy,
+            )
+        })
     }
 
     fn into_logits_copy(logits: Self::Logits) -> Self::Readback {
@@ -3364,25 +3388,50 @@ impl M1DiagnosticChoiceObservationBackendV1 for M1ProductionDiagnosticChoiceRead
         target: Self::Readback,
     ) -> Result<Self::Choices, M1DiagnosticChoiceValidationFailureV1<Self>> {
         let owner = match &self.completion {
-            M1ObservedCompletionOutputV1::SpeculativeK4(case) => {
-                case.case.custody.completion_output().speculative_diagnostic_choices()
+            M1ObservedCompletionOutputV1::SpeculativeK4(case) => case
+                .case
+                .custody
+                .completion_output()
+                .speculative_diagnostic_choices(),
+            M1ObservedCompletionOutputV1::SpeculativeK8(case) => case
+                .case
+                .custody
+                .completion_output()
+                .speculative_diagnostic_choices(),
+            M1ObservedCompletionOutputV1::SpeculativeK16(case) => case
+                .case
+                .custody
+                .completion_output()
+                .speculative_diagnostic_choices(),
+            _ => {
+                return Err(Box::new((
+                    M1SpeculativeDiagnosticObservationErrorV1::NotSpeculativeShape,
+                    draft,
+                    target,
+                )))
             }
-            M1ObservedCompletionOutputV1::SpeculativeK8(case) => {
-                case.case.custody.completion_output().speculative_diagnostic_choices()
-            }
-            M1ObservedCompletionOutputV1::SpeculativeK16(case) => {
-                case.case.custody.completion_output().speculative_diagnostic_choices()
-            }
-            _ => return Err(Box::new((M1SpeculativeDiagnosticObservationErrorV1::NotSpeculativeShape, draft, target))),
         };
         let Some(owner) = owner else {
-            return Err(Box::new((M1SpeculativeDiagnosticObservationErrorV1::CaptureNotEnabled, draft, target)));
+            return Err(Box::new((
+                M1SpeculativeDiagnosticObservationErrorV1::CaptureNotEnabled,
+                draft,
+                target,
+            )));
         };
         observe_m1_speculative_diagnostic_choices_v1(
-            owner, self.generation, self.live_sequences, draft, target,
-        ).map_err(|failure| {
+            owner,
+            self.generation,
+            self.live_sequences,
+            draft,
+            target,
+        )
+        .map_err(|failure| {
             let (error, draft, target) = *failure;
-            Box::new((M1SpeculativeDiagnosticObservationErrorV1::Choices(error), draft, target))
+            Box::new((
+                M1SpeculativeDiagnosticObservationErrorV1::Choices(error),
+                draft,
+                target,
+            ))
         })
     }
 }
@@ -8081,7 +8130,11 @@ mod tests {
 
         fn destroy_or_quarantine(self) -> Result<Self::TeardownSuccess, Self::TeardownFailure> {
             let teardown = self.read.destroy_or_quarantine().unwrap();
-            if self.fail_teardown { Err(teardown) } else { Ok(teardown) }
+            if self.fail_teardown {
+                Err(teardown)
+            } else {
+                Ok(teardown)
+            }
         }
     }
 
@@ -8099,13 +8152,21 @@ mod tests {
             copy: Self::Readback,
         ) -> Result<Self::Logits, (Self::Error, Self::Readback)> {
             if self.invalid_logits {
-                Err((InjectedReadErrorV1 { range: "engineering-s1-k4-logits", message: "invalid logits" }, copy))
+                Err((
+                    InjectedReadErrorV1 {
+                        range: "engineering-s1-k4-logits",
+                        message: "invalid logits",
+                    },
+                    copy,
+                ))
             } else {
                 Ok(copy)
             }
         }
 
-        fn into_logits_copy(logits: Self::Logits) -> Self::Readback { logits }
+        fn into_logits_copy(logits: Self::Logits) -> Self::Readback {
+            logits
+        }
 
         fn observe_choices(
             &self,
@@ -8113,7 +8174,14 @@ mod tests {
             target: Self::Readback,
         ) -> Result<Self::Choices, M1DiagnosticChoiceValidationFailureV1<Self>> {
             if self.invalid_choices {
-                Err(Box::new((InjectedReadErrorV1 { range: "choices", message: "invalid choices" }, draft, target)))
+                Err(Box::new((
+                    InjectedReadErrorV1 {
+                        range: "choices",
+                        message: "invalid choices",
+                    },
+                    draft,
+                    target,
+                )))
             } else {
                 Ok(retain_all_m1_diagnostic_choice_copies(draft, target))
             }
@@ -8124,7 +8192,14 @@ mod tests {
     fn engineering_s1_k4_read_validation_and_failed_teardown_retain_exact_copies() {
         let mut ranges = [None; crate::M1_SPECULATIVE_DIAGNOSTIC_MAX_DRAFT_TOKENS_V1];
         ranges[..4].copy_from_slice(&[Some(0), Some(32), Some(64), Some(96)]);
-        let expected = [vec![0], vec![32], vec![64], vec![96], vec![4_096], vec![8_192]];
+        let expected = [
+            vec![0],
+            vec![32],
+            vec![64],
+            vec![96],
+            vec![4_096],
+            vec![8_192],
+        ];
         for (fail_at, invalid_logits, invalid_choices, message, retained) in [
             (Some(5), false, false, "injected read_completed fault", 5),
             (None, true, false, "invalid logits", 6),
@@ -8133,7 +8208,10 @@ mod tests {
             for fail_teardown in [false, true] {
                 let failure = observe_m1_diagnostic_choice_ranges_v1(
                     InjectedObservationBackendV1 {
-                        read: InjectedReadBackendV1 { calls: Vec::new(), fail_at },
+                        read: InjectedReadBackendV1 {
+                            calls: Vec::new(),
+                            fail_at,
+                        },
                         invalid_logits,
                         invalid_choices,
                         fail_teardown,
@@ -8141,7 +8219,8 @@ mod tests {
                     ranges,
                     4,
                     4_096,
-                ).unwrap_err();
+                )
+                .unwrap_err();
                 assert_eq!(failure.error().message, message);
                 assert_eq!(failure.copied_choice_ranges(), retained);
                 assert_eq!(failure.partial.copies, expected[..retained]);
@@ -8166,7 +8245,10 @@ mod tests {
         }
         let (backend, choices, logits) = observe_m1_diagnostic_choice_ranges_v1(
             InjectedObservationBackendV1 {
-                read: InjectedReadBackendV1 { calls: Vec::new(), fail_at: None },
+                read: InjectedReadBackendV1 {
+                    calls: Vec::new(),
+                    fail_at: None,
+                },
                 invalid_logits: false,
                 invalid_choices: false,
                 fail_teardown: false,
@@ -8174,7 +8256,8 @@ mod tests {
             ranges,
             4,
             4_096,
-        ).unwrap();
+        )
+        .unwrap();
         assert_eq!(&*choices, &expected[..5]);
         assert_eq!(logits, Some(vec![8_192]));
         assert_eq!(backend.read.calls, [0, 32, 64, 96, 4_096, 8_192]);
