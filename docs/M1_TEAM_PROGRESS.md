@@ -343,8 +343,9 @@ prophetic spec annotation; removing it or substituting current state would
 change or invalidate the existing contract. A separate source-gate candidate
 therefore admits only the bare outer attribute on checked spec functions in
 reviewed Verus contexts, retaining rejection of external bodies, assumptions,
-axioms and malformed or unreviewed placements. It is not yet tested and does
-not grant runtime authority or prove those functions. The future-state
+axioms and malformed or unreviewed placements. It does not grant runtime
+authority or prove those functions. Its first actual test
+attempt and successor are recorded below. The future-state
 contract itself remains unchanged.
 
 The independent ordinary-host campaign on the exact frozen second-preparation
@@ -361,16 +362,189 @@ source-policy, Verus or protected-runtime acceptance. These uncommitted changes
 are not part of the `011e0aca` native source and do not close the model-bundle
 gate.
 
-The subsequent terminal-retention SSH connection exits 255 after the server
+The initial terminal-retention SSH connection exits 255 after the server
 stops responding. One bounded read-only status connection also exits 255 with
-a port-22 timeout. No retention retry is launched. The remote retainer's
-terminal/group state and complete raw-log/ELF archive custody remain unknown;
-the successful original host campaign is not relabeled as a failure or as a
-fully retained result. All local command sessions are closed. The separately
-prepared fresh source-gate build, 46 tests and inventory-generation campaign
-remain unlaunched. Their authorization is held pending remote-status recovery.
-The proposed read-only inventory of 19 completed native scratch roots is held
-as well: no remote cleanup has run, and no remote idle/no-use claim is made.
+a port-22 timeout. Both transport failures are retained; no retention retry is
+launched. A later bounded read-only connection recovers authoritative status:
+the original retainer completed with exit 0 at `2026-09-16T14:51:04Z`, and its
+process group 1101020 is absent. The existing archive is downloaded without
+rerunning retention. Its 15,754,423 bytes have SHA-256
+`d7b7c8f3b5243dca4581ac51dc06bfaf578fa8806a86ddd032b49a1d6b2503d9`;
+all 263 archive members, 261 payload hashes and sizes, both embedded metadata
+copies, and 14 external records are checked locally. Root independently checks
+the payloads, external hashes, metadata equality and exact 19-test roster.
+This recovers full custody of the successful host campaign, not new tests.
+
+The separate source-gate campaign then passes exact input/syntax admission,
+records the initial formatting failure and its authorized one-hunk correction,
+and builds both fresh normal and test executables. Its full suite reports
+45 passed, one failed and zero ignored; campaign exit is 101. The failing
+`prophetic_spec_bodies_keep_trust_rejections` regression is retained unchanged.
+Strict Clippy, metadata and inventory generation remain unlaunched. Source
+and control after-checks pass; both full source censuses have SHA-256
+`09ea829f20cd7defb11f4278128e9b351073d19d713d2dc0bef74f38c1407ead`.
+
+Pinned parser inspection identifies an existing audit gap exposed by that
+regression: unqualified `assume(false)` is a dedicated `Expr::Assume`, not the
+ordinary function-call node checked by the old guard. The local successor adds
+explicit rejection of that node, keeps child traversal and the failing test,
+and adds non-prophetic free-function, method and assertion-message coverage.
+Trust-call name checks also normalize raw identifiers through the parser's
+structured API, with matching spelling regressions. The existing future-state
+contract and narrow prophetic placement rules are unchanged. The successor's
+single mi300x attempt passes formatting without changes, both fresh builds and
+producer checks, and 46 of 47 tests with no ignores. All assumption/admission
+spelling regressions pass. The remaining hostile-body fixture now reaches a
+parser error: pinned `verus_syn` does not recognize a bare nested `axiom` item
+at statement position. No Clippy, metadata or inventory phase launches; the
+campaign retains exit 101 and source/control after-checks pass. A test-only
+correction will use an explicit recognized item prefix and a bodyless axiom
+declaration, keeping parser preflight and policy rejection assertions. A
+separate genuine three-module bundle Verus check is being prepared without
+claiming source-policy or protected-runtime acceptance.
+
+The failed source-policy campaign is fully retained: its 4,115,275-byte archive
+has SHA-256
+`35ab4ee4342401720ec37ca1486016b0c4d3466cca0a8b86bd7bdfe6be52ae65`.
+Root independently checks all 17 external records, 155 payload hashes and
+sizes, and both embedded metadata copies. Retention succeeds without changing
+the campaign's 45-pass/one-failure result.
+
+The second source-policy failure is also fully retained: its 4,116,954-byte
+archive has SHA-256
+`df0020e04976a3a71f228f97de2866a147445d7821859dd950296bbbdd53befe`.
+Root independently checks all 17 external records, 139 payload hashes and
+sizes, and both embedded metadata copies. Its source remains unchanged; the
+test-only successor adds fixture diagnostics and valid axiom declarations,
+with all 47 tests and rejection assertions retained. Neither failed attempt
+produces a replacement executable inventory.
+
+The third source-policy attempt passes all 47 tests, then stops at strict
+Clippy on unnecessary raw-string delimiter hashes in the new test fixture.
+The authorized remote formatter changes one helper-call line wrap; no
+production policy change is needed. Metadata and inventory generation remain
+unlaunched. Its 4,125,359-byte archive has SHA-256
+`2576b8ab6d865e2ddaa52a792fe2789fa3c8299db97d199038201a5f4c872c8c`;
+all 17 external hashes, 172 payload hashes and sizes, and embedded metadata
+copies pass root's independent checks. The test-only successor removes those
+two delimiter hashes without changing fixture contents or suppressing lints.
+
+The fourth attempt passes formatting, all 47 tests, strict Clippy and both
+locked metadata graphs. Genuine whole-tree inventory generation then rejects
+the existing method-level `#[cfg(test)]` on
+`M1PrepublicationStepCustodyV1::for_step_binding_test`. No inventory is
+produced. Its 4,255,030-byte failure archive has SHA-256
+`011e536dcb236c4cf0751c7583c187fd6b8441e50843fb6fe513b393347da7a5`;
+all 17 external hashes, 180 payload hashes and sizes, and embedded metadata
+copies pass root's independent checks. The local engine correction moves only
+that unchanged test helper into a separate test-only impl, matching the
+neighboring KV workspace helper and the source gate's existing exclusion rule.
+Production method bodies and the source policy's conditional-source rules
+remain unchanged.
+
+Independent read-only review also identifies a pre-existing assertion audit
+gap: expression-position macros did not traverse their argument tokens.
+The local source-gate successor applies the existing statement-argument parser
+to the same five reviewed assertion/printing macros in expression position,
+preserving inclusion rejection and attribute/path traversal. Positive and
+hostile expression-position cases extend the existing 47-test suite. Other
+expression macros retain prior behavior; this is not an all-macro audit claim.
+The fifth attempt passes formatting unchanged, both fresh gate builds, all
+47 tests, strict Clippy and both locked metadata graphs. Inventory generation
+then rejects another existing method-level test attribute, this time on
+`CanonicalCatalogs::build`. The campaign remains exit 1; source and control
+after-checks pass. Engine tests and engine Clippy are not launched.
+Its 4,366,281-byte archive has SHA-256
+`04ebb44633cad450c2ec53a29d9b15638b79db357dd6402478008543497dae3f`;
+all 17 external hashes, 186 payload hashes and sizes, embedded metadata and
+source/predecessor before-after identities pass root's independent checks.
+
+A broader source review identifies exactly one more such helper in the covered
+crates, `CanonicalKernargProfiles::new`. Both local corrections move unchanged
+legacy-strategy test wrappers into whole test-only impls, without changing
+production methods or conditional-source policy. These two relocations and
+the original prepublication relocation still require their engine regression
+checks and successful inventory generation.
+
+The sixth attempt reuses the exact fifth-attempt gate executable, with its
+original producer and unchanged source/manifest/lock/toolchain bindings checked;
+the 47 tests are not rerun or relabeled. Formatting of both additional Rust
+relocations and both locked metadata graphs pass. Generation gets past the
+conditional-source and prophetic-attribute checks, then rejects 92 missing
+and 13 stale entries in the explicit `proofs/UNVERIFIED_BODIES` admission list.
+The diagnostic has SHA-256
+`e41a949bcf6c87c9a52b233567f22e8a12e0672e741a775581e2fa41dea002d5`.
+The campaign remains exit 1, source/control after-checks pass, and the fresh
+engine build, 18 selected regressions and engine Clippy remain unlaunched.
+No inventory is generated or applied. These existing engine/kernel additions
+need explicit per-body admission review; no automatic allowlist expansion or
+source-gate relaxation is made. Ordinary engine regression validation can be
+isolated from this broader inventory prerequisite without implying acceptance.
+The 2,232,498-byte terminal archive has SHA-256
+`ae1f4e76fd54c668de23d32512d68c6fcdf5cb865e074dece17cb13cbcd2d75c`;
+all 17 external hashes, 115 payload hashes and sizes, embedded metadata and
+source/predecessor before-after identities pass root's independent checks.
+All campaign and retention sessions are closed; no successor is launched.
+
+The two new manifest mutations also require a complete three-row model-bundle
+product in the negative-evidence validator's synthetic test fixture. The local
+fixture now creates all three independent mutation records under one shared
+run identity and rejects omission of each row. The production validator's
+completeness rule is unchanged; these fixture changes await remote execution
+and do not constitute genuine mutation-proof evidence.
+
+The separate genuine component Verus command completes with exit 0 on the
+unchanged first-policy source: 119 verified queries, zero errors, and successful
+function details for all 114 functions in exactly `auth`, `weight_stream` and
+`model_bundle`. The new manifest byte-equality helper, borrowed commitment
+revalidator, manifest-pair gate and auth projection lemma, plus the strengthened
+composition function, all have successful positive-work records. The root
+transcript SHA-256 is
+`e3238716dfb8d6bab658f783740d074ccc830e7577c341b86393c6cad94dcbd4`.
+
+The campaign nevertheless ends with exit 1: its separate result checker expects
+`is-verifying-entire-crate=false`, but the pinned Verus implementation omits
+`verify_only_module` from that flag's calculation and reports true. The actual
+command and structured module roster still select exactly the three modules;
+no whole-crate result is claimed. All source, dependency, tool-closure, artifact
+and control after-checks pass. The failed checker is retained unchanged, and
+any corrected post-hoc assessment must remain separate from this campaign.
+Registered outer-theorem and negative-mutation runs remain pending, and this
+user-cache component result does not close protected-runtime qualification.
+Its 89,819,882-byte archive has SHA-256
+`11f388c80af467b9c6fd79a004889a3a3464fc4a110ab9630764713040add37c`;
+all 14 external hashes, 500 payload hashes and sizes, and both embedded metadata
+copies pass root's independent checks. The three library modules still match
+the integration candidate byte for byte. Retained Rust dep-info files contain
+no Verus import paths after the later compiler pass; any direct import-path
+assessment must be labeled as inference from actual producer arguments and
+the pinned resolver, not observed file-open telemetry.
+
+A separate post-hoc assessment completes with exit 0 without rerunning Verus
+or modifying the original campaign. It confirms the exact 119-query result,
+all 14 required function checks, six source-bound export producers and 12
+direct import edges inferred from actual arguments and the pinned resolver.
+The assessment result has SHA-256
+`d8da42fa11d34443eeea2b22dd846bbd2d3fa5629612c2218d33f6ce67917608`.
+Root independently checks all 33 retained record hashes and sizes, their exact
+roster, and byte-identical before/after identities. The original proof exit 0,
+checker exit 1 and campaign exit 1 remain unchanged. This is neither observed
+import file-open telemetry nor whole-crate, source-policy, registered-theorem,
+negative-mutation or protected-runtime qualification.
+
+The single read-only inventory of 19 completed native scratch roots stops
+with exit 1 before no-use checks or manifest creation: the survey's own
+`remote-files.sha256` is absent from the expected 106-file custody ledger.
+All 14 raw/control records are retained, and the owned process group is absent.
+No file is deleted or reclaimable-byte total established. A reviewed successor
+adds only that exact checksum-file pin and preserves the selected roots,
+exclusions and resource limits. Its custody checks pass for all 107 expected
+files, but the sixth process-usage scan stops on an unapproved permission error
+reading `/proc/2097927/fd`. The command and wrapper both exit 1, and the owned
+process group is absent. All 33 raw/control records are retained. The initial
+disk census observes 382,360 KiB across the 19 candidates, not approved
+reclaimable space. No successful manifest or deletion is produced; no retry,
+permission-check bypass or deletion is authorized.
 
 A separate read-only survey of the user-offered `mi350-2` succeeds. It observes
 one KFD gfx950 GPU, 0% busy with 19,314,954,240 bytes already allocated; this
