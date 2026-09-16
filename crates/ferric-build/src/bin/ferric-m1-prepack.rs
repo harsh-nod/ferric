@@ -23,6 +23,7 @@ use ferric_build::{
     QWEN3_TOKENIZER_METADATA_BYTES, QWEN3_TOKENIZER_SHA256, TARGET_REPOSITORY, TARGET_REVISION,
 };
 use ferric_spec::{EngineLimits, Qwen3ModelRole};
+use rustix::fs::{renameat_with, RenameFlags, CWD};
 use std::collections::BTreeSet;
 use std::error::Error;
 use std::ffi::{OsStr, OsString};
@@ -137,7 +138,7 @@ impl StagingDirectory {
     }
 
     fn publish(mut self, output: &Path) -> io::Result<()> {
-        fs::rename(&self.path, output)?;
+        renameat_with(CWD, &self.path, CWD, output, RenameFlags::NOREPLACE)?;
         sync_directory(parent_directory(output))?;
         self.armed = false;
         Ok(())
@@ -879,6 +880,56 @@ mod tests {
         assert!(validate_snapshot_roster(&root).is_err());
 
         fs::remove_dir_all(root).expect("remove isolated test root");
+    }
+
+    #[test]
+    fn directory_publication_moves_staging_to_absent_destination() {
+        let root = test_root("publication-success");
+        fs::create_dir(&root).expect("create isolated publication root");
+        let output = root.join("snapshot");
+        let staging = StagingDirectory::create(&output).expect("create staging directory");
+        let staging_path = staging.path.clone();
+        fs::write(staging_path.join("complete"), b"complete").expect("write staged file");
+
+        staging
+            .publish(&output)
+            .expect("publish absent destination");
+        assert_eq!(
+            fs::read(output.join("complete")).expect("read published file"),
+            b"complete"
+        );
+        assert!(!staging_path.exists());
+
+        fs::remove_dir_all(root).expect("remove isolated publication root");
+    }
+
+    #[test]
+    fn directory_publication_rejects_competing_empty_destination() {
+        let root = test_root("publication-empty-destination");
+        fs::create_dir(&root).expect("create isolated publication root");
+        let output = root.join("snapshot");
+        let staging = StagingDirectory::create(&output).expect("create staging directory");
+        let staging_path = staging.path.clone();
+        fs::write(staging_path.join("partial"), b"partial").expect("write partial staging file");
+
+        fs::create_dir(&output).expect("create competing empty destination");
+        assert_eq!(
+            staging
+                .publish(&output)
+                .expect_err("competing empty destination must not be replaced")
+                .kind(),
+            std::io::ErrorKind::AlreadyExists
+        );
+        assert!(output.is_dir());
+        assert_eq!(
+            fs::read_dir(&output)
+                .expect("read preserved destination")
+                .count(),
+            0
+        );
+        assert!(!staging_path.exists());
+
+        fs::remove_dir_all(root).expect("remove isolated publication root");
     }
 
     #[test]
