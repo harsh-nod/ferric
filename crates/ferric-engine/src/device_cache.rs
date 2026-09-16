@@ -5655,26 +5655,32 @@ pub(crate) struct RetiredPageLease {
 }
 
 impl RetiredPageLease {
+    pub(crate) closed spec fn lease_spec(&self) -> DeviceKvPageLease { self.lease }
+
+    pub(crate) closed spec fn after_epoch_spec(&self) -> CompletionEpoch { self.after_epoch }
+
+    pub(crate) closed spec fn quiescent_spec(&self) -> bool { self.quiescent }
+
     pub(crate) const fn lease(&self) -> (lease: &DeviceKvPageLease)
-        ensures *lease == self.lease,
+        ensures *lease == self.lease_spec(),
     {
         &self.lease
     }
 
     pub(crate) const fn after_epoch(&self) -> (epoch: CompletionEpoch)
-        ensures epoch == self.after_epoch,
+        ensures epoch == self.after_epoch_spec(),
     {
         self.after_epoch
     }
 
     pub(crate) const fn is_quiescent(&self) -> (quiescent: bool)
-        ensures quiescent == self.quiescent,
+        ensures quiescent == self.quiescent_spec(),
     {
         self.quiescent
     }
 
     pub(crate) fn into_lease(self) -> (lease: DeviceKvPageLease)
-        ensures lease == self.lease,
+        ensures lease == self.lease_spec(),
     {
         self.lease
     }
