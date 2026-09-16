@@ -2796,6 +2796,8 @@ fn commit_page_return_batch_ledgers(
         old(target_pages)@, old(draft_pages)@, final(target_pages)@, final(draft_pages)@,
     ),
 {
+    hide(page_return_batch_ready);
+    hide(page_return_batch_prefix);
     let ghost before_retired = retired@;
     let ghost before_tickets = tickets@;
     let ghost before_target = target_pages@;
@@ -2803,8 +2805,6 @@ fn commit_page_return_batch_ledgers(
     let ghost count = page_return_batch_len(before_retired, before_tickets);
     let ghost mut cursor: int = 0;
     proof {
-        hide(page_return_batch_ready);
-        hide(page_return_batch_prefix);
         reveal(page_return_batch_len);
         assert forall|index: int| 0 <= index < count implies
             #[trigger] before_tickets[index].matches_ledgers_spec(
