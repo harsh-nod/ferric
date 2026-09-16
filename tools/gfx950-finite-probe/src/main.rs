@@ -1,4 +1,7 @@
 mod artifact;
+mod atomic_artifact;
+mod atomic_command;
+mod atomic_probe;
 mod kproj_artifact;
 mod kproj_command;
 mod object;
@@ -8,6 +11,8 @@ mod task_artifact;
 mod task_command;
 mod task_probe;
 
+#[cfg(test)]
+mod atomic_tests;
 #[cfg(test)]
 mod process_tests;
 #[cfg(test)]
@@ -128,12 +133,13 @@ impl Options {
             .ok_or("expected inspect or run subcommand")?;
         let required = match mode.as_str() {
             "inspect"
+            | "atomic-channel-inspect"
             | "task-graph-inspect"
             | "qwen3-kproj-inspect"
             | "qwen3-kproj-wave64-inspect" => {
                 vec!["--object", "--source-file", "--metadata"]
             }
-            "task-graph-run" => vec![
+            "task-graph-run" | "atomic-channel-run" => vec![
                 "--object",
                 "--source-file",
                 "--metadata",
@@ -160,7 +166,11 @@ impl Options {
             if flag == "--allow-unauthenticated-machine-code"
                 && matches!(
                     mode.as_str(),
-                    "run" | "task-graph-run" | "qwen3-kproj-run" | "qwen3-kproj-wave64-run"
+                    "run"
+                        | "task-graph-run"
+                        | "atomic-channel-run"
+                        | "qwen3-kproj-run"
+                        | "qwen3-kproj-wave64-run"
                 )
                 && !acknowledged
             {
@@ -183,7 +193,11 @@ impl Options {
         }
         if matches!(
             mode.as_str(),
-            "run" | "task-graph-run" | "qwen3-kproj-run" | "qwen3-kproj-wave64-run"
+            "run"
+                | "task-graph-run"
+                | "atomic-channel-run"
+                | "qwen3-kproj-run"
+                | "qwen3-kproj-wave64-run"
         ) && !acknowledged
         {
             return Err(
@@ -199,6 +213,9 @@ impl Options {
 }
 
 fn execute(options: &Options) -> Result<()> {
+    if options.mode.starts_with("atomic-channel-") {
+        return atomic_command::execute(options);
+    }
     if options.mode.starts_with("qwen3-kproj-") {
         return kproj_command::execute(options);
     }

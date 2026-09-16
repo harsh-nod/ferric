@@ -150,3 +150,34 @@ kernarg copying, signal reset, publication, completion polling and idle checks.
 `host_epoch_reset_dispatch_readback_ns` includes state reset and all readbacks;
 `host_lifecycle_ns` also covers artifact checking and worker setup/cleanup, but
 excludes final report writes. None is a GPU timestamp or isolated kernel time.
+
+## Indexed Atomic Storage
+
+The `atomic-channel-inspect` and `atomic-channel-run` modes accept only
+`ferric_gfx950_atomic_channel_v1`. This fixed ABI has three 256-word slices:
+shared atomic channels, exclusively owned inputs and disjoint write-only output.
+The input `DisjointSlice` has an RW capability but the source only reads it;
+the harness requires byte-for-byte input immutability. This explicit exclusive
+input contract establishes separation without making the atomic slice noalias.
+Pointer/length offsets are 0/8, 16/24 and 32/40, with 48 explicit kernarg bytes.
+The launch is two 128-thread workgroups, wave64, with no LDS or private storage.
+Optional qualifiers must not describe the atomic channel as readonly or noalias.
+
+All three allocations have 64-byte prefix/suffix guards. Atomic channels and
+output start with distinct poisons, each different from every corresponding
+expected word. A single dispatch release-stores then acquire-loads each
+invocation's own atomic cell. Both raw result buffers are retained; the probe
+checks immutable inputs, every guard, completion and reverse-order cleanup.
+The independent reference checks all 512 words, not just the final output.
+
+```sh
+bash qualification/gfx950-atomic-channel-v1/verify-suite.sh \
+  PROBE WORKER HSACO SOURCE PRIVATE_DEVICE_ID NEW_EVIDENCE_DIRECTORY
+```
+
+This is an engineering-only test of indexed atomic storage. It does not test
+cross-workgroup read-from relationships, ordinary tensor publication, full-model
+inference or speed. The existing worker requests `VRAM | WRITABLE | PUBLIC`,
+not the `COHERENT` allocation flag; a passing observation is not a protected
+runtime coherence proof. Current compilation/GPU status is recorded in the
+[qualification directory](../../qualification/gfx950-atomic-channel-v1/README.md).
