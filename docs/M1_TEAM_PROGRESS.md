@@ -8,6 +8,21 @@ receipt. The 33 M1 roadmap gates remain open.
 ### Upstream Tracking And Build Policy
 
 The latest read-only fetch of fe2o3 `main` is
+`d5424f5bf00b7531e11380a86d5d2cb71603807c`, three commits after the previous
+`e7aff682` observation. Production race analysis now bounds actual SSA value
+names through a newer Pliron API. Pliron changes from
+`161c385576d45d4e634ba179fa93a545b91124e6` to
+`cc902cc8c669b5de2b292ae8638d9e8311bc735b`: both direct declarations and the
+`pliron`, `pliron-derive` and `pliron-llvm` root-lock identities change, while
+their dependency lists are unchanged. KFD, runtime, device code, the toolchain
+and LLVM-worker subtree are unchanged. This newer source is not yet adopted
+or validated; the completed native/reference campaign and current proof
+candidate remain pinned to `7f90d187`. The earlier graph-unchanged assessment
+below applies only through `e7aff682`, not to this newer main. Adoption now
+also requires actual dependency resolution/vendor refresh and focused
+production race-analysis tests before matching tool and artifact rebuilds.
+
+The previous read-only fetch was
 `e7aff682c054e152c2256dae1da63ecfcce12fe3`, four commits beyond the
 `7f90d187` snapshot below. The changes cover tutorial CPU-reference tooling,
 selected binding-host tests and opt-in numeric race-preflight diagnostics;
@@ -26,6 +41,35 @@ is a source-impact assessment, not a validation result for `e7aff682`.
 All builds and tests remain on `mi300x`. Any authorized fe2o3 push is rebased
 onto current main and uses `[skip ci]`; no GitHub build/test is authorized.
 No new fe2o3 push was needed for this checkpoint.
+
+The user reports no known administrator-managed CPU-only container or isolated
+filesystem on mi300x for fe2o3's pinned protected proof runtime. The required
+root-owned installation and OS-library identity prerequisite remains unresolved.
+Shared host libraries will not be replaced, and rootless ownership or relaxed
+admission will not be presented as satisfying that trust boundary. Ordinary
+Rust tests, user-cache component Verus checks and engineering GPU comparisons
+can continue independently, but cannot close protected functional-refinement
+qualification.
+
+### Published Site
+
+The R18 site is live at <https://harsh-nod.github.io/ferric/> from prebuilt
+commit `df34029b15f85da1664dca545538796cd6f38b3e`. All five QA phases ran on
+mi300x and passed, including eight browser viewports and 64 screenshots.
+The retained QA archive is
+`84061ffc882ef71921d6bc693aca42045afe508508f4fd6931acb56be2074373`;
+all 133 payload hashes and sizes were independently checked. The single
+deploy-only GitHub run `35109654146` succeeded at the exact admitted commit;
+it performed no build or test. All seven canonical and seven cache-busted
+live assets return HTTP 200 and match the validated artifact.
+
+The site records the mixed matched numerical comparison below, not a numerical
+pass or a performance improvement. Its upstream snapshot remains `e7aff682`;
+the later `d5424f5b` observation and unavailable protected-runtime prerequisite
+above are not retroactively attributed to that frozen site artifact. The
+completed clean source worktree was removed with ordinary non-force Git
+removal, reclaiming 1,608 KiB. Its source branch and commits, QA evidence and
+public checkout remain retained.
 
 ### RMSNorm Boundary Candidate
 
@@ -273,10 +317,60 @@ numerical improvement or an isolated causal test of the RMSNorm change.
 Separately, an uncommitted model-bundle proof candidate revalidates canonical
 record commitment and destination layout on the exact retained target and
 draft manifests. It adds six focused Rust tests and two actual-body proof
-mutations without new assumptions or trusted external bodies. Formatting,
-compiler-derived inventory regeneration, Rust tests and genuine Verus checks
-remain pending on mi300x. This candidate is not part of the `011e0aca` native
-source and does not close the model-bundle gate merely by existing.
+mutations without new assumptions or trusted external bodies. Its first
+mi300x preparation records the initial formatting failure, then passes the
+explicitly scoped four-file formatting step and check; only three line-wrap
+hunks change. Both locked offline metadata graphs pass. Actual inventory
+generation stops at a pre-existing unsupported `assert_ne!` statement in the
+legacy GEMM renderer, before producing a new inventory. Source/control
+after-checks pass. The 7,707,209-byte failure archive has SHA-256
+`cc1a9aa1dc929f3fdcb6f17424855a35e097ac443ab145344088106cbdc41239`;
+all 130 payload hashes and sizes are independently checked locally.
+
+The local successor expresses that renderer's same pre-emission rejection as
+`assert!(schedule != MfmaBf16K16Wave64V1, ...)`, retaining the diagnostic and
+existing rejection test without changing the source checker. Remote formatting
+changes are applied exactly. Its second mi300x preparation passes formatting
+and both locked metadata graphs, then actual inventory generation rejects the
+existing `verifier::prophetic` attribute on the KV retirement future-state spec
+method. No inventory is produced. Source/control after-checks pass. The
+7,760,139-byte failure archive has SHA-256
+`d5de2e90e6fe6e0cf9457ee3ac8027d7c1da0f34a014885bb38875194cedfca6`;
+all 115 payload hashes and sizes are independently checked locally.
+
+Pinned Verus source review confirms that `mut_ref_future` requires this
+prophetic spec annotation; removing it or substituting current state would
+change or invalidate the existing contract. A separate source-gate candidate
+therefore admits only the bare outer attribute on checked spec functions in
+reviewed Verus contexts, retaining rejection of external bodies, assumptions,
+axioms and malformed or unreviewed placements. It is not yet tested and does
+not grant runtime authority or prove those functions. The future-state
+contract itself remains unchanged.
+
+The independent ordinary-host campaign on the exact frozen second-preparation
+source completes with exit 0. Both normal libtest builds and producer checks
+pass; all 17 selected bundle/auth/layout tests and both existing GEMM rejection
+tests pass with zero ignores. Both scoped strict `--lib --tests` Clippy commands
+pass. Source, all 115 predecessor payloads, and both original and copied test
+executables remain unchanged according to the completed remote after-check.
+The locally retained campaign stream records all 29 phase exits and campaign
+exit 0, SHA-256
+`7192f78835218caba9d5293aeadf46deb902cb2d6bc276061894961d684584f1`.
+This campaign excludes the new source-gate candidate and establishes no
+source-policy, Verus or protected-runtime acceptance. These uncommitted changes
+are not part of the `011e0aca` native source and do not close the model-bundle
+gate.
+
+The subsequent terminal-retention SSH connection exits 255 after the server
+stops responding. One bounded read-only status connection also exits 255 with
+a port-22 timeout. No retention retry is launched. The remote retainer's
+terminal/group state and complete raw-log/ELF archive custody remain unknown;
+the successful original host campaign is not relabeled as a failure or as a
+fully retained result. All local command sessions are closed. The separately
+prepared fresh source-gate build, 46 tests and inventory-generation campaign
+remain unlaunched. Their authorization is held pending remote-status recovery.
+The proposed read-only inventory of 19 completed native scratch roots is held
+as well: no remote cleanup has run, and no remote idle/no-use claim is made.
 
 A separate read-only survey of the user-offered `mi350-2` succeeds. It observes
 one KFD gfx950 GPU, 0% busy with 19,314,954,240 bytes already allocated; this
