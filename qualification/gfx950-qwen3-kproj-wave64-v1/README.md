@@ -82,6 +82,17 @@ allocation guards, completion, reverse frees, queue close, and worker exit
 passed. The [sanitized evidence](evidence.json) binds the observations to the
 exact source, HSACO, executable tools, checkpoint tensor, reference, and outputs.
 
+A fresh build with compiler checkpoint
+`59d7e1b9f7c2f62fb314c474f4e22ac5528257fb` produced byte-identical LLVM and
+HSACO. A separate four-dispatch MI350-2 regression run again passed all 4096
+outputs and lifecycle checks, with the same numerical errors below. Its
+[sanitized evidence](evidence-compiler-59d7-regression.json) records the exact
+probe and dispatch identities. The immutable compiler snapshot provenance is
+SHA-256 `117fb5f861f93255bc478cfa691c180193a0e2a575f3186820a9516d8ef46ec0`;
+the extraction inputs and artifacts are retained in
+`evidence/kproj-wave-build-v6`. This is a compiler regression check, not a new
+kernel optimization or a timing comparison.
+
 | Case | Max absolute error | Max error / bound |
 | --- | ---: | ---: |
 | Zero | 0 | 0 |

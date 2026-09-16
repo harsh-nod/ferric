@@ -9,9 +9,10 @@ Current checkpoint: host contract tests and the independent scheduler model
 pass. Production extraction passes source/arithmetic analysis and general
 kernel verification, including finite pipeline convergence. Input and config
 reads use checked total-load views; launch bounds come from the unchanged
-authenticated geometry contract. Translation validation still rejects the
-conditional-read effect-control mapping before target IR emission. There is
-no scheduler HSACO or GPU scheduler result at this checkpoint. All compiler
+authenticated geometry contract. Translation validation now passes with
+compiler checkpoint `59d7e1b`. AMDGPU target lowering still rejects workgroup
+barrier convergence at `bb116`, operation 8, before target IR emission. There
+is no scheduler HSACO or GPU scheduler result at this checkpoint. All compiler
 gates remain enabled. Projection GPU results are separate evidence.
 
 ## Graph and Arithmetic
