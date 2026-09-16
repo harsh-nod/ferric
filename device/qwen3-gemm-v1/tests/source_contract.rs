@@ -45,9 +45,9 @@ fn compact_tokens(tokens: impl quote::ToTokens) -> String {
 }
 
 #[test]
-fn source_has_exact_three_root_roster_and_no_worker_escape_hatch() {
+fn source_has_exact_four_root_roster_and_no_worker_escape_hatch() {
     let kernels = kernels();
-    assert_eq!(kernels.len(), 3);
+    assert_eq!(kernels.len(), 4);
     assert_eq!(
         kernels
             .iter()
@@ -56,6 +56,7 @@ fn source_has_exact_three_root_roster_and_no_worker_escape_hatch() {
         vec![
             String::from("ferric_qwen3_gemm_reference_bf16_f32_bf16_v1"),
             String::from("ferric_qwen3_gemm_vector_a4_bf16_f32_bf16_v1"),
+            String::from("ferric_qwen3_gemm_mfma_bf16_f32_bf16_v1"),
             String::from("ferric_qwen3_token_embedding_bf16_copy_v1"),
         ]
     );
@@ -79,7 +80,7 @@ fn source_has_exact_three_root_roster_and_no_worker_escape_hatch() {
 #[test]
 fn matrix_roots_are_read_read_readwrite_and_embedding_is_write_only() {
     let kernels = kernels();
-    for matrix in &kernels[..2] {
+    for matrix in &kernels[..3] {
         assert_eq!(matrix.sig.inputs.len(), 7);
         assert_eq!(compact_type(&matrix.sig.inputs[0]), "&[u16]");
         assert_eq!(compact_type(&matrix.sig.inputs[1]), "&[u16]");
@@ -92,7 +93,7 @@ fn matrix_roots_are_read_read_readwrite_and_embedding_is_write_only() {
         }
     }
 
-    let embedding = &kernels[2];
+    let embedding = &kernels[3];
     assert_eq!(embedding.sig.inputs.len(), 6);
     assert_eq!(compact_type(&embedding.sig.inputs[0]), "&[u32]");
     assert_eq!(compact_type(&embedding.sig.inputs[1]), "&[u16]");
@@ -110,6 +111,7 @@ fn generated_host_adapter_types_preserve_exact_kfd_effects() {
         GeneratedKfdReadWriteSlice, GeneratedKfdWriteSlice,
     };
     use ferric_qwen3_gemm_device_v1::{
+        ferric_qwen3_gemm_mfma_bf16_f32_bf16_v1_gpu as mfma,
         ferric_qwen3_gemm_reference_bf16_f32_bf16_v1_gpu as reference,
         ferric_qwen3_gemm_vector_a4_bf16_f32_bf16_v1_gpu as vectorized,
         ferric_qwen3_token_embedding_bf16_copy_v1_gpu as embedding,
@@ -135,6 +137,7 @@ fn generated_host_adapter_types_preserve_exact_kfd_effects() {
         vectorized::Marker,
         vectorized::Arguments<'static, ReadU16, ReadU16, ReadWriteU16>,
     >();
+    assert_kfd_adapter::<mfma::Marker, mfma::Arguments<'static, ReadU16, ReadU16, ReadWriteU16>>();
     assert_kfd_adapter::<
         embedding::Marker,
         embedding::Arguments<'static, ReadU32, ReadU16, WriteU16>,
@@ -490,7 +493,7 @@ fn source_pins_finite_divisors_and_a4_reduction_guards() {
         );
         assert_eq!(
             SOURCE.matches(&branch).count(),
-            2,
+            3,
             "missing finite {extent_source} divisor"
         );
     }
@@ -693,16 +696,16 @@ fn source_requires_a_flat_one_dimensional_grid() {
         .chars()
         .filter(|character| !character.is_whitespace())
         .collect();
-    assert_eq!(compact.matches("max_grid=[1215488,1,1]").count(), 2);
+    assert_eq!(compact.matches("max_grid=[1215488,1,1]").count(), 3);
     assert_eq!(compact.matches("max_grid=[131072,1,1]").count(), 1);
     assert!(SOURCE.contains("let tile_index = raw / 64;"));
-    assert_eq!(SOURCE.matches("thread::grid_dim_x() as usize").count(), 3);
-    assert_eq!(SOURCE.matches("thread::block_dim_x() as usize").count(), 3);
+    assert_eq!(SOURCE.matches("thread::grid_dim_x() as usize").count(), 4);
+    assert_eq!(SOURCE.matches("thread::block_dim_x() as usize").count(), 4);
     assert_eq!(
         SOURCE
             .matches("if launch_extent != expected_extent")
             .count(),
-        2
+        3
     );
     assert!(SOURCE.contains("if launch_extent != output.len()"));
 }
