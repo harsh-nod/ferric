@@ -5,6 +5,36 @@ receipt. The 33 M1 roadmap gates remain open.
 
 ## Current Checkpoint
 
+### Current Compiler Adoption
+
+The current validation batch freezes observed fe2o3 main
+`abd8be76fadc74b09cc40533e775949471358a74`. Ferric adopts it in
+`f9b86bdb7fe2381498bb354eb1b0d4b68dfc24b9` after all 50 bounded mi300x
+validation phases pass: 32 locked dependency graphs, fresh normal/test source
+gate producers, all 47 source-gate tests, four generated dependency inventories,
+and ordinary source coverage inventory/generation/validation. The 80-file
+transition changes only reviewed compiler identities and dependent policy
+hashes. No dependency edge, version, feature or lock repair is needed. Runtime
+inventory and the integrated final-RMS unverified coverage remain byte-identical.
+
+Compared with the previously integrated `2d3ffbed`, 17 upstream files change.
+The newer bounds-witness and affine-index analysis are production compiler
+changes, not merely tests. Runtime/KFD, device code, manifests/locks, pinned
+Pliron `cc902cc8`, toolchain and LLVM-worker subtree remain unchanged; all 53
+compiler vendor manifests match. Fresh compiler package payloads, matching
+tools, emission and native validation are still required. Existing native
+results retain their actual `7f90d187` producer, and completed `2d3` tools are
+not relabeled as `abd8` tools.
+
+Adoption archive SHA-256 is
+`d29d49381aaa090589f3f3a5139b8f0d476bf88db4bea057ef1a75207f363798`
+(20,931,829 bytes). All 1,647 members, 1,646 payload hashes/sizes/modes and 16
+external execution records are independently checked. The generated patch SHA is
+`6c67d23e1293a140b6cdd0a78434597701a156b12a36a2da49f177efd943697a`;
+all 1,157 integrated source identities match the final remote census. This is
+dependency/source-policy adoption, not compiler behavior qualification, GPU
+execution, numerical acceptance, performance evidence or an M1 gate closure.
+
 ### Final-RMS Intermediate Capture Candidate
 
 An explicit `--mfma13 --capture-m5-final-rms DIRECTORY` candidate extends the
@@ -88,7 +118,7 @@ shared host libraries remain untouched.
 
 ### Matching 2d3 Compiler Tools
 
-The completed build matches integrated fe2o3 pin `2d3ffbed`. Exact reviewed
+The completed build matches the then-integrated fe2o3 pin `2d3ffbed`. Exact reviewed
 compiler-cache retirement on mi300x removes
 282 paths / 270 inode groups and reclaims 1,241,568 KiB, reducing the owned
 compiler stage from 9,783,172 to 8,541,604 KiB. No model, private compiler tool,
@@ -120,8 +150,9 @@ qualification. Old native results retain their actual `7f90d187` identity.
 A later read-only upstream check observes main `90bef1db`: 12 commits and 13
 changed files in backend projection logic and tests. Runtime/KFD/device,
 toolchain, Pliron `cc902cc8`, LLVM-worker source and all 53 existing compiler
-vendor manifests are unchanged. Actual updated dependency graphs, pins, tools
-and emission are still required before new native work. The completed `2d3`
+vendor manifests are unchanged. At that checkpoint, updated dependency graphs,
+pins, tools and emission were still required before new native work. The subsequent
+`abd8` dependency adoption is recorded above. The completed `2d3`
 tools and tests are not relabeled as `90bef` or as current-main validation.
 
 ### Retained M5 Ranking Diagnostic
@@ -184,8 +215,8 @@ files, reference venv and shared jobs are untouched.
 ### Upstream Tracking And Build Policy
 
 At the completed dependency-adoption checkpoint, the observed fe2o3 `main` was
-`2d3ffbedd6dc2dd51d777ede70e26329370bcf77`; the later `90bef1db` observation
-and pending adoption are recorded above. The merged history after the
+`2d3ffbedd6dc2dd51d777ede70e26329370bcf77`; later observations and the current
+`abd8be76` adoption are recorded above. The merged history after the
 previous observation includes helper argument/result/call and slice
 correspondence, authenticated context flow, semantic import and debug storage.
 The full `7f90d187`-to-`2d3ffbed` diff changes 155 files; it is not merely a
