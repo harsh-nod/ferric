@@ -537,14 +537,44 @@ and nine existing KV-ledger/metadata bodies missing from the old inventory.
 All nine additional bodies are independently reviewed against matching source
 hashes. Runtime dependency records and all other inventory rows are unchanged.
 Checked-body classification is not a new Verus pass. Registered same-source
-theorem and mutation runs remain pending; no protected-runtime or roadmap gate
-is closed by inventory generation.
+theorem and mutation evidence is not established by this result; no
+protected-runtime or roadmap gate is closed by inventory generation.
+
+Private candidate `07b455ce178a1a91c18ac89371724a76a26b108d` commits the bundle,
+source-gate, fixture and reviewed inventory changes. The registered proof
+campaign uses an actual clean detached checkout of that commit from a complete
+Git bundle. Registry policy passes 59 hostile fixtures and 35 exact current
+mutator anchors. The ordinary `ferric-m1-proof` all-target compile passes in
+1 minute 58 seconds. The positive `cargo-verus` command then reaches its
+unchanged 600-second timeout while compiling fresh dependencies, before any
+selected model-bundle theorem result is produced. The dependency transcript's
+2,044 vstd and 484 ferric-spec verified queries are not the selected theorem.
+The three registered mutations and both evidence-policy scripts are unlaunched.
+
+Campaign and positive phase remain exit 1; all source, cache, tool-closure and
+control after-checks pass. There is no retry, timeout increase or substituted
+component-proof result. Its 1,797,738-byte failure archive has SHA-256
+`50d8433375f3801625bc855eedfa07aa124dc2d88b863de54bd2560583ff40bb`.
+All 16 external records and 132 payloads are checked against the exact 134-member
+archive, and root independently checks hashes, roster, embedded metadata and
+source/cache/tool before-after equality. The ordinary compile transcript has
+SHA-256 `dae6efacd6ac17ae253760e2b04fa5c6d4354c5c561e2769b5e4e7935af0670f`;
+the timeout stderr has SHA-256
+`ee975cba9d46a112b78b2f30c0a23be0ce4e6b63daa3eced6ea286d70c78795d`.
+No selected theorem summary, theorem record or result file exists. The runner
+removes its own heavy build scratch; retained evidence is not a qualification
+pass, and no new GPU or performance measurement is made.
+After root acknowledgement, exact-stage cleanup removes the temporary clean
+checkout and empty scratch/template directories; the separate target is already
+absent. Net stage allocation falls by 57,548 KiB. All 148 protected files and the
+authenticated full-history source bundle remain unchanged. Root checks all 15
+cleanup records and the three intent/completion pairs. Every session is closed.
 
 The two new manifest mutations also require a complete three-row model-bundle
 product in the negative-evidence validator's synthetic test fixture. The local
 fixture now creates all three independent mutation records under one shared
 run identity and rejects omission of each row. The production validator's
-completeness rule is unchanged; these fixture changes await remote execution
+completeness rule is unchanged; these evidence-fixture changes await remote execution
 and do not constitute genuine mutation-proof evidence.
 
 The separate genuine component Verus command completes with exit 0 on the
