@@ -5,8 +5,9 @@ receipt. The 33 M1 roadmap gates remain open.
 
 ## Current Checkpoint
 
-Private integration `5bcf44ed` now pins freshly fetched fe2o3 main `55d9bfe5`
-across all 80 active pin-bearing files. Upstream adds enum SSA edge transport
+Private integration `ea529fd8` builds on the `5bcf44ed` baseline, which pins
+freshly fetched fe2o3 main `55d9bfe5` across all 80 active pin-bearing files.
+Upstream adds enum SSA edge transport
 and authenticated-downcast fixes, plus tutorial source-binding corrections;
 the compiler lockfile and device/host/KFD trees are unchanged from e3. The
 combined MFMA source passes all 32 locked/offline graphs and 42 freshly built
@@ -42,12 +43,52 @@ all 513 payload hashes, the exact 514-member roster and all six actual test
 executable bytes are independently retained and checked locally.
 
 Successor `f9def4c0` adds only a test-module `extern crate std;` plus spacing;
-production kernel bodies are unchanged. Its architecture tests and four strict
-Clippy phases are not yet rerun. The runtime stage is 9,912,728 KiB, below its
-10 GiB cap but without the required 1 GiB pre-build reserve. Scoped obsolete-cache
-review and a separate continuation are being prepared; build guards are unchanged.
-Current-source Verus, compiler tools, emission and GPU numerical validation remain
-pending. The prepared proof gate remains disabled, and all 33 M1 gates stay open.
+production kernel bodies are unchanged. Its R2 continuation passes all eight
+aggregate build/run pairs: 54 tests across gfx942 and gfx950, zero failures or
+ignored tests. Together R1/R2 cover 1,195 passes and 14 ignores, attributed to
+their separate source commits. Core strict Clippy then finds one redundant
+catalog closure; the three later Clippy phases remain unlaunched. R2 stays exit
+101. All 528 payload hashes and its eight actual test executables are retained
+locally in the 181,816,253-byte archive at SHA-256
+`29861cd3a7d507f58e1e10bb141e1eb8a304425904beb8ab060b8196c7149800`.
+
+`2f1dded1` fixes that projection and `538aa053` replaces private-field references
+in four crate-visible retired-page accessor contracts with closed spec getters.
+R3 builds a distinct engine test executable and passes eight catalog tests and
+three batch-return regressions. Its explicit engine-only codegen-units=1 setting
+is host regression evidence, not a performance build. Source, prior evidence,
+native executable and control after-checks pass. Strict Clippy reports two
+ignored-unit-pattern errors in the invocation-only test fixture; `873f4958`
+fixes them without lint suppression. R3 remains exit 101 and the later three
+Clippy phases are unlaunched. All 122 payloads and the actual executable are
+locally checked in the 209,362,975-byte archive at SHA-256
+`36c2d719e509f1f2568975a7e23c09512b7d17a43c789205c66c0f038f8501df`.
+
+The actual current-55 batch consumer has now been attempted in Verus. R2 on
+`5bcf44ed` genuinely verifies seven dependency exports but fails engine
+translation on four opaque-datatype field references, before consumer SMT work.
+After the accessor fix, proof R3 on `538aa053` preserves those seven exports and
+reaches the selected consumer's solver obligations. It fails at the final
+prefix postcondition and remaining-ticket frame assertion; nonzero solver work
+is not a proof pass. Before/after source, dependency, tool-closure and artifact
+checks pass. The full 183,762,226-byte failed R3 stage is retained locally at
+SHA-256 `fb16cc8bbe4ce52c62272be106c15b805d782f23320a7244956c2b56d836c9c3`,
+with all 3,734 members and 3,155 file payload hashes checked. `ea529fd8` adds
+17 ghost-only lines connecting entry-state ledgers and explicit per-ticket
+frames; remote formatting passes, but its proof retry is pending. No trust
+annotations, executable behavior changes or weakened contracts are introduced.
+
+Scoped reproducible-cache cleanup removes 23 obsolete engine/build libraries
+and 11 obsolete engineering-adapter libraries, reclaiming 1,041,180 KiB while
+preserving protected sources, artifacts and evidence. A separate no-use scan
+fails on a transient unreadable process and deletes nothing; the fresh retry
+passes after that process is observed absent. The runtime stage after host R3
+is 9,334,764 KiB; another bounded cache review is restoring initial headroom.
+Fresh surveys find all eight mi300x GPUs occupied. mi350-2 has one physical
+gfx950 GPU at zero utilization but a foreign process still holds three queues
+and 17.7 GiB, and its kernel/driver profile is not admitted. Compiler55 tool
+refresh, current-source emission and GPU numerical validation remain pending.
+All 33 M1 gates stay open.
 
 The dated Pages R5-R6 snapshot is deployed at public static-only commit
 `f3cb38aa`; all seven live assets match the mi300x-validated artifact. Fresh QA
