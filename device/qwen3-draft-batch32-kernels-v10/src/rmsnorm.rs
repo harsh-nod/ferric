@@ -1,5 +1,4 @@
 //! Draft-only pure RMSNorm admission with unchanged generic arithmetic.
-#![allow(clippy::let_and_return)]
 
 use fe2o3_device::{
     Bf16, Index1D, Math, RowStriped2D, Wave64, WaveLane, WriteOnlyDisjointSlice, kernel, memory,
@@ -16,7 +15,7 @@ const QWEN3_RMSNORM_EPSILON_V1: f32 = 1e-6_f32;
 /// genuinely empty residual and fused-output slices. The stronger entry guard
 /// excludes fused mode; the original arithmetic remains intact below it.
 /// Every lane owns columns `lane + component * 64` in its row.
-#[allow(clippy::too_many_arguments, clippy::len_zero)]
+#[allow(clippy::too_many_arguments, clippy::len_zero, clippy::let_and_return)]
 #[kernel(
     typed,
     launch(
