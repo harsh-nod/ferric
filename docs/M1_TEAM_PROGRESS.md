@@ -64,6 +64,27 @@ not new Ferric kernels, GPU execution, numerical acceptance, protected proof
 qualification or performance evidence. All 33 gates remain open, and prior
 native results retain their actual `7f90d187` compiler producer.
 
+### Optimized Final-RMS Diagnostic Release
+
+The single optimized `ferric-m1-engineering-speculative-smoke` binary now
+passes all six bounded mi300x release phases from frozen Ferric `6e2ad936`
+with compiler `abd8be76` and Pliron `cc902cc8`. Its producer is fresh and
+non-test, with no root features, debug information or RPATH/RUNPATH. Source
+before/after checks pass. The private executable is 14,221,224 bytes, SHA
+`6e3ccf1248e8bba8dfe26714242a3d9205f6c247846bd916a77e016be70e7289`.
+All 302 retained archive members (301 payloads plus manifest) and 12 external
+records pass independent hash, size, mode and tar-metadata checks. Archive SHA:
+`443cc4698de031e653f266b90dd3a3ba8cd02c69a9f0be239b7b60520bfe0616`.
+The historical R6 tests remain at compiler `2d3`, not rerun on `abd8`.
+
+A separate current-source locked/offline all-feature device metadata phase
+also passes, resolving exactly 53 compiler Git packages at `abd8be76` and
+two Pliron packages at `cc902cc8`. Its nine raw records are independently
+checked. Vendor formation and matching MFMA13 device emission are still
+pending. The release adds the executable needed for final-RMS capture, not
+a native/GPU observation, numerical acceptance, protected proof result,
+performance measurement or an M1 gate closure.
+
 ### Final-RMS Intermediate Capture Candidate
 
 An explicit `--mfma13 --capture-m5-final-rms DIRECTORY` candidate extends the
