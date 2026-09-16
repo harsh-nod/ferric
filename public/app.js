@@ -72,7 +72,16 @@
   const resident = project.residentCheckpoint;
   const residentProgress = document.querySelector("[data-resident-progress]");
   residentProgress.append(element("p", "performance-scope", resident.scope),
-    element("h3", "", "Published compiler adopted: dependency checks passed"),
+    element("h3", "", "Compiler 111: 32 tokens and completed draft catch-up"),
+    element("p", "", resident.integration.native111.detail),
+    element("h3", "", "Prefill: matching token, logit differences still unqualified"),
+    element("p", "", resident.integration.prefill111.detail),
+    element("h3", "", "Catch-up method: focused proof, integration pending"),
+    element("p", "", resident.integration.catchupProof111.detail),
+    element("h3", "", "Compiler 349 adopted for source checks; 45d0 observed only"),
+    element("p", "", resident.integration.compiler349.detail),
+    element("h3", "", "Earlier compiler 111 adoption: dependency checks passed"),
+    element("p", "performance-scope", "The following records preserve their original source identities and then-pending work. They do not supersede the native, numerical, proof or compiler checkpoints above."),
     element("p", "", resident.integration.compilerAdoption.detail),
     element("h3", "", "Earlier 8af smoke checkpoint: scoped host checks passed"),
     element("p", "performance-scope", "This smoke and verifier-publication record predates the adoption above. Its 8af test attribution and then-pending adoption status are preserved, not current 111 engine-validation claims."),
@@ -163,8 +172,13 @@
   residentDetails.append(element("summary", "", "Checkpoint source identities"));
   const residentPins = element("dl", "observation-facts");
   for (const [label, value] of [
-    ["Status tracker source", resident.integration.compilerAdoption.source],
-    ["Ferric dependency pin", resident.integration.compilerAdoption.compilerSource],
+    ["Status tracker source", resident.integration.compiler349.trackerSource],
+    ["Ferric dependency pin", resident.integration.compiler349.compilerSource],
+    ["Observed upstream compiler; not adopted", resident.integration.compiler349.latestObservedCompiler],
+    ["Native and prefill Ferric source", resident.integration.native111.source],
+    ["Native and prefill compiler", resident.integration.native111.compilerSource],
+    ["Separate catch-up proof candidate", resident.integration.catchupProof111.source],
+    ["Earlier compiler adoption source", resident.integration.compilerAdoption.source],
     ["Earlier smoke tracker source", resident.integration.engineeringSmoke.trackerSource],
     ["MFMA13 engineering smoke source", resident.integration.engineeringSmoke.source],
     ["MFMA13 smoke validation compiler", resident.integration.engineeringSmoke.compilerPin],
