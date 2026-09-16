@@ -7957,6 +7957,10 @@ mod tests {
         M1PhysicalQueueCreateFailureClassV1, M1PhysicalQueuePhaseV1,
         M1_COMPLETION_PROGRESS_MAX_CONSECUTIVE_STALLED_SCANS_V1,
     };
+    use super::{
+        observe_m1_diagnostic_choice_ranges_v1, retain_all_m1_diagnostic_choice_copies,
+        M1DiagnosticChoiceObservationBackendV1, M1DiagnosticChoiceValidationFailureV1,
+    };
     use crate::Engine;
     use std::cell::{Cell, RefCell};
 
