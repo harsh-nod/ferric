@@ -19,7 +19,7 @@ second inference project or a parallel compiler path.
 | Declared operation planner | Implemented and CPU-tested; no admission authority |
 | Measurement/ablation validator | Implemented and CPU-tested; no actual performance results |
 | Exact MI350-2 platform tuple | Additive upstream engineering profile; negative tests pass |
-| Actual device binding | Rejected: KFD XCD ID differs from DRM board ID |
+| Actual device binding | Read-only binding/currentness/cleanup pass with explicit XCP0 parent-render contract |
 | Ordinary Rust atomic lowering | Rejected: callable memory-effect summaries incomplete |
 | Tile worker scheduler / numerical handlers | Not implemented by this checkpoint |
 | Full-model decode / performance qualification | Not executed; no claim |
@@ -27,9 +27,10 @@ second inference project or a parallel compiler path.
 The CPU test logs and failing device/compiler probes (device IDs redacted) are in
 [the initial evidence directory](evidence/gfx950-megakernel-42/README.md).
 The host's partition identifier and board identifier are different domains,
-not a decimal/hex parsing error. Fixing that requires a reviewed XCP-to-render
-identity contract upstream; disabling equality or hardcoding one device pair
-is not an acceptable fix. Protected production authority is separately open.
+not a decimal/hex parsing error. A narrowly scoped upstream SPX/XCP0-to-parent
+render contract now retains and independently rechecks both domains. It is
+selected by the exact engineering profile, not by a failed equality comparison.
+Protected production authority remains separately open; no GPU work was run.
 
 ## Initial Envelope
 
@@ -133,6 +134,44 @@ are experiments requiring numerical and resource tests, not mandatory wins.
 7. Close release/property gates and qualify the exact executable without rebuild.
 
 None of these gates is completed by a passing host-side planner test.
+
+### Atomic Source Vertical Slices
+
+The rejected ordinary Rust atomic fixture is an implementation gap, not proof
+that gfx950 lacks the instructions. Source review found the following exact
+upstream boundaries; a single allowlist or purity annotation cannot close them.
+Paths below are relative to the fe2o3 repository.
+
+| Boundary | Existing owner | Required implementation |
+| --- | --- | --- |
+| Pointer-to-atomic adapters | `crates/fe2o3-device/src/atomic.rs::global_atomic_view!` and `crates/rustc-codegen-fe2o3/src/production_semantic_terminal_v1.rs::is_traversed_reviewed_helper_v1` | Preserve the authenticated helper body, types, and returned pointer provenance through a bounded normalization or equivalent effect summary |
+| Defined-call admission | `crates/rustc-codegen-fe2o3/src/production_ranked_projection_v1.rs::DefinedCallableEmptyEffectSummariesV1` and `require_bounds_neutral_callable` | Add exact pointer-result and memory-effect custody; scalar empty-effect summaries are insufficient |
+| Allocation correspondence | The same file's `local_provenance_v1`, `local_allocation_contracts`, and `authenticated_source_allocation_contract_v1` | Retain allocation identity, offset, alignment, borrow/alias constraints, and source correspondence across normalized calls |
+| Source intrinsic recognition | `crates/rustc-codegen-fe2o3/src/production_rustc_intrinsic_v1.rs::atomic_rmw_intrinsic_rule_v1` | Extend beyond RMW to atomic load/store and strong/weak CAS, including both CAS orderings and its result representation |
+| Production KIR | `crates/fe2o3-lower-mir-kernel/src/production_semantic_kir_v1.rs` | Preserve the complete effects and SSA results; implement atomic load/store/CAS rather than using the scalar-helper path |
+
+A bounded body-derived transformation of the closed authenticated adapter and
+wrapper closure can keep general effectful helper calls unsupported. Inlining
+only the pointer adapter does not close the atomic method/wrapper calls. Marking
+them pure would erase the effects the scheduler relies on.
+
+Implement and test the slices in this order:
+
+1. Normalize the complete supported RMW call closure with exact callee/type/ABI
+   identities, orderings, pointer provenance, and effectful result custody.
+2. Require ordinary Rust RMW fixtures to reach production LLVM with observable
+   results and intact side effects even when return values are unused.
+3. Add load/store and CAS source-to-KIR support with explicit width, scope,
+   ordering, and failure-order restrictions.
+4. Bind coherent allocation and target/runtime visibility contracts, then run
+   bounded multi-workgroup publication tests through direct KFD.
+
+Negative tests must reject spoofed providers, changed helper bodies, stale
+identities, missing provenance, conflicting aliases, unsupported widths and
+orderings, recursion, and arbitrary pointer transformations. Do not identify
+the first rejected callable solely from the diagnostic's numeric callable ID;
+the archived log does not provide its name. This roadmap is not a claim that
+any of these compiler slices is implemented by this Ferric change.
 
 ## Validation And Performance
 

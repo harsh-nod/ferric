@@ -2,7 +2,8 @@
 
 Collected on SSH host `mi350-2` on 2026-09-15 for
 [Ferric #42](https://github.com/harsh-nod/ferric/issues/42).
-This directory records CPU checks and two rejected probes. It contains no GPU
+This directory records CPU checks, the initial rejected device/compiler probes,
+and a subsequent passing read-only device bind. It contains no GPU
 dispatch, model numerical result, timing sample, formal proof, or release
 qualification. The epic's M1-M7 completion gates remain open.
 
@@ -27,6 +28,9 @@ output remains in the caller-owned evidence directory on the test host.
 - `uapi-tests.log`: DRM and KFD UAPI layout tests.
 - `drm-oracle.log` / `kfd-event-oracle.log`: exact installed-header C oracles.
 - `manifest-source-hashes.log`: new platform manifest versus installed sources.
+- `xcp-*.log`: follow-up typed XCP0 correlation, default/engineering tests,
+  Clippy, 25 source hashes, and successful read-only probe. The probe copy is
+  explicitly redacted; it is not a GPU dispatch result.
 
 Rust 1.97.1 was used for Ferric; fe2o3 used its pinned
 `nightly-2026-04-03` with `rustc-dev`/`rust-src`. All builds and tests ran in
@@ -36,7 +40,7 @@ override was performed. The compiler build needed its Rust shared-library
 directory in `LD_LIBRARY_PATH`; initial loader setup failures are not compiler
 behavior findings.
 
-## Rejected Runtime Probe
+## Initial Rejected Runtime Probe
 
 `read-only-probe.log` preserves the rejection with device IDs redacted:
 
@@ -49,10 +53,36 @@ Set `KFD_DEVICE_UNIQUE_ID` from local topology without publishing its value.
 The KFD topology reports an XCD/XCP identity; the DRM parent exposes a
 different board identity. The common topology
 contract rejects the unequal IDs before acquiring device execution authority.
-The exact driver sources explain the two domains, but the reviewed public ABI
-does not provide a corresponding independent DRM XCD-ID query. A separate
-XCP-aware correlation contract is needed; this patch does not waive the check.
+The exact driver sources explain the two domains. A matching independent DRM
+XCD-ID query is not exposed, but the existing ABI supports the typed
+correspondence implemented by the follow-up below; no new driver API is needed
+for that contracted relationship.
 See upstream `docs/gfx950-mi350-2-engineering-admission-v1.md` for source review.
+
+## Passing Read-Only XCP0 Probe
+
+The upstream engineering observation-v2 profile uses an explicit XCP0-to-parent
+render contract, gated by the exact platform/feature, SPX/NPS1, geometry,
+firmware, canonical PCI ancestry, exact render number/BDF, unique endpoint, and
+retained XCP evidence. Both UID domains remain in snapshot/currentness equality.
+Default gfx942 and original gfx950 behavior are unchanged.
+
+`xcp-read-only-probe-redacted.log` records the successful `--all` example on
+the host inventory, including two currentness checks and descriptor cleanup
+(four before and after). GPU ID, unique ID, and render minor are redacted from
+this published copy; original output is retained privately on the host. All
+execution authorities in the probe are false. This is neither production
+execution qualification nor proof of UID equivalence or all-reset detection.
+
+Follow-up tests: 422 default KFD tests passed with one ignored; 498 engineering
+tests passed with one ignored; strict Clippy passed for both configurations.
+The 25 pinned installed-source hashes match. See the corresponding logs.
+
+The follow-up source is fe2o3
+`3018ec8193f13c829db4e037641664401f7eb180`, based on public main
+`55d9bfe5746daf29dde35caa2c909c0d55393cda`. The successful probe executable
+SHA-256 is
+`5d6deead4e675d1a9470d86d0098b990a07227e89e021a9268543f0af66b7504`.
 
 ## Rejected Compiler Probe
 
