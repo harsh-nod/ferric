@@ -9,7 +9,7 @@ All builds, tests and Verus runs remain on mi300x. The fe2o3 main push
 `e3c359fb` contains `[skip ci]`; fresh GitHub API checks find zero workflow
 runs and zero check runs for that commit. No further fe2o3 push is made here.
 
-Private integration `53eaf54e` builds on the `5bcf44ed` baseline, which pins
+Private integration `6c34cbe1` builds on the `5bcf44ed` baseline, which pins
 the tested fe2o3 checkpoint `55d9bfe5` across all 80 active pin-bearing files.
 Upstream adds enum SSA edge transport
 and authenticated-downcast fixes, plus tutorial source-binding corrections;
@@ -176,6 +176,16 @@ worktrees are removed with their branches preserved. No trust
 annotations, executable behavior changes, weakened contracts or raised solver
 bounds are introduced.
 
+R9 on the same proof-only `cde4faaa` source succeeds for all 14 selected
+executable functions: the nine return-family bodies, four retired-lease
+accessors and `global_page_index_core`. Every selected exec has successful
+nonzero solver work. The seven dependency exports and all prior raw evidence
+remain unchanged. This expands R8's selected-consumer coverage, not the outer
+pool/queue composition, negative mutations, changed maintenance checker or
+native qualification. The full 250,915,254-byte archive is retained locally at
+SHA-256 `8596f98ac1c83db0f63499386f1daed2a299fcf7f4881816a118e4434e93e1c1`;
+all 4,132 regular-file payload hashes pass independent local checks.
+
 Scoped reproducible-cache cleanup removes 23 obsolete engine/build libraries
 and 11 obsolete engineering-adapter libraries, reclaiming 1,041,180 KiB while
 preserving protected sources, artifacts and evidence. A separate no-use scan
@@ -198,11 +208,26 @@ campaign needs scoped cache cleanup before launch.
 Removing only the two completed local unpacked verification copies for R7
 and the host continuation reclaims 973,488 KiB; their independently checked
 archives, manifests, raw results and executable payloads remain archived.
-Fresh surveys find all eight mi300x GPUs occupied. mi350-2 has one physical
+The earlier survey found all eight mi300x GPUs occupied. mi350-2 had one physical
 gfx950 GPU at zero utilization but a foreign process still holds three queues
-and 17.7 GiB, and its kernel/driver profile is not admitted. Compiler55 tool
-refresh, current-source emission and GPU numerical validation remain pending.
+and 17.7 GiB, and its kernel/driver profile is not admitted. A fresh mi300x
+survey at 03:08:54 UTC finds GPUs 1-7 idle with no selected-device queues or
+VRAM users; the foreign GPU0 workload is untouched. Latest-f0b tool refresh,
+current-source emission and GPU numerical validation remain pending.
 All 33 M1 gates stay open.
+
+Runtime metadata inventory R7 stops on an FD race in the owned native child and
+deletes nothing. After the native and proof jobs terminate, namespace-only R8
+passes. Separately admitted cleanup removes exactly 11 obsolete metadata files,
+reclaiming 255,032 KiB. All 1,290 protected file payloads and native bytes are
+checked before/after, and 2,984 unselected dependency entries remain unchanged.
+Measured runtime usage is 9,134,984 KiB, restoring the unchanged full-source
+launch reserve. Compiler-cache inventory R1 instead stops before deletion on
+one empty metadata file; its strict positive-size assumption requires an exact
+file-scoped successor, not a broadened cleanup roster. Latest-f0b compiler
+validation controls are prepared but not launched. Removal of the two new
+local unpacked proof/native verification copies reclaims 763,552 KiB; checked
+archives, manifests and raw evidence remain retained.
 
 Pages-only source `3c7a4023` includes the terminal R4 outcomes and is published
 as static-only commit `58ebfe67`. All five mi300x QA phases pass, including
@@ -267,6 +292,26 @@ The latest runtime executable is source `00ac6a22`, still pinned to fe2o3
 00ac changes only three lifetime spellings. The source-bound 32-token R5 native
 diagnostic stopped before inference on a process-observation race, not the
 maintenance transition. No new performance result is available.
+
+R6 reruns that exact frozen binary on idle physical mi300x GPU4 and reaches the
+maintenance-publication check. It exits 134 with `step draft catchup custody`,
+before submission of the 425 maintenance packets. The parent speculative
+selection is deliberately retained by both the KV binder and pending owner,
+but the step checker incorrectly expects the outer custody to use Decode.
+Successor `6c34cbe1` compares it to the speculative draft selection instead,
+leaving all completion-plan, request, epoch, width and ownership guards intact.
+Nine new cases use real pending reservations across K4/K8/K16, accept the exact
+selection and reject wrong-speculative and Decode outer selections. Independent
+review finds no blockers; focused host validation and a rebuilt native retry
+remain pending. The test-only assembly helper grants no production authority.
+
+R6 failure evidence is retained locally in the 3,845,968-byte archive at SHA-256
+`c51d8cb5be5cfbe0970b2fee184cd8854bed862f5e2d101cfb152a1b84ef5043`;
+all 22 native-stage file hashes and retained review files match. The owned
+process group and observed child are absent, GPU4 has no queues or VRAM users,
+and fresh device memory is back to its 298,647,552-byte baseline. No reset or
+foreign intervention occurs. The report is absent, the failure is not relabeled
+as fixed, and the active 128-token prompt fill is not a comparable benchmark.
 
 Compiler `e3c359fb` is now published to fe2o3 main, rebased onto freshly fetched
 upstream `2585ce64`. All twelve patches are unchanged by range-diff; the tip's
