@@ -149,7 +149,36 @@ qualification.
 
 ### Published Site
 
-The R18 site is live at <https://harsh-nod.github.io/ferric/> from prebuilt
+The R19 site is live at <https://harsh-nod.github.io/ferric/> from prebuilt
+commit `ee6e41c045ad14aa6915b1b278d4502174537b2a`, deployed by the single
+deploy-only run `35136590156`. All five QA phases pass on mi300x, including
+eight browser viewports and 64 screenshots; representative desktop/mobile
+screenshots were independently inspected. All 14 canonical/cache-busted live
+asset downloads return HTTP 200 and match the seven-file, 691,654-byte
+validated artifact. No GitHub build or test runs.
+
+The R19 archive is
+`618b650aa167802b65f729b942ddb19916595763a1db642d880296e1620be98c`
+(11,380,976 bytes), with all 134 members, 133 payloads and 20 external files
+checked. Source `bda0d76e76e4ec2444f7844ffb04a201fa848efc` records the frozen
+`b8ac0b03` proof/host checkpoint and separately scoped retained-M5 ranking
+diagnostic. The subsequent `1d6078af` dependency adoption and `92d03385`
+checkpoint-row CPU ablation above are newer than that frozen site source;
+they are not retroactively attributed to its artifact. Historical numerical
+and performance records remain unchanged. The completed clean source worktree
+was removed normally, reclaiming 1,632 KiB, while retaining its branch, source
+archive, QA evidence and isolated public checkout.
+
+The exact R19 remote-stage cleanup then stops before deletion: ownership,
+six recorded process-group absence checks and custody/input hashes pass, but
+the first scoped `lsof` check emits inaccessible unrelated mount warnings.
+No file-use match is observed, yet incomplete visibility is not treated as
+an empty check. All three roots remain untouched, totaling 50,896 KiB
+(37,552 KiB QA, 1,600 KiB inputs, 11,744 KiB retention). This allocation is
+not counted as reclaimed; failure logs remain retained and no retry or
+visibility override occurs.
+
+The preceding R18 publication was from prebuilt
 commit `df34029b15f85da1664dca545538796cd6f38b3e`. All five QA phases ran on
 mi300x and passed, including eight browser viewports and 64 screenshots.
 The retained QA archive is
@@ -159,7 +188,7 @@ deploy-only GitHub run `35109654146` succeeded at the exact admitted commit;
 it performed no build or test. All seven canonical and seven cache-busted
 live assets return HTTP 200 and match the validated artifact.
 
-The site records the mixed matched numerical comparison below, not a numerical
+That site records the mixed matched numerical comparison below, not a numerical
 pass or a performance improvement. Its upstream snapshot remains `e7aff682`;
 the later `d5424f5b`/`ec2b88cf` observations and unavailable protected-runtime prerequisite
 above are not retroactively attributed to that frozen site artifact. The
