@@ -23,6 +23,9 @@ jobs:
       - run: cargo fmt --manifest-path tools/megakernel-planner/Cargo.toml -- --check
       - run: cargo clippy --manifest-path tools/megakernel-planner/Cargo.toml --all-targets --locked -- -D warnings
       - run: cargo test --manifest-path tools/megakernel-planner/Cargo.toml --locked
+      - run: cargo fmt --manifest-path tools/task-graph-model/Cargo.toml -- --check
+      - run: cargo clippy --manifest-path tools/task-graph-model/Cargo.toml --all-targets --locked -- -D warnings
+      - run: cargo test --manifest-path tools/task-graph-model/Cargo.toml --locked
 
   megakernel-measurement-tests:
     runs-on: ubuntu-latest
@@ -34,6 +37,16 @@ jobs:
       - run: python3 -B -I qualification/gfx950-decoder-layer-f32-v1/test_summary.py
       # Replays recorded output against an independent CPU reference, not a GPU run.
       - run: python3 -B -I qualification/gfx950-decoder-layer-f32-v1/test_recorded_results.py
+      # Independent reference and hostile-evidence unit tests, without a GPU or weights download.
+      - run: python3 -B -m unittest -v test_reference
+        working-directory: qualification/gfx950-task-graph-v1
+      - run: python3 -B -m unittest -v test_reference test_binding
+        working-directory: qualification/gfx950-qwen3-kproj-v1
+      - run: python3 -B -m unittest -v test_reference test_binding
+        working-directory: qualification/gfx950-qwen3-kproj-wave64-v1
+      - run: bash -n qualification/gfx950-task-graph-v1/build.sh qualification/gfx950-task-graph-v1/verify.sh
+      - run: bash -n qualification/gfx950-qwen3-kproj-v1/build.sh qualification/gfx950-qwen3-kproj-v1/verify.sh
+      - run: bash -n qualification/gfx950-qwen3-kproj-wave64-v1/build.sh qualification/gfx950-qwen3-kproj-wave64-v1/verify.sh
 
   finite-decoder-probe:
     runs-on: ubuntu-latest
@@ -57,11 +70,15 @@ jobs:
       - run: cargo test --manifest-path tools/gfx950-finite-probe/Cargo.toml --locked
       - run: cargo clippy --manifest-path tools/gfx950-finite-probe/Cargo.toml --all-targets --locked -- -D warnings
 
-  qwen3-swiglu-device:
+  device-binding-tests:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        kernel: [qwen3-swiglu-v1, gfx950-qwen3-kproj-v1, gfx950-qwen3-kproj-wave64-v1, gfx950-task-graph-v1]
     defaults:
       run:
-        working-directory: device/qwen3-swiglu-v1
+        working-directory: device/${{ matrix.kernel }}
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@nightly

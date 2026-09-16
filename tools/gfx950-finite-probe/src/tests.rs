@@ -38,6 +38,8 @@ fn metadata() -> KernelMetadataV1 {
 }
 
 struct Mock {
+    kproj: bool,
+    wave64: bool,
     buffers: BTreeMap<u64, Vec<u8>>,
     next_buffer: u64,
     mutation: u32,
@@ -49,6 +51,8 @@ struct Mock {
 impl Mock {
     fn new(mutation: u32) -> Self {
         Self {
+            kproj: false,
+            wave64: false,
             buffers: BTreeMap::new(),
             next_buffer: 1,
             mutation,
@@ -70,8 +74,24 @@ impl Transport for Mock {
                 ..
             } => {
                 assert_eq!(object_sha256, artifact::digest(&payload));
-                assert_eq!(symbol, artifact::SYMBOL);
-                let mut metadata = metadata();
+                assert_eq!(
+                    symbol,
+                    if self.wave64 {
+                        crate::kproj_artifact::WAVE64_SYMBOL
+                    } else if self.kproj {
+                        crate::kproj_artifact::SYMBOL
+                    } else {
+                        artifact::SYMBOL
+                    }
+                );
+                let mut metadata = if self.kproj {
+                    kproj_metadata()
+                } else {
+                    metadata()
+                };
+                if self.wave64 {
+                    metadata.symbol = crate::kproj_artifact::WAVE64_SYMBOL.into();
+                }
                 if self.mutation == 1 {
                     metadata.object_sha256[0] ^= 1;
                 }
@@ -97,7 +117,11 @@ impl Transport for Mock {
             CommandV1::Write { buffer, offset, .. } => {
                 assert_eq!(offset, 0);
                 *self.buffers.get_mut(&buffer).unwrap() = payload;
-                ResponseV1::Written
+                if self.mutation == 12 {
+                    ResponseV1::Freed
+                } else {
+                    ResponseV1::Written
+                }
             }
             CommandV1::Dispatch {
                 workgroup,
@@ -107,17 +131,42 @@ impl Transport for Mock {
                 ..
             } => {
                 assert_eq!(workgroup, [128, 1, 1]);
-                assert_eq!(grid, [256, 1, 1]);
+                let bytes = if self.kproj {
+                    crate::kproj_artifact::BYTES
+                } else {
+                    BYTES
+                };
+                assert_eq!(
+                    grid,
+                    if self.wave64 {
+                        crate::kproj_artifact::WAVE64_GRID
+                    } else if self.kproj {
+                        crate::kproj_artifact::GRID
+                    } else {
+                        artifact::GRID
+                    }
+                );
                 assert_eq!(timeout_ms, 10_000);
                 assert_eq!(pointers.len(), 3);
-                assert_eq!(payload, artifact::kernarg(&metadata()).unwrap());
+                assert_eq!(
+                    payload,
+                    if self.kproj {
+                        crate::kproj_artifact::kernarg(&kproj_metadata()).unwrap()
+                    } else {
+                        artifact::kernarg(&metadata()).unwrap()
+                    }
+                );
                 for (index, pointer) in pointers.iter().enumerate() {
                     assert_eq!(pointer.kernarg_offset, u32::try_from(index * 16).unwrap());
                     assert_eq!(pointer.buffer, index as u64 + 1);
-                    assert_eq!(pointer.extent_bytes, BYTES[index] as u64);
+                    assert_eq!(pointer.extent_bytes, bytes[index] as u64);
                     assert_eq!(
                         pointer.buffer_offset,
-                        if index == 2 { GUARD as u64 } else { 0 }
+                        if index == 2 || self.kproj {
+                            GUARD as u64
+                        } else {
+                            0
+                        }
                     );
                     assert_eq!(
                         pointer.access,
@@ -134,12 +183,23 @@ impl Transport for Mock {
                 }
                 let output = self.buffers.get_mut(&3).unwrap();
                 if self.mutation != 6 {
-                    output[GUARD..GUARD + BYTES[2]].fill(0);
+                    output[GUARD..GUARD + bytes[2]].fill(0);
                 }
                 if self.mutation == 5 {
                     output[0] ^= 1;
                 }
-                ResponseV1::Dispatched { elapsed_ns: 123 }
+                if self.mutation == 11 {
+                    output[GUARD..GUARD + 4].copy_from_slice(&f32::INFINITY.to_le_bytes());
+                }
+                if self.mutation == 10 {
+                    let weights = self.buffers.get_mut(&2).unwrap();
+                    *weights.last_mut().unwrap() ^= 1;
+                }
+                if self.mutation == 13 {
+                    ResponseV1::Written
+                } else {
+                    ResponseV1::Dispatched { elapsed_ns: 123 }
+                }
             }
             CommandV1::Read {
                 buffer,
@@ -464,5 +524,200 @@ fn cli_requires_acknowledgement_and_rejects_unknown_duplicate_options() {
         let mut changed = acknowledged.clone();
         changed.push(flag);
         assert!(crate::Options::parse(changed.into_iter().map(str::to_owned)).is_err());
+    }
+}
+
+fn kproj_metadata() -> KernelMetadataV1 {
+    let mut value = metadata();
+    value.symbol = crate::kproj_artifact::SYMBOL.into();
+    value.explicit_arguments[0].pointee_alignment = Some(2);
+    value.explicit_arguments[2].pointee_alignment = Some(2);
+    value
+}
+
+#[test]
+fn kproj_fixed_dispatch_guards_all_buffers_and_rejects_protocol_mutations() {
+    for mutation in 0..=13 {
+        let mut mock = Mock::new(mutation);
+        mock.kproj = true;
+        let result = probe::run_kproj(
+            &mut mock,
+            b"fixture object".to_vec(),
+            &kproj_metadata(),
+            &vec![0; crate::kproj_artifact::BYTES[0]],
+            &vec![0; crate::kproj_artifact::BYTES[1]],
+        );
+        assert_eq!(result.is_ok(), mutation == 0, "mutation {mutation}");
+        assert!(mock.dispatches <= 1);
+        if mutation == 0 {
+            assert_eq!(result.unwrap().output.len(), 4096);
+            assert_eq!(mock.dispatches, 1);
+            assert_eq!(mock.frees, [3, 2, 1]);
+            assert!(mock.closed);
+        }
+        if mutation <= 3 && mutation != 0 || mutation == 12 {
+            assert_eq!(mock.dispatches, 0);
+        }
+    }
+}
+
+#[test]
+fn kproj_exact_contract_rejects_decoder_and_every_abi_field_mutation() {
+    use crate::kproj_artifact as abi;
+    abi::validate_abi(&kproj_metadata()).unwrap();
+    assert!(abi::validate_abi(&metadata()).is_err());
+    for mutation in 0..9 {
+        let mut value = kproj_metadata();
+        match mutation {
+            0 => value.symbol.push('x'),
+            1 => value.kernarg_alignment = 16,
+            2 => value.group_segment_bytes = 4,
+            3 => value.private_segment_bytes = 4,
+            4 => value.wavefront_size = 32,
+            5 => value.kernarg_bytes += 1,
+            6 => value.implicit_argument_offset = Some(56),
+            7 => value.implicit_argument_bytes = 128,
+            _ => {
+                value.explicit_arguments.pop();
+            }
+        }
+        assert!(abi::validate_abi(&value).is_err(), "resource {mutation}");
+    }
+    for index in 0..6 {
+        for mutation in 0..5 {
+            let mut value = kproj_metadata();
+            let arg = &mut value.explicit_arguments[index];
+            match mutation {
+                0 => arg.offset += 1,
+                1 => arg.bytes = 4,
+                2 => arg.global_buffer = !arg.global_buffer,
+                3 => arg.pointee_alignment = Some(8),
+                _ => arg.access = Some(BufferAccessV1::ReadWrite),
+            }
+            assert!(
+                abi::validate_abi(&value).is_err(),
+                "arg {index} field {mutation}"
+            );
+        }
+    }
+    let mut native = kproj_metadata();
+    native.kernarg_bytes = 48;
+    native.implicit_argument_offset = None;
+    native.implicit_argument_bytes = 0;
+    for arg in &mut native.explicit_arguments {
+        arg.access = None;
+        arg.pointee_alignment = None;
+    }
+    let kernarg = abi::kernarg(&native).unwrap();
+    assert_eq!(kernarg.len(), 48);
+    for (index, length) in abi::LENGTHS.iter().enumerate() {
+        assert_eq!(&kernarg[index * 16..index * 16 + 8], &[0; 8]);
+        assert_eq!(
+            &kernarg[index * 16 + 8..index * 16 + 16],
+            &length.to_le_bytes()
+        );
+    }
+}
+
+#[test]
+fn kproj_cli_requires_acknowledgement_and_fixed_file_contract() {
+    let args = [
+        "qwen3-kproj-run",
+        "--object",
+        "a",
+        "--source-file",
+        "b",
+        "--metadata",
+        "c",
+        "--worker",
+        "d",
+        "--inputs",
+        "e",
+        "--weights",
+        "f",
+        "--device-id-file",
+        "g",
+        "--run-dir",
+        "h",
+    ];
+    assert!(crate::Options::parse(args.into_iter().map(str::to_owned)).is_err());
+    let mut accepted = args.to_vec();
+    accepted.push("--allow-unauthenticated-machine-code");
+    assert!(crate::Options::parse(accepted.iter().map(|s| (*s).to_owned())).is_ok());
+    for option in ["--grid", "--object", "--allow-unauthenticated-machine-code"] {
+        let mut invalid = accepted.clone();
+        invalid.push(option);
+        assert!(crate::Options::parse(invalid.into_iter().map(str::to_owned)).is_err());
+    }
+}
+
+#[test]
+fn wave64_projection_has_its_own_exact_launch_and_all_guard_checks() {
+    for mutation in 0..=13 {
+        let mut mock = Mock::new(mutation);
+        mock.kproj = true;
+        mock.wave64 = true;
+        let mut metadata = kproj_metadata();
+        metadata.symbol = crate::kproj_artifact::WAVE64_SYMBOL.into();
+        let result = probe::run_kproj(
+            &mut mock,
+            b"fixture object".to_vec(),
+            &metadata,
+            &vec![0; crate::kproj_artifact::BYTES[0]],
+            &vec![0; crate::kproj_artifact::BYTES[1]],
+        );
+        assert_eq!(result.is_ok(), mutation == 0, "wave mutation {mutation}");
+        assert!(mock.dispatches <= 1);
+        if mutation == 0 {
+            assert_eq!(result.unwrap().output.len(), 4096);
+            assert_eq!(mock.frees, [3, 2, 1]);
+            assert!(mock.closed);
+        }
+    }
+}
+
+#[test]
+fn wave64_cli_remains_fixed_and_requires_explicit_execution_acknowledgement() {
+    let inspect = [
+        "qwen3-kproj-wave64-inspect",
+        "--object",
+        "a",
+        "--source-file",
+        "b",
+        "--metadata",
+        "c",
+    ];
+    assert!(crate::Options::parse(inspect.into_iter().map(str::to_owned)).is_ok());
+    let mut run = vec![
+        "qwen3-kproj-wave64-run",
+        "--object",
+        "a",
+        "--source-file",
+        "b",
+        "--metadata",
+        "c",
+        "--worker",
+        "d",
+        "--inputs",
+        "e",
+        "--weights",
+        "f",
+        "--device-id-file",
+        "g",
+        "--run-dir",
+        "h",
+    ];
+    assert!(crate::Options::parse(run.iter().map(|s| (*s).to_owned())).is_err());
+    run.push("--allow-unauthenticated-machine-code");
+    assert!(crate::Options::parse(run.iter().map(|s| (*s).to_owned())).is_ok());
+    for option in [
+        "--grid",
+        "--block",
+        "--object",
+        "--allow-unauthenticated-machine-code",
+    ] {
+        let mut invalid = run.clone();
+        invalid.push(option);
+        assert!(crate::Options::parse(invalid.into_iter().map(str::to_owned)).is_err());
     }
 }

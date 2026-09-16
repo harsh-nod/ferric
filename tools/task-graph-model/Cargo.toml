@@ -1,0 +1,18 @@
+[package]
+name = "ferric-task-graph-model"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.94"
+publish = false
+description = "Engineering-only interleaving model of the finite gfx950 scheduler"
+
+[workspace]
+
+[lints.rust]
+unsafe_code = "forbid"
+
+[lints.clippy]
+all = "deny"
+pedantic = "deny"
+
+[dependencies]

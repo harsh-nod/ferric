@@ -1,6 +1,4 @@
-use fe2o3_amdhsa_loader::AdmittedProfile;
-use fe2o3_hsaco::{ArgumentAccess, ExplicitValueKind};
-use fe2o3_kfd::engineering_wire::{BufferAccessV1, ExplicitArgumentV1, KernelMetadataV1};
+use fe2o3_kfd::engineering_wire::{BufferAccessV1, KernelMetadataV1};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 
@@ -47,10 +45,10 @@ pub fn declared_abi() -> DeclaredAbi {
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(deny_unknown_fields)]
 pub struct ObservedLaunchMetadata {
-    required_workgroup_size: Option<[u32; 3]>,
-    max_flat_workgroup_size: u32,
-    max_workgroups: [Option<u32>; 3],
-    cluster_dims: Option<[u32; 3]>,
+    pub required_workgroup_size: Option<[u32; 3]>,
+    pub max_flat_workgroup_size: u32,
+    pub max_workgroups: [Option<u32>; 3],
+    pub cluster_dims: Option<[u32; 3]>,
 }
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
@@ -90,14 +88,6 @@ impl ObservedArgumentQualifiers {
     }
 }
 
-fn wire_access(access: ArgumentAccess) -> BufferAccessV1 {
-    match access {
-        ArgumentAccess::ReadOnly => BufferAccessV1::Read,
-        ArgumentAccess::WriteOnly => BufferAccessV1::Write,
-        ArgumentAccess::ReadWrite => BufferAccessV1::ReadWrite,
-    }
-}
-
 pub fn validate_launch(
     required: Option<[u32; 3]>,
     max_flat: u32,
@@ -130,10 +120,6 @@ pub fn hex(bytes: &[u8; 32]) -> String {
     output
 }
 
-fn narrow(value: u64) -> Result<u32> {
-    u32::try_from(value).map_err(|_| "kernel metadata integer exceeds supported width".into())
-}
-
 /// Inspect owned bytes without opening any GPU device or minting authority.
 pub struct Inspection {
     pub metadata: KernelMetadataV1,
@@ -142,80 +128,19 @@ pub struct Inspection {
 }
 
 pub fn inspect(object: &[u8]) -> Result<Inspection> {
-    let closure = fe2o3_amdhsa_loader::validate(object, AdmittedProfile::Gfx950XnackOffCov6)
-        .map_err(|_| "offline gfx950 code object admission failed")?
-        .bind_kernel(SYMBOL)
-        .map_err(|_| "finite decoder symbol is absent or invalid")?;
-    let resources = closure.resources();
-    let launch = ObservedLaunchMetadata {
-        required_workgroup_size: resources.required_workgroup_size(),
-        max_flat_workgroup_size: resources.max_flat_workgroup_size(),
-        max_workgroups: resources.max_workgroups(),
-        cluster_dims: resources.cluster_dims(),
-    };
+    let observed = crate::object::inspect(object, SYMBOL)?;
+    let launch = &observed.launch;
     validate_launch(
         launch.required_workgroup_size,
         launch.max_flat_workgroup_size,
         launch.max_workgroups,
         launch.cluster_dims,
     )?;
-    let kernel = closure.selected_kernel();
-    if !kernel.arguments_were_emitted() {
-        return Err("explicit kernel argument metadata is required".into());
+    for (index, qualifier) in observed.qualifiers.iter().enumerate() {
+        qualifier.validate(index)?;
     }
-    let qualifiers = kernel
-        .explicit_arguments()
-        .iter()
-        .enumerate()
-        .map(|(index, argument)| {
-            let observed = ObservedArgumentQualifiers {
-                actual_access: argument.actual_access().map(wire_access),
-                is_const: argument.is_const(),
-                is_restrict: argument.is_restrict(),
-                is_volatile: argument.is_volatile(),
-                is_pipe: argument.is_pipe(),
-            };
-            observed.validate(index)?;
-            Ok(observed)
-        })
-        .collect::<Result<Vec<_>>>()?;
-    let explicit_arguments = kernel
-        .explicit_arguments()
-        .iter()
-        .map(|argument| {
-            if !matches!(
-                argument.value_kind(),
-                ExplicitValueKind::ByValue | ExplicitValueKind::GlobalBuffer
-            ) {
-                return Err("unsupported explicit argument kind".into());
-            }
-            Ok(ExplicitArgumentV1 {
-                offset: narrow(argument.offset())?,
-                bytes: narrow(argument.size())?,
-                global_buffer: argument.value_kind() == ExplicitValueKind::GlobalBuffer,
-                pointee_alignment: argument.pointee_alignment().map(narrow).transpose()?,
-                access: argument.access().map(wire_access),
-            })
-        })
-        .collect::<Result<Vec<_>>>()?;
-    let metadata = KernelMetadataV1 {
-        symbol: kernel.name().into(),
-        object_sha256: digest(object),
-        kernarg_bytes: narrow(kernel.kernarg_segment_size())?,
-        kernarg_alignment: narrow(kernel.kernarg_segment_alignment())?,
-        group_segment_bytes: narrow(kernel.group_segment_fixed_size())?,
-        private_segment_bytes: narrow(kernel.private_segment_fixed_size())?,
-        wavefront_size: kernel.wavefront_size(),
-        implicit_argument_offset: kernel.implicit_argument_offset().map(narrow).transpose()?,
-        implicit_argument_bytes: narrow(kernel.implicit_argument_size())?,
-        explicit_arguments,
-    };
-    validate_abi(&metadata)?;
-    Ok(Inspection {
-        metadata,
-        launch,
-        qualifiers,
-    })
+    validate_abi(&observed.metadata)?;
+    Ok(observed)
 }
 
 pub fn validate_abi(metadata: &KernelMetadataV1) -> Result<()> {

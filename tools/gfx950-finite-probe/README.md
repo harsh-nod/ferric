@@ -91,3 +91,62 @@ cargo test --manifest-path tools/gfx950-finite-probe/Cargo.toml
 cargo clippy --manifest-path tools/gfx950-finite-probe/Cargo.toml --all-targets -- -D warnings
 cargo fmt --manifest-path tools/gfx950-finite-probe/Cargo.toml --check
 ```
+
+## Bounded Task Graph
+
+The separate `task-graph-inspect` and `task-graph-run` modes accept only
+`ferric_gfx950_task_graph_v1`; the decoder modes and ABI are unchanged. This
+engineering micrograph is not model inference, a production deployment path,
+or a performance comparison with another scheduler.
+
+The fixed DAG is `0 -> {1,2} -> 3 -> {4,5} -> 6`. Each task sums one tile of
+128 unsigned integers plus the payloads of its immediate dependencies. Inputs
+are exactly 896 little-endian `u32` values, each at most 1024. The independent
+Python reference evaluates the DAG topologically, without reproducing the GPU
+claim/queue algorithm.
+
+The source ABI has two read slices, input and expected-epoch configuration,
+followed by thirteen shared atomic pointers: epoch, ready, done, claimed, owners,
+errors, and seven payloads. Its seventeen physical records occupy 136 explicit
+kernarg bytes; native optional qualifiers remain observations rather than
+invented authority. The launch is two 128-thread workgroups, two wave64 waves
+per workgroup, with exactly 1024 bytes of shared storage.
+
+```sh
+"$PROBE" task-graph-inspect --object /path/tasks.hsaco --source-file /path/tasks.rs \
+  --metadata /path/task-artifact.json
+"$PROBE" task-graph-run --worker /path/fe2o3-gfx950-engineering-worker \
+  --object /path/tasks.hsaco --source-file /path/tasks.rs \
+  --metadata /path/task-artifact.json --inputs /path/case/inputs.u32le \
+  --device-id-file /private/selected-device --run-dir /path/new-task-run \
+  --allow-unauthenticated-machine-code
+```
+
+One worker, queue, and fifteen distinct allocations are reused for four positive
+epochs, numbered 1 through 4, followed by a stale-epoch rejection (expected 5,
+actual 4). All fifteen allocations have 64-byte prefix/suffix guards. The host
+resets mutable state between completed dispatches and checks input/configuration
+immutability, every guard, exact completion masks, owners, epoch, and error state
+before proceeding. The stale case must change only the error flag to numeric 1.
+Every successful run ends with reverse-order frees, Close, and child exit.
+
+`states.u32le` contains all thirteen state words from each of the five epochs.
+`report.json` binds the artifact, probe, worker, input and state hashes. It records
+the actual owner of each task and dependency edges whose endpoints were handled
+by different workgroups. Launching two workgroups does **not** establish that a
+cross-workgroup dependency occurred; a correct serial execution is reported as
+such. Numerical checking is separate:
+
+```sh
+python3 qualification/gfx950-task-graph-v1/reference.py check \
+  --case-dir /path/case --run-dir /path/new-task-run \
+  --artifact /path/task-artifact.json --probe "$PROBE" \
+  --worker /path/fe2o3-gfx950-engineering-worker
+```
+
+All timing fields use host clocks. `worker_dispatch_interval_ns` includes
+kernarg copying, signal reset, publication, completion polling and idle checks.
+`host_dispatch_roundtrip_ns` additionally includes the framed protocol roundtrip.
+`host_epoch_reset_dispatch_readback_ns` includes state reset and all readbacks;
+`host_lifecycle_ns` also covers artifact checking and worker setup/cleanup, but
+excludes final report writes. None is a GPU timestamp or isolated kernel time.

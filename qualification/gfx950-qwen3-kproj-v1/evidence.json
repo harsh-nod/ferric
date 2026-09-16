@@ -1,0 +1,81 @@
+{
+  "schema": "ferric-qwen3-kproj-public-engineering-summary-v1",
+  "authority": "none",
+  "scope": "four actual-weight scalar GEMV correctness dispatches; no production, full-model or performance claim",
+  "target": "gfx950",
+  "workgroup": [
+    128,
+    1,
+    1
+  ],
+  "grid_work_items": [
+    1024,
+    1,
+    1
+  ],
+  "policy": "bf16-exact-fp32-fma-gamma1024-v1",
+  "values_checked": 4096,
+  "identity": {
+    "source_sha256": "fa4b4dbe31864c147c58c7f0d6af1b3686c7e232c7e1ff5f2a4b154527b58877",
+    "object_sha256": "53a4d535ec1d9f7eb75b8b501af840cc92e4bc9b98d70c1c915aa3b7ec776792",
+    "probe_sha256": "1301933c47bc1361513247516a9f8d7ab666612374541e5951ad06fa3d68240d",
+    "worker_sha256": "22296c36c1cafca4ff9c13a30c5b650f53a63bb8bbc37676fcbf8b303d23b11a",
+    "weights_sha256": "68dd761a149b0ff707ad0c1ac6d61dfed75d6fedfbbdbfedde4889f5ca0706f4",
+    "reference_sha256": "f68bdc21ed953fff9a0684168c3273aeff8d820efa64801bb713acbf9a87be47",
+    "extractor_sha256": "f1971e5a970c42d9fcd2e12beada69547a97f5287d7f0e734b3efe23773ea1f9",
+    "binder_sha256": "387bfe763e72c8ba9417e4e6d635f308ff9bc826570322c75f5b4e5ad5c3bf97",
+    "preflight_sha256": "96121809a46b598731eb2a84b200564173e9ebf17edab0efb50150ece332b337",
+    "artifact_record_sha256": "7e8dfb8ac4bd4414b789b8b19387b021242ae02d53323078831694d4674786ef"
+  },
+  "cases": [
+    {
+      "case": "zero",
+      "values_checked": 1024,
+      "exact_rows_checked": 1024,
+      "maximum_absolute_error": 0.0,
+      "maximum_error_to_bound_ratio": 0.0,
+      "input_sha256": "e5a00aa9991ac8a5ee3109844d84a55583bd20572ad3ffcd42792f3c36b183ad",
+      "output_sha256": "ad7facb2586fc6e966c004d7d1d16b024f5805ff7cb47c7a85dabd8b48892ca7",
+      "report_sha256": "e9b203163c1f30908af7f52ba6730afadc6b541d27066dda94031341e42b9761",
+      "comparison_sha256": "a1d0fb7188493004afabf1e454b1baf90d5a68878bf40994c07961ad65cf8d9b",
+      "receipt_sha256": "22316a9067af6e50a796118d2ea6d3b90768faa930fa00e853e3d521360bac1e"
+    },
+    {
+      "case": "basis",
+      "values_checked": 1024,
+      "exact_rows_checked": 1024,
+      "maximum_absolute_error": 0.0,
+      "maximum_error_to_bound_ratio": 0.0,
+      "input_sha256": "e491595da7b04002378344376d0bc3350fd7ed604a4126922e8f25c4b111fea4",
+      "output_sha256": "d4e136c6bed2f40f7fe0f7165d34f222ef57e392f1cf64b5e0e15248ccaf3cdd",
+      "report_sha256": "6be756b5ded3ae0ad069b952fb9203fa76ae8b2e06e47d57f4a6528956237a93",
+      "comparison_sha256": "081bdfd176c8122ebca3de7e7a79228a1aaba36abd6afbf95cdd068a870435de",
+      "receipt_sha256": "22eb11efc432289a6018c4a41768209139dc9564b9b4e9c7ce2dbe076c9c9607"
+    },
+    {
+      "case": "mixed",
+      "values_checked": 1024,
+      "exact_rows_checked": 0,
+      "maximum_absolute_error": 1.7881393432617188e-07,
+      "maximum_error_to_bound_ratio": 0.0001264578406250646,
+      "input_sha256": "1514456873bd579ed3fb5bcad2c071f69124f34981d795711fd0a3831b60bfb5",
+      "output_sha256": "3a1c3df323b12866be070f7b0436d85cd2a6fb566e47d2a83bf36729bbcdbaf9",
+      "report_sha256": "f1834d8d615435a15b0df071a361888e70a9226cd475f43cc9314080f2fc6dc6",
+      "comparison_sha256": "8ec386dd579ecede0c7910c5bc0044840b95f4c3439d8651814e00536cda505d",
+      "receipt_sha256": "64970d72997f16505aa8203bc555b0a5bb742dd28e7e22d864eac668e5c09404"
+    },
+    {
+      "case": "cancellation",
+      "values_checked": 1024,
+      "exact_rows_checked": 1,
+      "maximum_absolute_error": 0.0,
+      "maximum_error_to_bound_ratio": 0.0,
+      "input_sha256": "2979958cc2f3f569af6e39c1fbf4d06d4e9383016cd2bd20233cc5d3958ce86d",
+      "output_sha256": "819560afbf5e0ca3fb45899a92a7c2b48d749b30538c58c2e1d59930eace77f3",
+      "report_sha256": "f3c3e3fac7ebf689062b7bd221ba77f941b32358823393713aa908e5a19a55ec",
+      "comparison_sha256": "9f41623c4e2936fd413bab202c174f9be0f6208a8700f2707b770133c25549a1",
+      "receipt_sha256": "3aee00daadbc0a386df9db3147b3e94e32a24291caaada89b36da8204aeb897b"
+    }
+  ],
+  "redaction": "allowlisted receipt fields only; no hardware identifiers, device selector or raw worker transcript"
+}

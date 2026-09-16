@@ -1,9 +1,17 @@
 mod artifact;
+mod kproj_artifact;
+mod kproj_command;
+mod object;
 mod probe;
 mod session;
+mod task_artifact;
+mod task_command;
+mod task_probe;
 
 #[cfg(test)]
 mod process_tests;
+#[cfg(test)]
+mod task_tests;
 #[cfg(test)]
 mod tests;
 
@@ -119,8 +127,22 @@ impl Options {
             .next()
             .ok_or("expected inspect or run subcommand")?;
         let required = match mode.as_str() {
-            "inspect" => vec!["--object", "--source-file", "--metadata"],
-            "run" => vec![
+            "inspect"
+            | "task-graph-inspect"
+            | "qwen3-kproj-inspect"
+            | "qwen3-kproj-wave64-inspect" => {
+                vec!["--object", "--source-file", "--metadata"]
+            }
+            "task-graph-run" => vec![
+                "--object",
+                "--source-file",
+                "--metadata",
+                "--worker",
+                "--inputs",
+                "--device-id-file",
+                "--run-dir",
+            ],
+            "run" | "qwen3-kproj-run" | "qwen3-kproj-wave64-run" => vec![
                 "--object",
                 "--source-file",
                 "--metadata",
@@ -135,7 +157,13 @@ impl Options {
         let mut paths = BTreeMap::new();
         let mut acknowledged = false;
         while let Some(flag) = arguments.next() {
-            if flag == "--allow-unauthenticated-machine-code" && mode == "run" && !acknowledged {
+            if flag == "--allow-unauthenticated-machine-code"
+                && matches!(
+                    mode.as_str(),
+                    "run" | "task-graph-run" | "qwen3-kproj-run" | "qwen3-kproj-wave64-run"
+                )
+                && !acknowledged
+            {
                 acknowledged = true;
                 continue;
             }
@@ -153,7 +181,11 @@ impl Options {
         if required.iter().any(|flag| !paths.contains_key(*flag)) {
             return Err("missing required command option; see README.md".into());
         }
-        if mode == "run" && !acknowledged {
+        if matches!(
+            mode.as_str(),
+            "run" | "task-graph-run" | "qwen3-kproj-run" | "qwen3-kproj-wave64-run"
+        ) && !acknowledged
+        {
             return Err(
                 "run requires explicit --allow-unauthenticated-machine-code acknowledgement".into(),
             );
@@ -167,6 +199,12 @@ impl Options {
 }
 
 fn execute(options: &Options) -> Result<()> {
+    if options.mode.starts_with("qwen3-kproj-") {
+        return kproj_command::execute(options);
+    }
+    if options.mode.starts_with("task-graph-") {
+        return task_command::execute(options);
+    }
     let object = read_bounded(options.path("--object"), u64::from(MAX_OBJECT_BYTES_V1))?;
     let source = read_bounded(options.path("--source-file"), 1024 * 1024)?;
     let inspected = artifact::inspect(&object)?;

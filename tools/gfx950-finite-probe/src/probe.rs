@@ -24,7 +24,11 @@ pub fn ready(packet: &Packet, unique_id: u64) -> Result<()> {
     Ok(())
 }
 
-fn request(transport: &mut impl Transport, command: CommandV1, payload: Vec<u8>) -> Result<Packet> {
+pub(crate) fn request(
+    transport: &mut impl Transport,
+    command: CommandV1,
+    payload: Vec<u8>,
+) -> Result<Packet> {
     if command
         .payload_bytes()
         .map_err(|_| "invalid protocol command")?
@@ -39,7 +43,7 @@ fn request(transport: &mut impl Transport, command: CommandV1, payload: Vec<u8>)
     Ok(packet)
 }
 
-fn read(transport: &mut impl Transport, buffer: u64, bytes: usize) -> Result<Vec<u8>> {
+pub(crate) fn read(transport: &mut impl Transport, buffer: u64, bytes: usize) -> Result<Vec<u8>> {
     let bytes_u32 = u32::try_from(bytes).map_err(|_| "read exceeds supported width")?;
     let packet = request(
         transport,
@@ -67,9 +71,63 @@ pub fn run(
     weights: &[u8],
 ) -> Result<Observation> {
     artifact::validate_abi(metadata)?;
+    run_fixed(
+        transport,
+        object,
+        metadata,
+        inputs,
+        weights,
+        FixedDispatch {
+            bytes: BYTES,
+            grid: GRID,
+            kernarg: artifact::kernarg(metadata)?,
+            guard_inputs: false,
+        },
+    )
+}
+
+pub fn run_kproj(
+    transport: &mut impl Transport,
+    object: Vec<u8>,
+    metadata: &KernelMetadataV1,
+    inputs: &[u8],
+    weights: &[u8],
+) -> Result<Observation> {
+    crate::kproj_artifact::validate_abi(metadata)?;
+    run_fixed(
+        transport,
+        object,
+        metadata,
+        inputs,
+        weights,
+        FixedDispatch {
+            bytes: crate::kproj_artifact::BYTES,
+            grid: crate::kproj_artifact::variant(metadata)?.grid(),
+            kernarg: crate::kproj_artifact::kernarg(metadata)?,
+            guard_inputs: true,
+        },
+    )
+}
+
+// Only the two validated, fixed contracts above can select a dispatch layout.
+struct FixedDispatch {
+    bytes: [usize; 3],
+    grid: [u32; 3],
+    kernarg: Vec<u8>,
+    guard_inputs: bool,
+}
+
+fn run_fixed(
+    transport: &mut impl Transport,
+    object: Vec<u8>,
+    metadata: &KernelMetadataV1,
+    inputs: &[u8],
+    weights: &[u8],
+    layout: FixedDispatch,
+) -> Result<Observation> {
     if artifact::digest(&object) != metadata.object_sha256
-        || inputs.len() != BYTES[0]
-        || weights.len() != BYTES[1]
+        || inputs.len() != layout.bytes[0]
+        || weights.len() != layout.bytes[1]
     {
         return Err("artifact digest or input extents mismatch".into());
     }
@@ -93,11 +151,20 @@ pub fn run(
         return Err("worker kernel metadata differs from offline exact artifact inspection".into());
     }
 
-    let mut guarded = vec![0xa5; BYTES[2] + GUARD * 2];
-    for word in guarded[GUARD..GUARD + BYTES[2]].chunks_exact_mut(4) {
+    let mut guarded = vec![0xa5; layout.bytes[2] + GUARD * 2];
+    for word in guarded[GUARD..GUARD + layout.bytes[2]].chunks_exact_mut(4) {
         word.copy_from_slice(&0x7fc0_1234_u32.to_le_bytes());
     }
-    let data = [inputs, weights, guarded.as_slice()];
+    let protect_input = |bytes: &[u8]| {
+        if layout.guard_inputs {
+            let mut protected = vec![0xa5; bytes.len() + GUARD * 2];
+            protected[GUARD..GUARD + bytes.len()].copy_from_slice(bytes);
+            protected
+        } else {
+            bytes.to_vec()
+        }
+    };
+    let data = [protect_input(inputs), protect_input(weights), guarded];
     let mut buffers = [0_u64; 3];
     for (index, bytes) in data.iter().enumerate() {
         let allocated = request(
@@ -125,7 +192,7 @@ pub fn run(
                 offset: 0,
                 payload_bytes: u32::try_from(bytes.len()).expect("bounded fixture"),
             },
-            bytes.to_vec(),
+            bytes.clone(),
         )?;
         if !matches!(written.response, ResponseV1::Written) {
             return Err("worker did not acknowledge initialization".into());
@@ -137,8 +204,12 @@ pub fn run(
         .map(|(index, buffer)| PointerFixupV1 {
             kernarg_offset: u32::try_from(index * 16).expect("three slices"),
             buffer: *buffer,
-            buffer_offset: if index == 2 { GUARD as u64 } else { 0 },
-            extent_bytes: BYTES[index] as u64,
+            buffer_offset: if index == 2 || layout.guard_inputs {
+                GUARD as u64
+            } else {
+                0
+            },
+            extent_bytes: layout.bytes[index] as u64,
             access: if index == 2 {
                 BufferAccessV1::Write
             } else {
@@ -146,14 +217,14 @@ pub fn run(
             },
         })
         .collect();
-    let args = artifact::kernarg(metadata)?;
+    let args = layout.kernarg;
     let dispatched = request(
         transport,
         CommandV1::Dispatch {
             kernel,
             payload_bytes: u32::try_from(args.len()).expect("bounded kernarg"),
             workgroup: WORKGROUP,
-            grid: GRID,
+            grid: layout.grid,
             pointers,
             timeout_ms: 10_000,
         },
@@ -163,19 +234,19 @@ pub fn run(
         return Err("worker did not observe dispatch completion".into());
     };
     for index in 0..2 {
-        if read(transport, buffers[index], BYTES[index])? != data[index] {
+        if read(transport, buffers[index], data[index].len())? != data[index] {
             return Err("read-only input changed during dispatch".into());
         }
     }
-    let readback = read(transport, buffers[2], guarded.len())?;
+    let readback = read(transport, buffers[2], data[2].len())?;
     if readback[..GUARD]
         .iter()
-        .chain(&readback[GUARD + BYTES[2]..])
+        .chain(&readback[GUARD + layout.bytes[2]..])
         .any(|byte| *byte != 0xa5)
     {
         return Err("output guard corruption detected".into());
     }
-    let output = readback[GUARD..GUARD + BYTES[2]].to_vec();
+    let output = readback[GUARD..GUARD + layout.bytes[2]].to_vec();
     if output
         .chunks_exact(4)
         .any(|word| !f32::from_le_bytes(word.try_into().expect("four bytes")).is_finite())
