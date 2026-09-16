@@ -41,10 +41,13 @@ all 1,604 regular members and 1,603 payload hashes and sizes pass independent
 local checks. No engine, Verus or GPU test is attributed to this adoption.
 The `111722028` build/emission/native records below remain explicitly frozen
 at that checkpoint and do not validate the newer compiler.
-The latest read-only upstream check subsequently finds `45d0bf2e`: nine commits
+An intermediate read-only upstream check subsequently finds `45d0bf2e`: nine commits
 over 349, covering generative tile providers, nominal refusals, descriptor
 signature normalization and associated tests. The active diagnostic campaigns
-remain frozen on 349; this newer head has not been adopted or validated here.
+remain frozen on 349; this newer head is not adopted by Ferric. The compiler
+fix lane then rebases onto `9af22bb5`, one further optional-GDB-audit test commit.
+Its separately attributed validation below does not upgrade Ferric's adopted
+compiler pin or relabel any compiler111/349 evidence.
 
 The matching engineering CLI, linker proxy, backend and extractor build on
 mi300x from the exact published compiler archive. All six tool-build/copy/source
@@ -246,6 +249,36 @@ ordinary-source positive test fails at a later authenticated store-mapping
 boundary. Source/protected-input/control/toolchain after-checks pass. The
 failed positive is preserved; remaining read-rejection and gather diagnostics
 do not turn that failure into a successful compiler pipeline.
+
+The R4 compiler successor on exact main `9af22bb5`, candidate tree
+`6401d5e74a9a072713711825de5caa4b1a519bfe`, adds narrow trusted Thread-call
+store-value mapping using the existing dominance resolver. Fresh producers,
+three output-ABI unit tests, 30 GPU-expression regressions and the unchanged
+ordinary-source positive all pass. The positive now reaches the existing
+`functional-refinement proof runtime unavailable` boundary. Its compiler
+still stops before proof admission or artifact emission; no solver or
+production-admission success is implied.
+
+R4's overall exit remains 101 because scoped strict Clippy reports 17
+diagnostics. All reported sites are unchanged relative to the exact `9af` base;
+this is source attribution, not a separately executed baseline result. No
+warning is suppressed or unrelated code refactored. Final source, producer,
+control and protected-input checks pass. The 88,279,315-byte terminal archive
+has SHA-256
+`717ef333171433e583cc44d4b4e7e1bef80794cd0719ef198fc63940e1552e09`;
+all 183 regular members, 182 payload hashes and four actual producer ELF
+copies pass independent local verification. Before this run, four exact
+obsolete producer names are retired after retention/no-use checks, reclaiming
+273,312 KiB without changing the shared-stage cap or protected inputs.
+
+This candidate is not published. The proposed public patch will preserve the
+reusable ABI/resolver changes and meaningful passing coverage, but exclude
+the privately retained gather/slice-read diagnostic experiments. The latter
+failed assertions are not rewritten as passes; the proposed standalone
+coordinate-read regression has not run. A fresh-main public diff review and
+validation remain required before any `[skip ci]` push. The current shared
+compiler stage has only 194,720 KiB free within its cap, below the existing
+512 MiB initial reserve; no further build is admitted at this checkpoint.
 
 Separately, two redundant remote archive copies are removed after local
 verification, reclaiming 116,240,384 allocated bytes. Their attempted extra
@@ -1124,7 +1157,7 @@ the fresh device census found all eight mi300x GPUs at 100 percent busy.
 
 | Team | Current Work | Next Evidence Required |
 | --- | --- | --- |
-| Compiler / Kernels | Published core-only `111722028` has zero GitHub runs/checks. Its 13-root MFMA13 engineering emission and replay pass. A separate 349 output-ABI candidate passes three unit tests but fails the ordinary-source positive at the next store-mapping boundary. The narrow resolver successor is rebased onto main `9af22bb5` for remote validation, not published or adopted by Ferric. | Resolve and validate the generic compiler boundary; rebase and retest before any core-only main push with CI skipped. Kernel emission is not numerical qualification. |
+| Compiler / Kernels | Published core-only `111722028` has zero GitHub runs/checks. The resolver successor on main `9af22bb5` passes 3 ABI tests, 30 expression regressions and the unchanged real-source positive to the unavailable-proof-runtime boundary. R4 remains exit 101 because strict Clippy reports 17 diagnostics at unchanged upstream sites. Full evidence is retained; no new push or Ferric adoption. | Prepare/review a clean core-only public diff, preserve excluded failed experiments, restore the unchanged build-space reserve, and rebase/revalidate before a CI-skipped push. No proof admission or kernel numerical qualification is established. |
 | Runtime / Integration | Exact `2bfce38b`/`111722028` native32 completes 20 speculative rounds, full-accept catch-up and clean teardown. The current111 prefill comparison matches the next token but has max absolute logit error 0.125. Combined M5/catch-up source `568882e2` passes 21 host349 phases and is integrated privately at `6b5322dc`. | Investigate numerical differences, execute actual five-position comparison, broaden continuation/fault coverage and obtain matched TTFT/TPOT/throughput measurements. |
 | Verification | Exact `a9fad31b`/111 verifies the production catch-up transition and all nine actual-body mutations fail intended postconditions. Fresh combined `568882e2`/349 separately passes all 14 proof phases and verifies that same selected method with genuine dependency exports. Both campaigns are fully retained; old negatives remain111. | Prove outer queue/caller and physical KV composition separately, preserve exact compiler attribution and obtain native validation of the combined capture path. |
 | Integration / Pages | Private integration now includes the host-tested M5/catch-up source on349. Public static `3e41846` reports the dated native/numerical/proof checkpoint; all 14 live asset checks match mi300x QA. Completed prefill scratch and obsolete111 host-cache cleanup reclaim 350,568,448 and 1,427,656,704 bytes after retention. | Keep dated public scopes truthful, deploy only validated prebuilt assets and remove only completed owned stages/worktrees. |
