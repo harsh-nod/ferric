@@ -2,8 +2,9 @@
 
 This directory provides an independent exact-integer DAG reference and an
 engineering-only dispatch harness for the [device source](../../device/gfx950-task-graph-v1/README.md).
-The source's current checked compiler frontier is pipeline convergence; no
-scheduler HSACO or GPU result is claimed yet.
+General kernel verification, including pipeline convergence, passes for the
+current source. Translation validation of conditional-read effect control
+still blocks emission; no scheduler HSACO or GPU result is claimed yet.
 
 ```sh
 python3 -B -m unittest -v test_reference

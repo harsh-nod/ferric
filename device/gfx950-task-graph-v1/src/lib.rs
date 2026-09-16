@@ -86,15 +86,20 @@ pub fn ferric_gfx950_task_graph_v1(
     } else {
         fe2o3_device::trap()
     };
+    let config_view = if let Ok(view) = StridedReadView2D::from_shared_slice(config, 0, 1, 1, 1) {
+        view
+    } else {
+        fe2o3_device::trap()
+    };
     // The typed linear index retains invocation evidence for LDS projection.
-    // With the exact 128-lane launch, quotient/remainder are WG/local IDs.
+    // The required 128-lane workgroup and max_grid=2 launch contract bound
+    // these WG/local IDs; runtime admission must enforce that same contract.
     let global_index = thread::index_1d().get();
     let lane = global_index % LANES;
     let worker = (global_index / LANES) as u32;
-    if lane >= LANES || worker >= 2 {
-        fe2o3_device::trap();
-    }
-    let expected_epoch = config[0];
+    // Zero is always rejected by the existing stale-epoch path. The total
+    // read preserves collective participation even on an invalid coordinate.
+    let expected_epoch = config_view.load_or(0, 0, 0);
     let owner = if worker == 0 { 1u32 } else { 2u32 };
     let mut scope = WorkgroupLdsScope::current();
     let mut pipeline = WorkgroupPipeline::<u32, 2, 128, 1>::current(&mut scope);

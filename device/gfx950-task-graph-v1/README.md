@@ -6,13 +6,13 @@ It requires the normal checked source-to-semantic-to-ranked-to-KIR compiler path
 A host test does not execute or qualify the device entry point.
 
 Current checkpoint: host contract tests and the independent scheduler model
-pass, and production extraction passes source/arithmetic analysis. Extraction
-last rejected a slice-bounds panic edge inside the collective loop. The source
-now uses a checked total-load view and the existing invalid-input sentinel;
-extraction still rejects because the ranked access projection represents its
-bounds-failure path as a trap rather than an effect-free continuation. There
-is no emitted scheduler HSACO or GPU scheduler result at this checkpoint.
-Proof gates remain enabled. Projection GPU results are separate evidence.
+pass. Production extraction passes source/arithmetic analysis and general
+kernel verification, including finite pipeline convergence. Input and config
+reads use checked total-load views; launch bounds come from the unchanged
+authenticated geometry contract. Translation validation still rejects the
+conditional-read effect-control mapping before target IR emission. There is
+no scheduler HSACO or GPU scheduler result at this checkpoint. All compiler
+gates remain enabled. Projection GPU results are separate evidence.
 
 ## Graph and Arithmetic
 
