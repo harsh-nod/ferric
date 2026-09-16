@@ -30,3 +30,23 @@ CPU-only regressions, also on mi300x:
 ```sh
 python3 -I -B test_engineering_m5_rank_diagnostic.py
 ```
+
+## Checkpoint RMSNorm Ablation
+
+The additive `engineering_rmsnorm_ablation.py` uses the pinned reference venv
+on mi300x. It authenticates all nine canonical target files (16,392,982,768
+bytes), then reads only embedding row 13 and layer-zero input RMSNorm weights.
+It never loads the full model. From the repository layout:
+
+```sh
+"$REFERENCE_VENV/bin/python" -I -B benches/m1/reference/test_engineering_rmsnorm_ablation.py
+"$REFERENCE_VENV/bin/python" -I -B benches/m1/reference/engineering_rmsnorm_ablation.py \
+  MODEL_SOURCE NEW_OUTPUT_DIRECTORY
+```
+
+The three CPU cases are actual pinned HF RMSNorm, sequential FP32 reduction
+with `rsqrt`, and that same reduction with `sqrt` followed by reciprocal. All
+cases retain both BF16 rounding boundaries. The fresh output contains raw
+inputs, intermediate tensors, outputs, exact bit differences and `ablation.json`.
+The checkpoint embedding row is not a captured final hidden state; this test
+cannot establish device behavior or explain an end-to-end token mismatch.

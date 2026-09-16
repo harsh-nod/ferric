@@ -33,6 +33,35 @@ removed after retention and an empty scoped file-use check, reclaiming
 3,216 KiB. This is posthoc numerical diagnosis, not FP32-head evidence,
 isolated RMSNorm causality, new TTFT/TPOT or an M1 gate closure.
 
+### Checkpoint-Row CPU RMSNorm Ablation
+
+A separate additive diagnostic authenticates all nine canonical target files
+(16,392,982,768 bytes), then reads only `model.embed_tokens.weight[13]` and
+`model.layers.0.input_layernorm.weight`. Seven focused tests pass on mi300x,
+followed by the actual checkpoint-row experiment. It compares actual pinned
+HF RMSNorm, sequential FP32 reduction with `rsqrt`, and the same reduction
+with `sqrt` followed by reciprocal. BF16 input/weight and both rounding
+boundaries are held fixed; all tensors are explicitly CPU tensors and both
+thread counts remain one.
+
+All 4,096 final BF16 elements are byte-identical across the three cases.
+The HF mean-square/inverse bits are `0x39e4cdc4` / `0x423f41af`; both serial
+variants produce `0x39e4cde3` / `0x423f41a1`. Therefore the FP32 reduction
+difference does not change final BF16 output for this first-layer input.
+This does not cover later native activations, GPU transcendental behavior,
+or establish the cause of the position-131 mismatch. No kernel change or
+tolerance follows from this one-row observation.
+
+Result SHA-256 is
+`49c9d6927954a1f668b85cd2f8184d44291a29cac1e2202e135e8732559c5c7d`.
+All 33 source/input/result/log files match remote hashes after local retention;
+both input afterchecks and the runner exit pass. Raw stderr retains ROCm
+parser warnings about the requested `-1` visibility values. Those variables
+are not presented as proof of device invisibility; the operation/device
+checks establish only the stated CPU computation scope. The completed exact
+408 KiB remote stage is removed after a scoped empty file-use check. Model
+files, reference venv and shared jobs are untouched.
+
 ### Upstream Tracking And Build Policy
 
 The latest read-only `ls-remote` observation of fe2o3 `main` is
