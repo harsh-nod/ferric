@@ -60,6 +60,17 @@ All 85 members and 84 payload hashes and sizes are independently checked after
 transfer. This establishes matching engineering tools, not full compiler
 qualification, kernel emission or a GPU result.
 
+The matching optimized `ferric-m1-engineering-speculative-smoke` binary also
+builds on mi300x from exact `a0cc9929`/`1fad`. All six release phases and source/
+control after-checks pass. The normal no-feature opt3/debug0 Cargo product is
+fresh, and all 1,148 source files remain unchanged. Its 14,254,656-byte ELF has
+SHA-256 `6c46c97b2ad1ab3c880ea69f32b4a295eadcddbc8eb4b666ecf7299395d1edf4`.
+The 11,351,881-byte archive has SHA-256
+`d3886c416fa71a489632b94cba1970e07c74ae1901b135f3e76ee457fec3859a`;
+all 88 members and 87 payload hashes and sizes pass independent local checks.
+This is build validation only. Matching kernel emission, the M5 GPU capture
+and independent five-position logits comparison have not run on this checkpoint.
+
 A subsequent upstream fetch observes `86248cd74453f8c6fbf19e08a5b6cbfce3fc42cb`,
 five commits after `1fad`. The 63-file change introduces kernel-context
 entry generation and frontend authentication, including a new
