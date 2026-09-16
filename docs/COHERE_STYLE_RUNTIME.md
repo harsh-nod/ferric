@@ -36,6 +36,15 @@ and observed four cross-workgroup dependency edges. Its seven-task integer DAG
 checked 260 state words, including 112 exact valid-epoch payload values; the
 ownership encodings are validated without assuming a deterministic schedule.
 
+The separate [indexed atomic slice fixture](../qualification/gfx950-atomic-channel-v1/README.md)
+now compiles ordinary Rust `&[AtomicU32]` through the checked source pipeline
+to gfx950 HSACO and passes four GPU cases: 2048 exact integer comparisons,
+unchanged inputs/guards, and complete worker cleanup. It uses two 128-thread
+workgroups with two wave64 waves each. Each invocation reads its own write;
+this validates the indexed storage path, not inter-workgroup tensor visibility.
+The original potentially aliasing shared-input source remains rejected, and
+protected runtime preparation stays closed without its memory-contract join.
+
 This scheduler evidence is separate from the projection and decoder numerical
 fixtures. Atomic integer publication does not establish ordinary cross-task
 tensor visibility, KV correctness, or a production token loop. Full-model

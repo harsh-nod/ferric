@@ -15,11 +15,48 @@ python3 -B -m unittest -v test_reference
 python3 reference.py generate --case alternating --case-dir NEW_CASE_DIRECTORY
 ```
 
-Current tests use synthetic reports to test the checker. They are not device
-execution evidence. No atomic-slice native artifact or GPU result is recorded
-yet. This first fixture reads only each invocation's own write, so even a future
-passing GPU result would not prove cross-workgroup tensor publication,
-full-model correctness, performance or production authority.
+The four checker unit tests use synthetic reports; they are not device evidence.
+The separate [native GPU evidence](evidence-native-v1.json) records four passing
+dispatches on `mi350-2`. Each invocation reads its own write, so this establishes
+only the tested indexed atomic storage path, not cross-workgroup tensor
+publication, full-model correctness, performance or production authority.
+
+## Native Result
+
+| Case | Channel words | Output words | Result |
+| --- | ---: | ---: | --- |
+| Zero | 256 | 256 | Exact |
+| Walking bits | 256 | 256 | Exact |
+| Alternating/all-one words | 256 | 256 | Exact |
+| Seeded random | 256 | 256 | Exact |
+| Total | 1024 | 1024 | 2048 exact comparisons |
+
+All input bytes and allocation guards remained unchanged. Each dispatch
+completed, then all three buffers were freed in reverse order, the worker
+closed, and its process exited successfully. Source, executable, artifact and
+reference identities were frozen before dispatch and rechecked afterward.
+
+Ferric source checkpoint `d6fa1241344cb10d212455376950f709d23a3147` and clean
+fe2o3 `3dfa5b3fdac1832bd7d8902e32f591d81300d1e3` produced HSACO
+`549717e479cdabfcb4e803d1edd5ee5f06d900b03c551cc38637c021db67dbfe`.
+The ordinary Rust pipeline retained nominal atomic storage, actual slice
+guards, ranked/formal memory checks and target validation before emitting the
+compiler handoff. The unmodified LLVM contains an aligned four-byte Release
+store and Acquire load at System scope. ROCm 7.2.0 LLVM 22 linked that checked
+output and its standard providers; no handwritten kernel IR or HIP was used.
+
+The launch uses two 128-thread workgroups, two wave64 waves per workgroup,
+48 explicit argument bytes, no LDS/private segment, 22 SGPRs and 5 VGPRs with
+no spills. These are artifact/resource observations, not a speed measurement.
+The engineering worker uses `VRAM|WRITABLE|PUBLIC`, without the COHERENT flag;
+neither HBM residency nor a protected coherence contract is inferred from this
+passing test. Protected generated KFD and HSA preparation still reject the
+unjoined shared-atomic runtime contract.
+
+Compiler library tests passed 682/682. Separate source controls passed both
+indexed positives and the shared-input alias negative. The probe passed 34 host tests, strict
+Clippy and formatting. The compiler itself retains 38 verified pre-existing
+Clippy diagnostics; it is not reported as Clippy-clean.
 
 ## Reproduction
 

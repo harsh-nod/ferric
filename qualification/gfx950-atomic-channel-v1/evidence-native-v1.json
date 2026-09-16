@@ -1,0 +1,120 @@
+{
+  "schema": "ferric-atomic-channel-public-evidence-v1",
+  "authority": "none",
+  "status": "pass",
+  "host": "mi350-2",
+  "target": "gfx950",
+  "scope": "per-index atomic storage; not cross-workgroup publication, model inference, or performance",
+  "ferric_source_commit": "d6fa1241344cb10d212455376950f709d23a3147",
+  "compiler_source_commit": "3dfa5b3fdac1832bd7d8902e32f591d81300d1e3",
+  "source_sha256": "f37effa23b02c143efb0d205d4bf76bb8c101dd723ab88d9b4bb5a20249f4ca5",
+  "handoff_sha256": "0285cc4ca05d1dbe32d89bc75269e474c3a24da6aca1bd6249b1a880d64f2223",
+  "llvm_sha256": "56673df6ba0870cb52dceeb5087cedb0787166afe0b44a5a12a505c7668371ac",
+  "object_sha256": "549717e479cdabfcb4e803d1edd5ee5f06d900b03c551cc38637c021db67dbfe",
+  "metadata_sha256": "39a4f98451a422e73c978ba62f0cfa147ec03c1234d80982071dfb7096878515",
+  "artifact_record_sha256": "5e4dd8e0aded9f4de047bad7f8f35574ca5e7273a80ad60ee4b51eb9d72e6e1c",
+  "compiler_build_provenance_sha256": "d989cfd14d8fb86b905f9817c56832bc7a8c5cbef5eebbbcb446edb7b7837efb",
+  "native_build_inputs_manifest_sha256": "2219d652feb17cf9400cb801dbda012ad8502d9b8a962747f24845eab7be93f7",
+  "extractor_sha256": "b8dfb43f7da9f2630a43c26b4ac69b1c71342528725d6cdf05e474ec0b5df7cb",
+  "backend_sha256": "6eb6b86436888c7f27b9ab2c640dc8425a4a37505462f35d079ca7bd64cd429a",
+  "cli_sha256": "5938267f9efd89dd3af099f88f91b70d343218b221cdc7a66b75cfe86c8c5e19",
+  "probe_sha256": "916e56cdaa1ba23feb12d20bf77f757147da2307da762a1e5f5f5cf6043ba566",
+  "worker_sha256": "22296c36c1cafca4ff9c13a30c5b650f53a63bb8bbc37676fcbf8b303d23b11a",
+  "reference_sha256": "15c03b043eb0068ae5081a2857b2d1ed866c20be67aecdf4e1069755e44ef494",
+  "native_toolchain": "ROCm 7.2.0 LLVM 22, checked compiler handoff, code object V6",
+  "build_source_status": "compiler and Ferric committed and clean",
+  "kernel": {
+    "symbol": "ferric_gfx950_atomic_channel_v1",
+    "workgroup": [
+      128,
+      1,
+      1
+    ],
+    "grid_work_items": [
+      256,
+      1,
+      1
+    ],
+    "wavefront_size": 64,
+    "waves_per_workgroup": 2,
+    "explicit_kernarg_bytes": 48,
+    "group_segment_bytes": 0,
+    "private_segment_bytes": 0,
+    "sgpr_count": 22,
+    "vgpr_count": 5,
+    "sgpr_spill_count": 0,
+    "vgpr_spill_count": 0
+  },
+  "memory": {
+    "logical_access": [
+      "ReadWrite",
+      "ReadWrite",
+      "Write"
+    ],
+    "allocation_policy": "VRAM|WRITABLE|PUBLIC; no COHERENT flag",
+    "distinct_allocations": true,
+    "guard_bytes_each_end": 64,
+    "cpu_access_during_dispatch": false,
+    "hbm_placement_or_bandwidth_claim": false
+  },
+  "completed_dispatches": 4,
+  "exact_word_comparisons": 2048,
+  "checks": {
+    "source_and_binary_hashes_rechecked": true,
+    "all_input_bytes_unchanged": true,
+    "all_allocation_guards_unchanged": true,
+    "reverse_frees_close_worker_exit": true
+  },
+  "cases": [
+    {
+      "case": "zero",
+      "status": "pass",
+      "input_sha256": "5f70bf18a086007016e948b04aed3b82103a36bea41755b6cddfaf10ace3c6ef",
+      "channels_sha256": "5f70bf18a086007016e948b04aed3b82103a36bea41755b6cddfaf10ace3c6ef",
+      "output_sha256": "5f70bf18a086007016e948b04aed3b82103a36bea41755b6cddfaf10ace3c6ef",
+      "report_sha256": "81beb22c47d1604eef4eb0064f5e8402471fb5e6fe6a47944af06fc49e82d602",
+      "completed_dispatches": 1,
+      "channel_words_compared": 256,
+      "output_words_compared": 256
+    },
+    {
+      "case": "walking",
+      "status": "pass",
+      "input_sha256": "c0f0c03ff4dbc7392a470c23bca6d9f94490caf78ce8c21dbe78c57aea1441e1",
+      "channels_sha256": "c0f0c03ff4dbc7392a470c23bca6d9f94490caf78ce8c21dbe78c57aea1441e1",
+      "output_sha256": "c0f0c03ff4dbc7392a470c23bca6d9f94490caf78ce8c21dbe78c57aea1441e1",
+      "report_sha256": "2a1ba11a4883d50e9dee5faf24cbc97067df05b7818a941de2bfaa664686b0cf",
+      "completed_dispatches": 1,
+      "channel_words_compared": 256,
+      "output_words_compared": 256
+    },
+    {
+      "case": "alternating",
+      "status": "pass",
+      "input_sha256": "ab55c3fc92c4b4ad727365f8df23ec41bb9f7e63366ac8a1360d563c0bb40154",
+      "channels_sha256": "ab55c3fc92c4b4ad727365f8df23ec41bb9f7e63366ac8a1360d563c0bb40154",
+      "output_sha256": "ab55c3fc92c4b4ad727365f8df23ec41bb9f7e63366ac8a1360d563c0bb40154",
+      "report_sha256": "22b6464fe000b508b35b5037f006e5c3a2fb946e288c68fc461ab51a28107277",
+      "completed_dispatches": 1,
+      "channel_words_compared": 256,
+      "output_words_compared": 256
+    },
+    {
+      "case": "random",
+      "status": "pass",
+      "input_sha256": "d20480a79b2c56096ac90e0cb99aacb17cfd2d40fffb0eda4559a9c75909d759",
+      "channels_sha256": "d20480a79b2c56096ac90e0cb99aacb17cfd2d40fffb0eda4559a9c75909d759",
+      "output_sha256": "d20480a79b2c56096ac90e0cb99aacb17cfd2d40fffb0eda4559a9c75909d759",
+      "report_sha256": "89e3c25b53695a37b6cd88aeed6b48f985d50350515a47bb538138b05a5525a7",
+      "completed_dispatches": 1,
+      "channel_words_compared": 256,
+      "output_words_compared": 256
+    }
+  ],
+  "limits": [
+    "Each invocation reads its own atomic write; no cross-workgroup read-from evidence.",
+    "No Qwen full-model, KV cache or token-loop qualification.",
+    "Protected KFD/HSA atomic runtime preparation remains closed.",
+    "No GPU event timing, bandwidth, speedup or Cohere parity claim."
+  ]
+}
