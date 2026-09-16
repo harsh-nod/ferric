@@ -5,7 +5,11 @@ receipt. The 33 M1 roadmap gates remain open.
 
 ## Current Checkpoint
 
-Private integration `2108e736` builds on the `5bcf44ed` baseline, which pins
+All builds, tests and Verus runs remain on mi300x. The fe2o3 main push
+`e3c359fb` contains `[skip ci]`; fresh GitHub API checks find zero workflow
+runs and zero check runs for that commit. No further fe2o3 push is made here.
+
+Private integration `53eaf54e` builds on the `5bcf44ed` baseline, which pins
 the tested fe2o3 checkpoint `55d9bfe5` across all 80 active pin-bearing files.
 Upstream adds enum SSA edge transport
 and authenticated-downcast fixes, plus tutorial source-binding corrections;
@@ -23,6 +27,11 @@ compiler owner and ranked-assertion paths change, so actual aggregate emission
 needs fresh checks even though no direct Ferric API break is found. Existing
 55-pinned results are not relabeled as latest-main evidence. New optimizer and
 V12 lowering primitives do not establish production admission or performance.
+The next fetch reaches `f0bce59e`, adding one six-file compiler change for
+aggregate components at exact source uses. It changes no production manifest,
+lockfile, KFD, host or device API. Fallible reaching-definition analysis now
+precedes the no-reference lowering branch, so ordinary Ferric kernels also
+need fresh emission validation. This newer main is reviewed, not yet adopted.
 
 The first source-gate run genuinely reports 41 passes and one failure: its
 marker-order fixture anchor now occurs in both rosters. Fixture successor
@@ -84,6 +93,38 @@ the exact 101-member roster are independently checked in the 218,719,868-byte
 archive at SHA-256
 `aa94caa28aab43cdf7c8c42e34809bffc115f7b6d80fa635e2408f969c753095`.
 
+Kernel successor `d034c7c2` adds eight function-scoped lint exceptions across
+six aggregate-owned files, preserving every device body and source contract.
+Remote edition-2024 formatting passes. Host R5 passes adapter strict Clippy;
+both aggregate targets advance past the 103 kernel-body diagnostics and report
+four host-only logits reference-test lints each. `1c71d9f1` fixes those test
+assertions and iteration without suppressions; formatting passes, rerun pending.
+R5 builds a fresh gfx942 source-contract executable, but its producer checker
+rejects legitimate verbose Cargo build-script lines before executing it. This
+is a harness failure, not a compiler failure or a test pass. Overall exit is 1;
+all source, native, prior-evidence and control after-checks pass. Its 103 payloads,
+104-member roster and unexecuted ELF are independently checked locally in the
+233,647,765-byte archive at SHA-256
+`e3081d0b28729ae2868381a25a821f3e2db0c993ec6ab7ae560864a52405c7f8`.
+A separately named same-source continuation accepts only the exact
+source-matched build-script messages. Both aggregate source-contract suites
+pass 11 tests each. Standalone GEMM then reports 10 passes and four failures:
+its source contract still counts three roots and two matrix roots after the
+MFMA addition. The five later suites are unlaunched; exit remains 101, and all
+source/native/prior-evidence/control after-checks pass. The original failed
+producer receipt and both Clippy failures remain unchanged. This continuation
+is host source-contract evidence, not kernel emission or GPU validation.
+Its 253,398,168-byte archive is checked independently locally at SHA-256
+`ce4159f53108afc5b13728299cd68ec798d18b835995a81ca85a7da5c0a2b06b`,
+including all 122 payloads, the exact 123-member roster and both new actual
+test executables. Successor `53eaf54e` updates the exact four-root GEMM roster,
+three matrix ABIs, finite-divisor/grid counts and MFMA generated-adapter type
+coverage. Scalar/A4 recurrence checks and production bodies remain unchanged.
+Remote formatting passes; the test rerun remains pending. Separate TP ABI
+review finds 14 available source roots versus 13 explicitly selected markers.
+That source/selection contract needs a scoped follow-up and emitter check;
+the selected TP roster is not silently broadened.
+
 The actual current-55 batch consumer has now been attempted in Verus. R2 on
 `5bcf44ed` genuinely verifies seven dependency exports but fails engine
 translation on four opaque-datatype field references, before consumer SMT work.
@@ -102,9 +143,38 @@ evidence remain unchanged. The full 193,456,937-byte failed stage is retained
 locally at SHA-256
 `e50191a61a5bdf8b09bf25e5a94a2b3988c6f3cf30133377a4aa9383a3de945c`,
 with all 3,885 members and 3,295 file payloads independently checked. Explicit
-entry-vector links and localized pointwise prefix reasoning are the next proof
-work, not a verified result. No trust annotations, executable behavior changes,
-weakened contracts or raised solver bounds are introduced.
+entry-vector links and localized pointwise prefix reasoning in `f29108e4` reach
+SMT in R5, but the loop still exceeds the unchanged solver limit. The absence
+of the earlier individual diagnostics is not a proof pass. The full
+203,221,418-byte failed stage is checked locally at SHA-256
+`8f979eca3c6c189ea4e64eb22bc63f1be16edd4e96a30853ff0f26eb7371c500`,
+with all 4,041 members and 3,436 file payloads verified.
+
+R6 on proof-only source `869ac60c` narrows predicate expansion but fails Verus
+translation because the hide headers follow ghost bindings; no SMT work runs.
+All seven verified dependency exports and prior evidence remain unchanged.
+Its 212,873,273-byte archive is independently checked locally at SHA-256
+`b67b866cffb54d7fa0c8bec42c9bd0ba00a34e71a4097ce6a20b3610abd696db`,
+with all 4,190 members and 3,575 file payloads verified. Proof-only successor
+`fb020d0e`, integrated as `08a9e3ae`, moves just those two headers to the start
+of the function body. R7 reaches SMT and fails the freed-prefix assertion
+with nonzero solver work; it is not a proof pass. All after-checks pass, and
+the 222,559,843-byte archive is independently checked locally at SHA-256
+`1eaa158b6c08056c91824c31d3530a843aeb5d641ed5a3126007357f974d868e`,
+including its 4,339 members and 3,714 file payloads. Proof-only `cde4faaa`,
+integrated as `a6aebf1c`, adds explicit consumed-lease and current-slot update
+connections. Remote formatting passes. R8 succeeds with actual nonzero solver
+work for `commit_page_return_batch_ledgers`: verified 2, errors 0, selected
+exec success true, rlimit 6,300,370. Fresh root VIR/rmeta, the sole engine
+producer and all source/dependency/artifact/control/history after-checks pass.
+This is a selected-consumer proof, not verification of its unselected helpers
+or the complete caller/pool/queue composition. The full 236,117,213-byte R8
+archive is independently checked locally at SHA-256
+`a9cb4fbe02832e10ebcba1c94c4391dce7f6ddc970f6579e9bcdc569e7fc27c5`,
+including all 4,510 members and 3,875 file payloads. All three temporary proof
+worktrees are removed with their branches preserved. No trust
+annotations, executable behavior changes, weakened contracts or raised solver
+bounds are introduced.
 
 Scoped reproducible-cache cleanup removes 23 obsolete engine/build libraries
 and 11 obsolete engineering-adapter libraries, reclaiming 1,041,180 KiB while
@@ -115,15 +185,37 @@ cache cleanup reclaims another 78,620 KiB with all 986 protected inputs unchange
 Its complete inventory and deletion journal match locally. The runtime stage
 after host R4 is 9,420,480 KiB, still below its 10 GiB cap; future launches must
 restore their required initial reserve rather than weaken the resource guards.
+A further exact 56-file obsolete-library cleanup reclaims 265,632 KiB while
+preserving 1,081 retained payloads and all 2,917 unselected dependency entries.
+Its first inventory attempt stops before deletion because a JavaScript JSON
+round-trip rounded nanosecond timestamps. The corrected R6 roster carries exact
+remote Python integers without numeric transformation; inventory, separate
+delete admission and the 56-row journal all pass. Runtime usage after host R5
+is 9,275,436 KiB; the 10 GiB cap and per-phase reserve remain enforced.
+After the same-source continuation, runtime usage is 9,387,684 KiB. It remains
+below the cap but lacks the full-source launch reserve; a new full-source host
+campaign needs scoped cache cleanup before launch.
+Removing only the two completed local unpacked verification copies for R7
+and the host continuation reclaims 973,488 KiB; their independently checked
+archives, manifests, raw results and executable payloads remain archived.
 Fresh surveys find all eight mi300x GPUs occupied. mi350-2 has one physical
 gfx950 GPU at zero utilization but a foreign process still holds three queues
 and 17.7 GiB, and its kernel/driver profile is not admitted. Compiler55 tool
 refresh, current-source emission and GPU numerical validation remain pending.
 All 33 M1 gates stay open.
 
-Pages-only candidate `318656ca` prepares the newer source-bound status copy;
-its clean temporary worktree is removed. Remote QA and publication have not run,
-and the prepared copy must incorporate the final R4 outcomes before deployment.
+Pages-only source `3c7a4023` includes the terminal R4 outcomes and is published
+as static-only commit `58ebfe67`. All five mi300x QA phases pass, including
+1,121 widths, eight viewports and 64 screenshots. Root reviews four desktop and
+mobile screenshots; all seven canonical and seven cache-busted live files
+match the retained 616,600-byte artifact. GitHub run `35048733488` performs only
+artifact admission and deployment, with no build/test or settings changes.
+Private implementation ancestry is not pushed. The dated R4 site checkpoint
+does not claim later R5/R6 results. The temporary Pages worktree is removed.
+Separate reviewed cleanup removes the three completed remote Pages directories,
+reclaiming 50,812 KiB after exact inventory, custody and no-use checks. All 445
+deletion-journal rows and the full receipts remain retained locally; shared
+caches and all runtime/compiler/proof stages remain untouched by that cleanup.
 
 The dated Pages R5-R6 snapshot is deployed at public static-only commit
 `f3cb38aa`; all seven live assets match the mi300x-validated artifact. Fresh QA
