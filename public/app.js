@@ -72,6 +72,15 @@
   const resident = project.residentCheckpoint;
   const residentProgress = document.querySelector("[data-resident-progress]");
   residentProgress.append(element("p", "performance-scope", resident.scope),
+    element("h3", "", "Model-bundle component proof: scoped result, separate assessment"),
+    element("p", "", resident.integration.modelBundleComponent119.detail),
+    element("h3", "", "Host checks and source inventory passed"),
+    element("p", "", resident.integration.modelBundleHostInventory.detail),
+    element("h3", "", "Registered proof timed out; protected qualification unavailable"),
+    element("p", "", resident.integration.registeredBundleTimeout.detail),
+    element("h3", "", "Retained M5 logits: CPU-only ranking replay"),
+    element("p", "", resident.integration.m5RankReplay.detail),
+    element("p", "performance-scope", "The retained compiler and M5 records below preserve their earlier source identities. This checkpoint adds no GPU observation or performance measurement."),
     element("h3", "", "Compiler 7f90 adopted: 47 dependency and source phases passed"),
     element("p", "", resident.integration.compilerAdoption7f90.detail),
     element("h3", "", "Matching 7f90 compiler tools: all six tool phases passed"),
@@ -202,12 +211,25 @@
     element("h3", "", "Earlier compiler and canonical gfx942 extraction"),
     element("p", "performance-scope", "The following eaa observations predate the attributed divisor and overflow diagnostics above; migration was pending at that checkpoint."),
     element("p", "", resident.compiler.detail),
+    element("h3", "", "Earlier R18 compiler and M5 summary"),
+    element("p", "", resident.earlierOverview),
     element("p", "", resident.overview),
     element("p", "", resident.remaining));
   const residentDetails = element("details", "performance-identities");
   residentDetails.append(element("summary", "", "Checkpoint source identities"));
   const residentPins = element("dl", "observation-facts");
   for (const [label, value] of [
+    ["Current checkpoint tracker source", resident.integration.modelBundleHostInventory.trackerSource],
+    ["Model-bundle integration source", resident.integration.modelBundleHostInventory.integrationSource],
+    ["Component Verus evidence SHA-256; original campaign failed", resident.integration.modelBundleComponent119.evidenceSha256],
+    ["Separate component assessment SHA-256", resident.integration.modelBundleComponent119.assessmentSha256],
+    ["Source-gate R5 evidence SHA-256; generation then failed", resident.integration.modelBundleHostInventory.sourceGateEvidenceSha256],
+    ["Scoped engine-host evidence SHA-256", resident.integration.modelBundleHostInventory.engineEvidenceSha256],
+    ["R7 inventory evidence SHA-256", resident.integration.modelBundleHostInventory.inventoryEvidenceSha256],
+    ["Integrated executable inventory SHA-256", resident.integration.modelBundleHostInventory.generatedInventorySha256],
+    ["Registered theorem timeout evidence SHA-256", resident.integration.registeredBundleTimeout.evidenceSha256],
+    ["CPU-only M5 ranking replay SHA-256", resident.integration.m5RankReplay.resultSha256],
+    ["Latest observed compiler; unadopted", resident.integration.registeredBundleTimeout.observedUpstreamCompiler],
     ["Current compiler adoption source", resident.integration.compilerAdoption7f90.source],
     ["Ferric dependency pin", resident.integration.compilerAdoption7f90.compilerSource],
     ["Compiler 7f90 adoption evidence SHA-256", resident.integration.compilerAdoption7f90.evidenceSha256],
@@ -225,7 +247,7 @@
     ["Compiler 7f90 MFMA13 inspection SHA-256", resident.integration.m5Emission7f90.inspectionSha256],
     ["Compiler 7f90 MFMA13 image SHA-256", resident.integration.m5Emission7f90.hsacoSha256],
     ["Compiler 7f90 emission evidence SHA-256", resident.integration.m5Emission7f90.evidenceSha256],
-    ["Current tracker source", resident.integration.m5Comparison7f90.trackerSource],
+    ["M5 comparison tracker source", resident.integration.m5Comparison7f90.trackerSource],
     ["Compiler 7f90 native-attempt failure evidence SHA-256", resident.integration.nativeAttempt7f90.evidenceSha256],
     ["Compiler 7f90 second-capture evidence SHA-256", resident.integration.m5Comparison7f90.captureEvidenceSha256],
     ["Compiler 7f90 five-position comparison SHA-256", resident.integration.m5Comparison7f90.comparisonSha256],
