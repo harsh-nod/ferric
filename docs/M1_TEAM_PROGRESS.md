@@ -9,7 +9,83 @@ All builds, tests and Verus runs remain on mi300x. The fe2o3 main push
 `e3c359fb` contains `[skip ci]`; fresh GitHub API checks find zero workflow
 runs and zero check runs for that commit. No further fe2o3 push is made here.
 
-Private integration `6c34cbe1` builds on the `5bcf44ed` baseline, which pins
+Private integration `71bd407e` adopts freshly fetched fe2o3 `8af54567` across
+the 80 active pin-bearing files. Its complete mi300x dependency/source-gate
+campaign passes all 47 phases: 32 locked/offline graphs, 42 fresh source-gate
+tests, and four actual CLI inventory derivations. The three compiler-bearing
+inventories change only the revision; the runtime inventory and historical
+property-binder pin remain unchanged. No dependency-edge repair is needed.
+The 20,472,348-byte archive has SHA-256
+`be2ef2071511d2fe92558e8a853065575f52ae35a7b494db84fc5826f772a57e`;
+all 1,603 payload hashes and all 1,145 final local source hashes pass independent
+checks. This is not compiler-tool, engine, Verus, emission or GPU qualification.
+The separate compiler R1 focused campaign stops with a harness failure after
+33 successful phases. Twelve checked test groups pass 661 tests; the backend
+suite itself reports another 610 passes, zero failures and zero ignores, but
+its merged stderr warning interrupts one named-test line. The exact-name checker
+rejects that output, so R1 remains exit 1 and nine later phases are unlaunched.
+All 14 freshly produced test executables and prior tools/source are preserved.
+The 108,475,406-byte failed archive has SHA-256
+`50bca68de861314dcecd7178a6ad8830a956822d9eff6e5e1231e6e77add96e3`;
+all 394 payloads and its exact 396-member roster pass independent local checks.
+The same-source R2 continuation separates stdout/stderr without suppressing
+diagnostics or relaxing named-test checks. Backend, kernel-opt and Pliron pass
+610, 26 and 1,258 tests respectively, including the required optimizer-policy
+regressions. Together with R1's checked prefix, this is 2,555 checked test
+executions across 15 groups, not a completed compiler campaign. Aggregate
+reference then fails because the direct runner's loader path omits the freshly
+built compiler shared library. R2 remains exit 1; six later phases are unlaunched.
+Its 216,091,762-byte archive has SHA-256
+`2edc8a42bf66bb818a3553c7dd8994f183f0f10ff4a4f6747b9cdc376dc7bf5a`;
+all 494 payload hashes and the exact 496-member roster pass independent checks.
+R3 binds the existing normal extractor, exporter and backend producer records,
+but both preflight guards reject the existing nightly library directory's
+0775 mode. No substantive test phase launches, and R3 remains exit 1. The two
+new debug directories are private 0700 paths; the rejected nightly directory
+is already the unchanged wrapper's library path. A narrow successor will bind
+that existing toolchain trust separately without changing its permissions.
+The failed preflight is preserved in 22,078 bytes at SHA-256
+`a34220a9118bbc99b97613a2c86c60e68707e287815289ffce4d4d2ce46d9ea3`;
+all 39 payloads and the exact 40-member roster pass independent checks. Its
+fresh retention-only source checks are not relabeled as original guard passes.
+No source or test executable is changed.
+Earlier results below retain their original source and compiler identities.
+
+R4 passes both preservation guards and the aggregate-reference test. The V4
+test then reaches its scratch debugger build, where `rustc` receives SIGXFSZ:
+the direct checker incorrectly applies its 64 MiB log budget as a process-wide
+file-size limit inherited by compiler artifact writes. R4 remains exit 1, and
+five later phases are unlaunched. Its scratch directory is removed normally.
+The next runner correction will cap the two captured streams directly, leaving
+the original stage/disk, memory, CPU and wall-time limits unchanged. The checked
+compiler prefix now totals 2,556 test executions, not complete qualification.
+The failed R4 archive is 356,412,776 bytes at SHA-256
+`607b359b0fd36b0fbb04b398cbf63740548cc3a7a4f58a1351f8f00a297ad4a4`;
+all 573 payload hashes and the exact 575-member roster pass independent checks,
+including the 14 test executables and three normal child-tool binaries. The
+R5 stream-capture correction passes six bounded helper tests on mi300x:
+separate streams and nonzero exit, exact-cap output, overflow on each stream,
+TERM-ignored overflow requiring KILL, and an 80 MiB sparse artifact write with
+unchanged inherited file-size limits. The temporary artifact is removed and
+all downloaded probe files match remote hashes. Its result SHA-256 is
+`e08aa7580fe7ef0c33aa3da20dd08e4ea49132c8e1b009b94bb174638d83ff21`.
+The six remaining compiler phases have not yet been rerun with this correction.
+
+On `71bd407e`, the separate host-kernel campaign passes all 19 phases: 14
+target-neutral GEMM tests once, eight TP tests per gfx942/gfx950 target, and
+strict aggregate Clippy with `--all-targets -D warnings` for both targets.
+All 30 test executions pass with zero failures or ignores, using seven fresh
+test executables. Full source and earlier dependency evidence remain unchanged.
+The retained 83,210,265-byte archive has SHA-256
+`443492f47fbf6f260c7e87a3925764407b573ec077992d05872346f277538591`.
+All 1,834 payload hashes, the exact 1,835-member roster, and the separately
+retained terminal retainer logs pass independent local checks. Removing only
+the redundant host-kernel and compiler-R1/R2 unpacked verification copies
+reclaims 1,418,244 KiB; their verified archives and manifests remain retained.
+This closes those host regressions, not kernel emission, numerical GPU
+qualification, native replay or performance qualification.
+
+Earlier private integration `6c34cbe1` builds on the `5bcf44ed` baseline, which pins
 the tested fe2o3 checkpoint `55d9bfe5` across all 80 active pin-bearing files.
 Upstream adds enum SSA edge transport
 and authenticated-downcast fixes, plus tutorial source-binding corrections;
@@ -32,6 +108,12 @@ aggregate components at exact source uses. It changes no production manifest,
 lockfile, KFD, host or device API. Fallible reaching-definition analysis now
 precedes the no-reference lowering branch, so ordinary Ferric kernels also
 need fresh emission validation. This newer main is reviewed, not yet adopted.
+The subsequent fetch reaches `8af54567`: two further commits add checked
+optimizer policy 3 and harden receipt/lifetime boundaries in kernel-opt and
+Pliron. This increment changes no manifest, lockfile, KFD, host or device API.
+Ferric's dependency adoption is validated above; actual compiler tests, tool
+builds and emission remain distinct requirements. No optimizer performance
+improvement is inferred from source adoption.
 
 The first source-gate run genuinely reports 41 passes and one failure: its
 marker-order fixture anchor now occurs in both rosters. Fixture successor
@@ -122,8 +204,12 @@ three matrix ABIs, finite-divisor/grid counts and MFMA generated-adapter type
 coverage. Scalar/A4 recurrence checks and production bodies remain unchanged.
 Remote formatting passes; the test rerun remains pending. Separate TP ABI
 review finds 14 available source roots versus 13 explicitly selected markers.
-That source/selection contract needs a scoped follow-up and emitter check;
-the selected TP roster is not silently broadened.
+Test-only successor `eab370bb` checks all 14 available roots separately from
+the exact 13 selected contract markers, including uniqueness and the sole
+unselected MFMA root. Production TP exports are unchanged. The later
+`71bd407e` host-kernel campaign above passes the TP and GEMM regressions.
+An actual compiler emission check remains pending; host roster checks are not
+evidence that the emitter selects the intended programs.
 
 The actual current-55 batch consumer has now been attempted in Verus. R2 on
 `5bcf44ed` genuinely verifies seven dependency exports but fails engine
@@ -228,11 +314,42 @@ file-scoped successor, not a broadened cleanup roster. R2 admits only that
 exact empty historical test metadata file and succeeds for 228 obsolete files
 (86 rlibs, 142 metadata files), totaling 1,635,144 KiB. The actual inventory
 has SHA-256 `a85f2a8adf9ec8a4db704e89fb3118e06726722401614cb136eeefa587f256b8`.
-No compiler cache files are deleted; retention-only controls are prepared.
-Latest-f0b compiler validation controls pass independent review but are not
-launched. Removal of the two new
+Retention R3 subsequently archives all 228 payloads in 395,853,185 bytes at
+SHA-256 `5e964011bf01df98b6da4deff2a91c81e2de068711ca3ccc6dea12f774101d34`.
+After independent local archive, payload and metadata checks, separately
+reviewed deletion R4 removes exactly those files and reclaims 1,635,144 KiB.
+All 168 protected current libraries, 1,720 unselected dependency entries,
+source/tool bytes and R2/R3 evidence remain unchanged. Fresh no-use checks pass
+under the existing explicit visibility exceptions; complete system process
+visibility is not claimed. All 228 journal identities match the original
+integer-precise inventory. The deletion receipt has SHA-256
+`6d1a6dd3dbc4a156e141bdead84c7f0ad09154c631bf3cf2f738ba528d029e56`;
+the measured compiler stage falls from 10,483,440 to 8,848,296 KiB.
+The f0b drafts remain unexecuted; the reviewed 8af successor is launched instead.
+Removing only R3's redundant local unpacked copy reclaims 1,637,964 KiB while
+the verified archive and raw evidence remain retained. Removal of the two earlier
 local unpacked proof/native verification copies reclaims 763,552 KiB; checked
 archives, manifests and raw evidence remain retained.
+
+Pages source `0f8516e1` prepares the R9 proof and native-maintenance checkpoint.
+Actual Pages R9 QA passes structural/negative checks but fails a browser
+assertion that still expects the replaced R4 overview. No publication occurs.
+Test-only successor `38e3feb8` corrects that assertion and explicitly retains
+MFMA opt-in/default and historical-boundary checks; public assets are unchanged
+from R9. Its actual mi300x QA retry passes all five phases, including 1,121
+widths, eight viewports and 64 screenshots. All 133 payloads in the 11,320,854-byte
+archive at SHA-256
+`c1a7b01695eb20e501cc9eb5c78793de3a93a481d53b6a6172c45b33be539a75`
+pass local checks, and root reviews desktop/mobile overview and checkpoint
+images. Static-only public commit `60f65896` deploys successfully in GitHub run
+`35054007136`, with no build/test or protection changes. All seven canonical
+and seven cache-busted live files match the 619,456-byte retained artifact.
+This is the dated proof/maintenance checkpoint, not the later 8af pin result.
+Both clean temporary worktrees are removed. The original R9 failure is retained
+separately in 932,021 bytes at SHA-256
+`eeb91c30c10607ebdacd63ec7e784602c4f783d03ec874b8bb29a336232c3be7`;
+all 91 payloads pass independent checks, with QA exit 1 and no artifact or
+screenshots. The failed run is not relabeled as successful by the R10 retry.
 
 Pages-only source `3c7a4023` includes the terminal R4 outcomes and is published
 as static-only commit `58ebfe67`. All five mi300x QA phases pass, including
