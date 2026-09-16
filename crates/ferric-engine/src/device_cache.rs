@@ -2229,16 +2229,16 @@ impl M1PartitionedModelMemoryKvQueueCustodyV1 {
         )
     }
 
-    pub(crate) fn commit_page_return(
+    pub(crate) fn commit_page_return_batch(
         &mut self,
-        preflighted: M1PreflightedKvPageReturnV1,
-        lease: DeviceKvPageLease,
+        retired: Vec<RetiredPageLease>,
+        tickets: Vec<M1PreflightedKvPageReturnV1>,
     ) {
-        commit_page_return_ledgers(
+        commit_page_return_batch_ledgers(
             &mut self.target_pages,
             &mut self.draft_pages,
-            preflighted,
-            lease,
+            retired,
+            tickets,
         );
     }
 
@@ -2727,6 +2727,152 @@ fn commit_page_return_ledgers(
         Qwen3ModelRole::Draft06B => {
             commit_page_return_state(&mut draft_pages[index], preflighted, lease);
         },
+    }
+}
+
+closed spec fn page_return_batch_len(
+    retired: Seq<RetiredPageLease>,
+    tickets: Seq<M1PreflightedKvPageReturnV1>,
+) -> int {
+    if retired.len() < tickets.len() { retired.len() as int } else { tickets.len() as int }
+}
+
+closed spec fn page_return_batch_ready(
+    retired: Seq<RetiredPageLease>,
+    tickets: Seq<M1PreflightedKvPageReturnV1>,
+    target_pages: Seq<M1KvPoolPageStateV1>,
+    draft_pages: Seq<M1KvPoolPageStateV1>,
+) -> bool {
+    let count = page_return_batch_len(retired, tickets);
+    &&& forall|index: int| 0 <= index < count ==> #[trigger] tickets[index].matches_ledgers_spec(
+        &retired[index].lease, target_pages, draft_pages,
+    )
+    &&& forall|first: int, second: int| 0 <= first < second < count ==>
+        tickets[first].role != tickets[second].role
+            || tickets[first].global_index != tickets[second].global_index
+}
+
+closed spec fn page_return_batch_prefix(
+    retired: Seq<RetiredPageLease>,
+    tickets: Seq<M1PreflightedKvPageReturnV1>,
+    count: int,
+    before_target: Seq<M1KvPoolPageStateV1>,
+    before_draft: Seq<M1KvPoolPageStateV1>,
+    target_pages: Seq<M1KvPoolPageStateV1>,
+    draft_pages: Seq<M1KvPoolPageStateV1>,
+) -> bool {
+    &&& target_pages.len() == before_target.len()
+    &&& draft_pages.len() == before_draft.len()
+    &&& forall|index: int| 0 <= index < count ==>
+        page_return_ledger_spec(tickets[index].role, target_pages, draft_pages)[
+            tickets[index].global_index as int
+        ] == (M1KvPoolPageStateV1::Free {
+            generation: (retired[index].lease.page.generation_spec() as int + 1) as u32,
+        })
+    &&& forall|slot: int| 0 <= slot < before_target.len()
+        && !(exists|index: int| 0 <= index < count
+            && tickets[index].role == Qwen3ModelRole::Target8B
+            && tickets[index].global_index == slot)
+        ==> target_pages[slot] == before_target[slot]
+    &&& forall|slot: int| 0 <= slot < before_draft.len()
+        && !(exists|index: int| 0 <= index < count
+            && tickets[index].role == Qwen3ModelRole::Draft06B
+            && tickets[index].global_index == slot)
+        ==> draft_pages[slot] == before_draft[slot]
+}
+
+/// The completed-step caller's consuming loop, over its actual borrowed ledgers.
+/// Unequal vectors keep the original zip behavior; roster completeness remains
+/// a separate caller obligation. No queue or completion authority is minted.
+fn commit_page_return_batch_ledgers(
+    target_pages: &mut [M1KvPoolPageStateV1],
+    draft_pages: &mut [M1KvPoolPageStateV1],
+    retired: Vec<RetiredPageLease>,
+    tickets: Vec<M1PreflightedKvPageReturnV1>,
+)
+    requires page_return_batch_ready(retired@, tickets@, old(target_pages)@, old(draft_pages)@),
+    ensures page_return_batch_prefix(
+        retired@, tickets@, page_return_batch_len(retired@, tickets@),
+        old(target_pages)@, old(draft_pages)@, final(target_pages)@, final(draft_pages)@,
+    ),
+{
+    let ghost before_retired = retired@;
+    let ghost before_tickets = tickets@;
+    let ghost before_target = target_pages@;
+    let ghost before_draft = draft_pages@;
+    let ghost count = page_return_batch_len(before_retired, before_tickets);
+    let ghost mut cursor: int = 0;
+    proof {
+        reveal(page_return_batch_len);
+        reveal(page_return_batch_ready);
+        reveal(page_return_batch_prefix);
+    }
+    let mut retired_iter = retired.into_iter();
+    let mut ticket_iter = tickets.into_iter();
+    loop
+        invariant
+            0 <= cursor <= count,
+            count == page_return_batch_len(before_retired, before_tickets),
+            page_return_batch_ready(before_retired, before_tickets, before_target, before_draft),
+            vstd::std_specs::iter::IteratorSpec::remaining(&retired_iter)
+                == before_retired.subrange(cursor, before_retired.len() as int),
+            vstd::std_specs::iter::IteratorSpec::remaining(&ticket_iter)
+                == before_tickets.subrange(cursor, before_tickets.len() as int),
+            forall|index: int| cursor <= index < count ==>
+                #[trigger] before_tickets[index].matches_ledgers_spec(
+                    &before_retired[index].lease, target_pages@, draft_pages@,
+                ),
+            page_return_batch_prefix(
+                before_retired, before_tickets, cursor,
+                before_target, before_draft, target_pages@, draft_pages@,
+            ),
+        decreases count - cursor,
+    {
+        let retired = match retired_iter.next() {
+            Some(retired) => retired,
+            None => {
+                proof {
+                    reveal(page_return_batch_len);
+                    assert(cursor == count);
+                }
+                return;
+            },
+        };
+        let ticket = match ticket_iter.next() {
+            Some(ticket) => ticket,
+            None => {
+                proof {
+                    reveal(page_return_batch_len);
+                    assert(cursor == count);
+                }
+                return;
+            },
+        };
+        proof {
+            reveal(page_return_batch_len);
+            assert(cursor < count);
+            assert(retired == before_retired[cursor]);
+            assert(ticket == before_tickets[cursor]);
+        }
+        commit_page_return_ledgers(target_pages, draft_pages, ticket, retired.into_lease());
+        proof {
+            reveal(page_return_batch_ready);
+            reveal(page_return_batch_prefix);
+            reveal(M1PreflightedKvPageReturnV1::matches_ledgers_spec);
+            reveal(page_return_ledger_spec);
+            assert forall|index: int| cursor + 1 <= index < count implies
+                #[trigger] before_tickets[index].matches_ledgers_spec(
+                    &before_retired[index].lease, target_pages@, draft_pages@,
+                ) by {
+                assert(before_tickets[cursor].role != before_tickets[index].role
+                    || before_tickets[cursor].global_index != before_tickets[index].global_index);
+            }
+            assert(page_return_batch_prefix(
+                before_retired, before_tickets, cursor + 1,
+                before_target, before_draft, target_pages@, draft_pages@,
+            ));
+            cursor = cursor + 1;
+        }
     }
 }
 
@@ -5499,6 +5645,8 @@ pub struct DeviceKvCacheProjection {
     pub target_qualification_future_pages: usize,
 }
 
+verus! {
+
 #[derive(Debug, PartialEq, Eq)]
 pub(crate) struct RetiredPageLease {
     lease: DeviceKvPageLease,
@@ -5507,22 +5655,32 @@ pub(crate) struct RetiredPageLease {
 }
 
 impl RetiredPageLease {
-    pub(crate) const fn lease(&self) -> &DeviceKvPageLease {
+    pub(crate) const fn lease(&self) -> (lease: &DeviceKvPageLease)
+        ensures *lease == self.lease,
+    {
         &self.lease
     }
 
-    pub(crate) const fn after_epoch(&self) -> CompletionEpoch {
+    pub(crate) const fn after_epoch(&self) -> (epoch: CompletionEpoch)
+        ensures epoch == self.after_epoch,
+    {
         self.after_epoch
     }
 
-    pub(crate) const fn is_quiescent(&self) -> bool {
+    pub(crate) const fn is_quiescent(&self) -> (quiescent: bool)
+        ensures quiescent == self.quiescent,
+    {
         self.quiescent
     }
 
-    pub(crate) fn into_lease(self) -> DeviceKvPageLease {
+    pub(crate) fn into_lease(self) -> (lease: DeviceKvPageLease)
+        ensures lease == self.lease,
+    {
         self.lease
     }
 }
+
+} // verus!
 
 #[derive(Debug, PartialEq, Eq)]
 struct RoleDeviceKvCache {
@@ -8908,6 +9066,120 @@ mod tests {
                 assert_eq!(target, expected_target);
                 assert_eq!(draft, expected_draft);
             }
+        }
+    }
+
+    struct PageReturnBatchFixture {
+        target: Vec<M1KvPoolPageStateV1>,
+        draft: Vec<M1KvPoolPageStateV1>,
+        retired: Vec<RetiredPageLease>,
+        tickets: Vec<M1PreflightedKvPageReturnV1>,
+    }
+
+    const PAGE_RETURN_BATCH_KEYS: [(Qwen3ModelRole, u32, u32); 4] = [
+        (Qwen3ModelRole::Target8B, 2, 11),
+        (Qwen3ModelRole::Draft06B, 2, 17),
+        (Qwen3ModelRole::Target8B, 0, 23),
+        (Qwen3ModelRole::Draft06B, 3, 29),
+    ];
+
+    fn page_return_batch_fixture() -> PageReturnBatchFixture {
+        let mut fixture = PageReturnBatchFixture {
+            target: vec![M1KvPoolPageStateV1::INITIAL; 4],
+            draft: vec![M1KvPoolPageStateV1::INITIAL; 4],
+            retired: Vec::new(),
+            tickets: Vec::new(),
+        };
+        let request = RequestId::new(0, 7);
+        for (role, index, generation) in PAGE_RETURN_BATCH_KEYS {
+            let ledger = match role {
+                Qwen3ModelRole::Target8B => &mut fixture.target,
+                Qwen3ModelRole::Draft06B => &mut fixture.draft,
+            };
+            ledger[index as usize] = M1KvPoolPageStateV1::Leased { request, generation };
+        }
+        fixture.target[1] = M1KvPoolPageStateV1::Leased {
+            request: RequestId::new(1, 9),
+            generation: 31,
+        };
+        for (role, index, generation) in PAGE_RETURN_BATCH_KEYS {
+            let lease = DeviceKvPageLease {
+                device: device(),
+                allocation_id: identity(2),
+                request,
+                page: PhysicalPageId::new(role, index, generation),
+            };
+            let ticket = preflight_page_return_ledgers(
+                device(),
+                identity(2),
+                role,
+                &fixture.target,
+                &fixture.draft,
+                &lease,
+            )
+            .unwrap();
+            fixture.retired.push(RetiredPageLease {
+                lease,
+                after_epoch: CompletionEpoch::new(3),
+                quiescent: true,
+            });
+            fixture.tickets.push(ticket);
+        }
+        fixture
+    }
+
+    #[test]
+    fn returned_page_batch_commits_both_roles_and_preserves_unselected_slots() {
+        let mut fixture = page_return_batch_fixture();
+        let mut expected_target = fixture.target.clone();
+        let mut expected_draft = fixture.draft.clone();
+        for (role, index, generation) in PAGE_RETURN_BATCH_KEYS {
+            let ledger = match role {
+                Qwen3ModelRole::Target8B => &mut expected_target,
+                Qwen3ModelRole::Draft06B => &mut expected_draft,
+            };
+            ledger[index as usize] = M1KvPoolPageStateV1::Free {
+                generation: generation + 1,
+            };
+        }
+        commit_page_return_batch_ledgers(
+            &mut fixture.target,
+            &mut fixture.draft,
+            fixture.retired,
+            fixture.tickets,
+        );
+        assert_eq!(fixture.target, expected_target);
+        assert_eq!(fixture.draft, expected_draft);
+    }
+
+    #[test]
+    fn returned_page_batch_mismatches_keep_forward_zip_prefix_and_frame_the_suffix() {
+        for (retired_count, ticket_count) in [(0, 4), (4, 0), (1, 4), (4, 1), (3, 4), (4, 3)] {
+            let mut fixture = page_return_batch_fixture();
+            let mut expected_target = fixture.target.clone();
+            let mut expected_draft = fixture.draft.clone();
+            for (role, index, generation) in PAGE_RETURN_BATCH_KEYS
+                .into_iter()
+                .take(retired_count.min(ticket_count))
+            {
+                let ledger = match role {
+                    Qwen3ModelRole::Target8B => &mut expected_target,
+                    Qwen3ModelRole::Draft06B => &mut expected_draft,
+                };
+                ledger[index as usize] = M1KvPoolPageStateV1::Free {
+                    generation: generation + 1,
+                };
+            }
+            fixture.retired.truncate(retired_count);
+            fixture.tickets.truncate(ticket_count);
+            commit_page_return_batch_ledgers(
+                &mut fixture.target,
+                &mut fixture.draft,
+                fixture.retired,
+                fixture.tickets,
+            );
+            assert_eq!(fixture.target, expected_target);
+            assert_eq!(fixture.draft, expected_draft);
         }
     }
 

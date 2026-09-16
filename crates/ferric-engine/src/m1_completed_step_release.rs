@@ -1703,12 +1703,10 @@ fn commit_role<Q>(
             Qwen3ModelRole::Draft06B => core::mem::take(&mut plan.draft),
             Qwen3ModelRole::Target8B => core::mem::take(&mut plan.target),
         };
-        for (retired, ticket) in retired.into_iter().zip(tickets) {
-            queue
-                .custody_mut()
-                .partitioned_memory_mut()
-                .commit_page_return(ticket, retired.into_lease());
-        }
+        queue
+            .custody_mut()
+            .partitioned_memory_mut()
+            .commit_page_return_batch(retired, tickets);
     }
 }
 
@@ -1993,6 +1991,34 @@ mod tests {
         assert_queue::<M1AuthenticatedPhysicalReadbackQueueSessionV1>();
         assert_carrier::<M1CompletedStepSuccessV1>();
         assert_carrier::<M1AuthenticatedCompletedStepSuccessV1>();
+    }
+
+    #[test]
+    fn completed_step_role_commit_uses_the_single_consuming_ledger_loop() {
+        let source = include_str!("m1_completed_step_release.rs");
+        let body = source
+            .split("fn commit_role<Q>(")
+            .nth(1)
+            .unwrap()
+            .split("struct M1ReleasedCompletedStepCoreV1<Q>")
+            .next()
+            .unwrap();
+        assert_eq!(
+            body.matches(".commit_page_return_batch(retired, tickets)")
+                .count(),
+            1
+        );
+        assert!(!body.contains("retired.into_iter().zip(tickets)"));
+        assert!(!body.contains(".commit_page_return("));
+        assert!(
+            body.find("member_take_retired_pages(member, role)")
+                .unwrap()
+                < body
+                    .find(".commit_page_return_batch(retired, tickets)")
+                    .unwrap()
+        );
+        assert!(body.contains("core::mem::take(&mut plan.draft)"));
+        assert!(body.contains("core::mem::take(&mut plan.target)"));
     }
 
     #[test]
