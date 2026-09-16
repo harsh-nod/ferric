@@ -41,6 +41,10 @@ all 1,604 regular members and 1,603 payload hashes and sizes pass independent
 local checks. No engine, Verus or GPU test is attributed to this adoption.
 The `111722028` build/emission/native records below remain explicitly frozen
 at that checkpoint and do not validate the newer compiler.
+The latest read-only upstream check subsequently finds `45d0bf2e`: nine commits
+over 349, covering generative tile providers, nominal refusals, descriptor
+signature normalization and associated tests. The active diagnostic campaigns
+remain frozen on 349; this newer head has not been adopted or validated here.
 
 The matching engineering CLI, linker proxy, backend and extractor build on
 mi300x from the exact published compiler archive. All six tool-build/copy/source
@@ -128,6 +132,28 @@ All 260 regular members, the exact ordered roster, and all 259 payload hashes
 and sizes pass independent local verification. Model weights, reference caches
 and build targets are excluded. This is not a TTFT/TPOT or serving measurement,
 and does not validate compiler `349b2cd0`.
+After verified local retention, the four completed prefill capture/reference/
+comparison scratch directories are removed, including their private disposable
+caches: 113 files, 13 directories and 350,568,448 allocated bytes. All 90
+retained payloads in those directories are rechecked, prior process groups are
+absent, and both selected-path `fuser` batches return no users and no diagnostics.
+Reusable model, reference environment, compiler artifacts and input/output
+bundles remain available. The cleanup receipt has SHA-256
+`eb80d158c28cc794f4e88134353565b383f62685c685b6dc5d1e39e50b9bf742`.
+
+A separate bounded CPU-only experiment on mi300x finds concrete per-operation
+rounding witnesses against the installed Transformers 4.51.0 implementation.
+Synthetic RMSNorm has 229/1,024 differing BF16 outputs, SwiGLU 1,033/4,096,
+and rotary embedding 172/1,024 when FP32 intermediates are kept through the
+final operation instead of applying the canonical intermediate BF16 narrowing.
+The explicit SwiGLU intermediate narrowing exactly matches the canonical
+activation outputs in this experiment. This does not execute the device
+kernels or establish the cause of the full-model error: device transcendental
+implementations, reduction order, fused residual inputs and MFMA remain outside
+the experiment. No kernel or tolerance is changed. Raw report SHA-256 is
+`435ed666e165d378d2f2c6eb921249452d5d3c122194f1fdc720f431b7df72a0`;
+the diagnostic source, logs and terminal 0 are retained separately from the
+completed prefill archive.
 
 The separate draft catch-up proof candidate `a9fad31b`, on compiler
 `111722028`, passes its 21 selected host coordinator tests with zero failures
@@ -146,13 +172,24 @@ and `c263b3acd0a6c58a8da0da8184677df58c82d9071eda7844cebe70a37d505f86`.
 The M5 engineering candidate `cf8dd23e` implements one-shot readback of all
 five real S1/K4 target logit rows and a separate canonical full-prefix
 reference. It includes partial-copy/failed-teardown ownership regressions and
-rejects rearming this capture allocation. Its 14-file host campaign is running
-on compiler `349b2cd0`; no host pass or native/numerical result is claimed yet.
+rejects rearming this capture allocation. Its first host campaign on compiler
+`349b2cd0` fails engine-test compilation with five errors caused by four missing
+test-module imports. Source, formatting, both metadata graphs and final source/
+control checks pass, but no Rust/Python tests or Clippy execute. Failed R1 is
+fully retained at archive SHA-256
+`f60a0a4b651569a2d973c2996981b2d8ce5bc9d7db8b08283519593b9033900b`.
+Import-only successor `e16eb929` and R2 controls are prepared but not executed;
+launch is held to combine the separate catch-up proof change into one host
+validation run. No host pass or native/numerical result is claimed yet.
 The reusable compiler lane separately reproduces an earlier admission gap:
 the real-style guarded gather reference rejects `WriteOnlyDisjointSlice<u16>`
 as having no reference ABI relation. The observation harness passes while the
 compiler subprocess exits 101; this is not compiler/proof success. A narrow
-output-only relation fix and rejection regressions are prepared, not validated.
+output-only relation fix builds and passes its three unit tests, but its
+ordinary-source positive test fails at a later authenticated store-mapping
+boundary. Source/protected-input/control/toolchain after-checks pass. The
+failed positive is preserved; remaining read-rejection and gather diagnostics
+do not turn that failure into a successful compiler pipeline.
 
 Separately, two redundant remote archive copies are removed after local
 verification, reclaiming 116,240,384 allocated bytes. Their attempted extra
