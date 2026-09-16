@@ -46,6 +46,31 @@ all 1,608 members and 1,607 payload hashes and sizes pass independent local
 verification. This is dependency/source-gate coverage, not engine, Verus, native,
 numerical or serving validation on the new compiler.
 
+All six matching compiler-tool build/copy/source phases subsequently pass on
+mi300x at exact `1fadb7e0`. The CLI, linker proxy, backend and extractor are
+fresh Cargo products; the backend build-script record binds the new CLI.
+The 5,046-file compiler census and protected historical tools remain unchanged.
+CLI SHA-256 is
+`081f3092d37176e10f31664a5c8d5288bfeebd2972087b5daf9f65480e1a3b5a`;
+backend SHA-256 is
+`43741b5938d2c32e307de4655a6ee10d1f9a04ee0508de25d7fd1c839d37606e`.
+The 60,995,341-byte archive has SHA-256
+`9084ba6be03d07b023703bf023887456d081b807f52e3035f7450f525d606d4b`.
+All 85 members and 84 payload hashes and sizes are independently checked after
+transfer. This establishes matching engineering tools, not full compiler
+qualification, kernel emission or a GPU result.
+
+A subsequent upstream fetch observes `86248cd74453f8c6fbf19e08a5b6cbfce3fc42cb`,
+five commits after `1fad`. The 63-file change introduces kernel-context
+entry generation and frontend authentication, including a new
+`fe2o3-macros` dependency on `fe2o3-rustc-front`. No KFD/runtime or toolchain
+change is present in this delta, and Ferric's device sources contain no
+`KernelContext` or reserved issuer use. The collector nevertheless adds checks
+over reachable calls, so source inspection alone does not establish full
+compatibility. This newer head is not yet adopted. Running build/emission
+checkpoints remain frozen on `a0cc9929`/`1fad`; no result is relabeled as a test
+of `86248cd7`.
+
 After separate inventory and no-use checks, exactly 41 superseded single-link
 debug rlibs are removed from the owned compiler cache, reclaiming 528,704 KiB.
 All 960 protected files, 5,046 compiler source files and 6,909 unselected target
