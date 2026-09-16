@@ -360,7 +360,28 @@ qualification.
 
 ### Published Site
 
-The R19 site is live at <https://harsh-nod.github.io/ferric/> from prebuilt
+The R20 site is live at <https://harsh-nod.github.io/ferric/> from prebuilt
+commit `d7056632ca93c82398f9251eafc2495cf123f155`, deployed by the single
+deploy-only run `35152509800`. Source `c00dc017c1e22b1cf120d0bdbf9b253c98b6eaac`
+continues the R19 Pages lineage and records the final-RMS host checks, abd8
+adoption/tools, optimized diagnostic release and current device metadata.
+All five QA phases pass on mi300x, with eight viewports, every width 320..1440,
+64 screenshots and representative desktop/mobile visual review. All 14 live
+asset checks match the seven-file, 705,194-byte artifact. No GitHub build/test,
+new GPU observation, performance result or M1 gate closure is claimed.
+
+R20 QA archive SHA is
+`f566b13866fa67d33b67903d6a6bc86ecf6f47de9031eadf738f3ba091bcf699`
+(11,456,082 bytes). All 133 payload hashes/sizes/modes/whole-second mtimes,
+the 134-member roster/embedded manifest and 20 external records pass local
+custody checks. The completed clean source worktree is removed normally,
+reclaiming 3,448 KiB; its branch, source and evidence remain available.
+The exact remote cleanup stops before deletion on incomplete `lsof` mount
+visibility, after ownership, six absent process groups and custody checks pass.
+The three owned R20 roots total 51,116 KiB and remain retained, not reclaimed.
+No retry or visibility-policy exception is introduced.
+
+The preceding R19 publication was from prebuilt
 commit `ee6e41c045ad14aa6915b1b278d4502174537b2a`, deployed by the single
 deploy-only run `35136590156`. All five QA phases pass on mi300x, including
 eight browser viewports and 64 screenshots; representative desktop/mobile
