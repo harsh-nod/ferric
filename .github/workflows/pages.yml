@@ -70,18 +70,18 @@ jobs:
             test "$(stat -c %h "public/$file")" -eq 1
             total=$((total + $(stat -c %s "public/$file")))
           done
-          test "$total" -eq 595623
+          test "$total" -eq 612402
           test "$total" -le 2097152
 
-          # mi300x QA archive: a3a2c8b221822c6a95dfe6db3234d9f3e7294ab79806e821ec7c25564bbcf296
+          # September 15 checkpoint, mi300x R5-R6 QA archive: f5fe61cbecc83cc085c7d88ab711ccfdcf905527544e513e1d3e8bdd7ef0e139
           sha256sum --check --strict <<'SHA256'
-          d9c9e863beacdd3c8df340e31936bdd69e1175877844f47cea4ee83d2a7e3859  public/app.js
+          850e928a8c2034c35d05c79d96281bac14b3635dd6e9b32349e3a922b1d00da0  public/app.js
           07291c88f57be83ac12bccc73876fb67158ed96ca8efc2e5717d50d98ad9cb69  public/assets/architecture.svg
           5ddc6e2efcaa8eea3fd8f5607cae74813da636f180a34a5ba72cd879e1b6b809  public/assets/mark.svg
           05ad1f50575547c0b0c8244b2912e1d7518258772527f7ff236fdb8d2e42102f  public/data/performance.js
-          cf367cfc8d810d7e6de6abb87b5afbbbff02e92d3e9e8749c82debe0e600eed6  public/data/project.js
+          ca4b804cc11b57d0d12a58cf1f4ebcc8385072bf1fce9eeed9feee240aad5d91  public/data/project.js
           84927238616d4858c0308c95e10ce1c7063d928216e1e4cc28005a65ffb25c93  public/index.html
-          cf1a0f46a4c7db01a1a14c530e3ba145b497e9ab312dbf5fbe35272930d7f8ea  public/styles.css
+          96dad9e9ae20db7a97d39b811ef17579955160d7238243b75b609c951675e9aa  public/styles.css
           SHA256
 
       - name: Configure GitHub Pages
