@@ -2812,6 +2812,8 @@ fn commit_page_return_batch_ledgers(
     loop
         invariant
             0 <= cursor <= count,
+            before_target == old(target_pages)@,
+            before_draft == old(draft_pages)@,
             count == page_return_batch_len(before_retired, before_tickets),
             page_return_batch_ready(before_retired, before_tickets, before_target, before_draft),
             vstd::std_specs::iter::IteratorSpec::remaining(&retired_iter)
@@ -2848,8 +2850,11 @@ fn commit_page_return_batch_ledgers(
                 return;
             },
         };
+        let ghost prior_target = target_pages@;
+        let ghost prior_draft = draft_pages@;
         proof {
             reveal(page_return_batch_len);
+            reveal(RetiredPageLease::lease_spec);
             assert(cursor < count);
             assert(retired == before_retired[cursor]);
             assert(ticket == before_tickets[cursor]);
@@ -2864,8 +2869,20 @@ fn commit_page_return_batch_ledgers(
                 #[trigger] before_tickets[index].matches_ledgers_spec(
                     &before_retired[index].lease, target_pages@, draft_pages@,
                 ) by {
+                assert(before_tickets[index].matches_ledgers_spec(
+                    &before_retired[index].lease, prior_target, prior_draft,
+                ));
                 assert(before_tickets[cursor].role != before_tickets[index].role
                     || before_tickets[cursor].global_index != before_tickets[index].global_index);
+                let prior_ledger = page_return_ledger_spec(
+                    before_tickets[index].role, prior_target, prior_draft,
+                );
+                let current_ledger = page_return_ledger_spec(
+                    before_tickets[index].role, target_pages@, draft_pages@,
+                );
+                assert(current_ledger.len() == prior_ledger.len());
+                assert(current_ledger[before_tickets[index].global_index as int]
+                    == prior_ledger[before_tickets[index].global_index as int]);
             }
             assert(page_return_batch_prefix(
                 before_retired, before_tickets, cursor + 1,
