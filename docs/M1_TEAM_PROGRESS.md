@@ -5,9 +5,47 @@ receipt. The 33 M1 roadmap gates remain open.
 
 ## Current Checkpoint
 
+### Retained M5 Ranking Diagnostic
+
+A new CPU-only diagnostic replays the exact retained `011e0aca` / `7f90d187`
+capture and independent reference, checks their hashes and reproduces all five
+original per-row metrics. It adds top-five logits, maximum tie counts, both
+winners' ranks and signed errors without changing the original comparison.
+All eight focused tests and the actual replay pass on mi300x. No GPU or model
+execution occurs in this checkpoint.
+
+At position 131, the reference has a three-way maximum tie: tokens 16, 220 and
+576 all have BF16 logit 18.75, so lowest-ID tie-breaking selects 16. Ferric has
+576 at 18.75, but 16 and 220 at 18.625, and selects 576. Thus the retained
+mismatch is not a strict winner reversal in both arrays: the reference winner
+ties Ferric's winner in the reference array. The difference between those two
+candidate logits in Ferric is one BF16 step, 0.125. This does not establish
+which earlier operation caused that difference, and does not admit tolerance
+or change the original one-mismatch result.
+
+Diagnostic SHA-256 is
+`fb9a2eba62d965928eed844820a9d427e2d1ed8693c3f62115ed781826ed7820`.
+Its input comparison remains
+`a073987db9a15a351552d22030274d7ae050b44495f1abff230d3f84c593bdb1`.
+All 12 frozen inputs match before and after; the result and nine control/log
+records match independent local hashes. The exact completed remote stage is
+removed after retention and an empty scoped file-use check, reclaiming
+3,216 KiB. This is posthoc numerical diagnosis, not FP32-head evidence,
+isolated RMSNorm causality, new TTFT/TPOT or an M1 gate closure.
+
 ### Upstream Tracking And Build Policy
 
 The latest read-only `ls-remote` observation of fe2o3 `main` is
+`2d3ffbedd6dc2dd51d777ede70e26329370bcf77`. The merged history after the
+previous observation includes helper argument/result/call and slice
+correspondence, authenticated context flow, semantic import and debug storage.
+The full `7f90d187`-to-`2d3ffbed` diff changes 155 files; it is not merely a
+diagnostic-only increment. KFD, runtime, device implementation, toolchain and
+LLVM-worker implementation remain unchanged in this source comparison. The
+latest-pin transition is in progress; matching tools, emission and native
+validation have not run. Existing results retain their original compiler pin.
+
+The preceding read-only `ls-remote` observation was
 `ec2b88cfb050cb954a426f9968b8a73e1688ad37`, two commits after `d5424f5b`.
 Both commit objects are already locally available. Their source diff adds
 opt-in, bounded numeric diagnostics for pipeline scalar-definition rejection
