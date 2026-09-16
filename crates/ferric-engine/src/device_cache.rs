@@ -2805,13 +2805,20 @@ fn commit_page_return_batch_ledgers(
     proof {
         reveal(page_return_batch_len);
         reveal(page_return_batch_ready);
-        reveal(page_return_batch_prefix);
+        assert(page_return_batch_prefix(
+            before_retired, before_tickets, 0,
+            before_target, before_draft, before_target, before_draft,
+        )) by {
+            reveal(page_return_batch_prefix);
+        }
     }
     let mut retired_iter = retired.into_iter();
     let mut ticket_iter = tickets.into_iter();
     loop
         invariant
             0 <= cursor <= count,
+            before_retired == retired@,
+            before_tickets == tickets@,
             before_target == old(target_pages)@,
             before_draft == old(draft_pages)@,
             count == page_return_batch_len(before_retired, before_tickets),
@@ -2836,6 +2843,10 @@ fn commit_page_return_batch_ledgers(
                 proof {
                     reveal(page_return_batch_len);
                     assert(cursor == count);
+                    assert(page_return_batch_prefix(
+                        before_retired, before_tickets, count,
+                        before_target, before_draft, target_pages@, draft_pages@,
+                    ));
                 }
                 return;
             },
@@ -2846,6 +2857,10 @@ fn commit_page_return_batch_ledgers(
                 proof {
                     reveal(page_return_batch_len);
                     assert(cursor == count);
+                    assert(page_return_batch_prefix(
+                        before_retired, before_tickets, count,
+                        before_target, before_draft, target_pages@, draft_pages@,
+                    ));
                 }
                 return;
             },
@@ -2858,11 +2873,14 @@ fn commit_page_return_batch_ledgers(
             assert(cursor < count);
             assert(retired == before_retired[cursor]);
             assert(ticket == before_tickets[cursor]);
+            assert(page_return_batch_prefix(
+                before_retired, before_tickets, cursor,
+                before_target, before_draft, prior_target, prior_draft,
+            ));
         }
         commit_page_return_ledgers(target_pages, draft_pages, ticket, retired.into_lease());
         proof {
             reveal(page_return_batch_ready);
-            reveal(page_return_batch_prefix);
             reveal(M1PreflightedKvPageReturnV1::matches_ledgers_spec);
             reveal(page_return_ledger_spec);
             assert forall|index: int| cursor + 1 <= index < count implies
@@ -2887,7 +2905,65 @@ fn commit_page_return_batch_ledgers(
             assert(page_return_batch_prefix(
                 before_retired, before_tickets, cursor + 1,
                 before_target, before_draft, target_pages@, draft_pages@,
-            ));
+            )) by {
+                reveal(page_return_batch_prefix);
+                assert(target_pages@.len() == before_target.len());
+                assert(draft_pages@.len() == before_draft.len());
+                assert forall|index: int| 0 <= index < cursor + 1 implies
+                    page_return_ledger_spec(before_tickets[index].role, target_pages@, draft_pages@)[
+                        before_tickets[index].global_index as int
+                    ] == (M1KvPoolPageStateV1::Free {
+                        generation: (before_retired[index].lease.page.generation_spec() as int + 1) as u32,
+                    }) by {
+                    if index < cursor {
+                        assert(before_tickets[index].matches_ledgers_spec(
+                            &before_retired[index].lease, before_target, before_draft,
+                        ));
+                        assert(before_tickets[index].role != before_tickets[cursor].role
+                            || before_tickets[index].global_index != before_tickets[cursor].global_index);
+                        let prior_ledger = page_return_ledger_spec(
+                            before_tickets[index].role, prior_target, prior_draft,
+                        );
+                        let current_ledger = page_return_ledger_spec(
+                            before_tickets[index].role, target_pages@, draft_pages@,
+                        );
+                        assert(prior_ledger[before_tickets[index].global_index as int]
+                            == (M1KvPoolPageStateV1::Free {
+                                generation: (before_retired[index].lease.page.generation_spec() as int + 1) as u32,
+                            }));
+                        assert(current_ledger[before_tickets[index].global_index as int]
+                            == prior_ledger[before_tickets[index].global_index as int]);
+                    } else {
+                        assert(index == cursor);
+                    }
+                }
+                assert forall|slot: int| 0 <= slot < before_target.len()
+                    && !(exists|index: int| 0 <= index < cursor + 1
+                        && before_tickets[index].role == Qwen3ModelRole::Target8B
+                        && before_tickets[index].global_index == slot)
+                    implies target_pages@[slot] == before_target[slot] by {
+                    assert(!(exists|index: int| 0 <= index < cursor
+                        && before_tickets[index].role == Qwen3ModelRole::Target8B
+                        && before_tickets[index].global_index == slot));
+                    assert(before_tickets[cursor].role != Qwen3ModelRole::Target8B
+                        || before_tickets[cursor].global_index != slot);
+                    assert(prior_target[slot] == before_target[slot]);
+                    assert(target_pages@[slot] == prior_target[slot]);
+                }
+                assert forall|slot: int| 0 <= slot < before_draft.len()
+                    && !(exists|index: int| 0 <= index < cursor + 1
+                        && before_tickets[index].role == Qwen3ModelRole::Draft06B
+                        && before_tickets[index].global_index == slot)
+                    implies draft_pages@[slot] == before_draft[slot] by {
+                    assert(!(exists|index: int| 0 <= index < cursor
+                        && before_tickets[index].role == Qwen3ModelRole::Draft06B
+                        && before_tickets[index].global_index == slot));
+                    assert(before_tickets[cursor].role != Qwen3ModelRole::Draft06B
+                        || before_tickets[cursor].global_index != slot);
+                    assert(prior_draft[slot] == before_draft[slot]);
+                    assert(draft_pages@[slot] == prior_draft[slot]);
+                }
+            }
             cursor = cursor + 1;
         }
     }
