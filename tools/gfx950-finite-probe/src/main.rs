@@ -2,6 +2,9 @@ mod artifact;
 mod atomic_artifact;
 mod atomic_command;
 mod atomic_probe;
+mod knorm_artifact;
+mod knorm_command;
+mod knorm_probe;
 mod kproj_artifact;
 mod kproj_command;
 mod object;
@@ -13,6 +16,8 @@ mod task_probe;
 
 #[cfg(test)]
 mod atomic_tests;
+#[cfg(test)]
+mod knorm_tests;
 #[cfg(test)]
 mod process_tests;
 #[cfg(test)]
@@ -158,6 +163,26 @@ impl Options {
                 "--device-id-file",
                 "--run-dir",
             ],
+            "qwen3-knorm-chain-inspect" => vec![
+                "--producer-object",
+                "--producer-source",
+                "--consumer-object",
+                "--consumer-source",
+                "--metadata",
+            ],
+            "qwen3-knorm-chain-run" => vec![
+                "--producer-object",
+                "--producer-source",
+                "--consumer-object",
+                "--consumer-source",
+                "--metadata",
+                "--worker",
+                "--inputs",
+                "--weights",
+                "--norm-weights",
+                "--device-id-file",
+                "--run-dir",
+            ],
             _ => return Err("expected inspect or run subcommand".into()),
         };
         let mut paths = BTreeMap::new();
@@ -171,6 +196,7 @@ impl Options {
                         | "atomic-channel-run"
                         | "qwen3-kproj-run"
                         | "qwen3-kproj-wave64-run"
+                        | "qwen3-knorm-chain-run"
                 )
                 && !acknowledged
             {
@@ -198,6 +224,7 @@ impl Options {
                 | "atomic-channel-run"
                 | "qwen3-kproj-run"
                 | "qwen3-kproj-wave64-run"
+                | "qwen3-knorm-chain-run"
         ) && !acknowledged
         {
             return Err(
@@ -213,6 +240,9 @@ impl Options {
 }
 
 fn execute(options: &Options) -> Result<()> {
+    if options.mode.starts_with("qwen3-knorm-chain-") {
+        return knorm_command::execute(options);
+    }
     if options.mode.starts_with("atomic-channel-") {
         return atomic_command::execute(options);
     }

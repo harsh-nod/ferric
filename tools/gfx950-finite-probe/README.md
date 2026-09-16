@@ -181,3 +181,26 @@ inference or speed. The existing worker requests `VRAM | WRITABLE | PUBLIC`,
 not the `COHERENT` allocation flag; a passing observation is not a protected
 runtime coherence proof. Current compilation/GPU status is recorded in the
 [qualification directory](../../qualification/gfx950-atomic-channel-v1/README.md).
+
+## Qwen Key Projection And Normalization
+
+The fixed `qwen3-knorm-chain-inspect` and `qwen3-knorm-chain-run` modes bind
+a wave64 projection artifact and a K-RMSNorm artifact. Inspection requires
+`--producer-object`, `--producer-source`, `--consumer-object`,
+`--consumer-source`, and `--metadata`. Execution additionally requires
+`--worker`, `--inputs`, `--weights`, `--norm-weights`, `--device-id-file`,
+`--run-dir`, and `--allow-unauthenticated-machine-code`.
+
+Six distinct guarded buffers retain the hidden activation, projection weights,
+FP32 projection, BF16 gamma, quantized BF16 keys, and BF16 norm result. The
+consumer receives the same projection allocation after exact producer
+completion, without a host rewrite. Both artifact roles, launch geometries,
+pointer extents, guards, input immutability, and intermediate immutability are
+checked. The probe does not decide numerical acceptance; its raw three-stage
+outputs are checked by the independent
+[staged reference](../../qualification/gfx950-qwen3-knorm-v1/README.md).
+
+A report is written only after two completions, reverse-order frees, Close,
+and successful worker exit. Any failure is terminal, with no retry or fallback.
+This is a completion-ordered engineering baseline, not a single-launch
+megakernel, a timing result, or protected production authority.

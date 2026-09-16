@@ -1,0 +1,17 @@
+[package]
+name = "ferric-gfx950-qwen3-knorm-v1"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.94"
+publish = false
+description = "Engineering-only completion-ordered Qwen3 BF16 key RMSNorm"
+
+[workspace]
+
+[dependencies]
+fe2o3-device = { git = "https://github.com/harsh-nod/fe2o3", rev = "3dfa5b3fdac1832bd7d8902e32f591d81300d1e3", version = "=0.1.0" }
+
+[target.'cfg(not(target_arch = "amdgpu"))'.dependencies]
+fe2o3-host = { git = "https://github.com/harsh-nod/fe2o3", rev = "3dfa5b3fdac1832bd7d8902e32f591d81300d1e3", version = "=0.1.0" }
+
+[lib]
