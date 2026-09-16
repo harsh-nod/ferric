@@ -180,8 +180,7 @@ fn six_new_roots_have_exact_element_units_and_scalar_order() {
     }
 }
 
-#[test]
-fn imported_roots_and_new_roots_match_exact_thirteen_symbol_contract() {
+fn source_roots() -> Vec<String> {
     let mut roots: Vec<_> = new_signatures().into_iter().map(|entry| entry.0).collect();
     for source in [
         include_str!("../../qwen3-all-kernels-v1/src/gemm.rs"),
@@ -206,5 +205,54 @@ fn imported_roots_and_new_roots_match_exact_thirteen_symbol_contract() {
         );
     }
     roots.sort();
-    assert_eq!(roots, contract::KERNEL_SYMBOLS);
+    roots
+}
+
+#[test]
+fn imported_roots_and_new_roots_have_exact_fourteen_available_symbols() {
+    assert_eq!(
+        source_roots(),
+        [
+            "ferric_qwen3_compact_completion_v1",
+            "ferric_qwen3_gemm_mfma_bf16_f32_bf16_v1",
+            "ferric_qwen3_gemm_reference_bf16_f32_bf16_v1",
+            "ferric_qwen3_gemm_vector_a4_bf16_f32_bf16_v1",
+            "ferric_qwen3_lowest_id_argmax_bf16_v1",
+            "ferric_qwen3_speculative_token_assembly_v1",
+            "ferric_qwen3_token_embedding_bf16_copy_v1",
+            "ferric_qwen3_tp_gemv_bf16_f32_bf16_v1",
+            "ferric_qwen3_tp_gemv_partial_bf16_f32_v1",
+            "ferric_qwen3_tp_gqa_decode_bf16_f32_v1",
+            "ferric_qwen3_tp_kv_append_v1",
+            "ferric_qwen3_tp_rope_v1",
+            "ferric_qwen3_tp_swiglu_bf16_f32_v1",
+            "qwen3_rmsnorm_v1",
+        ]
+    );
+}
+
+#[test]
+fn selected_thirteen_marker_contract_excludes_only_available_mfma_root() {
+    let roots = source_roots();
+    let roster = ferric_qwen3_tp_kernels_device_v1::compiler_expectation_roster_v1();
+    let mut selected = roster
+        .iter()
+        .map(fe2o3_host::CompilerGeneratedKernelExpectationRosterEntryV1::export_name)
+        .collect::<Vec<_>>();
+    selected.sort();
+    assert_eq!(selected.len(), 13);
+    assert_eq!(selected, contract::KERNEL_SYMBOLS);
+    assert!(selected.windows(2).all(|pair| pair[0] < pair[1]));
+    assert!(
+        selected
+            .iter()
+            .all(|symbol| roots.iter().any(|root| root.as_str() == *symbol))
+    );
+    // Importing GEMM source exposes MFMA, but does not select it for TP intake.
+    let unselected = roots
+        .iter()
+        .map(String::as_str)
+        .filter(|root| !selected.contains(root))
+        .collect::<Vec<_>>();
+    assert_eq!(unselected, ["ferric_qwen3_gemm_mfma_bf16_f32_bf16_v1"]);
 }
