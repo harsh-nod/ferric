@@ -20,6 +20,19 @@ single-request timing with the production target-smoke field names. That timing
 starts after artifact, model-memory, and tokenizer setup and is explicitly not
 comparable to R33 serving, vLLM, or SGLang measurements.
 
+`ferric-m1-engineering-speculative-smoke` accepts an explicit leading
+`--mfma13` to admit an `AttributedMfma13` engineering artifact. Omitting it
+preserves the `LegacyScalar12` route. Both one-step and resident reports bind
+`program_strategy` and `program_count` to the admitted artifact, not just the
+command-line flag. This remains gfx942-only, authority-free engineering
+execution, not protected publication or performance qualification.
+
+```sh
+ferric-m1-engineering-speculative-smoke [--mfma13] \
+  PREPACKED-SNAPSHOT ENGINEERING-OBSERVATION-DIRECTORY \
+  GPU-UNIQUE-ID RAW-PROMPT [RESIDENT-MAX-NEW-TOKENS:1..32]
+```
+
 For engineering startup diagnosis only, set
 `FERRIC_M1_ENGINEERING_STARTUP_PHASE_DIAGNOSTICS_V1=1` when invoking either
 smoke binary. The opt-in writes fixed, cumulative `std::time::Instant` phase

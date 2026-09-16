@@ -6,8 +6,61 @@ receipt. The 33 M1 roadmap gates remain open.
 ## Current Checkpoint
 
 All builds, tests and Verus runs remain on mi300x. The fe2o3 main push
-`e3c359fb` contains `[skip ci]`; fresh GitHub API checks find zero workflow
-runs and zero check runs for that commit. No further fe2o3 push is made here.
+`111722028` contains `[skip ci]`; post-push GitHub API checks find zero workflow
+runs and zero check runs for that commit. It contains only the six-file core
+verifier correction described below, not Ferric kernels or inference code.
+
+Private Ferric `f8eed966` adds an explicit leading `--mfma13` option to the
+engineering speculative smoke. The default remains `LegacyScalar12`; one-step
+and resident reports bind their strategy and exact 12/13 program count to the
+admitted artifact. Argument failures precede artifact or device I/O. The
+gfx942-only device boundary and authority/comparison exclusions are unchanged.
+
+On mi300x, smoke R3 checks 110 library, 20 speculative-smoke and 17 target-smoke
+tests successfully, with two existing hardware tests ignored. It then records
+a genuine source-policy failure: the old test expects a single scalar opener
+instead of the explicit strategy match. The test-only successor checks both
+admission routes, their common fallible error boundary, and all six ordered
+startup completions. All 38 source-policy tests pass. Four selected engine
+regressions and three GEMM regressions also pass, including the draft-catchup
+reservation test covering K4/K8/K16; adapter `--all-targets -D warnings` passes.
+These are separately attributed host cohorts, not new emission, native,
+numerical or performance results. R1/R2 parser failures, R3's policy failure,
+and R4's pre-engine wrapper-label rejection remain retained rather than being
+relabeled as whole-campaign passes.
+
+The fe2o3 verifier correction is published `111722028`, rebased onto freshly
+fetched main `d6471109`. It boxes the cold V4 nested error while preserving
+Display/direct error-source downcasts, and makes four Cargo fixture paths
+mandatory at compile time. Earlier e68-based affected tests pass after using
+the fixture's required package-only debuginfo setting. Scoped strict Clippy
+passes; its first result checker incorrectly expects executable debug settings
+on metadata-only artifacts, and a separate raw-evidence inspection records the
+passing lint scope without changing that failed campaign. The exact rebased
+candidate passes all 16 current-tip validation phases: 152 tests pass, ten
+existing tests are ignored, and strict Clippy passes for the library and four
+changed fixture targets. Six fresh test executables and both normal fixtures
+are bound to the candidate source; source/control after-checks pass. A final
+fetch confirms the parent is still current before the normal main push.
+Full-package legacy test lint debt remains outside this six-file correction.
+This is verifier regression coverage, not complete compiler qualification.
+
+The final verifier archive is 52,872,086 bytes at SHA-256
+`8f62d1a78c64306e7bb3b892ad9f267de1bf7de367e4891ae19baa510e402c34`;
+all 166 payloads, 168 members and embedded metadata pass independent local
+checks. The incremental Ferric policy/engine/GEMM/lint archive is 25,507,099
+bytes at SHA-256
+`191e406d7a1c4372395eb981a83bb6ad6377a409479b46ae4f74444dc81353e5`;
+all 111 payloads and 113 members pass independent checks. Both retain their
+earlier archive dependencies and failed attempts without duplicating full
+source trees. Local evidence remains available under
+`.codex-tmp/fe2o3-verifier-error-size-v1` and
+`.codex-tmp/ferric-smoke-mfma13-v1`. After verifying custody and absence of all
+recorded process groups, the two completed owned mi300x build stages are
+removed, reclaiming 3,398,644 KiB. The completed compiler worktree is removed
+with its branch and published commit preserved. Shared caches and foreign
+workloads are untouched. Removing the eight independently verified remote
+retention copies reclaims another 293,744 KiB; their local archives remain.
 
 Private integration `71bd407e` adopts freshly fetched fe2o3 `8af54567` across
 the 80 active pin-bearing files. Its complete mi300x dependency/source-gate
@@ -69,7 +122,14 @@ TERM-ignored overflow requiring KILL, and an 80 MiB sparse artifact write with
 unchanged inherited file-size limits. The temporary artifact is removed and
 all downloaded probe files match remote hashes. Its result SHA-256 is
 `e08aa7580fe7ef0c33aa3da20dd08e4ea49132c8e1b009b94bb174638d83ff21`.
-The six remaining compiler phases have not yet been rerun with this correction.
+The R5 continuation passes aggregate V4, aggregate V5 and control-flow V6,
+bringing the checked 8af prefix to 2,559 test executions. Tutorial checks pass;
+strict changed-package Clippy then reports the oversized nested V4 verifier
+error addressed by the later correction above. R5 remains exit 101, and final
+compiler-tool qualification is not established. Its 356,562,561-byte archive
+has SHA-256
+`1852a74f07a110fa2fbed07ccab60bfe9305b0d9fed4f61838e340f3d0a722af`;
+all 714 payload hashes and the exact 716-member roster pass independent checks.
 
 On `71bd407e`, the separate host-kernel campaign passes all 19 phases: 14
 target-neutral GEMM tests once, eight TP tests per gfx942/gfx950 target, and
@@ -779,10 +839,10 @@ the fresh device census found all eight mi300x GPUs at 100 percent busy.
 
 | Team | Current Work | Next Evidence Required |
 | --- | --- | --- |
-| Compiler / Kernels | Our e3 push retains zero observed GitHub workflow/check runs. Main subsequently advances to `55d9bfe5`, now pinned in Ferric. Existing complete tool results remain attributed to e3. The upstream delta has no runtime/API/dependency change. | Focused enum-lowering regressions, rebuilt 55 tools, current-source emission and numerical GPU qualification. |
-| Runtime / Integration | `5bcf44ed` combines MFMA and the actual batch consumer with current 55 pins. All 32 graph checks and 42 source-gate tests pass; four standalone lock edges are repaired. Older source47 host/proof results remain separately attributed. | Execute the frozen 37-phase current-source host suite; caller/whole-roster composition and admitted native validation. |
-| Verification | Nine actual source47 helper bodies and six ledger negatives have retained proof evidence. Pinned Verus supports the actual batch iterator/projections; suffix normalization and frame preservation remain unvalidated obligations. | Verify the consumer with genuine current-55 dependencies after host validation; outer-caller completeness and native completion custody. |
-| Integration / Pages | R5-R6 is deployed through the approved static-only branch; all seven live assets match 1,121-width remote QA. Main and environment protections are unchanged. Completed private worktree is removed. | Later independently validated checkpoints and bounded remote stage cleanup; failed QA evidence remains protected. |
+| Compiler / Kernels | Published `111722028` is rebased onto `d6471109`; 152 affected tests and scoped strict Clippy pass on mi300x, with zero observed GitHub runs/checks. Ferric still pins dependency checkpoint `8af54567`, not latest main. | Adopt current main, rebuild exact compiler tools, emit and numerically validate MFMA kernels. |
+| Runtime / Integration | `f8eed966` adds explicit MFMA13 speculative/resident smoke admission. The separately attributed smoke, source-policy and selected engine/GEMM cohorts pass; strict adapter Clippy passes. | Current-compiler artifact emission and native replay with actual draft catch-up completion. No new TTFT/TPOT/throughput result. |
+| Verification | Proof R9 retains 14 selected executions with seven genuine dependency exports at its original source. New host tests do not establish new Verus results. | Outer queue/caller composition, mutation evidence and the changed custody check still require their own proofs. |
+| Integration / Pages | The public site remains the explicitly dated proof-R9/native-R6 checkpoint, deployed through the approved static-only branch. This newer private checkpoint is not presented as published. | Publish the next validated status from the separate Pages source; retain failures and remove only completed owned stages/worktrees. |
 
 The upstream freshness audit found no service-host, KFD or runtime source changes
 from Ferric's old `4f6f65ce` pin through published `e3c359fb`. The coherent
