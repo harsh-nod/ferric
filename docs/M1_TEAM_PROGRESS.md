@@ -5,6 +5,59 @@ receipt. The 33 M1 roadmap gates remain open.
 
 ## Current Checkpoint
 
+### mi350 Model Transport And Loader Checks Pass
+
+Canonical source transport from mi300x to the user-selected eight-GPU mi350
+finishes at 2026-09-17T20:09:36Z. Both SSH endpoints, tar operations and the
+coordinator return zero with owned leaders/groups absent. The exact 13-file
+roster totals 17,907,716,208 bytes; destination files are read-only and source
+non-atime metadata is unchanged. Independent custody checks all 33 source,
+35 destination and 36 coordinator records. This is transport evidence, not
+model content authentication. The incomplete admission marker is unchanged;
+Ferric intake must authenticate the model bytes before use.
+
+The actual Ferric59822 controller `a8e7961e...` and fe406 runtime worker
+`47426e4f...` are staged on mi350 with their original producer attribution.
+All six passive readelf/loader verify/list checks pass, as do terminal file,
+control and process-absence checks. Both resolve installed libraries on glibc
+2.39 without changing the host. The retained 97-file record archive is SHA256
+`536d7892001441c0ea6c56109becf9594aab3e81b78d08afe0e6b5ef5af42c77`.
+Neither executable entrypoint is invoked: no GPU, model or inference result
+is implied by loader compatibility.
+
+Full fe406 four-tool build custody is now complete. The 82,422,000-byte archive
+SHA256 `9853c1dc1822b4e57a3245e2a17f75c9cb8c122a1405a1d0c4c2a811190177ef`
+has 155 payloads and 156 regular members; the separate 37 terminal records also
+pass independent review. All six build phases, source/cache preservation and
+four actual tool identities are checked. Two redundant local extractions are
+removed after fresh no-use checks, reclaiming 362,592 KiB; authoritative archives,
+active compiler/cache/model owners and unrelated worktrees remain untouched.
+
+The fresh Ferric59822 source-gate campaign passes all 17 phases and 48 tests.
+TP metadata has 163 packages, including 53 fe406 and two Pliron packages.
+All 1,157 source files, four TCB inventories and coverage remain unchanged.
+The 5,311,957-byte archive SHA256
+`a57181029ad0a9c7ac672311ffb6c07580832094c0bc377ab881598b2191e184`
+passes independent 300-payload/301-member and 20-external-record custody.
+An initial retention deployment failed its directory-permission check; that
+failure is preserved separately, and the fresh corrected retention passes.
+
+The TP14 vendor prerequisite passes without copying packages or running Cargo.
+Its fresh projection fits the 10 GiB stage and ordinary 512 MiB reserve:
+3,754,004 KiB observed stage plus 4,048,408 KiB projected growth. Formation
+and the exact 14-root gfx950 artifact remain separate pending steps. The old
+13-root artifact lacks the MFMA export required by the current controller and
+is not a substitute. No new Qwen tokens, TP8 dispatch, TTFT or TPOT are reported.
+
+A fresh upstream query now observes fe2o3 main `e364682e`. Its six commits after
+fe406 change 11 tutorial/config/documentation files. Independent Git-object and
+build-input review finds production compiler/runtime dependencies and the LLVM
+worker subtree unchanged. Existing producers remain fe406-produced, with an
+explicit production-source-equivalence bridge, not a claimed e364 rebuild or
+Ferric pin transition. Tutorial integration-test inputs did change and need
+their own validation. All builds and CPU tests remain on mi300x; all 33 M1 gates
+remain open.
+
 ### Native Validation Redirected To Eight-GPU mi350
 
 The user redirects native execution from mi350-2 to mi350. Fresh SSH reaches
