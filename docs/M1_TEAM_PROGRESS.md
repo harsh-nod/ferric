@@ -5,6 +5,99 @@ receipt. The 33 M1 roadmap gates remain open.
 
 ## Current Checkpoint
 
+### Matching abd8 Kernel Emission
+
+All 13 bounded mi300x CPU-only emission phases pass using matching abd8 tools
+and frozen Ferric 6e source. Fresh canonical and private empty-home metadata
+agree; all source/vendor/input preservation checks pass. The gfx942:xnack-
+code-object-v6 ELF contains the exact 13 kernel entry/descriptor sets, passes
+exact output replay and includes the expected BF16 MFMA instruction. No GPU
+load/launch or publication grant is issued. The original 512 MiB admission
+reserve is unchanged, and recorded peak stage usage is 10440360 KiB.
+
+HSACO SHA is
+`bae9d461d441bba739c8bede79e5955146dade2b65232c68711a9262c006edaa`
+(112936 bytes); inspection SHA is
+`627f94f80a17287c1707617bfa37095b835d72033f43df461505ddb80fc5bbcc`.
+Terminal retention exits 0 with all recorded groups absent. All 230 payload
+SHA/size/mode checks, the exact 231-member regular-file roster, embedded
+manifest/summary and 12 external hashes verify independently. Archive SHA is
+`e67913703797e8dc87aea8c837dcc7f19ba022ab4994f6f67bb60b918d38fa1c`
+(5941085 bytes). Original vendor formation exit 1 remains explicit; separate
+source/semantic observations support consumption, not relabeling that failure.
+
+The native final-RMS candidate now binds this actual emission, source, release
+and tools but remains UNREADY. At 2026-09-17T02:22:21Z, the selected GPU4 is
+still 97% busy with 105477615616 bytes VRAM used. No GPU work is launched or
+interrupted. This compiler-side engineering result is not a new numerical,
+protected-proof or performance result and closes no M1 gate.
+
+### Vendor Source And Cargo Semantic Checks
+
+The approved reserve384 vendor formation remains a failed status-1 attempt;
+there is no normalization retry or synthesized success receipt. Separate
+mi300x source assessment R2 now verifies all 198 package checksums, 143 unchanged
+registry packages and 55 canonical Git payloads. Full vendor, canonical source,
+workspace and original evidence identities are unchanged. All 19 external
+records pass independent local hash checks. R1's overly strict single-link
+assumption for a borrowed Pliron Git pack is retained as a failure; R2 permits
+shared links only for canonical `.git/objects`, preserving full identities.
+
+One subsequent pinned-nightly Cargo metadata invocation, offline/locked with
+all features and a fresh private Cargo home, matches the retained genuine
+host-1.97.1 canonical producer. The full 163-package resolve graph, feature sets,
+workspace and package IDs match. All 55 entire Git-package objects agree after
+only package-relative manifest and target-source path relocation. All 29 raw
+records verify locally, and a separate jq comparison of the two raw metadata
+files independently reproduces those results. No existing source, vendor or
+shared target changes; the canonical baseline is not rerun or relabeled.
+
+Assessment receipt SHA is
+`001db999ea3e8eb525ac0db9b2333a3f38f7669e34ea2f5d47d0ff74e83ba4df`;
+semantic receipt SHA is
+`9dcb870136a1ec4bc29cd0133772e856366d5ad7794ba853c1f9bbc934db6cd5`.
+These are source and scoped Cargo semantic observations, not independently
+reproduced normalized manifest bytes, compiler qualification or GPU authority.
+The reviewed emission consumer preserves original formation exit 1, binds all
+61 custody/assessment/semantic/baseline records and retains all 13 emission
+phases, including both fresh emission-time metadata executions.
+
+### Exact Tool Retirement
+
+The R2 cleanup inventory stopped before deletion when a process disappeared
+during inspection; all nine failure records remain retained. A separately
+reviewed R3 inventory passes with the identical eight-path scope and unchanged
+file-use policy. Separately acknowledged apply then removes exactly eight
+aliases/four completed tool inodes, reclaiming 208668 KiB (203.8 MiB). Stage
+allocation changes from 10037756 to 9829088 KiB. Private tool copies, source,
+vendor, evidence and all unselected target identities are unchanged.
+
+All 14 inventory and 15 apply external hashes pass; full before censuses agree
+and the fsynced journal contains eight intent/completion pairs. Both recorded
+groups are absent. Visibility remains explicitly incomplete under the existing
+exact sd-pam/structurally checked SSH transport policy; no new exception or
+unknown gap is admitted. Apply receipt SHA is
+`82e797b0f44a5f3a43f6c0e91f16107f662237bfd57b16dff54931f726f150e5`.
+The emission reserve remains 512 MiB; the one-run 384 MiB vendor exception is
+not reused. Cleanup alone does not grant emission or native admission.
+
+### Latest Upstream And Native Availability
+
+Fresh upstream observation finds fe2o3 main at
+`bd1ed7d559b1a372644a78b1ede7e6057e5ccbc7`: 11 commits/12 files since the
+adopted 9f8 pin. Production changes include verified helper INDEX-to-U64 ABI
+casts and structured defined-call argument mismatch diagnostics. Runtime/KFD,
+device/host, production manifests, locks, toolchain and LLVM-worker tree stay
+unchanged; one test-fixture manifest does change. A revision-only adoption
+preparation is UNREADY, with the exact 80-file/32-lock roster and no new TCB
+target allowance. It is not an integrated or validated upgrade yet.
+
+At 2026-09-17T01:46:37Z, frozen gfx942 GPU4 was 98% busy with 105477611520
+bytes used. No GPU workload was launched or interrupted. The diagnostic path
+remains frozen at Ferric 6e/compiler abd8; current integration remains 9f8.
+There is still no new native numerical, protected-proof or TTFT/TPOT result,
+and all 33 M1 gates remain open.
+
 ### Published September 17 Checkpoint
 
 The public site at <https://harsh-nod.github.io/ferric/> now publishes the EOS,
