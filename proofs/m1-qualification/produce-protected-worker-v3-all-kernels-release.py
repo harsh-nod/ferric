@@ -16,7 +16,7 @@ import tomllib
 from typing import Any, NoReturn
 
 
-FE2O3_REVISION = "bd1ed7d559b1a372644a78b1ede7e6057e5ccbc7"
+FE2O3_REVISION = "f7f5aa32600959a56a80d34fd608bcf935bc09cf"
 PLIRON_REVISION = "cc902cc8c669b5de2b292ae8638d9e8311bc735b"
 DEVICE_RELATIVE = Path("device/qwen3-all-kernels-v1")
 DEVICE_CRATE = "ferric-qwen3-all-kernels-device-v1"
