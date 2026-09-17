@@ -1078,7 +1078,9 @@ mod tests {
             *name != "ferric_qwen3_gemm_mfma_bf16_f32_bf16_v1"
         })));
         assert!(!exact_exports(
-            names.into_iter().chain(std::iter::once("unexpected_kernel"))
+            names
+                .into_iter()
+                .chain(std::iter::once("unexpected_kernel"))
         ));
     }
 
