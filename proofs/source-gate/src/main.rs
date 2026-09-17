@@ -4363,6 +4363,7 @@ fn validate_attributes(attributes: &[Attribute], allow_solver_attributes: bool) 
                         | "dead_code , reason = \"allocating entry remains available to non-resident rollover callers\""
                         | "unused_imports"
                         | "clippy :: boxed_local"
+                        | "clippy :: cast_lossless , reason = \"Verus models widening casts directly but the pinned From call is opaque\""
                         | "clippy :: cast_possible_truncation"
                         | "clippy :: large_enum_variant"
                         | "clippy :: large_enum_variant , reason = \"resident success keeps physical readback inline to avoid a timed heap allocation\""
@@ -8313,5 +8314,26 @@ verus! {
         let broader = verus_syn::parse_file("#![allow(clippy::all)]")
             .expect("broader Clippy allowance parses");
         assert!(validate_attributes(&broader.attrs, false).is_err());
+    }
+
+    #[test]
+    fn proof_visible_widening_cast_allowance_requires_exact_lint_and_reason() {
+        let exact = verus_syn::parse_file(
+            "#![allow(clippy::cast_lossless, reason = \"Verus models widening casts directly but the pinned From call is opaque\")]",
+        )
+        .expect("exact widening-cast allowance parses");
+        assert_eq!(validate_attributes(&exact.attrs, false), Ok(()));
+        assert_eq!(validate_attributes(&exact.attrs, true), Ok(()));
+
+        for source in [
+            "#![allow(clippy::cast_lossless)]",
+            "#![allow(clippy::cast_lossless, reason = \"broader suppression\")]",
+            "#![allow(clippy::all, reason = \"Verus models widening casts directly but the pinned From call is opaque\")]",
+            "#![allow(clippy::cast_lossless, clippy::all, reason = \"Verus models widening casts directly but the pinned From call is opaque\")]",
+        ] {
+            let broader = verus_syn::parse_file(source).expect("broader allowance parses");
+            assert!(validate_attributes(&broader.attrs, false).is_err());
+            assert!(validate_attributes(&broader.attrs, true).is_err());
+        }
     }
 }
