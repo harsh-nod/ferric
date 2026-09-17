@@ -5,6 +5,49 @@ receipt. The 33 M1 roadmap gates remain open.
 
 ## Current Checkpoint
 
+### TP1 Roster And Portable mi350-2 Controller
+
+Ferric source `59822dd469a95294cc11c6e8bab0c79978f66703`, tree
+`9020cf3c7a1f30437e01873919e6bea4acd623d3`, fixes TP's exact export roster
+to include all 14 roots emitted from its imported source. The previously
+omitted MFMA root is admitted as source metadata; this does not select it for
+dispatch or change kernel arithmetic, default targets or protected routes.
+The compiler/runtime pin remains published fe2o3 main `fe406b0c`, reconfirmed
+by a fresh upstream query after validation.
+
+All builds and tests stay on mi300x: 34 gfx950 and 34 gfx942 device tests pass,
+as do one default and two TP-enabled adapter admission regressions. Both final
+formatting checks and the release controller build pass. These are focused
+tests, not the complete adapter suite or native numerical qualification.
+The 17 build/test phases preserve the initial adapter-format exit 1 and its
+successful correction; the other 16 phases return zero.
+
+The ordinary mi300x link requires GLIBC_2.39, unavailable on mi350-2's
+glibc 2.35. A final-bin-only relink against 20 privately captured installed
+link inputs produces controller SHA256
+`cbcceea01f035515b886754ebedbc7c832450afc22fc9b791876ec182932d264`,
+with maximum required GLIBC version 2.34. No shared library, toolchain,
+dependency or repository source is changed for this relink. Independent
+review checks all 648 actual link inputs, tool/capture hashes and required
+runtime symbols. This is static compatibility, not controller execution.
+
+The retained 97,572,588-byte archive has SHA256
+`13da490f7aef70c7ce1d495d682d239f932b372f9926cade57033e53e1f569b5`.
+Independent custody verifies all 362 payloads and 367 regular members,
+14 actual test ELFs, three distinct controller producers, raw phase outcomes,
+capture/link provenance and both successful external retention phases.
+After that ACK, fresh process/no-use and identity checks precede removal of
+the two owned completed test stages, totaling 3,099,044 KiB. Cleanup returns
+zero; active build/cache owners, models and shared jobs are untouched. The
+two inspected local worktree registries contain no eligible finished tree
+to remove.
+
+Fresh current-compiler gfx950 kernel emission, canonical model staging and
+the Qwen smoke on mi350-2 remain pending. That host has one gfx950 GPU and
+does not replace gfx942-specific or eight-GPU evidence. No new Qwen output,
+TTFT/TPOT, protected proof or M1 gate closure is claimed. All 33 gates remain
+open; builds remain restricted to mi300x.
+
 ### Published Asrock Runtime Adopted
 
 Ferric `289288fa29adbc70f5155fb1eb81fdf44a6d38e7`, tree
@@ -34,9 +77,10 @@ mi300x within the existing caps; no local or GitHub build runs.
 The user-selected mi350-2 is reachable at the 18:10 UTC follow-up, with GPU
 utilization zero, 297,750,528 bytes of VRAM used and no visible GPU users.
 This is an observation, not a reservation. It exposes one gfx950 GPU and
-cannot replace gfx942-specific capture or eight-GPU evidence. Current-source
-TP1 controller/kernel builds, canonical model transfer and Qwen execution
-remain pending. This dependency adoption establishes no native arithmetic,
+cannot replace gfx942-specific capture or eight-GPU evidence. At this adoption
+checkpoint, current-source TP1 controller/kernel builds, canonical model
+transfer and Qwen execution were pending. This adoption establishes no native
+arithmetic,
 performance, protected proof or M1 gate closure; all 33 gates remain open.
 
 ### Current-Main Asrock Runtime Published
