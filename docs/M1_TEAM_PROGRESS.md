@@ -5,6 +5,57 @@ receipt. The 33 M1 roadmap gates remain open.
 
 ## Current Checkpoint
 
+### Published R23 Checkpoint
+
+The public site records the BF16 helper, source-bound host/proof results,
+f7f adoption and separate unadopted 6ae observation below. Private Pages source
+`2de4b98f46ac79bde05752e61bc191a2ced7184e` passes all five mi300x-only QA
+phases, every width from 320 to 1440 pixels, eight rendered viewports and
+64 retained screenshots. Source, Node/npm and browser preservation pass.
+
+Archive SHA is
+`bbe9b81a5dc1f87a20b2bf88877da21cb5bf9db4b43a48f0fd112160d0c006f4`
+(11,462,862 bytes). All 133 payload identities, the exact 134-member roster
+and 22 external records verify independently. Two additional source controls
+are retained externally and match the admitted ledger. A local invocation
+with incorrect expected manifest/receipt hashes failed before extraction;
+that failure remains recorded, and the actual remote-ledger hashes validate
+unchanged evidence. Desktop/mobile overview and checkpoint images are reviewed.
+
+Static commit `b81f3223dc506d5c4ab2d6c1a8cbd9d616483088` deploys through
+the successful deploy-only run `35181761167`. All seven canonical and seven
+cache-busted live requests match the admitted 729,876-byte artifact. No GitHub
+build/test or protection change is made. After exact source, clean commit and
+scoped no-use checks, the completed 3,496 KiB Pages worktree is removed without
+force; source branch and evidence remain. Remote process-visibility gaps still
+withhold cleanup authority; no shared process or library is modified.
+
+### f7f Compiler Adoption
+
+Ferric adopts fe2o3 `f7f5aa32600959a56a80d34fd608bcf935bc09cf` in
+`3836cc1fb3bdb36b18854df10dd368cf47c902f0`. All 50 bounded mi300x phases
+pass, including 32 locked graphs and 48 fresh source-gate tests. The exact
+80-file revision transition preserves runtime TCB, property-binder and Pliron
+pins, and selected-helper coverage. All 1,157 integrated source files match
+the validated final census. Independent actual-evidence review finds no issue.
+
+Archive SHA is
+`c5575dc2ea8a96f72568b4d97259884fe34825f7a65b1d4ea3a5250e72bda4e0`
+(20,968,339 bytes). All 1,651 payload identities, the exact 1,652-member roster
+and 14 external records verify. All 50 recorded phase groups are absent.
+This is dependency/source-policy adoption, not whole-engine or GPU validation.
+The BF16 host and proof results below remain attributed to bd1/df3a78e0.
+Newer upstream `6ae096ca717c762ad00d5d1b3ca80d4db5e0628c` is separately
+source-audited and is not validated or adopted by this checkpoint. Its two
+commits change private-array initialization and lowering, without an identified
+Ferric API migration or runtime/KFD/toolchain/manifest/LLVM-worker change.
+
+User-authorized mi350-2 is reachable with one gfx950 device. The checked cache
+lacks the canonical target/draft bundle, and a current-source TP1 run needs
+matching rebuilt tools, worker and gfx950 TP emission. The frozen gfx942
+final-RMS capture cannot run there unchanged. No new native admission, GPU
+execution, numerical result or performance measurement is claimed.
+
 ### BF16 Host Ordering Helper
 
 Reviewed candidate `df3a78e0ac7bfb96106935e0c07a4de6e860de1b` adds a finite
@@ -37,13 +88,14 @@ Host R3 was explicitly cancelled after review found the obsolete gate would
 reject its unreasoned annotation; its missing phase status remains unknown,
 not synthesized. Prepared proof R4/R5 were never launched. Completed duplicate
 local extractions were removed after no-use checks, reclaiming 206,932 KiB;
-original archives and verification records remain. This is not a full host-scan,
+the completed helper worktree was also removed, reclaiming 45,184 KiB.
+Original archives and verification records remain. This is not a full host-scan,
 formal IEEE/device, protected-runtime, numerical parity or M1 qualification
 claim, and it does not establish the cause of the historical logit mismatch.
 
-### Published R22 Checkpoint
+### Earlier R22 Checkpoint
 
-The public site now includes the matching abd8 emission, separate vendor
+The earlier R22 site includes the matching abd8 emission, separate vendor
 semantic checks and bd1 adoption below. Private Pages source `bcf3647b` passes
 all five mi300x-only phases: widths 320..1440, eight viewports, 64 screenshots
 and unchanged source/runtime/browser checks. Archive SHA is
