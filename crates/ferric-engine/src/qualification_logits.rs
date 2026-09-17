@@ -24,6 +24,8 @@ use ferric_spec::{
     TokenId, QWEN3_VOCABULARY_SIZE,
 };
 use sha2::{Digest, Sha256};
+#[allow(unused_imports)]
+use vstd::prelude::*;
 
 use crate::BoundM1CompletionOutputV1;
 
@@ -194,6 +196,8 @@ impl From<ServiceAllocationErrorV1> for M1QualificationLogitsErrorV1 {
     }
 }
 
+verus! {
+
 /// Numerical rejection while deriving terminal choices from copied BF16 rows.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum M1QualificationFinalLogitsErrorV1 {
@@ -210,6 +214,8 @@ pub enum M1QualificationFinalLogitsErrorV1 {
     /// Bounded host storage for the derived lane choices was unavailable.
     HostAllocation,
 }
+
+} // verus!
 
 impl fmt::Display for M1QualificationFinalLogitsErrorV1 {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -981,14 +987,35 @@ impl M1ObservedQualificationLogitsV1 {
     }
 }
 
+verus! {
+
 fn lowest_id_finite_bf16_argmax(
     bytes: &[u8],
     lane: usize,
-) -> Result<TokenId, M1QualificationFinalLogitsErrorV1> {
-    let expected = usize::try_from(
-        u64::from(QWEN3_VOCABULARY_SIZE) * M1_QUALIFICATION_LOGITS_ELEMENT_BYTES_V1,
-    )
-    .expect("the fixed M1 BF16 vocabulary row fits usize");
+) -> (result: Result<TokenId, M1QualificationFinalLogitsErrorV1>)
+    ensures
+        match result {
+            Ok(token) => ferric_spec::finite_bf16_argmax_result(bytes@, Ok(token)),
+            Err(M1QualificationFinalLogitsErrorV1::RowExtent {
+                lane: actual_lane, expected, actual,
+            }) => {
+                actual_lane == lane
+                    && expected == 2 * QWEN3_VOCABULARY_SIZE
+                    && actual == bytes@.len()
+                    && ferric_spec::finite_bf16_argmax_result(
+                        bytes@, Err(FiniteBf16ArgmaxError::RowExtent),
+                    )
+            },
+            Err(M1QualificationFinalLogitsErrorV1::NonFinite { lane: actual_lane, token }) => {
+                actual_lane == lane
+                    && ferric_spec::finite_bf16_argmax_result(
+                        bytes@, Err(FiniteBf16ArgmaxError::NonFinite { token }),
+                    )
+            },
+            Err(_) => false,
+        },
+{
+    let expected = 2 * QWEN3_VOCABULARY_SIZE as usize;
     match select_lowest_finite_bf16_argmax(bytes) {
         Ok(token) => Ok(token),
         Err(FiniteBf16ArgmaxError::RowExtent) => {
@@ -1003,6 +1030,8 @@ fn lowest_id_finite_bf16_argmax(
         }
     }
 }
+
+} // verus!
 
 pub(crate) fn observe_m1_qualification_logits_v1(
     shape: M1QualificationLogitsShapeV1,
@@ -1505,6 +1534,38 @@ pub(crate) mod tests {
             assert_eq!(ferric_spec::select_lowest_argmax(&scores), Ok(expected));
             assert_eq!(lowest_id_finite_bf16_argmax(&row, 3), Ok(expected));
         }
+    }
+
+    #[test]
+    fn terminal_bf16_argmax_preserves_exact_extent_and_lane_diagnostics() {
+        let expected = usize::try_from(QWEN3_VOCABULARY_SIZE).unwrap() * 2;
+        for lane in [0, 7, usize::MAX] {
+            for actual in [0, 1, expected - 2, expected - 1, expected + 1, expected + 2] {
+                let row = vec![0; actual];
+                assert_eq!(
+                    lowest_id_finite_bf16_argmax(&row, lane),
+                    Err(M1QualificationFinalLogitsErrorV1::RowExtent {
+                        lane,
+                        expected,
+                        actual,
+                    })
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn terminal_bf16_argmax_preserves_first_nonfinite_and_extreme_lane() {
+        let mut row = bf16_row(0);
+        set_bf16(&mut row, 7, 0xff80);
+        set_bf16(&mut row, 11, 0x7fc0);
+        assert_eq!(
+            lowest_id_finite_bf16_argmax(&row, usize::MAX),
+            Err(M1QualificationFinalLogitsErrorV1::NonFinite {
+                lane: usize::MAX,
+                token: 7,
+            })
+        );
     }
 
     #[test]

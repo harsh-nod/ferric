@@ -122,6 +122,24 @@ pub use step_plan_publication::{
 
 verus! {
 
+/// Public proof view of the complete BF16 scanner's result, including errors.
+pub open spec fn finite_bf16_argmax_result(
+    bytes: Seq<u8>,
+    result: Result<TokenId, FiniteBf16ArgmaxError>,
+) -> bool {
+    match result {
+        Ok(token) => m1_completion::is_lowest_finite_bf16_argmax(bytes, token),
+        Err(FiniteBf16ArgmaxError::RowExtent) => bytes.len() != 2 * QWEN3_VOCABULARY_SIZE,
+        Err(FiniteBf16ArgmaxError::NonFinite { token }) => {
+            bytes.len() == 2 * QWEN3_VOCABULARY_SIZE
+                && token < QWEN3_VOCABULARY_SIZE
+                && m1_completion::bf16_row_key(bytes, token as int).is_none()
+                && forall|prior: int| 0 <= prior < token as int
+                    ==> m1_completion::bf16_row_key(bytes, prior).is_some()
+        },
+    }
+}
+
 /// Public proof view of the executable lowest-token-ID argmax contract.
 pub open spec fn is_lowest_argmax(scores: Seq<i64>, token: TokenId) -> bool {
     m1_completion::is_lowest_argmax(scores, token)
