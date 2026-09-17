@@ -72,6 +72,13 @@
   const resident = project.residentCheckpoint;
   const residentProgress = document.querySelector("[data-resident-progress]");
   residentProgress.append(element("p", "performance-scope", resident.scope),
+    element("h3", "", "Matching abd8 kernels: all 13 emission phases passed"),
+    element("p", "", resident.integration.emissionAbd8.detail),
+    element("h3", "", "Vendor semantics checked; original formation remains failed"),
+    element("p", "", resident.integration.vendorSemanticsAbd8.detail),
+    element("h3", "", "Compiler bd1 adopted; GPU validation held"),
+    element("p", "", resident.integration.upstreamAndNativeHold.detail),
+    element("p", "performance-scope", "The retained checkpoints below preserve their original source identities and then-pending states. Later abd8 emission does not relabel earlier validation or close a qualification gate."),
     element("h3", "", "Prefill EOS: authenticated terminal ownership, host checks passed"),
     element("p", "", resident.integration.prefillEos.detail),
     element("h3", "", "Canonical prepack publication: atomic no-replace fix"),
@@ -237,6 +244,18 @@
   residentDetails.append(element("summary", "", "Checkpoint source identities"));
   const residentPins = element("dl", "observation-facts");
   for (const [label, value] of [
+    ["Latest emission tracker source", resident.integration.emissionAbd8.trackerSource],
+    ["Matching abd8 HSACO SHA-256", resident.integration.emissionAbd8.hsacoSha256],
+    ["Matching abd8 inspection SHA-256", resident.integration.emissionAbd8.inspectionSha256],
+    ["Matching abd8 emission evidence SHA-256", resident.integration.emissionAbd8.evidenceSha256],
+    ["Separate vendor source assessment receipt SHA-256", resident.integration.vendorSemanticsAbd8.assessmentReceiptSha256],
+    ["Separate Cargo semantic receipt SHA-256", resident.integration.vendorSemanticsAbd8.semanticReceiptSha256],
+    ["Completed-tool cleanup receipt SHA-256", resident.integration.vendorSemanticsAbd8.cleanupReceiptSha256],
+    ["Current integrated compiler", resident.integration.upstreamAndNativeHold.integratedCompiler],
+    ["Compiler bd1 adoption source", resident.integration.upstreamAndNativeHold.source],
+    ["Compiler bd1 validation archive SHA-256", resident.integration.upstreamAndNativeHold.validationArchiveSha256],
+    ["Compiler bd1 retention receipt SHA-256", resident.integration.upstreamAndNativeHold.retentionReceiptSha256],
+    ["Compiler bd1 external ledger SHA-256", resident.integration.upstreamAndNativeHold.externalLedgerSha256],
     ["Prefill EOS integration source", resident.integration.prefillEos.source],
     ["Prefill EOS R4 host evidence SHA-256", resident.integration.prefillEos.evidenceSha256],
     ["Prepack publication fix source", resident.integration.prepackPublication.source],
