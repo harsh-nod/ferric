@@ -5,32 +5,41 @@ receipt. The 33 M1 roadmap gates remain open.
 
 ## Current Checkpoint
 
-### BF16 Host Sampler Draft
+### BF16 Host Ordering Helper
 
-Private candidate `adbed0e5dcb982879173cb62176e61adf95667df` adds a finite
+Reviewed candidate `df3a78e0ac7bfb96106935e0c07a4de6e860de1b` adds a finite
 BF16 integer-key helper and uses it in the allocation-free host argmax observer.
-The declared mapping merges signed zeros, reverses negative magnitudes and
-rejects all exponent-all-ones encodings. Pinned ordinary Verus verifies exactly
-this selected executable body with `--no-cheating`; four body-only mutations
-each fail the unchanged postcondition with genuine solver work. All 15 phases
-pass their expected statuses. Independent review confirms the narrow scope.
+The mapping merges signed zeros, reverses negative magnitudes and rejects all
+256 nonfinite encodings. Independent CPU tests exhaust all 65,536 encodings;
+host regressions preserve lowest-ID ties and reject late nonfinite values.
 
-Proof archive SHA is
-`69d7ff14fac03207ebcde137f8d046e6d645a0a09c1662132cb2bd4e932c0118`
-(11,078,409 bytes): all 180 payloads, the exact 182-member roster and 12 external
-records verify independently. Full source and pinned 190-file tool closure
-checks pass before/after. The earlier spec type failure and opaque-conversion
-proof failure remain separately retained; no negative case ran in either.
+Exact-source host R4 passes all 30 mi300x phases: 48 source-gate tests, 132 spec
+tests and 760 engine tests, with nine engine tests still ignored. Formatting,
+all three strict Clippy selections, genuine metadata, normal coverage validation
+and preservation checks pass. A function-local cast allowance has one exact
+reason-bound gate rule; regressions reject plain, changed-reason, broad and
+mixed allowances. Fresh gate CLI/test producers are retained with both library
+test producers. Archive SHA is
+`7123d4e539b44732784d0dd80f2b1e976f67d36e39a44f4ec74ed114fd1aca84`
+(31,374,341 bytes); all 281 payloads, 283 members and 14 external records verify.
 
-Host R1 stops at strict formatting before compilation/tests, with source and
-borrowed-producer afterchecks passing. Its complete failure archive is retained.
-Successor `4157968bedc7ea9b063915720bd356fe09d3ba67` applies only the reported
-edition-2021 formatting to the crate-root exports and host observer. The helper
-file is byte-identical to the R3 proof input, but exact-source proof refresh,
-full Rust tests, exhaustive BF16/FP32 ordering regression, strict Clippy and
-ordinary coverage generation remain pending. The host R2 preparation is held.
-No BF16 code or coverage promotion is integrated. The selected proof is not a
-whole-host, floating-point/device, protected-proof or M1 qualification claim.
+Exact-source ordinary Verus R6 passes all 15 expected phases with `--no-cheating`:
+one selected executable body verified, and four body-only mutations each fail
+the unchanged postcondition with genuine solver work. All five source trees
+and the pinned 190-file verifier closure are unchanged. Proof archive SHA is
+`cab7440c72ae0b5617ce9973cfb4885307c4fb90d0cbc00b7f1baa15a8233922`
+(11,077,970 bytes); all 180 payloads, 182 members and 12 external records verify.
+Independent review approves this exact source and generated single-helper
+coverage entry. The complete host scan stays explicitly `pending-verus`.
+
+Earlier type, opaque-conversion, formatting and Clippy failures remain retained.
+Host R3 was explicitly cancelled after review found the obsolete gate would
+reject its unreasoned annotation; its missing phase status remains unknown,
+not synthesized. Prepared proof R4/R5 were never launched. Completed duplicate
+local extractions were removed after no-use checks, reclaiming 206,932 KiB;
+original archives and verification records remain. This is not a full host-scan,
+formal IEEE/device, protected-runtime, numerical parity or M1 qualification
+claim, and it does not establish the cause of the historical logit mismatch.
 
 ### Published R22 Checkpoint
 
@@ -166,14 +175,32 @@ guarded-memory analysis and receipt V3 now flow through lowering, verifier and
 codegen lineage. Public minimum-byte-length/alias accessors become optional and
 the multiroot formal-memory accessor returns a new receipt facade, so downstream
 compatibility needs review before adoption. Runtime/KFD/device/host, production
-manifests/locks, toolchain, Pliron and LLVM-worker remain unchanged. No dirty
-fe2o3 checkout changes, fetch or compiler/runtime source push is performed.
+manifests/locks, toolchain, Pliron and LLVM-worker remain unchanged. Downstream
+review finds no Ferric caller of the changed range/accessor APIs or a concrete
+legacy-receipt parser, so no production compatibility edit is identified.
 
-At 2026-09-17T03:01:01Z, frozen gfx942 GPU4 was 97% busy with 105477599232
-bytes used. No GPU workload was launched or interrupted. The diagnostic path
-remains frozen at Ferric 6e/compiler abd8; current integration is now bd1.
-There is still no new native numerical, protected-proof or TTFT/TPOT result,
-and all 33 M1 gates remain open.
+The latest fresh observation is main
+`f7f5aa32600959a56a80d34fd608bcf935bc09cf`: one additional commit, five files
+and 4,005 additions. It adds local-frame/finite-chain KIR APIs and tests, with
+no caller outside the new module or in Ferric. No runtime, target, dependency
+roster or toolchain change is identified. A separate held bd1-to-f7f adoption
+retains the 80-pin/32-graph scope and now requires all 48 gate tests, including
+the BF16 allowance regression. It is not yet validated or adopted. The dirty
+fe2o3 checkout remains untouched; no compiler/runtime source push is made.
+
+At 2026-09-17T03:48:21Z, frozen gfx942 GPU4 was 97% busy with 105477574656
+bytes used. The other six compute-active GPUs are busy; GPU0 remains
+compute-idle but holds about 91.5 GB of VRAM, not an available admission.
+User-authorized mi350-2 is reachable and exposes one gfx950 GPU, unique ID
+1956390207832604050, with low VRAM use and no observed queue for its listed
+KFD process. This is an availability observation, not native admission.
+Its checked home/shared model cache does not contain the required target/draft
+bundle. Existing Ferric gfx950 TP1 engineering support needs matching rebuilt
+tools, worker and TP emission; it cannot run the frozen gfx942 final-RMS capture
+unchanged or count as M1 gfx942 qualification. No GPU workload is launched or
+interrupted. The diagnostic path remains Ferric 6e/compiler abd8 and current
+integration remains bd1. There is no new native numerical, protected-proof or
+TTFT/TPOT result; all 33 M1 gates remain open.
 
 ### Previous R21 Publication
 

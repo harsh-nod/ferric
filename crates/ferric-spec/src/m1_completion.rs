@@ -255,6 +255,41 @@ pub fn validate_compact_completion(
     Ok(())
 }
 
+/// Integer ordering key for a finite BF16 encoding, merging the two zeros.
+///
+/// The exponent-all-ones encodings are outside this finite score domain.
+pub open spec fn finite_bf16_order_key_spec(bits: u16) -> Option<i64> {
+    let magnitude = bits as int % 32_768;
+    if magnitude >= 32_640 {
+        None
+    } else if bits < 32_768 {
+        Some(magnitude as i64)
+    } else {
+        Some((-magnitude) as i64)
+    }
+}
+
+/// Maps finite BF16 bits into the integer score order used by M1 argmax.
+///
+/// Both signed zeros map to zero. Negative finite encodings reverse magnitude
+/// order; positive encodings preserve it. NaNs and infinities return `None`.
+/// This is an encoded-value contract, not a GPU arithmetic or model-accuracy
+/// claim. Its exact-result postcondition requires a separate Verus result.
+#[must_use]
+#[allow(clippy::cast_lossless, reason = "Verus models widening casts directly but the pinned From call is opaque")]
+pub fn finite_bf16_order_key(bits: u16) -> (key: Option<i64>)
+    ensures key == finite_bf16_order_key_spec(bits),
+{
+    let magnitude = bits % 32_768;
+    if magnitude >= 32_640 {
+        None
+    } else if bits < 32_768 {
+        Some(magnitude as i64)
+    } else {
+        Some(-(magnitude as i64))
+    }
+}
+
 /// Mathematical lowest-token tie-breaking argmax relation.
 pub open spec fn is_lowest_argmax(scores: Seq<i64>, token: TokenId) -> bool {
     scores.len() == QWEN3_VOCABULARY_SIZE
@@ -267,9 +302,10 @@ pub open spec fn is_lowest_argmax(scores: Seq<i64>, token: TokenId) -> bool {
 
 /// Selects the maximum ordered logit, retaining the lowest token ID on ties.
 ///
-/// The input is an integer total-order abstraction. Mapping BF16/FP32 machine
-/// values, NaNs, and signed zero into this order remains a separate numerical
-/// contract.
+/// The input is an integer total-order abstraction. [`finite_bf16_order_key`]
+/// supplies finite encoded BF16 keys for the host observer, including signed
+/// zero equality and nonfinite rejection. Correspondence to device arithmetic
+/// and FP32 model results remains a separate numerical contract.
 ///
 /// # Errors
 ///
@@ -318,8 +354,8 @@ pub fn select_lowest_argmax(
 #[cfg(test)]
 mod tests {
     use super::{
-        select_lowest_argmax, validate_compact_completion, CompactCompletionError,
-        CompactCompletionRecord, M1_MAX_COMPLETION_TOKENS,
+        finite_bf16_order_key, select_lowest_argmax, validate_compact_completion,
+        CompactCompletionError, CompactCompletionRecord, M1_MAX_COMPLETION_TOKENS,
     };
     use crate::completion::CompletionEpoch;
     use crate::{Identity, RequestId, QWEN3_VOCABULARY_SIZE};
@@ -449,6 +485,56 @@ mod tests {
             validate_compact_completion(&changed, expected_request, expected_epoch, &expected, 4),
             Err(CompactCompletionError::TokenOutOfRange)
         );
+    }
+
+    #[test]
+    fn finite_bf16_order_key_exhaustively_matches_cpu_f32_order() {
+        let mut finite = Vec::with_capacity(65_280);
+        let mut rejected = 0;
+        for bits in u16::MIN..=u16::MAX {
+            let value = f32::from_bits(u32::from(bits) << 16);
+            match finite_bf16_order_key(bits) {
+                Some(key) => {
+                    assert!(value.is_finite(), "nonfinite encoding {bits:#06x}");
+                    finite.push((key, value));
+                }
+                None => {
+                    assert!(!value.is_finite(), "finite encoding {bits:#06x}");
+                    rejected += 1;
+                }
+            }
+        }
+        assert_eq!(finite.len(), 65_280);
+        assert_eq!(rejected, 256);
+        finite.sort_unstable_by_key(|(key, _)| *key);
+        let mut equal_neighbors = 0;
+        for pair in finite.windows(2) {
+            let numerical_order = pair[0].1.partial_cmp(&pair[1].1).unwrap();
+            assert_eq!(pair[0].0.cmp(&pair[1].0), numerical_order);
+            if numerical_order == core::cmp::Ordering::Equal {
+                assert_eq!(pair[0].0, 0);
+                equal_neighbors += 1;
+            }
+        }
+        assert_eq!(equal_neighbors, 1);
+    }
+
+    #[test]
+    fn finite_bf16_order_key_preserves_zero_subnormals_and_extremes() {
+        for (bits, expected) in [
+            (0x0000, 0),
+            (0x8000, 0),
+            (0x0001, 1),
+            (0x8001, -1),
+            (0x007f, 127),
+            (0x807f, -127),
+            (0x0080, 128),
+            (0x8080, -128),
+            (0x7f7f, 32_639),
+            (0xff7f, -32_639),
+        ] {
+            assert_eq!(finite_bf16_order_key(bits), Some(expected));
+        }
     }
 
     #[test]

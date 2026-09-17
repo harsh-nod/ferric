@@ -18,8 +18,10 @@ use fe2o3_service_host::{
     HostDownloadRoleV1, HostVisibleAllocationV1, ServiceAllocationErrorV1, ServiceAllocationKeyV1,
     ServiceAllocationSessionV1, ServiceCompletedReadbackV1, ServiceHostDispatchRangeV1,
 };
-use ferric_build::{M1StepWorkspaceRangeRole, m1_step_workspace_requirements};
-use ferric_spec::{QWEN3_VOCABULARY_SIZE, Qwen3ModelRole, Qwen3PlanSelection, TokenId};
+use ferric_build::{m1_step_workspace_requirements, M1StepWorkspaceRangeRole};
+use ferric_spec::{
+    finite_bf16_order_key, Qwen3ModelRole, Qwen3PlanSelection, TokenId, QWEN3_VOCABULARY_SIZE,
+};
 use sha2::{Digest, Sha256};
 
 use crate::BoundM1CompletionOutputV1;
@@ -994,14 +996,13 @@ fn lowest_id_finite_bf16_argmax(
         });
     }
     let mut best_token = 0;
-    let mut best_value = f32::NEG_INFINITY;
+    let mut best_value = i64::MIN;
     for (token, encoded) in bytes.chunks_exact(2).enumerate() {
         let bits = u16::from_le_bytes([encoded[0], encoded[1]]);
-        let value = f32::from_bits(u32::from(bits) << 16);
         let token = TokenId::try_from(token).expect("the fixed M1 vocabulary fits TokenId");
-        if !value.is_finite() {
+        let Some(value) = finite_bf16_order_key(bits) else {
             return Err(M1QualificationFinalLogitsErrorV1::NonFinite { lane, token });
-        }
+        };
         if value > best_value {
             best_value = value;
             best_token = token;
@@ -1199,13 +1200,11 @@ pub(crate) mod tests {
                     .is_err()
             );
         }
-        assert!(
-            m1_engineering_s1_k4_logits_shape_v1(Qwen3PlanSelection {
-                role: Qwen3ModelRole::Draft06B,
-                ..exact
-            })
-            .is_err()
-        );
+        assert!(m1_engineering_s1_k4_logits_shape_v1(Qwen3PlanSelection {
+            role: Qwen3ModelRole::Draft06B,
+            ..exact
+        })
+        .is_err());
     }
 
     #[test]
@@ -1253,10 +1252,14 @@ pub(crate) mod tests {
                 Err(M1EngineeringS1K4LogitsErrorV1::Geometry(_))
             ));
         }
-        assert!(
-            validate_engineering_s1_k4_logits(shape, 64, 9, coordinates, &bytes[..bytes.len() - 2])
-                .is_err()
-        );
+        assert!(validate_engineering_s1_k4_logits(
+            shape,
+            64,
+            9,
+            coordinates,
+            &bytes[..bytes.len() - 2]
+        )
+        .is_err());
         for index in 0..5 {
             let mut missing = bytes.clone();
             let (start, end) = engineering_s1_k4_row_bounds(shape, index).unwrap();
@@ -1346,17 +1349,15 @@ pub(crate) mod tests {
         ] {
             assert!(validate_engineering_s1_k4_capture(shape, 64, 9, wrong, &bytes, true).is_err());
         }
-        assert!(
-            validate_engineering_s1_k4_capture(
-                shape,
-                64,
-                9,
-                coordinates,
-                &bytes[..bytes.len() - 2],
-                true
-            )
-            .is_err()
-        );
+        assert!(validate_engineering_s1_k4_capture(
+            shape,
+            64,
+            9,
+            coordinates,
+            &bytes[..bytes.len() - 2],
+            true
+        )
+        .is_err());
         for (workspace, offset) in engineering_final_rms_workspace_offsets(shape)
             .unwrap()
             .into_iter()
@@ -1487,6 +1488,49 @@ pub(crate) mod tests {
     }
 
     #[test]
+    fn terminal_bf16_argmax_matches_integer_sampler_for_finite_edge_rows() {
+        for (fill, entries, expected) in [
+            (0xbf80, [(2, 0x8000), (5, 0x0000), (7, 0x8001)], 2),
+            (0xbf80, [(2, 0x0000), (5, 0x8000), (7, 0x8001)], 2),
+            (0x0000, [(2, 0x8001), (5, 0x0001), (7, 0x0001)], 5),
+            (0xc000, [(2, 0xbf81), (5, 0xbf80), (7, 0xbf80)], 5),
+            (0x0000, [(2, 0x7f7e), (5, 0x7f7f), (7, 0x7f7f)], 5),
+            (0xbf80, [(16, 0x4196), (220, 0x4196), (576, 0x4196)], 16),
+            (0xbf80, [(16, 0x4195), (220, 0x4195), (576, 0x4196)], 576),
+        ] {
+            let mut row = bf16_row(fill);
+            for (token, bits) in entries {
+                set_bf16(&mut row, token, bits);
+            }
+            let scores: Vec<_> = row
+                .chunks_exact(2)
+                .map(|encoded| {
+                    finite_bf16_order_key(u16::from_le_bytes([encoded[0], encoded[1]])).unwrap()
+                })
+                .collect();
+            assert_eq!(ferric_spec::select_lowest_argmax(&scores), Ok(expected));
+            assert_eq!(lowest_id_finite_bf16_argmax(&row, 3), Ok(expected));
+        }
+    }
+
+    #[test]
+    fn terminal_bf16_argmax_rejects_late_nonfinite_after_finite_maximum() {
+        let last = usize::try_from(QWEN3_VOCABULARY_SIZE - 1).unwrap();
+        for bits in [0x7f80, 0xff80, 0x7fc0, 0xffc0, 0x7f81, 0xff81] {
+            let mut row = bf16_row(0);
+            set_bf16(&mut row, 0, 0x7f7f);
+            set_bf16(&mut row, last, bits);
+            assert_eq!(
+                lowest_id_finite_bf16_argmax(&row, 9),
+                Err(M1QualificationFinalLogitsErrorV1::NonFinite {
+                    lane: 9,
+                    token: TokenId::try_from(last).unwrap(),
+                })
+            );
+        }
+    }
+
+    #[test]
     fn every_target_only_shape_has_exact_first_and_last_final_row_boundaries() {
         for bucket in TARGET_ONLY_BUCKETS {
             let shape = m1_qualification_logits_shape_v1(selection(bucket)).unwrap();
@@ -1511,11 +1555,9 @@ pub(crate) mod tests {
                     .unwrap(),
                 shape.extent_bytes() - shape.row_bytes()
             );
-            assert!(
-                last_first
-                    .checked_add(shape.row_bytes())
-                    .is_some_and(|end| end <= shape.extent_bytes())
-            );
+            assert!(last_first
+                .checked_add(shape.row_bytes())
+                .is_some_and(|end| end <= shape.extent_bytes()));
         }
     }
 

@@ -9003,6 +9003,7 @@ verified=ferric-spec|crates/ferric-spec/src/identity.rs|ferric_spec::identity::R
 verified=ferric-spec|crates/ferric-spec/src/identity.rs|ferric_spec::identity::RequestId::slot
 module=ferric-spec|crates/ferric-spec/src/lib.rs|ferric_spec
 module=ferric-spec|crates/ferric-spec/src/m1_completion.rs|ferric_spec::m1_completion
+verified=ferric-spec|crates/ferric-spec/src/m1_completion.rs|ferric_spec::m1_completion::finite_bf16_order_key
 verified=ferric-spec|crates/ferric-spec/src/m1_completion.rs|ferric_spec::m1_completion::select_lowest_argmax
 verified=ferric-spec|crates/ferric-spec/src/m1_completion.rs|ferric_spec::m1_completion::validate_compact_completion
 module=ferric-spec|crates/ferric-spec/src/m1_foundation_theorems.rs|ferric_spec::m1_foundation_theorems
