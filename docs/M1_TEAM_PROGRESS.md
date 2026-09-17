@@ -159,6 +159,32 @@ At 2026-09-17T05:39:43Z, GPU4/renderD160 was compute-idle with 298,647,552
 bytes VRAM used. This is only a read-only availability observation, not native
 admission. No new GPU workload or TTFT/TPOT/throughput result is claimed.
 
+### Compiler 272 Host And Vendor Prerequisites
+
+The frozen `999aa65f` source now passes all 24 fresh mi300x host phases with
+compiler 272: seven exact engine, 25 adapter and 38 source-policy tests, 70
+total. This is a selected host campaign, not a full engine-suite rerun. Cargo
+uses an independently copied cache and an empty target. Full source, original
+metadata-owner, toolchain and control preservation checks pass. The release
+build takes 9m22s and produces a fresh 14,219,952-byte binary, SHA-256
+`b108c70b23639ac654a65551a54ad47fd9e2e749efe3b007d9f43de599343330`.
+No RPATH/RUNPATH is present. Root and independent review verify all 246 payloads,
+247 archive members and 14 external records, including exact nanosecond
+timestamps. Archive SHA is
+`45161ae1e4c5f3c4b7510dfdb51082133a71d9d1cd1f31e554d0c2ddc52e793d`
+(26,654,305 bytes). All actual statuses and retained producers agree.
+
+A separate read-only vendor prerequisite passes and retains 35 independently
+checked raw records. It authenticates 198 package identities, including 53
+compiler and two Pliron Git origins, against the pinned Cargo packaging rules.
+The complete old vendor censuses roundtrip losslessly. Current evidence is
+projected at 9,801,728 bytes under the unchanged 12 MiB cap; the projected stage
+growth fits the 10 GiB cap with the ordinary 512 MiB reserve. This is not a
+formation result or a replacement for fresh no-use and capacity admission.
+The consumed reserve exception and historical failed formation remain unchanged.
+No new device artifact, native numerical result, performance claim or M1 closure
+is established by these host and prerequisite results.
+
 ### Earlier Published R23 Checkpoint
 
 The public site records the BF16 helper, source-bound host/proof results,
