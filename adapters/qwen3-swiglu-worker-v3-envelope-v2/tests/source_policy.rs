@@ -5,7 +5,7 @@ const ADMISSION_DOC: &str = include_str!("../../../docs/M1_QWEN3_SWIGLU_PRODUCTI
 const BUILD_EVIDENCE: &str =
     include_str!("../../../proofs/m1/evidence/PROTECTED_WORKER_V3_SWIGLU_BUILD.json");
 
-const FE2O3_REVISION: &str = "9989714525028db2e73bacfaa944f97fd3d5eeff";
+const FE2O3_REVISION: &str = "fe406b0c3275c33b92f81734a4e6e3852b891073";
 
 #[test]
 fn public_adapter_surface_has_no_parallel_identity_inputs() {
