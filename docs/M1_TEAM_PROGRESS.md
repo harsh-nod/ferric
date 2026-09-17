@@ -5,6 +5,64 @@ receipt. The 33 M1 roadmap gates remain open.
 
 ## Current Checkpoint
 
+### BF16 Observer Wrapper Integrated
+
+Ferric `a6e0be415fc741d6b1e17f9da66de8c1b4631104`, tree
+`f5b89fcc60f2197cb91088717dd22719e5c447e8`, integrates the exact two Rust
+files proved and tested at `cdc6071237c1cc2402f0abe499a05fa1a5940bbb`, plus
+the separately validated one-body coverage update from `4f2d071e`. All four
+integrated files match the reviewed candidate; newer tracker changes are
+preserved. This is not an integrated-source rerun.
+
+The actual production observer wrapper now proves exact translation of the
+shared BF16 scanner result: lowest-ID finite argmax, malformed-row expected
+and actual extents with the original lane, and first-nonfinite token with the
+original lane. Runtime behavior is unchanged; no second scan is introduced.
+Ordinary pinned Verus with `--no-cheating` verifies one condition with zero
+errors. Seven actual-body mutations fail the unchanged postcondition. Six
+reject at the default solver limit; the wrong-success-token mutation rejects
+in R2 with `--rlimit 50` and a matching positive control. Its original R1
+solver-exhaustion result remains inconclusive, not a passing negative.
+
+On mi300x, all 15 qualification-logits host tests, 10 focused spec tests and
+48 source-gate tests pass, as do formatting and both strict Clippy selections.
+Fresh normal coverage validates 177 modules and 8,691 executable bodies, with
+exactly one wrapper row promoted and only its pending admission removed.
+The complete 1,157-file candidate matches the final validation census; source,
+borrowed Cargo cache and pinned 190-file Verus closure preservation pass.
+
+Archive SHA is
+`2199bd5fa87b87286802282bb86168ece6229878a5893d1eec65c49992a92048`
+(48,258,102 bytes). Root and independent review verify 647 payload hashes,
+sizes and modes, the exact 648 regular-member roster, 38 historical phase
+statuses and successful R2 retention. Four actual executable producers are
+retained. The initial missing-rustup invocation, inconclusive negative,
+supplemental coverage-checker bug and first retainer's producer-size rejection
+remain preserved failures. Successful successors do not overwrite them.
+
+This evidence remains tied to adopted compiler `9b64a2da`. It does not prove
+surrounding allocation/readback, GPU arithmetic, BF16-to-integer sampler
+composition, reference parity or protected qualification. No new native,
+serving, TTFT/TPOT or performance result is claimed; all 33 gates remain open.
+
+After review, clean-source and diagnostic-free local no-use checks, the
+completed 45,232 KiB candidate worktree is removed normally, retaining its
+branch. The redundant 233,704 KiB evidence extraction is also removed after
+archive recheck and no-use checks; the canonical archive and external records
+remain. Remote stage cleanup still requires its own fresh inventory/no-use
+admission and is not claimed here.
+
+### Upstream Compiler Currency
+
+A fresh published-main check finds `7581df51ffa6392cf463160f90cd59a15212c102`,
+one direct descendant of adopted `9b64a2da`. A separate source-only audit finds
+14 changed files, confined to lower-MIR and ranked projection code/tests for
+checked Unit-local helpers and memory-free roots. Manifests, lockfile,
+toolchain, runtime, KFD and gfx950 platform sources are unchanged. The commit
+does not resolve the mi350-2 platform-profile mismatch below. No test was run
+by this audit; adoption and matching compiler tools/emission require separate
+validation. Existing 9b64 evidence is not relabeled as 7581 evidence.
+
 ### mi350-2 Platform Compatibility
 
 The user-requested 2026-09-17 survey reaches `mi350-2` and observes one
@@ -15,8 +73,8 @@ reported GPU allocation and no observed queues. This is a read-only
 availability observation, not admission or a reservation.
 
 There is a concrete runtime incompatibility: the host runs kernel
-`5.15.160+`, while the currently adopted and freshly rechecked upstream
-fe2o3 `9b64a2da` gfx950 platform validator requires `6.8.0-124-generic`.
+`5.15.160+`, while the adopted fe2o3 `9b64a2da` gfx950 platform validator
+requires `6.8.0-124-generic`.
 The observed amdgpu module is `6.16.15`, source version
 `9462451703604FCD7EC2365`, rather than the admitted `6.16.13` /
 `703B1127E578BC5D4BD6615`. Installed driver sources are available under
@@ -79,8 +137,9 @@ validation and preservation checks pass. Four fresh executable producers are
 retained. Archive SHA is
 `138fb2084bbf3702f01cc40a89691089c27031b9f91e2360a68b815bbb0dbd70`
 (31,481,979 bytes); 281 payloads, 283 members and 14 external records verify.
-Independent review approved integration. The engine wrapper remains unverified;
-this is not device-numerical, protected-runtime or M1 qualification. The
+Independent review approved integration. At that checkpoint the engine wrapper
+remained unverified; its subsequent proof is recorded above. This is not
+device-numerical, protected-runtime or M1 qualification. The
 historical GPU logit mismatch remains unresolved.
 
 The completed scanner worktree was removed normally after clean-source and
