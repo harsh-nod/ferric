@@ -5,7 +5,7 @@ receipt. The 33 M1 roadmap gates remain open.
 
 ## Current Checkpoint
 
-### Fresh TP14 Vendor Passes; Emission In Progress
+### Fresh TP14 Artifact Passes; mi350 Native Check In Progress
 
 Fresh Ferric59822 / fe406 vendor formation on mi300x passes with the normal
 512 MiB reserve. Cargo normalizes all 55 Git packages in the 198-package view;
@@ -24,12 +24,24 @@ false because its checker expected a nonexistent nested process-census key.
 That record is preserved; the separate correction retains all five independent
 process-absence checks and does not rerun or relabel vendor formation.
 
-Fresh gfx950:xnack-/COV6 TP14 emission is now running under the unchanged
-mi300x-only CPU/resource envelope. Source, vendor and both metadata paths have
-passed; no completed artifact, Qwen output, TP8 result or timing is claimed.
-The mi350 TP1 diagnostic controls are drafted around the existing canonical
-model intake before worker spawn. Native launch still requires a completed
-artifact and fresh shared-GPU admission. All 33 M1 gates remain open.
+Fresh gfx950:xnack-/COV6 TP14 emission finishes in 496 seconds with all 13
+phases and terminal statuses zero. All 14 kernel roots/descriptors, exact
+output replay and BF16 MFMA instruction inspection pass. Independent custody
+checks 702 payloads, 704 archive members, 17 external terminal records and
+54 process identities. Archive SHA256 is
+`66d65d0099c1f4515cfeda7faa2e20ccfcc932cdae5f9bea982d8344cefdc167`.
+The actual 111,768-byte HSACO has SHA256
+`fc20155a47e6d723799481ecd60d0486970ed21beba3c88122962a2f8f916e5c`;
+both artifact files transfer to mi350 with identical hashes.
+
+The TP1 runner passes syntax/AST and 50 GPU-free helper cases on mi300x.
+The first native attempt exits 1 with `ContentDirectoryIdentity`, before
+model intake or GPU dispatch: the staging path omitted the required immediate
+parent `fe2o3-engineering-v1`. Its controller/process groups are absent and
+raw failure records remain unchanged. A fresh attempt corrects only the path
+constraint and uses new run/control/admission owners; no executable, kernel
+bytes or resource limits change. No new Qwen output, TP8 result, TTFT or TPOT
+is claimed. All 33 M1 gates remain open.
 
 ### mi350 Model Transport And Loader Checks Pass
 
