@@ -5,7 +5,132 @@ receipt. The 33 M1 roadmap gates remain open.
 
 ## Current Checkpoint
 
-### Published R23 Checkpoint
+### Published R24 Checkpoint
+
+The public site at <https://harsh-nod.github.io/ferric/> now records the full
+BF16 scanner result below. Source `f5905220336c450d2ce41f3e6b18676bce549fdd`
+passes all five mi300x-only phases, every width from 320 to 1440 pixels,
+eight rendered viewports and 64 screenshots. All source/runtime/browser
+preservation checks pass. Independent custody verifies 133 payloads, 134
+members and 22 external records. Archive SHA is
+`c16618f5480f2b45743f50b948aaca01041b30a5ebe7ca3b51168f788985876f`
+(11,526,999 bytes). Desktop/mobile overview and checkpoint images are reviewed.
+
+Static commit `8b821193ef5e004c8e776e81134070929bb51eaa` is deployed by
+successful deploy-only run `35187297686`. All seven canonical and seven
+cache-busted live requests match the 733,849-byte artifact. No GitHub build,
+test or environment-protection change is made. Two earlier QA attempts remain
+failed at stale wording assertions; their 40 raw records each are retained
+and hash-checked. The two successors only correct three validator literals.
+The completed 3,504 KiB source worktree is removed normally after clean-source
+and scoped no-use checks, retaining its branch and evidence. Remote stage
+cleanup remains separate and is not claimed.
+
+### Full BF16 Scanner Integrated
+
+Ferric `aec2fa54264db382459383eed2f9d2b342050ba5` integrates the exact
+three Rust files validated at `039018f08a3258affb56952531f7c5ac4c6c8656`,
+plus one generated verified-coverage row. All 1,157 source identities match
+before that coverage promotion. Integrated tree is
+`6966666705cc9ce91c840ce3af26858a08d8ed37`. This is not a rerun of the host
+campaign at the integration commit.
+
+The allocation-free scanner checks the entire little-endian BF16 vocabulary
+row, rejects incorrect extents and the first nonfinite value, and returns the
+lowest token ID on finite ties, including signed zeros. Exact-source ordinary
+Verus R4 passes all 21 phases: key and scanner bodies verified, with one and
+two verification conditions respectively, and all six unchanged body mutations
+rejected through genuine proof failures. Retained archive SHA is
+`81732091f8ff75be31595c8242d536783db6633a2595a402728a047259c8099e`
+(13,787,772 bytes); 249 payloads, 251 members and 12 external records verify.
+Earlier count-checker and solver-exhaustion attempts remain failed/inconclusive.
+
+Host R1 on mi300x at the same source and adopted compiler f7f passes all 30
+phases: 48 source-gate, 136 spec and 760 engine tests, with nine engine tests
+ignored. Formatting, three strict Clippy selections, metadata, normal coverage
+validation and preservation checks pass. Four fresh executable producers are
+retained. Archive SHA is
+`138fb2084bbf3702f01cc40a89691089c27031b9f91e2360a68b815bbb0dbd70`
+(31,481,979 bytes); 281 payloads, 283 members and 14 external records verify.
+Independent review approved integration. The engine wrapper remains unverified;
+this is not device-numerical, protected-runtime or M1 qualification. The
+historical GPU logit mismatch remains unresolved.
+
+The completed scanner worktree was removed normally after clean-source and
+no-use checks, reclaiming 45,196 KiB. Its branch and retained evidence remain.
+Remote duplicate-stage cleanup still requires a fresh complete no-use audit;
+unreadable interactive SSH sessions are not granted a new exception.
+
+### Compiler 272 Tools And Adoption Validation
+
+Ferric `999aa65f161d71c98b75475a9f4a518c7064be85` adopts compiler 272.
+Source-only audit of newer `1d0294bf` found
+four lower-MIR files changed from 6ae; a fresh upstream observation then found
+`272af56d6032f25019156e27a0ba50d16f85830c`. The latter adds a work-ledger
+identity and hardens local-frame scope accounting in seven kernel-IR files.
+No Ferric caller migration or runtime/KFD/toolchain/manifest change was found.
+The frozen 272 revision now has matching tools and passes the dependency
+adoption validation below. No compiler/runtime source change or push is made.
+
+A bounded mi300x read-only cache-shape audit passes. A separate fresh 272 build
+passes all six phases, with no old target reuse and the original 10 GiB cap;
+the consumed one-run 384 MiB vendor exception is not reused. Twelve focused
+mi300x tests pass for the revised failed-build evidence parser. They exercise
+the actual helper functions with explicit identity stubs, not full custody.
+The future vendor-manifest contract separately passes 12 unit tests; it is not
+a fresh vendor formation or producer snapshot. Original abd8 formation exit 1
+remains failed.
+
+Fresh-stage preparation passes with an independently copied cache, unchanged
+old cache and 5,153 matching compiler source files. Actual initial allocation
+is 1,765,360 KiB; the empty target and 1,907,900 KiB reserve fit inside the
+10 GiB cap. Fresh Cargo producers establish release cargo-fe2o3/lld-proxy and
+debug backend.so/extractor, with the backend bound to the newly copied CLI.
+All 5,153 compiler source files and the old cache remain unchanged. Archive
+SHA is `611bdd9d478a47a9fce8a3b08a510b270fcf53f491377e88b5f79bfe62770c1a`
+(81,942,120 bytes); independent custody verifies 101 payloads, 102 members
+and 25 external records. This is not full compiler or GPU qualification.
+
+Ferric adoption R3 at exact base `aec2fa54` passes all 50 mi300x phases,
+including 32 locked graphs, 48 fresh source-gate tests, formatting, four
+actual TCB derivations and unchanged coverage. The candidate changes exactly
+80 pin/policy files; runtime TCB, property-binder and Pliron pins are unchanged.
+R1/R2 remain failed at checksum-array line wrapping, each with only preparation
+and formatting launched. R3 uses the pinned formatter to generate the array
+and retains a separate strict formatting check.
+
+Independent review found that the original failed-attempt archiver rounded
+nanosecond timestamps through floating point. All R1/R2 payload bytes, sizes
+and modes match, but their exact timestamp checks fail; those original
+archives and verdicts remain unchanged. A separately reviewed controller now
+uses exact decimal PAX timestamps and checks metadata plus payload readback.
+All three precise retention attempts pass. R3 archive SHA is
+`af9218ba1290e82a13a64fbbcedd726579a641dfcac4b782970e126219f1978b`
+(24,540,425 bytes); independent review passes 1,658 payload identities, the
+exact 1,659-member roster and 14 external records. Both fresh source-gate
+producers, all phase statuses and the complete 80-file patch are reviewed.
+All 1,157 committed Git blobs match the validated final census; adopted tree
+is `1e59d81197dce97c12a9a6aaa7c18d7f12e779c9`. The progress notes are a
+separate documentation change, not part of the remotely validated source.
+
+The precise R1/R2 archives also pass full 1,218-payload/1,219-member custody
+and 14 external records each. Their campaign exit 1 and original rounded
+archives remain unchanged. This is dependency/source-policy adoption, not a
+whole-engine, kernel-emission, native or numerical rerun on compiler 272.
+
+A separate read-only cleanup inventory passes for exactly 12 completed
+scan-proof roots, with 44,477 unchanged entries and 1,667,710,976 allocated
+bytes. Four archived campaigns and all 32 source trees are reconstructible;
+all 60 campaign and four retention groups are absent. All 50 retained raw
+records verify. The unchanged scoped no-use policy passes but still records
+`complete_visibility: false`; it makes no system-wide or future-use claim.
+No deletion occurred. Any exact apply requires a fresh census and usage check.
+
+At 2026-09-17T05:39:43Z, GPU4/renderD160 was compute-idle with 298,647,552
+bytes VRAM used. This is only a read-only availability observation, not native
+admission. No new GPU workload or TTFT/TPOT/throughput result is claimed.
+
+### Earlier Published R23 Checkpoint
 
 The public site records the BF16 helper, source-bound host/proof results,
 f7f adoption and separate unadopted 6ae observation below. Private Pages source
@@ -44,7 +169,8 @@ Archive SHA is
 (20,968,339 bytes). All 1,651 payload identities, the exact 1,652-member roster
 and 14 external records verify. All 50 recorded phase groups are absent.
 This is dependency/source-policy adoption, not whole-engine or GPU validation.
-The BF16 host and proof results below remain attributed to bd1/df3a78e0.
+The earlier BF16 helper results below remain attributed to bd1/df3a78e0;
+the full scanner checkpoint above is validated at 0390/f7f.
 Newer upstream `6ae096ca717c762ad00d5d1b3ca80d4db5e0628c` is separately
 source-audited and is not validated or adopted by this checkpoint. Its two
 commits change private-array initialization and lowering, without an identified
@@ -56,7 +182,7 @@ matching rebuilt tools, worker and gfx950 TP emission. The frozen gfx942
 final-RMS capture cannot run there unchanged. No new native admission, GPU
 execution, numerical result or performance measurement is claimed.
 
-### BF16 Host Ordering Helper
+### Earlier BF16 Host Ordering Helper
 
 Reviewed candidate `df3a78e0ac7bfb96106935e0c07a4de6e860de1b` adds a finite
 BF16 integer-key helper and uses it in the allocation-free host argmax observer.
@@ -209,7 +335,7 @@ unknown gap is admitted. Apply receipt SHA is
 The emission reserve remains 512 MiB; the one-run 384 MiB vendor exception is
 not reused. Cleanup alone does not grant emission or native admission.
 
-### Latest Upstream And Native Availability
+### Earlier Upstream And Native Availability
 
 The upstream observation for the adoption above found fe2o3 main at
 `bd1ed7d559b1a372644a78b1ede7e6057e5ccbc7`: 11 commits/12 files since the
