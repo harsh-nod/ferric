@@ -14,6 +14,7 @@ fn marker_inventory_is_unique() {
         };
     }
     let mut entries = [
+        marker!(gemm, ferric_qwen3_gemm_mfma_bf16_f32_bf16_v1_gpu),
         marker!(gemm, ferric_qwen3_gemm_reference_bf16_f32_bf16_v1_gpu),
         marker!(gemm, ferric_qwen3_gemm_vector_a4_bf16_f32_bf16_v1_gpu),
         marker!(gemm, ferric_qwen3_token_embedding_bf16_copy_v1_gpu),

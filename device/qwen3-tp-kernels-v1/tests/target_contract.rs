@@ -11,8 +11,8 @@ use ferric_qwen3_tp_kernels_device_v1::{
 };
 
 #[test]
-fn all_thirteen_entrypoints_share_the_selected_target_contract() {
-    assert_eq!(compiler_expectation_roster_v1().len(), 13);
+fn all_fourteen_entrypoints_share_the_selected_target_contract() {
+    assert_eq!(compiler_expectation_roster_v1().len(), 14);
     assert_eq!(QWEN3_RMSNORM_TARGET_V1, QWEN3_DEVICE_TARGET_V1);
     assert_eq!(
         QWEN3_RMSNORM_CODE_OBJECT_VERSION_V1,

@@ -25,7 +25,8 @@ pub const ENGINEERING_TP_TARGET_V1: &str = "gfx950:xnack-";
 pub const ENGINEERING_TP_CRATE_V1: &str = "ferric_qwen3_tp_kernels_device_v1";
 
 /// Closed export roster, including unchanged imported helper roots.
-pub const ENGINEERING_TP_EXPORTS_V1: [&str; 13] = [
+pub const ENGINEERING_TP_EXPORTS_V1: [&str; 14] = [
+    "ferric_qwen3_gemm_mfma_bf16_f32_bf16_v1",
     "ferric_qwen3_gemm_reference_bf16_f32_bf16_v1",
     "ferric_qwen3_gemm_vector_a4_bf16_f32_bf16_v1",
     "ferric_qwen3_token_embedding_bf16_copy_v1",
@@ -256,7 +257,7 @@ impl EngineeringTpArtifactV1 {
     /// Reopens an exact two-file engineering observation and its source roster.
     ///
     /// `expected` must be the compiler-generated roster from the current TP
-    /// source crate. The fixed thirteen export names are checked independently.
+    /// source crate. The fixed fourteen export names are checked independently.
     /// This is structural source agreement, not compiler-origin authentication.
     ///
     /// # Errors
@@ -1057,10 +1058,28 @@ mod tests {
         names[0] = names[1];
         assert!(!exact_exports(names.into_iter()));
         assert!(!exact_exports(
-            ENGINEERING_TP_EXPORTS_V1[..12].iter().copied()
+            ENGINEERING_TP_EXPORTS_V1[..13].iter().copied()
         ));
         names[0] = "qwen3_rope_v1";
         assert!(!exact_exports(names.into_iter()));
+    }
+
+    #[test]
+    #[cfg(feature = "tp-engineering")]
+    fn exact_tp_roster_matches_compiler_markers_and_requires_imported_mfma() {
+        let roster = ferric_qwen3_tp_kernels_device_v1::compiler_expectation_roster_v1();
+        let names = roster
+            .iter()
+            .map(fe2o3_host::CompilerGeneratedKernelExpectationRosterEntryV1::export_name)
+            .collect::<Vec<_>>();
+        assert_eq!(names.len(), 14);
+        assert!(exact_exports(names.iter().copied()));
+        assert!(!exact_exports(names.iter().copied().filter(|name| {
+            *name != "ferric_qwen3_gemm_mfma_bf16_f32_bf16_v1"
+        })));
+        assert!(!exact_exports(
+            names.into_iter().chain(std::iter::once("unexpected_kernel"))
+        ));
     }
 
     #[test]

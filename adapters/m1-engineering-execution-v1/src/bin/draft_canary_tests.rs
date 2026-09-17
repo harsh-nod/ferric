@@ -242,5 +242,5 @@ fn retained_closed_tp_v1_image_must_match_current_host_roster() {
     let path = std::env::var_os("FERRIC_DRAFT_TP_V1_ARTIFACT").expect("explicit retained image");
     let roster = ferric_qwen3_tp_kernels_device_v1::compiler_expectation_roster_v1();
     let image = EngineeringTpArtifactV1::open(Path::new(&path), &roster).unwrap();
-    assert_eq!(image.inspection().hsaco().kernels().len(), 13);
+    assert_eq!(image.inspection().hsaco().kernels().len(), roster.len());
 }

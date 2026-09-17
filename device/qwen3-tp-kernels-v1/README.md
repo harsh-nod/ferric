@@ -34,8 +34,10 @@ All six names have prefix `ferric_qwen3_`. Column projection tags are Q=1,
 K=2, V=3, gate=4, up=5. Partial tags are O=1, down=2. Weights are compact
 row-major `[n,k]`. RoPE takes exactly 64 cosine/sine elements for the supplied
 position. Attention uses local Q-to-KV ratios 4 (8B) or 2 (0.6B), online softmax,
-and no explicit scratch buffer. The exact thirteen-symbol roster is in
-`src/contract.rs`; imported roots retain their existing ABI.
+and no explicit scratch buffer. The exact fourteen-symbol roster is in
+`src/contract.rs`; imported roots retain their existing ABI. The imported GEMM
+module emits its MFMA root unconditionally, so image admission includes that
+root even though the single-sequence controller does not select it for dispatch.
 
 ## Numerical And Proof Scope
 

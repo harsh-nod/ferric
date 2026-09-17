@@ -1,7 +1,8 @@
 //! Engineering ABI facts, not protected artifact or dispatch authority.
 
-pub const KERNEL_SYMBOLS: [&str; 13] = [
+pub const KERNEL_SYMBOLS: [&str; 14] = [
     "ferric_qwen3_compact_completion_v1",
+    "ferric_qwen3_gemm_mfma_bf16_f32_bf16_v1",
     "ferric_qwen3_gemm_reference_bf16_f32_bf16_v1",
     "ferric_qwen3_gemm_vector_a4_bf16_f32_bf16_v1",
     "ferric_qwen3_lowest_id_argmax_bf16_v1",

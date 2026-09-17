@@ -153,7 +153,7 @@ or token and never constructs a measurement report.
 The optional `tp-engineering` feature builds `ferric-qwen3-tp-engineering`.
 It is a separate engineering command, not an HTTP server or protected M1
 admission. Ferric authenticates canonical model bytes, inspects the closed
-thirteen-kernel TP artifact, and sends owned bytes to one isolated fe2o3 KFD
+fourteen-kernel TP artifact, and sends owned bytes to one isolated fe2o3 KFD
 worker per distinct physical gfx950 device. No unsafe Rust is added to Ferric.
 The operator must explicitly trust the machine code through
 `--allow-unauthenticated-machine-code`; structural inspection alone is not a

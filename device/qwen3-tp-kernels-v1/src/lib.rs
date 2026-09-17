@@ -27,12 +27,13 @@ pub mod contract;
 pub mod projection;
 pub mod rope_kv;
 
-/// Exact metadata from all thirteen current compiler-generated markers.
+/// Exact metadata from all fourteen current compiler-generated markers.
 #[cfg(not(target_arch = "amdgpu"))]
 pub fn compiler_expectation_roster_v1()
 -> alloc::vec::Vec<fe2o3_host::CompilerGeneratedKernelExpectationRosterEntryV1> {
     use fe2o3_host::CompilerGeneratedKernelExpectationRosterEntryV1 as Entry;
     let mut entries = alloc::vec![
+        Entry::for_marker::<gemm::ferric_qwen3_gemm_mfma_bf16_f32_bf16_v1_gpu::Marker>(),
         Entry::for_marker::<gemm::ferric_qwen3_gemm_reference_bf16_f32_bf16_v1_gpu::Marker>(),
         Entry::for_marker::<gemm::ferric_qwen3_gemm_vector_a4_bf16_f32_bf16_v1_gpu::Marker>(),
         Entry::for_marker::<gemm::ferric_qwen3_token_embedding_bf16_copy_v1_gpu::Marker>(),
