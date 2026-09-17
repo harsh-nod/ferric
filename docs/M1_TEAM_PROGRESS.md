@@ -58,8 +58,9 @@ historical GPU logit mismatch remains unresolved.
 
 The completed scanner worktree was removed normally after clean-source and
 no-use checks, reclaiming 45,196 KiB. Its branch and retained evidence remain.
-Remote duplicate-stage cleanup still requires a fresh complete no-use audit;
-unreadable interactive SSH sessions are not granted a new exception.
+The exact 12-root scan-proof cleanup below is now complete. Other remote
+duplicate-stage cleanup still requires its own fresh no-use audit; unreadable
+interactive SSH sessions are not granted a new exception.
 
 ### Compiler 272 Tools And Adoption Validation
 
@@ -124,7 +125,35 @@ bytes. Four archived campaigns and all 32 source trees are reconstructible;
 all 60 campaign and four retention groups are absent. All 50 retained raw
 records verify. The unchanged scoped no-use policy passes but still records
 `complete_visibility: false`; it makes no system-wide or future-use claim.
-No deletion occurred. Any exact apply requires a fresh census and usage check.
+A separately reviewed exact apply now passes after a fresh census, custody
+and scoped usage check. It removes only those 12 roots: 37,813 files and
+6,664 directories, with all 44,477 entries represented by 88,954 ordered,
+paired journal records. All 56 retained raw files verify independently;
+protected evidence and controllers are unchanged and all 12 roots are absent.
+The removed census allocation is 1,667,710,976 bytes (about 1.55 GiB), not a
+system-wide free-space delta. Receipt SHA is
+`13860eebd85e9debff3f35a58d90f8b4abdb499964b84cb49c1da05548753a54`;
+journal SHA is
+`455b9baeebb97b1f515614afa4ca730d6f8d4f4faed929a5646762e54f7aae84`.
+No foreign session, shared library, model or active cache is removed.
+
+The adopted `999aa65f` source archive and full 1,157-file census now pass a
+separate three-phase mi300x source/metadata check. Fresh locked, offline,
+all-features device metadata contains 163 packages, including exactly 53
+compiler 272 and two Pliron packages. All source and seven protected file
+identities are unchanged; all 48 retained records verify independently.
+Metadata SHA is
+`04a1af6f9638145e6963ad73edbf2456e9047178b1f3100da91f0e81be4f6314`.
+This reuses authenticated read-only source, not old build outputs.
+
+Three mi300x tests pass for lossless compressed vendor census evidence:
+exact roundtrip, corrupted content despite an updated compressed hash, and
+changed raw bytes. The first launcher failed before tests because its nested
+virtual-memory limit tried to exceed the outer limit; that setup failure is
+preserved. A separate R2 lowers the inner limit to the existing 2 GiB ceiling,
+passes all three tests, and retains 16 independently checked files. Vendor
+formation remains unrun at 272, with the ordinary 512 MiB reserve and all
+other limits unchanged; compression is not itself a capacity-admission result.
 
 At 2026-09-17T05:39:43Z, GPU4/renderD160 was compute-idle with 298,647,552
 bytes VRAM used. This is only a read-only availability observation, not native
