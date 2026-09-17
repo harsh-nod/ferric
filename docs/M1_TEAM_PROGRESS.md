@@ -72,8 +72,8 @@ identity and hardens local-frame scope accounting in seven kernel-IR files.
 No Ferric caller migration or runtime/KFD/toolchain/manifest change was found.
 The frozen 272 revision now has matching tools and passes the dependency
 adoption validation below. No compiler/runtime source change or push was made
-at that checkpoint. The newer published compatibility fix below is not yet
-adopted by Ferric.
+at that checkpoint. The separate adoption of the newer compatibility fix is
+recorded below.
 
 A bounded mi300x read-only cache-shape audit passes. A separate fresh 272 build
 passes all six phases, with no old target reuse and the original 10 GiB cap;
@@ -277,12 +277,43 @@ The completed compiler worktree is removed normally after clean-source and
 scoped no-use checks, reclaiming 90,012 KiB. Its branch, validated source
 archive and evidence remain. Remote test-stage cleanup is not yet performed.
 
-Ferric still pins compiler 272. Source-only review indicates the established
-80-file dependency/policy adoption with regenerated compiler-bearing TCB
-records, not a caller API migration. Fresh matching tools, vendor formation,
-kernel emission and native numerical validation remain pending. These targeted
-compiler tests do not establish full compiler, GPU, performance or M1
+At publication, Ferric still pinned compiler 272. Source-only review indicated
+the established 80-file dependency/policy adoption with regenerated
+compiler-bearing TCB records, not a caller API migration. Fresh matching tools,
+vendor formation, kernel emission and native numerical validation remain pending.
+These targeted compiler tests do not establish full compiler, GPU, performance or M1
 qualification, and the historical numerical mismatch remains unresolved.
+
+### Compiler 9b64 Adopted
+
+Ferric `7f1121f15d1f85e9323661151ad36df3192e606c` adopts published fe2o3
+`9b64a2da7f81f7ca2649cb44142dbd2f3e268496`; integrated tree is
+`382268e28513accee9b069eafa0ec138d0dc0e36`. All 1,157 committed blobs match
+the remotely validated final source. Exactly 80 pin/policy files change:
+the compiler revision and two derived verifier checksum rows. Pliron,
+property-binder pins, runtime TCB and verification coverage remain unchanged.
+
+The fresh mi300x adoption campaign at base `08bccfcb` passes all 50 phases
+from 09:47:33Z to 09:51:41Z: formatting, 32 locked dependency graphs, 48
+source-gate tests, four actual TCB derivations and normal coverage validation.
+It uses an empty target and the existing owned metadata cache under its lock,
+with unchanged 2 GiB campaign and 10 GiB metadata-owner limits. Stable 1.97.1
+tool identities and control afterchecks pass. Six bounded mi300x helper tests
+precede the run; successor controls preserve the first failure and forward
+cancellation through the active driver and phase wrapper.
+
+Archive SHA is
+`63f55fb73dd852db6aeb201081d0b4c910885b2041877843c190e3268d111d74`
+(24,588,242 bytes). Independent custody verifies all 1,933 payloads, 1,934
+members and 29 external records, including exact nanosecond metadata, both
+fresh source-gate executables and all 105 recorded process identities. The
+generated patch is independently reviewed before integration. This progress
+note is a separate documentation change, not part of that validated source.
+
+This establishes compiler dependency/source-policy adoption, not a new host,
+kernel-emission, protected-proof, native or performance result. Matching tools
+and device artifacts must be rebuilt before the pending numerical comparison;
+old compiler272 products are not relabeled. All 33 M1 gates remain open.
 
 ### Earlier Published R23 Checkpoint
 
