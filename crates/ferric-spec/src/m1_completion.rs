@@ -265,7 +265,7 @@ pub open spec fn finite_bf16_order_key_spec(bits: u16) -> Option<i64> {
     } else if bits < 32_768 {
         Some(magnitude as i64)
     } else {
-        Some(-(magnitude as i64))
+        Some((-magnitude) as i64)
     }
 }
 
