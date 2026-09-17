@@ -151,9 +151,9 @@ exact roundtrip, corrupted content despite an updated compressed hash, and
 changed raw bytes. The first launcher failed before tests because its nested
 virtual-memory limit tried to exceed the outer limit; that setup failure is
 preserved. A separate R2 lowers the inner limit to the existing 2 GiB ceiling,
-passes all three tests, and retains 16 independently checked files. Vendor
-formation remains unrun at 272, with the ordinary 512 MiB reserve and all
-other limits unchanged; compression is not itself a capacity-admission result.
+passes all three tests, and retains 16 independently checked files. The codec
+tests alone do not establish vendor formation or capacity admission. The later
+formation result below retains the ordinary 512 MiB reserve and all other limits.
 
 At 2026-09-17T05:39:43Z, GPU4/renderD160 was compute-idle with 298,647,552
 bytes VRAM used. This is only a read-only availability observation, not native
@@ -184,6 +184,26 @@ formation result or a replacement for fresh no-use and capacity admission.
 The consumed reserve exception and historical failed formation remain unchanged.
 No new device artifact, native numerical result, performance claim or M1 closure
 is established by these host and prerequisite results.
+
+The separate current272 vendor formation now passes in one mi300x run,
+07:53:14Z to 07:56:37Z. All 198 packages pass, with 143 registry packages
+unchanged and 53 compiler plus two Pliron Git packages refreshed by pinned
+Cargo. All 55 independent Git origin rosters and all 163 package metadata
+projections pass. Cargo-generated manifests and checksums are not overwritten;
+the immediate producer snapshot equals the final full package inventory.
+Original111, prior1fad, source and Git workspace preservation checks pass.
+
+Terminal stage allocation is 3,995,240 KiB and evidence is 6,920 KiB, within
+the unchanged 10 GiB stage, 512 MiB reserve and 12 MiB evidence limits. Scoped
+no-use checks find no selected matches while explicitly retaining incomplete
+visibility. No foreign session or new visibility exception is involved.
+Receipt SHA is
+`76276e9452709fc732f00656a0e15272c2c7472ca5d5c6aca0f97dd15ad0b4bb`.
+Root and independent terminal custody verify all 105 payloads, 107 members and
+19 external records with exact nanosecond metadata. All actual statuses and
+preservation records agree; archive SHA is
+`51740e6ddd221fbbcc1c222328f118ea79c784320bb60fec95d89cab81437aac`
+(2,995,047 bytes). Matching device emission and native validation remain pending.
 
 ### Earlier Published R23 Checkpoint
 
