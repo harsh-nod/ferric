@@ -17,6 +17,10 @@ availability observation, not admission or a reservation.
 There is a concrete runtime incompatibility: the host runs kernel
 `5.15.160+`, while the currently adopted and freshly rechecked upstream
 fe2o3 `9b64a2da` gfx950 platform validator requires `6.8.0-124-generic`.
+The observed amdgpu module is `6.16.15`, source version
+`9462451703604FCD7EC2365`, rather than the admitted `6.16.13` /
+`703B1127E578BC5D4BD6615`. Installed driver sources are available under
+`/usr/src/amdgpu-6.16.15-2267428.22.04`; their compatibility is not yet reviewed.
 The engineering worker requires this check too; its machine-code opt-in
 does not bypass it. Supporting this host requires a separately identified
 and validated platform profile in fe2o3, not a relaxed check or host change.
