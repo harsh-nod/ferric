@@ -5,7 +5,7 @@ receipt. The 33 M1 roadmap gates remain open.
 
 ## Current Checkpoint
 
-### New Upstream Compiler Requires Adoption
+### Latest Upstream Compiler Adopted
 
 The latest fresh fetch observes fe2o3 main
 `70aadc048a25b17ccc1bb2b185163df0256e1931`. Its one commit after `e364682e`
@@ -15,10 +15,51 @@ Independent Git-object review finds the KFD runtime and complete local
 dependency chain, LLVM worker subtree, workspace manifests, lock and toolchain
 unchanged. Those limited source bridges do not relabel existing binaries.
 
-The native result below remains Ferric59822 / fe406-produced. Adoption of
-`70aadc0`, a fresh compiler/backend build and fresh TP14 emission are pending;
-no latest-compiler native result is claimed. All builds and CPU tests remain
-on mi300x. The current native host is the user-selected eight-GPU mi350.
+Ferric `e3477526caffd954e6b283e061aa040ecd5a11fd`, tree
+`b966fc043aeb2f2847feda61bb35c9c81e8e2019`, now adopts `70aadc0`. All 50
+adoption phases pass on mi300x: 32 locked graphs, 35 offline metadata queries
+after one fetch, both owning-edition formatting checks, two fresh source-gate
+executables, 48 source-gate tests, four inventory derivations and normal
+coverage generation/validation. The exact 80-file change and all 1,157 files
+match the retained final census. Inventory changes are revision-only; no new
+declarations, lock repairs, coverage, runtime-TCB or property-binder changes
+are admitted. A fresh upstream query still observes `70aadc0` as main.
+
+The successor adoption wrapper checks resource observations and terminal
+writes, preserves the first command failure, handles repeated cleanup signals
+and stops both captured leader and group before setsid can complete. Remote
+preflights pass nine Python ASTs and 57 lifecycle, inventory-transition,
+resource, terminal-write and actual pre-setsid cleanup cases. Original CPU0,
+nice19, ordered locks, stage/cache limits and reserved headroom remain intact.
+
+Independent custody and source review checks 2,124 payloads/2,125 members,
+exact nanosecond metadata, 51 external files, all raw phases and both actual
+source-gate producers. The 24,669,140-byte archive has SHA256
+`4f3eeb4f15da81b672eb7f2ca11aec8031217eca363d5b36ba702d2086d46492`.
+Campaign and retention exits are zero. This does not establish engine, native
+GPU or protected-proof validation. The native result below remains
+Ferric59822 / fe406-produced. Fresh compiler tools and TP14 emission are still
+required before a `70aadc0`-produced artifact can be used. All builds and CPU
+tests remain on mi300x; native execution uses the selected eight-GPU mi350.
+
+After the independent ACK and fresh hash/process/no-use checks, the completed
+owned remote retainer is removed, reclaiming 25,008 KiB. The authoritative
+local archive and useful adoption/cache/model owners remain. Scoped lsof
+reports no users but warns about inaccessible unrelated mounts, so no global
+host-visibility claim is made. No new worktree was created.
+
+### Team Priorities After Adoption
+
+| Team | Current Evidence | Next Work |
+| --- | --- | --- |
+| Compiler integration | Latest published fe2o3 pin adopted and source-gate campaign passes. LLVM and KFD worker sources are unchanged, without relabeling their producers. | Fresh four-tool build and TP14 emission, retaining build-specific limits and source identities. |
+| Kernels and numerics | The retained gfx942 position-131 mismatch is still unexplained; the current token-at-a-time driver reads only the GPU choice. | Add opt-in completed final-stage residual, normalized-state and full-logit readback, then compare with two independent reference passes. Preserve raw disagreement and existing tolerances. |
+| Inference integration | Fresh gfx950 TP1 correctness smoke passes; older TP8 evidence remains separately attributed. | Validate fresh TP8 producers after emission. Sustained request-driven speculation remains beyond the existing two-round K4 canary. |
+| Verification | Adoption source tests and independent custody pass; no protected proof runtime has become available. | Validate numerical-capture ordering, read failures, epoch/position selection and close-before-completion behavior. Keep engineering evidence distinct from qualification. |
+
+The numerical task targets R07/R12/R21/R29 evidence, not a new qualification
+framework. Capture-mode timings will not be benchmark-comparable, and gfx950
+observations cannot replace gfx942 evidence. All 33 M1 gates remain open.
 
 ### R26 Website Checkpoint Published
 
