@@ -258,7 +258,7 @@ fn standalone_manifest_keeps_exact_compiler_and_no_old_routes() {
     let library = include_str!("../src/lib.rs");
     assert_eq!(
         manifest
-            .matches("9b64a2da7f81f7ca2649cb44142dbd2f3e268496")
+            .matches("9989714525028db2e73bacfaa944f97fd3d5eeff")
             .count(),
         2
     );

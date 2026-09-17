@@ -8,7 +8,7 @@ publish = false
 [workspace]
 
 [dependencies]
-fe2o3-kfd = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "9b64a2da7f81f7ca2649cb44142dbd2f3e268496", features = ["engineering-gfx950"] }
+fe2o3-kfd = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "9989714525028db2e73bacfaa944f97fd3d5eeff", features = ["engineering-gfx950"] }
 serde = { version = "=1.0.229", features = ["derive"] }
 serde_json = "=1.0.151"
 sha2 = "=0.11.0"
