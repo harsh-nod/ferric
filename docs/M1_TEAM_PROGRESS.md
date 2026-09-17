@@ -349,6 +349,52 @@ its verified original producer attribution. This is engineering tool evidence,
 not full compiler, protected-proof, GPU, numerical or performance qualification.
 The historical numerical mismatch and all 33 M1 gates remain open.
 
+### Compiler 9b64 Host Validated
+
+The matching `7f1121f1`/`9b64a2da` host campaign passes on mi300x from
+11:04:38Z to 11:30:04Z on 2026-09-17. All 24 primary phases and three
+explicitly tracked preservation phases exit zero, as do the outer launcher
+and terminal retainer. Seven selected engine, 25 adapter and 38 source-policy
+tests pass, 70 total; this is not the full engine suite. Six lifecycle and
+20 resource-error control tests also pass remotely. fe2o3 main is observed
+unchanged before and after execution.
+
+The fresh release build takes 13m15s and produces a 14,211,048-byte opt3,
+debug0 binary with features [], Cargo `fresh:false`, and no RPATH/RUNPATH.
+Its SHA-256 is
+`3ce677527cd2c53f9ed7da495f6241b9002d21976e382cd3913c6c262a88fd57`.
+The empty target and independent Cargo-home copy retain CPU0/nice19/jobs1,
+the original 8 GiB host-stage cap, 512 MiB reserve and all other resource
+bounds. Source, original metadata owner, toolchain and controls pass
+preservation checks. No local build, GPU run or reserve exception is used.
+
+Precise retention includes the earlier successful three-phase source/device
+metadata campaign: all 1,157 adopted source files and ten protected identities,
+the exact 163-package graph with 53 compiler and two Pliron packages, and
+the genuine gate/tool receipts. The gate summary retains its actual
+`08bccfcb` source-base attribution. Its compiler metadata and host evidence
+are not relabeled historical272 products.
+
+Archive SHA is
+`2eca2031751952511cc1ddf97dbad9fbf4c7eabc2af51882ae6cc52849e0f09d`
+(35,120,343 bytes). Independent shell custody verifies all 550 payloads,
+551 members and 20 external records, including exact signed-nanosecond
+timestamps, both control ledgers, raw test outcomes, actual Cargo producers
+and release bytes. Fresh post-retention checks find all 96 recorded process
+entries absent, including the retainer; this is an entry count, not unique PIDs.
+
+Parallel static reviews record the exact new vendor/emission bindings and
+native-controller changes, including its new 24+3 host-phase contract. Next
+are fresh vendor formation and 13-kernel emission, followed by fresh GPU4
+admission and final-RMS capture. The separate worker keeps its actual original
+producer. No new worktree is created. The release/evidence remain needed;
+bulk scratch cleanup needs a narrowly rebound no-use/hardlink-aware controller,
+not reuse of a deletion script bound to historical directories.
+
+This checkpoint establishes selected engineering host validation, not native
+numerical acceptance, protected proof qualification, performance or M1 closure.
+The historical numerical mismatch and all 33 M1 gates remain open.
+
 ### Earlier Published R23 Checkpoint
 
 The public site records the BF16 helper, source-bound host/proof results,
