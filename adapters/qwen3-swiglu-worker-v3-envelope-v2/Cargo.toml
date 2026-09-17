@@ -10,7 +10,7 @@ publish = false
 [workspace]
 
 [dependencies]
-fe2o3-runtime-protocol = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "f7f5aa32600959a56a80d34fd608bcf935bc09cf", version = "=0.1.0" }
+fe2o3-runtime-protocol = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "272af56d6032f25019156e27a0ba50d16f85830c", version = "=0.1.0" }
 ferric-engine = { path = "../../crates/ferric-engine" }
 sha2 = "0.11.0"
 

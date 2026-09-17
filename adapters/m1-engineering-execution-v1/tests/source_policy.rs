@@ -37,7 +37,7 @@ const CORE_SOURCE: &str =
 const CAPABILITY_SOURCE: &str =
     include_str!("../../../crates/ferric-non-authoritative-program-source-v1/src/lib.rs");
 
-const FE2O3_REVISION: &str = "f7f5aa32600959a56a80d34fd608bcf935bc09cf";
+const FE2O3_REVISION: &str = "272af56d6032f25019156e27a0ba50d16f85830c";
 
 fn explicit_mfma_route_policy(source: &str, cli: &str) -> bool {
     let compact = source
