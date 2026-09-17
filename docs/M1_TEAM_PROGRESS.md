@@ -203,7 +203,51 @@ Root and independent terminal custody verify all 105 payloads, 107 members and
 19 external records with exact nanosecond metadata. All actual statuses and
 preservation records agree; archive SHA is
 `51740e6ddd221fbbcc1c222328f118ea79c784320bb60fec95d89cab81437aac`
-(2,995,047 bytes). Matching device emission and native validation remain pending.
+(2,995,047 bytes). The subsequent device-emission attempt is recorded below;
+native validation remains pending.
+
+### Compiler 272 Emission Compatibility Failure
+
+The single frozen `999aa65f`/`272af56d` MFMA13 emission attempt runs on mi300x
+from 08:20:24Z to 08:27:22Z. Eleven prerequisite/preservation phases pass;
+the emit phase, controller and campaign exit 1. Inspection does not run,
+no HSACO is produced and no GPU workload is launched. Source, vendor, tool
+and control afterchecks pass. The unchanged 10 GiB stage cap and normal
+512 MiB admission reserve apply; the earlier one-run exception is not reused.
+
+Root and two independent static investigations identify a compiler package
+representation mismatch. `trusted_device_items.rs` hashes exact `Cargo.toml`,
+optional `build.rs`, and every `src/**` file, but accepts only the reviewed
+original-workspace closure. All 26 vendored device source files match the
+canonical compiler census, and neither package has `build.rs`. The canonical
+manifest SHA is `da7bbcd2f3dac75b968f45137c920d94658b5600ff52bf9d843d494bcdd8afb7`;
+the unchanged Cargo-produced manifest SHA is
+`8ffc8a52272ff0866b3f68d78d0365f50af2da1be2e305891175539d5cde65b3`.
+The actual vendored manifest bytes are captured and authenticated separately
+for a future regression fixture. This is not a caller omission or a kernel
+source change, and metadata-semantic equivalence does not satisfy the existing
+byte-exact compiler check.
+
+The failed attempt is retained without retry or manifest rewriting. Archive
+SHA is `ef59520c2e3c19770b0a082228571bcfc629876f14fe115fa9b498d62efff7c0`
+(1,812,581 bytes); root and independent custody verify 231 payloads, 233
+members and all 20 external records with exact nanosecond metadata. All 42
+external identities and the four genuine tool producers match. The original nonzero
+statuses and absent inspection remain explicit. Retention exit 0 means byte
+custody only, not successful emission or a closed M1 gate.
+
+The next compiler work belongs in fe2o3: review exact Cargo-normalized package
+closure support consistently at both provider-admission and semantic-definition
+validation, retain the actual observed identity, and test canonical/vendor
+positives plus manifest/source/roster mutation negatives. Do not ignore the
+manifest, accept arbitrary semantic equivalence, or substitute an original
+manifest. Start that separately validated fix from current upstream main in an
+owned checkout, rebase before pushing, and keep all builds on mi300x with
+GitHub CI skipped. No compiler source change or push is made at this checkpoint.
+The independently reviewed final-RMS capture/reference controller remains
+unready pending a successful matching artifact and fresh GPU4 admission.
+The historical numerical mismatch and all 33 M1 gates remain open; no new
+TTFT, TPOT, throughput or vLLM/SGLang comparison is claimed.
 
 ### Earlier Published R23 Checkpoint
 
