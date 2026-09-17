@@ -5,6 +5,21 @@ receipt. The 33 M1 roadmap gates remain open.
 
 ## Current Checkpoint
 
+### New Upstream Compiler Requires Adoption
+
+The latest fresh fetch observes fe2o3 main
+`70aadc048a25b17ccc1bb2b185163df0256e1931`. Its one commit after `e364682e`
+changes 20 files, adding MemorySSA and closed Policy3 output admission. The
+earlier whole-production-source equivalence bridge no longer covers main.
+Independent Git-object review finds the KFD runtime and complete local
+dependency chain, LLVM worker subtree, workspace manifests, lock and toolchain
+unchanged. Those limited source bridges do not relabel existing binaries.
+
+The native result below remains Ferric59822 / fe406-produced. Adoption of
+`70aadc0`, a fresh compiler/backend build and fresh TP14 emission are pending;
+no latest-compiler native result is claimed. All builds and CPU tests remain
+on mi300x. The current native host is the user-selected eight-GPU mi350.
+
 ### R26 Website Checkpoint Published
 
 The validated mi350 transport/source-gate snapshot is live at
@@ -22,7 +37,14 @@ source worktree and redundant screenshot/artifact extraction are removed,
 reclaiming 15,840 KiB; archives and active work remain. The published snapshot
 predates the native attempts below and claims no new Qwen result.
 
-### Fresh TP14 Artifact Passes; mi350 Native Check In Progress
+After access returns, the three completed owned mi300x Pages stage, retention
+and input directories are also removed, reclaiming 52,392 KiB. Fresh owner,
+path, archive-hash and recorded-process absence checks precede deletion.
+Scoped lsof checks observe no users; warnings about inaccessible unrelated
+mounts limit host-wide visibility. Authoritative local evidence, active build
+and model inputs, and shared jobs remain untouched.
+
+### Fresh TP14 And mi350 TP1 Pass
 
 Fresh Ferric59822 / fe406 vendor formation on mi300x passes with the normal
 512 MiB reserve. Cargo normalizes all 55 Git packages in the 198-package view;
@@ -62,14 +84,29 @@ intake authorization is mode0644 rather than required0600. Independent byte
 custody passes for both failed attempts, retaining the failures explicitly.
 
 R3 verifies the corrected authorization mode/UID/link count/size/hash, obtains
-fresh GPU admission, and passes artifact admission. Its last observed progress
-is `artifact admitted; authenticating canonical Qwen source`, with about 15.4 GiB
-group RSS at 21:33:48Z. The SSH session subsequently returns 255 with a server
-timeout; fresh bounded SSH attempts to both mi350 and mi300x also time out at
-22:55 UTC. R3's terminal status, model-intake completion, worker/dispatch state
-and cleanup are not yet observable. Do not relaunch or delete its files before
-recovering those records. No new Qwen output, TP8 result, TTFT or TPOT is claimed.
-All 33 M1 gates remain open.
+fresh GPU admission, and passes artifact admission and canonical model intake.
+The SSH session is temporarily lost; bounded access attempts also time out at
+22:55 UTC. Once access returns, the actual terminal records show completion at
+21:36:20Z with launch, runner and application exits all zero. Qwen3-8B produces
+tokens `[12095,13]`, text ` Paris.`, for `The capital of France is`. The checker
+passes the canonical bundle, exact artifact/live worker identities, all three
+setup/measurement/Closed records and real worker closure. There are 3264 rank
+dispatches and six processed KV positions. The worker/process group is absent;
+GPU0 returns to zero busy and its 297,766,912-byte idle VRAM baseline.
+
+Independent R3 custody and result review passes all 63 payloads, exact
+nanosecond metadata, 19 external records, executable/artifact pins, tokens,
+recorded process absence and restored VRAM. The 62,623-byte retained archive
+has SHA256
+`975e7478602cba164df2cb41ebc34ec0d07cac394c5195ee8d161e7cac066075`.
+R1 and R2 remain separately retained failures, not relabeled successes.
+
+This is a two-token TP1 correctness smoke using the fe406 debug worker and
+token-at-a-time prefill, not the optimized serving route or a matched benchmark.
+Raw observations are 86.766 seconds intake, 180.473 seconds setup, 39.567 seconds
+TTFT and 7.924 seconds for the sole decode interval. They are not comparable to
+the retained vLLM/SGLang workloads. No fresh TP8 or protected gfx942 qualification
+is established. Transport STATE remains unpromoted. All 33 M1 gates remain open.
 
 ### mi350 Model Transport And Loader Checks Pass
 
