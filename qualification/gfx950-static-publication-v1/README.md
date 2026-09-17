@@ -1,9 +1,13 @@
 # Static Publication Engineering Qualification
 
-Status: CPU-only fixture/probe/reference implementation. No native artifact,
-GPU result, protected admission, or native-memory eligibility is asserted.
+Status: Rust-to-gfx950 native build and the fixed 44-attempt engineering GPU
+suite passed on Asrock (`mi350-2`). This is an observed one-shot publication
+experiment, not protected admission or general native-memory eligibility.
 The device and host dependencies pin compiler revision
 `cb8f51ec0b52894a1fb510bc3f523005dda8bfaf`; `build.sh` requires its clean snapshot.
+See the [Asrock results](#asrock-results), [complete sanitized suite](evidence-asrock-v1.json),
+[native artifact metadata](artifact-asrock-v1.json), and
+[bring-up notes](../../docs/evidence/gfx950-megakernel-42/asrock.md).
 
 ## Fixed Contract
 
@@ -70,3 +74,26 @@ has an explicit operator-reviewed native-memory assumption; there is no safe
 or protected dispatch through this harness. Existing shared-atomic and gfx950
 protected gates remain closed. No CPU/GPU concurrent access, other-GPU use,
 HBM residency/bandwidth, GPU event timing, general scheduling, or model claim.
+
+## Asrock Results
+
+The fixed matrix completed exactly once: 40 valid attempts and four invalid
+length controls, with no retry, replacement, or matrix extension. The suite
+passed its predeclared coverage policy, with 1,392 Ready consumers returning
+the exact current input bits and 3,728 NotReady consumers returning +0.
+Each initial pattern observed Ready in both consumer waves; across its eight
+attempts, every cell in each wave was covered. NotReady also covered every
+cell across the 40 valid attempts. These aggregate observations do not imply
+a progress guarantee for any individual launch. The retained results include
+valid launches with no Ready observation.
+
+All 5,120 producer payload words matched their independent inputs. The four
+invalid controls returned 1,024 Invalid/+0 results with unchanged payloads
+and flags. All guards, input immutability and worker cleanup checks passed.
+The native artifact has 80 explicit kernarg bytes, no implicit arguments,
+34 SGPRs, 8 VGPRs, no LDS/private memory, and no spills. Grid256 is enforced
+by the fixed harness/source contract, not an ELF maximum-workgroup field.
+
+Ferric source revision was `5842ea2854713ae558a06271235ee41490b2a17c`;
+ROCm was 7.3.0 / AMD LLVM 22. HSACO SHA-256:
+`d2df70547618e16485774a64016148c479980f14b27aabe3652c330b55ea30f1`.

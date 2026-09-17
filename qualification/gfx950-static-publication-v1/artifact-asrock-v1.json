@@ -1,0 +1,232 @@
+{
+  "schema": "ferric-static-publication-artifact-v1",
+  "source_sha256": "f4be21c91c46a24d18967bdb247b30a0ff575262a01084039913c3f5884edb5c",
+  "object_sha256": "d2df70547618e16485774a64016148c479980f14b27aabe3652c330b55ea30f1",
+  "metadata": {
+    "symbol": "ferric_gfx950_static_publication_v1",
+    "object_sha256": [
+      210,
+      223,
+      112,
+      84,
+      118,
+      24,
+      225,
+      100,
+      133,
+      119,
+      74,
+      100,
+      1,
+      97,
+      72,
+      196,
+      121,
+      152,
+      15,
+      20,
+      178,
+      122,
+      171,
+      227,
+      101,
+      44,
+      51,
+      11,
+      85,
+      234,
+      48,
+      241
+    ],
+    "kernarg_bytes": 80,
+    "kernarg_alignment": 8,
+    "group_segment_bytes": 0,
+    "private_segment_bytes": 0,
+    "wavefront_size": 64,
+    "implicit_argument_offset": null,
+    "implicit_argument_bytes": 0,
+    "explicit_arguments": [
+      {
+        "offset": 0,
+        "bytes": 8,
+        "global_buffer": true,
+        "pointee_alignment": null,
+        "access": null
+      },
+      {
+        "offset": 8,
+        "bytes": 8,
+        "global_buffer": false,
+        "pointee_alignment": null,
+        "access": null
+      },
+      {
+        "offset": 16,
+        "bytes": 8,
+        "global_buffer": true,
+        "pointee_alignment": null,
+        "access": null
+      },
+      {
+        "offset": 24,
+        "bytes": 8,
+        "global_buffer": false,
+        "pointee_alignment": null,
+        "access": null
+      },
+      {
+        "offset": 32,
+        "bytes": 8,
+        "global_buffer": true,
+        "pointee_alignment": null,
+        "access": null
+      },
+      {
+        "offset": 40,
+        "bytes": 8,
+        "global_buffer": false,
+        "pointee_alignment": null,
+        "access": null
+      },
+      {
+        "offset": 48,
+        "bytes": 8,
+        "global_buffer": true,
+        "pointee_alignment": null,
+        "access": null
+      },
+      {
+        "offset": 56,
+        "bytes": 8,
+        "global_buffer": false,
+        "pointee_alignment": null,
+        "access": null
+      },
+      {
+        "offset": 64,
+        "bytes": 8,
+        "global_buffer": true,
+        "pointee_alignment": null,
+        "access": null
+      },
+      {
+        "offset": 72,
+        "bytes": 8,
+        "global_buffer": false,
+        "pointee_alignment": null,
+        "access": null
+      }
+    ]
+  },
+  "observed_launch_metadata": {
+    "required_workgroup_size": [
+      128,
+      1,
+      1
+    ],
+    "max_flat_workgroup_size": 128,
+    "max_workgroups": [
+      null,
+      null,
+      null
+    ],
+    "cluster_dims": null
+  },
+  "observed_argument_qualifiers": [
+    {
+      "actual_access": null,
+      "is_const": null,
+      "is_restrict": null,
+      "is_volatile": null,
+      "is_pipe": null
+    },
+    {
+      "actual_access": null,
+      "is_const": null,
+      "is_restrict": null,
+      "is_volatile": null,
+      "is_pipe": null
+    },
+    {
+      "actual_access": null,
+      "is_const": null,
+      "is_restrict": null,
+      "is_volatile": null,
+      "is_pipe": null
+    },
+    {
+      "actual_access": null,
+      "is_const": null,
+      "is_restrict": null,
+      "is_volatile": null,
+      "is_pipe": null
+    },
+    {
+      "actual_access": null,
+      "is_const": null,
+      "is_restrict": null,
+      "is_volatile": null,
+      "is_pipe": null
+    },
+    {
+      "actual_access": null,
+      "is_const": null,
+      "is_restrict": null,
+      "is_volatile": null,
+      "is_pipe": null
+    },
+    {
+      "actual_access": null,
+      "is_const": null,
+      "is_restrict": null,
+      "is_volatile": null,
+      "is_pipe": null
+    },
+    {
+      "actual_access": null,
+      "is_const": null,
+      "is_restrict": null,
+      "is_volatile": null,
+      "is_pipe": null
+    },
+    {
+      "actual_access": null,
+      "is_const": null,
+      "is_restrict": null,
+      "is_volatile": null,
+      "is_pipe": null
+    },
+    {
+      "actual_access": null,
+      "is_const": null,
+      "is_restrict": null,
+      "is_volatile": null,
+      "is_pipe": null
+    }
+  ],
+  "engineering_contract": "fixed source fixture, not source-to-object or runtime authority; PUBLIC allocation does not authenticate System atomic eligibility",
+  "workgroup": [
+    128,
+    1,
+    1
+  ],
+  "grid": [
+    256,
+    1,
+    1
+  ],
+  "allocation_bytes": [
+    512,
+    512,
+    512,
+    1024,
+    1024
+  ],
+  "pointer_access": [
+    "read_write",
+    "read_write",
+    "read_write",
+    "write",
+    "write"
+  ]
+}

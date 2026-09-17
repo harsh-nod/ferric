@@ -41,3 +41,65 @@ Raw records are retained under
 device selectors and worker stderr are not published. Post-run GPU/UMC
 activity was zero and used VRAM remained 283 MB. No clocks, driver settings,
 firmware, or other users' processes were changed.
+
+## Finite Megakernel Scheduler
+
+The unchanged seven-task integer scheduler was rebuilt from Rust on Asrock,
+using clean Ferric revision `5842ea2854713ae558a06271235ee41490b2a17c`, the
+compiler revision above, and ROCm 7.3.0 / AMD LLVM 22. The fixed numerical suite
+passed all 20 dispatches: 16 valid epochs and four stale-epoch rejections.
+There were 112 exact independent payload comparisons within 260 checked state
+words. Both workgroups participated and four dependency edges crossed between
+them in every valid epoch; this is measured ownership, not an inference from
+launch geometry. All input, guard, queue, allocation and process checks passed.
+
+The launch has two workgroups, 128 lanes each, with two wave64 waves per
+workgroup. Native resources are 77 SGPRs, 18 VGPRs, 1,024 LDS bytes, zero private
+memory and no SGPR/VGPR spills. The host fixes grid256; ELF does not independently
+encode the maximum workgroup count. Post-run GPU/UMC activity was zero and used
+VRAM remained 283 MB. No GPU-only timing or performance claim is made.
+
+[Sanitized results](../../../qualification/gfx950-task-graph-v1/evidence-asrock-v1.json)
+retain per-epoch ownership and hashes of the underlying reports and states.
+Native build records are under `evidence/task-graph-asrock-native-v1/`; GPU
+records are under `evidence/taskgraph-asrock-gpu-v1/`, both within the Asrock
+work root above. HSACO SHA-256:
+`fe55cc7167fd9e6859ba3ea4cf5f66ccfdb40c91e30be4bf05d8139d46298187`.
+This establishes the finite atomic scheduler core, not ordinary tensor
+visibility, a full Qwen model, an unbounded runtime, or production admission.
+
+## Ordinary Payload Publication
+
+The separate V31 one-shot publication fixture was also built from Rust using
+the same clean sources and compiler. The checked V2 handoff preserved its
+LLVM bytes; ROCm 7.3.0 produced the gfx950 HSACO. Offline LLVM/ISA review
+confirmed the guarded ordinary payload load, producer payload store before
+READY release, and consumer REQUEST release followed by acquire. Existing
+proof, descriptor and protected-runtime gates were not relaxed.
+
+The predeclared 44-attempt GPU suite passed without retry or replacement:
+
+| Check | Observed result |
+| --- | --- |
+| Valid launches / invalid-length controls | 40 / 4 |
+| Exact producer payload comparisons | 5,120 |
+| Ready consumers, exact current producer bits | 1,392 |
+| NotReady consumers, +0 results | 3,728 |
+| Ready coverage per initial pattern | Both wave64 ranges, all 128 cells |
+| NotReady coverage across valid launches | Both wave64 ranges, all 128 cells |
+| Invalid/+0 results, payload and flags unchanged | 1,024 |
+| Guard, immutable-input and cleanup checks | Passed |
+
+[Full sanitized results](../../../qualification/gfx950-static-publication-v1/evidence-asrock-v1.json)
+retain all per-attempt Ready/NotReady cell sets. The experiment has no polling
+or progress guarantee; several valid launches observed no Ready consumers.
+PUBLIC memory is not COHERENT, and this numerical observation does not
+authenticate general System atomic or ordinary-memory eligibility. The
+engineering worker still requires explicit unauthenticated-code admission.
+
+Native resources are 34 SGPRs, 8 VGPRs, zero LDS/private memory and no spills.
+The launch is two WG128 workgroups, each with two wave64 waves; the 80-byte
+kernarg has no implicit arguments. [Artifact metadata](../../../qualification/gfx950-static-publication-v1/artifact-asrock-v1.json)
+binds source and native object. Raw build and GPU records remain under
+`evidence/publication-asrock-native-v1/` and `evidence/publication-asrock-gpu-v1/`
+in the Asrock work root. No performance or full-model result is asserted.

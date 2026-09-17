@@ -14,3 +14,7 @@ Device and host dependencies pin reviewed compiler revision
 `cb8f51ec0b52894a1fb510bc3f523005dda8bfaf`. A pin alone establishes no GPU
 execution, native-memory eligibility, protected runtime admission, performance,
 or model-inference result.
+
+The [Asrock engineering suite](../../qualification/gfx950-static-publication-v1/README.md#asrock-results)
+now records a fresh native Rust build and all 44 predeclared GPU attempts.
+Its observed numerical pass does not widen the execution boundary above.

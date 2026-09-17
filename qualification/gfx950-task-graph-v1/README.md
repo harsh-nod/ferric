@@ -6,7 +6,10 @@ The ordinary Rust source now compiles through semantic MIR, ranked/formal
 checks, translation validation, target convergence and gfx950 LLVM lowering.
 Production extraction 23 produced an inert native HSACO, and the bounded
 engineering GPU suite passed on the original `mi350-2` host. These are
-historical observations, not results for the replacement asrock host.
+historical observations. The replacement Asrock host also passed a fresh native
+build and the fixed 20-dispatch suite using compiler `cb8f51ec` and ROCm 7.3.0.
+See the [Asrock evidence](evidence-asrock-v1.json) and
+[bring-up notes](../../docs/evidence/gfx950-megakernel-42/asrock.md).
 
 ## Native Evidence
 
