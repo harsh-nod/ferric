@@ -5,6 +5,37 @@ receipt. The 33 M1 roadmap gates remain open.
 
 ## Current Checkpoint
 
+### mi350-2 Checked Binding Passes
+
+User-requested mi350-2 access is restored. On 2026-09-17 at 17:32:55 UTC,
+the exact mi300x-built e22d22 identity producer passes on Asrock GPU UID
+1956390207832604050, KFD ID 39229, render minor 128. It reports gfx950:xnack-,
+the selected profile hash
+`cf65a0d24a127c3a7fb12b8aefb1668fe75cb779036562a0dde2d00f52ce2978`,
+one process aperture and contracted-clear currentness. Descriptor counts
+return from five to five; command, wrapper and cleanup statuses are zero.
+The owned process group is absent. Visible GPU users are absent before and
+after, VRAM stays at 297,750,528 bytes, and final GPU utilization is zero.
+The 631,238-byte retained archive has SHA256
+`7ec8ef6ee8a02626f90b926189a8d85358611c97d0278567be6b7f4d67034adb`;
+all 30 payload hashes pass local shell-only streaming checks.
+
+This bounded probe opens KFD/render descriptors and subscribes to reset
+events, but performs no explicit VM acquisition, GPU allocation, queue
+creation, kernel dispatch or XNACK change. It establishes checked engineering
+binding, not Qwen correctness, general driver teardown or protected authority.
+The host exposes one gfx950 GPU, so it cannot replace a gfx942-specific capture
+or an eight-physical-GPU experiment. Builds remain restricted to mi300x.
+
+Fresh independent checks also match all 28 installed-driver manifest source
+hashes, resolving the thirteen missing source checks below. Four primary and
+fourteen transitive x86-64 LP64 UAPI headers are retained for future mi300x
+C-oracle compilation; their ledger hash is
+`048bfa6680d86e383c55aceeee3f5cc4c998eafdfcc2b743396b1326bbe83589`.
+Fresh C-oracle compiler/include provenance, latest-main rebase/validation,
+Ferric adoption and gfx950 Qwen execution remain pending. Existing CPU evidence
+keeps its e22d22 attribution. All 33 M1 roadmap gates remain open.
+
 ### Asrock Runtime Port CPU-Validated
 
 Isolated fe2o3 commit `e22d22dee508129379089c50cebb91cc952c6ee2`, tree
