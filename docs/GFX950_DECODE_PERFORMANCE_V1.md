@@ -36,12 +36,24 @@ passing observation.
 
 ## What 700 Tokens/s Means
 
-The target is **single-request Qwen3-8B decode**, not aggregate throughput,
-Qwen3-0.6B, or speculative accepted-token throughput. At 700 tokens/s the mean
-post-first-token interval is `1_000_000_000 / 700 = 1_428_571.43 ns`. This is a
-target line, not a measured bar. Every comparison must name precision, batch,
-live KV lengths and token-counting boundary. Lower precision is a separate
-variant requiring accuracy validation; the initial baseline remains BF16.
+The user-selected target is **single-request, BF16, target-only Qwen3-8B
+decode** on one GPU (TP1), not aggregate throughput or Qwen3-0.6B. BF16 is the
+required optimization contract, not merely a baseline to replace with a
+lower-precision result. FP8, FP4, integer or weight-only quantization and
+lower-precision KV-cache substitutions are out of scope. Preserve the existing
+numerical policy, including its higher-precision accumulation where specified;
+BF16 does not require rounding every intermediate operation to BF16.
+
+Target-only excludes draft-model and speculative decoding. Each output token
+must come from the target model's ordinary autoregressive decode; accepted
+speculative tokens cannot count toward the target. The separate Draft06B
+bring-up observations remain useful diagnostics, not a substitute workload.
+
+At 700 tokens/s the mean post-first-token interval is
+`1_000_000_000 / 700 = 1_428_571.43 ns`. This is a target line, not a measured
+bar or promised outcome. Every comparison must retain the pinned checkpoint,
+BF16 numerical contract and batch-one execution, and name live KV lengths and
+the token-counting boundary. Do not relax these constraints to meet the target.
 
 Report setup, prefill/first-token latency, post-first decode, complete resident
 request time and teardown separately. End-to-end measurements must include all
@@ -76,6 +88,12 @@ streaming, and no KV, activation, scheduling or compute costs. They are an
 analytical model, not measured throughput or a cache-independent physical limit.
 Under these assumptions, uncompressed BF16 target-only decoding cannot reach
 700 tokens/s. Reducing launch overhead alone cannot remove the weight traffic.
+At 700 tokens/s, this model would require `15,136,819,200 * 700 =
+10,595,773,440,000 bytes/s` (10.596 TB/s) for weights alone. The work therefore
+aims to maximize measured BF16 target-only performance and explain the remaining
+gap to a validated bound, not substitute quantization or speculative decoding.
+Report a missed target honestly; change the bound only with measured evidence
+for changed traffic or reuse assumptions.
 
 ## Independent Reference
 
@@ -168,8 +186,9 @@ path and applicable tuned ROCm serving baselines. Measure dispatch consolidation
 ready-task scheduling, tile/worker tuning, prefetch, software pipelining and LDS
 multi-buffering as separately named variants. Preserve losing variants. Include
 leave-one-out ablations when changes interact; percentage gains are not additive.
-A runtime or precision change invalidates a same-variant comparison unless
-explicitly represented in the experiment policy and independently checked.
+Represent runtime changes explicitly in the experiment policy and validate
+them independently. Precision changes are excluded by the BF16 target-only
+contract, even if they would improve the reported rate.
 
 The draft profile keeps the existing no-rollover packet budget. Ten warmups and
 thirty samples at four full-prefill output tokens use `40 * 4 * 480 = 76,800`
