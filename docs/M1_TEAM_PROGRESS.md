@@ -5,6 +5,23 @@ receipt. The 33 M1 roadmap gates remain open.
 
 ## Current Checkpoint
 
+### R26 Website Checkpoint Published
+
+The validated mi350 transport/source-gate snapshot is live at
+https://harsh-nod.github.io/ferric/. All five mi300x QA phases pass, including
+every width from 320 through 1440 and 64 retained screenshots. Independent
+custody checks 133 payloads/134 members and 20 downloaded external records;
+two source-review supplements have separately identified local provenance.
+The initial lifecycle fixture's PID-observer cleanup bug is fixed only in a
+fresh fixture revision; all 28 cases then pass, with the failed record retained.
+
+Static revision `8ce1d92fefa181fec7ace02a634235f21d85c97c` deploys successfully
+in run `35284983178`, without a GitHub build. All seven canonical and seven
+cache-busted live-file hashes match the admitted artifact. The completed clean
+source worktree and redundant screenshot/artifact extraction are removed,
+reclaiming 15,840 KiB; archives and active work remain. The published snapshot
+predates the native attempts below and claims no new Qwen result.
+
 ### Fresh TP14 Artifact Passes; mi350 Native Check In Progress
 
 Fresh Ferric59822 / fe406 vendor formation on mi300x passes with the normal
