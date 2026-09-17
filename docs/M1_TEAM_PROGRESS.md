@@ -5,6 +5,73 @@ receipt. The 33 M1 roadmap gates remain open.
 
 ## Current Checkpoint
 
+### BF16 Host Sampler Draft
+
+Private candidate `adbed0e5dcb982879173cb62176e61adf95667df` adds a finite
+BF16 integer-key helper and uses it in the allocation-free host argmax observer.
+The declared mapping merges signed zeros, reverses negative magnitudes and
+rejects all exponent-all-ones encodings. Pinned ordinary Verus verifies exactly
+this selected executable body with `--no-cheating`; four body-only mutations
+each fail the unchanged postcondition with genuine solver work. All 15 phases
+pass their expected statuses. Independent review confirms the narrow scope.
+
+Proof archive SHA is
+`69d7ff14fac03207ebcde137f8d046e6d645a0a09c1662132cb2bd4e932c0118`
+(11,078,409 bytes): all 180 payloads, the exact 182-member roster and 12 external
+records verify independently. Full source and pinned 190-file tool closure
+checks pass before/after. The earlier spec type failure and opaque-conversion
+proof failure remain separately retained; no negative case ran in either.
+
+Host R1 stops at strict formatting before compilation/tests, with source and
+borrowed-producer afterchecks passing. Its complete failure archive is retained.
+Successor `4157968bedc7ea9b063915720bd356fe09d3ba67` applies only the reported
+edition-2021 formatting to the crate-root exports and host observer. The helper
+file is byte-identical to the R3 proof input, but exact-source proof refresh,
+full Rust tests, exhaustive BF16/FP32 ordering regression, strict Clippy and
+ordinary coverage generation remain pending. The host R2 preparation is held.
+No BF16 code or coverage promotion is integrated. The selected proof is not a
+whole-host, floating-point/device, protected-proof or M1 qualification claim.
+
+### Published R22 Checkpoint
+
+The public site now includes the matching abd8 emission, separate vendor
+semantic checks and bd1 adoption below. Private Pages source `bcf3647b` passes
+all five mi300x-only phases: widths 320..1440, eight viewports, 64 screenshots
+and unchanged source/runtime/browser checks. Archive SHA is
+`2eb71e710c2d63d2c06dd97f37770aa29e24d5cc8450cc886c480048e77c76ce`
+(11,440,575 bytes); all 133 payload identities, the exact 134-member roster and
+20 external hashes verify independently. Desktop/mobile layouts were reviewed.
+
+Static commit `792eae3e1f6fdb9ff1178c3b504f3bccdab073c2` is deployed by the
+single successful deploy-only run `35176831270`. All seven canonical and seven
+cache-busted live requests match the admitted artifact. No GitHub build/test or
+protection change is made. The completed 3,480 KiB source worktree is removed
+without force after full census, clean commit and scoped no-use checks. The
+prior failed-extraction duplicate from compiler custody is also removed after
+checking no use, reclaiming 104,652 KiB; original archive and failure logs stay.
+No remote cleanup exception or new qualification is claimed.
+
+### bd1 Compiler Adoption
+
+Ferric adopts fe2o3 `bd1ed7d559b1a372644a78b1ede7e6057e5ccbc7` in
+`819ebcdbbbce6aa795c3bf72997c096ab24f526b`. All 50 bounded mi300x phases
+pass, including 32 locked graphs and 47 source-gate tests. The exact 80-file
+revision transition adds no target or dependency allowance. Runtime TCB,
+property-binder pins and the integrated EOS proof inventory are unchanged.
+All 1,157 integrated source files match the validated final census.
+
+Archive SHA-256 is
+`436bb904672e12d81ef0cdfc64aa53725dd9f7b5c625545e05e45fb131f9bc68`
+(20,958,731 bytes). All 1,652 payload hashes, sizes and modes, the exact
+1,653-member roster and 18 external records pass independent checks; all 50
+recorded phase groups are absent. The initial local extraction masked group
+write permission on syntax records through umask; its failed check is retained,
+and extraction preserving archived permissions passes without changing evidence.
+Receipt SHA is
+`ec4f8bbe3409c4a7d8fcb55b60ef00316d8b96f7e41ce3747472db0282e3932e`.
+This is dependency/source-policy adoption, not whole-engine, GPU, protected-proof
+or performance qualification. Historical native inputs remain frozen at 6e/abd8.
+
 ### Matching abd8 Kernel Emission
 
 All 13 bounded mi300x CPU-only emission phases pass using matching abd8 tools
@@ -83,22 +150,32 @@ not reused. Cleanup alone does not grant emission or native admission.
 
 ### Latest Upstream And Native Availability
 
-Fresh upstream observation finds fe2o3 main at
+The upstream observation for the adoption above found fe2o3 main at
 `bd1ed7d559b1a372644a78b1ede7e6057e5ccbc7`: 11 commits/12 files since the
-adopted 9f8 pin. Production changes include verified helper INDEX-to-U64 ABI
+previous 9f8 pin. Production changes include verified helper INDEX-to-U64 ABI
 casts and structured defined-call argument mismatch diagnostics. Runtime/KFD,
 device/host, production manifests, locks, toolchain and LLVM-worker tree stay
-unchanged; one test-fixture manifest does change. A revision-only adoption
-preparation is UNREADY, with the exact 80-file/32-lock roster and no new TCB
-target allowance. It is not an integrated or validated upgrade yet.
+unchanged; one test-fixture manifest does change. The revision-only adoption
+above validates the exact 80-file/32-graph roster without a new TCB target
+allowance.
 
-At 2026-09-17T01:46:37Z, frozen gfx942 GPU4 was 98% busy with 105477611520
+A subsequent fresh observation finds main at
+`6771738c03879c6a266d186333f4c66c1e693f37`. This is not relabeled as the
+validated bd1 input. Read-only Git-object review finds two commits/18 files:
+guarded-memory analysis and receipt V3 now flow through lowering, verifier and
+codegen lineage. Public minimum-byte-length/alias accessors become optional and
+the multiroot formal-memory accessor returns a new receipt facade, so downstream
+compatibility needs review before adoption. Runtime/KFD/device/host, production
+manifests/locks, toolchain, Pliron and LLVM-worker remain unchanged. No dirty
+fe2o3 checkout changes, fetch or compiler/runtime source push is performed.
+
+At 2026-09-17T03:01:01Z, frozen gfx942 GPU4 was 97% busy with 105477599232
 bytes used. No GPU workload was launched or interrupted. The diagnostic path
-remains frozen at Ferric 6e/compiler abd8; current integration remains 9f8.
+remains frozen at Ferric 6e/compiler abd8; current integration is now bd1.
 There is still no new native numerical, protected-proof or TTFT/TPOT result,
 and all 33 M1 gates remain open.
 
-### Published September 17 Checkpoint
+### Previous R21 Publication
 
 The public site at <https://harsh-nod.github.io/ferric/> now publishes the EOS,
 atomic prepack, compiler 9f8 adoption and failed single vendor attempt recorded
@@ -148,7 +225,7 @@ The completed 45,164 KiB EOS worktree is removed after its committed tree matche
 the integration commit. No native GPU, protected proof, numerical, performance
 or gate-closure claim is added.
 
-### Current Compiler Adoption
+### Previous 9f8 Compiler Adoption
 
 Ferric adopts observed fe2o3 main
 `9f8ffda4df3647d0ed7c424f16a6ff0111a32a69` in
