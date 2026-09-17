@@ -276,6 +276,8 @@ pub open spec fn finite_bf16_order_key_spec(bits: u16) -> Option<i64> {
 /// This is an encoded-value contract, not a GPU arithmetic or model-accuracy
 /// claim. Its exact-result postcondition requires a separate Verus result.
 #[must_use]
+// Verus models this widening cast directly; the pinned `From` call is opaque.
+#[allow(clippy::cast_lossless)]
 pub fn finite_bf16_order_key(bits: u16) -> (key: Option<i64>)
     ensures key == finite_bf16_order_key_spec(bits),
 {
