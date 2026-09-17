@@ -146,8 +146,35 @@ classes. No deletion or apply is attempted, and no exception or retry is
 introduced. All 16 failure records are retained and independently checked;
 ledger SHA is
 `dac81cbf07f65d9f9e1aad647515feff9bfee39b3930306511b73065f0062e8a`.
-This separate cleanup hold does not invalidate either completed build, but
-does not provide the additional vendor-capacity admission.
+This separate cleanup hold does not invalidate either completed build. It did
+not provide vendor capacity; the subsequent one-run admission below is separate.
+
+### Single Approved abd8 Vendor Attempt
+
+The user approves one formation with a 384 MiB internal reserve instead of
+512 MiB; the 10 GiB stage cap and all other limits stay unchanged. Fresh
+read-only admission passes after the previously uninspectable session is gone,
+without touching that session or changing the visibility policy. The one
+formation then exits 1. Cargo normalization exits 0, the exact 198-package
+roster and checksum checks pass, but an unconditional `Cargo.toml.orig` check
+fails for `dialect-amdgcn`. The canonical Git payload loop and final receipt
+do not complete, so the new vendor view is not accepted.
+
+The prior successful 1fad receipt has 55 Git packages and none contains that
+filename; its actual validator did not require it. This identifies an unsupported
+assertion, not proof that the current product is correct. No retry, synthetic
+file, compiler change, emission or GPU launch occurs. A separate read-only
+assessment of the existing output is the next step. The emitter's own 512 MiB
+reserve is unchanged by this one-run approval.
+
+Original111, prior1fad, canonical sources, Git package bytes and workspace
+inputs pass the final preservation checks. Both owned groups are absent.
+The final stage/cache/evidence sample is 10,037,644 / 10,000,456 / 10,340 KiB,
+within the approved caps. Archive SHA-256 is
+`684ee1f3c7317a13c046d57308dda68d04fc0afc4b104b165f13ef4e34b4e918`
+(1,814,674 bytes); all 62 payload identities and the exact 64-member roster
+are independently checked. This remains the frozen 6e/abd8 diagnostic path,
+not 9f8 tools or native qualification. All 33 M1 gates remain open.
 
 ### Optimized Final-RMS Diagnostic Release
 
