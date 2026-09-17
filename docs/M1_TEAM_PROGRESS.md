@@ -481,6 +481,43 @@ No new TTFT/TPOT, numerical acceptance, protected proof qualification or M1
 closure follows from compiler emission. All 33 M1 gates remain open. Builds
 and application tests stay on mi300x; no worktree or foreign job is touched.
 
+### Compiler 9b64 Native Guarded Attempts
+
+On 2026-09-17, the matching final-RMS launch controls pass 63 host/emission
+validator cases and 31 GPU-free helper cases on mi300x. The latter cover
+resource-read failures, interrupted spawn, PID-record failure, strict owned
+group absence and fresh GPU-admission authentication. Existing limits are
+unchanged. Published fe2o3 main is still `9b64a2da`; no compiler change or
+push is made. No build or application test runs locally.
+
+Two freshly admitted GPU4 attempts launch the frozen `7f1121f1` release and
+matching emitted artifact. R1 runs 13:21:06Z to 13:23:22Z; R2 runs 13:26:51Z
+to 13:29:09Z. Both stop during CPU model bootstrap when foreign shared GPU
+tests appear. R1 detects a queue-directory race; its after-scan confirms
+selected-GPU allocations and queues. R2 directly detects a foreign selected
+VRAM allocation. Both campaign exits are 126 and owned command exits are 143.
+Only the owned groups are terminated and strictly confirmed absent. Controls
+remain unchanged, and no foreign job or shared library is modified.
+
+Neither attempt reaches Ferric's KFD-bind phase or produces the five-file
+capture, a capture-pass record or a numerical comparison. No independent
+reference is launched. The historical numerical mismatch is unresolved;
+these guard stops are not kernel-correctness results. Another run needs an
+uninterrupted shared-GPU window, not relaxed guards or another immediate retry.
+
+Both failed attempts have successful terminal custody and independent local
+shell readback of every payload's hash, size, mode and signed-nanosecond time,
+plus archive UID/GID and exact member rosters. R1 has 56 payloads/57 members;
+archive SHA `5fb2e53193575f894a1e44034d289d4bd9b91caa85481d8b9d1d397b02edc5ef`
+(4,522,162 bytes). R2 has 57 payloads/58 members; archive SHA
+`dfd54db3d747fbaef5bfdc2345f25418dec4e39e83522ab3b9b929347c2a7dd4`
+(4,522,435 bytes). Custody success does not change either failed native result.
+
+No new worktree, TTFT/TPOT, serving success, protected qualification or M1
+gate closure is claimed. All 33 M1 gates remain open. The consumed one-run
+vendor reserve exception is not reused. Pages remains at the published R24
+checkpoint; this native status has not yet been deployed there.
+
 ### Earlier Published R23 Checkpoint
 
 The public site records the BF16 helper, source-bound host/proof results,
