@@ -395,6 +395,49 @@ This checkpoint establishes selected engineering host validation, not native
 numerical acceptance, protected proof qualification, performance or M1 closure.
 The historical numerical mismatch and all 33 M1 gates remain open.
 
+### Compiler 9b64 Vendor Validated
+
+The matching vendor prerequisite passes on mi300x from 11:44:19Z to
+11:47:04Z on 2026-09-17. Its 63 authenticated raw records establish 198
+package identities, 55 independently derived Git origins, preservation and
+a 9,826,304-byte evidence projection. No Cargo or package mutation occurs
+in that prerequisite. Its proposals remain unready until separately bound.
+
+Fresh vendor formation then passes from 11:59:13Z to 12:02:32Z. Cargo copies
+198 whole packages, preserves 143 registry packages and refreshes 53 compiler
+plus two pinned Pliron packages. All 163 relocated metadata projections and
+the immediate/final producer snapshots match. Cargo-generated manifests and
+checksums are not manually rewritten. Original111/prior1fad, adopted source,
+compiler tools, workspaces and lockfiles pass preservation. Published fe2o3
+main remains `9b64a2da` at the fresh post-run observation.
+
+The normal 512 MiB reserve fits under the unchanged 10 GiB stage cap; the
+historical one-run 384 MiB approval is not reused. The scoped wrapper and
+formation/retention controllers pass 26, 13 and 22 conditional resource
+cases respectively on mi300x. Static review fixes lifecycle relative-key
+mapping and cleanup after a failed child-PID write before retention launch.
+The original authenticated compiler wrapper is not modified.
+
+Archive SHA is
+`c751fd9b4e35b3ff285d3191ff035dbdc5b882115ee4585d1781fccb54ab13ba`
+(2,987,514 bytes). Independent shell custody verifies all 111 payloads,
+113 members and 21 external records with exact signed-nanosecond metadata,
+14 zero statuses, package/metadata semantics and both full preservation
+censuses. All six recorded process entries are freshly absent; this is not
+a unique-PID count. Parallel static review finds no discrepancy.
+
+The unchanged scoped no-use helper records no visible references to the
+new empty vendor, but retains `complete_visibility=false` and its existing
+limited sd-pam/SSH identity allowances. No allowance is widened, no foreign
+session is touched and no cleanup authorization follows from that report.
+
+Next are separately admitted 13-kernel emission and inspection/custody,
+then fresh GPU4 admission and final-RMS capture using the matching 24+3-phase
+host result. The LLVM worker keeps its original producer attribution. No
+GPU or local application build/test is run here, and no new worktree is
+created. This is dependency/engineering validation only: the numerical
+mismatch, protected-runtime limitation and all 33 M1 gates remain open.
+
 ### Earlier Published R23 Checkpoint
 
 The public site records the BF16 helper, source-bound host/proof results,
