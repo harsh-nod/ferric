@@ -1,0 +1,188 @@
+{
+  "artifact": {
+    "available_kernel_names": [
+      "ferric_qwen3_compact_completion_v1",
+      "ferric_qwen3_gemm_mfma_bf16_f32_bf16_v1",
+      "ferric_qwen3_gemm_reference_bf16_f32_bf16_v1",
+      "ferric_qwen3_gemm_vector_a4_bf16_f32_bf16_v1",
+      "ferric_qwen3_lowest_id_argmax_bf16_v1",
+      "ferric_qwen3_speculative_token_assembly_v1",
+      "ferric_qwen3_token_embedding_bf16_copy_v1",
+      "ferric_qwen3_tp_gemv_bf16_f32_bf16_v1",
+      "ferric_qwen3_tp_gemv_partial_bf16_f32_v1",
+      "ferric_qwen3_tp_gqa_decode_bf16_f32_v1",
+      "ferric_qwen3_tp_kv_append_v1",
+      "ferric_qwen3_tp_rope_v1",
+      "ferric_qwen3_tp_swiglu_bf16_f32_v1",
+      "qwen3_rmsnorm_v1"
+    ],
+    "code_object_version": 6,
+    "exact_output_replay_reported": true,
+    "grants": {
+      "launch": false,
+      "load": false,
+      "publication": false
+    },
+    "handoff_byte_len": 419398,
+    "handoff_identity_mode": "manifest-identity",
+    "hsaco_byte_len": 111768,
+    "kernel_root_count": 14,
+    "raw_handoff_bytes_retained_and_revalidated": false,
+    "source_crate": "ferric_qwen3_tp_kernels_device_v1"
+  },
+  "authority": "none",
+  "gpu_overlap_measured": false,
+  "host_timing": {
+    "clock": "std::time::Instant",
+    "excluded_setup_seconds": 200.283177823,
+    "generation_seconds": 19.109795159,
+    "recording_overhead": "unmeasured",
+    "scope": "monotonic controller clock; includes IPC, host collectives and per-token progress logging; excludes setup",
+    "single_decode_interval_seconds": 3.185901999,
+    "ttft_seconds": 15.92389316,
+    "whole_controller_seconds": 220.440096572
+  },
+  "nonclaims": [
+    "One unwarmed two-token smoke; not repeated TPOT, full32-token validation, general numerical qualification or a controlled speed comparison",
+    "Full Target8B engineering multi-dispatch path, not a single-launch megakernel or protected M1/serving admission",
+    "Host timings include IPC, host collectives and progress logging; no calibrated device timeline or GPU overlap",
+    "No Draft paged-pool retirement, allocation-guard or sustained throughput claim",
+    "Record/hash consistency does not attest collector truth, hardware or machine-code correctness"
+  ],
+  "observations": {
+    "all_tokens_match": true,
+    "dispatch_count": 3264,
+    "forward_count": 6,
+    "generated_tokens": [
+      12095,
+      13
+    ],
+    "generated_utf8_bytes": [
+      32,
+      80,
+      97,
+      114,
+      105,
+      115,
+      46
+    ],
+    "kv_tokens_processed": 6,
+    "reference_utf8_match": true,
+    "saved_pre_and_post_gfx_umc_activity_zero": true,
+    "saved_pre_and_post_vram_mb": 283,
+    "sole_zero_allocation_monitor_identity_checked": true,
+    "topology_generation_unchanged": true,
+    "worker_close_and_exit_checked": true
+  },
+  "performance_qualified": false,
+  "provenance": {
+    "checkpoint_files": [
+      {
+        "bytes": 728,
+        "name": "config.json",
+        "sha256": "f7c4eadfbbf522470667b797a3c89be2524832d2d599797248dc304fff447c30"
+      },
+      {
+        "bytes": 3996250744,
+        "name": "model-00001-of-00005.safetensors",
+        "sha256": "31d6a825ae35f11fb85b195b4c42c146c051e446433125a215336abdf95cbf5f"
+      },
+      {
+        "bytes": 3993160032,
+        "name": "model-00002-of-00005.safetensors",
+        "sha256": "5991236cea6fe21f3d43cab0f0e84448734fbbe0789816202989f2ddc9d18282"
+      },
+      {
+        "bytes": 3959604768,
+        "name": "model-00003-of-00005.safetensors",
+        "sha256": "c5185c4794be2d8a9784d5753c9922db38df478ce11f9ed0b415b7304d896836"
+      },
+      {
+        "bytes": 3187841392,
+        "name": "model-00004-of-00005.safetensors",
+        "sha256": "b5ee7de71fbf17db3d5704e0c8f2bc7d005ca9e1d7ca2aeb19827b0cfcaa917a"
+      },
+      {
+        "bytes": 1244659840,
+        "name": "model-00005-of-00005.safetensors",
+        "sha256": "20c2d6366ab85c90786ccdd829cd2b9e7d30ef3b2ebbb998280e7e4014b542ff"
+      },
+      {
+        "bytes": 32878,
+        "name": "model.safetensors.index.json",
+        "sha256": "f9fdbcb91c23971c13ec5d5f2573d2349e8f61f2f049371ec699281748fdb1bc"
+      },
+      {
+        "bytes": 11422654,
+        "name": "tokenizer.json",
+        "sha256": "aeb13307a71acd8fe81861d94ad54ab689df773318809eed3cbe794b4492dae4"
+      },
+      {
+        "bytes": 9732,
+        "name": "tokenizer_config.json",
+        "sha256": "d5d09f07b48c3086c508b30d1c9114bd1189145b74e982a265350c923acd8101"
+      }
+    ],
+    "fe2o3_compiler_commit": "fe406b0c3275c33b92f81734a4e6e3852b891073",
+    "ferric_base_commit": "362ab57d8a0b81af138c7668188de07b9f4c6233",
+    "model_bundle_id": "6dfba0acd1c00ce13cec7b5eebb180691bdb8855a7eee89876df2a0a12a2802b",
+    "source_tree_scope": "Frozen device/host file manifests over a worktree with separately recorded unrelated changes; not a whole-worktree clean claim"
+  },
+  "reference": {
+    "attention_implementation": "sdpa",
+    "authority": "independent-offline-reference-only",
+    "candidate_prefix_checked": 2,
+    "dtype": "bfloat16",
+    "format": "FERRIC-QWEN3-8B-GREEDY-REFERENCE-V1",
+    "frozen_passes": 2,
+    "model_forward": "transformers.generate",
+    "new_asrock_reference": false,
+    "origin_device_name": "AMD Instinct MI300X",
+    "tokens_per_frozen_pass": 32,
+    "torch": "2.12.1+rocm7.2",
+    "transformers": "4.51.0"
+  },
+  "schema": "FerricAsrockTarget8BSmokePublicV1",
+  "sha256": {
+    "artifact_manifest": "3efd26914e28a9e427f510c91840c92dfa6513bd6403ef2fe1fc3c40262437b5",
+    "canonical_descriptor": "92ddb3415240af45408a4257d4ccc69ab758ac6f3fc028ee06fbcee170cefc45",
+    "capture": "ef2911e1ab0815b0756a0d47dcf8d62e8de3665831eac786dbd6049f99e3fab0",
+    "comparator": "00aac3b6a35e67411c07182241dc8179cf7b0bd7d247c4b22d4448985682490c",
+    "comparator_helper": "9a0634738a36c5c0c619d64273490c81c16015f2ba3dc95ef99fadef2d4da26c",
+    "compiler_handoff_identity": "4289da27a8dd8d3e49059befb4201e2b9acaa29a785904f34a9dd3e9fad720b8",
+    "controller": "61224c6261454bbe2ffc7e211ec2c8c6e2a943b06c03634c6e316e356fcc03b3",
+    "device_source_manifest": "0e1cb8804e41c5062f46c6805cefc519563cf0dfa4bd9fb36e8ea7082695ccbe",
+    "host_source_manifest": "be9054489e7c79d1574259629b721a90914bcfaf02b50448d2c8c7846cbaf256",
+    "hsaco": "82720026ca2de3488bb9b5604e5650f5ffdae01f4f7748954ee06346ebbde4a7",
+    "native_provenance_manifest": "ac8a8115f2c9e89ce242856642dccef77863413a9cfaa7cbbcb80d33b3ebaf24",
+    "predeclared_plan": "de06df46f6ea7bdc19922b77c003375010ec3eea1829a2b6a8eedf52f050697b",
+    "reference": "1ed868663df52a146dd7921f9fbb2cf1e1d0c0ceed8a7bfda030d65f8ec5b094",
+    "runtime_worker": "b4cb30788d4a32d9cae240823c26a80e9103f5698f91d95b16d2bda7e78270f9"
+  },
+  "status": "actual-records-revalidated",
+  "target_700_tokens_per_second_attainment_claim": false,
+  "workload": {
+    "capacity": 16,
+    "collective": "host_staged_fp32_rank_order_reduce_bf16_residual",
+    "concurrent_cpu_work": true,
+    "decoding": "greedy_lowest_id_fixed_length",
+    "dtype": "BF16",
+    "measured_requests": 1,
+    "model": "Qwen/Qwen3-8B",
+    "new_tokens": 2,
+    "prefill": "token_at_a_time_m1",
+    "prompt": "The capital of France is",
+    "prompt_tokens": [
+      785,
+      6722,
+      315,
+      9625,
+      374
+    ],
+    "request_batch_size": 1,
+    "revision": "b968826d9c46dd6066d109eabc6255188de91218",
+    "target": "gfx950:xnack-",
+    "tensor_parallel": 1,
+    "warmups": 0
+  }
+}

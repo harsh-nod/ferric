@@ -1,0 +1,752 @@
+{
+  "authority": "none",
+  "equivalence": {
+    "clock": "CLOCK_MONOTONIC_RAW",
+    "context_tokens": 16,
+    "environment_sha256": "9fe5ac967761cc610911cf364db7c6f3f2ab6e7ba57bd3259589249264178e5d",
+    "eos_stopping": false,
+    "expected_output_sha256": "09be7d760a727bdac32e96c464485bb1cc5abffa24b82437af407525897d001f",
+    "head_precision": "fp32-v10",
+    "identity": {
+      "draft_config_id": "660db3b73d788119c04535e48cf9be5f55bc3100841a718637ae695b442f27dd",
+      "draft_model_id": "351fc121a569f0a53e9bb5c98caaeff80d6f8d94737eecf5e179cfa54d9cf998",
+      "draft_weights_sha256": "1ef7831cb757e33432b09d47542a48b27509ae2ae99f3967c24913b300d41c62",
+      "model_bundle_id": "6dfba0acd1c00ce13cec7b5eebb180691bdb8855a7eee89876df2a0a12a2802b"
+    },
+    "model": "Qwen/Qwen3-0.6B",
+    "model_revision": "c1899de289a04d12100db370d81485cdf75e47ca",
+    "new_tokens": 4,
+    "physical_pages": 1,
+    "prefix_cache": false,
+    "prompt_tokens": [
+      785,
+      6722,
+      315,
+      9625,
+      374
+    ],
+    "samples": 30,
+    "tensor_parallel": 1,
+    "warmups": 10
+  },
+  "goal": {
+    "analytical_only": {
+      "assumed_streamed_weight_bytes_per_token": 15136819200,
+      "caveat": "BF16 weight-streaming model, no cache credit; excludes KV, activations and compute. Not a measured or universal upper bound.",
+      "host_source": "operator-reported sanitized AMD-SMI static max_bandwidth, not measured bandwidth",
+      "installed_host_advertised_bytes_per_second": 6810000000000,
+      "installed_host_advertised_weight_streaming_tokens_per_second": 449.8963692451318,
+      "optimistic_product_peak_bytes_per_second": 8000000000000,
+      "optimistic_product_weight_streaming_tokens_per_second": 528.5126217270271,
+      "product_source": "https://rocm.docs.amd.com/en/latest/reference/gpu-arch/mi350.html"
+    },
+    "applicable_to_this_draft06b_capture": false,
+    "batch_size": 1,
+    "model": "Qwen/Qwen3-8B",
+    "revision": "b968826d9c46dd6066d109eabc6255188de91218",
+    "single_request": true,
+    "target_decode_tokens_per_second": 700,
+    "target_reached_claim": false
+  },
+  "gpu_overlap_measured": false,
+  "handoff_provenance": {
+    "byte_len": 471051,
+    "mode": "manifest-identity",
+    "observation_manifest_sha256": "6d40c397bc98180135db067dca905547c7a0a6fa29443a9b0fa1a9f2e4eeebbb",
+    "raw_handoff_bytes_retained_and_revalidated": false,
+    "scope": "Identity consistency only; open_draft32 retains descriptor/roster/admission checks. Not attestation.",
+    "sha256": "3303c167a43c0c9ad78a0fe4bd2a6d0c4eda772a28ccb1d5e9e26d939e81d071"
+  },
+  "label": "Draft06B mfma runtime diagnostic",
+  "lifecycle": {
+    "setup_ns": 148995106778,
+    "teardown_ns": 1189739829,
+    "whole_controller_ns": 183315843480
+  },
+  "manifest_sha256": "8fd8aa89865c6da02ff85105b48262a8ccbd0d03be3f4a9381bf025bfb55001f",
+  "metrics": {
+    "aggregate_output_tokens_per_second": 4.837703453242469,
+    "aggregate_window_ns": 24805158307,
+    "excluded_warmups": 10,
+    "measured_requests": 30,
+    "output_tokens": 120,
+    "per_request_decode_rate": {
+      "max": 5.2058556352651495,
+      "mean": 5.068959719159387,
+      "min": 4.60236276805482,
+      "n": 30,
+      "p50": 5.135440489814616,
+      "p95": 5.186979089736383
+    },
+    "per_request_output_rate": {
+      "max": 5.020217854336775,
+      "mean": 4.8512500568872605,
+      "min": 4.196885536569676,
+      "n": 30,
+      "p50": 4.952050177123817,
+      "p95": 5.016710487047488
+    },
+    "pooled_post_first_decode_tokens_per_second": 5.063300548006588,
+    "post_first_tokens": 90,
+    "r33_tpot_floor_ns": {
+      "p50": 194698947,
+      "p90": 210684701,
+      "p99": 217279699
+    },
+    "summed_post_first_decode_ns": 17774966970,
+    "ttft_ns": {
+      "p50": 223435095,
+      "p90": 287968119,
+      "p99": 304374024
+    }
+  },
+  "nonclaims": [
+    "Hash/record checks do not authenticate collector truth, hardware, model correctness or M1 qualification",
+    "Draft06B is not the Qwen3-8B target; 700 tok/s target comparison is not applicable",
+    "RAW host intervals include IPC, queue waits, checked KV commit and inter-step observation emission",
+    "Fresh uncached sequence per run; warm weights/worker do not imply steady-state serving",
+    "Small decode lengths/repetitions do not establish stable tails, sustained throughput or GPU overlap"
+  ],
+  "performance_qualified": false,
+  "provenance_sha256": {
+    "artifact_manifest": "6d40c397bc98180135db067dca905547c7a0a6fa29443a9b0fa1a9f2e4eeebbb",
+    "capture": "46502dccb340a02fe74c460ff36c9f981ddc183b3bfde400a3ab5633c1c7b3c2",
+    "compiler": "fa7998dd1c067f27441b17beaa4d9879be62291990d7056c5f729a617128b1c9",
+    "controller": "0ced9e502c172b2bfbaeefd6b3e1c2b6fe43689d2979e21b0d9a96134f446392",
+    "environment": "9fe5ac967761cc610911cf364db7c6f3f2ab6e7ba57bd3259589249264178e5d",
+    "handoff": "3303c167a43c0c9ad78a0fe4bd2a6d0c4eda772a28ccb1d5e9e26d939e81d071",
+    "hsaco": "90f39f5f4a7f67522872251647af13920756acd7a15264615ccecb155fd109e9",
+    "model_manifest": "db9a2561d5599d58db7e407652829db0ec8d391188f00addccd375268666b80d",
+    "plan": "cb21c37ad4159f02eff4e7c39abba2dbd2492ba92622a97648d7b46e83c842a5",
+    "reference": "6774a7ea7a50f0f2d3ff282897281d81c435aa25a7a543e2593a9624800bab25",
+    "worker": "b4cb30788d4a32d9cae240823c26a80e9103f5698f91d95b16d2bda7e78270f9"
+  },
+  "report_tool_sha256": {
+    "adapters/m1-engineering-execution-v1/tools/compare_tp_batch.py": "1be4f2b3b0f8d1c96ef0b5bf21388da232d6b23e5700c7bef6295117b6093b6a",
+    "adapters/m1-engineering-execution-v1/tools/host_timing_summary.py": "057f4a6dfb929db44714f8192bb1e373184f4170ce3946dcc31be811637b2402",
+    "adapters/m1-engineering-execution-v1/tools/performance_ledger.py": "6da3b95acda3332bfa27a1c51685dda316d5f188615b9b939554d5eef8c9085e",
+    "tools/qwen-decode-report/artifact.py": "2621ecbd1dd73ac94bc389e9c93ab50887bbe08cd906d2d790307317c4589bef",
+    "tools/qwen-decode-report/common.py": "ebba86b021a7c7d288b58ce4a3bc564f823800cfdb036e17c34e2837200508d1",
+    "tools/qwen-decode-report/draft.py": "ee703ebbeb000f3a8c174502f6907685975d984c774f745f93e4641e2db63ca2",
+    "tools/qwen-decode-report/plots.py": "ac5ef27e87a6983daac715ffaf6eabc4f9d0c92ec4e754d4e2d72f81d5de007f",
+    "tools/qwen-decode-report/report.py": "1ad78763ae7a0a53a43e8dc797c4489a9cfcdf6327c7cda3b9e78ebd231dbd25",
+    "tools/qwen-decode-report/test_artifact.py": "1e04745647b8dc6804d329a3319ede9c04cdacf2fb26a077b4ef3611cc740209",
+    "tools/qwen-decode-report/test_draft.py": "fa969768413adbbd90ca76cf7dc8258dd0732349cd7f77dfab3d62733f0904b5",
+    "tools/qwen-decode-report/test_m1_adapter.py": "2f2ade92de3c6e6d5cd4f389384a5a2b10709bb847b281066f18ca3ae25f4729",
+    "tools/qwen-decode-report/test_report.py": "43a3e8c579782feba263241285b505d44915e914e817aa7111b71580d2ce9005",
+    "tools/qwen-decode-report/trace.py": "21e187d06c5454e4186e8b9845d1d29d17c9192997b46ef49b0809a62831297d"
+  },
+  "requests": [
+    {
+      "arrival_ns": 157301054730,
+      "decode_ns": 578371331,
+      "first_token_ns": 157520018627,
+      "itl_ns": [
+        189353180,
+        191621914,
+        197396237
+      ],
+      "output_tokens": 4,
+      "output_tokens_per_second": 5.016710487047488,
+      "post_first_decode_tokens_per_second": 5.186979089736383,
+      "post_first_tokens": 3,
+      "run": 10,
+      "terminal_ns": 158098389958,
+      "tpot_floor_ns": 192790443,
+      "tpot_mean_ns": 192790443.66666666,
+      "ttft_ns": 218963897,
+      "workload_ns": 797335228
+    },
+    {
+      "arrival_ns": 158098471330,
+      "decode_ns": 583562549,
+      "first_token_ns": 158321268619,
+      "itl_ns": [
+        193794082,
+        193748785,
+        196019682
+      ],
+      "output_tokens": 4,
+      "output_tokens_per_second": 4.9605645166072865,
+      "post_first_decode_tokens_per_second": 5.14083709645322,
+      "post_first_tokens": 3,
+      "run": 11,
+      "terminal_ns": 158904831168,
+      "tpot_floor_ns": 194520849,
+      "tpot_mean_ns": 194520849.66666666,
+      "ttft_ns": 222797289,
+      "workload_ns": 806359838
+    },
+    {
+      "arrival_ns": 158904924388,
+      "decode_ns": 582647827,
+      "first_token_ns": 159132382109,
+      "itl_ns": [
+        193328113,
+        192895955,
+        196423759
+      ],
+      "output_tokens": 4,
+      "output_tokens_per_second": 4.937628201504429,
+      "post_first_decode_tokens_per_second": 5.148907901101637,
+      "post_first_tokens": 3,
+      "run": 12,
+      "terminal_ns": 159715029936,
+      "tpot_floor_ns": 194215942,
+      "tpot_mean_ns": 194215942.33333334,
+      "ttft_ns": 227457721,
+      "workload_ns": 810105548
+    },
+    {
+      "arrival_ns": 159715096155,
+      "decode_ns": 584242220,
+      "first_token_ns": 159939063358,
+      "itl_ns": [
+        193766462,
+        193759511,
+        196716247
+      ],
+      "output_tokens": 4,
+      "output_tokens_per_second": 4.94921227861012,
+      "post_first_decode_tokens_per_second": 5.134856566853385,
+      "post_first_tokens": 3,
+      "run": 13,
+      "terminal_ns": 160523305578,
+      "tpot_floor_ns": 194747406,
+      "tpot_mean_ns": 194747406.66666666,
+      "ttft_ns": 223967203,
+      "workload_ns": 808209423
+    },
+    {
+      "arrival_ns": 160523386690,
+      "decode_ns": 584451594,
+      "first_token_ns": 160746681354,
+      "itl_ns": [
+        193210347,
+        193681935,
+        197559312
+      ],
+      "output_tokens": 4,
+      "output_tokens_per_second": 4.952050177123817,
+      "post_first_decode_tokens_per_second": 5.133017055301247,
+      "post_first_tokens": 3,
+      "run": 14,
+      "terminal_ns": 161331132948,
+      "tpot_floor_ns": 194817198,
+      "tpot_mean_ns": 194817198.0,
+      "ttft_ns": 223294664,
+      "workload_ns": 807746258
+    },
+    {
+      "arrival_ns": 161331212787,
+      "decode_ns": 643101760,
+      "first_token_ns": 161619180906,
+      "itl_ns": [
+        251641525,
+        194563087,
+        196897148
+      ],
+      "output_tokens": 4,
+      "output_tokens_per_second": 4.296132965117648,
+      "post_first_decode_tokens_per_second": 4.664891602846803,
+      "post_first_tokens": 3,
+      "run": 15,
+      "terminal_ns": 162262282666,
+      "tpot_floor_ns": 214367253,
+      "tpot_mean_ns": 214367253.33333334,
+      "ttft_ns": 287968119,
+      "workload_ns": 931069879
+    },
+    {
+      "arrival_ns": 162262355415,
+      "decode_ns": 582664853,
+      "first_token_ns": 162487125283,
+      "itl_ns": [
+        194324098,
+        193183857,
+        195156898
+      ],
+      "output_tokens": 4,
+      "output_tokens_per_second": 4.953960854006921,
+      "post_first_decode_tokens_per_second": 5.14875744530278,
+      "post_first_tokens": 3,
+      "run": 16,
+      "terminal_ns": 163069790136,
+      "tpot_floor_ns": 194221617,
+      "tpot_mean_ns": 194221617.66666666,
+      "ttft_ns": 224769868,
+      "workload_ns": 807434721
+    },
+    {
+      "arrival_ns": 163069861493,
+      "decode_ns": 584603301,
+      "first_token_ns": 163292004690,
+      "itl_ns": [
+        194129226,
+        193359390,
+        197114685
+      ],
+      "output_tokens": 4,
+      "output_tokens_per_second": 4.958187001637285,
+      "post_first_decode_tokens_per_second": 5.131685015921591,
+      "post_first_tokens": 3,
+      "run": 17,
+      "terminal_ns": 163876607991,
+      "tpot_floor_ns": 194867767,
+      "tpot_mean_ns": 194867767.0,
+      "ttft_ns": 222143197,
+      "workload_ns": 806746498
+    },
+    {
+      "arrival_ns": 163876672107,
+      "decode_ns": 584096841,
+      "first_token_ns": 164097890977,
+      "itl_ns": [
+        193302686,
+        194181023,
+        196613132
+      ],
+      "output_tokens": 4,
+      "output_tokens_per_second": 4.966996105208234,
+      "post_first_decode_tokens_per_second": 5.136134608884146,
+      "post_first_tokens": 3,
+      "run": 18,
+      "terminal_ns": 164681987818,
+      "tpot_floor_ns": 194698947,
+      "tpot_mean_ns": 194698947.0,
+      "ttft_ns": 221218870,
+      "workload_ns": 805315711
+    },
+    {
+      "arrival_ns": 164682063472,
+      "decode_ns": 583114177,
+      "first_token_ns": 164904519448,
+      "itl_ns": [
+        192887152,
+        192942215,
+        197284810
+      ],
+      "output_tokens": 4,
+      "output_tokens_per_second": 4.9654272630430984,
+      "post_first_decode_tokens_per_second": 5.14479002282944,
+      "post_first_tokens": 3,
+      "run": 19,
+      "terminal_ns": 165487633625,
+      "tpot_floor_ns": 194371392,
+      "tpot_mean_ns": 194371392.33333334,
+      "ttft_ns": 222455976,
+      "workload_ns": 805570153
+    },
+    {
+      "arrival_ns": 165487712864,
+      "decode_ns": 632054104,
+      "first_token_ns": 165792086888,
+      "itl_ns": [
+        241370585,
+        194074854,
+        196608665
+      ],
+      "output_tokens": 4,
+      "output_tokens_per_second": 4.271550459022521,
+      "post_first_decode_tokens_per_second": 4.746429112657102,
+      "post_first_tokens": 3,
+      "run": 20,
+      "terminal_ns": 166424140992,
+      "tpot_floor_ns": 210684701,
+      "tpot_mean_ns": 210684701.33333334,
+      "ttft_ns": 304374024,
+      "workload_ns": 936428128
+    },
+    {
+      "arrival_ns": 166424219410,
+      "decode_ns": 582380126,
+      "first_token_ns": 166647807084,
+      "itl_ns": [
+        192622165,
+        193306300,
+        196451661
+      ],
+      "output_tokens": 4,
+      "output_tokens_per_second": 4.962977429123099,
+      "post_first_decode_tokens_per_second": 5.1512746848095565,
+      "post_first_tokens": 3,
+      "run": 21,
+      "terminal_ns": 167230187210,
+      "tpot_floor_ns": 194126708,
+      "tpot_mean_ns": 194126708.66666666,
+      "ttft_ns": 223587674,
+      "workload_ns": 805967800
+    },
+    {
+      "arrival_ns": 167230264435,
+      "decode_ns": 651839099,
+      "first_token_ns": 167531513040,
+      "itl_ns": [
+        259036069,
+        195863789,
+        196939241
+      ],
+      "output_tokens": 4,
+      "output_tokens_per_second": 4.196885536569676,
+      "post_first_decode_tokens_per_second": 4.60236276805482,
+      "post_first_tokens": 3,
+      "run": 22,
+      "terminal_ns": 168183352139,
+      "tpot_floor_ns": 217279699,
+      "tpot_mean_ns": 217279699.66666666,
+      "ttft_ns": 301248605,
+      "workload_ns": 953087704
+    },
+    {
+      "arrival_ns": 168183408955,
+      "decode_ns": 583930231,
+      "first_token_ns": 168407237670,
+      "itl_ns": [
+        194504289,
+        193806281,
+        195619661
+      ],
+      "output_tokens": 4,
+      "output_tokens_per_second": 4.951972392021022,
+      "post_first_decode_tokens_per_second": 5.137600077431168,
+      "post_first_tokens": 3,
+      "run": 23,
+      "terminal_ns": 168991167901,
+      "tpot_floor_ns": 194643410,
+      "tpot_mean_ns": 194643410.33333334,
+      "ttft_ns": 223828715,
+      "workload_ns": 807758946
+    },
+    {
+      "arrival_ns": 168991206650,
+      "decode_ns": 583923851,
+      "first_token_ns": 169214900804,
+      "itl_ns": [
+        193241974,
+        194086612,
+        196595265
+      ],
+      "output_tokens": 4,
+      "output_tokens_per_second": 4.9528365826861425,
+      "post_first_decode_tokens_per_second": 5.137656211271973,
+      "post_first_tokens": 3,
+      "run": 24,
+      "terminal_ns": 169798824655,
+      "tpot_floor_ns": 194641283,
+      "tpot_mean_ns": 194641283.66666666,
+      "ttft_ns": 223694154,
+      "workload_ns": 807618005
+    },
+    {
+      "arrival_ns": 169798920789,
+      "decode_ns": 586985946,
+      "first_token_ns": 170023943036,
+      "itl_ns": [
+        194821825,
+        194586041,
+        197578080
+      ],
+      "output_tokens": 4,
+      "output_tokens_per_second": 4.926058670937572,
+      "post_first_decode_tokens_per_second": 5.110854902819087,
+      "post_first_tokens": 3,
+      "run": 25,
+      "terminal_ns": 170610928982,
+      "tpot_floor_ns": 195661982,
+      "tpot_mean_ns": 195661982.0,
+      "ttft_ns": 225022247,
+      "workload_ns": 812008193
+    },
+    {
+      "arrival_ns": 170611007390,
+      "decode_ns": 585117943,
+      "first_token_ns": 170834442485,
+      "itl_ns": [
+        194284939,
+        194520903,
+        196312101
+      ],
+      "output_tokens": 4,
+      "output_tokens_per_second": 4.9471089860650554,
+      "post_first_decode_tokens_per_second": 5.127171429094253,
+      "post_first_tokens": 3,
+      "run": 26,
+      "terminal_ns": 171419560428,
+      "tpot_floor_ns": 195039314,
+      "tpot_mean_ns": 195039314.33333334,
+      "ttft_ns": 223435095,
+      "workload_ns": 808553038
+    },
+    {
+      "arrival_ns": 171419656983,
+      "decode_ns": 583664433,
+      "first_token_ns": 171643057987,
+      "itl_ns": [
+        192932580,
+        193219521,
+        197512332
+      ],
+      "output_tokens": 4,
+      "output_tokens_per_second": 4.9562276076010425,
+      "post_first_decode_tokens_per_second": 5.139939716011443,
+      "post_first_tokens": 3,
+      "run": 27,
+      "terminal_ns": 172226722420,
+      "tpot_floor_ns": 194554811,
+      "tpot_mean_ns": 194554811.0,
+      "ttft_ns": 223401004,
+      "workload_ns": 807065437
+    },
+    {
+      "arrival_ns": 172226801739,
+      "decode_ns": 584805404,
+      "first_token_ns": 172450813199,
+      "itl_ns": [
+        193038799,
+        194461715,
+        197304890
+      ],
+      "output_tokens": 4,
+      "output_tokens_per_second": 4.945495300651891,
+      "post_first_decode_tokens_per_second": 5.1299115560156485,
+      "post_first_tokens": 3,
+      "run": 28,
+      "terminal_ns": 173035618603,
+      "tpot_floor_ns": 194935134,
+      "tpot_mean_ns": 194935134.66666666,
+      "ttft_ns": 224011460,
+      "workload_ns": 808816864
+    },
+    {
+      "arrival_ns": 173035722298,
+      "decode_ns": 584610201,
+      "first_token_ns": 173259362812,
+      "itl_ns": [
+        194766211,
+        195066702,
+        194777288
+      ],
+      "output_tokens": 4,
+      "output_tokens_per_second": 4.948959432717607,
+      "post_first_decode_tokens_per_second": 5.1316244479969315,
+      "post_first_tokens": 3,
+      "run": 29,
+      "terminal_ns": 173843973013,
+      "tpot_floor_ns": 194870067,
+      "tpot_mean_ns": 194870067.0,
+      "ttft_ns": 223640514,
+      "workload_ns": 808250715
+    },
+    {
+      "arrival_ns": 173844016078,
+      "decode_ns": 576274144,
+      "first_token_ns": 174064520105,
+      "itl_ns": [
+        191233641,
+        191593261,
+        193447242
+      ],
+      "output_tokens": 4,
+      "output_tokens_per_second": 5.020217854336775,
+      "post_first_decode_tokens_per_second": 5.2058556352651495,
+      "post_first_tokens": 3,
+      "run": 30,
+      "terminal_ns": 174640794249,
+      "tpot_floor_ns": 192091381,
+      "tpot_mean_ns": 192091381.33333334,
+      "ttft_ns": 220504027,
+      "workload_ns": 796778171
+    },
+    {
+      "arrival_ns": 174640858145,
+      "decode_ns": 623608103,
+      "first_token_ns": 174860796634,
+      "itl_ns": [
+        189729635,
+        192407483,
+        241470985
+      ],
+      "output_tokens": 4,
+      "output_tokens_per_second": 4.741883895845317,
+      "post_first_decode_tokens_per_second": 4.810713628587985,
+      "post_first_tokens": 3,
+      "run": 31,
+      "terminal_ns": 175484404737,
+      "tpot_floor_ns": 207869367,
+      "tpot_mean_ns": 207869367.66666666,
+      "ttft_ns": 219938489,
+      "workload_ns": 843546592
+    },
+    {
+      "arrival_ns": 175484450666,
+      "decode_ns": 583166606,
+      "first_token_ns": 175705667593,
+      "itl_ns": [
+        192522175,
+        194252891,
+        196391540
+      ],
+      "output_tokens": 4,
+      "output_tokens_per_second": 4.972752220674811,
+      "post_first_decode_tokens_per_second": 5.1443274857202645,
+      "post_first_tokens": 3,
+      "run": 32,
+      "terminal_ns": 176288834199,
+      "tpot_floor_ns": 194388868,
+      "tpot_mean_ns": 194388868.66666666,
+      "ttft_ns": 221216927,
+      "workload_ns": 804383533
+    },
+    {
+      "arrival_ns": 176288901610,
+      "decode_ns": 589283543,
+      "first_token_ns": 176553531082,
+      "itl_ns": [
+        195840954,
+        195917709,
+        197524880
+      ],
+      "output_tokens": 4,
+      "output_tokens_per_second": 4.6843178751643695,
+      "post_first_decode_tokens_per_second": 5.090927848972697,
+      "post_first_tokens": 3,
+      "run": 33,
+      "terminal_ns": 177142814625,
+      "tpot_floor_ns": 196427847,
+      "tpot_mean_ns": 196427847.66666666,
+      "ttft_ns": 264629472,
+      "workload_ns": 853913015
+    },
+    {
+      "arrival_ns": 177142891801,
+      "decode_ns": 581810150,
+      "first_token_ns": 177365786355,
+      "itl_ns": [
+        192650597,
+        193055966,
+        196103587
+      ],
+      "output_tokens": 4,
+      "output_tokens_per_second": 4.970767512749621,
+      "post_first_decode_tokens_per_second": 5.156321181402559,
+      "post_first_tokens": 3,
+      "run": 34,
+      "terminal_ns": 177947596505,
+      "tpot_floor_ns": 193936716,
+      "tpot_mean_ns": 193936716.66666666,
+      "ttft_ns": 222894554,
+      "workload_ns": 804704704
+    },
+    {
+      "arrival_ns": 177947658168,
+      "decode_ns": 584532896,
+      "first_token_ns": 178170695426,
+      "itl_ns": [
+        193949086,
+        193171628,
+        197412182
+      ],
+      "output_tokens": 4,
+      "output_tokens_per_second": 4.953130053392241,
+      "post_first_decode_tokens_per_second": 5.132303109934808,
+      "post_first_tokens": 3,
+      "run": 35,
+      "terminal_ns": 178755228322,
+      "tpot_floor_ns": 194844298,
+      "tpot_mean_ns": 194844298.66666666,
+      "ttft_ns": 223037258,
+      "workload_ns": 807570154
+    },
+    {
+      "arrival_ns": 178755309213,
+      "decode_ns": 634689929,
+      "first_token_ns": 179053502794,
+      "itl_ns": [
+        249429306,
+        190989765,
+        194270858
+      ],
+      "output_tokens": 4,
+      "output_tokens_per_second": 4.2877807969828945,
+      "post_first_decode_tokens_per_second": 4.7267175087002204,
+      "post_first_tokens": 3,
+      "run": 36,
+      "terminal_ns": 179688192723,
+      "tpot_floor_ns": 211563309,
+      "tpot_mean_ns": 211563309.66666666,
+      "ttft_ns": 298193581,
+      "workload_ns": 932883510
+    },
+    {
+      "arrival_ns": 179688237871,
+      "decode_ns": 583639415,
+      "first_token_ns": 179907932464,
+      "itl_ns": [
+        194176567,
+        193376766,
+        196086082
+      ],
+      "output_tokens": 4,
+      "output_tokens_per_second": 4.979248930290525,
+      "post_first_decode_tokens_per_second": 5.140160042138347,
+      "post_first_tokens": 3,
+      "run": 37,
+      "terminal_ns": 180491571879,
+      "tpot_floor_ns": 194546471,
+      "tpot_mean_ns": 194546471.66666666,
+      "ttft_ns": 219694593,
+      "workload_ns": 803334008
+    },
+    {
+      "arrival_ns": 180491672820,
+      "decode_ns": 583618604,
+      "first_token_ns": 180713841055,
+      "itl_ns": [
+        193781884,
+        193252460,
+        196584260
+      ],
+      "output_tokens": 4,
+      "output_tokens_per_second": 4.964091998529154,
+      "post_first_decode_tokens_per_second": 5.140343332852357,
+      "post_first_tokens": 3,
+      "run": 38,
+      "terminal_ns": 181297459659,
+      "tpot_floor_ns": 194539534,
+      "tpot_mean_ns": 194539534.66666666,
+      "ttft_ns": 222168235,
+      "workload_ns": 805786839
+    },
+    {
+      "arrival_ns": 181297538927,
+      "decode_ns": 584175789,
+      "first_token_ns": 181522037248,
+      "itl_ns": [
+        192867312,
+        194125891,
+        197182586
+      ],
+      "output_tokens": 4,
+      "output_tokens_per_second": 4.946368321350117,
+      "post_first_decode_tokens_per_second": 5.135440489814616,
+      "post_first_tokens": 3,
+      "run": 39,
+      "terminal_ns": 182106213037,
+      "tpot_floor_ns": 194725263,
+      "tpot_mean_ns": 194725263.0,
+      "ttft_ns": 224498321,
+      "workload_ns": 808674110
+    }
+  ],
+  "runtime_options": {
+    "prefill": "full",
+    "projection": "mfma",
+    "runtime_cache_admission": true,
+    "runtime_operational": true
+  },
+  "sampling_class": "benchmark-sized-unqualified",
+  "schema": "FerricDraftDecodeReportV1",
+  "status": "observations-validated",
+  "trace_overhead": "unmeasured",
+  "workload_kind": "full-model-draft06b-greedy"
+}

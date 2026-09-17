@@ -1,0 +1,172 @@
+{
+  "authority": "none",
+  "equivalence": {
+    "clock": "CLOCK_MONOTONIC_RAW",
+    "context_tokens": 16,
+    "environment_sha256": "9fe5ac967761cc610911cf364db7c6f3f2ab6e7ba57bd3259589249264178e5d",
+    "eos_stopping": false,
+    "expected_output_sha256": "09be7d760a727bdac32e96c464485bb1cc5abffa24b82437af407525897d001f",
+    "head_precision": "fp32-v10",
+    "identity": {
+      "draft_config_id": "660db3b73d788119c04535e48cf9be5f55bc3100841a718637ae695b442f27dd",
+      "draft_model_id": "351fc121a569f0a53e9bb5c98caaeff80d6f8d94737eecf5e179cfa54d9cf998",
+      "draft_weights_sha256": "1ef7831cb757e33432b09d47542a48b27509ae2ae99f3967c24913b300d41c62",
+      "model_bundle_id": "6dfba0acd1c00ce13cec7b5eebb180691bdb8855a7eee89876df2a0a12a2802b"
+    },
+    "model": "Qwen/Qwen3-0.6B",
+    "model_revision": "c1899de289a04d12100db370d81485cdf75e47ca",
+    "new_tokens": 4,
+    "physical_pages": 1,
+    "prefix_cache": false,
+    "prompt_tokens": [
+      785,
+      6722,
+      315,
+      9625,
+      374
+    ],
+    "samples": 1,
+    "tensor_parallel": 1,
+    "warmups": 0
+  },
+  "goal": {
+    "analytical_only": {
+      "assumed_streamed_weight_bytes_per_token": 15136819200,
+      "caveat": "BF16 weight-streaming model, no cache credit; excludes KV, activations and compute. Not a measured or universal upper bound.",
+      "host_source": "operator-reported sanitized AMD-SMI static max_bandwidth, not measured bandwidth",
+      "installed_host_advertised_bytes_per_second": 6810000000000,
+      "installed_host_advertised_weight_streaming_tokens_per_second": 449.8963692451318,
+      "optimistic_product_peak_bytes_per_second": 8000000000000,
+      "optimistic_product_weight_streaming_tokens_per_second": 528.5126217270271,
+      "product_source": "https://rocm.docs.amd.com/en/latest/reference/gpu-arch/mi350.html"
+    },
+    "applicable_to_this_draft06b_capture": false,
+    "batch_size": 1,
+    "model": "Qwen/Qwen3-8B",
+    "revision": "b968826d9c46dd6066d109eabc6255188de91218",
+    "single_request": true,
+    "target_decode_tokens_per_second": 700,
+    "target_reached_claim": false
+  },
+  "gpu_overlap_measured": false,
+  "handoff_provenance": {
+    "byte_len": 471051,
+    "mode": "manifest-identity",
+    "observation_manifest_sha256": "6d40c397bc98180135db067dca905547c7a0a6fa29443a9b0fa1a9f2e4eeebbb",
+    "raw_handoff_bytes_retained_and_revalidated": false,
+    "scope": "Identity consistency only; open_draft32 retains descriptor/roster/admission checks. Not attestation.",
+    "sha256": "3303c167a43c0c9ad78a0fe4bd2a6d0c4eda772a28ccb1d5e9e26d939e81d071"
+  },
+  "label": "Draft06B mfma runtime diagnostic",
+  "lifecycle": {
+    "setup_ns": 149456289663,
+    "teardown_ns": 1194665030,
+    "whole_controller_ns": 151635277240
+  },
+  "manifest_sha256": "c7e8b605d4c368ffc64780ebee00dc84fc901fb3cc2b580a49fc73a422267b4a",
+  "metrics": {
+    "aggregate_output_tokens_per_second": 4.147779003190694,
+    "aggregate_window_ns": 964371534,
+    "excluded_warmups": 0,
+    "measured_requests": 1,
+    "output_tokens": 4,
+    "per_request_decode_rate": {
+      "max": 4.556593947118111,
+      "mean": 4.556593947118111,
+      "min": 4.556593947118111,
+      "n": 1,
+      "p50": 4.556593947118111,
+      "p95": 4.556593947118111
+    },
+    "per_request_output_rate": {
+      "max": 4.147779003190694,
+      "mean": 4.147779003190694,
+      "min": 4.147779003190694,
+      "n": 1,
+      "p50": 4.147779003190694,
+      "p95": 4.147779003190694
+    },
+    "pooled_post_first_decode_tokens_per_second": 4.556593947118111,
+    "post_first_tokens": 3,
+    "r33_tpot_floor_ns": {
+      "p50": 219462171,
+      "p90": 219462171,
+      "p99": 219462171
+    },
+    "summed_post_first_decode_ns": 658386513,
+    "ttft_ns": {
+      "p50": 305985021,
+      "p90": 305985021,
+      "p99": 305985021
+    }
+  },
+  "nonclaims": [
+    "Hash/record checks do not authenticate collector truth, hardware, model correctness or M1 qualification",
+    "Draft06B is not the Qwen3-8B target; 700 tok/s target comparison is not applicable",
+    "RAW host intervals include IPC, queue waits, checked KV commit and inter-step observation emission",
+    "Fresh uncached sequence per run; warm weights/worker do not imply steady-state serving",
+    "Small decode lengths/repetitions do not establish stable tails, sustained throughput or GPU overlap"
+  ],
+  "performance_qualified": false,
+  "provenance_sha256": {
+    "artifact_manifest": "6d40c397bc98180135db067dca905547c7a0a6fa29443a9b0fa1a9f2e4eeebbb",
+    "capture": "c55525b9e18d8654f4da672d76d53d34048913486a01996fd4fc218d1a47d827",
+    "compiler": "fa7998dd1c067f27441b17beaa4d9879be62291990d7056c5f729a617128b1c9",
+    "controller": "0ced9e502c172b2bfbaeefd6b3e1c2b6fe43689d2979e21b0d9a96134f446392",
+    "environment": "9fe5ac967761cc610911cf364db7c6f3f2ab6e7ba57bd3259589249264178e5d",
+    "handoff": "3303c167a43c0c9ad78a0fe4bd2a6d0c4eda772a28ccb1d5e9e26d939e81d071",
+    "hsaco": "90f39f5f4a7f67522872251647af13920756acd7a15264615ccecb155fd109e9",
+    "model_manifest": "db9a2561d5599d58db7e407652829db0ec8d391188f00addccd375268666b80d",
+    "plan": "7e53f120b61fdf3f35b5694dc821c311729a6d2ccdb62c5fd100cfe646cbb0e0",
+    "reference": "6774a7ea7a50f0f2d3ff282897281d81c435aa25a7a543e2593a9624800bab25",
+    "worker": "b4cb30788d4a32d9cae240823c26a80e9103f5698f91d95b16d2bda7e78270f9"
+  },
+  "report_tool_sha256": {
+    "adapters/m1-engineering-execution-v1/tools/compare_tp_batch.py": "1be4f2b3b0f8d1c96ef0b5bf21388da232d6b23e5700c7bef6295117b6093b6a",
+    "adapters/m1-engineering-execution-v1/tools/host_timing_summary.py": "057f4a6dfb929db44714f8192bb1e373184f4170ce3946dcc31be811637b2402",
+    "adapters/m1-engineering-execution-v1/tools/performance_ledger.py": "6da3b95acda3332bfa27a1c51685dda316d5f188615b9b939554d5eef8c9085e",
+    "tools/qwen-decode-report/artifact.py": "2621ecbd1dd73ac94bc389e9c93ab50887bbe08cd906d2d790307317c4589bef",
+    "tools/qwen-decode-report/common.py": "ebba86b021a7c7d288b58ce4a3bc564f823800cfdb036e17c34e2837200508d1",
+    "tools/qwen-decode-report/draft.py": "ee703ebbeb000f3a8c174502f6907685975d984c774f745f93e4641e2db63ca2",
+    "tools/qwen-decode-report/plots.py": "ac5ef27e87a6983daac715ffaf6eabc4f9d0c92ec4e754d4e2d72f81d5de007f",
+    "tools/qwen-decode-report/report.py": "1ad78763ae7a0a53a43e8dc797c4489a9cfcdf6327c7cda3b9e78ebd231dbd25",
+    "tools/qwen-decode-report/test_artifact.py": "1e04745647b8dc6804d329a3319ede9c04cdacf2fb26a077b4ef3611cc740209",
+    "tools/qwen-decode-report/test_draft.py": "fa969768413adbbd90ca76cf7dc8258dd0732349cd7f77dfab3d62733f0904b5",
+    "tools/qwen-decode-report/test_m1_adapter.py": "2f2ade92de3c6e6d5cd4f389384a5a2b10709bb847b281066f18ca3ae25f4729",
+    "tools/qwen-decode-report/test_report.py": "43a3e8c579782feba263241285b505d44915e914e817aa7111b71580d2ce9005",
+    "tools/qwen-decode-report/trace.py": "21e187d06c5454e4186e8b9845d1d29d17c9192997b46ef49b0809a62831297d"
+  },
+  "requests": [
+    {
+      "arrival_ns": 149456435091,
+      "decode_ns": 658386513,
+      "first_token_ns": 149762420112,
+      "itl_ns": [
+        265548540,
+        194835606,
+        198002367
+      ],
+      "output_tokens": 4,
+      "output_tokens_per_second": 4.147779003190694,
+      "post_first_decode_tokens_per_second": 4.556593947118111,
+      "post_first_tokens": 3,
+      "run": 0,
+      "terminal_ns": 150420806625,
+      "tpot_floor_ns": 219462171,
+      "tpot_mean_ns": 219462171.0,
+      "ttft_ns": 305985021,
+      "workload_ns": 964371534
+    }
+  ],
+  "runtime_options": {
+    "prefill": "full",
+    "projection": "mfma",
+    "runtime_cache_admission": true,
+    "runtime_operational": true
+  },
+  "sampling_class": "diagnostic-only",
+  "schema": "FerricDraftDecodeReportV1",
+  "status": "observations-validated",
+  "trace_overhead": "unmeasured",
+  "workload_kind": "full-model-draft06b-greedy"
+}

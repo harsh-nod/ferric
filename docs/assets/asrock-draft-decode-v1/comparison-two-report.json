@@ -1,0 +1,170 @@
+{
+  "authority": "none",
+  "baseline": "Baseline",
+  "equivalence": {
+    "clock": "CLOCK_MONOTONIC_RAW",
+    "context_tokens": 16,
+    "environment_sha256": "9fe5ac967761cc610911cf364db7c6f3f2ab6e7ba57bd3259589249264178e5d",
+    "eos_stopping": false,
+    "expected_output_sha256": "09be7d760a727bdac32e96c464485bb1cc5abffa24b82437af407525897d001f",
+    "head_precision": "fp32-v10",
+    "identity": {
+      "draft_config_id": "660db3b73d788119c04535e48cf9be5f55bc3100841a718637ae695b442f27dd",
+      "draft_model_id": "351fc121a569f0a53e9bb5c98caaeff80d6f8d94737eecf5e179cfa54d9cf998",
+      "draft_weights_sha256": "1ef7831cb757e33432b09d47542a48b27509ae2ae99f3967c24913b300d41c62",
+      "model_bundle_id": "6dfba0acd1c00ce13cec7b5eebb180691bdb8855a7eee89876df2a0a12a2802b"
+    },
+    "model": "Qwen/Qwen3-0.6B",
+    "model_revision": "c1899de289a04d12100db370d81485cdf75e47ca",
+    "new_tokens": 4,
+    "physical_pages": 1,
+    "prefix_cache": false,
+    "prompt_tokens": [
+      785,
+      6722,
+      315,
+      9625,
+      374
+    ],
+    "samples": 1,
+    "tensor_parallel": 1,
+    "warmups": 0
+  },
+  "goal": {
+    "analytical_only": {
+      "assumed_streamed_weight_bytes_per_token": 15136819200,
+      "caveat": "BF16 weight-streaming model, no cache credit; excludes KV, activations and compute. Not a measured or universal upper bound.",
+      "host_source": "operator-reported sanitized AMD-SMI static max_bandwidth, not measured bandwidth",
+      "installed_host_advertised_bytes_per_second": 6810000000000,
+      "installed_host_advertised_weight_streaming_tokens_per_second": 449.8963692451318,
+      "optimistic_product_peak_bytes_per_second": 8000000000000,
+      "optimistic_product_weight_streaming_tokens_per_second": 528.5126217270271,
+      "product_source": "https://rocm.docs.amd.com/en/latest/reference/gpu-arch/mi350.html"
+    },
+    "applicable_to_this_draft06b_capture": false,
+    "batch_size": 1,
+    "model": "Qwen/Qwen3-8B",
+    "revision": "b968826d9c46dd6066d109eabc6255188de91218",
+    "single_request": true,
+    "target_decode_tokens_per_second": 700,
+    "target_reached_claim": false
+  },
+  "manifest_sha256": "bae5b9e3651fb66ed6cab2a8034dd15d661a40b9cf65802f0a3bc7113954aa7c",
+  "nonclaim": "Descriptive same-workload observations, not causal attribution, statistical significance, M1 qualification or the Qwen3-8B target.",
+  "performance_qualified": false,
+  "report_tool_sha256": {
+    "adapters/m1-engineering-execution-v1/tools/compare_tp_batch.py": "1be4f2b3b0f8d1c96ef0b5bf21388da232d6b23e5700c7bef6295117b6093b6a",
+    "adapters/m1-engineering-execution-v1/tools/host_timing_summary.py": "057f4a6dfb929db44714f8192bb1e373184f4170ce3946dcc31be811637b2402",
+    "adapters/m1-engineering-execution-v1/tools/performance_ledger.py": "6da3b95acda3332bfa27a1c51685dda316d5f188615b9b939554d5eef8c9085e",
+    "tools/qwen-decode-report/artifact.py": "2621ecbd1dd73ac94bc389e9c93ab50887bbe08cd906d2d790307317c4589bef",
+    "tools/qwen-decode-report/common.py": "ebba86b021a7c7d288b58ce4a3bc564f823800cfdb036e17c34e2837200508d1",
+    "tools/qwen-decode-report/draft.py": "ee703ebbeb000f3a8c174502f6907685975d984c774f745f93e4641e2db63ca2",
+    "tools/qwen-decode-report/plots.py": "ac5ef27e87a6983daac715ffaf6eabc4f9d0c92ec4e754d4e2d72f81d5de007f",
+    "tools/qwen-decode-report/report.py": "1ad78763ae7a0a53a43e8dc797c4489a9cfcdf6327c7cda3b9e78ebd231dbd25",
+    "tools/qwen-decode-report/test_artifact.py": "1e04745647b8dc6804d329a3319ede9c04cdacf2fb26a077b4ef3611cc740209",
+    "tools/qwen-decode-report/test_draft.py": "fa969768413adbbd90ca76cf7dc8258dd0732349cd7f77dfab3d62733f0904b5",
+    "tools/qwen-decode-report/test_m1_adapter.py": "2f2ade92de3c6e6d5cd4f389384a5a2b10709bb847b281066f18ca3ae25f4729",
+    "tools/qwen-decode-report/test_report.py": "43a3e8c579782feba263241285b505d44915e914e817aa7111b71580d2ce9005",
+    "tools/qwen-decode-report/trace.py": "21e187d06c5454e4186e8b9845d1d29d17c9192997b46ef49b0809a62831297d"
+  },
+  "schema": "FerricDecodeAblationReportV1",
+  "trace_overhead": "unmeasured; this capture always emits per-step records and has no matched trace-off switch",
+  "variants": [
+    {
+      "changed_provenance_fields": [],
+      "decode_rate_change_percent": 0.0,
+      "decode_rate_ratio": 1.0,
+      "manifest_sha256": "778d1f0cbef6ad5af44a3ed7d68b2df43a8cd8a43122afe2be2132d07f1b38e2",
+      "metrics": {
+        "aggregate_output_tokens_per_second": 0.42776513170668906,
+        "aggregate_window_ns": 9350925785,
+        "excluded_warmups": 0,
+        "measured_requests": 1,
+        "output_tokens": 4,
+        "per_request_decode_rate": {
+          "max": 0.43201741834785184,
+          "mean": 0.43201741834785184,
+          "min": 0.43201741834785184,
+          "n": 1,
+          "p50": 0.43201741834785184,
+          "p95": 0.43201741834785184
+        },
+        "per_request_output_rate": {
+          "max": 0.42776513170668906,
+          "mean": 0.42776513170668906,
+          "min": 0.42776513170668906,
+          "n": 1,
+          "p50": 0.42776513170668906,
+          "p95": 0.42776513170668906
+        },
+        "pooled_post_first_decode_tokens_per_second": 0.43201741834785184,
+        "post_first_tokens": 3,
+        "r33_tpot_floor_ns": {
+          "p50": 2314721484,
+          "p90": 2314721484,
+          "p99": 2314721484
+        },
+        "summed_post_first_decode_ns": 6944164454,
+        "ttft_ns": {
+          "p50": 2406761331,
+          "p90": 2406761331,
+          "p99": 2406761331
+        }
+      },
+      "name": "Baseline",
+      "runtime_option_changes": {}
+    },
+    {
+      "changed_provenance_fields": [
+        "capture",
+        "plan"
+      ],
+      "decode_rate_change_percent": 1.3502643810314297,
+      "decode_rate_ratio": 1.0135026438103143,
+      "manifest_sha256": "19166dd7830a1da695622b86808552ef985ee6c9ebfa5f0ccc6312ae0bb2ad35",
+      "metrics": {
+        "aggregate_output_tokens_per_second": 0.43753718587523643,
+        "aggregate_window_ns": 9142080100,
+        "excluded_warmups": 0,
+        "measured_requests": 1,
+        "output_tokens": 4,
+        "per_request_decode_rate": {
+          "max": 0.43785079566765445,
+          "mean": 0.43785079566765445,
+          "min": 0.43785079566765445,
+          "n": 1,
+          "p50": 0.43785079566765445,
+          "p95": 0.43785079566765445
+        },
+        "per_request_output_rate": {
+          "max": 0.43753718587523643,
+          "mean": 0.43753718587523643,
+          "min": 0.43753718587523643,
+          "n": 1,
+          "p50": 0.43753718587523643,
+          "p95": 0.43753718587523643
+        },
+        "pooled_post_first_decode_tokens_per_second": 0.43785079566765445,
+        "post_first_tokens": 3,
+        "r33_tpot_floor_ns": {
+          "p50": 2283883025,
+          "p90": 2283883025,
+          "p99": 2283883025
+        },
+        "summed_post_first_decode_ns": 6851649077,
+        "ttft_ns": {
+          "p50": 2290431023,
+          "p90": 2290431023,
+          "p99": 2290431023
+        }
+      },
+      "name": "MFMA",
+      "runtime_option_changes": {
+        "projection": {
+          "baseline": "baseline",
+          "variant": "mfma"
+        }
+      }
+    }
+  ]
+}

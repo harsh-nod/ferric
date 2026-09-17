@@ -55,6 +55,14 @@ qualification, performance qualification, and end-to-end inference path
 remain open. All 33 M1 roadmap requirements remain open. Unsupported stages
 fail closed rather than selecting another implementation.
 
+Separate, non-protected gfx950 engineering work has produced reference-checked
+Qwen3-0.6B and Qwen3-8B decode observations on MI350X. See the
+[draft configurations and host timelines](docs/GFX950_DECODE_OBSERVATIONS_V1.md),
+[two-token target-model smoke](docs/GFX950_TARGET8B_SMOKE_V1.md), and
+[single-request Qwen3-8B performance protocol](docs/GFX950_DECODE_PERFORMANCE_V1.md).
+These diagnostics do not complete the production milestone, demonstrate GPU
+overlap, or establish a 700 tokens/s result.
+
 ## First Product Milestone
 
 The first product milestone is Qwen3-8B target inference with Qwen3-0.6B as a

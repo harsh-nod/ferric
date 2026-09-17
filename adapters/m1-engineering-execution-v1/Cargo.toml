@@ -47,6 +47,11 @@ path = "src/bin/ferric-qwen3-draft-paged-canary.rs"
 required-features = ["tp-batch-engineering"]
 
 [[bin]]
+name = "ferric-qwen3-draft-decode-profile"
+path = "src/bin/ferric-qwen3-draft-decode-profile.rs"
+required-features = ["tp-batch-engineering"]
+
+[[bin]]
 name = "ferric-qwen3-paired-paged-canary"
 path = "src/bin/ferric-qwen3-paired-paged-canary.rs"
 required-features = ["tp-batch-engineering"]
