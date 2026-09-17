@@ -72,7 +72,7 @@
   const resident = project.residentCheckpoint;
   const residentProgress = document.querySelector("[data-resident-progress]");
   residentProgress.append(element("p", "performance-scope", resident.scope),
-    element("h3", "", "BF16 host ordering: selected helper verified"),
+    element("h3", "", "BF16 host scanner: both selected bodies verified"),
     element("p", "", resident.integration.bf16HostOrdering.detail),
     element("h3", "", "Completed local copies removed; evidence retained"),
     element("p", "", resident.integration.bf16LocalCleanup.detail),
@@ -81,7 +81,7 @@
     element("p", "performance-scope", "The retained checkpoints below preserve their original source identities and then-pending states. New host and selected-proof checks do not relabel earlier native or performance results."),
     element("h3", "", "Matching abd8 kernels: all 13 emission phases passed"),
     element("p", "", resident.integration.emissionAbd8.detail),
-    element("h3", "", "Vendor semantics checked; original formation remains failed"),
+    element("h3", "", "Vendor contract unit-checked; original formation remains failed"),
     element("p", "", resident.integration.vendorSemanticsAbd8.detail),
     element("h3", "", "Compiler bd1 adopted; GPU validation held"),
     element("p", "", resident.integration.upstreamAndNativeHold.detail),
@@ -250,10 +250,12 @@
   residentDetails.append(element("summary", "", "Checkpoint source identities"));
   const residentPins = element("dl", "observation-facts");
   for (const [label, value] of [
-    ["BF16 helper integration source", resident.integration.bf16HostOrdering.source],
-    ["BF16 exact validated source", resident.integration.bf16HostOrdering.validatedSource],
-    ["BF16 host R4 evidence SHA-256", resident.integration.bf16HostOrdering.hostArchiveSha256],
-    ["BF16 selected proof R6 evidence SHA-256", resident.integration.bf16HostOrdering.proofArchiveSha256],
+    ["BF16 exact validated host source", resident.integration.bf16HostOrdering.hostSource],
+    ["BF16 integrated host source", resident.integration.bf16HostOrdering.hostIntegrationSource],
+    ["BF16 retained host R1 evidence SHA-256", resident.integration.bf16HostOrdering.hostArchiveSha256],
+    ["BF16 exact selected-proof source", resident.integration.bf16HostOrdering.proofSource],
+    ["BF16 prior host R4 evidence SHA-256", resident.integration.bf16HostOrdering.priorHostArchiveSha256],
+    ["BF16 selected proof R4 evidence SHA-256", resident.integration.bf16HostOrdering.proofArchiveSha256],
     ["Current integrated compiler", resident.integration.compilerAndMi350Readiness.integratedCompiler],
     ["Compiler f7f adoption source", resident.integration.compilerAndMi350Readiness.source],
     ["Compiler f7f validation archive SHA-256", resident.integration.compilerAndMi350Readiness.validationArchiveSha256],
