@@ -54,7 +54,7 @@ admission and is not claimed here.
 
 ### Upstream Compiler Currency
 
-A fresh published-main check finds `7581df51ffa6392cf463160f90cd59a15212c102`,
+The earlier published-main check finds `7581df51ffa6392cf463160f90cd59a15212c102`,
 one direct descendant of adopted `9b64a2da`. A separate source-only audit finds
 14 changed files, confined to lower-MIR and ranked projection code/tests for
 checked Unit-local helpers and memory-free roots. Manifests, lockfile,
@@ -62,6 +62,15 @@ toolchain, runtime, KFD and gfx950 platform sources are unchanged. The commit
 does not resolve the mi350-2 platform-profile mismatch below. No test was run
 by this audit; adoption and matching compiler tools/emission require separate
 validation. Existing 9b64 evidence is not relabeled as 7581 evidence.
+
+After R25 publication, another published-main observation finds
+`306c2e554efaf303a62aeceafe00b8c53625f54c`, a direct child of 7581. Its
+two-file delta adds a production memory-free extraction test and selects that
+ignored exact test in local ROCm CI. Production compiler, runtime, KFD,
+platform, manifests and toolchain files are unchanged from 7581. No build or
+test was run by this incremental source audit; adoption remains pending.
+The published checkpoint's 7581 observation and all 9b64-bound results retain
+their original attribution.
 
 ### mi350-2 Platform Compatibility
 
@@ -90,10 +99,35 @@ final-RMS capture and cannot close that hardware-specific M1 gate. No new
 GPU workload, numerical result, performance measurement or host modification
 is claimed. The existing gfx942 capture remains pending.
 
-### Published R24 Checkpoint
+### Published R25 Wrapper Checkpoint
 
-The public site at <https://harsh-nod.github.io/ferric/> now records the full
-BF16 scanner result below. Source `f5905220336c450d2ce41f3e6b18676bce549fdd`
+The public site at <https://harsh-nod.github.io/ferric/> now records the wrapper
+integration, matching compiler9b64 emission, both guarded native aborts and
+the mi350-2 platform blocker. Source `9452fbea86f50ac7124957c10cbed2fa14ead9e8`,
+site tree `2cd3841e3be1d0100d07f4aee3f6a7e7eb2aa084`, passes all five mi300x
+QA phases, every width from 320 to 1440 pixels, eight rendered viewports and
+64 screenshots. Source/runtime/browser preservation checks pass. Root reviews
+desktop/mobile overview and checkpoint screenshots; no overlap is observed.
+
+Root and independent custody verify 133 payloads, the exact 134 regular-member
+roster and 22 external records. Archive SHA is
+`ceef7fcbf74fbfd437e6e8d8c88dca1e5789fb061674cbfa3c452075677f1b99`
+(11,524,267 bytes); the seven static files total 744,662 bytes. Timestamp
+custody is checked at integer-second precision, not exact nanoseconds.
+
+Static commit `1496d5d99deb5ba7d968f6550d5f04772489ba6d` is deployed by
+successful deploy-only run `35242350042`. All seven canonical and seven
+cache-busted live requests match the tested artifact. Workflow changes only
+bind its size, hashes and evidence reference; no GitHub build/test, permission
+or environment-protection change is made. After clean-source and scoped
+no-use checks, the completed 3,532 KiB source worktree is removed normally,
+retaining its branch and evidence. Remote scratch cleanup remains separate.
+No native/numerical/performance result or M1 gate closure follows.
+
+### Earlier R24 Checkpoint
+
+The prior R24 deployment records the full BF16 scanner result below.
+Source `f5905220336c450d2ce41f3e6b18676bce549fdd`
 passes all five mi300x-only phases, every width from 320 to 1440 pixels,
 eight rendered viewports and 64 screenshots. All source/runtime/browser
 preservation checks pass. Independent custody verifies 133 payloads, 134
