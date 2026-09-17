@@ -5,6 +5,29 @@ receipt. The 33 M1 roadmap gates remain open.
 
 ## Current Checkpoint
 
+### mi350-2 Platform Compatibility
+
+The user-requested 2026-09-17 survey reaches `mi350-2` and observes one
+gfx950 device, unique ID `1956390207832604050`, in SPX/NPS1 mode. At
+13:52:47 UTC it is 0% busy with 297,750,528 bytes of VRAM allocated. The
+only observed KFD process is the host's root-owned `gpuagent`, with zero
+reported GPU allocation and no observed queues. This is a read-only
+availability observation, not admission or a reservation.
+
+There is a concrete runtime incompatibility: the host runs kernel
+`5.15.160+`, while the currently adopted and freshly rechecked upstream
+fe2o3 `9b64a2da` gfx950 platform validator requires `6.8.0-124-generic`.
+The engineering worker requires this check too; its machine-code opt-in
+does not bypass it. Supporting this host requires a separately identified
+and validated platform profile in fe2o3, not a relaxed check or host change.
+The surveyed model caches also lack the canonical Qwen3 target/draft pair.
+
+Once those prerequisites are met, Ferric's existing gfx950 TP1 engineering
+path can be built on mi300x and executed here. It is not the pending gfx942
+final-RMS capture and cannot close that hardware-specific M1 gate. No new
+GPU workload, numerical result, performance measurement or host modification
+is claimed. The existing gfx942 capture remains pending.
+
 ### Published R24 Checkpoint
 
 The public site at <https://harsh-nod.github.io/ferric/> now records the full
