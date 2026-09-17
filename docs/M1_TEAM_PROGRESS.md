@@ -5,6 +5,44 @@ receipt. The 33 M1 roadmap gates remain open.
 
 ## Current Checkpoint
 
+### Native Validation Redirected To Eight-GPU mi350
+
+The user redirects native execution from mi350-2 to mi350. Fresh SSH reaches
+`smci350-rck-g03-b19-03` as UID 9661 and observes eight MI350X gfx950 GPUs,
+all idle with no visible KFD users. This is an observation, not a reservation.
+All builds and CPU tests remain on mi300x; shared jobs are untouched.
+
+At 2026-09-17T19:34:57Z, the actual mi300x-built fe406 identity executable
+SHA256 `1544d60efa281e3e8c424d805351e40b983050352a5676fb504f8074892d0fd8`
+passes `--all` on all eight physical UIDs. Each reports original MI350 profile
+`6f859b0a67f8ee2497393206930ff35bf1a9ae69d33f172106a790a0c9226667`,
+eight process apertures and contracted-clear currentness. Descriptor counts
+return from five to five. Command, wrapper and cleanup statuses are zero;
+the process leader/group are absent. All eight GPUs remain idle with unchanged
+VRAM usage of 297,766,912 bytes each and no visible fuser users.
+
+This probe opens KFD/render devices and observes identity/reset state. It does
+not acquire explicit VM authority, allocate GPU memory, create queues, dispatch
+kernels or set XNACK. Its 633,615-byte retained archive has SHA256
+`8c5c2d0300801d122ecd6879bdca301d752517ae9dc18b6ab0fb1ee8602bc6cb`;
+all 38 payload hashes and the 40-member archive roster are checked locally
+using shell-only data custody. No application code is executed locally.
+
+The host's kernel 6.8.0-124-generic, amdgpu 6.16.13/srcversion
+703B1127E578BC5D4BD6615 and device roster match the existing MI350 path.
+Its glibc 2.39 removes the known Asrock controller-link mismatch. The historical
+`/tmp/ferric-qwen8.TRNKht` runtime/model bundle is absent, so it cannot be reused
+as a live input. Canonical model staging, fresh current-source 14-root gfx950
+kernel emission and Qwen execution remain pending. No new Qwen timing or TP8
+inference result is claimed; gfx950 does not replace gfx942-specific evidence.
+
+The fresh fe406 four-tool compiler campaign on mi300x finishes all six phases
+with zero status, including terminal source/control/group checks. Actual CLI
+and backend producer receipts are retained separately; full campaign archival
+is still pending. A fresh upstream query confirms fe406 remains main. No new
+fe2o3 changes or push are needed solely for this host redirect. All 33 M1 gates
+remain open.
+
 ### TP1 Roster And Portable mi350-2 Controller
 
 Ferric source `59822dd469a95294cc11c6e8bab0c79978f66703`, tree
