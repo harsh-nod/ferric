@@ -5,6 +5,42 @@ receipt. The 33 M1 roadmap gates remain open.
 
 ## Current Checkpoint
 
+### Current-Main Asrock Runtime Published
+
+fe2o3 main now contains `fe406b0c3275c33b92f81734a4e6e3852b891073`, the
+six-file strict engineering-only Asrock profile rebased onto latest main
+`8cbd2a94`. A fresh fetch and rebase precede the fast-forward push; the commit
+uses `[skip ci]`, and the subsequent GitHub Actions query returns no runs.
+No kernel or inference code is added to fe2o3. Ferric still pins `99897145`
+until its separate dependency/TCB adoption is validated.
+
+Fresh mi300x checks pass 422 default and 490 engineering KFD unit tests, with
+one existing ignored test each; 64 UAPI integration tests; 27 default and 31
+engineering compile-fail doctests; both strict Clippy selections; formatting;
+and the identity/worker builds. Three fresh C layout probes built from the
+18 captured Asrock headers match all expected KFD/event/DRM output. Actual
+compiler arguments, tool hashes, dependency lists/hashes, saved preprocessed
+sources/assembly/objects, binaries and terminal statuses are retained. This
+checks ABI layouts and request encodings, not live driver semantics or a
+protected C compiler/runtime installation.
+
+The 25,208,962-byte archive has SHA256
+`15a5dca4042f5d29d2347bed68361485140e3c97a69b1eb68b2c62e32d12d387`.
+Independent custody checks all 340 payloads, 341 regular members, 17 external
+records, 18 phases, 11 Rust producers and all 5,192 source files against the
+exact committed tree. The phases preserve an initial pre-child setup failure
+and its successful successor; they are not an all-green first attempt.
+Both rebuilt native tools are byte-identical to the e22 producers. The prior
+mi350-2 identity event retains its original attribution, with this explicit
+executable-byte bridge rather than an invented new native run.
+
+Next adoption must preserve the existing 80-file/32-graph validation and
+account for exactly two new lowerer dev-dependency declarations in the
+verifier-dev and combined TCB inventories. Fresh metadata must confirm that
+expected delta. Rebuilt TP1 controller/kernel emission, canonical model staging
+and Qwen execution on mi350-2 remain pending. No new Qwen timing, gfx942
+capture, protected proof or M1 gate closure is claimed.
+
 ### mi350-2 Checked Binding Passes
 
 User-requested mi350-2 access is restored. On 2026-09-17 at 17:32:55 UTC,
