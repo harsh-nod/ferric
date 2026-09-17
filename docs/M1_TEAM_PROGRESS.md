@@ -163,6 +163,22 @@ Current ioctl identity, XNACK, apertures, reset-fence and checked binding still
 need validation alongside an additive exact platform profile. Compiler 998
 does not change that requirement; no platform check is relaxed.
 
+A subsequent read-only check at 16:54:07 UTC reconfirms the same idle gfx950
+device. An intervening independent engineering worker held device descriptors
+and exited without intervention, so this is not an exclusive GPU reservation.
+Existing separate work on the host contains clean fe2o3 candidate
+`cb8f51ec0b52894a1fb510bc3f523005dda8bfaf`, adding an exact engineering-only
+Asrock profile and rejection tests. It is not on main 998 or adopted here.
+Its parent `313f917c81ea6bb15d739c67888870497043b603` includes earlier
+profile-selection/XCP infrastructure absent from main; the five-file tip is
+not a standalone current-main patch. Main has 130 commits absent from that
+candidate, so directly adopting its revision would also lose current work.
+Review and narrow integration can reuse the exact profile without importing
+the older host's XCP exception, followed by mi300x-only builds/tests and
+separate native admission.
+The existing host workspace, artifacts and processes are left untouched;
+its prior build records are not claimed as this campaign's validation.
+
 Once those prerequisites are met, Ferric's existing gfx950 TP1 engineering
 path can be built on mi300x and executed here. It is not the pending gfx942
 final-RMS capture and cannot close that hardware-specific M1 gate. No new
