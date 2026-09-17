@@ -5,6 +5,32 @@ receipt. The 33 M1 roadmap gates remain open.
 
 ## Current Checkpoint
 
+### Fresh TP14 Vendor Passes; Emission In Progress
+
+Fresh Ferric59822 / fe406 vendor formation on mi300x passes with the normal
+512 MiB reserve. Cargo normalizes all 55 Git packages in the 198-package view;
+143 registry packages and both historical source views remain unchanged.
+Formation receipt SHA256 is
+`ec864a74487edc01018ce521a462d54feed1fadd12ac8341eb830bbae31975cc`.
+The genuine normalized device manifest is `8ffc8a52...`; no post-Cargo
+manifest or checksum edits are made.
+
+Independent terminal custody passes for the corrected retention attempt:
+198 payloads, 200 regular archive members, 16 external records and all 14
+recorded statuses zero. Archive SHA256 is
+`614b207b223980aaf648adf50330e951aa5333225000166b60e5ea3c6640731b`.
+The first retention's byte custody succeeded but its consistency summary was
+false because its checker expected a nonexistent nested process-census key.
+That record is preserved; the separate correction retains all five independent
+process-absence checks and does not rerun or relabel vendor formation.
+
+Fresh gfx950:xnack-/COV6 TP14 emission is now running under the unchanged
+mi300x-only CPU/resource envelope. Source, vendor and both metadata paths have
+passed; no completed artifact, Qwen output, TP8 result or timing is claimed.
+The mi350 TP1 diagnostic controls are drafted around the existing canonical
+model intake before worker spawn. Native launch still requires a completed
+artifact and fresh shared-GPU admission. All 33 M1 gates remain open.
+
 ### mi350 Model Transport And Loader Checks Pass
 
 Canonical source transport from mi300x to the user-selected eight-GPU mi350
