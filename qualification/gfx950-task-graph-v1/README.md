@@ -5,7 +5,8 @@ engineering-only dispatch harness for the [device source](../../device/gfx950-ta
 The ordinary Rust source now compiles through semantic MIR, ranked/formal
 checks, translation validation, target convergence and gfx950 LLVM lowering.
 Production extraction 23 produced an inert native HSACO, and the bounded
-engineering GPU suite passed on `mi350-2`.
+engineering GPU suite passed on the original `mi350-2` host. These are
+historical observations, not results for the replacement asrock host.
 
 ## Native Evidence
 
@@ -47,15 +48,30 @@ publishing the private device selector or worker stderr.
 
 ## Reproduction
 
-Use clean source checkouts and immutable binaries matching the JSON identities,
-fresh output directories, offline artifact inspection and shared-host device
-allocation checks before dispatch. The retained native build uses ROCm 7.2.0.
+The historical artifact used ROCm 7.2.0 and the compiler recorded above. Replay
+of those identities requires their original source revisions and build script;
+advancing either dependency pin or compiler produces new evidence.
+
+For a new build, both source checkouts must be committed and clean. The device
+and host dependency revisions, including Cargo's resolved providers, must equal
+the compiler checkout's HEAD. Use a frozen matching compiler snapshot with
+`compiler-source-head.txt`, empty `compiler-source-status.txt`, `SHA256SUMS`,
+`loader-providers.sha256`, and the adjacent `SNAPSHOT.provenance.sha256` manifest.
+The build verifies exact selected manifest members and rechecks sources and
+hashes afterward. Cargo metadata and extraction run offline with an isolated
+environment; populate the reviewed dependency cache before the retained build.
+
+Use fresh output directories, offline artifact inspection and shared-host
+device allocation checks before dispatch. `ROCM_PATH` selects the reviewed
+ROCm installation explicitly; the asrock rebuild uses its ROCm 7.3 installation,
+while the script's historical default remains `/opt/rocm-7.2.0`. A new build
+does not establish an asrock GPU result.
 
 ```sh
 cd qualification/gfx950-task-graph-v1
 python3 -B -m unittest -v test_reference
-FE2O3_COMPILER_BIN=WORK_ROOT/evidence/compiler-contextual-product-bin \
-  ROCM_PATH=/opt/rocm-7.2.0 bash build.sh WORK_ROOT FRESH_BUILD_DIRECTORY
+FE2O3_COMPILER_BIN=MATCHED_CLEAN_COMPILER_SNAPSHOT \
+  ROCM_PATH=REVIEWED_ROCM_INSTALLATION bash build.sh WORK_ROOT FRESH_BUILD_DIRECTORY
 bash verify-suite.sh PROBE WORKER HSACO SOURCE PRIVATE_DEVICE_ID NEW_EVIDENCE_DIRECTORY
 ```
 

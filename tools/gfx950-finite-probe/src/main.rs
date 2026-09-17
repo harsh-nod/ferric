@@ -9,6 +9,9 @@ mod kproj_artifact;
 mod kproj_command;
 mod object;
 mod probe;
+mod publication_artifact;
+mod publication_command;
+mod publication_probe;
 mod session;
 mod task_artifact;
 mod task_command;
@@ -20,6 +23,8 @@ mod atomic_tests;
 mod knorm_tests;
 #[cfg(test)]
 mod process_tests;
+#[cfg(test)]
+mod publication_tests;
 #[cfg(test)]
 mod task_tests;
 #[cfg(test)]
@@ -140,10 +145,22 @@ impl Options {
             "inspect"
             | "atomic-channel-inspect"
             | "task-graph-inspect"
+            | "static-publication-inspect"
             | "qwen3-kproj-inspect"
             | "qwen3-kproj-wave64-inspect" => {
                 vec!["--object", "--source-file", "--metadata"]
             }
+            "static-publication-run" => vec![
+                "--object",
+                "--source-file",
+                "--metadata",
+                "--worker",
+                "--inputs",
+                "--initial-flags",
+                "--case-file",
+                "--device-id-file",
+                "--run-dir",
+            ],
             "task-graph-run" | "atomic-channel-run" => vec![
                 "--object",
                 "--source-file",
@@ -196,6 +213,7 @@ impl Options {
                         | "atomic-channel-run"
                         | "qwen3-kproj-run"
                         | "qwen3-kproj-wave64-run"
+                        | "static-publication-run"
                         | "qwen3-knorm-chain-run"
                 )
                 && !acknowledged
@@ -224,6 +242,7 @@ impl Options {
                 | "atomic-channel-run"
                 | "qwen3-kproj-run"
                 | "qwen3-kproj-wave64-run"
+                | "static-publication-run"
                 | "qwen3-knorm-chain-run"
         ) && !acknowledged
         {
@@ -245,6 +264,9 @@ fn execute(options: &Options) -> Result<()> {
     }
     if options.mode.starts_with("atomic-channel-") {
         return atomic_command::execute(options);
+    }
+    if options.mode.starts_with("static-publication-") {
+        return publication_command::execute(options);
     }
     if options.mode.starts_with("qwen3-kproj-") {
         return kproj_command::execute(options);

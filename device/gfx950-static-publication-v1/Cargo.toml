@@ -1,17 +1,17 @@
 [package]
-name = "ferric-gfx950-task-graph-v1"
+name = "ferric-gfx950-static-publication-v1"
 version = "0.1.0"
 edition = "2024"
 rust-version = "1.94"
 publish = false
-description = "Engineering-only finite multi-workgroup atomic task graph"
+description = "Engineering-only fixed consumer-clear ordinary publication fixture"
 
 [workspace]
 
+# Both providers match the reviewed compiler source revision. This pin is not
+# protected runtime admission or a claim of native execution.
 [dependencies]
 fe2o3-device = { git = "https://github.com/harsh-nod/fe2o3", rev = "cb8f51ec0b52894a1fb510bc3f523005dda8bfaf", version = "=0.1.0" }
 
 [target.'cfg(not(target_arch = "amdgpu"))'.dependencies]
 fe2o3-host = { git = "https://github.com/harsh-nod/fe2o3", rev = "cb8f51ec0b52894a1fb510bc3f523005dda8bfaf", version = "=0.1.0" }
-
-[lib]

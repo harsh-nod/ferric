@@ -10,9 +10,10 @@ fi
 root=$(realpath -- "$1")
 out=$(realpath -m -- "$2")
 repo=$(cd -- "$(dirname -- "$0")/../.." && pwd)
-package="$repo/device/gfx950-task-graph-v1"
-# Native evidence requires committed sources; a diff cannot retain untracked
-# provider contents. Development diagnostics use separate scratch invocations.
+package="$repo/device/gfx950-static-publication-v1"
+# A diff plus a status listing cannot reconstruct untracked provider contents.
+# Development diagnostics use separate scratch invocations; retained native
+# evidence starts only from committed, clean compiler and fixture sources.
 for checkout in "$root/fe2o3" "$repo"; do
     if [[ -n $(git -C "$checkout" status --porcelain=v1 --untracked-files=all) ]]; then
         printf 'native evidence requires clean committed source: %s\n' "$checkout" >&2
@@ -20,7 +21,7 @@ for checkout in "$root/fe2o3" "$repo"; do
     fi
 done
 nightly="$root/toolchain/rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu"
-compiler=$(realpath -- "${FE2O3_COMPILER_BIN:?set FE2O3_COMPILER_BIN to a frozen clean-source compiler snapshot}")
+compiler=$(realpath -- "${FE2O3_COMPILER_BIN:?set FE2O3_COMPILER_BIN to a frozen clean-source V31 snapshot}")
 compiler_head=$(git -C "$root/fe2o3" rev-parse HEAD)
 test -f "$compiler/compiler-source-head.txt"
 test -f "$compiler/compiler-source-status.txt"
@@ -76,7 +77,7 @@ env -i HOME="$HOME" PATH="$nightly/bin:/usr/local/bin:/usr/bin:/bin" \
     "$nightly/bin/cargo" metadata --locked --offline \
     --manifest-path "$package/Cargo.toml" --format-version=1 \
     > "$out/package-metadata.json"
-# Reject declared pin drift and resolved Cargo patch/config substitutions.
+# Also reject Cargo patch/config overrides of the two resolved providers.
 jq -e --arg declared "git+https://github.com/harsh-nod/fe2o3?rev=$compiler_head" \
     --arg resolved "git+https://github.com/harsh-nod/fe2o3?rev=$compiler_head#$compiler_head" '
     .resolve.root as $root |
@@ -89,7 +90,7 @@ jq -e --arg declared "git+https://github.com/harsh-nod/fe2o3?rev=$compiler_head"
     ([$providers[].name] | sort) == ["fe2o3-device", "fe2o3-host"] and
     all($providers[]; .source == $resolved)
 ' "$out/package-metadata.json" > "$out/dependency-pins-checked.txt"
-artifact="$out/task-graph-v1"
+artifact="$out/static-publication-v1"
 inputs=(
     "$0" "$package/Cargo.toml" "$package/Cargo.lock" "$package/src/lib.rs"
     "$compiler/fe2o3-rustc-extract" "$compiler/librustc_codegen_fe2o3.so"
@@ -110,21 +111,20 @@ test ! -s "$out/compiler-source-status.txt"
 test ! -s "$out/ferric-source-status.txt"
 flags='-Zalways-encode-mir -Zinline-mir=yes -Zmir-enable-passes=-JumpThreading -Copt-level=3 -Ctarget-cpu=gfx950 -Ctarget-feature=-xnack,+wavefrontsize64,-wavefrontsize32'
 printf '%s\n' "$flags" > "$out/rustflags.txt"
-# Match optimized-inline-v1: origins remain source-audited by the extractor.
 env -i HOME="$HOME" PATH="$nightly/bin:/usr/local/bin:/usr/bin:/bin" \
     CARGO_HOME="$root/toolchain/cargo" RUSTUP_HOME="$root/toolchain/rustup" \
     CARGO_TARGET_DIR="$out/cargo-target" CARGO_BUILD_JOBS=2 \
     LD_LIBRARY_PATH="$compiler:$nightly/lib" \
     RUSTC="$nightly/bin/rustc" RUSTC_WORKSPACE_WRAPPER= \
     RUSTC_WRAPPER="$compiler/fe2o3-rustc-extract" \
-    FE2O3_EXTRACT_CRATE_V1=ferric_gfx950_task_graph_v1 \
+    FE2O3_EXTRACT_CRATE_V1=ferric_gfx950_static_publication_v1 \
     FE2O3_EXTRACT_AMDGPU_COMPILER_HANDOFF_PATH_V1="$artifact.handoff" \
     RUSTFLAGS="$flags" \
     "$nightly/bin/cargo" rustc --locked --offline --lib --manifest-path "$package/Cargo.toml" \
     -Zbuild-std=core --target amdgcn-amd-amdhsa \
     2>&1 | tee "$out/extraction.log"
 "$unpack" "$artifact.handoff" "$artifact.ll" | tee "$out/unpack.log"
-# Decode the unchanged compiler handoff. No handwritten or patched LLVM path.
+# Decode the unchanged checked compiler handoff; never patch its LLVM output.
 "$llvm/llvm-link" --only-needed "$artifact.ll" "${provider_files[@]}" -o "$artifact.linked.bc"
 "$llvm/opt" '-passes=default<O3>' "$artifact.linked.bc" -o "$artifact.optimized.bc"
 "$llvm/llc" -O3 -mtriple=amdgcn-amd-amdhsa -mcpu=gfx950 \
