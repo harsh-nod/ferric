@@ -1,9 +1,65 @@
 # M1 Team Progress
 
-Updated: 2026-09-16 UTC. This is an implementation checkpoint, not a qualification
+Updated: 2026-09-17 UTC. This is an implementation checkpoint, not a qualification
 receipt. The 33 M1 roadmap gates remain open.
 
 ## Current Checkpoint
+
+### Healthy Resident Prefill Stop
+
+`eed0ad074af3991f522f93bb495a1c10549fe8fe` handles an authenticated stop
+token in the bounded resident first/next prefill paths. The request retires and
+the queue completes healthy shutdown before any successor is scheduled. The
+move-only terminal result publishes exactly one stop token, retains all owners
+until close, and cannot resume a resident session. Failed or quarantined shutdown
+cannot become successful termination. The existing continuing-success interface
+and allocation-free continuation remain intact. R33 deliberately rejects the
+short terminal result as a fixed-length measurement; benchmark work is not relaxed.
+
+On mi300x with compiler `9f8ffda4`, R2 passes 758 engine tests (9 ignored) and
+the isolated zero-allocation test. After correcting only the relative temporary
+directory in the test harness, R3 passes 112 adapter tests (1 ignored), 38 source
+policy tests, seven selected compile-fail doctests and strict engine Clippy.
+R4 renames a counter in one new test, then passes all ten phases, including fresh
+adapter/policy test producers, the same 112/38 tests, strict adapter Clippy,
+rustfmt and ordinary source inventory/generation/validation. The coverage delta
+is exactly 14 pending-Verus helpers, with no verified promotion or TCB change.
+
+R1's two stale derived-Debug admissions, R2's 22 fixture-path failures and R3's
+two similar-name lint diagnostics remain separately retained. R4 explicitly
+transitions one live test source file and replaces the two affected test
+executables; original R2/R3 archives remain immutable. R4 archive SHA-256 is
+`5d29bd14d0c4a20885df490820df3b2d1aeff600924e9b30065e81cd505750c9`
+(8,623,993 bytes). All 123 payload identities and the exact 124-member roster
+are independently checked. All 1,157 integrated source identities match the
+validated census before installing the identically validated coverage ledger.
+The completed 45,164 KiB EOS worktree is removed after its committed tree matches
+the integration commit. No native GPU, protected proof, numerical, performance
+or gate-closure claim is added.
+
+### Current Compiler Adoption
+
+Ferric adopts observed fe2o3 main
+`9f8ffda4df3647d0ed7c424f16a6ff0111a32a69` in
+`d48ae0d5a67dca0c5357fe23c0b6dcf7af71d7ba`. All 50 bounded mi300x phases
+pass: 32 locked graphs, fresh normal/test source-gate producers, all 47 source
+gate tests, four generated dependency inventories and ordinary source coverage.
+The 80-file transition binds the new compiler and its newly auto-discovered
+`execution_semantic_operations_v3` test target. There is no new dependency edge,
+lock repair, feature change or proof promotion; all 1,157 final identities match.
+
+The 21 upstream commits since abd8 add execution roles/capabilities, semantic
+operations and related compiler validation. Native runtime/KFD, device/host/AQL,
+manifests/locks, pinned Pliron, toolchain and LLVM-worker subtree remain unchanged.
+The subsequent EOS engine/adapter host validation above uses this actual pin.
+Historical native tools, optimized release and diagnostic controls below remain
+frozen at their stated 6e/abd8 or older producers, not relabeled as 9f8.
+
+Adoption archive SHA-256 is
+`616dd43e06b465423a4e2b12be58cca1c288f9969c0903b6d741d51d1d06024e`
+(20,939,860 bytes): all 1,655 payloads, the exact 1,656-member roster and 27
+external checks pass. This is compiler dependency/source-policy adoption, not
+native numerical qualification, protected proof or a performance result.
 
 ### Atomic Prepack Snapshot Publication
 
@@ -25,9 +81,9 @@ Archive SHA is
 Ferric prepack binary; it adds no native/GPU, protected proof or performance
 result and closes no M1 gate. The 6e/abd8 native diagnostic batch stays frozen.
 
-### Current Compiler Adoption
+### Retained abd8 Compiler Adoption
 
-The current validation batch freezes observed fe2o3 main
+The preceding validation batch freezes observed fe2o3 main
 `abd8be76fadc74b09cc40533e775949471358a74`. Ferric adopts it in
 `f9b86bdb7fe2381498bb354eb1b0d4b68dfc24b9` after all 50 bounded mi300x
 validation phases pass: 32 locked dependency graphs, fresh normal/test source
