@@ -20,7 +20,7 @@ const TEST_SUPPORT_SOURCE: &str = include_str!("../src/protected_verifier_test_s
 const MANIFEST: &str = include_str!("../Cargo.toml");
 const LOCKFILE: &str = include_str!("../Cargo.lock");
 const README: &str = include_str!("../README.md");
-const FE2O3_REVISION: &str = "fe406b0c3275c33b92f81734a4e6e3852b891073";
+const FE2O3_REVISION: &str = "70aadc048a25b17ccc1bb2b185163df0256e1931";
 const TEST_MODULE_BOUNDARY: &str = "#[cfg(test)]\nmod tests {";
 const BACKEND_TRAIT: &str =
     "WorkerV3ProtectedRosterVerifierBackendV1<M1AllKernelsWorkerV3RosterV1>";
@@ -51,12 +51,12 @@ const REVIEWED_FILE_SHA256: [[u8; 32]; 7] = [
         4, 53, 9, 149, 204, 198, 78, 167, 240, 54, 180, 86,
     ],
     [
-        1, 237, 20, 59, 38, 10, 78, 73, 7, 160, 192, 159, 106, 202, 226, 169, 239, 215, 3, 112,
-        135, 3, 220, 239, 68, 213, 207, 65, 228, 47, 12, 114,
+        245, 245, 249, 41, 87, 217, 221, 167, 86, 251, 186, 38, 13, 157, 81, 38, 105, 238, 213, 22,
+        153, 229, 118, 253, 197, 208, 162, 153, 99, 106, 20, 7,
     ],
     [
-        86, 63, 4, 145, 98, 176, 191, 139, 241, 136, 116, 11, 55, 110, 211, 200, 251, 75, 151, 50,
-        5, 111, 73, 156, 172, 45, 36, 146, 131, 89, 227, 9,
+        30, 95, 17, 162, 99, 177, 167, 165, 26, 183, 213, 26, 208, 87, 64, 41, 80, 208, 190, 190,
+        215, 15, 156, 170, 18, 60, 209, 12, 143, 23, 111, 17,
     ],
 ];
 const REVIEWED_LIB_NODE_FINGERPRINTS: [[u8; 32]; 23] = [
@@ -183,12 +183,12 @@ publish = false
 
 [dependencies]
 ed25519-dalek = { version = "=2.2.0", default-features = false, features = ["fast", "zeroize"] }
-fe2o3-host = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "fe406b0c3275c33b92f81734a4e6e3852b891073", version = "=0.1.0" }
-fe2o3-hsaco-finalize = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "fe406b0c3275c33b92f81734a4e6e3852b891073", version = "=0.1.0" }
-fe2o3-runtime-protocol = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "fe406b0c3275c33b92f81734a4e6e3852b891073", version = "=0.1.0" }
-fe2o3-verifier = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "fe406b0c3275c33b92f81734a4e6e3852b891073", version = "=0.1.0" }
-fe2o3-worker-v3-verification-client = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "fe406b0c3275c33b92f81734a4e6e3852b891073", version = "=0.1.0" }
-fe2o3-worker-v3-verification-protocol = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "fe406b0c3275c33b92f81734a4e6e3852b891073", version = "=0.1.0" }
+fe2o3-host = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "70aadc048a25b17ccc1bb2b185163df0256e1931", version = "=0.1.0" }
+fe2o3-hsaco-finalize = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "70aadc048a25b17ccc1bb2b185163df0256e1931", version = "=0.1.0" }
+fe2o3-runtime-protocol = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "70aadc048a25b17ccc1bb2b185163df0256e1931", version = "=0.1.0" }
+fe2o3-verifier = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "70aadc048a25b17ccc1bb2b185163df0256e1931", version = "=0.1.0" }
+fe2o3-worker-v3-verification-client = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "70aadc048a25b17ccc1bb2b185163df0256e1931", version = "=0.1.0" }
+fe2o3-worker-v3-verification-protocol = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "70aadc048a25b17ccc1bb2b185163df0256e1931", version = "=0.1.0" }
 ferric-qwen3-all-kernels-device-v1 = { path = "../../device/qwen3-all-kernels-v1" }
 ferric-qwen3-all-kernels-worker-v3-source-pin-v1 = { path = "../qwen3-all-kernels-worker-v3-source-pin-v1" }
 libc = "=0.2.189"
@@ -196,8 +196,8 @@ rustix = { version = "=1.1.4", features = ["fs"] }
 sha2 = { version = "=0.11.0", default-features = false }
 
 [dev-dependencies]
-fe2o3-artifact-transaction = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "fe406b0c3275c33b92f81734a4e6e3852b891073", version = "=0.1.0" }
-fe2o3-external-anchor-protocol = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "fe406b0c3275c33b92f81734a4e6e3852b891073", version = "=0.1.0" }
+fe2o3-artifact-transaction = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "70aadc048a25b17ccc1bb2b185163df0256e1931", version = "=0.1.0" }
+fe2o3-external-anchor-protocol = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "70aadc048a25b17ccc1bb2b185163df0256e1931", version = "=0.1.0" }
 proc-macro2 = "=1.0.107"
 quote = "=1.0.47"
 syn = { version = "=2.0.119", features = ["full", "visit"] }
@@ -556,7 +556,7 @@ fn lockfile_semantics_policy(source: &str) -> bool {
 
     let registry = Some("registry+https://github.com/rust-lang/crates.io-index");
     let fe2o3 = Some(
-        "git+https://github.com/harsh-nod/fe2o3.git?rev=fe406b0c3275c33b92f81734a4e6e3852b891073#fe406b0c3275c33b92f81734a4e6e3852b891073",
+        "git+https://github.com/harsh-nod/fe2o3.git?rev=70aadc048a25b17ccc1bb2b185163df0256e1931#70aadc048a25b17ccc1bb2b185163df0256e1931",
     );
     [
         (
