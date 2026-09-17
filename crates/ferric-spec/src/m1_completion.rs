@@ -290,6 +290,100 @@ pub fn finite_bf16_order_key(bits: u16) -> (key: Option<i64>)
     }
 }
 
+/// Failure while scanning one complete little-endian BF16 vocabulary row.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum FiniteBf16ArgmaxError {
+    RowExtent,
+    NonFinite { token: TokenId },
+}
+
+pub open spec fn bf16_row_bits(bytes: Seq<u8>, token: int) -> u16 {
+    (bytes[2 * token] as int + 256 * bytes[2 * token + 1] as int) as u16
+}
+
+pub open spec fn bf16_row_key(bytes: Seq<u8>, token: int) -> Option<i64> {
+    finite_bf16_order_key_spec(bf16_row_bits(bytes, token))
+}
+
+/// Finite encoded-value maximum with the lowest token ID among equal keys.
+pub open spec fn is_lowest_finite_bf16_argmax(bytes: Seq<u8>, token: TokenId) -> bool {
+    bytes.len() == 2 * QWEN3_VOCABULARY_SIZE
+        && token < QWEN3_VOCABULARY_SIZE
+        && bf16_row_key(bytes, token as int).is_some()
+        && (forall|index: int| 0 <= index < QWEN3_VOCABULARY_SIZE
+            ==> bf16_row_key(bytes, index).is_some())
+        && (forall|index: int| 0 <= index < QWEN3_VOCABULARY_SIZE
+            ==> bf16_row_key(bytes, token as int).unwrap() >= bf16_row_key(bytes, index).unwrap())
+        && (forall|index: int| 0 <= index < token as int
+            ==> bf16_row_key(bytes, index).unwrap() < bf16_row_key(bytes, token as int).unwrap())
+}
+
+/// Scans the complete BF16 row without allocating or converting to floats.
+///
+/// Signed zeros tie. The first nonfinite encoding rejects the entire row,
+/// including when a preceding finite value already attains the largest key.
+/// This contract covers encoded bytes and selection, not device arithmetic.
+///
+/// # Errors
+///
+/// Rejects any extent other than two bytes per vocabulary entry, or the first
+/// nonfinite entry in token order.
+#[allow(clippy::cast_lossless, reason = "Verus models widening casts directly but the pinned From call is opaque")]
+pub fn select_lowest_finite_bf16_argmax(
+    bytes: &[u8],
+) -> (result: Result<TokenId, FiniteBf16ArgmaxError>)
+    ensures
+        match result {
+            Ok(token) => is_lowest_finite_bf16_argmax(bytes@, token),
+            Err(FiniteBf16ArgmaxError::RowExtent) => bytes@.len() != 2 * QWEN3_VOCABULARY_SIZE,
+            Err(FiniteBf16ArgmaxError::NonFinite { token }) => {
+                bytes@.len() == 2 * QWEN3_VOCABULARY_SIZE
+                    && token < QWEN3_VOCABULARY_SIZE
+                    && bf16_row_key(bytes@, token as int).is_none()
+                    && forall|prior: int| 0 <= prior < token as int
+                        ==> bf16_row_key(bytes@, prior).is_some()
+            },
+        },
+{
+    if bytes.len() != 2 * QWEN3_VOCABULARY_SIZE as usize {
+        return Err(FiniteBf16ArgmaxError::RowExtent);
+    }
+    let mut index = 0u32;
+    let mut best = 0u32;
+    let mut best_value = 0i64;
+    while index < QWEN3_VOCABULARY_SIZE
+        invariant
+            bytes@.len() == 2 * QWEN3_VOCABULARY_SIZE,
+            index <= QWEN3_VOCABULARY_SIZE,
+            index == 0 ==> best == 0,
+            index > 0 ==> best < index,
+            index > 0 ==> bf16_row_key(bytes@, best as int) == Some(best_value),
+            index > 0 ==> bf16_row_key(bytes@, 0).is_some(),
+            forall|prior: int| 0 <= prior < index as int
+                ==> bf16_row_key(bytes@, prior).is_some(),
+            forall|prior: int| 0 <= prior < index as int
+                ==> bf16_row_key(bytes@, prior).unwrap() <= best_value,
+            forall|prior: int| 0 <= prior < best as int
+                ==> bf16_row_key(bytes@, prior).unwrap() < best_value,
+        decreases QWEN3_VOCABULARY_SIZE - index,
+    {
+        let offset = 2 * index as usize;
+        let bits = bytes[offset] as u16 + (bytes[offset + 1] as u16) * 256;
+        assert(bits == bf16_row_bits(bytes@, index as int));
+        let value = match finite_bf16_order_key(bits) {
+            Some(value) => value,
+            None => return Err(FiniteBf16ArgmaxError::NonFinite { token: index }),
+        };
+        if index == 0 || value > best_value {
+            best = index;
+            best_value = value;
+        }
+        index += 1;
+    }
+    assert(index == QWEN3_VOCABULARY_SIZE);
+    Ok(best)
+}
+
 /// Mathematical lowest-token tie-breaking argmax relation.
 pub open spec fn is_lowest_argmax(scores: Seq<i64>, token: TokenId) -> bool {
     scores.len() == QWEN3_VOCABULARY_SIZE
@@ -354,8 +448,9 @@ pub fn select_lowest_argmax(
 #[cfg(test)]
 mod tests {
     use super::{
-        finite_bf16_order_key, select_lowest_argmax, validate_compact_completion,
-        CompactCompletionError, CompactCompletionRecord, M1_MAX_COMPLETION_TOKENS,
+        finite_bf16_order_key, select_lowest_argmax, select_lowest_finite_bf16_argmax,
+        validate_compact_completion, CompactCompletionError, CompactCompletionRecord,
+        FiniteBf16ArgmaxError, M1_MAX_COMPLETION_TOKENS,
     };
     use crate::completion::CompletionEpoch;
     use crate::{Identity, RequestId, QWEN3_VOCABULARY_SIZE};
@@ -534,6 +629,88 @@ mod tests {
             (0xff7f, -32_639),
         ] {
             assert_eq!(finite_bf16_order_key(bits), Some(expected));
+        }
+    }
+
+    #[test]
+    fn bf16_byte_scan_matches_independent_float_oracle() {
+        let mut bytes = Vec::with_capacity(QWEN3_VOCABULARY_SIZE as usize * 2);
+        let mut expected = 0;
+        let mut maximum = f32::NEG_INFINITY;
+        for token in 0..QWEN3_VOCABULARY_SIZE {
+            let bits = u16::try_from(token % 65_536).unwrap().rotate_left(7);
+            let bits = if bits & 0x7f80 == 0x7f80 { 0 } else { bits };
+            bytes.extend_from_slice(&bits.to_le_bytes());
+            let value = f32::from_bits(u32::from(bits) << 16);
+            assert!(value.is_finite());
+            if value > maximum {
+                maximum = value;
+                expected = token;
+            }
+        }
+        assert_eq!(select_lowest_finite_bf16_argmax(&bytes), Ok(expected));
+    }
+
+    #[test]
+    fn bf16_byte_scan_preserves_ties_zeros_and_little_endian_order() {
+        let mut bytes = vec![0; QWEN3_VOCABULARY_SIZE as usize * 2];
+        for pair in bytes.chunks_exact_mut(2) {
+            pair.copy_from_slice(&0xff7fu16.to_le_bytes());
+        }
+        bytes[8..10].copy_from_slice(&0x8000u16.to_le_bytes());
+        bytes[12..14].copy_from_slice(&0x0000u16.to_le_bytes());
+        assert_eq!(select_lowest_finite_bf16_argmax(&bytes), Ok(4));
+        bytes[8..10].copy_from_slice(&0x0000u16.to_le_bytes());
+        bytes[12..14].copy_from_slice(&0x8000u16.to_le_bytes());
+        assert_eq!(select_lowest_finite_bf16_argmax(&bytes), Ok(4));
+        bytes[18..20].copy_from_slice(&0x3f80u16.to_le_bytes());
+        bytes[26..28].copy_from_slice(&0x803fu16.to_le_bytes());
+        assert_eq!(select_lowest_finite_bf16_argmax(&bytes), Ok(9));
+        let last = bytes.len() - 2;
+        bytes[last..].copy_from_slice(&0x7f7fu16.to_le_bytes());
+        assert_eq!(
+            select_lowest_finite_bf16_argmax(&bytes),
+            Ok(QWEN3_VOCABULARY_SIZE - 1)
+        );
+        bytes[32..34].copy_from_slice(&0x7f7fu16.to_le_bytes());
+        assert_eq!(select_lowest_finite_bf16_argmax(&bytes), Ok(16));
+    }
+
+    #[test]
+    fn bf16_byte_scan_rejects_extent_before_reading_any_value() {
+        let expected = QWEN3_VOCABULARY_SIZE as usize * 2;
+        for length in [0, 1, expected - 2, expected - 1, expected + 1, expected + 2] {
+            let bytes = vec![0xff; length];
+            assert_eq!(
+                select_lowest_finite_bf16_argmax(&bytes),
+                Err(FiniteBf16ArgmaxError::RowExtent)
+            );
+        }
+    }
+
+    #[test]
+    fn bf16_byte_scan_rejects_first_nonfinite_even_after_maximum() {
+        for bits in [0x7f80u16, 0xff80, 0x7f81, 0xff81, 0x7fff, 0xffff] {
+            let mut bytes = vec![0; QWEN3_VOCABULARY_SIZE as usize * 2];
+            bytes[..2].copy_from_slice(&0x7f7fu16.to_le_bytes());
+            let last = bytes.len() - 2;
+            bytes[last..].copy_from_slice(&bits.to_le_bytes());
+            assert_eq!(
+                select_lowest_finite_bf16_argmax(&bytes),
+                Err(FiniteBf16ArgmaxError::NonFinite {
+                    token: QWEN3_VOCABULARY_SIZE - 1
+                })
+            );
+            bytes[34..36].copy_from_slice(&bits.to_le_bytes());
+            assert_eq!(
+                select_lowest_finite_bf16_argmax(&bytes),
+                Err(FiniteBf16ArgmaxError::NonFinite { token: 17 })
+            );
+            bytes[..2].copy_from_slice(&bits.to_le_bytes());
+            assert_eq!(
+                select_lowest_finite_bf16_argmax(&bytes),
+                Err(FiniteBf16ArgmaxError::NonFinite { token: 0 })
+            );
         }
     }
 

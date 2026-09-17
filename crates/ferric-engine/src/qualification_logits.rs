@@ -20,7 +20,8 @@ use fe2o3_service_host::{
 };
 use ferric_build::{m1_step_workspace_requirements, M1StepWorkspaceRangeRole};
 use ferric_spec::{
-    finite_bf16_order_key, Qwen3ModelRole, Qwen3PlanSelection, TokenId, QWEN3_VOCABULARY_SIZE,
+    select_lowest_finite_bf16_argmax, FiniteBf16ArgmaxError, Qwen3ModelRole, Qwen3PlanSelection,
+    TokenId, QWEN3_VOCABULARY_SIZE,
 };
 use sha2::{Digest, Sha256};
 
@@ -988,27 +989,19 @@ fn lowest_id_finite_bf16_argmax(
         u64::from(QWEN3_VOCABULARY_SIZE) * M1_QUALIFICATION_LOGITS_ELEMENT_BYTES_V1,
     )
     .expect("the fixed M1 BF16 vocabulary row fits usize");
-    if bytes.len() != expected {
-        return Err(M1QualificationFinalLogitsErrorV1::RowExtent {
-            lane,
-            expected,
-            actual: bytes.len(),
-        });
-    }
-    let mut best_token = 0;
-    let mut best_value = i64::MIN;
-    for (token, encoded) in bytes.chunks_exact(2).enumerate() {
-        let bits = u16::from_le_bytes([encoded[0], encoded[1]]);
-        let token = TokenId::try_from(token).expect("the fixed M1 vocabulary fits TokenId");
-        let Some(value) = finite_bf16_order_key(bits) else {
-            return Err(M1QualificationFinalLogitsErrorV1::NonFinite { lane, token });
-        };
-        if value > best_value {
-            best_value = value;
-            best_token = token;
+    match select_lowest_finite_bf16_argmax(bytes) {
+        Ok(token) => Ok(token),
+        Err(FiniteBf16ArgmaxError::RowExtent) => {
+            Err(M1QualificationFinalLogitsErrorV1::RowExtent {
+                lane,
+                expected,
+                actual: bytes.len(),
+            })
+        }
+        Err(FiniteBf16ArgmaxError::NonFinite { token }) => {
+            Err(M1QualificationFinalLogitsErrorV1::NonFinite { lane, token })
         }
     }
-    Ok(best_token)
 }
 
 pub(crate) fn observe_m1_qualification_logits_v1(
@@ -1505,7 +1498,8 @@ pub(crate) mod tests {
             let scores: Vec<_> = row
                 .chunks_exact(2)
                 .map(|encoded| {
-                    finite_bf16_order_key(u16::from_le_bytes([encoded[0], encoded[1]])).unwrap()
+                    ferric_spec::finite_bf16_order_key(u16::from_le_bytes([encoded[0], encoded[1]]))
+                        .unwrap()
                 })
                 .collect();
             assert_eq!(ferric_spec::select_lowest_argmax(&scores), Ok(expected));
