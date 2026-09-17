@@ -5,6 +5,52 @@ receipt. The 33 M1 roadmap gates remain open.
 
 ## Current Checkpoint
 
+### Asrock Runtime Port CPU-Validated
+
+Isolated fe2o3 commit `e22d22dee508129379089c50cebb91cc952c6ee2`, tree
+`6c9fe45146af876f1628d1acd275953ddcbb99d5`, ports the exact mi350-2 Asrock
+engineering profile onto main-at-freeze `99897145`. Six files change. It
+retains the selected observation manifest on the bound device and reports
+that manifest from the identity probe. Default/gfx942 admission and strict
+KFD-to-PCI UID equality remain unchanged; no XCP exception or other diverged
+compiler work is imported. Independent source review finds no blocking defect.
+
+All execution stays on mi300x: 422 default-feature and 490 engineering-feature
+unit tests pass, with one existing test ignored in each selection. The UAPI
+integration suite passes 64 tests; compile-fail documentation
+contracts pass 27 default and 31 engineering tests. Both strict Clippy
+selections, formatting, the identity-probe build and engineering-worker build
+pass. All 5,184 final source files match the local committed tree. The first
+default build failed in libc's build script because the pinned Rust compiler
+could not load its LLVM library. That exit 101 is retained; R2 fixes only the
+owned launch environment's library path, without changing shared libraries.
+
+The 25,252,817-byte archive has SHA
+`b7de4fef3c6366ce2d3aaf1edba977d629b6e8ee7c3e3b10001e57fa33534d45`,
+371 payloads, 372 members and 11 executable producers. Its 24 recorded phases
+include the failed R1 and successful successors, not an all-green R1 claim.
+The retainer itself returns zero with its terminal records retained separately.
+Independent shell-only custody checks every payload, the closed archive roster,
+all raw test/phase records, both exact tree patches and the retained producers;
+no material discrepancy is found.
+
+This is not yet pushed to main or adopted into Ferric. Existing remote UAPI
+outputs match the frozen Rust layouts, and 15 installed-source plus 14 oracle
+ledger rows hash-match. Thirteen additional manifest source hashes, a fresh
+mi300x C-oracle producer closure and live checked binding remain unverified.
+During read-only follow-up, mi350-2 starts returning SSH public-key denial
+after its Conductor check; no alternate access or permission bypass is tried.
+There is no new native/Qwen result, performance measurement, protected proof
+or gfx942 qualification. All 33 M1 gates remain open.
+
+A later upstream query finds main `8cbd2a9410308c46e96ab670bccdf94a9d69d479`,
+five commits beyond the frozen base. Its 26-file delta updates exact KIR V12
+simulation and checked Policy3 lowerer consumers. KFD, UAPI and runtime source
+files are unchanged; Cargo.lock adds two dependencies only to the lowerer.
+No build is claimed for this newer source. The private port will require a
+fresh rebase/validation before any main push, and Ferric's integrated compiler
+pin remains 998 pending a separate adoption. Existing results are not relabeled.
+
 ### Compiler 998 Dependency Update Integrated
 
 Ferric `c54ac0b08d74cc5fbb5acf911d30715347d4e244`, tree
@@ -64,6 +110,12 @@ proof of a driver stall. The next generic optimization can reuse fe2o3's
 existing owned immutable initialization witness to remove the duplicate weight
 hash while preserving readback/currentness and Ferric's preflight-before-effect
 ordering. It is not implemented or measured at this checkpoint.
+
+A subsequent producer audit confirms that R3's actual initializer and runtime
+sha2 were built at optimization level 3. The separately recorded opt-level-0
+sha2 is a host/proc-macro artifact, not the runtime dependency. Debug hashing
+is therefore ruled out as the explanation; runtime backend selection and
+operation-level time attribution remain unobserved.
 
 ### BF16 Observer Wrapper Integrated
 
