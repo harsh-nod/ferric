@@ -315,6 +315,40 @@ kernel-emission, protected-proof, native or performance result. Matching tools
 and device artifacts must be rebuilt before the pending numerical comparison;
 old compiler272 products are not relabeled. All 33 M1 gates remain open.
 
+### Compiler 9b64 Tools Built
+
+The fresh mi300x four-tool campaign passes all six phases from
+10:16:59Z to 10:31:05Z on 2026-09-17, with campaign and launcher exit zero.
+Actual Cargo records establish new release `cargo-fe2o3` and linker-proxy
+producers plus debug backend and extractor producers at published compiler
+`9b64a2da7f81f7ca2649cb44142dbd2f3e268496`. The backend build script binds
+the newly produced CLI SHA. Upstream main is independently observed unchanged
+after the build; old compiler272 products are not reused or relabeled.
+
+The empty target and independent, non-reflink Cargo-home copy retain CPU0,
+nice19, one job, the original 10 GiB stage cap and 1,907,900 KiB admission
+reserve. The source, borrowed cache, installed toolchain and controls pass
+preservation checks. Six focused process-check tests and remote syntax checks
+precede execution. No vendor reserve exception, local build or GPU execution
+is used. Cancellation cleanup starts no new preservation phase and retains
+the first failure separately from later checks.
+
+Retained archive SHA is
+`37400450290e05f373a7f9e8388ff20652c53aab485c5339d0d48a9eec8126bc`
+(82,357,803 bytes). Independent verification passes all 160 payloads, 161
+members and 39 external records with exact signed-nanosecond metadata. It
+reconstructs all 5,176 canonical source files, the four raw Cargo producers,
+CLI-to-backend binding and independent cache-copy checks. All 25 recorded
+process entries pass fresh absence checks after terminal retention.
+
+The owned tool stage remains needed for matching artifact production. No new
+worktree is created; the completed compiler worktree remains removed. Next
+are the matching Ferric host, fresh vendor formation and kernel emission,
+then the pending GPU4 numerical capture. The separate LLVM worker retains
+its verified original producer attribution. This is engineering tool evidence,
+not full compiler, protected-proof, GPU, numerical or performance qualification.
+The historical numerical mismatch and all 33 M1 gates remain open.
+
 ### Earlier Published R23 Checkpoint
 
 The public site records the BF16 helper, source-bound host/proof results,
