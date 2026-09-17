@@ -5,6 +5,66 @@ receipt. The 33 M1 roadmap gates remain open.
 
 ## Current Checkpoint
 
+### Compiler 998 Dependency Update Integrated
+
+Ferric `c54ac0b08d74cc5fbb5acf911d30715347d4e244`, tree
+`cb43526162d2029e9b620fcbbecf593bc735a370`, adopts fe2o3
+`9989714525028db2e73bacfaa944f97fd3d5eeff`. It was published main when this
+validation was frozen. The exact 80-file update covers 30 manifests, 30 locks
+and 20 policy/declaration/inventory files. All 1,157 integrated source files
+match the validated remote final census before this tracker update.
+
+On mi300x, all 50 campaign phases pass: 32 locked graphs, 35 offline metadata
+queries after one fetch, both owning-edition formatting checks, two freshly
+built source-gate executables, all 48 source-gate tests, four actual dependency
+inventory derivations and normal coverage generation/validation. Three separate
+preflight phases also pass, including six lifecycle fixtures. The three verifier
+inventories change only the compiler revision; runtime inventory, coverage,
+Pliron and the separately pinned property binder remain unchanged.
+
+Archive `5212acb34f16f448d367903a8bb5a963fe32d399b73ccad728168f32ddc57570`
+is 24,607,654 bytes. Independent shell-only review checks all 25 external
+records, 1,964 payloads and 1,965 members, including exact nanosecond metadata,
+both genuine ELF producers, all terminal records and the complete source delta.
+Campaign, retention and cleanup checks return zero. All execution stays on
+mi300x, within the existing caps; no local or GitHub build is run.
+
+This validates dependency pins, graphs and source policy, not new compiler-tool
+emission, engine execution, GPU arithmetic, Verus proofs or performance. The
+latest compiler's production delta is still the checked local-helper/ranked-
+projection work described below; subsequent commits add tests, tutorial tooling
+and docs. Runtime/KFD/platform sources are unchanged from 9b64. Existing native
+and wrapper-proof results keep their original 9b64 attribution. The separate
+logical-sampler candidate is not integrated or claimed verified. All 33 M1
+gates remain open.
+
+### Native Capture R3 Timed Out
+
+A fresh GPU4 admission allowed the 7f1121f1 / 9b64 final-RMS attempt to run
+from 16:00:40 to 16:20:43 UTC on 2026-09-17. Checked KFD binding returned at
+154.883 cumulative seconds; the following complete memory-initialization call
+did not return before the unchanged 1,200-second command limit. Campaign and
+process exits are 124. No capture directory, logits or capture-pass record
+exists. This is a timeout, not the shared-GPU abort from the earlier attempts.
+The owned group is absent, and fresh observations show GPU4 restored to its
+original idle allocation. No foreign job or shared configuration was changed.
+
+The failure archive is
+`e9dba42ec89a7397e63d057ba4fc55f44b40462beca2a3f9871088499cf58db6`,
+4,524,837 bytes, with 52 payloads and 53 members. Root and independent custody
+checks pass; the receipt correctly retains capture-pass=false. No automatic
+retry or independent reference run follows this failed capture.
+
+A source audit narrows the unobserved interval: descriptor preparation hashes
+64 GiB of logical zero-KV input and hashes both weight images, after which KFD
+validation hashes the same 17,884,735,488 weight bytes again. Full weight
+copy/readback, zero-KV writes and later native mapping remain inside the same
+interval. These are source-established costs, not measured time attribution or
+proof of a driver stall. The next generic optimization can reuse fe2o3's
+existing owned immutable initialization witness to remove the duplicate weight
+hash while preserving readback/currentness and Ferric's preflight-before-effect
+ordering. It is not implemented or measured at this checkpoint.
+
 ### BF16 Observer Wrapper Integrated
 
 Ferric `a6e0be415fc741d6b1e17f9da66de8c1b4631104`, tree
@@ -71,6 +131,8 @@ platform, manifests and toolchain files are unchanged from 7581. No build or
 test was run by this incremental source audit; adoption remains pending.
 The published checkpoint's 7581 observation and all 9b64-bound results retain
 their original attribution.
+The completed 998 dependency update above supersedes the pending-adoption
+status of these historical observations without relabeling their evidence.
 
 ### mi350-2 Platform Compatibility
 
@@ -92,6 +154,14 @@ The engineering worker requires this check too; its machine-code opt-in
 does not bypass it. Supporting this host requires a separately identified
 and validated platform profile in fe2o3, not a relaxed check or host change.
 The surveyed model caches also lack the canonical Qwen3 target/draft pair.
+
+A later read-only DKMS/source/sysfs audit confirms that the existing engineering
+queue geometry and module parameters match this host. It identifies the mixed
+header closure: DKMS KFD/amdgpu UAPI headers precede the kernel's core DRM
+headers. Exact expanded historical compiler arguments are not retained.
+Current ioctl identity, XNACK, apertures, reset-fence and checked binding still
+need validation alongside an additive exact platform profile. Compiler 998
+does not change that requirement; no platform check is relaxed.
 
 Once those prerequisites are met, Ferric's existing gfx950 TP1 engineering
 path can be built on mi300x and executed here. It is not the pending gfx942
