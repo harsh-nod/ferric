@@ -438,6 +438,49 @@ GPU or local application build/test is run here, and no new worktree is
 created. This is dependency/engineering validation only: the numerical
 mismatch, protected-runtime limitation and all 33 M1 gates remain open.
 
+### Compiler 9b64 Emission Validated
+
+The matching 7f1121f1/compiler9b64 CPU-only emission passes on mi300x from
+12:49:32Z to 12:58:21Z on 2026-09-17. All 13 phases, command/cleanup exits,
+coordinator checks and launch/campaign statuses are zero. Inspection confirms
+13 gfx942:xnack- kernel entries and descriptors, code-object version 6,
+exact output replay and actual MFMA instruction evidence. The LLVM worker
+keeps its original producer216822/tree613ef attribution. No GPU is launched.
+
+The earlier R1 command produced the same artifact, but a whole-stage `du`
+raced with compiler scratch cleanup. Its controller125/wrapper143/command0
+statuses and absent inspection remain separately retained as a failed run.
+New scoped R2 controls allow one complete resample only for exact-emitter
+scratch ENOENTs, preserve rejected observations and still reject over-cap
+partial totals. Child timeouts, clean-result checks and original resource
+limits remain enforced. All 60 remote control cases pass; R2 itself needs no
+resample. The normal 512 MiB reserve fits the unchanged 10 GiB stage cap, and
+the historical one-run 384 MiB approval is not reused.
+
+Artifact digest is
+`feb0124fb88fc2a97efca6a357f442e05d94b593e1b01c6acdbb35f93282ecde`.
+The 113,192-byte HSACO SHA is
+`b73a25170b87a61710c04f0d0416822112e0525cdc1d6e71b632366ec9a956d7`.
+The retained archive SHA is
+`c82d5f993c49b0143e46ef56484cd036a9616c7207f789798e2a2de199715c00`
+(1,924,709 bytes). Independent shell custody verifies all 503 payloads,
+505 members and 22 external records with exact signed-nanosecond metadata,
+14 zero global statuses, all phases and artifact/inspection linkage. All
+43 recorded process entries are freshly absent; this is not a unique-PID
+count. Retention's 25 conditional resource cases pass on mi300x.
+
+The next native candidate binds these actual host/tool/emission identities.
+Its command and both retainers require the exact 24+3 host phase schema and
+authenticate the emission receipt, summary, manifest and archive instead of
+only syntax-checking hash strings. All 63 remote validator cases and separate
+checks against the actual retained records pass. The candidate remains unready
+for GPU execution until fresh GPU4 admission and frozen launch controls.
+
+Next is final-RMS capture and its separately admitted independent reference.
+No new TTFT/TPOT, numerical acceptance, protected proof qualification or M1
+closure follows from compiler emission. All 33 M1 gates remain open. Builds
+and application tests stay on mi300x; no worktree or foreign job is touched.
+
 ### Earlier Published R23 Checkpoint
 
 The public site records the BF16 helper, source-bound host/proof results,
