@@ -40,8 +40,19 @@ model intake or GPU dispatch: the staging path omitted the required immediate
 parent `fe2o3-engineering-v1`. Its controller/process groups are absent and
 raw failure records remain unchanged. A fresh attempt corrects only the path
 constraint and uses new run/control/admission owners; no executable, kernel
-bytes or resource limits change. No new Qwen output, TP8 result, TTFT or TPOT
-is claimed. All 33 M1 gates remain open.
+bytes or resource limits change. R2 stops before launch because the transferred
+intake authorization is mode0644 rather than required0600. Independent byte
+custody passes for both failed attempts, retaining the failures explicitly.
+
+R3 verifies the corrected authorization mode/UID/link count/size/hash, obtains
+fresh GPU admission, and passes artifact admission. Its last observed progress
+is `artifact admitted; authenticating canonical Qwen source`, with about 15.4 GiB
+group RSS at 21:33:48Z. The SSH session subsequently returns 255 with a server
+timeout; fresh bounded SSH attempts to both mi350 and mi300x also time out at
+22:55 UTC. R3's terminal status, model-intake completion, worker/dispatch state
+and cleanup are not yet observable. Do not relaunch or delete its files before
+recovering those records. No new Qwen output, TP8 result, TTFT or TPOT is claimed.
+All 33 M1 gates remain open.
 
 ### mi350 Model Transport And Loader Checks Pass
 
