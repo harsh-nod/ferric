@@ -283,9 +283,9 @@ pub fn finite_bf16_order_key(bits: u16) -> (key: Option<i64>)
     if magnitude >= 32_640 {
         None
     } else if bits < 32_768 {
-        Some(i64::from(magnitude))
+        Some(magnitude as i64)
     } else {
-        Some(-i64::from(magnitude))
+        Some(-(magnitude as i64))
     }
 }
 
