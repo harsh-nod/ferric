@@ -5,6 +5,24 @@ receipt. The 33 M1 roadmap gates remain open.
 
 ## Current Checkpoint
 
+### Published September 17 Checkpoint
+
+The public site at <https://harsh-nod.github.io/ferric/> now publishes the EOS,
+atomic prepack, compiler 9f8 adoption and failed single vendor attempt recorded
+below. Private source `2dcec621` passes all five mi300x-only Pages phases,
+including every width 320..1440, eight viewports, 64 screenshots and unchanged
+source/runtime/browser checks. All 133 payload identities, the exact 134-member
+archive roster and 20 external hashes pass independent custody checks. Archive
+SHA-256 is `2de2c155db9e9800b544ac4b3e76c3eb73129eea31145396e8b8a1f4c9aec422`.
+
+Static commit `a984022d2f8349768f239b40a23d8d7475faa7f3` is deployed by the
+single successful deploy-only run `35171182331`. All seven canonical and seven
+cache-busted live asset requests match the validated artifact. No GitHub build
+or test runs. The completed 3,460 KiB Pages worktree is removed; its source
+commit and evidence remain. Remote cleanup stops before deletion on incomplete
+lsof visibility, leaving 51,108 KiB of this Pages staging retained. No foreign
+session or user worktree is touched. This publication adds no qualification.
+
 ### Healthy Resident Prefill Stop
 
 `eed0ad074af3991f522f93bb495a1c10549fe8fe` handles an authenticated stop
