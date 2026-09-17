@@ -18,9 +18,9 @@ use fe2o3_service_host::{
     HostDownloadRoleV1, HostVisibleAllocationV1, ServiceAllocationErrorV1, ServiceAllocationKeyV1,
     ServiceAllocationSessionV1, ServiceCompletedReadbackV1, ServiceHostDispatchRangeV1,
 };
-use ferric_build::{M1StepWorkspaceRangeRole, m1_step_workspace_requirements};
+use ferric_build::{m1_step_workspace_requirements, M1StepWorkspaceRangeRole};
 use ferric_spec::{
-    QWEN3_VOCABULARY_SIZE, Qwen3ModelRole, Qwen3PlanSelection, TokenId, finite_bf16_order_key,
+    finite_bf16_order_key, Qwen3ModelRole, Qwen3PlanSelection, TokenId, QWEN3_VOCABULARY_SIZE,
 };
 use sha2::{Digest, Sha256};
 
@@ -1200,13 +1200,11 @@ pub(crate) mod tests {
                     .is_err()
             );
         }
-        assert!(
-            m1_engineering_s1_k4_logits_shape_v1(Qwen3PlanSelection {
-                role: Qwen3ModelRole::Draft06B,
-                ..exact
-            })
-            .is_err()
-        );
+        assert!(m1_engineering_s1_k4_logits_shape_v1(Qwen3PlanSelection {
+            role: Qwen3ModelRole::Draft06B,
+            ..exact
+        })
+        .is_err());
     }
 
     #[test]
@@ -1254,10 +1252,14 @@ pub(crate) mod tests {
                 Err(M1EngineeringS1K4LogitsErrorV1::Geometry(_))
             ));
         }
-        assert!(
-            validate_engineering_s1_k4_logits(shape, 64, 9, coordinates, &bytes[..bytes.len() - 2])
-                .is_err()
-        );
+        assert!(validate_engineering_s1_k4_logits(
+            shape,
+            64,
+            9,
+            coordinates,
+            &bytes[..bytes.len() - 2]
+        )
+        .is_err());
         for index in 0..5 {
             let mut missing = bytes.clone();
             let (start, end) = engineering_s1_k4_row_bounds(shape, index).unwrap();
@@ -1347,17 +1349,15 @@ pub(crate) mod tests {
         ] {
             assert!(validate_engineering_s1_k4_capture(shape, 64, 9, wrong, &bytes, true).is_err());
         }
-        assert!(
-            validate_engineering_s1_k4_capture(
-                shape,
-                64,
-                9,
-                coordinates,
-                &bytes[..bytes.len() - 2],
-                true
-            )
-            .is_err()
-        );
+        assert!(validate_engineering_s1_k4_capture(
+            shape,
+            64,
+            9,
+            coordinates,
+            &bytes[..bytes.len() - 2],
+            true
+        )
+        .is_err());
         for (workspace, offset) in engineering_final_rms_workspace_offsets(shape)
             .unwrap()
             .into_iter()
@@ -1555,11 +1555,9 @@ pub(crate) mod tests {
                     .unwrap(),
                 shape.extent_bytes() - shape.row_bytes()
             );
-            assert!(
-                last_first
-                    .checked_add(shape.row_bytes())
-                    .is_some_and(|end| end <= shape.extent_bytes())
-            );
+            assert!(last_first
+                .checked_add(shape.row_bytes())
+                .is_some_and(|end| end <= shape.extent_bytes()));
         }
     }
 

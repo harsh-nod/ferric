@@ -48,8 +48,8 @@ pub use graph::{
 };
 pub use identity::{Identity, RequestId};
 pub use m1_completion::{
-    finite_bf16_order_key, select_lowest_argmax, validate_compact_completion, CompactCompletionError,
-    CompactCompletionRecord, M1_MAX_COMPLETION_TOKENS,
+    finite_bf16_order_key, select_lowest_argmax, validate_compact_completion,
+    CompactCompletionError, CompactCompletionRecord, M1_MAX_COMPLETION_TOKENS,
 };
 pub use m1_new_window_cardinality::{
     plan_m1_new_window_cardinality_v1, M1NewWindowCardinalityPlanErrorV1,
