@@ -16,11 +16,12 @@ use std::collections::VecDeque;
 use ferric_engine::{
     Engine, M1AuthenticatedPhysicalRunnerV1, M1AuthenticatedResidentCloseV1,
     M1AuthenticatedResidentSessionV1, M1AuthenticatedResidentWindowInputV1,
-    M1AuthenticatedS1T128PrefillBootstrapFailureV1, M1AuthenticatedS1T128PrefillBootstrapInputV1,
-    M1AuthenticatedS1T128PrefillPrepublicationV1, M1AuthenticatedTargetWindowClockStartV1,
-    M1AuthenticatedTargetWindowExecutionFailureV1, M1AuthenticatedTargetWindowExecutionSuccessV1,
-    M1AuthenticatedTargetWindowRoundPlansV1, M1PartitionedModelMemoryKvPoolV1,
-    M1QueueWaitTimeoutV1, execute_m1_authenticated_resident_first_window_v1,
+    M1AuthenticatedResidentWindowOutcomeV1, M1AuthenticatedS1T128PrefillBootstrapFailureV1,
+    M1AuthenticatedS1T128PrefillBootstrapInputV1, M1AuthenticatedS1T128PrefillPrepublicationV1,
+    M1AuthenticatedTargetWindowClockStartV1, M1AuthenticatedTargetWindowExecutionFailureV1,
+    M1AuthenticatedTargetWindowExecutionSuccessV1, M1AuthenticatedTargetWindowRoundPlansV1,
+    M1PartitionedModelMemoryKvPoolV1, M1QueueWaitTimeoutV1,
+    execute_m1_authenticated_resident_first_window_v1,
     execute_m1_authenticated_resident_next_window_v1,
     execute_m1_authenticated_s1_t128_target_window_v1,
     prepare_m1_authenticated_s1_t128_prefill_prepublication_v1,
@@ -1302,6 +1303,28 @@ impl M1R33AuthorityFreeBackendV1 for M1R33AuthenticatedProductionBackendV1 {
                     |_, timeout| deadline.bounded_queue_timeout(timeout),
                 ) {
                     Ok(success) => {
+                        let success = match success {
+                            M1AuthenticatedResidentWindowOutcomeV1::Resident(success) => success,
+                            M1AuthenticatedResidentWindowOutcomeV1::Terminal(terminal) => {
+                                let closed = terminal.into_close();
+                                self.state.state = BackendStateV1::Faulted {
+                                    binding,
+                                    custody: FaultedCustodyV1::Active(ActiveCustodyV1 {
+                                        runner: M1R33AuthenticatedRunnerCustodyV1::ResidentClosed {
+                                            _custody: closed,
+                                            _pending: pending,
+                                        },
+                                        model_memory: M1R33AuthenticatedMemoryCustodyV1::Joined,
+                                        engine: M1R33EngineCustodyV1::Joined,
+                                    }),
+                                };
+                                return Err(fault(if deadline.expired() {
+                                    FAULT_DEADLINE_EXPIRED
+                                } else {
+                                    FAULT_EXECUTION_REJECTED
+                                }));
+                            }
+                        };
                         let (session, tokens, timing) = success.into_parts();
                         let report = match (
                             resident_report(window, tokens.len(), timing),
@@ -1405,6 +1428,28 @@ impl M1R33AuthorityFreeBackendV1 for M1R33AuthenticatedProductionBackendV1 {
                     |_, timeout| deadline.bounded_queue_timeout(timeout),
                 ) {
                     Ok(success) => {
+                        let success = match success {
+                            M1AuthenticatedResidentWindowOutcomeV1::Resident(success) => success,
+                            M1AuthenticatedResidentWindowOutcomeV1::Terminal(terminal) => {
+                                let closed = terminal.into_close();
+                                self.state.state = BackendStateV1::Faulted {
+                                    binding,
+                                    custody: FaultedCustodyV1::Active(ActiveCustodyV1 {
+                                        runner: M1R33AuthenticatedRunnerCustodyV1::ResidentClosed {
+                                            _custody: closed,
+                                            _pending: pending,
+                                        },
+                                        model_memory: M1R33AuthenticatedMemoryCustodyV1::Joined,
+                                        engine: M1R33EngineCustodyV1::Joined,
+                                    }),
+                                };
+                                return Err(fault(if deadline.expired() {
+                                    FAULT_DEADLINE_EXPIRED
+                                } else {
+                                    FAULT_EXECUTION_REJECTED
+                                }));
+                            }
+                        };
                         let (session, tokens, timing) = success.into_parts();
                         let report = match (
                             resident_report(window, tokens.len(), timing),
@@ -1917,6 +1962,20 @@ mod tests {
         assert_faulted_resident_closes_once(&mut backend, &closes);
     }
 
+    #[test]
+    fn prefill_terminal_close_does_not_repeat_native_destruction() {
+        let destruction_count = Rc::new(Cell::new(0));
+        let closed = close_model_resident(ModelResidentSession(Rc::clone(&destruction_count)));
+        let owner = M1R33ResidentStopOwnerV1::<ModelResidentSession, _, _>::Closed {
+            closed,
+            pending: vec![1, 2, 3],
+        };
+        let (closed, pending) = close_resident_stop_owner(owner, close_model_resident);
+        assert_eq!(closed, ModelResidentClosed);
+        assert_eq!(pending, [1, 2, 3]);
+        assert_eq!(destruction_count.get(), 1);
+    }
+
     fn backend() -> (
         BackendStateMachineV1<DropWitness, DropWitness, usize>,
         Rc<Cell<usize>>,
@@ -2112,6 +2171,36 @@ mod tests {
                 server_start: 0,
                 window: 0,
             },
+        }
+    }
+
+    #[test]
+    fn one_token_prefill_stop_is_not_a_fixed_length_measurement() {
+        let window = r33_window(vec![1; 128], 2);
+        for output_tokens in [1, 2] {
+            let report = M1R33MeasurementReportV1 {
+                clock: M1_R33_CLOCK_V1.to_owned(),
+                duration_boundary: M1_R33_DURATION_BOUNDARY_V1.to_owned(),
+                duration_ns: 30_000,
+                failed_requests: 0,
+                input_tokens: 128,
+                output_tokens,
+                request_events: vec![M1R33RequestEventWireV1 {
+                    arrival_offset_ns: 0,
+                    first_token_offset_ns: 10_000,
+                    input_tokens: 128,
+                    output_tokens,
+                    request_ordinal: 0,
+                    terminal_offset_ns: 20_000,
+                }],
+                request_timing_boundaries: M1_R33_TIMING_BOUNDARIES_V1.to_owned(),
+                successful_requests: 1,
+                total_tokens: 128 + output_tokens,
+            };
+            assert_eq!(
+                report.validate_against(&window.row.expected_work).is_ok(),
+                output_tokens == 2
+            );
         }
     }
 

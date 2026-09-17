@@ -287,7 +287,8 @@ pub use authenticated_resident_session::{
     execute_m1_authenticated_resident_next_window_v1, M1AuthenticatedResidentCloseV1,
     M1AuthenticatedResidentFailureV1, M1AuthenticatedResidentRoundPlansV1,
     M1AuthenticatedResidentSessionV1, M1AuthenticatedResidentStageV1,
-    M1AuthenticatedResidentWindowInputV1, M1AuthenticatedResidentWindowSuccessV1,
+    M1AuthenticatedResidentTerminalWindowSuccessV1, M1AuthenticatedResidentWindowInputV1,
+    M1AuthenticatedResidentWindowOutcomeV1, M1AuthenticatedResidentWindowSuccessV1,
     M1_AUTHENTICATED_RESIDENT_MAX_OUTPUT_TOKENS_V1, M1_AUTHENTICATED_RESIDENT_WINDOWS_V1,
 };
 pub use authenticated_speculative_executor::{

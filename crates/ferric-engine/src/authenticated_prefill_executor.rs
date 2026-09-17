@@ -268,6 +268,113 @@ fn require_one_authenticated_prefill_choice(
     Ok(*choice)
 }
 
+fn retire_prefill_stop(
+    retire_stop_tokens: bool,
+    policy: M1SpeculativeGenerationPolicyV1,
+    token: TokenId,
+) -> bool {
+    retire_stop_tokens && policy.stop_tokens().contains(&token)
+}
+
+#[must_use = "completed prefill custody must continue or close"]
+pub(crate) enum M1AuthenticatedResidentPrefillOutcomeV1<const C: usize> {
+    Continuing(M1AuthenticatedS1T128PrefillExecutionSuccessV1<C>),
+    Terminal(M1AuthenticatedTerminalPrefillV1<C>),
+}
+
+#[must_use = "terminal prefill custody still owns its native queue"]
+pub(crate) struct M1AuthenticatedTerminalPrefillV1<const C: usize> {
+    engine: Engine<C>,
+    released: M1AuthenticatedReleasedCompletedStepV1,
+    first_token: TokenId,
+    direct_choices: M1ObservedDirectDiagnosticChoicesV1,
+    successor: M1AuthenticatedS1T128PrefillSuccessorCustodyV1,
+}
+
+impl<const C: usize> M1AuthenticatedTerminalPrefillV1<C> {
+    pub(crate) const fn first_token(&self) -> TokenId {
+        self.first_token
+    }
+
+    pub(crate) const fn policy(&self) -> M1SpeculativeGenerationPolicyV1 {
+        self.successor.policy
+    }
+
+    pub(crate) fn reject(self) -> Box<M1AuthenticatedS1T128PrefillExecutionFailureV1<C>> {
+        let Self {
+            mut engine,
+            released,
+            first_token,
+            direct_choices,
+            successor,
+        } = self;
+        let teardown = released.destroy_queue_and_retain_step(&mut engine);
+        let status = teardown_result_status(&teardown);
+        terminal_failure(
+            engine,
+            M1AuthenticatedS1T128PrefillExecutionStageV1::PrefillPageRelease,
+            M1AuthenticatedS1T128PrefillExecutionErrorV1::LowerRejected,
+            status,
+            (teardown, first_token, direct_choices, successor),
+        )
+    }
+
+    pub(crate) fn shutdown_for_resident(
+        self,
+    ) -> Result<
+        crate::authenticated_resident_session::M1AuthenticatedResidentQueueTeardownV1,
+        crate::authenticated_resident_session::M1AuthenticatedResidentQueueTeardownV1,
+    > {
+        use crate::authenticated_resident_session::M1AuthenticatedResidentQueueTeardownV1 as Teardown;
+        let Self {
+            mut engine,
+            released,
+            first_token,
+            direct_choices,
+            successor,
+        } = self;
+        let retained = (first_token, direct_choices, successor);
+        match released.shutdown_all_terminal_queue(&mut engine) {
+            Ok(closed) => Ok(Teardown::released((engine, closed, retained))),
+            Err(crate::M1AuthenticatedReleasedAllTerminalQueueShutdownFailureV1::Rejected(
+                rejection,
+            )) => {
+                let (error, released) = rejection.into_parts();
+                match released.destroy_queue_and_retain_step(&mut engine) {
+                    Ok(closed) => Err(Teardown::released((engine, closed, retained, error))),
+                    Err(quarantined) => Err(Teardown::quarantined((
+                        engine,
+                        quarantined,
+                        retained,
+                        error,
+                    ))),
+                }
+            }
+            Err(crate::M1AuthenticatedReleasedAllTerminalQueueShutdownFailureV1::Quarantined(
+                quarantined,
+            )) => Err(Teardown::quarantined((engine, quarantined, retained))),
+        }
+    }
+}
+
+impl<const C: usize> M1AuthenticatedResidentPrefillOutcomeV1<C> {
+    pub(crate) fn first_token(&self) -> TokenId {
+        match self {
+            Self::Continuing(value) => value.first_token(),
+            Self::Terminal(value) => value.first_token(),
+        }
+    }
+
+    pub(crate) fn close_for_resident(
+        self,
+    ) -> crate::authenticated_resident_session::M1AuthenticatedResidentQueueTeardownV1 {
+        match self {
+            Self::Continuing(value) => value.close_for_resident(),
+            Self::Terminal(value) => value.reject().into_resident_teardown(),
+        }
+    }
+}
+
 /// Rollover-ready custody after one exact authenticated paired-prefill step.
 ///
 /// The first token is copied only from authenticated direct-choice evidence.
@@ -490,12 +597,16 @@ pub fn execute_m1_authenticated_s1_t128_paired_prefill_v1<const C: usize>(
     M1AuthenticatedS1T128PrefillExecutionSuccessV1<C>,
     Box<M1AuthenticatedS1T128PrefillExecutionFailureV1<C>>,
 > {
-    execute_m1_authenticated_s1_t128_paired_prefill_with_deadline_v1(
+    match execute_m1_authenticated_s1_t128_paired_prefill_with_deadline_v1(
         prepared,
         diagnostic_ring_bytes,
         queue_wait_timeout,
+        false,
         |_, configured| Some(configured),
-    )
+    )? {
+        M1AuthenticatedResidentPrefillOutcomeV1::Continuing(success) => Ok(success),
+        M1AuthenticatedResidentPrefillOutcomeV1::Terminal(terminal) => Err(terminal.reject()),
+    }
 }
 
 #[allow(clippy::too_many_lines)]
@@ -503,12 +614,13 @@ pub(crate) fn execute_m1_authenticated_s1_t128_paired_prefill_with_deadline_v1<c
     prepared: M1AuthenticatedS1T128PrefillPrepublicationV1<C>,
     diagnostic_ring_bytes: u32,
     queue_wait_timeout: M1QueueWaitTimeoutV1,
+    retire_stop_tokens: bool,
     mut deadline_expired: impl FnMut(
         crate::authenticated_resident_session::M1AuthenticatedResidentDeadlineBoundaryV1,
         M1QueueWaitTimeoutV1,
     ) -> Option<M1QueueWaitTimeoutV1>,
 ) -> Result<
-    M1AuthenticatedS1T128PrefillExecutionSuccessV1<C>,
+    M1AuthenticatedResidentPrefillOutcomeV1<C>,
     Box<M1AuthenticatedS1T128PrefillExecutionFailureV1<C>>,
 > {
     use crate::authenticated_resident_session::{
@@ -787,7 +899,12 @@ pub(crate) fn execute_m1_authenticated_s1_t128_paired_prefill_with_deadline_v1<c
             (teardown, cache, successor),
         ));
     }
-    members.push(M1DeviceKvCompletionMemberV1::continuing(cache));
+    let terminal = retire_prefill_stop(retire_stop_tokens, policy, first_token);
+    members.push(if terminal {
+        M1DeviceKvCompletionMemberV1::retiring(cache)
+    } else {
+        M1DeviceKvCompletionMemberV1::continuing(cache)
+    });
     let (readback, direct_choices) = direct.into_parts();
     if deadline_expired(Boundary::BeforeSettlement, queue_wait_timeout).is_none() {
         let closure = close_prefill_readback(&mut engine, readback);
@@ -882,19 +999,34 @@ pub(crate) fn execute_m1_authenticated_s1_t128_paired_prefill_with_deadline_v1<c
         ));
     }
 
-    Ok(M1AuthenticatedS1T128PrefillExecutionSuccessV1 {
-        engine,
-        released,
-        first_token,
-        direct_choices,
-        successor,
-    })
+    if terminal {
+        Ok(M1AuthenticatedResidentPrefillOutcomeV1::Terminal(
+            M1AuthenticatedTerminalPrefillV1 {
+                engine,
+                released,
+                first_token,
+                direct_choices,
+                successor,
+            },
+        ))
+    } else {
+        Ok(M1AuthenticatedResidentPrefillOutcomeV1::Continuing(
+            M1AuthenticatedS1T128PrefillExecutionSuccessV1 {
+                engine,
+                released,
+                first_token,
+                direct_choices,
+                successor,
+            },
+        ))
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use super::{
-        require_one_authenticated_prefill_choice, M1AuthenticatedS1T128PrefillExecutionErrorV1,
+        require_one_authenticated_prefill_choice, retire_prefill_stop,
+        M1AuthenticatedS1T128PrefillExecutionErrorV1,
     };
     use crate::M1ObservedDirectDiagnosticChoicesV1;
 
@@ -928,6 +1060,29 @@ mod tests {
     }
 
     #[test]
+    fn resident_prefill_stop_retires_only_configured_tokens_and_preserves_legacy() {
+        let policy = crate::M1SpeculativeGenerationPolicyV1::qwen3(7).unwrap();
+        for token in [
+            ferric_spec::QWEN3_END_OF_TEXT_TOKEN,
+            ferric_spec::QWEN3_IM_END_TOKEN,
+        ] {
+            assert!(retire_prefill_stop(true, policy, token));
+            assert!(!retire_prefill_stop(false, policy, token));
+            assert_eq!(
+                require_one_authenticated_prefill_choice(&choices(&[token])),
+                Ok(token)
+            );
+        }
+        assert!(!retire_prefill_stop(true, policy, 17));
+        let no_stops = crate::M1SpeculativeGenerationPolicyV1::new(7, &[]).unwrap();
+        assert!(!retire_prefill_stop(
+            true,
+            no_stops,
+            ferric_spec::QWEN3_IM_END_TOKEN
+        ));
+    }
+
+    #[test]
     fn production_source_pins_post_join_completion_and_release_order() {
         let source = include_str!("authenticated_prefill_executor.rs");
         let production = source
@@ -938,9 +1093,11 @@ mod tests {
         let ordered = [
             "direct.check_completion()",
             "require_one_authenticated_prefill_choice(direct.choices())",
+            "retire_prefill_stop(retire_stop_tokens, policy, first_token)",
+            "M1DeviceKvCompletionMemberV1::retiring(cache)",
             "complete_m1_authenticated_physical_step_v1(",
             "release_m1_authenticated_completed_step_kv_pages_v1(physical)",
-            "Ok(M1AuthenticatedS1T128PrefillExecutionSuccessV1",
+            "Ok(M1AuthenticatedResidentPrefillOutcomeV1::Continuing",
         ];
         let mut prior = 0;
         for needle in ordered {

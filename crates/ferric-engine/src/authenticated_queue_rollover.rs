@@ -6549,6 +6549,49 @@ impl M1AuthenticatedSpeculativeNewWindowReleasedV1 {
         )
     }
 
+    pub(crate) fn shutdown_terminal_for_resident<const C: usize>(
+        self,
+        engine: &mut Engine<C>,
+    ) -> Result<
+        crate::authenticated_resident_session::M1AuthenticatedResidentQueueTeardownV1,
+        crate::authenticated_resident_session::M1AuthenticatedResidentQueueTeardownV1,
+    > {
+        use crate::authenticated_resident_session::M1AuthenticatedResidentQueueTeardownV1 as Teardown;
+        if self.member_count != 1
+            || self.member(0).is_none_or(|member| {
+                member.status()
+                    != M1AuthenticatedSpeculativeNewWindowReleasedMemberStatusV1::Retired
+            })
+        {
+            return Err(Teardown::from_speculative_disposition(
+                self.cancel_and_close(engine),
+            ));
+        }
+        let Self {
+            released,
+            members,
+            member_count,
+            selection,
+            epoch,
+        } = self;
+        let retained = (members, member_count, selection, epoch);
+        match released.shutdown_all_terminal_queue(engine) {
+            Ok(closed) => Ok(Teardown::released((closed, retained))),
+            Err(crate::M1AuthenticatedLongLivedQueueAllTerminalShutdownFailureV1::Rejected(
+                rejection,
+            )) => {
+                let (error, released) = rejection.into_parts();
+                match released.destroy_queue_and_retain_round(engine) {
+                    Ok(closed) => Err(Teardown::released((closed, retained, error))),
+                    Err(quarantined) => Err(Teardown::quarantined((quarantined, retained, error))),
+                }
+            }
+            Err(crate::M1AuthenticatedLongLivedQueueAllTerminalShutdownFailureV1::Quarantined(
+                quarantined,
+            )) => Err(Teardown::quarantined((quarantined, retained))),
+        }
+    }
+
     pub(crate) fn cancel_and_close<const C: usize>(
         self,
         engine: &mut Engine<C>,
@@ -10209,7 +10252,8 @@ mod tests {
             .unwrap();
         let released = &production[released_start..released_end];
         assert!(released.contains("pub fn schedule_successor<const C: usize>("));
-        assert!(!released.contains("into_parts"));
+        assert!(!released.contains("pub fn into_parts"));
+        assert!(!released.contains("pub(crate) fn into_parts"));
         assert!(!released.contains("current_released"));
 
         assert!(production.contains(

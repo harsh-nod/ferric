@@ -1928,6 +1928,15 @@ fn authenticated_resident_path_is_exact_bounded_and_phase_ordered() {
             .split_once("Ok(success) =>")
             .unwrap()
             .1;
+        let (terminal, success) = success
+            .split_once("let (session, tokens, timing) = success.into_parts();")
+            .unwrap();
+        assert!(terminal.contains("M1AuthenticatedResidentWindowOutcomeV1::Terminal(terminal)"));
+        let terminal_close = terminal.find("terminal.into_close()").unwrap();
+        let terminal_fault = terminal.find("return Err(fault(").unwrap();
+        assert!(terminal_close < terminal_fault);
+        assert!(terminal.contains("ResidentClosed"));
+        assert!(!terminal.contains("return Ok(report)"));
         let report = success
             .find("resident_report(window, tokens.len(), timing)")
             .unwrap();

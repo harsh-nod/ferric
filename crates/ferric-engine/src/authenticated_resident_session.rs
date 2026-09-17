@@ -553,6 +553,7 @@ pub enum M1AuthenticatedResidentStageV1 {
     Cancellation,
     WindowLimit,
     Timing,
+    TerminalShutdown,
 }
 
 /// Opaque exhaustive custody for any resident transition failure.
@@ -849,6 +850,147 @@ impl<const C: usize> M1AuthenticatedResidentWindowSuccessV1<C> {
     ) {
         (self.session, self.tokens, self.timing)
     }
+}
+
+/// A completed resident window either retains its executor or closes at prefill.
+#[must_use = "window outcome custody must remain retained"]
+#[derive(Debug)]
+// Keep the resident success inline: publication must not add a heap allocation.
+#[allow(clippy::large_enum_variant)]
+pub enum M1AuthenticatedResidentWindowOutcomeV1<const C: usize> {
+    Resident(M1AuthenticatedResidentWindowSuccessV1<C>),
+    Terminal(M1AuthenticatedResidentTerminalWindowSuccessV1),
+}
+
+/// One authenticated prefill stop token after confirmed healthy queue shutdown.
+///
+/// This owner cannot resume a resident session or expose device capabilities.
+///
+/// ```compile_fail
+/// use ferric_engine::M1AuthenticatedResidentTerminalWindowSuccessV1;
+/// fn require_clone<T: Clone>() {}
+/// require_clone::<M1AuthenticatedResidentTerminalWindowSuccessV1>();
+/// ```
+///
+/// ```compile_fail
+/// use ferric_engine::M1AuthenticatedResidentTerminalWindowSuccessV1;
+/// fn resume(value: M1AuthenticatedResidentTerminalWindowSuccessV1) {
+///     let _ = value.into_session();
+/// }
+/// ```
+///
+/// ```compile_fail
+/// use ferric_engine::{execute_m1_authenticated_resident_next_window_v1,
+///     M1AuthenticatedResidentTerminalWindowSuccessV1, M1AuthenticatedResidentWindowInputV1,
+///     M1AuthenticatedTargetWindowClockStartV1};
+/// fn next(clock: M1AuthenticatedTargetWindowClockStartV1,
+///     terminal: M1AuthenticatedResidentTerminalWindowSuccessV1,
+///     input: M1AuthenticatedResidentWindowInputV1) {
+///     let _ = execute_m1_authenticated_resident_next_window_v1::<1>(
+///         clock, terminal, input, |_, timeout| Some(timeout));
+/// }
+/// ```
+#[must_use = "terminal window evidence and closed custody remain linear"]
+#[derive(Debug)]
+pub struct M1AuthenticatedResidentTerminalWindowSuccessV1 {
+    tokens: [TokenId; 1],
+    timing: M1AuthenticatedTargetWindowTimingV1,
+    closed: M1AuthenticatedResidentCloseV1,
+}
+
+impl M1AuthenticatedResidentTerminalWindowSuccessV1 {
+    #[must_use]
+    pub const fn tokens(&self) -> &[TokenId; 1] {
+        &self.tokens
+    }
+
+    #[must_use]
+    pub const fn timing(&self) -> M1AuthenticatedTargetWindowTimingV1 {
+        self.timing
+    }
+
+    #[must_use]
+    pub const fn reason(&self) -> crate::M1SpeculativeTerminalReasonV1 {
+        crate::M1SpeculativeTerminalReasonV1::StopToken {
+            token: self.tokens[0],
+        }
+    }
+
+    /// Retains the published token and timing with the already-confirmed close.
+    #[must_use = "terminal close retains the complete window report"]
+    pub fn into_close(self) -> M1AuthenticatedResidentCloseV1 {
+        let Self {
+            tokens,
+            timing,
+            closed,
+        } = self;
+        M1AuthenticatedResidentCloseV1 {
+            status: closed.status,
+            engine_quarantined: closed.engine_quarantined,
+            retained: Box::new((closed.retained, tokens, timing)),
+        }
+    }
+}
+
+fn terminal_window_success(
+    token: TokenId,
+    policy: crate::M1SpeculativeGenerationPolicyV1,
+    timing: M1AuthenticatedTargetWindowTimingV1,
+    engine_quarantined: bool,
+    teardown: M1AuthenticatedResidentQueueTeardownV1,
+) -> Result<M1AuthenticatedResidentTerminalWindowSuccessV1, Box<M1AuthenticatedResidentFailureV1>> {
+    if engine_quarantined
+        || teardown.status != M1AuthenticatedResidentQueueTeardownStatusV1::Released
+        || !policy.stop_tokens().contains(&token)
+    {
+        return Err(resident_failure(
+            M1AuthenticatedResidentStageV1::TerminalShutdown,
+            engine_quarantined,
+            teardown.retain((token, policy, timing)),
+        ));
+    }
+    Ok(M1AuthenticatedResidentTerminalWindowSuccessV1 {
+        tokens: [token],
+        timing,
+        closed: M1AuthenticatedResidentCloseV1 {
+            status: teardown.status,
+            engine_quarantined,
+            retained: teardown.retained,
+        },
+    })
+}
+
+fn finish_terminal_prefill(
+    clock_start: M1AuthenticatedTargetWindowClockStartV1,
+    first_token_offset_ns: u64,
+    token: TokenId,
+    policy: crate::M1SpeculativeGenerationPolicyV1,
+    engine_quarantined: bool,
+    teardown: M1AuthenticatedResidentQueueTeardownV1,
+) -> Result<M1AuthenticatedResidentTerminalWindowSuccessV1, Box<M1AuthenticatedResidentFailureV1>> {
+    let duration_ns = match clock_start.elapsed_ns() {
+        Ok(value) => value,
+        Err(error) => {
+            return Err(resident_failure(
+                M1AuthenticatedResidentStageV1::Clock,
+                engine_quarantined,
+                teardown.retain((token, policy, error)),
+            ))
+        }
+    };
+    let Some(timing) = M1AuthenticatedTargetWindowTimingV1::from_resident_boundaries(
+        duration_ns,
+        first_token_offset_ns,
+        first_token_offset_ns,
+        1,
+    ) else {
+        return Err(resident_failure(
+            M1AuthenticatedResidentStageV1::Timing,
+            engine_quarantined,
+            teardown.retain((token, policy, duration_ns, first_token_offset_ns)),
+        ));
+    };
+    terminal_window_success(token, policy, timing, engine_quarantined, teardown)
 }
 
 #[derive(Debug)]
@@ -1996,9 +2138,10 @@ where
 ///
 /// Returns exhaustive opaque custody for any invalid input, deadline, logical,
 /// registry, physical, settlement, teardown, or timing transition.
-/// Successful execution reuses input-owned host storage throughout the timed
-/// window. Terminal failure construction may allocate while retaining opaque
-/// custody and is outside that successful-window allocation guarantee.
+/// `Resident` continuations reuse input-owned host storage throughout the timed
+/// window. Terminal-prefill close and failure construction may allocate opaque
+/// custody and are outside that allocation guarantee. Fixed-length R33
+/// measurements reject the one-token terminal-prefill outcome.
 #[allow(clippy::too_many_arguments)]
 #[allow(clippy::too_many_lines)]
 pub fn execute_m1_authenticated_resident_first_window_v1<const C: usize>(
@@ -2011,7 +2154,7 @@ pub fn execute_m1_authenticated_resident_first_window_v1<const C: usize>(
         M1AuthenticatedResidentDeadlineBoundaryV1,
         M1QueueWaitTimeoutV1,
     ) -> Option<M1QueueWaitTimeoutV1>,
-) -> Result<M1AuthenticatedResidentWindowSuccessV1<C>, Box<M1AuthenticatedResidentFailureV1>> {
+) -> Result<M1AuthenticatedResidentWindowOutcomeV1<C>, Box<M1AuthenticatedResidentFailureV1>> {
     let M1AuthenticatedResidentWindowInputV1 {
         bootstrap,
         mut rounds,
@@ -2079,6 +2222,7 @@ pub fn execute_m1_authenticated_resident_first_window_v1<const C: usize>(
         prepared,
         diagnostic_ring_bytes,
         queue_wait_timeout,
+        true,
         &mut deadline,
     ) {
         Ok(executed) => executed,
@@ -2109,6 +2253,25 @@ pub fn execute_m1_authenticated_resident_first_window_v1<const C: usize>(
         }
     };
     let first_token = executed.first_token();
+    let executed = match executed {
+        crate::authenticated_prefill_executor::M1AuthenticatedResidentPrefillOutcomeV1::Continuing(executed) => executed,
+        crate::authenticated_prefill_executor::M1AuthenticatedResidentPrefillOutcomeV1::Terminal(terminal) => {
+            let policy = terminal.policy();
+            let teardown = match terminal.shutdown_for_resident() {
+                Ok(teardown) => teardown.retain((rounds, storage)),
+                Err(teardown) => return Err(resident_failure(
+                    M1AuthenticatedResidentStageV1::TerminalShutdown,
+                    true,
+                    teardown.retain((rounds, storage)),
+                )),
+            };
+            if deadline(M1AuthenticatedResidentDeadlineBoundaryV1::AfterSettlement, queue_wait_timeout).is_none() {
+                return Err(resident_failure(M1AuthenticatedResidentStageV1::Cancellation, false, teardown));
+            }
+            return finish_terminal_prefill(clock_start, first_token_offset_ns, first_token, policy, false, teardown)
+                .map(M1AuthenticatedResidentWindowOutcomeV1::Terminal);
+        }
+    };
     let registry = match M1ServingRegistryV1::<C>::new() {
         Ok(registry) => registry,
         Err(error) => {
@@ -2548,20 +2711,22 @@ pub fn execute_m1_authenticated_resident_first_window_v1<const C: usize>(
         ));
     }
     unused_plans.extend(rounds);
-    Ok(M1AuthenticatedResidentWindowSuccessV1 {
-        session: M1AuthenticatedResidentSessionV1 {
-            registry,
-            engine,
-            executor,
-            request,
-            plan,
-            completed_windows: 1,
-            evidence,
-            unused_plans,
+    Ok(M1AuthenticatedResidentWindowOutcomeV1::Resident(
+        M1AuthenticatedResidentWindowSuccessV1 {
+            session: M1AuthenticatedResidentSessionV1 {
+                registry,
+                engine,
+                executor,
+                request,
+                plan,
+                completed_windows: 1,
+                evidence,
+                unused_plans,
+            },
+            tokens,
+            timing,
         },
-        tokens,
-        timing,
-    })
+    ))
 }
 
 /// Replaces one all-terminal singleton generation with the next authenticated
@@ -2576,10 +2741,10 @@ pub fn execute_m1_authenticated_resident_first_window_v1<const C: usize>(
 ///
 /// Returns exhaustive opaque custody for any invalid input, deadline, logical,
 /// registry, physical, settlement, teardown, window-limit, or timing transition.
-/// Successful execution reuses input-owned and session-owned host storage
-/// throughout the timed window. Terminal failure construction may allocate
-/// while retaining opaque custody and is outside that successful-window
-/// allocation guarantee.
+/// `Resident` continuations reuse input-owned and session-owned host storage
+/// throughout the timed window. Terminal-prefill close and failure construction
+/// may allocate opaque custody and are outside that allocation guarantee.
+/// Fixed-length R33 measurements reject the one-token terminal-prefill outcome.
 #[allow(clippy::too_many_lines)]
 pub fn execute_m1_authenticated_resident_next_window_v1<const C: usize>(
     clock_start: M1AuthenticatedTargetWindowClockStartV1,
@@ -2589,7 +2754,7 @@ pub fn execute_m1_authenticated_resident_next_window_v1<const C: usize>(
         M1AuthenticatedResidentDeadlineBoundaryV1,
         M1QueueWaitTimeoutV1,
     ) -> Option<M1QueueWaitTimeoutV1>,
-) -> Result<M1AuthenticatedResidentWindowSuccessV1<C>, Box<M1AuthenticatedResidentFailureV1>> {
+) -> Result<M1AuthenticatedResidentWindowOutcomeV1<C>, Box<M1AuthenticatedResidentFailureV1>> {
     let M1AuthenticatedResidentSessionV1 {
         mut registry,
         mut engine,
@@ -3049,7 +3214,8 @@ pub fn execute_m1_authenticated_resident_next_window_v1<const C: usize>(
             )),
         ));
     };
-    let continues = policy.permits_fresh_anchor(observed_member.emitted_token());
+    let prefill_token = observed_member.emitted_token();
+    let continues = policy.permits_fresh_anchor(prefill_token);
     let completion = if continues {
         M1ServingCompletionDispositionV1::Continue(plan)
     } else {
@@ -3120,9 +3286,14 @@ pub fn execute_m1_authenticated_resident_next_window_v1<const C: usize>(
             )),
         ));
     };
+    let expected_status = if continues {
+        M1AuthenticatedSpeculativeNewWindowReleasedMemberStatusV1::Continuing
+    } else {
+        M1AuthenticatedSpeculativeNewWindowReleasedMemberStatusV1::Retired
+    };
     if released_member.request() != next_request
-        || released_member.status()
-            != M1AuthenticatedSpeculativeNewWindowReleasedMemberStatusV1::Continuing
+        || released_member.status() != expected_status
+        || released_member.emitted_token() != prefill_token
     {
         let closure = released.cancel_and_close(&mut engine);
         return Err(resident_failure(
@@ -3136,6 +3307,55 @@ pub fn execute_m1_authenticated_resident_next_window_v1<const C: usize>(
                 unused_plans,
             )),
         ));
+    }
+    if !continues {
+        let first_token = released_member.emitted_token();
+        let shutdown = released.shutdown_terminal_for_resident(&mut engine);
+        let engine_quarantined = engine.is_faulted();
+        let retained = (
+            registry,
+            engine,
+            rounds,
+            evidence,
+            unused_plans,
+            round_inputs,
+            coordinator_storage,
+            tokens,
+            first_controls,
+            first_rollover_join,
+            prompt,
+        );
+        let teardown = match shutdown {
+            Ok(teardown) => teardown.retain(retained),
+            Err(teardown) => {
+                return Err(resident_failure(
+                    M1AuthenticatedResidentStageV1::TerminalShutdown,
+                    engine_quarantined,
+                    teardown.retain(retained),
+                ))
+            }
+        };
+        if deadline(
+            M1AuthenticatedResidentDeadlineBoundaryV1::AfterSettlement,
+            queue_wait_timeout,
+        )
+        .is_none()
+        {
+            return Err(resident_failure(
+                M1AuthenticatedResidentStageV1::Cancellation,
+                engine_quarantined,
+                teardown,
+            ));
+        }
+        return finish_terminal_prefill(
+            clock_start,
+            first_token_offset_ns,
+            first_token,
+            policy,
+            engine_quarantined,
+            teardown,
+        )
+        .map(M1AuthenticatedResidentWindowOutcomeV1::Terminal);
     }
     let Some(first_plans) = rounds.pop_front() else {
         let closure = released.cancel_and_close(&mut engine);
@@ -3781,20 +4001,22 @@ pub fn execute_m1_authenticated_resident_next_window_v1<const C: usize>(
         ));
     }
     unused_plans.extend(rounds);
-    Ok(M1AuthenticatedResidentWindowSuccessV1 {
-        session: M1AuthenticatedResidentSessionV1 {
-            registry,
-            engine,
-            executor,
-            request: next_request,
-            plan,
-            completed_windows: completed_windows + 1,
-            evidence,
-            unused_plans,
+    Ok(M1AuthenticatedResidentWindowOutcomeV1::Resident(
+        M1AuthenticatedResidentWindowSuccessV1 {
+            session: M1AuthenticatedResidentSessionV1 {
+                registry,
+                engine,
+                executor,
+                request: next_request,
+                plan,
+                completed_windows: completed_windows + 1,
+                evidence,
+                unused_plans,
+            },
+            tokens,
+            timing,
         },
-        tokens,
-        timing,
-    })
+    ))
 }
 
 #[cfg(test)]
@@ -4230,6 +4452,97 @@ mod tests {
     }
 
     #[test]
+    fn terminal_prefill_publishes_one_stop_and_retains_custody_until_close_drops() {
+        use std::{cell::Cell, rc::Rc};
+        struct DropWitness(Rc<Cell<usize>>);
+        impl Drop for DropWitness {
+            fn drop(&mut self) {
+                self.0.set(self.0.get() + 1);
+            }
+        }
+        let policy = crate::M1SpeculativeGenerationPolicyV1::qwen3(7).unwrap();
+        let timing =
+            M1AuthenticatedTargetWindowTimingV1::from_resident_boundaries(30, 10, 10, 1).unwrap();
+        for token in [
+            ferric_spec::QWEN3_END_OF_TEXT_TOKEN,
+            ferric_spec::QWEN3_IM_END_TOKEN,
+        ] {
+            let drops = Rc::new(Cell::new(0));
+            let terminal = terminal_window_success(
+                token,
+                policy,
+                timing,
+                false,
+                M1AuthenticatedResidentQueueTeardownV1::released(DropWitness(Rc::clone(&drops))),
+            )
+            .unwrap();
+            assert_eq!(terminal.tokens(), &[token]);
+            assert_eq!(
+                terminal.reason(),
+                crate::M1SpeculativeTerminalReasonV1::StopToken { token }
+            );
+            assert_eq!(terminal.timing().first_token_offset_ns(), 10);
+            assert_eq!(terminal.timing().terminal_token_offset_ns(), 10);
+            let closed = terminal.into_close();
+            assert!(closed.queue_released());
+            assert!(!closed.engine_quarantined());
+            assert!(closed.retains_all_custody());
+            assert_eq!(drops.get(), 0);
+            drop(closed);
+            assert_eq!(drops.get(), 1);
+        }
+    }
+
+    #[test]
+    fn terminal_prefill_rejects_nonstop_no_queue_and_unhealthy_close() {
+        let policy = crate::M1SpeculativeGenerationPolicyV1::qwen3(7).unwrap();
+        let timing =
+            M1AuthenticatedTargetWindowTimingV1::from_resident_boundaries(30, 10, 10, 1).unwrap();
+        for (token, engine_quarantined, status) in [
+            (
+                17,
+                false,
+                M1AuthenticatedResidentQueueTeardownStatusV1::Released,
+            ),
+            (
+                ferric_spec::QWEN3_IM_END_TOKEN,
+                false,
+                M1AuthenticatedResidentQueueTeardownStatusV1::NoQueue,
+            ),
+            (
+                ferric_spec::QWEN3_IM_END_TOKEN,
+                false,
+                M1AuthenticatedResidentQueueTeardownStatusV1::Quarantined,
+            ),
+            (
+                ferric_spec::QWEN3_IM_END_TOKEN,
+                true,
+                M1AuthenticatedResidentQueueTeardownStatusV1::Released,
+            ),
+        ] {
+            let failure = terminal_window_success(
+                token,
+                policy,
+                timing,
+                engine_quarantined,
+                M1AuthenticatedResidentQueueTeardownV1 {
+                    status,
+                    retained: Box::new(()),
+                },
+            )
+            .unwrap_err();
+            assert_eq!(
+                failure.stage(),
+                M1AuthenticatedResidentStageV1::TerminalShutdown
+            );
+            let closed = failure.close();
+            assert_eq!(closed.queue_status(), status);
+            assert_eq!(closed.engine_quarantined(), engine_quarantined);
+            assert!(closed.retains_all_custody());
+        }
+    }
+
+    #[test]
     fn hostile_pre_schedule_expiry_preserves_owner_and_runs_no_effect() {
         #[derive(Debug)]
         struct ModelScheduleOwner {
@@ -4324,7 +4637,7 @@ mod tests {
     }
 
     #[test]
-    fn first_window_rejects_terminal_prefill_choice_before_successor_scheduling() {
+    fn first_window_closes_terminal_prefill_before_reconciliation_or_successor_scheduling() {
         let source = include_str!("authenticated_resident_session.rs");
         let first = source
             .split("pub fn execute_m1_authenticated_resident_first_window_v1")
@@ -4334,10 +4647,49 @@ mod tests {
                     .next()
             })
             .expect("resident first-window source is present");
+        let terminal = first
+            .find("M1AuthenticatedResidentPrefillOutcomeV1::Terminal")
+            .unwrap();
+        let shutdown = first.find("terminal.shutdown_for_resident()").unwrap();
+        let finish = first.find("return finish_terminal_prefill").unwrap();
+        let reconcile = first
+            .find("reconcile_m1_authenticated_s1_t128_finite_prefill_registry_v1")
+            .unwrap();
         let policy = first.find("permits_speculative_successor").unwrap();
         let deadline = first.find("BeforeFirstRolloverSchedule").unwrap();
         let schedule = first.find("schedule_first_speculative_round").unwrap();
+        assert!(terminal < shutdown && shutdown < finish && finish < reconcile);
         assert!(policy < deadline && deadline < schedule);
+    }
+
+    #[test]
+    fn next_window_terminal_prefill_settles_and_shuts_down_before_successor() {
+        let source = include_str!("authenticated_resident_session.rs");
+        let next = source
+            .split("pub fn execute_m1_authenticated_resident_next_window_v1")
+            .nth(1)
+            .unwrap()
+            .split("#[cfg(test)]")
+            .next()
+            .unwrap();
+        let saved = next
+            .find("let prefill_token = observed_member.emitted_token()")
+            .unwrap();
+        let settle = next
+            .find("observed.settle_with_deadline_and_storage")
+            .unwrap();
+        let compare = next
+            .find("released_member.emitted_token() != prefill_token")
+            .unwrap();
+        let shutdown = next
+            .find("released.shutdown_terminal_for_resident")
+            .unwrap();
+        let finish = next.find("return finish_terminal_prefill").unwrap();
+        let successor = next
+            .find("released.schedule_successor_with_recipe_input")
+            .unwrap();
+        assert!(saved < settle && settle < compare && compare < shutdown);
+        assert!(shutdown < finish && finish < successor);
     }
 
     #[test]
