@@ -5,6 +5,40 @@ receipt. The 33 M1 roadmap gates remain open.
 
 ## Current Checkpoint
 
+### Published Asrock Runtime Adopted
+
+Ferric `289288fa29adbc70f5155fb1eb81fdf44a6d38e7`, tree
+`41028757bfb666766a289a15fcfee88b6e5a394e`, adopts published fe2o3 main
+`fe406b0c3275c33b92f81734a4e6e3852b891073`. The exact 80-file update and
+all 1,157 integrated source files match the validated remote census before
+this tracker update. Compiler/runtime work remains in fe2o3; Ferric owns its
+kernel, inference and qualification sources.
+
+All 50 adoption phases pass on mi300x: 32 locked graphs, 35 offline metadata
+queries after one fetch, both owning-edition formatting checks, two fresh
+source-gate producers, 48 source-gate tests, four actual dependency inventory
+derivations and normal coverage generation/validation. Four preflights also
+pass, including six lifecycle and twelve TCB-transition fixtures. The verifier
+DEV and combined inventories gain exactly the two reviewed lowerer dev
+declarations beyond the revision change. Runtime TCB, coverage, Pliron and
+the separately pinned property binder remain unchanged; no lock repair occurs.
+
+The 24,639,559-byte archive has SHA256
+`fc371ab77b306505f30c9008ad77ed534d5439102ce5b978c736b47d4e6f5deb`.
+Independent shell-only custody review verifies all 1,981 payloads and 1,982
+regular members, exact nanosecond metadata, 19 external hashes, both control
+ledgers, fresh producer bytes, raw terminal records and the complete source
+delta. Campaign and retention return zero. All builds and tests stay on
+mi300x within the existing caps; no local or GitHub build runs.
+
+The user-selected mi350-2 is reachable at the 18:10 UTC follow-up, with GPU
+utilization zero, 297,750,528 bytes of VRAM used and no visible GPU users.
+This is an observation, not a reservation. It exposes one gfx950 GPU and
+cannot replace gfx942-specific capture or eight-GPU evidence. Current-source
+TP1 controller/kernel builds, canonical model transfer and Qwen execution
+remain pending. This dependency adoption establishes no native arithmetic,
+performance, protected proof or M1 gate closure; all 33 gates remain open.
+
 ### Current-Main Asrock Runtime Published
 
 fe2o3 main now contains `fe406b0c3275c33b92f81734a4e6e3852b891073`, the
