@@ -71,7 +71,9 @@ four lower-MIR files changed from 6ae; a fresh upstream observation then found
 identity and hardens local-frame scope accounting in seven kernel-IR files.
 No Ferric caller migration or runtime/KFD/toolchain/manifest change was found.
 The frozen 272 revision now has matching tools and passes the dependency
-adoption validation below. No compiler/runtime source change or push is made.
+adoption validation below. No compiler/runtime source change or push was made
+at that checkpoint. The newer published compatibility fix below is not yet
+adopted by Ferric.
 
 A bounded mi300x read-only cache-shape audit passes. A separate fresh 272 build
 passes all six phases, with no old target reuse and the original 10 GiB cap;
@@ -236,18 +238,51 @@ external identities and the four genuine tool producers match. The original nonz
 statuses and absent inspection remain explicit. Retention exit 0 means byte
 custody only, not successful emission or a closed M1 gate.
 
-The next compiler work belongs in fe2o3: review exact Cargo-normalized package
-closure support consistently at both provider-admission and semantic-definition
-validation, retain the actual observed identity, and test canonical/vendor
-positives plus manifest/source/roster mutation negatives. Do not ignore the
-manifest, accept arbitrary semantic equivalence, or substitute an original
-manifest. Start that separately validated fix from current upstream main in an
-owned checkout, rebase before pushing, and keep all builds on mi300x with
-GitHub CI skipped. No compiler source change or push is made at this checkpoint.
+That failure required a compiler-side correction. Its separately validated
+successor is recorded below; the failed emission and original evidence remain
+unchanged.
 The independently reviewed final-RMS capture/reference controller remains
 unready pending a successful matching artifact and fresh GPU4 admission.
 The historical numerical mismatch and all 33 M1 gates remain open; no new
 TTFT, TPOT, throughput or vLLM/SGLang comparison is claimed.
+
+### Published Provider Materialization Fix
+
+fe2o3 main now contains `9b64a2da7f81f7ca2649cb44142dbd2f3e268496`,
+tree `35d12678e3f4ef36dcadf7c673699912d3dd1e84`, rebased on upstream
+`8012017e93a08b0194bd527cd8d2fa5c698ac884` before publication. The four-file
+compiler-only change admits exactly the reviewed canonical and Cargo-vendored
+device source closures at both provider admission and semantic validation.
+It preserves the actual observed closure and distinct durable identities;
+it does not normalize, replace or ignore Cargo's manifest. Runtime, KFD,
+device sources, CLI, workspace manifests, toolchain and LLVM worker are unchanged.
+
+Fresh mi300x R2 at that exact commit passes all five CPU-only phases from
+09:19:15Z to 09:23:55Z, including 29 provider tests and all three new
+regressions. Coverage includes canonical/vendor positives, 18 manifest/source
+mutation cases, incomplete policies, and existing stale-source, path and
+symlink rejection tests. The empty target and independent cache copy use the
+normal 512 MiB reserve and unchanged 10 GiB stage cap. All 5,176 source files,
+the borrowed cache, toolchain and controls pass preservation checks.
+
+Retained R2 archive SHA is
+`4606968d49d99c6463682e17307480a4985705fd3fb46d0a114edc8c53c6ef52`
+(16,123,418 bytes). Independent custody verifies all 100 payloads, 102 members
+and ten external records with exact nanosecond metadata; all 15 actual
+statuses are zero. The earlier successful R1 applies only to `314b9f39` on
+`26326746`, not to the rebased source. The push includes `[skip ci]`; the
+post-push GitHub observation reports zero workflow runs and zero check runs.
+
+The completed compiler worktree is removed normally after clean-source and
+scoped no-use checks, reclaiming 90,012 KiB. Its branch, validated source
+archive and evidence remain. Remote test-stage cleanup is not yet performed.
+
+Ferric still pins compiler 272. Source-only review indicates the established
+80-file dependency/policy adoption with regenerated compiler-bearing TCB
+records, not a caller API migration. Fresh matching tools, vendor formation,
+kernel emission and native numerical validation remain pending. These targeted
+compiler tests do not establish full compiler, GPU, performance or M1
+qualification, and the historical numerical mismatch remains unresolved.
 
 ### Earlier Published R23 Checkpoint
 
