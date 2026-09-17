@@ -5758,7 +5758,6 @@ unverified=ferric-engine|crates/ferric-engine/src/qualification_logits.rs|ferric
 unverified=ferric-engine|crates/ferric-engine/src/qualification_logits.rs|ferric_engine::qualification_logits::engineering_final_rms_row_offsets|pending-verus|m1-qualification-logits-proof-pending
 unverified=ferric-engine|crates/ferric-engine/src/qualification_logits.rs|ferric_engine::qualification_logits::engineering_final_rms_workspace_offsets|pending-verus|m1-qualification-logits-proof-pending
 unverified=ferric-engine|crates/ferric-engine/src/qualification_logits.rs|ferric_engine::qualification_logits::engineering_s1_k4_row_bounds|pending-verus|m1-qualification-logits-proof-pending
-unverified=ferric-engine|crates/ferric-engine/src/qualification_logits.rs|ferric_engine::qualification_logits::lowest_id_finite_bf16_argmax|pending-verus|m1-qualification-logits-proof-pending
 unverified=ferric-engine|crates/ferric-engine/src/qualification_logits.rs|ferric_engine::qualification_logits::m1_engineering_s1_k4_logits_shape_v1|pending-verus|m1-qualification-logits-proof-pending
 unverified=ferric-engine|crates/ferric-engine/src/qualification_logits.rs|ferric_engine::qualification_logits::m1_qualification_logits_shape_v1|pending-verus|m1-qualification-logits-proof-pending
 unverified=ferric-engine|crates/ferric-engine/src/qualification_logits.rs|ferric_engine::qualification_logits::observe_m1_engineering_s1_k4_logits_v1|pending-verus|m1-qualification-logits-proof-pending
