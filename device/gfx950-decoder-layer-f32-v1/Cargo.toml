@@ -1,0 +1,19 @@
+[package]
+name = "ferric-gfx950-decoder-layer-f32-v1"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.94"
+publish = false
+description = "Engineering-only fixed-shape gfx950 decoder-layer source"
+
+[workspace]
+
+[dependencies]
+fe2o3-device = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "1989681e50bbc5ab97eadec6f22dd9e7ebca68eb", version = "=0.1.0" }
+
+[target.'cfg(not(target_arch = "amdgpu"))'.dependencies]
+fe2o3-host = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "1989681e50bbc5ab97eadec6f22dd9e7ebca68eb", version = "=0.1.0" }
+
+[lib]
+name = "ferric_gfx950_decoder_layer_f32_v1"
+path = "src/lib.rs"

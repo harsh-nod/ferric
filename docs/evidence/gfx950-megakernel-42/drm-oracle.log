@@ -1,0 +1,4 @@
+drm_version:size=64 align=8 major=0 minor=4 patch=8 name_len=16 name=24 date_len=32 date=40 desc_len=48 desc=56 request=0xc0406400
+amdgpu_info:size=32 align=8 return_pointer=0 return_size=8 query=12 union=16 request=0x40206445 accel=0 dev_info=0x16
+currentness:vram_lost_counter=0x1f result_size=4
+device:size=448 align=8 device_id=0 chip_rev=4 external_rev=8 pci_rev=12 family=16 family_ai=141

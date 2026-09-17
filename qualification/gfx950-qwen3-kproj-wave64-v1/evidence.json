@@ -1,0 +1,92 @@
+{
+  "schema": "ferric-qwen3-kproj-wave64-public-evidence-v1",
+  "authority": "none",
+  "status": "pass",
+  "target": "gfx950:xnack-",
+  "workgroup": [
+    128,
+    1,
+    1
+  ],
+  "grid_work_items": [
+    65536,
+    1,
+    1
+  ],
+  "wavefront_size": 64,
+  "compared_values": 4096,
+  "completed_dispatches": 4,
+  "policy": {
+    "id": "bf16-exact-fp32-fma16-tree6-gamma22-v1",
+    "terms_per_lane": 16,
+    "wave_lanes": 64,
+    "tree_add_depth": 6,
+    "rounding_depth_bound": 22,
+    "fp32_unit_roundoff": 5.960464477539063e-08,
+    "gamma32_upper": 1.3113039045742693e-06,
+    "gamma64_upper": 1.1368683772162898e-13,
+    "absolute_bound": "upward((gamma22_upper+gamma64_upper)*upward(sum_abs/(1-gamma64_upper)))",
+    "derivation": "each product traverses at most16 FMA roundings and6 tree additions; (1+gamma16)*(1+gamma6)-1 <= gamma22",
+    "domain": "finite BF16; nonzero product lattice at least2^-126; sum_abs below2^120",
+    "reference": "FP64 math.fsum of exactly widened BF16 products; gamma64 covers reference rounding",
+    "exact_cases": "zero and basis require exact FP32 outputs; cancellation requires exact row0 zero"
+  },
+  "probe_sha256": "af4cfe14183c1ec976872b08d77b2d470136213a6190f22cdea0be566a4762d4",
+  "worker_sha256": "22296c36c1cafca4ff9c13a30c5b650f53a63bb8bbc37676fcbf8b303d23b11a",
+  "source_sha256": "87ede6b189d9413d900f0e096ccec5fade2114fe267f569b8ee8215d013d837c",
+  "object_sha256": "d594e2c8e202a69c41398e91e447857611af877f15d5907c093a61ff5b65c3f3",
+  "weights_sha256": "68dd761a149b0ff707ad0c1ac6d61dfed75d6fedfbbdbfedde4889f5ca0706f4",
+  "reference_sha256": "40ddfa2e466f948ea38f7590234815f1eda5c2e15e3805927a49e64e1b9d15ca",
+  "serial_reference_sha256": "f68bdc21ed953fff9a0684168c3273aeff8d820efa64801bb713acbf9a87be47",
+  "extractor_sha256": "f1971e5a970c42d9fcd2e12beada69547a97f5287d7f0e734b3efe23773ea1f9",
+  "observations": [
+    {
+      "case": "zero",
+      "status": "pass",
+      "receipt_sha256": "ad3ec2b152e83477c4546ff6ff938253e4f4fcdb53697ca85aadd9f4d855386d",
+      "values_checked": 1024,
+      "exact_rows_checked": 1024,
+      "maximum_absolute_error": 0.0,
+      "maximum_error_to_bound_ratio": 0.0,
+      "input_sha256": "e5a00aa9991ac8a5ee3109844d84a55583bd20572ad3ffcd42792f3c36b183ad",
+      "output_sha256": "ad7facb2586fc6e966c004d7d1d16b024f5805ff7cb47c7a85dabd8b48892ca7"
+    },
+    {
+      "case": "basis",
+      "status": "pass",
+      "receipt_sha256": "dab83cbcae438d91d90a42acb759d142a52b909d2eb88ca7921eb8e8aebcd8f1",
+      "values_checked": 1024,
+      "exact_rows_checked": 1024,
+      "maximum_absolute_error": 0.0,
+      "maximum_error_to_bound_ratio": 0.0,
+      "input_sha256": "e491595da7b04002378344376d0bc3350fd7ed604a4126922e8f25c4b111fea4",
+      "output_sha256": "d4e136c6bed2f40f7fe0f7165d34f222ef57e392f1cf64b5e0e15248ccaf3cdd"
+    },
+    {
+      "case": "mixed",
+      "status": "pass",
+      "receipt_sha256": "e6cf3f95f901677d4a75041e9d8e6a5c6f3ae9a2b6fc4fd43dd8c3f6b3d1d29d",
+      "values_checked": 1024,
+      "exact_rows_checked": 0,
+      "maximum_absolute_error": 1.1920928955078125e-07,
+      "maximum_error_to_bound_ratio": 0.005085048481565353,
+      "input_sha256": "1514456873bd579ed3fb5bcad2c071f69124f34981d795711fd0a3831b60bfb5",
+      "output_sha256": "408305448e96ab37e1703133fd0dfabc8238a29b575d2170824cadd455575006"
+    },
+    {
+      "case": "cancellation",
+      "status": "pass",
+      "receipt_sha256": "b3855cbc566f3948ae2fcd473540b8db5a30e3d7beccb3c0af23a7de33d6e46d",
+      "values_checked": 1024,
+      "exact_rows_checked": 1,
+      "maximum_absolute_error": 0.0,
+      "maximum_error_to_bound_ratio": 0.0,
+      "input_sha256": "2979958cc2f3f569af6e39c1fbf4d06d4e9383016cd2bd20233cc5d3958ce86d",
+      "output_sha256": "819560afbf5e0ca3fb45899a92a7c2b48d749b30538c58c2e1d59930eace77f3"
+    }
+  ],
+  "full_model": false,
+  "production_qualified": false,
+  "performance_claim": null,
+  "scope": "file-bound engineering observations of one real-weight wave64 GEMV, not model inference"
+}

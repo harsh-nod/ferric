@@ -1,0 +1,15 @@
+{
+  "atol": 2e-05,
+  "authority": "independent-reference-only",
+  "case": "skewed-attention",
+  "expected_sha256": "c01d06c3a204021ab36d892e21a249f8842994bf6da8c0b7a1f53c577acf9beb",
+  "format": "ferric.gfx950-decoder-layer-reference.v1",
+  "input_width": 12,
+  "inputs_sha256": "70ba20d01a8ba020baf27cc6695aa50fc18dcc8af6506766062ba8699cdce447",
+  "output_width": 40,
+  "reference_sha256": "38db76640119422e0f969e97eab0d0574ca95adb0d174a73b9c53189664ff619",
+  "rows": 256,
+  "rtol": 0.0002,
+  "weights": 110,
+  "weights_sha256": "bc852d7643fc41d8f3d1eef6724bc7755c1fe1ccdc74c8f72899076173a572ca"
+}

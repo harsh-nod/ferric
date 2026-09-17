@@ -1,0 +1,204 @@
+{
+  "schema": "ferric-finite-decoder-probe-v1",
+  "authority": "none",
+  "scope": "unqualified finite decoder fixture, not Ferric production or a persistent scheduler",
+  "artifact": {
+    "schema": "ferric-finite-decoder-artifact-v1",
+    "source_sha256": "d48897ddf5f58f50d71f0cc3e54759826fd0944714ddd7e9008718958ae4e845",
+    "object_sha256": "bba059db38e010479ad1ba7f6265583983d46642d5c0e7d362b0deecdea00dbc",
+    "metadata": {
+      "symbol": "ferric_gfx950_decoder_layer_f32_v1",
+      "object_sha256": [
+        187,
+        160,
+        89,
+        219,
+        56,
+        224,
+        16,
+        71,
+        154,
+        209,
+        186,
+        127,
+        98,
+        101,
+        88,
+        57,
+        131,
+        212,
+        102,
+        66,
+        213,
+        192,
+        231,
+        211,
+        98,
+        176,
+        222,
+        236,
+        222,
+        160,
+        13,
+        188
+      ],
+      "kernarg_bytes": 48,
+      "kernarg_alignment": 8,
+      "group_segment_bytes": 0,
+      "private_segment_bytes": 0,
+      "wavefront_size": 64,
+      "implicit_argument_offset": null,
+      "implicit_argument_bytes": 0,
+      "explicit_arguments": [
+        {
+          "offset": 0,
+          "bytes": 8,
+          "global_buffer": true,
+          "pointee_alignment": null,
+          "access": null
+        },
+        {
+          "offset": 8,
+          "bytes": 8,
+          "global_buffer": false,
+          "pointee_alignment": null,
+          "access": null
+        },
+        {
+          "offset": 16,
+          "bytes": 8,
+          "global_buffer": true,
+          "pointee_alignment": null,
+          "access": null
+        },
+        {
+          "offset": 24,
+          "bytes": 8,
+          "global_buffer": false,
+          "pointee_alignment": null,
+          "access": null
+        },
+        {
+          "offset": 32,
+          "bytes": 8,
+          "global_buffer": true,
+          "pointee_alignment": null,
+          "access": null
+        },
+        {
+          "offset": 40,
+          "bytes": 8,
+          "global_buffer": false,
+          "pointee_alignment": null,
+          "access": null
+        }
+      ]
+    },
+    "observed_launch_metadata": {
+      "required_workgroup_size": [
+        128,
+        1,
+        1
+      ],
+      "max_flat_workgroup_size": 128,
+      "max_workgroups": [
+        null,
+        null,
+        null
+      ],
+      "cluster_dims": null
+    },
+    "observed_argument_qualifiers": [
+      {
+        "actual_access": null,
+        "is_const": null,
+        "is_restrict": null,
+        "is_volatile": null,
+        "is_pipe": null
+      },
+      {
+        "actual_access": null,
+        "is_const": null,
+        "is_restrict": null,
+        "is_volatile": null,
+        "is_pipe": null
+      },
+      {
+        "actual_access": null,
+        "is_const": null,
+        "is_restrict": null,
+        "is_volatile": null,
+        "is_pipe": null
+      },
+      {
+        "actual_access": null,
+        "is_const": null,
+        "is_restrict": null,
+        "is_volatile": null,
+        "is_pipe": null
+      },
+      {
+        "actual_access": null,
+        "is_const": null,
+        "is_restrict": null,
+        "is_volatile": null,
+        "is_pipe": null
+      },
+      {
+        "actual_access": null,
+        "is_const": null,
+        "is_restrict": null,
+        "is_volatile": null,
+        "is_pipe": null
+      }
+    ],
+    "source_declared_abi": {
+      "basis": "fixed harness and source-declared ABI; not ELF-derived or source-to-object authority",
+      "workgroup": [
+        128,
+        1,
+        1
+      ],
+      "grid_work_items": [
+        256,
+        1,
+        1
+      ],
+      "max_workgroups": [
+        2,
+        1,
+        1
+      ],
+      "slice_lengths": [
+        3072,
+        110,
+        10240
+      ],
+      "pointer_alignment": 4,
+      "pointer_access": [
+        "read",
+        "read",
+        "write"
+      ]
+    }
+  },
+  "worker_sha256": "22296c36c1cafca4ff9c13a30c5b650f53a63bb8bbc37676fcbf8b303d23b11a",
+  "input_sha256": "70ba20d01a8ba020baf27cc6695aa50fc18dcc8af6506766062ba8699cdce447",
+  "weights_sha256": "bc852d7643fc41d8f3d1eef6724bc7755c1fe1ccdc74c8f72899076173a572ca",
+  "output_sha256": "d6e8bf970a6817aaab621cde90e11b083f9e445efb982b2977b87eafc9ab4b69",
+  "workgroup": [
+    128,
+    1,
+    1
+  ],
+  "grid_work_items": [
+    256,
+    1,
+    1
+  ],
+  "completed_dispatches": 1,
+  "worker_elapsed_ns": 1430516,
+  "input_immutability_and_output_guards_passed": true,
+  "free_close_and_worker_exit_passed": true,
+  "numerical_validation": "not evaluated here; compare output with an independent reference"
+}

@@ -1,0 +1,41 @@
+   Compiling ferric-megakernel-planner v0.1.0 (/home/harmenon/ferric-gfx950-42/ferric/tools/megakernel-planner)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.40s
+     Running unittests src/lib.rs (ferric-gfx950-42/target-planner/debug/deps/ferric_megakernel_planner-ec664f63670b9e2b)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/planner.rs (ferric-gfx950-42/target-planner/debug/deps/planner-1ce65fb82de2eaf3)
+
+running 20 tests
+test unsupported_shapes_and_page_sizes_are_rejected ... ok
+test rejects_stale_epoch_generation_cross_request_and_bad_positions ... ok
+test zero_allocation_patch_binding_accepts_ragged_and_page_boundary_contexts ... ok
+test append_reservations_do_not_alias_committed_prefix_or_workspace ... ok
+test query_projection_does_not_assume_query_width_equals_hidden ... ok
+test positions_feed_rope_kv_append_and_ragged_attention_in_every_layer ... ok
+test sequential_operator_roster_matches_qwen3_and_tracks_residual_edges ... ok
+test mutation_suite_rejects_missing_and_stale_identity_declarations ... ok
+test rejects_independently_unexpected_model_even_when_graph_is_canonical ... ok
+test workspace_and_queue_underallocation_fail_closed ... ok
+test independent_topological_walk_reaches_completion_and_covers_every_task ... ok
+test norm_and_embedding_weights_are_retained_and_tied_only_for_small_model ... ok
+test fp32_logits_and_exact_model_constants_are_part_of_the_canonical_plan ... ok
+test rejects_omitted_or_retagged_operator_even_if_edges_remain_valid ... ok
+test canonical_commitment_changes_for_shape_and_identity ... ok
+test rejects_wrong_target_wave_size_and_version ... ok
+test rejects_cycles_dangling_edges_duplicates_and_missing_fan_in ... ok
+test detects_overflow_wrong_shapes_and_overlapping_live_ranges ... ok
+test edge_vector_preflight_precedes_all_buffer_cross_reference_scans ... ok
+test complete_envelope_has_exact_graph_and_deterministic_bytes ... ok
+
+test result: ok. 20 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.13s
+
+   Doc-tests ferric_megakernel_planner
+
+running 1 test
+test src/planner.rs - planner::DeclaredStepBinding (line 587) - compile fail ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+

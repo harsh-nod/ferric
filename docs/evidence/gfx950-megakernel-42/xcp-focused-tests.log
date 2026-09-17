@@ -1,0 +1,19 @@
+   Compiling fe2o3-kfd v0.1.0 (/home/harmenon/ferric-gfx950-42/fe2o3/crates/fe2o3-kfd)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.75s
+     Running unittests src/lib.rs (/home/harmenon/ferric-gfx950-42/target-upstream/debug/deps/fe2o3_kfd-c9684218e39d8bb4)
+
+running 11 tests
+test topology::tests::gfx950_xcp_tests::xcp0_profile_retains_both_uid_domains_and_explicit_contract ... ok
+test topology::tests::gfx950_xcp_tests::xcp0_mutation_of_either_uid_changes_retained_observation ... ok
+test topology::tests::gfx950_xcp_tests::xcp0_directory_replacement_changes_retained_identity ... ok
+test topology::tests::gfx950_xcp_tests::missing_module_observations_cannot_select_xcp0_contract ... ok
+test topology::tests::gfx950_xcp_tests::xcp0_replaced_evidence_and_duplicate_parent_change_or_reject_identity ... ok
+test topology::tests::gfx950_xcp_tests::xcp0_rejects_virtual_render_with_same_device_symlink ... ok
+test topology::tests::gfx950_xcp_tests::xcp0_route_is_selected_by_profile_not_mismatch_fallback ... ok
+test topology::tests::gfx950_xcp_tests::xcp0_rejects_wrong_pci_location_and_render_minor ... ok
+test topology::tests::gfx950_xcp_tests::xcp0_rejects_missing_symlinked_or_nonregular_evidence ... ok
+test topology::tests::gfx950_xcp_tests::xcp0_requires_exact_platform_and_target ... ok
+test topology::tests::gfx950_xcp_tests::xcp0_rejects_other_partitions_and_every_geometry_mutation ... ok
+
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 488 filtered out; finished in 0.01s
+

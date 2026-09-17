@@ -1,0 +1,679 @@
+{
+  "artifact_record_sha256": "2d90632bf303b340fb7d5c1446caeaa775d498940c7c6079a313d4fdcb998383",
+  "authority": "none",
+  "compiler_commit": "cb8f51ec0b52894a1fb510bc3f523005dda8bfaf",
+  "counting_note": "112 payload comparisons are included in the 260 state words, not additional words.",
+  "lifecycle": {
+    "current_input_and_artifact_manifest_checks_passed": true,
+    "free_close_and_worker_exit_passed": true,
+    "guarded_allocations_per_case": 15,
+    "input_immutability_and_all_guards_passed": true,
+    "reused_worker_queue_and_allocations_per_case": true
+  },
+  "limitations": [
+    "Exact-u32 seven-task engineering micrograph, not full-model inference or protected runtime qualification",
+    "Crossings are observed per epoch, never inferred from launch geometry",
+    "DEVICE_LOCAL_PUBLIC is not a claim of COHERENT allocation or independently measured HBM residency",
+    "No GPU timing or performance claim; private selectors and worker stderr omitted"
+  ],
+  "manifest_sha256": {
+    "native_artifacts": "f5c9e54b2054a0a88960498f7d62a25b1a128ecde874ab03aaa068c91f6dc8fa",
+    "native_inputs": "023216aa927b2244035d6242b4ccd315cc8219bb6100c0b188c2b2c8241f2453",
+    "suite_inputs": "7a28d2f07402c106b533d8c3598312fc82e90d4d204db91f256f890706921a71"
+  },
+  "metadata_sha256": "fdcfa79ae5bcae24942617d0a590f861fbfcb2e8cf82b6397203c66044867c15",
+  "object_sha256": "fe55cc7167fd9e6859ba3ea4cf5f66ccfdb40c91e30be4bf05d8139d46298187",
+  "observations": [
+    {
+      "case": "zero",
+      "deterministic_state_words_compared": 61,
+      "expected_payloads": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "hashes": {
+        "artifact_record_sha256": "2d90632bf303b340fb7d5c1446caeaa775d498940c7c6079a313d4fdcb998383",
+        "input_sha256": "6cf1b57d59e7111bc218dfb01dda93ac0f776715599a1c69f89035bd20c16a10",
+        "numerical_sha256": "8b00338d7a587451726cd37845d95961b81b32e85a519e65d53a00659b0183ae",
+        "object_sha256": "fe55cc7167fd9e6859ba3ea4cf5f66ccfdb40c91e30be4bf05d8139d46298187",
+        "probe_sha256": "687818a330bb1e622fcb3271b3dc03ba3640a474d4ac01a78b004efde2097b36",
+        "reference_record_sha256": "5277aae19ac210af1a6fe4be592349b60576493d887f5aefa4abc25555a84ddb",
+        "reference_sha256": "b3fa631fd4e57b4aec011c505c5a557107dc3c9825455573ecc47d1dd8ae6237",
+        "report_sha256": "7621b3efcd0fd86e29bea31430f8e1fca64e44faf357d8c151ebfe055a4f2485",
+        "source_sha256": "6d17ed3b123f241627d9847ff90eb9d895ca9fd28754092f27a96b0881132510",
+        "states_sha256": "1984a54bef58889d8d10072ba755bd348b38f9e5ab667130f8ffbb56cf4fb63c",
+        "worker_sha256": "6f6e13ef2e15aedbb4e5d2cc966421c69d99784049ba00334e8334d4c97c7a4b"
+      },
+      "independent_payload_values_checked": 28,
+      "positive_epochs": 4,
+      "stale_epoch_rejections": 1,
+      "state_words_validated": 65,
+      "valid_epochs": [
+        {
+          "cross_workgroup_dependency_edges": [
+            [
+              0,
+              2
+            ],
+            [
+              1,
+              3
+            ],
+            [
+              3,
+              5
+            ],
+            [
+              4,
+              6
+            ]
+          ],
+          "distinct_observed_workgroups": 2,
+          "expected_epoch": 1,
+          "task_owners": [
+            1,
+            1,
+            2,
+            2,
+            2,
+            1,
+            1
+          ]
+        },
+        {
+          "cross_workgroup_dependency_edges": [
+            [
+              0,
+              2
+            ],
+            [
+              1,
+              3
+            ],
+            [
+              3,
+              5
+            ],
+            [
+              4,
+              6
+            ]
+          ],
+          "distinct_observed_workgroups": 2,
+          "expected_epoch": 2,
+          "task_owners": [
+            2,
+            2,
+            1,
+            1,
+            1,
+            2,
+            2
+          ]
+        },
+        {
+          "cross_workgroup_dependency_edges": [
+            [
+              0,
+              2
+            ],
+            [
+              1,
+              3
+            ],
+            [
+              3,
+              5
+            ],
+            [
+              4,
+              6
+            ]
+          ],
+          "distinct_observed_workgroups": 2,
+          "expected_epoch": 3,
+          "task_owners": [
+            1,
+            1,
+            2,
+            2,
+            2,
+            1,
+            1
+          ]
+        },
+        {
+          "cross_workgroup_dependency_edges": [
+            [
+              0,
+              2
+            ],
+            [
+              1,
+              3
+            ],
+            [
+              3,
+              5
+            ],
+            [
+              4,
+              6
+            ]
+          ],
+          "distinct_observed_workgroups": 2,
+          "expected_epoch": 4,
+          "task_owners": [
+            2,
+            2,
+            1,
+            1,
+            1,
+            2,
+            2
+          ]
+        }
+      ]
+    },
+    {
+      "case": "ramp",
+      "deterministic_state_words_compared": 61,
+      "expected_payloads": [
+        56896,
+        128256,
+        129395,
+        327189,
+        394791,
+        392855,
+        851376
+      ],
+      "hashes": {
+        "artifact_record_sha256": "2d90632bf303b340fb7d5c1446caeaa775d498940c7c6079a313d4fdcb998383",
+        "input_sha256": "bd4639f52f4c6380fd8a96e2e4fb82fc187ae3882974863570223c161559e8ed",
+        "numerical_sha256": "a9069740a53b201e94b3359529d5ceca3817799084940269d449e3096f1a32f0",
+        "object_sha256": "fe55cc7167fd9e6859ba3ea4cf5f66ccfdb40c91e30be4bf05d8139d46298187",
+        "probe_sha256": "687818a330bb1e622fcb3271b3dc03ba3640a474d4ac01a78b004efde2097b36",
+        "reference_record_sha256": "96200baf93037b9929c088b29d15b5a002918c35a9c9fb8393e2d6828234fbed",
+        "reference_sha256": "b3fa631fd4e57b4aec011c505c5a557107dc3c9825455573ecc47d1dd8ae6237",
+        "report_sha256": "7f006d1dc07eaf9007bb5ed827a2c1582f828f012ddb81de99949842f2144e5f",
+        "source_sha256": "6d17ed3b123f241627d9847ff90eb9d895ca9fd28754092f27a96b0881132510",
+        "states_sha256": "ddb1f0ecce40a07ef7949d571d619bead49b4ca293c97c67cd12a5dc361aff71",
+        "worker_sha256": "6f6e13ef2e15aedbb4e5d2cc966421c69d99784049ba00334e8334d4c97c7a4b"
+      },
+      "independent_payload_values_checked": 28,
+      "positive_epochs": 4,
+      "stale_epoch_rejections": 1,
+      "state_words_validated": 65,
+      "valid_epochs": [
+        {
+          "cross_workgroup_dependency_edges": [
+            [
+              0,
+              2
+            ],
+            [
+              1,
+              3
+            ],
+            [
+              3,
+              5
+            ],
+            [
+              4,
+              6
+            ]
+          ],
+          "distinct_observed_workgroups": 2,
+          "expected_epoch": 1,
+          "task_owners": [
+            1,
+            1,
+            2,
+            2,
+            2,
+            1,
+            1
+          ]
+        },
+        {
+          "cross_workgroup_dependency_edges": [
+            [
+              0,
+              2
+            ],
+            [
+              1,
+              3
+            ],
+            [
+              3,
+              5
+            ],
+            [
+              4,
+              6
+            ]
+          ],
+          "distinct_observed_workgroups": 2,
+          "expected_epoch": 2,
+          "task_owners": [
+            1,
+            1,
+            2,
+            2,
+            2,
+            1,
+            1
+          ]
+        },
+        {
+          "cross_workgroup_dependency_edges": [
+            [
+              0,
+              2
+            ],
+            [
+              1,
+              3
+            ],
+            [
+              3,
+              5
+            ],
+            [
+              4,
+              6
+            ]
+          ],
+          "distinct_observed_workgroups": 2,
+          "expected_epoch": 3,
+          "task_owners": [
+            2,
+            2,
+            1,
+            1,
+            1,
+            2,
+            2
+          ]
+        },
+        {
+          "cross_workgroup_dependency_edges": [
+            [
+              0,
+              2
+            ],
+            [
+              1,
+              3
+            ],
+            [
+              3,
+              5
+            ],
+            [
+              4,
+              6
+            ]
+          ],
+          "distinct_observed_workgroups": 2,
+          "expected_epoch": 4,
+          "task_owners": [
+            1,
+            1,
+            2,
+            2,
+            2,
+            1,
+            1
+          ]
+        }
+      ]
+    },
+    {
+      "case": "maximum",
+      "deterministic_state_words_compared": 61,
+      "expected_payloads": [
+        131072,
+        262144,
+        262144,
+        655360,
+        786432,
+        786432,
+        1703936
+      ],
+      "hashes": {
+        "artifact_record_sha256": "2d90632bf303b340fb7d5c1446caeaa775d498940c7c6079a313d4fdcb998383",
+        "input_sha256": "ec73509be571a540a651a98ecab146ea84415ceb2fef6f9a9f6e9f3b640ca241",
+        "numerical_sha256": "cc4d24ede71d7b7bb49876029be136e9c2c944c729d824dfb010068874c8d043",
+        "object_sha256": "fe55cc7167fd9e6859ba3ea4cf5f66ccfdb40c91e30be4bf05d8139d46298187",
+        "probe_sha256": "687818a330bb1e622fcb3271b3dc03ba3640a474d4ac01a78b004efde2097b36",
+        "reference_record_sha256": "ec1374332aa6c9bb658e8813f0a2d5dcca7d954fb6005b8de1d9db60131c0774",
+        "reference_sha256": "b3fa631fd4e57b4aec011c505c5a557107dc3c9825455573ecc47d1dd8ae6237",
+        "report_sha256": "9876a148db15b26a2b3c7ed9b41b60e3e83990e9db6185b4855576c795b56080",
+        "source_sha256": "6d17ed3b123f241627d9847ff90eb9d895ca9fd28754092f27a96b0881132510",
+        "states_sha256": "01d9c7be9efa672cf6cdd910ff80870ef19d9d5c8a98457629e0f574a2fb63a3",
+        "worker_sha256": "6f6e13ef2e15aedbb4e5d2cc966421c69d99784049ba00334e8334d4c97c7a4b"
+      },
+      "independent_payload_values_checked": 28,
+      "positive_epochs": 4,
+      "stale_epoch_rejections": 1,
+      "state_words_validated": 65,
+      "valid_epochs": [
+        {
+          "cross_workgroup_dependency_edges": [
+            [
+              0,
+              2
+            ],
+            [
+              1,
+              3
+            ],
+            [
+              3,
+              5
+            ],
+            [
+              4,
+              6
+            ]
+          ],
+          "distinct_observed_workgroups": 2,
+          "expected_epoch": 1,
+          "task_owners": [
+            1,
+            1,
+            2,
+            2,
+            2,
+            1,
+            1
+          ]
+        },
+        {
+          "cross_workgroup_dependency_edges": [
+            [
+              0,
+              2
+            ],
+            [
+              1,
+              3
+            ],
+            [
+              3,
+              5
+            ],
+            [
+              4,
+              6
+            ]
+          ],
+          "distinct_observed_workgroups": 2,
+          "expected_epoch": 2,
+          "task_owners": [
+            2,
+            2,
+            1,
+            1,
+            1,
+            2,
+            2
+          ]
+        },
+        {
+          "cross_workgroup_dependency_edges": [
+            [
+              0,
+              2
+            ],
+            [
+              1,
+              3
+            ],
+            [
+              3,
+              5
+            ],
+            [
+              4,
+              6
+            ]
+          ],
+          "distinct_observed_workgroups": 2,
+          "expected_epoch": 3,
+          "task_owners": [
+            1,
+            1,
+            2,
+            2,
+            2,
+            1,
+            1
+          ]
+        },
+        {
+          "cross_workgroup_dependency_edges": [
+            [
+              0,
+              2
+            ],
+            [
+              1,
+              3
+            ],
+            [
+              3,
+              5
+            ],
+            [
+              4,
+              6
+            ]
+          ],
+          "distinct_observed_workgroups": 2,
+          "expected_epoch": 4,
+          "task_owners": [
+            1,
+            1,
+            2,
+            2,
+            2,
+            1,
+            1
+          ]
+        }
+      ]
+    },
+    {
+      "case": "random",
+      "deterministic_state_words_compared": 61,
+      "expected_payloads": [
+        61799,
+        130013,
+        128927,
+        324370,
+        390121,
+        381631,
+        834922
+      ],
+      "hashes": {
+        "artifact_record_sha256": "2d90632bf303b340fb7d5c1446caeaa775d498940c7c6079a313d4fdcb998383",
+        "input_sha256": "03700303f0a4924ee2d1c293d6f64c566bcf539f1f5348485edb720ebd506cd0",
+        "numerical_sha256": "f2e477ae007d0c0afc960e28b6632d51d69436f6caca8821bb3b4c036f3002c9",
+        "object_sha256": "fe55cc7167fd9e6859ba3ea4cf5f66ccfdb40c91e30be4bf05d8139d46298187",
+        "probe_sha256": "687818a330bb1e622fcb3271b3dc03ba3640a474d4ac01a78b004efde2097b36",
+        "reference_record_sha256": "26b06ff3f0a0b5b935258053dda68b808d49099787d9f05dc9ee6782697f0f65",
+        "reference_sha256": "b3fa631fd4e57b4aec011c505c5a557107dc3c9825455573ecc47d1dd8ae6237",
+        "report_sha256": "cd816556e8f1460507580febd9ed54977c55ee4190815491f434fd2448142115",
+        "source_sha256": "6d17ed3b123f241627d9847ff90eb9d895ca9fd28754092f27a96b0881132510",
+        "states_sha256": "407070da40b70e27177fb2a928f3f883569d7dfcd43a19b8c68da22b933a0e21",
+        "worker_sha256": "6f6e13ef2e15aedbb4e5d2cc966421c69d99784049ba00334e8334d4c97c7a4b"
+      },
+      "independent_payload_values_checked": 28,
+      "positive_epochs": 4,
+      "stale_epoch_rejections": 1,
+      "state_words_validated": 65,
+      "valid_epochs": [
+        {
+          "cross_workgroup_dependency_edges": [
+            [
+              0,
+              2
+            ],
+            [
+              1,
+              3
+            ],
+            [
+              3,
+              5
+            ],
+            [
+              4,
+              6
+            ]
+          ],
+          "distinct_observed_workgroups": 2,
+          "expected_epoch": 1,
+          "task_owners": [
+            2,
+            2,
+            1,
+            1,
+            1,
+            2,
+            2
+          ]
+        },
+        {
+          "cross_workgroup_dependency_edges": [
+            [
+              0,
+              2
+            ],
+            [
+              1,
+              3
+            ],
+            [
+              3,
+              5
+            ],
+            [
+              4,
+              6
+            ]
+          ],
+          "distinct_observed_workgroups": 2,
+          "expected_epoch": 2,
+          "task_owners": [
+            1,
+            1,
+            2,
+            2,
+            2,
+            1,
+            1
+          ]
+        },
+        {
+          "cross_workgroup_dependency_edges": [
+            [
+              0,
+              2
+            ],
+            [
+              1,
+              3
+            ],
+            [
+              3,
+              5
+            ],
+            [
+              4,
+              6
+            ]
+          ],
+          "distinct_observed_workgroups": 2,
+          "expected_epoch": 3,
+          "task_owners": [
+            2,
+            2,
+            1,
+            1,
+            1,
+            2,
+            2
+          ]
+        },
+        {
+          "cross_workgroup_dependency_edges": [
+            [
+              0,
+              2
+            ],
+            [
+              1,
+              3
+            ],
+            [
+              3,
+              5
+            ],
+            [
+              4,
+              6
+            ]
+          ],
+          "distinct_observed_workgroups": 2,
+          "expected_epoch": 4,
+          "task_owners": [
+            1,
+            1,
+            2,
+            2,
+            2,
+            1,
+            1
+          ]
+        }
+      ]
+    }
+  ],
+  "probe_sha256": "687818a330bb1e622fcb3271b3dc03ba3640a474d4ac01a78b004efde2097b36",
+  "reference_sha256": "b3fa631fd4e57b4aec011c505c5a557107dc3c9825455573ecc47d1dd8ae6237",
+  "resources": {
+    "kernarg_alignment": 8,
+    "kernarg_bytes": 136,
+    "lds_bytes": 1024,
+    "private_bytes": 0,
+    "sgpr_spills": 0,
+    "sgprs": 77,
+    "vgpr_spills": 0,
+    "vgprs": 18,
+    "wavefront_size": 64
+  },
+  "schema": "ferric-task-graph-sanitized-observation-summary-v1",
+  "source_commit": "5842ea2854713ae558a06271235ee41490b2a17c",
+  "source_sha256": "6d17ed3b123f241627d9847ff90eb9d895ca9fd28754092f27a96b0881132510",
+  "status": "pass",
+  "totals": {
+    "completed_dispatches": 20,
+    "deterministic_state_words_compared": 244,
+    "independent_payload_values_checked": 112,
+    "ownership_words_validated": 16,
+    "positive_epochs": 16,
+    "stale_epoch_rejections": 4,
+    "state_words_validated": 260
+  },
+  "worker_sha256": "6f6e13ef2e15aedbb4e5d2cc966421c69d99784049ba00334e8334d4c97c7a4b"
+}

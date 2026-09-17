@@ -1,0 +1,27 @@
+[package]
+name = "ferric-gfx950-finite-probe"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.97.1"
+publish = false
+description = "Bounded, unqualified direct-KFD finite decoder fixture probe"
+
+# This executable cannot supply Ferric production load or launch authority.
+[workspace]
+resolver = "2"
+
+[dependencies]
+fe2o3-kfd = { path = "../../../fe2o3/crates/fe2o3-kfd", features = ["engineering-gfx950"] }
+fe2o3-amdhsa-loader = { path = "../../../fe2o3/crates/fe2o3-amdhsa-loader" }
+fe2o3-hsaco = { path = "../../../fe2o3/crates/fe2o3-hsaco" }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+sha2 = "0.11"
+
+[lints.rust]
+unsafe_code = "forbid"
+
+[lints.clippy]
+all = { level = "deny", priority = -1 }
+pedantic = { level = "deny", priority = -1 }
+too_many_lines = { level = "allow", priority = 1 }

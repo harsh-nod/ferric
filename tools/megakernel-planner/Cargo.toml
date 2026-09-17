@@ -1,0 +1,20 @@
+[package]
+name = "ferric-megakernel-planner"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.97.1"
+publish = false
+description = "Engineering-only addressless Qwen3 decode planning"
+
+# Host engineering tooling is deliberately separate from Ferric's verified
+# production workspace and its strict Verus artifact qualification.
+[workspace]
+resolver = "2"
+
+[lints.rust]
+unsafe_code = "forbid"
+
+[lints.clippy]
+all = { level = "deny", priority = -1 }
+pedantic = { level = "deny", priority = -1 }
+too_many_lines = { level = "allow", priority = 1 }

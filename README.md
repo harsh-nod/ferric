@@ -40,6 +40,13 @@ the production verifier, generated runner, remaining kernels, model bundle,
 hardware qualification, and end-to-end inference path remain open. Unsupported
 stages fail closed rather than selecting another implementation.
 
+The parallel [gfx950 megakernel work](docs/COHERE_STYLE_RUNTIME.md) starts with
+Qwen3-0.6B correctness, then Qwen3-8B, then North Mini Code. Engineering-only
+GPU evidence currently covers a small decoder layer and an actual-weight
+Qwen3 key projection. These isolated direct-KFD test tools do not provide
+production launch authority, full-model generation, or performance parity.
+See the [projection's numerical evidence](qualification/gfx950-qwen3-kproj-v1/README.md).
+
 ## First Product Milestone
 
 The first product milestone is Qwen3-8B target inference with Qwen3-0.6B as a

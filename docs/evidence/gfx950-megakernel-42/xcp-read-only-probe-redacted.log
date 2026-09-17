@@ -1,0 +1,5 @@
+   Compiling fe2o3-kfd v0.1.0 (/home/harmenon/ferric-gfx950-42/fe2o3/crates/fe2o3-kfd)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 1.08s
+     Running `/home/harmenon/ferric-gfx950-42/target-upstream/debug/examples/kfd-gfx950-device-identity --all`
+target=gfx950:xnack- profile_sha256=913b66f5e477f025d1d6a054d9e298ac444673983963c2315076e24a55142649 gpu_id=<redacted> unique_id=<redacted> render_minor=<redacted> drm_device=DrmAmdgpuDeviceIdentityV1 { device_id: 30112, chip_rev: 0, external_rev: 80, pci_rev: 0, family: 141 } descriptors=3 apertures=1 currentness=contracted-clear authority=checked-observation-only explicit_vm_acquisition=false vm_authority=false memory=false queue=false dispatch=false xnack_set=false
+descriptor_cleanup=passed before=4 after=4
