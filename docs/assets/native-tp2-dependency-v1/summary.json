@@ -1,0 +1,58 @@
+{
+  "accepted": true,
+  "accepted_report_sha256": "46ac6691bc55b5310c22133017351d2fdbe9c2605d00f6a9d34796b234491e0a",
+  "actual_output_bytes_retained": false,
+  "all_observed_cpu_routes_checked": true,
+  "all_seven_postchecks_zero": true,
+  "bf16_words_checked_in_process": 16384,
+  "binary_sha256": "c718411d348c99827f0634eee5f3bfe8fbf835c136e0ac686ee6a281db48ba97",
+  "both_raw_idle_snapshots_checked": true,
+  "cache_bit_causal_claim": false,
+  "four_exact_mapping_snapshots_checked": true,
+  "four_signals_and_both_actual_frontiers_checked": true,
+  "generation_output_hashes": [
+    {
+      "consumer_output_sha256": "3563f691925493b41e5796e12a3e3b89f779f46c157f4339feecdf23f5e450a3",
+      "producer_output_sha256": "251ea955c58ff7b8ba2b753cb4f730dd2476aa44f36b291ca25e010f821581fc"
+    },
+    {
+      "consumer_output_sha256": "aeef537d60a449d5af990472bbe50b413f99486a333fa312b46763152392eb51",
+      "producer_output_sha256": "e89fd0130f8d4081a5fe08118af5d6b9f6b125f1ae76adf105065d345abe52d7"
+    }
+  ],
+  "gpu_dependency_latency_claim": false,
+  "hash_receipts_match_predeclared_closures": true,
+  "hsaco_sha256": "6b0889e2834bda81313b3cbda5a60207dd9fa41c40ea80251bbec89d7befef2c",
+  "independent_expected_hashes_match": true,
+  "model_throughput_claim": false,
+  "native_expert_unauthenticated_machine_code": true,
+  "native_report_sha256": "f4623ff1467fd629a1dfaa96b842b17662448e47c7f70914db1787fc4710a462",
+  "new_gpu_invocation": false,
+  "observed_host_phases": [
+    {
+      "generation": 1,
+      "hold_ns": 31027955,
+      "host_elapsed_ns": 43124956,
+      "witness_after_ns": 6050380
+    },
+    {
+      "generation": 2,
+      "hold_ns": 31047045,
+      "host_elapsed_ns": 43158355,
+      "witness_after_ns": 6052590
+    }
+  ],
+  "per_poll_currentness_raw_trace_retained": false,
+  "plan_sha256": "cea5bfab1c898d991a5582ddba7e62bb0efc798049795df912ace3bb23ed301a",
+  "prior_residual_admission_sha256": "e1a4587222f87afc2b4400109bbd1bc7713e6bf2e08fa47a934cb4acb27d807d",
+  "production_authorization_claim": false,
+  "raw_files_verified": 41,
+  "raw_output_replay": false,
+  "raw_run_manifest_sha256": "d190a52daa0c3b7c40925bf8c0fa6c59175744756a9157d006b8f133cd59685b",
+  "residual_implicit_bytes": 256,
+  "residual_implicit_offset": 56,
+  "residual_kernarg_bytes": 312,
+  "schema": "FerricNativeTp2DependencyIndependentAuditV1",
+  "source_manifest_sha256": "cf31cf0390576cd3dc018c0dbcd98585b0445144de96b58ba2a7cc7f8368e525",
+  "two_generations_checked": true
+}

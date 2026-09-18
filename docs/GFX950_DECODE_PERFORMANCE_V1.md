@@ -14,6 +14,9 @@ The separate [Qwen3-8B two-token smoke](GFX950_TARGET8B_SMOKE_V1.md) checks the
 actual target model on Asrock, but is not a megakernel or performance result.
 The [32-token target-model ablations](GFX950_TARGET8B_ABLATIONS_V2.md) retain
 accepted numerical observations, rejected candidates and actual host-time plots.
+The separate [native two-GPU dependency milestone](GFX950_NATIVE_TP2_DEPENDENCY_V1.md)
+retains two rejected attempts and one accepted primitive canary. It is not a
+tensor-parallel model result, dependency-latency benchmark, or overlap measurement.
 
 ## Execution And Numerical Scope
 

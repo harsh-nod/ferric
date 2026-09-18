@@ -1,0 +1,16 @@
+{
+  "schema": "FerricNativeTp2DependencyAuditProvenanceV1",
+  "independent_review_sha256": "6429ee279c2d7edaa1931af756bc0809448a02f8e6c8bff9c1ff98d9775edccf",
+  "independent_auditor_sha256": "2f1e031c6973b4263e7dcd3301267aafa19b40ad83d4c1e88633c6c65349cf07",
+  "independent_audit_tests_sha256": "1657d9a06e2ffc61af8cd1639f3ad865e0e8d416dc4bff6338d6002508674177",
+  "passed_test_cases": 7,
+  "accepted_raw_manifest_sha256": "d190a52daa0c3b7c40925bf8c0fa6c59175744756a9157d006b8f133cd59685b",
+  "rejected_v1_raw_manifest_sha256": "2bbb3863d73ae41bb3f539f1f61d515cbed0376ecc1fc2882db4cede06a8d28e",
+  "rejected_v1_review_sha256": "0c5f59aeddcd3445e097c48c812f3a05dabd1fee267296c7bfd41026cfb8f7ca",
+  "rejected_v2_raw_manifest_sha256": "e7a94c4d9fad9f8d13b844ee68e1b28ae43bbb964ceef48959f126c4f29dcaca",
+  "rejected_v2_review_sha256": "d0ef1c74b8665ed353a65b8e06792d523df9553da5fb4771b4de725edc3afa72",
+  "previous_failures_preserved": true,
+  "expert_machine_code_admission_not_production_authority": true,
+  "actual_vector_bytes_retained": false,
+  "new_gpu_invocation": false
+}

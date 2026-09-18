@@ -12,6 +12,10 @@ The capture retains **36 forwards, 616 ordered AQL packets per forward, and
 rate, stable speedup, GPU overlap, GPU utilization, or pure kernel-body duration
 is inferred from these measurements.
 
+A separate [native two-GPU dependency canary](GFX950_NATIVE_TP2_DEPENDENCY_V1.md)
+validates one cross-device dependency primitive, not model TP2 execution or GPU
+overlap. It does not alter this TP1 capture or supply an overlap timeline.
+
 ## What Was Measured
 
 Opt-in native queue profiling records AMD dispatch **packet-processing** start
