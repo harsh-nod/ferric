@@ -16,6 +16,8 @@ mod authenticated_queue_rearm;
 mod authenticated_queue_rollover;
 mod authenticated_resident_session;
 mod authenticated_s8_k4_window;
+mod authenticated_s8_prefill_bootstrap;
+mod authenticated_s8_prefill_execution;
 mod authenticated_speculative_executor;
 mod authenticated_target_rollover_phase_custody;
 mod authenticated_target_window_executor;
@@ -298,6 +300,21 @@ pub use authenticated_s8_k4_window::{
     M1AuthenticatedS8K4WindowPreparedV1, M1AuthenticatedS8K4WindowPublishErrorV1,
     M1AuthenticatedS8K4WindowPublishFailureV1, M1AuthenticatedS8K4WindowScheduleFailureV1,
     M1AuthenticatedS8K4WindowScheduledV1, M1AuthenticatedS8K4WindowTerminalCustodyV1,
+};
+pub use authenticated_s8_prefill_bootstrap::{
+    prepare_m1_authenticated_s8_t128_prefill_prepublication_v1,
+    M1AuthenticatedS8T128PrefillBootstrapErrorV1, M1AuthenticatedS8T128PrefillBootstrapFailureV1,
+    M1AuthenticatedS8T128PrefillBootstrapInputErrorV1,
+    M1AuthenticatedS8T128PrefillBootstrapInputFailureV1,
+    M1AuthenticatedS8T128PrefillBootstrapInputV1, M1AuthenticatedS8T128PrefillBootstrapPhaseV1,
+    M1AuthenticatedS8T128PrefillPrepublicationV1,
+};
+pub use authenticated_s8_prefill_execution::{
+    execute_m1_authenticated_s8_t128_paired_prefill_v1, M1AuthenticatedS8CompletedFirstRoundV1,
+    M1AuthenticatedS8FirstRoundInputsV1, M1AuthenticatedS8PrefillExecutionErrorV1,
+    M1AuthenticatedS8PrefillExecutionFailureV1, M1AuthenticatedS8PrefillExecutionStageV1,
+    M1AuthenticatedS8PreparedFirstRoundV1, M1AuthenticatedS8PublishedFirstRoundV1,
+    M1AuthenticatedS8ScheduledFirstRoundV1, M1AuthenticatedS8T128PrefillExecutionSuccessV1,
 };
 pub use authenticated_speculative_executor::{
     prepare_m1_authenticated_speculative_bootstrap_v1, M1AuthenticatedSpeculativeBootstrapErrorV1,
