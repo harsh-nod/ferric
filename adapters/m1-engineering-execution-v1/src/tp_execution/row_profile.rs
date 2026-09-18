@@ -67,7 +67,7 @@ pub(super) fn bind(
         else {
             return Err("wave RMSNorm v15 requires five slices and four exact scalars".into());
         };
-        if capacity != 32 || !(1..=32).contains(rows) || *width != 4096
+        if !((capacity == 32 && (1..=32).contains(rows)) || (capacity == 16 && *rows == 1)) || *width != 4096
             || epsilon.to_bits() != 1.0e-6_f32.to_bits() || *behavior != 0
             || command.workgroup_size != 64 || command.grid_workgroups != *rows
             || command.arguments[..5].iter().enumerate().any(|(index, arg)| {

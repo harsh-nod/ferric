@@ -58,6 +58,20 @@ COHORTS = {
                        b"base_source=0 controller_inputs=0 paired_source=0 argmax_source=0 "
                        b"argmax_original_source=0 argmax_shared_source=0\n"),
     },
+    "rmsnorm-v15": {
+        "checker": "target_full_forward_rmsnorm_v15_v1.py",
+        "sha256": "1df745d231bb6f1a2666bb7a16179a681c945ae8a45312619ca728d225523eda",
+        "schema": "FerricTargetFullForwardRmsNormV15ObservationV1",
+        "variants": ("baseline", "wave-v15"),
+        "labels": ("Baseline hidden-state RMSNorm", "Wave hidden-state RMSNorm v15"),
+        "title": "Qwen3-8B: hidden-state RMSNorm selector observation",
+        "axis": "hidden-state-rmsnorm-selector",
+        "identity_fields": (),
+        "controller_cohort": "full-forward-rmsnorm-v15-controller-v1",
+        "postchecks": {name: 0 for name in (
+            "inputs_pre", "sources_pre", "idle_pre", "plan_pre", "controller", "numerical",
+            "inputs_post", "sources_post", "plan_post", "model_stat_post", "idle_post", "topology_post")},
+    },
 }
 
 
@@ -95,8 +109,12 @@ def revalidate(checker, family, directory, variant, reference):
     checker.core.same(report["variant"], variant, "exact plotted variant")
     raw = read(directory / "report-public.json", 1048576)
     checker.core.same(checker.core.json_value(raw), report, "regenerated public report")
-    checker.core.require(read(directory / "postcheck-status.txt", 256) == COHORTS[family]["postchecks"],
-                         "all exact cohort postchecks")
+    if family == "rmsnorm-v15":
+        checker.core.same(checker.core.json_value(read(directory / "postcheck-status.json", 65536)),
+                          COHORTS[family]["postchecks"], "all exact norm cohort postchecks")
+    else:
+        checker.core.require(read(directory / "postcheck-status.txt", 256) == COHORTS[family]["postchecks"],
+                             "all exact cohort postchecks")
     return report, raw
 
 
@@ -126,6 +144,12 @@ def matched_axis(checker, family, rows):
             core.same(row["fp32_argmax"], variant, "actual argmax selector axis")
             core.same(row["argmax_root"], checker.ARGMAX_ROOTS[variant], "source-derived selected root")
             core.same(row["fp32_argmax_artifact"], checker.ARGMAX_ARTIFACT, "identical actual sidecar")
+        elif family == "rmsnorm-v15":
+            core.same(row["rmsnorm"], variant, "actual hidden-state norm selector")
+            core.same(row["rmsnorm_artifact"], checker.RMSNORM_ARTIFACT, "identical actual norm sidecar")
+            core.same(row["fp32_argmax"], "wave-v11", "argmax unchanged")
+            core.same(row["argmax_root"], checker.ARGMAX_ROOTS["wave-v11"], "argmax root unchanged")
+            core.same(row["fp32_argmax_artifact"], checker.ARGMAX_ARTIFACT, "argmax image unchanged")
     for key in core.IDENTITIES:
         if key in cohort["identity_fields"]:
             core.require(rows[0]["identities"][key] != rows[1]["identities"][key], "declared identity axis differs")
@@ -174,14 +198,20 @@ def rows_and_contrast(checker, family, reports):
             expected.update(worker_source_manifest_sha256=checker.WORKER_SOURCE_MANIFEST_SHA256,
                             transaction_preparation_fence=index == 1, currentness_check_count_measured=False)
         else:
-            expected.update(**checker.SOURCE_PINS, fp32_argmax=variant,
+            argmax_variant = "wave-v11" if family == "rmsnorm-v15" else variant
+            expected.update(**checker.SOURCE_PINS, fp32_argmax=argmax_variant,
                             fp32_argmax_artifact=checker.ARGMAX_ARTIFACT,
                             argmax_canonical_descriptor_sha256=checker.ARGMAX_CANONICAL_DESCRIPTOR_SHA256,
                             argmax_admission_sha256=checker.ARGMAX_ADMISSION_SHA256,
                             argmax_admission_provenance_sha256=checker.ARGMAX_ADMISSION_PROVENANCE_SHA256,
-                            argmax_root=checker.ARGMAX_ROOTS[variant], sidecar_loaded_both_variants=True,
+                            argmax_root=checker.ARGMAX_ROOTS[argmax_variant], sidecar_loaded_both_variants=True,
                             argmax_source_row_capacity=32, controller_row_capacity=16, observed_rows=1,
                             transaction_preparation_fence=True, currentness_check_count_measured=False)
+            if family == "rmsnorm-v15":
+                expected.update(rmsnorm=variant, rmsnorm_artifact=checker.RMSNORM_ARTIFACT,
+                                rmsnorm_canonical_descriptor_sha256=checker.RMSNORM_CANONICAL_DESCRIPTOR_SHA256,
+                                rmsnorm_admission_sha256=checker.RMSNORM_ADMISSION_SHA256,
+                                changed_norm_packets_per_forward=73, rmsnorm_source_row_capacity=32)
         for key, value in expected.items():
             core.same(report[key], value, "exact ablation plot " + key)
         config = {
@@ -196,6 +226,8 @@ def rows_and_contrast(checker, family, reports):
         }
         if family == "argmax-v11":
             config["fp32_argmax"] = variant
+        elif family == "rmsnorm-v15":
+            config.update(fp32_argmax="wave-v11", rmsnorm=variant)
         core.same(report["configuration"], config, "exact full-forward wave configuration and declared selector")
         timing = report["timing"]
         intervals = timing["decode_intervals_ns"]
@@ -213,9 +245,11 @@ def rows_and_contrast(checker, family, reports):
                      "reference_sha256": report["reference_sha256"],
                      "decode_intervals_seconds": [value / 1e9 for value in intervals],
                      "post_first_tokens_per_second": rate})
-        if family == "argmax-v11":
+        if family in ("argmax-v11", "rmsnorm-v15"):
             rows[-1].update(fp32_argmax=report["fp32_argmax"], argmax_root=report["argmax_root"],
                             fp32_argmax_artifact=copy.deepcopy(report["fp32_argmax_artifact"]))
+        if family == "rmsnorm-v15":
+            rows[-1].update(rmsnorm=report["rmsnorm"], rmsnorm_artifact=copy.deepcopy(report["rmsnorm_artifact"]))
     matched_axis(checker, family, rows)
     ratio = rows[1]["post_first_tokens_per_second"] / rows[0]["post_first_tokens_per_second"]
     contrast = {
@@ -245,7 +279,7 @@ def rows_and_contrast(checker, family, reports):
     elif family == "preparation-worker":
         contrast.update(worker_source_manifest_sha256=checker.WORKER_SOURCE_MANIFEST_SHA256,
                         currentness_check_count_measured=False)
-    else:
+    elif family == "argmax-v11":
         contrast.update(**checker.SOURCE_PINS,
                         differing_configuration_fields=["fp32_argmax"],
                         fp32_argmax_artifact=copy.deepcopy(checker.ARGMAX_ARTIFACT),
@@ -256,6 +290,21 @@ def rows_and_contrast(checker, family, reports):
                         sidecar_loaded_both_variants=True, argmax_source_row_capacity=32,
                         controller_row_capacity=16, observed_rows=1, transaction_preparation_fence=True,
                         currentness_check_count_measured=False, gpu_argmax_duration_measured=False)
+    else:
+        contrast.update(**checker.SOURCE_PINS, differing_configuration_fields=["rmsnorm"],
+                        fp32_argmax="wave-v11", fp32_argmax_artifact=copy.deepcopy(checker.ARGMAX_ARTIFACT),
+                        argmax_root=checker.ARGMAX_ROOTS["wave-v11"],
+                        argmax_canonical_descriptor_sha256=checker.ARGMAX_CANONICAL_DESCRIPTOR_SHA256,
+                        argmax_admission_sha256=checker.ARGMAX_ADMISSION_SHA256,
+                        argmax_admission_provenance_sha256=checker.ARGMAX_ADMISSION_PROVENANCE_SHA256,
+                        rmsnorm_artifact=copy.deepcopy(checker.RMSNORM_ARTIFACT),
+                        rmsnorm_canonical_descriptor_sha256=checker.RMSNORM_CANONICAL_DESCRIPTOR_SHA256,
+                        rmsnorm_admission_sha256=checker.RMSNORM_ADMISSION_SHA256,
+                        changed_norm_packets_per_forward=73, rmsnorm_source_row_capacity=32,
+                        argmax_source_row_capacity=32, controller_row_capacity=16, observed_rows=1,
+                        sidecar_loaded_both_variants=True, transaction_preparation_fence=True,
+                        fp32_sum_association_changed=True, bf16_rounding_boundaries_retained=2,
+                        currentness_check_count_measured=False, gpu_rmsnorm_duration_measured=False)
     core.require(all(math.isfinite(value) for value in (
         ratio, contrast["observed_tpot_change_percent"],
         max(max(row["decode_intervals_seconds"]) for row in rows) * 1120,

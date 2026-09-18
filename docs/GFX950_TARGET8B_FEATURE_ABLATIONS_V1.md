@@ -203,6 +203,78 @@ and [asset hashes](assets/asrock-target8b-feature-ablations-v1/argmax-v11/SHA256
 belong only to this matched selector cohort. The earlier image and worker
 assets remain byte-identical.
 
+## Hidden-State RMSNorm V15
+
+This fourth, independently captured cohort compares `--rmsnorm baseline` with
+`--rmsnorm wave-v15`. Both arms retain the same controller `dbb09f...`, worker
+`055037...`, paired main image `2e677...`, FP32-v7 head `b21c...`, wave-v11
+argmax image `86c3ee...`, and v15 norm image `c33882...`. All four images are
+loaded in both variants before allocation. Only the norm selector differs;
+no earlier run is reused as this control.
+
+| Variant | TTFT (s) | Mean TPOT (s) | Post-first tokens/s | Observed rate / control | Setup (s) |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Baseline hidden-state RMSNorm | 0.801599 | 0.133992 | 7.463122 | 1.000x | 214.214495 |
+| Wave hidden-state RMSNorm v15 | 0.410723 | 0.091939 | 10.876773 | 1.457x | 215.426273 |
+
+The observed rate ratio is **1.457402x**, with **31.384774% lower** mean TPOT.
+Both fresh requests match all 32 reference tokens and decoded bytes and pass
+all 12 cohort-specific acceptance checks. This remains one unwarmed,
+nonisolated request per variant, not a stable or causal speedup. It does not
+measure the duration or speedup of any individual norm kernel. Ratios from the
+other three cohorts must not be multiplied with this one.
+
+### Mechanism And Numerical Scope
+
+The separate [instrumented GPU packet profile](GFX950_TARGET8B_GPU_PROFILE_V1.md)
+identified 73 full-hidden normalization packets as the largest relevant
+absolute interval group: 36 input norms, 36 post-attention norms, and one final
+norm. That profile motivated this selector, but it used a different instrumented
+controller/worker cohort. Its times are not combined with this uninstrumented
+pair or used to derive a per-norm speedup. The 72 width-128 Q/K norm packets
+remain on their original path.
+
+The unchanged [v15 source](../device/qwen3-tp-wave-rmsnorm-kernels-v15/src/rmsnorm.rs)
+uses one Wave64 per 4096-wide row. Each lane accumulates 64 strided components;
+six wave-reduction levels combine the partial sums. It then normalizes and
+writes disjoint output components. The selector changes exactly **73 kernel
+symbols per forward** from `qwen3_rmsnorm_v1` to
+`ferric_qwen3_tp_batch32_wave_rmsnorm_bf16_v15`. The remaining 543 packets,
+including Q/K norms, stay unchanged. Both paths still execute 616 ordered AQL
+packets, not one fused device kernel.
+
+The wave reduction **changes FP32 sum association**. It retains both BF16
+rounding boundaries: normalization narrows to BF16, that value is widened for
+weight multiplication, and the result narrows again. This is not a proof of
+bitwise equality for arbitrary inputs or every intermediate tensor. Before the
+model pair, the exact current image passed 16 finite standalone cases: eight
+original analytical cases and eight nonuniform independent-f64 reference cases,
+at rows 1, 16, 17, and 32. Exact output bytes, all 80 buffers, and 160 guards
+passed; 1,081,344 output BF16 words were checked. The model experiment itself
+validates only one active row and the fixed 32-token reference window.
+
+The closed one-root image has a 352-byte kernarg (96 explicit plus 256 hidden),
+Wave64/workgroup64, no private storage or LDS, and no reported spills. Current
+checked emission, exact ABI checks, and ordinary admission for both selectors
+passed. Source row capacity 32 and controller buffer capacity 16 are not
+claims that every supported model batch shape has been GPU-validated.
+
+![Hidden-state RMSNorm selector observation, one unwarmed request per mode](assets/asrock-target8b-feature-ablations-v1/rmsnorm-v15/rates.svg)
+
+![All 62 actual host decode intervals for the hidden-state RMSNorm pair](assets/asrock-target8b-feature-ablations-v1/rmsnorm-v15/intervals.svg)
+
+The [baseline report](assets/asrock-target8b-feature-ablations-v1/rmsnorm-v15/control-report.json)
+and [wave report](assets/asrock-target8b-feature-ablations-v1/rmsnorm-v15/candidate-report.json)
+are exact regenerated public reports. The
+[contrast](assets/asrock-target8b-feature-ablations-v1/rmsnorm-v15/observed-contrast.json)
+preserves all four image identities, the measured controller/source pins,
+73-symbol scope, admission evidence, changed FP32 association, and retained
+BF16 roundings. The [62-interval CSV](assets/asrock-target8b-feature-ablations-v1/rmsnorm-v15/intervals.csv),
+[generated table](assets/asrock-target8b-feature-ablations-v1/rmsnorm-v15/table.md),
+and [hashes](assets/asrock-target8b-feature-ablations-v1/rmsnorm-v15/SHA256SUMS)
+belong only to this fourth pair. All three earlier asset directories remain
+byte-identical.
+
 ## Measurement Scope
 
 The post-first rate is `31e9 / sum(the 31 decode intervals in nanoseconds)`.
@@ -223,6 +295,9 @@ The image and worker pairs use profile
 `mfma-v3-fp32-v7-wave-attention-tp1-616`; both argmax arms use
 `mfma-v3-fp32-v7-wave-attention-v11-sidecar-tp1-616` with the explicit
 `--fp32-argmax` mode and identical `--fp32-argmax-artifact`.
+Both norm arms use
+`mfma-v3-fp32-v7-wave-attention-v11-v15-sidecars-tp1-616`, retain `wave-v11`
+argmax, and load the same norm sidecar with their explicit `--rmsnorm` selector.
 
 The model revision is `b968826d9c46dd6066d109eabc6255188de91218`. The independent
 reference was generated earlier on MI300X. This checks one fixed prompt and
@@ -230,8 +305,8 @@ reference was generated earlier on MI300X. This checks one fixed prompt and
 
 ### The Remaining 700 Tokens/s Gap
 
-The highest observed rate here, 7.270475 tokens/s, is still far below 700 tokens/s. Register
-prefetching, fewer host checks, and wave argmax do not eliminate the model's BF16 weight
+The highest observed rate here, 10.876773 tokens/s, is still far below 700 tokens/s. Register
+prefetching, fewer host checks, wave argmax, and wave normalization do not eliminate the model's BF16 weight
 traffic. The existing
 [model-specific weight-streaming analysis](GFX950_DECODE_PERFORMANCE_V1.md#bf16-weight-streaming-bound)
 and [explicit bandwidth scenarios](GFX950_TARGET8B_ABLATIONS_V2.md#theoretical-context-not-a-measured-bar)
@@ -250,6 +325,7 @@ nor multiplication of separate cohort ratios demonstrates the 700-token/s goal.
 | Paired-image comparator | `da77a498a9a429202bd247bd724e457732621716b5ad7f4f2e301cf14f5b41b2` |
 | Preparation-worker comparator | `7e654a33f32a3d382638eafceada3c0db44aa46237533836a51302e6eea4483f` |
 | Argmax selector comparator | `f862c587edc165c96a62cca057e07354b456068a7550b600b808378b51b238f2` |
+| Norm selector comparator | `1df745d231bb6f1a2666bb7a16179a681c945ae8a45312619ca728d225523eda` |
 | Common numerical comparator | `90cd589fe9b98660f6efb3400775cd269af236688706f37eaedee2d12e92b975` |
 | Controller-v7 | `5b218caa6aa51c56749f64329054d29faf0cc766e401db2c41f58bc8d1324f48` |
 | Argmax cohort controller | `b4d180bc078b1c84bad374e55f5905b3ba407c0847e6c4255f8546adfaa5199a` |
@@ -258,6 +334,13 @@ nor multiplication of separate cohort ratios demonstrates the 700-token/s goal.
 | Argmax native sidecar | `86c3ee4cead26f6432ef590434b3335e1ee2a95c9c900cf6315dca4ef0a542b0` |
 | Argmax ordinary admission | `8d574bd5d838c4f83e7f57b8855e9bee2ded5745db0aea8c7624f4ba1ac9af14` |
 | Argmax admission provenance | `25c151cb56dbe3412345787d2bae89172141558b04663f3e4008d46a68f92dbc` |
+| Measured norm cohort controller | `dbb09fb78689667c9c6bf80659770e9a340f1fbcbca4ff4520c9b94da3368545` |
+| Measured norm controller source-v3 manifest | `2489bee6d4237eeb5873487c96c67c37d0c44d91051b707b07dbfed5a87c3d6c` |
+| Norm kernel source manifest | `1a8fbbcb2dbb05d74b9108634bd235d537cdba817b9126484ae15bbb1fccd537` |
+| Norm image | `c33882db1afcd8eb26ec02bc43ea2144af322d29bf4e0e921e03ea74adc55af6` |
+| Norm actual compiler handoff | `348c74397e520f5dca74d655ec50d9207a57ef2b36b378266b2318a0fdacebb5` |
+| Norm canonical descriptor | `67ed3415901de9936ff4dd01bfdf06847b7cb23067268af6921456faf4cb47f2` |
+| Norm ordinary admission | `38318484211888d2d20da75985c7b8f8789dbf61907425031567ebea173928f9` |
 | Independent reference | `1ed868663df52a146dd7921f9fbb2cf1e1d0c0ceed8a7bfda030d65f8ec5b094` |
 | Paired source manifest | `b27b9cffc159ee82667d039056aa6a414569cc1309e25a5dca442279aba59fb0` |
 | Complete 15-root catalog | `d4a1e53ed7d8ca8bd0d29dded44192e6cbeac2b825174d9faa391fd414af99e6` |
@@ -299,6 +382,17 @@ are rejected. The captures include request retirement and worker
 closure; the close record alone does not independently establish system-wide
 idleness or a final free-page count. Performance qualification remains false.
 
+The norm pair instead retains an exact 12-key JSON status object with integer
+zeros for `inputs_pre`, `sources_pre`, `idle_pre`, `plan_pre`, `controller`,
+`numerical`, `inputs_post`, `sources_post`, `plan_post`, `model_stat_post`,
+`idle_post`, and `topology_post`. Missing, extra, boolean, or nonzero values
+are rejected. Its independent replay also checked the original capture
+manifests, predeclared plans/commands, all source-file hashes, unchanged model
+metadata, all four images, both admission evidence directories, and every
+interval recomputed from the 32 output timestamps. The checker publication is
+byte-identical to the comparator used for the accepted run. Later CPU-only
+test adjustments do not change or relabel the measured source-v3/controller.
+
 ## Reproduce The Reporting
 
 With `EVIDENCE` and `REFERENCE` pointing to the retained evidence and reference:
@@ -322,16 +416,24 @@ python3 -B tools/target_feature_ablation_plots_v1.py \
   --candidate-capture "$EVIDENCE/target8b-full-forward-argmax-v11-v1-wave-01" \
   --reference "$REFERENCE" \
   --output /tmp/ferric-argmax-selector-observation-v1-rebuilt
+python3 -B tools/target_feature_ablation_plots_v1.py \
+  --family rmsnorm-v15 \
+  --control-capture "$EVIDENCE/target8b-full-forward-rmsnorm-v15-v1-prep/independent-audit-v1/baseline" \
+  --candidate-capture "$EVIDENCE/target8b-full-forward-rmsnorm-v15-v1-prep/independent-audit-v1/wave-v15" \
+  --reference "$REFERENCE" \
+  --output /tmp/ferric-rmsnorm-selector-observation-v1-rebuilt
 PYTHONPATH=tools python3 -B -m unittest \
   test_target_mfma_paired_prefetch_v1 \
   test_target_full_forward_preparation_v1 \
   test_target_full_forward_argmax_v11_v1 \
+  test_target_full_forward_rmsnorm_v15_v1 \
   test_target_feature_ablation_plots_v1
 ```
 
-The combined suite passes 67 CPU tests, including the reporter's 16 synthetic
+The combined suite passes 79 CPU tests, including the reporter's 17 synthetic
 tests. They cover actual identity preservation,
 declared-axis matching, numerical scope, all interval values, exact report
-equality, source pinning, every seven- or 13-status postcheck line, and rejection before
+equality, source pinning, every seven- or 13-status postcheck line, all 12 norm JSON
+statuses, and rejection before
 output creation. Synthetic fixtures are explicitly labeled and rejected by
 the production reference digest check; they provide no GPU or rate evidence.

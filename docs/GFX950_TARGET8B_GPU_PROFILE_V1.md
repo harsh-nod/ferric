@@ -89,6 +89,9 @@ for both rounding points and changed reduction association. The captured
 uses a grid-leader component-copy loop. These source observations motivate
 separate optimization candidates; this profile does not establish their gains.
 Attention's 1.7894 ms all-forward mean is not the dominant interval category here.
+The later [uninstrumented hidden-state norm pair](GFX950_TARGET8B_FEATURE_ABLATIONS_V1.md#hidden-state-rmsnorm-v15)
+tests a 73-symbol selector separately. Its host-rate contrast is not combined
+with this capture and does not measure a per-norm GPU speedup.
 
 ## Every Forward
 

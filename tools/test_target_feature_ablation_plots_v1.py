@@ -14,9 +14,11 @@ import target_feature_ablation_plots_v1 as plots
 from test_target_mfma_paired_prefetch_v1 import fixture as paired_fixture
 from test_target_full_forward_preparation_v1 import fixture as preparation_fixture
 from test_target_full_forward_argmax_v11_v1 import fixture as argmax_fixture
+from test_target_full_forward_rmsnorm_v15_v1 import fixture as rmsnorm_fixture
 
 
-FIXTURES = {"paired-prefetch": paired_fixture, "preparation-worker": preparation_fixture, "argmax-v11": argmax_fixture}
+FIXTURES = {"paired-prefetch": paired_fixture, "preparation-worker": preparation_fixture,
+            "argmax-v11": argmax_fixture, "rmsnorm-v15": rmsnorm_fixture}
 
 
 def fixture(family):
@@ -39,8 +41,11 @@ def synthetic_capture(checker, family, directory, variant):
         "workload.json": json.dumps(checker.expected_workload(plan)).encode(),
         "predeclared-expectation.json": json.dumps(plan).encode(),
         "stderr.log": checker.STDERR,
-        "postcheck-status.txt": plots.COHORTS[family]["postchecks"],
     }
+    if family == "rmsnorm-v15":
+        inputs["postcheck-status.json"] = json.dumps(plots.COHORTS[family]["postchecks"]).encode()
+    else:
+        inputs["postcheck-status.txt"] = plots.COHORTS[family]["postchecks"]
     with mock.patch.object(checker.core, "load_reference", return_value=reference):
         report = checker.compare(inputs["capture.ndjson"], inputs["exit-status.txt"], inputs["workload.json"],
                                  b"synthetic-only-reference", inputs["predeclared-expectation.json"], inputs["stderr.log"])
@@ -79,6 +84,17 @@ class FeatureAblationPlotTests(unittest.TestCase):
                     self.assertEqual(contrast["fp32_argmax_artifact"], checker.ARGMAX_ARTIFACT)
                     self.assertEqual(contrast["argmax_roots_by_variant"], checker.ARGMAX_ROOTS)
                     self.assertIs(contrast["gpu_argmax_duration_measured"], False)
+                elif family == "rmsnorm-v15":
+                    self.assertEqual(reports[0]["identities"], reports[1]["identities"])
+                    self.assertEqual(contrast["differing_identity_fields"], [])
+                    self.assertEqual(contrast["differing_configuration_fields"], ["rmsnorm"])
+                    self.assertEqual(contrast["rmsnorm_artifact"], checker.RMSNORM_ARTIFACT)
+                    self.assertEqual(contrast["fp32_argmax_artifact"], checker.ARGMAX_ARTIFACT)
+                    self.assertEqual(contrast["fp32_argmax"], "wave-v11")
+                    self.assertEqual(contrast["changed_norm_packets_per_forward"], 73)
+                    self.assertEqual(contrast["bf16_rounding_boundaries_retained"], 2)
+                    self.assertIs(contrast["fp32_sum_association_changed"], True)
+                    self.assertIs(contrast["gpu_rmsnorm_duration_measured"], False)
                 else:
                     self.assertNotEqual(reports[0]["identities"], reports[1]["identities"])
                 self.assertEqual(contrast["differing_axis"], plots.COHORTS[family]["axis"])
@@ -216,6 +232,27 @@ class FeatureAblationPlotTests(unittest.TestCase):
                 with self.assertRaises(ValueError):
                     plots.rows_and_contrast(checker, "argmax-v11", reports)
 
+    def test_norm_selector_four_images_sources_count_and_capacity_are_exact(self):
+        checker, original = fixture("rmsnorm-v15")
+        mutations = [(key, "a" * 64) for key in checker.SOURCE_PINS]
+        mutations += [("rmsnorm", "baseline"), ("rmsnorm_artifact", {}),
+                      ("rmsnorm_canonical_descriptor_sha256", "a" * 64),
+                      ("rmsnorm_admission_sha256", "a" * 64), ("changed_norm_packets_per_forward", 72),
+                      ("changed_norm_packets_per_forward", 73.0), ("rmsnorm_source_row_capacity", 16),
+                      ("fp32_argmax", "serial-v7"), ("fp32_argmax_artifact", {}),
+                      ("controller_row_capacity", 32), ("observed_rows", 16),
+                      ("sidecar_loaded_both_variants", False)]
+        for key, value in mutations:
+            reports = copy.deepcopy(original); reports[1][key] = value
+            with self.subTest(key=key), self.assertRaises(ValueError):
+                plots.rows_and_contrast(checker, "rmsnorm-v15", reports)
+        for key, value in (("rmsnorm", "baseline"), ("fp32_argmax", "serial-v7")):
+            reports = copy.deepcopy(original); reports[1]["configuration"][key] = value
+            with self.assertRaises(ValueError): plots.rows_and_contrast(checker, "rmsnorm-v15", reports)
+        for family in ("paired-prefetch", "preparation-worker", "argmax-v11"):
+            _, earlier = fixture(family)
+            with self.assertRaises(ValueError): plots.rows_and_contrast(checker, "rmsnorm-v15", [earlier[0], original[1]])
+
     def test_intervals_rates_boundaries_and_nonfinite_values_rejected(self):
         checker, original = fixture("paired-prefetch")
         for value in (True, 0, 1.0, float("inf"), 2**64):
@@ -284,12 +321,19 @@ class FeatureAblationPlotTests(unittest.TestCase):
                 reference_path = root / "synthetic-reference"
                 reference_path.write_bytes(b"synthetic-only-reference")
                 expected = plots.COHORTS[family]["postchecks"]
-                variants = [expected.replace(field, field.replace(b"=0", b"=1")) for field in expected.split()]
-                variants += [b" ".join(expected.split()[:6]) + b"\n", expected.rstrip(), expected + b"extra=0\n"]
-                other = "preparation-worker" if family == "paired-prefetch" else "paired-prefetch"
-                variants.append(plots.COHORTS[other]["postchecks"])
+                if family == "rmsnorm-v15":
+                    variants = [json.dumps(dict(expected, **{field: value})).encode() for field in expected for value in (1, False)]
+                    variants += [b"{}", json.dumps(dict(expected, extra=0)).encode(),
+                                 json.dumps({key: value for key, value in expected.items() if key != "controller"}).encode()]
+                    status_name = "postcheck-status.json"
+                else:
+                    variants = [expected.replace(field, field.replace(b"=0", b"=1")) for field in expected.split()]
+                    variants += [b" ".join(expected.split()[:6]) + b"\n", expected.rstrip(), expected + b"extra=0\n"]
+                    other = "preparation-worker" if family == "paired-prefetch" else "paired-prefetch"
+                    variants.append(plots.COHORTS[other]["postchecks"])
+                    status_name = "postcheck-status.txt"
                 for status in variants:
-                    (captures[1] / "postcheck-status.txt").write_bytes(status)
+                    (captures[1] / status_name).write_bytes(status)
                     output = root / "not-created"
                     with mock.patch.object(plots, "load_checker", return_value=checker), \
                          mock.patch.object(checker.core, "load_reference", return_value=reference):

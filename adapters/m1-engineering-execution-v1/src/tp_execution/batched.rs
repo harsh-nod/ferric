@@ -41,6 +41,7 @@ enum FullForwardProfile {
     MfmaFp32V7,
     MfmaFp32V7WaveAttention,
     MfmaFp32V7WaveAttentionArgmaxV11,
+    MfmaFp32V7WaveAttentionArgmaxV11RmsNormV15,
 }
 
 const MAX_ROWS: usize = 16;
@@ -158,6 +159,45 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
                 argmax_v11: Some(binding),
                 query_hoist_v14: None,
                 wave_rmsnorm_v15: None,
+            },
+        )
+    }
+
+    /// Loads the same v11/v15 sidecars before allocation for both norm comparison modes.
+    /// Selection remains separate and requires the exact single-row full-forward profile.
+    /// # Errors
+    /// Rejects mismatched images, unsupported transports or allocation failures.
+    #[allow(clippy::too_many_arguments)]
+    pub fn new_full_forward_with_argmax_v11_and_rmsnorm_v15(
+        mut transports: Vec<R>,
+        model: ModelConfig,
+        weights: &[u8],
+        layout: &AuthenticatedModelWeightLayout,
+        pool: &EngineeringTpPagedPoolV1,
+        argmax: &crate::tp_artifact::EngineeringTpArtifactV1,
+        rmsnorm: &crate::tp_artifact::EngineeringTpArtifactV1,
+    ) -> TpResult<Self> {
+        let Some((argmax, rmsnorm)) = argmax
+            .fp32_argmax_binding_v11()
+            .zip(rmsnorm.wave_rmsnorm_binding_v15())
+        else {
+            for transport in &mut transports {
+                let _ = transport.close();
+            }
+            return Err("full-forward norm requires exact admitted v11 and v15 images".into());
+        };
+        Self::new_profile(
+            transports,
+            model,
+            weights,
+            layout,
+            pool,
+            BatchedProfile::Target {
+                rows: 16,
+                large_kv: false,
+                argmax_v11: Some(argmax),
+                query_hoist_v14: None,
+                wave_rmsnorm_v15: Some(&rmsnorm),
             },
         )
     }
@@ -371,12 +411,24 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
                             )?;
                         }
                         if let Some(image) = admitted_wave_rmsnorm_v15 {
-                            validate_wave_rmsnorm_binding_v15(
-                                &mut transports,
-                                row_capacity,
-                                large_kv,
-                                image,
-                            )?;
+                            if row_capacity == 16 {
+                                if admitted_argmax_v11.is_none() {
+                                    return Err("full-forward norm requires v11 admission".into());
+                                }
+                                validate_full_forward_rmsnorm_binding_v15(
+                                    &mut transports,
+                                    row_capacity,
+                                    large_kv,
+                                    image,
+                                )?;
+                            } else {
+                                validate_wave_rmsnorm_binding_v15(
+                                    &mut transports,
+                                    row_capacity,
+                                    large_kv,
+                                    image,
+                                )?;
+                            }
                         }
                         Ok(())
                     })
@@ -1253,18 +1305,62 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
         Ok(())
     }
 
+    /// Seals the same MFMA/wave-attention/wave-argmax stack with an optional wave norm.
+    /// Only the 73 pure width4096 norm packets change; Q/K norms stay on v1.
+    /// # Errors
+    /// Rejects missing or mismatched preallocation admissions and any stale profile.
+    pub fn configure_mfma_v7_wave_argmax_rmsnorm_full_forward(
+        &mut self,
+        argmax: &crate::tp_artifact::EngineeringTpArtifactV1,
+        rmsnorm: &crate::tp_artifact::EngineeringTpArtifactV1,
+        wave_rmsnorm: bool,
+    ) -> TpResult<()> {
+        let (argmax, rmsnorm) = argmax
+            .fp32_argmax_binding_v11()
+            .zip(rmsnorm.wave_rmsnorm_binding_v15())
+            .ok_or("full-forward norm requires exact admitted v11 and v15 images")?;
+        self.configure_full_forward_rmsnorm_binding_v15(argmax, rmsnorm, wave_rmsnorm)
+    }
+
+    fn configure_full_forward_rmsnorm_binding_v15(
+        &mut self,
+        argmax: crate::tp_artifact::Fp32ArgmaxBindingV11,
+        rmsnorm: crate::tp_artifact::WaveRmsNormBindingV15,
+        wave_rmsnorm: bool,
+    ) -> TpResult<()> {
+        if self.admitted_argmax_v11 != Some(argmax)
+            || self.admitted_wave_rmsnorm_v15 != Some(rmsnorm)
+        {
+            return Err("full-forward norm binding differs from preallocation admission".into());
+        }
+        self.configure_full_forward(
+            FullForwardProfile::MfmaFp32V7WaveAttentionArgmaxV11RmsNormV15,
+        )?;
+        self.fp32_argmax_v11 = Some(argmax);
+        self.wave_rmsnorm_v15 = wave_rmsnorm.then_some(rmsnorm);
+        Ok(())
+    }
+
     fn configure_full_forward(&mut self, profile: FullForwardProfile) -> TpResult<()> {
         let attention_matches = self.wave_attention
             == matches!(
                 profile,
                 FullForwardProfile::MfmaFp32V7WaveAttention
                     | FullForwardProfile::MfmaFp32V7WaveAttentionArgmaxV11
+                    | FullForwardProfile::MfmaFp32V7WaveAttentionArgmaxV11RmsNormV15
             );
         let argmax_matches = self.fp32_argmax_v11.is_none()
             && (self.admitted_argmax_v11.is_some()
                 == matches!(
                     profile,
                     FullForwardProfile::MfmaFp32V7WaveAttentionArgmaxV11
+                        | FullForwardProfile::MfmaFp32V7WaveAttentionArgmaxV11RmsNormV15
+                ));
+        let norm_matches = self.wave_rmsnorm_v15.is_none()
+            && (self.admitted_wave_rmsnorm_v15.is_some()
+                == matches!(
+                    profile,
+                    FullForwardProfile::MfmaFp32V7WaveAttentionArgmaxV11RmsNormV15
                 ));
         let arithmetic_matches = match profile {
             FullForwardProfile::ScalarBf16 => {
@@ -1274,7 +1370,8 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
             }
             FullForwardProfile::MfmaFp32V7
             | FullForwardProfile::MfmaFp32V7WaveAttention
-            | FullForwardProfile::MfmaFp32V7WaveAttentionArgmaxV11 => {
+            | FullForwardProfile::MfmaFp32V7WaveAttentionArgmaxV11
+            | FullForwardProfile::MfmaFp32V7WaveAttentionArgmaxV11RmsNormV15 => {
                 self.projection.mode == super::EngineeringTpProjectionModeV3::Mfma
                     && self.head_profile_configured
                     && self.fp32_logits.is_some_and(|logits| {
@@ -1314,8 +1411,7 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
             || !argmax_matches
             || self.query_hoist_v14.is_some()
             || self.admitted_query_hoist_v14.is_some()
-            || self.wave_rmsnorm_v15.is_some()
-            || self.admitted_wave_rmsnorm_v15.is_some()
+            || !norm_matches
             || self.reduction_mode() != EngineeringTpReductionModeV3::DeviceTp1V3
         {
             return Err(match profile {
@@ -1323,6 +1419,7 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
                 FullForwardProfile::MfmaFp32V7 => "full-forward MFMA-v7 requires fresh Target8B TP1/capacity16/context64/pages4, MFMA-v3 projection, baseline attention, device TP1 and the unpruned FP32-v7 head",
                 FullForwardProfile::MfmaFp32V7WaveAttention => "full-forward MFMA-v7-wave requires fresh Target8B TP1/capacity16/context64/pages4, MFMA-v3 projection, wave attention, device TP1 and the unpruned FP32-v7 head",
                 FullForwardProfile::MfmaFp32V7WaveAttentionArgmaxV11 => "full-forward MFMA-v7-wave argmax requires the exact fresh capacity16 profile and preallocated v11 admission",
+                FullForwardProfile::MfmaFp32V7WaveAttentionArgmaxV11RmsNormV15 => "full-forward wave norm requires the exact fresh capacity16 profile and preallocated v11/v15 admissions",
             }.into());
         }
         self.inner.full_forward_enabled = true;
@@ -2042,6 +2139,27 @@ fn validate_full_forward_argmax_binding_v11<R: EngineeringTpRankTransportV1>(
     transports[0].require_loaded_image(
         image.hsaco,
         &crate::tp_artifact::ENGINEERING_TP_FP32_ARGMAX32_EXPORTS_V11,
+    )
+}
+
+fn validate_full_forward_rmsnorm_binding_v15<R: EngineeringTpRankTransportV1>(
+    transports: &mut [R],
+    row_capacity: usize,
+    large_kv: bool,
+    image: crate::tp_artifact::WaveRmsNormBindingV15,
+) -> TpResult<()> {
+    if row_capacity != 16
+        || large_kv
+        || transports.len() != 1
+        || transports[0].peer_group_rank().is_some()
+        || !transports[0].supports_full_forward()
+        || transports[0].supports_queue_rollover()
+    {
+        return Err("full-forward norm requires fresh nonpeer TP1/capacity16 storage".into());
+    }
+    transports[0].require_loaded_image(
+        image.hsaco,
+        &crate::tp_artifact::ENGINEERING_TP_WAVE_RMSNORM_EXPORTS_V15,
     )
 }
 

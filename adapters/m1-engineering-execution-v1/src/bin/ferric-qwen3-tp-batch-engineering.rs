@@ -48,6 +48,7 @@ const USAGE: &str = concat!(
     "[--projection baseline|wave|mfma|auto] [--attention baseline|wave] ",
     "[--head-precision bf16-v7-control|fp32-v7|bf16-v8-control|fp32-v8 --fp32-head-artifact DIR] ",
     "[--fp32-argmax serial-v7|wave-v11 --fp32-argmax-artifact DIR] ",
+    "[--rmsnorm baseline|wave-v15 --rmsnorm-artifact DIR] ",
     "[--native-full-forward-timestamps off|on --native-timestamp-output ABS_PATH] ",
     "[--kv-pool-profile large-kv-v9 --large-kv-artifact DIR] ",
     "[--benchmark-control FILE] [--host-timing FILE] ",
@@ -63,6 +64,8 @@ struct Options {
     fp32_head_artifact: Option<PathBuf>,
     fp32_argmax_artifact: Option<PathBuf>,
     fp32_argmax: Option<Fp32Argmax>,
+    rmsnorm_artifact: Option<PathBuf>,
+    rmsnorm: Option<RmsNorm>,
     head_precision: Option<HeadPrecision>,
     large_kv_artifact: Option<PathBuf>,
     worker: PathBuf,
@@ -108,6 +111,21 @@ impl Fp32Argmax {
         match self {
             Self::SerialV7 => "serial-v7",
             Self::WaveV11 => "wave-v11",
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum RmsNorm {
+    Baseline,
+    WaveV15,
+}
+
+impl RmsNorm {
+    const fn label(self) -> &'static str {
+        match self {
+            Self::Baseline => "baseline",
+            Self::WaveV15 => "wave-v15",
         }
     }
 }
@@ -194,6 +212,8 @@ impl Options {
         let mut fp32_head_artifact = None;
         let mut fp32_argmax_artifact = None;
         let mut fp32_argmax = None;
+        let mut rmsnorm_artifact = None;
+        let mut rmsnorm = None;
         let mut head_precision = None;
         let mut large_kv = false;
         let mut large_kv_artifact = None;
@@ -281,6 +301,14 @@ impl Options {
                 "--peer-artifact" => peer_artifact = Some(PathBuf::from(value)),
                 "--fp32-head-artifact" => fp32_head_artifact = Some(PathBuf::from(value)),
                 "--fp32-argmax-artifact" => fp32_argmax_artifact = Some(PathBuf::from(value)),
+                "--rmsnorm-artifact" => rmsnorm_artifact = Some(PathBuf::from(value)),
+                "--rmsnorm" => {
+                    rmsnorm = Some(match value.as_str() {
+                        "baseline" => RmsNorm::Baseline,
+                        "wave-v15" => RmsNorm::WaveV15,
+                        _ => return Err("RMSNorm must be baseline or wave-v15".into()),
+                    });
+                }
                 "--fp32-argmax" => {
                     fp32_argmax = Some(match value.as_str() {
                         "serial-v7" => Fp32Argmax::SerialV7,
@@ -589,6 +617,14 @@ impl Options {
             }
             _ => return Err("native timestamp diagnostics require both explicit options, TP1 exact full-forward, at most 36 batches and no host profiling/capture/replica mode".into()),
         };
+        if rmsnorm.is_some() != rmsnorm_artifact.is_some()
+            || (rmsnorm.is_some()
+                && (!full_forward_mfma_v7_wave
+                    || fp32_argmax != Some(Fp32Argmax::WaveV11)
+                    || native_timestamps.is_some()))
+        {
+            return Err("RMSNorm requires both explicit mode and v15 artifact with MFMA-v7-wave full-forward, wave-v11 argmax and no native timestamp diagnostics".into());
+        }
         Ok(Self {
             source: source.ok_or("--source is required")?,
             artifact: artifact.ok_or("--artifact is required")?,
@@ -596,6 +632,8 @@ impl Options {
             fp32_head_artifact,
             fp32_argmax_artifact,
             fp32_argmax,
+            rmsnorm_artifact,
+            rmsnorm,
             head_precision,
             large_kv_artifact,
             worker: worker.ok_or("--worker is required")?,
@@ -1044,6 +1082,13 @@ fn run_with_timing(
             EngineeringTpArtifactV1::open_fp32_argmax32_v11(path).map_err(|error| error.to_string())
         })
         .transpose()?;
+    let rmsnorm_artifact = options
+        .rmsnorm_artifact
+        .as_ref()
+        .map(|path| {
+            EngineeringTpArtifactV1::open_wave_rmsnorm_v15(path).map_err(|error| error.to_string())
+        })
+        .transpose()?;
     drop(admission_timing);
     let model_timing = timing.scope("setup_model");
     let model = EngineeringQwenModelV1::open(&options.source)?;
@@ -1130,6 +1175,9 @@ fn run_with_timing(
                 if let Some(argmax) = &fp32_argmax_artifact {
                     worker.load_additional_artifact(argmax)?;
                 }
+                if let Some(rmsnorm) = &rmsnorm_artifact {
+                    worker.load_additional_artifact(rmsnorm)?;
+                }
                 if let Some(large) = &large_kv_artifact {
                     worker.load_additional_artifact(large)?;
                 }
@@ -1154,7 +1202,19 @@ fn run_with_timing(
     } else {
         EngineeringTpBatchExecutionV2::new
     };
-    let mut gpu = if let Some(argmax) = &fp32_argmax_artifact {
+    let mut gpu = if let Some(rmsnorm) = &rmsnorm_artifact {
+        EngineeringTpBatchExecutionV2::new_full_forward_with_argmax_v11_and_rmsnorm_v15(
+            workers,
+            model.config(),
+            model.target_weights(),
+            model.layout(),
+            &pool,
+            fp32_argmax_artifact
+                .as_ref()
+                .ok_or("missing norm argmax admission")?,
+            rmsnorm,
+        )?
+    } else if let Some(argmax) = &fp32_argmax_artifact {
         EngineeringTpBatchExecutionV2::new_full_forward_with_argmax_v11(
             workers,
             model.config(),
@@ -1196,7 +1256,15 @@ fn run_with_timing(
         gpu.configure_ordered_batches(options.runtime.ordered_batches)?;
     }
     if options.runtime.full_forward {
-        if let Some(argmax) = &fp32_argmax_artifact {
+        if let Some(rmsnorm) = &rmsnorm_artifact {
+            gpu.configure_mfma_v7_wave_argmax_rmsnorm_full_forward(
+                fp32_argmax_artifact
+                    .as_ref()
+                    .ok_or("missing norm argmax admission")?,
+                rmsnorm,
+                options.rmsnorm == Some(RmsNorm::WaveV15),
+            )?;
+        } else if let Some(argmax) = &fp32_argmax_artifact {
             gpu.configure_mfma_v7_wave_argmax_full_forward(
                 argmax,
                 options.fp32_argmax == Some(Fp32Argmax::WaveV11),
@@ -1307,7 +1375,9 @@ fn run_with_timing(
         }
         if options.runtime.full_forward {
             setup["runtime_full_forward"] = serde_json::json!(true);
-            setup["full_forward_profile"] = serde_json::json!(if options.fp32_argmax.is_some() {
+            setup["full_forward_profile"] = serde_json::json!(if options.rmsnorm.is_some() {
+                "mfma-v3-fp32-v7-wave-attention-v11-v15-sidecars-tp1-616"
+            } else if options.fp32_argmax.is_some() {
                 "mfma-v3-fp32-v7-wave-attention-v11-sidecar-tp1-616"
             } else if options.full_forward_mfma_v7_wave {
                 "mfma-v3-fp32-v7-wave-attention-tp1-616"
@@ -1315,6 +1385,15 @@ fn run_with_timing(
                 "mfma-v3-fp32-v7-tp1-616"
             } else {
                 "scalar-v3-tp1-bf16-616"
+            });
+        }
+        if let Some(rmsnorm) = &rmsnorm_artifact {
+            setup["rmsnorm"] =
+                serde_json::json!(options.rmsnorm.ok_or("missing norm mode")?.label());
+            setup["rmsnorm_artifact"] = serde_json::json!({
+                "artifact_hsaco_id":hex(rmsnorm.hsaco_id().as_bytes()),
+                "artifact_manifest_id":hex(rmsnorm.manifest_id().as_bytes()),
+                "artifact_handoff_id":hex(rmsnorm.handoff_id().as_bytes())
             });
         }
         if let Some(large) = &large_kv_artifact {
@@ -1476,6 +1555,47 @@ fn main() -> std::process::ExitCode {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn full_forward_norm_requires_exact_paired_mode_and_wave_argmax() {
+        for (mode, expected) in [
+            ("baseline", RmsNorm::Baseline),
+            ("wave-v15", RmsNorm::WaveV15),
+        ] {
+            let mut base = timestamp_base();
+            base.extend(["--rmsnorm", mode, "--rmsnorm-artifact", "/norm"]);
+            let parsed = args(&base).unwrap();
+            assert_eq!(parsed.rmsnorm, Some(expected));
+            assert_eq!(parsed.rmsnorm_artifact, Some(PathBuf::from("/norm")));
+            for flag in ["--rmsnorm", "--rmsnorm-artifact"] {
+                let mut missing = base.clone();
+                let index = missing.iter().position(|value| *value == flag).unwrap();
+                missing.drain(index..index + 2);
+                assert!(args(&missing).is_err());
+            }
+            for (flag, value) in [
+                ("--fp32-argmax", "serial-v7"),
+                ("--rmsnorm", "auto"),
+                ("--batch-tokens", "2"),
+                ("--context", "128"),
+                ("--attention", "baseline"),
+            ] {
+                let mut changed = base.clone();
+                let index = changed.iter().position(|item| *item == flag).unwrap();
+                changed[index + 1] = value;
+                assert!(args(&changed).is_err());
+            }
+            let mut diagnostic = base.clone();
+            diagnostic.extend([
+                "--native-full-forward-timestamps",
+                "on",
+                "--native-timestamp-output",
+                "/owned/frames.ndjson",
+            ]);
+            assert!(args(&diagnostic).is_err());
+        }
+        assert!(args(&timestamp_base()).unwrap().rmsnorm.is_none());
+    }
+
     fn timestamp_base() -> Vec<&'static str> {
         vec![
             "--devices",

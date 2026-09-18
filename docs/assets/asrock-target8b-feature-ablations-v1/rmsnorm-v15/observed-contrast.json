@@ -1,0 +1,89 @@
+{
+  "activation_precision": "BF16",
+  "argmax_admission_provenance_sha256": "25c151cb56dbe3412345787d2bae89172141558b04663f3e4008d46a68f92dbc",
+  "argmax_admission_sha256": "8d574bd5d838c4f83e7f57b8855e9bee2ded5745db0aea8c7624f4ba1ac9af14",
+  "argmax_canonical_descriptor_sha256": "2e83fee4aeb6c5c014d78dc1536bf6aa2d96606e958cdfeb6e3fa7f1e7bc4629",
+  "argmax_original_source_manifest_sha256": "4ff99114c52e0a9313a3ae92422566636818bf41be57fd379c007ad0e220fe87",
+  "argmax_root": "ferric_qwen3_tp_batch32_wave_argmax_f32_v11",
+  "argmax_shared_source_manifest_sha256": "165e1f3fa2e87a1f99e34afa5a1b86ab0b8e9463d049adbc38718aada8d19d9c",
+  "argmax_source_manifest_sha256": "1556bf8bdba72646a62da57c80b2676495b0e6b5655896bd22a43c4c878c3384",
+  "argmax_source_row_capacity": 32,
+  "bf16_rounding_boundaries_retained": 2,
+  "causal_or_stable_speedup_claim": false,
+  "changed_norm_packets_per_forward": 73,
+  "codegen_catalog_sha256": "d4a1e53ed7d8ca8bd0d29dded44192e6cbeac2b825174d9faa391fd414af99e6",
+  "controller_base_source_manifest_sha256": "07a696d0dfd8ad14eb808ce5d58ad817a487b2f1352cb8401fabbc09fa818c70",
+  "controller_cohort": "full-forward-rmsnorm-v15-controller-v1",
+  "controller_row_capacity": 16,
+  "controller_source_manifest_sha256": "2489bee6d4237eeb5873487c96c67c37d0c44d91051b707b07dbfed5a87c3d6c",
+  "controller_unchanged_source_manifest_sha256": "1c48fd826c244103ffbcb56ff1c6ae91b60f2785035b1896bac6931077d8e25f",
+  "cpu_isolation_verified": false,
+  "currentness_check_count_measured": false,
+  "differing_axis": "hidden-state-rmsnorm-selector",
+  "differing_configuration_fields": [
+    "rmsnorm"
+  ],
+  "differing_identity_fields": [],
+  "family": "rmsnorm-v15",
+  "fp32_argmax": "wave-v11",
+  "fp32_argmax_artifact": {
+    "artifact_handoff_id": "d7aa3543e0b58bcfcbd181b6702934f417b8b8e55847745f980a09dffce32e98",
+    "artifact_hsaco_id": "86c3ee4cead26f6432ef590434b3335e1ee2a95c9c900cf6315dca4ef0a542b0",
+    "artifact_manifest_id": "8ab01a5a2913a76b09912cb39c831d714fb1c03cb1d0ad197e0b8d63e6ab8118"
+  },
+  "fp32_sum_association_changed": true,
+  "frontier_count_scope": "source-derived schedule; not measured polls or GPU event count",
+  "gpu_overlap_measured": false,
+  "gpu_rmsnorm_duration_measured": false,
+  "head_artifact": {
+    "artifact_handoff_id": "d6ca1b9b6c5170eec8a904e2117e64c4988bd5a7334a6d3569c855e7400219c6",
+    "artifact_hsaco_id": "b21caccae5ec030640242034940822cb1a3f1e8531b7b6ded7371492da3747ae",
+    "artifact_manifest_id": "6815ba33eb0c96a88a0722b1cdc73473d09cce3b4594d98370e6e1282437a008"
+  },
+  "identities_by_variant": {
+    "baseline": {
+      "artifact_handoff_id": "dc7f7981a477b8fae0c3449930dcc890028fe26fff4c454a09ad6208be3d0a16",
+      "artifact_hsaco_id": "2e677384a5e86c6e1ae95f10333f2d0d330922ed4d1348acdb1b09f5655281e2",
+      "artifact_manifest_id": "e295584f1c5eeed36bdc653e83259e1dac3515b54d504b0704f54cd884531c67",
+      "controller_sha256": "dbb09fb78689667c9c6bf80659770e9a340f1fbcbca4ff4520c9b94da3368545",
+      "worker_sha256": "05503764710e8add6ee15fbb1f8526ed9bdddfce7dd670acd7c604f9491490a7"
+    },
+    "wave-v15": {
+      "artifact_handoff_id": "dc7f7981a477b8fae0c3449930dcc890028fe26fff4c454a09ad6208be3d0a16",
+      "artifact_hsaco_id": "2e677384a5e86c6e1ae95f10333f2d0d330922ed4d1348acdb1b09f5655281e2",
+      "artifact_manifest_id": "e295584f1c5eeed36bdc653e83259e1dac3515b54d504b0704f54cd884531c67",
+      "controller_sha256": "dbb09fb78689667c9c6bf80659770e9a340f1fbcbca4ff4520c9b94da3368545",
+      "worker_sha256": "05503764710e8add6ee15fbb1f8526ed9bdddfce7dd670acd7c604f9491490a7"
+    }
+  },
+  "logits_precision": "FP32",
+  "measured_requests_per_variant": 1,
+  "observed_rate_ratio": 1.4574024786407245,
+  "observed_rows": 1,
+  "observed_tpot_change_percent": -31.384774305264663,
+  "packets_per_request_each": 22176,
+  "paired_source_manifest_sha256": "b27b9cffc159ee82667d039056aa6a414569cc1309e25a5dca442279aba59fb0",
+  "performance_qualified": false,
+  "persistent_gpu_kernel": false,
+  "rmsnorm_admission_sha256": "38318484211888d2d20da75985c7b8f8789dbf61907425031567ebea173928f9",
+  "rmsnorm_artifact": {
+    "artifact_handoff_id": "348c74397e520f5dca74d655ec50d9207a57ef2b36b378266b2318a0fdacebb5",
+    "artifact_hsaco_id": "c33882db1afcd8eb26ec02bc43ea2144af322d29bf4e0e921e03ea74adc55af6",
+    "artifact_manifest_id": "7bc199a5be639d4b7cfcb5a3abefa85312ea31077c081849b86dd2136f9dca7a"
+  },
+  "rmsnorm_canonical_descriptor_sha256": "67ed3415901de9936ff4dd01bfdf06847b7cb23067268af6921456faf4cb47f2",
+  "rmsnorm_source_manifest_sha256": "1a8fbbcb2dbb05d74b9108634bd235d537cdba817b9126484ae15bbb1fccd537",
+  "rmsnorm_source_row_capacity": 32,
+  "schema": "FerricFeatureAblationObservedContrastV1",
+  "sidecar_loaded_both_variants": true,
+  "source_completion_frontiers": {
+    "baseline": 36,
+    "wave-v15": 36
+  },
+  "target_700_tokens_per_second_claimed": false,
+  "title": "Qwen3-8B: hidden-state RMSNorm selector observation",
+  "transaction_preparation_fence": true,
+  "warmup_requests": 0,
+  "weight_precision": "BF16",
+  "worker_source_manifest_sha256": "b4de3efc58249ab345c89c2d5d423c5c78c32d348b4d5c5c8f67e49213136fb3"
+}

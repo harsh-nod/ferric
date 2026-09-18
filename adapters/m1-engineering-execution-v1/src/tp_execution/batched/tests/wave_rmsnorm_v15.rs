@@ -468,8 +468,20 @@ fn wave_rmsnorm_v15_row_binding_is_exact_and_preserves_legacy_norms() {
         );
         assert!(bind_mode(true, 32, false, command.clone()).is_err());
         assert!(bind_storage(32, true, command.clone()).is_err());
-        for capacity in [1, 16] {
+        for capacity in [0, 1, 2, 15, 17, 31, 33] {
             assert!(bind(capacity, command.clone()).is_err());
+        }
+        // The full-forward profile admits only one active row at capacity16.
+        if rows == 1 {
+            assert_eq!(bind(16, command.clone()).unwrap(), command);
+            assert_eq!(
+                bind_mode(false, 16, false, command.clone()).unwrap(),
+                command
+            );
+            assert!(bind_mode(true, 16, false, command.clone()).is_err());
+            assert!(bind_storage(16, true, command.clone()).is_err());
+        } else {
+            assert!(bind(16, command.clone()).is_err());
         }
         for mutation in 0..13 {
             let mut bad = command.clone();
@@ -494,7 +506,12 @@ fn wave_rmsnorm_v15_row_binding_is_exact_and_preserves_legacy_norms() {
                 12 => bad.arguments[5] = EngineeringTpArgumentV1::F32(1.0),
                 _ => unreachable!(),
             }
-            assert!(bind(32, bad).is_err(), "rows {rows}, mutation {mutation}");
+            for capacity in [16, 32] {
+                assert!(
+                    bind(capacity, bad.clone()).is_err(),
+                    "capacity {capacity}, rows {rows}, mutation {mutation}"
+                );
+            }
         }
         for index in 0..5 {
             for mutation in 0..5 {
@@ -523,10 +540,12 @@ fn wave_rmsnorm_v15_row_binding_is_exact_and_preserves_legacy_norms() {
                     4 => bad.arguments[index] = EngineeringTpArgumentV1::U32(0),
                     _ => unreachable!(),
                 }
-                assert!(
-                    bind(32, bad).is_err(),
-                    "buffer {index}, mutation {mutation}"
-                );
+                for capacity in [16, 32] {
+                    assert!(
+                        bind(capacity, bad.clone()).is_err(),
+                        "capacity {capacity}, buffer {index}, mutation {mutation}"
+                    );
+                }
             }
         }
         for width in [128, 1024, 4096] {
