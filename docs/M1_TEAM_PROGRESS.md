@@ -7,10 +7,10 @@ receipt. The 33 M1 roadmap gates remain open.
 
 | Team | Implemented Or Validated | Next Dependency |
 | --- | --- | --- |
-| Engine | Fresh S8/T128 bootstrap and first S8/K4 round; 781 CPU tests pass on the retained R3 source; expanded tests committed but unrun | Validate new admission tests and ignored public S8 hardware fixture |
+| Engine | Fresh S8/T128 bootstrap and first S8/K4 round; 781 CPU tests pass on the retained R3 source; expanded tests and typed close status remain unvalidated | Validate admission/close tests and ignored public S8 hardware fixture |
 | Numerical | Explicit arithmetic capture; CPU checks pass; authenticated retained-reference reuse passes 11 regressions | Fresh native captures and recomputed tensor errors |
 | Compiler/Runtime | Validated 46d adoption; newer 3f53122f compiler/Pliron delta reviewed; runtime/KFD inputs unchanged | Dual-pin adoption, fresh compiler tools and kernel emission |
-| Verification | Source coverage passes with 52 new bodies explicitly pending-Verus | Body proofs and protected-runtime qualification remain open |
+| Verification | Retained R3 source coverage passes with 52 new bodies pending-Verus; six close-status bodies newly declared pending | Regenerate current coverage, then body proofs and protected-runtime qualification |
 | Site | R29 CPU progress draft committed; historical results keep their attribution | Remote QA paused at disk-space admission; deploy-only publication pending |
 
 The selected native GPU host is `mi350`, not `mi350-2`. SSH succeeds on
@@ -33,6 +33,10 @@ and still no amdgpu, /dev/kfd or KFD topology. The user has been asked whether
 host bring-up is still ongoing; no driver or host configuration is changed.
 At 16:17:32 UTC, SSH still succeeds and uptime is 45 minutes, but the same
 driver and device nodes remain absent. No native launch is attempted.
+At 17:01:44 UTC the host reports 1:29 uptime and still has no amdgpu,
+/dev/kfd or KFD topology. No driver changes or native launch are attempted.
+The final passive check at approximately 17:09 UTC confirms the same missing
+paths; SSH itself remains usable.
 
 ### Current Resource And Publication Blockers
 
@@ -55,6 +59,11 @@ are synthesized. A later passive observation at 16:01 UTC reports only
 without lowering the admission floor or reusing the earlier reserve exception.
 The 16:19:19 UTC passive check reports 12,561,140 KiB root free and
 42,151,324 KiB tmpfs free; the root floor still fails.
+At 17:01:37 UTC, root available space has fallen to zero KiB (100% used).
+Tmpfs still has 43,352,376 KiB free and MemAvailable is 1,629,155,412 KiB;
+neither substitutes for the root-filesystem admission requirement. No build,
+test, coverage generator or application validation is launched.
+The approximately 17:09 UTC check again reports zero KiB root available.
 
 A read-only cleanup review identifies three old Cargo target directories under
 /home/harsh: ferric-m1-fe-416ef90d-ignored-target (3,113,172 KiB),
@@ -70,6 +79,15 @@ total 1,006,724 KiB and contain mixed controls/evidence. The only inspected
 generated child, /tmp/ferric-kv-v5.sFL42Paq/target, is 102,640 KiB; redundant
 custody and complete no-use admission are not established. No deletion is
 performed, and this bounded inventory cannot resolve the root-space deficit.
+
+A further read-only UID-1002 /tmp survey finds 226 directories matching
+fe2o3*, fc-*, cargo*, rust* or kernel*, totaling 20,072,124 KiB, plus
+488,520 KiB of matching regular files. The entire prefix scope is only
+19.61 GiB and includes source/evidence, not just disposable output. Four
+inspected projector Cargo target children total 2.88 GiB; their parents contain
+Git/source/perf-evidence, and complete no-use and redundant-product custody
+are not established. All eight inspection sessions finish with exit zero.
+Nothing is deleted; this review does not establish a 22-GiB recovery path.
 
 The local worktree review preserves both remaining candidate checkouts: the
 BF16 logical-sampler branch contains a unique unintegrated commit, and dispatch
@@ -162,9 +180,10 @@ singleton fixture's authenticated aggregate/model/KFD setup and calls the real
 public S8 bootstrap, physical prefill, first-round schedule, preparation,
 publication and completion APIs. Two ordered live requests occupy the physical
 eight-lane shape; the fixture asserts a continuing first member, a
-Deadline-cancelled second member and the exact next-active roster. It invokes
-close, but does not claim queue-release evidence from the current opaque close
-result. Its inherited 1,000-ms per-queue wait remains untested for this shape.
+Deadline-cancelled second member and the exact next-active roster. At this
+commit it invokes close without asserting queue release; the subsequent typed
+close candidate below adds that assertion. Its inherited 1,000-ms per-queue
+wait remains untested for this shape.
 
 Independent static reviews find no concrete source/API blocker. Both edited
 files have byte-identical production prefixes before cfg(test), and git diff
@@ -174,6 +193,36 @@ requires admitted exclusive gfx942 hardware and protected inputs; it cannot be
 validated by a CPU mock or counted as gfx950 evidence. These source additions
 do not replace the retained 781-test result, close the physical lifecycle
 coverage gap, or promote any M1 gate. No local or GitHub-hosted build is used.
+
+### S8 Close Status Candidate: Not Yet Validated
+
+The new M1AuthenticatedS8CloseV1 replaces the opaque Debug-only result on all
+five explicit S8 close/cancel methods. Callers can observe whether native queue
+release succeeded, whether that permits successful stopping, and the separate
+logical Engine quarantine state. Constructors and retained owners remain
+private; the result cannot be cloned or split. Release status comes from the
+existing lower teardown Result or failure disposition, not the Engine flag.
+Lower teardown/abort order and retained-owner drop order are preserved.
+Independent source review finds no concrete queue-status or ownership
+regression across the five paths. No NoQueue state applies to these owners.
+The public return-type change requires adjustment for external callers that
+explicitly expect Box<dyn Debug>; no incompatible in-tree caller is found.
+
+Four unit tests cover release/quarantine classification, retained non-Debug
+owners, relative drop order and all five public method return types. Two
+compile-fail examples cover attempted cloning and owner extraction. The ignored
+public S8 hardware fixture now requires queue_released and permits_stop_success
+after closing its first completed round. These tests and the hardware assertion
+have not run; none supplies new physical queue-release evidence yet.
+
+The six new production bodies are explicitly pending-Verus in
+proofs/UNVERIFIED_BODIES. The generated proofs/VERIFIED_MODULES file is left
+unchanged until the actual remote coverage generator can run. Current coverage,
+formatting, strict Clippy, compilation, unit tests and doctests are pending;
+the historical R3 coverage pass does not apply to this candidate. Source-only
+git diff --check passes. Independent inventory review confirms all six names
+and pending declarations, with no removed or reclassified old rows. No proof,
+hardware or performance gate is promoted.
 
 ### S8 Implementation And Coverage
 

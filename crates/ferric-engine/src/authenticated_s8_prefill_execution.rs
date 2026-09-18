@@ -77,6 +77,98 @@ impl fmt::Debug for OpaqueExecutionCustody {
     }
 }
 
+/// Status-only terminal custody after explicitly closing an S8 queue.
+///
+/// Queue destruction and logical Engine quarantine are separate observations:
+/// a clean queue release does not make the retained Engine reusable. No
+/// registry, Engine, physical queue, or allocation owner can be recovered.
+///
+/// ```compile_fail
+/// use ferric_engine::M1AuthenticatedS8CloseV1;
+/// fn recover(closed: M1AuthenticatedS8CloseV1) {
+///     let _ = closed.into_parts();
+/// }
+/// ```
+///
+/// ```compile_fail
+/// use ferric_engine::M1AuthenticatedS8CloseV1;
+/// fn duplicate(closed: M1AuthenticatedS8CloseV1) {
+///     let _ = closed.clone();
+/// }
+/// ```
+#[must_use = "S8 close status and terminal custody must remain observed"]
+pub struct M1AuthenticatedS8CloseV1 {
+    queue_released: bool,
+    engine_quarantined: bool,
+    retained: OpaqueExecutionCustody,
+}
+
+impl fmt::Debug for M1AuthenticatedS8CloseV1 {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        formatter
+            .debug_struct("M1AuthenticatedS8CloseV1")
+            .field("queue_released", &self.queue_released)
+            .field("engine_quarantined", &self.engine_quarantined)
+            .field("retained", &self.retained)
+            .finish_non_exhaustive()
+    }
+}
+
+impl M1AuthenticatedS8CloseV1 {
+    // The split payload preserves each caller's drop order around lower teardown custody.
+    fn from_teardown<T: Any, E: Any>(
+        teardown: Result<T, E>,
+        engine_quarantined: bool,
+        before_teardown: impl Any,
+        after_teardown: impl Any,
+    ) -> Self {
+        Self {
+            queue_released: teardown.is_ok(),
+            engine_quarantined,
+            retained: OpaqueExecutionCustody(Box::new((
+                before_teardown,
+                teardown,
+                after_teardown,
+            ))),
+        }
+    }
+
+    fn from_disposition(
+        disposition: crate::M1AuthenticatedSpeculativeFailureDispositionV1,
+        engine_quarantined: bool,
+        before_teardown: impl Any,
+        after_teardown: impl Any,
+    ) -> Self {
+        Self {
+            queue_released: disposition.queue_released(),
+            engine_quarantined,
+            retained: OpaqueExecutionCustody(Box::new((
+                before_teardown,
+                disposition,
+                after_teardown,
+            ))),
+        }
+    }
+
+    /// Whether native queue destruction completed with retained release evidence.
+    #[must_use]
+    pub const fn queue_released(&self) -> bool {
+        self.queue_released
+    }
+
+    /// Whether this close confirms that no live native queue remains.
+    #[must_use]
+    pub const fn permits_stop_success(&self) -> bool {
+        self.queue_released
+    }
+
+    /// Logical Engine state after the lower teardown and terminalization.
+    #[must_use]
+    pub const fn engine_quarantined(&self) -> bool {
+        self.engine_quarantined
+    }
+}
+
 /// Terminal opaque custody after any execution or rollover failure.
 #[must_use = "terminal S8 execution custody must be retained"]
 pub struct M1AuthenticatedS8PrefillExecutionFailureV1<const C: usize> {
@@ -205,20 +297,19 @@ impl<const C: usize> M1AuthenticatedS8T128PrefillExecutionSuccessV1<C> {
         &self.direct_choices
     }
 
-    /// Explicitly abandons rollover and destroys the retained prefill queue.
+    /// Explicitly abandons rollover and reports the retained prefill queue's teardown.
     #[must_use = "closed prefill state remains opaque and retained"]
-    pub fn close(mut self) -> Box<dyn fmt::Debug> {
+    pub fn close(mut self) -> M1AuthenticatedS8CloseV1 {
         let teardown = self
             .released
             .destroy_queue_and_retain_step(&mut self.engine);
-        Box::new(OpaqueExecutionCustody(Box::new((
-            self.registry,
-            self.engine.into_m1_capture_quarantine(),
+        let engine = self.engine.into_m1_capture_quarantine();
+        M1AuthenticatedS8CloseV1::from_teardown(
             teardown,
-            self.first_tokens,
-            self.direct_choices,
-            self.successor,
-        ))))
+            engine.is_faulted(),
+            (self.registry, engine),
+            (self.first_tokens, self.direct_choices, self.successor),
+        )
     }
 }
 
@@ -1002,7 +1093,7 @@ impl<const C: usize> M1AuthenticatedS8ScheduledFirstRoundV1<C> {
 
     /// Cancels before rollover publication and retains every owner opaquely.
     #[must_use = "cancelled scheduled S8/K4 custody remains retained"]
-    pub fn cancel_and_close(mut self) -> Box<dyn fmt::Debug> {
+    pub fn cancel_and_close(mut self) -> M1AuthenticatedS8CloseV1 {
         let disposition = match crate::authenticated_queue_rollover::prepare_m1_authenticated_speculative_rollover_retained_v1(
             &mut self.engine,
             self.scheduled,
@@ -1011,13 +1102,13 @@ impl<const C: usize> M1AuthenticatedS8ScheduledFirstRoundV1<C> {
             Err(failure) => failure.into_disposition(),
         };
         let abort = self.registry.abort_publication(self.reservation);
-        Box::new(OpaqueExecutionCustody(Box::new((
-            self.registry,
-            self.engine.into_m1_capture_quarantine(),
-            abort,
+        let engine = self.engine.into_m1_capture_quarantine();
+        M1AuthenticatedS8CloseV1::from_disposition(
             disposition,
+            engine.is_faulted(),
+            (self.registry, engine, abort),
             self.residue,
-        ))))
+        )
     }
 }
 
@@ -1092,16 +1183,16 @@ impl<const C: usize> M1AuthenticatedS8PreparedFirstRoundV1<C> {
 
     /// Cancels prepared work before submission and retains every owner opaquely.
     #[must_use = "cancelled prepared S8/K4 custody remains retained"]
-    pub fn cancel_and_close(mut self) -> Box<dyn fmt::Debug> {
+    pub fn cancel_and_close(mut self) -> M1AuthenticatedS8CloseV1 {
         let disposition = self.prepared.cancel_and_close(&mut self.engine);
         let abort = self.registry.abort_publication(self.reservation);
-        Box::new(OpaqueExecutionCustody(Box::new((
-            self.registry,
-            self.engine.into_m1_capture_quarantine(),
-            abort,
+        let engine = self.engine.into_m1_capture_quarantine();
+        M1AuthenticatedS8CloseV1::from_disposition(
             disposition,
+            engine.is_faulted(),
+            (self.registry, engine, abort),
             self.residue,
-        ))))
+        )
     }
 }
 
@@ -1250,14 +1341,15 @@ impl<const C: usize> M1AuthenticatedS8PublishedFirstRoundV1<C> {
 
     /// Closes in-flight rollover work and retains registry and physical custody.
     #[must_use = "cancelled published S8/K4 custody remains retained"]
-    pub fn cancel_and_close(mut self) -> Box<dyn fmt::Debug> {
+    pub fn cancel_and_close(mut self) -> M1AuthenticatedS8CloseV1 {
         let disposition = self.published.cancel_and_close(&mut self.engine);
-        Box::new(OpaqueExecutionCustody(Box::new((
-            self.registry,
-            self.engine.into_m1_capture_quarantine(),
+        let engine = self.engine.into_m1_capture_quarantine();
+        M1AuthenticatedS8CloseV1::from_disposition(
             disposition,
+            engine.is_faulted(),
+            (self.registry, engine),
             self.residue,
-        ))))
+        )
     }
 }
 
@@ -1271,19 +1363,17 @@ impl<const C: usize> M1AuthenticatedS8CompletedFirstRoundV1<C> {
         self.physical.outcome()
     }
 
-    /// Explicitly closes the physical queue while retaining registry and Engine state opaquely.
+    /// Reports physical queue teardown while retaining registry and Engine state opaquely.
     #[must_use = "closed S8 state remains opaque and retained"]
-    pub fn close(mut self) -> Box<dyn fmt::Debug> {
+    pub fn close(mut self) -> M1AuthenticatedS8CloseV1 {
         let (executor, outcome, choices) = self.physical.into_parts();
         let teardown = executor.destroy_queue_and_retain_state(&mut self.engine);
-        Box::new(OpaqueExecutionCustody(Box::new((
-            self.registry,
-            self.engine,
+        M1AuthenticatedS8CloseV1::from_teardown(
             teardown,
-            outcome,
-            choices,
-            self.residue,
-        ))))
+            self.engine.is_faulted(),
+            (self.registry, self.engine),
+            (outcome, choices, self.residue),
+        )
     }
 }
 
@@ -1291,14 +1381,16 @@ impl<const C: usize> M1AuthenticatedS8CompletedFirstRoundV1<C> {
 mod tests {
     use super::*;
 
+    struct NonDebug(std::rc::Rc<std::cell::Cell<usize>>);
+
+    impl Drop for NonDebug {
+        fn drop(&mut self) {
+            self.0.set(self.0.get() + 1);
+        }
+    }
+
     #[test]
     fn opaque_debug_custody_retains_non_debug_owner_until_drop() {
-        struct NonDebug(std::rc::Rc<std::cell::Cell<usize>>);
-        impl Drop for NonDebug {
-            fn drop(&mut self) {
-                self.0.set(self.0.get() + 1);
-            }
-        }
         let drops = std::rc::Rc::new(std::cell::Cell::new(0));
         let owner = NonDebug(std::rc::Rc::clone(&drops));
         let retained: Box<dyn fmt::Debug> = Box::new(OpaqueExecutionCustody(Box::new(owner)));
@@ -1307,6 +1399,120 @@ mod tests {
         assert_eq!(drops.get(), 0);
         drop(retained);
         assert_eq!(drops.get(), 1);
+    }
+
+    #[test]
+    fn close_classifies_teardown_without_conflating_engine_quarantine_or_dropping_owners() {
+        for queue_released in [false, true] {
+            for engine_quarantined in [false, true] {
+                let drops = std::rc::Rc::new(std::cell::Cell::new(0));
+                let lower = NonDebug(std::rc::Rc::clone(&drops));
+                let teardown: Result<NonDebug, NonDebug> = if queue_released {
+                    Ok(lower)
+                } else {
+                    Err(lower)
+                };
+                let closed = M1AuthenticatedS8CloseV1::from_teardown(
+                    teardown,
+                    engine_quarantined,
+                    NonDebug(std::rc::Rc::clone(&drops)),
+                    NonDebug(std::rc::Rc::clone(&drops)),
+                );
+                assert_eq!(closed.queue_released(), queue_released);
+                assert_eq!(closed.permits_stop_success(), queue_released);
+                assert_eq!(closed.engine_quarantined(), engine_quarantined);
+                assert!(format!("{closed:?}").contains("M1AuthenticatedS8CloseV1"));
+                assert_eq!(drops.get(), 0);
+                drop(closed);
+                assert_eq!(drops.get(), 3);
+            }
+        }
+    }
+
+    #[test]
+    fn close_preserves_released_and_quarantined_disposition_custody() {
+        use crate::authenticated_speculative_executor::{
+            quarantined_disposition, released_disposition,
+        };
+
+        for queue_released in [false, true] {
+            let drops = std::rc::Rc::new(std::cell::Cell::new(0));
+            let lower = OpaqueExecutionCustody(Box::new(NonDebug(std::rc::Rc::clone(&drops))));
+            let disposition = if queue_released {
+                released_disposition(lower)
+            } else {
+                quarantined_disposition(lower)
+            };
+            let closed = M1AuthenticatedS8CloseV1::from_disposition(
+                disposition,
+                true,
+                NonDebug(std::rc::Rc::clone(&drops)),
+                (),
+            );
+            assert_eq!(closed.queue_released(), queue_released);
+            assert_eq!(closed.permits_stop_success(), queue_released);
+            assert!(closed.engine_quarantined());
+            assert!(format!("{closed:?}").contains("M1AuthenticatedS8CloseV1"));
+            assert_eq!(drops.get(), 0);
+            drop(closed);
+            assert_eq!(drops.get(), 2);
+        }
+    }
+
+    #[test]
+    fn close_preserves_owner_drop_order_for_both_teardown_representations() {
+        use crate::authenticated_speculative_executor::{
+            quarantined_disposition, released_disposition,
+        };
+
+        struct OrderedDrop(u8, std::rc::Rc<std::cell::RefCell<Vec<u8>>>);
+        impl Drop for OrderedDrop {
+            fn drop(&mut self) {
+                self.1.borrow_mut().push(self.0);
+            }
+        }
+
+        for released in [false, true] {
+            for use_disposition in [false, true] {
+                let trace = std::rc::Rc::new(std::cell::RefCell::new(Vec::new()));
+                let before = OrderedDrop(0, std::rc::Rc::clone(&trace));
+                let lower = OrderedDrop(1, std::rc::Rc::clone(&trace));
+                let after = OrderedDrop(2, std::rc::Rc::clone(&trace));
+                let closed = if use_disposition {
+                    let lower = OpaqueExecutionCustody(Box::new(lower));
+                    let disposition = if released {
+                        released_disposition(lower)
+                    } else {
+                        quarantined_disposition(lower)
+                    };
+                    M1AuthenticatedS8CloseV1::from_disposition(disposition, true, before, after)
+                } else {
+                    let teardown: Result<OrderedDrop, OrderedDrop> = if released {
+                        Ok(lower)
+                    } else {
+                        Err(lower)
+                    };
+                    M1AuthenticatedS8CloseV1::from_teardown(teardown, true, before, after)
+                };
+                assert!(trace.borrow().is_empty());
+                drop(closed);
+                assert_eq!(*trace.borrow(), [0, 1, 2]);
+            }
+        }
+    }
+
+    #[test]
+    fn every_explicit_s8_close_returns_observable_status_without_exposing_owners() {
+        let _: fn(M1AuthenticatedS8T128PrefillExecutionSuccessV1<8>) -> M1AuthenticatedS8CloseV1 =
+            M1AuthenticatedS8T128PrefillExecutionSuccessV1::close;
+        let _: fn(M1AuthenticatedS8ScheduledFirstRoundV1<8>) -> M1AuthenticatedS8CloseV1 =
+            M1AuthenticatedS8ScheduledFirstRoundV1::cancel_and_close;
+        let _: fn(M1AuthenticatedS8PreparedFirstRoundV1<8>) -> M1AuthenticatedS8CloseV1 =
+            M1AuthenticatedS8PreparedFirstRoundV1::cancel_and_close;
+        let _: fn(M1AuthenticatedS8PublishedFirstRoundV1<8>) -> M1AuthenticatedS8CloseV1 =
+            M1AuthenticatedS8PublishedFirstRoundV1::cancel_and_close;
+        let _: fn(M1AuthenticatedS8CompletedFirstRoundV1<8>) -> M1AuthenticatedS8CloseV1 =
+            M1AuthenticatedS8CompletedFirstRoundV1::close;
     }
 
     fn choices(values: &[u32]) -> M1ObservedDirectDiagnosticChoicesV1 {

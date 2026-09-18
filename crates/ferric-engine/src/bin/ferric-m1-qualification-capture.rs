@@ -9846,8 +9846,12 @@ mod tests {
             M1DeviceKvCompletionDispositionV1::Retire
         );
         assert_eq!(outcome.next_active_roster(), &requests[..1]);
-        // The S8 close result is opaque; this call is not a queue-release assertion.
         let closed = completed.close();
+        assert!(
+            closed.queue_released(),
+            "S8 queue teardown quarantined: {closed:?}"
+        );
+        assert!(closed.permits_stop_success());
         drop((closed, logical_runner));
     }
 

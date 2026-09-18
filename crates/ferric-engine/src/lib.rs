@@ -310,11 +310,12 @@ pub use authenticated_s8_prefill_bootstrap::{
     M1AuthenticatedS8T128PrefillPrepublicationV1,
 };
 pub use authenticated_s8_prefill_execution::{
-    execute_m1_authenticated_s8_t128_paired_prefill_v1, M1AuthenticatedS8CompletedFirstRoundV1,
-    M1AuthenticatedS8FirstRoundInputsV1, M1AuthenticatedS8PrefillExecutionErrorV1,
-    M1AuthenticatedS8PrefillExecutionFailureV1, M1AuthenticatedS8PrefillExecutionStageV1,
-    M1AuthenticatedS8PreparedFirstRoundV1, M1AuthenticatedS8PublishedFirstRoundV1,
-    M1AuthenticatedS8ScheduledFirstRoundV1, M1AuthenticatedS8T128PrefillExecutionSuccessV1,
+    execute_m1_authenticated_s8_t128_paired_prefill_v1, M1AuthenticatedS8CloseV1,
+    M1AuthenticatedS8CompletedFirstRoundV1, M1AuthenticatedS8FirstRoundInputsV1,
+    M1AuthenticatedS8PrefillExecutionErrorV1, M1AuthenticatedS8PrefillExecutionFailureV1,
+    M1AuthenticatedS8PrefillExecutionStageV1, M1AuthenticatedS8PreparedFirstRoundV1,
+    M1AuthenticatedS8PublishedFirstRoundV1, M1AuthenticatedS8ScheduledFirstRoundV1,
+    M1AuthenticatedS8T128PrefillExecutionSuccessV1,
 };
 pub use authenticated_speculative_executor::{
     prepare_m1_authenticated_speculative_bootstrap_v1, M1AuthenticatedSpeculativeBootstrapErrorV1,
