@@ -73,8 +73,8 @@
   const resident = project.residentCheckpoint;
   const residentProgress = document.querySelector("[data-resident-progress]");
   residentProgress.append(element("p", "performance-scope", resident.scope),
-    element("h3", "", "Current CPU progress; native validation pending"),
-    element("p", "", resident.currentCpuOverview),
+    element("h3", "", "Performance Swarm V4: native TP1 comparison"),
+    ...resident.currentCpuOverview.split("\n\n").map((paragraph) => element("p", "", paragraph)),
     element("h3", "", "Historical a167 source and GPU2 host-residual pair"),
     element("p", "", resident.integration.currentA167HostResidualPair.detail),
     element("p", "performance-scope", "The retained checkpoints below preserve their original dates, source identities, evidence and then-current limitations."),

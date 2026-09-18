@@ -16,9 +16,12 @@ export function validateResidentCheckpoint(value, updated) {
   assert.equal(checkpoint.m1OpenGates, 33);
   assert.equal(checkpoint.fullAcceptanceCatchupImplemented, true);
   assert.equal(checkpoint.newGpuObservation, true);
-  for (const key of ["nativeServingQualified", "newPerformanceMeasurement"]) {
-    assert.equal(checkpoint[key], false, key);
-  }
+  assert.equal(checkpoint.nativeServingQualified, false);
+  assert.equal(checkpoint.newPerformanceMeasurement, true);
+  const historicalSeparator = "Retained earlier CPU checkpoint, with its original source pins";
+  const currentOverview = checkpoint.currentCpuOverview.split(historicalSeparator);
+  assert.equal(currentOverview.length, 2);
+  assert.equal(currentOverview[0], "Performance Swarm V4: private Ferric 1fc45a52 adds direct aggregate argument packing and an opt-in comparison of existing V14 attention and V15 RMSNorm. Generic runtime changes are published on fe2o3 main at 5ed3840a after rebasing onto c384; [skip ci] was used and no GitHub Actions runs were observed. Runtime validation passes 494 CPU tests with one hardware test ignored, strict Clippy and a release build. At the final compiler pin, the adapter passes 367 release library tests with six ignored, 41 V17 binary tests with four ignored, four composition tests, two real-metadata packing tests, strict Clippy, 39 source-policy tests and 48 source-gate tests. All builds and CPU tests run on mi300x-2.\n\nThe mi350 native probe uses Qwen3-8B BF16, TP1, 128 input and 128 output tokens, context8192, with prefix caching and speculation off. All 16 requests across four modes match the independent token IDs and decoded text. Each mode has one excluded warmup and three measured requests in fixed arm order.\n\nBaseline: TTFT 2662.66 ms, TPOT 135.85 ms, output rate 6.43 tokens/s. V14 only: TPOT 134.74 ms. V15 only: TPOT 86.42 ms. Combined: TTFT 2280.81 ms, TPOT 84.55 ms, output rate 9.83 tokens/s. The combined arm has about 38% lower TPOT and 53% higher output rate in this cohort; V14 alone differs by less than 1%.\n\nThese are descriptive controller-ingress timings, not HTTP latency, sustained throughput, GPU durations, stable gains or a vendor comparison. Raw archive SHA256: c1cd3b9448e05076cc935801f82ad99b5b48c3d664ad758628860e50b9f953d6. Owned workers exited and all eight GPUs were observed idle afterward. Runtime and packing changes are shared by all arms, so their separate gains are not measured. Existing kernel-image producer identities, defaults and historical benchmark values are unchanged. No TP8 result, new Verus proof, serving qualification or protected authority follows; all 33 M1 gates remain open.\n\n");
   assert.equal(checkpoint.scope, "Private resident integration; source-bound engineering observations, not qualification");
   for (const claim of [
     "Ferric 7544c3e4 implements fresh 1..8-member S8/T128 prefill and the first authenticated S8/K4 round lifecycle",
@@ -3421,7 +3424,12 @@ export function testResidentCheckpointRejections(value, updated) {
     (x) => { x.earlierOverview = x.overview; },
     (x) => { x.integration.registeredBundleTimeout.selectedTheoremVerifiedQueries = 2044; },
     (x) => { x.integration.registeredBundleTimeout.selectedTheoremVerifiedQueries = 484; },
-    (x) => { x.newPerformanceMeasurement = true; },
+    (x) => { x.newPerformanceMeasurement = false; },
+    (x) => { x.currentCpuOverview = x.currentCpuOverview.replace("494 CPU tests", "493 CPU tests"); },
+    (x) => { x.currentCpuOverview = x.currentCpuOverview.replace("84.55 ms", "4.55 ms"); },
+    (x) => { x.currentCpuOverview = x.currentCpuOverview.replace("in fixed arm order", "in random arm order"); },
+    (x) => { x.currentCpuOverview = x.currentCpuOverview.replace("not HTTP latency", "HTTP latency"); },
+    (x) => { x.currentCpuOverview = x.currentCpuOverview.replace("all 33 M1 gates remain open", "all 33 M1 gates are closed"); },
     (x) => { x.integration.hostProgress.r29.source = x.integration.hostProgress.r29.integratedSource; },
     (x) => { x.integration.hostProgress.r29.comparisonTests = 25; },
     (x) => { x.integration.hostProgress.r29.engineeringReferenceTests = 14; },

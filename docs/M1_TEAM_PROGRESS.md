@@ -5,6 +5,35 @@ receipt. The 33 M1 roadmap gates remain open.
 
 ## Current Checkpoint
 
+The user-requested [performance swarm V4](M1_PERFORMANCE_SWARM_V4.md) is
+implemented privately at `1fc45a52`. Core-only runtime work is published on
+fe2o3 main at `5ed3840a`, after rebase and remote validation, with CI skipped.
+The final-pin adapter passes 367 release library tests (six ignored), 41 V17
+binary tests (four ignored), four composition tests, two real-metadata packing
+tests, strict Clippy, 39 source-policy tests and 48 source-gate tests. Runtime
+validation passes 494 CPU tests with one hardware ignore. All builds and CPU
+tests run on mi300x-2; no local or GitHub build is used.
+
+The four-arm mi350 TP1 probe completes all 16 reference-matched requests. With
+one warmup excluded and three measured requests per mode, combined V14/V15
+records 84.55 ms TPOT and 9.83 output tokens/s versus baseline 135.85 ms and
+6.43 tokens/s. These are fixed-order controller-ingress diagnostics, not HTTP,
+sustained throughput, TP8 or a vendor win. V14 alone differs by less than 1%;
+runtime and packing gains are not isolated. Independent raw replay and six
+audit tests pass. The [project site](https://harsh-nod.github.io/ferric/) is live
+at static-only commit `329a86b4`: remote structural/negative checks, widths
+320..1440, eight named viewports and 64 screenshots pass, and all seven deployed
+files match the validated artifact. Defaults, historical results and all 33
+open M1 gates remain unchanged. The obsolete clean core and Pages worktrees
+and 2.2 GiB of remote debug products
+have been removed; both completed GPU stages are also removed after retention.
+Active worktrees and model files are preserved. The final CPU archive is
+checksum-verified locally. Roughly 6.2 GiB of CPU-stage data remains on mi300x-2:
+cleanup stops because the host's same-UID systemd manager is not inspectable,
+so complete no-use admission is unavailable. No deletion guard is bypassed.
+
+### Historical V3 Checkpoint
+
 The user-requested [performance swarm V3](M1_PERFORMANCE_SWARM_V3.md) is active:
 runtime profiling, opt-in draft kernels and same-eight-GPU comparison reporting
 have source implementations. On user-authorized mi300x-2, the combined Python

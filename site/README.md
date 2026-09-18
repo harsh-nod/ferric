@@ -7,7 +7,36 @@ checked performance observations live in
 real browser checks. Run all checks on the designated remote build host, not
 locally, and remove the private stage after archiving evidence.
 
-## September 16 Combined M5 Host and Proof Draft
+## September 18 Performance Swarm V4
+
+The current overview records private Ferric `1fc45a52`, published core runtime
+`5ed3840a`, final-pin CPU validation, and a four-arm native TP1 comparison.
+All 16 requests match the independent 128-output reference. Independent raw
+replay and six mutation/positive tests pass on mi300x-2.
+
+The combined V14/V15 arm records 84.55 ms TPOT and 9.83 tokens/s versus baseline
+135.85 ms and 6.43 tokens/s. These are fixed-order controller-ingress diagnostics
+with one excluded warmup and three measured requests per arm, not HTTP,
+sustained throughput, stable gains or a vendor comparison. Runtime and packing
+changes are common to every arm and have no isolated gain measurement.
+Native archive SHA256:
+`c1cd3b9448e05076cc935801f82ad99b5b48c3d664ad758628860e50b9f953d6`.
+
+The overview's exact text and selected rendered claims are checked, with added
+negative mutations for counts, timings, arm order and scope. Historical
+`performance.js`, kernel producer attribution, defaults and all 33 open gates
+remain unchanged. The new measurement flag applies to this diagnostic, not
+serving or protected qualification. Remote structural/negative checks, every
+width 320..1440, eight named viewports and 64 screenshots pass. The validated
+seven-file artifact (789,721 bytes) is live at
+[harsh-nod.github.io/ferric](https://harsh-nod.github.io/ferric/) through
+static-only commit `329a86b4bab2b7fc4c8585437f395c295c8cbe44` on
+`pages/prebuilt`. Deploy-only workflow `35394680140` succeeds, and all live
+files are byte-equal to the artifact. No local or GitHub build/test ran. The
+temporary publishing worktree is removed after retaining its Git bundle and
+deployment receipt. The older source-bound records below are historical.
+
+## Historical September 16 Combined M5 Host and Proof Draft
 
 This source-only successor starts from Pages source `4c206bfc` and follows
 private tracker `e4e55afb`, retained R5 compiler results and completed compiler
