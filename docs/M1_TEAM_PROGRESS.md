@@ -6,20 +6,98 @@ receipt. The 33 M1 roadmap gates remain open.
 ## Current Checkpoint
 
 The selected native GPU host is `mi350`, not `mi350-2`. SSH succeeds on
-September 18 at 07:48 UTC; all eight physical GPUs report zero activity.
+September 18 at 09:19 UTC; all eight physical GPUs report zero activity.
 This is an availability snapshot,
 not a reservation or launch admission. Builds and CPU tests remain on mi300x;
 every native launch requires a fresh device/no-use check.
 
-### 14ec Compiler Source Adopted; Fresh Tools Built
+### 6f1b Compiler Source And Fresh Tools Audited
 
-A fresh upstream check observes main at
-`3122f6056a1b86b1cdddc7d6e9be62efed1303b1`, one commit beyond the earlier
-`ec14bcc4cc7bb046e1fcdf4d987ae58330cbc4aa` observation. The ec14 successor
-adds an unconditionally compiled lowerer API; 3122 additionally changes ranked
-native replay, checked integer arithmetic and verifier code. The 14ec tools
-below are not current-main products. The unexecuted ec14 adoption/tool
-proposals require updating before use; no result is relabeled to a newer pin.
+The latest upstream check and fetch observes main at
+`6f1b38ea9764beb57168266e924dd5314b558337`. Ferric commit
+`3f5fb0ae8a03de3ecaf9a0c0db833a60aa182a39`, tree
+`2cd384dc194bb67487397802cedb1bbf51944e46`, adopts that exact revision.
+The compiler increment includes ranked native replay, checked arithmetic,
+verifier changes and ordered read-source indexing. Older tool and kernel
+products retain their actual producer revisions; they are not relabeled.
+
+The mi300x adoption campaign runs from 08:38:43Z to 08:42:39Z on September 18.
+All 50 main phases and nine preflight phases pass, including 48 source-gate
+tests, 32 locked dependency graphs, 35 metadata records, four dependency
+inventories and coverage generation/validation. The exact 80-file transition
+changes revisions and refreshes the affected source-policy checksums. It adds
+no dependency edge: the earlier 29 lower-MIR promotions remain unchanged.
+Runtime inventory, coverage and the frozen property-binder pin remain intact.
+
+First-attempt retention and independent audit pass. The 24,831,050-byte archive
+has SHA256 `8e8bf266a6292fc9c644869d6978cc79d8d35e14b8702b235a47b6a546faf76a`.
+The audit verifies all 2,183 payloads, 2,184 safe archive members, exact
+nanosecond metadata, 23 external records, two fresh source-gate ELF producers
+and the complete original/final source census. All 1,169 integrated files match
+the audited final census before this progress-note update. Fresh absence
+checks cover 125 recorded process entries, not global host process visibility.
+
+The new four-tool build passes on mi300x from 08:51:39Z to 09:05:47Z on
+September 18, from the canonical 5,253-file compiler source package.
+All six command/cleanup/wrapper triples and campaign, launch, group, source
+and control checks are zero. Eight required preflight checks pass. A first
+retention-lifecycle invocation omits its required fixture argument and exits 1;
+the corrected invocation passes, and both records remain. An initial launch
+admission rejects mode 0755 introduced by directory transfer before any
+controller or build starts. Root restores only the owned directory to 0700;
+the separately admitted build then starts. CPU, memory, space, reserve and
+cleanup limits are unchanged.
+
+| Tool | Bytes | SHA256 |
+| --- | --- | --- |
+| `cargo-fe2o3` | 26,601,768 | `d338b4cc0ce98890110340b13a2ff71261f294dc008b49f96bc1f07122cd6cb3` |
+| `lld-proxy` | 454,512 | `fe505654643320fbae1deacd3d4ccd355968353f172d79a6ff234ea58f5ff219` |
+| `extractor` | 200,040 | `7f71cfa72f400f3c63eb8f28e86411d6d5aaa7e7e48d79ddfb5a25494c566d08` |
+| `backend.so` | 191,039,088 | `71bf52b2b50db06a75b936ff023381d82effa5367fdf651b40cd3a1be0c21364` |
+
+First-attempt retention and independent audit pass. The 83,160,028-byte
+archive has SHA256
+`56c0ee38c7aece87611701b8f86694390f521e8d3d7b94eb39fb67e3f5aeeac0`.
+All 176 payloads, 177 safe members, exact integer-nanosecond metadata,
+57 external records, 5,253 canonical source files and four actual fresh
+original/copied ELF producers pass. Source and original borrowed-cache
+preservation pass; the backend receipt binds the new CLI. Both audit phases
+have zero command/cleanup/wrapper statuses. Fresh absence checks cover
+44 recorded process entries and 17 unique IDs, not global visibility.
+All transferred evidence hashes pass locally. A stale local ready-copy audit
+manifest is reconciled without changing the explicitly hash-bound executed
+auditor, bindings or raw records.
+
+After independent custody review and fresh source/tool/hash/process/no-use
+checks, cleanup removes only the private compiler target and cache copy,
+reclaiming 3,233,044 KiB at 09:14:15Z. Source, all four tools, retained records
+and original borrowed caches remain. No local build or GitHub build runs.
+
+The current-pin TP14 source-binding campaign passes all four phases from
+09:16:03Z to 09:16:21Z, after independent static review and three passing
+remote preflight phases, including seven lifecycle fixtures. Launch,
+campaign and all four command/cleanup/wrapper triples are zero. Fresh nightly
+metadata resolves 163 packages, including 53 pinned compiler packages and
+two Pliron packages. Before/after checks preserve all 1,169 frozen files.
+The adoption's 48 tests remain explicitly inherited, not new executions.
+
+Its first retention attempt passes and all 23 downloaded external hashes
+verify. The 7,921,593-byte archive has SHA256
+`593c5b5011da98f5d7707ef860fca6f17177ba5dd1714276b473ac4a298ff59f`,
+with 111 payloads and 112 members. Independent review verifies every payload
+hash, mode/UID/GID/size and exact integer-nanosecond mtime; all 1,169 nested
+source files match the committed census. The actual metadata package origins,
+raw statuses and inherited producer/test/inventory fields agree with their
+separate adoption custody. All 15 resource samples satisfy the unchanged caps.
+This data review performs no fresh remote process probe. It is not new kernel
+emission or native execution.
+
+Fresh vendor formation, emission, a current-pin residual-capture
+controller and independently admitted mi350 execution remain necessary. No new
+native inference, numerical acceptance, TTFT/TPOT or M1 qualification result
+follows from source adoption. All 33 gates remain open.
+
+### Historical 14ec Source And Tools
 
 Ferric `1997e1c32d3e298696d6a6f62a78b95f625eed6d` adopts published fe2o3
 `14ec7d2f75561977331e7a1ad5f916ada6d2ca59`. All 50 adoption phases and
