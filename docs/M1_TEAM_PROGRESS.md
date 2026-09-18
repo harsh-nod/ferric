@@ -149,10 +149,84 @@ The 1,935,382-byte archive has SHA256
 `6b634e1a423e7e077cb54911f427ba9f6ae83bcd893485e14db1fc5753387bf5`;
 its success-consistency flag remains false. A separate R2 corrects only the
 missing-path matcher and attempt namespaces. All five preflight phases pass,
-including 34 sampler tests; the full R2 emission is running. Two early
+including 34 sampler tests. Two early
 preflight launch calls encounter the still-held serial CPU lock and execute
 no command; subsequent independently recorded calls pass. Neither numerical
 tolerances nor resource caps are relaxed.
+
+The full R2 emission passes all thirteen phases from 10:40:28Z to 10:47:27Z.
+Independent custody review authenticates all 643 payloads, 645 archive members,
+exact nanosecond metadata, 50 external records, 55 process records and the
+unchanged source/tool/vendor inputs. The 1,972,773-byte archive has SHA256
+`a8eabe926555fb24560e6b003a79bb60980477c21941c899383692b82bfc87cf`.
+Inspection confirms fourteen gfx950/COV6 kernels with their descriptors,
+actual MFMA instructions and exact replay. The 111,768-byte HSACO has SHA256
+`d9ba14a65de179fd9143333d594950e57bbc369f5985c662e7b1a991e8809a37`.
+Both samplers succeed on their first samples; no live retry is claimed.
+
+The artifact transfers to mi350 with matching hashes, sizes and private file
+permissions. The first native admission attempt exits 1 at 10:57:46Z before
+starting the controller: its transferred intake authorization is mode 0644,
+while the runner requires 0600. It performs no model or GPU execution.
+Its complete failure records remain intact in a separate 46-payload archive,
+SHA256 `1ec3ee7a128339786510dc7f182bf2af7b51fa0c68514dc89949b2ebbf99fc91`.
+A second attempt uses fresh owners, verified 0600 intake files and fresh GPU0
+admission. It passes from 11:00:38Z to 11:04:30Z, generating token IDs
+`[12095, 13]` and text ` Paris.`. Launch, runner, controller and group-absence
+statuses are zero; the worker closes and selected GPU VRAM returns to its idle
+baseline. Both requested layer-zero residual captures are published, with
+manifest SHA256
+`bddd2bb93a6b766d069d1b49f9a9d228459656dd469be6c3e11c40079704f7d1`.
+The runner, limits and controller/worker/kernel bytes are unchanged.
+Independent custody review passes all 77 archived payloads, exact metadata,
+22 external records, six capture files and eight row slices. The 124,917-byte
+archive has SHA256
+`e559b73e4e37c79ddaa75c416ac1c02e479a158f96191361ab18942a2491e3f3`.
+Both rows preserve exact host-broadcast/GPU-hidden agreement. The earlier
+pre-launch failure also passes independent failure-custody review.
+
+### Same-Input Layer-Zero Residual Replay
+
+The held native capture now replays on mi300x. Extraction and all three
+source-before/replay/source-after phases have zero command, cleanup and wrapper
+statuses; the full 1,169-file source census remains unchanged. An earlier
+direct invocation of the non-executable wrapper is rejected before creating
+any phase; invoking that same script through Bash succeeds.
+The diagnostic performs two passes of each arithmetic case, retaining 48 raw
+tensor files. Every repeat pair is byte-identical and all compared values are
+finite. Native FP32 projection partials and BF16 post-residual hidden values
+match the source-ordered CPU replay exactly at both positions. Replaying the
+held native partial through the host reducer also matches exactly.
+
+| KV Position | Different Torch Hidden Elements | Maximum Absolute Error | RMSE |
+| --- | --- | --- | --- |
+| 4 | 1,188 / 4,096 | 0.0078125 | 0.0001702714864973519 |
+| 5 | 1,157 / 4,096 | 0.0078125 | 0.00021869217689438102 |
+
+The 37,680-byte diagnostic JSON has SHA256
+`8ca0cc3585f2ceb3d534d8c5aed32d8f1226a4dd678f4a6cc44376ed42b3f04c`.
+The CPU process completes in 22.75 seconds with peak RSS 1,310,648 KiB;
+these are diagnostic resource observations, not inference performance.
+ROCm imports retain warnings about the `-1` visibility syntax; the calculation
+uses explicit CPU tensors, not a hardware-isolation claim.
+
+Source review identifies a deliberate arithmetic-contract difference: Ferric
+adds the residual to FP32 projection partials and rounds once, whereas the
+exact pinned Qwen BF16 forward materializes the BF16 projection first.
+The current comparison changes both accumulation and rounding placement, so
+it does not isolate either as the cause. The next bounded test should compare
+both rounding placements using the same captured partial and residual. Any
+production reducer change also affects TP2/TP8 and needs explicit contract
+review; no tolerance or arithmetic contract is changed here.
+
+Replay retention and independent custody review pass. The 675,485-byte archive
+has SHA256
+`5f25064f069968d9d5bb3d4ed828337fe4330ee2728f47a5931ecd77d2703774`.
+All 128 payloads, exact nanosecond metadata, source preservation, raw phase
+statuses, recorded process absence, native bindings and 48 tensor hashes are
+verified. Independent byte comparisons confirm source/native agreement and
+repeat agreement. Floating-point metric values are consistency-reviewed
+against the JSON and payload identities, not independently recomputed.
 
 After fresh ownership, product-hash, recorded-process and scoped no-use checks,
 cleanup removes the completed controller and worker targets plus two empty
@@ -162,9 +236,9 @@ process checks do not establish global host visibility. Separately, six
 verified duplicate local extraction trees are removed, reclaiming
 3,687,732 KiB while preserving their archives and evidence records.
 
-Native residual capture and CPU replay remain pending. No new native
-inference, numerical acceptance, TTFT/TPOT or M1 qualification result follows
-from these host builds. All 33 gates remain open.
+This is a two-token TP1 diagnostic with a debug worker and extra readbacks,
+not a TP8, numerical-acceptance or comparable TTFT/TPOT result. All 33 M1 gates
+remain open.
 
 ### Historical 14ec Source And Tools
 
