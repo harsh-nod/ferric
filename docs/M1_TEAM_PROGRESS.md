@@ -7,9 +7,9 @@ receipt. The 33 M1 roadmap gates remain open.
 
 | Team | Implemented Or Validated | Next Dependency |
 | --- | --- | --- |
-| Engine | Fresh S8/T128 bootstrap and first S8/K4 round; 781 CPU tests pass | Public physical-submit lifecycle coverage and native integration |
+| Engine | Fresh S8/T128 bootstrap and first S8/K4 round; 781 CPU tests pass on the retained R3 source; expanded tests committed but unrun | Validate new admission tests and ignored public S8 hardware fixture |
 | Numerical | Explicit arithmetic capture; CPU checks pass; authenticated retained-reference reuse passes 11 regressions | Fresh native captures and recomputed tensor errors |
-| Compiler/Runtime | Validated 46d adoption; 930 delta and corrected disabled controls reviewed; KFD inputs unchanged | Narrow 930 source adoption, fresh compiler tools and kernel emission |
+| Compiler/Runtime | Validated 46d adoption; newer 3f53122f compiler/Pliron delta reviewed; runtime/KFD inputs unchanged | Dual-pin adoption, fresh compiler tools and kernel emission |
 | Verification | Source coverage passes with 52 new bodies explicitly pending-Verus | Body proofs and protected-runtime qualification remain open |
 | Site | R29 CPU progress draft committed; historical results keep their attribution | Remote QA paused at disk-space admission; deploy-only publication pending |
 
@@ -31,6 +31,8 @@ At 15:45:35 UTC the host reports 13 minutes uptime and the same absent driver
 and GPU nodes. Another passive check at 16:07:00 UTC reports 34 minutes uptime
 and still no amdgpu, /dev/kfd or KFD topology. The user has been asked whether
 host bring-up is still ongoing; no driver or host configuration is changed.
+At 16:17:32 UTC, SSH still succeeds and uptime is 45 minutes, but the same
+driver and device nodes remain absent. No native launch is attempted.
 
 ### Current Resource And Publication Blockers
 
@@ -51,14 +53,23 @@ directories are retained locally; no missing records or successful outcomes
 are synthesized. A later passive observation at 16:01 UTC reports only
 12,857,908 KiB free on the shared root filesystem. Builds and tests are paused
 without lowering the admission floor or reusing the earlier reserve exception.
+The 16:19:19 UTC passive check reports 12,561,140 KiB root free and
+42,151,324 KiB tmpfs free; the root floor still fails.
 
 A read-only cleanup review identifies three old Cargo target directories under
 /home/harsh: ferric-m1-fe-416ef90d-ignored-target (3,113,172 KiB),
 ferric-m1-fe-e7be5c96-ignored-target (4,270,260 KiB) and
 ferric-target-m1-binder-ba666ef-debug (257,444 KiB). Although all are owned by
 the expected user, authoritative redundant-product custody is not established
-and lsof reports incomplete visibility. None is deleted. Their combined size
-would still be insufficient to restore the 22 GiB floor at that observation.
+and lsof reports incomplete visibility. None is deleted. A follow-up filesystem
+check corrects the earlier hypothetical reclaim calculation: all three targets
+are on the separate /home volume, device 64513, not the root filesystem,
+device 66317. Deleting them would recover zero root-filesystem space.
+Five current-user Ferric directories directly under /tmp, which is on root,
+total 1,006,724 KiB and contain mixed controls/evidence. The only inspected
+generated child, /tmp/ferric-kv-v5.sFL42Paq/target, is 102,640 KiB; redundant
+custody and complete no-use admission are not established. No deletion is
+performed, and this bounded inventory cannot resolve the root-space deficit.
 
 The local worktree review preserves both remaining candidate checkouts: the
 BF16 logical-sampler branch contains a unique unintegrated commit, and dispatch
@@ -114,6 +125,55 @@ pending; the compiler source pin is still 46d. The corrected audit manifest is
 `5df5e1a1bd0a6eda652e169cc19b4bcbbc88b5dd9e2b4bfd262f6065de7d2023`;
 the disabled retention control ledger is
 `24c8d34c15d32ff85782991561245a179a940fe3aa9557bc82e74396b1a93d86`.
+
+The next upstream check fetches fe2o3 main
+`3f53122fe08d9462f2e811927db3ef5bacecdc1a`, tree
+`8e30b417f5e7146db2aef0ba2c4b7214da0e3a29`. Its single-commit delta from
+930 contains 112 files, adding checked private-load forwarding and bounded
+scalar-helper expansion. It also advances Pliron from
+`cc902cc8c669b5de2b292ae8638d9e8311bc735b` to
+`7ebf6e6638c2a3bcec179423993b01211a9689b4`. Therefore the disabled 930
+revision-only proposal is not sufficient and is not launched. Independent
+static review identifies 58 existing Pliron package-source substitutions across
+29 Ferric lockfiles, matching source-gate/producer constants and existing TCB
+rows. No additional dependency rows or lock-edge promotions are identified;
+the property-binder exception, runtime inventory and coverage remain unchanged.
+The reviewed authorized macro closure is
+`56bb6c0704b781694e0eb11c3cbe883bdf1c8778f22b5a05b877a7531a364d58`.
+Runtime/KFD, HSA, device, AMD target, toolchain and LLVM-worker subtrees are
+unchanged across this delta. No concrete Ferric caller signature change is
+found. This is source review, not dual-pin adoption, tests, rebuilt products or
+new kernel emission; Ferric remains pinned to validated 46d.
+
+### S8 Test Candidate: Not Yet Validated
+
+Commit `07ed9c0f26cb3dfa38d1971631c6091406ed3cde` adds seven net CPU test
+functions to the bootstrap module, bringing its declared total to 13. The
+public addressless constructor is exercised against invalid roster and policy
+counts, prompt widths on all eight lanes, vocabulary boundaries, context
+overflow, equal-but-wrong workspace shapes and identity drift in either
+workspace copy. Rejections assert unchanged prompt/policy values and the
+original Vec buffers and boxed-plan allocations. Upper-bound positive cases
+and every admitted live count are also represented.
+
+The same commit adds the ignored hardware fixture
+`admitted_mi300x_runs_public_s8_prefill_and_mixed_first_round`. It reuses the
+singleton fixture's authenticated aggregate/model/KFD setup and calls the real
+public S8 bootstrap, physical prefill, first-round schedule, preparation,
+publication and completion APIs. Two ordered live requests occupy the physical
+eight-lane shape; the fixture asserts a continuing first member, a
+Deadline-cancelled second member and the exact next-active roster. It invokes
+close, but does not claim queue-release evidence from the current opaque close
+result. Its inherited 1,000-ms per-queue wait remains untested for this shape.
+
+Independent static reviews find no concrete source/API blocker. Both edited
+files have byte-identical production prefixes before cfg(test), and git diff
+--check passes. Formatting, Clippy, compilation and test execution have not run
+because of the remote root-space admission failure. The ignored fixture also
+requires admitted exclusive gfx942 hardware and protected inputs; it cannot be
+validated by a CPU mock or counted as gfx950 evidence. These source additions
+do not replace the retained 781-test result, close the physical lifecycle
+coverage gap, or promote any M1 gate. No local or GitHub-hosted build is used.
 
 ### S8 Implementation And Coverage
 
