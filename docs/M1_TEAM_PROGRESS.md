@@ -12,6 +12,72 @@ bound to physical GPU 2, with a separate fresh admission for each arm.
 Availability snapshots are not reservations or launch admission. Builds and
 CPU tests remain on mi300x; no local or GitHub-hosted build is used.
 
+### mi350 Paired Native Result
+
+Both sequential TP1 host-residual arms complete on physical GPU 2 on
+September 18: old-default from 12:53:45Z to 12:57:36Z and projection-first
+BF16 from 12:58:11Z to 13:04:53Z. The prompt is `The capital of France is`;
+each arm produces token IDs `[12095, 13]` and the exact text ` Paris.`.
+Both use the same b700 release controller, 6f-attributed debug worker, TP14
+artifact, authenticated Qwen3-8B checkpoint and workload. Each performs
+3,264 dispatches, closes its worker and process group, and restores GPU 2's
+idle allocation baseline of 297,766,912 bytes. Foreign GPU 0/1 work is untouched.
+
+The pair checker exits zero and independently reviewed archives agree on
+all fixed inputs and both token and byte outputs. The old-default archive is
+`4b42f42066739cfb1cbcd5dc11c5179890afbea4c6ddb17ecc6c1f8be09b4abb`
+(47,303 bytes); projection-first is
+`135291cbba170244136530d675554e4cc8a31150f0f5ecc099d82dfbba173119`
+(48,081 bytes). Each contains 69 authenticated payloads. Pair JSON SHA256 is
+`f60e3b1f7ba0c41ecdede2ea99459e79d019325312c52db3265c65030e27b694`.
+Launcher script and invocation observations are retained separately and are
+explicitly primary-agent observations, not independent remote attestation.
+
+This is a two-token functional TP1 result, not tensor or full numerical
+parity, gfx942 validation, TP8 inference, a serving qualification, or comparable
+TTFT/TPOT/throughput evidence. Existing GPU products retain their actual 6f
+provenance; the a167 source adoption does not relabel them. All 33 M1 gates
+remain open.
+
+Six temporary executable copies (43,714,848 logical bytes) remain: cleanup
+stops before deletion because a current-user process's mappings cannot be
+inspected. The initial empty-lock file-kind rejection and subsequent visibility
+failure are retained. Canonical runtime, model, artifacts and all logs remain.
+
+### Authenticated Two-Member S8 Window
+
+Ferric `c4e1c6cf4d64debf6560836eb318f3add04e4b87`, tree
+`0b3c54166f7520ffa5c3f908f2f7fbd30f7c2bcd`, adds an exact two-live-member
+S8/T128 paired-prefill replacement-window adapter for the existing S8/K4
+authenticated path. It binds ordered prompts and policies, retains six
+inactive physical lanes, passes only checked live lengths to request-local
+page admission, and preflights the registry before physical publication.
+Pre-detach failures retain retry ownership; later failures retain terminal
+registry and physical custody together.
+
+On mi300x with fe2o3 a167, formatting, strict library Clippy and the fresh
+library-test build pass. The complete retained test executable reports
+771 passed, nine ignored and zero failed in 280.30 seconds. Six focused
+selections pass with nonempty discovery; their counts overlap the full suite.
+All 15 R2 validation phases close successfully and preserve the exact
+1,173-file source census. R1's five lint diagnostics and exit 101 remain
+retained; R2 fixes the checked conversion, boxed input failure and error docs.
+
+The 34,346,172-byte evidence archive has SHA256
+`fd48fc4812bf7576061a6db33e0a66ed0eb51548fcbd0d3c7164fab57959c78e`;
+all 25 downloaded external records verify. Independent review authenticates
+all 394 payloads, exact nanosecond metadata, both source censuses and the fresh
+94,859,608-byte test executable's Cargo producer. All 331 resource samples
+remain within the unchanged caps. The tested target is removed only
+after executable-copy, source and process checks, reclaiming 1,385,584 KiB.
+The earlier failed target cleanup reclaimed 448,812 KiB. Source archives,
+test executable, producer records and failed/successful phase logs remain.
+
+This is not fresh-engine S8 bootstrap. Public-constructor error-recovery and
+complete authenticated physical submit/cancel fixtures remain to be added.
+Singleton serving admission is unchanged; CPU tests do not close hardware,
+formal, numerical, performance or M1 qualification gates.
+
 ### a167 Compiler Source Adoption
 
 Ferric `dc75d9282690ef16539a2434ed61af59f05eb443`, tree
@@ -34,6 +100,10 @@ The audit checks 2,183 payloads, 2,184 safe members, exact nanosecond metadata,
 23 external records, two fresh source-gate ELF producers and both source
 censuses. Fresh absence checks cover 125 recorded process entries. This is
 source adoption, not new engine, numerical, hardware or M1 qualification.
+
+After source, archive, retained executable and fresh process checks, cleanup
+removes only the a167 adoption target, reclaiming 57,316 KiB. Retained source,
+tools, evidence and borrowed caches remain unchanged.
 
 ### Host-Residual Release Controller
 
