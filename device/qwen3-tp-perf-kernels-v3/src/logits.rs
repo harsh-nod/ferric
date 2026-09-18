@@ -1,0 +1,155 @@
+use fe2o3_device::{
+    Bf16, Gfx950Subgroup, Index1D, RowStriped2D, StridedReadView2D, WriteOnlyDisjointSlice, kernel,
+    thread,
+};
+
+// Source-equivalence tests bind these host fixtures to the expanded device body.
+#[cfg(test)]
+macro_rules! lane_argmax {
+    ($logits_view:expr, $row:expr, $lane:expr) => {{
+        let first = Bf16::from_bits($logits_view.load_or($row, $lane, 0)).to_f32();
+        let mut invalid = if first.is_finite() { 0.0_f32 } else { 1.0 };
+        let mut value = if first.is_finite() { first } else { 0.0 };
+        let mut winner = $lane as u32;
+        let mut step = 1_usize;
+        while step < 2374 {
+            let token = step * 64 + $lane;
+            let candidate = Bf16::from_bits($logits_view.load_or($row, token, 0)).to_f32();
+            if !candidate.is_finite() {
+                invalid = 1.0;
+            } else if candidate > value {
+                value = candidate;
+                winner = token as u32;
+            }
+            step += 1;
+        }
+        (value, winner, invalid)
+    }};
+}
+
+#[cfg(test)]
+macro_rules! stable_key {
+    ($value:expr, $maximum:expr, $winner:expr) => {{
+        if $value == $maximum {
+            151936.0_f32 - $winner as f32
+        } else {
+            0.0_f32
+        }
+    }};
+}
+
+#[cfg(test)]
+macro_rules! decode_key {
+    ($winning_key:expr) => {{
+        let winning_key = $winning_key as u32;
+        if winning_key < 151937 {
+        } else {
+            fe2o3_device::trap();
+        }
+        if winning_key == 0 {
+            fe2o3_device::trap();
+        }
+        (151936.0_f32 - winning_key as f32) as u32
+    }};
+}
+
+/// Opt-in v3 body retaining the v2 BF16 ABI, finite rejection and lowest-ID ties.
+/// All lanes scan disjoint logits; only lane zero owns the existing output stripe.
+#[kernel(typed, launch(required = [64, 1, 1], max = [64, 1, 1], max_grid = [16, 1, 1]), control_flow(loop_bounds(2374)))]
+pub fn ferric_qwen3_tp_batch_argmax_bf16_v2(
+    logits: &[u16],
+    mut choices: WriteOnlyDisjointSlice<u32, RowStriped2D<Index1D, 64, 1>>,
+    rows: u32,
+) {
+    if rows == 0 || rows > 16 {
+        fe2o3_device::trap();
+    }
+    let rows = rows as usize;
+    if rows < 17 {
+    } else {
+        fe2o3_device::trap();
+    }
+    if logits.len() < rows * 151936
+        || logits.len() > 16 * 151936
+        || choices.len() < rows
+        || choices.len() > 16
+        || thread::launch_extent_1d() != rows * 64
+    {
+        fe2o3_device::trap();
+    }
+    let Ok(logits_view) = StridedReadView2D::from_shared_slice(logits, 0, rows, 151936, 151936)
+    else {
+        fe2o3_device::trap();
+    };
+    let invocation = thread::index_1d();
+    let raw = invocation.get();
+    let row = thread::block_idx_x() as usize;
+    let lane = raw % 64;
+    if row < rows {
+    } else {
+        fe2o3_device::trap();
+    }
+    let subgroup = Gfx950Subgroup::current();
+    let (value, winner, invalid) = {
+        // BEGIN lane_argmax
+        let first = Bf16::from_bits(logits_view.load_or(row, lane, 0)).to_f32();
+        let mut invalid = if first.is_finite() { 0.0_f32 } else { 1.0 };
+        let mut value = if first.is_finite() { first } else { 0.0 };
+        let mut winner = lane as u32;
+        let mut step = 1_usize;
+        while step < 2374 {
+            let token = step * 64 + lane;
+            let candidate = Bf16::from_bits(logits_view.load_or(row, token, 0)).to_f32();
+            if !candidate.is_finite() {
+                invalid = 1.0;
+            } else if candidate > value {
+                value = candidate;
+                winner = token as u32;
+            }
+            step += 1;
+        }
+        (value, winner, invalid)
+        // END lane_argmax
+    };
+    // Defer rejection until every lane has participated; no invalid row can store.
+    let any_invalid = subgroup.reduce_max_f32::<64>(invalid);
+    if any_invalid != 0.0 {
+        fe2o3_device::trap();
+    }
+    let maximum = subgroup.reduce_max_f32::<64>(value);
+    // Every key is an exact FP32 integer. Equal signed zeros select the same key set.
+    let key = {
+        // BEGIN stable_key
+        if value == maximum {
+            151936.0_f32 - winner as f32
+        } else {
+            0.0_f32
+        }
+        // END stable_key
+    };
+    let winning_key = subgroup.reduce_max_f32::<64>(key);
+    if lane == 0 {
+        let Some(stripe) = invocation.checked_row_striped_2d::<64, 1>() else {
+            fe2o3_device::trap();
+        };
+        let winner = {
+            // BEGIN decode_key
+            let winning_key = winning_key as u32;
+            if winning_key < 151937 {
+            } else {
+                fe2o3_device::trap();
+            }
+            if winning_key == 0 {
+                fe2o3_device::trap();
+            }
+            (151936.0_f32 - winning_key as f32) as u32
+            // END decode_key
+        };
+        if !choices.write_row_striped_2d(&stripe, 0, rows, 1, 1, winner) {
+            fe2o3_device::trap();
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests;

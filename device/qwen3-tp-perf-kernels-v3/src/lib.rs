@@ -28,7 +28,9 @@ pub mod baseline_projection;
 #[cfg(not(test))]
 pub mod embedding;
 #[path = "../../qwen3-tp-batch-kernels-v2/src/logits.rs"]
-#[cfg(not(test))]
+#[cfg(all(not(test), not(feature = "cooperative-argmax")))]
+pub mod logits;
+#[cfg(feature = "cooperative-argmax")]
 pub mod logits;
 #[path = "../../qwen3-all-kernels-v1/src/rmsnorm.rs"]
 #[cfg(not(test))]

@@ -11,6 +11,7 @@ publish = false
 default = ["gfx950", "mfma"]
 gfx950 = []
 mfma = []
+cooperative-argmax = []
 
 [dependencies]
 fe2o3-device = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "fe406b0c3275c33b92f81734a4e6e3852b891073", version = "=0.1.0" }
