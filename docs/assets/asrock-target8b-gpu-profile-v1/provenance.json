@@ -1,0 +1,72 @@
+{
+  "acceptance": {
+    "clean_footer": true,
+    "forwards": 36,
+    "packets": 22176,
+    "postchecks_zero": 13,
+    "reference_tokens": 32
+  },
+  "accepted_analysis_sha256": "bb73534910b1a87ee9b2c64bd28cf6c5ca8f55991455ace85bf2d581be59f61e",
+  "capture_manifest_sha256": "6c9e89737c956dbedc61de96d830f23c6c970b7a0663f04043cc16e35833d6a8",
+  "plan_sha256": "a7288b925c2fd05e622b509b9d6bd6aa8c3e3648a576a6d3ba4ccbe36bdbd08e",
+  "private_analysis_input_sha256": {
+    "all-forwards.csv": "3a72f5fc5ef9d47a526ead84c634fdcc4a37d30907621b5165cf068a035bc82d",
+    "all-packets-private.csv": "b412a669cccba394612e7d5a597a2b3c8f0dde27c561de103738567bd208a719",
+    "analysis-private.json": "bb73534910b1a87ee9b2c64bd28cf6c5ca8f55991455ace85bf2d581be59f61e"
+  },
+  "public_data_sha256": {
+    "forwards.csv": "578497360942fdd9611663fbbd37c779411b5e904016d5dfbc2586d77c7e1a6f",
+    "kernel-roster.json": "5726e6991d0d6aa686d1dba6c0e2d4c63698fed06294839d564e4a144806ee30",
+    "packets.csv": "9d84849791af5704a15481775d20106161bf81947345f0032d89c02d56d072bd"
+  },
+  "raw_capture_sha256": {
+    "after-identity-private.log": "ffa9b81aa9e09f7bdf3f78846d9c582ad85c28d50ce62131f4be290209110a7c",
+    "after-list-private.json": "2773e4d0a2f68434575f32315b030ff56a31e88e476e6ae96f6b4ae339b98ff1",
+    "after-metric-private.json": "f2654a31c89344e35076d9b0c8fb04c9daebf62307cee965892d5a3976f09e90",
+    "after-process-private.json": "642bc408ae2eaa07915386766d638470d57926c72a7737773e8117c6da649420",
+    "before-identity-private.log": "ffa9b81aa9e09f7bdf3f78846d9c582ad85c28d50ce62131f4be290209110a7c",
+    "before-list-private.json": "2773e4d0a2f68434575f32315b030ff56a31e88e476e6ae96f6b4ae339b98ff1",
+    "before-metric-private.json": "f2654a31c89344e35076d9b0c8fb04c9daebf62307cee965892d5a3976f09e90",
+    "before-process-private.json": "642bc408ae2eaa07915386766d638470d57926c72a7737773e8117c6da649420",
+    "command-private.json": "bb4d378709e0f86f6bd26cfb2a0829cb1dbb9f3070083e5e2519be167562bb4f",
+    "dispatch-timestamps.ndjson": "70b4bfacb99eda670b533092c80d5387b3acb97c892f9b121848aba3a7f4329f",
+    "model-stat-before-private.json": "f64e352a5c06e19e483d5f8fd9b3dd9de6e8f9b428cdfef1a1262c8a5514011b",
+    "postcheck-status.json": "fa410c1587631683682315fd0727ad01824d8dff809699422e2c6e2617736b78",
+    "predeclared-plan.json": "a7288b925c2fd05e622b509b9d6bd6aa8c3e3648a576a6d3ba4ccbe36bdbd08e",
+    "report-private.json": "da469db577f0f24ac5e2849e31759d3485411ca21f769982404779d9064dde4e",
+    "status.txt": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+    "stderr.log": "b0b1f3a97acfdb615bc25716034e171f4c53539bf23bce1db6b10c534095818b",
+    "stdout.ndjson": "cffd9d22cf7e69127c271408557d3c121fe2a86ae5d3c05e3652cb6b2112c075"
+  },
+  "raw_roster_sha256": "cf22112055614845533ea4c76f38ea76be2f66f6b8bed58111443c9b5e5b80d7",
+  "sanitization": "Closed CSV schemas; absolute GPU/system ticks removed; each forward has its own zero origin. No process IDs, device IDs, model contents, or host paths.",
+  "schema": "FerricPublicGpuPacketProfileProvenanceV1",
+  "scope": "Single instrumented run; AMD packet-processing intervals; not pure wave-body, busy/union, overlap, or throughput qualification.",
+  "source_input_sha256": {
+    "argmax_admission": "8d574bd5d838c4f83e7f57b8855e9bee2ded5745db0aea8c7624f4ba1ac9af14",
+    "argmax_admission_inputs": "5215ad4656fae8cbffabddbb3c616b04928d95ad00c1adb16f0b02c63efa4489",
+    "argmax_admission_provenance": "25c151cb56dbe3412345787d2bae89172141558b04663f3e4008d46a68f92dbc",
+    "argmax_hsaco": "86c3ee4cead26f6432ef590434b3335e1ee2a95c9c900cf6315dca4ef0a542b0",
+    "argmax_manifest": "8ab01a5a2913a76b09912cb39c831d714fb1c03cb1d0ad197e0b8d63e6ab8118",
+    "argmax_source": "1556bf8bdba72646a62da57c80b2676495b0e6b5655896bd22a43c4c878c3384",
+    "checker": "ef617b471520477914db653341178e4fe89645042bf5cf8cc3b9e492289362ac",
+    "codegen_catalog": "d4a1e53ed7d8ca8bd0d29dded44192e6cbeac2b825174d9faa391fd414af99e6",
+    "controller": "5b661196dcf4cc63aa2965ae2aea5598c51ea2130ec92412f9f9f31f9bee8ba4",
+    "controller_source": "290c56560e7495e784fbba7dfc44c102dd9dcf86f9f832c89260bdb05508ea3d",
+    "core": "90cd589fe9b98660f6efb3400775cd269af236688706f37eaedee2d12e92b975",
+    "full_guard": "6647ff682da5e249c3e96a9ebc355ecbd75431ca52892a2a4e1c4704462c01c0",
+    "harness": "45ebf3a035b621c54e46b9f4d052e35060bc51f069c986952e84852f65405077",
+    "head_hsaco": "b21caccae5ec030640242034940822cb1a3f1e8531b7b6ded7371492da3747ae",
+    "head_manifest": "6815ba33eb0c96a88a0722b1cdc73473d09cce3b4594d98370e6e1282437a008",
+    "identity": "6cdb80243b8b0c0fe9390ba77e8854e8de2a599f93f3a39525c5a73f8f4c4bb8",
+    "main_hsaco": "2e677384a5e86c6e1ae95f10333f2d0d330922ed4d1348acdb1b09f5655281e2",
+    "main_manifest": "e295584f1c5eeed36bdc653e83259e1dac3515b54d504b0704f54cd884531c67",
+    "paired_source": "b27b9cffc159ee82667d039056aa6a414569cc1309e25a5dca442279aba59fb0",
+    "reference": "1ed868663df52a146dd7921f9fbb2cf1e1d0c0ceed8a7bfda030d65f8ec5b094",
+    "roster": "cf22112055614845533ea4c76f38ea76be2f66f6b8bed58111443c9b5e5b80d7",
+    "serial_guard": "84bd1326032f9121e57695f7c921e15e0fef24c9b2a22991280207d433d6effe",
+    "worker": "24fcf50e0deb641715691b1d381b34c9f423e036834104ac46b0d754c41be5dc",
+    "worker_source": "a9101743147f73beaab2ae8df3f5951fa2885f19dd23282450c541914a01d9fe",
+    "workload": "2b5dfadc654312328572b4017aa4a7a22db87e6c973bde9299b9ea989ef3afee"
+  }
+}

@@ -1,0 +1,173 @@
+[
+  {
+    "image_sha256": "2e677384a5e86c6e1ae95f10333f2d0d330922ed4d1348acdb1b09f5655281e2",
+    "implicit_argument_bytes": 256,
+    "implicit_argument_offset": 40,
+    "kernarg_bytes": 296,
+    "kernel_symbol": "ferric_qwen3_tp_batch_argmax_bf16_v2",
+    "loaded_kernel_ordinal": 1,
+    "wavefront_size": 64
+  },
+  {
+    "image_sha256": "2e677384a5e86c6e1ae95f10333f2d0d330922ed4d1348acdb1b09f5655281e2",
+    "implicit_argument_bytes": 256,
+    "implicit_argument_offset": 56,
+    "kernarg_bytes": 312,
+    "kernel_symbol": "ferric_qwen3_tp_batch_embedding_bf16_v2",
+    "loaded_kernel_ordinal": 2,
+    "wavefront_size": 64
+  },
+  {
+    "image_sha256": "2e677384a5e86c6e1ae95f10333f2d0d330922ed4d1348acdb1b09f5655281e2",
+    "implicit_argument_bytes": 256,
+    "implicit_argument_offset": 72,
+    "kernarg_bytes": 328,
+    "kernel_symbol": "ferric_qwen3_tp_batch_gemm_bf16_f32_bf16_v2",
+    "loaded_kernel_ordinal": 3,
+    "wavefront_size": 64
+  },
+  {
+    "image_sha256": "2e677384a5e86c6e1ae95f10333f2d0d330922ed4d1348acdb1b09f5655281e2",
+    "implicit_argument_bytes": 256,
+    "implicit_argument_offset": 72,
+    "kernarg_bytes": 328,
+    "kernel_symbol": "ferric_qwen3_tp_batch_gemm_partial_bf16_f32_v2",
+    "loaded_kernel_ordinal": 4,
+    "wavefront_size": 64
+  },
+  {
+    "image_sha256": "2e677384a5e86c6e1ae95f10333f2d0d330922ed4d1348acdb1b09f5655281e2",
+    "implicit_argument_bytes": 256,
+    "implicit_argument_offset": 120,
+    "kernarg_bytes": 376,
+    "kernel_symbol": "ferric_qwen3_tp_batch_paged_gqa_bf16_f32_v2",
+    "loaded_kernel_ordinal": 5,
+    "wavefront_size": 64
+  },
+  {
+    "image_sha256": "2e677384a5e86c6e1ae95f10333f2d0d330922ed4d1348acdb1b09f5655281e2",
+    "implicit_argument_bytes": 256,
+    "implicit_argument_offset": 112,
+    "kernarg_bytes": 368,
+    "kernel_symbol": "ferric_qwen3_tp_batch_paged_kv_append_v2",
+    "loaded_kernel_ordinal": 6,
+    "wavefront_size": 64
+  },
+  {
+    "image_sha256": "2e677384a5e86c6e1ae95f10333f2d0d330922ed4d1348acdb1b09f5655281e2",
+    "implicit_argument_bytes": 256,
+    "implicit_argument_offset": 56,
+    "kernarg_bytes": 312,
+    "kernel_symbol": "ferric_qwen3_tp_batch_residual_bf16_v3",
+    "loaded_kernel_ordinal": 7,
+    "wavefront_size": 64
+  },
+  {
+    "image_sha256": "2e677384a5e86c6e1ae95f10333f2d0d330922ed4d1348acdb1b09f5655281e2",
+    "implicit_argument_bytes": 256,
+    "implicit_argument_offset": 120,
+    "kernarg_bytes": 376,
+    "kernel_symbol": "ferric_qwen3_tp_batch_rope_v2",
+    "loaded_kernel_ordinal": 8,
+    "wavefront_size": 64
+  },
+  {
+    "image_sha256": "2e677384a5e86c6e1ae95f10333f2d0d330922ed4d1348acdb1b09f5655281e2",
+    "implicit_argument_bytes": 256,
+    "implicit_argument_offset": 56,
+    "kernarg_bytes": 312,
+    "kernel_symbol": "ferric_qwen3_tp_batch_swiglu_bf16_f32_v2",
+    "loaded_kernel_ordinal": 9,
+    "wavefront_size": 64
+  },
+  {
+    "image_sha256": "2e677384a5e86c6e1ae95f10333f2d0d330922ed4d1348acdb1b09f5655281e2",
+    "implicit_argument_bytes": 256,
+    "implicit_argument_offset": 72,
+    "kernarg_bytes": 328,
+    "kernel_symbol": "ferric_qwen3_tp_mfma_gemm_bf16_v3",
+    "loaded_kernel_ordinal": 10,
+    "wavefront_size": 64
+  },
+  {
+    "image_sha256": "2e677384a5e86c6e1ae95f10333f2d0d330922ed4d1348acdb1b09f5655281e2",
+    "implicit_argument_bytes": 256,
+    "implicit_argument_offset": 72,
+    "kernarg_bytes": 328,
+    "kernel_symbol": "ferric_qwen3_tp_mfma_gemm_partial_f32_v3",
+    "loaded_kernel_ordinal": 11,
+    "wavefront_size": 64
+  },
+  {
+    "image_sha256": "2e677384a5e86c6e1ae95f10333f2d0d330922ed4d1348acdb1b09f5655281e2",
+    "implicit_argument_bytes": 256,
+    "implicit_argument_offset": 72,
+    "kernarg_bytes": 328,
+    "kernel_symbol": "ferric_qwen3_tp_wave_gemv_bf16_v3",
+    "loaded_kernel_ordinal": 12,
+    "wavefront_size": 64
+  },
+  {
+    "image_sha256": "2e677384a5e86c6e1ae95f10333f2d0d330922ed4d1348acdb1b09f5655281e2",
+    "implicit_argument_bytes": 256,
+    "implicit_argument_offset": 72,
+    "kernarg_bytes": 328,
+    "kernel_symbol": "ferric_qwen3_tp_wave_gemv_partial_f32_v3",
+    "loaded_kernel_ordinal": 13,
+    "wavefront_size": 64
+  },
+  {
+    "image_sha256": "2e677384a5e86c6e1ae95f10333f2d0d330922ed4d1348acdb1b09f5655281e2",
+    "implicit_argument_bytes": 256,
+    "implicit_argument_offset": 120,
+    "kernarg_bytes": 376,
+    "kernel_symbol": "ferric_qwen3_tp_wave_paged_gqa_bf16_v3",
+    "loaded_kernel_ordinal": 14,
+    "wavefront_size": 64
+  },
+  {
+    "image_sha256": "2e677384a5e86c6e1ae95f10333f2d0d330922ed4d1348acdb1b09f5655281e2",
+    "implicit_argument_bytes": 256,
+    "implicit_argument_offset": 96,
+    "kernarg_bytes": 352,
+    "kernel_symbol": "qwen3_rmsnorm_v1",
+    "loaded_kernel_ordinal": 15,
+    "wavefront_size": 64
+  },
+  {
+    "image_sha256": "b21caccae5ec030640242034940822cb1a3f1e8531b7b6ded7371492da3747ae",
+    "implicit_argument_bytes": 256,
+    "implicit_argument_offset": 40,
+    "kernarg_bytes": 296,
+    "kernel_symbol": "ferric_qwen3_tp_argmax_f32_v7",
+    "loaded_kernel_ordinal": 16,
+    "wavefront_size": 64
+  },
+  {
+    "image_sha256": "b21caccae5ec030640242034940822cb1a3f1e8531b7b6ded7371492da3747ae",
+    "implicit_argument_bytes": 256,
+    "implicit_argument_offset": 72,
+    "kernarg_bytes": 328,
+    "kernel_symbol": "ferric_qwen3_tp_head_bf16_f32_v7",
+    "loaded_kernel_ordinal": 17,
+    "wavefront_size": 64
+  },
+  {
+    "image_sha256": "b21caccae5ec030640242034940822cb1a3f1e8531b7b6ded7371492da3747ae",
+    "implicit_argument_bytes": 256,
+    "implicit_argument_offset": 72,
+    "kernarg_bytes": 328,
+    "kernel_symbol": "ferric_qwen3_tp_mfma_head_f32_v7",
+    "loaded_kernel_ordinal": 18,
+    "wavefront_size": 64
+  },
+  {
+    "image_sha256": "86c3ee4cead26f6432ef590434b3335e1ee2a95c9c900cf6315dca4ef0a542b0",
+    "implicit_argument_bytes": 256,
+    "implicit_argument_offset": 40,
+    "kernarg_bytes": 296,
+    "kernel_symbol": "ferric_qwen3_tp_batch32_wave_argmax_f32_v11",
+    "loaded_kernel_ordinal": 19,
+    "wavefront_size": 64
+  }
+]

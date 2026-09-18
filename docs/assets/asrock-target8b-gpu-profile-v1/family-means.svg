@@ -1,0 +1,85 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1160" height="690" viewBox="0 0 1160 690" role="img">
+<title>Absolute packet interval family means, same scale for prompt and decode</title>
+<rect width="100%" height="100%" fill="white"/>
+<style>text{font:13px Arial,sans-serif;fill:#263238}.title{font-size:21px;font-weight:600}.small{font-size:12px}.axis{stroke:#ccd2d5;stroke-width:1}</style>
+<text class="title" x="30" y="34">Packet-processing intervals by operation family</text>
+<text x="30" y="60">Mean sum per forward (ms); 5 prompt forwards and 31 decode forwards from one instrumented run</text>
+<text x="290" y="93">Prompt (common 0-60 ms scale)</text>
+<path class="axis" d="M290.00 110V618"/><text x="290.00" y="637" text-anchor="middle">0</text>
+<path class="axis" d="M370.00 110V618"/><text x="370.00" y="637" text-anchor="middle">15</text>
+<path class="axis" d="M450.00 110V618"/><text x="450.00" y="637" text-anchor="middle">30</text>
+<path class="axis" d="M530.00 110V618"/><text x="530.00" y="637" text-anchor="middle">45</text>
+<path class="axis" d="M610.00 110V618"/><text x="610.00" y="637" text-anchor="middle">60</text>
+<text x="30" y="131">normalization</text>
+<rect data-family="normalization" data-phase="prompt" x="290" y="117" width="305.4306" height="19" fill="#ad5b31"/>
+<text x="620" y="131">57.268</text>
+<text x="30" y="169">MLP down projection</text>
+<rect data-family="MLP down projection" data-phase="prompt" x="290" y="155" width="78.5671" height="19" fill="#ad5b31"/>
+<text x="620" y="169">14.731</text>
+<text x="30" y="207">QKV projections</text>
+<rect data-family="QKV projections" data-phase="prompt" x="290" y="193" width="77.6707" height="19" fill="#ad5b31"/>
+<text x="620" y="207">14.563</text>
+<text x="30" y="245">KV cache write</text>
+<rect data-family="KV cache write" data-phase="prompt" x="290" y="231" width="63.7157" height="19" fill="#ad5b31"/>
+<text x="620" y="245">11.947</text>
+<text x="30" y="283">MLP gate/up projections</text>
+<rect data-family="MLP gate/up projections" data-phase="prompt" x="290" y="269" width="56.1568" height="19" fill="#ad5b31"/>
+<text x="620" y="283">10.529</text>
+<text x="30" y="321">attention output projection</text>
+<rect data-family="attention output projection" data-phase="prompt" x="290" y="307" width="27.2157" height="19" fill="#ad5b31"/>
+<text x="620" y="321">5.103</text>
+<text x="30" y="359">attention</text>
+<rect data-family="attention" data-phase="prompt" x="290" y="345" width="2.8686" height="19" fill="#ad5b31"/>
+<text x="620" y="359">0.538</text>
+<text x="30" y="397">rotary position</text>
+<rect data-family="rotary position" data-phase="prompt" x="290" y="383" width="7.5164" height="19" fill="#ad5b31"/>
+<text x="620" y="397">1.409</text>
+<text x="30" y="435">argmax</text>
+<rect data-family="argmax" data-phase="prompt" x="290" y="421" width="5.1483" height="19" fill="#ad5b31"/>
+<text x="620" y="435">0.965</text>
+<text x="30" y="473">vocabulary projection</text>
+<rect data-family="vocabulary projection" data-phase="prompt" x="290" y="459" width="4.6421" height="19" fill="#ad5b31"/>
+<text x="620" y="473">0.870</text>
+<text x="30" y="511">residual add</text>
+<rect data-family="residual add" data-phase="prompt" x="290" y="497" width="2.8717" height="19" fill="#ad5b31"/>
+<text x="620" y="511">0.538</text>
+<text x="30" y="549">activation</text>
+<rect data-family="activation" data-phase="prompt" x="290" y="535" width="2.0528" height="19" fill="#ad5b31"/>
+<text x="620" y="549">0.385</text>
+<text x="30" y="587">embedding</text>
+<rect data-family="embedding" data-phase="prompt" x="290" y="573" width="0.0561" height="19" fill="#ad5b31"/>
+<text x="620" y="587">0.011</text>
+<text x="730" y="93">Decode (common 0-60 ms scale)</text>
+<path class="axis" d="M730.00 110V618"/><text x="730.00" y="637" text-anchor="middle">0</text>
+<path class="axis" d="M810.00 110V618"/><text x="810.00" y="637" text-anchor="middle">15</text>
+<path class="axis" d="M890.00 110V618"/><text x="890.00" y="637" text-anchor="middle">30</text>
+<path class="axis" d="M970.00 110V618"/><text x="970.00" y="637" text-anchor="middle">45</text>
+<path class="axis" d="M1050.00 110V618"/><text x="1050.00" y="637" text-anchor="middle">60</text>
+<rect data-family="normalization" data-phase="decode" x="730" y="117" width="305.3874" height="19" fill="#217995"/>
+<text x="1060" y="131">57.260</text>
+<rect data-family="MLP down projection" data-phase="decode" x="730" y="155" width="78.5856" height="19" fill="#217995"/>
+<text x="1060" y="169">14.735</text>
+<rect data-family="QKV projections" data-phase="decode" x="730" y="193" width="77.5608" height="19" fill="#217995"/>
+<text x="1060" y="207">14.543</text>
+<rect data-family="KV cache write" data-phase="decode" x="730" y="231" width="63.7154" height="19" fill="#217995"/>
+<text x="1060" y="245">11.947</text>
+<rect data-family="MLP gate/up projections" data-phase="decode" x="730" y="269" width="56.0620" height="19" fill="#217995"/>
+<text x="1060" y="283">10.512</text>
+<rect data-family="attention output projection" data-phase="decode" x="730" y="307" width="27.2074" height="19" fill="#217995"/>
+<text x="1060" y="321">5.101</text>
+<rect data-family="attention" data-phase="decode" x="730" y="345" width="10.6202" height="19" fill="#217995"/>
+<text x="1060" y="359">1.991</text>
+<rect data-family="rotary position" data-phase="decode" x="730" y="383" width="7.5116" height="19" fill="#217995"/>
+<text x="1060" y="397">1.408</text>
+<rect data-family="argmax" data-phase="decode" x="730" y="421" width="5.1340" height="19" fill="#217995"/>
+<text x="1060" y="435">0.963</text>
+<rect data-family="vocabulary projection" data-phase="decode" x="730" y="459" width="4.6350" height="19" fill="#217995"/>
+<text x="1060" y="473">0.869</text>
+<rect data-family="residual add" data-phase="decode" x="730" y="497" width="2.8564" height="19" fill="#217995"/>
+<text x="1060" y="511">0.536</text>
+<rect data-family="activation" data-phase="decode" x="730" y="535" width="2.0224" height="19" fill="#217995"/>
+<text x="1060" y="549">0.379</text>
+<rect data-family="embedding" data-phase="decode" x="730" y="573" width="0.0452" height="19" fill="#217995"/>
+<text x="1060" y="587">0.008</text>
+<text class="small" x="30" y="674">Sum-derived category means, not GPU busy percentages, overlap, or pure wave-body time.</text>
+</svg>

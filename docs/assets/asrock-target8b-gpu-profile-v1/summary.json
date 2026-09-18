@@ -1,0 +1,121 @@
+{
+  "all_packets": 22176,
+  "clock_accuracy_qualified": false,
+  "gpu_overlap_measured": false,
+  "normalization_shapes": [
+    {
+      "mean_packet_interval_ns": 743426.5875190259,
+      "mean_sum_per_forward_ns": 54270140.88888889,
+      "normalization_shape": "full_hidden_4096",
+      "packets_per_forward": 73,
+      "phase": "all"
+    },
+    {
+      "mean_packet_interval_ns": 743415.7534246575,
+      "mean_sum_per_forward_ns": 54269350.0,
+      "normalization_shape": "full_hidden_4096",
+      "packets_per_forward": 73,
+      "phase": "prompt"
+    },
+    {
+      "mean_packet_interval_ns": 743428.3349536015,
+      "mean_sum_per_forward_ns": 54270268.451612905,
+      "normalization_shape": "full_hidden_4096",
+      "packets_per_forward": 73,
+      "phase": "decode"
+    },
+    {
+      "mean_packet_interval_ns": 41543.456790123455,
+      "mean_sum_per_forward_ns": 2991128.888888889,
+      "normalization_shape": "qk_width_128",
+      "packets_per_forward": 72,
+      "phase": "all"
+    },
+    {
+      "mean_packet_interval_ns": 41651.22222222222,
+      "mean_sum_per_forward_ns": 2998888.0,
+      "normalization_shape": "qk_width_128",
+      "packets_per_forward": 72,
+      "phase": "prompt"
+    },
+    {
+      "mean_packet_interval_ns": 41526.07526881721,
+      "mean_sum_per_forward_ns": 2989877.419354839,
+      "normalization_shape": "qk_width_128",
+      "packets_per_forward": 72,
+      "phase": "decode"
+    }
+  ],
+  "performance_qualified": false,
+  "phases": [
+    {
+      "forwards": 5,
+      "instrumented_host_batch_elapsed_ns": {
+        "max": 135834477,
+        "mean": 132322826.4,
+        "min": 130316846,
+        "sum": 661614132
+      },
+      "packet_interval_span_ns_floor": {
+        "max": 119006621,
+        "mean": 118858873.0,
+        "min": 118484037,
+        "sum": 594294365
+      },
+      "phase": "prompt",
+      "sum_packet_intervals_ns": {
+        "max": 119006329,
+        "mean": 118858606.2,
+        "min": 118483715,
+        "sum": 594293031
+      }
+    },
+    {
+      "forwards": 31,
+      "instrumented_host_batch_elapsed_ns": {
+        "max": 143741014,
+        "mean": 133487926.29032259,
+        "min": 131795765,
+        "sum": 4138125715
+      },
+      "packet_interval_span_ns_floor": {
+        "max": 121563638,
+        "mean": 120252100.32258065,
+        "min": 119083764,
+        "sum": 3727815110
+      },
+      "phase": "decode",
+      "sum_packet_intervals_ns": {
+        "max": 121563348,
+        "mean": 120251846.38709678,
+        "min": 119083528,
+        "sum": 3727807238
+      }
+    },
+    {
+      "forwards": 36,
+      "instrumented_host_batch_elapsed_ns": {
+        "max": 143741014,
+        "mean": 133326106.8611111,
+        "min": 130316846,
+        "sum": 4799739847
+      },
+      "packet_interval_span_ns_floor": {
+        "max": 121563638,
+        "mean": 120058596.52777778,
+        "min": 118484037,
+        "sum": 4322109475
+      },
+      "phase": "all",
+      "sum_packet_intervals_ns": {
+        "max": 121563348,
+        "mean": 120058340.80555555,
+        "min": 118483715,
+        "sum": 4322100269
+      }
+    }
+  ],
+  "schema": "FerricPublicGpuPacketProfileSummaryV1",
+  "timeline_generation": 6,
+  "timeline_packets": 616
+}

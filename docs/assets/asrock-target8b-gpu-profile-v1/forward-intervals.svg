@@ -1,0 +1,168 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1120" height="900" viewBox="0 0 1120 900" role="img">
+<title>All 36 forwards, separate packet span, packet sum, and host elapsed panels</title>
+<rect width="100%" height="100%" fill="white"/>
+<style>text{font:13px Arial,sans-serif;fill:#263238}.title{font-size:21px;font-weight:600}.small{font-size:12px}.axis{stroke:#ccd2d5;stroke-width:1}</style>
+<text class="title" x="75" y="33">All 36 instrumented forwards</text>
+<text x="75" y="58">Shaded generations 1-5: prompt. Generations 6-36: decode after the first generated token.</text>
+<text x="75" y="95">Packet interval span; displayed axis 117-123 ms (not zero-based)</text>
+<rect x="75" y="115" width="121.5" height="164" fill="#fff1df"/>
+<path class="axis" d="M75 279.0H1020"/><text x="65" y="283.0" text-anchor="end">117.00</text>
+<path class="axis" d="M75 238.0H1020"/><text x="65" y="242.0" text-anchor="end">118.50</text>
+<path class="axis" d="M75 197.0H1020"/><text x="65" y="201.0" text-anchor="end">120.00</text>
+<path class="axis" d="M75 156.0H1020"/><text x="65" y="160.0" text-anchor="end">121.50</text>
+<path class="axis" d="M75 115.0H1020"/><text x="65" y="119.0" text-anchor="end">123.00</text>
+<polyline data-series="packet_interval_span_ns_floor" points="75.000,238.436 102.000,225.746 129.000,226.762 156.000,225.857 183.000,224.152 210.000,221.119 237.000,218.579 264.000,222.044 291.000,210.130 318.000,215.795 345.000,209.284 372.000,214.941 399.000,210.126 426.000,202.213 453.000,203.721 480.000,196.308 507.000,199.589 534.000,197.477 561.000,194.642 588.000,194.920 615.000,182.827 642.000,193.597 669.000,178.758 696.000,190.882 723.000,182.913 750.000,181.805 777.000,176.385 804.000,165.835 831.000,181.709 858.000,169.399 885.000,170.234 912.000,170.617 939.000,163.123 966.000,159.619 993.000,160.537 1020.000,154.261" fill="none" stroke="#217995" stroke-width="1.4"/>
+<circle data-series="packet_interval_span_ns_floor" data-generation="1" cx="75.000" cy="238.436" r="3" fill="#217995"><title>Generation 1: 118.484037 ms</title></circle>
+<circle data-series="packet_interval_span_ns_floor" data-generation="2" cx="102.000" cy="225.746" r="3" fill="#217995"><title>Generation 2: 118.948301 ms</title></circle>
+<circle data-series="packet_interval_span_ns_floor" data-generation="3" cx="129.000" cy="226.762" r="3" fill="#217995"><title>Generation 3: 118.911157 ms</title></circle>
+<circle data-series="packet_interval_span_ns_floor" data-generation="4" cx="156.000" cy="225.857" r="3" fill="#217995"><title>Generation 4: 118.944249 ms</title></circle>
+<circle data-series="packet_interval_span_ns_floor" data-generation="5" cx="183.000" cy="224.152" r="3" fill="#217995"><title>Generation 5: 119.006621 ms</title></circle>
+<circle data-series="packet_interval_span_ns_floor" data-generation="6" cx="210.000" cy="221.119" r="3" fill="#217995"><title>Generation 6: 119.117613 ms</title></circle>
+<circle data-series="packet_interval_span_ns_floor" data-generation="7" cx="237.000" cy="218.579" r="3" fill="#217995"><title>Generation 7: 119.210533 ms</title></circle>
+<circle data-series="packet_interval_span_ns_floor" data-generation="8" cx="264.000" cy="222.044" r="3" fill="#217995"><title>Generation 8: 119.083764 ms</title></circle>
+<circle data-series="packet_interval_span_ns_floor" data-generation="9" cx="291.000" cy="210.130" r="3" fill="#217995"><title>Generation 9: 119.519642 ms</title></circle>
+<circle data-series="packet_interval_span_ns_floor" data-generation="10" cx="318.000" cy="215.795" r="3" fill="#217995"><title>Generation 10: 119.312379 ms</title></circle>
+<circle data-series="packet_interval_span_ns_floor" data-generation="11" cx="345.000" cy="209.284" r="3" fill="#217995"><title>Generation 11: 119.550588 ms</title></circle>
+<circle data-series="packet_interval_span_ns_floor" data-generation="12" cx="372.000" cy="214.941" r="3" fill="#217995"><title>Generation 12: 119.343633 ms</title></circle>
+<circle data-series="packet_interval_span_ns_floor" data-generation="13" cx="399.000" cy="210.126" r="3" fill="#217995"><title>Generation 13: 119.519780 ms</title></circle>
+<circle data-series="packet_interval_span_ns_floor" data-generation="14" cx="426.000" cy="202.213" r="3" fill="#217995"><title>Generation 14: 119.809280 ms</title></circle>
+<circle data-series="packet_interval_span_ns_floor" data-generation="15" cx="453.000" cy="203.721" r="3" fill="#217995"><title>Generation 15: 119.754111 ms</title></circle>
+<circle data-series="packet_interval_span_ns_floor" data-generation="16" cx="480.000" cy="196.308" r="3" fill="#217995"><title>Generation 16: 120.025332 ms</title></circle>
+<circle data-series="packet_interval_span_ns_floor" data-generation="17" cx="507.000" cy="199.589" r="3" fill="#217995"><title>Generation 17: 119.905279 ms</title></circle>
+<circle data-series="packet_interval_span_ns_floor" data-generation="18" cx="534.000" cy="197.477" r="3" fill="#217995"><title>Generation 18: 119.982537 ms</title></circle>
+<circle data-series="packet_interval_span_ns_floor" data-generation="19" cx="561.000" cy="194.642" r="3" fill="#217995"><title>Generation 19: 120.086258 ms</title></circle>
+<circle data-series="packet_interval_span_ns_floor" data-generation="20" cx="588.000" cy="194.920" r="3" fill="#217995"><title>Generation 20: 120.076088 ms</title></circle>
+<circle data-series="packet_interval_span_ns_floor" data-generation="21" cx="615.000" cy="182.827" r="3" fill="#217995"><title>Generation 21: 120.518510 ms</title></circle>
+<circle data-series="packet_interval_span_ns_floor" data-generation="22" cx="642.000" cy="193.597" r="3" fill="#217995"><title>Generation 22: 120.124517 ms</title></circle>
+<circle data-series="packet_interval_span_ns_floor" data-generation="23" cx="669.000" cy="178.758" r="3" fill="#217995"><title>Generation 23: 120.667376 ms</title></circle>
+<circle data-series="packet_interval_span_ns_floor" data-generation="24" cx="696.000" cy="190.882" r="3" fill="#217995"><title>Generation 24: 120.223837 ms</title></circle>
+<circle data-series="packet_interval_span_ns_floor" data-generation="25" cx="723.000" cy="182.913" r="3" fill="#217995"><title>Generation 25: 120.515365 ms</title></circle>
+<circle data-series="packet_interval_span_ns_floor" data-generation="26" cx="750.000" cy="181.805" r="3" fill="#217995"><title>Generation 26: 120.555912 ms</title></circle>
+<circle data-series="packet_interval_span_ns_floor" data-generation="27" cx="777.000" cy="176.385" r="3" fill="#217995"><title>Generation 27: 120.754219 ms</title></circle>
+<circle data-series="packet_interval_span_ns_floor" data-generation="28" cx="804.000" cy="165.835" r="3" fill="#217995"><title>Generation 28: 121.140198 ms</title></circle>
+<circle data-series="packet_interval_span_ns_floor" data-generation="29" cx="831.000" cy="181.709" r="3" fill="#217995"><title>Generation 29: 120.559444 ms</title></circle>
+<circle data-series="packet_interval_span_ns_floor" data-generation="30" cx="858.000" cy="169.399" r="3" fill="#217995"><title>Generation 30: 121.009803 ms</title></circle>
+<circle data-series="packet_interval_span_ns_floor" data-generation="31" cx="885.000" cy="170.234" r="3" fill="#217995"><title>Generation 31: 120.979238 ms</title></circle>
+<circle data-series="packet_interval_span_ns_floor" data-generation="32" cx="912.000" cy="170.617" r="3" fill="#217995"><title>Generation 32: 120.965234 ms</title></circle>
+<circle data-series="packet_interval_span_ns_floor" data-generation="33" cx="939.000" cy="163.123" r="3" fill="#217995"><title>Generation 33: 121.239398 ms</title></circle>
+<circle data-series="packet_interval_span_ns_floor" data-generation="34" cx="966.000" cy="159.619" r="3" fill="#217995"><title>Generation 34: 121.367582 ms</title></circle>
+<circle data-series="packet_interval_span_ns_floor" data-generation="35" cx="993.000" cy="160.537" r="3" fill="#217995"><title>Generation 35: 121.334022 ms</title></circle>
+<circle data-series="packet_interval_span_ns_floor" data-generation="36" cx="1020.000" cy="154.261" r="3" fill="#217995"><title>Generation 36: 121.563638 ms</title></circle>
+<text x="75" y="300" text-anchor="middle">1</text>
+<text x="183" y="300" text-anchor="middle">5</text>
+<text x="210" y="300" text-anchor="middle">6</text>
+<text x="318" y="300" text-anchor="middle">10</text>
+<text x="453" y="300" text-anchor="middle">15</text>
+<text x="588" y="300" text-anchor="middle">20</text>
+<text x="723" y="300" text-anchor="middle">25</text>
+<text x="858" y="300" text-anchor="middle">30</text>
+<text x="1020" y="300" text-anchor="middle">36</text>
+<text x="75" y="340">Sum of packet intervals; displayed axis 117-123 ms (not zero-based)</text>
+<rect x="75" y="360" width="121.5" height="164" fill="#fff1df"/>
+<path class="axis" d="M75 524.0H1020"/><text x="65" y="528.0" text-anchor="end">117.00</text>
+<path class="axis" d="M75 483.0H1020"/><text x="65" y="487.0" text-anchor="end">118.50</text>
+<path class="axis" d="M75 442.0H1020"/><text x="65" y="446.0" text-anchor="end">120.00</text>
+<path class="axis" d="M75 401.0H1020"/><text x="65" y="405.0" text-anchor="end">121.50</text>
+<path class="axis" d="M75 360.0H1020"/><text x="65" y="364.0" text-anchor="end">123.00</text>
+<polyline data-series="sum_packet_intervals_ns" points="75.000,483.445 102.000,470.754 129.000,471.768 156.000,470.863 183.000,469.160 210.000,466.125 237.000,463.585 264.000,467.050 291.000,455.137 318.000,460.801 345.000,454.290 372.000,459.949 399.000,455.138 426.000,447.221 453.000,448.727 480.000,441.314 507.000,444.596 534.000,442.487 561.000,439.649 588.000,439.929 615.000,427.836 642.000,438.603 669.000,423.765 696.000,435.889 723.000,427.920 750.000,426.811 777.000,421.391 804.000,410.842 831.000,426.715 858.000,414.405 885.000,415.239 912.000,415.624 939.000,408.129 966.000,404.626 993.000,405.541 1020.000,399.268" fill="none" stroke="#348356" stroke-width="1.4"/>
+<circle data-series="sum_packet_intervals_ns" data-generation="1" cx="75.000" cy="483.445" r="3" fill="#348356"><title>Generation 1: 118.483715 ms</title></circle>
+<circle data-series="sum_packet_intervals_ns" data-generation="2" cx="102.000" cy="470.754" r="3" fill="#348356"><title>Generation 2: 118.948031 ms</title></circle>
+<circle data-series="sum_packet_intervals_ns" data-generation="3" cx="129.000" cy="471.768" r="3" fill="#348356"><title>Generation 3: 118.910927 ms</title></circle>
+<circle data-series="sum_packet_intervals_ns" data-generation="4" cx="156.000" cy="470.863" r="3" fill="#348356"><title>Generation 4: 118.944029 ms</title></circle>
+<circle data-series="sum_packet_intervals_ns" data-generation="5" cx="183.000" cy="469.160" r="3" fill="#348356"><title>Generation 5: 119.006329 ms</title></circle>
+<circle data-series="sum_packet_intervals_ns" data-generation="6" cx="210.000" cy="466.125" r="3" fill="#348356"><title>Generation 6: 119.117387 ms</title></circle>
+<circle data-series="sum_packet_intervals_ns" data-generation="7" cx="237.000" cy="463.585" r="3" fill="#348356"><title>Generation 7: 119.210290 ms</title></circle>
+<circle data-series="sum_packet_intervals_ns" data-generation="8" cx="264.000" cy="467.050" r="3" fill="#348356"><title>Generation 8: 119.083528 ms</title></circle>
+<circle data-series="sum_packet_intervals_ns" data-generation="9" cx="291.000" cy="455.137" r="3" fill="#348356"><title>Generation 9: 119.519374 ms</title></circle>
+<circle data-series="sum_packet_intervals_ns" data-generation="10" cx="318.000" cy="460.801" r="3" fill="#348356"><title>Generation 10: 119.312147 ms</title></circle>
+<circle data-series="sum_packet_intervals_ns" data-generation="11" cx="345.000" cy="454.290" r="3" fill="#348356"><title>Generation 11: 119.550378 ms</title></circle>
+<circle data-series="sum_packet_intervals_ns" data-generation="12" cx="372.000" cy="459.949" r="3" fill="#348356"><title>Generation 12: 119.343342 ms</title></circle>
+<circle data-series="sum_packet_intervals_ns" data-generation="13" cx="399.000" cy="455.138" r="3" fill="#348356"><title>Generation 13: 119.519353 ms</title></circle>
+<circle data-series="sum_packet_intervals_ns" data-generation="14" cx="426.000" cy="447.221" r="3" fill="#348356"><title>Generation 14: 119.808988 ms</title></circle>
+<circle data-series="sum_packet_intervals_ns" data-generation="15" cx="453.000" cy="448.727" r="3" fill="#348356"><title>Generation 15: 119.753873 ms</title></circle>
+<circle data-series="sum_packet_intervals_ns" data-generation="16" cx="480.000" cy="441.314" r="3" fill="#348356"><title>Generation 16: 120.025085 ms</title></circle>
+<circle data-series="sum_packet_intervals_ns" data-generation="17" cx="507.000" cy="444.596" r="3" fill="#348356"><title>Generation 17: 119.905037 ms</title></circle>
+<circle data-series="sum_packet_intervals_ns" data-generation="18" cx="534.000" cy="442.487" r="3" fill="#348356"><title>Generation 18: 119.982196 ms</title></circle>
+<circle data-series="sum_packet_intervals_ns" data-generation="19" cx="561.000" cy="439.649" r="3" fill="#348356"><title>Generation 19: 120.086023 ms</title></circle>
+<circle data-series="sum_packet_intervals_ns" data-generation="20" cx="588.000" cy="439.929" r="3" fill="#348356"><title>Generation 20: 120.075763 ms</title></circle>
+<circle data-series="sum_packet_intervals_ns" data-generation="21" cx="615.000" cy="427.836" r="3" fill="#348356"><title>Generation 21: 120.518207 ms</title></circle>
+<circle data-series="sum_packet_intervals_ns" data-generation="22" cx="642.000" cy="438.603" r="3" fill="#348356"><title>Generation 22: 120.124275 ms</title></circle>
+<circle data-series="sum_packet_intervals_ns" data-generation="23" cx="669.000" cy="423.765" r="3" fill="#348356"><title>Generation 23: 120.667123 ms</title></circle>
+<circle data-series="sum_packet_intervals_ns" data-generation="24" cx="696.000" cy="435.889" r="3" fill="#348356"><title>Generation 24: 120.223575 ms</title></circle>
+<circle data-series="sum_packet_intervals_ns" data-generation="25" cx="723.000" cy="427.920" r="3" fill="#348356"><title>Generation 25: 120.515130 ms</title></circle>
+<circle data-series="sum_packet_intervals_ns" data-generation="26" cx="750.000" cy="426.811" r="3" fill="#348356"><title>Generation 26: 120.555698 ms</title></circle>
+<circle data-series="sum_packet_intervals_ns" data-generation="27" cx="777.000" cy="421.391" r="3" fill="#348356"><title>Generation 27: 120.753999 ms</title></circle>
+<circle data-series="sum_packet_intervals_ns" data-generation="28" cx="804.000" cy="410.842" r="3" fill="#348356"><title>Generation 28: 121.139919 ms</title></circle>
+<circle data-series="sum_packet_intervals_ns" data-generation="29" cx="831.000" cy="426.715" r="3" fill="#348356"><title>Generation 29: 120.559209 ms</title></circle>
+<circle data-series="sum_packet_intervals_ns" data-generation="30" cx="858.000" cy="414.405" r="3" fill="#348356"><title>Generation 30: 121.009578 ms</title></circle>
+<circle data-series="sum_packet_intervals_ns" data-generation="31" cx="885.000" cy="415.239" r="3" fill="#348356"><title>Generation 31: 120.979059 ms</title></circle>
+<circle data-series="sum_packet_intervals_ns" data-generation="32" cx="912.000" cy="415.624" r="3" fill="#348356"><title>Generation 32: 120.964988 ms</title></circle>
+<circle data-series="sum_packet_intervals_ns" data-generation="33" cx="939.000" cy="408.129" r="3" fill="#348356"><title>Generation 33: 121.239165 ms</title></circle>
+<circle data-series="sum_packet_intervals_ns" data-generation="34" cx="966.000" cy="404.626" r="3" fill="#348356"><title>Generation 34: 121.367351 ms</title></circle>
+<circle data-series="sum_packet_intervals_ns" data-generation="35" cx="993.000" cy="405.541" r="3" fill="#348356"><title>Generation 35: 121.333850 ms</title></circle>
+<circle data-series="sum_packet_intervals_ns" data-generation="36" cx="1020.000" cy="399.268" r="3" fill="#348356"><title>Generation 36: 121.563348 ms</title></circle>
+<text x="75" y="545" text-anchor="middle">1</text>
+<text x="183" y="545" text-anchor="middle">5</text>
+<text x="210" y="545" text-anchor="middle">6</text>
+<text x="318" y="545" text-anchor="middle">10</text>
+<text x="453" y="545" text-anchor="middle">15</text>
+<text x="588" y="545" text-anchor="middle">20</text>
+<text x="723" y="545" text-anchor="middle">25</text>
+<text x="858" y="545" text-anchor="middle">30</text>
+<text x="1020" y="545" text-anchor="middle">36</text>
+<text x="75" y="585">Separate host batch elapsed (not GPU time); displayed axis 129-145 ms (not zero-based)</text>
+<rect x="75" y="605" width="121.5" height="164" fill="#fff1df"/>
+<path class="axis" d="M75 769.0H1020"/><text x="65" y="773.0" text-anchor="end">129.00</text>
+<path class="axis" d="M75 728.0H1020"/><text x="65" y="732.0" text-anchor="end">133.00</text>
+<path class="axis" d="M75 687.0H1020"/><text x="65" y="691.0" text-anchor="end">137.00</text>
+<path class="axis" d="M75 646.0H1020"/><text x="65" y="650.0" text-anchor="end">141.00</text>
+<path class="axis" d="M75 605.0H1020"/><text x="65" y="609.0" text-anchor="end">145.00</text>
+<polyline data-series="instrumented_host_batch_elapsed_ns" points="75.000,698.947 102.000,755.502 129.000,741.086 156.000,740.539 183.000,738.631 210.000,739.930 237.000,737.682 264.000,740.343 291.000,735.776 318.000,737.283 345.000,734.743 372.000,736.590 399.000,734.573 426.000,731.506 453.000,732.710 480.000,729.587 507.000,730.574 534.000,730.253 561.000,728.987 588.000,729.168 615.000,723.964 642.000,729.143 669.000,722.837 696.000,726.646 723.000,724.425 750.000,724.110 777.000,722.470 804.000,717.333 831.000,723.591 858.000,718.641 885.000,692.401 912.000,617.905 939.000,717.036 966.000,714.981 993.000,716.496 1020.000,711.275" fill="none" stroke="#645e79" stroke-width="1.4"/>
+<circle data-series="instrumented_host_batch_elapsed_ns" data-generation="1" cx="75.000" cy="698.947" r="3" fill="#645e79"><title>Generation 1: 135.834477 ms</title></circle>
+<circle data-series="instrumented_host_batch_elapsed_ns" data-generation="2" cx="102.000" cy="755.502" r="3" fill="#645e79"><title>Generation 2: 130.316846 ms</title></circle>
+<circle data-series="instrumented_host_batch_elapsed_ns" data-generation="3" cx="129.000" cy="741.086" r="3" fill="#645e79"><title>Generation 3: 131.723287 ms</title></circle>
+<circle data-series="instrumented_host_batch_elapsed_ns" data-generation="4" cx="156.000" cy="740.539" r="3" fill="#645e79"><title>Generation 4: 131.776707 ms</title></circle>
+<circle data-series="instrumented_host_batch_elapsed_ns" data-generation="5" cx="183.000" cy="738.631" r="3" fill="#645e79"><title>Generation 5: 131.962815 ms</title></circle>
+<circle data-series="instrumented_host_batch_elapsed_ns" data-generation="6" cx="210.000" cy="739.930" r="3" fill="#645e79"><title>Generation 6: 131.836115 ms</title></circle>
+<circle data-series="instrumented_host_batch_elapsed_ns" data-generation="7" cx="237.000" cy="737.682" r="3" fill="#645e79"><title>Generation 7: 132.055394 ms</title></circle>
+<circle data-series="instrumented_host_batch_elapsed_ns" data-generation="8" cx="264.000" cy="740.343" r="3" fill="#645e79"><title>Generation 8: 131.795765 ms</title></circle>
+<circle data-series="instrumented_host_batch_elapsed_ns" data-generation="9" cx="291.000" cy="735.776" r="3" fill="#645e79"><title>Generation 9: 132.241331 ms</title></circle>
+<circle data-series="instrumented_host_batch_elapsed_ns" data-generation="10" cx="318.000" cy="737.283" r="3" fill="#645e79"><title>Generation 10: 132.094300 ms</title></circle>
+<circle data-series="instrumented_host_batch_elapsed_ns" data-generation="11" cx="345.000" cy="734.743" r="3" fill="#645e79"><title>Generation 11: 132.342101 ms</title></circle>
+<circle data-series="instrumented_host_batch_elapsed_ns" data-generation="12" cx="372.000" cy="736.590" r="3" fill="#645e79"><title>Generation 12: 132.161942 ms</title></circle>
+<circle data-series="instrumented_host_batch_elapsed_ns" data-generation="13" cx="399.000" cy="734.573" r="3" fill="#645e79"><title>Generation 13: 132.358706 ms</title></circle>
+<circle data-series="instrumented_host_batch_elapsed_ns" data-generation="14" cx="426.000" cy="731.506" r="3" fill="#645e79"><title>Generation 14: 132.657903 ms</title></circle>
+<circle data-series="instrumented_host_batch_elapsed_ns" data-generation="15" cx="453.000" cy="732.710" r="3" fill="#645e79"><title>Generation 15: 132.540457 ms</title></circle>
+<circle data-series="instrumented_host_batch_elapsed_ns" data-generation="16" cx="480.000" cy="729.587" r="3" fill="#645e79"><title>Generation 16: 132.845192 ms</title></circle>
+<circle data-series="instrumented_host_batch_elapsed_ns" data-generation="17" cx="507.000" cy="730.574" r="3" fill="#645e79"><title>Generation 17: 132.748839 ms</title></circle>
+<circle data-series="instrumented_host_batch_elapsed_ns" data-generation="18" cx="534.000" cy="730.253" r="3" fill="#645e79"><title>Generation 18: 132.780165 ms</title></circle>
+<circle data-series="instrumented_host_batch_elapsed_ns" data-generation="19" cx="561.000" cy="728.987" r="3" fill="#645e79"><title>Generation 19: 132.903730 ms</title></circle>
+<circle data-series="instrumented_host_batch_elapsed_ns" data-generation="20" cx="588.000" cy="729.168" r="3" fill="#645e79"><title>Generation 20: 132.886034 ms</title></circle>
+<circle data-series="instrumented_host_batch_elapsed_ns" data-generation="21" cx="615.000" cy="723.964" r="3" fill="#645e79"><title>Generation 21: 133.393732 ms</title></circle>
+<circle data-series="instrumented_host_batch_elapsed_ns" data-generation="22" cx="642.000" cy="729.143" r="3" fill="#645e79"><title>Generation 22: 132.888497 ms</title></circle>
+<circle data-series="instrumented_host_batch_elapsed_ns" data-generation="23" cx="669.000" cy="722.837" r="3" fill="#645e79"><title>Generation 23: 133.503675 ms</title></circle>
+<circle data-series="instrumented_host_batch_elapsed_ns" data-generation="24" cx="696.000" cy="726.646" r="3" fill="#645e79"><title>Generation 24: 133.132100 ms</title></circle>
+<circle data-series="instrumented_host_batch_elapsed_ns" data-generation="25" cx="723.000" cy="724.425" r="3" fill="#645e79"><title>Generation 25: 133.348825 ms</title></circle>
+<circle data-series="instrumented_host_batch_elapsed_ns" data-generation="26" cx="750.000" cy="724.110" r="3" fill="#645e79"><title>Generation 26: 133.379520 ms</title></circle>
+<circle data-series="instrumented_host_batch_elapsed_ns" data-generation="27" cx="777.000" cy="722.470" r="3" fill="#645e79"><title>Generation 27: 133.539559 ms</title></circle>
+<circle data-series="instrumented_host_batch_elapsed_ns" data-generation="28" cx="804.000" cy="717.333" r="3" fill="#645e79"><title>Generation 28: 134.040647 ms</title></circle>
+<circle data-series="instrumented_host_batch_elapsed_ns" data-generation="29" cx="831.000" cy="723.591" r="3" fill="#645e79"><title>Generation 29: 133.430175 ms</title></circle>
+<circle data-series="instrumented_host_batch_elapsed_ns" data-generation="30" cx="858.000" cy="718.641" r="3" fill="#645e79"><title>Generation 30: 133.913037 ms</title></circle>
+<circle data-series="instrumented_host_batch_elapsed_ns" data-generation="31" cx="885.000" cy="692.401" r="3" fill="#645e79"><title>Generation 31: 136.473080 ms</title></circle>
+<circle data-series="instrumented_host_batch_elapsed_ns" data-generation="32" cx="912.000" cy="617.905" r="3" fill="#645e79"><title>Generation 32: 143.741014 ms</title></circle>
+<circle data-series="instrumented_host_batch_elapsed_ns" data-generation="33" cx="939.000" cy="717.036" r="3" fill="#645e79"><title>Generation 33: 134.069691 ms</title></circle>
+<circle data-series="instrumented_host_batch_elapsed_ns" data-generation="34" cx="966.000" cy="714.981" r="3" fill="#645e79"><title>Generation 34: 134.270170 ms</title></circle>
+<circle data-series="instrumented_host_batch_elapsed_ns" data-generation="35" cx="993.000" cy="716.496" r="3" fill="#645e79"><title>Generation 35: 134.122339 ms</title></circle>
+<circle data-series="instrumented_host_batch_elapsed_ns" data-generation="36" cx="1020.000" cy="711.275" r="3" fill="#645e79"><title>Generation 36: 134.631680 ms</title></circle>
+<text x="75" y="790" text-anchor="middle">1</text>
+<text x="183" y="790" text-anchor="middle">5</text>
+<text x="210" y="790" text-anchor="middle">6</text>
+<text x="318" y="790" text-anchor="middle">10</text>
+<text x="453" y="790" text-anchor="middle">15</text>
+<text x="588" y="790" text-anchor="middle">20</text>
+<text x="723" y="790" text-anchor="middle">25</text>
+<text x="858" y="790" text-anchor="middle">30</text>
+<text x="1020" y="790" text-anchor="middle">36</text>
+<text class="small" x="75" y="850">Separate panels retain all 108 observations. Span and sum nearly coincide; neither is a GPU utilization measure.</text>
+<text class="small" x="75" y="874">Host Instant durations have no absolute alignment to these GPU-correlated system timestamps.</text>
+</svg>
