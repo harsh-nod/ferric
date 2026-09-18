@@ -13,13 +13,21 @@ every native launch requires a fresh device/no-use check.
 
 ### 6f1b Compiler Source And Fresh Tools Audited
 
-The latest upstream check and fetch observes main at
+The adoption campaign's upstream check and fetch observes main at
 `6f1b38ea9764beb57168266e924dd5314b558337`. Ferric commit
 `3f5fb0ae8a03de3ecaf9a0c0db833a60aa182a39`, tree
 `2cd384dc194bb67487397802cedb1bbf51944e46`, adopts that exact revision.
 The compiler increment includes ranked native replay, checked arithmetic,
 verifier changes and ordered read-source indexing. Older tool and kernel
 products retain their actual producer revisions; they are not relabeled.
+
+A later upstream check observes main at
+`98ec3935544c45f03f37384a98c83f41cc6e4738`. Its 23-commit, 73-path delta
+changes compiler admission and formal-memory interfaces; runtime, KFD/UAPI,
+device API, toolchain, locks and the LLVM-worker subtree are unchanged.
+This revision is reviewed but not adopted or built here. Current diagnostic
+products remain attributed to `6f1b`; fresh graph and compiler validation is
+required before claiming `98ec` products.
 
 The mi300x adoption campaign runs from 08:38:43Z to 08:42:39Z on September 18.
 All 50 main phases and nine preflight phases pass, including 48 source-gate
@@ -213,11 +221,10 @@ uses explicit CPU tensors, not a hardware-isolation claim.
 Source review identifies a deliberate arithmetic-contract difference: Ferric
 adds the residual to FP32 projection partials and rounds once, whereas the
 exact pinned Qwen BF16 forward materializes the BF16 projection first.
-The current comparison changes both accumulation and rounding placement, so
-it does not isolate either as the cause. The next bounded test should compare
-both rounding placements using the same captured partial and residual. Any
-production reducer change also affects TP2/TP8 and needs explicit contract
-review; no tolerance or arithmetic contract is changed here.
+That three-case comparison changes both accumulation and rounding placement,
+so it does not isolate either as the cause. The following paired experiment
+holds the captured partial and residual fixed. A default production reducer
+change would also affect TP2/TP8 and requires explicit contract review.
 
 Replay retention and independent custody review pass. The 675,485-byte archive
 has SHA256
@@ -239,6 +246,68 @@ verified duplicate local extraction trees are removed, reclaiming
 This is a two-token TP1 diagnostic with a debug worker and extra readbacks,
 not a TP8, numerical-acceptance or comparable TTFT/TPOT result. All 33 M1 gates
 remain open.
+
+### Paired Residual Rounding And Explicit Host Mode
+
+Ferric `fb2de404d611c00fb6eae8639234c9df562a5ce8` adds a fourth replay case:
+the same native FP32 projection is materialized as BF16 before the separate
+residual addition. The 11:27:55Z--11:29:52Z mi300x campaign passes all thirteen
+main phases, three preflights, 21 focused tests and 121 existing reference
+tests. All 32 selected source files remain unchanged.
+
+Both positions, 4 and 5, now match the pinned Torch post-residual hidden
+values bit for bit in both repeats. The native/default hidden values differ
+in 1,188 and 1,157 of 4,096 elements respectively; maximum absolute error is
+0.0078125. The narrowed native projection differs from Torch in one element
+at position 4 and none at position 5; that one difference disappears after
+the residual addition. This isolates rounding placement for these held
+inputs, not all layers, Down projections, TP8 or full-model numerical parity.
+
+Independent custody review verifies all 340 payloads, exact metadata, source
+and native bindings, all 64 tensor files and the unchanged 48 older tensors.
+The 988,818-byte archive has SHA256
+`887ad9e4e53001b4b5638c5eaeb4d070c478a7ceea70626cd5ca1978b99f2770`.
+The initial retention helper rejects digits in a phase name before archiving;
+the corrected helper passes, and both raw outcomes remain retained.
+
+Ferric `b70006fae208e48c7db656d3f48a501a2b5381fc` adds an explicit,
+host-only residual arithmetic selection to single and batched execution.
+The opt-in projection-first profile rounds only after the complete ascending
+rank FP32 sum, then adds the BF16 residual and rounds again. It covers O and
+Down with allocating or reused host staging. Omitted options preserve the
+original arithmetic and setup records; device and peer collectives are
+unchanged. Selection is one-shot, identity-bound in setup records and rejected
+by legacy capture modes. The batch comparator requires the exact external
+arithmetic expectation. This is an engineering ablation, not a default switch.
+
+The mi300x CPU campaign finishes at 12:16:14Z. Formatting and strict scoped
+Clippy pass, as do 357 library, 23 single-CLI, 63 batch-CLI and 36 comparator
+tests: 479 passed, 12 existing Rust tests ignored, zero failed. Tests cover
+TP1/2/8, both host staging paths, full mocked single/batch execution, ordering,
+overflow before publication, lifecycle restrictions and setup identities.
+All 1,172 integrated files match the tested R3 census before this note changes.
+No new release controller or native execution of this option is claimed.
+
+Failed attempts remain explicit: R1 stops at the excessive-boolean Clippy
+lint; R2 stops at formatting; R3 CLI and R4 comparator admission stop before
+application execution at the unchanged 512 MiB entry reserve. Successful
+Rust tests use R3 library and R4 CLI phases; the comparator and final source
+check use R5. Every retry retains the actual source/control identity.
+Cleanup removes only two verified archived source extractions (89,696 KiB),
+then the private debug directory (1,484,068 KiB before removal), preserving
+the three exact tested executables by hardlink. Shared caches remain intact.
+
+The 44,159,134-byte retained CPU evidence archive has SHA256
+`6f69f9a49ce69d6d3400fb3bd7fdd4e05021a2ee2834353e7033d7541cdad8ac`.
+It preserves 405 payloads and 25 completed pre-packaging phases, including
+failures; the closed packaging phase is retained separately. Packaging and
+cleanup complete with zero command/cleanup/wrapper statuses. Independent
+custody review verifies all 27 external files, exact payload metadata, three
+source censuses, control bindings and three actual fresh ELF producers.
+Recorded absence checks cover 50 PID/PGID values; 487 resource samples remain
+within the unchanged limits. These are retained observations, not fresh
+process probes. This checkpoint closes no M1 gate and makes no competitive
+TTFT/TPOT claim.
 
 ### Historical 14ec Source And Tools
 
