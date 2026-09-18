@@ -5,6 +5,79 @@ receipt. The 33 M1 roadmap gates remain open.
 
 ## Current Checkpoint
 
+### Same-Input Final RMS Matches Both CPU Replays
+
+Ferric `57ef4ed0` adds `engineering_tp1_rmsnorm_ablation.py`, which authenticates
+the retained mi350 capture and canonical checkpoint, then replays each exact
+native BF16 residual through actual pinned Qwen3 RMSNorm and the existing
+source-spelled serial-FP32 CPU arithmetic. Both captured positions, 4 and 5, have zero bit differences
+across all 4,096 normalized BF16 values in all three pairwise comparisons.
+Maximum BF16 ULP, absolute error and RMSE are all zero. The authenticated final
+RMS weight SHA256 is
+`4f4f6cc0467f0cf8516b154f3ec0748ed03d82ae24d435dfe678075e9a8e2070`.
+
+This narrows the final-RMS investigation for these two observed inputs; it
+does not establish general device/compiler behavior or explain the upstream
+residual divergence. The earlier full-model tensor differences and gfx942
+position-131 mismatch remain unresolved. No tolerance, numerical acceptance,
+performance, protected-proof or M1 gate claim follows. The diagnostic does not
+execute a full model or use a GPU.
+
+All 103 CPU tests pass on mi300x: 14 new diagnostic tests and 89 across seven
+existing reference/arithmetic suites. New coverage includes successful secure
+publication, existing-output preservation, capture/model-source drift refusal,
+actual pinned-Torch width-4,096 replay, and raw nonfinite native-output retention.
+Nonfinite replay inputs, weights or CPU intermediates still reject publication;
+the original native capture remains separately retained evidence.
+
+All eleven CPU phases complete with command, cleanup and wrapper exits zero.
+The real diagnostic JSON is 14,964 bytes with SHA256
+`4ee0e234bddd35eaf4a7ed95ad544e7450cd50d706f7696a501b7e44557556c8`.
+The complete 227-file stage, including all 21 raw tensor payloads, source,
+inputs, logs and terminal records, is retained without exclusions. Its
+3,711,398-byte archive has SHA256
+`26daed3ea4857871f58123a965211612623798037a9b18f6ebfb3fe13c108f6e`.
+Independent review passes every payload hash and archived size, mode, UID/GID
+and nanosecond mtime, all 52 external files, before/after ledgers, eleven raw
+phase terminal triples and 22 process-absence records. All seven implementation
+hashes, 21 output descriptors and native input bindings agree. The external
+Qwen module and original model shard are not copied into this archive; the
+authenticated captured weight and all native/diagnostic bytes are retained.
+After that ACK and fresh scoped no-use/hash checks, the completed RMS and
+retention owners are removed, reclaiming 8,952 KiB. Cleanup metadata is retained
+locally and then removed remotely. No new worktree or local build was created.
+
+### 1ca7 Compiler Source Adoption Complete
+
+Ferric `c3707b89c360909435df2882bf5be6902f89fb4a` adopts published fe2o3 main
+`1ca7e12974ec77f28ea250847b7b3ae93182232c`. A fresh upstream check still finds
+that revision. All 50 adoption phases pass on mi300x: 32 locked dependency
+graphs, 35 metadata records, both formatting editions, two fresh source-gate
+executables, 48 gate tests, four inventory derivations and normal coverage
+generation/validation. The integrated exact 80-file change and all 1,161 file
+hashes match the independently reviewed final census. Runtime inventory,
+coverage and the property-binder pin remain unchanged; no lock repair or new
+verification claim is introduced.
+
+Independent custody review passes all 2,128 payloads, exact archived metadata,
+2,129 archive members, 52 external files, raw terminal records and producer
+bindings. The 32,067,636-byte archive has SHA256
+`142e0c2aefbf0c628e5e86a51b4e7ebb841c5e8d16315be6c7558dc4e7b8d7ca`.
+Builds and CPU tests remain on mi300x; native execution uses mi350. Existing
+native binaries retain their original producers. Fresh four-tool builds and
+TP14 emission are still outstanding. Review found a forced-cleanup gap in the
+proposed build launcher, so it remains unready until corrected, independently
+reviewed and tested. No compiler build was launched from that proposal.
+
+After integration, independent custody ACK and fresh hash/process/no-use checks,
+the completed adoption and retention owners are removed from mi300x, reclaiming
+185,940 KiB. A first pre-deletion check resolved six archive-only control paths
+under the wrong owner and stopped before any deletion; that record is retained.
+The corrected owner mapping checks all retained files before cleanup. Local
+archives, borrowed caches, canonical models and reusable runtimes remain.
+Two redundant local transfer archives are also removed after byte-for-byte
+hash agreement with the audited archive members, reclaiming 14,629,316 bytes.
+
 ### mi350 TP1 Capture And Independent Reference Complete
 
 The user-selected mi350 completes the new final-stage capture on physical GPU
@@ -36,8 +109,9 @@ are not comparable performance measurements.
 The native producer remains the actual `6756cd67`/`70aadc0` controller, with
 the separately attributed `fe406` worker and `59822`/`fe406` TP14 artifact.
 The comparator revision does not relabel those binaries. A fresh upstream
-check still finds fe2o3 main at `1ca7e129`; its adoption and fresh artifact
-emission remain outstanding.
+check still finds fe2o3 main at `1ca7e129`; adoption was outstanding at that
+capture checkpoint and is now recorded above. Fresh artifact emission remains
+outstanding.
 
 Independent native custody audit passes all 85 payload hashes, exact archived
 metadata, before/after ledgers, terminal witnesses and six BF16 row-slice hashes.
@@ -193,10 +267,10 @@ host-visibility claim is made. No new worktree was created.
 
 | Team | Current Evidence | Next Work |
 | --- | --- | --- |
-| Compiler integration | 70aadc adoption and source-gate campaign pass. New main 1ca7e129 changes compiler behavior; LLVM and KFD sources remain unchanged without relabeling their producers. | Validate the new adoption, then fresh matching four-tool build and TP14 emission. |
-| Kernels and numerics | Real mi350 final-stage capture and two-pass mi300x reference complete. Token choices match at positions 4 and 5, but tensors differ; the retained gfx942 position-131 mismatch remains unexplained. | Investigate numerical differences without changing existing tolerances or treating the cross-target comparison as qualification. |
+| Compiler integration | 1ca7e129 adoption and source-gate campaign pass; all 1,161 integrated source hashes match the reviewed census. Existing binary producers remain unchanged. | Correct and test the build launcher's forced cleanup, then fresh matching four-tool build and TP14 emission. |
+| Kernels and numerics | Final RMS matches both same-input CPU replays exactly at positions 4 and 5. Full-model tensors still differ; the retained gfx942 position-131 mismatch remains unexplained. | Localize upstream residual and final-head differences without changing tolerances or treating cross-target diagnostics as qualification. |
 | Inference integration | Fresh gfx950 TP1 smoke and capture complete; older TP8 evidence remains separately attributed. | Validate fresh TP8 producers after emission. Sustained request-driven speculation remains beyond the existing two-round K4 canary. |
-| Verification | Capture tests, unchanged coverage checks, 82 reference tests and independent native/reference custody audits pass; no protected proof runtime has become available. | Keep unresolved numerical acceptance and protected-proof requirements open; preserve engineering/qualification separation. |
+| Verification | Capture tests, source-adoption coverage checks, 103 reference/arithmetic tests and independent native/reference/same-input custody audits pass; no protected proof runtime has become available. | Keep numerical acceptance and protected-proof requirements open; retain separate evidence for the upcoming compiler build. |
 
 The numerical task targets R07/R12/R21/R29 evidence, not a new qualification
 framework. Capture-mode timings will not be benchmark-comparable, and gfx950
