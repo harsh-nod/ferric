@@ -1,13 +1,64 @@
 # M1 Team Progress
 
-Updated: 2026-09-17 UTC. This is an implementation checkpoint, not a qualification
+Updated: 2026-09-18 UTC. This is an implementation checkpoint, not a qualification
 receipt. The 33 M1 roadmap gates remain open.
 
 ## Current Checkpoint
 
-### Latest Upstream Compiler Adopted
+### TP1 Final-Stage Capture Implemented
 
-The latest fresh fetch observes fe2o3 main
+Ferric `6756cd6704875cfc70862a0ebdab37bf8e35cae9` adds an opt-in final-stage
+capture to the token-at-a-time TP1 engineering command. Selected consumed KV
+positions retain the completed pre-final-RMS residual, normalized vector and
+full BF16 logits. Normal dispatches and the GPU-selected token are unchanged.
+Nonfinite logits and CPU/GPU argmax disagreement are retained as diagnostics,
+not replaced or treated as successful parity. Publication requires the complete
+declared sequence and successful actual worker teardown. Capture timings are
+explicitly non-comparable.
+
+On mi300x, the final revision passes 122 default-library tests, 123 TP-library
+tests, 21 CLI tests and 38 source-policy tests. The one ignored test in each
+library configuration remains unrun. Ten new capture tests cover completion
+ordering, exact readback extents, failed-read poisoning, selection and epoch
+drift, identity/close rejection, raw nonfinite retention, ties and exclusive
+publication. Both strict Clippy configurations and formatting pass. Normal
+source-gate inventory, generation and validation preserve all four dependency
+inventories and existing coverage byte-for-byte; no verification row is added.
+The validated source census contains 1,159 files.
+
+The fresh mi300x release controller is 9,225,344 bytes with SHA256
+`42d35b30ec875843b95303402eb231d64e9ecd5527d5c01d73a25aa413eb8c41`.
+Its actual Cargo producer and copied ELF agree; the maximum observed GLIBC
+requirement is 2.39, matching mi350's observed userspace. The final host collector
+passes. Owned debug and release target cleanup reclaims about 2.24 GiB after
+retaining the needed products. No local build, GPU run or new worktree is used.
+
+The first test compile's SHA-formatting error, one Clippy borrow warning, and
+two prelaunch reserved-space stops remain recorded. Fixes and owned cleanup
+precede the passing reruns. Test executables are retained before removing
+build intermediates. There is no new native capture or numerical-parity result;
+the independent two-pass reference comparator is still to be implemented.
+
+The user-selected native host is mi350. At 2026-09-18T00:05:24Z, SSH succeeds
+and all eight gfx950 devices report idle with baseline VRAM. This is not a
+continuing reservation. Builds and CPU tests remain on mi300x; each native
+launch needs a fresh shared-host admission check. gfx950 evidence does not
+replace gfx942 qualification.
+
+### New Upstream Delta Observed
+
+During the capture controller release build, main advances to
+`1ca7e12974ec77f28ea250847b7b3ae93182232c`. The 28-file compiler change adds
+checked store forwarding and guarded output stages, including worker-handoff
+handling. Independent Git-object review finds the complete KFD local dependency
+closure, LLVM worker subtree, workspace manifests, lock and toolchains unchanged.
+Whole-compiler equivalence does not hold. The present host validation remains
+70aadc-attributed; the new pin needs adoption validation and fresh matching
+compiler tools/TP14 emission before latest-compiler native claims.
+
+### 70aadc Compiler Adoption Checkpoint
+
+The preceding adoption fetch observed fe2o3 main
 `70aadc048a25b17ccc1bb2b185163df0256e1931`. Its one commit after `e364682e`
 changes 20 files, adding MemorySSA and closed Policy3 output admission. The
 earlier whole-production-source equivalence bridge no longer covers main.
@@ -23,7 +74,8 @@ executables, 48 source-gate tests, four inventory derivations and normal
 coverage generation/validation. The exact 80-file change and all 1,157 files
 match the retained final census. Inventory changes are revision-only; no new
 declarations, lock repairs, coverage, runtime-TCB or property-binder changes
-are admitted. A fresh upstream query still observes `70aadc0` as main.
+are admitted. `70aadc0` was main at that checkpoint; the later delta is recorded
+above.
 
 The successor adoption wrapper checks resource observations and terminal
 writes, preserves the first command failure, handles repeated cleanup signals
@@ -52,10 +104,10 @@ host-visibility claim is made. No new worktree was created.
 
 | Team | Current Evidence | Next Work |
 | --- | --- | --- |
-| Compiler integration | Latest published fe2o3 pin adopted and source-gate campaign passes. LLVM and KFD worker sources are unchanged, without relabeling their producers. | Fresh four-tool build and TP14 emission, retaining build-specific limits and source identities. |
-| Kernels and numerics | The retained gfx942 position-131 mismatch is still unexplained; the current token-at-a-time driver reads only the GPU choice. | Add opt-in completed final-stage residual, normalized-state and full-logit readback, then compare with two independent reference passes. Preserve raw disagreement and existing tolerances. |
+| Compiler integration | 70aadc adoption and source-gate campaign pass. New main 1ca7e129 changes compiler behavior; LLVM and KFD sources remain unchanged without relabeling their producers. | Validate the new adoption, then fresh matching four-tool build and TP14 emission. |
+| Kernels and numerics | Opt-in completed final-stage readback is implemented and CPU-tested. The retained gfx942 position-131 mismatch remains unexplained. | Implement the sibling two-pass reference comparator, then collect native diagnostic bytes and compare without changing existing tolerances. |
 | Inference integration | Fresh gfx950 TP1 correctness smoke passes; older TP8 evidence remains separately attributed. | Validate fresh TP8 producers after emission. Sustained request-driven speculation remains beyond the existing two-round K4 canary. |
-| Verification | Adoption source tests and independent custody pass; no protected proof runtime has become available. | Validate numerical-capture ordering, read failures, epoch/position selection and close-before-completion behavior. Keep engineering evidence distinct from qualification. |
+| Verification | Capture ordering/failure/selection/close tests and unchanged coverage checks pass; no protected proof runtime has become available. | Test the independent comparator and audit native capture custody. Keep engineering evidence distinct from qualification. |
 
 The numerical task targets R07/R12/R21/R29 evidence, not a new qualification
 framework. Capture-mode timings will not be benchmark-comparable, and gfx950
