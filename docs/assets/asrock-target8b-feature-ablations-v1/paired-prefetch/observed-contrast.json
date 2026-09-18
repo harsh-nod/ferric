@@ -1,0 +1,96 @@
+{
+  "activation_precision": "BF16",
+  "causal_or_stable_speedup_claim": false,
+  "changed_kernel_roots": [
+    "ferric_qwen3_tp_batch_argmax_bf16_v2",
+    "ferric_qwen3_tp_batch_gemm_partial_bf16_f32_v2",
+    "ferric_qwen3_tp_batch_paged_gqa_bf16_f32_v2",
+    "ferric_qwen3_tp_mfma_gemm_bf16_v3",
+    "ferric_qwen3_tp_mfma_gemm_partial_f32_v3",
+    "ferric_qwen3_tp_wave_paged_gqa_bf16_v3"
+  ],
+  "codegen_catalog_sha256": "d4a1e53ed7d8ca8bd0d29dded44192e6cbeac2b825174d9faa391fd414af99e6",
+  "comparison_scope": "matched-source-and-tools-image-feature-ablation",
+  "controller_cohort": "mfma-paired-prefetch-matched-v2-controller-v7",
+  "cpu_isolation_verified": false,
+  "differing_axis": "main-image",
+  "differing_identity_fields": [
+    "artifact_hsaco_id",
+    "artifact_manifest_id",
+    "artifact_handoff_id"
+  ],
+  "family": "paired-prefetch",
+  "frontier_count_scope": "source-derived schedule; not measured polls or GPU event count",
+  "gpu_overlap_measured": false,
+  "head_artifact": {
+    "artifact_handoff_id": "d6ca1b9b6c5170eec8a904e2117e64c4988bd5a7334a6d3569c855e7400219c6",
+    "artifact_hsaco_id": "b21caccae5ec030640242034940822cb1a3f1e8531b7b6ded7371492da3747ae",
+    "artifact_manifest_id": "6815ba33eb0c96a88a0722b1cdc73473d09cce3b4594d98370e6e1282437a008"
+  },
+  "identities_by_variant": {
+    "baseline-main": {
+      "artifact_handoff_id": "0be2d9f0c499925cfba5fe10795eb8920b17762077a518428c6518410b019cac",
+      "artifact_hsaco_id": "73f452ce2fb94d4bb8708c8d0fd0148f3c887e0ea8f7bf0d17c15311ae8f79c7",
+      "artifact_manifest_id": "a2cf3801d8b38a6e84341b9ba8402faf4eb7645915811a3d67a30edde328cc2f",
+      "controller_sha256": "5b218caa6aa51c56749f64329054d29faf0cc766e401db2c41f58bc8d1324f48",
+      "worker_sha256": "8284a44f702b8e42a35fe9e04cf051dd709ce9995329adaa2ea5a57ab80fb06a"
+    },
+    "paired-main": {
+      "artifact_handoff_id": "dc7f7981a477b8fae0c3449930dcc890028fe26fff4c454a09ad6208be3d0a16",
+      "artifact_hsaco_id": "2e677384a5e86c6e1ae95f10333f2d0d330922ed4d1348acdb1b09f5655281e2",
+      "artifact_manifest_id": "e295584f1c5eeed36bdc653e83259e1dac3515b54d504b0704f54cd884531c67",
+      "controller_sha256": "5b218caa6aa51c56749f64329054d29faf0cc766e401db2c41f58bc8d1324f48",
+      "worker_sha256": "8284a44f702b8e42a35fe9e04cf051dd709ce9995329adaa2ea5a57ab80fb06a"
+    }
+  },
+  "logits_precision": "FP32",
+  "main_canonical_descriptors_by_variant": {
+    "baseline-main": "f3a4256977c57d2fad68d0e297baaa3a7ec1230f5add8781357a3e176414aded",
+    "paired-main": "bfd322d0a5b1bbbe4fa9342e558085fd1cc1d542a699167446cd5217ce323745"
+  },
+  "measured_requests_per_variant": 1,
+  "observed_rate_ratio": 1.1151207562036538,
+  "observed_tpot_change_percent": -10.323613434976664,
+  "packets_per_request_each": 22176,
+  "paired_prefetch_feature_by_variant": {
+    "baseline-main": {
+      "default_enabled": false,
+      "multirow_gpu_validated": false,
+      "observed_rows": 1,
+      "selected": false,
+      "source_tp1_row_range": [
+        1,
+        16
+      ]
+    },
+    "paired-main": {
+      "default_enabled": false,
+      "multirow_gpu_validated": false,
+      "observed_rows": 1,
+      "selected": true,
+      "source_tp1_row_range": [
+        1,
+        16
+      ]
+    }
+  },
+  "paired_source_manifest_sha256": "b27b9cffc159ee82667d039056aa6a414569cc1309e25a5dca442279aba59fb0",
+  "performance_qualified": false,
+  "persistent_gpu_kernel": false,
+  "pure_prefetch_causal_gain_claimed": false,
+  "schema": "FerricFeatureAblationObservedContrastV1",
+  "secondary_codegen_roots": [
+    "ferric_qwen3_tp_batch_argmax_bf16_v2",
+    "ferric_qwen3_tp_batch_gemm_partial_bf16_f32_v2",
+    "ferric_qwen3_tp_batch_paged_gqa_bf16_f32_v2",
+    "ferric_qwen3_tp_wave_paged_gqa_bf16_v3"
+  ],
+  "source_completion_frontiers": {
+    "baseline-main": 36,
+    "paired-main": 36
+  },
+  "target_700_tokens_per_second_claimed": false,
+  "title": "Qwen3-8B: image-level feature observation",
+  "warmup_requests": 0,
+  "weight_precision": "BF16"
+}
