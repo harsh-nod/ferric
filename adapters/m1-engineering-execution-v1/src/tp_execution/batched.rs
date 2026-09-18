@@ -57,6 +57,60 @@ pub struct EngineeringTpBatchOutputV2 {
     pub completion: EngineeringTpBatchCompletionV1,
 }
 
+/// Same-image ablations of the two separately admitted target wave candidates.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum EngineeringTpWaveTargetModeV17 {
+    /// Existing C1 projection and resident v5 attention/normalization.
+    Baseline,
+    /// Query-hoisted v14 attention only.
+    QueryHoist,
+    /// Pure target-width v15 normalization only.
+    RmsNorm,
+    /// Query-hoisted attention and pure target-width wave normalization.
+    Combined,
+}
+
+impl EngineeringTpWaveTargetModeV17 {
+    /// Stable experiment identity, separate from any default kernel policy.
+    #[must_use]
+    pub const fn label(self) -> &'static str {
+        match self {
+            Self::Baseline => "baseline",
+            Self::QueryHoist => "query-hoist-v14",
+            Self::RmsNorm => "wave-rmsnorm-v15",
+            Self::Combined => "combined",
+        }
+    }
+
+    /// Actual attention route selected by this experiment.
+    #[must_use]
+    pub const fn attention(self) -> &'static str {
+        match self {
+            Self::QueryHoist | Self::Combined => "query-hoist-v14",
+            Self::Baseline | Self::RmsNorm => "wave",
+        }
+    }
+
+    /// Actual pure target-width normalization route selected by this experiment.
+    #[must_use]
+    pub const fn rmsnorm(self) -> &'static str {
+        match self {
+            Self::RmsNorm | Self::Combined => "wave-v15",
+            Self::Baseline | Self::QueryHoist => "baseline",
+        }
+    }
+}
+
+/// All three separate images remain loaded in every V17 ablation arm.
+pub struct EngineeringTpWaveTargetArtifactsV17<'a> {
+    /// Existing FP32 wave argmax, preserving the v8 output head.
+    pub argmax: &'a crate::tp_artifact::EngineeringTpArtifactV1,
+    /// Existing query-hoisted paged attention.
+    pub attention: &'a crate::tp_artifact::EngineeringTpArtifactV1,
+    /// Existing pure width4096 wave normalization.
+    pub rmsnorm: &'a crate::tp_artifact::EngineeringTpArtifactV1,
+}
+
 /// One resident weight set and physical KV pool for a bounded request stream.
 // Lifecycle state and independent, explicitly selected ablations are orthogonal.
 #[allow(clippy::struct_excessive_bools)]
@@ -231,6 +285,45 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
                 large_kv: false,
                 argmax_v11: Some(argmax_v11),
                 query_hoist_v14: None,
+                wave_rmsnorm_v15: Some(&wave_rmsnorm_v15),
+            },
+        )
+    }
+
+    /// Admits v11/v14/v15 before allocation, without selecting either candidate.
+    /// Every comparison arm uses the same images, buffers and weight layouts.
+    /// # Errors
+    /// Rejects wrong/unloaded images, stale transports, unsupported geometry or allocation failure.
+    pub fn new_wide32_with_wave_target_v17(
+        mut transports: Vec<R>,
+        model: ModelConfig,
+        weights: &[u8],
+        layout: &AuthenticatedModelWeightLayout,
+        pool: &EngineeringTpPagedPoolV1,
+        artifacts: &EngineeringTpWaveTargetArtifactsV17<'_>,
+    ) -> TpResult<Self> {
+        let bindings = artifacts
+            .argmax
+            .fp32_argmax_binding_v11()
+            .zip(artifacts.attention.query_hoist_binding_v14())
+            .zip(artifacts.rmsnorm.wave_rmsnorm_binding_v15());
+        let Some(((argmax_v11, query_hoist_v14), wave_rmsnorm_v15)) = bindings else {
+            for transport in &mut transports {
+                let _ = transport.close();
+            }
+            return Err("wave target requires exact separately admitted v11/v14/v15 images".into());
+        };
+        Self::new_profile(
+            transports,
+            model,
+            weights,
+            layout,
+            pool,
+            BatchedProfile::Target {
+                rows: 32,
+                large_kv: false,
+                argmax_v11: Some(argmax_v11),
+                query_hoist_v14: Some(query_hoist_v14),
                 wave_rmsnorm_v15: Some(&wave_rmsnorm_v15),
             },
         )
@@ -628,6 +721,54 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
         }
         self.configure_ordered_c1_wave_layers_fp32_argmax_binding_v11(argmax)?;
         self.wave_rmsnorm_v15 = Some(rmsnorm);
+        Ok(())
+    }
+
+    /// Freezes one same-image V17 ablation on the unchanged ordered C1/v8/v11 profile.
+    /// All three images must be admitted by the dedicated constructor before allocation.
+    /// # Errors
+    /// Rejects wrong bindings, unsupported profiles/transports and repeated or late selection.
+    pub fn configure_ordered_c1_wave_target_v17(
+        &mut self,
+        artifacts: &EngineeringTpWaveTargetArtifactsV17<'_>,
+        mode: EngineeringTpWaveTargetModeV17,
+    ) -> TpResult<()> {
+        let ((argmax, attention), rmsnorm) = artifacts
+            .argmax
+            .fp32_argmax_binding_v11()
+            .zip(artifacts.attention.query_hoist_binding_v14())
+            .zip(artifacts.rmsnorm.wave_rmsnorm_binding_v15())
+            .ok_or("wave target requires exact separately admitted v11/v14/v15 images")?;
+        self.configure_ordered_c1_wave_target_bindings_v17(argmax, attention, rmsnorm, mode)
+    }
+
+    fn configure_ordered_c1_wave_target_bindings_v17(
+        &mut self,
+        argmax: crate::tp_artifact::Fp32ArgmaxBindingV11,
+        attention: crate::tp_artifact::QueryHoistBindingV14,
+        rmsnorm: crate::tp_artifact::WaveRmsNormBindingV15,
+        mode: EngineeringTpWaveTargetModeV17,
+    ) -> TpResult<()> {
+        if self.query_hoist_v14.is_some()
+            || self.wave_rmsnorm_v15.is_some()
+            || self.admitted_query_hoist_v14 != Some(attention)
+            || self.admitted_wave_rmsnorm_v15 != Some(rmsnorm)
+        {
+            return Err("wave target requires both preallocated images and fresh selection".into());
+        }
+        self.configure_ordered_c1_wave_layers_fp32_argmax_binding_v11(argmax)?;
+        if matches!(
+            mode,
+            EngineeringTpWaveTargetModeV17::QueryHoist | EngineeringTpWaveTargetModeV17::Combined
+        ) {
+            self.query_hoist_v14 = Some(attention);
+        }
+        if matches!(
+            mode,
+            EngineeringTpWaveTargetModeV17::RmsNorm | EngineeringTpWaveTargetModeV17::Combined
+        ) {
+            self.wave_rmsnorm_v15 = Some(rmsnorm);
+        }
         Ok(())
     }
 

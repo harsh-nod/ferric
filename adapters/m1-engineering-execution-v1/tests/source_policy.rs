@@ -37,7 +37,7 @@ const CORE_SOURCE: &str =
 const CAPABILITY_SOURCE: &str =
     include_str!("../../../crates/ferric-non-authoritative-program-source-v1/src/lib.rs");
 
-const FE2O3_REVISION: &str = "46d189e5ca1c8d214d1abaf09e02f99f66e7917a";
+const FE2O3_REVISION: &str = "5ed3840a90db3f03a2cded9becffc0459b737f36";
 
 fn explicit_mfma_route_policy(source: &str, cli: &str) -> bool {
     let compact = source
@@ -392,6 +392,12 @@ fn wave_rmsnorm_v15_route_keeps_defaults_and_all_legacy_entrypoints_closed() {
             assert!(source.contains("mod wave_rmsnorm_v15_live_contract;"));
             assert!(source.contains("configure_ordered_c1_wave_rmsnorm_v15"));
             assert!(source.contains("open_wave_rmsnorm_v15"));
+        } else if binary["name"].as_str() == Some("ferric-qwen3-wave-target-v17-live") {
+            assert!(source.contains("mod wave_target_v17_live_contract;"));
+            assert!(source.contains("configure_ordered_c1_wave_target_v17"));
+            assert!(source.contains("open_wave_rmsnorm_v15"));
+            assert!(!source.contains("wave_rmsnorm_v15_live_contract"));
+            assert!(!source.contains("configure_ordered_c1_wave_rmsnorm_v15"));
         } else {
             for selector in [
                 "wave_rmsnorm_v15_live_contract",
@@ -498,6 +504,108 @@ fn wave_rmsnorm_v15_live_preserves_ingress_and_preloads_both_explicit_modes() {
 }
 
 #[test]
+fn wave_target_v17_keeps_legacy_binaries_closed_and_preloads_every_comparison_image() {
+    let manifest = toml::from_str::<toml::Value>(MANIFEST).unwrap();
+    let mut count = 0;
+    for binary in manifest["bin"].as_array().unwrap() {
+        let path =
+            std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join(binary["path"].as_str().unwrap());
+        let source = std::fs::read_to_string(path).unwrap();
+        let selected = binary["name"].as_str() == Some("ferric-qwen3-wave-target-v17-live");
+        for marker in [
+            "mod wave_target_v17_live_contract;",
+            "new_wide32_with_wave_target_v17",
+            "configure_ordered_c1_wave_target_v17",
+        ] {
+            assert_eq!(source.contains(marker), selected, "{marker}");
+        }
+        if selected {
+            count += 1;
+            assert_eq!(
+                binary["required-features"].as_array().unwrap(),
+                &[toml::Value::String("tp-batch-engineering".into())]
+            );
+        }
+    }
+    assert_eq!(count, 1);
+    assert!(!ENGINE_MANIFEST.contains("ferric-qwen3-wave-target-v17-live"));
+    let source = include_str!("../src/bin/ferric-qwen3-wave-target-v17-live.rs");
+    let production = &source[..source.find("#[cfg(test)]").unwrap()];
+    let ordered = [
+        "EngineeringTpArtifactV1::open_query_hoist_v14",
+        "EngineeringTpArtifactV1::open_wave_rmsnorm_v15",
+        "EngineeringQwenModelV1::open",
+        "Worker::spawn_with_timing",
+        "worker.load_additional_artifact(artifact)?",
+        "new_wide32_with_wave_target_v17",
+        "driver.configure_projection(",
+        "driver.configure_head_precision_v8(true)",
+        "driver.configure_ordered_c1_wave_target_v17",
+        "EngineeringTpBatchRuntimeV2::new_wide32",
+    ]
+    .map(|marker| production.find(marker).unwrap());
+    assert!(ordered.windows(2).all(|pair| pair[0] < pair[1]));
+    for marker in [
+        "attention != options.mode.attention()",
+        "rmsnorm != options.mode.rmsnorm()",
+        "\"wave_target_mode\":options.mode.label()",
+        "\"attention_artifact\":artifact_identity(&attention_artifact)",
+        "\"rmsnorm_artifact\":artifact_identity(&rmsnorm_artifact)",
+        "\"benchmark_admitted\":false",
+        "\"serving_admitted\":false",
+        "\"prefix_cache\":false",
+        "let close = worker.close();",
+        "let close = driver.close();",
+        "let close = runtime.close();",
+        "run_and_close(&mut runtime",
+        "tp_live_ingress::run(",
+        "check_retired(runtime, live.pages)",
+    ] {
+        assert!(production.contains(marker), "{marker}");
+    }
+    let run = &production[production.find("fn run(options:").unwrap()..];
+    assert!(run.find("options.validate()?").unwrap() < run.find("TimingFile::create(").unwrap());
+    let contract = include_str!("../src/bin/wave_target_v17_live_contract.rs");
+    for marker in [
+        "layer.layer_projection != LayerProjection::C1Wave",
+        "self.live.context != 8192",
+        "self.live.pages != 512",
+        "self.live.submission != Submission::Ordered",
+    ] {
+        assert!(contract.contains(marker), "{marker}");
+    }
+    let batched = include_str!("../src/tp_execution/batched.rs");
+    let constructor = batched
+        .split("pub fn new_wide32_with_wave_target_v17(")
+        .nth(1)
+        .unwrap()
+        .split("pub fn new_large_kv32(")
+        .next()
+        .unwrap();
+    for marker in [
+        "argmax_v11: Some(argmax_v11)",
+        "query_hoist_v14: Some(query_hoist_v14)",
+        "wave_rmsnorm_v15: Some(&wave_rmsnorm_v15)",
+        "let _ = transport.close();",
+        "Self::new_profile(",
+    ] {
+        assert!(constructor.contains(marker), "{marker}");
+    }
+    let profile = batched.split("    fn new_profile(").nth(1).unwrap();
+    let order = [
+        "validate_pool_binding(",
+        "validate_argmax_binding_v11(",
+        "validate_query_hoist_binding_v14(",
+        "validate_wave_rmsnorm_binding_v15(",
+        "if let Err(error) = binding",
+        "let _ = transport.close();",
+        "EngineeringTpExecutionV1::new_with_storage(",
+    ]
+    .map(|marker| profile.find(marker).unwrap());
+    assert!(order.windows(2).all(|pair| pair[0] < pair[1]));
+}
+
+#[test]
 fn wave_rmsnorm_v15_canary_preloads_both_arms_and_records_actual_mode() {
     let manifest = toml::from_str::<toml::Value>(MANIFEST).unwrap();
     let binaries = manifest["bin"].as_array().unwrap();
@@ -593,7 +701,10 @@ fn query_hoist_v14_route_keeps_defaults_and_all_legacy_entrypoints_closed() {
             assert!(!source.contains("--attention-mode"));
             assert!(!source.contains("--query-hoist-artifact"));
         }
-        assert!(!source.contains("open_query_hoist_v14"));
+        assert_eq!(
+            source.contains("open_query_hoist_v14"),
+            binary["name"].as_str() == Some("ferric-qwen3-wave-target-v17-live")
+        );
         assert!(!source.contains("configure_ordered_c1_wave_query_hoist_v14"));
         assert!(!source.contains("--attention-kernel"));
     }

@@ -13,6 +13,7 @@ mod ordered_batches;
 mod query_hoist_v14;
 mod speculative;
 mod wave_rmsnorm_v15;
+mod wave_target_v17;
 
 use super::super::{
     EngineeringTpBufferAccessV1, HostStagedPartialV1, Qwen3TensorParallelCollectiveStateV1,

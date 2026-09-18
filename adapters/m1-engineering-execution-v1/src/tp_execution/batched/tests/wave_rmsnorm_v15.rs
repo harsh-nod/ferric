@@ -5,7 +5,9 @@ use crate::tp_artifact::{Fp32ArgmaxBindingV11, QueryHoistBindingV14, WaveRmsNorm
 
 const V15: &str = crate::tp_artifact::ENGINEERING_TP_WAVE_RMSNORM_EXPORTS_V15[0];
 
-fn configured(pool: &EngineeringTpPagedPoolV1) -> EngineeringTpBatchExecutionV2<Recording> {
+pub(super) fn configured(
+    pool: &EngineeringTpPagedPoolV1,
+) -> EngineeringTpBatchExecutionV2<Recording> {
     let mut driver = fixture(1, pool);
     driver
         .configure_reduction(EngineeringTpReductionModeV3::DeviceTp1V3)

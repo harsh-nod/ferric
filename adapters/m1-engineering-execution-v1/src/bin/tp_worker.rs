@@ -680,7 +680,7 @@ impl EngineeringTpRankTransportV1 for Worker {
                 .kernels
                 .get(dispatch.kernel)
                 .ok_or("unloaded sequence kernel")?;
-            let (header, bytes) = pack_dispatch(loaded, dispatch, &self.buffers)?;
+            let header = pack_dispatch_into(loaded, dispatch, &self.buffers, &mut payload)?;
             let CommandV1::Dispatch {
                 kernel,
                 payload_bytes,
@@ -704,7 +704,6 @@ impl EngineeringTpRankTransportV1 for Worker {
                 pointers,
                 timeout_ms,
             });
-            payload.extend_from_slice(&bytes);
         }
         self.send(
             CommandV1::DispatchSequence {
@@ -756,7 +755,7 @@ impl EngineeringTpRankTransportV1 for Worker {
                     .kernels
                     .get(dispatch.kernel)
                     .ok_or("unloaded ordered batch kernel")?;
-                let (header, bytes) = pack_dispatch(loaded, dispatch, &self.buffers)?;
+                let header = pack_dispatch_into(loaded, dispatch, &self.buffers, &mut payload)?;
                 let CommandV1::Dispatch {
                     kernel,
                     payload_bytes,
@@ -775,7 +774,6 @@ impl EngineeringTpRankTransportV1 for Worker {
                     grid,
                     pointers,
                 });
-                payload.extend_from_slice(&bytes);
             }
             let header = CommandV1::DispatchOrderedBatch {
                 dispatches: entries,
@@ -969,6 +967,17 @@ pub(super) fn pack_dispatch(
     dispatch: &EngineeringTpDispatchV1,
     buffers: &BTreeMap<u64, usize>,
 ) -> TpResult<(CommandV1, Vec<u8>)> {
+    let mut bytes = Vec::new();
+    let header = pack_dispatch_into(loaded, dispatch, buffers, &mut bytes)?;
+    Ok((header, bytes))
+}
+
+fn pack_dispatch_into(
+    loaded: &LoadedKernel,
+    dispatch: &EngineeringTpDispatchV1,
+    buffers: &BTreeMap<u64, usize>,
+    payload: &mut Vec<u8>,
+) -> TpResult<CommandV1> {
     let metadata = &loaded.metadata;
     let workgroup = [dispatch.workgroup_size, 1, 1];
     let grid_x = dispatch
@@ -991,10 +1000,42 @@ pub(super) fn pack_dispatch(
     }
     let length =
         u32::try_from(metadata.kernarg_segment_size()).map_err(|_| "kernarg length overflow")?;
+    append_kernarg_payload(payload, length, |bytes| {
+        pack_dispatch_arguments(loaded, dispatch, buffers, bytes, workgroup, grid_x, length)
+    })
+}
+
+// Failed packing rolls back only the new suffix; no partial batch is published.
+fn append_kernarg_payload<T>(
+    payload: &mut Vec<u8>,
+    length: u32,
+    pack: impl FnOnce(&mut [u8]) -> TpResult<T>,
+) -> TpResult<T> {
     if length > wire::MAX_KERNARG_BYTES_V1 {
         return Err("kernarg bound exceeded".into());
     }
-    let mut bytes = vec![0; length as usize];
+    let start = payload.len();
+    let end = start
+        .checked_add(length as usize)
+        .ok_or("kernarg payload extent overflow")?;
+    payload.resize(end, 0);
+    let result = pack(&mut payload[start..]);
+    if result.is_err() {
+        payload.truncate(start);
+    }
+    result
+}
+
+fn pack_dispatch_arguments(
+    loaded: &LoadedKernel,
+    dispatch: &EngineeringTpDispatchV1,
+    buffers: &BTreeMap<u64, usize>,
+    bytes: &mut [u8],
+    workgroup: [u16; 3],
+    grid_x: u32,
+    length: u32,
+) -> TpResult<CommandV1> {
+    let metadata = &loaded.metadata;
     let mut explicit = metadata.explicit_arguments().iter();
     let mut pointers = Vec::new();
     for argument in &dispatch.arguments {
@@ -1046,28 +1087,20 @@ pub(super) fn pack_dispatch(
                 });
                 let count = explicit.next().ok_or("missing slice length ABI field")?;
                 put_scalar(
-                    &mut bytes,
+                    bytes,
                     count,
                     &(elements as u64).to_le_bytes(),
                     ExplicitValueType::U64,
                 )?;
             }
-            EngineeringTpArgumentV1::U32(value) => put_scalar(
-                &mut bytes,
-                field,
-                &value.to_le_bytes(),
-                ExplicitValueType::U32,
-            )?,
+            EngineeringTpArgumentV1::U32(value) => {
+                put_scalar(bytes, field, &value.to_le_bytes(), ExplicitValueType::U32)?;
+            }
             EngineeringTpArgumentV1::F32(value) => {
                 if !value.is_finite() {
                     return Err("nonfinite dispatch scalar".into());
                 }
-                put_scalar(
-                    &mut bytes,
-                    field,
-                    &value.to_le_bytes(),
-                    ExplicitValueType::F32,
-                )?;
+                put_scalar(bytes, field, &value.to_le_bytes(), ExplicitValueType::F32)?;
             }
         }
     }
@@ -1083,7 +1116,7 @@ pub(super) fn pack_dispatch(
         timeout_ms: DISPATCH_TIMEOUT_MS,
     };
     header.payload_bytes().map_err(|error| error.to_string())?;
-    Ok((header, bytes))
+    Ok(header)
 }
 
 fn put_scalar(
@@ -1112,6 +1145,76 @@ fn put_scalar(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn kernarg_append_is_relative_zero_filled_and_preserves_prior_dispatches() {
+        let mut payload = vec![0xA5; 19];
+        for length in [0, 4, 17, wire::MAX_KERNARG_BYTES_V1] {
+            let before = payload.clone();
+            let written = append_kernarg_payload(&mut payload, length, |bytes| {
+                assert_eq!(bytes.len(), length as usize);
+                assert!(bytes.iter().all(|&byte| byte == 0));
+                if let Some(last) = bytes.last_mut() {
+                    *last = 0x3C;
+                }
+                Ok(bytes.len())
+            })
+            .unwrap();
+            assert_eq!(written, length as usize);
+            assert_eq!(&payload[..before.len()], before);
+            assert_eq!(payload.len(), before.len() + length as usize);
+            if length != 0 {
+                assert_eq!(payload.last(), Some(&0x3C));
+            }
+        }
+    }
+
+    #[test]
+    fn kernarg_append_rolls_back_errors_and_zeroes_reused_suffix() {
+        let mut payload = vec![0xA5; 19];
+        let before = payload.clone();
+        let failed: TpResult<()> = append_kernarg_payload(&mut payload, 64, |bytes| {
+            bytes.fill(0xFF);
+            Err("injected late packing error".into())
+        });
+        assert_eq!(failed.unwrap_err(), "injected late packing error");
+        assert_eq!(payload, before);
+        append_kernarg_payload(&mut payload, 64, |bytes| {
+            assert_eq!(bytes, &[0; 64]);
+            Ok(())
+        })
+        .unwrap();
+        assert_eq!(&payload[..before.len()], before);
+    }
+
+    #[test]
+    fn kernarg_append_rejects_oversized_extent_before_mutation_or_callback() {
+        let mut payload = vec![0xA5; 19];
+        let before = payload.clone();
+        let result: TpResult<()> =
+            append_kernarg_payload(&mut payload, wire::MAX_KERNARG_BYTES_V1 + 1, |_| {
+                panic!("oversized kernarg must not reach its packer")
+            });
+        assert_eq!(result.unwrap_err(), "kernarg bound exceeded");
+        assert_eq!(payload, before);
+    }
+
+    #[test]
+    fn kernarg_append_reuses_existing_aggregate_capacity() {
+        let mut payload = Vec::with_capacity(16 * 64);
+        let base = payload.as_ptr();
+        for value in 0..16_u8 {
+            append_kernarg_payload(&mut payload, 64, |bytes| {
+                bytes.fill(value);
+                Ok(())
+            })
+            .unwrap();
+            assert_eq!(payload.as_ptr(), base);
+        }
+        for (index, bytes) in payload.chunks_exact(64).enumerate() {
+            assert!(bytes.iter().all(|&byte| usize::from(byte) == index));
+        }
+    }
 
     const FAKE_WORKER: &str = r"
 import json, struct, sys, time
@@ -1711,6 +1814,116 @@ while True:
             assert!(worker.submit_ordered_batch(&commands).is_err());
             assert_eq!(worker.queue_packets, 0);
             assert!(worker.failed && worker.exited);
+        }
+    }
+
+    #[test]
+    #[ignore = "requires FERRIC_V8_TEST_ARTIFACT; real metadata packing with a CPU fake worker, no GPU"]
+    #[cfg(feature = "tp-batch-engineering")]
+    fn actual_v8_metadata_direct_pack_matches_standalone_and_rolls_back_late_errors() {
+        let path = std::env::var_os("FERRIC_V8_TEST_ARTIFACT").expect("explicit v8 artifact path");
+        let artifact = EngineeringTpArtifactV1::open_fp32_head32(
+            Path::new(&path),
+            &ferric_qwen3_tp_fp32_head32_kernels_device_v8::compiler_expectation_roster_v8(),
+        )
+        .unwrap();
+        let symbol = "ferric_qwen3_tp_batch32_argmax_f32_v8";
+        let metadata = artifact
+            .inspection()
+            .hsaco()
+            .kernels()
+            .iter()
+            .find(|kernel| kernel.name() == symbol)
+            .unwrap();
+        let loaded = LoadedKernel {
+            id: 7,
+            image: *artifact.hsaco_id().as_bytes(),
+            metadata: metadata.clone(),
+        };
+        let buffers = BTreeMap::from([(11, 32 * 151_936 * 4), (12, 32 * 4)]);
+        let command = EngineeringTpDispatchV1 {
+            kernel: symbol,
+            grid_workgroups: 1,
+            workgroup_size: 64,
+            arguments: vec![
+                EngineeringTpArgumentV1::Buffer {
+                    id: 11,
+                    offset: 0,
+                    elements: 32 * 151_936,
+                    element_bytes: 4,
+                    access: EngineeringTpBufferAccessV1::Read,
+                },
+                EngineeringTpArgumentV1::Buffer {
+                    id: 12,
+                    offset: 0,
+                    elements: 32,
+                    element_bytes: 4,
+                    access: EngineeringTpBufferAccessV1::Write,
+                },
+                EngineeringTpArgumentV1::U32(1),
+            ],
+        };
+        let mut aggregate = vec![0xA5; 19];
+        for rows in 1..=16 {
+            let mut next = command.clone();
+            next.grid_workgroups = rows;
+            next.arguments[2] = EngineeringTpArgumentV1::U32(rows);
+            let (standalone, bytes) = pack_dispatch(&loaded, &next, &buffers).unwrap();
+            let before = aggregate.clone();
+            let direct = pack_dispatch_into(&loaded, &next, &buffers, &mut aggregate).unwrap();
+            assert_eq!(direct, standalone);
+            assert_eq!(&aggregate[..before.len()], before);
+            assert_eq!(&aggregate[before.len()..], bytes);
+            let mut expected = vec![0; usize::try_from(metadata.kernarg_segment_size()).unwrap()];
+            let fields = metadata.explicit_arguments();
+            for (index, value) in [
+                (1, (32 * 151_936_u64).to_le_bytes()),
+                (3, 32_u64.to_le_bytes()),
+            ] {
+                let offset = usize::try_from(fields[index].offset()).unwrap();
+                expected[offset..offset + 8].copy_from_slice(&value);
+            }
+            let offset = usize::try_from(fields[4].offset()).unwrap();
+            expected[offset..offset + 4].copy_from_slice(&rows.to_le_bytes());
+            assert_eq!(bytes, expected);
+        }
+        for mutation in 0..9 {
+            let mut bad = command.clone();
+            match mutation {
+                0 => bad.grid_workgroups = 0,
+                1 => bad.arguments.push(EngineeringTpArgumentV1::U32(1)),
+                2 => {
+                    bad.arguments.pop();
+                }
+                3 => bad.arguments[2] = EngineeringTpArgumentV1::F32(f32::NAN),
+                change => {
+                    let EngineeringTpArgumentV1::Buffer {
+                        id,
+                        offset,
+                        elements,
+                        element_bytes,
+                        access: _,
+                    } = &mut bad.arguments[1]
+                    else {
+                        unreachable!()
+                    };
+                    match change {
+                        4 => *id = 99,
+                        5 => *offset = 1,
+                        6 => *elements = 33,
+                        7 => *element_bytes = 0,
+                        8 => *elements = usize::MAX,
+                        _ => unreachable!(),
+                    }
+                }
+            }
+            let before = aggregate.clone();
+            let error = pack_dispatch(&loaded, &bad, &buffers).unwrap_err();
+            assert_eq!(
+                pack_dispatch_into(&loaded, &bad, &buffers, &mut aggregate).unwrap_err(),
+                error
+            );
+            assert_eq!(aggregate, before);
         }
     }
 
