@@ -92,10 +92,79 @@ separate adoption custody. All 15 resource samples satisfy the unchanged caps.
 This data review performs no fresh remote process probe. It is not new kernel
 emission or native execution.
 
-Fresh vendor formation, emission, a current-pin residual-capture
-controller and independently admitted mi350 execution remain necessary. No new
-native inference, numerical acceptance, TTFT/TPOT or M1 qualification result
-follows from source adoption. All 33 gates remain open.
+### Fresh Controller, Worker And Vendor Package
+
+The residual-capture controller now passes its twelve-phase mi300x campaign
+from 09:39:20Z to 10:00:01Z on September 18, using frozen Ferric `3f5fb0a`
+and fe2o3 `6f1b38e`. Formatting, strict scoped Clippy and all 189 tests pass;
+one test remains ignored. This includes six residual-boundary tests and the
+CLI exclusivity test. The fresh release controller is 9,307,808 bytes,
+SHA256 `8e3f1787686b6c1f508a7ea286d3833549c5ab62069afb32d0af8f1729872b77`.
+All command, cleanup, wrapper, campaign and launch statuses are zero.
+Independent custody review authenticates all 1,404 payloads, exact nanosecond
+metadata, 58 external records, canonical source and four fresh ELF producers.
+The 31,355,451-byte archive has SHA256
+`2dd246b85533a993c7285956f2d40973f7827822e23550fcf2d5ed284b253be1`.
+
+The fresh gfx950 KFD worker R2 builds on mi300x from 10:09:55Z to 10:10:21Z.
+Its actual producer is the frozen 6f source, in the non-test debug profile;
+this is a functional diagnostic worker, not a performance build. The copied
+5,196,152-byte worker has SHA256
+`47426e4f98a04feba3ed2c0783478e3d22bd4a0d3d02fcb5851321c2b4ed1477`.
+Its bytes equal the earlier worker, but the fresh producer is independently
+recorded. All statuses pass. Independent review verifies 57 payloads, exact
+nanosecond metadata, 51 external records and the canonical 5,253-file source.
+The 1,535,403-byte archive has SHA256
+`e3cc68a5b2d57fabdebdcc10667cb197492088b17550522fa24a7464974895fb`.
+R1 stopped before Cargo because its admission incorrectly counted the source
+root among descendant directories and rejected owner-write permissions.
+R2 corrects those assumptions without modifying the borrowed source or caps;
+the failed R1 records remain intact.
+
+Current vendor formation passes from 10:06:10Z to 10:07:49Z, retaining all
+198 packages and the ordinary 512 MiB reserve. Independent review verifies
+141 payloads, 143 archive members, exact nanosecond metadata, 43 external
+records, package origins and source/tool preservation. The 2,839,862-byte
+archive has SHA256
+`446491b204272240dd09f4b60306306c1d3076f0b4b65b6180a88ca5d9d6a8ed`.
+A resource-fixture invocation first fails on a missing owned parent directory;
+the corrected invocation passes, with both outcomes preserved.
+
+Both fresh executables are transferred to mi350 and their sizes and hashes
+match the mi300x products. All six passive loader checks pass there: readelf,
+system-loader verification and dependency listing for each ELF. These checks
+do not invoke either application entrypoint or open a GPU device. The new
+residual output checker also passes seven CPU test methods, covering twelve
+positive and negative cases, on mi300x.
+
+Current-pin TP14 emission R1 stops with launch/wrapper status 125 after the
+compiler produces an artifact. Its stage sampler encounters temporary-file
+removal during compiler cleanup; the recorded GNU du error uses an absolute
+program prefix and a missing-directory phrase outside the sampler's narrow
+retry matcher. The emit command is terminated (143), cleanup passes, and input
+and source preservation pass. Inspection is not run and the artifact is not
+accepted for native use. Independent failure-custody review passes all 609
+payloads and 611 members, exact nanosecond metadata and 50 external payloads.
+The 1,935,382-byte archive has SHA256
+`6b634e1a423e7e077cb54911f427ba9f6ae83bcd893485e14db1fc5753387bf5`;
+its success-consistency flag remains false. A separate R2 corrects only the
+missing-path matcher and attempt namespaces. All five preflight phases pass,
+including 34 sampler tests; the full R2 emission is running. Two early
+preflight launch calls encounter the still-held serial CPU lock and execute
+no command; subsequent independently recorded calls pass. Neither numerical
+tolerances nor resource caps are relaxed.
+
+After fresh ownership, product-hash, recorded-process and scoped no-use checks,
+cleanup removes the completed controller and worker targets plus two empty
+private temporary directories, reclaiming 1,098,076 KiB on mi300x. Source,
+products, copied test records, raw logs and custody archives remain. Scoped
+process checks do not establish global host visibility. Separately, six
+verified duplicate local extraction trees are removed, reclaiming
+3,687,732 KiB while preserving their archives and evidence records.
+
+Native residual capture and CPU replay remain pending. No new native
+inference, numerical acceptance, TTFT/TPOT or M1 qualification result follows
+from these host builds. All 33 gates remain open.
 
 ### Historical 14ec Source And Tools
 
