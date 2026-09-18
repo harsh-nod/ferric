@@ -1,0 +1,11 @@
+{
+  "causal_or_stable_speedup_claim": false,
+  "cpu_isolation_verified": false,
+  "gpu_overlap_measured": false,
+  "measured_requests_per_variant": 1,
+  "observed_rate_ratio": 1.1156395049136367,
+  "observed_tpot_change_percent": -10.365311052927307,
+  "performance_qualified": false,
+  "schema": "FerricV7Wave16ObservedContrastV1",
+  "warmup_requests": 0
+}

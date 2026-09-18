@@ -14,8 +14,9 @@ speedup estimates, stable tail measurements or production qualifications.
 
 The separately matched [cooperative BF16 argmax comparison](GFX950_BF16_ARGMAX_V1.md)
 adds an exact-choice kernel explanation, conditional bounds, and its own plots
-and raw public reports. It does not modify the four cohorts or 310 interval
-points on this page; its single-request difference is not a stable speedup claim.
+and raw public reports. It does not modify the original four cohorts or their 310
+interval points. A fifth, separately matched wave-attention cohort below adds 62
+interval points; neither single-request difference is a stable speedup claim.
 
 ## Fixed Workload
 
@@ -24,7 +25,7 @@ points on this page; its single-request difference is not a stable speedup claim
 | Model | `Qwen/Qwen3-8B` |
 | Revision | `b968826d9c46dd6066d109eabc6255188de91218` |
 | Weights and intermediate activations / target / concurrency | BF16 / target-only / one request, TP1 |
-| Output logits | BF16 controls; the separate head cohort explicitly labels FP32 logits |
+| Output logits | BF16 controls; the head and wave-attention cohorts explicitly label FP32 logits |
 | Prompt | `The capital of France is` |
 | Prompt tokens | `[785, 6722, 315, 9625, 374]` |
 | Generated tokens / processed KV positions | 32 / 36 |
@@ -436,6 +437,60 @@ compilation rejected its baseline attention root at the existing race-freedom
 proof peak-storage limit. CPU tests do not override that rejection. No image,
 GPU result or speedup is claimed for that attempt, and the proof limit was not
 weakened to continue it.
+
+## Wave64 Attention With The V7 Head
+
+This is a separate matched pair, not another row in the earlier head chart.
+Both runs retain **BF16 weights and intermediate activations, FP32-v7 logits,
+MFMA projection, device-side TP1 residuals, and an unpruned output head**.
+The controller, old runtime worker, admitted main15/head3 images, prompt and
+reference are identical within the pair. Only baseline versus Wave64 attention
+is selected. Both pass all 32 independent output tokens and decoded bytes and
+execute 616 packets per forward, 22,176 per request.
+
+| Attention | TTFT (s) | Mean TPOT (s) | Post-first tokens/s | Observed rate / baseline | Setup (s) |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Baseline | 2.132519 | 0.478535 | 2.089713 | 1.000x | 215.188188 |
+| Wave64 | 1.574438 | 0.428933 | 2.331366 | 1.116x | 217.103051 |
+
+The observed rate ratio is 1.11564x and mean TPOT is 10.37% lower. These are
+**one unwarmed request per variant**, with shared CPU work and no verified CPU
+isolation. They do not establish a stable improvement, an isolated GPU attention
+speedup, a SOTA result or achievement of 700 tokens/s.
+Initialization remains outside the decode-rate denominator and visible above.
+
+![Observed matched v7-head baseline and wave attention rates](assets/asrock-target8b-v7-wave16-v1/rates.svg)
+
+![All 62 measured inter-token intervals for the separate attention pair](assets/asrock-target8b-v7-wave16-v1/intervals.svg)
+
+The [baseline public report](assets/asrock-target8b-v7-wave16-v1/baseline-report.json),
+[wave public report](assets/asrock-target8b-v7-wave16-v1/wave-report.json),
+[62-point CSV](assets/asrock-target8b-v7-wave16-v1/intervals.csv) and
+[descriptive contrast](assets/asrock-target8b-v7-wave16-v1/observed-contrast.json)
+retain the actual receipts. Private raw captures remain retained separately.
+The [plot generator](../tools/target_v7_wave16_plots_v1.py) reruns the unchanged,
+SHA-pinned [v7 numerical checker](../tools/target_v7_wave16_decode_v1.py) on both
+complete captures, verifies the regenerated reports and matching image identities,
+then plots the host receipt intervals. No GPU events or overlap are inferred.
+
+### Share Each QK Dot Product Across A Wave
+
+The existing [wave attention kernel](../device/qwen3-tp-perf-kernels-v3/src/attention.rs)
+maps one Wave64 to one query head and row. Each lane computes two products from
+the 128-element Q/K head; six shuffle-reduction stages share the full score.
+Each lane then keeps two value-channel accumulators. A running maximum,
+denominator and rescaled numerator implement online softmax without materializing
+the attention-score matrix. Adjacent lanes access adjacent BF16 Q/K/V elements.
+This is Wave64 QK cooperation, not an MFMA attention tile or measured communication
+overlap. The finite-value and paged-cache bounds checks remain present.
+
+The new host admission permits this exact capacity16/MFMA/device-TP1/FP32-v7
+combination using already compiled kernels. Its CPU tests compare every command,
+operand, grid and host IO event, allowing only 36 attention-root substitutions
+per forward. The shuffle changes reduction order, so the complete GPU token check
+was still required. This accepted **attention** path does not reverse the earlier
+rejection of wave **projection**, qualify arbitrary prompts, or loosen the
+separate wide ordered-submission guard.
 
 ## Scalar Ordered Submission
 
