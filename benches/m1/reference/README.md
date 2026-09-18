@@ -141,3 +141,36 @@ CPU-only fixtures, run on mi300x:
 ```sh
 python3 -I -B benches/m1/reference/test_engineering_tp1_final_stage_reference.py
 ```
+
+## TP1 Same-Input Final-RMS Diagnostic
+
+`engineering_tp1_rmsnorm_ablation.py` is a CPU-only localization diagnostic for
+the authenticated TP1 final-stage capture. It accepts the same capture, witness,
+native pins, pins SHA256 and canonical model source as the TP1 comparator. It
+does not execute the model or use a GPU.
+
+```sh
+"$REFERENCE_VENV/bin/python" -I -B benches/m1/reference/engineering_tp1_rmsnorm_ablation.py \
+  CAPTURE_DIRECTORY WITNESS_DIRECTORY NATIVE_PINS_JSON NATIVE_PINS_SHA256 \
+  MODEL_SOURCE NEW_OUTPUT_DIRECTORY
+```
+
+For each selected native position, the tool decodes the exact held BF16
+residual and loads the authenticated canonical `model.norm.weight`. It retains
+the native normalized row alongside actual pinned HF RMSNorm and the existing
+source-spelled serial-FP32 `sqrt`-then-reciprocal case, including their raw
+intermediates, scalar bits and exact BF16 disagreements. The source-spelled case
+includes the kernel's BF16 pre-weight rounding boundary.
+
+```sh
+"$REFERENCE_VENV/bin/python" -I -B benches/m1/reference/test_engineering_tp1_rmsnorm_ablation.py
+```
+
+CPU arithmetic does not establish gfx device or compiler behavior. Neither
+agreement nor disagreement admits a tolerance, establishes a cause, supplies a
+numerical pass, qualifies a target, measures performance or closes an M1 gate.
+Replay inputs, the authenticated weight, and CPU intermediates must be finite;
+otherwise the tool refuses publication and the original native capture remains
+separate evidence. A nonfinite native normalized observation is retained as raw
+evidence and its finite ULP/absolute/RMSE metrics are null because it does not
+feed the replay arithmetic.
