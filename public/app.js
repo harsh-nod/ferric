@@ -61,7 +61,7 @@
   document.querySelector("[data-milestone-name]").textContent = project.milestone.name;
   document.querySelector("[data-milestone-label]").textContent = project.milestone.label;
   document.querySelector("[data-milestone-summary]").textContent =
-    `${project.residentCheckpoint.nativeRedirectOverview} ${project.residentCheckpoint.overview}`;
+    `${project.residentCheckpoint.currentCpuOverview} Historical native checkpoint: ${project.residentCheckpoint.nativeRedirectOverview} ${project.residentCheckpoint.overview}`;
   document.querySelector("[data-milestone-dot]").classList.add(
     `dot-${project.milestone.state}`,
   );
@@ -73,7 +73,9 @@
   const resident = project.residentCheckpoint;
   const residentProgress = document.querySelector("[data-resident-progress]");
   residentProgress.append(element("p", "performance-scope", resident.scope),
-    element("h3", "", "Current a167 source and GPU2 host-residual pair"),
+    element("h3", "", "Performance Swarm V4: native TP1 comparison"),
+    ...resident.currentCpuOverview.split("\n\n").map((paragraph) => element("p", "", paragraph)),
+    element("h3", "", "Historical a167 source and GPU2 host-residual pair"),
     element("p", "", resident.integration.currentA167HostResidualPair.detail),
     element("p", "performance-scope", "The retained checkpoints below preserve their original dates, source identities, evidence and then-current limitations."),
     element("h3", "", "mi350: eight checked identities, no kernel dispatch"),
