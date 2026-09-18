@@ -2,7 +2,7 @@
 
 use std::collections::BTreeMap;
 use std::io::{Read, Write};
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::process::{Child, Command, Stdio};
 use std::sync::mpsc::{self, Receiver, SyncSender};
 use std::thread::{self, JoinHandle};
@@ -38,6 +38,79 @@ pub struct RuntimeOptions {
     pub rollover: bool,
     pub shared_full_currentness: bool,
     pub profile: bool,
+}
+
+/// Explicit launch-only diagnostics, separate from host-wall runtime profiling.
+#[derive(Clone, Debug)]
+pub struct NativeFullForwardTimestamps {
+    mode: &'static str,
+    output: PathBuf,
+}
+
+impl NativeFullForwardTimestamps {
+    pub fn parse(mode: &str, output: PathBuf) -> TpResult<Self> {
+        let mode = match mode {
+            "off" => "off",
+            "on" => "on",
+            _ => return Err("native full-forward timestamps require explicit off or on".into()),
+        };
+        if !output.is_absolute() {
+            return Err("native timestamp output must be an absolute create-new path".into());
+        }
+        Ok(Self { mode, output })
+    }
+
+    pub fn setup_metadata(&self) -> serde_json::Value {
+        serde_json::json!({
+            "mode":self.mode,"output_path":self.output,"output_semantics":"owned_create_new_bounded_ndjson",
+            "schema":"NativeFullForwardTimestampHeaderV1","packets_per_forward":616,"max_forward_frames":36,
+            "host_diagnostics_enabled":true,"host_elapsed_is_gpu_time":false,"performance_qualified":false,
+            "clock_accuracy_qualified":false,"gpu_overlap_measured":false,
+            "host_overhead":"clock/snapshot work is inside dispatch elapsed; file writes and post-write native checks are outside dispatch elapsed but inside command latency",
+            "interval_scope":"AMD dispatch packet processing, not pure instruction body"
+        })
+    }
+}
+
+fn worker_command(
+    executable: &Path,
+    unique_id: u64,
+    diagnostic: Option<&NativeFullForwardTimestamps>,
+) -> Command {
+    let mut command = Command::new(executable);
+    command
+        .arg("--device-unique-id")
+        .arg(unique_id.to_string())
+        .arg("--allow-unauthenticated-machine-code");
+    if let Some(diagnostic) = diagnostic {
+        command
+            .arg("--full-forward-timestamp-canary")
+            .arg(diagnostic.mode)
+            .arg("--timestamp-output")
+            .arg(&diagnostic.output);
+    }
+    command
+}
+
+fn admit_native_timestamps(
+    diagnostic: Option<&NativeFullForwardTimestamps>,
+    options: RuntimeOptions,
+    host_timing: bool,
+    rank: u32,
+) -> TpResult<()> {
+    if diagnostic.is_some()
+        && (!options.full_forward
+            || options.sequences
+            || options.ordered_batches
+            || options.rollover
+            || options.shared_full_currentness
+            || options.profile
+            || host_timing
+            || rank != 0)
+    {
+        return Err("native timestamps require TP1 exact full-forward without other submission or host profiling modes".into());
+    }
+    Ok(())
 }
 
 struct Outgoing {
@@ -127,6 +200,21 @@ impl Worker {
         timing: HostTiming,
         rank: u32,
     ) -> TpResult<Self> {
+        Self::spawn_with_timestamp_diagnostic(
+            executable, unique_id, artifact, options, timing, rank, None,
+        )
+    }
+
+    pub fn spawn_with_timestamp_diagnostic(
+        executable: &Path,
+        unique_id: u64,
+        artifact: &EngineeringTpArtifactV1,
+        options: RuntimeOptions,
+        timing: HostTiming,
+        rank: u32,
+        diagnostic: Option<&NativeFullForwardTimestamps>,
+    ) -> TpResult<Self> {
+        admit_native_timestamps(diagnostic, options, timing.is_enabled(), rank)?;
         if options.shared_full_currentness {
             return Err("shared full currentness requires the explicit peer worker".into());
         }
@@ -138,10 +226,7 @@ impl Worker {
         {
             return Err("full-forward submission excludes sequences, ordered batches, rollover and profiling".into());
         }
-        let child = Command::new(executable)
-            .arg("--device-unique-id")
-            .arg(unique_id.to_string())
-            .arg("--allow-unauthenticated-machine-code")
+        let child = worker_command(executable, unique_id, diagnostic)
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
             .stderr(Stdio::inherit())
@@ -1233,6 +1318,78 @@ fn put_scalar(
 
 #[cfg(test)]
 pub(super) mod tests {
+    #[test]
+    fn native_timestamp_launch_preserves_legacy_argv_and_executable() {
+        let executable = std::path::Path::new("/pinned/worker");
+        let legacy = super::worker_command(executable, 123, None);
+        assert_eq!(legacy.get_program(), executable);
+        assert_eq!(
+            legacy.get_args().collect::<Vec<_>>(),
+            [
+                "--device-unique-id",
+                "123",
+                "--allow-unauthenticated-machine-code"
+            ]
+        );
+        assert_eq!(legacy.get_envs().count(), 0);
+        for mode in ["off", "on"] {
+            let selected = super::NativeFullForwardTimestamps::parse(
+                mode,
+                std::path::PathBuf::from("/owned/frames.ndjson"),
+            )
+            .unwrap();
+            let command = super::worker_command(executable, 123, Some(&selected));
+            assert_eq!(command.get_program(), executable);
+            assert_eq!(
+                command.get_args().collect::<Vec<_>>(),
+                [
+                    "--device-unique-id",
+                    "123",
+                    "--allow-unauthenticated-machine-code",
+                    "--full-forward-timestamp-canary",
+                    mode,
+                    "--timestamp-output",
+                    "/owned/frames.ndjson"
+                ]
+            );
+            assert_eq!(command.get_envs().count(), 0);
+        }
+        assert!(
+            super::NativeFullForwardTimestamps::parse("auto", std::path::PathBuf::from("/owned/x"))
+                .is_err()
+        );
+        assert!(
+            super::NativeFullForwardTimestamps::parse("on", std::path::PathBuf::from("relative"))
+                .is_err()
+        );
+    }
+
+    #[test]
+    fn native_timestamp_transport_rejects_non_full_forward_and_host_diagnostics() {
+        let diagnostic =
+            super::NativeFullForwardTimestamps::parse("on", std::path::PathBuf::from("/owned/x"))
+                .unwrap();
+        let base = super::RuntimeOptions {
+            full_forward: true,
+            ..super::RuntimeOptions::default()
+        };
+        assert!(super::admit_native_timestamps(Some(&diagnostic), base, false, 0).is_ok());
+        assert!(super::admit_native_timestamps(Some(&diagnostic), base, true, 0).is_err());
+        assert!(super::admit_native_timestamps(Some(&diagnostic), base, false, 1).is_err());
+        for field in 0..6 {
+            let mut changed = base;
+            match field {
+                0 => changed.full_forward = false,
+                1 => changed.sequences = true,
+                2 => changed.ordered_batches = true,
+                3 => changed.rollover = true,
+                4 => changed.shared_full_currentness = true,
+                _ => changed.profile = true,
+            }
+            assert!(super::admit_native_timestamps(Some(&diagnostic), changed, false, 0).is_err());
+            assert!(super::admit_native_timestamps(None, changed, true, 1).is_ok());
+        }
+    }
     use super::*;
 
     const FAKE_WORKER: &str = r"

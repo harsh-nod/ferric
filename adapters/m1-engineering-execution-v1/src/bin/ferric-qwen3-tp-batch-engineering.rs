@@ -34,7 +34,7 @@ use sha2::{Digest, Sha256};
 use tp_benchmark_control::{BenchmarkClock, ControlConfig};
 use tp_peer_worker::PeerWorker;
 use tp_rank_worker::RankWorker;
-use tp_worker::{RuntimeOptions, Worker};
+use tp_worker::{NativeFullForwardTimestamps, RuntimeOptions, Worker};
 
 const USAGE: &str = concat!(
     "ferric-qwen3-tp-batch-engineering --source DIR --artifact DIR --worker FILE ",
@@ -48,6 +48,7 @@ const USAGE: &str = concat!(
     "[--projection baseline|wave|mfma|auto] [--attention baseline|wave] ",
     "[--head-precision bf16-v7-control|fp32-v7|bf16-v8-control|fp32-v8 --fp32-head-artifact DIR] ",
     "[--fp32-argmax serial-v7|wave-v11 --fp32-argmax-artifact DIR] ",
+    "[--native-full-forward-timestamps off|on --native-timestamp-output ABS_PATH] ",
     "[--kv-pool-profile large-kv-v9 --large-kv-artifact DIR] ",
     "[--benchmark-control FILE] [--host-timing FILE] ",
     "[--numerical-capture DIR --numerical-batch N --numerical-layer N --numerical-projection q|k|v|o|gate|up|down]"
@@ -68,6 +69,7 @@ struct Options {
     requests: Option<PathBuf>,
     benchmark_control: Option<PathBuf>,
     host_timing: Option<PathBuf>,
+    native_timestamps: Option<NativeFullForwardTimestamps>,
     numerical: Option<NumericalOptions>,
     devices: Vec<u64>,
     rows: usize,
@@ -197,6 +199,7 @@ impl Options {
         let mut large_kv_artifact = None;
         let mut benchmark_control = None;
         let mut host_timing = None;
+        let (mut native_timestamp_mode, mut native_timestamp_output) = (None, None);
         let (mut numerical_directory, mut numerical_batch, mut numerical_layer, mut numerical_role) =
             (None, None, None, None);
         while let Some(flag) = args.next() {
@@ -298,6 +301,8 @@ impl Options {
                 "--requests" => requests = Some(PathBuf::from(value)),
                 "--benchmark-control" => benchmark_control = Some(PathBuf::from(value)),
                 "--host-timing" => host_timing = Some(PathBuf::from(value)),
+                "--native-full-forward-timestamps" => native_timestamp_mode = Some(value),
+                "--native-timestamp-output" => native_timestamp_output = Some(PathBuf::from(value)),
                 "--numerical-capture" => numerical_directory = Some(PathBuf::from(value)),
                 "--numerical-batch" => {
                     numerical_batch = Some(value.parse::<u64>().map_err(|e| e.to_string())?);
@@ -576,6 +581,14 @@ impl Options {
         {
             return Err("FP32 argmax requires both explicit mode and v11 artifact with the exact MFMA-v7-wave full-forward profile".into());
         }
+        let native_timestamps = match (native_timestamp_mode, native_timestamp_output) {
+            (None, None) => None,
+            (Some(mode), Some(output)) if runtime.full_forward && devices.len() == 1 && max_batches <= 36
+                && !runtime.profile && host_timing.is_none() && numerical.is_none() && benchmark_control.is_none() => {
+                Some(NativeFullForwardTimestamps::parse(&mode, output)?)
+            }
+            _ => return Err("native timestamp diagnostics require both explicit options, TP1 exact full-forward, at most 36 batches and no host profiling/capture/replica mode".into()),
+        };
         Ok(Self {
             source: source.ok_or("--source is required")?,
             artifact: artifact.ok_or("--artifact is required")?,
@@ -589,6 +602,7 @@ impl Options {
             requests,
             benchmark_control,
             host_timing,
+            native_timestamps,
             numerical,
             devices,
             rows,
@@ -1101,13 +1115,14 @@ fn run_with_timing(
             .iter()
             .enumerate()
             .map(|(rank, &id)| {
-                let mut worker = Worker::spawn_with_timing(
+                let mut worker = Worker::spawn_with_timestamp_diagnostic(
                     &options.worker,
                     id,
                     &artifact,
                     options.runtime,
                     timing.clone(),
                     u32::try_from(rank).map_err(|_| "timing rank overflow")?,
+                    options.native_timestamps.as_ref(),
                 )?;
                 if let Some(head) = &fp32_head_artifact {
                     worker.load_additional_artifact(head)?;
@@ -1320,6 +1335,7 @@ fn run_with_timing(
                 "Diagnostic runtime host-wall counters enabled; timings are not performance qualified"
             );
         }
+        add_native_timestamp_setup(&mut setup, options.native_timestamps.as_ref());
         if let Some(selection) = &options.numerical {
             setup["numerical_capture"] = serde_json::json!({"schema":"FerricTpNumericalSelectionV1",
                 "batch_ordinal":selection.batch,"layer":selection.layer,"role":format!("{:?}",selection.role),
@@ -1435,6 +1451,18 @@ fn run_with_timing(
     }
 }
 
+fn add_native_timestamp_setup(
+    setup: &mut serde_json::Value,
+    diagnostic: Option<&NativeFullForwardTimestamps>,
+) {
+    if let Some(diagnostic) = diagnostic {
+        setup["native_full_forward_timestamps"] = diagnostic.setup_metadata();
+        setup["numerical_status"] = serde_json::json!(
+            "Native dispatch timestamp diagnostic; fixed-reference token checks remain required; instrumented timings are not performance qualified"
+        );
+    }
+}
+
 fn main() -> std::process::ExitCode {
     match Options::parse(std::env::args().skip(1)).and_then(|options| run(&options)) {
         Ok(()) => std::process::ExitCode::SUCCESS,
@@ -1448,6 +1476,183 @@ fn main() -> std::process::ExitCode {
 #[cfg(test)]
 mod tests {
     use super::*;
+    fn timestamp_base() -> Vec<&'static str> {
+        vec![
+            "--devices",
+            "1",
+            "--kernel-profile",
+            "v3-mfma",
+            "--projection",
+            "mfma",
+            "--attention",
+            "wave",
+            "--collective",
+            "device-tp1-v3",
+            "--head-precision",
+            "fp32-v7",
+            "--fp32-head-artifact",
+            "/head",
+            "--batch-tokens",
+            "1",
+            "--prefill-chunk",
+            "1",
+            "--context",
+            "64",
+            "--pages",
+            "4",
+            "--max-batches",
+            "36",
+            "--disable-prefix-cache",
+            "--runtime-full-forward-mfma-v7-wave",
+            "--fp32-argmax",
+            "wave-v11",
+            "--fp32-argmax-artifact",
+            "/argmax",
+        ]
+    }
+
+    #[test]
+    fn native_timestamp_cli_requires_explicit_pair_and_bounded_full_forward() {
+        let base = timestamp_base();
+        assert!(args(&base).unwrap().native_timestamps.is_none());
+        for mode in ["off", "on"] {
+            let mut enabled = base.clone();
+            enabled.extend([
+                "--native-full-forward-timestamps",
+                mode,
+                "--native-timestamp-output",
+                "/owned/frames.ndjson",
+            ]);
+            let parsed = args(&enabled).unwrap();
+            assert_eq!(
+                parsed.native_timestamps.unwrap().setup_metadata()["mode"],
+                mode
+            );
+            for flag in [
+                "--native-full-forward-timestamps",
+                "--native-timestamp-output",
+            ] {
+                let mut missing = enabled.clone();
+                let index = missing.iter().position(|item| *item == flag).unwrap();
+                missing.drain(index..index + 2);
+                assert!(args(&missing).is_err());
+            }
+            for (flag, value) in [
+                ("--native-full-forward-timestamps", "auto"),
+                ("--native-timestamp-output", "relative"),
+                ("--devices", "1,2"),
+                ("--max-batches", "37"),
+                ("--batch-tokens", "2"),
+                ("--prefill-chunk", "2"),
+                ("--context", "128"),
+                ("--pages", "8"),
+            ] {
+                let mut changed = enabled.clone();
+                let index = changed.iter().position(|item| *item == flag).unwrap();
+                changed[index + 1] = value;
+                assert!(args(&changed).is_err(), "{flag}");
+            }
+            let mut serial = enabled.clone();
+            serial.retain(|item| *item != "--runtime-full-forward-mfma-v7-wave");
+            assert!(args(&serial).is_err());
+            for extra in [
+                vec!["--runtime-profile"],
+                vec!["--host-timing", "/host"],
+                vec!["--queue-rollover"],
+                vec!["--dispatch-sequences"],
+                vec!["--runtime-ordered-batches"],
+                vec!["--peer-artifact", "/peer"],
+                vec!["--peer-shared-full-currentness"],
+                vec!["--benchmark-control", "/replica"],
+                vec!["--native-full-forward-timestamps", "on"],
+            ] {
+                let mut changed = enabled.clone();
+                changed.extend(extra);
+                assert!(args(&changed).is_err());
+            }
+        }
+    }
+
+    #[test]
+    fn native_timestamp_setup_is_additive_only_when_explicit() {
+        let original = serde_json::json!({"worker_sha256":"same","running_worker_sha256":["same"],"runtime_profiling":false,"numerical_status":"legacy"});
+        let mut absent = original.clone();
+        add_native_timestamp_setup(&mut absent, None);
+        assert_eq!(absent, original);
+        let diagnostic =
+            NativeFullForwardTimestamps::parse("on", PathBuf::from("/owned/frames.ndjson"))
+                .unwrap();
+        let mut selected = original.clone();
+        add_native_timestamp_setup(&mut selected, Some(&diagnostic));
+        assert_eq!(selected["worker_sha256"], original["worker_sha256"]);
+        assert_eq!(
+            selected["running_worker_sha256"],
+            original["running_worker_sha256"]
+        );
+        assert_eq!(selected["runtime_profiling"], false);
+        assert_eq!(selected["native_full_forward_timestamps"]["mode"], "on");
+        assert_eq!(
+            selected["native_full_forward_timestamps"]["host_elapsed_is_gpu_time"],
+            false
+        );
+        assert_eq!(
+            selected["native_full_forward_timestamps"]["performance_qualified"],
+            false
+        );
+        assert_eq!(
+            selected["native_full_forward_timestamps"]["output_path"],
+            "/owned/frames.ndjson"
+        );
+    }
+
+    #[test]
+    #[ignore = "requires three explicitly pinned artifact directories; CPU admission only, no worker/GPU"]
+    fn native_timestamp_actual_artifact_roster_is_cpu_admitted() {
+        let main = PathBuf::from(
+            std::env::var_os("FERRIC_TIMESTAMP_MAIN_ARTIFACT").expect("main artifact"),
+        );
+        let head = PathBuf::from(
+            std::env::var_os("FERRIC_TIMESTAMP_HEAD_ARTIFACT").expect("head artifact"),
+        );
+        let argmax = PathBuf::from(
+            std::env::var_os("FERRIC_TIMESTAMP_ARGMAX_ARTIFACT").expect("argmax artifact"),
+        );
+        let images = [
+            EngineeringTpArtifactV1::open_performance(
+                &main,
+                &ferric_qwen3_tp_perf_kernels_device_v3::compiler_expectation_roster_v3(),
+                true,
+            )
+            .unwrap(),
+            EngineeringTpArtifactV1::open_fp32_head(
+                &head,
+                &ferric_qwen3_tp_fp32_head_kernels_device_v7::compiler_expectation_roster_v7(),
+            )
+            .unwrap(),
+            EngineeringTpArtifactV1::open_fp32_argmax32_v11(&argmax).unwrap(),
+        ];
+        let expected = [
+            "2e677384a5e86c6e1ae95f10333f2d0d330922ed4d1348acdb1b09f5655281e2",
+            "b21caccae5ec030640242034940822cb1a3f1e8531b7b6ded7371492da3747ae",
+            "86c3ee4cead26f6432ef590434b3335e1ee2a95c9c900cf6315dca4ef0a542b0",
+        ];
+        let mut roster = Vec::new();
+        for (image, expected) in images.iter().zip(expected) {
+            assert_eq!(hex(image.hsaco_id().as_bytes()), expected);
+            for kernel in image.inspection().hsaco().kernels() {
+                roster.push(serde_json::json!({"kernel_id":roster.len()+1,"kernel_symbol":kernel.name(),
+                    "kernel_sha256":image.hsaco_id().as_bytes(),"kernarg_bytes":kernel.kernarg_segment_size(),
+                    "kernarg_alignment":kernel.kernarg_segment_alignment(),"wavefront_size":kernel.wavefront_size(),
+                    "group_segment_bytes":kernel.group_segment_fixed_size(),"private_segment_bytes":kernel.private_segment_fixed_size(),
+                    "implicit_argument_offset":kernel.implicit_argument_offset(),"implicit_argument_bytes":kernel.implicit_argument_size()}));
+            }
+        }
+        assert_eq!(roster.len(), 19);
+        println!(
+            "NATIVE_TIMESTAMP_ARTIFACT_ROSTER={}",
+            serde_json::to_string(&roster).unwrap()
+        );
+    }
     fn args(extra: &[&str]) -> Result<Options, String> {
         let mut base = vec![
             "--source",
