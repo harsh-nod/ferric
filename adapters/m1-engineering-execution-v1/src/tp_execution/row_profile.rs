@@ -54,6 +54,35 @@ pub(super) fn bind(
     mut command: EngineeringTpDispatchV1,
 ) -> TpResult<EngineeringTpDispatchV1> {
     #[cfg(feature = "tp-batch-engineering")]
+    if command.kernel == crate::tp_artifact::ENGINEERING_TP_PARALLEL_KV_EXPORTS_V16[0] {
+        use super::EngineeringTpBufferAccessV1::{Read, Write};
+        let Some(
+            [
+                EngineeringTpArgumentV1::U32(1),
+                EngineeringTpArgumentV1::U32(1),
+                EngineeringTpArgumentV1::U32(4),
+                EngineeringTpArgumentV1::U32(4),
+            ],
+        ) = command.arguments.get(6..)
+        else {
+            return Err(
+                "parallel KV v16 requires six slices and exact rows1/world1/stride4/pages4".into(),
+            );
+        };
+        if capacity != 16 || command.workgroup_size != 64 || command.grid_workgroups != 64
+            || command.arguments[..6].iter().enumerate().any(|(index, arg)| {
+                let extent = match index { 0 | 1 => 16 * 1024, 2 => 16, 3 => 16 * 4, _ => 4 * 16 * 1024 };
+                !matches!(arg, EngineeringTpArgumentV1::Buffer { offset, elements, element_bytes, access, .. }
+                    if *offset == 0 && *elements == extent
+                    && *element_bytes == (if matches!(index, 2 | 3) { 4 } else { 2 })
+                    && *access == (if index >= 4 { Write } else { Read }))
+            })
+        {
+            return Err("parallel KV v16 requires exact full-capacity TP1 buffers and 64 Wave64 workgroups".into());
+        }
+        return Ok(command);
+    }
+    #[cfg(feature = "tp-batch-engineering")]
     if command.kernel == crate::tp_artifact::ENGINEERING_TP_WAVE_RMSNORM_EXPORTS_V15[0] {
         use super::EngineeringTpBufferAccessV1::{Read, Write};
         let Some(

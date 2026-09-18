@@ -31,6 +31,7 @@ enum BatchedProfile<'a> {
         argmax_v11: Option<crate::tp_artifact::Fp32ArgmaxBindingV11>,
         query_hoist_v14: Option<crate::tp_artifact::QueryHoistBindingV14>,
         wave_rmsnorm_v15: Option<&'a crate::tp_artifact::WaveRmsNormBindingV15>,
+        parallel_kv_v16: Option<&'a crate::tp_artifact::ParallelKvBindingV16>,
     },
     Draft(crate::tp_artifact::DraftBindingV10),
 }
@@ -42,6 +43,7 @@ enum FullForwardProfile {
     MfmaFp32V7WaveAttention,
     MfmaFp32V7WaveAttentionArgmaxV11,
     MfmaFp32V7WaveAttentionArgmaxV11RmsNormV15,
+    MfmaFp32V7WaveAttentionArgmaxV11RmsNormV15KvV16,
 }
 
 const MAX_ROWS: usize = 16;
@@ -96,6 +98,8 @@ pub struct EngineeringTpBatchExecutionV2<R: EngineeringTpRankTransportV1> {
     admitted_query_hoist_v14: Option<crate::tp_artifact::QueryHoistBindingV14>,
     wave_rmsnorm_v15: Option<crate::tp_artifact::WaveRmsNormBindingV15>,
     admitted_wave_rmsnorm_v15: Option<crate::tp_artifact::WaveRmsNormBindingV15>,
+    parallel_kv_v16: Option<crate::tp_artifact::ParallelKvBindingV16>,
+    admitted_parallel_kv_v16: Option<crate::tp_artifact::ParallelKvBindingV16>,
 }
 
 impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
@@ -159,6 +163,7 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
                 argmax_v11: Some(binding),
                 query_hoist_v14: None,
                 wave_rmsnorm_v15: None,
+                parallel_kv_v16: None,
             },
         )
     }
@@ -198,6 +203,49 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
                 argmax_v11: Some(argmax),
                 query_hoist_v14: None,
                 wave_rmsnorm_v15: Some(&rmsnorm),
+                parallel_kv_v16: None,
+            },
+        )
+    }
+
+    /// Admits all three sidecars before allocation for both KV comparison modes.
+    /// Selection requires the exact single-row full-forward wave norm/argmax stack.
+    /// # Errors
+    /// Rejects mismatched or unloaded images, unsupported geometry or allocation failure.
+    #[allow(clippy::too_many_arguments)]
+    pub fn new_full_forward_with_argmax_v11_rmsnorm_v15_and_parallel_kv_v16(
+        mut transports: Vec<R>,
+        model: ModelConfig,
+        weights: &[u8],
+        layout: &AuthenticatedModelWeightLayout,
+        pool: &EngineeringTpPagedPoolV1,
+        argmax: &crate::tp_artifact::EngineeringTpArtifactV1,
+        rmsnorm: &crate::tp_artifact::EngineeringTpArtifactV1,
+        kv: &crate::tp_artifact::EngineeringTpArtifactV1,
+    ) -> TpResult<Self> {
+        let Some(((argmax, rmsnorm), kv)) = argmax
+            .fp32_argmax_binding_v11()
+            .zip(rmsnorm.wave_rmsnorm_binding_v15())
+            .zip(kv.parallel_kv_binding_v16())
+        else {
+            for transport in &mut transports {
+                let _ = transport.close();
+            }
+            return Err("full-forward KV requires exact admitted v11/v15/v16 images".into());
+        };
+        Self::new_profile(
+            transports,
+            model,
+            weights,
+            layout,
+            pool,
+            BatchedProfile::Target {
+                rows: 16,
+                large_kv: false,
+                argmax_v11: Some(argmax),
+                query_hoist_v14: None,
+                wave_rmsnorm_v15: Some(&rmsnorm),
+                parallel_kv_v16: Some(&kv),
             },
         )
     }
@@ -232,6 +280,7 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
                 argmax_v11: Some(binding),
                 query_hoist_v14: None,
                 wave_rmsnorm_v15: None,
+                parallel_kv_v16: None,
             },
         )
     }
@@ -273,6 +322,7 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
                 argmax_v11: Some(argmax_v11),
                 query_hoist_v14: Some(query_hoist_v14),
                 wave_rmsnorm_v15: None,
+                parallel_kv_v16: None,
             },
         )
     }
@@ -314,6 +364,7 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
                 argmax_v11: Some(argmax_v11),
                 query_hoist_v14: None,
                 wave_rmsnorm_v15: Some(&wave_rmsnorm_v15),
+                parallel_kv_v16: None,
             },
         )
     }
@@ -354,6 +405,7 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
                 argmax_v11: None,
                 query_hoist_v14: None,
                 wave_rmsnorm_v15: None,
+                parallel_kv_v16: None,
             },
         )
     }
@@ -373,6 +425,7 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
             admitted_argmax_v11,
             admitted_query_hoist_v14,
             admitted_wave_rmsnorm_v15,
+            admitted_parallel_kv_v16,
         ) = match profile {
             BatchedProfile::Target {
                 rows,
@@ -380,6 +433,7 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
                 argmax_v11,
                 query_hoist_v14,
                 wave_rmsnorm_v15,
+                parallel_kv_v16,
             } => (
                 rows,
                 large_kv,
@@ -387,8 +441,9 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
                 argmax_v11,
                 query_hoist_v14,
                 wave_rmsnorm_v15.copied(),
+                parallel_kv_v16.copied(),
             ),
-            BatchedProfile::Draft(_) => (32, false, true, None, None, None),
+            BatchedProfile::Draft(_) => (32, false, true, None, None, None, None),
         };
         let binding = match profile {
             BatchedProfile::Target { .. } => {
@@ -429,6 +484,24 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
                                     image,
                                 )?;
                             }
+                        }
+                        if let Some(image) = admitted_parallel_kv_v16 {
+                            if admitted_argmax_v11.is_none()
+                                || admitted_wave_rmsnorm_v15.is_none()
+                                || admitted_query_hoist_v14.is_some()
+                            {
+                                return Err(
+                                    "full-forward KV requires only v11/v15/v16 admissions".into()
+                                );
+                            }
+                            validate_full_forward_parallel_kv_binding_v16(
+                                &mut transports,
+                                row_capacity,
+                                large_kv,
+                                pool.limits().context_tokens(),
+                                pool.limits().physical_page_count(),
+                                image,
+                            )?;
                         }
                         Ok(())
                     })
@@ -513,6 +586,8 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
             admitted_query_hoist_v14,
             wave_rmsnorm_v15: None,
             admitted_wave_rmsnorm_v15,
+            parallel_kv_v16: None,
+            admitted_parallel_kv_v16,
         })
     }
 
@@ -732,6 +807,16 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
     pub const fn rmsnorm_mode(&self) -> &'static str {
         if self.wave_rmsnorm_v15.is_some() {
             "wave-v15"
+        } else {
+            "baseline"
+        }
+    }
+
+    /// Actual KV append policy; both full-forward comparison modes admit the V16 image.
+    #[must_use]
+    pub const fn kv_append_mode(&self) -> &'static str {
+        if self.parallel_kv_v16.is_some() {
+            "parallel-v16"
         } else {
             "baseline"
         }
@@ -1240,6 +1325,8 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
             || self.admitted_query_hoist_v14.is_some()
             || self.wave_rmsnorm_v15.is_some()
             || self.admitted_wave_rmsnorm_v15.is_some()
+            || self.parallel_kv_v16.is_some()
+            || self.admitted_parallel_kv_v16.is_some()
             || self.reduction_mode() != EngineeringTpReductionModeV3::DeviceTp1V3
         {
             return Err("ordered scalar-v3 requires fresh TP1/capacity16, explicit baseline projection/attention, device-tp1-v3 and the unpruned BF16 head; alternate images, peers, sequences and numerical capture are unsupported".into());
@@ -1341,6 +1428,47 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
         Ok(())
     }
 
+    /// Seals the exact wave attention/argmax/norm stack with an optional parallel KV copy.
+    /// Only the 36 KV append symbols and their workgroup counts differ between modes.
+    /// # Errors
+    /// Rejects missing/mismatched preallocation admissions or any stale profile.
+    pub fn configure_mfma_v7_wave_argmax_rmsnorm_parallel_kv_full_forward(
+        &mut self,
+        argmax: &crate::tp_artifact::EngineeringTpArtifactV1,
+        rmsnorm: &crate::tp_artifact::EngineeringTpArtifactV1,
+        kv: &crate::tp_artifact::EngineeringTpArtifactV1,
+        parallel: bool,
+    ) -> TpResult<()> {
+        let ((argmax, rmsnorm), kv) = argmax
+            .fp32_argmax_binding_v11()
+            .zip(rmsnorm.wave_rmsnorm_binding_v15())
+            .zip(kv.parallel_kv_binding_v16())
+            .ok_or("full-forward KV requires exact admitted v11/v15/v16 images")?;
+        self.configure_full_forward_parallel_kv_binding_v16(argmax, rmsnorm, kv, parallel)
+    }
+
+    fn configure_full_forward_parallel_kv_binding_v16(
+        &mut self,
+        argmax: crate::tp_artifact::Fp32ArgmaxBindingV11,
+        rmsnorm: crate::tp_artifact::WaveRmsNormBindingV15,
+        kv: crate::tp_artifact::ParallelKvBindingV16,
+        parallel: bool,
+    ) -> TpResult<()> {
+        if self.admitted_argmax_v11 != Some(argmax)
+            || self.admitted_wave_rmsnorm_v15 != Some(rmsnorm)
+            || self.admitted_parallel_kv_v16 != Some(kv)
+        {
+            return Err("full-forward KV binding differs from preallocation admission".into());
+        }
+        self.configure_full_forward(
+            FullForwardProfile::MfmaFp32V7WaveAttentionArgmaxV11RmsNormV15KvV16,
+        )?;
+        self.fp32_argmax_v11 = Some(argmax);
+        self.wave_rmsnorm_v15 = Some(rmsnorm);
+        self.parallel_kv_v16 = parallel.then_some(kv);
+        Ok(())
+    }
+
     fn configure_full_forward(&mut self, profile: FullForwardProfile) -> TpResult<()> {
         let attention_matches = self.wave_attention
             == matches!(
@@ -1348,6 +1476,7 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
                 FullForwardProfile::MfmaFp32V7WaveAttention
                     | FullForwardProfile::MfmaFp32V7WaveAttentionArgmaxV11
                     | FullForwardProfile::MfmaFp32V7WaveAttentionArgmaxV11RmsNormV15
+                    | FullForwardProfile::MfmaFp32V7WaveAttentionArgmaxV11RmsNormV15KvV16
             );
         let argmax_matches = self.fp32_argmax_v11.is_none()
             && (self.admitted_argmax_v11.is_some()
@@ -1355,12 +1484,20 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
                     profile,
                     FullForwardProfile::MfmaFp32V7WaveAttentionArgmaxV11
                         | FullForwardProfile::MfmaFp32V7WaveAttentionArgmaxV11RmsNormV15
+                        | FullForwardProfile::MfmaFp32V7WaveAttentionArgmaxV11RmsNormV15KvV16
                 ));
         let norm_matches = self.wave_rmsnorm_v15.is_none()
             && (self.admitted_wave_rmsnorm_v15.is_some()
                 == matches!(
                     profile,
                     FullForwardProfile::MfmaFp32V7WaveAttentionArgmaxV11RmsNormV15
+                        | FullForwardProfile::MfmaFp32V7WaveAttentionArgmaxV11RmsNormV15KvV16
+                ));
+        let kv_matches = self.parallel_kv_v16.is_none()
+            && (self.admitted_parallel_kv_v16.is_some()
+                == matches!(
+                    profile,
+                    FullForwardProfile::MfmaFp32V7WaveAttentionArgmaxV11RmsNormV15KvV16
                 ));
         let arithmetic_matches = match profile {
             FullForwardProfile::ScalarBf16 => {
@@ -1371,7 +1508,8 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
             FullForwardProfile::MfmaFp32V7
             | FullForwardProfile::MfmaFp32V7WaveAttention
             | FullForwardProfile::MfmaFp32V7WaveAttentionArgmaxV11
-            | FullForwardProfile::MfmaFp32V7WaveAttentionArgmaxV11RmsNormV15 => {
+            | FullForwardProfile::MfmaFp32V7WaveAttentionArgmaxV11RmsNormV15
+            | FullForwardProfile::MfmaFp32V7WaveAttentionArgmaxV11RmsNormV15KvV16 => {
                 self.projection.mode == super::EngineeringTpProjectionModeV3::Mfma
                     && self.head_profile_configured
                     && self.fp32_logits.is_some_and(|logits| {
@@ -1412,6 +1550,7 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
             || self.query_hoist_v14.is_some()
             || self.admitted_query_hoist_v14.is_some()
             || !norm_matches
+            || !kv_matches
             || self.reduction_mode() != EngineeringTpReductionModeV3::DeviceTp1V3
         {
             return Err(match profile {
@@ -1420,6 +1559,7 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
                 FullForwardProfile::MfmaFp32V7WaveAttention => "full-forward MFMA-v7-wave requires fresh Target8B TP1/capacity16/context64/pages4, MFMA-v3 projection, wave attention, device TP1 and the unpruned FP32-v7 head",
                 FullForwardProfile::MfmaFp32V7WaveAttentionArgmaxV11 => "full-forward MFMA-v7-wave argmax requires the exact fresh capacity16 profile and preallocated v11 admission",
                 FullForwardProfile::MfmaFp32V7WaveAttentionArgmaxV11RmsNormV15 => "full-forward wave norm requires the exact fresh capacity16 profile and preallocated v11/v15 admissions",
+                FullForwardProfile::MfmaFp32V7WaveAttentionArgmaxV11RmsNormV15KvV16 => "full-forward parallel KV requires the exact fresh capacity16 wave norm/argmax profile and preallocated v11/v15/v16 admissions",
             }.into());
         }
         self.inner.full_forward_enabled = true;
@@ -1662,6 +1802,7 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
         let projection = &self.projection;
         let c1_wave_layers = self.c1_wave_layers;
         let wave_rmsnorm_v15 = self.wave_rmsnorm_v15.is_some();
+        let parallel_kv_v16 = self.parallel_kv_v16.is_some();
         let attention = if self.query_hoist_v14.is_some() {
             crate::tp_artifact::ENGINEERING_TP_QUERY_HOIST_EXPORTS_V14[0]
         } else if self.wave_attention {
@@ -1851,8 +1992,12 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
             let append_timing = self.inner.timing.span("attention_kv_append", None);
             self.inner.dispatch_each(|r| {
                 dispatch(
-                    APPEND,
-                    1,
+                    if parallel_kv_v16 {
+                        crate::tp_artifact::ENGINEERING_TP_PARALLEL_KV_EXPORTS_V16[0]
+                    } else {
+                        APPEND
+                    },
+                    if parallel_kv_v16 { 64 } else { 1 },
                     vec![
                         r.k_rotated.read(),
                         r.v.read(),
@@ -2160,6 +2305,31 @@ fn validate_full_forward_rmsnorm_binding_v15<R: EngineeringTpRankTransportV1>(
     transports[0].require_loaded_image(
         image.hsaco,
         &crate::tp_artifact::ENGINEERING_TP_WAVE_RMSNORM_EXPORTS_V15,
+    )
+}
+
+fn validate_full_forward_parallel_kv_binding_v16<R: EngineeringTpRankTransportV1>(
+    transports: &mut [R],
+    row_capacity: usize,
+    large_kv: bool,
+    context_tokens: u32,
+    physical_pages: u32,
+    image: crate::tp_artifact::ParallelKvBindingV16,
+) -> TpResult<()> {
+    if row_capacity != 16
+        || large_kv
+        || context_tokens != 64
+        || physical_pages != 4
+        || transports.len() != 1
+        || transports[0].peer_group_rank().is_some()
+        || !transports[0].supports_full_forward()
+        || transports[0].supports_queue_rollover()
+    {
+        return Err("parallel KV requires fresh nonpeer TP1/capacity16/context64/pages4 full-forward storage".into());
+    }
+    transports[0].require_loaded_image(
+        image.hsaco,
+        &crate::tp_artifact::ENGINEERING_TP_PARALLEL_KV_EXPORTS_V16,
     )
 }
 

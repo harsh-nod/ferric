@@ -72,6 +72,20 @@ COHORTS = {
             "inputs_pre", "sources_pre", "idle_pre", "plan_pre", "controller", "numerical",
             "inputs_post", "sources_post", "plan_post", "model_stat_post", "idle_post", "topology_post")},
     },
+    "parallel-kv-v16": {
+        "checker": "target_full_forward_parallel_kv_v16_v1.py",
+        "sha256": "444b597ed9afc0ece7919707a91b31edc3a436d6487ba605a70712b6dc563b75",
+        "schema": "FerricTargetFullForwardParallelKvV16ObservationV1",
+        "variants": ("baseline", "parallel-v16"),
+        "labels": ("Serial KV append", "Parallel KV append v16"),
+        "title": "Qwen3-8B: KV append selector observation",
+        "axis": "kv-append-selector",
+        "identity_fields": (),
+        "controller_cohort": "full-forward-parallel-kv-v16-controller-v2",
+        "postchecks": {name: 0 for name in (
+            "inputs_pre", "sources_pre", "idle_pre", "plan_pre", "controller", "numerical",
+            "inputs_post", "sources_post", "plan_post", "model_stat_post", "idle_post", "topology_post")},
+    },
 }
 
 
@@ -109,9 +123,9 @@ def revalidate(checker, family, directory, variant, reference):
     checker.core.same(report["variant"], variant, "exact plotted variant")
     raw = read(directory / "report-public.json", 1048576)
     checker.core.same(checker.core.json_value(raw), report, "regenerated public report")
-    if family == "rmsnorm-v15":
+    if family in ("rmsnorm-v15", "parallel-kv-v16"):
         checker.core.same(checker.core.json_value(read(directory / "postcheck-status.json", 65536)),
-                          COHORTS[family]["postchecks"], "all exact norm cohort postchecks")
+                          COHORTS[family]["postchecks"], "all exact sidecar cohort postchecks")
     else:
         checker.core.require(read(directory / "postcheck-status.txt", 256) == COHORTS[family]["postchecks"],
                              "all exact cohort postchecks")
@@ -144,12 +158,16 @@ def matched_axis(checker, family, rows):
             core.same(row["fp32_argmax"], variant, "actual argmax selector axis")
             core.same(row["argmax_root"], checker.ARGMAX_ROOTS[variant], "source-derived selected root")
             core.same(row["fp32_argmax_artifact"], checker.ARGMAX_ARTIFACT, "identical actual sidecar")
-        elif family == "rmsnorm-v15":
-            core.same(row["rmsnorm"], variant, "actual hidden-state norm selector")
+        elif family in ("rmsnorm-v15", "parallel-kv-v16"):
+            core.same(row["rmsnorm"], variant if family == "rmsnorm-v15" else "wave-v15", "actual hidden-state norm selector")
             core.same(row["rmsnorm_artifact"], checker.RMSNORM_ARTIFACT, "identical actual norm sidecar")
             core.same(row["fp32_argmax"], "wave-v11", "argmax unchanged")
             core.same(row["argmax_root"], checker.ARGMAX_ROOTS["wave-v11"], "argmax root unchanged")
             core.same(row["fp32_argmax_artifact"], checker.ARGMAX_ARTIFACT, "argmax image unchanged")
+            if family == "parallel-kv-v16":
+                core.same(row["kv_append"], variant, "actual KV selector axis")
+                core.same(row["kv_root"], checker.KV_ROOTS[variant], "source-derived selected KV root")
+                core.same(row["kv_append_artifact"], checker.KV_ARTIFACT, "identical actual KV sidecar")
     for key in core.IDENTITIES:
         if key in cohort["identity_fields"]:
             core.require(rows[0]["identities"][key] != rows[1]["identities"][key], "declared identity axis differs")
@@ -198,7 +216,7 @@ def rows_and_contrast(checker, family, reports):
             expected.update(worker_source_manifest_sha256=checker.WORKER_SOURCE_MANIFEST_SHA256,
                             transaction_preparation_fence=index == 1, currentness_check_count_measured=False)
         else:
-            argmax_variant = "wave-v11" if family == "rmsnorm-v15" else variant
+            argmax_variant = "wave-v11" if family in ("rmsnorm-v15", "parallel-kv-v16") else variant
             expected.update(**checker.SOURCE_PINS, fp32_argmax=argmax_variant,
                             fp32_argmax_artifact=checker.ARGMAX_ARTIFACT,
                             argmax_canonical_descriptor_sha256=checker.ARGMAX_CANONICAL_DESCRIPTOR_SHA256,
@@ -207,11 +225,22 @@ def rows_and_contrast(checker, family, reports):
                             argmax_root=checker.ARGMAX_ROOTS[argmax_variant], sidecar_loaded_both_variants=True,
                             argmax_source_row_capacity=32, controller_row_capacity=16, observed_rows=1,
                             transaction_preparation_fence=True, currentness_check_count_measured=False)
-            if family == "rmsnorm-v15":
-                expected.update(rmsnorm=variant, rmsnorm_artifact=checker.RMSNORM_ARTIFACT,
+            if family in ("rmsnorm-v15", "parallel-kv-v16"):
+                expected.update(rmsnorm=variant if family == "rmsnorm-v15" else "wave-v15", rmsnorm_artifact=checker.RMSNORM_ARTIFACT,
                                 rmsnorm_canonical_descriptor_sha256=checker.RMSNORM_CANONICAL_DESCRIPTOR_SHA256,
                                 rmsnorm_admission_sha256=checker.RMSNORM_ADMISSION_SHA256,
-                                changed_norm_packets_per_forward=73, rmsnorm_source_row_capacity=32)
+                                rmsnorm_source_row_capacity=32)
+                if family == "rmsnorm-v15":
+                    expected["changed_norm_packets_per_forward"] = 73
+                else:
+                    expected.update(kv_append=variant, kv_append_artifact=checker.KV_ARTIFACT,
+                                    kv_root=checker.KV_ROOTS[variant],
+                                    kv_canonical_descriptor_sha256=checker.KV_CANONICAL_DESCRIPTOR_SHA256,
+                                    kv_admission_sha256=checker.KV_ADMISSION_SHA256,
+                                    kv_cli_admission_sha256=checker.KV_CLI_ADMISSION_SHA256,
+                                    kv_fixtures_sha256=checker.KV_FIXTURES_SHA256,
+                                    changed_kv_packets_per_forward=36, kv_workgroups_per_packet=64 if index else 1,
+                                    unchanged_wave_norm_packets_per_forward=73)
         for key, value in expected.items():
             core.same(report[key], value, "exact ablation plot " + key)
         config = {
@@ -228,6 +257,8 @@ def rows_and_contrast(checker, family, reports):
             config["fp32_argmax"] = variant
         elif family == "rmsnorm-v15":
             config.update(fp32_argmax="wave-v11", rmsnorm=variant)
+        elif family == "parallel-kv-v16":
+            config.update(fp32_argmax="wave-v11", rmsnorm="wave-v15", kv_append=variant)
         core.same(report["configuration"], config, "exact full-forward wave configuration and declared selector")
         timing = report["timing"]
         intervals = timing["decode_intervals_ns"]
@@ -245,11 +276,14 @@ def rows_and_contrast(checker, family, reports):
                      "reference_sha256": report["reference_sha256"],
                      "decode_intervals_seconds": [value / 1e9 for value in intervals],
                      "post_first_tokens_per_second": rate})
-        if family in ("argmax-v11", "rmsnorm-v15"):
+        if family in ("argmax-v11", "rmsnorm-v15", "parallel-kv-v16"):
             rows[-1].update(fp32_argmax=report["fp32_argmax"], argmax_root=report["argmax_root"],
                             fp32_argmax_artifact=copy.deepcopy(report["fp32_argmax_artifact"]))
-        if family == "rmsnorm-v15":
+        if family in ("rmsnorm-v15", "parallel-kv-v16"):
             rows[-1].update(rmsnorm=report["rmsnorm"], rmsnorm_artifact=copy.deepcopy(report["rmsnorm_artifact"]))
+        if family == "parallel-kv-v16":
+            rows[-1].update(kv_append=report["kv_append"], kv_root=report["kv_root"],
+                            kv_append_artifact=copy.deepcopy(report["kv_append_artifact"]))
     matched_axis(checker, family, rows)
     ratio = rows[1]["post_first_tokens_per_second"] / rows[0]["post_first_tokens_per_second"]
     contrast = {
@@ -290,7 +324,7 @@ def rows_and_contrast(checker, family, reports):
                         sidecar_loaded_both_variants=True, argmax_source_row_capacity=32,
                         controller_row_capacity=16, observed_rows=1, transaction_preparation_fence=True,
                         currentness_check_count_measured=False, gpu_argmax_duration_measured=False)
-    else:
+    elif family == "rmsnorm-v15":
         contrast.update(**checker.SOURCE_PINS, differing_configuration_fields=["rmsnorm"],
                         fp32_argmax="wave-v11", fp32_argmax_artifact=copy.deepcopy(checker.ARGMAX_ARTIFACT),
                         argmax_root=checker.ARGMAX_ROOTS["wave-v11"],
@@ -305,6 +339,32 @@ def rows_and_contrast(checker, family, reports):
                         sidecar_loaded_both_variants=True, transaction_preparation_fence=True,
                         fp32_sum_association_changed=True, bf16_rounding_boundaries_retained=2,
                         currentness_check_count_measured=False, gpu_rmsnorm_duration_measured=False)
+    else:
+        contrast.update(**checker.SOURCE_PINS, differing_configuration_fields=["kv_append"],
+                        fp32_argmax="wave-v11", fp32_argmax_artifact=copy.deepcopy(checker.ARGMAX_ARTIFACT),
+                        argmax_root=checker.ARGMAX_ROOTS["wave-v11"],
+                        argmax_canonical_descriptor_sha256=checker.ARGMAX_CANONICAL_DESCRIPTOR_SHA256,
+                        argmax_admission_sha256=checker.ARGMAX_ADMISSION_SHA256,
+                        argmax_admission_provenance_sha256=checker.ARGMAX_ADMISSION_PROVENANCE_SHA256,
+                        rmsnorm="wave-v15", rmsnorm_artifact=copy.deepcopy(checker.RMSNORM_ARTIFACT),
+                        rmsnorm_canonical_descriptor_sha256=checker.RMSNORM_CANONICAL_DESCRIPTOR_SHA256,
+                        rmsnorm_admission_sha256=checker.RMSNORM_ADMISSION_SHA256,
+                        kv_append_artifact=copy.deepcopy(checker.KV_ARTIFACT),
+                        kv_roots_by_variant=copy.deepcopy(checker.KV_ROOTS),
+                        kv_canonical_descriptor_sha256=checker.KV_CANONICAL_DESCRIPTOR_SHA256,
+                        kv_admission_sha256=checker.KV_ADMISSION_SHA256,
+                        kv_cli_admission_sha256=checker.KV_CLI_ADMISSION_SHA256,
+                        kv_fixtures_sha256=checker.KV_FIXTURES_SHA256,
+                        changed_kv_packets_per_forward=36,
+                        kv_workgroups_per_packet_by_variant={"baseline": 1, "parallel-v16": 64},
+                        unchanged_wave_norm_packets_per_forward=73, rmsnorm_source_row_capacity=32,
+                        argmax_source_row_capacity=32, controller_row_capacity=16, observed_rows=1,
+                        sidecar_loaded_both_variants=True, loaded_images_per_variant=5,
+                        transaction_preparation_fence=True, logical_explicit_arguments_unchanged=True,
+                        buffer_extents_and_access_modes_unchanged=True,
+                        physical_pointer_bytes_compared=False, hidden_launch_fields_unchanged=False,
+                        argument_equality_scope="logical explicit encoding; not relocated pointers or hidden launch-derived fields",
+                        currentness_check_count_measured=False, gpu_kv_duration_measured=False)
     core.require(all(math.isfinite(value) for value in (
         ratio, contrast["observed_tpot_change_percent"],
         max(max(row["decode_intervals_seconds"]) for row in rows) * 1120,

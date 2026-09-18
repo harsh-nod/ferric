@@ -130,6 +130,7 @@ tp-batch-engineering = [
     "dep:ferric-qwen3-tp-fp32-argmax-kernels-device-v11",
     "dep:ferric-qwen3-tp-wave-query-hoist-kernels-device-v14",
     "dep:ferric-qwen3-tp-wave-rmsnorm-kernels-device-v15",
+    "dep:ferric-qwen3-tp-parallel-kv-kernels-device-v16",
 ]
 qualification-fault-injection = [
     "ferric-engine/qualification-fault-injection",
@@ -160,6 +161,7 @@ ferric-qwen3-draft-batch32-kernels-device-v10 = { path = "../../device/qwen3-dra
 ferric-qwen3-tp-fp32-argmax-kernels-device-v11 = { path = "../../device/qwen3-tp-fp32-argmax-kernels-v11", version = "=0.1.0", optional = true, default-features = false, features = ["gfx950"] }
 ferric-qwen3-tp-wave-query-hoist-kernels-device-v14 = { path = "../../device/qwen3-tp-wave-query-hoist-kernels-v14", version = "=0.1.0", optional = true, default-features = false, features = ["gfx950"] }
 ferric-qwen3-tp-wave-rmsnorm-kernels-device-v15 = { path = "../../device/qwen3-tp-wave-rmsnorm-kernels-v15", version = "=0.1.0", optional = true, default-features = false, features = ["gfx950"] }
+ferric-qwen3-tp-parallel-kv-kernels-device-v16 = { path = "../../device/qwen3-tp-parallel-kv-kernels-v16", version = "=0.1.0", optional = true, default-features = false, features = ["gfx950"] }
 ferric-qwen3-all-kernels-worker-v3-verifier-v1 = { path = "../qwen3-all-kernels-worker-v3-verifier-v1", version = "=0.1.0" }
 ferric-spec = { path = "../../crates/ferric-spec", version = "=0.1.0" }
 rustix = { version = "=1.1.4", features = ["event", "fs", "net", "process", "rand", "time"] }

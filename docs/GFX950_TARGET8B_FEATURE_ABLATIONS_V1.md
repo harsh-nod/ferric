@@ -275,6 +275,85 @@ and [hashes](assets/asrock-target8b-feature-ablations-v1/rmsnorm-v15/SHA256SUMS)
 belong only to this fourth pair. All three earlier asset directories remain
 byte-identical.
 
+## Parallel KV Append V16
+
+This fifth matched cohort compares `--kv-append baseline` with
+`--kv-append parallel-v16`. Both arms use controller `7ef9f9...`, transaction
+worker `055037...`, and the same five images: paired main `2e677...`, FP32-v7
+head `b21c...`, wave-v11 argmax `86c3ee...`, wave-v15 norm `c33882...`, and
+parallel-v16 KV append `55f095...`. All five are loaded in both modes before
+allocation. The new baseline is a fresh capture, not the preceding norm
+candidate relabeled as a control. The only configured difference is `kv_append`.
+
+| Variant | TTFT (s) | Mean TPOT (s) | Post-first tokens/s | Observed rate / control | Setup (s) |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Serial KV append | 0.456338 | 0.086976 | 11.497466 | 1.000x | 213.311712 |
+| Parallel KV append v16 | 0.353535 | 0.080695 | 12.392285 | 1.078x | 211.002111 |
+
+The observed rate ratio is **1.077827x**, with **7.220768% lower** mean TPOT.
+The full 31-interval medians are **83.586903 ms** and **82.904579 ms**,
+respectively: a much smaller difference than the means. The raw plots below
+retain every interval, including the variation within each request.
+Both requests match every one of the 32 reference token IDs and decoded bytes
+and pass all 12 cohort acceptance checks. These host observations cover one
+unwarmed, nonisolated request per mode. They do not establish a stable or causal
+speedup, measure individual KV kernel durations, or justify multiplying ratios
+across the five cohorts.
+
+### Exact-Copy Mechanism
+
+The separate [instrumented packet profile](GFX950_TARGET8B_GPU_PROFILE_V1.md)
+identified serial KV append as a substantial absolute interval group, motivating
+this change. Its timings came from a different instrumented controller/worker
+cohort; they are not combined with this pair or used to derive a KV-kernel
+speedup.
+
+The [v16 source](../device/qwen3-tp-parallel-kv-kernels-v16/src/append.rs)
+launches 64 Wave64 workgroups, one for each physical token slot in four pages.
+Every group performs the existing bounds and slot-validation prepass. Only
+the group selected by the physical slot copies data: its 64 lanes each copy
+16 strided u16 words for K and V. The other groups do not write cache words.
+This is exact bit copying, including nonfinite BF16 encodings; it adds no
+floating-point arithmetic or reduction reassociation.
+
+Only **36 KV append symbols and grids per forward** change, from
+`ferric_qwen3_tp_batch_paged_kv_append_v2` with one workgroup to
+`ferric_qwen3_tp_batch_parallel_kv_append_v16` with 64 workgroups. The other
+580 packets, logical explicit arguments, buffer extents and access modes, guard policies, packet order,
+and all 73 wave norms remain unchanged. Both modes still execute 616 sequential
+AQL packets per forward, not a fused kernel or measured GPU-overlap schedule.
+The admitted selector is limited to TP1, one row, context 64, and four pages.
+Recording tests compare logical commands after normalizing only the kernel
+symbol and launch grid. Physical device-pointer bytes may differ between
+processes, and hidden launch-derived block counts intentionally differ.
+The frozen report's argument-byte shorthand denotes logical explicit argument
+encoding, not byte-identical relocated GPU kernargs across the two requests.
+
+Before this model pair, the actual current image passed 32 standalone cases:
+192 complete allocations and 384 guards were compared exactly, covering all
+65,536 u16 encodings across the fixtures. Independent replay checked 1,669
+wire records and all raw buffer bytes. The closed one-root native image has a
+368-byte kernarg (112 explicit plus 256 hidden), workgroup64/Wave64, no LDS or
+private storage, and no reported spills. Current checked emission, actual ABI
+admission, and ordinary five-image admission for both selectors passed.
+These checks do not validate other KV shapes or a general multirow model domain.
+
+![KV append selector observation, one unwarmed request per mode](assets/asrock-target8b-feature-ablations-v1/parallel-kv-v16/rates.svg)
+
+![All 62 actual host decode intervals for the KV append pair](assets/asrock-target8b-feature-ablations-v1/parallel-kv-v16/intervals.svg)
+
+The [baseline report](assets/asrock-target8b-feature-ablations-v1/parallel-kv-v16/control-report.json)
+and [parallel report](assets/asrock-target8b-feature-ablations-v1/parallel-kv-v16/candidate-report.json)
+are exact raw-capture-revalidated reports. The
+[contrast](assets/asrock-target8b-feature-ablations-v1/parallel-kv-v16/observed-contrast.json)
+retains all five image identities, the measured controller and source pins,
+36-packet scope, grids, admission evidence, and the logical argument/buffer contract.
+The [62-interval CSV](assets/asrock-target8b-feature-ablations-v1/parallel-kv-v16/intervals.csv),
+[generated table](assets/asrock-target8b-feature-ablations-v1/parallel-kv-v16/table.md),
+and [hashes](assets/asrock-target8b-feature-ablations-v1/parallel-kv-v16/SHA256SUMS)
+belong only to this fifth pair. All four earlier asset directories remain
+byte-identical.
+
 ## Measurement Scope
 
 The post-first rate is `31e9 / sum(the 31 decode intervals in nanoseconds)`.
@@ -298,6 +377,9 @@ The image and worker pairs use profile
 Both norm arms use
 `mfma-v3-fp32-v7-wave-attention-v11-v15-sidecars-tp1-616`, retain `wave-v11`
 argmax, and load the same norm sidecar with their explicit `--rmsnorm` selector.
+Both KV arms use
+`mfma-v3-fp32-v7-wave-attention-v11-v15-v16-sidecars-tp1-616`, retain wave argmax
+and wave norm, and load the same KV sidecar with their explicit `--kv-append` mode.
 
 The model revision is `b968826d9c46dd6066d109eabc6255188de91218`. The independent
 reference was generated earlier on MI300X. This checks one fixed prompt and
@@ -305,8 +387,8 @@ reference was generated earlier on MI300X. This checks one fixed prompt and
 
 ### The Remaining 700 Tokens/s Gap
 
-The highest observed rate here, 10.876773 tokens/s, is still far below 700 tokens/s. Register
-prefetching, fewer host checks, wave argmax, and wave normalization do not eliminate the model's BF16 weight
+The highest observed rate here, 12.392285 tokens/s, is still far below 700 tokens/s. Register
+prefetching, fewer host checks, wave argmax, wave normalization, and parallel KV copying do not eliminate the model's BF16 weight
 traffic. The existing
 [model-specific weight-streaming analysis](GFX950_DECODE_PERFORMANCE_V1.md#bf16-weight-streaming-bound)
 and [explicit bandwidth scenarios](GFX950_TARGET8B_ABLATIONS_V2.md#theoretical-context-not-a-measured-bar)
@@ -326,6 +408,7 @@ nor multiplication of separate cohort ratios demonstrates the 700-token/s goal.
 | Preparation-worker comparator | `7e654a33f32a3d382638eafceada3c0db44aa46237533836a51302e6eea4483f` |
 | Argmax selector comparator | `f862c587edc165c96a62cca057e07354b456068a7550b600b808378b51b238f2` |
 | Norm selector comparator | `1df745d231bb6f1a2666bb7a16179a681c945ae8a45312619ca728d225523eda` |
+| KV selector comparator | `444b597ed9afc0ece7919707a91b31edc3a436d6487ba605a70712b6dc563b75` |
 | Common numerical comparator | `90cd589fe9b98660f6efb3400775cd269af236688706f37eaedee2d12e92b975` |
 | Controller-v7 | `5b218caa6aa51c56749f64329054d29faf0cc766e401db2c41f58bc8d1324f48` |
 | Argmax cohort controller | `b4d180bc078b1c84bad374e55f5905b3ba407c0847e6c4255f8546adfaa5199a` |
@@ -341,6 +424,17 @@ nor multiplication of separate cohort ratios demonstrates the 700-token/s goal.
 | Norm actual compiler handoff | `348c74397e520f5dca74d655ec50d9207a57ef2b36b378266b2318a0fdacebb5` |
 | Norm canonical descriptor | `67ed3415901de9936ff4dd01bfdf06847b7cb23067268af6921456faf4cb47f2` |
 | Norm ordinary admission | `38318484211888d2d20da75985c7b8f8789dbf61907425031567ebea173928f9` |
+| Measured KV cohort controller | `7ef9f9e87a9fe1a5722dd3d1ab32c633de5ae82abfafd9d97443eb1e5880fa70` |
+| Measured KV controller source-v2 manifest | `6bc0ed1f8bf732cb48772f8e04a2f801960c222247366732b7f1f60eadcde1e2` |
+| KV kernel source manifest | `d24c70959d194d973d001e341acb78bf905857ad914a780278bf27a7a1911b66` |
+| KV image | `55f0953fc5e60279201d7523b5a11823170e1afcb48c90a985236ecb8518cb66` |
+| KV actual compiler handoff | `828f650ab7e0c644cfe25d84ac202f3640e36f39c539612ad216cddb06cfd2f3` |
+| KV canonical descriptor | `134aa309ba2a9eb7abf76762b3c588e965c2dc2ed7175f4b37fda6512b58c367` |
+| KV ordinary ABI admission | `c6b96a4b92d82244dd3d179dcfbae2269cb4eba27959ce37985208307c05aa94` |
+| KV five-image CLI admission | `767113d41542b0644e91d558f25d494d6b5baa43209de130a6985a0d158c0a12` |
+| KV standalone fixtures | `e8665f799a5488142f9639fde182c835bc7703143d60adbcd2812916616bd89b` |
+| KV standalone accepted report | `96e1ae3c884acc4f3125918eeb3bc7a28dcc344795bfc057d3f013f20586c292` |
+| KV standalone capture manifest | `daae62aec9776aed1b23b024f1f21c3e0e52063badff386c8af0a14eef63847b` |
 | Independent reference | `1ed868663df52a146dd7921f9fbb2cf1e1d0c0ceed8a7bfda030d65f8ec5b094` |
 | Paired source manifest | `b27b9cffc159ee82667d039056aa6a414569cc1309e25a5dca442279aba59fb0` |
 | Complete 15-root catalog | `d4a1e53ed7d8ca8bd0d29dded44192e6cbeac2b825174d9faa391fd414af99e6` |
@@ -393,6 +487,20 @@ interval recomputed from the 32 output timestamps. The checker publication is
 byte-identical to the comparator used for the accepted run. Later CPU-only
 test adjustments do not change or relabel the measured source-v3/controller.
 
+The KV pair requires the same 12 exact JSON statuses, with separate frozen
+plans and actual controller/source identities. Both model arms pin and replay
+the accepted 32-case standalone capture before and after execution. Independent
+model replay checks all five images, source files, admission records, raw
+capture manifests, predeclared commands, model metadata, clean worker closure,
+and all 31 intervals. Its published checker is byte-identical to the accepted
+model comparator; no earlier controller or image identity is substituted.
+
+The published KV crate differs from its measured source-v4 snapshot only by
+removal of one redundant final blank line in `Cargo.toml` and `Cargo.lock`.
+Kernel code and dependency entries are unchanged. The immutable source and
+binary identities above still describe the measured artifacts, not a rebuild
+of the publication tree.
+
 ## Reproduce The Reporting
 
 With `EVIDENCE` and `REFERENCE` pointing to the retained evidence and reference:
@@ -422,18 +530,25 @@ python3 -B tools/target_feature_ablation_plots_v1.py \
   --candidate-capture "$EVIDENCE/target8b-full-forward-rmsnorm-v15-v1-prep/independent-audit-v1/wave-v15" \
   --reference "$REFERENCE" \
   --output /tmp/ferric-rmsnorm-selector-observation-v1-rebuilt
+python3 -B tools/target_feature_ablation_plots_v1.py \
+  --family parallel-kv-v16 \
+  --control-capture "$EVIDENCE/target8b-full-forward-parallel-kv-v16-v1-prep/independent-audit-v1/baseline" \
+  --candidate-capture "$EVIDENCE/target8b-full-forward-parallel-kv-v16-v1-prep/independent-audit-v1/parallel-v16" \
+  --reference "$REFERENCE" \
+  --output /tmp/ferric-parallel-kv-selector-observation-v1-rebuilt
 PYTHONPATH=tools python3 -B -m unittest \
   test_target_mfma_paired_prefetch_v1 \
   test_target_full_forward_preparation_v1 \
   test_target_full_forward_argmax_v11_v1 \
   test_target_full_forward_rmsnorm_v15_v1 \
+  test_target_full_forward_parallel_kv_v16_v1 \
   test_target_feature_ablation_plots_v1
 ```
 
-The combined suite passes 79 CPU tests, including the reporter's 17 synthetic
-tests. They cover actual identity preservation,
+The combined suite passes 92 CPU tests, including the reporter's 18 synthetic
+tests and one mandatory public-asset reproduction test. They cover actual identity preservation,
 declared-axis matching, numerical scope, all interval values, exact report
-equality, source pinning, every seven- or 13-status postcheck line, all 12 norm JSON
+equality, source pinning, every seven- or 13-status postcheck line, all 12 norm and KV JSON
 statuses, and rejection before
 output creation. Synthetic fixtures are explicitly labeled and rejected by
 the production reference digest check; they provide no GPU or rate evidence.

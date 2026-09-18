@@ -49,6 +49,7 @@ const USAGE: &str = concat!(
     "[--head-precision bf16-v7-control|fp32-v7|bf16-v8-control|fp32-v8 --fp32-head-artifact DIR] ",
     "[--fp32-argmax serial-v7|wave-v11 --fp32-argmax-artifact DIR] ",
     "[--rmsnorm baseline|wave-v15 --rmsnorm-artifact DIR] ",
+    "[--kv-append baseline|parallel-v16 --kv-append-artifact DIR] ",
     "[--native-full-forward-timestamps off|on --native-timestamp-output ABS_PATH] ",
     "[--kv-pool-profile large-kv-v9 --large-kv-artifact DIR] ",
     "[--benchmark-control FILE] [--host-timing FILE] ",
@@ -66,6 +67,8 @@ struct Options {
     fp32_argmax: Option<Fp32Argmax>,
     rmsnorm_artifact: Option<PathBuf>,
     rmsnorm: Option<RmsNorm>,
+    kv_append_artifact: Option<PathBuf>,
+    kv_append: Option<KvAppend>,
     head_precision: Option<HeadPrecision>,
     large_kv_artifact: Option<PathBuf>,
     worker: PathBuf,
@@ -136,6 +139,21 @@ enum HeadPrecision {
     Fp32,
     Bf16ControlV8,
     Fp32V8,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum KvAppend {
+    Baseline,
+    ParallelV16,
+}
+
+impl KvAppend {
+    const fn label(self) -> &'static str {
+        match self {
+            Self::Baseline => "baseline",
+            Self::ParallelV16 => "parallel-v16",
+        }
+    }
 }
 
 impl HeadPrecision {
@@ -214,6 +232,8 @@ impl Options {
         let mut fp32_argmax = None;
         let mut rmsnorm_artifact = None;
         let mut rmsnorm = None;
+        let mut kv_append_artifact = None;
+        let mut kv_append = None;
         let mut head_precision = None;
         let mut large_kv = false;
         let mut large_kv_artifact = None;
@@ -302,6 +322,14 @@ impl Options {
                 "--fp32-head-artifact" => fp32_head_artifact = Some(PathBuf::from(value)),
                 "--fp32-argmax-artifact" => fp32_argmax_artifact = Some(PathBuf::from(value)),
                 "--rmsnorm-artifact" => rmsnorm_artifact = Some(PathBuf::from(value)),
+                "--kv-append-artifact" => kv_append_artifact = Some(PathBuf::from(value)),
+                "--kv-append" => {
+                    kv_append = Some(match value.as_str() {
+                        "baseline" => KvAppend::Baseline,
+                        "parallel-v16" => KvAppend::ParallelV16,
+                        _ => return Err("KV append must be baseline or parallel-v16".into()),
+                    });
+                }
                 "--rmsnorm" => {
                     rmsnorm = Some(match value.as_str() {
                         "baseline" => RmsNorm::Baseline,
@@ -625,6 +653,15 @@ impl Options {
         {
             return Err("RMSNorm requires both explicit mode and v15 artifact with MFMA-v7-wave full-forward, wave-v11 argmax and no native timestamp diagnostics".into());
         }
+        if kv_append.is_some() != kv_append_artifact.is_some()
+            || (kv_append.is_some()
+                && (!full_forward_mfma_v7_wave
+                    || fp32_argmax != Some(Fp32Argmax::WaveV11)
+                    || rmsnorm != Some(RmsNorm::WaveV15)
+                    || native_timestamps.is_some()))
+        {
+            return Err("KV append requires both explicit mode and v16 artifact with exact MFMA-v7-wave full-forward, wave-v11 argmax, wave-v15 RMSNorm and no timestamp diagnostics".into());
+        }
         Ok(Self {
             source: source.ok_or("--source is required")?,
             artifact: artifact.ok_or("--artifact is required")?,
@@ -634,6 +671,8 @@ impl Options {
             fp32_argmax,
             rmsnorm_artifact,
             rmsnorm,
+            kv_append_artifact,
+            kv_append,
             head_precision,
             large_kv_artifact,
             worker: worker.ok_or("--worker is required")?,
@@ -1089,6 +1128,13 @@ fn run_with_timing(
             EngineeringTpArtifactV1::open_wave_rmsnorm_v15(path).map_err(|error| error.to_string())
         })
         .transpose()?;
+    let kv_append_artifact = options
+        .kv_append_artifact
+        .as_ref()
+        .map(|path| {
+            EngineeringTpArtifactV1::open_parallel_kv_v16(path).map_err(|error| error.to_string())
+        })
+        .transpose()?;
     drop(admission_timing);
     let model_timing = timing.scope("setup_model");
     let model = EngineeringQwenModelV1::open(&options.source)?;
@@ -1178,6 +1224,9 @@ fn run_with_timing(
                 if let Some(rmsnorm) = &rmsnorm_artifact {
                     worker.load_additional_artifact(rmsnorm)?;
                 }
+                if let Some(kv) = &kv_append_artifact {
+                    worker.load_additional_artifact(kv)?;
+                }
                 if let Some(large) = &large_kv_artifact {
                     worker.load_additional_artifact(large)?;
                 }
@@ -1202,7 +1251,13 @@ fn run_with_timing(
     } else {
         EngineeringTpBatchExecutionV2::new
     };
-    let mut gpu = if let Some(rmsnorm) = &rmsnorm_artifact {
+    let mut gpu = if let Some(kv) = &kv_append_artifact {
+        EngineeringTpBatchExecutionV2::new_full_forward_with_argmax_v11_rmsnorm_v15_and_parallel_kv_v16(
+            workers, model.config(), model.target_weights(), model.layout(), &pool,
+            fp32_argmax_artifact.as_ref().ok_or("missing KV argmax admission")?,
+            rmsnorm_artifact.as_ref().ok_or("missing KV norm admission")?, kv,
+        )?
+    } else if let Some(rmsnorm) = &rmsnorm_artifact {
         EngineeringTpBatchExecutionV2::new_full_forward_with_argmax_v11_and_rmsnorm_v15(
             workers,
             model.config(),
@@ -1256,7 +1311,18 @@ fn run_with_timing(
         gpu.configure_ordered_batches(options.runtime.ordered_batches)?;
     }
     if options.runtime.full_forward {
-        if let Some(rmsnorm) = &rmsnorm_artifact {
+        if let Some(kv) = &kv_append_artifact {
+            gpu.configure_mfma_v7_wave_argmax_rmsnorm_parallel_kv_full_forward(
+                fp32_argmax_artifact
+                    .as_ref()
+                    .ok_or("missing KV argmax admission")?,
+                rmsnorm_artifact
+                    .as_ref()
+                    .ok_or("missing KV norm admission")?,
+                kv,
+                options.kv_append == Some(KvAppend::ParallelV16),
+            )?;
+        } else if let Some(rmsnorm) = &rmsnorm_artifact {
             gpu.configure_mfma_v7_wave_argmax_rmsnorm_full_forward(
                 fp32_argmax_artifact
                     .as_ref()
@@ -1375,7 +1441,9 @@ fn run_with_timing(
         }
         if options.runtime.full_forward {
             setup["runtime_full_forward"] = serde_json::json!(true);
-            setup["full_forward_profile"] = serde_json::json!(if options.rmsnorm.is_some() {
+            setup["full_forward_profile"] = serde_json::json!(if options.kv_append.is_some() {
+                "mfma-v3-fp32-v7-wave-attention-v11-v15-v16-sidecars-tp1-616"
+            } else if options.rmsnorm.is_some() {
                 "mfma-v3-fp32-v7-wave-attention-v11-v15-sidecars-tp1-616"
             } else if options.fp32_argmax.is_some() {
                 "mfma-v3-fp32-v7-wave-attention-v11-sidecar-tp1-616"
@@ -1394,6 +1462,15 @@ fn run_with_timing(
                 "artifact_hsaco_id":hex(rmsnorm.hsaco_id().as_bytes()),
                 "artifact_manifest_id":hex(rmsnorm.manifest_id().as_bytes()),
                 "artifact_handoff_id":hex(rmsnorm.handoff_id().as_bytes())
+            });
+        }
+        if let Some(kv) = &kv_append_artifact {
+            setup["kv_append"] =
+                serde_json::json!(options.kv_append.ok_or("missing KV append mode")?.label());
+            setup["kv_append_artifact"] = serde_json::json!({
+                "artifact_hsaco_id":hex(kv.hsaco_id().as_bytes()),
+                "artifact_manifest_id":hex(kv.manifest_id().as_bytes()),
+                "artifact_handoff_id":hex(kv.handoff_id().as_bytes())
             });
         }
         if let Some(large) = &large_kv_artifact {
@@ -1555,6 +1632,86 @@ fn main() -> std::process::ExitCode {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn parallel_kv_v16_cli_requires_exact_paired_full_forward_stack() {
+        for (mode, expected) in [
+            ("baseline", KvAppend::Baseline),
+            ("parallel-v16", KvAppend::ParallelV16),
+        ] {
+            let mut base = timestamp_base();
+            base.extend([
+                "--rmsnorm",
+                "wave-v15",
+                "--rmsnorm-artifact",
+                "/norm",
+                "--kv-append",
+                mode,
+                "--kv-append-artifact",
+                "/kv",
+            ]);
+            let parsed = args(&base).unwrap();
+            assert_eq!(parsed.kv_append, Some(expected));
+            assert_eq!(parsed.kv_append_artifact, Some(PathBuf::from("/kv")));
+            for flag in [
+                "--kv-append",
+                "--kv-append-artifact",
+                "--rmsnorm",
+                "--rmsnorm-artifact",
+                "--fp32-argmax",
+                "--fp32-argmax-artifact",
+            ] {
+                let mut changed = base.clone();
+                let index = changed.iter().position(|item| *item == flag).unwrap();
+                changed.drain(index..index + 2);
+                assert!(args(&changed).is_err(), "missing {flag}");
+            }
+            for (flag, value) in [
+                ("--kv-append", "auto"),
+                ("--rmsnorm", "baseline"),
+                ("--fp32-argmax", "serial-v7"),
+                ("--devices", "1,2"),
+                ("--batch-tokens", "2"),
+                ("--prefill-chunk", "2"),
+                ("--context", "128"),
+                ("--pages", "5"),
+                ("--attention", "baseline"),
+                ("--projection", "wave"),
+            ] {
+                let mut changed = base.clone();
+                let index = changed.iter().position(|item| *item == flag).unwrap();
+                changed[index + 1] = value;
+                assert!(args(&changed).is_err(), "{flag} {value}");
+            }
+            for mode in ["off", "on"] {
+                let mut changed = base.clone();
+                changed.extend([
+                    "--native-full-forward-timestamps",
+                    mode,
+                    "--native-timestamp-output",
+                    "/owned/frames",
+                ]);
+                assert!(args(&changed).is_err());
+            }
+            for flag in [
+                "--runtime-profile",
+                "--runtime-ordered-batches",
+                "--queue-rollover",
+                "--dispatch-sequences",
+                "--prune-output-head",
+            ] {
+                let mut changed = base.clone();
+                changed.push(flag);
+                assert!(args(&changed).is_err(), "{flag}");
+            }
+            for (flag, value) in [("--host-timing", "/timing"), ("--peer-artifact", "/peer")] {
+                let mut changed = base.clone();
+                changed.extend([flag, value]);
+                assert!(args(&changed).is_err(), "{flag}");
+            }
+        }
+        assert!(args(&timestamp_base()).unwrap().kv_append.is_none());
+    }
+
     #[test]
     fn full_forward_norm_requires_exact_paired_mode_and_wave_argmax() {
         for (mode, expected) in [

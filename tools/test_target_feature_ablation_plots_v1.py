@@ -2,8 +2,10 @@
 
 import copy
 import csv
+import hashlib
 import io
 import json
+import statistics
 import tempfile
 import unittest
 from pathlib import Path
@@ -15,10 +17,11 @@ from test_target_mfma_paired_prefetch_v1 import fixture as paired_fixture
 from test_target_full_forward_preparation_v1 import fixture as preparation_fixture
 from test_target_full_forward_argmax_v11_v1 import fixture as argmax_fixture
 from test_target_full_forward_rmsnorm_v15_v1 import fixture as rmsnorm_fixture
+from test_target_full_forward_parallel_kv_v16_v1 import fixture as kv_fixture
 
 
 FIXTURES = {"paired-prefetch": paired_fixture, "preparation-worker": preparation_fixture,
-            "argmax-v11": argmax_fixture, "rmsnorm-v15": rmsnorm_fixture}
+            "argmax-v11": argmax_fixture, "rmsnorm-v15": rmsnorm_fixture, "parallel-kv-v16": kv_fixture}
 
 
 def fixture(family):
@@ -42,7 +45,7 @@ def synthetic_capture(checker, family, directory, variant):
         "predeclared-expectation.json": json.dumps(plan).encode(),
         "stderr.log": checker.STDERR,
     }
-    if family == "rmsnorm-v15":
+    if family in ("rmsnorm-v15", "parallel-kv-v16"):
         inputs["postcheck-status.json"] = json.dumps(plots.COHORTS[family]["postchecks"]).encode()
     else:
         inputs["postcheck-status.txt"] = plots.COHORTS[family]["postchecks"]
@@ -57,6 +60,34 @@ def synthetic_capture(checker, family, directory, variant):
 
 
 class FeatureAblationPlotTests(unittest.TestCase):
+    def test_public_assets_present_and_byte_reproducible(self):
+        root = Path(__file__).resolve().parents[1] / "docs/assets/asrock-target8b-feature-ablations-v1"
+        names = {"control-report.json", "candidate-report.json", "observed-contrast.json",
+                 "intervals.svg", "rates.svg", "intervals.csv", "table.md", "SHA256SUMS"}
+        for family in plots.COHORTS:
+            with self.subTest(family=family), tempfile.TemporaryDirectory() as directory:
+                published = root / family
+                self.assertEqual({path.name for path in published.iterdir()}, names)
+                checker = plots.load_checker(family)
+                raw = [(published / name).read_bytes() for name in ("control-report.json", "candidate-report.json")]
+                for data in raw:
+                    timing = json.loads(data)["timing"]
+                    self.assertEqual(statistics.median(timing["decode_intervals_ns"]), timing["median_tpot_ns"])
+                output = Path(directory) / "rebuilt"
+                plots.generate(output, checker, family, [json.loads(data) for data in raw], raw)
+                for name in names:
+                    self.assertEqual((published / name).read_bytes(), (output / name).read_bytes())
+                for line in (published / "SHA256SUMS").read_text().splitlines():
+                    digest, name = line.split("  ")
+                    self.assertEqual(digest, hashlib.sha256((published / name).read_bytes()).hexdigest())
+                self.assertEqual(len(ET.parse(published / "intervals.svg").findall(".//{http://www.w3.org/2000/svg}circle")), 62)
+                points = list(csv.DictReader(io.StringIO((published / "intervals.csv").read_text())))
+                self.assertEqual(len(points), 62)
+                for name in names:
+                    data = (published / name).read_bytes()
+                    for private in (b"/home/", b"/tmp/", b"mi350-2", b"harmenon", b'"pid"'):
+                        self.assertNotIn(private, data)
+
     def test_each_family_preserves_actual_different_identities_and62_points(self):
         for family in plots.COHORTS:
             checker, reports = fixture(family)
@@ -95,6 +126,23 @@ class FeatureAblationPlotTests(unittest.TestCase):
                     self.assertEqual(contrast["bf16_rounding_boundaries_retained"], 2)
                     self.assertIs(contrast["fp32_sum_association_changed"], True)
                     self.assertIs(contrast["gpu_rmsnorm_duration_measured"], False)
+                elif family == "parallel-kv-v16":
+                    self.assertEqual(reports[0]["identities"], reports[1]["identities"])
+                    self.assertEqual(contrast["differing_identity_fields"], [])
+                    self.assertEqual(contrast["differing_configuration_fields"], ["kv_append"])
+                    self.assertEqual(contrast["kv_append_artifact"], checker.KV_ARTIFACT)
+                    self.assertEqual(contrast["kv_roots_by_variant"], checker.KV_ROOTS)
+                    self.assertEqual(contrast["kv_workgroups_per_packet_by_variant"], {"baseline": 1, "parallel-v16": 64})
+                    self.assertEqual(contrast["changed_kv_packets_per_forward"], 36)
+                    self.assertEqual(contrast["unchanged_wave_norm_packets_per_forward"], 73)
+                    self.assertEqual(contrast["loaded_images_per_variant"], 5)
+                    self.assertEqual(contrast["rmsnorm"], "wave-v15")
+                    self.assertEqual(contrast["fp32_argmax"], "wave-v11")
+                    self.assertIs(contrast["logical_explicit_arguments_unchanged"], True)
+                    self.assertIs(contrast["buffer_extents_and_access_modes_unchanged"], True)
+                    self.assertIs(contrast["physical_pointer_bytes_compared"], False)
+                    self.assertIs(contrast["hidden_launch_fields_unchanged"], False)
+                    self.assertIs(contrast["gpu_kv_duration_measured"], False)
                 else:
                     self.assertNotEqual(reports[0]["identities"], reports[1]["identities"])
                 self.assertEqual(contrast["differing_axis"], plots.COHORTS[family]["axis"])
@@ -268,6 +316,29 @@ class FeatureAblationPlotTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 plots.rows_and_contrast(checker, "paired-prefetch", reports)
 
+    def test_kv_selector_five_images_sources_geometry_and_unchanged_norm_are_exact(self):
+        checker, original = fixture("parallel-kv-v16")
+        mutations = [(key, "a" * 64) for key in checker.SOURCE_PINS]
+        mutations += [("kv_append", "baseline"), ("kv_append_artifact", {}),
+                      ("kv_root", checker.KV_ROOTS["baseline"]),
+                      ("kv_canonical_descriptor_sha256", "a" * 64),
+                      ("kv_admission_sha256", "a" * 64), ("kv_cli_admission_sha256", "a" * 64),
+                      ("kv_fixtures_sha256", "a" * 64), ("changed_kv_packets_per_forward", 35),
+                      ("changed_kv_packets_per_forward", 36.0), ("kv_workgroups_per_packet", 1),
+                      ("kv_workgroups_per_packet", 64.0), ("unchanged_wave_norm_packets_per_forward", 72),
+                      ("rmsnorm", "baseline"), ("rmsnorm_artifact", {}),
+                      ("fp32_argmax", "serial-v7"), ("fp32_argmax_artifact", {}),
+                      ("observed_rows", 16), ("sidecar_loaded_both_variants", False)]
+        for key, value in mutations:
+            reports = copy.deepcopy(original); reports[1][key] = value
+            with self.subTest(key=key), self.assertRaises(ValueError):
+                plots.rows_and_contrast(checker, "parallel-kv-v16", reports)
+        for key, value in (("kv_append", "baseline"), ("rmsnorm", "baseline"), ("fp32_argmax", "serial-v7")):
+            reports = copy.deepcopy(original); reports[1]["configuration"][key] = value
+            with self.assertRaises(ValueError): plots.rows_and_contrast(checker, "parallel-kv-v16", reports)
+        for family in ("paired-prefetch", "preparation-worker", "argmax-v11", "rmsnorm-v15"):
+            _, earlier = fixture(family)
+            with self.assertRaises(ValueError): plots.rows_and_contrast(checker, "parallel-kv-v16", [earlier[0], original[1]])
     def test_output_source_bytes_must_match_report_before_directory_creation(self):
         checker, reports = fixture("paired-prefetch")
         with tempfile.TemporaryDirectory() as directory:
@@ -321,7 +392,7 @@ class FeatureAblationPlotTests(unittest.TestCase):
                 reference_path = root / "synthetic-reference"
                 reference_path.write_bytes(b"synthetic-only-reference")
                 expected = plots.COHORTS[family]["postchecks"]
-                if family == "rmsnorm-v15":
+                if family in ("rmsnorm-v15", "parallel-kv-v16"):
                     variants = [json.dumps(dict(expected, **{field: value})).encode() for field in expected for value in (1, False)]
                     variants += [b"{}", json.dumps(dict(expected, extra=0)).encode(),
                                  json.dumps({key: value for key, value in expected.items() if key != "controller"}).encode()]

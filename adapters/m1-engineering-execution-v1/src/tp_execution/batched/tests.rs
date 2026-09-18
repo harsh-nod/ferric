@@ -10,6 +10,7 @@ mod full_forward;
 mod full_forward_argmax_v11;
 mod full_forward_mfma_v7;
 mod full_forward_mfma_v7_wave;
+mod full_forward_parallel_kv_v16;
 mod full_forward_rmsnorm_v15;
 mod large_kv;
 mod layer_c1_wave;
@@ -100,6 +101,7 @@ struct Recording {
     argmax_v11_loaded: Option<[u8; 32]>,
     query_hoist_v14_loaded: Option<[u8; 32]>,
     wave_rmsnorm_v15_loaded: Option<[u8; 32]>,
+    parallel_kv_v16_loaded: Option<[u8; 32]>,
     argmax_peer: Option<(u32, u32, u32)>,
 }
 
@@ -178,7 +180,9 @@ impl EngineeringTpRankTransportV1 for Recording {
                 || (self.query_hoist_v14_loaded == Some(image)
                     && kernels == crate::tp_artifact::ENGINEERING_TP_QUERY_HOIST_EXPORTS_V14)
                 || (self.wave_rmsnorm_v15_loaded == Some(image)
-                    && kernels == crate::tp_artifact::ENGINEERING_TP_WAVE_RMSNORM_EXPORTS_V15))
+                    && kernels == crate::tp_artifact::ENGINEERING_TP_WAVE_RMSNORM_EXPORTS_V15)
+                || (self.parallel_kv_v16_loaded == Some(image)
+                    && kernels == crate::tp_artifact::ENGINEERING_TP_PARALLEL_KV_EXPORTS_V16))
         {
             Ok(())
         } else {
@@ -527,7 +531,8 @@ impl EngineeringTpRankTransportV1 for Recording {
             "ferric_qwen3_draft_batch32_rope_v10" | "ferric_qwen3_tp_batch32_rope_v5" => ROPE,
             "ferric_qwen3_tp_batch32_paged_kv_append_v5"
             | "ferric_qwen3_draft_batch32_paged_kv_append_v10"
-            | "ferric_qwen3_tp_batch32_large_kv_append_v9" => APPEND,
+            | "ferric_qwen3_tp_batch32_large_kv_append_v9"
+            | "ferric_qwen3_tp_batch_parallel_kv_append_v16" => APPEND,
             "ferric_qwen3_tp_batch32_paged_gqa_bf16_f32_v5"
             | "ferric_qwen3_draft_batch32_paged_gqa_bf16_f32_v10"
             | "ferric_qwen3_tp_batch32_large_kv_paged_gqa_bf16_f32_v9"
@@ -672,7 +677,16 @@ impl EngineeringTpRankTransportV1 for Recording {
                     assert!(page < pages);
                     assert!(slots.insert((page, position % 16)));
                 }
-                assert_eq!(command.grid_workgroups, 1);
+                assert_eq!(
+                    command.grid_workgroups,
+                    if command.kernel
+                        == crate::tp_artifact::ENGINEERING_TP_PARALLEL_KV_EXPORTS_V16[0]
+                    {
+                        64
+                    } else {
+                        1
+                    }
+                );
             }
             ATTENTION | "ferric_qwen3_tp_wave_paged_gqa_bf16_v3" => {
                 let rows = scalar(&command, 6);
@@ -763,6 +777,7 @@ fn fixture_for_model(
             argmax_v11_loaded: None,
             query_hoist_v14_loaded: None,
             wave_rmsnorm_v15_loaded: None,
+            parallel_kv_v16_loaded: None,
             argmax_peer: None,
             rank,
             buffers: BTreeMap::new(),
@@ -877,6 +892,8 @@ fn fixture_for_model(
         admitted_query_hoist_v14: None,
         wave_rmsnorm_v15: None,
         admitted_wave_rmsnorm_v15: None,
+        parallel_kv_v16: None,
+        admitted_parallel_kv_v16: None,
     }
 }
 
