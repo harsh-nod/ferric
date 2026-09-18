@@ -430,6 +430,8 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
 
     /// Selects the separately admitted TP1 v7 head or its explicit BF16 control.
     /// The original BF16 logits allocation and all non-head arithmetic are retained.
+    /// Preselected wave attention is supported only with FP32 logits, target
+    /// MFMA projection and device TP1 residuals; configure the head last.
     /// # Errors
     /// Rejects repeated/late configuration, unsupported modes, or workspace allocation failure.
     pub fn configure_head_precision_v7(&mut self, fp32: bool) -> TpResult<()> {
@@ -699,13 +701,26 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
     }
 
     fn configure_head_precision(&mut self, fp32: bool, capacity: usize) -> TpResult<()> {
+        // The v3 wave root has the same six buffers and launch geometry as
+        // baseline attention. Admit only the separately tested v7 combination;
+        // this does not expand the wider ordered or BF16-logit profiles.
+        let wave_v7 = capacity == 16
+            && fp32
+            && self.inner.plan.model().role == Qwen3ModelRole::Target8B
+            && self.inner.plan.world_size() == 1
+            && self.inner.transports.len() == 1
+            && self.inner.transports[0].peer_group_rank().is_none()
+            && !self.inner.large_kv
+            && !self.inner.draft_v10
+            && self.projection.mode == super::EngineeringTpProjectionModeV3::Mfma
+            && self.reduction_mode() == EngineeringTpReductionModeV3::DeviceTp1V3;
         if self.head_profile_configured
             || self.last_batch != 0
             || self.poisoned
             || self.inner.closed
             || self.row_capacity != capacity
             || self.inner.ranks.len() != 1
-            || (self.wave_attention && capacity != 32)
+            || (self.wave_attention && capacity != 32 && !wave_v7)
             || self.inner.sequences.is_some()
             || self.inner.ordered_batches.is_some()
             || self.numerical.is_some()
@@ -716,7 +731,7 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
             )
         {
             return Err(format!(
-                "FP32 head profile requires fresh TP1/{capacity} rows, baseline or MFMA projection, wave attention only with 32 rows, no sequences or numerical capture"
+                "FP32 head profile requires fresh TP1/{capacity} rows, baseline or MFMA projection, wave attention with v8 or target v7 FP32/MFMA/device TP1, no sequences or numerical capture"
             ));
         }
         if fp32 {

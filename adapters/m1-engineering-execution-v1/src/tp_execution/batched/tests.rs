@@ -13,6 +13,7 @@ mod ordered_batches;
 mod ordered_scalar_v3;
 mod query_hoist_v14;
 mod speculative;
+mod v7_wave_attention;
 mod wave_rmsnorm_v15;
 
 use super::super::{
@@ -351,7 +352,9 @@ impl EngineeringTpRankTransportV1 for Recording {
         if self.failure == Some(Failure::AttentionSubmit)
             && matches!(
                 command.kernel,
-                "ferric_qwen3_tp_batch32_paged_gqa_bf16_f32_v5"
+                ATTENTION
+                    | "ferric_qwen3_tp_wave_paged_gqa_bf16_v3"
+                    | "ferric_qwen3_tp_batch32_paged_gqa_bf16_f32_v5"
                     | "ferric_qwen3_tp_batch32_wave_paged_gqa_bf16_v5"
                     | "ferric_qwen3_tp_batch32_wave_paged_gqa_query_hoist_bf16_v14"
             )
@@ -422,7 +425,9 @@ impl EngineeringTpRankTransportV1 for Recording {
         if self.failure == Some(Failure::AttentionWait)
             && matches!(
                 command.kernel,
-                "ferric_qwen3_tp_batch32_paged_gqa_bf16_f32_v5"
+                ATTENTION
+                    | "ferric_qwen3_tp_wave_paged_gqa_bf16_v3"
+                    | "ferric_qwen3_tp_batch32_paged_gqa_bf16_f32_v5"
                     | "ferric_qwen3_tp_batch32_wave_paged_gqa_bf16_v5"
                     | "ferric_qwen3_tp_batch32_wave_paged_gqa_query_hoist_bf16_v14"
             )

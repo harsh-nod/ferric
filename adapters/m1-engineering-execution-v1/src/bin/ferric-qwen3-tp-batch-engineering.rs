@@ -408,13 +408,18 @@ impl Options {
                 devices.len() != 1
                     || kernel_profile.wide32() != precision.wide32()
                     || runtime.sequences
-                    || (wave_attention && !precision.wide32())
+                    || (wave_attention
+                        && !precision.wide32()
+                        && !(precision == HeadPrecision::Fp32
+                            && kernel_profile == KernelProfile::Mfma
+                            && projection == ProjectionMode::Mfma
+                            && collective == EngineeringTpReductionModeV3::DeviceTp1V3))
                     || numerical.is_some()
                     || benchmark_control.is_some()
                     || !matches!(projection, ProjectionMode::Baseline | ProjectionMode::Mfma)
             })
         {
-            return Err("head requires both explicit options, TP1 with exact v7/16-row or v8/32-row profile, baseline or MFMA projection, wave attention only for v8, no sequences, numerical capture or replicas".into());
+            return Err("head requires both explicit options, TP1 with exact v7/16-row or v8/32-row profile, baseline or MFMA projection; wave attention needs v8 or v3-mfma/FP32-v7/device-tp1-v3, no sequences, numerical capture or replicas".into());
         }
         if large_kv != large_kv_artifact.is_some()
             || (large_kv
@@ -1294,6 +1299,88 @@ mod tests {
         ];
         base.extend(extra);
         Options::parse(base.into_iter().map(str::to_owned))
+    }
+
+    #[test]
+    fn v7_wave_attention_requires_fp32_mfma_device_tp1_without_other_profile_changes() {
+        let base = [
+            "--devices",
+            "1",
+            "--kernel-profile",
+            "v3-mfma",
+            "--projection",
+            "mfma",
+            "--attention",
+            "wave",
+            "--collective",
+            "device-tp1-v3",
+            "--head-precision",
+            "fp32-v7",
+            "--fp32-head-artifact",
+            "/v7",
+        ];
+        for rows in ["1", "3", "16"] {
+            for prune in [false, true] {
+                let mut values = base.to_vec();
+                values.extend(["--batch-tokens", rows, "--prefill-chunk", rows]);
+                if prune {
+                    values.push("--prune-output-head");
+                }
+                let options = args(&values).unwrap();
+                assert!(options.wave_attention);
+                assert_eq!(options.head_precision, Some(HeadPrecision::Fp32));
+                assert_eq!(options.projection, ProjectionMode::Mfma);
+                assert_eq!(
+                    options.collective,
+                    EngineeringTpReductionModeV3::DeviceTp1V3
+                );
+                assert_eq!(options.prune_output_head, prune);
+                assert!(!options.runtime.ordered_batches && !options.ordered_scalar_v3);
+            }
+        }
+        for (flag, value) in [
+            ("--devices", "1,2"),
+            ("--kernel-profile", "v2"),
+            ("--kernel-profile", "v3-wave"),
+            ("--kernel-profile", "v5-mfma32"),
+            ("--projection", "baseline"),
+            ("--projection", "wave"),
+            ("--projection", "auto"),
+            ("--collective", "host-staged-reuse-v3"),
+            ("--head-precision", "bf16-v7-control"),
+            ("--head-precision", "fp32-v8"),
+        ] {
+            let mut values = base.to_vec();
+            let index = values.iter().position(|&value| value == flag).unwrap();
+            values[index + 1] = value;
+            assert!(args(&values).is_err(), "{flag}={value}");
+        }
+        for extra in [
+            vec!["--dispatch-sequences"],
+            vec!["--runtime-ordered-batches"],
+            vec!["--runtime-ordered-scalar-v3"],
+            vec!["--benchmark-control", "/replica"],
+            vec![
+                "--kv-pool-profile",
+                "large-kv-v9",
+                "--large-kv-artifact",
+                "/v9",
+            ],
+            vec![
+                "--numerical-capture",
+                "/capture",
+                "--numerical-batch",
+                "2",
+                "--numerical-layer",
+                "0",
+                "--numerical-projection",
+                "q",
+            ],
+        ] {
+            let mut values = base.to_vec();
+            values.extend(extra);
+            assert!(args(&values).is_err());
+        }
     }
 
     #[test]
