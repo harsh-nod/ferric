@@ -124,13 +124,25 @@ pub(super) fn bind(
         let Some(EngineeringTpArgumentV1::U32(rows)) = command.arguments.get(2) else {
             return Err("argmax v11 row argument is missing".into());
         };
-        if capacity != 32
+        if !matches!(capacity, 16 | 32)
             || command.workgroup_size != 64
             || command.arguments.len() != 3
-            || !(1..=32).contains(rows)
+            || !(1..=capacity).contains(rows)
             || command.grid_workgroups != *rows
         {
             return Err("argmax v11 requires exactly one Wave64 group per active row".into());
+        }
+        if capacity == 16 {
+            use super::EngineeringTpBufferAccessV1::{Read, Write};
+            if *rows != 1
+                || command.arguments[..2].iter().enumerate().any(|(index, arg)| {
+                    !matches!(arg, EngineeringTpArgumentV1::Buffer { offset, elements, element_bytes, access, .. }
+                        if *offset == 0 && *elements == (if index == 0 { 16 * 151_936 } else { 16 })
+                        && *element_bytes == 4 && *access == (if index == 0 { Read } else { Write }))
+                })
+            {
+                return Err("capacity16 argmax v11 requires exact single-row full-forward buffers".into());
+            }
         }
         return Ok(command);
     }

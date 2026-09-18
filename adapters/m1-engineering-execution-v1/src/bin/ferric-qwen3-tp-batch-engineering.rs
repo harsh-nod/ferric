@@ -47,6 +47,7 @@ const USAGE: &str = concat!(
     "[--peer-artifact DIR] [--kernel-profile v2|v3-wave|v3-mfma|v5-wave32|v5-mfma32] ",
     "[--projection baseline|wave|mfma|auto] [--attention baseline|wave] ",
     "[--head-precision bf16-v7-control|fp32-v7|bf16-v8-control|fp32-v8 --fp32-head-artifact DIR] ",
+    "[--fp32-argmax serial-v7|wave-v11 --fp32-argmax-artifact DIR] ",
     "[--kv-pool-profile large-kv-v9 --large-kv-artifact DIR] ",
     "[--benchmark-control FILE] [--host-timing FILE] ",
     "[--numerical-capture DIR --numerical-batch N --numerical-layer N --numerical-projection q|k|v|o|gate|up|down]"
@@ -59,6 +60,8 @@ struct Options {
     artifact: PathBuf,
     peer_artifact: Option<PathBuf>,
     fp32_head_artifact: Option<PathBuf>,
+    fp32_argmax_artifact: Option<PathBuf>,
+    fp32_argmax: Option<Fp32Argmax>,
     head_precision: Option<HeadPrecision>,
     large_kv_artifact: Option<PathBuf>,
     worker: PathBuf,
@@ -90,6 +93,21 @@ struct NumericalOptions {
     batch: u64,
     layer: u32,
     role: NumericalRole,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum Fp32Argmax {
+    SerialV7,
+    WaveV11,
+}
+
+impl Fp32Argmax {
+    const fn label(self) -> &'static str {
+        match self {
+            Self::SerialV7 => "serial-v7",
+            Self::WaveV11 => "wave-v11",
+        }
+    }
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -172,6 +190,8 @@ impl Options {
         let mut wave_attention = false;
         let mut peer_artifact = None;
         let mut fp32_head_artifact = None;
+        let mut fp32_argmax_artifact = None;
+        let mut fp32_argmax = None;
         let mut head_precision = None;
         let mut large_kv = false;
         let mut large_kv_artifact = None;
@@ -257,6 +277,14 @@ impl Options {
                 "--artifact" => artifact = Some(PathBuf::from(value)),
                 "--peer-artifact" => peer_artifact = Some(PathBuf::from(value)),
                 "--fp32-head-artifact" => fp32_head_artifact = Some(PathBuf::from(value)),
+                "--fp32-argmax-artifact" => fp32_argmax_artifact = Some(PathBuf::from(value)),
+                "--fp32-argmax" => {
+                    fp32_argmax = Some(match value.as_str() {
+                        "serial-v7" => Fp32Argmax::SerialV7,
+                        "wave-v11" => Fp32Argmax::WaveV11,
+                        _ => return Err("unknown explicit FP32 argmax profile".into()),
+                    });
+                }
                 "--head-precision" => {
                     head_precision = Some(match value.as_str() {
                         "bf16-v7-control" => HeadPrecision::Bf16Control,
@@ -543,11 +571,18 @@ impl Options {
         {
             return Err("full-forward requires its exact scalar-v3/BF16 or MFMA-v3/FP32-v7 selector and matching baseline/wave attention, TP1, device-tp1-v3, one row/chunk, context64/pages4, unpruned head and disabled prefix cache; other submission modes, extra sidecars, live input and instrumentation are unsupported".into());
         }
+        if fp32_argmax.is_some() != fp32_argmax_artifact.is_some()
+            || (fp32_argmax.is_some() && !full_forward_mfma_v7_wave)
+        {
+            return Err("FP32 argmax requires both explicit mode and v11 artifact with the exact MFMA-v7-wave full-forward profile".into());
+        }
         Ok(Self {
             source: source.ok_or("--source is required")?,
             artifact: artifact.ok_or("--artifact is required")?,
             peer_artifact,
             fp32_head_artifact,
+            fp32_argmax_artifact,
+            fp32_argmax,
             head_precision,
             large_kv_artifact,
             worker: worker.ok_or("--worker is required")?,
@@ -988,6 +1023,13 @@ fn run_with_timing(
             .map_err(|error| error.to_string())
         })
         .transpose()?;
+    let fp32_argmax_artifact = options
+        .fp32_argmax_artifact
+        .as_ref()
+        .map(|path| {
+            EngineeringTpArtifactV1::open_fp32_argmax32_v11(path).map_err(|error| error.to_string())
+        })
+        .transpose()?;
     drop(admission_timing);
     let model_timing = timing.scope("setup_model");
     let model = EngineeringQwenModelV1::open(&options.source)?;
@@ -1070,6 +1112,9 @@ fn run_with_timing(
                 if let Some(head) = &fp32_head_artifact {
                     worker.load_additional_artifact(head)?;
                 }
+                if let Some(argmax) = &fp32_argmax_artifact {
+                    worker.load_additional_artifact(argmax)?;
+                }
                 if let Some(large) = &large_kv_artifact {
                     worker.load_additional_artifact(large)?;
                 }
@@ -1094,13 +1139,24 @@ fn run_with_timing(
     } else {
         EngineeringTpBatchExecutionV2::new
     };
-    let mut gpu = driver_constructor(
-        workers,
-        model.config(),
-        model.target_weights(),
-        model.layout(),
-        &pool,
-    )?;
+    let mut gpu = if let Some(argmax) = &fp32_argmax_artifact {
+        EngineeringTpBatchExecutionV2::new_full_forward_with_argmax_v11(
+            workers,
+            model.config(),
+            model.target_weights(),
+            model.layout(),
+            &pool,
+            argmax,
+        )?
+    } else {
+        driver_constructor(
+            workers,
+            model.config(),
+            model.target_weights(),
+            model.layout(),
+            &pool,
+        )?
+    };
     drop(resident_timing);
     gpu.configure_host_timing(timing.clone())?;
     let policies_timing = timing.scope("setup_execution_policies");
@@ -1125,7 +1181,12 @@ fn run_with_timing(
         gpu.configure_ordered_batches(options.runtime.ordered_batches)?;
     }
     if options.runtime.full_forward {
-        if options.full_forward_mfma_v7_wave {
+        if let Some(argmax) = &fp32_argmax_artifact {
+            gpu.configure_mfma_v7_wave_argmax_full_forward(
+                argmax,
+                options.fp32_argmax == Some(Fp32Argmax::WaveV11),
+            )?;
+        } else if options.full_forward_mfma_v7_wave {
             gpu.configure_mfma_v7_wave_full_forward()?;
         } else if options.full_forward_mfma_v7 {
             gpu.configure_mfma_v7_full_forward()?;
@@ -1231,14 +1292,15 @@ fn run_with_timing(
         }
         if options.runtime.full_forward {
             setup["runtime_full_forward"] = serde_json::json!(true);
-            setup["full_forward_profile"] =
-                serde_json::json!(if options.full_forward_mfma_v7_wave {
-                    "mfma-v3-fp32-v7-wave-attention-tp1-616"
-                } else if options.full_forward_mfma_v7 {
-                    "mfma-v3-fp32-v7-tp1-616"
-                } else {
-                    "scalar-v3-tp1-bf16-616"
-                });
+            setup["full_forward_profile"] = serde_json::json!(if options.fp32_argmax.is_some() {
+                "mfma-v3-fp32-v7-wave-attention-v11-sidecar-tp1-616"
+            } else if options.full_forward_mfma_v7_wave {
+                "mfma-v3-fp32-v7-wave-attention-tp1-616"
+            } else if options.full_forward_mfma_v7 {
+                "mfma-v3-fp32-v7-tp1-616"
+            } else {
+                "scalar-v3-tp1-bf16-616"
+            });
         }
         if let Some(large) = &large_kv_artifact {
             setup["kv_pool_profile"] = serde_json::json!("large-kv-v9");
@@ -1294,6 +1356,19 @@ fn run_with_timing(
                 "artifact_handoff_id":hex(head.handoff_id().as_bytes())
             });
             setup["fp32_head_workspace_bytes"] = serde_json::json!(fp32_head_workspace_bytes);
+        }
+        if let Some(argmax) = &fp32_argmax_artifact {
+            setup["fp32_argmax"] = serde_json::json!(
+                options
+                    .fp32_argmax
+                    .ok_or("missing FP32 argmax mode")?
+                    .label()
+            );
+            setup["fp32_argmax_artifact"] = serde_json::json!({
+                "artifact_hsaco_id":hex(argmax.hsaco_id().as_bytes()),
+                "artifact_manifest_id":hex(argmax.manifest_id().as_bytes()),
+                "artifact_handoff_id":hex(argmax.handoff_id().as_bytes())
+            });
         }
         if timing.is_enabled() {
             diagnostics.setup = Some(setup.clone());
@@ -1661,6 +1736,91 @@ mod tests {
         }
         enabled.retain(|flag| *flag != "--disable-prefix-cache");
         assert!(args(&enabled).is_err());
+    }
+
+    #[test]
+    fn full_forward_argmax_v11_requires_same_sidecar_and_exact_wave_profile_for_both_modes() {
+        let base = [
+            "--devices",
+            "1",
+            "--kernel-profile",
+            "v3-mfma",
+            "--projection",
+            "mfma",
+            "--attention",
+            "wave",
+            "--collective",
+            "device-tp1-v3",
+            "--head-precision",
+            "fp32-v7",
+            "--fp32-head-artifact",
+            "/head",
+            "--batch-tokens",
+            "1",
+            "--prefill-chunk",
+            "1",
+            "--context",
+            "64",
+            "--pages",
+            "4",
+            "--disable-prefix-cache",
+            "--runtime-full-forward-mfma-v7-wave",
+        ];
+        assert!(args(&base).unwrap().fp32_argmax.is_none());
+        for (mode, expected) in [
+            ("serial-v7", Fp32Argmax::SerialV7),
+            ("wave-v11", Fp32Argmax::WaveV11),
+        ] {
+            let mut enabled = base.to_vec();
+            enabled.extend(["--fp32-argmax", mode, "--fp32-argmax-artifact", "/argmax"]);
+            let parsed = args(&enabled).unwrap();
+            assert_eq!(parsed.fp32_argmax, Some(expected));
+            assert_eq!(parsed.fp32_argmax_artifact, Some(PathBuf::from("/argmax")));
+            assert!(parsed.runtime.full_forward && parsed.full_forward_mfma_v7_wave);
+            for flag in ["--fp32-argmax", "--fp32-argmax-artifact"] {
+                let mut missing = enabled.clone();
+                let position = missing.iter().position(|item| *item == flag).unwrap();
+                missing.drain(position..position + 2);
+                assert!(args(&missing).is_err());
+            }
+            for (flag, value) in [
+                ("--attention", "baseline"),
+                ("--head-precision", "bf16-v7-control"),
+                ("--head-precision", "fp32-v8"),
+                ("--kernel-profile", "v5-mfma32"),
+                ("--projection", "baseline"),
+                ("--batch-tokens", "2"),
+                ("--context", "128"),
+                ("--pages", "5"),
+                ("--collective", "host-staged-v1"),
+                ("--devices", "1,2"),
+                ("--fp32-argmax", "auto"),
+            ] {
+                let mut changed = enabled.clone();
+                let position = changed.iter().position(|item| *item == flag).unwrap();
+                changed[position + 1] = value;
+                assert!(args(&changed).is_err(), "{flag} {value}");
+            }
+            for extra in [
+                vec!["--runtime-ordered-batches"],
+                vec!["--runtime-profile"],
+                vec!["--prune-output-head"],
+                vec!["--queue-rollover"],
+                vec!["--host-timing", "/timing"],
+                vec!["--runtime-full-forward-mfma-v7"],
+                vec!["--fp32-argmax", mode],
+            ] {
+                let mut changed = enabled.clone();
+                changed.extend(extra);
+                assert!(args(&changed).is_err());
+            }
+            let without_seal = enabled
+                .iter()
+                .copied()
+                .filter(|flag| *flag != "--runtime-full-forward-mfma-v7-wave")
+                .collect::<Vec<_>>();
+            assert!(args(&without_seal).is_err());
+        }
     }
 
     #[test]

@@ -60,7 +60,8 @@ Qwen3-0.6B and Qwen3-8B decode observations on MI350X. See the
 [draft configurations and host timelines](docs/GFX950_DECODE_OBSERVATIONS_V1.md),
 [two-token target-model smoke](docs/GFX950_TARGET8B_SMOKE_V1.md),
 [32-token target-model ablations](docs/GFX950_TARGET8B_ABLATIONS_V2.md),
-[full-forward submission comparisons](docs/GFX950_TARGET8B_FULL_FORWARD_V2.md), and
+[full-forward submission comparisons](docs/GFX950_TARGET8B_FULL_FORWARD_V2.md),
+[paired-prefetch and preparation-worker observations](docs/GFX950_TARGET8B_FEATURE_ABLATIONS_V1.md), and
 [single-request Qwen3-8B performance protocol](docs/GFX950_DECODE_PERFORMANCE_V1.md).
 These diagnostics do not complete the production milestone, demonstrate GPU
 overlap, or establish a 700 tokens/s result.

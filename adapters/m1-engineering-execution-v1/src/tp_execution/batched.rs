@@ -40,6 +40,7 @@ enum FullForwardProfile {
     ScalarBf16,
     MfmaFp32V7,
     MfmaFp32V7WaveAttention,
+    MfmaFp32V7WaveAttentionArgmaxV11,
 }
 
 const MAX_ROWS: usize = 16;
@@ -125,6 +126,40 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
         pool: &EngineeringTpPagedPoolV1,
     ) -> TpResult<Self> {
         Self::new_bounded(transports, model, weights, layout, pool, 32, false)
+    }
+
+    /// Admits the same v11 sidecar for both single-row full-forward argmax modes.
+    /// Selection is deferred until the exact MFMA-v7/wave-attention profile is sealed.
+    /// # Errors
+    /// Rejects a wrong or unloaded image, stale transport, or unsupported allocation.
+    pub fn new_full_forward_with_argmax_v11(
+        mut transports: Vec<R>,
+        model: ModelConfig,
+        weights: &[u8],
+        layout: &AuthenticatedModelWeightLayout,
+        pool: &EngineeringTpPagedPoolV1,
+        artifact: &crate::tp_artifact::EngineeringTpArtifactV1,
+    ) -> TpResult<Self> {
+        let Some(binding) = artifact.fp32_argmax_binding_v11() else {
+            for transport in &mut transports {
+                let _ = transport.close();
+            }
+            return Err("full-forward argmax requires its exact admitted v11 image".into());
+        };
+        Self::new_profile(
+            transports,
+            model,
+            weights,
+            layout,
+            pool,
+            BatchedProfile::Target {
+                rows: 16,
+                large_kv: false,
+                argmax_v11: Some(binding),
+                query_hoist_v14: None,
+                wave_rmsnorm_v15: None,
+            },
+        )
     }
 
     /// Binds a separately loaded v11 image before allocating the unchanged v5/v8 buffers.
@@ -320,12 +355,12 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
                 validate_pool_binding(&mut transports, model, pool, row_capacity, large_kv)
                     .and_then(|()| {
                         if let Some(image) = admitted_argmax_v11 {
-                            validate_argmax_binding_v11(
-                                &mut transports,
-                                row_capacity,
-                                large_kv,
-                                image,
-                            )?;
+                            let validate = if row_capacity == 16 {
+                                validate_full_forward_argmax_binding_v11
+                            } else {
+                                validate_argmax_binding_v11
+                            };
+                            validate(&mut transports, row_capacity, large_kv, image)?;
                         }
                         if let Some(image) = admitted_query_hoist_v14 {
                             validate_query_hoist_binding_v14(
@@ -1189,16 +1224,57 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
         self.configure_full_forward(FullForwardProfile::MfmaFp32V7WaveAttention)
     }
 
+    /// Seals the exact single-row MFMA-v7/wave-attention profile with a v11 sidecar.
+    /// Both modes require the same preallocation admission; only `wave_argmax`
+    /// changes the final packet from serial v7 to cooperative v11.
+    /// # Errors
+    /// Rejects missing/mismatched admission, unsupported profiles or a started stream.
+    pub fn configure_mfma_v7_wave_argmax_full_forward(
+        &mut self,
+        artifact: &crate::tp_artifact::EngineeringTpArtifactV1,
+        wave_argmax: bool,
+    ) -> TpResult<()> {
+        let binding = artifact
+            .fp32_argmax_binding_v11()
+            .ok_or("full-forward argmax requires its exact admitted v11 image")?;
+        self.configure_full_forward_argmax_binding_v11(binding, wave_argmax)
+    }
+
+    fn configure_full_forward_argmax_binding_v11(
+        &mut self,
+        binding: crate::tp_artifact::Fp32ArgmaxBindingV11,
+        wave_argmax: bool,
+    ) -> TpResult<()> {
+        if self.admitted_argmax_v11 != Some(binding) {
+            return Err("full-forward argmax binding differs from preallocation admission".into());
+        }
+        self.configure_full_forward(FullForwardProfile::MfmaFp32V7WaveAttentionArgmaxV11)?;
+        self.fp32_argmax_v11 = wave_argmax.then_some(binding);
+        Ok(())
+    }
+
     fn configure_full_forward(&mut self, profile: FullForwardProfile) -> TpResult<()> {
-        let attention_matches =
-            self.wave_attention == matches!(profile, FullForwardProfile::MfmaFp32V7WaveAttention);
+        let attention_matches = self.wave_attention
+            == matches!(
+                profile,
+                FullForwardProfile::MfmaFp32V7WaveAttention
+                    | FullForwardProfile::MfmaFp32V7WaveAttentionArgmaxV11
+            );
+        let argmax_matches = self.fp32_argmax_v11.is_none()
+            && (self.admitted_argmax_v11.is_some()
+                == matches!(
+                    profile,
+                    FullForwardProfile::MfmaFp32V7WaveAttentionArgmaxV11
+                ));
         let arithmetic_matches = match profile {
             FullForwardProfile::ScalarBf16 => {
                 self.projection.mode == super::EngineeringTpProjectionModeV3::Baseline
                     && !self.head_profile_configured
                     && self.fp32_logits.is_none()
             }
-            FullForwardProfile::MfmaFp32V7 | FullForwardProfile::MfmaFp32V7WaveAttention => {
+            FullForwardProfile::MfmaFp32V7
+            | FullForwardProfile::MfmaFp32V7WaveAttention
+            | FullForwardProfile::MfmaFp32V7WaveAttentionArgmaxV11 => {
                 self.projection.mode == super::EngineeringTpProjectionModeV3::Mfma
                     && self.head_profile_configured
                     && self.fp32_logits.is_some_and(|logits| {
@@ -1235,8 +1311,7 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
             || self.c1_wave_layers
             || !attention_matches
             || self.prune_output_head
-            || self.fp32_argmax_v11.is_some()
-            || self.admitted_argmax_v11.is_some()
+            || !argmax_matches
             || self.query_hoist_v14.is_some()
             || self.admitted_query_hoist_v14.is_some()
             || self.wave_rmsnorm_v15.is_some()
@@ -1247,6 +1322,7 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
                 FullForwardProfile::ScalarBf16 => "full-forward scalar-v3 requires fresh Target8B TP1/capacity16/context64/pages4, baseline projection/attention, device TP1 and the unpruned BF16 head",
                 FullForwardProfile::MfmaFp32V7 => "full-forward MFMA-v7 requires fresh Target8B TP1/capacity16/context64/pages4, MFMA-v3 projection, baseline attention, device TP1 and the unpruned FP32-v7 head",
                 FullForwardProfile::MfmaFp32V7WaveAttention => "full-forward MFMA-v7-wave requires fresh Target8B TP1/capacity16/context64/pages4, MFMA-v3 projection, wave attention, device TP1 and the unpruned FP32-v7 head",
+                FullForwardProfile::MfmaFp32V7WaveAttentionArgmaxV11 => "full-forward MFMA-v7-wave argmax requires the exact fresh capacity16 profile and preallocated v11 admission",
             }.into());
         }
         self.inner.full_forward_enabled = true;
@@ -1294,6 +1370,14 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
         output_rows: &[usize],
     ) -> TpResult<EngineeringTpBatchOutputV2> {
         let _timing = self.inner.timing.batch(batch.id());
+        if self.row_capacity == 16
+            && self.admitted_argmax_v11.is_some()
+            && !self.inner.full_forward_enabled
+        {
+            return Err(
+                "capacity16 argmax sidecar requires its sealed full-forward profile".into(),
+            );
+        }
         self.validate(batch)?;
         if self.inner.full_forward_enabled && batch.rows().len() != 1 {
             return Err("full-forward execution requires exactly one physical row".into());
@@ -1938,6 +2022,27 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
             Ok(output_rows.iter().map(|&row| choices[row]).collect())
         }
     }
+}
+
+fn validate_full_forward_argmax_binding_v11<R: EngineeringTpRankTransportV1>(
+    transports: &mut [R],
+    row_capacity: usize,
+    large_kv: bool,
+    image: crate::tp_artifact::Fp32ArgmaxBindingV11,
+) -> TpResult<()> {
+    if row_capacity != 16
+        || large_kv
+        || transports.len() != 1
+        || transports[0].peer_group_rank().is_some()
+        || !transports[0].supports_full_forward()
+        || transports[0].supports_queue_rollover()
+    {
+        return Err("full-forward argmax requires fresh nonpeer TP1/capacity16 storage".into());
+    }
+    transports[0].require_loaded_image(
+        image.hsaco,
+        &crate::tp_artifact::ENGINEERING_TP_FP32_ARGMAX32_EXPORTS_V11,
+    )
 }
 
 fn validate_argmax_binding_v11<R: EngineeringTpRankTransportV1>(
