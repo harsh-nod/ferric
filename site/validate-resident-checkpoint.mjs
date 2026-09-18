@@ -9,7 +9,7 @@ export function validateResidentCheckpoint(value, updated) {
   const checkpoint = JSON.parse(JSON.stringify(value));
   exactKeys(checkpoint, ["date", "scope", "implementationPrivate", "m1OpenGates",
     "nativeServingQualified", "fullAcceptanceCatchupImplemented", "newGpuObservation",
-    "newPerformanceMeasurement", "nativeRedirectOverview", "overview", "earlierOverview", "integration", "followup", "selection", "host", "compiler", "remaining"]);
+    "newPerformanceMeasurement", "currentCpuOverview", "nativeRedirectOverview", "overview", "earlierOverview", "integration", "followup", "selection", "host", "compiler", "remaining"]);
   assert.equal(updated, "2026-09-18");
   assert.equal(checkpoint.date, updated);
   assert.equal(checkpoint.implementationPrivate, true);
@@ -20,6 +20,24 @@ export function validateResidentCheckpoint(value, updated) {
     assert.equal(checkpoint[key], false, key);
   }
   assert.equal(checkpoint.scope, "Private resident integration; source-bound engineering observations, not qualification");
+  for (const claim of [
+    "Ferric 7544c3e4 implements fresh 1..8-member S8/T128 prefill and the first authenticated S8/K4 round lifecycle",
+    "781 tests with nine ignored",
+    "52 pending-Verus bodies, not proofs",
+    "affb1d48 passes 363 library, 24 CLI, 63 batch, 36 comparator and 27 reference-parser CPU tests",
+    "e336ac3a passes 11 CPU tests and admission of the actual historical evidence",
+    "without a fresh reference execution",
+    "compiler 46d189e5; adoption of upstream 930342d9 is pending",
+    "Builds and CPU tests remain on mi300x",
+    "15:45:35 UTC observation after reboot reports 13 minutes uptime",
+    "only /dev/dri/card0, and no amdgpu, /dev/kfd or KFD topology",
+    "earlier 15:35 UTC snapshot saw eight accelerators on PCI",
+    "neither observation is a reservation or launch admission",
+    "no driver or host changes were made",
+    "no new native tensor comparison, TP8, performance, serving or protected qualification result",
+    "all 33 gates remain open",
+    "earlier two-token ' Paris.' pair below retains its b700 controller and 6f GPU-product attribution",
+  ]) assert(checkpoint.currentCpuOverview.includes(claim), claim);
   for (const claim of [
     "Ferric dc75d928 adopts fe2o3 a167 through the exact 80-file source transition",
     "50 phases, 48 source-gate tests and 32 locked graphs pass",
@@ -3397,6 +3415,7 @@ export function testResidentCheckpointRejections(value, updated) {
     (x) => { x.nativeServingQualified = true; },
     (x) => { x.fullAcceptanceCatchupImplemented = false; },
     (x) => { x.newGpuObservation = false; },
+    (x) => { x.currentCpuOverview = x.nativeRedirectOverview; },
     (x) => { x.nativeRedirectOverview = x.overview; },
     (x) => { x.overview = x.earlierOverview; },
     (x) => { x.earlierOverview = x.overview; },
