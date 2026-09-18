@@ -1,0 +1,9 @@
+schema=FerricTargetProcessResourcesV1
+scope=controller-and-waited-children-including-setup-and-teardown
+user_seconds=151.65
+system_seconds=30.33
+elapsed_seconds=213.34
+max_rss_kib=16118188
+voluntary_context_switches=977836
+involuntary_context_switches=1532
+command_exit_status=0

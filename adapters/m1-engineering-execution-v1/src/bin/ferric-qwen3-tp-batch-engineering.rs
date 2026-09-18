@@ -42,7 +42,7 @@ const USAGE: &str = concat!(
     "[--batch-tokens 16] [--prefill-chunk 16] [--context 128] [--pages 64] ",
     "[--cache-ttl 1024] [--max-batches 240] [--disable-prefix-cache] [--prune-output-head] ",
     "[--runtime-cache-admission] [--runtime-operational] [--dispatch-sequences] [--queue-rollover] ",
-    "[--runtime-profile] [--peer-shared-full-currentness] [--runtime-ordered-batches] ",
+    "[--runtime-profile] [--peer-shared-full-currentness] [--runtime-ordered-batches | --runtime-ordered-scalar-v3] ",
     "[--collective host-staged-v1|host-staged-reuse-v3|device-tp1-v3|device-peer-serial-v4|device-peer-concurrent-round-v1] ",
     "[--peer-artifact DIR] [--kernel-profile v2|v3-wave|v3-mfma|v5-wave32|v5-mfma32] ",
     "[--projection baseline|wave|mfma|auto] [--attention baseline|wave] ",
@@ -52,6 +52,8 @@ const USAGE: &str = concat!(
     "[--numerical-capture DIR --numerical-batch N --numerical-layer N --numerical-projection q|k|v|o|gate|up|down]"
 );
 
+// Admission, arithmetic and submission are independently selected policies.
+#[allow(clippy::struct_excessive_bools)]
 struct Options {
     source: PathBuf,
     artifact: PathBuf,
@@ -74,6 +76,7 @@ struct Options {
     cache: bool,
     prune_output_head: bool,
     runtime: RuntimeOptions,
+    ordered_scalar_v3: bool,
     collective: EngineeringTpReductionModeV3,
     kernel_profile: KernelProfile,
     projection: ProjectionMode,
@@ -158,6 +161,7 @@ impl Options {
         let mut prune_output_head = false;
         let mut live_stdin = false;
         let mut runtime = RuntimeOptions::default();
+        let mut ordered_scalar_v3 = false;
         let mut collective = EngineeringTpReductionModeV3::HostStagedV1;
         let mut kernel_profile = KernelProfile::V2;
         let mut projection = ProjectionMode::Baseline;
@@ -206,6 +210,10 @@ impl Options {
                 }
                 "--runtime-ordered-batches" => {
                     runtime.ordered_batches = true;
+                    continue;
+                }
+                "--runtime-ordered-scalar-v3" => {
+                    ordered_scalar_v3 = true;
                     continue;
                 }
                 "--queue-rollover" => {
@@ -422,6 +430,11 @@ impl Options {
         {
             return Err("large-kv-v9 requires both explicit pool/image options, TP1/capacity32 with v8 head, baseline attention and baseline/MFMA projection; peers, sequences, capture and replicas are unsupported".into());
         }
+        if ordered_scalar_v3 && runtime.ordered_batches {
+            return Err(
+                "ordered scalar-v3 and the wide ordered profile are mutually exclusive".into(),
+            );
+        }
         if runtime.ordered_batches
             && (devices.len() != 1
                 || kernel_profile != KernelProfile::WideMfma
@@ -436,6 +449,28 @@ impl Options {
                 || benchmark_control.is_some())
         {
             return Err("--runtime-ordered-batches requires TP1/v5-mfma32 with v8 head, MFMA projection, baseline or wave attention, device-tp1-v3 and pruning; legacy sequences, large KV, peers, numerical capture and replicas are unsupported".into());
+        }
+        if ordered_scalar_v3 {
+            if devices.len() != 1
+                || kernel_profile != KernelProfile::Wave
+                || projection != ProjectionMode::Baseline
+                || wave_attention
+                || collective != EngineeringTpReductionModeV3::DeviceTp1V3
+                || prune_output_head
+                || head_precision.is_some()
+                || fp32_head_artifact.is_some()
+                || peer_artifact.is_some()
+                || runtime.sequences
+                || runtime.shared_full_currentness
+                || runtime.rollover
+                || large_kv
+                || numerical.is_some()
+                || benchmark_control.is_some()
+                || live_stdin
+            {
+                return Err("--runtime-ordered-scalar-v3 requires TP1/v3-wave capacity16 with baseline projection/attention, device-tp1-v3 and unpruned BF16 head; secondary images, peers, sequences, rollover, live input, numerical capture and replicas are unsupported".into());
+            }
+            runtime.ordered_batches = true;
         }
         Ok(Self {
             source: source.ok_or("--source is required")?,
@@ -459,6 +494,7 @@ impl Options {
             cache,
             prune_output_head,
             runtime,
+            ordered_scalar_v3,
             collective,
             kernel_profile,
             projection,
@@ -1010,7 +1046,11 @@ fn run_with_timing(
             gpu.configure_head_precision_v7(precision.fp32())?;
         }
     }
-    gpu.configure_ordered_batches(options.runtime.ordered_batches)?;
+    if options.ordered_scalar_v3 {
+        gpu.configure_scalar_v3_ordered_batches()?;
+    } else {
+        gpu.configure_ordered_batches(options.runtime.ordered_batches)?;
+    }
     let fp32_head_workspace_bytes = gpu.fp32_head_workspace_bytes();
     if let Some(selection) = &options.numerical {
         let identity = serde_json::json!({
@@ -1103,6 +1143,9 @@ fn run_with_timing(
         }
         if options.runtime.ordered_batches {
             setup["runtime_ordered_batches"] = serde_json::json!(true);
+        }
+        if options.ordered_scalar_v3 {
+            setup["ordered_batch_profile"] = serde_json::json!("scalar-v3-tp1-bf16");
         }
         if let Some(large) = &large_kv_artifact {
             setup["kv_pool_profile"] = serde_json::json!("large-kv-v9");
@@ -1251,6 +1294,103 @@ mod tests {
         ];
         base.extend(extra);
         Options::parse(base.into_iter().map(str::to_owned))
+    }
+
+    #[test]
+    fn ordered_scalar_v3_policy_is_separate_explicit_and_narrow() {
+        let base = [
+            "--devices",
+            "1",
+            "--kernel-profile",
+            "v3-wave",
+            "--projection",
+            "baseline",
+            "--collective",
+            "device-tp1-v3",
+        ];
+        let serial = args(&base).unwrap();
+        assert!(!serial.ordered_scalar_v3 && !serial.runtime.ordered_batches);
+        let mut enabled = base.to_vec();
+        enabled.push("--runtime-ordered-scalar-v3");
+        let parsed = args(&enabled).unwrap();
+        assert!(parsed.ordered_scalar_v3 && parsed.runtime.ordered_batches);
+        assert!(!parsed.runtime.sequences && !parsed.runtime.rollover);
+        assert!(!parsed.prune_output_head && parsed.head_precision.is_none());
+        for rows in ["1", "3", "16"] {
+            let mut flags = enabled.clone();
+            flags.extend(["--batch-tokens", rows, "--prefill-chunk", rows]);
+            assert!(args(&flags).unwrap().ordered_scalar_v3);
+        }
+        let mut diagnostic = enabled.clone();
+        diagnostic.extend([
+            "--runtime-profile",
+            "--runtime-cache-admission",
+            "--runtime-operational",
+        ]);
+        assert!(args(&diagnostic).unwrap().runtime.profile);
+        for extra in [
+            vec!["--runtime-ordered-batches"],
+            vec!["--runtime-ordered-scalar-v3"],
+            vec!["--dispatch-sequences"],
+            vec!["--queue-rollover"],
+            vec!["--prune-output-head"],
+            vec!["--attention", "wave"],
+            vec!["--peer-shared-full-currentness"],
+            vec!["--peer-artifact", "/peer"],
+            vec![
+                "--head-precision",
+                "bf16-v7-control",
+                "--fp32-head-artifact",
+                "/head",
+            ],
+            vec![
+                "--head-precision",
+                "fp32-v7",
+                "--fp32-head-artifact",
+                "/head",
+            ],
+            vec![
+                "--kv-pool-profile",
+                "large-kv-v9",
+                "--large-kv-artifact",
+                "/kv",
+            ],
+            vec!["--benchmark-control", "/replica"],
+            vec![
+                "--numerical-capture",
+                "/capture",
+                "--numerical-batch",
+                "1",
+                "--numerical-layer",
+                "0",
+                "--numerical-projection",
+                "q",
+            ],
+        ] {
+            let mut flags = enabled.clone();
+            flags.extend(extra);
+            assert!(args(&flags).is_err());
+        }
+        for (flag, bad) in [
+            ("--devices", "1,2"),
+            ("--kernel-profile", "v2"),
+            ("--kernel-profile", "v3-mfma"),
+            ("--kernel-profile", "v5-wave32"),
+            ("--kernel-profile", "v5-mfma32"),
+            ("--projection", "wave"),
+            ("--projection", "mfma"),
+            ("--projection", "auto"),
+            ("--collective", "host-staged-v1"),
+            ("--collective", "host-staged-reuse-v3"),
+        ] {
+            let mut flags = enabled.clone();
+            let index = flags.iter().position(|item| *item == flag).unwrap();
+            flags[index + 1] = bad;
+            assert!(args(&flags).is_err(), "{flag} {bad}");
+        }
+        let mut legacy = base.to_vec();
+        legacy.push("--runtime-ordered-batches");
+        assert!(args(&legacy).is_err());
     }
 
     #[test]

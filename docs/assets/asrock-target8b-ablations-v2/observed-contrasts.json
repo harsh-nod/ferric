@@ -16,6 +16,38 @@
       "observed_rate_ratio": 2.8222968234538612,
       "observed_tpot_change_percent": -64.56786572943723,
       "to": "operational"
+    },
+    {
+      "causal_or_statistical_speedup_claim": false,
+      "family": "batch",
+      "from": "baseline-host",
+      "observed_rate_ratio": 1.0426343862220648,
+      "observed_tpot_change_percent": -4.089102257268573,
+      "to": "baseline-device"
+    },
+    {
+      "causal_or_statistical_speedup_claim": false,
+      "family": "head",
+      "from": "baseline-bf16-v7-control",
+      "observed_rate_ratio": 0.9988822628998468,
+      "observed_tpot_change_percent": 0.11189878343702553,
+      "to": "baseline-fp32-v7"
+    },
+    {
+      "causal_or_statistical_speedup_claim": false,
+      "family": "head",
+      "from": "baseline-fp32-v7",
+      "observed_rate_ratio": 2.7745046663093995,
+      "observed_tpot_change_percent": -63.95753043262372,
+      "to": "mfma-fp32-v7"
+    },
+    {
+      "causal_or_statistical_speedup_claim": false,
+      "family": "ordered",
+      "from": "serial-control",
+      "observed_rate_ratio": 1.1217805352574428,
+      "observed_tpot_change_percent": -10.856003596950881,
+      "to": "ordered-scalar-v3"
     }
   ],
   "nonclaim": "Descriptive ratios of single unwarmed requests. No controlled causal contribution or additive optimization attribution.",

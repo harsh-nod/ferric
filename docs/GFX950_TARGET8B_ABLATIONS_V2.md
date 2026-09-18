@@ -6,7 +6,8 @@ capture checks all 32 generated token IDs and decoded bytes against an independe
 SHA-pinned reference. **700 tokens/s is not achieved.** These are multi-dispatch
 engineering executions, not a full-model megakernel or a SOTA comparison.
 
-Each configuration has **one unwarmed request and 31 post-first-token intervals**.
+Each comparison cohort has **one unwarmed request per configuration, with 31
+post-first-token intervals**.
 CPU isolation and recording-overhead corrections are absent. Ratios below describe
 these observations; they are not controlled causal contributions, repeated-run
 speedup estimates, stable tail measurements or production qualifications.
@@ -17,7 +18,8 @@ speedup estimates, stable tail measurements or production qualifications.
 | --- | --- |
 | Model | `Qwen/Qwen3-8B` |
 | Revision | `b968826d9c46dd6066d109eabc6255188de91218` |
-| Precision / target / concurrency | BF16 / target-only / one request, TP1 |
+| Weights and intermediate activations / target / concurrency | BF16 / target-only / one request, TP1 |
+| Output logits | BF16 controls; the separate head cohort explicitly labels FP32 logits |
 | Prompt | `The capital of France is` |
 | Prompt tokens | `[785, 6722, 315, 9625, 374]` |
 | Generated tokens / processed KV positions | 32 / 36 |
@@ -113,19 +115,26 @@ option changed. Its fixed workload is one row, prefill chunk one, four 16-token
 physical pages, context 64, disabled prefix caching and disabled output-head
 pruning. Admission caching and operational currentness are enabled together.
 
-The first completed capture checks all 32 target choices and decoded bytes. Its
-19,584 dispatches use scalar projections and host-staged reusable reduction
-buffers. It does not establish a speedup over the different legacy controller.
+Both completed scalar-projection captures check all 32 target choices and decoded
+bytes. They retain the same controller, worker, native image and scheduling
+options. The first uses host-staged reusable reduction buffers; the second changes
+only the TP1 residual path to device-side handling. Neither establishes a speedup
+over the different legacy controller.
 
 | Configuration | TTFT (s) | Mean TPOT (s) | Post-first tokens/s | Observed rate / first | Setup (s) |
 | --- | ---: | ---: | ---: | ---: | ---: |
 | Baseline + host reuse | 5.953338 | 1.272268 | 0.785998 | 1.000x | 168.567387 |
+| Baseline + device residual | 5.720333 | 1.220244 | 0.819508 | 1.043x | 168.326220 |
+
+![Actual scalar paged-runtime decode rates](assets/asrock-target8b-ablations-v2/batch-rates.svg)
 
 ![Actual paged target-model decode intervals](assets/asrock-target8b-ablations-v2/batch-intervals.svg)
 
-The [paged baseline report](assets/asrock-target8b-ablations-v2/batch-baseline-host-report.json)
+The [host-reuse report](assets/asrock-target8b-ablations-v2/batch-baseline-host-report.json),
+[device-residual report](assets/asrock-target8b-ablations-v2/batch-baseline-device-report.json)
 and [interval CSV](assets/asrock-target8b-ablations-v2/batch-intervals.csv) retain
-the actual data. There is no comparison bar for this single configuration.
+the actual data. The observed device/host rate ratio is 1.043x and mean TPOT is
+4.09% lower, but one unwarmed observation per mode is not a qualified speedup.
 The techniques below describe source paths; rejected or unmeasured configurations
 and pending native candidates are not plotted as successful results.
 
@@ -183,6 +192,91 @@ forward, or 22,176 instead of 19,584 over the request. More dispatches can still
 mean less host work, but only actual end-to-end measurements establish the net
 effect. No cross-device collective is claimed by the TP1 kernel.
 
+### Bound Extra Serial Completion Polls
+
+A separate software experiment retains scalar projections and device-side TP1
+residuals but changes the runtime worker binary. It must not be inserted into the
+same-worker ablation above. The old worker is SHA-256
+`b4cb30788d4a32d9cae240823c26a80e9103f5698f91d95b16d2bda7e78270f9`;
+the bounded-poll worker is
+`737f151f798b16cf8393659950cddf1b62faa204e8c8dbbc5c2753b969391d20`.
+Controller, native image, reference, runtime options and 22,176 dispatches remain
+the same, and both separate resource-accounted captures pass all 32 output tokens.
+
+After the first pending completion observation, including its mandatory initial
+currentness fence, the new worker opens one monotonic backoff window. It admits
+at most 16 additional fresh polls while the window is less than 10 microseconds
+old, with a spin-loop hint between attempts. Once either limit is reached it uses
+the unchanged 50-microsecond sleeps for the rest of that dispatch, without
+reopening the window. Completion and error paths return before a pause or new
+backoff-clock read. The poll implementation, publication, timeout start, success
+idle fence, peer/ordered paths and teardown remain unchanged. This bounds extra
+poll admissions, not the duration of a poll that blocks or is descheduled.
+The `engineering_gfx950.rs` implementation snapshot has SHA-256
+`cece0666efd8219c77d7038ec13b0f5d77e13952571028e8154a36c9fe3e75aa`.
+The published [backoff implementation and validation note](https://github.com/harsh-nod/fe2o3/blob/01cd73e4813a5484ac025034f1315aa76f8e2a54/docs/gfx950-serial-backoff-v1.md)
+records the unchanged runtime contracts and focused tests.
+
+| Separate software cohort | TTFT (s) | Mean TPOT (s) | Post-first tokens/s | Setup (s) | Whole-process CPU (s) |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Original worker, resource control | 5.380819 | 1.231651 | 0.811919 | 167.792913 | 181.98 |
+| Bounded extra-poll worker | 5.903367 | 1.192912 | 0.838285 | 169.620889 | 183.92 |
+
+These are again one unwarmed request per worker, with concurrent CPU work and no
+CPU isolation. The observed rate difference is not a causal or statistically
+qualified gain. CPU seconds are GNU time's user plus system seconds for the
+controller and waited-for children, **including setup and teardown**, not
+decode-only CPU time. The larger total for the second row cannot establish the
+backoff's isolated CPU cost, and these captures did not measure completion-poll
+counts. The [original-worker report](assets/asrock-target8b-ablations-v2/worker-control-report.json),
+[new-worker report](assets/asrock-target8b-ablations-v2/worker-spin-report.json),
+[control resources](assets/asrock-target8b-ablations-v2/worker-control-resources.txt)
+and [new-worker resources](assets/asrock-target8b-ablations-v2/worker-spin-resources.txt)
+retain the checked observations separately. Runtime-counter profiling, when used,
+is a different instrumented diagnostic and cannot replace these non-profiled rows.
+
+### Measure Host Counters Separately
+
+Two additional requests explicitly enabled runtime profiling, with the same old
+and new worker hashes shown above. Both pass the unchanged 32-token reference and
+perform 22,176 scalar/device-residual dispatches. These are a separate diagnostic
+cohort, not the uninstrumented resource pair or a GPU execution timeline.
+
+| Workload counter delta | Original worker | Bounded extra-poll worker |
+| --- | ---: | ---: |
+| Completed dispatch packets | 22,176 | 22,176 |
+| Worker commands | 22,393 | 22,393 |
+| Completion observations | 337,974 | 574,169 |
+| Completion observations / dispatch | 15.2405 | 25.8915 |
+| Operational currentness checks | 89,137 | 89,137 |
+| New kernel admissions | 0 | 0 |
+| Command host-wall seconds | 40.476575122 | 40.356761093 |
+| Dispatch preparation host-wall seconds | 1.729881243 | 1.952099832 |
+| Dispatch publication host-wall seconds | 1.718533726 | 1.935345915 |
+| Dispatch wait host-wall seconds | 35.265477265 | 34.493446267 |
+| Currentness host-wall seconds, overlapping | 6.752211722 | 7.604924692 |
+
+The counters are differences between the before-workload and after-workload
+snapshots. Their window includes the earlier snapshot command and the later
+snapshot's idle/currentness fence, but excludes worker close. Command timing
+excludes framing reads and response emission. These are **host-wall timers, not
+GPU timestamps, GPU kernel durations, thread CPU seconds or measured overlap**.
+Currentness/admission timing overlaps other phases; summing every timer row or
+stacking them as independent optimization contributions would double-count work.
+
+The bounded-poll observation has more completion polls, larger preparation,
+publication and currentness totals, and a smaller wait total. One instrumented
+request per worker, without CPU isolation or profiling-overhead correction, does
+not establish an isolated backoff effect or a net performance win. The change in
+poll count is an observation, not a hardware-overlap measurement.
+
+The [original-worker counter report](assets/asrock-target8b-ablations-v2/runtime-profile-control-report.json)
+and [new-worker counter report](assets/asrock-target8b-ablations-v2/runtime-profile-spin-report.json)
+are the separate runtime-profile checker's explicit public whitelist. They retain
+all 19 before/after/delta counters, frozen input/checker identities and numerical
+checks, without private process or device selectors. Their schema is deliberately
+not accepted by the ordinary rate-plot input contract.
+
 ### Group Serial IPC Submissions
 
 The existing `--dispatch-sequences` path groups bounded dependent dispatches in a
@@ -197,7 +291,7 @@ not enable queue rollover or relax the separately guarded ordered-batch mode.
 
 ### Retain Rejected Loop-Tuning Attempts
 
-A further projection candidate tries to stop the FP32 partial's reduction loop
+An archived projection candidate attempted to stop the FP32 partial's reduction loop
 after its admitted K dimension rather than continuing empty iterations up to the
 largest supported width. It is **not included in the measured charts** until a
 native artifact and actual GPU reference check both succeed.
@@ -217,6 +311,198 @@ A fourth formulation uses six explicit static loops for the admitted K values
 but this alone is not a candidate GPU result. In TP1, the attention-output partial
 needs 64 useful iterations while the down projection still needs 192; the
 per-lane FP32 operation order and final subgroup reduction remain unchanged.
+After the wave model capture failed its reference, this source experiment was
+retired and its two production-file deltas restored to the baseline. Its source
+snapshots and native/admission evidence remain archived; it is not a landed
+model-qualified optimization.
+
+## MFMA And Output-Head Precision
+
+This is a third, separately matched cohort. All three captures use the same
+controller, original worker, 15-root v3 MFMA-capable image, three-root v7 head
+sidecar, reference and paged workload. They retain scalar attention, host-staged
+reusable TP1 reductions and 19,584 dispatch packets. Prefix reuse, pruning,
+dispatch sequences, ordered batches and queue rollover are disabled. Each
+capture passes **all 32 original token IDs and decoded bytes**; the failed WaveGEMV
+candidate above remains rejected and is not rehabilitated by these results.
+
+Weights and intermediate activations remain BF16 in every row. The first row is
+an explicit BF16-logit control; the other two retain the final output logits in
+FP32 before greedy selection. This precision difference is not hidden under the
+BF16 model label, and no quantized weights, speculative tokens or extra requests
+are used.
+
+| Configuration | TTFT (s) | Mean TPOT (s) | Post-first tokens/s | Observed rate / first | Setup (s) |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Scalar + BF16 logits | 5.970907 | 1.280531 | 0.780926 | 1.000x | 169.661754 |
+| Scalar + FP32 logits | 6.257646 | 1.281963 | 0.780053 | 0.999x | 167.166619 |
+| MFMA + FP32 logits | 1.787298 | 0.462051 | 2.164262 | 2.771x | 211.986581 |
+
+| Change relative to preceding row | Observed rate ratio | Observed mean TPOT change |
+| --- | ---: | ---: |
+| Preserve FP32 output logits | 0.999x | +0.11% |
+| Use MFMA projections, retaining FP32 logits | 2.775x | -63.96% |
+
+![Actual output-head and MFMA decode rates](assets/asrock-target8b-ablations-v2/head-rates.svg)
+
+![Every recorded output-head and MFMA decode interval](assets/asrock-target8b-ablations-v2/head-intervals.svg)
+
+The [BF16 control report](assets/asrock-target8b-ablations-v2/head-baseline-bf16-v7-control-report.json),
+[scalar FP32-logit report](assets/asrock-target8b-ablations-v2/head-baseline-fp32-v7-report.json),
+[MFMA FP32-logit report](assets/asrock-target8b-ablations-v2/head-mfma-fp32-v7-report.json)
+and [31 intervals per request](assets/asrock-target8b-ablations-v2/head-intervals.csv)
+retain the checked measurements. The observed MFMA/scalar-FP32 rate ratio is
+2.7745x, not a causal or statistically qualified contribution. These are one
+unwarmed request per configuration, not a SOTA comparison or a stable 2.16-token/s
+claim. Runtime-counter profiling and host-span sidecars are disabled in this
+cohort; the existing host token timing, JSON emission and their uncorrected
+overheads remain. Separately instrumented diagnostics must not replace these rows.
+
+### Tile BF16 Products With FP32 Accumulation
+
+The [v3 projection source](../device/qwen3-tp-perf-kernels-v3/src/projection.rs)
+assigns one Wave64 to a 16-by-16 output tile. Its matrix-fragment API loads
+16-wide K fragments and issues BF16 matrix multiply-accumulate with FP32
+accumulators. Inactive activation rows are zero-filled; a single-token request
+therefore does not fill all 16 tile rows. Only live output elements are stored,
+with explicit finite and extent checks. Attention-output and down projections
+retain FP32 partials for the existing residual path; other intermediate outputs
+round back to BF16. The matrix reduction order is different from the scalar
+projection, so passing native compilation alone is not sufficient acceptance.
+
+MFMA uses an additional resident row-major `[k, n]` transpose of the unchanged
+BF16 weights. The actual setup receipt records **15,136,194,560 additional
+resident bytes** in this run. This is a layout copy, not compression or reduced
+precision. Its preparation and allocation remain included in the 211.99-second
+setup observation above; they are not charged to the post-first-token rate.
+Memory cost and setup cost must accompany any reuse-based decode comparison.
+
+### Preserve Logits Through Greedy Selection
+
+The [v7 head projection](../device/qwen3-tp-fp32-head-kernels-v7/src/projection.rs)
+and [argmax](../device/qwen3-tp-fp32-head-kernels-v7/src/logits.rs) avoid rounding
+the final logit vector to BF16 in the explicitly selected FP32 modes. The
+predeclared head workspace is 9,723,904 bytes, `16 * 151936 * 4`, versus zero
+additional FP32-head workspace in the BF16 control. This does not convert the
+model's weight tensors or intermediate activations to FP32.
+
+Retaining FP32 logits can prevent a final BF16 conversion from collapsing close
+values into a tie, but these captures do not establish that as the cause of the
+earlier WaveGEMV mismatch. All three rows match the same independent reference on
+this prompt; that does not establish bitwise equality of every logit, broader
+generation equivalence or model-wide quality. The dedicated
+[head validator](../tools/target_head_decode_v1.py) checks the declared precision,
+workspace and both native-image identities before reusing the unchanged numerical
+and request-schedule checks.
+
+### Profile The Remaining Host Spans
+
+A separate MFMA/FP32-head request enables `--host-timing` and still passes all
+32 independent reference choices, page/dispatch checks, worker closure and
+post-run idle/currentness checks. It retains the same v3/v7 images and controller
+as the uninstrumented head cohort. These spans include host checks, IPC,
+scheduling and completion waits; **they are not GPU kernel durations**.
+
+| Named host scope | Calls over 36 forwards | Total seconds | Mean milliseconds per call |
+| --- | ---: | ---: | ---: |
+| Attention, including its projections and normalization | 1,296 | 7.343729 | 5.666 |
+| Feed-forward, including its normalization and projections | 1,296 | 4.100177 | 3.163 |
+| Output head, including the three following subscopes | 36 | 0.873570 | 24.266 |
+| Output-head normalization | 36 | 0.036955 | 1.027 |
+| Output-head projection | 36 | 0.041941 | 1.165 |
+| Output-head argmax | 36 | 0.794583 | 22.072 |
+
+The whole workload scope is 14.955226 seconds, with setup separately measured at
+215.803789 seconds. Do not add the output-head parent to its child rows, or infer
+GPU overlap from these aggregated spans. The observations include prompt
+forwards as well as decode forwards and do not establish recording-free costs.
+They prioritize attention/feed-forward investigation and cooperative argmax;
+they do not measure the benefit of those future changes.
+
+The [strict diagnostic checker](../tools/target_head_host_timing_v1.py) verifies
+the exact named scopes for every completed physical batch and independently
+reuses the unchanged token/byte and sidecar validators. The
+[public host-span report](assets/asrock-target8b-ablations-v2/head-mfma-host-spans-report.json)
+omits raw process identities, paths and absolute clock origins. It is not included
+in the uninstrumented rate charts.
+
+An attempted unchanged capacity-32 v5 image remains unavailable: native
+compilation rejected its baseline attention root at the existing race-freedom
+proof peak-storage limit. CPU tests do not override that rejection. No image,
+GPU result or speedup is claimed for that attempt, and the proof limit was not
+weakened to continue it.
+
+## Scalar Ordered Submission
+
+This fourth cohort uses a newly frozen controller for **both** its serial control
+and ordered case. It retains the original runtime worker and 13-root v3 image,
+scalar projections, scalar attention, device-side TP1 residuals, BF16 weights,
+intermediate activations and output logits. Both requests pass all 32 independent
+reference tokens and bytes, with identical model, prompt, paging and cache/currentness
+options. No head sidecar, pruning, prefix caching, sequences or rollover is enabled.
+
+| Configuration | TTFT (s) | Mean TPOT (s) | Post-first tokens/s | Observed rate / first | Setup (s) |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Serial control | 5.827936 | 1.206858 | 0.828598 | 1.000x | 167.792711 |
+| Ordered scalar groups | 5.166229 | 1.075842 | 0.929505 | 1.122x | 167.645664 |
+
+![Actual serial and ordered scalar decode rates](assets/asrock-target8b-ablations-v2/ordered-rates.svg)
+
+![Every recorded serial and ordered scalar decode interval](assets/asrock-target8b-ablations-v2/ordered-intervals.svg)
+
+The observed ordered/serial rate ratio is **1.1218x**, and mean TPOT is 10.86%
+lower. This is one unwarmed request per case without CPU isolation, not a causal
+contribution or qualified speedup. The
+[serial-control report](assets/asrock-target8b-ablations-v2/ordered-serial-control-report.json),
+[ordered report](assets/asrock-target8b-ablations-v2/ordered-ordered-scalar-v3-report.json)
+and [interval CSV](assets/asrock-target8b-ablations-v2/ordered-intervals.csv) preserve
+the observations separately from the older paged-controller and MFMA cohorts.
+Runtime counters and host-span sidecars are disabled. Existing host token timing
+and between-batch JSON emission remain in the measured intervals.
+
+### Group Packets At Existing Dependency Barriers
+
+The opt-in `--runtime-ordered-scalar-v3` policy is sealed by
+[`configure_scalar_v3_ordered_batches`](../adapters/m1-engineering-execution-v1/src/tp_execution/batched.rs).
+It groups dependent dispatch packets at the existing attention and feed-forward
+boundaries. Each layer has an 11-packet attention group and a six-packet
+feed-forward group, including device residual handling. A residual completes
+with its producers before the hidden/scratch state advances. Four remaining
+calls per forward, including the embedding and unpruned BF16 head path, remain
+synchronous.
+
+```text
+packets per forward = 36 layers * (11 + 6) + 4 = 616
+ordered completion frontiers per forward = 36 layers * 2 + 4 = 76
+request forwards = 5 prompt forwards + 31 decode forwards = 36
+```
+
+| Work-accounting item | Serial control | Ordered scalar groups |
+| --- | ---: | ---: |
+| Completed GPU dispatch packets | 22,176 | 22,176 |
+| Source-derived ordered groups | 0 | 2,592 |
+| Source-derived serial frontiers | 22,176 | 144 |
+| Source-derived completion frontiers | 22,176 | 2,736 |
+
+Packet counts are checked execution receipts. Group/frontier counts are derived
+from the admitted source schedule, **not measured GPU events, completion polls,
+kernel-duration savings or overlap**. Grouped publication/completion reduces
+host submission boundaries while retaining every packet and its arithmetic;
+it does not fuse the model into one kernel or imply concurrent execution of
+dependent operators. The runtime still validates dispatch operands and retains
+the group's required completion/error handling. Failed groups cannot silently
+advance hidden state or the request cursor.
+
+The new scalar policy is separate from both `--dispatch-sequences` and the
+previous wider ordered profile. It does not broaden their admission rules, and
+it does not admit the v7 FP32-head/MFMA combination used in the preceding cohort.
+Multiplying this observed ratio by the MFMA ratio would be an unmeasured
+combination. The [ordered-scalar validator](../tools/target_ordered_scalar_v3.py)
+checks the exact controller, worker, image and explicit mode before reusing the
+unchanged reference/page/timing checks. Optional counter-on diagnostics use a
+different schema and cannot enter this ordinary rate chart; their minimum
+completion observations must be checked against frontiers, not confused with
+the unchanged packet count.
 
 ## Theoretical Context, Not A Measured Bar
 
@@ -276,7 +562,8 @@ timings and successful worker closure. The separate
 [paged-target validator](../tools/target_batch_decode_v1.py) additionally checks
 the exact request schedule and emitted page accounting. System idle/topology and
 input-digest checks remain separately retained evidence, not deductions from a
-close record.
+close record. The separately declared head cohort additionally pins the v7
+sidecar and distinguishes BF16 controls from FP32 output logits.
 
 [The plotting tool](../tools/target_decode_plots_v1.py) consumes only those
 validated reports. It keeps runtime families separate, requires matching
@@ -290,6 +577,12 @@ python3 -B tools/target_decode_plots_v1.py \
   --legacy cache="$CACHE_VALIDATED_REPORT" \
   --legacy operational="$OPERATIONAL_VALIDATED_REPORT" \
   --batch baseline-host="$BATCH_BASELINE_VALIDATED_REPORT" \
+  --batch baseline-device="$BATCH_DEVICE_VALIDATED_REPORT" \
+  --head baseline-bf16-v7-control="$HEAD_BF16_CONTROL_VALIDATED_REPORT" \
+  --head baseline-fp32-v7="$HEAD_FP32_VALIDATED_REPORT" \
+  --head mfma-fp32-v7="$HEAD_MFMA_VALIDATED_REPORT" \
+  --ordered serial-control="$ORDERED_SERIAL_CONTROL_VALIDATED_REPORT" \
+  --ordered ordered-scalar-v3="$ORDERED_SCALAR_VALIDATED_REPORT" \
   --output "$NEW_PLOT_DIRECTORY"
 ```
 

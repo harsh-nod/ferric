@@ -10,6 +10,7 @@ mod large_kv;
 mod layer_c1_wave;
 mod ordered_attention_argmax_v11;
 mod ordered_batches;
+mod ordered_scalar_v3;
 mod query_hoist_v14;
 mod speculative;
 mod wave_rmsnorm_v15;
@@ -50,6 +51,8 @@ enum Failure {
     RuntimeCounter,
     OrderedSubmit,
     OrderedWait,
+    OrderedSubmitAt(usize),
+    OrderedWaitAt(usize),
     PreparePackets,
     ArgmaxSubmit,
     ArgmaxWait,
@@ -242,7 +245,16 @@ impl EngineeringTpRankTransportV1 for Recording {
         self.events
             .borrow_mut()
             .push(Event::OrderedSubmit(self.rank, commands.len()));
-        if self.failure == Some(Failure::OrderedSubmit) {
+        let ordinal = self
+            .events
+            .borrow()
+            .iter()
+            .filter(|event| matches!(event, Event::OrderedSubmit(_, _)))
+            .count()
+            - 1;
+        if self.failure == Some(Failure::OrderedSubmit)
+            || self.failure == Some(Failure::OrderedSubmitAt(ordinal))
+        {
             return Err("injected ordered publication failure".into());
         }
         self.pending_ordered = Some(commands.to_vec());
@@ -255,7 +267,16 @@ impl EngineeringTpRankTransportV1 for Recording {
         self.events
             .borrow_mut()
             .push(Event::OrderedWait(self.rank, count));
-        if self.failure == Some(Failure::OrderedWait) {
+        let ordinal = self
+            .events
+            .borrow()
+            .iter()
+            .filter(|event| matches!(event, Event::OrderedWait(_, _)))
+            .count()
+            - 1;
+        if self.failure == Some(Failure::OrderedWait)
+            || self.failure == Some(Failure::OrderedWaitAt(ordinal))
+        {
             return Err("injected ordered aggregate completion failure".into());
         }
         for command in commands {

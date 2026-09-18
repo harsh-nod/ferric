@@ -1076,6 +1076,53 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
         Ok(())
     }
 
+    /// Seals the separate scalar-v3 TP1/BF16 profile for ordered submission.
+    ///
+    /// Configure this last. Only submission changes: each residual completes
+    /// with its producers before the hidden/scratch swap, and the embedding
+    /// and unpruned BF16 head remain synchronous. The wider v5/v8 profile is
+    /// still admitted exclusively by `configure_ordered_batches`.
+    /// # Errors
+    /// Rejects unsupported, incomplete, already sealed, or started profiles.
+    pub fn configure_scalar_v3_ordered_batches(&mut self) -> TpResult<()> {
+        if self.last_batch != 0
+            || self.completed_batches != 0
+            || self.poisoned
+            || self.inner.closed
+            || self.row_capacity != 16
+            || self.inner.row_capacity != 16
+            || self.inner.plan.model().role != Qwen3ModelRole::Target8B
+            || self.inner.plan.world_size() != 1
+            || self.inner.ranks.len() != 1
+            || self.inner.transports.len() != 1
+            || self.inner.transports[0].peer_group_rank().is_some()
+            || !self.inner.transports[0].supports_ordered_batches()
+            || self.inner.ordered_batches.is_some()
+            || self.inner.sequences.is_some()
+            || self.inner.large_kv
+            || self.inner.draft_v10
+            || self.numerical.is_some()
+            || !self.projection_configured
+            || self.projection.mode != super::EngineeringTpProjectionModeV3::Baseline
+            || self.c1_wave_layers
+            || self.wave_attention
+            || self.prune_output_head
+            || self.head_profile_configured
+            || self.fp32_logits.is_some()
+            || self.fp32_argmax_v11.is_some()
+            || self.admitted_argmax_v11.is_some()
+            || self.query_hoist_v14.is_some()
+            || self.admitted_query_hoist_v14.is_some()
+            || self.wave_rmsnorm_v15.is_some()
+            || self.admitted_wave_rmsnorm_v15.is_some()
+            || self.reduction_mode() != EngineeringTpReductionModeV3::DeviceTp1V3
+        {
+            return Err("ordered scalar-v3 requires fresh TP1/capacity16, explicit baseline projection/attention, device-tp1-v3 and the unpruned BF16 head; alternate images, peers, sequences and numerical capture are unsupported".into());
+        }
+        self.inner.ordered_batches = Some(Vec::with_capacity(16));
+        Ok(())
+    }
+
     /// Actual projected rows, distinct from all physical transformer/KV rows.
     #[must_use]
     pub const fn output_head_rows(&self, physical: usize, published: usize) -> usize {
