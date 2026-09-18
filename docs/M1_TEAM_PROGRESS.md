@@ -6,12 +6,20 @@ receipt. The 33 M1 roadmap gates remain open.
 ## Current Checkpoint
 
 The selected native GPU host is `mi350`, not `mi350-2`. SSH succeeds on
-September 18 at 05:55 UTC; all eight physical GPUs report zero activity and
-297,766,912 bytes of baseline VRAM usage each. This is an availability snapshot,
+September 18 at 07:48 UTC; all eight physical GPUs report zero activity.
+This is an availability snapshot,
 not a reservation or launch admission. Builds and CPU tests remain on mi300x;
 every native launch requires a fresh device/no-use check.
 
 ### 14ec Compiler Source Adopted; Fresh Tools Built
+
+A fresh upstream check observes main at
+`3122f6056a1b86b1cdddc7d6e9be62efed1303b1`, one commit beyond the earlier
+`ec14bcc4cc7bb046e1fcdf4d987ae58330cbc4aa` observation. The ec14 successor
+adds an unconditionally compiled lowerer API; 3122 additionally changes ranked
+native replay, checked integer arithmetic and verifier code. The 14ec tools
+below are not current-main products. The unexecuted ec14 adoption/tool
+proposals require updating before use; no result is relabeled to a newer pin.
 
 Ferric `1997e1c32d3e298696d6a6f62a78b95f625eed6d` adopts published fe2o3
 `14ec7d2f75561977331e7a1ad5f916ada6d2ca59`. All 50 adoption phases and
@@ -71,30 +79,75 @@ cache copy are removed, reclaiming 3,229,828 KiB. Canonical source, all four
 reusable tools, retained evidence and original borrowed caches remain. These
 scoped cleanup checks do not claim global process visibility.
 
-The next TP14 step reuses the adoption's authenticated source-gate results
-after exact source comparison and obtains fresh nightly TP metadata. It does
-not rerun or invent records for the inherited 48 tests. Fresh vendor formation,
-the existing 13-phase emitter and separately admitted mi350 native validation
-remain necessary. The LLVM worker subtree is unchanged at its actual older
-producer, fe406 and 14ec, so reuse retains that original producer attribution.
-The four-phase TP metadata successor's shell syntax, four Python AST checks
-and seven inherited lifecycle fixtures pass on mi300x with zero terminal
-triples. Its actual source-binding/metadata campaign remains unexecuted and
-unready; these preflights are not a new source-gate or kernel result.
+The four-phase TP source-binding/metadata campaign now passes on mi300x.
+Before/after source preservation authenticates all 1,165 files; fresh nightly
+metadata resolves 163 packages, including 53 pinned fe2o3 and two Pliron
+packages. The adoption's 48 source-gate tests are explicitly inherited, not
+rerun. Campaign, launch and all four command/cleanup/wrapper triples are zero.
+Its retained 7,831,226-byte archive has SHA256
+`cd7b42390a69a72fde0abb11794fa56e6d570c5652c91854db873dcb7914a3f0`.
+Independent data review verifies 111 payloads, 112 archive members, 23 external
+records and every source hash; exact PAX nanoseconds were not independently
+rechecked. The first retention attempt rejects an incorrect seven-file
+control-roster expectation; its exit 1 and cleanup 0 remain preserved. The
+corrected attempt accepts only the actual nine files and succeeds.
+
+Fresh current-source vendor formation, TP14 emission and separately admitted
+mi350 native validation remain necessary after the current-main adoption. No
+14ec tool or metadata record is relabeled. The LLVM worker subtree is unchanged
+at its actual older producer, fe406, 14ec and ec14, so any reuse retains that
+original producer attribution.
 All nine KFD/runtime dependency source trees and the compiler root manifest,
 lockfile and toolchain are identical between fe406 and 14ec. Any reused native
 worker still retains its actual old producer and requires fresh artifact and
 device admission; source equality is not a new native build or run.
 
-The opt-in layer-zero TP1 attention-output boundary capture proposal has a
-static review ACK. It retains the actual projection input, host residual,
-native FP32 partial consumed by the reducer and GPU hidden readback after
-broadcast, with close-bound publication and no acceptance/timing claim. Review
-fixes preserve the existing reduction API, reject unsupported profiles before
-any token dispatch, bind the canonical checkpoint tensor name and remove a
-test-helper shadowing compile error. Its seven proposed tests, remote build
-and native use remain unexecuted; the patch is not integrated. All 33 M1 gates
+The opt-in layer-zero TP1 attention-output boundary capture now passes its
+CPU checks on the frozen 14ec source snapshot: 129 library tests (one ignored),
+22 CLI tests, 38 policy tests, strict scoped Clippy, formatting, four metadata
+queries, four dependency inventories and coverage generation/validation.
+It retains the actual projection input, host residual, native FP32 partial
+consumed by the reducer and GPU hidden readback after broadcast, with
+close-bound publication and no acceptance/timing claim. Six library tests and
+one CLI test cover the new mode. The optimized executable builds in 9m31s;
+all 23 R5 command/cleanup/wrapper triples, campaign and launch are zero.
+The fresh 9,349,440-byte controller has SHA256
+`456bba1ed9366849101a76ff02df96547c052ab02e1ada60a8d862d0833df369`.
+Its copied executable and original Cargo producer remain retained; the owned
+debug and release directories are removed. Native use is unexecuted.
+
+Failed validation attempts remain explicit: R1 exits 1 on an incorrect
+unchanged-source count; R2 exits 101 after Unix-socket fixtures exceed the
+temporary path limit; R3 exits 101 on two CLI Clippy diagnostics; R4 exits 101
+on a remaining semicolon lint. R5 uses a short owned TMPDIR and the corrected
+CLI, preserving old source censuses and test producers. It does not relax a
+test, lint, numerical tolerance or resource limit. The 46,786,238-byte retained
+archive has SHA256
+`674a23f8dbe876e635c83c2cdbd9a5d6c83f989539c4044cd5d331093a5f2524`;
+its semantic check succeeds while preserving those four failed attempts.
+Independent data review verifies all 1,889 payloads, exact archive metadata
+including timestamp strings, 79 external records, all 1,167 final source files,
+seven ELF producers, the generated inventories and raw phase/driver outcomes.
+Retained process snapshots record absence; this is not a fresh live-host claim.
+After that independent ACK, fresh recorded-process absence and archive/source/
+controller hash checks, the two copied test-product directories and empty
+owned short TMPDIR are removed, reclaiming 134,344 KiB. Cleanup and its syntax
+check finish with zero command/cleanup/wrapper exits. Source, controller and
+the complete archive remain; no shared cache or foreign job is touched.
+
+The CPU-only `engineering_tp1_layer0_residual_ablation.py` passes 16 focused
+tests and all 121 existing reference tests on mi300x, with its 32-file source
+bundle unchanged before and after. This includes a real synthetic 4096-by-4096
+overflow replay, exact tensor-digest rejection and wrong-tensor metadata
+rejection. For an authenticated future capture it repeats Torch BF16 linear,
+ascending separate FP32 multiply/add and native-partial host residual replay,
+retaining every raw pass. No native capture, canonical-model replay, numerical
+acceptance or performance result is produced by these tests. All 33 M1 gates
 remain open.
+Independent review authenticates all 229 retained CPU-test files, 13 zero
+phase triples, source preservation and resource bounds. ROCm imports warn
+about the `-1` visibility syntax; explicit CPU tensors are used, and these
+tests do not establish hardware isolation.
 
 ### Same-Input LM Head Matches The Source-Ordered Replay
 

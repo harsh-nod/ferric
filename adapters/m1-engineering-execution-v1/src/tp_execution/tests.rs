@@ -28,6 +28,8 @@ struct RecordingTransport {
     commands: Vec<EngineeringTpDispatchV1>,
     reads: Vec<(u64, usize, usize, Option<&'static str>)>,
     fail_final_read: Option<u64>,
+    fail_boundary_read: Option<u64>,
+    read_overrides_after_partial: Vec<(u64, usize, u16)>,
     logit_overrides: Vec<(usize, u16)>,
 }
 
@@ -82,7 +84,17 @@ impl EngineeringTpRankTransportV1 for RecordingTransport {
         if self.fail_final_read == Some(buffer) && last_kernel == Some(ARGMAX) {
             return Err("injected final-stage read failure".into());
         }
+        if self.fail_boundary_read == Some(buffer) && last_kernel == Some(PARTIAL) {
+            return Err("injected residual-boundary read failure".into());
+        }
         bytes.copy_from_slice(&self.buffers[&buffer][offset..offset + bytes.len()]);
+        if last_kernel == Some(PARTIAL) {
+            for &(id, index, bits) in &self.read_overrides_after_partial {
+                if id == buffer && index * 2 + 2 <= bytes.len() {
+                    bytes[index * 2..index * 2 + 2].copy_from_slice(&bits.to_le_bytes());
+                }
+            }
+        }
         Ok(())
     }
 
@@ -216,6 +228,8 @@ fn fixture_model(
             commands: Vec::new(),
             reads: Vec::new(),
             fail_final_read: None,
+            fail_boundary_read: None,
+            read_overrides_after_partial: Vec::new(),
             logit_overrides: Vec::new(),
         })
         .collect::<Vec<_>>();
@@ -271,6 +285,7 @@ fn fixture_model(
 }
 
 mod final_stage_tests;
+mod residual_boundary_tests;
 
 fn draft() -> ModelConfig {
     ModelConfig {

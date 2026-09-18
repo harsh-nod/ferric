@@ -10,12 +10,14 @@ use std::time::Instant;
 use ferric_m1_engineering_execution_v1::tp_artifact::EngineeringTpArtifactV1;
 use ferric_m1_engineering_execution_v1::tp_execution::EngineeringTpExecutionV1;
 use ferric_m1_engineering_execution_v1::tp_execution::final_stage::EngineeringTpFinalStageCaptureV1;
+use ferric_m1_engineering_execution_v1::tp_execution::residual_boundary::EngineeringTpResidualBoundaryCaptureV1;
 use ferric_m1_engineering_execution_v1::tp_model::EngineeringQwenModelV1;
+use ferric_spec::Qwen3TensorKind;
 use serde::Serialize;
 use sha2::{Digest, Sha256};
 use tp_worker::Worker;
 
-const USAGE: &str = "ferric-qwen3-tp-engineering --source DIR --artifact DIR --worker FILE --devices ID[,ID...] --allow-unauthenticated-machine-code [--prompt TEXT] [--new-tokens 32] [--repetitions 3] [--warmup 1] [--capacity 128] [--capture-final-stage DIR --capture-positions P[,P...]]";
+const USAGE: &str = "ferric-qwen3-tp-engineering --source DIR --artifact DIR --worker FILE --devices ID[,ID...] --allow-unauthenticated-machine-code [--prompt TEXT] [--new-tokens 32] [--repetitions 3] [--warmup 1] [--capacity 128] [--capture-final-stage DIR|--capture-residual-boundary DIR --capture-positions P[,P...]]";
 
 struct Options {
     source: PathBuf,
@@ -28,6 +30,7 @@ struct Options {
     warmup: u32,
     capacity: u32,
     capture_directory: Option<PathBuf>,
+    residual_boundary_directory: Option<PathBuf>,
     capture_positions: Vec<u32>,
 }
 
@@ -40,6 +43,7 @@ impl Options {
         let (mut new_tokens, mut repetitions, mut warmup, mut capacity) = (32, 3, 1, 128);
         let mut consent = false;
         let mut capture_directory = None;
+        let mut residual_boundary_directory = None;
         let mut capture_positions = None;
         while let Some(flag) = arguments.next() {
             if !seen.insert(flag.clone()) {
@@ -74,6 +78,9 @@ impl Options {
                 "--warmup" => warmup = number(&flag, &value)?,
                 "--capacity" => capacity = number(&flag, &value)?,
                 "--capture-final-stage" => capture_directory = Some(PathBuf::from(value)),
+                "--capture-residual-boundary" => {
+                    residual_boundary_directory = Some(PathBuf::from(value));
+                }
                 "--capture-positions" => {
                     capture_positions = Some(
                         value
@@ -104,17 +111,29 @@ impl Options {
         {
             return Err("prompt or measurement bounds exceeded".into());
         }
-        if capture_directory.is_some() != capture_positions.is_some() {
+        let capture_count = usize::from(capture_directory.is_some())
+            + usize::from(residual_boundary_directory.is_some());
+        if capture_count > 1 {
+            return Err("final-stage and residual-boundary capture are mutually exclusive".into());
+        }
+        if (capture_count == 1) != capture_positions.is_some() {
             return Err(
-                "capture requires both --capture-final-stage and --capture-positions".into(),
+                "capture requires exactly one capture directory and --capture-positions".into(),
             );
         }
         let capture_positions = capture_positions.unwrap_or_default();
-        if capture_directory.is_some() {
+        if capture_count == 1 {
             if devices.len() != 1 || repetitions != 1 || warmup != 0 {
                 return Err("capture requires TP1, --repetitions 1 and --warmup 0".into());
             }
-            EngineeringTpFinalStageCaptureV1::validate_positions(&capture_positions, capacity)?;
+            if capture_directory.is_some() {
+                EngineeringTpFinalStageCaptureV1::validate_positions(&capture_positions, capacity)?;
+            } else {
+                EngineeringTpResidualBoundaryCaptureV1::validate_positions(
+                    &capture_positions,
+                    capacity,
+                )?;
+            }
         }
         Ok(Self {
             source: source.ok_or("--source is required")?,
@@ -127,6 +146,7 @@ impl Options {
             warmup,
             capacity,
             capture_directory,
+            residual_boundary_directory,
             capture_positions,
         })
     }
@@ -179,6 +199,11 @@ fn emit(value: &impl Serialize) -> Result<(), String> {
     output.flush().map_err(|error| error.to_string())
 }
 
+enum DiagnosticCapture {
+    FinalStage(EngineeringTpFinalStageCaptureV1),
+    ResidualBoundary(EngineeringTpResidualBoundaryCaptureV1),
+}
+
 fn run_sequence(
     engine: &mut EngineeringTpExecutionV1<Worker>,
     model: &EngineeringQwenModelV1,
@@ -186,7 +211,7 @@ fn run_sequence(
     options: &Options,
     run: u32,
     warmup: bool,
-    capture: &mut Option<EngineeringTpFinalStageCaptureV1>,
+    capture: &mut Option<DiagnosticCapture>,
 ) -> Result<Measurement, String> {
     engine.reset_sequence()?;
     let before = engine.dispatch_counts();
@@ -257,19 +282,39 @@ fn run_sequence(
         generation_seconds,
         rank_dispatch_counts: counts,
         kv_tokens_processed: engine.position(),
-        benchmark_comparable: capture.as_ref().map(|_| false),
+        benchmark_comparable: capture.is_some().then_some(false),
     })
 }
 
 fn captured_step(
     engine: &mut EngineeringTpExecutionV1<Worker>,
-    capture: &mut Option<EngineeringTpFinalStageCaptureV1>,
+    capture: &mut Option<DiagnosticCapture>,
     token: u32,
 ) -> Result<u32, String> {
     match capture {
-        Some(capture) => capture.step(engine, token),
+        Some(DiagnosticCapture::FinalStage(capture)) => capture.step(engine, token),
+        Some(DiagnosticCapture::ResidualBoundary(capture)) => capture.step(engine, token),
         None => engine.step(token),
     }
+}
+
+fn layer_zero_output_projection_sha256(model: &EngineeringQwenModelV1) -> Result<String, String> {
+    let role = model.config().role;
+    let mut found = None;
+    for ordinal in 0..model.layout().section_count(role) {
+        let binding = model
+            .layout()
+            .by_ordinal(role, ordinal)
+            .map_err(|error| error.to_string())?;
+        let metadata = binding.metadata();
+        if metadata.layer == 0
+            && metadata.kind == Qwen3TensorKind::OutputProjection
+            && found.replace(hex(&binding.sha256())).is_some()
+        {
+            return Err("duplicate layer-zero output projection weight".into());
+        }
+    }
+    found.ok_or_else(|| "missing layer-zero output projection weight".into())
 }
 
 fn hash_file(path: &Path) -> Result<String, String> {
@@ -323,6 +368,12 @@ fn run(options: &Options) -> Result<(), String> {
     }
     if options.capture_directory.is_some() {
         EngineeringTpFinalStageCaptureV1::validate_positions(&options.capture_positions, required)?;
+    }
+    if options.residual_boundary_directory.is_some() {
+        EngineeringTpResidualBoundaryCaptureV1::validate_positions(
+            &options.capture_positions,
+            required,
+        )?;
     }
     let dispatch_budget = checked_dispatch_budget(
         required,
@@ -381,12 +432,41 @@ fn run(options: &Options) -> Result<(), String> {
             setup["final_stage_capture"] = serde_json::json!({
                 "positions":options.capture_positions,"benchmark_comparable":false,
                 "timing":"diagnostic readbacks invalidate all performance measurements"});
-            capture = Some(EngineeringTpFinalStageCaptureV1::new(
-                directory,
-                options.capture_positions.clone(),
-                required,
-                setup.clone(),
-            )?);
+            capture = Some(DiagnosticCapture::FinalStage(
+                EngineeringTpFinalStageCaptureV1::new(
+                    directory,
+                    options.capture_positions.clone(),
+                    required,
+                    setup.clone(),
+                )?,
+            ));
+        }
+        if let Some(directory) = &options.residual_boundary_directory {
+            if capture.is_some() {
+                return Err("capture modes are mutually exclusive".into());
+            }
+            setup["residual_boundary_capture"] = serde_json::json!({
+                "positions":options.capture_positions, "layer":0,
+                "operation":"AttentionOutputSum", "tensor_parallel_rank":0,
+                "tensor_parallel_world":1,
+                "output_projection_weight_tensor":"model.layers.0.self_attn.o_proj.weight",
+                "output_projection_weight_shape":[4096,4096],
+                "projection_input_elements":4096,
+                "residual_elements":4096, "projection_partial_elements":4096,
+                "hidden_after_elements":4096,
+                "residual_source":"host_staged_collective_input",
+                "output_projection_weight_shard_sha256":layer_zero_output_projection_sha256(&model)?,
+                "benchmark_comparable":false,
+                "timing":"diagnostic readbacks invalidate all performance measurements"
+            });
+            capture = Some(DiagnosticCapture::ResidualBoundary(
+                EngineeringTpResidualBoundaryCaptureV1::new(
+                    directory,
+                    options.capture_positions.clone(),
+                    required,
+                    setup.clone(),
+                )?,
+            ));
         }
         emit(&setup)?;
         for index in 0..options.warmup {
@@ -420,8 +500,12 @@ fn run(options: &Options) -> Result<(), String> {
         (Ok(()), Ok(())) => {
             let closed = serde_json::json!({ "schema": "FerricQwen3TpEngineeringClosedV1", "authority": "none", "worker_pids": pids, "all_workers_exited": true, "whole_seconds": whole.elapsed().as_secs_f64() });
             emit(&closed)?;
-            if let Some(capture) = &mut capture {
-                emit(&capture.finish(&closed)?)?;
+            match &mut capture {
+                Some(DiagnosticCapture::FinalStage(capture)) => emit(&capture.finish(&closed)?)?,
+                Some(DiagnosticCapture::ResidualBoundary(capture)) => {
+                    emit(&capture.finish(&closed)?)?;
+                }
+                None => (),
             }
             Ok(())
         }
@@ -533,5 +617,36 @@ mod tests {
         assert!(options(&valid[..8]).is_err());
         assert!(options(&["--devices", "1", "--capture-positions", "4"]).is_err());
         assert!(EngineeringTpFinalStageCaptureV1::validate_positions(&[6], 6).is_err());
+    }
+
+    #[test]
+    fn residual_boundary_capture_is_explicit_exclusive_and_tp1_only() {
+        let valid = [
+            "--devices",
+            "1",
+            "--repetitions",
+            "1",
+            "--warmup",
+            "0",
+            "--capture-residual-boundary",
+            "/capture",
+            "--capture-positions",
+            "4,5",
+        ];
+        let parsed = options(&valid).unwrap();
+        assert_eq!(parsed.capture_positions, [4, 5]);
+        assert_eq!(
+            parsed.residual_boundary_directory,
+            Some(PathBuf::from("/capture"))
+        );
+        let mut both = valid.to_vec();
+        both.extend(["--capture-final-stage", "/other"]);
+        assert!(options(&both).is_err());
+        for (index, value) in [(1, "1,2"), (3, "2"), (5, "1")] {
+            let mut args = valid.to_vec();
+            args[index] = value;
+            assert!(options(&args).is_err());
+        }
+        assert!(options(&["--devices", "1", "--capture-residual-boundary", "/capture"]).is_err());
     }
 }

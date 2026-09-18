@@ -210,3 +210,34 @@ BF16 weight and FP32 workspace. One recorded two-position CPU run on mi300x
 completed in 64.43 seconds with maximum RSS 9,007,616 KiB under a 16 GiB
 address-space cap. That is diagnostic resource observation, not inference
 performance or a resource guarantee for another environment.
+
+## TP1 Same-Input Layer-Zero Residual Diagnostic
+
+`engineering_tp1_layer0_residual_ablation.py` consumes an authenticated
+`--capture-residual-boundary` capture, its successful terminal witness and
+native pins. It uses the pinned CPU reference environment on mi300x:
+
+```sh
+"$REFERENCE_VENV/bin/python" -I -B benches/m1/reference/engineering_tp1_layer0_residual_ablation.py \
+  CAPTURE_DIRECTORY WITNESS_DIRECTORY NATIVE_PINS_JSON NATIVE_PINS_SHA256 \
+  MODEL_SOURCE NEW_OUTPUT_DIRECTORY
+```
+
+For each selected position it binds the exact canonical layer-zero `o_proj`
+tensor bytes and replays three paths twice: Torch BF16 linear followed by the
+host residual addition, separate ascending FP32 multiply/add followed by that
+addition, and the captured native FP32 partial through the host reducer alone.
+The host replay preserves zero-plus-partial, residual addition, then integer
+BF16 round-to-nearest-even order. Torch's intermediate BF16 projection rounding
+is an explicit difference, not a claim of native arithmetic equivalence.
+
+All four native operands and both passes of every CPU path are retained.
+Projection inputs, residual inputs and weights must be finite; nonfinite
+outputs remain diagnostic data with null finite-error metrics. Exact source,
+tensor and input identities are rechecked before publication. Existing output
+directories are never replaced. The tool supplies no acceptance threshold,
+performance measurement, device/compiler proof or M1 qualification.
+
+```sh
+"$REFERENCE_VENV/bin/python" -I -B benches/m1/reference/test_engineering_tp1_layer0_residual_ablation.py
+```

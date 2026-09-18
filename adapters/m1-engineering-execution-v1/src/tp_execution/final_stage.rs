@@ -339,7 +339,7 @@ impl EngineeringTpFinalStageCaptureV1 {
     }
 }
 
-fn validate_setup(setup: &Value, required: u32) -> TpResult<()> {
+pub(super) fn validate_setup(setup: &Value, required: u32) -> TpResult<()> {
     for name in [
         "controller_sha256",
         "worker_sha256",
@@ -404,7 +404,7 @@ fn validate_setup(setup: &Value, required: u32) -> TpResult<()> {
     Ok(())
 }
 
-fn new_file(directory: &File, name: &str) -> TpResult<File> {
+pub(super) fn new_file(directory: &File, name: &str) -> TpResult<File> {
     rustix::fs::openat(
         directory,
         name,
@@ -415,7 +415,7 @@ fn new_file(directory: &File, name: &str) -> TpResult<File> {
     .map_err(|error| error.to_string())
 }
 
-fn write_new(directory: &File, name: &str, bytes: &[u8]) -> TpResult<()> {
+pub(super) fn write_new(directory: &File, name: &str, bytes: &[u8]) -> TpResult<()> {
     let mut file = new_file(directory, name)?;
     file.write_all(bytes).map_err(|error| error.to_string())?;
     file.sync_all().map_err(|error| error.to_string())

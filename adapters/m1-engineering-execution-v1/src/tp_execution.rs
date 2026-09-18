@@ -12,6 +12,7 @@ pub mod final_stage;
 mod peer_reduction;
 mod performance;
 mod reduction;
+pub mod residual_boundary;
 mod row_profile;
 
 #[cfg(feature = "tp-batch-engineering")]
@@ -26,6 +27,7 @@ pub use projection::EngineeringTpProjectionModeV3;
 pub use collective::{HostStagedPartialV1, reduce_residual_bf16_v1};
 pub use reduction::EngineeringTpReductionModeV3;
 use reduction::ReductionWorkspace;
+use residual_boundary::{EngineeringTpResidualBoundaryCaptureV1, LayerBoundaryReadbackV1};
 
 use ferric_build::AuthenticatedModelWeightLayout;
 use ferric_engine::tensor_parallel::{
@@ -513,6 +515,22 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpExecutionV1<R> {
     /// Rejects invalid tokens, exhausted context, bad state, nonfinite reduction,
     /// or transport failure. Failures after begin permanently poison the group.
     pub fn step(&mut self, token: u32) -> TpResult<u32> {
+        self.step_inner(token, None)
+    }
+
+    pub(super) fn step_with_residual_boundary(
+        &mut self,
+        token: u32,
+        capture: &mut EngineeringTpResidualBoundaryCaptureV1,
+    ) -> TpResult<u32> {
+        self.step_inner(token, Some(capture))
+    }
+
+    fn step_inner(
+        &mut self,
+        token: u32,
+        capture: Option<&mut EngineeringTpResidualBoundaryCaptureV1>,
+    ) -> TpResult<u32> {
         if self.closed {
             return Err("TP execution is closed".into());
         }
@@ -520,7 +538,7 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpExecutionV1<R> {
             .sequence
             .begin(token)
             .map_err(|e| format!("TP begin: {e:?}"))?;
-        match self.forward(token, position) {
+        match self.forward(token, position, capture) {
             Ok(choice) => {
                 self.sequence
                     .complete()
@@ -557,7 +575,12 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpExecutionV1<R> {
         }
     }
 
-    fn forward(&mut self, token: u32, position: u32) -> TpResult<u32> {
+    fn forward(
+        &mut self,
+        token: u32,
+        position: u32,
+        mut boundary_capture: Option<&mut EngineeringTpResidualBoundaryCaptureV1>,
+    ) -> TpResult<u32> {
         use EngineeringTpArgumentV1::U32;
         let model = self.plan.model();
         let role = role_tag(model.role);
@@ -722,7 +745,67 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpExecutionV1<R> {
                     ],
                 )
             })?;
-            self.reduce(layer, Qwen3TensorParallelCollectiveV1::AttentionOutputSum)?;
+            let boundary_before = if layer == 0 && boundary_capture.is_some() {
+                let rank = &self.ranks[0];
+                if rank.attention.id == 0
+                    || rank.attention.elements != model.hidden_size as usize
+                    || rank.attention.element_bytes != 2
+                    || rank.partial.id == 0
+                    || rank.partial.elements != model.hidden_size as usize
+                    || rank.partial.element_bytes != 4
+                    || self.hidden.len() != model.hidden_size as usize
+                {
+                    return Err("layer-zero attention boundary tensor extent drift".into());
+                }
+                let mut projection_input = vec![0; rank.attention.elements * 2];
+                self.transports[0].read(rank.attention.id, 0, &mut projection_input)?;
+                let residual_before = self
+                    .hidden
+                    .iter()
+                    .flat_map(|bits| bits.to_le_bytes())
+                    .collect::<Vec<_>>();
+                Some((projection_input, residual_before))
+            } else {
+                None
+            };
+            let mut projection_partial = Vec::new();
+            self.reduce_with_residual_boundary(
+                layer,
+                Qwen3TensorParallelCollectiveV1::AttentionOutputSum,
+                boundary_before.as_ref().map(|_| &mut projection_partial),
+            )?;
+            if let Some((projection_input, residual_before)) = boundary_before {
+                let hidden = self.ranks[0].hidden;
+                if hidden.id == 0
+                    || hidden.elements != model.hidden_size as usize
+                    || hidden.element_bytes != 2
+                {
+                    return Err("layer-zero broadcast hidden tensor extent drift".into());
+                }
+                let expected_hidden_after = self
+                    .hidden
+                    .iter()
+                    .flat_map(|bits| bits.to_le_bytes())
+                    .collect::<Vec<_>>();
+                let mut hidden_after = vec![0; hidden.elements * 2];
+                self.transports[0].read(hidden.id, 0, &mut hidden_after)?;
+                let hidden_after_matches_host_broadcast = hidden_after == expected_hidden_after;
+                boundary_capture
+                    .as_deref_mut()
+                    .ok_or("selected boundary capture disappeared")?
+                    .retain(LayerBoundaryReadbackV1 {
+                        epoch: self.sequence.epoch(),
+                        position,
+                        token,
+                        layer,
+                        operation: Qwen3TensorParallelCollectiveV1::AttentionOutputSum,
+                        projection_input,
+                        residual_before,
+                        projection_partial,
+                        hidden_after,
+                        hidden_after_matches_host_broadcast,
+                    })?;
+            }
             self.dispatch_each(|r| {
                 rmsnorm(
                     r,
@@ -940,6 +1023,15 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpExecutionV1<R> {
     }
 
     fn reduce(&mut self, layer: u32, operation: Qwen3TensorParallelCollectiveV1) -> TpResult<()> {
+        self.reduce_with_residual_boundary(layer, operation, None)
+    }
+
+    fn reduce_with_residual_boundary(
+        &mut self,
+        layer: u32,
+        operation: Qwen3TensorParallelCollectiveV1,
+        mut captured_tp1_partial: Option<&mut Vec<u8>>,
+    ) -> TpResult<()> {
         let _timing = self.timing.scope(match operation {
             Qwen3TensorParallelCollectiveV1::AttentionOutputSum => "collective_attention",
             Qwen3TensorParallelCollectiveV1::FeedForwardDownSum => "collective_feed_forward",
@@ -949,6 +1041,12 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpExecutionV1<R> {
             || self.reduction.mode() != EngineeringTpReductionModeV3::DeviceTp1V3
         {
             self.flush_dispatch_groups()?;
+        }
+        if captured_tp1_partial.is_some()
+            && (self.reduction.mode() != EngineeringTpReductionModeV3::HostStagedV1
+                || self.plan.world_size() != 1)
+        {
+            return Err("boundary partial capture requires host-staged TP1 reduction".into());
         }
         match self.reduction.mode() {
             EngineeringTpReductionModeV3::HostStagedReuseV3 => {
@@ -971,6 +1069,12 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpExecutionV1<R> {
         for (rank, transport) in self.ranks.iter().zip(&mut self.transports) {
             let mut bytes = vec![0; self.hidden.len() * 4];
             transport.read(rank.partial.id, 0, &mut bytes)?;
+            if let Some(captured) = &mut captured_tp1_partial {
+                if !captured.is_empty() || rank.geometry.rank != 0 {
+                    return Err("boundary partial capture rank drift".into());
+                }
+                captured.extend_from_slice(&bytes);
+            }
             let values = bytes
                 .chunks_exact(4)
                 .map(|b| f32::from_le_bytes([b[0], b[1], b[2], b[3]]))

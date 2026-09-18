@@ -219,3 +219,26 @@ timings are non-comparable. This adapter is Contracted and outside the verified
 production workspace; successful readback is not numerical parity, a reviewed
 tolerance, or M1 qualification. An independent two-pass reference comparison
 and native validation of this capture path remain separate work.
+
+### TP1 Layer-Zero Residual Diagnostics
+
+Use `--capture-residual-boundary /absolute/fresh-directory --capture-positions 4,5`
+with `--repetitions 1 --warmup 0` to inspect the first attention-output
+projection and residual addition. This mode is mutually exclusive with
+`--capture-final-stage` and supports only the target Qwen3-8B, single-row TP1,
+default host-staged reduction path. The same position and destination rules
+apply; no diagnostic reads are added to ordinary or unselected steps.
+
+Each selected position retains four 4,096-element operands: BF16 projection
+input, the BF16 host residual, the actual FP32 projection partial consumed by
+the reducer, and BF16 GPU hidden state read after the host broadcast. The
+manifest binds `model.layers.0.self_attn.o_proj.weight`, its `[4096, 4096]`
+shape and exact tensor-byte hash. Per-row and whole-file hashes preserve the
+little-endian payloads, including an observation of whether the GPU hidden
+readback equals the host broadcast.
+
+Publication requires every selected row, successful execution and confirmed
+worker teardown. A failed capture poisons its sequence and cannot publish a
+completed manifest. This diagnostic does not change token selection, admit a
+numerical tolerance, establish parity or close an M1 gate. Its timings are
+explicitly non-comparable; native validation remains separate work.
