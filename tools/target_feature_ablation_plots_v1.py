@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Plot raw-capture-revalidated feature observations without changing identities.
 
-CPU only. Exact pinned comparators and all seven cohort-specific postchecks
+CPU only. Exact pinned comparators and every cohort-specific postcheck
 must pass before any public output directory is created.
 """
 
@@ -44,6 +44,20 @@ COHORTS = {
         "controller_cohort": "full-forward-preparation-fence-v1-controller-v7",
         "postchecks": b"controller=0 idle=0 topology=0 inputs=0 plan=0 source=0 worker_source=0\n",
     },
+    "argmax-v11": {
+        "checker": "target_full_forward_argmax_v11_v1.py",
+        "sha256": "f862c587edc165c96a62cca057e07354b456068a7550b600b808378b51b238f2",
+        "schema": "FerricTargetFullForwardArgmaxV11ObservationV1",
+        "variants": ("serial-v7", "wave-v11"),
+        "labels": ("Serial FP32 argmax v7", "Wave FP32 argmax v11"),
+        "title": "Qwen3-8B: FP32 argmax selector observation",
+        "axis": "fp32-argmax-selector",
+        "identity_fields": (),
+        "controller_cohort": "full-forward-best-stack-fp32-argmax-v11-controller-v1",
+        "postchecks": (b"controller=0 idle=0 topology=0 inputs=0 plan=0 source=0 worker_source=0 "
+                       b"base_source=0 controller_inputs=0 paired_source=0 argmax_source=0 "
+                       b"argmax_original_source=0 argmax_shared_source=0\n"),
+    },
 }
 
 
@@ -82,7 +96,7 @@ def revalidate(checker, family, directory, variant, reference):
     raw = read(directory / "report-public.json", 1048576)
     checker.core.same(checker.core.json_value(raw), report, "regenerated public report")
     checker.core.require(read(directory / "postcheck-status.txt", 256) == COHORTS[family]["postchecks"],
-                         "all seven exact cohort postchecks")
+                         "all exact cohort postchecks")
     return report, raw
 
 
@@ -90,8 +104,11 @@ def expected_identities(checker, family, variant):
     if family == "paired-prefetch":
         return {"controller_sha256": checker.CONTROLLER_SHA256,
                 "worker_sha256": checker.WORKER_SHA256, **checker.ARTIFACTS[variant]}
+    if family == "preparation-worker":
+        return {"controller_sha256": checker.CONTROLLER_SHA256,
+                "worker_sha256": checker.WORKERS[variant], **checker.ARTIFACT}
     return {"controller_sha256": checker.CONTROLLER_SHA256,
-            "worker_sha256": checker.WORKERS[variant], **checker.ARTIFACT}
+            "worker_sha256": checker.WORKER_SHA256, **checker.ARTIFACT}
 
 
 def matched_axis(checker, family, rows):
@@ -105,6 +122,10 @@ def matched_axis(checker, family, rows):
         core.same(row["identities"], expected_identities(checker, family, variant), "actual ablation identities")
         core.same(row["model_revision"], core.REVISION, "same model revision")
         core.same(row["reference_sha256"], core.REFERENCE_SHA256, "same reference")
+        if family == "argmax-v11":
+            core.same(row["fp32_argmax"], variant, "actual argmax selector axis")
+            core.same(row["argmax_root"], checker.ARGMAX_ROOTS[variant], "source-derived selected root")
+            core.same(row["fp32_argmax_artifact"], checker.ARGMAX_ARTIFACT, "identical actual sidecar")
     for key in core.IDENTITIES:
         if key in cohort["identity_fields"]:
             core.require(rows[0]["identities"][key] != rows[1]["identities"][key], "declared identity axis differs")
@@ -149,9 +170,18 @@ def rows_and_contrast(checker, family, reports):
                 paired_prefetch_feature={"default_enabled": False, "selected": index == 1,
                                          "observed_rows": 1, "source_tp1_row_range": [1, 16],
                                          "multirow_gpu_validated": False})
-        else:
+        elif family == "preparation-worker":
             expected.update(worker_source_manifest_sha256=checker.WORKER_SOURCE_MANIFEST_SHA256,
                             transaction_preparation_fence=index == 1, currentness_check_count_measured=False)
+        else:
+            expected.update(**checker.SOURCE_PINS, fp32_argmax=variant,
+                            fp32_argmax_artifact=checker.ARGMAX_ARTIFACT,
+                            argmax_canonical_descriptor_sha256=checker.ARGMAX_CANONICAL_DESCRIPTOR_SHA256,
+                            argmax_admission_sha256=checker.ARGMAX_ADMISSION_SHA256,
+                            argmax_admission_provenance_sha256=checker.ARGMAX_ADMISSION_PROVENANCE_SHA256,
+                            argmax_root=checker.ARGMAX_ROOTS[variant], sidecar_loaded_both_variants=True,
+                            argmax_source_row_capacity=32, controller_row_capacity=16, observed_rows=1,
+                            transaction_preparation_fence=True, currentness_check_count_measured=False)
         for key, value in expected.items():
             core.same(report[key], value, "exact ablation plot " + key)
         config = {
@@ -164,7 +194,9 @@ def rows_and_contrast(checker, family, reports):
                                     "runtime_profiling": False, "dispatch_sequences": False,
                                     "queue_rollover": False, "projection": "mfma", "attention": "wave"},
         }
-        core.same(report["configuration"], config, "identical full-forward wave configuration")
+        if family == "argmax-v11":
+            config["fp32_argmax"] = variant
+        core.same(report["configuration"], config, "exact full-forward wave configuration and declared selector")
         timing = report["timing"]
         intervals = timing["decode_intervals_ns"]
         core.same(timing["decode_interval_count"], 31, "31 actual intervals")
@@ -181,6 +213,9 @@ def rows_and_contrast(checker, family, reports):
                      "reference_sha256": report["reference_sha256"],
                      "decode_intervals_seconds": [value / 1e9 for value in intervals],
                      "post_first_tokens_per_second": rate})
+        if family == "argmax-v11":
+            rows[-1].update(fp32_argmax=report["fp32_argmax"], argmax_root=report["argmax_root"],
+                            fp32_argmax_artifact=copy.deepcopy(report["fp32_argmax_artifact"]))
     matched_axis(checker, family, rows)
     ratio = rows[1]["post_first_tokens_per_second"] / rows[0]["post_first_tokens_per_second"]
     contrast = {
@@ -207,9 +242,20 @@ def rows_and_contrast(checker, family, reports):
         contrast["main_canonical_descriptors_by_variant"] = copy.deepcopy(checker.MAIN_CANONICAL_DESCRIPTORS)
         contrast["paired_prefetch_feature_by_variant"] = {
             report["variant"]: copy.deepcopy(report["paired_prefetch_feature"]) for report in reports}
-    else:
+    elif family == "preparation-worker":
         contrast.update(worker_source_manifest_sha256=checker.WORKER_SOURCE_MANIFEST_SHA256,
                         currentness_check_count_measured=False)
+    else:
+        contrast.update(**checker.SOURCE_PINS,
+                        differing_configuration_fields=["fp32_argmax"],
+                        fp32_argmax_artifact=copy.deepcopy(checker.ARGMAX_ARTIFACT),
+                        argmax_roots_by_variant=copy.deepcopy(checker.ARGMAX_ROOTS),
+                        argmax_canonical_descriptor_sha256=checker.ARGMAX_CANONICAL_DESCRIPTOR_SHA256,
+                        argmax_admission_sha256=checker.ARGMAX_ADMISSION_SHA256,
+                        argmax_admission_provenance_sha256=checker.ARGMAX_ADMISSION_PROVENANCE_SHA256,
+                        sidecar_loaded_both_variants=True, argmax_source_row_capacity=32,
+                        controller_row_capacity=16, observed_rows=1, transaction_preparation_fence=True,
+                        currentness_check_count_measured=False, gpu_argmax_duration_measured=False)
     core.require(all(math.isfinite(value) for value in (
         ratio, contrast["observed_tpot_change_percent"],
         max(max(row["decode_intervals_seconds"]) for row in rows) * 1120,

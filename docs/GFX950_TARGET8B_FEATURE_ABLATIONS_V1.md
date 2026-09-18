@@ -109,8 +109,9 @@ seven postflight checks before these assets were generated.
 The observed rate ratio is **1.096191x**, with **8.774994% lower** mean TPOT.
 This remains one unwarmed, nonisolated request per worker, not a stable causal
 speedup. The preparation-worker ratio cannot be multiplied by the image-level
-ratio: their main-image identities and capture cohorts differ, and the combined
-configuration has not been measured here.
+ratio: their main-image identities and capture cohorts differ. The separate
+argmax pair below holds both features fixed; it does not measure how their
+individual effects combine.
 
 ### Mechanism
 
@@ -146,6 +147,62 @@ remain separate from the paired-image cohort. The candidate worker's frozen
 source manifest below binds this mechanism; both harness arms check that
 source and all its files before and after their run.
 
+## FP32 Argmax Selector Observation
+
+This third cohort compares `serial-v7` with `wave-v11` on the same full-forward
+stack. Both arms use the identical controller `b4d180...`, transaction-fence
+worker `055037...`, paired-prefetch main image `2e677...`, FP32 head `b21c...`,
+and native v11 sidecar `86c3ee...`. Both load that sidecar before allocation,
+including the serial control. The only configured difference is the FP32
+argmax selector and its final kernel root, not an executable or image identity.
+The older cohorts' captures are not relabeled or reused as this control.
+
+| Variant | TTFT (s) | Mean TPOT (s) | Post-first tokens/s | Observed rate / control | Setup (s) |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Serial FP32 argmax v7 | 0.778280 | 0.160648 | 6.224789 | 1.000x | 210.207021 |
+| Wave FP32 argmax v11 | 0.678554 | 0.137543 | 7.270475 | 1.168x | 218.197635 |
+
+The observed rate ratio is **1.167987x**, with **14.382642% lower** mean TPOT.
+These are complete-request host observations from one unwarmed, nonisolated
+request per mode. They do not establish a stable causal speedup or measure the
+GPU duration of the argmax kernel. Both fresh captures match all 32 reference
+tokens and decoded bytes and pass all 13 cohort-specific postflight checks.
+
+### Mechanism
+
+The unchanged [v11 argmax source](../device/qwen3-tp-fp32-argmax-kernels-v11/src/logits.rs#L62)
+uses one Wave64 per active row. Its lanes inspect strided positions across all
+151,936 FP32 logits, then perform wave reductions for nonfinite rejection,
+the maximum value, and the stable lowest-token winner. Equal signed zeros
+preserve the same lowest-token tie policy. It writes one token choice and
+does not prune the vocabulary or change BF16 weights/activations or FP32 logits.
+
+The frozen selector changes the final root from
+`ferric_qwen3_tp_argmax_f32_v7` to
+`ferric_qwen3_tp_batch32_wave_argmax_f32_v11`; the other 615 packets remain in
+the same forward schedule. Root names and packet counts are source-derived,
+not an instrumented GPU trace. The closed one-root sidecar's complete native
+ABI and both ordinary admission cases are pinned separately. Its source
+domain is rows 1 through 32, the controller uses capacity 16 buffers, and this
+GPU observation validates **only one active row**.
+
+![FP32 argmax selector observation: one unwarmed request per mode](assets/asrock-target8b-feature-ablations-v1/argmax-v11/rates.svg)
+
+![All 62 actual host decode intervals for the argmax selector pair](assets/asrock-target8b-feature-ablations-v1/argmax-v11/intervals.svg)
+
+The [serial control report](assets/asrock-target8b-feature-ablations-v1/argmax-v11/control-report.json)
+and [wave candidate report](assets/asrock-target8b-feature-ablations-v1/argmax-v11/candidate-report.json)
+are exact copies of independently raw-capture-revalidated reports. The
+[contrast](assets/asrock-target8b-feature-ablations-v1/argmax-v11/observed-contrast.json)
+keeps all actual identities equal and names `fp32_argmax` as the differing
+configuration field. It retains sidecar identities, distinct actual handoff
+and canonical descriptor, admission/provenance hashes, and every source pin.
+The [62-interval CSV](assets/asrock-target8b-feature-ablations-v1/argmax-v11/intervals.csv),
+[generated table](assets/asrock-target8b-feature-ablations-v1/argmax-v11/table.md),
+and [asset hashes](assets/asrock-target8b-feature-ablations-v1/argmax-v11/SHA256SUMS)
+belong only to this matched selector cohort. The earlier image and worker
+assets remain byte-identical.
+
 ## Measurement Scope
 
 The post-first rate is `31e9 / sum(the 31 decode intervals in nanoseconds)`.
@@ -154,8 +211,7 @@ is reported separately. Each pair plots all 62 actual intervals at output
 token ordinals 2 through 32. Host intervals include runtime, IPC, and
 between-batch JSON logging. Recording overhead is not measured or subtracted.
 
-Both variants in each pair use `--runtime-full-forward-mfma-v7-wave`, profile
-`mfma-v3-fp32-v7-wave-attention-tp1-616`, one row, one-token prefill chunks,
+Both variants in each pair use `--runtime-full-forward-mfma-v7-wave`, one row, one-token prefill chunks,
 context 64, four physical pages, and device TP1 residuals. Each request
 executes 36 forwards and 22,176 dispatch packets. The 36 completion frontiers
 are source-derived schedule counts, not measured polls, events, or GPU durations.
@@ -163,6 +219,10 @@ The execution remains 616 sequential AQL packets per forward, not a fused GPU
 kernel. Runtime admission caching and operational currentness are enabled;
 prefix caching, head pruning, dispatch sequences, queue rollover, and runtime
 profiling are disabled. The head workspace remains 9,723,904 bytes.
+The image and worker pairs use profile
+`mfma-v3-fp32-v7-wave-attention-tp1-616`; both argmax arms use
+`mfma-v3-fp32-v7-wave-attention-v11-sidecar-tp1-616` with the explicit
+`--fp32-argmax` mode and identical `--fp32-argmax-artifact`.
 
 The model revision is `b968826d9c46dd6066d109eabc6255188de91218`. The independent
 reference was generated earlier on MI300X. This checks one fixed prompt and
@@ -170,8 +230,8 @@ reference was generated earlier on MI300X. This checks one fixed prompt and
 
 ### The Remaining 700 Tokens/s Gap
 
-The observed 5.592616 tokens/s is still far below 700 tokens/s. Register
-prefetching and fewer host checks do not eliminate the model's BF16 weight
+The highest observed rate here, 7.270475 tokens/s, is still far below 700 tokens/s. Register
+prefetching, fewer host checks, and wave argmax do not eliminate the model's BF16 weight
 traffic. The existing
 [model-specific weight-streaming analysis](GFX950_DECODE_PERFORMANCE_V1.md#bf16-weight-streaming-bound)
 and [explicit bandwidth scenarios](GFX950_TARGET8B_ABLATIONS_V2.md#theoretical-context-not-a-measured-bar)
@@ -180,7 +240,7 @@ idealized bounds assume perfect streaming, no persistent weight-cache credit,
 and no activation, KV, synchronization, or compute cost; they are not measured
 sustained bandwidth or cache-independent physical limits. No new theoretical
 bar is added here. Host timings alone cannot attribute the remaining gap to
-HBM, kernel work, or runtime overhead, and neither this isolated observation
+HBM, kernel work, or runtime overhead, and neither this single-request observation
 nor multiplication of separate cohort ratios demonstrates the 700-token/s goal.
 
 ## Frozen Validation
@@ -189,8 +249,15 @@ nor multiplication of separate cohort ratios demonstrates the 700-token/s goal.
 | --- | --- |
 | Paired-image comparator | `da77a498a9a429202bd247bd724e457732621716b5ad7f4f2e301cf14f5b41b2` |
 | Preparation-worker comparator | `7e654a33f32a3d382638eafceada3c0db44aa46237533836a51302e6eea4483f` |
+| Argmax selector comparator | `f862c587edc165c96a62cca057e07354b456068a7550b600b808378b51b238f2` |
 | Common numerical comparator | `90cd589fe9b98660f6efb3400775cd269af236688706f37eaedee2d12e92b975` |
 | Controller-v7 | `5b218caa6aa51c56749f64329054d29faf0cc766e401db2c41f58bc8d1324f48` |
+| Argmax cohort controller | `b4d180bc078b1c84bad374e55f5905b3ba407c0847e6c4255f8546adfaa5199a` |
+| Argmax controller overlay source | `9fb2f8d4228f827f37046dbfba27711a6f4e85546d8b5c02e5817a2ed663ff35` |
+| Argmax native source closure | `1556bf8bdba72646a62da57c80b2676495b0e6b5655896bd22a43c4c878c3384` |
+| Argmax native sidecar | `86c3ee4cead26f6432ef590434b3335e1ee2a95c9c900cf6315dca4ef0a542b0` |
+| Argmax ordinary admission | `8d574bd5d838c4f83e7f57b8855e9bee2ded5745db0aea8c7624f4ba1ac9af14` |
+| Argmax admission provenance | `25c151cb56dbe3412345787d2bae89172141558b04663f3e4008d46a68f92dbc` |
 | Independent reference | `1ed868663df52a146dd7921f9fbb2cf1e1d0c0ceed8a7bfda030d65f8ec5b094` |
 | Paired source manifest | `b27b9cffc159ee82667d039056aa6a414569cc1309e25a5dca442279aba59fb0` |
 | Complete 15-root catalog | `d4a1e53ed7d8ca8bd0d29dded44192e6cbeac2b825174d9faa391fd414af99e6` |
@@ -204,7 +271,7 @@ raw captures, zero controller status, exact stderr, workload, expectation,
 reference, identities, dispatch counts, and timing receipts. Regenerated
 reports must exactly equal the retained public reports before any output
 directory is created. The comparison explicitly checks the permitted identity
-difference and does not normalize or drop image or worker identities to make
+or selector difference and does not normalize or drop image or worker identities to make
 plots appear matched.
 
 The original six postflight checks and the cohort-specific seventh source
@@ -217,7 +284,18 @@ controller=0 idle=0 topology=0 inputs=0 plan=0 source=0 worker_source=0
 
 The first line applies only to paired-prefetch; the second applies only to
 preparation workers. Neither a missing seventh check nor the other cohort's
-source check is accepted. The captures include request retirement and worker
+source check is accepted. The argmax cohort instead requires this exact 13-status line:
+
+```text
+controller=0 idle=0 topology=0 inputs=0 plan=0 source=0 worker_source=0 base_source=0 controller_inputs=0 paired_source=0 argmax_source=0 argmax_original_source=0 argmax_shared_source=0
+```
+
+This binds the controller overlay and base, unchanged controller inputs,
+worker source, paired source, complete native source closure, original v11
+source, and both shared native build inputs. The full sidecar admission
+provenance and every referenced record are also checked as immutable inputs
+before and after each run. Missing, reordered, substituted, or nonzero statuses
+are rejected. The captures include request retirement and worker
 closure; the close record alone does not independently establish system-wide
 idleness or a final free-page count. Performance qualification remains false.
 
@@ -238,15 +316,22 @@ python3 -B tools/target_feature_ablation_plots_v1.py \
   --candidate-capture "$EVIDENCE/target8b-full-forward-preparation-v1-transaction-01" \
   --reference "$REFERENCE" \
   --output /tmp/ferric-worker-preparation-observation-v1-rebuilt
+python3 -B tools/target_feature_ablation_plots_v1.py \
+  --family argmax-v11 \
+  --control-capture "$EVIDENCE/target8b-full-forward-argmax-v11-v1-control-01" \
+  --candidate-capture "$EVIDENCE/target8b-full-forward-argmax-v11-v1-wave-01" \
+  --reference "$REFERENCE" \
+  --output /tmp/ferric-argmax-selector-observation-v1-rebuilt
 PYTHONPATH=tools python3 -B -m unittest \
   test_target_mfma_paired_prefetch_v1 \
   test_target_full_forward_preparation_v1 \
+  test_target_full_forward_argmax_v11_v1 \
   test_target_feature_ablation_plots_v1
 ```
 
-The combined suite passes 48 CPU tests, including the reporter's 14 synthetic
+The combined suite passes 67 CPU tests, including the reporter's 16 synthetic
 tests. They cover actual identity preservation,
 declared-axis matching, numerical scope, all interval values, exact report
-equality, source pinning, all seven postcheck statuses, and rejection before
+equality, source pinning, every seven- or 13-status postcheck line, and rejection before
 output creation. Synthetic fixtures are explicitly labeled and rejected by
 the production reference digest check; they provide no GPU or rate evidence.

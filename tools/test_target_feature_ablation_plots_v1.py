@@ -13,9 +13,10 @@ from xml.etree import ElementTree as ET
 import target_feature_ablation_plots_v1 as plots
 from test_target_mfma_paired_prefetch_v1 import fixture as paired_fixture
 from test_target_full_forward_preparation_v1 import fixture as preparation_fixture
+from test_target_full_forward_argmax_v11_v1 import fixture as argmax_fixture
 
 
-FIXTURES = {"paired-prefetch": paired_fixture, "preparation-worker": preparation_fixture}
+FIXTURES = {"paired-prefetch": paired_fixture, "preparation-worker": preparation_fixture, "argmax-v11": argmax_fixture}
 
 
 def fixture(family):
@@ -71,7 +72,15 @@ class FeatureAblationPlotTests(unittest.TestCase):
                 contrast = json.loads((output / "observed-contrast.json").read_text())
                 self.assertEqual(contrast["source_completion_frontiers"], {r["variant"]: 36 for r in reports})
                 self.assertEqual(contrast["identities_by_variant"], {r["variant"]: r["identities"] for r in reports})
-                self.assertNotEqual(reports[0]["identities"], reports[1]["identities"])
+                if family == "argmax-v11":
+                    self.assertEqual(reports[0]["identities"], reports[1]["identities"])
+                    self.assertEqual(contrast["differing_identity_fields"], [])
+                    self.assertEqual(contrast["differing_configuration_fields"], ["fp32_argmax"])
+                    self.assertEqual(contrast["fp32_argmax_artifact"], checker.ARGMAX_ARTIFACT)
+                    self.assertEqual(contrast["argmax_roots_by_variant"], checker.ARGMAX_ROOTS)
+                    self.assertIs(contrast["gpu_argmax_duration_measured"], False)
+                else:
+                    self.assertNotEqual(reports[0]["identities"], reports[1]["identities"])
                 self.assertEqual(contrast["differing_axis"], plots.COHORTS[family]["axis"])
                 self.assertEqual(contrast["logits_precision"], "FP32")
                 for key in ("causal_or_stable_speedup_claim", "gpu_overlap_measured", "persistent_gpu_kernel",
@@ -179,6 +188,34 @@ class FeatureAblationPlotTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 plots.rows_and_contrast(checker, "preparation-worker", reports)
 
+    def test_argmax_selector_sidecar_admission_sources_and_scope_are_exact(self):
+        checker, original = fixture("argmax-v11")
+        mutations = [(key, "a" * 64) for key in checker.SOURCE_PINS]
+        mutations += [("fp32_argmax", "serial-v7"), ("argmax_root", checker.ARGMAX_ROOTS["serial-v7"]),
+                      ("fp32_argmax_artifact", {}), ("argmax_admission_sha256", "a" * 64),
+                      ("argmax_admission_provenance_sha256", "a" * 64),
+                      ("argmax_canonical_descriptor_sha256", "a" * 64),
+                      ("sidecar_loaded_both_variants", False), ("observed_rows", 16),
+                      ("controller_row_capacity", 32), ("argmax_source_row_capacity", 16),
+                      ("transaction_preparation_fence", False)]
+        for key, value in mutations:
+            reports = copy.deepcopy(original)
+            reports[1][key] = value
+            with self.subTest(key=key), self.assertRaises(ValueError):
+                plots.rows_and_contrast(checker, "argmax-v11", reports)
+        reports = copy.deepcopy(original)
+        reports[1]["configuration"]["fp32_argmax"] = "serial-v7"
+        with self.assertRaises(ValueError):
+            plots.rows_and_contrast(checker, "argmax-v11", reports)
+
+    def test_argmax_pair_is_distinct_from_previous_worker_and_image_cohorts(self):
+        checker, original = fixture("argmax-v11")
+        for family in ("paired-prefetch", "preparation-worker"):
+            _, earlier = fixture(family)
+            for reports in ([earlier[0], original[1]], [original[0], earlier[1]]):
+                with self.assertRaises(ValueError):
+                    plots.rows_and_contrast(checker, "argmax-v11", reports)
+
     def test_intervals_rates_boundaries_and_nonfinite_values_rejected(self):
         checker, original = fixture("paired-prefetch")
         for value in (True, 0, 1.0, float("inf"), 2**64):
@@ -236,7 +273,7 @@ class FeatureAblationPlotTests(unittest.TestCase):
                 with self.assertRaises(ValueError):
                     plots.revalidate(checker, family, capture, variant, b"synthetic-only-reference")
 
-    def test_all_seven_postchecks_required_before_any_pipeline_output(self):
+    def test_all_cohort_postchecks_required_before_any_pipeline_output(self):
         for family in plots.COHORTS:
             checker = plots.load_checker(family)
             with tempfile.TemporaryDirectory() as directory:
