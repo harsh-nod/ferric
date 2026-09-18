@@ -11,6 +11,91 @@ September 18 at 05:55 UTC; all eight physical GPUs report zero activity and
 not a reservation or launch admission. Builds and CPU tests remain on mi300x;
 every native launch requires a fresh device/no-use check.
 
+### 14ec Compiler Source Adopted; Fresh Tools Built
+
+Ferric `1997e1c32d3e298696d6a6f62a78b95f625eed6d` adopts published fe2o3
+`14ec7d2f75561977331e7a1ad5f916ada6d2ca59`. All 50 adoption phases and
+eight preflight phases pass on mi300x, including 48 source-gate tests,
+32 locked dependency graphs, 35 metadata records, four dependency inventories
+and normal coverage generation/validation. All 1,165 integrated source files
+match the independently audited final census.
+
+The exact 80-file transition includes one reviewed dependency promotion in
+29 lockfiles: `fe2o3-lower-mir-kernel` now depends on `fe2o3-kernel-opt` as a
+normal dependency. Production/dev/combined inventories record that change;
+runtime inventory, coverage and the deliberately frozen property-binder pin
+remain unchanged. No automatic unlocked lockfile repair occurs. Upstream's
+compiler changes require fresh compiler products; the previously built 1ca7
+tools are not relabeled.
+
+The retained adoption archive is 32,157,041 bytes, SHA256
+`cf309150897dc36d1d3b40e0d26d928425e86051772df7128cd18704900ebecf`.
+Independent review verifies all 2,177 payloads and 2,178 archive members,
+exact nanosecond metadata, 65 external files, raw terminal records, two fresh
+source-gate ELF producers, all source bytes and the exact patch. The first
+auditor incorrectly expects the frozen property-binder graph to follow the
+new compiler pin and exits 1. That failed audit remains intact; a separately
+recorded correction accepts only the graph's original reviewed pin and passes.
+Fresh absence checks cover 129 recorded process entries, not global visibility.
+
+The fresh 14ec four-tool campaign passes on mi300x from 06:34:37Z to 06:48:41Z
+on September 18, after eight passing compiler/retainer preflight phases and
+independent control review. All six command/cleanup/wrapper triples and the
+campaign, launch, group, source and control checks are zero. It keeps
+CPU0/nice19/jobs1, the 10 GiB owner cap, 1,907,900 KiB build reserve and the
+existing host free-space/memory floors. Initial build admission observes
+1,767,312 KiB owner usage and an empty target. Source and borrowed-cache
+preservation pass; all four tools have actual fresh Cargo producers, and the
+backend receipt binds the newly built CLI.
+
+| Tool | Bytes | SHA256 |
+| --- | --- | --- |
+| `cargo-fe2o3` | 26,599,216 | `d4875f6f125e2debf6150875bc771cb2f5a788f94c5669adadb473ec37c6215e` |
+| `lld-proxy` | 454,512 | `fe505654643320fbae1deacd3d4ccd355968353f172d79a6ff234ea58f5ff219` |
+| `extractor` | 200,040 | `7f71cfa72f400f3c63eb8f28e86411d6d5aaa7e7e48d79ddfb5a25494c566d08` |
+| `backend.so` | 190,552,360 | `92dfa7538f2553c84da50ddfcdfaf38152bd52b033b9b772ac801a516ec05634` |
+
+The first terminal-retention attempt passes. Its 82,951,673-byte archive has
+SHA256 `8702f9dbc9960f80fc154f637d5f55d6c90dbf7f3af9b97150f705bb0079d69e`.
+Independent review passes all 176 payloads, 177 archive members, exact signed
+nanosecond metadata, 57 external files, 5,233 canonical source files, four
+original/copied ELF identities and source/cache/control preservation. Both
+audit phases have zero command/cleanup/wrapper exits; 44 recorded process
+entries covering 17 unique IDs are absent. All transferred evidence hashes
+pass locally. No kernel emission, native execution or full compiler
+qualification follows from this four-tool build.
+
+After that independent ACK, fresh custody/tool hashes, recorded process
+absence and scoped no-use checks, the completed private compiler target and
+cache copy are removed, reclaiming 3,229,828 KiB. Canonical source, all four
+reusable tools, retained evidence and original borrowed caches remain. These
+scoped cleanup checks do not claim global process visibility.
+
+The next TP14 step reuses the adoption's authenticated source-gate results
+after exact source comparison and obtains fresh nightly TP metadata. It does
+not rerun or invent records for the inherited 48 tests. Fresh vendor formation,
+the existing 13-phase emitter and separately admitted mi350 native validation
+remain necessary. The LLVM worker subtree is unchanged at its actual older
+producer, fe406 and 14ec, so reuse retains that original producer attribution.
+The four-phase TP metadata successor's shell syntax, four Python AST checks
+and seven inherited lifecycle fixtures pass on mi300x with zero terminal
+triples. Its actual source-binding/metadata campaign remains unexecuted and
+unready; these preflights are not a new source-gate or kernel result.
+All nine KFD/runtime dependency source trees and the compiler root manifest,
+lockfile and toolchain are identical between fe406 and 14ec. Any reused native
+worker still retains its actual old producer and requires fresh artifact and
+device admission; source equality is not a new native build or run.
+
+The opt-in layer-zero TP1 attention-output boundary capture proposal has a
+static review ACK. It retains the actual projection input, host residual,
+native FP32 partial consumed by the reducer and GPU hidden readback after
+broadcast, with close-bound publication and no acceptance/timing claim. Review
+fixes preserve the existing reduction API, reject unsupported profiles before
+any token dispatch, bind the canonical checkpoint tensor name and remove a
+test-helper shadowing compile error. Its seven proposed tests, remote build
+and native use remain unexecuted; the patch is not integrated. All 33 M1 gates
+remain open.
+
 ### Same-Input LM Head Matches The Source-Ordered Replay
 
 Ferric `7a1f03fa88bcca704be217167acc85caf1824244` adds the CPU-only
@@ -120,12 +205,10 @@ LM-head diagnostic is recorded above. The Pages update is still an unpublished
 proposal. No numerical acceptance, performance, protected-proof or M1 gate claim
 follows.
 
-The next campaign reuses the existing dedicated 17-phase TP14 source-gate
-workflow, then vendor prerequisites/formation and the 13-phase emitter. The
-adopted `c3707b89` kernel-source snapshot is unchanged by the later diagnostic
-commits: device sources, proofs, Cargo manifest and lock are byte-identical.
-It may retain its actual c370 source attribution with the new 1ca7 tools;
-neither the newer diagnostic commit nor a newer artifact is inferred.
+At the 1ca7 checkpoint, the planned successor was the dedicated 17-phase TP14
+source-gate workflow, vendor formation and the 13-phase emitter. The newer
+14ec adoption and reuse plan above supersede that proposed source binding;
+historical 1ca7 tools and results retain their actual attribution.
 
 ### Same-Input Final RMS Matches Both CPU Replays
 
