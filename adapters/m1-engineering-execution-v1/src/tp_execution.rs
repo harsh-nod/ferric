@@ -8,6 +8,7 @@
 //! protected M1 execution or a source-to-device correctness proof.
 
 mod collective;
+pub mod final_stage;
 mod peer_reduction;
 mod performance;
 mod reduction;

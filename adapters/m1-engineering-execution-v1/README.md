@@ -192,3 +192,30 @@ Timeouts or malformed responses poison the instance; they cannot count as a
 successful measurement. Binary/artifact identities are observations, not
 publication or launch authority. Actual hardware results are tracked in
 `docs/M1_TEAM_PROGRESS.md`.
+
+### TP1 Final-Stage Diagnostics
+
+Add `--capture-final-stage /absolute/fresh-directory --capture-positions 4,5`
+to a TP1 invocation with `--repetitions 1 --warmup 0`. The destination must
+not exist and its parent must be canonical. Select 1..8 strictly increasing
+consumed KV positions within the actual prompt-plus-decode sequence. For the
+default prompt with `--new-tokens 2`, positions 4 and 5 observe the last prompt
+token and the first generated token consumed by the engine. The last emitted
+token is not yet consumed.
+
+Selected steps retain rank-zero pre-final-RMS residual, normalized state and
+all 151,936 BF16 logits after the ordinary final argmax completes. Payloads
+are little-endian BF16 rows concatenated in selection order, with per-row and
+whole-file SHA-256 descriptors. `intent.json` records the selection and actual
+setup identity; `manifest.json` is published without replacement only after
+all selected reads, successful model execution and actual worker teardown.
+A fourth JSONL record supplies the manifest hash. Partial output or a manifest
+without a successful receipt and terminal process result is not a completed
+run.
+
+The GPU-selected token is never replaced. Raw nonfinite logits and finite
+CPU/GPU argmax disagreement remain available as diagnostics. All capture-mode
+timings are non-comparable. This adapter is Contracted and outside the verified
+production workspace; successful readback is not numerical parity, a reviewed
+tolerance, or M1 qualification. An independent two-pass reference comparison
+and native validation of this capture path remain separate work.

@@ -26,6 +26,9 @@ struct RecordingTransport {
     fail_wait: bool,
     fail_close: bool,
     commands: Vec<EngineeringTpDispatchV1>,
+    reads: Vec<(u64, usize, usize, Option<&'static str>)>,
+    fail_final_read: Option<u64>,
+    logit_overrides: Vec<(usize, u16)>,
 }
 
 impl RecordingTransport {
@@ -74,6 +77,11 @@ impl EngineeringTpRankTransportV1 for RecordingTransport {
 
     fn read(&mut self, buffer: u64, offset: usize, bytes: &mut [u8]) -> TpResult<()> {
         assert!(self.pending.is_none());
+        let last_kernel = self.commands.last().map(|command| command.kernel);
+        self.reads.push((buffer, offset, bytes.len(), last_kernel));
+        if self.fail_final_read == Some(buffer) && last_kernel == Some(ARGMAX) {
+            return Err("injected final-stage read failure".into());
+        }
         bytes.copy_from_slice(&self.buffers[&buffer][offset..offset + bytes.len()]);
         Ok(())
     }
@@ -135,7 +143,17 @@ impl EngineeringTpRankTransportV1 for RecordingTransport {
                 }
                 self.output(&command, 4, &0_u16.to_le_bytes());
             }
-            GEMV | LM_HEAD | SWIGLU => self.output(&command, 2, &0_u16.to_le_bytes()),
+            LM_HEAD => {
+                self.output(&command, 2, &0_u16.to_le_bytes());
+                let EngineeringTpArgumentV1::Buffer { id, .. } = command.arguments[2] else {
+                    panic!("LM head output buffer expected");
+                };
+                for &(index, bits) in &self.logit_overrides {
+                    self.buffers.get_mut(&id).unwrap()[index * 2..index * 2 + 2]
+                        .copy_from_slice(&bits.to_le_bytes());
+                }
+            }
+            GEMV | SWIGLU => self.output(&command, 2, &0_u16.to_le_bytes()),
             ROPE => {
                 self.output(&command, 4, &0_u16.to_le_bytes());
                 self.output(&command, 5, &0_u16.to_le_bytes());
@@ -196,6 +214,9 @@ fn fixture_model(
             fail_wait: false,
             fail_close: false,
             commands: Vec::new(),
+            reads: Vec::new(),
+            fail_final_read: None,
+            logit_overrides: Vec::new(),
         })
         .collect::<Vec<_>>();
     let plan = Qwen3TensorParallelPlanV1::new(model, world).unwrap();
@@ -248,6 +269,8 @@ fn fixture_model(
         closed: false,
     }
 }
+
+mod final_stage_tests;
 
 fn draft() -> ModelConfig {
     ModelConfig {

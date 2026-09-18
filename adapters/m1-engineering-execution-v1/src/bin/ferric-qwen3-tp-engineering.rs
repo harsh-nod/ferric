@@ -9,12 +9,13 @@ use std::time::Instant;
 
 use ferric_m1_engineering_execution_v1::tp_artifact::EngineeringTpArtifactV1;
 use ferric_m1_engineering_execution_v1::tp_execution::EngineeringTpExecutionV1;
+use ferric_m1_engineering_execution_v1::tp_execution::final_stage::EngineeringTpFinalStageCaptureV1;
 use ferric_m1_engineering_execution_v1::tp_model::EngineeringQwenModelV1;
 use serde::Serialize;
 use sha2::{Digest, Sha256};
 use tp_worker::Worker;
 
-const USAGE: &str = "ferric-qwen3-tp-engineering --source DIR --artifact DIR --worker FILE --devices ID[,ID...] --allow-unauthenticated-machine-code [--prompt TEXT] [--new-tokens 32] [--repetitions 3] [--warmup 1] [--capacity 128]";
+const USAGE: &str = "ferric-qwen3-tp-engineering --source DIR --artifact DIR --worker FILE --devices ID[,ID...] --allow-unauthenticated-machine-code [--prompt TEXT] [--new-tokens 32] [--repetitions 3] [--warmup 1] [--capacity 128] [--capture-final-stage DIR --capture-positions P[,P...]]";
 
 struct Options {
     source: PathBuf,
@@ -26,6 +27,8 @@ struct Options {
     repetitions: u32,
     warmup: u32,
     capacity: u32,
+    capture_directory: Option<PathBuf>,
+    capture_positions: Vec<u32>,
 }
 
 impl Options {
@@ -36,6 +39,8 @@ impl Options {
         let mut prompt = "The capital of France is".to_owned();
         let (mut new_tokens, mut repetitions, mut warmup, mut capacity) = (32, 3, 1, 128);
         let mut consent = false;
+        let mut capture_directory = None;
+        let mut capture_positions = None;
         while let Some(flag) = arguments.next() {
             if !seen.insert(flag.clone()) {
                 return Err(format!("duplicate option {flag}"));
@@ -68,6 +73,15 @@ impl Options {
                 "--repetitions" => repetitions = number(&flag, &value)?,
                 "--warmup" => warmup = number(&flag, &value)?,
                 "--capacity" => capacity = number(&flag, &value)?,
+                "--capture-final-stage" => capture_directory = Some(PathBuf::from(value)),
+                "--capture-positions" => {
+                    capture_positions = Some(
+                        value
+                            .split(',')
+                            .map(|part| number(&flag, part))
+                            .collect::<Result<Vec<_>, _>>()?,
+                    );
+                }
                 _ => return Err(format!("unknown option {flag}")),
             }
         }
@@ -90,6 +104,18 @@ impl Options {
         {
             return Err("prompt or measurement bounds exceeded".into());
         }
+        if capture_directory.is_some() != capture_positions.is_some() {
+            return Err(
+                "capture requires both --capture-final-stage and --capture-positions".into(),
+            );
+        }
+        let capture_positions = capture_positions.unwrap_or_default();
+        if capture_directory.is_some() {
+            if devices.len() != 1 || repetitions != 1 || warmup != 0 {
+                return Err("capture requires TP1, --repetitions 1 and --warmup 0".into());
+            }
+            EngineeringTpFinalStageCaptureV1::validate_positions(&capture_positions, capacity)?;
+        }
         Ok(Self {
             source: source.ok_or("--source is required")?,
             artifact: artifact.ok_or("--artifact is required")?,
@@ -100,6 +126,8 @@ impl Options {
             repetitions,
             warmup,
             capacity,
+            capture_directory,
+            capture_positions,
         })
     }
 }
@@ -140,6 +168,8 @@ struct Measurement {
     generation_seconds: f64,
     rank_dispatch_counts: Vec<u64>,
     kv_tokens_processed: u32,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    benchmark_comparable: Option<bool>,
 }
 
 fn emit(value: &impl Serialize) -> Result<(), String> {
@@ -156,13 +186,14 @@ fn run_sequence(
     options: &Options,
     run: u32,
     warmup: bool,
+    capture: &mut Option<EngineeringTpFinalStageCaptureV1>,
 ) -> Result<Measurement, String> {
     engine.reset_sequence()?;
     let before = engine.dispatch_counts();
     let started = Instant::now();
     let mut next = None;
     for (position, &token) in prompt.iter().enumerate() {
-        next = Some(engine.step(token)?);
+        next = Some(captured_step(engine, capture, token)?);
         eprintln!(
             "run={run} warmup={warmup} prompt_position={position} elapsed_seconds={:.6}",
             started.elapsed().as_secs_f64()
@@ -175,7 +206,7 @@ fn run_sequence(
     let mut intervals = Vec::with_capacity(options.new_tokens as usize - 1);
     let mut token = first;
     for ordinal in 1..options.new_tokens {
-        token = engine.step(token)?;
+        token = captured_step(engine, capture, token)?;
         let now = Instant::now();
         intervals.push(now.duration_since(previous).as_secs_f64());
         tokens.push(token);
@@ -226,7 +257,19 @@ fn run_sequence(
         generation_seconds,
         rank_dispatch_counts: counts,
         kv_tokens_processed: engine.position(),
+        benchmark_comparable: capture.as_ref().map(|_| false),
     })
+}
+
+fn captured_step(
+    engine: &mut EngineeringTpExecutionV1<Worker>,
+    capture: &mut Option<EngineeringTpFinalStageCaptureV1>,
+    token: u32,
+) -> Result<u32, String> {
+    match capture {
+        Some(capture) => capture.step(engine, token),
+        None => engine.step(token),
+    }
 }
 
 fn hash_file(path: &Path) -> Result<String, String> {
@@ -278,6 +321,9 @@ fn run(options: &Options) -> Result<(), String> {
     if prompt.is_empty() || required > options.capacity {
         return Err("tokenized prompt/output exceeds sequence capacity".into());
     }
+    if options.capture_directory.is_some() {
+        EngineeringTpFinalStageCaptureV1::validate_positions(&options.capture_positions, required)?;
+    }
     let dispatch_budget = checked_dispatch_budget(
         required,
         options.repetitions + options.warmup,
@@ -309,8 +355,9 @@ fn run(options: &Options) -> Result<(), String> {
         options.capacity,
     )?;
     let setup_seconds = whole.elapsed().as_secs_f64();
+    let mut capture = None;
     let measured = (|| {
-        emit(&serde_json::json!({
+        let mut setup = serde_json::json!({
             "schema": "FerricQwen3TpEngineeringSetupV1", "authority": "none",
             "model": "Qwen/Qwen3-8B", "dtype": "BF16", "target": "gfx950:xnack-",
             "tensor_parallel": options.devices.len(), "device_unique_ids": options.devices,
@@ -329,22 +376,55 @@ fn run(options: &Options) -> Result<(), String> {
             "prefill": "token_at_a_time_m1", "decoding": "greedy_lowest_id_fixed_length",
             "numerical_status": "Contracted; compare emitted token IDs independently",
             "timing": "monotonic controller clock; includes IPC, host collectives and per-token progress logging; excludes setup"
-        }))?;
+        });
+        if let Some(directory) = &options.capture_directory {
+            setup["final_stage_capture"] = serde_json::json!({
+                "positions":options.capture_positions,"benchmark_comparable":false,
+                "timing":"diagnostic readbacks invalidate all performance measurements"});
+            capture = Some(EngineeringTpFinalStageCaptureV1::new(
+                directory,
+                options.capture_positions.clone(),
+                required,
+                setup.clone(),
+            )?);
+        }
+        emit(&setup)?;
         for index in 0..options.warmup {
-            let measurement = run_sequence(&mut engine, &model, &prompt, options, index, true)?;
+            let measurement = run_sequence(
+                &mut engine,
+                &model,
+                &prompt,
+                options,
+                index,
+                true,
+                &mut capture,
+            )?;
             emit(&measurement)?;
         }
         for index in 0..options.repetitions {
-            let measurement = run_sequence(&mut engine, &model, &prompt, options, index, false)?;
+            let measurement = run_sequence(
+                &mut engine,
+                &model,
+                &prompt,
+                options,
+                index,
+                false,
+                &mut capture,
+            )?;
             emit(&measurement)?;
         }
         Ok::<(), String>(())
     })();
     let closed = engine.close();
     match (measured, closed) {
-        (Ok(()), Ok(())) => emit(
-            &serde_json::json!({ "schema": "FerricQwen3TpEngineeringClosedV1", "authority": "none", "worker_pids": pids, "all_workers_exited": true, "whole_seconds": whole.elapsed().as_secs_f64() }),
-        ),
+        (Ok(()), Ok(())) => {
+            let closed = serde_json::json!({ "schema": "FerricQwen3TpEngineeringClosedV1", "authority": "none", "worker_pids": pids, "all_workers_exited": true, "whole_seconds": whole.elapsed().as_secs_f64() });
+            emit(&closed)?;
+            if let Some(capture) = &mut capture {
+                emit(&capture.finish(&closed)?)?;
+            }
+            Ok(())
+        }
         (Err(error), Ok(())) => Err(error),
         (Ok(()), Err(error)) => Err(format!("worker teardown failed: {error}")),
         (Err(error), Err(close)) => Err(format!("{error}; worker teardown failed: {close}")),
@@ -417,5 +497,41 @@ mod tests {
         assert!(checked_dispatch_budget(241, 1, 36).is_err());
         assert!(checked_dispatch_budget(0, 1, 36).is_err());
         assert!(checked_dispatch_budget(u32::MAX, u32::MAX, u32::MAX).is_err());
+    }
+
+    #[test]
+    fn final_stage_capture_is_explicit_bounded_and_single_run_tp1_only() {
+        assert!(
+            options(&["--devices", "1"])
+                .unwrap()
+                .capture_directory
+                .is_none()
+        );
+        let valid = [
+            "--devices",
+            "1",
+            "--repetitions",
+            "1",
+            "--warmup",
+            "0",
+            "--capture-final-stage",
+            "/capture",
+            "--capture-positions",
+            "4,5",
+        ];
+        assert_eq!(options(&valid).unwrap().capture_positions, [4, 5]);
+        for positions in ["", "4,4", "5,4", "128", "-1", "0,1,2,3,4,5,6,7,8"] {
+            let mut args = valid.to_vec();
+            args[9] = positions;
+            assert!(options(&args).is_err(), "{positions}");
+        }
+        for (index, value) in [(1, "1,2"), (3, "2"), (5, "1")] {
+            let mut args = valid.to_vec();
+            args[index] = value;
+            assert!(options(&args).is_err());
+        }
+        assert!(options(&valid[..8]).is_err());
+        assert!(options(&["--devices", "1", "--capture-positions", "4"]).is_err());
+        assert!(EngineeringTpFinalStageCaptureV1::validate_positions(&[6], 6).is_err());
     }
 }
