@@ -1,0 +1,54 @@
+{
+  "accepted_decode_performance_available": false,
+  "authority": "none",
+  "capture_bytes": 0,
+  "controller_exit_status": 1,
+  "diagnosis": "The CLI RankWorker adapter omits supports_full_forward, submit_full_forward and wait_full_forward. Trait defaults reject capability before driver setup. Worker itself implements the methods. The same omission exists in the frozen scalar-v2 and combined-v3 controllers.",
+  "diagnosis_scope": "Read-only frozen-source review; no corrected runtime or new GPU execution is represented.",
+  "emitted_capture_records": 0,
+  "gpu_overlap_measured": false,
+  "harness_geometry_review": "One row/chunk, capacity16, context64/pages4, baseline projection/attention and deviceTP1 are supported. No evidence of a harness geometry mismatch was found.",
+  "identities": {
+    "artifact_handoff_id": "3d6714946adb7e459717d3e03868a4a66ff86e47113c762f7f2d1e9edda81e33",
+    "artifact_hsaco_id": "583a889a4ac5f03c7b004cdd52c1d062649853326e9f4b3d251e11de706573b5",
+    "artifact_manifest_id": "636e1ca50839455767027616086b632168404de928560880fdb316feb6c54d35",
+    "controller_sha256": "d624b07b1b629d28b46cd2aefbceba9c9d4e7fca707e55ebdf53bc90aae19cd3",
+    "worker_sha256": "8284a44f702b8e42a35fe9e04cf051dd709ce9995329adaa2ea5a57ab80fb06a"
+  },
+  "independent_reference_checked": false,
+  "nonclaims": [
+    "No accepted tokens/s, TPOT, GPU duration or successful numerical result exists for this failed attempt.",
+    "An empty capture is not a successful zero-dispatch receipt or proof of worker closure.",
+    "A proposed host transport fix does not establish later correctness or performance."
+  ],
+  "outcome": "rejected-before-setup-receipt-and-decode",
+  "performance_qualified": false,
+  "postflight_checks": {
+    "gpu_idle": true,
+    "inputs_unchanged": true,
+    "plan_unchanged": true,
+    "source_unchanged": true,
+    "topology_unchanged": true
+  },
+  "public_error": "Qwen TP batch engineering failed: full-forward scalar-v3 requires fresh Target8B TP1/capacity16/context64/pages4, baseline projection/attention, device TP1 and the unpruned BF16 head",
+  "raw_evidence_sha256": {
+    "capture.ndjson": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "exit-status.txt": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865",
+    "plan.sha256": "d211750ceb186105e523c55574c0c46c618ae4f2f8e0d3563ffea3862de39381",
+    "postcheck-status.txt": "8b5217c8c61463445e2a3c9fafd382eff7c6e5892a337a7211e8865369abff7b",
+    "predeclared-expectation.json": "643777b0fe827eebd9114506e425d69575eb03e391f8ecd8697ffc3517efa7ae",
+    "predeclared-inputs.sha256": "33600034f8714af8f5887b31cd4e40057ccbe0ebd54fd14349b6d56703e590d3",
+    "stderr.log": "155728eb82fc106d8ca4e1dcf036d3c0777d9f7039811f87841f91e1bd34de0e"
+  },
+  "schema": "FerricTargetFullForwardRejectedSetupV1",
+  "source_review_sha256": {
+    "controller_v2_rank_adapter_sha256": "ca2ae3924674e3b9a3c42e8700e033189d655ee4e4e4899b79ae04c648c8432f",
+    "controller_v2_transport_trait_sha256": "77a9c07d42225b308debe1967ae656d0df0f15bb126a11df8daace7c74e6f8b0",
+    "controller_v2_worker_transport_sha256": "fb3d2a4893be5e1c6525159cb68b78494edf572d8b1aedc5eecb8d9404998d89",
+    "controller_v3_rank_adapter_sha256": "ca2ae3924674e3b9a3c42e8700e033189d655ee4e4e4899b79ae04c648c8432f",
+    "controller_v3_transport_trait_sha256": "77a9c07d42225b308debe1967ae656d0df0f15bb126a11df8daace7c74e6f8b0",
+    "controller_v3_worker_transport_sha256": "fb3d2a4893be5e1c6525159cb68b78494edf572d8b1aedc5eecb8d9404998d89"
+  },
+  "variant": "full-forward-scalar-v3",
+  "worker_close_receipt_observed": false
+}

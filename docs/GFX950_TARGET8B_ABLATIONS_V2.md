@@ -18,6 +18,12 @@ and raw public reports. It does not modify the original four cohorts or their 31
 interval points. A fifth, separately matched wave-attention cohort below adds 62
 interval points; neither single-request difference is a stable speedup claim.
 
+The separate [full-forward submission comparisons](GFX950_TARGET8B_FULL_FORWARD_V2.md)
+add matched scalar and MFMA cohorts. The MFMA pair observes 2.162303 versus
+4.261868 tokens/s while retaining 616 ordered GPU packets per forward. The profile
+reduces host submissions, not GPU packet count. It is not a persistent megakernel
+or measured GPU overlap; the observations do not establish a stable speedup.
+
 ## Fixed Workload
 
 | Item | Checked value |
