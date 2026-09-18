@@ -19,6 +19,7 @@ use ferric_m1_engineering_execution_v1::tp_execution::numerical::{
 };
 use ferric_m1_engineering_execution_v1::tp_execution::{
     EngineeringTpProjectionModeV3 as ProjectionMode, EngineeringTpReductionModeV3,
+    EngineeringTpResidualArithmeticV1,
 };
 use ferric_m1_engineering_execution_v1::tp_live_ingress;
 use ferric_m1_engineering_execution_v1::tp_model::EngineeringQwenModelV1;
@@ -44,6 +45,7 @@ const USAGE: &str = concat!(
     "[--runtime-cache-admission] [--runtime-operational] [--dispatch-sequences] [--queue-rollover] ",
     "[--runtime-profile] [--peer-shared-full-currentness] [--runtime-ordered-batches] ",
     "[--collective host-staged-v1|host-staged-reuse-v3|device-tp1-v3|device-peer-serial-v4|device-peer-concurrent-round-v1] ",
+    "[--host-residual-arithmetic fp32-rank-sum-plus-residual-then-bf16-v1|fp32-rank-sum-then-bf16-plus-residual-then-bf16-v1] ",
     "[--peer-artifact DIR] [--kernel-profile v2|v3-wave|v3-mfma|v5-wave32|v5-mfma32] ",
     "[--projection baseline|wave|mfma|auto] [--attention baseline|wave] ",
     "[--head-precision bf16-v7-control|fp32-v7|bf16-v8-control|fp32-v8 --fp32-head-artifact DIR] ",
@@ -75,6 +77,7 @@ struct Options {
     prune_output_head: bool,
     runtime: RuntimeOptions,
     collective: EngineeringTpReductionModeV3,
+    residual_arithmetic: Option<EngineeringTpResidualArithmeticV1>,
     kernel_profile: KernelProfile,
     projection: ProjectionMode,
     wave_attention: bool,
@@ -134,6 +137,12 @@ impl KernelProfile {
 }
 
 impl Options {
+    fn record_residual_arithmetic(&self, setup: &mut serde_json::Value) {
+        if let Some(mode) = self.residual_arithmetic {
+            setup["residual_arithmetic"] = serde_json::json!(mode.label());
+        }
+    }
+
     fn paged_limits(&self) -> Result<EngineeringTpPagedLimitsV1, String> {
         let constructor = if self.large_kv_artifact.is_some() {
             EngineeringTpPagedLimitsV1::new_large_kv32
@@ -159,6 +168,7 @@ impl Options {
         let mut live_stdin = false;
         let mut runtime = RuntimeOptions::default();
         let mut collective = EngineeringTpReductionModeV3::HostStagedV1;
+        let mut residual_arithmetic = None;
         let mut kernel_profile = KernelProfile::V2;
         let mut projection = ProjectionMode::Baseline;
         let mut wave_attention = false;
@@ -279,6 +289,9 @@ impl Options {
                         _ => return Err("unsupported collective".into()),
                     }
                 }
+                "--host-residual-arithmetic" => {
+                    residual_arithmetic = Some(EngineeringTpResidualArithmeticV1::parse(&value)?);
+                }
                 "--kernel-profile" => {
                     kernel_profile = match value.as_str() {
                         "v2" => KernelProfile::V2,
@@ -338,6 +351,18 @@ impl Options {
             );
         }
         let peer = collective.is_peer();
+        if residual_arithmetic.is_some()
+            && (!matches!(
+                collective,
+                EngineeringTpReductionModeV3::HostStagedV1
+                    | EngineeringTpReductionModeV3::HostStagedReuseV3
+            ) || numerical_directory.is_some())
+        {
+            return Err(
+                "host residual arithmetic does not admit device collectives or numerical capture"
+                    .into(),
+            );
+        }
         if runtime.shared_full_currentness && !peer {
             return Err(
                 "--peer-shared-full-currentness requires an explicit peer transport".into(),
@@ -460,6 +485,7 @@ impl Options {
             prune_output_head,
             runtime,
             collective,
+            residual_arithmetic,
             kernel_profile,
             projection,
             wave_attention,
@@ -997,6 +1023,9 @@ fn run_with_timing(
     let policies_timing = timing.scope("setup_execution_policies");
     gpu.configure_output_head_pruning(options.prune_output_head)?;
     gpu.configure_reduction(options.collective)?;
+    if let Some(mode) = options.residual_arithmetic {
+        gpu.configure_host_residual_arithmetic(mode)?;
+    }
     gpu.configure_dispatch_sequences(options.runtime.sequences)?;
     {
         let _projection_timing = timing.scope("setup_projection");
@@ -1086,6 +1115,7 @@ fn run_with_timing(
             "prefill":"true_multirow_chunked", "attention":"paged_causal_gqa", "cache":"complete_page_radix_after_retirement",
             "arrival_policy":"logical batch ticks; elapsed latency starts at admission",
             "numerical_status":"Contracted; independently compare emitted token IDs; not a serving qualification"});
+        options.record_residual_arithmetic(&mut setup);
         if let Some(clock) = &benchmark_clock {
             setup["replica_benchmark"] =
                 serde_json::to_value(clock.metadata()).map_err(|e| e.to_string())?;
@@ -1251,6 +1281,97 @@ mod tests {
         ];
         base.extend(extra);
         Options::parse(base.into_iter().map(str::to_owned))
+    }
+
+    #[test]
+    fn residual_arithmetic_requires_an_explicit_host_profile() {
+        let mode = EngineeringTpResidualArithmeticV1::ProjectionBf16V1;
+        let mut setup =
+            serde_json::json!({"collective":"host_staged_fp32_rank_order_reduce_bf16_residual"});
+        let original = setup.clone();
+        args(&["--devices", "1"])
+            .unwrap()
+            .record_residual_arithmetic(&mut setup);
+        assert_eq!(setup, original);
+        for arithmetic in [EngineeringTpResidualArithmeticV1::Fp32ResidualV1, mode] {
+            args(&[
+                "--devices",
+                "1",
+                "--host-residual-arithmetic",
+                arithmetic.label(),
+            ])
+            .unwrap()
+            .record_residual_arithmetic(&mut setup);
+            assert_eq!(setup["residual_arithmetic"], arithmetic.label());
+            assert_eq!(setup["collective"], original["collective"]);
+        }
+        assert!(
+            args(&["--devices", "1"])
+                .unwrap()
+                .residual_arithmetic
+                .is_none()
+        );
+        for devices in ["1", "1,2", "1,2,3,4,5,6,7,8"] {
+            for collective in ["host-staged-v1", "host-staged-reuse-v3"] {
+                let parsed = args(&[
+                    "--devices",
+                    devices,
+                    "--collective",
+                    collective,
+                    "--host-residual-arithmetic",
+                    mode.label(),
+                ])
+                .unwrap();
+                assert_eq!(parsed.residual_arithmetic, Some(mode));
+                assert_eq!(parsed.collective.label(), collective);
+            }
+        }
+        for collective in [
+            "device-tp1-v3",
+            "device-peer-serial-v4",
+            "device-peer-concurrent-round-v1",
+        ] {
+            assert!(
+                args(&[
+                    "--devices",
+                    "1",
+                    "--collective",
+                    collective,
+                    "--host-residual-arithmetic",
+                    mode.label()
+                ])
+                .is_err()
+            );
+        }
+        assert!(args(&["--devices", "1", "--host-residual-arithmetic", "auto"]).is_err());
+        assert!(
+            args(&[
+                "--devices",
+                "1",
+                "--host-residual-arithmetic",
+                mode.label(),
+                "--host-residual-arithmetic",
+                mode.label()
+            ])
+            .is_err()
+        );
+        assert!(
+            args(&[
+                "--devices",
+                "1",
+                "--host-residual-arithmetic",
+                mode.label(),
+                "--numerical-capture",
+                "/capture",
+                "--numerical-batch",
+                "1",
+                "--numerical-layer",
+                "0",
+                "--numerical-projection",
+                "o"
+            ])
+            .is_err()
+        );
     }
 
     #[test]

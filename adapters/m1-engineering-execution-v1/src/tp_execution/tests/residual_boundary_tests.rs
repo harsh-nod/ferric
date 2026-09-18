@@ -74,6 +74,24 @@ fn new_capture(output: &Output, positions: &[u32]) -> Capture {
 }
 
 #[test]
+fn legacy_boundary_capture_rejects_explicit_arithmetic_before_dispatch() {
+    for mode in [
+        EngineeringTpResidualArithmeticV1::Fp32ResidualV1,
+        EngineeringTpResidualArithmeticV1::ProjectionBf16V1,
+    ] {
+        let output = Output::new();
+        let mut capture = new_capture(&output, &[0]);
+        let mut engine = fixture(1);
+        engine.configure_host_residual_arithmetic(mode).unwrap();
+        assert!(capture.step(&mut engine, 7).is_err());
+        assert!(engine.transports[0].commands.is_empty());
+        engine.close().unwrap();
+        assert!(capture.finish(&closed()).is_err());
+        assert!(!output.0.join("manifest.json").exists());
+    }
+}
+
+#[test]
 fn selected_boundary_retains_four_exact_payloads_and_weight_binding_after_close() {
     let output = Output::new();
     let mut capture = new_capture(&output, &[0]);

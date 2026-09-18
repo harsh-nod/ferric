@@ -47,6 +47,8 @@ PEER_COLLECTIVE = "device-peer-serial-v4"
 CONCURRENT_COLLECTIVE = "device-peer-concurrent-round-v1"
 PEER_COLLECTIVES = (PEER_COLLECTIVE, CONCURRENT_COLLECTIVE)
 COLLECTIVES = ("host-staged-v1", "host-staged-reuse-v3", "device-tp1-v3", *PEER_COLLECTIVES)
+HOST_RESIDUAL_ARITHMETICS = ("fp32-rank-sum-plus-residual-then-bf16-v1",
+                            "fp32-rank-sum-then-bf16-plus-residual-then-bf16-v1")
 PEER_ARTIFACT_FIELDS = {"artifact_hsaco_id", "artifact_manifest_id", "artifact_handoff_id"}
 WIDE_KERNEL_PROFILES = ("v5-wave32", "v5-mfma32")
 PROFILE_BOOLS = {"runtime_cache_admission", "runtime_operational", "dispatch_sequences",
@@ -276,7 +278,8 @@ def wide_timeline(cache, budget, chunk):
 
 def check_setup(setup, world, gpu_ids, expected_hashes, expected_cache,
                 expected_pruning=None, expected_collective=None, expected_profile=None,
-                expected_peer_artifact=None, expected_wide_kernel_profile=None):
+                expected_peer_artifact=None, expected_wide_kernel_profile=None,
+                expected_residual_arithmetic=None):
     extra = set()
     if expected_pruning is not None:
         require(type(expected_pruning) is bool, "expected pruning must be boolean")
@@ -301,7 +304,17 @@ def check_setup(setup, world, gpu_ids, expected_hashes, expected_cache,
     if expected_collective == CONCURRENT_COLLECTIVE:
         require(expected_profile is not None and expected_profile["dispatch_sequences"] is False,
                 "concurrent round requires an explicit profile and rejects legacy sequences")
+    if expected_residual_arithmetic is not None:
+        require(type(expected_residual_arithmetic) is str
+                and expected_residual_arithmetic in HOST_RESIDUAL_ARITHMETICS,
+                "unknown expected residual arithmetic")
+        require(expected_collective in (None, "host-staged-v1", "host-staged-reuse-v3"),
+                "host residual arithmetic rejects device collectives")
+        extra.add("residual_arithmetic")
     record(setup, "Setup", SETUP_FIELDS | extra)
+    if expected_residual_arithmetic is not None:
+        require(setup["residual_arithmetic"] == expected_residual_arithmetic,
+                "expected residual arithmetic drifted")
     if expected_wide_kernel_profile is not None:
         require(setup["kernel_profile"] == expected_wide_kernel_profile,
                 "expected wide kernel profile drifted")
@@ -358,14 +371,15 @@ def check_setup(setup, world, gpu_ids, expected_hashes, expected_cache,
 
 def validate_records(records, gpu_ids, world=8, expected_hashes=None, expected_cache=None,
                      expected_pruning=None, expected_collective=None, expected_profile=None,
-                     expected_peer_artifact=None, expected_wide_kernel_profile=None):
+                     expected_peer_artifact=None, expected_wide_kernel_profile=None,
+                     expected_residual_arithmetic=None):
     require(world in (1, 2, 8) and type(world) is int, "unsupported expected world")
     require(type(records) is list and 1 < len(records) <= 64, "invalid JSONL record count")
     expected_hashes = {} if expected_hashes is None else expected_hashes
     setup = records[0]
     check_setup(setup, world, gpu_ids, expected_hashes, expected_cache,
                 expected_pruning, expected_collective, expected_profile, expected_peer_artifact,
-                expected_wide_kernel_profile)
+                expected_wide_kernel_profile, expected_residual_arithmetic)
     cache = setup["prefix_cache"]
     batches, order = timeline(cache)
     ids = REQUEST_IDS
@@ -529,10 +543,13 @@ def validate_records(records, gpu_ids, world=8, expected_hashes=None, expected_c
             "nonclaims": ["not a repeated or controlled benchmark", "no cache speedup claim",
                           "not HTTP serving or protected qualification", "not a numerical error bound",
                           "GPU idle snapshots and CLI close records are observations, not authenticated attestations"]}
-    if expected_pruning is not None or expected_collective is not None or expected_profile is not None:
+    if any(value is not None for value in (expected_pruning, expected_collective,
+                                          expected_profile, expected_residual_arithmetic)):
         report["expected_execution_profile"] = {"output_head_pruning": expected_pruning,
                                                 "collective": expected_collective,
                                                 "performance_profile": expected_profile}
+    if expected_residual_arithmetic is not None:
+        report["expected_execution_profile"]["residual_arithmetic"] = expected_residual_arithmetic
     if expected_collective in PEER_COLLECTIVES:
         report["identities"]["peer_artifact"] = dict(expected_peer_artifact)
         report["externally_pinned_peer_artifact_identities"] = sorted(PEER_ARTIFACT_FIELDS)
@@ -547,7 +564,7 @@ def validate_records(records, gpu_ids, world=8, expected_hashes=None, expected_c
 def compare(run_dir, workload_path, reference_path, world=8, expected_hashes=None, expected_cache=None,
             expected_pruning=None, expected_collective=None, expected_profile=None,
             expected_workload_hash=None, expected_reference_hash=None, expected_peer_artifact=None,
-            expected_wide_kernel_profile=None):
+            expected_wide_kernel_profile=None, expected_residual_arithmetic=None):
     run_dir = Path(run_dir)
     files = {"status": read_bounded(run_dir / "status", 16),
              "gpu-before.json": read_bounded(run_dir / "gpu-before.json", 65536),
@@ -570,7 +587,7 @@ def compare(run_dir, workload_path, reference_path, world=8, expected_hashes=Non
     records = [json_value(line) for line in lines]
     report = validate_records(records, before, world, expected_hashes, expected_cache,
                               expected_pruning, expected_collective, expected_profile, expected_peer_artifact,
-                              expected_wide_kernel_profile)
+                              expected_wide_kernel_profile, expected_residual_arithmetic)
     report["input_sha256"] = {name: sha256(data) for name, data in files.items()}
     report["gpu_idle_before_and_after"] = True
     report["comparator_sha256"] = sha256(read_bounded(Path(__file__), 128 * 1024))
@@ -596,6 +613,7 @@ def main():
     parser.add_argument("--expect-reference-sha256")
     parser.add_argument("--expect-output-head-pruning", choices=("on", "off"))
     parser.add_argument("--expect-collective", choices=COLLECTIVES)
+    parser.add_argument("--expect-residual-arithmetic", choices=HOST_RESIDUAL_ARITHMETICS)
     parser.add_argument("--expect-profile", help="Exact allowlisted performance-profile JSON object")
     parser.add_argument("--expect-wide-kernel-profile", choices=WIDE_KERNEL_PROFILES)
     parser.add_argument("--output", type=Path)
@@ -612,7 +630,7 @@ def main():
                          None if args.expect_output_head_pruning is None else args.expect_output_head_pruning == "on",
                          args.expect_collective, None if args.expect_profile is None else performance_profile(json_value(args.expect_profile)),
                          args.expect_workload_sha256, args.expect_reference_sha256, peer_pins or None,
-                         args.expect_wide_kernel_profile)
+                         args.expect_wide_kernel_profile, args.expect_residual_arithmetic)
         encoded = json.dumps(report, sort_keys=True, indent=2, allow_nan=False) + "\n"
         if args.output is not None:
             with args.output.open("x", encoding="utf-8") as output:

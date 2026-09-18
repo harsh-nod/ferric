@@ -31,6 +31,7 @@ struct RecordingTransport {
     fail_boundary_read: Option<u64>,
     read_overrides_after_partial: Vec<(u64, usize, u16)>,
     logit_overrides: Vec<(usize, u16)>,
+    partial_override: Option<f32>,
 }
 
 impl RecordingTransport {
@@ -126,7 +127,10 @@ impl EngineeringTpRankTransportV1 for RecordingTransport {
             PARTIAL => self.output(
                 &command,
                 2,
-                &(f32::from(u16::try_from(self.rank + 1).unwrap()) / 1024.0).to_le_bytes(),
+                &self
+                    .partial_override
+                    .unwrap_or(f32::from(u16::try_from(self.rank + 1).unwrap()) / 1024.0)
+                    .to_le_bytes(),
             ),
             ARGMAX => self.output(&command, 1, &42_u32.to_le_bytes()),
             KV_APPEND => {
@@ -231,6 +235,7 @@ fn fixture_model(
             fail_boundary_read: None,
             read_overrides_after_partial: Vec::new(),
             logit_overrides: Vec::new(),
+            partial_override: None,
         })
         .collect::<Vec<_>>();
     let plan = Qwen3TensorParallelPlanV1::new(model, world).unwrap();
@@ -277,6 +282,8 @@ fn fixture_model(
         draft_v10: false,
         hidden: vec![0; model.hidden_size as usize],
         reduction: ReductionWorkspace::default(),
+        reduction_selection: None,
+        residual_arithmetic: None,
         sequences: None,
         ordered_batches: None,
         timing: crate::host_timing::HostTiming::default(),
@@ -285,6 +292,7 @@ fn fixture_model(
 }
 
 mod final_stage_tests;
+mod residual_arithmetic_tests;
 mod residual_boundary_tests;
 
 fn draft() -> ModelConfig {

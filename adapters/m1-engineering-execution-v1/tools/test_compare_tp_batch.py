@@ -60,6 +60,38 @@ def peer_fixture(world=8, cache=True, pruning=False, wide=None, budget=16, chunk
 
 
 class PeerProfileTests(unittest.TestCase):
+    def test_host_residual_arithmetic_is_exact_external_expectation(self):
+        for world in (1, 2, 8):
+            for arithmetic in CHECK.HOST_RESIDUAL_ARITHMETICS:
+                rows = fixture(world)
+                rows[0]["residual_arithmetic"] = arithmetic
+                with self.assertRaises(ValueError):
+                    CHECK.validate_records(rows, GPU_IDS, world, PINS)
+                report = CHECK.validate_records(rows, GPU_IDS, world, PINS,
+                                                expected_residual_arithmetic=arithmetic)
+                self.assertTrue(report["passed"])
+                self.assertEqual(report["expected_execution_profile"]["residual_arithmetic"], arithmetic)
+                with self.assertRaises(ValueError):
+                    CHECK.validate_records(fixture(world), GPU_IDS, world, PINS,
+                                           expected_residual_arithmetic=arithmetic)
+                for bad in ("auto", False, CHECK.HOST_RESIDUAL_ARITHMETICS[arithmetic == CHECK.HOST_RESIDUAL_ARITHMETICS[0]]):
+                    rows[0]["residual_arithmetic"] = bad
+                    with self.assertRaises(ValueError):
+                        CHECK.validate_records(rows, GPU_IDS, world, PINS,
+                                               expected_residual_arithmetic=arithmetic)
+
+    def test_host_arithmetic_cannot_relabel_a_device_collective(self):
+        arithmetic = CHECK.HOST_RESIDUAL_ARITHMETICS[1]
+        rows = extended_fixture(1, collective="device-tp1-v3")
+        rows[0]["residual_arithmetic"] = arithmetic
+        with self.assertRaisesRegex(ValueError, "rejects device collectives"):
+            CHECK.validate_records(rows, GPU_IDS, 1, PINS, expected_pruning=False,
+                                   expected_collective="device-tp1-v3",
+                                   expected_residual_arithmetic=arithmetic)
+        with self.assertRaisesRegex(ValueError, "unknown expected residual arithmetic"):
+            CHECK.validate_records(fixture(), GPU_IDS, 8, PINS,
+                                   expected_residual_arithmetic="auto")
+
     def test_concurrent_round_has_explicit_label_pins_roster_and_no_legacy_sequences(self):
         for world in (2, 8):
             rows = peer_fixture(world)

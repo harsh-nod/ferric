@@ -117,7 +117,10 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpExecutionV1<R> {
         if self.closed || self.ranks.iter().any(|rank| rank.dispatches != 0) {
             return Err("reduction mode requires a fresh, open execution".into());
         }
-        if !matches!(self.reduction, ReductionWorkspace::Baseline) {
+        if self.reduction_selection.is_some()
+            || self.residual_arithmetic.is_some()
+            || !matches!(self.reduction, ReductionWorkspace::Baseline)
+        {
             return Err("reduction mode is already configured".into());
         }
         match mode {
@@ -161,6 +164,7 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpExecutionV1<R> {
                 self.reduction = ReductionWorkspace::DeviceTp1(scratch);
             }
         }
+        self.reduction_selection = Some(mode);
         Ok(())
     }
 
@@ -331,6 +335,10 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpExecutionV1<R> {
                     return Err("row-parallel reduction overflow".into());
                 }
             }
+            let sum = self
+                .residual_arithmetic
+                .unwrap_or_default()
+                .projection(sum)?;
             let residual = f32::from_bits(u32::from(bits) << 16);
             let value = sum + residual;
             if !residual.is_finite() || !value.is_finite() {

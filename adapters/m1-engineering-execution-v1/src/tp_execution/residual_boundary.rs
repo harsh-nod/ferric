@@ -356,6 +356,7 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpExecutionV1<R> {
             || model.hidden_size as usize != ELEMENTS
             || self.ranks[0].geometry.query_channels.count as usize != ELEMENTS
             || self.reduction.mode() != EngineeringTpReductionModeV3::HostStagedV1
+            || self.residual_arithmetic.is_some()
             || self.sequences.is_some()
             || self.ordered_batches.is_some()
         {

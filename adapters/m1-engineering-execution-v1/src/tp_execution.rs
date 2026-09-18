@@ -12,6 +12,7 @@ pub mod final_stage;
 mod peer_reduction;
 mod performance;
 mod reduction;
+mod residual_arithmetic;
 pub mod residual_boundary;
 mod row_profile;
 
@@ -27,6 +28,7 @@ pub use projection::EngineeringTpProjectionModeV3;
 pub use collective::{HostStagedPartialV1, reduce_residual_bf16_v1};
 pub use reduction::EngineeringTpReductionModeV3;
 use reduction::ReductionWorkspace;
+pub use residual_arithmetic::EngineeringTpResidualArithmeticV1;
 use residual_boundary::{EngineeringTpResidualBoundaryCaptureV1, LayerBoundaryReadbackV1};
 
 use ferric_build::AuthenticatedModelWeightLayout;
@@ -298,6 +300,8 @@ pub struct EngineeringTpExecutionV1<R: EngineeringTpRankTransportV1> {
     draft_v10: bool,
     hidden: Vec<u16>,
     reduction: ReductionWorkspace,
+    reduction_selection: Option<EngineeringTpReductionModeV3>,
+    residual_arithmetic: Option<EngineeringTpResidualArithmeticV1>,
     sequences: Option<Vec<Vec<EngineeringTpDispatchV1>>>,
     ordered_batches: Option<Vec<EngineeringTpDispatchV1>>,
     timing: crate::host_timing::HostTiming,
@@ -472,6 +476,8 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpExecutionV1<R> {
             draft_v10: false,
             hidden: vec![0; model.hidden_size as usize * rows as usize],
             reduction: ReductionWorkspace::default(),
+            reduction_selection: None,
+            residual_arithmetic: None,
             sequences: None,
             ordered_batches: None,
             timing: crate::host_timing::HostTiming::default(),
@@ -1092,7 +1098,12 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpExecutionV1<R> {
                 values,
             })
             .collect::<Vec<_>>();
-        let result = reduce_residual_bf16_v1(self.plan.world_size(), &borrowed, &self.hidden)?;
+        let result = residual_arithmetic::reduce(
+            self.residual_arithmetic(),
+            self.plan.world_size(),
+            &borrowed,
+            &self.hidden,
+        )?;
         let bytes = result
             .iter()
             .flat_map(|value| value.to_le_bytes())

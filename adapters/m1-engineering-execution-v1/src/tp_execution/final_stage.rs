@@ -188,6 +188,7 @@ impl EngineeringTpFinalStageCaptureV1 {
                 || self.epoch.is_some_and(|seen| seen != epoch)
                 || engine.plan.world_size() != 1
                 || engine.row_capacity != 1
+                || engine.residual_arithmetic.is_some()
                 || engine.plan.model().role != Qwen3ModelRole::Target8B
             {
                 return Err("capture sequence state drift".into());

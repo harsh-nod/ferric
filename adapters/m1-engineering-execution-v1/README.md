@@ -193,6 +193,27 @@ successful measurement. Binary/artifact identities are observations, not
 publication or launch authority. Actual hardware results are tracked in
 `docs/M1_TEAM_PROGRESS.md`.
 
+### Host Residual Arithmetic
+
+Both engineering commands also accept an explicit host-only arithmetic ablation:
+`--host-residual-arithmetic fp32-rank-sum-then-bf16-plus-residual-then-bf16-v1`.
+It sums every rank's FP32 O/down partial in ascending order, materializes the
+complete projection in BF16 RNE, widens it, adds the BF16 residual, then rounds
+to BF16 RNE again. It never rounds individual rank partials. Batched execution
+supports both ordinary and reused host staging with this setting. The default
+remains `fp32-rank-sum-plus-residual-then-bf16-v1`; omitted options preserve the
+existing setup record. Explicit selection records a separate
+`residual_arithmetic` identity without changing the transport label.
+
+The ablation rejects device collectives, nonfinite inputs/intermediates/output,
+and legacy numerical captures. Configuration is fresh-only and one-shot;
+select the batched reduction policy before its arithmetic. Projection overflow
+is rejected even if a later residual could cancel it. This is an engineering
+comparison, not general Torch parity or a changed M1 arithmetic qualification.
+The fixed-workload batch checker requires the matching
+`--expect-residual-arithmetic` label; it rejects unannounced arithmetic fields,
+missing or mismatched identities, and arithmetic/device-collective combinations.
+
 ### TP1 Final-Stage Diagnostics
 
 Add `--capture-final-stage /absolute/fresh-directory --capture-positions 4,5`

@@ -77,6 +77,7 @@ struct Recording {
     write_payloads: Vec<(u64, usize, Vec<u8>)>,
     failure: Option<Failure>,
     choice_override: Option<Vec<u32>>,
+    partial_override: Option<f32>,
     rollover_supported: bool,
     queue_packets: u64,
     queue_epochs: u64,
@@ -531,6 +532,7 @@ impl EngineeringTpRankTransportV1 for Recording {
             | "ferric_qwen3_tp_mfma_gemm_partial_f32_v3" => {
                 let rank = self.rank;
                 let nonfinite = self.failure == Some(Failure::NonfinitePartial);
+                let partial_override = self.partial_override;
                 self.output(
                     &command,
                     2,
@@ -539,6 +541,8 @@ impl EngineeringTpRankTransportV1 for Recording {
                     |row| {
                         let value = if nonfinite {
                             f32::NAN
+                        } else if let Some(value) = partial_override {
+                            value
                         } else {
                             exact_f32((rank + 1) * (row + 1)) / 1024.0
                         };
@@ -693,6 +697,7 @@ fn fixture_for_model(
             write_payloads: Vec::new(),
             failure: None,
             choice_override: None,
+            partial_override: None,
             rollover_supported: false,
             queue_packets: 0,
             queue_epochs: 0,
@@ -755,6 +760,8 @@ fn fixture_for_model(
         draft_v10: false,
         hidden: vec![0; model.hidden_size as usize * row_capacity],
         reduction: super::super::ReductionWorkspace::default(),
+        reduction_selection: None,
+        residual_arithmetic: None,
         sequences: None,
         ordered_batches: None,
         timing: crate::host_timing::HostTiming::default(),
@@ -1805,6 +1812,204 @@ fn device_mode_rejects_peer_worlds_without_allocating_or_dispatching() {
                 .iter()
                 .all(|t| t.commands.is_empty())
         );
+        driver.close().unwrap();
+    }
+}
+
+#[test]
+fn full_batch_routes_both_projections_through_host_arithmetic() {
+    for world in [1, 2, 8] {
+        for reuse in [false, true] {
+            let mut pool = pool();
+            let mut driver = fixture(world, &pool);
+            driver
+                .configure_reduction(if reuse {
+                    EngineeringTpReductionModeV3::HostStagedReuseV3
+                } else {
+                    EngineeringTpReductionModeV3::HostStagedV1
+                })
+                .unwrap();
+            driver
+                .configure_host_residual_arithmetic(
+                    EngineeringTpResidualArithmeticV1::ProjectionBf16V1,
+                )
+                .unwrap();
+            for transport in &mut driver.inner.transports {
+                transport.partial_override = Some(if transport.rank == 0 {
+                    f32::from_bits(0x3b80_8000)
+                } else {
+                    0.0
+                });
+            }
+            let batch = prepare(&mut pool, 3);
+            pool.begin_submission(&batch).unwrap();
+            let result = driver.execute(&batch).unwrap();
+            assert_eq!(result.choices, [42, 43, 44]);
+            for (row, values) in driver.inner.hidden.chunks_exact(4096).enumerate() {
+                let expected = [0x3f80, 0x4000, 0x4040][row];
+                assert!(values.iter().all(|value| *value == expected));
+            }
+            for transport in &driver.inner.transports {
+                for operation in [1, 2] {
+                    assert_eq!(
+                        transport
+                            .commands
+                            .iter()
+                            .filter(|command| command.kernel == PARTIAL
+                                && scalar(command, 7) == operation)
+                            .count(),
+                        36
+                    );
+                }
+            }
+            assert_eq!(driver.dispatch_counts(), driver.expected_dispatch_counts(3));
+            pool.commit_batch(&batch, result.completion).unwrap();
+            driver.close().unwrap();
+        }
+    }
+}
+
+#[test]
+fn host_rounding_modes_match_between_staging_policies_for_o_and_down() {
+    for world in [1, 2, 8] {
+        for rows in [1, 3, 16] {
+            for mode in [
+                EngineeringTpResidualArithmeticV1::Fp32ResidualV1,
+                EngineeringTpResidualArithmeticV1::ProjectionBf16V1,
+            ] {
+                let pool = pool();
+                let mut ordinary = fixture(world, &pool);
+                let mut reused = fixture(world, &pool);
+                ordinary
+                    .configure_reduction(EngineeringTpReductionModeV3::HostStagedV1)
+                    .unwrap();
+                reused
+                    .configure_reduction(EngineeringTpReductionModeV3::HostStagedReuseV3)
+                    .unwrap();
+                ordinary.configure_host_residual_arithmetic(mode).unwrap();
+                reused.configure_host_residual_arithmetic(mode).unwrap();
+                for operation in [
+                    Qwen3TensorParallelCollectiveV1::AttentionOutputSum,
+                    Qwen3TensorParallelCollectiveV1::FeedForwardDownSum,
+                ] {
+                    for driver in [&mut ordinary, &mut reused] {
+                        driver.inner.hidden = vec![0x3b80; rows * 4096];
+                        for (rank, transport) in
+                            driver.inner.ranks.iter().zip(&mut driver.inner.transports)
+                        {
+                            let value = if rank.geometry.rank == 0 {
+                                1.003_906_25_f32
+                            } else {
+                                0.0
+                            };
+                            for bytes in transport.buffers.get_mut(&rank.partial.id).unwrap()
+                                [..rows * 4096 * 4]
+                                .chunks_exact_mut(4)
+                            {
+                                bytes.copy_from_slice(&value.to_le_bytes());
+                            }
+                        }
+                        driver.inner.reduce(0, operation).unwrap();
+                        let expected = if mode == EngineeringTpResidualArithmeticV1::Fp32ResidualV1
+                        {
+                            0x3f81
+                        } else {
+                            0x3f80
+                        };
+                        assert!(driver.inner.hidden.iter().all(|value| *value == expected));
+                    }
+                    assert_eq!(ordinary.inner.hidden, reused.inner.hidden);
+                    for (left, right) in ordinary
+                        .inner
+                        .transports
+                        .iter()
+                        .zip(&reused.inner.transports)
+                    {
+                        assert_eq!(left.reads, right.reads);
+                        assert_eq!(left.writes, right.writes);
+                        assert_eq!(left.buffers, right.buffers);
+                        assert!(left.commands.is_empty() && right.commands.is_empty());
+                    }
+                }
+                ordinary.close().unwrap();
+                reused.close().unwrap();
+            }
+        }
+    }
+}
+
+#[test]
+fn host_arithmetic_requires_configured_host_staging_before_execution() {
+    let pool = pool();
+    let mut driver = fixture(1, &pool);
+    let arithmetic = EngineeringTpResidualArithmeticV1::ProjectionBf16V1;
+    assert!(
+        driver
+            .configure_host_residual_arithmetic(arithmetic)
+            .is_err()
+    );
+    driver
+        .configure_reduction(EngineeringTpReductionModeV3::HostStagedV1)
+        .unwrap();
+    driver
+        .configure_host_residual_arithmetic(arithmetic)
+        .unwrap();
+    assert!(
+        driver
+            .configure_host_residual_arithmetic(arithmetic)
+            .is_err()
+    );
+    assert!(
+        driver
+            .configure_reduction(EngineeringTpReductionModeV3::DeviceTp1V3)
+            .is_err()
+    );
+    driver.close().unwrap();
+    let mut driver = fixture(1, &pool);
+    driver
+        .configure_reduction(EngineeringTpReductionModeV3::DeviceTp1V3)
+        .unwrap();
+    assert!(
+        driver
+            .configure_host_residual_arithmetic(arithmetic)
+            .is_err()
+    );
+    driver.close().unwrap();
+}
+
+#[test]
+fn projection_overflow_rejects_before_broadcast_in_both_host_paths() {
+    for reuse in [false, true] {
+        let pool = pool();
+        let mut driver = fixture(1, &pool);
+        driver
+            .configure_reduction(if reuse {
+                EngineeringTpReductionModeV3::HostStagedReuseV3
+            } else {
+                EngineeringTpReductionModeV3::HostStagedV1
+            })
+            .unwrap();
+        driver
+            .configure_host_residual_arithmetic(EngineeringTpResidualArithmeticV1::ProjectionBf16V1)
+            .unwrap();
+        driver.inner.hidden = vec![0xff7f; 4096];
+        let partial = driver.inner.ranks[0].partial.id;
+        let bytes = driver.inner.transports[0]
+            .buffers
+            .get_mut(&partial)
+            .unwrap();
+        for value in bytes[..4096 * 4].chunks_exact_mut(4) {
+            value.copy_from_slice(&0.0_f32.to_le_bytes());
+        }
+        bytes[4095 * 4..4096 * 4].copy_from_slice(&f32::MAX.to_le_bytes());
+        assert!(
+            driver
+                .inner
+                .reduce(0, Qwen3TensorParallelCollectiveV1::AttentionOutputSum)
+                .is_err()
+        );
+        assert!(driver.inner.transports[0].writes.is_empty());
+        assert!(driver.inner.hidden.iter().all(|value| *value == 0xff7f));
         driver.close().unwrap();
     }
 }

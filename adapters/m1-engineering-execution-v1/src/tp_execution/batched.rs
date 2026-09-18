@@ -9,9 +9,9 @@ use super::numerical::{
 };
 use super::{
     EngineeringTpArgumentV1, EngineeringTpDispatchV1, EngineeringTpExecutionV1,
-    EngineeringTpRankTransportV1, EngineeringTpReductionModeV3, Qwen3TensorKind,
-    Qwen3TensorParallelCollectiveV1, Rank, Tensor, TpResult, allocate_tensor, dispatch, rmsnorm,
-    rope_bytes,
+    EngineeringTpRankTransportV1, EngineeringTpReductionModeV3, EngineeringTpResidualArithmeticV1,
+    Qwen3TensorKind, Qwen3TensorParallelCollectiveV1, Rank, Tensor, TpResult, allocate_tensor,
+    dispatch, rmsnorm, rope_bytes,
 };
 use crate::tp_paged::{
     EngineeringTpBatchCompletionV1, EngineeringTpPagedPoolV1, EngineeringTpPoolScopeV1,
@@ -767,6 +767,7 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
             || self.inner.ordered_batches.is_some()
             || self.inner.timing.is_enabled()
             || self.wave_attention
+            || self.inner.residual_arithmetic.is_some()
             || !capture.matches_profile(self.projection.mode.label(), self.prune_output_head)
         {
             return Err(
@@ -854,6 +855,24 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
     #[must_use]
     pub const fn reduction_mode(&self) -> EngineeringTpReductionModeV3 {
         self.inner.reduction.mode()
+    }
+
+    /// Selects host arithmetic after reduction configuration, before any batch.
+    /// # Errors
+    /// Rejects started/poisoned streams, numerical capture or device reduction.
+    pub fn configure_host_residual_arithmetic(
+        &mut self,
+        mode: EngineeringTpResidualArithmeticV1,
+    ) -> TpResult<()> {
+        if self.poisoned
+            || self.last_batch != 0
+            || self.completed_batches != 0
+            || self.numerical.is_some()
+            || self.inner.reduction_selection.is_none()
+        {
+            return Err("host residual arithmetic requires a fresh configured batch stream".into());
+        }
+        self.inner.configure_host_residual_arithmetic(mode)
     }
 
     /// Executes a prepared batch once, without committing reusable page ownership.
