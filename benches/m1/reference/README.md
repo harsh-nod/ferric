@@ -174,3 +174,39 @@ otherwise the tool refuses publication and the original native capture remains
 separate evidence. A nonfinite native normalized observation is retained as raw
 evidence and its finite ULP/absolute/RMSE metrics are null because it does not
 feed the replay arithmetic.
+
+## TP1 Same-Input LM-Head Diagnostic
+
+`engineering_tp1_lm_head_ablation.py` is a CPU-only localization diagnostic for
+the authenticated TP1 final-stage capture. It accepts the same capture,
+witness, native pins, pins SHA256 and canonical model source as the TP1
+comparator. It does not execute the model or use a GPU.
+
+```sh
+"$REFERENCE_VENV/bin/python" -I -B benches/m1/reference/engineering_tp1_lm_head_ablation.py \
+  CAPTURE_DIRECTORY WITNESS_DIRECTORY NATIVE_PINS_JSON NATIVE_PINS_SHA256 \
+  MODEL_SOURCE NEW_OUTPUT_DIRECTORY
+```
+
+For each of at most two selected positions, the tool feeds the exact held BF16
+normalized row and authenticated canonical `lm_head.weight` into pinned Torch
+BF16 linear and a source-spelled ascending FP32 multiply-then-add recurrence.
+Each case runs twice. Both raw passes, the native normalized row and native
+logits are retained even when a pass is nonfinite or the two passes disagree.
+The weight is not copied into the output; its exact tensor descriptor and
+enclosing authenticated shard identity are recorded instead.
+
+```sh
+"$REFERENCE_VENV/bin/python" -I -B benches/m1/reference/test_engineering_tp1_lm_head_ablation.py
+```
+
+CPU arithmetic does not establish gfx device or compiler behavior. Agreement
+or disagreement does not admit a tolerance, establish a cause, supply a
+numerical pass, qualify a target, measure performance or close an M1 gate.
+Normalized inputs and the authenticated weight must be finite. CPU replay
+outputs and native logits may be nonfinite and are retained; their finite
+ULP/absolute/RMSE metrics are null. The finite-input checks traverse the complete
+BF16 weight and FP32 workspace. One recorded two-position CPU run on mi300x
+completed in 64.43 seconds with maximum RSS 9,007,616 KiB under a 16 GiB
+address-space cap. That is diagnostic resource observation, not inference
+performance or a resource guarantee for another environment.
