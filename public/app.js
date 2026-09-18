@@ -73,6 +73,9 @@
   const resident = project.residentCheckpoint;
   const residentProgress = document.querySelector("[data-resident-progress]");
   residentProgress.append(element("p", "performance-scope", resident.scope),
+    element("h3", "", "Current a167 source and GPU2 host-residual pair"),
+    element("p", "", resident.integration.currentA167HostResidualPair.detail),
+    element("p", "performance-scope", "The retained checkpoints below preserve their original dates, source identities, evidence and then-current limitations."),
     element("h3", "", "mi350: eight checked identities, no kernel dispatch"),
     element("p", "", resident.integration.mi350EightCheckedBinding.detail),
     element("h3", "", "mi350: model transport passed, authentication pending"),
