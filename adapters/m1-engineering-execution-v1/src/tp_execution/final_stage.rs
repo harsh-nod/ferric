@@ -1,6 +1,9 @@
 //! Opt-in TP1 final-stage bytes. Transport completion is not numerical parity.
 
-use super::{EngineeringTpExecutionV1, EngineeringTpRankTransportV1, TpResult};
+use super::{
+    EngineeringTpExecutionV1, EngineeringTpRankTransportV1, EngineeringTpResidualArithmeticV1,
+    TpResult,
+};
 use crate::hex;
 use ferric_spec::{FiniteBf16ArgmaxError, Qwen3ModelRole, select_lowest_finite_bf16_argmax};
 use rustix::fs::{Mode, OFlags, RenameFlags};
@@ -76,6 +79,7 @@ pub struct EngineeringTpFinalStageCaptureV1 {
     files: [File; 3],
     hashes: [Sha256; 3],
     setup: Value,
+    arithmetic: Option<EngineeringTpResidualArithmeticV1>,
     positions: Vec<u32>,
     required: u32,
     epoch: Option<u64>,
@@ -113,10 +117,36 @@ impl EngineeringTpFinalStageCaptureV1 {
         required: u32,
         setup: Value,
     ) -> TpResult<Self> {
+        Self::new_bound(directory, positions, required, setup, None)
+    }
+
+    fn new_bound(
+        directory: &Path,
+        positions: Vec<u32>,
+        required: u32,
+        setup: Value,
+        arithmetic: Option<EngineeringTpResidualArithmeticV1>,
+    ) -> TpResult<Self> {
         Self::validate_positions(&positions, required)?;
         validate_setup(&setup, required)?;
-        if setup["final_stage_capture"]["positions"] != json!(positions)
-            || setup["final_stage_capture"]["benchmark_comparable"] != false
+        let capture_key = if let Some(mode) = arithmetic {
+            if setup["residual_arithmetic"] != mode.label()
+                || setup.get("final_stage_capture").is_some()
+            {
+                return Err("explicit arithmetic capture identity differs from setup".into());
+            }
+            "arithmetic_final_stage_capture"
+        } else {
+            if setup.get("residual_arithmetic").is_some()
+                || setup.get("arithmetic_final_stage_capture").is_some()
+            {
+                return Err("legacy capture does not admit explicit residual arithmetic".into());
+            }
+            "final_stage_capture"
+        };
+        if setup[capture_key]["positions"] != json!(positions)
+            || setup[capture_key]["benchmark_comparable"] != false
+            || setup.get("residual_boundary_capture").is_some()
         {
             return Err("capture selection differs from setup".into());
         }
@@ -144,12 +174,16 @@ impl EngineeringTpFinalStageCaptureV1 {
             new_file(&directory, FILES[1])?,
             new_file(&directory, FILES[2])?,
         ];
-        let intent = serde_json::to_vec_pretty(&json!({
-            "schema":"FerricTpFinalStageIntentV1", "authority":"none", "complete":false,
-            "setup":setup, "positions":positions, "required_steps":required,
-            "benchmark_comparable":false, "qualification":false,
-        }))
-        .map_err(|error| error.to_string())?;
+        let intent = arithmetic_record(
+            json!({
+                "schema":"FerricTpFinalStageIntentV1", "authority":"none", "complete":false,
+                "setup":setup, "positions":positions, "required_steps":required,
+                "benchmark_comparable":false, "qualification":false,
+            }),
+            arithmetic,
+            "FerricTpArithmeticFinalStageIntentV1",
+        );
+        let intent = serde_json::to_vec_pretty(&intent).map_err(|error| error.to_string())?;
         write_new(&directory, "intent.json", &intent)?;
         directory.sync_all().map_err(|error| error.to_string())?;
         Ok(Self {
@@ -157,6 +191,7 @@ impl EngineeringTpFinalStageCaptureV1 {
             files,
             hashes: std::array::from_fn(|_| Sha256::new()),
             setup,
+            arithmetic,
             positions,
             required,
             epoch: None,
@@ -188,7 +223,7 @@ impl EngineeringTpFinalStageCaptureV1 {
                 || self.epoch.is_some_and(|seen| seen != epoch)
                 || engine.plan.world_size() != 1
                 || engine.row_capacity != 1
-                || engine.residual_arithmetic.is_some()
+                || engine.residual_arithmetic != self.arithmetic
                 || engine.plan.model().role != Qwen3ModelRole::Target8B
             {
                 return Err("capture sequence state drift".into());
@@ -299,13 +334,17 @@ impl EngineeringTpFinalStageCaptureV1 {
                     })
                 })
                 .collect::<Vec<_>>();
-            let manifest = json!({"schema":"FerricTpFinalStageCaptureV1", "authority":"none",
+            let manifest = arithmetic_record(
+                json!({"schema":"FerricTpFinalStageCaptureV1", "authority":"none",
                 "complete":true, "worker_close_confirmed":true, "qualification":false,
                 "benchmark_comparable":false, "numerical_pass_claimed":false,
                 "setup":self.setup,"closed":closed,"positions":self.positions,"epoch":self.epoch,
                 "input_tokens":self.tokens,"gpu_choices":self.choices,"rows":self.rows,
                 "payloads":payloads,"maximum_total_bytes":MAX_BYTES,
-                "nonclaim":"Completed diagnostic readbacks only; no numerical parity, tolerance acceptance, protected proof or performance claim."});
+                "nonclaim":"Completed diagnostic readbacks only; no numerical parity, tolerance acceptance, protected proof or performance claim."}),
+                self.arithmetic,
+                "FerricTpArithmeticFinalStageCaptureV1",
+            );
             let bytes = serde_json::to_vec_pretty(&manifest).map_err(|error| error.to_string())?;
             self.bytes
                 .checked_add(bytes.len())
@@ -327,17 +366,75 @@ impl EngineeringTpFinalStageCaptureV1 {
                 .sync_all()
                 .map_err(|error| error.to_string())?;
             self.finished = true;
-            Ok(
+            Ok(arithmetic_record(
                 json!({"schema":"FerricTpFinalStageCaptureReceiptV1", "authority":"none",
                 "qualification":false,"benchmark_comparable":false,
                 "manifest_sha256":hex(&Sha256::digest(&bytes)),"manifest_bytes":bytes.len()}),
-            )
+                self.arithmetic,
+                "FerricTpArithmeticFinalStageCaptureReceiptV1",
+            ))
         })();
         if result.is_err() {
             self.failed = true;
         }
         result
     }
+}
+
+/// Separate, versioned capture for an explicitly selected host arithmetic experiment.
+/// It does not change legacy capture admission or establish numerical parity.
+pub struct EngineeringTpArithmeticFinalStageCaptureV1(EngineeringTpFinalStageCaptureV1);
+
+impl EngineeringTpArithmeticFinalStageCaptureV1 {
+    /// Creates a bounded capture bound to the declared mode and actual emitted setup.
+    /// # Errors
+    /// Rejects missing/mismatched arithmetic, legacy capture metadata, or invalid output.
+    pub fn new(
+        directory: &Path,
+        positions: Vec<u32>,
+        required: u32,
+        setup: Value,
+        arithmetic: EngineeringTpResidualArithmeticV1,
+    ) -> TpResult<Self> {
+        EngineeringTpFinalStageCaptureV1::new_bound(
+            directory,
+            positions,
+            required,
+            setup,
+            Some(arithmetic),
+        )
+        .map(Self)
+    }
+
+    /// Reads completed tensors only with the exact explicitly configured engine mode.
+    /// # Errors
+    /// Rejects mode/sequence drift before dispatch, or readback/output failure.
+    pub fn step<R: EngineeringTpRankTransportV1>(
+        &mut self,
+        engine: &mut EngineeringTpExecutionV1<R>,
+        token: u32,
+    ) -> TpResult<u32> {
+        self.0.step(engine, token)
+    }
+
+    /// Publishes the distinct arithmetic schema only after actual worker close.
+    /// # Errors
+    /// Rejects failed/incomplete captures and unconfirmed or repeated closure.
+    pub fn finish(&mut self, closed: &Value) -> TpResult<Value> {
+        self.0.finish(closed)
+    }
+}
+
+fn arithmetic_record(
+    mut record: Value,
+    arithmetic: Option<EngineeringTpResidualArithmeticV1>,
+    schema: &str,
+) -> Value {
+    if let Some(mode) = arithmetic {
+        record["schema"] = json!(schema);
+        record["residual_arithmetic"] = json!(mode.label());
+    }
+    record
 }
 
 pub(super) fn validate_setup(setup: &Value, required: u32) -> TpResult<()> {

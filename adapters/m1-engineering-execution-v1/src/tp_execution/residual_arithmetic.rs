@@ -86,7 +86,8 @@ pub(super) fn reduce(
 
 impl<R: EngineeringTpRankTransportV1> EngineeringTpExecutionV1<R> {
     /// Selects host rounding once, before any dispatch. Device collectives and
-    /// legacy numerical captures do not admit this arithmetic ablation.
+    /// legacy numerical captures do not admit this arithmetic ablation. The separate
+    /// arithmetic final-stage capture binds the exact explicit mode before dispatch.
     ///
     /// # Errors
     /// Rejects a closed/started stream, repeated selection or a device reduction.

@@ -8,7 +8,9 @@ use std::path::{Path, PathBuf};
 use std::time::Instant;
 
 use ferric_m1_engineering_execution_v1::tp_artifact::EngineeringTpArtifactV1;
-use ferric_m1_engineering_execution_v1::tp_execution::final_stage::EngineeringTpFinalStageCaptureV1;
+use ferric_m1_engineering_execution_v1::tp_execution::final_stage::{
+    EngineeringTpArithmeticFinalStageCaptureV1, EngineeringTpFinalStageCaptureV1,
+};
 use ferric_m1_engineering_execution_v1::tp_execution::residual_boundary::EngineeringTpResidualBoundaryCaptureV1;
 use ferric_m1_engineering_execution_v1::tp_execution::{
     EngineeringTpExecutionV1, EngineeringTpResidualArithmeticV1,
@@ -19,7 +21,7 @@ use serde::Serialize;
 use sha2::{Digest, Sha256};
 use tp_worker::Worker;
 
-const USAGE: &str = "ferric-qwen3-tp-engineering --source DIR --artifact DIR --worker FILE --devices ID[,ID...] --allow-unauthenticated-machine-code [--prompt TEXT] [--new-tokens 32] [--repetitions 3] [--warmup 1] [--capacity 128] [--host-residual-arithmetic fp32-rank-sum-plus-residual-then-bf16-v1|fp32-rank-sum-then-bf16-plus-residual-then-bf16-v1] [--capture-final-stage DIR|--capture-residual-boundary DIR --capture-positions P[,P...]]";
+const USAGE: &str = "ferric-qwen3-tp-engineering --source DIR --artifact DIR --worker FILE --devices ID[,ID...] --allow-unauthenticated-machine-code [--prompt TEXT] [--new-tokens 32] [--repetitions 3] [--warmup 1] [--capacity 128] [--host-residual-arithmetic fp32-rank-sum-plus-residual-then-bf16-v1|fp32-rank-sum-then-bf16-plus-residual-then-bf16-v1] [--capture-final-stage DIR|--capture-residual-boundary DIR|--capture-arithmetic-final-stage DIR --capture-positions P[,P...]]";
 
 struct Options {
     source: PathBuf,
@@ -33,6 +35,7 @@ struct Options {
     capacity: u32,
     residual_arithmetic: Option<EngineeringTpResidualArithmeticV1>,
     capture_directory: Option<PathBuf>,
+    arithmetic_capture_directory: Option<PathBuf>,
     residual_boundary_directory: Option<PathBuf>,
     capture_positions: Vec<u32>,
 }
@@ -52,6 +55,7 @@ impl Options {
         let (mut new_tokens, mut repetitions, mut warmup, mut capacity) = (32, 3, 1, 128);
         let mut consent = false;
         let mut capture_directory = None;
+        let mut arithmetic_capture_directory = None;
         let mut residual_boundary_directory = None;
         let mut capture_positions = None;
         let mut residual_arithmetic = None;
@@ -91,6 +95,9 @@ impl Options {
                     residual_arithmetic = Some(EngineeringTpResidualArithmeticV1::parse(&value)?);
                 }
                 "--capture-final-stage" => capture_directory = Some(PathBuf::from(value)),
+                "--capture-arithmetic-final-stage" => {
+                    arithmetic_capture_directory = Some(PathBuf::from(value));
+                }
                 "--capture-residual-boundary" => {
                     residual_boundary_directory = Some(PathBuf::from(value));
                 }
@@ -125,9 +132,10 @@ impl Options {
             return Err("prompt or measurement bounds exceeded".into());
         }
         let capture_count = usize::from(capture_directory.is_some())
-            + usize::from(residual_boundary_directory.is_some());
+            + usize::from(residual_boundary_directory.is_some())
+            + usize::from(arithmetic_capture_directory.is_some());
         if capture_count > 1 {
-            return Err("final-stage and residual-boundary capture are mutually exclusive".into());
+            return Err("capture modes are mutually exclusive".into());
         }
         if (capture_count == 1) != capture_positions.is_some() {
             return Err(
@@ -136,13 +144,16 @@ impl Options {
         }
         let capture_positions = capture_positions.unwrap_or_default();
         if capture_count == 1 {
-            if residual_arithmetic.is_some() {
-                return Err("legacy capture does not admit explicit residual arithmetic".into());
+            if arithmetic_capture_directory.is_some() != residual_arithmetic.is_some() {
+                return Err(
+                    "arithmetic capture requires an explicit mode; legacy captures reject it"
+                        .into(),
+                );
             }
             if devices.len() != 1 || repetitions != 1 || warmup != 0 {
                 return Err("capture requires TP1, --repetitions 1 and --warmup 0".into());
             }
-            if capture_directory.is_some() {
+            if capture_directory.is_some() || arithmetic_capture_directory.is_some() {
                 EngineeringTpFinalStageCaptureV1::validate_positions(&capture_positions, capacity)?;
             } else {
                 EngineeringTpResidualBoundaryCaptureV1::validate_positions(
@@ -163,6 +174,7 @@ impl Options {
             capacity,
             residual_arithmetic,
             capture_directory,
+            arithmetic_capture_directory,
             residual_boundary_directory,
             capture_positions,
         })
@@ -218,6 +230,7 @@ fn emit(value: &impl Serialize) -> Result<(), String> {
 
 enum DiagnosticCapture {
     FinalStage(EngineeringTpFinalStageCaptureV1),
+    ArithmeticFinalStage(EngineeringTpArithmeticFinalStageCaptureV1),
     ResidualBoundary(EngineeringTpResidualBoundaryCaptureV1),
 }
 
@@ -310,6 +323,7 @@ fn captured_step(
 ) -> Result<u32, String> {
     match capture {
         Some(DiagnosticCapture::FinalStage(capture)) => capture.step(engine, token),
+        Some(DiagnosticCapture::ArithmeticFinalStage(capture)) => capture.step(engine, token),
         Some(DiagnosticCapture::ResidualBoundary(capture)) => capture.step(engine, token),
         None => engine.step(token),
     }
@@ -383,7 +397,7 @@ fn run(options: &Options) -> Result<(), String> {
     if prompt.is_empty() || required > options.capacity {
         return Err("tokenized prompt/output exceeds sequence capacity".into());
     }
-    if options.capture_directory.is_some() {
+    if options.capture_directory.is_some() || options.arithmetic_capture_directory.is_some() {
         EngineeringTpFinalStageCaptureV1::validate_positions(&options.capture_positions, required)?;
     }
     if options.residual_boundary_directory.is_some() {
@@ -489,6 +503,25 @@ fn run(options: &Options) -> Result<(), String> {
                 )?,
             ));
         }
+        if let Some(directory) = &options.arithmetic_capture_directory {
+            if capture.is_some() {
+                return Err("capture modes are mutually exclusive".into());
+            }
+            setup["arithmetic_final_stage_capture"] = serde_json::json!({
+                "positions":options.capture_positions,"benchmark_comparable":false,
+                "timing":"diagnostic readbacks invalidate all performance measurements"});
+            capture = Some(DiagnosticCapture::ArithmeticFinalStage(
+                EngineeringTpArithmeticFinalStageCaptureV1::new(
+                    directory,
+                    options.capture_positions.clone(),
+                    required,
+                    setup.clone(),
+                    options
+                        .residual_arithmetic
+                        .ok_or("explicit capture arithmetic missing")?,
+                )?,
+            ));
+        }
         emit(&setup)?;
         for index in 0..options.warmup {
             let measurement = run_sequence(
@@ -523,6 +556,9 @@ fn run(options: &Options) -> Result<(), String> {
             emit(&closed)?;
             match &mut capture {
                 Some(DiagnosticCapture::FinalStage(capture)) => emit(&capture.finish(&closed)?)?,
+                Some(DiagnosticCapture::ArithmeticFinalStage(capture)) => {
+                    emit(&capture.finish(&closed)?)?;
+                }
                 Some(DiagnosticCapture::ResidualBoundary(capture)) => {
                     emit(&capture.finish(&closed)?)?;
                 }
@@ -672,6 +708,47 @@ mod tests {
                 ])
                 .is_err()
             );
+        }
+    }
+
+    #[test]
+    fn arithmetic_final_capture_requires_exact_mode_and_exclusive_tp1_scope() {
+        let base = [
+            "--devices",
+            "1",
+            "--repetitions",
+            "1",
+            "--warmup",
+            "0",
+            "--capture-arithmetic-final-stage",
+            "/capture",
+            "--capture-positions",
+            "4,5",
+        ];
+        assert!(options(&base).is_err());
+        for mode in [
+            EngineeringTpResidualArithmeticV1::Fp32ResidualV1,
+            EngineeringTpResidualArithmeticV1::ProjectionBf16V1,
+        ] {
+            let mut args = base.to_vec();
+            args.extend(["--host-residual-arithmetic", mode.label()]);
+            let parsed = options(&args).unwrap();
+            assert_eq!(parsed.residual_arithmetic, Some(mode));
+            assert_eq!(
+                parsed.arithmetic_capture_directory,
+                Some(PathBuf::from("/capture"))
+            );
+            assert!(parsed.capture_directory.is_none());
+            for (index, value) in [(1, "1,2"), (3, "2"), (5, "1"), (9, "4,4"), (9, "128")] {
+                let mut rejected = args.clone();
+                rejected[index] = value;
+                assert!(options(&rejected).is_err());
+            }
+            for legacy in ["--capture-final-stage", "--capture-residual-boundary"] {
+                let mut rejected = args.clone();
+                rejected.extend([legacy, "/legacy"]);
+                assert!(options(&rejected).is_err());
+            }
         }
     }
 

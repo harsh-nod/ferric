@@ -31,6 +31,10 @@ IDENTITIES = {"controller_sha256", "worker_sha256", "model_bundle_id",
               "artifact_hsaco_id", "artifact_manifest_id", "artifact_handoff_id"}
 PIN_FIELDS = IDENTITIES | {"device_unique_ids", "prompt", "prompt_tokens", "new_tokens",
                            "capacity", "repetitions", "warmup_runs", "positions"}
+ARITHMETIC_MODES = (
+    "fp32-rank-sum-plus-residual-then-bf16-v1",
+    "fp32-rank-sum-then-bf16-plus-residual-then-bf16-v1",
+)
 NONCLAIM = ("Diagnostic cross-host comparison only: gfx950 Ferric readbacks and gfx942 "
             "independent full-sequence reference. No tolerance acceptance, numerical pass, "
             "causal attribution, protected proof, performance claim, or M1 gate closure.")
@@ -88,14 +92,29 @@ def document(data: bytes) -> dict:
     return value
 
 
-def validate_pins(data: bytes, expected_sha256: str) -> dict:
+def capture_profile(expected_arithmetic: str | None) -> tuple[str, str, set[str]]:
+    if expected_arithmetic is None:
+        return "FerricTpFinalStage", "final_stage_capture", PIN_FIELDS
+    if type(expected_arithmetic) is not str or expected_arithmetic not in ARITHMETIC_MODES:
+        raise Failure("explicit external residual arithmetic expectation is invalid")
+    return "FerricTpArithmeticFinalStage", "arithmetic_final_stage_capture", PIN_FIELDS | {"residual_arithmetic"}
+
+
+def bound_record(record: dict, expected_arithmetic: str | None) -> dict:
+    if expected_arithmetic is not None:
+        record["residual_arithmetic"] = expected_arithmetic
+    return record
+
+
+def validate_pins(data: bytes, expected_sha256: str, *, expected_arithmetic: str | None = None) -> dict:
+    prefix, _, fields = capture_profile(expected_arithmetic)
     core.require_sha256(expected_sha256, "externally retained native pins SHA256")
     equal(digest(data), expected_sha256, "native pins SHA256")
     pins = document(data)
-    object_keys(pins, PIN_FIELDS | {"schema", "authority", "qualification", "benchmark_comparable"}, "native pins")
-    for key, value in {"schema": "FerricTpFinalStageNativePinsV1", "authority": "none",
+    object_keys(pins, fields | {"schema", "authority", "qualification", "benchmark_comparable"}, "native pins")
+    for key, value in bound_record({"schema": f"{prefix}NativePinsV1", "authority": "none",
                        "qualification": False, "benchmark_comparable": False,
-                       "repetitions": 1, "warmup_runs": 0}.items():
+                       "repetitions": 1, "warmup_runs": 0}, expected_arithmetic).items():
         equal(pins[key], value, f"pins {key}")
     for key in IDENTITIES:
         core.require_sha256(pins[key], key)
@@ -128,7 +147,12 @@ def logits_diagnostics(data: bytes, choice: int) -> dict:
     return {"finite": True, "cpu_choice": cpu, "gpu_choice_matches": cpu == choice}
 
 
-def validate_capture(payloads: dict[str, bytes], witness: dict[str, bytes], pins: dict) -> dict:
+def validate_capture(payloads: dict[str, bytes], witness: dict[str, bytes], pins: dict,
+                     *, expected_arithmetic: str | None = None) -> dict:
+    prefix, capture_key, fields = capture_profile(expected_arithmetic)
+    # Even direct parser callers must supply the matching, closed pin schema.
+    pin_bytes = core.canonical_bytes(pins)
+    validate_pins(pin_bytes, digest(pin_bytes), expected_arithmetic=expected_arithmetic)
     if set(payloads) != CAPTURE_FILES or sum(map(len, payloads.values())) > MAX_BYTES:
         raise Failure("capture file roster or total extent drifted")
     if set(witness) != WITNESS_FILES:
@@ -147,10 +171,10 @@ def validate_capture(payloads: dict[str, bytes], witness: dict[str, bytes], pins
     setup, measured, closed, receipt = map(document, lines)
     manifest = document(payloads["manifest.json"])
     intent = document(payloads["intent.json"])
-    expected = {"schema": "FerricTpFinalStageCaptureV1", "authority": "none", "complete": True,
+    expected = bound_record({"schema": f"{prefix}CaptureV1", "authority": "none", "complete": True,
                 "worker_close_confirmed": True, "qualification": False,
                 "benchmark_comparable": False, "numerical_pass_claimed": False,
-                "maximum_total_bytes": MAX_BYTES}
+                "maximum_total_bytes": MAX_BYTES}, expected_arithmetic)
     object_keys(manifest, set(expected) | {"setup", "closed", "positions", "epoch", "input_tokens",
                                           "gpu_choices", "rows", "payloads", "nonclaim"}, "manifest")
     for key, value in expected.items():
@@ -160,7 +184,7 @@ def validate_capture(payloads: dict[str, bytes], witness: dict[str, bytes], pins
     equal(manifest["setup"], setup, "stdout/manifest setup")
     equal(manifest["closed"], closed, "stdout/manifest close")
     integer(manifest["epoch"], 0, 2**64 - 1, "capture epoch")
-    for key in PIN_FIELDS - {"positions"}:
+    for key in fields - {"positions"}:
         equal(setup[key], pins[key], f"setup frozen {key}")
     setup_expected = {"schema": "FerricQwen3TpEngineeringSetupV1", "authority": "none",
                       "model": core.PINNED_REPOSITORY, "dtype": "BF16", "target": "gfx950:xnack-",
@@ -171,9 +195,9 @@ def validate_capture(payloads: dict[str, bytes], witness: dict[str, bytes], pins
                       "numerical_status": "Contracted; compare emitted token IDs independently",
                       "timing": "monotonic controller clock; includes IPC, host collectives and per-token progress logging; excludes setup",
                       "conservative_ring_packet_limit": 131072,
-                      "final_stage_capture": {"positions": pins["positions"], "benchmark_comparable": False,
+                      capture_key: {"positions": pins["positions"], "benchmark_comparable": False,
                                               "timing": "diagnostic readbacks invalidate all performance measurements"}}
-    object_keys(setup, (PIN_FIELDS - {"positions"}) | set(setup_expected) | {
+    object_keys(setup, (fields - {"positions"}) | set(setup_expected) | {
         "worker_pids", "rank_zero_dispatch_budget", "conservative_ring_packet_limit",
         "model_intake_seconds", "setup_seconds", "numerical_status", "timing"}, "setup")
     for key, value in setup_expected.items():
@@ -200,17 +224,17 @@ def validate_capture(payloads: dict[str, bytes], witness: dict[str, bytes], pins
     choices = tokens(manifest["gpu_choices"], "actual GPU choices")
     equal(len(choices), required, "choice count")
     equal(sequence, prompt + choices[len(prompt) - 1:-1], "prompt/GPU-choice continuation")
-    equal(intent, {"schema": "FerricTpFinalStageIntentV1", "authority": "none", "complete": False,
+    equal(intent, bound_record({"schema": f"{prefix}IntentV1", "authority": "none", "complete": False,
                    "setup": setup, "positions": selected, "required_steps": required,
-                   "benchmark_comparable": False, "qualification": False}, "capture intent")
+                   "benchmark_comparable": False, "qualification": False}, expected_arithmetic), "capture intent")
     equal(closed, {"schema": "FerricQwen3TpEngineeringClosedV1", "authority": "none",
                    "worker_pids": pids, "all_workers_exited": True,
                    "whole_seconds": closed["whole_seconds"]}, "successful worker close")
     duration(closed["whole_seconds"], "whole seconds")
-    equal(receipt, {"schema": "FerricTpFinalStageCaptureReceiptV1", "authority": "none",
+    equal(receipt, bound_record({"schema": f"{prefix}CaptureReceiptV1", "authority": "none",
                     "qualification": False, "benchmark_comparable": False,
                     "manifest_sha256": digest(payloads["manifest.json"]),
-                    "manifest_bytes": len(payloads["manifest.json"])}, "manifest receipt")
+                    "manifest_bytes": len(payloads["manifest.json"])}, expected_arithmetic), "manifest receipt")
     measurement = {"schema": "FerricQwen3TpEngineeringMeasurementV1", "authority": "none",
                    "run": 0, "warmup": False, "world_size": 1, "prompt_tokens": prompt,
                    "generated_tokens": choices[len(prompt) - 1:], "kv_tokens_processed": required,
@@ -341,10 +365,14 @@ def execute(model, torch, sequence: list[int], selected: list[int]) -> dict[str,
     return {**captured, "logits.bf16": raw_logits}
 
 
-def implementation() -> dict[str, str]:
+def implementation(*, expected_arithmetic: str | None = None) -> dict[str, str]:
+    capture_profile(expected_arithmetic)
+    names = (Path(__file__).name, "run.py", "pyproject.toml", "uv.lock")
+    if expected_arithmetic is not None:
+        names += ("engineering_tp1_arithmetic_final_stage_reference.py",)
     with core.SecureDirectory.open(Path(__file__).parent, "TP1 reference source") as directory:
         return {name: digest(directory.read(name, "reference implementation", maximum=2 * 1024 * 1024))
-                for name in (Path(__file__).name, "run.py", "pyproject.toml", "uv.lock")}
+                for name in names}
 
 
 @contextmanager
@@ -363,7 +391,15 @@ def held_directory(path: Path, names: set[str], label: str, identities=None):
                 raise Failure(f"{label} directory identity drifted")
 
 
-def compare(payloads: dict[str, bytes], passes: list[dict[str, bytes]], manifest: dict) -> dict:
+def compare(payloads: dict[str, bytes], passes: list[dict[str, bytes]], manifest: dict,
+            *, expected_arithmetic: str | None = None) -> dict:
+    prefix, _, _ = capture_profile(expected_arithmetic)
+    equal(manifest["schema"], f"{prefix}CaptureV1", "comparison capture schema")
+    if expected_arithmetic is not None:
+        equal(manifest["residual_arithmetic"], expected_arithmetic, "comparison arithmetic")
+        equal(manifest["setup"]["residual_arithmetic"], expected_arithmetic, "comparison setup arithmetic")
+    elif "residual_arithmetic" in manifest or "residual_arithmetic" in manifest["setup"]:
+        raise Failure("legacy comparison rejects explicit residual arithmetic")
     if len(passes) != 2:
         raise Failure("reference must retain two executions")
     selected = manifest["positions"]
@@ -384,7 +420,7 @@ def compare(payloads: dict[str, bytes], passes: list[dict[str, bytes]], manifest
                             "pass1_vs_pass2": row_metrics(reference[0], reference[1], width)}
         rows.append({"position": position, "input_token": manifest["input_tokens"][position],
                      "gpu_choice": manifest["gpu_choices"][position], "stages": stages})
-    return {"schema": "FerricTpFinalStageReferenceComparisonV1", "authority": "none",
+    result = bound_record({"schema": f"{prefix}ReferenceComparisonV1", "authority": "none",
             "qualification": False, "benchmark_comparable": False, "numerical_pass_claimed": False,
             "tolerance_reviewed": False, "cause_established": False,
             "process_absence_independently_proven": False,
@@ -393,16 +429,20 @@ def compare(payloads: dict[str, bytes], passes: list[dict[str, bytes]], manifest
             "reference_model": {"repository": core.PINNED_REPOSITORY, "revision": core.PINNED_REVISION},
             "native_target": manifest["setup"]["target"], "reference_target": core.TARGET,
             "input_tokens": manifest["input_tokens"], "positions": selected,
-            "rows": rows, "nonclaim": NONCLAIM}
+            "rows": rows, "nonclaim": NONCLAIM}, expected_arithmetic)
+    if expected_arithmetic is not None:
+        result["reference_arithmetic"] = "unmodified-pinned-transformers-bf16-full-sequence"
+    return result
 
 
-def run(arguments: list[str]) -> None:
+def run(arguments: list[str], *, expected_arithmetic: str | None = None) -> None:
+    capture_profile(expected_arithmetic)
     if len(arguments) != 6:
         raise Failure("usage: engineering_tp1_final_stage_reference.py CAPTURE WITNESS PINS PINS-SHA256 MODEL-SOURCE NEW-OUTPUT")
     capture_path, witness_path, pins_path, pins_sha, model_path, output_path = arguments
     core.require_isolated_python()
     core.require_virtual_environment()
-    source_hashes = implementation()
+    source_hashes = implementation(expected_arithmetic=expected_arithmetic)
     with ExitStack() as held:
         pins_parent, pins_name = core.open_parent(Path(pins_path), "native pins")
         held.enter_context(pins_parent)
@@ -416,11 +456,11 @@ def run(arguments: list[str]) -> None:
             forbidden.add(directory.identity)
             input_directories[path] = directory
         pin_bytes = pins_file.read(maximum=65536)
-        pins = validate_pins(pin_bytes, pins_sha)
+        pins = validate_pins(pin_bytes, pins_sha, expected_arithmetic=expected_arithmetic)
         with held_directory(Path(capture_path), CAPTURE_FILES, "native capture", forbidden) as payloads, \
                 held_directory(Path(witness_path), WITNESS_FILES, "native witnesses", forbidden) as witness:
             reject_output_alias(parent, forbidden)
-            manifest = validate_capture(payloads, witness, pins)
+            manifest = validate_capture(payloads, witness, pins, expected_arithmetic=expected_arithmetic)
             with core.authenticate_model_source(Path(model_path)) as source:
                 if source.target.identity != input_directories[Path(model_path) / "target"].identity:
                     raise Failure("authenticated model target directory changed")
@@ -430,7 +470,7 @@ def run(arguments: list[str]) -> None:
                 for _ in range(2):
                     passes.append(execute(model, dependencies.torch, manifest["input_tokens"], manifest["positions"]))
                     source.validate()
-            result = compare(payloads, passes, manifest)
+            result = compare(payloads, passes, manifest, expected_arithmetic=expected_arithmetic)
         pins_file.validate()
         with pins_parent.open_file(pins_name, "reopened native pins") as reopened:
             if reopened.identity != pins_file.identity:
@@ -438,7 +478,7 @@ def run(arguments: list[str]) -> None:
         with core.SecureDirectory.open(Path(pins_path).parent, "reopened native pins parent") as reopened:
             if reopened.identity != pins_parent.identity:
                 raise Failure("native pin parent identity drifted")
-        equal(implementation(), source_hashes, "reference implementation")
+        equal(implementation(expected_arithmetic=expected_arithmetic), source_hashes, "reference implementation")
         outputs = {f"pass{index}-{name}": data for index, output in enumerate(passes, 1) for name, data in output.items()}
         result.update(implementation_sha256=source_hashes, native_pins_sha256=digest(pin_bytes),
                       native_files_sha256={name: digest(data) for name, data in payloads.items()},

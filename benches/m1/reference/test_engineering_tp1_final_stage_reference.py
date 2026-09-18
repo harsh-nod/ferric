@@ -28,7 +28,7 @@ def encoded(value):
     return json.dumps(value, indent=2, allow_nan=False).encode()
 
 
-def fixture(selected=None, prompt=None, new_tokens=2):
+def fixture(selected=None, prompt=None, new_tokens=2, *, arithmetic=None):
     selected = [4, 5] if selected is None else selected
     prompt = [785, 6722, 315, 9625, 374] if prompt is None else prompt
     length = len(prompt) + new_tokens - 1
@@ -61,6 +61,12 @@ def fixture(selected=None, prompt=None, new_tokens=2):
     intent = {"schema": "FerricTpFinalStageIntentV1", "authority": "none", "complete": False,
               "setup": setup, "positions": selected, "required_steps": length,
               "benchmark_comparable": False, "qualification": False}
+    if arithmetic is not None:
+        pins.update(schema="FerricTpArithmeticFinalStageNativePinsV1", residual_arithmetic=arithmetic)
+        setup["residual_arithmetic"] = arithmetic
+        setup["arithmetic_final_stage_capture"] = setup.pop("final_stage_capture")
+        manifest.update(schema="FerricTpArithmeticFinalStageCaptureV1", residual_arithmetic=arithmetic)
+        intent.update(schema="FerricTpArithmeticFinalStageIntentV1", residual_arithmetic=arithmetic)
     measurement = {"schema": "FerricQwen3TpEngineeringMeasurementV1", "authority": "none", "run": 0,
                    "warmup": False, "world_size": 1, "prompt_tokens": prompt,
                    "generated_tokens": choices[len(prompt) - 1:], "generated_text": "", "generated_utf8_bytes": [],
@@ -100,14 +106,17 @@ def seal(value):
     receipt = {"schema": "FerricTpFinalStageCaptureReceiptV1", "authority": "none", "qualification": False,
                "benchmark_comparable": False, "manifest_sha256": subject.digest(value.data["manifest.json"]),
                "manifest_bytes": len(value.data["manifest.json"])}
+    if value.manifest["schema"] == "FerricTpArithmeticFinalStageCaptureV1":
+        receipt.update(schema="FerricTpArithmeticFinalStageCaptureReceiptV1",
+                       residual_arithmetic=value.manifest["residual_arithmetic"])
     value.witness["stdout.txt"] = b"".join(json.dumps(part).encode() + b"\n" for part in (
         value.manifest["setup"], value.measurement, value.manifest["closed"], receipt))
 
 
-def admit(value):
+def admit(value, *, expected_arithmetic=None):
     pin_bytes = encoded(value.pins)
-    pins = subject.validate_pins(pin_bytes, subject.digest(pin_bytes))
-    return subject.validate_capture(value.data, value.witness, pins)
+    pins = subject.validate_pins(pin_bytes, subject.digest(pin_bytes), expected_arithmetic=expected_arithmetic)
+    return subject.validate_capture(value.data, value.witness, pins, expected_arithmetic=expected_arithmetic)
 
 
 class AdmissionTests(unittest.TestCase):
@@ -238,6 +247,125 @@ class AdmissionTests(unittest.TestCase):
             diagnostics = document["rows"][0]["logits_diagnostics"]
             self.assertEqual(diagnostics["finite"], bits == 0x3F80)
             self.assertEqual(diagnostics["gpu_choice_matches"], False if bits == 0x3F80 else None)
+
+
+class ArithmeticAdmissionTests(unittest.TestCase):
+    def test_both_explicit_modes_admit_only_with_exact_external_expectation(self):
+        for mode in subject.ARITHMETIC_MODES:
+            value = fixture(arithmetic=mode)
+            manifest = admit(value, expected_arithmetic=mode)
+            self.assertEqual(manifest["residual_arithmetic"], mode)
+            self.assertEqual(manifest["setup"]["residual_arithmetic"], mode)
+            self.assertNotIn("final_stage_capture", manifest["setup"])
+            for expected in (None, "auto", True, "", *[m for m in subject.ARITHMETIC_MODES if m != mode]):
+                with self.subTest(mode=mode, expected=expected), self.assertRaises(subject.Failure):
+                    admit(value, expected_arithmetic=expected)
+            pins = encoded(value.pins)
+            with self.assertRaises(subject.Failure):
+                subject.validate_pins(pins, "2" * 64, expected_arithmetic=mode)
+
+    def test_legacy_records_are_not_upgraded_or_mode_inferred(self):
+        for mode in subject.ARITHMETIC_MODES:
+            value = fixture()
+            with self.assertRaises(subject.Failure):
+                admit(value, expected_arithmetic=mode)
+            value.manifest["setup"]["residual_arithmetic"] = mode
+            seal(value)
+            with self.assertRaises(subject.Failure):
+                admit(value)
+            value = fixture(arithmetic=mode)
+            with self.assertRaises(subject.Failure):
+                subject.validate_capture(value.data, value.witness, value.pins)
+
+    def test_all_mode_and_schema_crosslinks_fail_closed(self):
+        mode, other = subject.ARITHMETIC_MODES
+        changes = [lambda v: v.manifest.update(residual_arithmetic=other),
+                   lambda v: v.manifest["setup"].update(residual_arithmetic=other),
+                   lambda v: v.intent.update(residual_arithmetic=other),
+                   lambda v: v.manifest.update(schema="FerricTpFinalStageCaptureV1"),
+                   lambda v: v.intent.update(schema="FerricTpFinalStageIntentV1"),
+                   lambda v: v.pins.update(schema="FerricTpFinalStageNativePinsV1"),
+                   lambda v: v.pins.pop("residual_arithmetic"),
+                   lambda v: v.manifest["setup"].update(final_stage_capture={}),
+                   lambda v: v.manifest["setup"].pop("arithmetic_final_stage_capture"),
+                   lambda v: v.manifest.update(numerical_pass_claimed=True),
+                   lambda v: v.manifest["setup"].update(controller_sha256="2" * 64),
+                   lambda v: v.manifest["setup"].update(artifact_hsaco_id="2" * 64)]
+        for index, change in enumerate(changes):
+            value = fixture(arithmetic=mode)
+            change(value)
+            seal(value)
+            with self.subTest(change=index), self.assertRaises(subject.Failure):
+                admit(value, expected_arithmetic=mode)
+        for key, bad in (("residual_arithmetic", other), ("schema", "FerricTpFinalStageCaptureReceiptV1")):
+            value = fixture(arithmetic=mode)
+            records = [json.loads(line) for line in value.witness["stdout.txt"].splitlines()]
+            records[3][key] = bad
+            value.witness["stdout.txt"] = b"".join(json.dumps(row).encode() + b"\n" for row in records)
+            with self.assertRaises(subject.Failure):
+                admit(value, expected_arithmetic=mode)
+
+    def test_arithmetic_capture_keeps_terminal_payload_and_causality_guards(self):
+        mode = subject.ARITHMETIC_MODES[1]
+        changes = [lambda v: v.witness.update({"process.exit": b"1\n"}),
+                   lambda v: v.manifest["closed"].update(all_workers_exited=False),
+                   lambda v: v.manifest["input_tokens"].__setitem__(5, 1),
+                   lambda v: v.manifest["payloads"][0].update(sha256="2" * 64),
+                   lambda v: v.manifest["rows"][0]["normalized"].update(offset_bytes=2),
+                   lambda v: v.manifest["setup"].update(tensor_parallel=2)]
+        for index, change in enumerate(changes):
+            value = fixture(arithmetic=mode)
+            change(value)
+            seal(value)
+            with self.subTest(change=index), self.assertRaises(subject.Failure):
+                admit(value, expected_arithmetic=mode)
+        value = fixture(arithmetic=mode)
+        value.data["normalized.bf16"] = b"\x80\x3f" + value.data["normalized.bf16"][2:]
+        with self.assertRaises(subject.Failure):
+            admit(value, expected_arithmetic=mode)
+
+    def test_nonfinite_disagreement_retention_and_all_three_comparisons(self):
+        for mode in subject.ARITHMETIC_MODES:
+            value = fixture(arithmetic=mode)
+            value.data["logits.bf16"] = b"\xc1\x7f" + value.data["logits.bf16"][2:]
+            refresh(value)
+            manifest = admit(value, expected_arithmetic=mode)
+            first = {name: data for name, data in value.data.items() if name.endswith(".bf16")}
+            second = {name: b"\x80\x3f" + data[2:] for name, data in first.items()}
+            result = subject.compare(value.data, [first, second], manifest, expected_arithmetic=mode)
+            self.assertEqual(result["schema"], "FerricTpArithmeticFinalStageReferenceComparisonV1")
+            self.assertEqual(result["residual_arithmetic"], mode)
+            self.assertEqual(result["reference_arithmetic"], "unmodified-pinned-transformers-bf16-full-sequence")
+            self.assertFalse(result["reference_byte_identical"])
+            for key in ("qualification", "benchmark_comparable", "numerical_pass_claimed", "tolerance_reviewed", "cause_established"):
+                self.assertIs(result[key], False)
+            self.assertEqual(set(result["rows"][0]["stages"]), set(subject.WIDTHS))
+            self.assertIsNone(result["rows"][0]["stages"]["logits"]["native_vs_pass2"]["rmse"])
+            self.assertEqual(result["rows"][0]["stages"]["normalized"]["pass1_vs_pass2"]["bit_mismatches"], 1)
+            with self.assertRaises(subject.Failure):
+                subject.compare(value.data, [first, second], manifest)
+            with self.assertRaises(subject.Failure):
+                subject.compare(value.data, [first, second], manifest,
+                                expected_arithmetic=next(m for m in subject.ARITHMETIC_MODES if m != mode))
+
+    def test_arithmetic_entrypoint_requires_external_mode_before_execution(self):
+        specification = importlib.util.spec_from_file_location(
+            "arithmetic_final_stage_entry_test",
+            Path(__file__).with_name("engineering_tp1_arithmetic_final_stage_reference.py"),
+        )
+        entry = importlib.util.module_from_spec(specification)
+        specification.loader.exec_module(entry)
+        with patch.object(entry.reference, "run") as run:
+            for mode in subject.ARITHMETIC_MODES:
+                entry.run([mode, "capture", "witness", "pins", "sha", "model", "output"])
+                run.assert_called_with(["capture", "witness", "pins", "sha", "model", "output"],
+                                       expected_arithmetic=mode)
+            run.reset_mock()
+            for arguments in (["capture", "witness", "pins", "sha", "model", "output"],
+                              ["auto", "capture", "witness", "pins", "sha", "model", "output"]):
+                with self.assertRaises(entry.reference.Failure):
+                    entry.run(arguments)
+            run.assert_not_called()
 
 
 class MetricsTests(unittest.TestCase):
@@ -416,6 +544,27 @@ class ExecutorTests(unittest.TestCase):
 
 
 class FileAndRunTests(unittest.TestCase):
+    def test_arithmetic_implementation_binds_entrypoint_and_shared_sources(self):
+        legacy = {"engineering_tp1_final_stage_reference.py", "run.py", "pyproject.toml", "uv.lock"}
+        entrypoint = "engineering_tp1_arithmetic_final_stage_reference.py"
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            payloads = {name: name.encode("ascii") for name in legacy | {entrypoint}}
+            for name, data in payloads.items():
+                (root / name).write_bytes(data)
+            with patch.object(subject, "__file__", str(root / "engineering_tp1_final_stage_reference.py")):
+                expected = {name: subject.digest(payloads[name]) for name in legacy}
+                self.assertEqual(subject.implementation(), expected)
+                for mode in subject.ARITHMETIC_MODES:
+                    self.assertEqual(subject.implementation(expected_arithmetic=mode), {
+                        **expected, entrypoint: subject.digest(payloads[entrypoint]),
+                    })
+                (root / entrypoint).write_bytes(b"changed entrypoint")
+                self.assertEqual(subject.implementation(), expected)
+                for mode in subject.ARITHMETIC_MODES:
+                    self.assertEqual(subject.implementation(expected_arithmetic=mode)[entrypoint],
+                                     subject.digest(b"changed entrypoint"))
+
     def test_held_files_reject_links_mutations_and_directory_replacement(self):
         for mode in ("symlink", "hardlink", "contents", "inode", "directory", "extra"):
             with self.subTest(mode=mode), tempfile.TemporaryDirectory() as root:
@@ -444,8 +593,8 @@ class FileAndRunTests(unittest.TestCase):
                         elif mode == "extra":
                             (path / "extra").write_bytes(b"extra")
 
-    def run_fixture(self, root, fail_source=False, existing_output=False, alias=None):
-        value = fixture()
+    def run_fixture(self, root, fail_source=False, existing_output=False, alias=None, arithmetic=None):
+        value = fixture(arithmetic=arithmetic)
         base = Path(root)
         for name, data in (("capture", value.data), ("witness", value.witness)):
             directory = base / name
@@ -482,7 +631,7 @@ class FileAndRunTests(unittest.TestCase):
                          subject.digest(raw_pins), str(base / "model"), str(output)]
             if fail_source or existing_output or alias is not None:
                 with self.assertRaises((subject.Failure, FileExistsError)):
-                    subject.run(arguments)
+                    subject.run(arguments, expected_arithmetic=arithmetic)
                 if alias is not None:
                     self.assertEqual(executor.call_count, 0)
                     self.assertFalse(output.exists())
@@ -492,11 +641,14 @@ class FileAndRunTests(unittest.TestCase):
                 else:
                     self.assertEqual((output / "sentinel").read_bytes(), b"preserve")
                 return
-            subject.run(arguments)
+            subject.run(arguments, expected_arithmetic=arithmetic)
         self.assertEqual(len(validations), 2)
         result = json.loads((output / "comparison.json").read_bytes())
         self.assertFalse(result["reference_byte_identical"])
         self.assertFalse(result["numerical_pass_claimed"])
+        if arithmetic is not None:
+            self.assertEqual(result["residual_arithmetic"], arithmetic)
+            self.assertEqual(result["schema"], "FerricTpArithmeticFinalStageReferenceComparisonV1")
         for ordinal, data in enumerate((first, second), 1):
             for name, raw in data.items():
                 self.assertEqual((output / f"pass{ordinal}-{name}").read_bytes(), raw)
@@ -506,6 +658,12 @@ class FileAndRunTests(unittest.TestCase):
     def test_complete_run_retains_both_nonidentical_raw_passes(self):
         with tempfile.TemporaryDirectory() as root:
             self.run_fixture(root)
+
+    def test_arithmetic_run_preserves_both_raw_passes_and_publication_guards(self):
+        for mode in subject.ARITHMETIC_MODES:
+            for options in ({}, {"fail_source": True}, {"existing_output": True}, {"alias": "capture"}):
+                with self.subTest(mode=mode, options=options), tempfile.TemporaryDirectory() as root:
+                    self.run_fixture(root, arithmetic=mode, **options)
 
     def test_model_revalidated_after_each_pass(self):
         with tempfile.TemporaryDirectory() as root:
