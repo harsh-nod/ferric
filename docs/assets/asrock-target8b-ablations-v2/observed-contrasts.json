@@ -1,0 +1,23 @@
+{
+  "authority": "none",
+  "contrasts": [
+    {
+      "causal_or_statistical_speedup_claim": false,
+      "family": "legacy",
+      "from": "baseline",
+      "observed_rate_ratio": 1.1878517749656246,
+      "observed_tpot_change_percent": -15.8144121113984,
+      "to": "cache"
+    },
+    {
+      "causal_or_statistical_speedup_claim": false,
+      "family": "legacy",
+      "from": "cache",
+      "observed_rate_ratio": 2.8222968234538612,
+      "observed_tpot_change_percent": -64.56786572943723,
+      "to": "operational"
+    }
+  ],
+  "nonclaim": "Descriptive ratios of single unwarmed requests. No controlled causal contribution or additive optimization attribution.",
+  "schema": "FerricTarget8BObservedContrastsV1"
+}

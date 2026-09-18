@@ -1600,6 +1600,86 @@ fn failed_sequence_drains_submitted_ranks_and_cannot_publish_or_resume() {
 }
 
 #[test]
+fn tp1_wave_sequences_preserve_device_residual_commands_and_completion_boundaries() {
+    let mut baseline = None;
+    for sequences in [false, true] {
+        let mut pool = pool();
+        let mut driver = fixture(1, &pool);
+        driver.projection.mode = super::super::EngineeringTpProjectionModeV3::Wave;
+        driver
+            .configure_reduction(EngineeringTpReductionModeV3::DeviceTp1V3)
+            .unwrap();
+        driver.configure_dispatch_sequences(sequences).unwrap();
+        let batch = prepare(&mut pool, 1);
+        pool.begin_submission(&batch).unwrap();
+        let result = driver.execute(&batch).unwrap();
+        assert_eq!(result.choices, [42]);
+        assert_eq!(driver.dispatch_counts(), [616]);
+        assert_eq!(driver.transposed_weight_bytes(), 0);
+        let transport = &driver.inner.transports[0];
+        assert_eq!(transport.commands.len(), 616);
+        assert_eq!(transport.reads, [(driver.inner.ranks[0].choice.id, 4)]);
+        assert!(
+            transport
+                .commands
+                .iter()
+                .all(|command| !matches!(command.kernel, GEMM | PARTIAL))
+        );
+        let hidden = driver.inner.ranks[0].hidden;
+        let state = (
+            transport.commands.clone(),
+            transport.buffers[&hidden.id][..4096 * 2].to_vec(),
+            transport.write_payloads.clone(),
+        );
+        if let Some(expected) = &baseline {
+            assert_eq!(&state, expected);
+        } else {
+            baseline = Some(state);
+        }
+        let events = transport.events.borrow();
+        assert!(
+            events
+                .iter()
+                .all(|event| !matches!(event, Event::OrderedSubmit(..) | Event::OrderedWait(..)))
+        );
+        let boundaries = events
+            .iter()
+            .filter(|event| {
+                matches!(event, Event::SequenceSubmit(..) | Event::SequenceWait(..))
+                    || matches!(event, Event::Submit(_, kernel) | Event::Wait(_, kernel)
+                        if *kernel == "ferric_qwen3_tp_batch_residual_bf16_v3")
+            })
+            .cloned()
+            .collect::<Vec<_>>();
+        if sequences {
+            // The residual stays outside each sequence and finishes before the
+            // next producer group can observe the swapped hidden-state buffer.
+            let layer = [
+                Event::SequenceSubmit(0, 10),
+                Event::SequenceWait(0, 10),
+                Event::Submit(0, "ferric_qwen3_tp_batch_residual_bf16_v3"),
+                Event::Wait(0, "ferric_qwen3_tp_batch_residual_bf16_v3"),
+                Event::SequenceSubmit(0, 5),
+                Event::SequenceWait(0, 5),
+                Event::Submit(0, "ferric_qwen3_tp_batch_residual_bf16_v3"),
+                Event::Wait(0, "ferric_qwen3_tp_batch_residual_bf16_v3"),
+            ];
+            let expected = (0..36)
+                .flat_map(|_| layer.iter().cloned())
+                .collect::<Vec<_>>();
+            assert_eq!(boundaries, expected);
+        } else {
+            assert_eq!(boundaries.len(), 144);
+        }
+        drop(events);
+        pool.commit_batch(&batch, result.completion).unwrap();
+        assert!(driver.configure_dispatch_sequences(false).is_err());
+        driver.close().unwrap();
+        assert!(driver.inner.transports[0].pending_sequence.is_none());
+    }
+}
+
+#[test]
 fn device_tp1_has_no_hidden_or_partial_host_copies_and_matches_host_result() {
     for rows in [1, 3, 16] {
         let mut baseline_pool = pool();

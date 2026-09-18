@@ -1,5 +1,6 @@
 //! Explicitly opted-in Qwen engineering execution; never a protected server.
 
+mod target_decode_profile_contract;
 mod tp_worker;
 
 use std::collections::BTreeSet;
@@ -12,9 +13,10 @@ use ferric_m1_engineering_execution_v1::tp_execution::EngineeringTpExecutionV1;
 use ferric_m1_engineering_execution_v1::tp_model::EngineeringQwenModelV1;
 use serde::Serialize;
 use sha2::{Digest, Sha256};
-use tp_worker::Worker;
+use target_decode_profile_contract::{Reference, validate_profile_options};
+use tp_worker::{RuntimeOptions, Worker};
 
-const USAGE: &str = "ferric-qwen3-tp-engineering --source DIR --artifact DIR --worker FILE --devices ID[,ID...] --allow-unauthenticated-machine-code [--prompt TEXT] [--new-tokens 32] [--repetitions 3] [--warmup 1] [--capacity 128]";
+const USAGE: &str = "ferric-qwen3-tp-engineering --source DIR --artifact DIR --worker FILE --devices ID[,ID...] --allow-unauthenticated-machine-code [--prompt TEXT] [--new-tokens 32] [--repetitions 3] [--warmup 1] [--capacity 128] [--reference FILE --reference-sha256 SHA256] [--runtime-cache-admission] [--runtime-operational] [--runtime-profile]";
 
 struct Options {
     source: PathBuf,
@@ -26,6 +28,9 @@ struct Options {
     repetitions: u32,
     warmup: u32,
     capacity: u32,
+    reference: Option<PathBuf>,
+    reference_sha256: Option<String>,
+    runtime: RuntimeOptions,
 }
 
 impl Options {
@@ -36,6 +41,8 @@ impl Options {
         let mut prompt = "The capital of France is".to_owned();
         let (mut new_tokens, mut repetitions, mut warmup, mut capacity) = (32, 3, 1, 128);
         let mut consent = false;
+        let (mut reference, mut reference_sha256) = (None, None);
+        let mut runtime = RuntimeOptions::default();
         while let Some(flag) = arguments.next() {
             if !seen.insert(flag.clone()) {
                 return Err(format!("duplicate option {flag}"));
@@ -46,6 +53,21 @@ impl Options {
             }
             if flag == "--help" {
                 return Err(USAGE.into());
+            }
+            match flag.as_str() {
+                "--runtime-cache-admission" => {
+                    runtime.cache_admission = true;
+                    continue;
+                }
+                "--runtime-operational" => {
+                    runtime.operational = true;
+                    continue;
+                }
+                "--runtime-profile" => {
+                    runtime.profile = true;
+                    continue;
+                }
+                _ => {}
             }
             let value = arguments
                 .next()
@@ -68,6 +90,8 @@ impl Options {
                 "--repetitions" => repetitions = number(&flag, &value)?,
                 "--warmup" => warmup = number(&flag, &value)?,
                 "--capacity" => capacity = number(&flag, &value)?,
+                "--reference" => reference = Some(PathBuf::from(value)),
+                "--reference-sha256" => reference_sha256 = Some(value),
                 _ => return Err(format!("unknown option {flag}")),
             }
         }
@@ -81,14 +105,29 @@ impl Options {
         {
             return Err("devices must name 1, 2 or 8 distinct nonzero physical unique IDs".into());
         }
+        let profile = validate_profile_options(
+            reference.as_deref(),
+            reference_sha256.as_deref(),
+            devices.len(),
+            &prompt,
+            new_tokens,
+            runtime.cache_admission || runtime.operational || runtime.profile,
+        )?;
         if !(2..=256).contains(&new_tokens)
-            || !(1..=10).contains(&repetitions)
-            || warmup > 3
+            || !(1..=if profile { 30 } else { 10 }).contains(&repetitions)
+            || warmup > if profile { 10 } else { 3 }
             || !(1..=8192).contains(&capacity)
             || prompt.is_empty()
             || prompt.len() > 16_384
         {
             return Err("prompt or measurement bounds exceeded".into());
+        }
+        if profile {
+            let steps = new_tokens + 4;
+            if steps > capacity {
+                return Err("target profile exceeds sequence capacity".into());
+            }
+            checked_dispatch_budget(steps, repetitions + warmup, 36)?;
         }
         Ok(Self {
             source: source.ok_or("--source is required")?,
@@ -100,6 +139,9 @@ impl Options {
             repetitions,
             warmup,
             capacity,
+            reference,
+            reference_sha256,
+            runtime,
         })
     }
 }
@@ -154,10 +196,14 @@ fn run_sequence(
     model: &EngineeringQwenModelV1,
     prompt: &[u32],
     options: &Options,
+    reference: Option<&Reference>,
     run: u32,
     warmup: bool,
 ) -> Result<Measurement, String> {
     engine.reset_sequence()?;
+    if engine.position() != 0 {
+        return Err("fresh target sequence has a nonzero KV cursor".into());
+    }
     let before = engine.dispatch_counts();
     let started = Instant::now();
     let mut next = None;
@@ -170,6 +216,9 @@ fn run_sequence(
     }
     let first_at = Instant::now();
     let first = next.ok_or("empty tokenized prompt")?;
+    if let Some(reference) = reference {
+        reference.check_token(0, first)?;
+    }
     let mut tokens = vec![first];
     let mut previous = first_at;
     let mut intervals = Vec::with_capacity(options.new_tokens as usize - 1);
@@ -177,6 +226,9 @@ fn run_sequence(
     for ordinal in 1..options.new_tokens {
         token = engine.step(token)?;
         let now = Instant::now();
+        if let Some(reference) = reference {
+            reference.check_token(ordinal as usize, token)?;
+        }
         intervals.push(now.duration_since(previous).as_secs_f64());
         tokens.push(token);
         previous = now;
@@ -208,6 +260,12 @@ fn run_sequence(
         }
     }
     let decoded = model.decode(&tokens)?;
+    if let Some(reference) = reference {
+        reference.check_output(&tokens, &decoded)?;
+        if u64::from(engine.position()) != steps {
+            return Err("target profile final KV cursor differs from the exact schedule".into());
+        }
+    }
     let text = String::from_utf8(decoded.clone()).ok();
     let interval_count = u32::try_from(intervals.len()).map_err(|_| "interval count overflow")?;
     Ok(Measurement {
@@ -263,6 +321,11 @@ fn hex(bytes: &[u8]) -> String {
 
 fn run(options: &Options) -> Result<(), String> {
     let whole = Instant::now();
+    let reference = match (&options.reference, &options.reference_sha256) {
+        (Some(path), Some(digest)) => Some(Reference::open(path, digest, options.new_tokens)?),
+        (None, None) => None,
+        _ => return Err("incomplete target reference options".into()),
+    };
     let worker_hash = hash_file(&options.worker)?;
     let executable_hash = hash_file(Path::new("/proc/self/exe"))?;
     let roster = ferric_qwen3_tp_kernels_device_v1::compiler_expectation_roster_v1();
@@ -271,6 +334,9 @@ fn run(options: &Options) -> Result<(), String> {
     eprintln!("artifact admitted; authenticating canonical Qwen source");
     let model = EngineeringQwenModelV1::open(&options.source)?;
     let prompt = model.encode(&options.prompt)?;
+    if let Some(reference) = &reference {
+        reference.bind(&hex(model.bundle_id().as_bytes()), &prompt)?;
+    }
     let required = u32::try_from(prompt.len())
         .map_err(|_| "prompt token length")?
         .checked_add(options.new_tokens - 1)
@@ -291,7 +357,9 @@ fn run(options: &Options) -> Result<(), String> {
     let workers = options
         .devices
         .iter()
-        .map(|&device| Worker::spawn(&options.worker, device, &artifact))
+        .map(|&device| {
+            Worker::spawn_with_options(&options.worker, device, &artifact, options.runtime)
+        })
         .collect::<Result<Vec<_>, _>>()?;
     let pids = workers.iter().map(Worker::pid).collect::<Vec<_>>();
     let running_hashes = pids
@@ -330,13 +398,52 @@ fn run(options: &Options) -> Result<(), String> {
             "numerical_status": "Contracted; compare emitted token IDs independently",
             "timing": "monotonic controller clock; includes IPC, host collectives and per-token progress logging; excludes setup"
         }))?;
+        if let Some(reference) = &reference {
+            emit(&serde_json::json!({
+                "schema": "FerricQwen3TargetDecodeProfileSetupV1", "authority": "none",
+                "performance_qualified": false, "reference_sha256": target_decode_profile_contract::REFERENCE_SHA256,
+                "reference_model_revision": target_decode_profile_contract::TARGET_REVISION,
+                "reference_device": "AMD Instinct MI300X", "reference_passes": 2,
+                "reference_tokens_available": 32, "reference_tokens_consumed": options.new_tokens,
+                "reference_expected_tokens": reference.tokens,
+                "reference_expected_utf8_bytes": reference.bytes,
+                "precision": "BF16", "target_only": true, "speculation": false,
+                "concurrent_requests": 1, "tensor_parallel": 1,
+                "runtime_cache_admission": options.runtime.cache_admission,
+                "runtime_operational": options.runtime.operational,
+                "runtime_profile": options.runtime.profile,
+                "runtime_sequences": false, "runtime_ordered_batches": false,
+                "runtime_rollover": false, "kv_prefix_cache": false,
+                "sequence_reuse": "reset logical cursor; each request overwrites every consumed KV position",
+                "timing": "host Instant; includes IPC, host collectives, progress logging and reference checks; not GPU timestamps",
+                "nonclaim": "Reference-checked bounded diagnostic; not model-wide numerical qualification, GPU overlap, megakernel execution, or a controlled benchmark"
+            }))?;
+        }
         for index in 0..options.warmup {
-            let measurement = run_sequence(&mut engine, &model, &prompt, options, index, true)?;
+            let measurement = run_sequence(
+                &mut engine,
+                &model,
+                &prompt,
+                options,
+                reference.as_ref(),
+                index,
+                true,
+            )?;
             emit(&measurement)?;
+            emit_profile_pass(reference.as_ref(), &measurement)?;
         }
         for index in 0..options.repetitions {
-            let measurement = run_sequence(&mut engine, &model, &prompt, options, index, false)?;
+            let measurement = run_sequence(
+                &mut engine,
+                &model,
+                &prompt,
+                options,
+                reference.as_ref(),
+                index,
+                false,
+            )?;
             emit(&measurement)?;
+            emit_profile_pass(reference.as_ref(), &measurement)?;
         }
         Ok::<(), String>(())
     })();
@@ -349,6 +456,23 @@ fn run(options: &Options) -> Result<(), String> {
         (Ok(()), Err(error)) => Err(format!("worker teardown failed: {error}")),
         (Err(error), Err(close)) => Err(format!("{error}; worker teardown failed: {close}")),
     }
+}
+
+fn emit_profile_pass(
+    reference: Option<&Reference>,
+    measurement: &Measurement,
+) -> Result<(), String> {
+    if reference.is_some() {
+        emit(&serde_json::json!({
+            "schema": "FerricQwen3TargetDecodeProfileRunV1", "authority": "none",
+            "run": measurement.run, "warmup": measurement.warmup,
+            "reference_passed": true, "performance_qualified": false,
+            "generated_tokens_checked": measurement.generated_tokens.len(),
+            "generated_utf8_bytes_checked": measurement.generated_utf8_bytes.len(),
+            "kv_tokens_processed": measurement.kv_tokens_processed
+        }))?;
+    }
+    Ok(())
 }
 
 fn main() -> std::process::ExitCode {
@@ -417,5 +541,114 @@ mod tests {
         assert!(checked_dispatch_budget(241, 1, 36).is_err());
         assert!(checked_dispatch_budget(0, 1, 36).is_err());
         assert!(checked_dispatch_budget(u32::MAX, u32::MAX, u32::MAX).is_err());
+    }
+
+    #[test]
+    fn profile_flags_preserve_legacy_bounds_and_close_runtime_ablations() {
+        let digest = target_decode_profile_contract::REFERENCE_SHA256;
+        let parsed = options(&[
+            "--devices",
+            "1",
+            "--new-tokens",
+            "2",
+            "--repetitions",
+            "30",
+            "--warmup",
+            "10",
+            "--reference",
+            "/reference",
+            "--reference-sha256",
+            digest,
+            "--runtime-cache-admission",
+            "--runtime-operational",
+            "--runtime-profile",
+        ])
+        .unwrap();
+        assert!(
+            parsed.runtime.cache_admission && parsed.runtime.operational && parsed.runtime.profile
+        );
+        assert!(
+            !parsed.runtime.sequences
+                && !parsed.runtime.ordered_batches
+                && !parsed.runtime.rollover
+        );
+        assert_eq!(
+            checked_dispatch_budget(6, parsed.repetitions + parsed.warmup, 36),
+            Ok(130_560)
+        );
+        assert!(checked_dispatch_budget(36, 7, 36).is_err());
+        assert!(
+            options(&[
+                "--devices",
+                "1",
+                "--reference",
+                "/reference",
+                "--reference-sha256",
+                digest,
+                "--repetitions",
+                "6",
+                "--warmup",
+                "1"
+            ])
+            .is_err()
+        );
+        assert!(
+            options(&[
+                "--devices",
+                "1",
+                "--reference",
+                "/reference",
+                "--reference-sha256",
+                digest,
+                "--capacity",
+                "35"
+            ])
+            .is_err()
+        );
+        for flag in [
+            "--runtime-cache-admission",
+            "--runtime-operational",
+            "--runtime-profile",
+        ] {
+            assert!(options(&["--devices", "1", flag]).is_err());
+            assert!(
+                options(&[
+                    "--devices",
+                    "1",
+                    "--reference",
+                    "/reference",
+                    "--reference-sha256",
+                    digest,
+                    flag,
+                    flag
+                ])
+                .is_err()
+            );
+        }
+        for (flag, value) in [
+            ("--repetitions", "31"),
+            ("--warmup", "11"),
+            ("--new-tokens", "4"),
+        ] {
+            assert!(
+                options(&[
+                    "--devices",
+                    "1",
+                    "--reference",
+                    "/reference",
+                    "--reference-sha256",
+                    digest,
+                    flag,
+                    value
+                ])
+                .is_err()
+            );
+        }
+        assert!(options(&["--devices", "1", "--repetitions", "11"]).is_err());
+        assert!(options(&["--devices", "1", "--runtime-sequences"]).is_err());
+        assert!(options(&["--devices", "1", "--runtime-ordered-batches"]).is_err());
+        assert!(options(&["--devices", "1", "--runtime-rollover"]).is_err());
+        assert!(options(&["--devices", "1", "--dtype", "FP8"]).is_err());
+        assert!(options(&["--devices", "1", "--speculation"]).is_err());
     }
 }

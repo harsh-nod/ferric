@@ -12,6 +12,8 @@ Actual short-run results and host-timeline graphs are retained in the
 Qwen3-0.6B engineering diagnostics, not the Qwen3-8B target result.
 The separate [Qwen3-8B two-token smoke](GFX950_TARGET8B_SMOKE_V1.md) checks the
 actual target model on Asrock, but is not a megakernel or performance result.
+The [32-token target-model ablations](GFX950_TARGET8B_ABLATIONS_V2.md) retain
+accepted numerical observations, rejected candidates and actual host-time plots.
 
 ## Execution And Numerical Scope
 
@@ -37,7 +39,10 @@ passing observation.
 ## What 700 Tokens/s Means
 
 The user-selected target is **single-request, BF16, target-only Qwen3-8B
-decode** on one GPU (TP1), not aggregate throughput or Qwen3-0.6B. BF16 is the
+decode**, not aggregate throughput or Qwen3-0.6B. The current experiment uses
+one GPU (TP1); single-request decoding does not itself require single-GPU
+execution. Any tensor-parallel experiment must declare its GPU count and remain
+a separate comparison. BF16 is the
 required optimization contract, not merely a baseline to replace with a
 lower-precision result. FP8, FP4, integer or weight-only quantization and
 lower-precision KV-cache substitutions are out of scope. Preserve the existing
@@ -94,6 +99,12 @@ aims to maximize measured BF16 target-only performance and explain the remaining
 gap to a validated bound, not substitute quantization or speculative decoding.
 Report a missed target honestly; change the bound only with measured evidence
 for changed traffic or reuse assumptions.
+
+A separate [CPU-only lossless feasibility study](assets/asrock-target8b-ablations-v2/bf16-lossless-feasibility.md)
+estimates entropy and an exponent escape-code traffic model from deterministic
+checkpoint samples. It implements no codec and measures no GPU gain. Those
+estimates are neither achieved compression ratios nor universal bounds; they
+do not change the admitted dense BF16 representation used by these experiments.
 
 ## Independent Reference
 
