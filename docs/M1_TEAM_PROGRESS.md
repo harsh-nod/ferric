@@ -5,12 +5,224 @@ receipt. The 33 M1 roadmap gates remain open.
 
 ## Current Checkpoint
 
+| Team | Implemented Or Validated | Next Dependency |
+| --- | --- | --- |
+| Engine | Fresh S8/T128 bootstrap and first S8/K4 round; 781 CPU tests pass | Public physical-submit lifecycle coverage and native integration |
+| Numerical | Explicit arithmetic capture; CPU checks pass; authenticated retained-reference reuse passes 11 regressions | Fresh native captures and recomputed tensor errors |
+| Compiler/Runtime | Validated 46d adoption; 930 delta and corrected disabled controls reviewed; KFD inputs unchanged | Narrow 930 source adoption, fresh compiler tools and kernel emission |
+| Verification | Source coverage passes with 52 new bodies explicitly pending-Verus | Body proofs and protected-runtime qualification remain open |
+| Site | R29 CPU progress draft committed; historical results keep their attribution | Remote QA paused at disk-space admission; deploy-only publication pending |
+
 The selected native GPU host is `mi350`, not `mi350-2`. SSH succeeds on
-September 18. A later passive observation finds a separate Ferric process on
-physical GPUs 0 and 1; that work is left untouched. The host-residual pair is
-bound to physical GPU 2, with a separate fresh admission for each arm.
+September 18. Before the reboot described below, a passive observation finds
+a separate Ferric process on physical GPUs 0 and 1; that work is left untouched.
+The completed host-residual pair uses physical GPU 2, with a separate fresh
+admission for each arm.
 Availability snapshots are not reservations or launch admission. Builds and
 CPU tests remain on mi300x; no local or GitHub-hosted build is used.
+
+At 15:34--15:35 UTC, a fresh passive observation reaches the same mi350 host
+after a reboot (reported uptime two minutes). All eight accelerators remain
+visible on PCI, but amdgpu is not loaded, /dev/kfd and KFD topology are absent,
+and DRM exposes only the display adapter. No driver or host configuration is
+changed. Earlier device mappings and idle observations are historical; native
+launch requires fresh admission after the device nodes return.
+At 15:45:35 UTC the host reports 13 minutes uptime and the same absent driver
+and GPU nodes. Another passive check at 16:07:00 UTC reports 34 minutes uptime
+and still no amdgpu, /dev/kfd or KFD topology. The user has been asked whether
+host bring-up is still ongoing; no driver or host configuration is changed.
+
+### Current Resource And Publication Blockers
+
+The R29 site update is committed locally as `3224600e926cc5b2602e10500384370071ca9388`.
+Its four source files cover S8 bootstrap, explicit arithmetic capture,
+authenticated retained-reference reuse and the dated mi350 availability
+observation. Existing performance results keep their original attribution.
+The public site remains the previously deployed R28 artifact; R29 is not
+published and its full application/render checks have not run.
+
+The R1 syntax and lifecycle preflights pass on mi300x. After the narrow R2
+launcher adjustment, the R2 syntax phase stops before child execution at
+15:58:26 UTC: root free space is 21,151,716 KiB, below the unchanged
+23,068,672 KiB (22 GiB) floor. Wrapper status is 125 and cleanup status is zero.
+There is no child command status or group-after record because no child starts.
+R2 lifecycle and the main QA campaign do not run. All three actual preflight
+directories are retained locally; no missing records or successful outcomes
+are synthesized. A later passive observation at 16:01 UTC reports only
+12,857,908 KiB free on the shared root filesystem. Builds and tests are paused
+without lowering the admission floor or reusing the earlier reserve exception.
+
+A read-only cleanup review identifies three old Cargo target directories under
+/home/harsh: ferric-m1-fe-416ef90d-ignored-target (3,113,172 KiB),
+ferric-m1-fe-e7be5c96-ignored-target (4,270,260 KiB) and
+ferric-target-m1-binder-ba666ef-debug (257,444 KiB). Although all are owned by
+the expected user, authoritative redundant-product custody is not established
+and lsof reports incomplete visibility. None is deleted. Their combined size
+would still be insufficient to restore the 22 GiB floor at that observation.
+
+The local worktree review preserves both remaining candidate checkouts: the
+BF16 logical-sampler branch contains a unique unintegrated commit, and dispatch
+scratch contains substantial uncommitted scheduler changes. Neither is redundant;
+no worktree is removed and no new worktree is created for this checkpoint.
+
+### Current Compiler Source: 46d
+
+Ferric `8d66a6e35df1a46e22e984a95d968439253ae566`, tree
+`44421d4d931f7beea8cd28e8fc2f5969135922d9`, adopts fe2o3
+`46d189e5ca1c8d214d1abaf09e02f99f66e7917a`, the main tip observed when
+this campaign was frozen. The prepared 7e4 campaign was never launched:
+upstream advanced by one compiler numeric-cast/native-output commit, with no
+additional dependency, runtime/KFD or LLVM-worker change. Both unused empty
+7e4 remote owners were removed.
+
+All 50 main phases and nine preflights pass on mi300x, including 48 source-gate
+tests, 32 locked graphs, four inventories and normal source coverage. The
+80-file update adds exactly one reviewed lowerer-to-descriptor dev declaration
+and its combined-inventory counterpart. Runtime inventory, property binder,
+coverage and all other source remain unchanged. Independent review checks
+all 185 phase resource observations against the original limits.
+
+The 25,968,954-byte archive has SHA256
+`41e5d091e10e2f2358205b1fc7de0038f3a0804f665ed0f0c826aba0d0f8695b`.
+Retention and independent audit pass: 2,206 payloads, 2,207 safe members,
+23 external records, exact nanosecond metadata, both fresh source-gate ELF
+producers, 1,195-file original/final censuses and the exact patch. Fresh absence
+checks cover 125 recorded process entries. An initial external hash ledger
+included itself and was rejected and corrected before audit; payloads were
+unchanged and the rejected ledger remains separately retained.
+
+This is compiler source adoption, not rebuilt native compiler/worker/kernel
+products or new GPU results. Historical a167 CPU and 6f native evidence keeps
+its original provenance.
+
+A subsequent main-tip check returns `930342d945eae1d69bdbec025614bccaeb850ad5`.
+It directly descends 46d, adding checked-output F32 exp admission and compiler
+tests. No root manifest, lockfile, toolchain, runtime/KFD or LLVM-worker input
+changes. Ferric remains pinned to the validated 46d snapshot while the narrow
+930 adoption is prepared; the disabled 46d compiler build is not launched.
+
+Independent static review of the disabled 930 adoption finds and resolves
+three stale donor assumptions: an already-present DEV declaration was still
+being reconstructed as new, the auditor expected pre-S8 coverage, and the
+retention wrapper retained an enabled 46d sentinel. The corrected auditor
+requires revision-only TCB bytes, the existing declaration exactly once, and
+coverage `90e6e192f95775417411db7c23a24ae86401c8651839750b16a7cc81e6156a9b`.
+The retention wrapper now has COMPILER_930_READY=false. A second independent
+static review finds no remaining blocker in those edits, and both manifest
+payload checks pass. Remote validation and all actual outcome bindings remain
+pending; the compiler source pin is still 46d. The corrected audit manifest is
+`5df5e1a1bd0a6eda652e169cc19b4bcbbc88b5dd9e2b4bfd262f6065de7d2023`;
+the disabled retention control ledger is
+`24c8d34c15d32ff85782991561245a179a940fe3aa9557bc82e74396b1a93d86`.
+
+### S8 Implementation And Coverage
+
+`411dd0b5d771456fbf73bd7bb1a86094605819ef` and
+`c8b6102e6dc125d686119a29bfa81586747da1aa` repair the existing S8 window's
+coverage inventory: exactly 26 pending-Verus bodies and one module, with no
+proof promotion. R1's missing-admission failure remains retained. All eight
+R2 phases pass, using the authenticated retained a167 source-gate executable;
+this is not a fresh gate build. Normal coverage reports 178 modules and 8,717
+executable bodies.
+
+The engine team has implemented a fresh 1..=8-member S8/T128 bootstrap,
+authenticated prefill settlement and first S8/K4 round lifecycle, committed
+as `7544c3e4`. The numerical team has implemented a separate explicit-arithmetic
+final-stage capture and matching reference parser, committed as `affb1d48`.
+Static review and remote CPU validation are complete. Four formatter warnings
+about the unstable skip_children option are retained, not hidden.
+
+The S8 R1 compile stopped with ten E0277 errors because retained Engine owners
+were placed directly in Debug error containers. The correction uses the
+module's existing opaque custody wrapper and adds a non-Debug owner drop test;
+shared Engine APIs and teardown order remain unchanged. R2 passes preflight,
+extraction, source authentication and formatting, then strict Clippy stops on
+three redundant must_use annotations. All source/control preservation checks
+and owned-process-group checks pass. Neither failed attempt builds or runs
+tests, and their original raw records remain retained.
+
+Those three annotations are removed in the current 1,197-file R3 staged tree
+`390513c7d48f6489ef360f5970ac13551c6b0cb9`, excluding numerical changes.
+R3 passes preflight, extraction, source authentication, formatting, strict
+library Clippy, fresh test build and all eight focused test selections. The
+new modules report six bootstrap and four execution tests passed. The full
+engine library passes 781 tests, with zero failed and nine ignored, in 281.01
+seconds. All 17 phase triples are zero, owned groups are absent, and campaign
+completion is recorded at 2026-09-18T15:10:17Z. The fresh test ELF is 95,106,904
+bytes, SHA256 `828e93fce096ea8525b3c2c284b6228e5cb3b5a130c74285701f22ef947ca97d`.
+The nine subsequent coverage phases pass through the existing F5 wrapper,
+invoked individually without the rejected outer launcher. They add exactly
+52 pending-Verus bodies and two modules, with no proof promotion. Normal
+coverage reports 180 modules and 8,769 executable bodies. Patch SHA256 is
+`79394fa5b8de651d30bba32f3f200b58c4433a074b8c6b32dc12c3302eb66fd1`;
+the only generated source changes are the two proof inventory files.
+These CPU results do not promote any proof or hardware gate.
+The 43,336,433-byte retained archive has SHA256
+`164ffe8a02dd5f4bd96a94edd0f3a557a8e18f2357baaaaed5355d607668c961`.
+Independent static review checks all 467 payload hashes and archived file
+metadata, the full staged source tree, exact test producer, 29 historical and
+current phase records, 61 recorded process identities and 380 resource samples.
+The archive retains both failed attempts. Metadata and process checks describe
+retained observations, not an independent claim about current remote state.
+Initial R1 extraction also rejected Git's
+actual group-writable archive mode before creating any source or target; the
+corrected exact-mode check passes and the original failure is preserved.
+Cleanup of the three completed S8 targets stops before any deletion at the
+first lsof visibility check. Statuses are command=1, cleanup=0, wrapper=1;
+the owned process group is absent. All three target directories remain
+(448,920, 448,828 and 1,386,284 KiB). No visibility requirement is relaxed.
+Source review finds no additional standalone-path blocker, but the tests do
+not yet exercise the complete public physical-submit lifecycle. Resident
+deadline handling and mixed stop-token retirement remain separate service work.
+The new path does not compact a roster containing an initial stop token; that
+case fails closed. Serving admission and all 33 M1 gates remain unchanged.
+
+The independent arithmetic-capture candidate's first CPU attempt passes
+preflight, extraction and source authentication, then stops at a single
+formatter line wrap in the new tests before compilation. Applying that exact
+formatter output yields the separate 1,196-file staged tree
+`7ec5c18bc373e2a6454bd70ea38200e708b0422c` for the successful R2 campaign.
+All retries preserve the original shared-machine caps and 512 MiB build reserve.
+
+R2 passes formatting and strict Clippy, then builds the library test executable
+in 2m20s. The library reports 363 passed, zero failed and six ignored in
+1,053.73 seconds. CLI tests report 24 passed and three ignored; batch tests
+63 passed and three ignored. All 36 comparator and 27 reference-parser tests
+pass, including the unmocked implementation-roster check. All 11 phase triples
+are zero with owned groups absent, source/control checks pass, and the campaign
+finishes successfully at 15:36:35 UTC. This is CPU validation, not a native
+arithmetic tensor comparison. The successful retention contains all three exact
+Cargo test producers and executables, both frozen source/control sets, all 15
+attempt phase directories and both campaigns. Archive SHA256 is
+`8112b0b734f2efba6f6415456ec247ef69cfa0449cb92bf3a5e75f30103971a0`
+(37,652,689 bytes; 253 payloads totaling 126,852,756 bytes). Packaging statuses
+are zero and its owned group is absent. Independent audit checks all 30 external
+hashes, 253 payload hashes, nested source censuses, exact fresh Cargo producers,
+541 resource samples and 32 recorded process identities in retained snapshots.
+The audit finds no blocker; it makes no new remote-visibility claim. Numerical
+build directories have not been deleted.
+
+The next arithmetic comparison can reuse the two authenticated full-sequence
+gfx942 reference passes from September 18, 01:31:35--01:32:14 UTC. Archive
+`72237f9f2257205c46e19514cbb632c2d4a814914162aac793a304b32ad25683`
+contains both residual, normalized and logits tensors for consumed tokens
+`[785, 6722, 315, 9625, 374, 12095]`, positions `[4, 5]`, and the same b968
+Qwen3-8B revision. Both passes are byte-identical; independent static review
+checks all six tensor hashes, producer sources and retained terminal records.
+Reusing these immutable tensors requires matching the model bytes, consumed
+tokens and positions and recomputing new native error metrics. It is not a
+fresh reference run or numerical qualification, and needs no new Torch setup.
+The original public reference entrypoint still runs two fresh GPU passes.
+Commit `e336ac3a` adds a separate CPU-only retained-reference entrypoint that
+authenticates the historical comparison, all six tensors, canonical model
+content identity, complete consumed sequence, positions, original producer
+command/timestamps and implementation hashes before comparison. Both arithmetic
+modes use the same immutable reference bytes, with original attribution kept
+separate from the new comparator's identity. All 11 regression tests pass on
+mi300x in 8.387 seconds. A separate unmocked check admits the actual retained
+11-file input roster, without performing or claiming a new native execution,
+reference execution or numerical comparison. All three validation phases have
+zero statuses and absent owned groups. Fresh native captures remain required.
 
 ### mi350 Paired Native Result
 
