@@ -39,6 +39,7 @@ enum BatchedProfile<'a> {
 enum FullForwardProfile {
     ScalarBf16,
     MfmaFp32V7,
+    MfmaFp32V7WaveAttention,
 }
 
 const MAX_ROWS: usize = 16;
@@ -1179,14 +1180,25 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
         self.configure_full_forward(FullForwardProfile::MfmaFp32V7)
     }
 
+    /// Seals MFMA-v3 projections, wave attention and the separately configured
+    /// FP32-v7 head for one 616-packet submission with device TP1 residuals.
+    /// Configure last, after projection, reduction, attention and head setup.
+    /// # Errors
+    /// Rejects other arithmetic/storage profiles, incomplete setup or a started stream.
+    pub fn configure_mfma_v7_wave_full_forward(&mut self) -> TpResult<()> {
+        self.configure_full_forward(FullForwardProfile::MfmaFp32V7WaveAttention)
+    }
+
     fn configure_full_forward(&mut self, profile: FullForwardProfile) -> TpResult<()> {
+        let attention_matches =
+            self.wave_attention == matches!(profile, FullForwardProfile::MfmaFp32V7WaveAttention);
         let arithmetic_matches = match profile {
             FullForwardProfile::ScalarBf16 => {
                 self.projection.mode == super::EngineeringTpProjectionModeV3::Baseline
                     && !self.head_profile_configured
                     && self.fp32_logits.is_none()
             }
-            FullForwardProfile::MfmaFp32V7 => {
+            FullForwardProfile::MfmaFp32V7 | FullForwardProfile::MfmaFp32V7WaveAttention => {
                 self.projection.mode == super::EngineeringTpProjectionModeV3::Mfma
                     && self.head_profile_configured
                     && self.fp32_logits.is_some_and(|logits| {
@@ -1221,7 +1233,7 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
             || !self.projection_configured
             || !arithmetic_matches
             || self.c1_wave_layers
-            || self.wave_attention
+            || !attention_matches
             || self.prune_output_head
             || self.fp32_argmax_v11.is_some()
             || self.admitted_argmax_v11.is_some()
@@ -1234,6 +1246,7 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
             return Err(match profile {
                 FullForwardProfile::ScalarBf16 => "full-forward scalar-v3 requires fresh Target8B TP1/capacity16/context64/pages4, baseline projection/attention, device TP1 and the unpruned BF16 head",
                 FullForwardProfile::MfmaFp32V7 => "full-forward MFMA-v7 requires fresh Target8B TP1/capacity16/context64/pages4, MFMA-v3 projection, baseline attention, device TP1 and the unpruned FP32-v7 head",
+                FullForwardProfile::MfmaFp32V7WaveAttention => "full-forward MFMA-v7-wave requires fresh Target8B TP1/capacity16/context64/pages4, MFMA-v3 projection, wave attention, device TP1 and the unpruned FP32-v7 head",
             }.into());
         }
         self.inner.full_forward_enabled = true;

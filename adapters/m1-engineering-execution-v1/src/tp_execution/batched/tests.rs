@@ -8,6 +8,7 @@ mod attention_argmax_v11;
 mod draft;
 mod full_forward;
 mod full_forward_mfma_v7;
+mod full_forward_mfma_v7_wave;
 mod large_kv;
 mod layer_c1_wave;
 mod ordered_attention_argmax_v11;
