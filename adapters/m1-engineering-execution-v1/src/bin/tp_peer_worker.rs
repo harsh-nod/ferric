@@ -552,6 +552,9 @@ impl PeerWorker {
         if options.ordered_batches {
             return Err("peer runtime ordered batches are unsupported".into());
         }
+        if options.full_forward {
+            return Err("peer runtime full-forward submission is unsupported".into());
+        }
         if options.rollover || concurrent_rounds && options.sequences {
             return Err("peer rollover and concurrent same-rank sequences are unsupported".into());
         }
@@ -905,7 +908,7 @@ impl EngineeringTpRankTransportV1 for PeerWorker {
 }
 
 #[cfg(test)]
-mod tests {
+pub(super) mod tests {
     use super::*;
 
     const FAKE: &str = r"
@@ -983,7 +986,7 @@ while True:
         )
     }
 
-    fn fixture(mode: &str) -> Vec<PeerWorker> {
+    pub(crate) fn fixture(mode: &str) -> Vec<PeerWorker> {
         let connection = Rc::new(RefCell::new(fixture_connection(mode, false).unwrap()));
         (0..2)
             .map(|rank| PeerWorker {
@@ -1328,6 +1331,24 @@ while True:
         );
         assert!(
             matches!(result, Err(error) if error == "peer runtime ordered batches are unsupported")
+        );
+    }
+
+    #[test]
+    fn peer_full_forward_rejects_before_process_spawn() {
+        let result = PeerWorker::spawn_with_timing(
+            Path::new("/nonexistent-peer-worker"),
+            &[1, 2],
+            &[],
+            RuntimeOptions {
+                full_forward: true,
+                ..RuntimeOptions::default()
+            },
+            false,
+            HostTiming::default(),
+        );
+        assert!(
+            matches!(result, Err(error) if error == "peer runtime full-forward submission is unsupported")
         );
     }
 

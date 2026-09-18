@@ -8,6 +8,7 @@
 //! protected M1 execution or a source-to-device correctness proof.
 
 mod collective;
+mod full_forward;
 mod peer_reduction;
 mod performance;
 mod reduction;
@@ -171,6 +172,22 @@ pub trait EngineeringTpRankTransportV1 {
     fn wait_ordered_batch(&mut self, _count: usize) -> TpResult<()> {
         Err("transport does not support ordered dispatch batches".into())
     }
+    /// Explicit support for one separately bounded 616-packet target forward.
+    fn supports_full_forward(&self) -> bool {
+        false
+    }
+    /// Publishes the entire recorded forward without intermediate host waits.
+    /// # Errors
+    /// Rejects unsupported operation, wrong cardinality, invalid bindings or pending work.
+    fn submit_full_forward(&mut self, _dispatches: &[EngineeringTpDispatchV1]) -> TpResult<()> {
+        Err("transport does not support full-forward dispatch".into())
+    }
+    /// Confirms exact full-forward completion, not publication or a partial count.
+    /// # Errors
+    /// Rejects absent, partial, failed or wrong-kind completion.
+    fn wait_full_forward(&mut self, _count: usize) -> TpResult<()> {
+        Err("transport does not support full-forward dispatch".into())
+    }
     /// Whether checked queue destruction and recreation are explicitly enabled.
     fn supports_queue_rollover(&self) -> bool {
         false
@@ -199,7 +216,7 @@ const LM_HEAD: &str = "ferric_qwen3_gemm_reference_bf16_f32_bf16_v1";
 const ARGMAX: &str = "ferric_qwen3_lowest_id_argmax_bf16_v1";
 const UPLOAD_CHUNK_BYTES: usize = 1 << 20;
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 struct Tensor {
     id: u64,
     elements: usize,
@@ -226,6 +243,7 @@ impl Tensor {
     }
 }
 
+#[derive(Clone)]
 struct Layer {
     weights: Vec<(Qwen3TensorKind, Tensor)>,
     k_cache: Tensor,
@@ -242,6 +260,7 @@ impl Layer {
     }
 }
 
+#[derive(Clone)]
 struct Rank {
     geometry: Qwen3TensorParallelRankV1,
     layers: Vec<Layer>,
@@ -283,6 +302,7 @@ impl Rank {
 ///
 /// A failed step permanently poisons this instance. Successful sequence reset
 /// retains allocations but starts KV at position zero; no stale suffix is read.
+#[allow(clippy::struct_excessive_bools)] // Independent storage/profile flags and terminal lifecycle state.
 pub struct EngineeringTpExecutionV1<R: EngineeringTpRankTransportV1> {
     transports: Vec<R>,
     ranks: Vec<Rank>,
@@ -297,6 +317,8 @@ pub struct EngineeringTpExecutionV1<R: EngineeringTpRankTransportV1> {
     reduction: ReductionWorkspace,
     sequences: Option<Vec<Vec<EngineeringTpDispatchV1>>>,
     ordered_batches: Option<Vec<EngineeringTpDispatchV1>>,
+    full_forward_enabled: bool,
+    full_forward: Option<full_forward::FullForwardRecording>,
     timing: crate::host_timing::HostTiming,
     closed: bool,
 }
@@ -471,6 +493,8 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpExecutionV1<R> {
             reduction: ReductionWorkspace::default(),
             sequences: None,
             ordered_batches: None,
+            full_forward_enabled: false,
+            full_forward: None,
             timing: crate::host_timing::HostTiming::default(),
             closed: false,
         })
@@ -839,6 +863,9 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpExecutionV1<R> {
 
     fn dispatch_zero(&mut self, command: &EngineeringTpDispatchV1) -> TpResult<()> {
         let _timing = self.timing.span("dispatch_zero", None);
+        if self.full_forward_enabled {
+            return self.record_full_forward_command(command.clone());
+        }
         let bound = if self.row_capacity == 32 {
             Some(row_profile::bind_mode(
                 self.draft_v10,
@@ -865,6 +892,10 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpExecutionV1<R> {
         command: impl Fn(&Rank) -> EngineeringTpDispatchV1,
     ) -> TpResult<()> {
         let _timing = self.timing.span("dispatch_each", None);
+        if self.full_forward_enabled {
+            let command = command(self.binding_rank_zero());
+            return self.record_full_forward_command(command);
+        }
         if let Some(pending) = &mut self.ordered_batches {
             if self.ranks.len() != 1 || self.sequences.is_some() || pending.len() >= 16 {
                 return Err("pending ordered dispatch batch bound drifted".into());
@@ -943,6 +974,9 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpExecutionV1<R> {
             Qwen3TensorParallelCollectiveV1::AttentionOutputSum => "collective_attention",
             Qwen3TensorParallelCollectiveV1::FeedForwardDownSum => "collective_feed_forward",
         });
+        if self.full_forward_enabled {
+            return self.reduce_device_tp1(layer, operation);
+        }
         if self.ordered_batches.is_none()
             || self.draft_v10
             || self.reduction.mode() != EngineeringTpReductionModeV3::DeviceTp1V3

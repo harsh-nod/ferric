@@ -244,6 +244,8 @@ fn fixture_model(
         reduction: ReductionWorkspace::default(),
         sequences: None,
         ordered_batches: None,
+        full_forward_enabled: false,
+        full_forward: None,
         timing: crate::host_timing::HostTiming::default(),
         closed: false,
     }

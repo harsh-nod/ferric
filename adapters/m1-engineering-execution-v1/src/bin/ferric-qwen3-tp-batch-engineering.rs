@@ -42,7 +42,7 @@ const USAGE: &str = concat!(
     "[--batch-tokens 16] [--prefill-chunk 16] [--context 128] [--pages 64] ",
     "[--cache-ttl 1024] [--max-batches 240] [--disable-prefix-cache] [--prune-output-head] ",
     "[--runtime-cache-admission] [--runtime-operational] [--dispatch-sequences] [--queue-rollover] ",
-    "[--runtime-profile] [--peer-shared-full-currentness] [--runtime-ordered-batches | --runtime-ordered-scalar-v3] ",
+    "[--runtime-profile] [--peer-shared-full-currentness] [--runtime-ordered-batches | --runtime-ordered-scalar-v3 | --runtime-full-forward | --runtime-full-forward-mfma-v7] ",
     "[--collective host-staged-v1|host-staged-reuse-v3|device-tp1-v3|device-peer-serial-v4|device-peer-concurrent-round-v1] ",
     "[--peer-artifact DIR] [--kernel-profile v2|v3-wave|v3-mfma|v5-wave32|v5-mfma32] ",
     "[--projection baseline|wave|mfma|auto] [--attention baseline|wave] ",
@@ -77,6 +77,7 @@ struct Options {
     prune_output_head: bool,
     runtime: RuntimeOptions,
     ordered_scalar_v3: bool,
+    full_forward_mfma_v7: bool,
     collective: EngineeringTpReductionModeV3,
     kernel_profile: KernelProfile,
     projection: ProjectionMode,
@@ -162,6 +163,7 @@ impl Options {
         let mut live_stdin = false;
         let mut runtime = RuntimeOptions::default();
         let mut ordered_scalar_v3 = false;
+        let mut full_forward_mfma_v7 = false;
         let mut collective = EngineeringTpReductionModeV3::HostStagedV1;
         let mut kernel_profile = KernelProfile::V2;
         let mut projection = ProjectionMode::Baseline;
@@ -214,6 +216,15 @@ impl Options {
                 }
                 "--runtime-ordered-scalar-v3" => {
                     ordered_scalar_v3 = true;
+                    continue;
+                }
+                "--runtime-full-forward" => {
+                    runtime.full_forward = true;
+                    continue;
+                }
+                "--runtime-full-forward-mfma-v7" => {
+                    runtime.full_forward = true;
+                    full_forward_mfma_v7 = true;
                     continue;
                 }
                 "--queue-rollover" => {
@@ -477,6 +488,45 @@ impl Options {
             }
             runtime.ordered_batches = true;
         }
+        if full_forward_mfma_v7 && seen.contains("--runtime-full-forward") {
+            return Err("scalar and MFMA/v7 full-forward selectors are mutually exclusive".into());
+        }
+        let full_forward_numerics = if full_forward_mfma_v7 {
+            kernel_profile == KernelProfile::Mfma
+                && projection == ProjectionMode::Mfma
+                && head_precision == Some(HeadPrecision::Fp32)
+                && fp32_head_artifact.is_some()
+        } else {
+            kernel_profile == KernelProfile::Wave
+                && projection == ProjectionMode::Baseline
+                && head_precision.is_none()
+                && fp32_head_artifact.is_none()
+        };
+        if runtime.full_forward
+            && (devices.len() != 1
+                || !full_forward_numerics
+                || wave_attention
+                || collective != EngineeringTpReductionModeV3::DeviceTp1V3
+                || rows != 1
+                || chunk != 1
+                || context != 64
+                || pages != 4
+                || cache
+                || prune_output_head
+                || peer_artifact.is_some()
+                || runtime.sequences
+                || runtime.ordered_batches
+                || runtime.shared_full_currentness
+                || runtime.rollover
+                || runtime.profile
+                || large_kv
+                || numerical.is_some()
+                || benchmark_control.is_some()
+                || host_timing.is_some()
+                || live_stdin)
+        {
+            return Err("full-forward requires its exact scalar-v3/BF16 or MFMA-v3/FP32-v7 selector, TP1, baseline attention, device-tp1-v3, one row/chunk, context64/pages4, unpruned head and disabled prefix cache; other submission modes, extra sidecars, live input and instrumentation are unsupported".into());
+        }
         Ok(Self {
             source: source.ok_or("--source is required")?,
             artifact: artifact.ok_or("--artifact is required")?,
@@ -500,6 +550,7 @@ impl Options {
             prune_output_head,
             runtime,
             ordered_scalar_v3,
+            full_forward_mfma_v7,
             collective,
             kernel_profile,
             projection,
@@ -1056,6 +1107,13 @@ fn run_with_timing(
     } else {
         gpu.configure_ordered_batches(options.runtime.ordered_batches)?;
     }
+    if options.runtime.full_forward {
+        if options.full_forward_mfma_v7 {
+            gpu.configure_mfma_v7_full_forward()?;
+        } else {
+            gpu.configure_scalar_v3_full_forward()?;
+        }
+    }
     let fp32_head_workspace_bytes = gpu.fp32_head_workspace_bytes();
     if let Some(selection) = &options.numerical {
         let identity = serde_json::json!({
@@ -1151,6 +1209,14 @@ fn run_with_timing(
         }
         if options.ordered_scalar_v3 {
             setup["ordered_batch_profile"] = serde_json::json!("scalar-v3-tp1-bf16");
+        }
+        if options.runtime.full_forward {
+            setup["runtime_full_forward"] = serde_json::json!(true);
+            setup["full_forward_profile"] = serde_json::json!(if options.full_forward_mfma_v7 {
+                "mfma-v3-fp32-v7-tp1-616"
+            } else {
+                "scalar-v3-tp1-bf16-616"
+            });
         }
         if let Some(large) = &large_kv_artifact {
             setup["kv_pool_profile"] = serde_json::json!("large-kv-v9");
@@ -1381,6 +1447,205 @@ mod tests {
             values.extend(extra);
             assert!(args(&values).is_err());
         }
+    }
+
+    #[test]
+    fn mfma_v7_full_forward_policy_keeps_scalar_and_other_profiles_separate() {
+        let base = [
+            "--devices",
+            "1",
+            "--kernel-profile",
+            "v3-mfma",
+            "--projection",
+            "mfma",
+            "--collective",
+            "device-tp1-v3",
+            "--head-precision",
+            "fp32-v7",
+            "--fp32-head-artifact",
+            "/head",
+            "--batch-tokens",
+            "1",
+            "--prefill-chunk",
+            "1",
+            "--context",
+            "64",
+            "--pages",
+            "4",
+            "--disable-prefix-cache",
+        ];
+        let serial = args(&base).unwrap();
+        assert!(!serial.runtime.full_forward && !serial.full_forward_mfma_v7);
+        let mut enabled = base.to_vec();
+        enabled.push("--runtime-full-forward-mfma-v7");
+        let parsed = args(&enabled).unwrap();
+        assert!(parsed.runtime.full_forward && parsed.full_forward_mfma_v7);
+        assert_eq!(parsed.head_precision, Some(HeadPrecision::Fp32));
+        let mut operational = enabled.clone();
+        operational.extend(["--runtime-cache-admission", "--runtime-operational"]);
+        assert!(args(&operational).unwrap().full_forward_mfma_v7);
+        for extra in [
+            vec!["--runtime-full-forward"],
+            vec!["--runtime-full-forward-mfma-v7"],
+            vec!["--runtime-ordered-batches"],
+            vec!["--runtime-ordered-scalar-v3"],
+            vec!["--dispatch-sequences"],
+            vec!["--queue-rollover"],
+            vec!["--runtime-profile"],
+            vec!["--prune-output-head"],
+            vec!["--attention", "wave"],
+            vec!["--peer-shared-full-currentness"],
+            vec!["--peer-artifact", "/peer"],
+            vec!["--host-timing", "/timing"],
+            vec!["--benchmark-control", "/benchmark"],
+            vec![
+                "--kv-pool-profile",
+                "large-kv-v9",
+                "--large-kv-artifact",
+                "/kv",
+            ],
+            vec![
+                "--numerical-capture",
+                "/capture",
+                "--numerical-batch",
+                "1",
+                "--numerical-layer",
+                "0",
+                "--numerical-projection",
+                "q",
+            ],
+        ] {
+            let mut values = enabled.clone();
+            values.extend(extra);
+            assert!(args(&values).is_err());
+        }
+        for (flag, bad) in [
+            ("--devices", "1,2"),
+            ("--kernel-profile", "v2"),
+            ("--kernel-profile", "v3-wave"),
+            ("--kernel-profile", "v5-mfma32"),
+            ("--projection", "baseline"),
+            ("--projection", "wave"),
+            ("--projection", "auto"),
+            ("--head-precision", "bf16-v7-control"),
+            ("--head-precision", "fp32-v8"),
+            ("--collective", "host-staged-v1"),
+            ("--collective", "host-staged-reuse-v3"),
+            ("--batch-tokens", "2"),
+            ("--context", "128"),
+            ("--pages", "8"),
+        ] {
+            let mut values = enabled.clone();
+            let index = values.iter().position(|item| *item == flag).unwrap();
+            values[index + 1] = bad;
+            assert!(args(&values).is_err(), "{flag} {bad}");
+        }
+        let mut scalar_selector = base.to_vec();
+        scalar_selector.push("--runtime-full-forward");
+        assert!(args(&scalar_selector).is_err());
+        enabled.retain(|flag| *flag != "--disable-prefix-cache");
+        assert!(args(&enabled).is_err());
+    }
+
+    #[test]
+    fn full_forward_policy_is_distinct_explicit_and_narrow() {
+        let base = [
+            "--devices",
+            "1",
+            "--kernel-profile",
+            "v3-wave",
+            "--projection",
+            "baseline",
+            "--collective",
+            "device-tp1-v3",
+            "--batch-tokens",
+            "1",
+            "--prefill-chunk",
+            "1",
+            "--context",
+            "64",
+            "--pages",
+            "4",
+            "--disable-prefix-cache",
+        ];
+        assert!(!args(&base).unwrap().runtime.full_forward);
+        let mut enabled = base.to_vec();
+        enabled.push("--runtime-full-forward");
+        assert!(args(&enabled).unwrap().runtime.full_forward);
+        let mut operational = enabled.clone();
+        operational.extend(["--runtime-cache-admission", "--runtime-operational"]);
+        let options = args(&operational).unwrap();
+        assert!(
+            options.runtime.full_forward
+                && options.runtime.cache_admission
+                && options.runtime.operational
+        );
+        for extra in [
+            vec!["--runtime-full-forward"],
+            vec!["--runtime-ordered-batches"],
+            vec!["--runtime-ordered-scalar-v3"],
+            vec!["--dispatch-sequences"],
+            vec!["--queue-rollover"],
+            vec!["--runtime-profile"],
+            vec!["--prune-output-head"],
+            vec!["--attention", "wave"],
+            vec!["--peer-shared-full-currentness"],
+            vec!["--peer-artifact", "/peer"],
+            vec!["--host-timing", "/timing"],
+            vec!["--benchmark-control", "/benchmark"],
+            vec![
+                "--head-precision",
+                "fp32-v7",
+                "--fp32-head-artifact",
+                "/head",
+            ],
+            vec![
+                "--head-precision",
+                "bf16-v7-control",
+                "--fp32-head-artifact",
+                "/head",
+            ],
+            vec![
+                "--kv-pool-profile",
+                "large-kv-v9",
+                "--large-kv-artifact",
+                "/kv",
+            ],
+            vec![
+                "--numerical-capture",
+                "/capture",
+                "--numerical-batch",
+                "1",
+                "--numerical-layer",
+                "0",
+                "--numerical-projection",
+                "q",
+            ],
+        ] {
+            let mut values = enabled.clone();
+            values.extend(extra);
+            assert!(args(&values).is_err());
+        }
+        for (flag, bad) in [
+            ("--devices", "1,2"),
+            ("--kernel-profile", "v2"),
+            ("--kernel-profile", "v3-mfma"),
+            ("--kernel-profile", "v5-wave32"),
+            ("--projection", "wave"),
+            ("--projection", "mfma"),
+            ("--collective", "host-staged-v1"),
+            ("--collective", "host-staged-reuse-v3"),
+            ("--batch-tokens", "2"),
+            ("--context", "128"),
+            ("--pages", "8"),
+        ] {
+            let mut values = enabled.clone();
+            let index = values.iter().position(|item| *item == flag).unwrap();
+            values[index + 1] = bad;
+            assert!(args(&values).is_err(), "{flag} {bad}");
+        }
+        enabled.retain(|flag| *flag != "--disable-prefix-cache");
+        assert!(args(&enabled).is_err());
     }
 
     #[test]

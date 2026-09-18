@@ -6,7 +6,7 @@ use super::{
     Qwen3TensorParallelCollectiveV1, Tensor, TpResult, allocate_tensor, decode_bf16, dispatch,
 };
 
-const DEVICE_RESIDUAL: &str = "ferric_qwen3_tp_batch_residual_bf16_v3";
+pub(super) const DEVICE_RESIDUAL: &str = "ferric_qwen3_tp_batch_residual_bf16_v3";
 
 /// Named, opt-in arithmetic/transport profiles with no implicit fallback.
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
@@ -182,6 +182,9 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpExecutionV1<R> {
         layer: u32,
         operation: Qwen3TensorParallelCollectiveV1,
     ) -> TpResult<()> {
+        if self.full_forward_enabled {
+            return self.record_full_forward_residual(layer, operation);
+        }
         let key = self.collective.expected();
         if key.layer != layer || key.operation != operation {
             return Err("device collective operation reordered".into());

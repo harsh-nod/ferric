@@ -35,6 +35,12 @@ enum BatchedProfile<'a> {
     Draft(crate::tp_artifact::DraftBindingV10),
 }
 
+#[derive(Clone, Copy)]
+enum FullForwardProfile {
+    ScalarBf16,
+    MfmaFp32V7,
+}
+
 const MAX_ROWS: usize = 16;
 const PAGE_TOKENS: u32 = 16;
 const EMBEDDING: &str = "ferric_qwen3_tp_batch_embedding_bf16_v2";
@@ -686,6 +692,7 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
             && !self.inner.large_kv
             && self.inner.sequences.is_none()
             && self.inner.ordered_batches.is_none()
+            && !self.inner.full_forward_enabled
             && self.numerical.is_none()
             && self.reduction_mode() == EngineeringTpReductionModeV3::DeviceTp1V3
     }
@@ -723,6 +730,7 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
             || (self.wave_attention && capacity != 32 && !wave_v7)
             || self.inner.sequences.is_some()
             || self.inner.ordered_batches.is_some()
+            || self.inner.full_forward_enabled
             || self.numerical.is_some()
             || !matches!(
                 self.projection.mode,
@@ -780,6 +788,7 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
             || self.inner.ranks.len() != 1
             || self.inner.sequences.is_some()
             || self.inner.ordered_batches.is_some()
+            || self.inner.full_forward_enabled
             || self.inner.timing.is_enabled()
             || self.wave_attention
             || !capture.matches_profile(self.projection.mode.label(), self.prune_output_head)
@@ -838,6 +847,7 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
         if self.last_batch != 0
             || self.poisoned
             || self.inner.closed
+            || self.inner.full_forward_enabled
             || (self.numerical.is_some() && timing.is_enabled())
         {
             return Err("host timing requires a fresh batch stream".into());
@@ -858,6 +868,7 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
             || self.completed_batches != 0
             || self.numerical.is_some()
             || self.inner.ordered_batches.is_some()
+            || self.inner.full_forward_enabled
             || (self.inner.large_kv && mode.is_peer())
         {
             return Err("reduction mode requires a fresh batch stream".into());
@@ -897,6 +908,11 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
         &mut self,
         work: crate::tp_paged::speculative::EngineeringTpSpeculativeTargetWorkV1<'_>,
     ) -> TpResult<crate::tp_paged::speculative::EngineeringTpSpeculativeTargetResultV1> {
+        if self.inner.full_forward_enabled {
+            return Err(
+                "full-forward execution is target-only, not speculative verification".into(),
+            );
+        }
         if !work.validate()
             || self.numerical.is_some()
             || self.inner.plan.model().role != Qwen3ModelRole::Target8B
@@ -924,6 +940,7 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
             || self.inner.closed
             || self.numerical.is_some()
             || self.inner.ordered_batches.is_some()
+            || self.inner.full_forward_enabled
         {
             return Err("output-head policy must be configured before execution".into());
         }
@@ -948,6 +965,7 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
             || self.numerical.is_some()
             || self.head_profile_configured
             || self.inner.ordered_batches.is_some()
+            || self.inner.full_forward_enabled
             || (self.inner.large_kv
                 && !matches!(
                     mode,
@@ -1020,6 +1038,7 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
             || self.inner.closed
             || self.numerical.is_some()
             || self.inner.ordered_batches.is_some()
+            || self.inner.full_forward_enabled
             || (self.head_profile_configured && (enabled || self.wave_attention))
             || (enabled && self.inner.large_kv)
         {
@@ -1036,6 +1055,7 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
         if self.last_batch != 0
             || self.fp32_argmax_v11.is_some()
             || self.inner.ordered_batches.is_some()
+            || self.inner.full_forward_enabled
             || (enabled
                 && (self.numerical.is_some()
                     || self.head_profile_configured
@@ -1067,6 +1087,7 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
             || self.poisoned
             || self.inner.closed
             || self.inner.ordered_batches.is_some()
+            || self.inner.full_forward_enabled
         {
             return Err("ordered batch policy requires a fresh unconfigured stream".into());
         }
@@ -1113,6 +1134,7 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
             || self.inner.transports[0].peer_group_rank().is_some()
             || !self.inner.transports[0].supports_ordered_batches()
             || self.inner.ordered_batches.is_some()
+            || self.inner.full_forward_enabled
             || self.inner.sequences.is_some()
             || self.inner.large_kv
             || self.inner.draft_v10
@@ -1135,6 +1157,86 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
             return Err("ordered scalar-v3 requires fresh TP1/capacity16, explicit baseline projection/attention, device-tp1-v3 and the unpruned BF16 head; alternate images, peers, sequences and numerical capture are unsupported".into());
         }
         self.inner.ordered_batches = Some(Vec::with_capacity(16));
+        Ok(())
+    }
+
+    /// Seals the exact single-row scalar/BF16 target profile for one full-forward submission.
+    /// Configure last. Live bindings and the collective cursor commit only after
+    /// all 616 packets complete and the unpruned BF16 choice is read and checked.
+    /// # Errors
+    /// Rejects unsupported transports, other numerical profiles or any started/sealed stream.
+    pub fn configure_scalar_v3_full_forward(&mut self) -> TpResult<()> {
+        self.configure_full_forward(FullForwardProfile::ScalarBf16)
+    }
+
+    /// Seals MFMA-v3 projections and the separately configured FP32-v7 head
+    /// for one 616-packet submission. Weights and intermediate activations
+    /// remain BF16; baseline attention and device TP1 residuals are unchanged.
+    /// Configure last, after projection, reduction and head setup.
+    /// # Errors
+    /// Rejects other arithmetic/storage profiles, incomplete setup or a started stream.
+    pub fn configure_mfma_v7_full_forward(&mut self) -> TpResult<()> {
+        self.configure_full_forward(FullForwardProfile::MfmaFp32V7)
+    }
+
+    fn configure_full_forward(&mut self, profile: FullForwardProfile) -> TpResult<()> {
+        let arithmetic_matches = match profile {
+            FullForwardProfile::ScalarBf16 => {
+                self.projection.mode == super::EngineeringTpProjectionModeV3::Baseline
+                    && !self.head_profile_configured
+                    && self.fp32_logits.is_none()
+            }
+            FullForwardProfile::MfmaFp32V7 => {
+                self.projection.mode == super::EngineeringTpProjectionModeV3::Mfma
+                    && self.head_profile_configured
+                    && self.fp32_logits.is_some_and(|logits| {
+                        logits.elements == 16 * 151_936 && logits.element_bytes == 4
+                    })
+            }
+        };
+        if self.last_batch != 0
+            || self.completed_batches != 0
+            || self.poisoned
+            || self.inner.closed
+            || self.row_capacity != 16
+            || self.inner.row_capacity != 16
+            || self.context_tokens != 64
+            || self.physical_pages != 4
+            || self.table_stride != 4
+            || self.inner.plan.model().role != Qwen3ModelRole::Target8B
+            || self.inner.plan.world_size() != 1
+            || self.inner.ranks.len() != 1
+            || self.inner.transports.len() != 1
+            || self.inner.transports[0].peer_group_rank().is_some()
+            || !self.inner.transports[0].supports_full_forward()
+            || self.inner.transports[0].supports_queue_rollover()
+            || self.inner.ordered_batches.is_some()
+            || self.inner.sequences.is_some()
+            || self.inner.full_forward_enabled
+            || self.inner.full_forward.is_some()
+            || self.inner.large_kv
+            || self.inner.draft_v10
+            || self.numerical.is_some()
+            || self.inner.timing.is_enabled()
+            || !self.projection_configured
+            || !arithmetic_matches
+            || self.c1_wave_layers
+            || self.wave_attention
+            || self.prune_output_head
+            || self.fp32_argmax_v11.is_some()
+            || self.admitted_argmax_v11.is_some()
+            || self.query_hoist_v14.is_some()
+            || self.admitted_query_hoist_v14.is_some()
+            || self.wave_rmsnorm_v15.is_some()
+            || self.admitted_wave_rmsnorm_v15.is_some()
+            || self.reduction_mode() != EngineeringTpReductionModeV3::DeviceTp1V3
+        {
+            return Err(match profile {
+                FullForwardProfile::ScalarBf16 => "full-forward scalar-v3 requires fresh Target8B TP1/capacity16/context64/pages4, baseline projection/attention, device TP1 and the unpruned BF16 head",
+                FullForwardProfile::MfmaFp32V7 => "full-forward MFMA-v7 requires fresh Target8B TP1/capacity16/context64/pages4, MFMA-v3 projection, baseline attention, device TP1 and the unpruned FP32-v7 head",
+            }.into());
+        }
+        self.inner.full_forward_enabled = true;
         Ok(())
     }
 
@@ -1180,6 +1282,9 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
     ) -> TpResult<EngineeringTpBatchOutputV2> {
         let _timing = self.inner.timing.batch(batch.id());
         self.validate(batch)?;
+        if self.inner.full_forward_enabled && batch.rows().len() != 1 {
+            return Err("full-forward execution requires exactly one physical row".into());
+        }
         if output_rows.iter().any(|&row| row >= batch.rows().len())
             || output_rows.windows(2).any(|pair| pair[0] >= pair[1])
         {
@@ -1213,9 +1318,12 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
                 });
             }
         }
-        self.last_batch = batch.id();
+        if !self.inner.full_forward_enabled {
+            self.last_batch = batch.id();
+        }
         match self.forward(batch, output_rows) {
             Ok(choices) => {
+                self.last_batch = batch.id();
                 self.completed_batches = next;
                 Ok(EngineeringTpBatchOutputV2 {
                     choices,
@@ -1389,7 +1497,9 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
         {
             return Err("batch collective cursor drifted".into());
         }
-        self.inner.hidden = vec![0; rows as usize * model.hidden_size as usize];
+        if !self.inner.full_forward_enabled {
+            self.inner.hidden = vec![0; rows as usize * model.hidden_size as usize];
+        }
         let mut tokens = Vec::with_capacity(rows as usize * 4);
         let mut positions = Vec::with_capacity(rows as usize * 4);
         let mut table = vec![u32::MAX; rows as usize * self.table_stride as usize];
@@ -1426,7 +1536,9 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
         let zero = &self.inner.ranks[0];
         self.inner.transports[0].write(zero.token.id, 0, &tokens)?;
         drop(metadata_timing);
+        self.inner.begin_full_forward(rows)?;
         let embedding_timing = self.inner.timing.scope("embedding");
+        let zero = self.inner.binding_rank_zero();
         self.inner.dispatch_zero(&dispatch(
             EMBEDDING,
             rows * model.hidden_size / 64,
@@ -1704,7 +1816,7 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
             self.inner
                 .reduce(layer, Qwen3TensorParallelCollectiveV1::FeedForwardDownSum)?;
         }
-        let expected = self.inner.collective.expected();
+        let expected = self.inner.planned_collective().expected();
         if expected.epoch != self.completed_batches + 1
             || expected.layer != 0
             || expected.operation != Qwen3TensorParallelCollectiveV1::AttentionOutputSum
@@ -1716,7 +1828,7 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
         }
         let head_timing = self.inner.timing.scope("output_head");
         let normalization_timing = self.inner.timing.scope("output_head_normalization");
-        let r = &self.inner.ranks[0];
+        let r = self.inner.binding_rank_zero();
         self.inner.dispatch_zero(&target_norm(
             r,
             r.hidden,
@@ -1728,7 +1840,7 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
         ))?;
         drop(normalization_timing);
         let projection_timing = self.inner.timing.scope("output_head_projection");
-        let r = &self.inner.ranks[0];
+        let r = self.inner.binding_rank_zero();
         let logits = self.fp32_logits.unwrap_or(r.logits);
         let mut head = projection.command(
             0,
@@ -1754,7 +1866,7 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
         self.inner.dispatch_zero(&head)?;
         drop(projection_timing);
         let argmax_timing = self.inner.timing.scope("output_head_argmax");
-        let r = &self.inner.ranks[0];
+        let r = self.inner.binding_rank_zero();
         self.inner.dispatch_zero(&dispatch(
             if self.fp32_argmax_v11.is_some() {
                 crate::tp_artifact::ENGINEERING_TP_FP32_ARGMAX32_EXPORTS_V11[0]
@@ -1768,6 +1880,7 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
         ))?;
         drop(argmax_timing);
         drop(head_timing);
+        self.inner.finish_full_forward()?;
         let _readback_timing = self.inner.timing.scope("output_readback");
         let mut bytes = vec![0; head_rows as usize * 4];
         self.inner.transports[0].read(self.inner.ranks[0].choice.id, 0, &mut bytes)?;
@@ -1805,6 +1918,7 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
                 &mut self.inner.transports[0],
             )?;
         }
+        self.inner.commit_full_forward()?;
         if self.prune_output_head {
             Ok(choices)
         } else {

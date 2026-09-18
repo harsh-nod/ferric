@@ -6,6 +6,8 @@
 mod argmax_v11;
 mod attention_argmax_v11;
 mod draft;
+mod full_forward;
+mod full_forward_mfma_v7;
 mod large_kv;
 mod layer_c1_wave;
 mod ordered_attention_argmax_v11;
@@ -33,6 +35,8 @@ enum Event {
     SequenceWait(u32, usize),
     OrderedSubmit(u32, usize),
     OrderedWait(u32, usize),
+    FullForwardSubmit(u32, usize),
+    FullForwardWait(u32, usize),
     Submit(u32, &'static str),
     Wait(u32, &'static str),
     Close(u32),
@@ -43,6 +47,7 @@ enum Failure {
     Submit,
     Wait,
     Write,
+    Read,
     BadChoice,
     NonfinitePartial,
     ResidualSubmit,
@@ -54,6 +59,8 @@ enum Failure {
     OrderedWait,
     OrderedSubmitAt(usize),
     OrderedWaitAt(usize),
+    FullForwardSubmit,
+    FullForwardWait,
     PreparePackets,
     ArgmaxSubmit,
     ArgmaxWait,
@@ -72,6 +79,8 @@ struct Recording {
     pending: Option<EngineeringTpDispatchV1>,
     pending_sequence: Option<Vec<EngineeringTpDispatchV1>>,
     pending_ordered: Option<Vec<EngineeringTpDispatchV1>>,
+    pending_full_forward: Option<Vec<EngineeringTpDispatchV1>>,
+    full_forward_supported: bool,
     ordered_supported: bool,
     sequences_supported: bool,
     events: Rc<RefCell<Vec<Event>>>,
@@ -236,6 +245,49 @@ impl EngineeringTpRankTransportV1 for Recording {
         self.ordered_supported
     }
 
+    fn supports_full_forward(&self) -> bool {
+        self.full_forward_supported
+    }
+
+    fn submit_full_forward(&mut self, commands: &[EngineeringTpDispatchV1]) -> TpResult<()> {
+        assert!(
+            self.pending.is_none()
+                && self.pending_sequence.is_none()
+                && self.pending_ordered.is_none()
+                && self.pending_full_forward.is_none()
+        );
+        assert_eq!(commands.len(), 616);
+        self.events
+            .borrow_mut()
+            .push(Event::FullForwardSubmit(self.rank, commands.len()));
+        if self.failure == Some(Failure::FullForwardSubmit) {
+            return Err("injected full-forward publication failure".into());
+        }
+        self.pending_full_forward = Some(commands.to_vec());
+        Ok(())
+    }
+
+    fn wait_full_forward(&mut self, count: usize) -> TpResult<()> {
+        let commands = self
+            .pending_full_forward
+            .take()
+            .expect("pending full forward");
+        assert_eq!(count, 616);
+        assert_eq!(commands.len(), count);
+        self.events
+            .borrow_mut()
+            .push(Event::FullForwardWait(self.rank, count));
+        for (index, command) in commands.into_iter().enumerate() {
+            // A late completion failure may leave physical buffers modified.
+            if index == 615 && self.failure == Some(Failure::FullForwardWait) {
+                return Err("injected full-forward completion failure".into());
+            }
+            self.submit(&command)?;
+            self.wait()?;
+        }
+        Ok(())
+    }
+
     fn submit_ordered_batch(&mut self, commands: &[EngineeringTpDispatchV1]) -> TpResult<()> {
         assert!(
             self.pending.is_none()
@@ -300,6 +352,7 @@ impl EngineeringTpRankTransportV1 for Recording {
     }
 
     fn write(&mut self, id: u64, offset: usize, bytes: &[u8]) -> TpResult<()> {
+        assert!(self.pending_full_forward.is_none());
         assert!(self.pending_sequence.is_none() && self.pending_ordered.is_none());
         assert!(self.pending.is_none());
         if self.failure == Some(Failure::Write) {
@@ -312,8 +365,12 @@ impl EngineeringTpRankTransportV1 for Recording {
     }
 
     fn read(&mut self, id: u64, offset: usize, bytes: &mut [u8]) -> TpResult<()> {
+        assert!(self.pending_full_forward.is_none());
         assert!(self.pending_sequence.is_none() && self.pending_ordered.is_none());
         assert!(self.pending.is_none());
+        if self.failure == Some(Failure::Read) {
+            return Err("injected output readback failure".into());
+        }
         bytes.copy_from_slice(&self.buffers[&id][offset..offset + bytes.len()]);
         self.reads.push((id, bytes.len()));
         Ok(())
@@ -710,6 +767,8 @@ fn fixture_for_model(
             pending: None,
             pending_sequence: None,
             pending_ordered: None,
+            pending_full_forward: None,
+            full_forward_supported: true,
             ordered_supported: true,
             sequences_supported: true,
             events: events.clone(),
@@ -783,6 +842,8 @@ fn fixture_for_model(
         reduction: super::super::ReductionWorkspace::default(),
         sequences: None,
         ordered_batches: None,
+        full_forward_enabled: false,
+        full_forward: None,
         timing: crate::host_timing::HostTiming::default(),
         closed: false,
     };

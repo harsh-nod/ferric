@@ -4,6 +4,9 @@ use super::{EngineeringTpExecutionV1, EngineeringTpRankTransportV1, TpResult};
 
 impl<R: EngineeringTpRankTransportV1> EngineeringTpExecutionV1<R> {
     pub(super) fn flush_dispatch_groups(&mut self) -> TpResult<()> {
+        if self.full_forward_enabled {
+            return Err("full-forward recording cannot use an intermediate dispatch flush".into());
+        }
         self.flush_ordered_batches()?;
         self.flush_sequences()
     }
