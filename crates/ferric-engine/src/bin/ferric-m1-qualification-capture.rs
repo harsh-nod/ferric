@@ -9250,6 +9250,98 @@ mod tests {
         assert!(catalog.admission_record().is_some());
     }
 
+    fn admitted_authenticated_rollover_fixture() -> (
+        ferric_engine::M1AuthenticatedPhysicalRunnerV1,
+        ferric_engine::M1PartitionedModelMemoryKvPoolV1,
+        ferric_engine::LogicalRunnerDeclaration,
+    ) {
+        let required_path =
+            |name: &str| std::env::var_os(name).map_or_else(|| panic!("set {name}"), PathBuf::from);
+        let snapshot_path = required_path("FERRIC_M1_OPERATIONAL_SNAPSHOT_ROOT");
+        let selector_path = required_path("FERRIC_M1_AGGREGATE_V2_SELECTOR_MANIFEST");
+        let closure_path = required_path("FERRIC_M1_QUALIFICATION_CLOSURE");
+        let environment_path = required_path("FERRIC_M1_QUALIFICATION_ENVIRONMENT");
+        let gpu_unique_id = std::env::var("FERRIC_M1_GPU_UNIQUE_ID")
+            .expect("set FERRIC_M1_GPU_UNIQUE_ID")
+            .parse::<u64>()
+            .expect("FERRIC_M1_GPU_UNIQUE_ID must be decimal");
+        let selector_bytes = read_r32_selector_manifest(&selector_path)
+            .expect("read exact aggregate V2 selector manifest");
+        let selector = decode_m1_worker_v3_selector_manifest_v2(&selector_bytes)
+            .expect("decode aggregate V2 selector manifest");
+        let closure = load_closure(&closure_path).expect("load exact qualification closure");
+        let _environment = load_environment(&environment_path, gpu_unique_id)
+            .expect("load exact qualification environment");
+        let snapshot = SecureDirectory::open(&snapshot_path, "prepacked snapshot root")
+            .expect("open canonical prepacked snapshot");
+        let model = load_model_inputs(&snapshot).expect("load canonical prepacked inputs");
+        let plan_catalog = build_authenticated_sequential_plan_catalog(
+            model.authenticate().expect("authenticate runner inputs"),
+        )
+        .expect("build authenticated runner plan catalog");
+        let memory_plan = model_memory_plan(
+            model
+                .authenticate()
+                .expect("authenticate model-memory inputs"),
+        )
+        .expect("build authenticated model-memory plan");
+        let mut verifier =
+            WorkerV3ProtectedRosterVerifierAdapterV1::new(M1AllKernelsProtectedVerifierV1::new());
+        let programs =
+            acquire_m1_all_kernels_authenticated_worker_v3_programs_v1(selector, &mut verifier)
+                .expect("authenticate aggregate Worker V3 program custody");
+        let executable_catalog_id = programs.catalog_id();
+        let external = complete_closure(&closure, &plan_catalog, executable_catalog_id)
+            .expect("bind aggregate identity closure");
+        let identity_closure = build_preliminary_identity_closure(plan_catalog, external)
+            .expect("build runner identity closure");
+        let publication = publish_qwen3_gfx942_runner_declaration(
+            generate_qwen3_gfx942_runner_declaration(identity_closure)
+                .expect("generate authenticated runner declaration"),
+        )
+        .expect("publish authenticated runner declaration");
+        let runner =
+            bind_m1_physical_runner_v1(programs, publication).expect("bind authenticated runner");
+
+        let logical_catalog = build_authenticated_sequential_plan_catalog(
+            model
+                .authenticate()
+                .expect("authenticate logical-runner inputs"),
+        )
+        .expect("build logical-runner plan catalog");
+        let logical_external = complete_closure(&closure, &logical_catalog, executable_catalog_id)
+            .expect("bind logical-runner identity closure");
+        let logical_runner = ferric_engine::LogicalRunnerDeclaration::from_published(
+            publish_qwen3_gfx942_runner_declaration(
+                generate_qwen3_gfx942_runner_declaration(
+                    build_preliminary_identity_closure(logical_catalog, logical_external)
+                        .expect("build retained logical-runner closure"),
+                )
+                .expect("generate retained logical runner"),
+            )
+            .expect("publish retained logical runner"),
+        );
+        let ModelInputBytes {
+            target_weights,
+            draft_weights,
+            ..
+        } = model;
+        let checked = OpenedKfd::open_default()
+            .expect("open KFD")
+            .admit_uapi()
+            .expect("admit pinned KFD UAPI")
+            .bind_gfx942_xnack_minus(DeviceSelector::UniqueId(gpu_unique_id))
+            .expect("bind exact gfx942:xnack- device");
+        let memory = initialize_m1_physical_runner_memory_v1(
+            checked,
+            memory_plan,
+            target_weights,
+            draft_weights,
+        )
+        .expect("initialize authenticated model memory");
+        (runner, memory, logical_runner)
+    }
+
     #[test]
     #[ignore = "requires an admitted aggregate, canonical prepacked snapshot, and exclusive MI300X"]
     fn admitted_mi300x_runs_public_authenticated_rollover_executor() {
@@ -9433,90 +9525,7 @@ mod tests {
                 .expect("native rollover fixture rollover must be ready")
         }
 
-        let required_path =
-            |name: &str| std::env::var_os(name).map_or_else(|| panic!("set {name}"), PathBuf::from);
-        let snapshot_path = required_path("FERRIC_M1_OPERATIONAL_SNAPSHOT_ROOT");
-        let selector_path = required_path("FERRIC_M1_AGGREGATE_V2_SELECTOR_MANIFEST");
-        let closure_path = required_path("FERRIC_M1_QUALIFICATION_CLOSURE");
-        let environment_path = required_path("FERRIC_M1_QUALIFICATION_ENVIRONMENT");
-        let gpu_unique_id = std::env::var("FERRIC_M1_GPU_UNIQUE_ID")
-            .expect("set FERRIC_M1_GPU_UNIQUE_ID")
-            .parse::<u64>()
-            .expect("FERRIC_M1_GPU_UNIQUE_ID must be decimal");
-        let selector_bytes = read_r32_selector_manifest(&selector_path)
-            .expect("read exact aggregate V2 selector manifest");
-        let selector = decode_m1_worker_v3_selector_manifest_v2(&selector_bytes)
-            .expect("decode aggregate V2 selector manifest");
-        let closure = load_closure(&closure_path).expect("load exact qualification closure");
-        let _environment = load_environment(&environment_path, gpu_unique_id)
-            .expect("load exact qualification environment");
-        let snapshot = SecureDirectory::open(&snapshot_path, "prepacked snapshot root")
-            .expect("open canonical prepacked snapshot");
-        let model = load_model_inputs(&snapshot).expect("load canonical prepacked inputs");
-        let plan_catalog = build_authenticated_sequential_plan_catalog(
-            model.authenticate().expect("authenticate runner inputs"),
-        )
-        .expect("build authenticated runner plan catalog");
-        let memory_plan = model_memory_plan(
-            model
-                .authenticate()
-                .expect("authenticate model-memory inputs"),
-        )
-        .expect("build authenticated model-memory plan");
-        let mut verifier =
-            WorkerV3ProtectedRosterVerifierAdapterV1::new(M1AllKernelsProtectedVerifierV1::new());
-        let programs =
-            acquire_m1_all_kernels_authenticated_worker_v3_programs_v1(selector, &mut verifier)
-                .expect("authenticate aggregate Worker V3 program custody");
-        let executable_catalog_id = programs.catalog_id();
-        let external = complete_closure(&closure, &plan_catalog, executable_catalog_id)
-            .expect("bind aggregate identity closure");
-        let identity_closure = build_preliminary_identity_closure(plan_catalog, external)
-            .expect("build runner identity closure");
-        let publication = publish_qwen3_gfx942_runner_declaration(
-            generate_qwen3_gfx942_runner_declaration(identity_closure)
-                .expect("generate authenticated runner declaration"),
-        )
-        .expect("publish authenticated runner declaration");
-        let runner =
-            bind_m1_physical_runner_v1(programs, publication).expect("bind authenticated runner");
-
-        let logical_catalog = build_authenticated_sequential_plan_catalog(
-            model
-                .authenticate()
-                .expect("authenticate logical-runner inputs"),
-        )
-        .expect("build logical-runner plan catalog");
-        let logical_external = complete_closure(&closure, &logical_catalog, executable_catalog_id)
-            .expect("bind logical-runner identity closure");
-        let logical_runner = ferric_engine::LogicalRunnerDeclaration::from_published(
-            publish_qwen3_gfx942_runner_declaration(
-                generate_qwen3_gfx942_runner_declaration(
-                    build_preliminary_identity_closure(logical_catalog, logical_external)
-                        .expect("build retained logical-runner closure"),
-                )
-                .expect("generate retained logical runner"),
-            )
-            .expect("publish retained logical runner"),
-        );
-        let ModelInputBytes {
-            target_weights,
-            draft_weights,
-            ..
-        } = model;
-        let checked = OpenedKfd::open_default()
-            .expect("open KFD")
-            .admit_uapi()
-            .expect("admit pinned KFD UAPI")
-            .bind_gfx942_xnack_minus(DeviceSelector::UniqueId(gpu_unique_id))
-            .expect("bind exact gfx942:xnack- device");
-        let memory = initialize_m1_physical_runner_memory_v1(
-            checked,
-            memory_plan,
-            target_weights,
-            draft_weights,
-        )
-        .expect("initialize authenticated model memory");
+        let (runner, memory, logical_runner) = admitted_authenticated_rollover_fixture();
 
         let target_prefill = Qwen3PlanSelection {
             role: Qwen3ModelRole::Target8B,
@@ -9677,6 +9686,168 @@ mod tests {
                 panic!("integrated rollover queue teardown quarantined: {witness:?}")
             }
         }
+        drop((closed, logical_runner));
+    }
+
+    #[test]
+    #[ignore = "requires an admitted aggregate, canonical prepacked snapshot, and exclusive MI300X"]
+    fn admitted_mi300x_runs_public_s8_prefill_and_mixed_first_round() {
+        use ferric_engine::{
+            execute_m1_authenticated_s8_t128_paired_prefill_v1,
+            prepare_m1_authenticated_s8_t128_prefill_prepublication_v1,
+            M1AuthenticatedS8FirstRoundInputsV1,
+            M1AuthenticatedS8T128PrefillBootstrapInputV1, M1QueueWaitTimeoutV1,
+            M1SpeculativeCancellationReasonV1, M1SpeculativeGenerationPolicyV1,
+            M1SpeculativeMemberControlV1, M1SpeculativeMemberStatusV1,
+        };
+        use ferric_spec::completion::CompletionEpoch;
+
+        let (runner, memory, logical_runner) = admitted_authenticated_rollover_fixture();
+        let target_prefill = Qwen3PlanSelection {
+            role: Qwen3ModelRole::Target8B,
+            mode: Qwen3ExecutionMode::Prefill,
+            bucket: Qwen3PlanBucket::PrefillS8T128,
+        };
+        let draft_prefill = Qwen3PlanSelection {
+            role: Qwen3ModelRole::Draft06B,
+            ..target_prefill
+        };
+        let target_speculative = Qwen3PlanSelection {
+            role: Qwen3ModelRole::Target8B,
+            mode: Qwen3ExecutionMode::Speculative,
+            bucket: Qwen3PlanBucket::SpeculativeS8K4C8192,
+        };
+        let draft_decode = Qwen3PlanSelection {
+            role: Qwen3ModelRole::Draft06B,
+            mode: Qwen3ExecutionMode::Decode,
+            bucket: Qwen3PlanBucket::DecodeS8C8192,
+        };
+        let workspace = |selection, byte| {
+            workload_workspace_plan(selection, [byte; 32])
+                .expect("construct exact S8 workspace plan")
+        };
+        let prefill_plans = || {
+            M1FullStepWorkspacePlans::paired_prefill(
+                workspace(draft_prefill, 111),
+                workspace(target_prefill, 112),
+            )
+        };
+        let input = M1AuthenticatedS8T128PrefillBootstrapInputV1::new(
+            vec![vec![1; 128], vec![2; 128]],
+            vec![
+                M1SpeculativeGenerationPolicyV1::new(32, &[]).unwrap(),
+                M1SpeculativeGenerationPolicyV1::new(33, &[]).unwrap(),
+            ],
+            prefill_plans(),
+            prefill_plans(),
+        )
+        .expect("construct two-live-member S8 prefill input");
+        let prepared = prepare_m1_authenticated_s8_t128_prefill_prepublication_v1(
+            Engine::<8>::new(512, 256, 8_192).expect("construct capacity-eight Engine"),
+            runner,
+            memory,
+            input,
+        )
+        .expect("prepare authenticated S8 paired prefill");
+        let requests = prepared.requests().to_vec();
+        assert_eq!(requests.len(), 2);
+        assert_ne!(requests[0], requests[1]);
+        let executed = execute_m1_authenticated_s8_t128_paired_prefill_v1(
+            prepared,
+            M1_PACKET_DIAGNOSTIC_RING_BYTES_V1,
+            M1QueueWaitTimeoutV1::new(1_000).unwrap(),
+        )
+        .expect("execute and settle authenticated S8 paired prefill");
+        assert_eq!(executed.requests(), requests.as_slice());
+        let anchors = executed.first_tokens().to_vec();
+        assert_eq!(anchors.len(), requests.len());
+        assert_eq!(executed.direct_choices().choices(), anchors.as_slice());
+
+        let epoch = CompletionEpoch::new(2);
+        let validated = |selection: Qwen3PlanSelection, width: usize| {
+            let mut lanes = Vec::with_capacity(8);
+            let mut tokens = vec![0; 8 * width];
+            let mut positions = vec![0; 8 * width];
+            let mut active_lengths = vec![0; 8];
+            let mut context_lengths = vec![0; 8];
+            for (lane, request) in requests.iter().copied().enumerate() {
+                lanes.push(Some(
+                    logical_runner
+                        .bind_step_plan(request, epoch, selection)
+                        .expect("bind exact live S8 rollover lane"),
+                ));
+                tokens[lane * width] = anchors[lane];
+                for column in 0..width {
+                    positions[lane * width + column] = 128 + u32::try_from(column).unwrap();
+                }
+                active_lengths[lane] = u32::try_from(width).unwrap();
+                context_lengths[lane] = 128;
+            }
+            lanes.resize_with(8, || None);
+            match validate_m1_step_inputs(M1StepInputCandidate::new(
+                selection,
+                lanes,
+                tokens,
+                positions,
+                active_lengths,
+                context_lengths,
+            )) {
+                M1StepInputValidationOutcome::Validated(inputs) => inputs,
+                M1StepInputValidationOutcome::Rejected(failure) => {
+                    panic!("S8 rollover input rejected: {:?}", failure.error())
+                }
+            }
+        };
+        let rollover_plans = || {
+            M1FullStepWorkspacePlans::speculative_round(
+                workspace(draft_decode, 113),
+                workspace(target_speculative, 114),
+            )
+        };
+        let inputs = M1AuthenticatedS8FirstRoundInputsV1::new(
+            validated(draft_decode, 1),
+            validated(target_speculative, 5),
+            rollover_plans(),
+            rollover_plans(),
+        );
+        let scheduled = executed
+            .schedule_first_speculative_round(inputs)
+            .expect("schedule real S8 prefill-to-K4 rollover");
+        let prepared = scheduled.prepare().expect("prepare real S8/K4 rollover");
+        let published = prepared.publish().expect("publish real S8/K4 rollover");
+        let completed = published
+            .complete_round(vec![
+                M1SpeculativeMemberControlV1::continuing(requests[0]),
+                M1SpeculativeMemberControlV1::cancelling(
+                    requests[1],
+                    M1SpeculativeCancellationReasonV1::Deadline,
+                ),
+            ])
+            .expect("settle and reconcile mixed S8 first-round dispositions");
+        assert_eq!(completed.requests(), requests.as_slice());
+        let outcome = completed.outcome();
+        assert_eq!(outcome.selection(), target_speculative);
+        assert_eq!(outcome.completed_epoch(), epoch);
+        assert_eq!(outcome.completed_round(), 0);
+        assert_eq!(outcome.members().len(), 2);
+        assert_eq!(outcome.members()[0].request(), requests[0]);
+        assert_eq!(outcome.members()[1].request(), requests[1]);
+        assert_eq!(outcome.members()[0].status(), M1SpeculativeMemberStatusV1::Active);
+        assert_eq!(
+            outcome.members()[0].physical_disposition(),
+            M1DeviceKvCompletionDispositionV1::Continue
+        );
+        assert_eq!(
+            outcome.members()[1].status(),
+            M1SpeculativeMemberStatusV1::Cancelled(M1SpeculativeCancellationReasonV1::Deadline)
+        );
+        assert_eq!(
+            outcome.members()[1].physical_disposition(),
+            M1DeviceKvCompletionDispositionV1::Retire
+        );
+        assert_eq!(outcome.next_active_roster(), &requests[..1]);
+        // The S8 close result is opaque; this call is not a queue-release assertion.
+        let closed = completed.close();
         drop((closed, logical_runner));
     }
 

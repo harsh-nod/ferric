@@ -1564,9 +1564,51 @@ mod tests {
         .unwrap()
     }
 
+    fn assert_rejected_without_loss(
+        prompts: Vec<Vec<TokenId>>,
+        policies: Vec<M1SpeculativeGenerationPolicyV1>,
+        preparation: M1FullStepWorkspacePlans,
+        recipe: M1FullStepWorkspacePlans,
+        expected: M1AuthenticatedS8T128PrefillBootstrapInputErrorV1,
+    ) {
+        let prompt_values = prompts.clone();
+        let policy_values = policies.clone();
+        let prompt_owner = prompts.as_ptr();
+        let prompt_rows: Vec<_> = prompts.iter().map(Vec::as_ptr).collect();
+        let policy_owner = policies.as_ptr();
+        let preparation_kind = preparation.kind();
+        let preparation_target = core::ptr::from_ref(preparation.target());
+        let preparation_draft = preparation.draft().map(core::ptr::from_ref);
+        let recipe_kind = recipe.kind();
+        let recipe_target = core::ptr::from_ref(recipe.target());
+        let recipe_draft = recipe.draft().map(core::ptr::from_ref);
+        let failure = M1AuthenticatedS8T128PrefillBootstrapInputV1::new(
+            prompts,
+            policies,
+            preparation,
+            recipe,
+        )
+        .unwrap_err();
+        assert_eq!(failure.error(), expected);
+        let (prompts, policies, preparation, recipe) = failure.into_parts();
+        assert_eq!(prompts, prompt_values);
+        assert_eq!(policies, policy_values);
+        assert_eq!(prompts.as_ptr(), prompt_owner);
+        assert_eq!(policies.as_ptr(), policy_owner);
+        for (prompt, owner) in prompts.iter().zip(prompt_rows) {
+            assert_eq!(prompt.as_ptr(), owner);
+        }
+        assert_eq!(preparation.kind(), preparation_kind);
+        assert_eq!(core::ptr::from_ref(preparation.target()), preparation_target);
+        assert_eq!(preparation.draft().map(core::ptr::from_ref), preparation_draft);
+        assert_eq!(recipe.kind(), recipe_kind);
+        assert_eq!(core::ptr::from_ref(recipe.target()), recipe_target);
+        assert_eq!(recipe.draft().map(core::ptr::from_ref), recipe_draft);
+    }
+
     #[test]
     fn admitted_live_range_is_one_through_eight() {
-        for count in [1, 2, 8] {
+        for count in 1..=PHYSICAL_LANES {
             let input = input(count);
             assert_eq!(input.live_member_count(), count);
             assert_eq!(input.prompts().len(), count);
@@ -1575,18 +1617,18 @@ mod tests {
                 assert_eq!(policy.max_output_tokens(), 7 + u32::try_from(lane).unwrap());
             }
         }
-        for count in [0, 9] {
+    }
+
+    #[test]
+    fn constructor_rejects_empty_and_oversized_rosters_without_loss() {
+        for count in [0, PHYSICAL_LANES + 1] {
             let (preparation, recipe) = plans();
-            let failure = M1AuthenticatedS8T128PrefillBootstrapInputV1::new(
+            assert_rejected_without_loss(
                 vec![vec![1; 128]; count],
                 vec![M1SpeculativeGenerationPolicyV1::new(7, &[]).unwrap(); count],
                 preparation,
                 recipe,
-            )
-            .unwrap_err();
-            assert_eq!(
-                failure.error(),
-                M1AuthenticatedS8T128PrefillBootstrapInputErrorV1::MemberCount { actual: count }
+                M1AuthenticatedS8T128PrefillBootstrapInputErrorV1::MemberCount { actual: count },
             );
         }
     }
@@ -1655,25 +1697,178 @@ mod tests {
     }
 
     #[test]
-    fn constructor_rejects_policy_prompt_and_workspace_drift_without_loss() {
+    fn constructor_rejects_missing_and_extra_policies_without_loss() {
+        for count in [0, 1, 3] {
+            let (preparation, recipe) = plans();
+            assert_rejected_without_loss(
+                vec![vec![1; 128], vec![2; 128]],
+                vec![M1SpeculativeGenerationPolicyV1::new(7, &[]).unwrap(); count],
+                preparation,
+                recipe,
+                M1AuthenticatedS8T128PrefillBootstrapInputErrorV1::PolicyCount {
+                    prompts: 2,
+                    policies: count,
+                },
+            );
+        }
+    }
+
+    #[test]
+    fn constructor_rejects_non_t128_prompts_on_every_live_lane_without_loss() {
+        for lane in 0..PHYSICAL_LANES {
+            for actual in [0, PREFILL_WIDTH - 1, PREFILL_WIDTH + 1] {
+                let (preparation, recipe) = plans();
+                let mut prompts = vec![vec![1; PREFILL_WIDTH]; PHYSICAL_LANES];
+                prompts[lane] = vec![2; actual];
+                assert_rejected_without_loss(
+                    prompts,
+                    vec![M1SpeculativeGenerationPolicyV1::new(7, &[]).unwrap(); PHYSICAL_LANES],
+                    preparation,
+                    recipe,
+                    M1AuthenticatedS8T128PrefillBootstrapInputErrorV1::PromptLength {
+                        lane,
+                        actual,
+                    },
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn constructor_rejects_out_of_vocabulary_tokens_without_loss() {
+        for lane in 0..PHYSICAL_LANES {
+            for column in [0, PREFILL_WIDTH / 2, PREFILL_WIDTH - 1] {
+                for token in [QWEN3_VOCABULARY_SIZE, u32::MAX] {
+                    let (preparation, recipe) = plans();
+                    let mut prompts = vec![vec![1; PREFILL_WIDTH]; PHYSICAL_LANES];
+                    prompts[lane][column] = token;
+                    assert_rejected_without_loss(
+                        prompts,
+                        vec![M1SpeculativeGenerationPolicyV1::new(7, &[]).unwrap(); PHYSICAL_LANES],
+                        preparation,
+                        recipe,
+                        M1AuthenticatedS8T128PrefillBootstrapInputErrorV1::TokenOutOfRange {
+                            lane,
+                            column,
+                            token,
+                        },
+                    );
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn constructor_admits_vocabulary_and_context_upper_bounds() {
         let (preparation, recipe) = plans();
-        let failure = M1AuthenticatedS8T128PrefillBootstrapInputV1::new(
-            vec![vec![1; 128], vec![2; 128]],
-            vec![M1SpeculativeGenerationPolicyV1::new(7, &[]).unwrap()],
+        let token = QWEN3_VOCABULARY_SIZE - 1;
+        let output = M1_MAX_CONTEXT_TOKENS - 129;
+        let policy = M1SpeculativeGenerationPolicyV1::new(output, &[token]).unwrap();
+        let admitted = M1AuthenticatedS8T128PrefillBootstrapInputV1::new(
+            vec![vec![token; PREFILL_WIDTH]; PHYSICAL_LANES],
+            vec![policy; PHYSICAL_LANES],
             preparation,
             recipe,
         )
-        .unwrap_err();
-        assert_eq!(
-            failure.error(),
-            M1AuthenticatedS8T128PrefillBootstrapInputErrorV1::PolicyCount {
-                prompts: 2,
-                policies: 1,
+        .unwrap();
+        assert_eq!(admitted.live_member_count(), PHYSICAL_LANES);
+        assert!(admitted
+            .prompts()
+            .iter()
+            .all(|prompt| prompt.as_ref() == [token; PREFILL_WIDTH]));
+        assert_eq!(admitted.policies(), &[policy; PHYSICAL_LANES]);
+    }
+
+    #[test]
+    fn constructor_rejects_context_overflow_on_every_live_lane_without_loss() {
+        for lane in 0..PHYSICAL_LANES {
+            let (preparation, recipe) = plans();
+            let output = M1_MAX_CONTEXT_TOKENS - 128;
+            let mut policies =
+                vec![M1SpeculativeGenerationPolicyV1::new(7, &[]).unwrap(); PHYSICAL_LANES];
+            policies[lane] = M1SpeculativeGenerationPolicyV1::new(output, &[]).unwrap();
+            assert_rejected_without_loss(
+                vec![vec![1; PREFILL_WIDTH]; PHYSICAL_LANES],
+                policies,
+                preparation,
+                recipe,
+                M1AuthenticatedS8T128PrefillBootstrapInputErrorV1::ContextExceeded {
+                    lane,
+                    output,
+                },
+            );
+        }
+    }
+
+    fn wrong_workspace_plans(case: usize) -> M1FullStepWorkspacePlans {
+        match case {
+            0 => M1FullStepWorkspacePlans::target_only(plan(TARGET_PREFILL, 2)),
+            1 => M1FullStepWorkspacePlans::paired_prefill(
+                plan(
+                    Qwen3PlanSelection {
+                        bucket: Qwen3PlanBucket::PrefillS1T128,
+                        ..DRAFT_PREFILL
+                    },
+                    1,
+                ),
+                plan(
+                    Qwen3PlanSelection {
+                        bucket: Qwen3PlanBucket::PrefillS1T128,
+                        ..TARGET_PREFILL
+                    },
+                    2,
+                ),
+            ),
+            2 => M1FullStepWorkspacePlans::speculative_round(
+                plan(DRAFT_SUCCESSOR, 1),
+                plan(TARGET_SUCCESSOR, 2),
+            ),
+            3 => M1FullStepWorkspacePlans::paired_prefill(
+                plan(TARGET_PREFILL, 1),
+                plan(DRAFT_PREFILL, 2),
+            ),
+            _ => panic!("unknown workspace rejection case"),
+        }
+    }
+
+    #[test]
+    fn constructor_rejects_equal_but_wrong_workspace_shapes_without_loss() {
+        for case in 0..4 {
+            let preparation = wrong_workspace_plans(case);
+            let recipe = wrong_workspace_plans(case);
+            assert_eq!(preparation, recipe);
+            assert_rejected_without_loss(
+                vec![vec![1; PREFILL_WIDTH]; 2],
+                vec![M1SpeculativeGenerationPolicyV1::new(7, &[]).unwrap(); 2],
+                preparation,
+                recipe,
+                M1AuthenticatedS8T128PrefillBootstrapInputErrorV1::WorkspaceShape,
+            );
+        }
+    }
+
+    #[test]
+    fn constructor_rejects_workspace_identity_drift_in_either_copy_without_loss() {
+        for (draft_identity, target_identity) in [(3, 2), (1, 4)] {
+            for swap in [false, true] {
+                let (mut preparation, _) = plans();
+                let mut recipe = M1FullStepWorkspacePlans::paired_prefill(
+                    plan(DRAFT_PREFILL, draft_identity),
+                    plan(TARGET_PREFILL, target_identity),
+                );
+                if swap {
+                    core::mem::swap(&mut preparation, &mut recipe);
+                }
+                assert_ne!(preparation, recipe);
+                assert_rejected_without_loss(
+                    vec![vec![1; PREFILL_WIDTH]; 2],
+                    vec![M1SpeculativeGenerationPolicyV1::new(7, &[]).unwrap(); 2],
+                    preparation,
+                    recipe,
+                    M1AuthenticatedS8T128PrefillBootstrapInputErrorV1::WorkspaceShape,
+                );
             }
-        );
-        let (prompts, policies, _, _) = failure.into_parts();
-        assert_eq!(prompts.len(), 2);
-        assert_eq!(policies.len(), 1);
+        }
     }
 
     #[test]
