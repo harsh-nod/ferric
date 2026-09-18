@@ -105,6 +105,22 @@ After source, archive, retained executable and fresh process checks, cleanup
 removes only the a167 adoption target, reclaiming 57,316 KiB. Retained source,
 tools, evidence and borrowed caches remain unchanged.
 
+A subsequent September 18 upstream check observes fe2o3 main at
+`7e4f15bc4bb5a65d599f425c63d6a3843607f0e4`, tree
+`3a912859696d97818fdba242481e22b122d7fd17`. Its 12-commit, 117-path delta
+changes compiler context imports, checked arithmetic, Semantic MIR and CLI
+source policy; it is not production-source-equivalent to a167. Git-object
+review finds runtime/KFD/UAPI, host, optimizer, verifier, LLVM and the nightly
+pin unchanged. The two new dependency edges are dev-only, with no new registry
+packages or normal dependency edges.
+
+The next adoption needs one reviewed lowerer-to-kernel-descriptor declaration
+in the verifier DEV inventory and its combined counterpart, confirmed by
+actual metadata. The prior revision-only inventory assertion cannot simply
+be reused. Fresh source-gate/graph validation and compiler/vendor/TP14 products
+remain required before attributing results to 7e4. This is an upstream review,
+not an adoption or rebuild; a167 CPU and 6f GPU results retain their pins.
+
 ### Host-Residual Release Controller
 
 The tested b700 host-residual implementation now has a fresh release
