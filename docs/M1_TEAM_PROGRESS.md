@@ -78,6 +78,40 @@ complete authenticated physical submit/cancel fixtures remain to be added.
 Singleton serving admission is unchanged; CPU tests do not close hardware,
 formal, numerical, performance or M1 qualification gates.
 
+### Published September 18 Site Checkpoint
+
+The public site at https://harsh-nod.github.io/ferric/ now describes the a167
+source adoption and successful mi350 GPU2 host-residual pair, while preserving
+the existing performance history. Source commit
+`d2672b0ecce4760bc75ddf1a20fb928f04801dcc` restores the previously deployed
+site before applying the five-file status update; the initial stale proposal
+was rejected before QA or publication.
+
+All five R28 QA phases pass on mi300x, including eight fixed viewports and
+every width from 320 through 1440. Independent retention review authenticates
+133 payloads, 34 source files, 64 PNGs and seven deployables totaling 786,106
+bytes. Root reviews six desktop/mobile screenshots. The 11,789,963-byte
+archive is `6da4e4815aed0f59e6e0ad5919f041380f4b151eaa32447504a9a27991d10cfc`.
+Archive mtimes round the retained integer timestamps by at most 216 ns;
+exact-nanosecond tar timestamp preservation is not claimed.
+
+Static branch commit `467b4b866b08a9032c5b5b2a62001a2414e1691a` deploys through
+run `35352811713`, successful at 13:53:07Z on September 18. All seven canonical
+and seven cache-busted public downloads match the validated artifact. GitHub
+only authenticates and deploys prebuilt files; no GitHub-hosted or local build
+is run. Later S8 CPU results and the upstream 7e4 review remain separately
+documented here and are not relabeled as part of that frozen site candidate.
+
+The completed Pages cleanup attempt stops before deletion because scoped
+lsof reports incomplete visibility on shared mounts. Ownership, terminal
+records, six recorded process/group absence checks and archive/control hashes
+pass, but the strict no-warning condition does not. The three owned remote
+stages (52,420 KiB total) and complete failure records are retained; no shared
+cache, browser, system mount or other user's work is changed.
+The independently reviewed local screenshot extraction and clean standalone
+publication checkout are removed, reclaiming 7,920 KiB; the remote static
+commit, source repository and authoritative local evidence remain.
+
 ### a167 Compiler Source Adoption
 
 Ferric `dc75d9282690ef16539a2434ed61af59f05eb443`, tree
