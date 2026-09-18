@@ -1,0 +1,37 @@
+{
+  "authority": "none",
+  "benchmark_qualified": false,
+  "causal_or_statistical_speedup_claim": false,
+  "gpu_overlap_measured": false,
+  "gpu_timestamps": false,
+  "intervals_per_variant": 31,
+  "nonclaim": "Descriptive single-request host observations; no stable gain or isolated argmax attribution.",
+  "observations": [
+    {
+      "label": "Scalar argmax control",
+      "mean_tpot_seconds": 1.2151789766451613,
+      "post_first_tokens_per_second": 0.8229240459383007,
+      "setup_seconds": 167.156145495,
+      "ttft_seconds": 5.664632617,
+      "variant": "control"
+    },
+    {
+      "label": "Cooperative Wave64 argmax",
+      "mean_tpot_seconds": 1.1887786916451613,
+      "post_first_tokens_per_second": 0.8411994654918412,
+      "setup_seconds": 166.694882028,
+      "ttft_seconds": 5.843878847,
+      "variant": "cooperative"
+    }
+  ],
+  "observed_mean_tpot_change_percent": -2.1725429346124203,
+  "observed_rate_ratio": 1.0222079056308324,
+  "report_sha256": {
+    "control": "82804d31d3bbbe2ad43dc1e4555acf45ecce48047693d82a90a2c53978985648",
+    "cooperative": "758393bbce91222ea3ee94b1055cee51ed52a90db401d23a8979c26d2d155c88"
+  },
+  "requests_per_variant": 1,
+  "schema": "FerricBf16ArgmaxPairV1",
+  "standalone_argmax_timing": false,
+  "warmup_requests": 0
+}

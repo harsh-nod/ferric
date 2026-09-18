@@ -12,6 +12,11 @@ CPU isolation and recording-overhead corrections are absent. Ratios below descri
 these observations; they are not controlled causal contributions, repeated-run
 speedup estimates, stable tail measurements or production qualifications.
 
+The separately matched [cooperative BF16 argmax comparison](GFX950_BF16_ARGMAX_V1.md)
+adds an exact-choice kernel explanation, conditional bounds, and its own plots
+and raw public reports. It does not modify the four cohorts or 310 interval
+points on this page; its single-request difference is not a stable speedup claim.
+
 ## Fixed Workload
 
 | Item | Checked value |
