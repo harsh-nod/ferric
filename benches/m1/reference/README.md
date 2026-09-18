@@ -86,3 +86,58 @@ allocation coordinates are checked; the full-copy digest is not independently
 reproduced. Neither intermediate comparison nor matching token choices alone
 establishes causality, accepts a tolerance, measures performance or closes a
 protected M1 gate. Adding the capture path is not evidence that it has run.
+
+## TP1 Final-Stage Comparison
+
+`engineering_tp1_final_stage_reference.py` is a separate diagnostic for the
+TP1 command's `--capture-final-stage DIR --capture-positions 4,5` output. It
+does not change either frozen M5 reference protocol or its tolerances. Native
+execution uses mi350 (`gfx950:xnack-`); independent reference execution still
+requires the pinned environment and a separately admitted mi300x GPU
+(`gfx942:xnack-`). It does not qualify either target.
+
+```sh
+"$REFERENCE_VENV/bin/python" -I -B benches/m1/reference/engineering_tp1_final_stage_reference.py \
+  CAPTURE_DIRECTORY WITNESS_DIRECTORY NATIVE_PINS_JSON NATIVE_PINS_SHA256 \
+  MODEL_SOURCE NEW_OUTPUT_DIRECTORY
+```
+
+The capture has exactly `intent.json`, `manifest.json`, `residual.bf16`,
+`normalized.bf16`, and `logits.bf16`. The separate witness directory has exactly
+`stdout.txt`, `process.exit`, `wrapper.exit`, `group-probe.exit`, and
+`group-after.txt`. Copy the completed native wrapper's `exit.status` bytes to
+`wrapper.exit` only after it terminates; the other files retain their original
+names and exact bytes. All three statuses must be `0\n`; group absence must be
+`leader and group absent\n`. Four stdout records must agree with the capture:
+Setup, Measurement, Closed, CaptureReceipt, in that order. These are retained
+external assertions, not independently reconstructed process-lifetime proof.
+
+Freeze and retain the native pins and their SHA256 before running the native
+campaign. The expected hash must come from that retained campaign, not be
+inferred from an untrusted capture. The exact `FerricTpFinalStageNativePinsV1`
+object contains `schema`, `authority: "none"`, `qualification: false`,
+`benchmark_comparable: false`, and these actual run fields:
+
+- `controller_sha256`, `worker_sha256`, `model_bundle_id`, `artifact_hsaco_id`,
+  `artifact_manifest_id`, `artifact_handoff_id`.
+- `device_unique_ids` (one nonzero exact u64), `prompt`, `prompt_tokens`,
+  `new_tokens`, `capacity`, `repetitions: 1`, `warmup_runs: 0`, `positions`.
+
+The comparator authenticates the canonical target checkpoint and all native
+payload extents, hashes, row offsets, identities, consumed tokens and successful
+close. It executes the consumed sequence twice with `use_cache=False`, hooks
+the final norm once per pass, and projects the selected normalized rows through
+the full LM head. Both raw reference passes are retained in six BF16 files,
+even if nonfinite or different. `comparison.json` reports per-stage bit, ULP,
+absolute and RMS errors, finite argmax choices, and repeat agreement. Numeric
+metrics are null for nonfinite rows; no tolerance, cause, parity-pass,
+performance or M1-closure claim is made. Structural success is not numerical
+success. All model/input identities are rechecked before publication, and an
+existing output directory is never replaced. The output parent cannot be a
+capture, witness, pins, model root/target/draft, or reference-source directory.
+
+CPU-only fixtures, run on mi300x:
+
+```sh
+python3 -I -B benches/m1/reference/test_engineering_tp1_final_stage_reference.py
+```

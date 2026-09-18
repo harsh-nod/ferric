@@ -5,6 +5,38 @@ receipt. The 33 M1 roadmap gates remain open.
 
 ## Current Checkpoint
 
+### TP1 Independent Comparator Host-Validated
+
+The additive `engineering_tp1_final_stage_reference.py` now implements the
+independent comparison for the new capture. It authenticates frozen native
+controller/worker/model/artifact/device/workload pins, exact payload and row
+hashes, the four linked stdout records, and retained successful process/wrapper
+and group-absence witnesses. Those external terminal assertions are not an
+independent process-lifetime proof. The original M5 protocols and tolerances
+are unchanged.
+
+The comparator executes the exact consumed token sequence twice without a KV
+cache, captures final-norm input/output and full selected-row logits, and
+checks that the LM head receives the captured normalized values. Both raw
+reference passes are retained even when nonfinite or different. Error metrics,
+lowest-ID finite argmax and repeat agreement are diagnostics; all numerical
+pass, tolerance, causality, performance and qualification claims remain false.
+Reference execution still admits only the pinned gfx942 runtime on mi300x.
+Comparing it with gfx950 native bytes does not qualify either target.
+
+All 82 CPU tests across six reference suites pass on mi300x: 19 new TP1 tests,
+13 final-RMS, four M5, eight rank diagnostic, 23 core reference and 15 original
+engineering reference tests. The frozen eleven-file reference policy passes
+on its unchanged package projection. The separate pinned-Torch RMSNorm
+ablation suite was not rerun. No GPU inference or new performance measurement
+is part of this comparator checkpoint.
+
+At 2026-09-18T00:49:01Z, SSH to the user-selected mi350 succeeds and reports
+eight MI350X/gfx950 GPUs at 0% busy, with no KFD PIDs listed. This is a fresh
+observation, not a reservation. The retained 70aadc-built controller can
+collect a diagnostic with the separately attributed fe406 worker and TP14
+artifact; latest-compiler claims still require the new adoption and emission.
+
 ### TP1 Final-Stage Capture Implemented
 
 Ferric `6756cd6704875cfc70862a0ebdab37bf8e35cae9` adds an opt-in final-stage
@@ -37,7 +69,7 @@ The first test compile's SHA-formatting error, one Clippy borrow warning, and
 two prelaunch reserved-space stops remain recorded. Fixes and owned cleanup
 precede the passing reruns. Test executables are retained before removing
 build intermediates. There is no new native capture or numerical-parity result;
-the independent two-pass reference comparator is still to be implemented.
+the independent comparator's later host-validation checkpoint is recorded above.
 
 The user-selected native host is mi350. At 2026-09-18T00:05:24Z, SSH succeeds
 and all eight gfx950 devices report idle with baseline VRAM. This is not a
@@ -105,9 +137,9 @@ host-visibility claim is made. No new worktree was created.
 | Team | Current Evidence | Next Work |
 | --- | --- | --- |
 | Compiler integration | 70aadc adoption and source-gate campaign pass. New main 1ca7e129 changes compiler behavior; LLVM and KFD sources remain unchanged without relabeling their producers. | Validate the new adoption, then fresh matching four-tool build and TP14 emission. |
-| Kernels and numerics | Opt-in completed final-stage readback is implemented and CPU-tested. The retained gfx942 position-131 mismatch remains unexplained. | Implement the sibling two-pass reference comparator, then collect native diagnostic bytes and compare without changing existing tolerances. |
+| Kernels and numerics | Opt-in completed final-stage readback and sibling two-pass reference comparator are implemented and CPU-tested. The retained gfx942 position-131 mismatch remains unexplained. | Collect native diagnostic bytes on mi350 and compare on separately admitted mi300x without changing existing tolerances. |
 | Inference integration | Fresh gfx950 TP1 correctness smoke passes; older TP8 evidence remains separately attributed. | Validate fresh TP8 producers after emission. Sustained request-driven speculation remains beyond the existing two-round K4 canary. |
-| Verification | Capture ordering/failure/selection/close tests and unchanged coverage checks pass; no protected proof runtime has become available. | Test the independent comparator and audit native capture custody. Keep engineering evidence distinct from qualification. |
+| Verification | Capture tests, unchanged coverage checks and 82 reference tests pass; no protected proof runtime has become available. | Audit native capture custody and the real independent comparison. Keep engineering evidence distinct from qualification. |
 
 The numerical task targets R07/R12/R21/R29 evidence, not a new qualification
 framework. Capture-mode timings will not be benchmark-comparable, and gfx950
