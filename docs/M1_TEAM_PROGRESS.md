@@ -6,10 +6,54 @@ receipt. The 33 M1 roadmap gates remain open.
 ## Current Checkpoint
 
 The selected native GPU host is `mi350`, not `mi350-2`. SSH succeeds on
-September 18 at 09:19 UTC; all eight physical GPUs report zero activity.
-This is an availability snapshot,
-not a reservation or launch admission. Builds and CPU tests remain on mi300x;
-every native launch requires a fresh device/no-use check.
+September 18. A later passive observation finds a separate Ferric process on
+physical GPUs 0 and 1; that work is left untouched. The host-residual pair is
+bound to physical GPU 2, with a separate fresh admission for each arm.
+Availability snapshots are not reservations or launch admission. Builds and
+CPU tests remain on mi300x; no local or GitHub-hosted build is used.
+
+### a167 Compiler Source Adoption
+
+Ferric `dc75d9282690ef16539a2434ed61af59f05eb443`, tree
+`e93d046ca1ac18baa659d375cccd1325fa9c3ec5`, adopts fe2o3
+`a1672a9fcca237d314193add170413718b61bf58`. This supersedes the source pin
+described in the historical 6f1b checkpoint below. It is not a claim that the
+existing compiler tools, worker or GPU kernels were rebuilt from a167.
+
+All 50 main and nine preflight phases pass on mi300x: 48 source-gate tests,
+32 locked graphs, 35 metadata records, four dependency inventories and normal
+coverage validation. The resource preflight includes 44 cases and preserves
+the ordinary 512 MiB compile-entry reserve. The exact 80-file revision update
+adds no dependency edge and preserves the runtime inventory, coverage and
+property-binder exception. All 1,172 integrated files match the audited final
+source census before this documentation update.
+
+Retention and the independent data-only audit pass. The 24,862,660-byte archive
+has SHA256 `9a335233d441a50e60b957117f447d26b475a22df52a1f0c90517aa9a6a3e85b`.
+The audit checks 2,183 payloads, 2,184 safe members, exact nanosecond metadata,
+23 external records, two fresh source-gate ELF producers and both source
+censuses. Fresh absence checks cover 125 recorded process entries. This is
+source adoption, not new engine, numerical, hardware or M1 qualification.
+
+### Host-Residual Release Controller
+
+The tested b700 host-residual implementation now has a fresh release
+controller: 9,375,464 bytes, SHA256
+`9a11a19e30275d49eb9fc855b3b2fc9936e5c2c68be3ab239ceb9ed1875e0c74`.
+The actual Cargo producer records optimization level 3, no debug assertions,
+only `tp-engineering`, and `fresh=false`. Independent custody review verifies
+all 480 payloads and retains the four earlier failed attempts alongside the
+successful tests and release. The 46,718,124-byte release-inclusive archive is
+`4093b5e922bbf8b2a4fdfcd2007045625ecd98ded94a76049ec7cc0bf0126f06`.
+Owned release intermediates were removed, reclaiming 934,976 KiB; the retained
+controller, sources, test products and borrowed caches remain.
+
+The new controller is transferred under a distinct immutable name on mi350;
+the historical runtime controller is not overwritten. Six passive loader
+checks pass for the controller and existing worker. GPU2 launch controls pass
+shell/AST checks and all 14 synthetic output-checker tests on mi300x. Paired
+native outcomes are not established by these preflights. The debug worker
+remains a functional diagnostic product, not a comparable performance build.
 
 ### 6f1b Compiler Source And Fresh Tools Audited
 
