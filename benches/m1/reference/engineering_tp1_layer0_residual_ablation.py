@@ -469,6 +469,21 @@ def host_residual_once(partial: bytes, residual: bytes, torch) -> tuple[bytes, b
     return summed_raw, bytes(rounded)
 
 
+def projection_rounded_residual_once(partial: bytes, residual: bytes, torch) -> dict[str, bytes]:
+    if sys.byteorder != "little" or len(partial) != WIDTH * 4 or len(residual) != WIDTH * 2:
+        raise Failure("projection-first residual operands have invalid geometry")
+    partial_tensor = torch.frombuffer(bytearray(partial), dtype=torch.float32).clone()
+    # Use the pinned conversion for nonfinite inputs too; retain the original partial separately.
+    with torch.inference_mode():
+        projection = partial_tensor.to(torch.bfloat16)
+        widened = projection.to(torch.float32)
+    projection_raw = tensor_bytes(projection, torch)
+    widened_raw = tensor_bytes(widened, torch)
+    summed, hidden = host_residual_once(widened_raw, residual, torch)
+    return {"projection_bf16": projection_raw, "partial_f32": widened_raw,
+            "sum_f32": summed, "hidden_bf16": hidden}
+
+
 def _ordered_f32(bits: int) -> int:
     return (
         0x80000000 - (bits & 0x7FFFFFFF)
@@ -506,7 +521,10 @@ def f32_metrics(actual: bytes, expected: bytes) -> dict:
 
 
 def record_row(row: dict, native: dict[str, bytes], passes: dict[str, list], retained: dict[str, bytes]) -> dict:
-    if set(passes) != {"torch_bf16_linear", "source_ascending_fp32", "native_partial_host"}:
+    if set(passes) != {
+        "torch_bf16_linear", "source_ascending_fp32", "native_partial_host",
+        "native_partial_bf16_first",
+    }:
         raise Failure("residual replay case roster drifted")
     if any(len(values) != 2 for values in passes.values()):
         raise Failure("each residual replay case must retain exactly two passes")
@@ -532,6 +550,7 @@ def record_row(row: dict, native: dict[str, bytes], passes: dict[str, list], ret
     torch_passes = passes["torch_bf16_linear"]
     source_passes = passes["source_ascending_fp32"]
     native_host = passes["native_partial_host"]
+    native_bf16_first = passes["native_partial_bf16_first"]
     comparisons = {
         "native_partial_vs_torch_widened": [
             f32_metrics(native["projection_partial"], value["partial_f32"])
@@ -552,6 +571,28 @@ def record_row(row: dict, native: dict[str, bytes], passes: dict[str, list], ret
         "native_hidden_vs_native_partial_host": [
             reference.row_metrics(native["hidden_after_broadcast"], value["hidden_bf16"], WIDTH)
             for value in native_host
+        ],
+        "native_hidden_vs_native_partial_bf16_first": [
+            reference.row_metrics(native["hidden_after_broadcast"], value["hidden_bf16"], WIDTH)
+            for value in native_bf16_first
+        ],
+        "native_partial_host_vs_bf16_first_hidden": [
+            reference.row_metrics(
+                native_host[index]["hidden_bf16"], native_bf16_first[index]["hidden_bf16"], WIDTH
+            )
+            for index in range(2)
+        ],
+        "native_partial_bf16_first_vs_torch_hidden": [
+            reference.row_metrics(
+                native_bf16_first[index]["hidden_bf16"], torch_passes[index]["hidden_bf16"], WIDTH
+            )
+            for index in range(2)
+        ],
+        "native_projection_bf16_first_vs_torch": [
+            reference.row_metrics(
+                native_bf16_first[index]["projection_bf16"], torch_passes[index]["projection_bf16"], WIDTH
+            )
+            for index in range(2)
         ],
         "torch_vs_source_hidden": [
             reference.row_metrics(
@@ -585,6 +626,12 @@ def record_row(row: dict, native: dict[str, bytes], passes: dict[str, list], ret
         ),
         "native_partial_host_repeat_hidden": reference.row_metrics(
             native_host[0]["hidden_bf16"], native_host[1]["hidden_bf16"], WIDTH
+        ),
+        "native_partial_bf16_first_repeat_partial": f32_metrics(
+            native_bf16_first[0]["partial_f32"], native_bf16_first[1]["partial_f32"]
+        ),
+        "native_partial_bf16_first_repeat_hidden": reference.row_metrics(
+            native_bf16_first[0]["hidden_bf16"], native_bf16_first[1]["hidden_bf16"], WIDTH
         ),
     }
     repeat = {
@@ -622,6 +669,7 @@ def replay_rows(payloads: dict[str, bytes], manifest: dict, weight, torch):
         torch_passes = []
         source_passes = []
         native_passes = []
+        native_bf16_first_passes = []
         for _ in range(2):
             torch_bf16 = torch_linear_once(projection_input, weight, torch)
             torch_partial = tensor_bytes(
@@ -643,13 +691,19 @@ def replay_rows(payloads: dict[str, bytes], manifest: dict, weight, torch):
                 row["projection_partial"], row["residual_before"], torch
             )
             native_passes.append({"sum_f32": native_sum, "hidden_bf16": native_hidden})
+            native_bf16_first_passes.append(
+                projection_rounded_residual_once(
+                    row["projection_partial"], row["residual_before"], torch
+                )
+            )
         records.append(
             record_row(
                 row,
                 {key: row[key] for key, _, _, _ in PAYLOADS},
                 {"torch_bf16_linear": torch_passes,
                  "source_ascending_fp32": source_passes,
-                 "native_partial_host": native_passes},
+                 "native_partial_host": native_passes,
+                 "native_partial_bf16_first": native_bf16_first_passes},
                 retained,
             )
         )
@@ -729,6 +783,11 @@ def result_document(
             ),
             "captured_native_partial_host": (
                 "held native FP32 partial enters the same source-spelled host residual reducer"
+            ),
+            "captured_native_partial_bf16_first": (
+                "the identical held native FP32 partial narrows through pinned Torch to BF16, "
+                "then widens to FP32 before the same host residual reducer; only projection "
+                "rounding placement varies from captured_native_partial_host, not accumulation"
             ),
             "passes_per_case": 2,
             "actual_runtime_unmeasured": True,

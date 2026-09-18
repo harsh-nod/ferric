@@ -188,6 +188,11 @@ def replay_passes():
         "native_partial_host": [
             {"sum_f32": fp32, "hidden_bf16": bf16} for _ in range(2)
         ],
+        "native_partial_bf16_first": [
+            {"projection_bf16": bf16, "partial_f32": fp32,
+             "sum_f32": fp32, "hidden_bf16": bf16}
+            for _ in range(2)
+        ],
     }
 
 
@@ -334,8 +339,11 @@ class PinnedTorchArithmeticTests(unittest.TestCase):
             payloads, {"rows": [native_row()]}, weight, torch
         )
         self.assertEqual(len(records), 1)
-        self.assertEqual(len(retained), 24)
-        for case in ("torch_bf16_linear", "source_ascending_fp32", "native_partial_host"):
+        self.assertEqual(len(retained), 32)
+        for case in (
+            "torch_bf16_linear", "source_ascending_fp32", "native_partial_host",
+            "native_partial_bf16_first",
+        ):
             with self.subTest(case=case):
                 self.assertTrue(all(records[0]["repeat_agreement"][case].values()))
                 for number in (1, 2):
@@ -349,6 +357,10 @@ class PinnedTorchArithmeticTests(unittest.TestCase):
             "native_partial_vs_torch_widened", "native_partial_vs_source_ordered",
             "native_hidden_vs_torch", "native_hidden_vs_source_ordered",
             "native_hidden_vs_native_partial_host",
+            "native_hidden_vs_native_partial_bf16_first",
+            "native_partial_host_vs_bf16_first_hidden",
+            "native_partial_bf16_first_vs_torch_hidden",
+            "native_projection_bf16_first_vs_torch",
         ):
             for metric in records[0]["comparisons"][name]:
                 fp32 = "max_fp32_ulp" in metric
@@ -364,6 +376,71 @@ class PinnedTorchArithmeticTests(unittest.TestCase):
             name = f"position-000004.native-{key.replace('_', '-')}.{suffix}"
             self.assertEqual(retained[name], payloads[filename])
         json.dumps(records, allow_nan=False)
+
+    def test_projection_first_isolates_double_rounding_at_a_tie(self):
+        partial = struct.pack("<f", 1 + 2**-8) + bytes((subject.WIDTH - 1) * 4)
+        residual = struct.pack("<H", 0x3B80) + bytes((subject.WIDTH - 1) * 2)
+        _, original = subject.host_residual_once(partial, residual, self.torch)
+        rounded = subject.projection_rounded_residual_once(partial, residual, self.torch)
+        self.assertEqual(struct.unpack_from("<H", original)[0], 0x3F81)
+        self.assertEqual(struct.unpack_from("<H", rounded["projection_bf16"])[0], 0x3F80)
+        self.assertEqual(struct.unpack_from("<I", rounded["partial_f32"])[0], 0x3F800000)
+        self.assertEqual(struct.unpack_from("<I", rounded["sum_f32"])[0], 0x3F808000)
+        self.assertEqual(struct.unpack_from("<H", rounded["hidden_bf16"])[0], 0x3F80)
+        self.assertEqual(
+            rounded, subject.projection_rounded_residual_once(partial, residual, self.torch)
+        )
+
+    def test_projection_first_preserves_representable_agreement_and_zero_behavior(self):
+        for partial_bits, residual_bits, hidden_bits in (
+            (0x3F800000, 0x3B80, 0x3F80),
+            (0x3F800000, 0xBF80, 0),
+            (0x80000000, 0x8000, 0),
+        ):
+            with self.subTest(partial=partial_bits, residual=residual_bits):
+                partial = struct.pack("<I", partial_bits) + bytes((subject.WIDTH - 1) * 4)
+                residual = struct.pack("<H", residual_bits) + bytes((subject.WIDTH - 1) * 2)
+                summed, hidden = subject.host_residual_once(partial, residual, self.torch)
+                rounded = subject.projection_rounded_residual_once(partial, residual, self.torch)
+                self.assertEqual(rounded["partial_f32"], partial)
+                self.assertEqual(struct.unpack_from("<H", rounded["projection_bf16"])[0], partial_bits >> 16)
+                self.assertEqual(rounded["sum_f32"], summed)
+                self.assertEqual(rounded["hidden_bf16"], hidden)
+                self.assertEqual(struct.unpack_from("<H", hidden)[0], hidden_bits)
+
+    def test_projection_first_retains_finite_to_bf16_overflow(self):
+        partial = struct.pack("<I", 0x7F7FFFFF) + bytes((subject.WIDTH - 1) * 4)
+        residual = struct.pack("<H", 0xFF7F) + bytes((subject.WIDTH - 1) * 2)
+        summed, _ = subject.host_residual_once(partial, residual, self.torch)
+        self.assertNotEqual(struct.unpack_from("<I", summed)[0] & 0x7F800000, 0x7F800000)
+        rounded = subject.projection_rounded_residual_once(partial, residual, self.torch)
+        self.assertEqual(struct.unpack_from("<H", rounded["projection_bf16"])[0], 0x7F80)
+        self.assertEqual(struct.unpack_from("<H", rounded["hidden_bf16"])[0], 0x7F80)
+        metrics = subject.f32_metrics(rounded["sum_f32"], summed)
+        self.assertEqual(metrics["actual_nonfinite_count"], 1)
+        self.assertEqual(metrics["expected_nonfinite_count"], 0)
+        self.assertIsNone(metrics["max_abs"])
+        self.assertIsNone(metrics["rmse"])
+
+    def test_projection_first_keeps_nonfinite_projection_categories(self):
+        partial = struct.pack("<4I", 0x7F800000, 0xFF800000, 0x7FFFFFFF, 0xFFFFFFFF)
+        partial += bytes((subject.WIDTH - 4) * 4)
+        rounded = subject.projection_rounded_residual_once(partial, bytes(subject.WIDTH * 2), self.torch)
+        projection = struct.unpack_from("<4H", rounded["projection_bf16"])
+        self.assertEqual(projection[:2], (0x7F80, 0xFF80))
+        for bits in projection[2:]:
+            self.assertEqual(bits & 0x7F80, 0x7F80)
+            self.assertNotEqual(bits & 0x007F, 0)
+        metrics = subject.f32_metrics(rounded["partial_f32"], partial)
+        self.assertEqual(metrics["actual_nonfinite_count"], 4)
+        self.assertEqual(metrics["expected_nonfinite_count"], 4)
+        self.assertIsNone(metrics["max_fp32_ulp"])
+
+    def test_projection_first_rejects_operand_geometry_drift(self):
+        for partial, residual in ((b"", bytes(subject.WIDTH * 2)), (bytes(subject.WIDTH * 4), b"")):
+            with self.subTest(partial_bytes=len(partial), residual_bytes=len(residual)):
+                with self.assertRaisesRegex(subject.Failure, "projection-first residual operands"):
+                    subject.projection_rounded_residual_once(partial, residual, self.torch)
 
     def test_nonfinite_f32_metrics_keep_bits_and_null_finite_metrics(self):
         left = struct.pack("<I", 0x7FC00001) + bytes((subject.WIDTH - 1) * 4)
@@ -487,6 +564,7 @@ class FileAndRunTests(unittest.TestCase):
             "torch_bf16_linear": {"projection_bf16": True},
             "source_ascending_fp32": {"partial_f32": True},
             "native_partial_host": {"hidden_bf16": True},
+            "native_partial_bf16_first": {"hidden_bf16": True},
         }, "comparisons": {}}]
         descriptor = {
             "tensor": subject.WEIGHT, "shard": subject.WEIGHT_SHARD,

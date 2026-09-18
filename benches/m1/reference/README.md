@@ -224,14 +224,23 @@ native pins. It uses the pinned CPU reference environment on mi300x:
 ```
 
 For each selected position it binds the exact canonical layer-zero `o_proj`
-tensor bytes and replays three paths twice: Torch BF16 linear followed by the
+tensor bytes and replays four paths twice: Torch BF16 linear followed by the
 host residual addition, separate ascending FP32 multiply/add followed by that
-addition, and the captured native FP32 partial through the host reducer alone.
+addition, the captured native FP32 partial through the host reducer alone, and
+the same captured partial rounded to BF16 before entering that reducer.
 The host replay preserves zero-plus-partial, residual addition, then integer
 BF16 round-to-nearest-even order. Torch's intermediate BF16 projection rounding
 is an explicit difference, not a claim of native arithmetic equivalence.
+The last two paths hold the partial and residual fixed to isolate projection
+rounding placement from accumulation order. The new path retains the existing
+reducer's zero-plus-partial behavior; it is not a complete canonical-forward
+replay or a change to the production reducer contract.
 
-All four native operands and both passes of every CPU path are retained.
+All four native operands and both passes of every CPU path are retained,
+including the projection-first BF16 value and its widened FP32 representation:
+32 raw files per selected row. Nonfinite native partials use the pinned Torch
+conversion, which may canonicalize NaN payloads; their original bytes remain
+separately retained.
 Projection inputs, residual inputs and weights must be finite; nonfinite
 outputs remain diagnostic data with null finite-error metrics. Exact source,
 tensor and input identities are rechecked before publication. Existing output
