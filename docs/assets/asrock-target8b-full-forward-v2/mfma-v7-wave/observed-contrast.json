@@ -1,0 +1,23 @@
+{
+  "activation_precision": "BF16",
+  "causal_or_stable_speedup_claim": false,
+  "controller_cohort": "mfma-v7-wave-attention-controller-v7",
+  "cpu_isolation_verified": false,
+  "family": "mfma-v7-wave",
+  "frontier_count_scope": "source-derived schedule; not measured polls or GPU event count",
+  "gpu_overlap_measured": false,
+  "logits_precision": "FP32",
+  "measured_requests_per_variant": 1,
+  "observed_rate_ratio": 1.870137445421541,
+  "observed_tpot_change_percent": -46.52799437559021,
+  "packets_per_request_each": 22176,
+  "performance_qualified": false,
+  "persistent_gpu_kernel": false,
+  "schema": "FerricFullForwardObservedContrastV2",
+  "source_completion_frontiers": {
+    "full_forward": 36,
+    "serial": 22176
+  },
+  "warmup_requests": 0,
+  "weight_precision": "BF16"
+}

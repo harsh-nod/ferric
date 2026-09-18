@@ -13,11 +13,12 @@ from xml.etree import ElementTree as ET
 import target_full_forward_plots_v2 as plots
 from test_target_full_forward_scalar_v2 import fixture as scalar_fixture
 from test_target_full_forward_mfma_v7_v2 import fixture as mfma_fixture
+from test_target_full_forward_mfma_wave_v1 import fixture as wave_fixture
 
 
 def fixture(family):
     checker = plots.load_checker(family)
-    source = scalar_fixture if family == "scalar" else mfma_fixture
+    source = {"scalar": scalar_fixture, "mfma-v7": mfma_fixture, "mfma-v7-wave": wave_fixture}[family]
     reports = []
     for variant in plots.COHORTS[family]["variants"]:
         report = checker.validate_records(*source(variant))
@@ -96,6 +97,21 @@ class FullForwardPlotPolicyTests(unittest.TestCase):
         reports[1]["execution_counts"]["completion_frontiers"] = 22176
         with self.assertRaises(ValueError):
             plots.rows_and_contrast(checker, "scalar", reports)
+
+    def test_wave_cohort_rejects_baseline_attention_and_other_controller(self):
+        for mutate in (
+            lambda report: report["configuration"]["performance_profile"].update(attention="baseline"),
+            lambda report: report.update(controller_cohort="rank-wrapper-fixed-v6"),
+            lambda report: report["head_artifact"].update(artifact_hsaco_id="a" * 64),
+        ):
+            checker, reports = fixture("mfma-v7-wave")
+            mutate(reports[1])
+            with self.assertRaises(ValueError):
+                plots.rows_and_contrast(checker, "mfma-v7-wave", reports)
+        checker, reports = fixture("mfma-v7-wave")
+        _, baseline = fixture("mfma-v7")
+        with self.assertRaises(ValueError):
+            plots.rows_and_contrast(checker, "mfma-v7-wave", [reports[0], baseline[1]])
 
     def test_output_source_bytes_must_match_validated_report(self):
         checker, reports = fixture("scalar")

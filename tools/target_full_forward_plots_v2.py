@@ -26,6 +26,7 @@ COHORTS = {
         "variants": ("serial-control", "full-forward-scalar-v3"),
         "projection": "baseline", "kernel_profile": "v3-wave", "logits": "BF16",
         "title": "Qwen3-8B: scalar/BF16 full-forward submissions",
+        "controller_cohort": "rank-wrapper-fixed-v6", "attention": "baseline",
     },
     "mfma-v7": {
         "checker": "target_full_forward_mfma_v7_v2.py",
@@ -34,6 +35,16 @@ COHORTS = {
         "variants": ("serial-mfma-v7-control", "full-forward-mfma-v7"),
         "projection": "mfma", "kernel_profile": "v3-mfma", "logits": "FP32",
         "title": "Qwen3-8B: MFMA/FP32-v7 full-forward submissions",
+        "controller_cohort": "rank-wrapper-fixed-v6", "attention": "baseline",
+    },
+    "mfma-v7-wave": {
+        "checker": "target_full_forward_mfma_wave_v1.py",
+        "sha256": "921d34280af358146882201c0faed96ead24a7162e2b8f2fdd1e962ced0d77bb",
+        "schema": "FerricTargetFullForwardMfmaWaveObservationV1",
+        "variants": ("serial-mfma-v7-wave-control", "full-forward-mfma-v7-wave"),
+        "projection": "mfma", "kernel_profile": "v3-mfma", "logits": "FP32",
+        "title": "Qwen3-8B: MFMA/v7/wave-attention full-forward submissions",
+        "controller_cohort": "mfma-v7-wave-attention-controller-v7", "attention": "wave",
     },
 }
 LABELS = ("Serial submissions", "Full-forward submission")
@@ -88,7 +99,7 @@ def rows_and_contrast(checker, family, reports):
         full_forward = index == 1
         for key, expected in {
             "schema": cohort["schema"], "variant": variant,
-            "controller_cohort": "rank-wrapper-fixed-v6", "comparator_sha256": cohort["sha256"],
+            "controller_cohort": cohort["controller_cohort"], "comparator_sha256": cohort["sha256"],
             "authority": "none", "model": "Qwen/Qwen3-8B", "revision": core.REVISION,
             "reference_sha256": core.REFERENCE_SHA256, "passed": True,
             "reference_tokens_and_bytes_match": True, "tensor_parallel": 1, "concurrent_requests": 1,
@@ -115,10 +126,10 @@ def rows_and_contrast(checker, family, reports):
             "full_forward_profile": checker.PROFILE if full_forward else None,
             "performance_profile": {"runtime_cache_admission": True, "runtime_operational": True,
                                     "runtime_profiling": False, "dispatch_sequences": False,
-                                    "queue_rollover": False, "projection": cohort["projection"], "attention": "baseline"},
+                                    "queue_rollover": False, "projection": cohort["projection"], "attention": cohort["attention"]},
         }
         core.same(report["configuration"], config, "exact full-forward plot configuration")
-        if family == "mfma-v7":
+        if cohort["logits"] == "FP32":
             core.same(report["head_artifact"], checker.HEAD_ARTIFACT, "unchanged FP32-v7 head image")
             core.same(report["head_precision"], "fp32-v7", "explicit FP32-v7 head")
             core.same(report["fp32_head_workspace_bytes"], 9_723_904, "unchanged FP32 workspace")
@@ -144,7 +155,7 @@ def rows_and_contrast(checker, family, reports):
     ratio = rows[1]["post_first_tokens_per_second"] / rows[0]["post_first_tokens_per_second"]
     contrast = {
         "schema": "FerricFullForwardObservedContrastV2", "family": family,
-        "controller_cohort": "rank-wrapper-fixed-v6", "observed_rate_ratio": ratio,
+        "controller_cohort": cohort["controller_cohort"], "observed_rate_ratio": ratio,
         "observed_tpot_change_percent": (1 / ratio - 1) * 100,
         "measured_requests_per_variant": 1, "warmup_requests": 0,
         "weight_precision": "BF16", "activation_precision": "BF16", "logits_precision": cohort["logits"],

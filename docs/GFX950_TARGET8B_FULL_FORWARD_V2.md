@@ -6,6 +6,8 @@ logits. The separate MFMA pair retains BF16 weights and activations with an
 FP32-v7 output head and logits. Neither pair uses quantization or speculation.
 Every request matches all 32 token IDs and decoded bytes from the unchanged
 independent reference.
+The later MFMA/wave-attention pair is reported separately below because it uses
+a different controller and attention implementation.
 **700 tokens/s is not achieved.**
 
 The implementation groups the existing forward's 616 ordered AQL packets into
@@ -77,6 +79,51 @@ fields. The separate [62-interval CSV](assets/asrock-target8b-full-forward-v2/mf
 and [asset hashes](assets/asrock-target8b-full-forward-v2/mfma-v7/SHA256SUMS)
 use the same post-first timing boundary as the scalar pair.
 
+## MFMA/FP32-v7 With Wave Attention
+
+This later pair uses the separately built controller-v7 and wave attention in
+both variants. Projections, native MFMA/head images, precision, workload and
+reference remain fixed within this pair. Only full-forward submission changes.
+It is not a direct ablation of wave attention against the preceding pair, whose
+controller and execution time differ. Do not multiply the cohort ratios.
+
+| Submission | TTFT (s) | Mean TPOT (s) | Post-first tokens/s | Observed rate / control | Setup (s) |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Serial submissions | 1.869457 | 0.368168 | 2.716149 | 1.000x | 211.959177 |
+| Full-forward submission | 0.960773 | 0.196867 | 5.079572 | 1.870x | 211.388518 |
+
+The observed rate ratio is **1.870137x**, with **46.527994% lower** mean TPOT.
+There is still only one unwarmed, nonisolated request per variant. Neither a
+stable causal speedup nor GPU overlap is established; **700 tokens/s remains
+unachieved**. BF16 weights/activations and FP32 output logits are unchanged.
+
+![Observed MFMA/v7/wave-attention decode rates](assets/asrock-target8b-full-forward-v2/mfma-v7-wave/rates.svg)
+
+![All 62 host intervals in the separate wave-attention cohort](assets/asrock-target8b-full-forward-v2/mfma-v7-wave/intervals.svg)
+
+The [control report](assets/asrock-target8b-full-forward-v2/mfma-v7-wave/control-report.json),
+[full-forward report](assets/asrock-target8b-full-forward-v2/mfma-v7-wave/full-forward-report.json),
+[interval CSV](assets/asrock-target8b-full-forward-v2/mfma-v7-wave/intervals.csv),
+[table](assets/asrock-target8b-full-forward-v2/mfma-v7-wave/table.md),
+[contrast](assets/asrock-target8b-full-forward-v2/mfma-v7-wave/observed-contrast.json),
+and [hashes](assets/asrock-target8b-full-forward-v2/mfma-v7-wave/SHA256SUMS)
+retain this cohort independently. Both raw captures were regenerated through the
+unchanged wave comparator and exactly matched their public reports; all six
+postflight statuses passed. No timing instrumentation was enabled.
+
+| Wave Cohort Item | SHA-256 |
+| --- | --- |
+| Comparator | `921d34280af358146882201c0faed96ead24a7162e2b8f2fdd1e962ced0d77bb` |
+| Controller-v7 | `5b218caa6aa51c56749f64329054d29faf0cc766e401db2c41f58bc8d1324f48` |
+| Controller-v7 source manifest | `07a696d0dfd8ad14eb808ce5d58ad817a487b2f1352cb8401fabbc09fa818c70` |
+
+The worker and independent reference hashes are the same as in the table below.
+Controller-v7 passed **430 regression tests**, with **11 ignored**, plus strict
+Clippy. Focused validation explicitly ran the two actual-artifact metadata tests
+that are normally ignored. The new selector admits only its exact TP1,
+one-row, context64/pages4, MFMA-v3, FP32-v7, wave-attention profile; the prior
+scalar and baseline-attention selectors remain closed to wave attention.
+
 ## Submission And Completion Scope
 
 The [forward recorder](../adapters/m1-engineering-execution-v1/src/tp_execution/full_forward.rs)
@@ -98,11 +145,12 @@ they do not count setup, transfers, reads, or teardown.
 Completion frontiers are source-derived schedule counts, not measured polling
 iterations, GPU events, or GPU duration. The capture's dispatch total remains
 22,176 in both cases. This grouping does not fuse device kernels or change the
-arithmetic within either matched pair.
+arithmetic within any matched pair.
 
 All requests use one row, one-token prefill chunks, context 64, four physical
-pages, baseline attention, and device TP1 residuals. The scalar pair uses scalar
-projections; the MFMA pair uses MFMA projections and the FP32-v7 head. Admission
+pages, and device TP1 residuals. The earlier pairs use baseline attention; the
+controller-v7 pair uses wave attention. The scalar pair uses scalar
+projections; both MFMA pairs use MFMA projections and the FP32-v7 head. Admission
 caching and operational currentness are enabled. Prefix caching, output-head
 pruning, ordered attention/FFN groups, dispatch sequences, queue rollover, and
 runtime/GPU profiling are disabled. The full-forward mode is the controlled
@@ -110,9 +158,10 @@ configuration difference.
 
 ## Frozen Identities And Validation
 
-Each pair shares the corrected `rank-wrapper-fixed-v6` controller, worker, model
-revision, workload, and reference. Native-image identities match within each
-pair and differ between the scalar and MFMA cohorts. Complete capture/input,
+The scalar and baseline-attention MFMA pairs each share the corrected
+`rank-wrapper-fixed-v6` controller, worker, model revision, workload, and
+reference. Native-image identities match within each pair and differ between
+the scalar and MFMA cohorts. Complete capture/input,
 native-image, and FP32 head hashes are retained in the applicable reports. The
 relevant source and binary pins are:
 
@@ -163,7 +212,7 @@ metadata were independently checked before copying it into this report.
 The metadata remains a record of that earlier attempt. The successful scalar
 pair above is independently validated under the corrected v6 controller. The
 [top-level asset hashes](assets/asrock-target8b-full-forward-v2/SHA256SUMS) bind the
-retained failure metadata and both separate cohort asset manifests.
+retained failure metadata and all three separate cohort asset manifests.
 
 ## Reproduce The Reporting
 
@@ -173,7 +222,9 @@ public reports, requires all six successful postflight statuses, and recomputes
 the rates before creating an output directory. An incomplete or cross-family
 pair is rejected. MFMA/FP32-v7 is a separate arithmetic cohort; its values must
 not be merged with this scalar/BF16 pair or used to multiply its observed ratio.
-Earlier plot directories remain unchanged.
+The wave-attention/controller-v7 pair is also kept separate. Regenerating the
+earlier scalar and MFMA assets with the extended reporter produced byte-identical
+files; those plot directories remain unchanged.
 
 With `EVIDENCE` and `REFERENCE` pointing to the retained evidence and reference:
 
@@ -190,14 +241,21 @@ python3 -B tools/target_full_forward_plots_v2.py \
   --full-capture "$EVIDENCE/target8b-full-forward-mfma-v7-v2-full-01" \
   --reference "$REFERENCE" \
   --output /tmp/ferric-full-forward-mfma-v7-v2-rebuilt
+python3 -B tools/target_full_forward_plots_v2.py \
+  --family mfma-v7-wave \
+  --control-capture "$EVIDENCE/target8b-full-forward-mfma-wave-v1-control-01" \
+  --full-capture "$EVIDENCE/target8b-full-forward-mfma-wave-v1-full-01" \
+  --reference "$REFERENCE" \
+  --output /tmp/ferric-full-forward-mfma-wave-v1-rebuilt
 PYTHONPATH=tools python3 -B -m unittest \
   test_target_full_forward_scalar_v2 \
   test_target_full_forward_mfma_v7_v2 \
+  test_target_full_forward_mfma_wave_v1 \
   test_target_full_forward_plots_v2
 ```
 
-The combined targeted suite passed **31 synthetic CPU tests**, including all
-**8 reporter tests**. They check pair identity and scope, precise interval
+The combined targeted suite passed **46 synthetic CPU tests**, including all
+**9 reporter tests**. They check pair identity and scope, precise interval
 cardinality, source pinning, exact report bytes, and rejection of invalid,
 incomplete, or mixed pairs. Synthetic tests provide no GPU or performance
 evidence; those observations come only from the separately validated captures.
