@@ -7874,6 +7874,103 @@ fn close_new_window_unbound<const C: usize, T: 'static>(
     close_pending_submission_failure(engine, pending)
 }
 
+/// Converts a validated physical prefill shape into the exact live request
+/// prefixes consumed by request-local page admission.
+///
+/// `ValidatedM1StepInputs` retains every physical bucket lane, including
+/// canonical inactive padding. Page admission instead consumes one length per
+/// scheduled request. This gate keeps those shapes distinct: it verifies the
+/// complete physical geometry, exact live roster association, and zero
+/// inactive lanes before returning only the checked live prefixes.
+fn authenticated_new_window_live_prefill_prefixes<'a>(
+    member_count: usize,
+    epoch: CompletionEpoch,
+    mut member: impl FnMut(usize) -> Option<ferric_spec::RequestId>,
+    prefill: M1ServingPlanV1,
+    draft: &'a ValidatedM1StepInputs,
+    target: &'a ValidatedM1StepInputs,
+) -> Option<(&'a [u32], &'a [u32])> {
+    let draft_dimensions = draft.dimensions();
+    let target_dimensions = target.dimensions();
+    let physical_lanes = usize::try_from(draft_dimensions.sequences).ok()?;
+    let width = usize::try_from(draft_dimensions.active_tokens).ok()?;
+    let flattened = physical_lanes.checked_mul(width)?;
+    if member_count == 0
+        || member_count > physical_lanes
+        || draft.selection() != prefill.draft()
+        || target.selection() != prefill.target()
+        || draft_dimensions != target_dimensions
+        || draft.live_lane_count() as usize != member_count
+        || target.live_lane_count() as usize != member_count
+        || draft.lanes().len() != physical_lanes
+        || target.lanes().len() != physical_lanes
+        || draft.active_lengths().len() != physical_lanes
+        || target.active_lengths().len() != physical_lanes
+        || draft.context_lengths().len() != physical_lanes
+        || target.context_lengths().len() != physical_lanes
+        || draft.token_ids().len() != flattened
+        || target.token_ids().len() != flattened
+        || draft.position_ids().len() != flattened
+        || target.position_ids().len() != flattened
+    {
+        return None;
+    }
+    for lane in 0..member_count {
+        let request = member(lane)?;
+        let draft_plan = draft.lanes().get(lane)?.as_ref()?;
+        let target_plan = target.lanes().get(lane)?.as_ref()?;
+        if draft_plan.request() != request
+            || target_plan.request() != request
+            || draft_plan.completion_epoch() != epoch
+            || target_plan.completion_epoch() != epoch
+            || draft.active_lengths().get(lane).copied()? == 0
+            || target.active_lengths().get(lane).copied()? == 0
+            || draft.active_lengths().get(lane) != target.active_lengths().get(lane)
+            || draft.context_lengths().get(lane).copied()? != 0
+            || target.context_lengths().get(lane).copied()? != 0
+        {
+            return None;
+        }
+    }
+    for lane in member_count..physical_lanes {
+        let row = lane.checked_mul(width)?;
+        let end = row.checked_add(width)?;
+        if draft.lanes().get(lane)?.is_some()
+            || target.lanes().get(lane)?.is_some()
+            || draft.active_lengths().get(lane).copied()? != 0
+            || target.active_lengths().get(lane).copied()? != 0
+            || draft.context_lengths().get(lane).copied()? != 0
+            || target.context_lengths().get(lane).copied()? != 0
+            || draft
+                .token_ids()
+                .get(row..end)?
+                .iter()
+                .any(|value| *value != 0)
+            || target
+                .token_ids()
+                .get(row..end)?
+                .iter()
+                .any(|value| *value != 0)
+            || draft
+                .position_ids()
+                .get(row..end)?
+                .iter()
+                .any(|value| *value != 0)
+            || target
+                .position_ids()
+                .get(row..end)?
+                .iter()
+                .any(|value| *value != 0)
+        {
+            return None;
+        }
+    }
+    Some((
+        draft.active_lengths().get(..member_count)?,
+        target.active_lengths().get(..member_count)?,
+    ))
+}
+
 /// Publishes the authenticated speculative-to-paired-prefill new window.
 ///
 /// The exact speculative successor intent and queue timeout were frozen before
@@ -7930,10 +8027,16 @@ pub fn submit_m1_authenticated_speculative_new_window_v1<const C: usize>(
             .partitioned_memory()
             .finite_speculative_rollover_output_state()
             != crate::M1FiniteSpeculativeRolloverOutputPortfolioStateV1::Activated
-        || scheduled.member_count() == 0
+        || authenticated_new_window_live_prefill_prefixes(
+            scheduled.member_count(),
+            scheduled.epoch(),
+            |lane| scheduled.member(lane),
+            next,
+            &draft_prefill,
+            &target_prefill,
+        )
+        .is_none()
         || scheduled.member_count() != member_intents.len()
-        || draft_prefill.active_lengths().len() != scheduled.member_count()
-        || target_prefill.active_lengths().len() != scheduled.member_count()
         || recipe.workspace_composition().workspace_plans() != &preparation_plans
         || recipe.requires_future_materialization()
         || recipe.rows().len() != crate::M1_PAIRED_PREFILL_FIXED_BATCH_PACKETS_V1
@@ -8167,11 +8270,20 @@ pub fn submit_m1_authenticated_speculative_new_window_v1<const C: usize>(
             .member(lane)
             .expect("the checked scheduled roster is complete");
     }
+    let live_prefill_lengths = authenticated_new_window_live_prefill_prefixes(
+        members,
+        scheduled.epoch(),
+        |lane| scheduled.member(lane),
+        next,
+        &draft_prefill,
+        &target_prefill,
+    )
+    .expect("the immutable physical prefill shape passed submit admission");
     let page_admission = match partitioned_memory.admit_authenticated_new_window_page_set(
         &lower,
         &page_requests[..members],
-        draft_prefill.active_lengths(),
-        target_prefill.active_lengths(),
+        live_prefill_lengths.0,
+        live_prefill_lengths.1,
     ) {
         Ok(admission) => admission,
         Err(source) => {
@@ -9826,9 +9938,14 @@ mod tests {
         M1ServingRegistryV1, M1SpeculativeGenerationPolicyV1, GFX942_PROCESSOR,
         GFX942_TARGET_FEATURES,
     };
+    use ferric_build::{
+        generate_qwen3_gfx942_runner_declaration, publish_qwen3_gfx942_runner_declaration,
+        qwen3_runner_closure_test_fixture,
+    };
     use ferric_spec::{
-        Identity, LogicalKvState, PhysicalPageId, Qwen3ExecutionMode, Qwen3ModelRole,
-        Qwen3PlanBucket, Qwen3PlanSelection, RequestId,
+        validate_m1_step_inputs, Identity, LogicalKvState, M1StepInputCandidate,
+        M1StepInputValidationOutcome, PhysicalPageId, Qwen3ExecutionMode, Qwen3ModelRole,
+        Qwen3PlanBucket, Qwen3PlanSelection, RequestId, TokenId,
     };
 
     fn serving_plan(mode: Qwen3ExecutionMode, bucket: Qwen3PlanBucket) -> M1ServingPlanV1 {
@@ -9857,6 +9974,219 @@ mod tests {
             },
         )
         .unwrap()
+    }
+
+    fn logical_runner() -> LogicalRunnerDeclaration {
+        let generated =
+            generate_qwen3_gfx942_runner_declaration(qwen3_runner_closure_test_fixture())
+                .expect("generate fixture runner declaration");
+        let published = publish_qwen3_gfx942_runner_declaration(generated)
+            .expect("publish fixture runner declaration");
+        LogicalRunnerDeclaration::from_published(published)
+    }
+
+    fn validated_prefill(
+        runner: &LogicalRunnerDeclaration,
+        selection: Qwen3PlanSelection,
+        requests: &[RequestId],
+        epoch: CompletionEpoch,
+    ) -> ValidatedM1StepInputs {
+        let physical_lanes = match selection.bucket {
+            Qwen3PlanBucket::PrefillS1T128 => 1,
+            Qwen3PlanBucket::PrefillS8T128 => 8,
+            _ => panic!("test helper accepts only T128 prefill buckets"),
+        };
+        let width = 128;
+        let mut lanes = Vec::with_capacity(physical_lanes);
+        for request in requests.iter().copied() {
+            lanes.push(Some(
+                runner
+                    .bind_step_plan(request, epoch, selection)
+                    .expect("bind fixture step plan"),
+            ));
+        }
+        lanes.resize_with(physical_lanes, || None);
+        let mut tokens = vec![0; physical_lanes * width];
+        let mut positions = vec![0; physical_lanes * width];
+        let mut active = vec![0; physical_lanes];
+        let context = vec![0; physical_lanes];
+        for lane in 0..requests.len() {
+            active[lane] = width as u32;
+            let row = lane * width;
+            for column in 0..width {
+                tokens[row + column] = TokenId::try_from(17 + lane).expect("fixture token fits");
+                positions[row + column] = u32::try_from(column).expect("fixture position fits");
+            }
+        }
+        match validate_m1_step_inputs(M1StepInputCandidate::new(
+            selection, lanes, tokens, positions, active, context,
+        )) {
+            M1StepInputValidationOutcome::Validated(inputs) => inputs,
+            M1StepInputValidationOutcome::Rejected(failure) => {
+                panic!("fixture input rejected: {:?}", failure.error())
+            }
+        }
+    }
+
+    fn malformed_inactive_prefill_candidate(
+        runner: &LogicalRunnerDeclaration,
+        selection: Qwen3PlanSelection,
+        requests: &[RequestId],
+        epoch: CompletionEpoch,
+    ) -> M1StepInputValidationOutcome {
+        let mut lanes = Vec::with_capacity(8);
+        for request in requests.iter().copied() {
+            lanes.push(Some(
+                runner
+                    .bind_step_plan(request, epoch, selection)
+                    .expect("bind fixture step plan"),
+            ));
+        }
+        lanes.resize_with(8, || None);
+        let mut tokens = vec![0; 8 * 128];
+        let mut positions = vec![0; 8 * 128];
+        let mut active = vec![0; 8];
+        let context = vec![0; 8];
+        for lane in 0..requests.len() {
+            active[lane] = 128;
+            let row = lane * 128;
+            for column in 0..128 {
+                tokens[row + column] = 17;
+                positions[row + column] = column as u32;
+            }
+        }
+        active[requests.len()] = 1;
+        validate_m1_step_inputs(M1StepInputCandidate::new(
+            selection, lanes, tokens, positions, active, context,
+        ))
+    }
+
+    #[test]
+    fn live_prefill_prefix_adapter_preserves_physical_s8_and_request_local_lengths() {
+        let runner = logical_runner();
+        let prefill = serving_plan(Qwen3ExecutionMode::Prefill, Qwen3PlanBucket::PrefillS8T128);
+        let epoch = CompletionEpoch::new(9);
+        let requests = [RequestId::new(3, 2), RequestId::new(7, 2)];
+        let draft = validated_prefill(&runner, prefill.draft(), &requests, epoch);
+        let target = validated_prefill(&runner, prefill.target(), &requests, epoch);
+        assert_eq!(draft.lanes().len(), 8);
+        assert_eq!(target.lanes().len(), 8);
+        assert_eq!(draft.active_lengths(), &[128, 128, 0, 0, 0, 0, 0, 0]);
+        assert_eq!(target.active_lengths(), &[128, 128, 0, 0, 0, 0, 0, 0]);
+
+        let prefixes = authenticated_new_window_live_prefill_prefixes(
+            requests.len(),
+            epoch,
+            |lane| requests.get(lane).copied(),
+            prefill,
+            &draft,
+            &target,
+        )
+        .expect("two live S8 lanes admit an exact request-local prefix");
+        assert_eq!(prefixes.0, &[128, 128]);
+        assert_eq!(prefixes.1, &[128, 128]);
+        assert_eq!(prefixes.0.len(), requests.len());
+        assert_eq!(prefixes.1.len(), requests.len());
+
+        let full_requests = (0..8)
+            .map(|slot| RequestId::new(slot, 2))
+            .collect::<Vec<_>>();
+        let full_draft = validated_prefill(&runner, prefill.draft(), &full_requests, epoch);
+        let full_target = validated_prefill(&runner, prefill.target(), &full_requests, epoch);
+        let full = authenticated_new_window_live_prefill_prefixes(
+            full_requests.len(),
+            epoch,
+            |lane| full_requests.get(lane).copied(),
+            prefill,
+            &full_draft,
+            &full_target,
+        )
+        .expect("full S8 behavior remains admitted");
+        assert_eq!(full.0, &[128_u32; 8]);
+        assert_eq!(full.1, &[128_u32; 8]);
+    }
+
+    #[test]
+    fn live_prefill_prefix_adapter_rejects_count_order_epoch_and_inactive_drift() {
+        let runner = logical_runner();
+        let prefill = serving_plan(Qwen3ExecutionMode::Prefill, Qwen3PlanBucket::PrefillS8T128);
+        let epoch = CompletionEpoch::new(9);
+        let requests = [RequestId::new(3, 2), RequestId::new(7, 2)];
+        let draft = validated_prefill(&runner, prefill.draft(), &requests, epoch);
+        let target = validated_prefill(&runner, prefill.target(), &requests, epoch);
+
+        assert!(authenticated_new_window_live_prefill_prefixes(
+            1,
+            epoch,
+            |lane| requests.get(lane).copied(),
+            prefill,
+            &draft,
+            &target,
+        )
+        .is_none());
+        assert!(authenticated_new_window_live_prefill_prefixes(
+            requests.len(),
+            epoch,
+            |lane| requests.get(requests.len() - 1 - lane).copied(),
+            prefill,
+            &draft,
+            &target,
+        )
+        .is_none());
+        assert!(authenticated_new_window_live_prefill_prefixes(
+            requests.len(),
+            CompletionEpoch::new(epoch.value() + 1),
+            |lane| requests.get(lane).copied(),
+            prefill,
+            &draft,
+            &target,
+        )
+        .is_none());
+        assert!(authenticated_new_window_live_prefill_prefixes(
+            requests.len(),
+            epoch,
+            |lane| requests.get(lane).copied(),
+            prefill,
+            &target,
+            &draft,
+        )
+        .is_none());
+
+        let three = [requests[0], requests[1], RequestId::new(8, 2)];
+        let three_live = validated_prefill(&runner, prefill.draft(), &three, epoch);
+        assert!(authenticated_new_window_live_prefill_prefixes(
+            requests.len(),
+            epoch,
+            |lane| requests.get(lane).copied(),
+            prefill,
+            &three_live,
+            &target,
+        )
+        .is_none());
+        assert!(matches!(
+            malformed_inactive_prefill_candidate(&runner, prefill.draft(), &requests, epoch,),
+            M1StepInputValidationOutcome::Rejected(_)
+        ));
+    }
+
+    #[test]
+    fn live_prefill_prefix_adapter_retains_singleton_shape_behavior() {
+        let runner = logical_runner();
+        let prefill = serving_plan(Qwen3ExecutionMode::Prefill, Qwen3PlanBucket::PrefillS1T128);
+        let epoch = CompletionEpoch::new(5);
+        let requests = [RequestId::new(1, 2)];
+        let draft = validated_prefill(&runner, prefill.draft(), &requests, epoch);
+        let target = validated_prefill(&runner, prefill.target(), &requests, epoch);
+        let prefixes = authenticated_new_window_live_prefill_prefixes(
+            1,
+            epoch,
+            |lane| requests.get(lane).copied(),
+            prefill,
+            &draft,
+            &target,
+        )
+        .expect("existing singleton shape remains admitted");
+        assert_eq!(prefixes, (&[128_u32][..], &[128_u32][..]));
     }
 
     fn active_logical(request: RequestId, role: Qwen3ModelRole, tokens: u32) -> LogicalKvState {
