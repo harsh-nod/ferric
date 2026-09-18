@@ -11,6 +11,7 @@ publish = false
 default = ["gfx950", "mfma"]
 gfx950 = []
 mfma = []
+mfma-paired-prefetch = ["mfma"]
 cooperative-argmax = []
 
 [dependencies]

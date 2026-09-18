@@ -8,6 +8,9 @@ use fe2o3_device::{
     WaveLane,
 };
 
+#[cfg(feature = "mfma")]
+const MFMA_PAIRED_PREFETCH: bool = cfg!(feature = "mfma-paired-prefetch");
+
 /// One Wave64 cooperatively computes each row/output-column dot product.
 /// Weights are the unchanged v2 row-major [n,k] layout.
 #[kernel(typed, launch(required = [64, 1, 1], max = [64, 1, 1], max_grid = [2430976, 1, 1]), control_flow(loop_bounds(64)))]
@@ -236,7 +239,7 @@ pub fn ferric_qwen3_tp_wave_gemv_partial_f32_v3(
 /// One Wave64 owns a 16x16 tile, with zero-filled inactive activation rows.
 /// `weights_kn` is a separately resident row-major [k,n] transpose of v2 weights.
 #[cfg(feature = "mfma")]
-#[kernel(typed, launch(required = [64, 1, 1], max = [64, 1, 1], max_grid = [9496, 1, 1]), control_flow(loop_bounds(256)))]
+#[kernel(typed, launch(required = [64, 1, 1], max = [64, 1, 1], max_grid = [9496, 1, 1]), control_flow(loop_bounds(128, 256)))]
 #[allow(clippy::too_many_arguments)]
 pub fn ferric_qwen3_tp_mfma_gemm_bf16_v3(
     a: &[u16],
@@ -279,10 +282,7 @@ pub fn ferric_qwen3_tp_mfma_gemm_bf16_v3(
     } else {
         fe2o3_device::trap();
     }
-    if a.len() < rows * 4096
-        || a.len() > 16 * 4096
-        || weights_kn.len() != n * 4096
-    {
+    if a.len() < rows * 4096 || a.len() > 16 * 4096 || weights_kn.len() != n * 4096 {
         fe2o3_device::trap();
     }
     let invocation = thread::index_1d();
@@ -298,12 +298,27 @@ pub fn ferric_qwen3_tp_mfma_gemm_bf16_v3(
     };
     let matrix = DeviceMatrix::current();
     let mut accumulator = F32AccumulatorFragment::zero(&lane);
-    let mut step = 0_usize;
-    while step < 256 {
-        let a_fragment = left.load_m16k16(&lane, 0, step * 16);
-        let b_fragment = right.load_k16n16(&lane, step * 16, tile_column * 16);
-        accumulator = matrix.multiply_accumulate(a_fragment, b_fragment, accumulator);
-        step += 1;
+    if MFMA_PAIRED_PREFETCH && world_size == 1 {
+        // Prepare two operand pairs before consuming either; the single accumulator
+        // still visits K16 tiles in exactly the original order.
+        let mut step = 0_usize;
+        while step < 128 {
+            let a_first = left.load_m16k16(&lane, 0, step * 32);
+            let b_first = right.load_k16n16(&lane, step * 32, tile_column * 16);
+            let a_second = left.load_m16k16(&lane, 0, step * 32 + 16);
+            let b_second = right.load_k16n16(&lane, step * 32 + 16, tile_column * 16);
+            accumulator = matrix.multiply_accumulate(a_first, b_first, accumulator);
+            accumulator = matrix.multiply_accumulate(a_second, b_second, accumulator);
+            step += 1;
+        }
+    } else {
+        let mut step = 0_usize;
+        while step < 256 {
+            let a_fragment = left.load_m16k16(&lane, 0, step * 16);
+            let b_fragment = right.load_k16n16(&lane, step * 16, tile_column * 16);
+            accumulator = matrix.multiply_accumulate(a_fragment, b_fragment, accumulator);
+            step += 1;
+        }
     }
     let [value_0, value_1, value_2, value_3] = accumulator.into_values();
     if output.len() < rows * n || output.len() > 16 * n {
@@ -359,8 +374,8 @@ pub fn ferric_qwen3_tp_mfma_gemm_bf16_v3(
 
 /// MFMA FP32 partial projection over exactly the rank-local reduction width.
 #[cfg(feature = "mfma")]
-#[kernel(typed, launch(required = [64, 1, 1], max = [64, 1, 1], max_grid = [256, 1, 1]), control_flow(loop_bounds(32, 96, 128, 256, 384, 768)))]
-#[allow(clippy::too_many_arguments)]
+#[kernel(typed, launch(required = [64, 1, 1], max = [64, 1, 1], max_grid = [256, 1, 1]), control_flow(loop_bounds(32, 96, 128, 128, 256, 384, 384, 768)))]
+#[allow(clippy::too_many_arguments, clippy::collapsible_else_if)]
 pub fn ferric_qwen3_tp_mfma_gemm_partial_f32_v3(
     a: &[u16],
     weights_kn: &[u16],
@@ -398,10 +413,7 @@ pub fn ferric_qwen3_tp_mfma_gemm_partial_f32_v3(
     } else {
         fe2o3_device::trap();
     }
-    if a.len() < rows * k
-        || a.len() > 16 * k
-        || weights_kn.len() != 4096 * k
-    {
+    if a.len() < rows * k || a.len() > 16 * k || weights_kn.len() != 4096 * k {
         fe2o3_device::trap();
     }
     let invocation = thread::index_1d();
@@ -417,7 +429,8 @@ pub fn ferric_qwen3_tp_mfma_gemm_partial_f32_v3(
     };
     let matrix = DeviceMatrix::current();
     let mut accumulator = F32AccumulatorFragment::zero(&lane);
-    // Static loops expose both termination and uniform control for each TP shape.
+    // Select paired loads within TP1's existing K branches so the feature
+    // constant removes the unused schedule before the race proof runs.
     if k == 512 {
         let mut step = 0_usize;
         while step < 32 {
@@ -443,12 +456,25 @@ pub fn ferric_qwen3_tp_mfma_gemm_partial_f32_v3(
             step += 1;
         }
     } else if k == 4096 {
-        let mut step = 0_usize;
-        while step < 256 {
-            let a_fragment = left.load_m16k16(&lane, 0, step * 16);
-            let b_fragment = right.load_k16n16(&lane, step * 16, tile_column * 16);
-            accumulator = matrix.multiply_accumulate(a_fragment, b_fragment, accumulator);
-            step += 1;
+        if MFMA_PAIRED_PREFETCH {
+            let mut step = 0_usize;
+            while step < 128 {
+                let a_first = left.load_m16k16(&lane, 0, step * 32);
+                let b_first = right.load_k16n16(&lane, step * 32, tile_column * 16);
+                let a_second = left.load_m16k16(&lane, 0, step * 32 + 16);
+                let b_second = right.load_k16n16(&lane, step * 32 + 16, tile_column * 16);
+                accumulator = matrix.multiply_accumulate(a_first, b_first, accumulator);
+                accumulator = matrix.multiply_accumulate(a_second, b_second, accumulator);
+                step += 1;
+            }
+        } else {
+            let mut step = 0_usize;
+            while step < 256 {
+                let a_fragment = left.load_m16k16(&lane, 0, step * 16);
+                let b_fragment = right.load_k16n16(&lane, step * 16, tile_column * 16);
+                accumulator = matrix.multiply_accumulate(a_fragment, b_fragment, accumulator);
+                step += 1;
+            }
         }
     } else if k == 6144 {
         let mut step = 0_usize;
@@ -459,12 +485,25 @@ pub fn ferric_qwen3_tp_mfma_gemm_partial_f32_v3(
             step += 1;
         }
     } else {
-        let mut step = 0_usize;
-        while step < 768 {
-            let a_fragment = left.load_m16k16(&lane, 0, step * 16);
-            let b_fragment = right.load_k16n16(&lane, step * 16, tile_column * 16);
-            accumulator = matrix.multiply_accumulate(a_fragment, b_fragment, accumulator);
-            step += 1;
+        if MFMA_PAIRED_PREFETCH {
+            let mut step = 0_usize;
+            while step < 384 {
+                let a_first = left.load_m16k16(&lane, 0, step * 32);
+                let b_first = right.load_k16n16(&lane, step * 32, tile_column * 16);
+                let a_second = left.load_m16k16(&lane, 0, step * 32 + 16);
+                let b_second = right.load_k16n16(&lane, step * 32 + 16, tile_column * 16);
+                accumulator = matrix.multiply_accumulate(a_first, b_first, accumulator);
+                accumulator = matrix.multiply_accumulate(a_second, b_second, accumulator);
+                step += 1;
+            }
+        } else {
+            let mut step = 0_usize;
+            while step < 768 {
+                let a_fragment = left.load_m16k16(&lane, 0, step * 16);
+                let b_fragment = right.load_k16n16(&lane, step * 16, tile_column * 16);
+                accumulator = matrix.multiply_accumulate(a_fragment, b_fragment, accumulator);
+                step += 1;
+            }
         }
     }
     let values = accumulator.into_values();
