@@ -5,13 +5,26 @@ receipt. The 33 M1 roadmap gates remain open.
 
 ## Current Checkpoint
 
+The user-requested [performance swarm V3](M1_PERFORMANCE_SWARM_V3.md) is active:
+runtime profiling, opt-in draft kernels and same-eight-GPU comparison reporting
+have source implementations. On user-authorized mi300x-2, the combined Python
+suite passes 115 tests and the stricter profiler passes retained C1 replay.
+The isolated draft kernel passes 14 tests, formatting and Clippy on the existing
+46d pin, intermediate 47d and frozen fe2o3 main f713; only that candidate adopts
+f713. The main adapter's compiler adoption and native emission remain pending.
+At 17:59:43 UTC mi350's driver/device nodes
+are restored and all eight GPUs report idle. This supersedes the driver blocker
+below, not its historical observations. mi300x root available space remains
+zero; the authorized build-host redirect supersedes that execution blocker.
+No new native result or performance gain is claimed.
+
 | Team | Implemented Or Validated | Next Dependency |
 | --- | --- | --- |
 | Engine | Fresh S8/T128 bootstrap and first S8/K4 round; 781 CPU tests pass on the retained R3 source; expanded tests and typed close status remain unvalidated | Validate admission/close tests and ignored public S8 hardware fixture |
 | Numerical | Explicit arithmetic capture; CPU checks pass; authenticated retained-reference reuse passes 11 regressions | Fresh native captures and recomputed tensor errors |
-| Compiler/Runtime | Validated 46d adoption; newer 3f53122f compiler/Pliron delta reviewed; runtime/KFD inputs unchanged | Dual-pin adoption, fresh compiler tools and kernel emission |
+| Compiler/Runtime | Validated 46d adapter adoption; newer f713 compiler delta reviewed and isolated v16 host checks pass | Full-adapter adoption, fresh compiler tools and kernel emission |
 | Verification | Retained R3 source coverage passes with 52 new bodies pending-Verus; six close-status bodies newly declared pending | Regenerate current coverage, then body proofs and protected-runtime qualification |
-| Site | R29 CPU progress draft committed; historical results keep their attribution | Remote QA paused at disk-space admission; deploy-only publication pending |
+| Site | R29 CPU progress draft committed; historical results keep their attribution | Move bounded QA to mi300x-2; deploy-only publication pending |
 
 The selected native GPU host is `mi350`, not `mi350-2`. SSH succeeds on
 September 18. Before the reboot described below, a passive observation finds
@@ -19,7 +32,7 @@ a separate Ferric process on physical GPUs 0 and 1; that work is left untouched.
 The completed host-residual pair uses physical GPU 2, with a separate fresh
 admission for each arm.
 Availability snapshots are not reservations or launch admission. Builds and
-CPU tests remain on mi300x; no local or GitHub-hosted build is used.
+CPU tests now use user-authorized mi300x-2; no local or GitHub-hosted build is used.
 
 At 15:34--15:35 UTC, a fresh passive observation reaches the same mi350 host
 after a reboot (reported uptime two minutes). All eight accelerators remain

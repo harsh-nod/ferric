@@ -1,3 +1,4 @@
+import copy
 import hashlib
 import json
 from pathlib import Path
@@ -15,9 +16,10 @@ import test_competitive_continuous as timeline_fixture
 import test_competitive_series as old_fixture
 
 
-def fixture(root, starts=3, windows=10, warmups=10):
+def fixture(root, starts=3, windows=10, warmups=10, ttft_slo_ms=1000):
     old, manifest, _ = old_fixture.fixture(root, starts=starts, windows=windows, warmups=warmups)
-    settings = timeline_fixture.config(warmup_windows=warmups, measurement_windows=windows)
+    settings = timeline_fixture.config(warmup_windows=warmups, measurement_windows=windows,
+                                       ttft_slo_ms=ttft_slo_ms)
     binding = old_fixture.save(root, 'continuous-settings.json', settings)
     frozen = {key: old[key] for key in ('cell', 'comparison_scope', 'workload_sha256',
         'tuning_policy_sha256', 'engines', 'baseline', 'starts', 'engine_order',
@@ -57,6 +59,45 @@ def fixture(root, starts=3, windows=10, warmups=10):
     return frozen, manifest, plan_binding['sha256']
 
 
+def allocation_config(layout, mode='target-only'):
+    width = series.LAYOUTS[layout]
+    return {'layout': layout, 'replica_device_unique_ids': [list(range(i, i + width))
+            for i in range(1, 9, width)], 'execution_mode': mode,
+            'speculation_config_sha256': 'f' * 64 if mode == 'speculative' else None,
+            'draft_device_unique_ids': [1] if mode == 'speculative' else []}
+
+
+def allocation_fixture(root, layouts=('8xTP1', '1xTP8'), mode='target-only', ttft_slo_ms=1000):
+    frozen, manifest, _ = fixture(root, ttft_slo_ms=ttft_slo_ms)
+    frozen['schema'] = series.ALLOCATION_PLAN_SCHEMA
+    frozen['comparison_scope'] = dict(frozen['comparison_scope'],
+        precision_policy_sha256='c' * 64, speculation_policy=mode)
+    frozen['serving_configurations'] = {engine: allocation_config(layout, mode)
+        for engine, layout in zip(('ferric', 'vllm'), layouts)}
+    if mode == 'speculative':
+        frozen['serving_configurations']['vllm']['speculation_config_sha256'] = 'e' * 64
+    identities = {}
+    for engine in frozen['engines']:
+        identity = {'engine': engine, 'comparison_scope': frozen['comparison_scope'], 'artifact': engine,
+                    'serving_configuration': frozen['serving_configurations'][engine]}
+        binding = old_fixture.save(root, engine + '-identity.json', identity)
+        frozen['engines'][engine] = binding['sha256']
+        identities[engine] = (identity, binding)
+    for entry in manifest['runs']:
+        identity, binding = identities[entry['engine']]
+        entry['identity'] = binding
+        start = json.loads((root / entry['start_evidence']['path']).read_bytes())
+        start['identity_sha256'] = binding['sha256']
+        entry['start_evidence'] = old_fixture.save(root, entry['start_evidence']['path'], start)
+        run = json.loads((root / entry['run']['path']).read_bytes())
+        run.update(identity=identity, identity_sha256=binding['sha256'], start_evidence=start,
+                   start_evidence_sha256=entry['start_evidence']['sha256'])
+        entry['run'] = old_fixture.save(root, entry['run']['path'], run)
+    binding = old_fixture.save(root, 'continuous-plan.json', frozen)
+    manifest.update(schema=series.ALLOCATION_RUNS_SCHEMA, plan_sha256=binding['sha256'])
+    return frozen, manifest, binding['sha256']
+
+
 class ContinuousSeriesTests(unittest.TestCase):
     def setUp(self):
         self.directory = tempfile.TemporaryDirectory()
@@ -68,6 +109,9 @@ class ContinuousSeriesTests(unittest.TestCase):
 
     def reset(self, **changes):
         self.plan, self.manifest, self.plan_sha = fixture(self.root, **changes)
+
+    def reset_allocation(self, **changes):
+        self.plan, self.manifest, self.plan_sha = allocation_fixture(self.root, **changes)
 
     def analyze(self):
         return series.analyze(self.plan, self.manifest, self.root, self.plan_sha)
@@ -112,6 +156,133 @@ class ContinuousSeriesTests(unittest.TestCase):
         self.assertFalse(result['framework_win_claim'])
         self.assertEqual(result['aggregator_sha256'], series.source_hashes()['aggregator_sha256'])
         self.assertEqual(result['resource_policy']['collector_response_bytes_unchanged'], 64 * 1024**2)
+
+    def test_v3_does_not_gain_an_allocation_or_precision_claim(self):
+        result = self.analyze()
+        self.assertEqual(result['schema'], series.REPORT_SCHEMA)
+        self.assertNotIn('serving_configurations', result)
+        self.assertNotIn('comparison_kind', result)
+        self.plan['serving_configurations'] = {}
+        with self.assertRaisesRegex(ValueError, 'plan fields drifted'):
+            self.analyze()
+
+    def test_v4_all_four_eight_gpu_layouts_replay_one_shared_slo_timeline(self):
+        layouts = list(series.LAYOUTS)
+        for left, right in zip(layouts, reversed(layouts)):
+            with self.subTest(ferric=left, vllm=right):
+                self.reset_allocation(layouts=(left, right))
+                result = self.analyze()
+                self.assertEqual(result['schema'], series.ALLOCATION_REPORT_SCHEMA)
+                self.assertEqual(result['comparison_kind'], 'same-mode-eight-GPU-allocation')
+                self.assertEqual(result['serving_configurations'], self.plan['serving_configurations'])
+                self.assertEqual(result['comparison_scope'], self.plan['comparison_scope'])
+                self.assertEqual(result['paired']['median_ratio'], 1)
+                self.assertEqual(result['paired']['independent_pair_count'], 3)
+                self.assertFalse(result['framework_win_claim'])
+                self.assertFalse(result['qualification_preconditions_satisfied'])
+                self.assertIn('text-chunk TPOT does not establish token-level ITL SLOs',
+                              result['qualification_precondition_failures'])
+
+    def test_v4_accepts_speculation_only_with_identity_bound_configuration(self):
+        self.reset_allocation(mode='speculative')
+        result = self.analyze()
+        self.assertTrue(result['comparison_valid'])
+        self.assertEqual(result['paired']['ratio_ci95'], [1, 1])
+        self.assertFalse(result['qualification'])
+        self.plan['serving_configurations']['ferric']['speculation_config_sha256'] = None
+        with self.assertRaisesRegex(ValueError, 'invalid SHA-256'):
+            self.analyze()
+
+    def test_v4_rejects_partial_duplicate_changed_or_malformed_gpu_allocations(self):
+        self.reset_allocation()
+        original = copy.deepcopy(self.plan)
+        for mutate in (lambda config: config.update(layout='3xTP2'),
+                       lambda config: config['replica_device_unique_ids'].pop(),
+                       lambda config: config['replica_device_unique_ids'][0].append(9),
+                       lambda config: config['replica_device_unique_ids'][0].__setitem__(0, 2),
+                       lambda config: config['replica_device_unique_ids'][0].__setitem__(0, 9),
+                       lambda config: config['replica_device_unique_ids'][0].__setitem__(0, True),
+                       lambda config: config['replica_device_unique_ids'][0].__setitem__(0, 0),
+                       lambda config: config['replica_device_unique_ids'][0].__setitem__(0, 2**64)):
+            with self.subTest(mutate=mutate):
+                self.plan = copy.deepcopy(original)
+                mutate(self.plan['serving_configurations']['ferric'])
+                with mock.patch.object(series.EvidenceBudget, 'load') as load:
+                    with self.assertRaises(ValueError):
+                        self.analyze()
+                    load.assert_not_called()
+
+    def test_v4_rejects_mixed_mode_ablations_and_target_only_draft_resources(self):
+        self.reset_allocation()
+        original = copy.deepcopy(self.plan)
+        for update in ({'execution_mode': 'speculative'}, {'draft_device_unique_ids': [1]},
+                       {'speculation_config_sha256': 'f' * 64}):
+            with self.subTest(update=update):
+                self.plan = copy.deepcopy(original)
+                self.plan['serving_configurations']['ferric'].update(update)
+                with self.assertRaisesRegex(ValueError, 'cross-mode|target-only'):
+                    self.analyze()
+        self.reset_allocation(mode='speculative')
+        self.plan['serving_configurations']['vllm']['execution_mode'] = 'target-only'
+        with self.assertRaisesRegex(ValueError, 'cross-mode'):
+            self.analyze()
+
+    def test_v4_draft_gpus_share_the_eight_device_budget(self):
+        self.reset_allocation(mode='speculative')
+        for draft in ([9], [1, 1], [True], [2**64], '1'):
+            with self.subTest(draft=draft):
+                self.plan['serving_configurations']['ferric']['draft_device_unique_ids'] = draft
+                with self.assertRaises(ValueError):
+                    self.analyze()
+
+    def test_v4_requires_a_frozen_precision_policy_and_matching_manifest_version(self):
+        self.reset_allocation()
+        precision = self.plan['comparison_scope'].pop('precision_policy_sha256')
+        with self.assertRaisesRegex(ValueError, 'comparison scope fields drifted'):
+            self.analyze()
+        self.plan['comparison_scope']['precision_policy_sha256'] = precision
+        self.manifest['schema'] = series.RUNS_SCHEMA
+        with self.assertRaisesRegex(ValueError, 'manifest plan mismatch'):
+            self.analyze()
+
+    def test_v4_layout_cannot_be_relabelled_without_the_run_identity(self):
+        self.reset_allocation()
+        self.plan['serving_configurations']['ferric'] = allocation_config('2xTP4')
+        binding = old_fixture.save(self.root, 'changed-plan.json', self.plan)
+        self.plan_sha = binding['sha256']
+        self.manifest['plan_sha256'] = self.plan_sha
+        with self.assertRaisesRegex(ValueError, 'identity-bound serving configuration drifted'):
+            self.analyze()
+
+    def test_v4_identity_gpu_numbers_are_not_boolean_equivalents(self):
+        self.reset_allocation()
+        entry = self.manifest['runs'][0]
+        identity = json.loads((self.root / entry['identity']['path']).read_bytes())
+        identity['serving_configuration']['replica_device_unique_ids'][0][0] = True
+        entry['identity'] = old_fixture.save(self.root, 'boolean-identity.json', identity)
+        self.plan['engines']['ferric'] = entry['identity']['sha256']
+        with self.assertRaisesRegex(ValueError, 'invalid physical GPU identity'):
+            self.analyze()
+
+    def test_v4_slo_misses_have_zero_goodput_without_becoming_request_failures(self):
+        self.reset_allocation(ttft_slo_ms=50)
+        result = self.analyze()
+        self.assertTrue(result['comparison_valid'])
+        self.assertTrue(all(window['goodputs'] == [0] * 10 for window in result['windows']))
+        self.assertTrue(all(not any(window['window_request_failures']) for window in result['windows']))
+        self.assertIsNone(result['paired']['median_ratio'])
+
+    def test_v4_retains_zero_failure_goodput_and_invalid_comparison_rejection(self):
+        self.reset_allocation()
+        self.fail('client_overload')
+        result = self.analyze()
+        self.assertEqual(result['windows'][0]['goodputs'][0], 0)
+        self.assertFalse(result['sampling_preconditions_satisfied'])
+        self.reset_allocation(mode='speculative')
+        self.fail('client_budget')
+        result = self.analyze()
+        self.assertFalse(result['comparison_valid'])
+        self.assertIsNone(result['paired'])
 
     def test_every_imported_source_and_aggregator_must_match_frozen_plan_before_loading_runs(self):
         for key in series.source_hashes():
@@ -317,6 +488,23 @@ class ContinuousSeriesTests(unittest.TestCase):
         result = subprocess.run(args + ['--output', str(failed)], capture_output=True, text=True, timeout=15)
         self.assertNotEqual(result.returncode, 0)
         report = json.loads(failed.read_bytes())
+        self.assertFalse(report['completed'])
+        self.assertFalse(report['comparison_valid'])
+        self.assertIsNone(report['paired'])
+        self.assertIn('hash drifted', report['analysis_error'])
+
+    def test_v4_cli_failure_retains_v4_schema_without_statistics(self):
+        self.reset_allocation()
+        manifest = old_fixture.save(self.root, 'runs.json', self.manifest)
+        (self.root / self.manifest['runs'][0]['run']['path']).write_text('{}')
+        output = self.root / 'failed-allocation.json'
+        result = subprocess.run([sys.executable, '-B', series.__file__,
+            '--plan', str(self.root / 'continuous-plan.json'), '--plan-sha256', self.plan_sha,
+            '--runs', str(self.root / manifest['path']), '--output', str(output)],
+            capture_output=True, text=True, timeout=15)
+        self.assertNotEqual(result.returncode, 0)
+        report = json.loads(output.read_bytes())
+        self.assertEqual(report['schema'], series.ALLOCATION_REPORT_SCHEMA)
         self.assertFalse(report['completed'])
         self.assertFalse(report['comparison_valid'])
         self.assertIsNone(report['paired'])

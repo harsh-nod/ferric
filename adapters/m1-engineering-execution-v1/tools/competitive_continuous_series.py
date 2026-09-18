@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Bounded paired V3 replay and descriptive statistics, never qualification."""
+"""Bounded paired replay and optional eight-GPU allocation contracts, never qualification."""
 
 import argparse
 import hashlib
@@ -26,6 +26,10 @@ SOURCES = {'collector': continuous, 'client': client, 'replay_verifier': replay}
 PLAN_SCHEMA = 'FerricCompetitiveContinuousSeriesPlanV3'
 RUNS_SCHEMA = 'FerricCompetitiveContinuousSeriesRunsV3'
 REPORT_SCHEMA = 'FerricCompetitiveContinuousSeriesReportV3'
+ALLOCATION_PLAN_SCHEMA = 'FerricCompetitiveContinuousSeriesPlanV4'
+ALLOCATION_RUNS_SCHEMA = 'FerricCompetitiveContinuousSeriesRunsV4'
+ALLOCATION_REPORT_SCHEMA = 'FerricCompetitiveContinuousSeriesReportV4'
+LAYOUTS = {'8xTP1': 1, '4xTP2': 2, '2xTP4': 4, '1xTP8': 8}
 
 
 def source_hashes():
@@ -35,16 +39,58 @@ def source_hashes():
     return values
 
 
+def serving_configurations(value, engines, scope):
+    replay.fields(value, set(engines), 'serving configurations')
+    mode = scope['speculation_policy']
+    require(mode in ('target-only', 'speculative'), 'invalid same-mode speculation policy')
+    shared_devices = None
+    for engine, config in value.items():
+        replay.fields(config, {'layout', 'replica_device_unique_ids', 'execution_mode',
+                               'speculation_config_sha256', 'draft_device_unique_ids'},
+                      f'{engine} serving configuration')
+        layout = config['layout']
+        require(type(layout) is str and layout in LAYOUTS, 'unsupported eight-GPU allocation')
+        width = LAYOUTS[layout]
+        groups = config['replica_device_unique_ids']
+        require(type(groups) is list and len(groups) == 8 // width
+                and all(type(group) is list and len(group) == width for group in groups),
+                'replica groups differ from eight-GPU allocation')
+        devices = [integer(device, 1, 2**64 - 1, 'physical GPU identity')
+                   for group in groups for device in group]
+        require(len(set(devices)) == 8, 'eight distinct physical GPUs required')
+        if shared_devices is None:
+            shared_devices = set(devices)
+        require(set(devices) == shared_devices, 'engines must use the same eight physical GPUs')
+        require(config['execution_mode'] == mode,
+                'cross-mode ablations cannot enter a same-mode allocation comparison')
+        draft = config['draft_device_unique_ids']
+        require(type(draft) is list and len(draft) <= 8, 'invalid draft GPU allocation')
+        draft = [integer(device, 1, 2**64 - 1, 'draft GPU identity') for device in draft]
+        require(len(set(draft)) == len(draft) and set(draft) <= shared_devices,
+                'draft GPUs must fit within the same eight-device budget')
+        if mode == 'target-only':
+            require(config['speculation_config_sha256'] is None and not draft,
+                    'target-only configuration contains speculation resources')
+        else:
+            replay.sha(config['speculation_config_sha256'])
+
+
 def plan(value):
-    replay.fields(value, {'schema', 'cell', 'comparison_scope', 'workload_sha256',
-                         'tuning_policy_sha256', 'settings', 'settings_sha256', 'engines',
-                         'baseline', 'starts', 'engine_order', 'bootstrap_seed', 'bootstrap_samples',
-                         *source_hashes()}, 'continuous series plan')
-    require(value['schema'] == PLAN_SCHEMA, 'unknown continuous series plan')
+    require(type(value) is dict and value.get('schema') in (PLAN_SCHEMA, ALLOCATION_PLAN_SCHEMA),
+            'unknown continuous series plan')
+    allocation = value['schema'] == ALLOCATION_PLAN_SCHEMA
+    expected = {'schema', 'cell', 'comparison_scope', 'workload_sha256',
+                'tuning_policy_sha256', 'settings', 'settings_sha256', 'engines',
+                'baseline', 'starts', 'engine_order', 'bootstrap_seed', 'bootstrap_samples',
+                *source_hashes()}
+    if allocation:
+        expected.add('serving_configurations')
+    replay.fields(value, expected, 'continuous series plan')
     require(type(value['cell']) is str and 0 < len(value['cell']) <= 128, 'invalid cell')
     require(value['baseline'] in ('vllm', 'sglang'), 'baseline must be explicitly frozen')
     replay.fields(value['engines'], {'ferric', value['baseline']}, 'engine identities')
-    replay.fields(value['comparison_scope'], replay.SCOPE, 'comparison scope')
+    scope_fields = replay.SCOPE | ({'precision_policy_sha256'} if allocation else set())
+    replay.fields(value['comparison_scope'], scope_fields, 'comparison scope')
     for key, entry in value['comparison_scope'].items():
         if key.endswith('_sha256'):
             replay.sha(entry)
@@ -52,6 +98,8 @@ def plan(value):
             require(type(entry) is str and 0 < len(entry) <= 256, f'invalid scope {key}')
     for identity in value['engines'].values():
         replay.sha(identity)
+    if allocation:
+        serving_configurations(value['serving_configurations'], value['engines'], value['comparison_scope'])
     for key in ('workload_sha256', 'tuning_policy_sha256', 'settings_sha256', *source_hashes()):
         replay.sha(value[key])
     continuous.settings(value['settings'])
@@ -161,9 +209,11 @@ def paired_start_bootstrap(pairs, samples, seed):
 
 def analyze(frozen, manifest, root, plan_sha):
     frozen = plan(frozen)
+    allocation = frozen['schema'] == ALLOCATION_PLAN_SCHEMA
     replay.sha(plan_sha)
     replay.fields(manifest, {'schema', 'plan_sha256', 'runs'}, 'continuous run manifest')
-    require(manifest['schema'] == RUNS_SCHEMA and manifest['plan_sha256'] == plan_sha,
+    expected_runs_schema = ALLOCATION_RUNS_SCHEMA if allocation else RUNS_SCHEMA
+    require(manifest['schema'] == expected_runs_schema and manifest['plan_sha256'] == plan_sha,
             'run manifest plan mismatch')
     entries = manifest['runs']
     require(type(entries) is list and len(entries) == 2 * frozen['starts'], 'missing paired starts')
@@ -187,6 +237,11 @@ def analyze(frozen, manifest, root, plan_sha):
         require(data['identity'].get('engine') == engine
                 and data['identity'].get('comparison_scope') == frozen['comparison_scope'],
                 'comparison scope drifted')
+        if allocation:
+            require(data['identity'].get('serving_configuration') == frozen['serving_configurations'][engine],
+                    'identity-bound serving configuration drifted')
+            serving_configurations({engine: data['identity']['serving_configuration']}, {engine},
+                                   frozen['comparison_scope'])
         require(data['settings'] == frozen['settings'], 'frozen continuous settings drifted')
         tuning_policy(data['tuning_policy'], frozen)
         instance = replay.start_evidence(data['start_evidence'], engine, frozen['engines'][engine])
@@ -245,7 +300,13 @@ def analyze(frozen, manifest, root, plan_sha):
         pairs = [list(zip(results[('ferric', index)]['goodputs'],
                           results[(frozen['baseline'], index)]['goodputs'])) for index in range(frozen['starts'])]
         paired = paired_start_bootstrap(pairs, frozen['bootstrap_samples'], frozen['bootstrap_seed'])
-    return {'schema': REPORT_SCHEMA, 'authority': 'none', 'qualification': False, 'framework_win_claim': False,
+    allocation_fields = ({'comparison_kind': 'same-mode-eight-GPU-allocation',
+                          'comparison_scope': frozen['comparison_scope'],
+                          'serving_configurations': frozen['serving_configurations'],
+                          'allocation_evidence_status': 'identity-bound operator declaration, not device attestation'}
+                         if allocation else {})
+    return {'schema': ALLOCATION_REPORT_SCHEMA if allocation else REPORT_SCHEMA,
+            'authority': 'none', 'qualification': False, 'framework_win_claim': False, **allocation_fields,
             'cell': frozen['cell'], 'baseline': frozen['baseline'], 'plan_sha256': plan_sha,
             **source_hashes(), 'comparison_valid': not invalid, 'comparison_invalid_reasons': invalid,
             'statistic': 'median fixed-window SLO-filtered DONE output tokens/s; ordinary failed windows stay zero',
@@ -284,6 +345,8 @@ def main():
     with args.output.open('x', encoding='utf-8') as output:
         try:
             frozen = replay.load(args.plan, args.plan_sha256)
+            if type(frozen) is dict and frozen.get('schema') == ALLOCATION_PLAN_SCHEMA:
+                report['schema'] = ALLOCATION_REPORT_SCHEMA
             raw, manifest = client.read_input(args.runs)
             report.update(analyze(frozen, manifest, args.runs.resolve().parent, args.plan_sha256),
                           runs_manifest_sha256=hashlib.sha256(raw).hexdigest(), completed=True)
