@@ -6,6 +6,8 @@ use super::{EngineeringTpArgumentV1, EngineeringTpDispatchV1, TpResult};
 mod c1_kv_copy_v19;
 #[cfg(feature = "tp-batch-engineering")]
 mod draft;
+#[cfg(feature = "tp-batch-engineering")]
+mod split_attention_v21;
 
 pub(super) fn bind_mode(
     draft_v10: bool,
@@ -30,6 +32,10 @@ pub(super) fn bind_storage(
     large_kv: bool,
     command: EngineeringTpDispatchV1,
 ) -> TpResult<EngineeringTpDispatchV1> {
+    #[cfg(feature = "tp-batch-engineering")]
+    if crate::tp_artifact::ENGINEERING_TP_SPLIT_ATTENTION_EXPORTS_V21.contains(&command.kernel) {
+        return split_attention_v21::bind(capacity, large_kv, command);
+    }
     #[cfg(feature = "tp-batch-engineering")]
     if command.kernel == crate::tp_artifact::ENGINEERING_TP_C1_KV_COPY_EXPORTS_V19[0] {
         return c1_kv_copy_v19::bind(capacity, large_kv, command);

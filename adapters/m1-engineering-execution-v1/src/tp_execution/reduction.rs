@@ -8,6 +8,23 @@ use super::{
 
 const DEVICE_RESIDUAL: &str = "ferric_qwen3_tp_batch_residual_bf16_v3";
 
+#[derive(Clone, Copy)]
+enum AttentionProducerSchedule {
+    Baseline,
+    #[cfg(feature = "tp-batch-engineering")]
+    Split8V21,
+}
+
+impl AttentionProducerSchedule {
+    const fn packets(self) -> usize {
+        match self {
+            Self::Baseline => 10,
+            #[cfg(feature = "tp-batch-engineering")]
+            Self::Split8V21 => 11,
+        }
+    }
+}
+
 /// Named, opt-in arithmetic/transport profiles with no implicit fallback.
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
 pub enum EngineeringTpReductionModeV3 {
@@ -186,6 +203,42 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpExecutionV1<R> {
         layer: u32,
         operation: Qwen3TensorParallelCollectiveV1,
     ) -> TpResult<()> {
+        self.reduce_device_tp1_schedule(layer, operation, AttentionProducerSchedule::Baseline)
+    }
+
+    #[cfg(feature = "tp-batch-engineering")]
+    pub(super) fn reduce_split_attention_v25(&mut self, layer: u32) -> TpResult<()> {
+        let _timing = self.timing.scope("collective_attention");
+        if self.closed
+            || self.packed_c1.is_some()
+            || self.sequences.is_some()
+            || self.ordered_batches.is_none()
+            || self.reduction.mode() != EngineeringTpReductionModeV3::DeviceTp1V3
+            || self.plan.world_size() != 1
+            || self.ranks.len() != 1
+            || self.transports.len() != 1
+            || self.row_capacity != 32
+            || self.hidden.len() != 4096
+            || self.draft_v10
+            || self.large_kv
+        {
+            return Err(
+                "V25 residual requires an ordered, nonpacked target TP1 single-row forward".into(),
+            );
+        }
+        self.reduce_device_tp1_schedule(
+            layer,
+            Qwen3TensorParallelCollectiveV1::AttentionOutputSum,
+            AttentionProducerSchedule::Split8V21,
+        )
+    }
+
+    fn reduce_device_tp1_schedule(
+        &mut self,
+        layer: u32,
+        operation: Qwen3TensorParallelCollectiveV1,
+        attention_schedule: AttentionProducerSchedule,
+    ) -> TpResult<()> {
         let key = self
             .packed_c1
             .map_or(self.collective, |state| state.collective)
@@ -210,7 +263,7 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpExecutionV1<R> {
                 .as_ref()
                 .expect("ordered residual group");
             let expected = match operation {
-                Qwen3TensorParallelCollectiveV1::AttentionOutputSum => 10,
+                Qwen3TensorParallelCollectiveV1::AttentionOutputSum => attention_schedule.packets(),
                 Qwen3TensorParallelCollectiveV1::FeedForwardDownSum => 5,
             };
             let count = pending

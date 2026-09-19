@@ -7,6 +7,7 @@ mod argmax_v11;
 mod attention_argmax_v11;
 mod c1_kv_copy_v19;
 mod c1_packet_packing_v22;
+mod c1_split_attention_v25;
 mod draft;
 mod large_kv;
 mod layer_c1_wave;
@@ -66,6 +67,9 @@ enum Failure {
     RmsNormWait(usize),
     KvCopySubmit,
     KvCopyWait,
+    SplitSubmit(usize),
+    SplitWait(usize),
+    AllocateAt(u64),
 }
 
 struct Recording {
@@ -93,6 +97,7 @@ struct Recording {
     query_hoist_v14_loaded: Option<[u8; 32]>,
     wave_rmsnorm_v15_loaded: Option<[u8; 32]>,
     c1_kv_copy_v19_loaded: Option<[u8; 32]>,
+    split_attention_v21_loaded: Option<[u8; 32]>,
     argmax_peer: Option<(u32, u32, u32)>,
 }
 
@@ -173,7 +178,9 @@ impl EngineeringTpRankTransportV1 for Recording {
                 || (self.wave_rmsnorm_v15_loaded == Some(image)
                     && kernels == crate::tp_artifact::ENGINEERING_TP_WAVE_RMSNORM_EXPORTS_V15)
                 || (self.c1_kv_copy_v19_loaded == Some(image)
-                    && kernels == crate::tp_artifact::ENGINEERING_TP_C1_KV_COPY_EXPORTS_V19))
+                    && kernels == crate::tp_artifact::ENGINEERING_TP_C1_KV_COPY_EXPORTS_V19)
+                || (self.split_attention_v21_loaded == Some(image)
+                    && kernels == crate::tp_artifact::ENGINEERING_TP_SPLIT_ATTENTION_EXPORTS_V21))
         {
             Ok(())
         } else {
@@ -299,6 +306,9 @@ impl EngineeringTpRankTransportV1 for Recording {
                 && self.pending_ordered.is_none()
         );
         let id = self.next;
+        if self.failure == Some(Failure::AllocateAt(id)) {
+            return Err("injected allocation failure".into());
+        }
         self.next += 1;
         self.buffers.insert(id, vec![0xa5; byte_len]);
         Ok(id)
@@ -325,6 +335,12 @@ impl EngineeringTpRankTransportV1 for Recording {
     }
 
     fn submit(&mut self, command: &EngineeringTpDispatchV1) -> TpResult<()> {
+        if let Some(Failure::SplitSubmit(index)) = self.failure
+            && command.kernel
+                == crate::tp_artifact::ENGINEERING_TP_SPLIT_ATTENTION_EXPORTS_V21[index]
+        {
+            return Err("injected split attention submission failure".into());
+        }
         if self.failure == Some(Failure::KvCopySubmit)
             && command.kernel == crate::tp_artifact::ENGINEERING_TP_C1_KV_COPY_EXPORTS_V19[0]
         {
@@ -410,6 +426,12 @@ impl EngineeringTpRankTransportV1 for Recording {
 
     fn wait(&mut self) -> TpResult<()> {
         let command = self.pending.take().expect("one submitted request");
+        if let Some(Failure::SplitWait(index)) = self.failure
+            && command.kernel
+                == crate::tp_artifact::ENGINEERING_TP_SPLIT_ATTENTION_EXPORTS_V21[index]
+        {
+            return Err("injected split attention completion failure".into());
+        }
         if let Some(Failure::RmsNormWait(ordinal)) = self.failure
             && command.kernel == crate::tp_artifact::ENGINEERING_TP_WAVE_RMSNORM_EXPORTS_V15[0]
             && self
@@ -648,6 +670,20 @@ impl EngineeringTpRankTransportV1 for Recording {
                 assert_eq!(command.grid_workgroups, rows * (query / 128) / world);
                 self.output(&command, 5, rows, query / world, |_| vec![0; 2]);
             }
+            "ferric_qwen3_tp_c1_split8_attention_partial_f32_v21" => {
+                assert_eq!(command.grid_workgroups, 256);
+                assert_eq!(scalar(&command, 7), 1);
+                assert_eq!(
+                    scalar(&command, 11),
+                    self.u32_values(buffer(&command, 3).0, 1)[0] + 1
+                );
+                self.output(&command, 5, 1, 512, |_| vec![0; 4]);
+                self.output(&command, 6, 1, 32_768, |_| vec![0; 4]);
+            }
+            "ferric_qwen3_tp_c1_split8_attention_merge_bf16_v21" => {
+                assert_eq!(command.grid_workgroups, 32);
+                self.output(&command, 2, 1, 4096, |_| vec![0; 2]);
+            }
             ARGMAX | FP32_ARGMAX => {
                 let bad = self.failure == Some(Failure::BadChoice);
                 let choices = self.choice_override.clone();
@@ -721,7 +757,19 @@ fn fixture_for_model(
     pool: &EngineeringTpPagedPoolV1,
     model: ModelConfig,
 ) -> EngineeringTpBatchExecutionV2<Recording> {
+    fixture_for_model_capacity(world, pool, model, 64, 4)
+}
+
+fn fixture_for_model_capacity(
+    world: u32,
+    pool: &EngineeringTpPagedPoolV1,
+    model: ModelConfig,
+    context_tokens: u32,
+    physical_pages: u32,
+) -> EngineeringTpBatchExecutionV2<Recording> {
     let row_capacity = pool.row_capacity();
+    let capacity = physical_pages * 16;
+    let table_stride = context_tokens.div_ceil(16);
     let events = Rc::new(RefCell::new(Vec::new()));
     let mut transports = (0..world)
         .map(|rank| Recording {
@@ -729,6 +777,7 @@ fn fixture_for_model(
             query_hoist_v14_loaded: None,
             wave_rmsnorm_v15_loaded: None,
             c1_kv_copy_v19_loaded: None,
+            split_attention_v21_loaded: None,
             argmax_peer: None,
             rank,
             buffers: BTreeMap::new(),
@@ -761,7 +810,7 @@ fn fixture_for_model(
             transport,
             &plan,
             u32::try_from(index).unwrap(),
-            64,
+            capacity,
             u32::try_from(row_capacity).unwrap(),
         )
         .unwrap();
@@ -794,15 +843,16 @@ fn fixture_for_model(
         }
         ranks.push(rank);
         positions.push(allocate_tensor(transport, row_capacity, 4).unwrap());
-        page_tables.push(allocate_tensor(transport, row_capacity * 4, 4).unwrap());
+        page_tables
+            .push(allocate_tensor(transport, row_capacity * table_stride as usize, 4).unwrap());
     }
     let inner = EngineeringTpExecutionV1 {
         transports,
         ranks,
         plan,
-        sequence: TensorParallelSequenceV1::new(64, model.vocabulary_size).unwrap(),
+        sequence: TensorParallelSequenceV1::new(capacity, model.vocabulary_size).unwrap(),
         collective: Qwen3TensorParallelCollectiveStateV1::new(&plan, 0, 0),
-        capacity: 64,
+        capacity,
         row_capacity: u32::try_from(row_capacity).unwrap(),
         large_kv: pool.large_kv_binding().is_some(),
         draft_v10: false,
@@ -823,9 +873,9 @@ fn fixture_for_model(
         page_tables,
         scope: pool.scope(),
         pool_identity: pool.identity(),
-        context_tokens: 64,
-        physical_pages: 4,
-        table_stride: 4,
+        context_tokens,
+        physical_pages,
+        table_stride,
         last_batch: 0,
         completed_batches: 0,
         poisoned: false,
@@ -846,6 +896,8 @@ fn fixture_for_model(
         c1_kv_copy_v19: None,
         admitted_c1_kv_copy_v19: None,
         c1_packet_packing_v22: None,
+        split_attention_workspace_v25: None,
+        c1_split_attention_v25: None,
     }
 }
 

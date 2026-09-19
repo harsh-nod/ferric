@@ -46,6 +46,11 @@ pub(super) enum Variant<'a> {
     PackedC1V22 {
         enabled: bool,
     },
+    #[allow(dead_code)] // Selected only by the separate V25 executable.
+    SplitAttentionV25 {
+        artifact: &'a Path,
+        enabled: bool,
+    },
 }
 
 impl Variant<'_> {
@@ -68,6 +73,15 @@ impl Variant<'_> {
         {
             return Err("V22 packet packing requires combined V17".into());
         }
+        if let Self::SplitAttentionV25 { artifact, .. } = self
+            && (options.mode != wave_target_v17_live_contract::Mode::Combined
+                || artifact.as_os_str().is_empty()
+                || options.live.host_timing.is_some())
+        {
+            return Err(
+                "V25 requires combined V17, its explicit V21 image and no diagnostic timing".into(),
+            );
+        }
         Ok(())
     }
 
@@ -77,6 +91,7 @@ impl Variant<'_> {
             Self::RuntimeDiagnostic => DIAGNOSTIC_PROFILE,
             Self::KvCopyV19 { .. } => "c1-kv-copy-v19-live-v1",
             Self::PackedC1V22 { .. } => "c1-packed-v22-live-v1",
+            Self::SplitAttentionV25 { .. } => "c1-split-attention-v25-live-v1",
         }
     }
 
@@ -110,6 +125,38 @@ impl Variant<'_> {
             }
             value["requested_c1_packet_mode"] = json!(self.c1_packet_mode());
             value["c1_packet_mode"] = json!(actual);
+        }
+        Ok(())
+    }
+
+    fn split_attention_mode(self) -> &'static str {
+        if matches!(self, Self::SplitAttentionV25 { enabled: true, .. }) {
+            "split8-v21"
+        } else {
+            "baseline"
+        }
+    }
+
+    fn annotate_split_attention(
+        self,
+        value: &mut Value,
+        image: Option<&EngineeringTpArtifactV1>,
+        actual: &str,
+        bytes: u64,
+    ) -> Result<(), String> {
+        if let Self::SplitAttentionV25 { artifact, .. } = self {
+            if actual != self.split_attention_mode() || bytes != 133_120 {
+                return Err("actual V25 attention policy or workspace differs".into());
+            }
+            let image = image.ok_or("V25 image missing from controller receipt")?;
+            value["requested_split_attention_mode"] = json!(self.split_attention_mode());
+            value["split_attention_mode"] = json!(actual);
+            value["split_attention_artifact_path"] = json!(artifact);
+            value["split_attention_artifact"] = artifact_identity(image);
+            value["split_attention_workspace_bytes"] = json!(bytes);
+            value["split_attention_policy"] = json!({"physical_rows":1, "actual_context_min":128, "actual_context_max":256,
+                "partitions":8, "fallback":"query-hoist-v14", "fallback_packets_no_head":613, "fallback_packets_with_head":616,
+                "split_packets_no_head":649, "split_packets_with_head":652});
         }
         Ok(())
     }
@@ -471,6 +518,13 @@ fn run_with_timing(
         ),
         _ => None,
     };
+    let split_artifact = match variant {
+        Variant::SplitAttentionV25 { artifact, .. } => Some(
+            EngineeringTpArtifactV1::open_split_attention_v21(artifact)
+                .map_err(|error| error.to_string())?,
+        ),
+        _ => None,
+    };
     let artifacts = EngineeringTpWaveTargetArtifactsV17 {
         argmax: &argmax_artifact,
         attention: &attention_artifact,
@@ -524,6 +578,9 @@ fn run_with_timing(
         if let Some(artifact) = &copy_artifact {
             worker.load_additional_artifact(artifact)?;
         }
+        if let Some(artifact) = &split_artifact {
+            worker.load_additional_artifact(artifact)?;
+        }
         Ok(())
     })();
     if let Err(error) = admitted {
@@ -539,6 +596,16 @@ fn run_with_timing(
             &pool,
             &artifacts,
             copy,
+        )?
+    } else if let Some(split) = &split_artifact {
+        EngineeringTpBatchExecutionV2::new_wide32_with_c1_split_attention_v25(
+            vec![worker],
+            model.config(),
+            model.target_weights(),
+            model.layout(),
+            &pool,
+            &artifacts,
+            split,
         )?
     } else {
         EngineeringTpBatchExecutionV2::new_wide32_with_wave_target_v17(
@@ -561,6 +628,23 @@ fn run_with_timing(
         driver.configure_wave_attention(true)?;
         driver.configure_head_precision_v8(true)?;
         match (variant, &copy_artifact) {
+            (Variant::SplitAttentionV25 { enabled, .. }, None) => {
+                driver.configure_ordered_c1_split_attention_v25(
+                    &artifacts,
+                    split_artifact
+                        .as_ref()
+                        .ok_or("V25 controller image missing")?,
+                    enabled,
+                )?;
+                if driver.split_attention_mode() != variant.split_attention_mode()
+                    || driver.c1_packet_mode() != "baseline"
+                    || driver.kv_append_mode() != "baseline"
+                {
+                    return Err(
+                        "actual V25 attention or historical packet/copy route differs".into(),
+                    );
+                }
+            }
             (Variant::KvCopyV19 { enabled, .. }, Some(copy)) => {
                 driver.configure_ordered_c1_kv_copy_v19(&artifacts, copy, enabled)?;
                 if driver.kv_append_mode() != variant.kv_append_mode() {
@@ -589,6 +673,12 @@ fn run_with_timing(
             driver.rmsnorm_mode(),
         )?;
         variant.annotate_packet_mode(&mut profile, driver.c1_packet_mode())?;
+        variant.annotate_split_attention(
+            &mut profile,
+            split_artifact.as_ref(),
+            driver.split_attention_mode(),
+            driver.split_attention_workspace_bytes(),
+        )?;
         Ok(profile)
     })();
     let mut performance_profile = match configured {
@@ -611,6 +701,8 @@ fn run_with_timing(
     let rmsnorm_mode = driver.rmsnorm_mode();
     let attention_mode = driver.attention_mode();
     let c1_packet_mode = driver.c1_packet_mode();
+    let split_attention_mode = driver.split_attention_mode();
+    let split_attention_workspace_bytes = driver.split_attention_workspace_bytes();
     let transposed_weight_bytes = driver.transposed_weight_bytes();
     let fp32_workspace_bytes = driver.fp32_head_workspace_bytes();
     let mut runtime =
@@ -655,6 +747,12 @@ fn run_with_timing(
         setup["requested_c1_packet_mode"] = json!(variant.c1_packet_mode());
         setup["c1_packet_mode"] = json!(c1_packet_mode);
     }
+    variant.annotate_split_attention(
+        &mut setup,
+        split_artifact.as_ref(),
+        split_attention_mode,
+        split_attention_workspace_bytes,
+    )?;
     timing.setup = Some(setup.clone());
     let body = |runtime: &mut EngineeringTpBatchRuntimeV2<_>| {
         emit(&setup)?;
@@ -671,9 +769,10 @@ fn run_with_timing(
         check_retired(runtime, live.pages)
     };
     let (result, close) = match variant {
-        Variant::V17 | Variant::KvCopyV19 { .. } | Variant::PackedC1V22 { .. } => {
-            run_and_close(&mut runtime, body)
-        }
+        Variant::V17
+        | Variant::KvCopyV19 { .. }
+        | Variant::PackedC1V22 { .. }
+        | Variant::SplitAttentionV25 { .. } => run_and_close(&mut runtime, body),
         Variant::RuntimeDiagnostic => run_diagnostic_and_close(
             &mut runtime,
             &timing.timing,
@@ -700,6 +799,12 @@ fn run_with_timing(
         closed["requested_c1_packet_mode"] = json!(variant.c1_packet_mode());
         closed["c1_packet_mode"] = json!(c1_packet_mode);
     }
+    variant.annotate_split_attention(
+        &mut closed,
+        split_artifact.as_ref(),
+        split_attention_mode,
+        split_attention_workspace_bytes,
+    )?;
     timing.closed = Some(closed.clone());
     let emitted = emit(&closed);
     match (result, close, emitted) {
@@ -934,6 +1039,123 @@ mod live_tests {
             .annotate_packet_mode(&mut frozen, "baseline")
             .unwrap();
         assert_eq!(frozen, before);
+    }
+
+    #[test]
+    fn v25_selects_only_the_separate_split_route_and_preserves_historical_metadata() {
+        let combined = wave_target_v17_live_contract::Mode::Combined;
+        for enabled in [false, true] {
+            let variant = Variant::SplitAttentionV25 {
+                artifact: Path::new("split"),
+                enabled,
+            };
+            let options = fixture(combined);
+            assert!(variant.validate(&options).is_ok());
+            assert_eq!(variant.live_profile(), "c1-split-attention-v25-live-v1");
+            assert_eq!(
+                variant.split_attention_mode(),
+                if enabled { "split8-v21" } else { "baseline" }
+            );
+            assert_eq!(variant.kv_append_mode(), "baseline");
+            assert_eq!(variant.c1_packet_mode(), "baseline");
+            let runtime = variant.worker_runtime(&options).unwrap();
+            assert!(!runtime.profile && runtime.ordered_batches && !runtime.sequences);
+            assert!(
+                variant
+                    .annotate_split_attention(
+                        &mut json!({}),
+                        None,
+                        variant.split_attention_mode(),
+                        133_120
+                    )
+                    .is_err()
+            );
+            for mode in MODES {
+                assert_eq!(variant.validate(&fixture(mode)).is_ok(), mode == combined);
+            }
+            let mut timed = fixture(combined);
+            timed.live.host_timing = Some(PathBuf::from("timing"));
+            assert!(variant.validate(&timed).is_err());
+            assert!(
+                Variant::SplitAttentionV25 {
+                    artifact: Path::new(""),
+                    enabled
+                }
+                .validate(&options)
+                .is_err()
+            );
+        }
+        for variant in [
+            Variant::V17,
+            Variant::RuntimeDiagnostic,
+            Variant::KvCopyV19 {
+                artifact: Path::new("copy"),
+                enabled: true,
+            },
+            Variant::PackedC1V22 { enabled: true },
+        ] {
+            let mut metadata = json!({"original":true});
+            variant
+                .annotate_split_attention(&mut metadata, None, "unused", 0)
+                .unwrap();
+            assert_eq!(metadata, json!({"original":true}));
+        }
+    }
+
+    #[test]
+    #[ignore = "requires actual emitted V21 image; CPU admission and event-schema validation only"]
+    fn v25_event_metadata_binds_actual_v21_image_and_exact_counts_in_both_arms() {
+        let path = PathBuf::from(
+            std::env::var_os("FERRIC_TEST_SPLIT_ATTENTION_V21_ARTIFACT")
+                .expect("explicit V21 image"),
+        );
+        let image = EngineeringTpArtifactV1::open_split_attention_v21(&path).unwrap();
+        for enabled in [false, true] {
+            let variant = Variant::SplitAttentionV25 {
+                artifact: &path,
+                enabled,
+            };
+            let mut event = json!({"performance_qualified":false});
+            variant
+                .annotate_split_attention(
+                    &mut event,
+                    Some(&image),
+                    variant.split_attention_mode(),
+                    133_120,
+                )
+                .unwrap();
+            assert_eq!(
+                event["requested_split_attention_mode"],
+                variant.split_attention_mode()
+            );
+            assert_eq!(
+                event["split_attention_mode"],
+                variant.split_attention_mode()
+            );
+            assert_eq!(event["split_attention_artifact"], artifact_identity(&image));
+            assert_eq!(event["split_attention_workspace_bytes"], 133_120);
+            assert_eq!(
+                event["split_attention_policy"],
+                json!({"physical_rows":1,"actual_context_min":128,"actual_context_max":256,
+                "partitions":8,"fallback":"query-hoist-v14","fallback_packets_no_head":613,"fallback_packets_with_head":616,
+                "split_packets_no_head":649,"split_packets_with_head":652})
+            );
+            assert!(
+                variant
+                    .annotate_split_attention(&mut event, Some(&image), "wrong", 133_120)
+                    .is_err()
+            );
+            assert!(
+                variant
+                    .annotate_split_attention(
+                        &mut event,
+                        Some(&image),
+                        variant.split_attention_mode(),
+                        133_119
+                    )
+                    .is_err()
+            );
+        }
     }
 
     #[test]

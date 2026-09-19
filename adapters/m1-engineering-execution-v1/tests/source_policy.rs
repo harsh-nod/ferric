@@ -290,7 +290,8 @@ fn batched_paged_runtime_requires_a_separate_engineering_opt_in() {
             Some("dep:ferric-qwen3-tp-fp32-argmax-kernels-device-v11"),
             Some("dep:ferric-qwen3-tp-wave-query-hoist-kernels-device-v14"),
             Some("dep:ferric-qwen3-tp-wave-rmsnorm-kernels-device-v15"),
-            Some("dep:ferric-qwen3-tp-c1-kv-copy-kernels-device-v19")
+            Some("dep:ferric-qwen3-tp-c1-kv-copy-kernels-device-v19"),
+            Some("dep:ferric-qwen3-tp-c1-split8-attention-kernels-device-v21")
         ]
     );
     let bin = manifest["bin"]
@@ -401,6 +402,7 @@ fn wave_rmsnorm_v15_route_keeps_defaults_and_all_legacy_entrypoints_closed() {
                     | "ferric-qwen3-wave-target-v17-runtime-diagnostic"
                     | "ferric-qwen3-c1-kv-copy-v19-live"
                     | "ferric-qwen3-c1-packed-v22-live"
+                    | "ferric-qwen3-c1-split-attention-v25-live"
             )
         ) {
             assert!(source.contains("mod wave_target_v17_live_contract;"));
@@ -530,6 +532,7 @@ fn wave_target_v17_keeps_legacy_binaries_closed_and_preloads_every_comparison_im
                     | "ferric-qwen3-wave-target-v17-runtime-diagnostic"
                     | "ferric-qwen3-c1-kv-copy-v19-live"
                     | "ferric-qwen3-c1-packed-v22-live"
+                    | "ferric-qwen3-c1-split-attention-v25-live"
             )
         );
         for marker in [
@@ -546,7 +549,7 @@ fn wave_target_v17_keeps_legacy_binaries_closed_and_preloads_every_comparison_im
             );
         }
     }
-    assert_eq!(count, 4);
+    assert_eq!(count, 5);
     assert!(!ENGINE_MANIFEST.contains("ferric-qwen3-wave-target-v17-live"));
     let wrapper = include_str!("../src/bin/ferric-qwen3-wave-target-v17-live.rs");
     assert!(wrapper.contains("wave_target_v17_live_contract::Options::parse"));
@@ -750,6 +753,7 @@ fn query_hoist_v14_route_keeps_defaults_and_all_legacy_entrypoints_closed() {
                         | "ferric-qwen3-wave-target-v17-runtime-diagnostic"
                         | "ferric-qwen3-c1-kv-copy-v19-live"
                         | "ferric-qwen3-c1-packed-v22-live"
+                        | "ferric-qwen3-c1-split-attention-v25-live"
                 )
             )
         );
@@ -759,6 +763,103 @@ fn query_hoist_v14_route_keeps_defaults_and_all_legacy_entrypoints_closed() {
         assert!(!source.contains("configure_ordered_c1_wave_query_hoist_v14"));
         assert!(!source.contains("--attention-kernel"));
     }
+}
+
+#[test]
+fn split_attention_v25_is_an_explicit_independent_image_with_closed_legacy_routes() {
+    let manifest = toml::from_str::<toml::Value>(MANIFEST).unwrap();
+    let dependency =
+        &manifest["build-dependencies"]["ferric-qwen3-tp-c1-split8-attention-kernels-device-v21"];
+    assert_eq!(dependency["optional"].as_bool(), Some(true));
+    assert_eq!(dependency["default-features"].as_bool(), Some(false));
+    assert_eq!(
+        dependency["features"].as_array().unwrap(),
+        &[toml::Value::String("gfx950".into())]
+    );
+    assert!(!ENGINE_MANIFEST.contains("split-attention-v25"));
+    for binary in manifest["bin"].as_array().unwrap() {
+        let source = std::fs::read_to_string(
+            std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join(binary["path"].as_str().unwrap()),
+        )
+        .unwrap();
+        let selected = binary["name"].as_str() == Some("ferric-qwen3-c1-split-attention-v25-live");
+        assert_eq!(
+            source.contains("mod c1_split_attention_v25_live_contract;"),
+            selected
+        );
+        assert_eq!(source.contains("Variant::SplitAttentionV25"), selected);
+        assert!(!source.contains("open_split_attention_v21"));
+    }
+    let runner = include_str!("../src/bin/wave_target_v17_runner.rs");
+    let production = &runner[..runner.find("#[cfg(test)]").unwrap()];
+    let ordered = [
+        "EngineeringTpArtifactV1::open_split_attention_v21",
+        "EngineeringQwenModelV1::open",
+        "Worker::spawn_with_timing",
+        "worker.load_additional_artifact(artifact)?",
+        "new_wide32_with_c1_split_attention_v25",
+        "configure_ordered_c1_split_attention_v25",
+        "EngineeringTpBatchRuntimeV2::new_wide32",
+    ]
+    .map(|marker| production.find(marker).unwrap());
+    assert!(ordered.windows(2).all(|pair| pair[0] < pair[1]));
+    assert_eq!(
+        production
+            .matches("variant.annotate_split_attention(")
+            .count(),
+        3
+    );
+    let route = include_str!("../src/tp_execution/batched/c1_split_attention_v25.rs");
+    for marker in [
+        "batch.rows().len() != 1",
+        "(128..=256).contains(&context)",
+        "checked_add(1)",
+        "pending.len() != 8",
+        "Workspace::allocate",
+        "self.c1_packet_packing_v22.is_some()",
+        "self.admitted_c1_kv_copy_v19.is_some()",
+        "row_profile::bind_mode(false, 32, false, command)",
+    ] {
+        assert!(route.contains(marker), "{marker}");
+    }
+    let artifact = include_str!("../src/tp_artifact/split_attention_v21.rs");
+    for marker in [
+        "V21_COMPILER_NAMES",
+        "Self::open_profile_names(",
+        "metadata_matches",
+    ] {
+        assert!(artifact.contains(marker), "{marker}");
+    }
+    assert!(!artifact.contains("compiler_expectation_roster_v21()"));
+    assert!(!artifact.contains("ferric_qwen3_tp_c1_split8_attention_kernels_device_v21::"));
+    let build = include_str!("../build.rs");
+    for marker in [
+        "compiler_expectation_roster_v21()",
+        "entry.logical_name()",
+        "entry.export_name()",
+        "v21_compiler_names.rs",
+        "#[cfg(feature = \"tp-batch-engineering\")]",
+    ] {
+        assert!(build.contains(marker), "{marker}");
+    }
+    assert!(
+        !manifest["dependencies"]
+            .as_table()
+            .unwrap()
+            .contains_key("ferric-qwen3-tp-c1-split8-attention-kernels-device-v21")
+    );
+    let build_dependencies = manifest["build-dependencies"].as_table().unwrap();
+    assert_eq!(build_dependencies.len(), 1);
+    for forbidden in ["transmute", "unsafe", "open_query_hoist_v14(root)"] {
+        assert!(!artifact.contains(forbidden));
+    }
+    let runtime = include_str!("../src/tp_batch_runtime.rs");
+    let step = &runtime[runtime.find("    pub fn step(").unwrap()..];
+    assert!(
+        step.find("expected_dispatch_counts_for_batch(&prepared")
+            .unwrap()
+            < step.find("self.pool.begin_submission(&prepared)").unwrap()
+    );
 }
 
 #[test]

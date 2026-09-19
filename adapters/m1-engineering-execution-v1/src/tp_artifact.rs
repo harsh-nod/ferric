@@ -141,6 +141,13 @@ pub(crate) use c1_kv_copy_v19::C1KvCopyBindingV19;
 #[cfg(feature = "tp-batch-engineering")]
 pub use c1_kv_copy_v19::ENGINEERING_TP_C1_KV_COPY_EXPORTS_V19;
 
+#[cfg(feature = "tp-batch-engineering")]
+mod split_attention_v21;
+#[cfg(feature = "tp-batch-engineering")]
+pub use split_attention_v21::ENGINEERING_TP_SPLIT_ATTENTION_EXPORTS_V21;
+#[cfg(feature = "tp-batch-engineering")]
+pub(crate) use split_attention_v21::SplitAttentionBindingV21;
+
 /// Private identity minted only by the separate one-root v14 profile.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 #[cfg(feature = "tp-batch-engineering")]
@@ -514,6 +521,21 @@ impl EngineeringTpArtifactV1 {
         source_crate: &'static str,
         exports: &[&str],
     ) -> Result<Self, M1EngineeringAggregateArtifactOpenErrorV1> {
+        let names = expected
+            .iter()
+            .map(|entry| (entry.logical_name(), entry.export_name()))
+            .collect::<Vec<_>>();
+        Self::open_profile_names(root, &names, source_crate, exports)
+    }
+
+    // Roster names are structural metadata, not typed dispatch or admission authority.
+    // This boundary also permits a separately pinned device SDK's generated roster.
+    fn open_profile_names(
+        root: &Path,
+        expected: &[(&str, &str)],
+        source_crate: &'static str,
+        exports: &[&str],
+    ) -> Result<Self, M1EngineeringAggregateArtifactOpenErrorV1> {
         use M1EngineeringAggregateArtifactOpenErrorV1 as Error;
         if root
             .parent()
@@ -554,12 +576,8 @@ impl EngineeringTpArtifactV1 {
         if !exact_roster(
             manifest.hsaco.kernel_names.iter().map(String::as_str),
             exports,
-        ) || !exact_roster(
-            expected
-                .iter()
-                .map(CompilerGeneratedKernelExpectationRosterEntryV1::export_name),
-            exports,
-        ) {
+        ) || !exact_roster(expected.iter().map(|entry| entry.1), exports)
+        {
             return Err(Error::MetadataKernelRoster);
         }
         let hsaco_len = usize::try_from(facts.hsaco.byte_len)
@@ -616,15 +634,15 @@ impl EngineeringTpArtifactV1 {
                 expected
                     .iter()
                     .skip(index + 1)
-                    .any(|right| left.logical_name() == right.logical_name())
+                    .any(|right| left.0 == right.0)
             })
             || descriptors.iter().any(|descriptor| {
                 !expected.iter().any(|entry| {
-                    descriptor.logical_name().as_str() == entry.logical_name()
-                        && descriptor.entry_name().as_str() == entry.export_name()
+                    descriptor.logical_name().as_str() == entry.0
+                        && descriptor.entry_name().as_str() == entry.1
                         && descriptor_symbol_matches(
                             descriptor.descriptor_symbol().as_str(),
-                            entry.export_name(),
+                            entry.1,
                         )
                 })
             })
@@ -795,6 +813,104 @@ fn exact_roster<'a>(actual: impl Iterator<Item = &'a str>, expected: &[&str]) ->
 #[cfg(test)]
 mod tests {
     use super::{ENGINEERING_TP_EXPORTS_V1, exact_exports};
+
+    #[test]
+    #[cfg(feature = "tp-batch-engineering")]
+    fn typed_roster_name_bridge_preserves_exact_roster_decisions() {
+        let entries = ferric_qwen3_tp_batch32_kernels_device_v5::compiler_expectation_roster_v5();
+        let names = entries
+            .iter()
+            .map(|entry| (entry.logical_name(), entry.export_name()))
+            .collect::<Vec<_>>();
+        let roots = &super::ENGINEERING_TP_BATCH32_EXPORTS_V5;
+        assert!(super::exact_roster(
+            entries
+                .iter()
+                .map(fe2o3_host::CompilerGeneratedKernelExpectationRosterEntryV1::export_name),
+            roots
+        ));
+        assert!(super::exact_roster(
+            names.iter().map(|entry| entry.1),
+            roots
+        ));
+        for mutation in 0..3 {
+            let mut changed = names.clone();
+            match mutation {
+                0 => {
+                    changed.pop();
+                }
+                1 => changed.push(changed[0]),
+                2 => changed[0].1 = "wrong_root",
+                _ => unreachable!(),
+            }
+            assert!(!super::exact_roster(
+                changed.iter().map(|entry| entry.1),
+                roots
+            ));
+        }
+    }
+
+    #[test]
+    #[ignore = "requires a canonical V5 image; compares old typed and private metadata routes"]
+    #[cfg(feature = "tp-batch-engineering")]
+    fn typed_roster_and_private_bridge_have_identical_artifact_admission() {
+        let root = std::path::PathBuf::from(
+            std::env::var_os("FERRIC_TEST_BATCH32_ARTIFACT").expect("explicit V5 image"),
+        );
+        let source_crate = "ferric_qwen3_tp_batch32_kernels_device_v5";
+        for mutation in 0..4 {
+            let mut entries =
+                ferric_qwen3_tp_batch32_kernels_device_v5::compiler_expectation_roster_v5();
+            let mut roots = super::ENGINEERING_TP_BATCH32_EXPORTS_V5.to_vec();
+            match mutation {
+                0 => {}
+                1 => {
+                    entries.pop();
+                }
+                2 => entries.push(
+                    ferric_qwen3_tp_batch32_kernels_device_v5::compiler_expectation_roster_v5()
+                        .remove(0),
+                ),
+                3 => roots[0] = "wrong_root",
+                _ => unreachable!(),
+            }
+            let names = entries
+                .iter()
+                .map(|entry| (entry.logical_name(), entry.export_name()))
+                .collect::<Vec<_>>();
+            let typed =
+                super::EngineeringTpArtifactV1::open_profile(&root, &entries, source_crate, &roots);
+            let primitive = super::EngineeringTpArtifactV1::open_profile_names(
+                &root,
+                &names,
+                source_crate,
+                &roots,
+            );
+            assert_eq!(typed.is_ok(), mutation == 0);
+            match (typed, primitive) {
+                (Ok(typed), Ok(primitive)) => {
+                    assert_eq!(typed.hsaco_id(), primitive.hsaco_id());
+                    assert_eq!(typed.manifest_id(), primitive.manifest_id());
+                    assert_eq!(typed.handoff_id(), primitive.handoff_id());
+                    let mut wrong_logical = names;
+                    wrong_logical[0].0 = "wrong_logical_name";
+                    assert!(
+                        super::EngineeringTpArtifactV1::open_profile_names(
+                            &root,
+                            &wrong_logical,
+                            source_crate,
+                            &roots
+                        )
+                        .is_err()
+                    );
+                }
+                (Err(typed), Err(primitive)) => {
+                    assert_eq!(format!("{typed:?}"), format!("{primitive:?}"));
+                }
+                _ => panic!("typed and primitive admission decisions differ"),
+            }
+        }
+    }
 
     #[test]
     #[cfg(feature = "tp-batch-engineering")]

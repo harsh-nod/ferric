@@ -5,29 +5,29 @@ receipt. The 33 M1 roadmap gates remain open.
 
 ## Current Checkpoint
 
-Matched optimization V5 has completed its first sequential Ferric V17 combined
-and vLLM HTTP cohorts on mi350 physical GPU 0. Both raw receipts pass their run
-gates and are retained in `ferric-matched-optimization-v5/pair-retained-r1`.
-Independent paired replay and eight replay-checker CPU tests pass on mi300x-2.
-This is an initial finite cohort, not sustained throughput, a vendor win or
-serving qualification.
+Matched optimization V5 has completed a new sequential Ferric V22 packed and
+vLLM HTTP pair on mi350 physical GPU 0. Both raw receipts and paired replay
+pass correctness, sampled ownership and cleanup checks. The shared monitor
+passes 22 CPU tests on mi300x-2. This is a finite cohort, not sustained
+throughput, a vendor win or serving qualification.
 
 | Engine | Mean TTFT (ms) | Mean TPOT (ms) | Output tokens/s |
 | --- | ---: | ---: | ---: |
-| Ferric V17 combined | 2555.823 | 114.619 | 7.479295 |
-| vLLM 0.28.0 | 19.909 | 4.232 | 229.358430 |
+| Ferric V22 packed | 2329.922 | 83.598 | 9.885898 |
+| vLLM 0.28.0 | 18.636 | 4.252 | 228.904359 |
 
-Ferric has 27.08 times the mean TPOT and 128.37 times the mean TTFT in this
+Ferric has 19.66 times the mean TPOT and 125.02 times the mean TTFT in this
 cell. All thirty measured requests succeed per engine, but there is no win.
 Paired summary SHA256:
-`11c761a2e4408fc29a822a29f87ed10995c5799e407fc3233068f197836974a9`.
+`0283449b779015bffe0ba72954069ffcca7b809ae6aadf91aa24d6b3fb9d1c07`.
 
 Both cohorts use the same SSE client and Qwen3-8B TP1/C1, 128-input/128-output
 cell with context 8192, BF16 decoder and FP32 output-head profile, speculation
 and prefix caching off, ten excluded warmups, thirty measured requests and two
-untimed output diagnostics. The frozen Ferric products retain implementation
-`1fc45a52` and runtime `5ed3840a`; later compiler/runtime adoption does not relabel
-them or the existing kernel-image producers. No new TP8 or SGLang result follows.
+untimed output diagnostics. Ferric uses the retained V22 packed controller
+`faf1aaa8...` and historical `f68e4219...` worker built against runtime
+`5ed3840a`; later compiler/runtime adoption does not relabel these products or
+the existing kernel-image producers. No new TP8 or SGLang result follows.
 The fixed order is vLLM then Ferric, one server start each. TTFT is client send
 to first nonempty text; TPOT is first-to-last text time divided by 127, not true
 token ITL. Output rate includes gaps and drain across the measured window.
@@ -37,14 +37,115 @@ GPU idle postflight pass. Replay compares retained pre/post model and image
 hash receipts; it does not independently rehash the model. There is no stable
 tail, confidence interval or stock BF16-output-head comparison claim.
 
+The prior V17 pair remains retained at summary `11c761a2...`: Ferric
+114.619 ms TPOT versus vLLM 4.232 ms. The new Ferric result is lower, but the
+two campaign rows are not a controlled V17-versus-V22 A/B. The separate native
+V22 A/B remains the evidence for its observed 11.63% TPOT reduction.
+
 | Team | V5 Progress | Next Dependency |
 | --- | --- | --- |
-| Measurement / integration | Matched HTTP pair and replay pass; V19 shows no gain; fourteen-request native control and timeline replay pass, with 84.535 ms TPOT at ordinals 12..14 | Compare new candidates after native correctness; no new HTTP or vendor gain claim |
-| Kernels | V19 passes CPU/ABI, isolated GPU and full-model parity; V20 passes eight CPU tests and strict Clippy; V21 passes twelve CPU tests and strict Clippy | Correct upstream trusted vendor fixture, then emit and validate new candidates on GPU |
-| Compiler / runtime | Frozen 5a503c04 V19 emission is separate from the HTTP baseline; newer c4c5cdd0 reviewed, KFD/runtime/AQL unchanged | Adopt new producer tools in a separate snapshot without relabelling historical images |
+| Measurement / integration | New V2 pair and replay accepted: Ferric 83.598 ms TPOT versus vLLM 4.252 ms; all 30 measured requests succeed per engine | Still 19.66x TPOT gap; evidence archived, further kernel optimization and repeated-start validation pending |
+| Kernels | V25 native retry passes all1,024 IDs; small cohort observes10.20% lower TPOT and8.95% higher output rate, TTFT1.25% worse; exact28-path opt-in source imported privately. V26/V27/V29/V30 pass c4c CPU checks; MFMA diagnostic passes40 native cells but all15 comparisons favor Wave | No new HTTP/vendor win. New-kernel emission needs nightly restoration; d10 import/preparation passes but its first test build reaches the unchanged stage reserve, later phases not admitted |
+| Compiler / runtime | Four-file vendor fixture repair built and four exact tests pass; rebased core fix pushed as 7dfbe5cc with CI skipped; identical upstream Clippy errors retained | Limited engineering emission only; no strict backend lint or formal qualification |
+| Engine completion packing | V22 privately committed as60153b82 after remote CPU checks, strict test Clippy, release build and native A/B; all1,024 output IDs match; short cohort observes11.63% lower TPOT; new matched HTTP pair accepted | No implementation push; still slower than vLLM, repeated-start validation remains required |
+| Larger runtime groups | Core ordered64 passes CPU/Clippy/build and251-packet native chain with594 guard checks; published to fe2o3 main d10f49bf after rebase, CI skipped; actual616-command packing,20-header decoding and both strict bridge Clippy commands pass | Original test failures retained; model integration and timing pending |
 | Runtime diagnostics | Instrumented V17 R2 accepted: all 256 output IDs match, 270 batches and 166,278 dispatches; execution and owned cleanup pass; 14 harness CPU tests pass, original fixture failure retained | Isolate operation-level costs; overlapping waits/currentness do not establish removable delay or an HTTP optimization gain |
 | Verification | Existing proof status unchanged; no new proof or M1 gate closure | Keep engineering observations separate from proof and protected-runtime qualification |
-| Site | V5 matched-result snapshot published at 72b76748; remote QA and deploy-only workflow pass; historical datasets unchanged | Publish later native results after evidence review, not a performance-win claim |
+| Site | Latest matched HTTP loss is live at static-only57db8612; remote responsive QA/64 captures, seven reviewed supplemental captures and15 publication tests pass; deployment35430034786 succeeds, all seven live files match | Original failures retained; private implementation and raw evidence remain unpublished; no GitHub build |
+
+The latest V25 focused retry retains status125/return-9 after the stage reserve
+is reached; its guard does not qualify detached cleanup. A later read-only check
+finds all known PIDs and the recorded process group absent, without relabeling
+the failure. The c4c kernel library and isolated adapter build script complete;
+the engine library and adapter tests still require a successful build. Five
+obsolete test executables and23 obsolete normal executable products are removed
+only after checksum-verified local retention, reclaiming about288MiB. Current
+libraries, current compiler tools, source and failure records remain intact.
+The unused nightly installation is separately removed after all5,603 file hashes
+match its retained local archive, reclaiming1.70GiB; V25 uses the preserved
+stable toolchain. The unchanged-source focused retry passes11 Rust tests and six
+receipt tests with a clean guard; ABI passes two tests with one explicitly ignored
+actual-image test, which remains scheduled separately. Future
+nightly emission requires restoring that exact installation. The10GiB
+stage cap and512MiB reserve are unchanged. The fixed-cadence ownership census
+passes22 deterministic remote tests and independent source review. Both engines
+use the same500ms sampling policy with sticky failure for observed foreign,
+unreadable or reused PIDs, bounded gaps and retained journals. This is sampled
+detection, not proof of absence between samples. Fresh V2 plan71855e76 passes
+preparation without launching a server; old vLLM timings cannot fill its new arm.
+
+The V2 vLLM arm subsequently completes with clean cleanup and an accepted
+192-sample ownership census (maximum gap 500.081 ms). Ferric also completes
+cleanly under the same plan; paired replay accepts both complete raw cohorts.
+Both earlier contention-rejected Ferric attempts remain rejected and retained.
+
+V25 shapes and bridge checks finish cleanly, but each takes about 315 seconds
+around a sub-second Cargo invocation. Review identifies 1,066 repeated source
+inventory walks in an ordinary phase. A successor caches only within one
+validation boundary and keeps separate fresh initial and final validation.
+The old loop was stopped by holding its build lock between phases: actual-ABI
+never admitted a child and has no result directory. This is not a status-125
+test failure, and the two real passes will not be relabelled. The successor's
+13 helper tests and preparation pass. Actual-ABI then passes the V21 and V5
+image tests but rejects a misnamed third selector that ran zero tests. This
+status-1 failure is retained; a separate exact-name retry is being prepared.
+Ordinary CLI passes 50 tests with five ignored. Legacy V17, V22 and diagnostic
+CLI checks pass 48, 50 and 51 tests respectively, each with five ignored.
+Source-policy passes 40 tests, and the library passes 398 with nine ignored and
+the known memory-heavy test explicitly excluded. Normal strict Clippy passes;
+test-target Clippy fails on one redundant closure and six missing semicolons
+in two test modules. The clean status-101 failure remains retained. A narrow
+test-only successor passes its six helper tests, eleven artifact tests (four
+ignored), eleven split tests, all three actual-image ABI tests, strict
+test-target Clippy and the release build. Six retention-policy tests also pass.
+Unchanged production checks are reused explicitly; the heavy-test exclusion
+remains. Controller593d8077 and build receipt5fffef64 stage successfully on
+mi350. A native baseline/split A/B under planc78bcec2 starts after a fresh
+all-eight-GPU idle check. The baseline checks512IDs, but a foreign TP2 worker
+arrives during the candidate; the supervisor rejects125/-9 with unqualified
+immediate cleanup. Later all five known owned PIDs are absent without extra
+signals; no foreign job is touched. The failure remains rejected and retained
+in archivedf7fcb14; no paired parity or speed result is claimed.
+
+A separate fresh V25 retry subsequently passes. Baseline versus split8 observes
+86.710 versus77.867ms native TPOT,2303.258 versus2331.938ms TTFT and9.612678
+versus10.473148 output tokens/s. One warmup plus three measured requests per arm
+are fixed-order, not an HTTP/vendor comparison. Independent raw review verifies
+all1,024 IDs, decoded text, timing arithmetic and counters. Reportcc9fc050 and
+archive3b967c53 retain both arm TERM/KILL flags: the frozen helper observes normal
+exit0 and a leader-only zombie before signalling the reserved group and reaping.
+Outer cleanup is normal and signal-free; no owned GPU job remains. The first
+attempt is still rejected. The exact28-path tested opt-in overlay is imported
+privately; existing defaults remain unchanged and there is no implementation push.
+
+Latest-SDK follow-through imports fe2o3 d10 and passes V26 revision-only source,
+lock and metadata preparation. Compilation then reaches the private stage
+reserve at10,193,813,504bytes: status125/return-15, TERMtrue, noKILL, unqualified
+detached cleanup. Later all four known PIDs and their group are absent. No d10
+test pass or subsequent phase is claimed. The10GiB cap/512MiB reserve remain;
+new emission needs additional headroom and restoration of the pinned nightly.
+
+V27 replaces the serial, single-leader prefill KV copy for an eligible aligned,
+exclusive 16-token page with raw u16 copies across 16,384 lanes. Both natural
+and final-token-first row orders pass CPU checks; defaults are unchanged.
+Retained prefill host spans are 2,282.387 ms across eight chunks, including
+1,889.415 ms in the attention group. These nested host spans are not isolated
+KV-copy or GPU timings. Emission, native parity and end-to-end measurement
+remain required before claiming a TTFT improvement.
+
+The V27 native harness separately passes 26 CPU-double tests on mi300x-2,
+covering ABI, raw-u16 permutations, guard preservation and timing rejection.
+This is not an emitted-image or native GPU pass. Restoring the retained nightly
+toolchain remains blocked by stage headroom: obsolete-backend retention stops
+at an unreadable user-systemd process before export or deletion. That process
+is left untouched, and no resource limit has been increased.
+
+The frozen f68/5ed runtime source routes persistent weights through
+VRAM|WRITABLE|PUBLIC allocations, uploading once into the same GPU-mapped BO;
+there is no application GTT fallback or per-token weight upload. Actual BO
+residency was not captured, so this is source evidence, not measured placement.
+The latest fe2o3 main was rechecked at 7dfbe5cc; historical products retain their
+original source identities.
 
 Accepted runtime diagnostic R2 is retained at report SHA-256
 `01869cfa796365849ef78d950dfef9e22f217996266abcdb8ea08306575c2642`.
@@ -100,13 +201,35 @@ inside decode batches, 0.005657 ms/token between them, stable measured RSS.
 Stage A has reached its unchanged 10 GiB minus 512 MiB reserve and receives no
 new builds. V20's first strict Clippy attempt was space-terminated; its retry
 in existing stage C passes. V21's twelve tests and strict Clippy pass there
-as well. No guard limits are relaxed. GPU emission is pending a four-file
-compiler fixture/closure repair on latest fetched main ca72d44b, not a vendor
-overlay. The repaired compiler backend and extractor build successfully;
-focused regression tests and strict Clippy remain pending. Two independent
-source reviews accept the split-attention native harness, whose nineteen CPU
-tests have not yet run. Historical images and the matched HTTP baseline retain
-their pins.
+as well. No guard limits are relaxed. The four-file compiler fixture repair
+builds and passes four focused regressions, without a vendor overlay. Strict
+Clippy fails before the backend on two unchanged dependency errors, reproduced
+identically by clean baseline and patched structured runs; this is not a lint
+pass. A limited engineering receipt permits experimental emission. The fix is
+rebased onto latest upstream and pushed as 7dfbe5cc with CI skipped; its clean
+temporary worktree is removed after retention. V20 emits and its scoped actual
+ISA review passes after distinguishing integer-index division from GEMV math;
+eight review-checker tests pass and the original overbroad rejection is retained.
+All twenty V20 native cells pass exact parity and cleanup. The isolated partial
+GEMV improvement is not a model or vendor win. V21 emission rejects its NaN
+fallback constant; a four-sentinel infinity correction awaits thirteen fresh
+CPU tests/Clippy and emission, without relaxing any compiler check.
+The first corrected-source test attempt reaches the unchanged space reserve;
+its status-125 failure is retained. After local evidence retention, unused
+nightly compiler debug cache is removed under the build lock (1,964,836 KiB),
+with copied-tool hashes intact. The thirteen-test retry and strict candidate
+Clippy pass under the same limits. Extraction then succeeds, but emission stops
+before HSACO creation because the LLVM worker's gfx950 device-library directory
+is absent; read-only runtime-path diagnosis is underway. The completed V20 GPU
+stage is removed after archive verification.
+V23's opt-in full-model integration passes independent source review after a
+test-only type correction; remote compilation and native acceptance are pending.
+The split-attention native harness passes nineteen
+CPU tests after a retained test-only fixture failure; two source reviews pass.
+V22 source and its native harness have independent reviews; six focused and
+twelve harness CPU tests pass. Broader regressions, build and GPU parity remain
+pending. Historical images and the matched HTTP baseline
+retain their pins. None of these candidates has a performance gain claim.
 
 All builds and CPU tests remain on mi300x-2; GPU validation remains on mi350.
 V5 site deployment `35411581137` succeeds, with no GitHub build. Private inference

@@ -3,6 +3,29 @@
 Started September 18, 2026 at user request: establish a fresh matched vLLM
 comparison, identify bottlenecks, and optimize Ferric. No win is assumed.
 
+## Latest Matched Pair
+
+The V22 packed-versus-vLLM V2 HTTP pair completes on mi350 with correctness,
+sampled ownership, input-preservation and clean shutdown checks accepted.
+Paired replay accepts the complete raw cohorts. The monitor has 22 passing
+remote CPU tests. Both engines use the measurement contract below, one start
+each, vLLM first, with the same 500 ms ownership sampling policy.
+
+| Engine | Mean TTFT (ms) | Mean TPOT (ms) | Measured-span output tokens/s |
+| --- | ---: | ---: | ---: |
+| Ferric V22 packed | 2329.922 | 83.598 | 9.885898 |
+| vLLM 0.28.0 | 18.636 | 4.252 | 228.904359 |
+
+Ferric remains 19.660x higher in TPOT and 125.021x higher in TTFT. Thirty
+measured requests succeed per engine. This is not a win, stock BF16-head
+comparison, stable-tail estimate, TP8 result or speculative-decoding result.
+The separate old V17 pair below is retained as history, not combined with the
+new baseline or used to attribute a cross-campaign gain to one optimization.
+Summary SHA256:
+`0283449b779015bffe0ba72954069ffcca7b809ae6aadf91aa24d6b3fb9d1c07`.
+Plan SHA256:
+`71855e76d38c3d3ff11d21b7ff33d7c67303a5fc28dff07c8deebb0ee14cf7fd`.
+
 ## Measurement Contract
 
 The first cell retains the previous independent reference and common SSE client:
@@ -236,19 +259,539 @@ V20 passes eight CPU tests, strict Clippy and sixteen native-harness CPU tests
 at the c4c dependency pin. Its
 first Clippy attempt reached stage A's unchanged storage reserve; the retry
 passes in existing stage C without changing any resource limit. V21 passes
-twelve CPU tests and strict Clippy after remote formatting. Neither has GPU
-performance evidence or an active default route.
+twelve CPU tests and strict Clippy after remote formatting. These initial CPU
+results preceded the V20 GPU results below; neither changes the default route.
 
 V20 emission preparation exposed a genuine upstream trusted-manifest defect:
 Cargo discovers ordered_program_api and ordered_region_api test targets that
 the pinned fixture omitted. The unmodified vendor tree is retained. A narrow
 compiler-only fixture/closure repair and actual-target-roster regression are
-prepared on freshly fetched fe2o3 main ca72d44b; remote compiler validation
-has built the new backend and extractor successfully. Four focused regression
-tests and strict Clippy remain pending. Kernel and runtime sources are
-unchanged between c4c and ca72. The split-attention native harness has passed
-two independent source reviews; its nineteen CPU tests and GPU validation
-remain pending. These preparation steps do not establish a performance gain.
+prepared on freshly fetched fe2o3 main ca72d44b. The rebuilt backend/extractor
+and all four exact regression tests pass remotely. Strict Clippy fails on two
+unchanged dependency diagnostics, before reaching the backend/new-test target;
+fresh structured baseline/patch runs reproduce the same two errors. This is
+not a strict lint pass or backend lint qualification. An explicit limited
+engineering receipt permits isolated experimental emission only. The core fix
+was rebased onto upstream 0b0e6c0d and pushed to main as `7dfbe5cc` with CI
+skipped; the four repaired files and compiler source closure match the tested
+snapshot. The clean temporary core worktree was removed after bundle retention.
+V20 now emits. Its first ISA review rejected all fused FP32 instructions;
+independent review locates exactly two per root in integer launch-geometry
+division, before tensor loads, not in the dot product. The corrected R2 gate
+binds the exact artifact, setup/loop instruction bytes, separate mul/add pairs
+and finite checks. All eight checker tests and the actual R2 inspection pass;
+the original R1 failure remains retained. V21's first emission rejects a NaN
+fallback constant. A four-sentinel infinity correction retains fail-closed
+finite checks and proceeds through the fresh validation attempts below.
+The first corrected-source test attempt stops at the unchanged stage reserve
+with status 125; its abnormal-cleanup uncertainty is retained. After retaining
+compiler source, results and emission evidence locally, the integration lead
+removes only the unused nightly compiler debug cache under the build lock,
+reclaiming 1,964,836 KiB. Copied compiler tools pass their hash checks before and
+after cleanup. All thirteen corrected-source tests and strict candidate Clippy
+then pass under unchanged limits. The new emission completes extraction to a
+94,407-byte intermediate handoff, but fails before producing an HSACO because
+the LLVM worker cannot open its gfx950 device-library directory. That failure
+is retained. Read-only diagnosis identifies a removed private `/tmp` dependency
+path in the historical worker, not a missing shared ROCm installation. All nine
+installed candidate library files match the expected hashes (489,572 bytes
+total). The exact files are restored into a newly owned private directory;
+an accounting wrapper includes that external tree under the unchanged stage
+cap. No shared library, worker executable or compiler/protected-runtime check
+is changed. Fresh emission succeeds with HSACO SHA256
+`45c91170c4e83178f3f3f849daffb0b0e1e302ec2c3d4f1178df1a48a9ccc069`.
+Actual ABI/resource inspection and independent manual ISA review pass their
+engineering checks: both roots are Wave64 with zero LDS/private/spills, and
+weighted recurrence remains separate multiply/add. Conversion, exponential
+and division lowering account for the fused instructions. This is not native
+or formal qualification. Manual report SHA256:
+`8612ee0aa3d977f6cc8e81d46b322d95630f5a833192b1de4eedbd2a2a68abbf`.
+The split-attention native harness passes nineteen CPU tests
+after a test-only exception-type correction; its initial failure is retained.
+V21 GPU numerical and performance validation remain pending. Fresh stage
+`/tmp/ferric-opt-v5-attention.YWkhYzAB` passes staging, but GPU admission stops
+with status125 before spawning a worker: GPU busy and foreign KFD PID2762504.
+No process is signaled. This failed preflight is retained, not a kernel failure.
+The planned analytic campaign checks fifteen correctness cells before six
+whole-chain timing cells. Nonzero varied-score validation and exact full-model
+greedy output remain separate required gates. Once the foreign process exits,
+a fresh retry in `/tmp/ferric-opt-v5-attention.DL2FXZIM` passes all twenty-one
+cells with clean teardown and no remaining KFD process. At logical group sizes
+1/4/8, V14 versus the complete V21 chain has worker host-wall microseconds per
+attention of 358.047/157.703, 265.601/88.087 and 244.529/82.124. Controller
+host-wall at N8 is 274.333 versus113.760 us. Both denominators are256 logical
+operations; V21 uses512 measured packets versus V14's256. These zero-score
+analytic fixtures and cache-hot timings do not establish general softmax
+correctness, Qwen parity, model latency or a vendor gain. Report SHA256:
+`a1ea1feeed3139ffe35632f30ca854d99e06af596b83dcd84eba94f778cfbfbf`;
+retained archive SHA256:
+`41e74ddb1592a18f50594f96d5cca814e56011751492cffde6d2e8ec9182417e`.
+Both the completed stage and failed preflight stage are removed after verified
+local retention, no-live-KFD checks and exclusive stage locks, reclaiming
+7,208 KiB and2,904 KiB. Shared model and baseline inputs are preserved.
+
+The separate varied-score oracle passes all20 CPU tests and its launcher passes
+all14 CPU tests. A first native attempt completes12 of21 cells, then fails closed
+while the thirteenth worker exits: `/proc/2901660/exe` disappears before its KFD
+sysfs entry. That worker's complete numerical checks pass, but the supervisor
+interrupts its controller and the campaign remains failed125. All owned children
+are reaped and postflight finds no KFD process. A bounded coherent-observation
+retry was prepared without ignoring persistent unknown or foreign entries.
+The separate R2 supervisor passes32 CPU tests, then all21 native varied-score
+cells and63 packets complete with normal exits, clean teardown and no remaining
+KFD process. The bounded retry journal is empty: this successful native attempt
+did not naturally exercise the exit race; fake CPU tests cover that mechanism.
+The same independent Decimal oracle and predeclared numerical limits are used.
+Three cells have five total differing BF16 elements between V14 and V21, all
+within those limits. OCML accuracy bounds remain stated assumptions, not proved
+facts. No timing, bitwise-equivalence or full-model claim follows. Report SHA256:
+`ff4329f040dbfc4e62599f20ef6cfe3fe2e211633df383c4e553807e4692d469`;
+retained archive SHA256:
+`f0ec4b4ea6bbe11554ec7fe9ad2327a4951a95570a38021de07951e605c437fa`.
+After local archive verification, both varied-score GPU stages are removed,
+reclaiming138,024 KiB and86,492 KiB. The failed R1 remains retained as failed.
+
+The distinct V25 full-model integration passes two independent source reviews.
+Both arms admit the same six images and allocate the same133,120-byte workspace.
+Only single-row contexts128..256 select partial/merge; all other batches retain
+V14. Its independent batch-aware counter expects87,711 packets per fixed
+128/128 request in the candidate versus83,139 in the control. Its native harness
+passes18 CPU tests in50.793s. Parser12 and preparation pass. The first format
+check fails because rustfmt needs a second pass for one return expression;
+the failed receipt and first-pass inventory/archive remain unchanged. A narrow
+successor admits only that exact whitespace change, passes three helper tests
+and two consecutive formatting checks, and reuses the actual parser/prepare
+receipts. Device contract5 and host8 tests pass. Actual adapter compilation then
+fails101 with252 duplicate `fe2o3_device` diagnostic items: the5a and c4c SDKs
+cannot coexist in one Rust link unit, even when only names cross their APIs.
+The failed focused log and clean guard remain retained. A narrow successor moves
+new-kernel metadata generation into an isolated build-script executable. Its
+first preparation rejects Cargo's changed dependency ordering; the raw before
+and after metadata are retained. An exact-edge ordering retry passes12 helper
+tests, actual metadata replay and two formatting checks. Focused adapter
+compilation stops at the unchanged stage reserve before tests: status125,
+return-15, known process group reaped; the guard leaves detached cleanup
+unqualified. Subsequent read-only checks find all known PIDs and their group
+absent, without relabeling that failed receipt. No successful compile is claimed.
+An unchanged-source, fresh-log retry after bounded cleanup also stops at the
+stage reserve: status125/return-9, peak observed RSS1,115,402,240 bytes. The c4c
+kernel library and adapter build-script executable finish; compilation reaches
+`ferric-engine` but no adapter tests run. The guard again leaves detached cleanup
+unqualified; subsequent read-only checks find its known PIDs and recorded process
+group absent. Both failed receipts are preserved. After retaining and removing
+the unused nightly installation, focusedretry2 passes all11 Rust tests and six
+receipt tests with clean guard0; ABI passes2 with1 ignored actual-image case.
+The twelve remaining CPU phases, including explicit actual-image admission,
+regressions, strict Clippy and release build, are running separately. The twelve
+original native-retention helper tests pass, but no V25 controller build,
+actual-image admission or full-model result exists.
+
+## V20 Isolated Native Results
+
+All twenty V5/V20 GPU cells pass full input/output/guard parity against the
+independent dyadic oracle, warmup/final validation, exact dispatch counters and
+clean teardown. Each cell uses a fresh worker, both images, sixteen warmup
+packets and 256 measured packets in ordered groups of sixteen. No KFD process
+remains after supervision. Mixed-fixture worker host-wall microseconds per
+packet are:
+
+| Root / Shape | V5 | V20 |
+| --- | ---: | ---: |
+| BF16, N=1024 K=4096 | 48.103 | 48.414 |
+| BF16, N=4096 K=4096 | 70.972 | 67.481 |
+| BF16, N=12288 K=4096 | 114.551 | 111.027 |
+| FP32 partial, N=4096 K=4096 | 79.907 | 66.894 |
+| FP32 partial, N=4096 K=12288 | 167.912 | 114.082 |
+
+The separate last-element fixture shows the same broad pattern. The larger
+partial GEMV result motivates an opt-in full-model comparison, not a model or
+vendor gain claim. These are cache-hot host-wall observations with different
+historical/new image producers, not GPU durations or source-only attribution.
+Actual ISA does not achieve four-pair overlapping loads: BF16 waits after each
+load, while partial GEMV allows an input/weight pair before waiting. Register
+counts are 22 VGPR/38 SGPR and 24/48, with zero scratch, LDS or spills.
+Accepted report SHA256:
+`d8d2202d0595a49fd025d6783f6d7da5f7b25187cd38c29db12882a412f5dba9`.
+Retained archive SHA256:
+`66d79e205cd5a0a600f77713d1b0110e7a42db24d84d4247a94854d7abd7ff7d`.
+The first archive attempt reports a directory-mtime warning because its output
+was created inside the archived root; the accepted retry names inputs explicitly.
+The completed GPU stage was removed after verified local retention, reclaiming
+7,404 KiB; the shared model and historical baseline remain untouched.
+The separate V23 full-model integration has passed independent source review
+after one test-only type correction. Both arms retain six identical images,
+baseline packet grouping and the FP32 head; only seven C1 layer projection roots
+change. CPU and actual-image admission tests, native output parity and timings
+are still required. Its first CPU preparation fails in the evidence parser:
+Cargo lock dependency edges omit a commit fragment present on package sources.
+The failure is retained. A separate R2 parser preserves exact package pins,
+rejects ambiguous/wrong-source edges, and passes all nine remote parser tests.
+R2 remains a parser-only result; a separate R3 source recipe will retain the
+later five-file V22 test corrections without rewriting original evidence.
+
+The separate V24 direct-index Q GEMV passes nine CPU tests and strict candidate
+Clippy, but emission fails before HSACO generation with
+`UnprovenBarrierConvergence` at the reduction. The admitted index bounds are
+mathematically valid; lane-dependent trap and safe-index paths precede the
+collective, and the compiler cannot prove uniform convergence. No retained IR
+identifies the exact predecessor. This experiment stops with no gate relaxation,
+GPU launch or load-overlap claim; its clean failed emission is retained.
+
+## Completion Packing Candidate
+
+Opt-in V22 keeps all 616 packets of an eligible single-row, single-output
+forward in the same order and groups them into 39 completions instead of 76.
+Pending hidden/scratch buffers and collective state commit only after a
+successful completion; failures poison the execution path. Existing multirow
+and headless routes, defaults, kernel images and runtime are unchanged. The
+source includes flattened command/buffer equivalence and failure tests for all
+39 boundaries. All six focused tests pass remotely, and the separate native A/B
+harness passes twelve CPU tests. Independent source review finds no concrete
+blocker. Remote CLI tests pass 49/4 ignored, legacy V17 47/4 ignored and
+diagnostic 50/4 ignored. Batched execution passes 121 tests (including the six
+focused tests), execution passes34, and peer regressions pass. Source-policy
+passes39 and selected strict Clippy passes. Broader test-target Clippy fails on
+eleven test-only lints: five missing semicolons, five excessive-precision
+literals and one floating-point array comparison. Five test files now use
+semicolons and exact f32 bit identities without changing production code or
+numerical values. The fresh R2 recipe preserves the failed R1 receipt and
+explicitly checks this limited delta. Its eleven helper tests, six focused,
+121 batching,34 execution and four residual tests pass; broad strict test-target
+Clippy, release build and retention also pass. Actual controller SHA256:
+`faf1aaa8c5874af18e2d25b6710e664f0ac77802acd4405cbb488bc7b5cc7bc5`.
+The locally verified CPU archive is
+`2a433bff97e60c69a16cc4190f8242f30098c55976e41fb93ad4cb52deb615fd`.
+
+The first same-source native A/B now passes all1,024 output IDs and decoded
+bytes across eight requests,1,080 batches and665,112 dispatches. Both arms use
+the same actual controller, historical f68 runtime, five images, model and
+commands; only the packet-packing selector differs. One warmup and three measured
+requests run per arm, baseline first. Clean outer supervision and postflight
+find no remaining owned or foreign KFD process.
+
+| Native Arm | Mean TTFT (ms) | Mean TPOT (ms) | Measured-span Output Tokens/s |
+| --- | ---: | ---: | ---: |
+| Baseline | 2600.412 | 111.871 | 7.614984 |
+| Packed16 V22 | 2524.218 | 98.857 | 8.488262 |
+
+This cohort observes11.63% lower TPOT and11.47% higher output rate, not an HTTP
+or vendor win. The three candidate TPOT samples span89.237..109.135ms; repeated
+starts and a fresh matched HTTP pair remain necessary. Report SHA256:
+`634c1634aac5a1a01fd7e436fe155a8d3300e14e5dca76bb0920dd0af54aa697`.
+Complete native archive SHA256:
+`a16078f0541f06857cad27a6e549ed83759535ba71db1b967b61cced223e7287`.
+
+The separate candidate HTTP successor passes all31 remote CPU tests in13.641s,
+with clean owned-process teardown and all thirty input hashes unchanged before
+and after execution. It requires successful retained V22 or V23 native output
+parity before admitting a new matched HTTP pair; synthetic test fixtures do not
+satisfy that prerequisite. Both engines must run under the same new plan, so the
+historical vLLM cohort cannot be relabeled as its comparator. Input-manifest
+SHA256: `3e9e7c5ce78ca8a7cce61002521077529567684e12c9bc3e9520121a3fd4bec7`.
+Actual native replay and preparation now produce fresh matched plan SHA256
+`e21c932e2ca6514e39dda9e14456d85c3fe22ef26159854867365ecd13b0512d`.
+The first vLLM attempt stops before container creation: its GPU preflight sees
+an unrelated TP2 worker on the shared host. A fresh second attempt subsequently
+passes its complete30-request cohort, diagnostics and clean teardown, recording
+mean19.684309ms TTFT and4.350754ms TPOT. Ferric R1 completes both diagnostics,
+all40 timed token checks and clean owned teardown, but an unrelated TP2 worker
+is present on GPUs0/1 at final postflight. Its final timing admission is false;
+it is not paired with vLLM or promoted by its earlier successful token checks.
+Both failed attempts remain failed and no unrelated process is stopped.
+Ferric R2 launches only after a fresh all-eight-GPU idle observation, but a
+foreign TP2 worker subsequently overlaps it on GPUs0/1. Root sends SIGINT only
+to the exact PID/start/argv-checked owned supervisor through pidfd. The controller
+closes normally; its owner terminates the SSE client with SIGTERM. The complete
+interruption/forced-client-cleanup/postflight exception chain remains rejected.
+All four known owned PIDs are absent afterward; no foreign process is signaled.
+No further GPU launch is attempted pending an uninterrupted idle window.
+The frozen harness checks idle pre/postflight, not continuous exclusivity;
+even a later accepted finite cohort must retain that limitation.
+All four attempts and257 source/evidence files are retained locally with verified
+archive SHA256 `63e6865642ca0caa73d9deb9893cb4a52d26286b5f10b0527b8d53d0fe452af8`.
+Closed result-file permissions were tightened from664 to644 before retention;
+contents were not rewritten. There is no new accepted pair or recomputed win.
+The remotely validated V22 implementation is checkpointed privately at
+`60153b823ca53af0a5c2d5b6939e5122b22dda09`; it is not pushed.
+
+A separate ordered64 core-runtime proposal is based on latest observed fe2o3
+main7dfbe5cc. Its new wire operation preserves the old sixteen-packet API and
+all per-packet ordering, completion, ownership and failure checks. Remote tests
+pass11 focused,24 ordered and505 full-library tests, with one existing actual
+image test ignored. Strict library/test Clippy and the release worker build
+also pass. Worker SHA256:
+`9649a9ad9218bbe3ba7fe88fb6b37856a271ae3b28061af77495a48ba1377868`.
+CPU evidence archive SHA256:
+`6919d9cbbf6581a9e989473338b8d27c8c83d247d55c2b677920d555a3719de9`.
+Its isolated native correctness run now passes251 dependent packets in groups
+1/17/40/64/64, idle rollover, then1/64. All251 outputs and594 full-buffer guard
+checks pass, the worker exits normally, and postflight finds no KFD process.
+Report SHA256:
+`77e225baf226ef220234834207f6be8568b941ee35410da092bc7f014d5d0b33`.
+Complete native archive SHA256:
+`b3e4a995eddf47d841b3e4f10ab694e62d2d631c0880c8d297329f926ee46a7d`.
+The native harness separately passes18 CPU tests. Actual Ferric serialized-header
+checks pass source preparation/formatting and export all616 recording commands.
+The next test fails compilation on digest hexadecimal formatting and a missing
+`open_batch32` boolean argument. A reviewed two-file test-only repair passes
+seven helper tests, preparation, formatting, actual packing and core decoding.
+All 616 commands fit ten groups per case; both the actual-width case and a
+synthetic maximal-integer-width clone decode all 20 headers. Maximum header
+sizes are 28,811 and 43,983 bytes, below the unchanged 65,536-byte cap. Synthetic
+allocation capacities do not establish native validity. Strict bridge Clippy
+then fails cleanly on two redundant method closures in the Ferric test module;
+the core Clippy command is not reached. This failure remains retained.
+A separate R3 changes only those two closures to method references. Its five
+helper tests, preparation, formatting, actual packing, core decoding and both
+strict Clippy commands pass under unchanged limits. Its wire, packing and core
+report bytes exactly match R2. This validates the header bridge, not a new
+model route or a runtime performance gain.
+
+The independently validated seven-file core ordered64 overlay is published to
+fe2o3 main as `d10f49bfedc26848285d20ec1399c193b3340f47`, after fetching and
+rebasing onto unchanged latest main7dfbe5cc. Every file matches the complete
+remote formatted inventory used by its 505-test library suite, strict Clippy
+and successful native chain. The commit has `[skip ci]`; no matching GitHub
+workflow run is observed. No Ferric kernel, model route, header fixture or
+dependency change is included. Its temporary clean worktree is removed.
+This core change is not used by any accepted model benchmark.
+
+## Fused Kernel CPU Checkpoints
+
+V29 combines the C1 gate and up projections with SwiGLU, preserving each
+projection's BF16 narrowing before the activation. It shares activation loads
+but does not reduce weight bytes. Nine Rust tests, five independent fixture/
+oracle tests and strict all-target Clippy pass on mi300x-2. A test-only loop
+lint fails in R1; the exact one-file R2 repair and all original failure receipts
+are retained. The dense dyadic fixtures establish their bounded arithmetic
+cases, not a general OCML exponential error guarantee or full-model parity.
+
+V30 combines Q/K RMSNorm and RoPE with one wave per Q head. It preserves the
+normalization, weight multiplication and rotation BF16 boundaries. Five
+contract tests, eight host-model tests and strict all-target Clippy pass on
+mi300x-2. Parallel norm reduction changes summation association explicitly;
+the host butterfly model does not establish the actual emitted reduction tree
+or exact equivalence to serial normalization. Both candidates would replace
+three C1 packets with one per layer, but neither is emitted, natively validated,
+integrated into the active adapter or measured. No speedup is claimed.
+
+The retained fourteen-phase CPU continuation, including the R3 header bridge,
+V29 R2 and V30 R1 source/receipts, has archive SHA256
+`90b2a2993e76a34da9d0c8bbfb0eb4fbb959accb07b8706af2346b43689dab18`.
+All fourteen actual guards report status0, normal completion and clean owned
+cleanup. Builds and tests remain remote; no resource limit is relaxed.
+
+The latest upstream check still finds fe2o3 main at d10f49bf. Its device SDK,
+macros and host/HSACO interfaces are unchanged from the c4c snapshot used for
+these CPU checks. A revision-only successor imports a pinned local Git bundle
+and passes V26 preparation: the regenerated lock differs only by the revision,
+and metadata resolves the exact d10 SDK. Its test build then reaches the private
+stage reserve at 10,193,813,504 bytes and stops with status125/return-15. This is
+not a test pass or an ordinary test failure. The guard records TERM, no KILL,
+and unqualified detached cleanup. A later read-only check finds all four known
+PIDs and the recorded group absent; that observation does not relabel the
+failure. No subsequent d10 phase is admitted. The 10 GiB cap and 512 MiB reserve
+remain unchanged; earlier c4c passes and binaries retain their identities.
+New GPU emission still requires restoring the complete pinned nightly toolchain
+and additional stage headroom. The existing
+fixed compiler implementation and ordered64 worker match the corresponding
+published source, but their original build provenance remains explicit.
+
+## Bottleneck Priorities
+
+Retained decode host spans put54.360ms in attention-collective flushes and
+27.446ms in feed-forward flushes out of85.226ms per batch. These scopes include
+GPU execution and waits, not isolated kernel durations. A distinct steady trace
+records84.529ms inside batches and only0.005657ms between them; HTTP delivery or
+between-batch scheduling is not supported as the primary explanation.
+
+Source and retained ISA review find that the V5 Wave GEMV accesses are already
+coalesced, with adjacent lanes reading adjacent BF16 elements. The stronger
+instruction-level hypothesis is serialized checked loads: each operand load is
+followed immediately by `s_waitcnt vmcnt(0)`, including all eight loads in V20's
+four-pair group. The intended prefetch overlap is therefore absent in that
+emission. The V5 partial root also executes 192 steps at K4096, with 128 masked
+inactive steps. Neither contribution is independently timed. Direct-KFD GPU
+dispatch timestamps and memory/issue-stall counters remain the discriminating
+measurement; overlapping host counters or requested sleeps cannot manufacture
+GPU duration or achieved HBM bandwidth.
+
+Cache-hot isolated GEMV and attention results motivate V23/V25 integration but
+cannot be added into an end-to-end prediction. Actual V20 ISA does not achieve
+the requested four-pair prefetch overlap. V24's direct-indexed alternative is
+still rejected for convergence, and the exact rejected IR was not retained.
+A default-off, bounded diagnostic proposal against main7dfbe5cc is independently
+reviewed; it changes error context only and still needs compilation and actual
+failure capture before any compiler proof change is justified. V26's paired
+down-projection outputs share one activation load across two independent weight
+loads. Its standalone crate now passes five contract tests, six host tests,
+formatting and strict all-target Clippy on mi300x-2 with clean bounded guards.
+Each output keeps the original V5 arithmetic/check order. Emission, actual ISA
+inspection and native validation remain pending; no performance gain is claimed.
+
+After verified local evidence retention, the unused stable candidate debug
+cache is also removed under the build lock, reclaiming 1,239,796 KiB. Release
+cache, compiler tools and all failed receipts were preserved at that step.
+After a separately verified archive and copied-binary identity check, the unused
+nightly compiler release cache is also removed under the build lock, reclaiming
+849,368 KiB. The stable release cache, retained compiler tools, source and all
+failed receipts remain. Product archive SHA256:
+`58f110eac88023642ab9a9f42276b0e9aaa8abeedbcceee18ac21a94c3b29a1c`.
+A redundant583,818,934-byte toolchain transport archive is subsequently removed
+under the same build lock after its exact local copy is verified at SHA256
+`9e87a85cd995a51417872ab6a27820a1ecd4fa1e5854972767eb164198cef446`.
+Installed toolchains and all build/source/failure records remain unchanged.
+No guard is relaxed.
+Five obsolete test executables and23 obsolete normal executable products
+(46 hardlink paths for the latter) are subsequently removed under the build
+lock after exact owner, size, hash and link-count checks plus verified local
+retention. They reclaim78,839,312 and222,749,520 bytes respectively. Their local
+archives are `d3abe4f8eb21c4e412e44159f14da53f112e1a72f40dbb7a156f281528e4856d`
+and `49dbf5e1a110045e92c14d682f987ca683e0c6ede7b372102032909e233330fa`.
+Redundant remote archive copies are removed only after local verification.
+Current V22 controller, ordered64 worker, libraries, tools and all failure
+records remain intact; later Cargo tests may rebuild some removed executables.
+The inactive nightly installation is then removed separately, reclaiming
+1,784,488KiB. All5,603 installed regular-file name/hash pairs match the existing
+locally retained transport archive exactly in both directions; the installed
+path/type/mode inventory is retained at SHA256
+`d06e0bd12f147104daafef2ceea296b68206992b655dc4315b3d4cf2e524da0d`.
+Locked deletion rechecks every installed hash and that exact inventory. V25 uses
+stage A's separate stable toolchain, which remains untouched. The nightly
+installation must be restored and checked before future compiler emission.
+A redundant fresh archive attempt times out124 after300s on the shared CPU;
+its incomplete local output is discarded, not used as retention evidence.
+Stage C is8,188,472KiB immediately after this cleanup; limits remain unchanged.
+The unused clean BF16 logical-sampler refinement worktree is also removed,
+reclaiming about45MiB locally; branch706718a7 and its history remain available.
+Uncommitted changes in the separate dispatch-review worktree are preserved.
+
+## V25 Validation Throughput and V27 Prefill Candidate
+
+The unchanged V25 SDK-isolated retry passes six receipt tests and eleven Rust
+tests with a clean guard; ABI passes two tests with its actual-image case
+explicitly ignored. Shapes (two tests) and bridge (one test) also pass. Each
+of those short phases takes about 315 seconds because nested historical
+validators repeat 1,066 source inventory walks. A separate successor shares
+hashes and inventories within each boundary, then checks their file identities
+and roster; it retains fresh initial and EXIT-final validation boundaries.
+The old driver stops before actual-ABI admission when the parent takes its
+build lock. There is no actual-ABI child or result directory, and no fabricated
+failure receipt. Original passes, source and failures remain unchanged.
+
+The efficient successor passes its 13 helper tests, then the CLI (50 tests),
+legacy V17/V22/diagnostic CLI suites (48/50/51), source-policy (40), library
+(398, nine ignored and one explicit memory-heavy exclusion) and normal strict
+Clippy. Each CLI suite has five ignored cases. Actual-image validation passes
+two tests but the third selector runs zero and is correctly rejected; the
+correct namespace is `wave_target_v17_runner::live_tests`. Test-target Clippy
+then fails on one redundant closure and six missing semicolons, all in two
+test modules. Both failures are retained. A successor changes only those two
+test modules and passes six repair-helper tests, eleven artifact tests (four
+ignored), eleven split-attention tests, all three actual-image ABI tests,
+strict test-target Clippy and the release build. Six retention-policy tests
+also pass. Unchanged production checks are explicitly reused from R3, not
+claimed as fresh R4 full-suite coverage; the heavy-fixture exclusion remains.
+The actual controller SHA256 is
+`593d807726fc0531284d824db8072d2bb4e1733ee7fae5fba73304c3d5202d90`;
+its build receipt is
+`5fffef6426bb1721883b2147183ba62220916587b995846a87f26d2c3412a20c`.
+Staging on mi350 passes without copying models. A separately admitted native
+baseline/split A/B uses plan
+`c78bcec2c52a0f51cc8d02f11d7fa2199e56a48478e872ef035c2bf9f6c0cf53`.
+The baseline checks all 512 output IDs, but an unrelated TP2 worker arrives on
+GPUs0/1 during the candidate arm. The supervisor rejects the pair with status125
+and returncode-9; its immediate cleanup receipt is unqualified. A subsequent
+read-only check finds all five known owned PIDs absent, with no additional
+signals sent and the unrelated job untouched. This later observation does not
+convert the rejected run into a pass. No V25 paired parity or timing gain is
+claimed. The complete failed-stage archive is retained locally at SHA256
+`df7fcb14104a8b3ad058b5ee704b8621ce9105b52187ad97c86396f904768af3`.
+
+A fresh retry on the same physical GPU subsequently passes under plan
+`a31552f23efdceb00e95f64a3806c69dfc168d4449ead8e1bf1f49bd28420cea`.
+Both arms use the same controller, historical worker, six images and workload,
+with one warmup and three measured requests each. Independent retained-raw
+review checks all 1,024 output IDs and every decoded byte against the reference,
+recomputes latency/rate, and verifies all batch/dispatch counts and input hashes.
+
+| Native Mode | Mean TTFT (ms) | Mean TPOT (ms) | Output tokens/s |
+| --- | ---: | ---: | ---: |
+| Baseline | 2303.258 | 86.710 | 9.612678 |
+| Split8 V25 | 2331.938 | 77.867 | 10.473148 |
+
+The short cohort observes 10.20% lower TPOT and 8.95% higher output rate, with
+1.25% worse TTFT. This fixed-order native comparison is not HTTP, a vLLM result,
+sustained throughput, statistical confidence or formal qualification. Do not
+combine its latency with the separate matched HTTP table. Report SHA256 is
+`cc9fc0502b25aedb127eed7e4fa6b1a60a550c5b778e1e66c7ce65cea67e526f`;
+the complete retained archive is
+`3b967c53395636eacb1e5f47d722815f9f0a87af29a06f6e8ce86a9170b687e9`.
+The outer supervisor exits normally with clean cleanup, no signals and empty
+post-run KFD ownership. Both arm cleanup records preserve TERM/KILL flags: the
+frozen WNOWAIT helper signals each reserved group after observing exit0 and only
+its zombie leader, then reaps it. Raw census records confirm that path. Do not
+describe the arms as signal-free. The interrupted first attempt stays rejected.
+
+The exact 28-path R4 kernel/adapter overlay is imported privately into Ferric.
+The entire tested source inventory matches except the six independently changed
+tracker/site files. A tested trailing blank line in adapter Cargo.toml is kept
+for byte identity. The new executable requires explicit artifact and mode
+selection; existing defaults and V22 hybrid rejection remain unchanged. This
+import preserves the actual adapter5a/build-only c4c SDK split, not an unfinished
+d10 migration, and is not pushed as private implementation.
+
+An existing-image per-shape Wave-versus-MFMA diagnostic passes all 22 bounded
+CPU tests and two independent source reviews, then completes natively with
+ten correctness workers followed by thirty N1/4/16 timing workers. It uses one
+V5 image, the same signed-dyadic mathematical fixtures in NK/KN layouts, and
+full-buffer guard checks. All cells pass, all workers exit normally and GPU
+idle postflight passes with no remaining KFD clients. The supervisor reports
+status0, clean cleanup and no termination/kill. Native report SHA256:
+`c905dfea6b58cfaf424015dbd2c894189280e0f45583f2d3fdd967eb5364cfb5`.
+
+MFMA is slower in every one of the fifteen matched shape/group comparisons.
+For ordered groups of16, controller wall time per complete projection is:
+
+| Shape | Wave (us) | MFMA (us) |
+| --- | ---: | ---: |
+| Q4096 | 79.697 | 187.715 |
+| KV1024 | 62.796 | 163.034 |
+| Up12288 | 125.262 | 194.009 |
+| Output4096 | 93.784 | 187.746 |
+| Down12288 | 178.912 | 481.695 |
+
+These are cache-hot synthetic host measurements over256 packets per cell,
+not GPU timestamps, model TPOT or a competitive comparison. Fixed root order
+alternates by shape; one worker per cell does not establish stable tails.
+The older all-MFMA model slowdown remains consistent with this diagnostic;
+no selective MFMA route switch is justified by the current evidence.
+
+V27 is a separate Ferric kernel for aligned, exclusive 16-token page copies.
+Its 16,384 lanes copy key and value raw u16 words without a collective or
+serial row loop. It supports both natural order and the final prompt's
+last-logical-row-first permutation. Five contract tests, six host tests and
+strict all-target Clippy pass on mi300x-2 under the unchanged resource guard.
+Runtime routing and defaults are not changed. The nightly installation must
+be restored byte-for-byte before engineering emission; actual ABI/ISA checks,
+native V5 parity and timing, and full-model output checks remain pending.
+The separate native harness passes all 26 CPU-double tests with a clean guard;
+this does not substitute for actual image emission or GPU execution.
+
+The motivating retained prefill spans total 2,282.386812 ms across eight
+16-row chunks: attention groups account for 1,889.415254 ms, feedforward for
+386.139320 ms and the final head for 2.256607 ms. These are nested host spans,
+not GPU timings or measured isolated KV-copy costs. Source review shows that
+prefill already uses MFMA projections and suppresses intermediate output heads;
+V27 targets a different serial copy path. No V27 performance claim follows.
+
+The new V2 matched HTTP plan is
+`71855e76d38c3d3ff11d21b7ff33d7c67303a5fc28dff07c8deebb0ee14cf7fd`.
+Its shared ownership monitor passes 22 remote tests. The vLLM arm finishes
+cleanly with 192 census samples, a maximum gap of 500.081 ms and no observed
+foreign owner. Ferric then completes under the same plan and paired replay
+accepts both complete raw cohorts, with results recorded at the top of this
+document. The older unmonitored vLLM arm is not substituted.
 
 ## Deferred Hypotheses
 
@@ -273,11 +816,37 @@ During preparation, upstream advances to `70b3fe00`, a four-file JavaScript
 navigation-capture update with no compiler/runtime source changes. The active
 producer build remains explicitly frozen at c4c, not relabelled as the new tip.
 
-The matched-result site is published at static-only Pages commit `72b76748`.
-Remote QA passes every width 320..1440, eight named viewports and 64 screenshots;
-deployment `35411581137` succeeds without a GitHub build. The published snapshot
-predates V19 native completion. Raw evidence, private implementation and this
-tracker are not published.
+The V19 no-gain result and explicit coverage limits are published at static-only
+Pages commit `b8d08cbc`. Remote QA passes every width 320..1440, eight named
+viewports and 64 screenshots; deployment `35418497983` succeeds without a GitHub
+build. Live HTML SHA256 matches the validated artifact:
+`d31be47346f205cbb7f0c218755057d4522724d34270ddea80d68c38d462e138`.
+The temporary publishing worktree is removed. The frozen matched V5 result and
+historical data files remain unchanged. Raw evidence, private implementation
+and this tracker are not published.
+
+The subsequent V22 site update publishes the accepted small native A/B and
+ordered64 correctness result at static-only commit
+`d27c6ec77eb9c57045bc076f31023f0e65c87b79`. Original negative-fixture and
+screenshot-postprocessor failures remain retained. A separate nine-test capture
+replay validates the64 existing captures; nine publication-parser tests and
+actual static preparation pass on mi300x-2. Deployment35425803909 succeeds with
+no GitHub build. All seven live file hashes match the remotely validated
+artifact, including HTML SHA256
+`67a2a2ab724736dccd4c962cc07ed083556ec34018dd85c67fc923048acc55bf`.
+Only the public index and workflow artifact hash/size metadata change; no
+private implementation, tracker or raw evidence is pushed. The historical
+HTTP comparison remains unchanged and no fresh HTTP win is claimed.
+
+The latest matched HTTP loss is subsequently published at static-only commit
+`57db861224c10bd9da899430f1f68a06a55152a3`. Remote site QA passes the responsive
+checks and 64 captures. A supplemental capture selector initially times out;
+the preserved clean failure is followed by a corrected seven-image desktop/
+mobile capture and 15 passing publication tests. Root reviews all seven new
+images before preparation. Deployment35430034786 succeeds, and all seven live
+file hashes match; HTML SHA256 is
+`e7d7fee8cab2822ff6cf4cd9844eb541b28f3c4c3ddc8d800a2fcb12c0378524`.
+No private source, raw evidence or GitHub build is published or triggered.
 
 All builds/CPU tests stay on mi300x-2 and GPU runs on mi350, serialized by the
 integration lead. A fresh GPU stage is `/tmp/ferric-opt-v5.Q8EAzf7k`; CPU work

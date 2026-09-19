@@ -21,6 +21,7 @@ use ferric_build::AuthenticatedModelWeightLayout;
 use ferric_spec::{ModelConfig, Qwen3ModelRole};
 
 mod c1_kv_copy_v19;
+mod c1_split_attention_v25;
 mod draft;
 pub use draft::EngineeringTpDraftBatchExecutionV10;
 
@@ -145,6 +146,8 @@ pub struct EngineeringTpBatchExecutionV2<R: EngineeringTpRankTransportV1> {
     c1_kv_copy_v19: Option<crate::tp_artifact::C1KvCopyBindingV19>,
     admitted_c1_kv_copy_v19: Option<crate::tp_artifact::C1KvCopyBindingV19>,
     c1_packet_packing_v22: Option<bool>,
+    split_attention_workspace_v25: Option<c1_split_attention_v25::Workspace>,
+    c1_split_attention_v25: Option<bool>,
 }
 
 impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
@@ -518,6 +521,8 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
             admitted_wave_rmsnorm_v15,
             c1_kv_copy_v19: None,
             admitted_c1_kv_copy_v19: None,
+            split_attention_workspace_v25: None,
+            c1_split_attention_v25: None,
             c1_packet_packing_v22: None,
         })
     }
@@ -785,6 +790,8 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
     /// Rejects repeated/late selection, unadmitted images, capture or incompatible execution.
     pub fn configure_c1_packet_packing_v22(&mut self, enabled: bool) -> TpResult<()> {
         if self.c1_packet_packing_v22.is_some()
+            || self.split_attention_workspace_v25.is_some()
+            || self.c1_split_attention_v25.is_some()
             || self.last_batch != 0
             || self.completed_batches != 0
             || self.poisoned
@@ -1351,9 +1358,22 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
         {
             return Err("output rows must be unique, ascending, and within the batch".into());
         }
-        let per_rank = u64::from(self.inner.plan.model().layers)
+        let base_per_rank = u64::from(self.inner.plan.model().layers)
             * (15 + self.reduction_mode().extra_dispatches_per_layer())
             + 4;
+        let split = c1_split_attention_v25::SplitContext::select(
+            self.c1_split_attention_v25 == Some(true),
+            batch,
+        )?
+        .is_some();
+        let per_rank = base_per_rank + if split { 36 } else { 0 };
+        // Mixed fallback/split batches must not undercount earlier 652-packet forwards.
+        let no_rollover_bound = base_per_rank
+            + if self.c1_split_attention_v25.is_some() {
+                36
+            } else {
+                0
+            };
         let next = self
             .completed_batches
             .checked_add(1)
@@ -1364,7 +1384,7 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
             .iter()
             .all(EngineeringTpRankTransportV1::supports_queue_rollover);
         if !rollover
-            && next.checked_mul(per_rank).is_none_or(|packets| {
+            && next.checked_mul(no_rollover_bound).is_none_or(|packets| {
                 packets > fe2o3_kfd::engineering_wire::MAX_UNRETIRED_RING_PACKETS_V1
             })
         {
@@ -1524,6 +1544,7 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
         let metadata_timing = self.inner.timing.scope("metadata");
         let model = self.inner.plan.model();
         let world = self.inner.plan.world_size();
+        let split_attention = self.prepare_split_attention_v25(batch)?;
         let projection = &self.projection;
         let c1_wave_layers = self.c1_wave_layers;
         let wave_rmsnorm_v15 = self.wave_rmsnorm_v15.is_some();
@@ -1739,25 +1760,32 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
             })?;
             drop(append_timing);
             let gqa_timing = self.inner.timing.span("attention_gqa_math", None);
-            self.inner.dispatch_each(|r| {
-                dispatch(
-                    attention,
-                    rows * r.geometry.query_heads.count,
-                    vec![
-                        r.q_rotated.read(),
-                        r.layers[li].k_cache.read(),
-                        r.layers[li].v_cache.read(),
-                        positions[r.geometry.rank as usize].read(),
-                        tables[r.geometry.rank as usize].read(),
-                        r.attention.write(),
-                        U32(rows),
-                        U32(world),
-                        U32(stride),
-                        U32(pages),
-                        U32(max_context),
-                    ],
-                )
-            })?;
+            if let Some(split) = split_attention {
+                if split.tokens() != max_context {
+                    return Err("V25 actual prepared context drifted".into());
+                }
+                split.enqueue(&mut self.inner, li)?;
+            } else {
+                self.inner.dispatch_each(|r| {
+                    dispatch(
+                        attention,
+                        rows * r.geometry.query_heads.count,
+                        vec![
+                            r.q_rotated.read(),
+                            r.layers[li].k_cache.read(),
+                            r.layers[li].v_cache.read(),
+                            positions[r.geometry.rank as usize].read(),
+                            tables[r.geometry.rank as usize].read(),
+                            r.attention.write(),
+                            U32(rows),
+                            U32(world),
+                            U32(stride),
+                            U32(pages),
+                            U32(max_context),
+                        ],
+                    )
+                })?;
+            }
             drop(gqa_timing);
             let output_timing = self.inner.timing.span("attention_output_projection", None);
             self.inner.dispatch_each(|r| {
@@ -1788,8 +1816,12 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
                 NumericalRole::AttentionOutput,
                 rows,
             )?;
-            self.inner
-                .reduce(layer, Qwen3TensorParallelCollectiveV1::AttentionOutputSum)?;
+            if split_attention.is_some() {
+                self.inner.reduce_split_attention_v25(layer)?;
+            } else {
+                self.inner
+                    .reduce(layer, Qwen3TensorParallelCollectiveV1::AttentionOutputSum)?;
+            }
             let feed_forward_timing = self.inner.timing.scope("feed_forward");
             let packed_hidden = self.inner.packed_c1.map(|state| state.hidden);
             self.inner.dispatch_each(|r| {

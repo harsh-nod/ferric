@@ -1,0 +1,26 @@
+[package]
+name = "ferric-qwen3-tp-c1-split8-attention-kernels-device-v21"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.94"
+publish = false
+
+[workspace]
+
+[features]
+default = ["gfx950"]
+gfx950 = []
+
+[dependencies]
+fe2o3-device = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "c4c5cdd0f69f3844386440a5addb4d4c3dce0e4b", version = "=0.1.0" }
+
+[target.'cfg(not(target_arch = "amdgpu"))'.dependencies]
+fe2o3-host = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "c4c5cdd0f69f3844386440a5addb4d4c3dce0e4b", version = "=0.1.0" }
+
+[dev-dependencies]
+quote = "=1.0.47"
+syn = { version = "=2.0.119", features = ["full", "visit-mut"] }
+
+[lib]
+name = "ferric_qwen3_tp_c1_split8_attention_kernels_device_v21"
+path = "src/lib.rs"

@@ -56,6 +56,16 @@ pub trait EngineeringTpBatchRunnerV2 {
             .map(|(rank, _)| if rank == 0 { 544 } else { 540 })
             .collect()
     }
+    /// Batch-aware independent packet expectation; legacy runners retain their existing policy.
+    /// # Errors
+    /// Rejects an invalid immutable prepared batch before submission begins.
+    fn expected_dispatch_counts_for_batch(
+        &self,
+        _batch: &EngineeringTpPreparedBatchV1,
+        published: usize,
+    ) -> TpResult<Vec<u64>> {
+        Ok(self.expected_dispatch_counts(published))
+    }
     /// Number of physical rows sent through the vocabulary projection.
     fn output_head_rows(&self, physical: usize, _published: usize) -> usize {
         physical
@@ -92,6 +102,13 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchRunnerV2
     }
     fn expected_dispatch_counts(&self, published: usize) -> Vec<u64> {
         self.expected_dispatch_counts(published)
+    }
+    fn expected_dispatch_counts_for_batch(
+        &self,
+        batch: &EngineeringTpPreparedBatchV1,
+        published: usize,
+    ) -> TpResult<Vec<u64>> {
+        self.expected_dispatch_counts_for_batch(batch, published)
     }
     fn output_head_rows(&self, physical: usize, published: usize) -> usize {
         self.output_head_rows(physical, published)
@@ -333,7 +350,22 @@ impl<G: EngineeringTpBatchRunnerV2> EngineeringTpBatchRuntimeV2<G> {
             .filter(|(_, row)| row.kind != TpBatchRowKindV1::PrefillIntermediate)
             .map(|(index, _)| index)
             .collect::<Vec<_>>();
-        let expected_counts = self.gpu.expected_dispatch_counts(output_rows.len());
+        let expected_counts = match self
+            .gpu
+            .expected_dispatch_counts_for_batch(&prepared, output_rows.len())
+        {
+            Ok(counts) => counts,
+            Err(error) => {
+                let aborted = self.pool.abort_batch(&prepared);
+                let scheduled_abort = self.scheduler.abort(scheduled.id());
+                if aborted.is_err() || scheduled_abort.is_err() {
+                    self.poisoned = true;
+                }
+                return Err(format!(
+                    "dispatch preflight: {error}; abort={aborted:?}/{scheduled_abort:?}"
+                ));
+            }
+        };
         let output_head_rows = self
             .gpu
             .output_head_rows(scheduled.rows().len(), output_rows.len());
@@ -532,3 +564,7 @@ impl<G: EngineeringTpBatchRunnerV2> EngineeringTpBatchRuntimeV2<G> {
 
 #[cfg(test)]
 mod tests;
+
+#[cfg(test)]
+#[path = "tp_batch_runtime/split_attention_v25_tests.rs"]
+mod split_attention_v25_tests;
