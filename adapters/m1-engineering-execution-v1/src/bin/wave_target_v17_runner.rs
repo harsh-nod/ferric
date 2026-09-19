@@ -42,6 +42,10 @@ pub(super) enum Variant<'a> {
         artifact: &'a Path,
         enabled: bool,
     },
+    #[allow(dead_code)] // Selected only by the separate V22 executable.
+    PackedC1V22 {
+        enabled: bool,
+    },
 }
 
 impl Variant<'_> {
@@ -59,6 +63,11 @@ impl Variant<'_> {
         {
             return Err("V19 requires combined V17 and an explicit copy image".into());
         }
+        if matches!(self, Self::PackedC1V22 { .. })
+            && options.mode != wave_target_v17_live_contract::Mode::Combined
+        {
+            return Err("V22 packet packing requires combined V17".into());
+        }
         Ok(())
     }
 
@@ -67,6 +76,7 @@ impl Variant<'_> {
             Self::V17 => LIVE_PROFILE,
             Self::RuntimeDiagnostic => DIAGNOSTIC_PROFILE,
             Self::KvCopyV19 { .. } => "c1-kv-copy-v19-live-v1",
+            Self::PackedC1V22 { .. } => "c1-packed-v22-live-v1",
         }
     }
 
@@ -83,6 +93,25 @@ impl Variant<'_> {
         } else {
             "baseline"
         }
+    }
+
+    fn c1_packet_mode(self) -> &'static str {
+        if matches!(self, Self::PackedC1V22 { enabled: true }) {
+            "packed16-v22"
+        } else {
+            "baseline"
+        }
+    }
+
+    fn annotate_packet_mode(self, value: &mut Value, actual: &str) -> Result<(), String> {
+        if let Self::PackedC1V22 { .. } = self {
+            if actual != self.c1_packet_mode() {
+                return Err("actual V22 packet policy differs from requested mode".into());
+            }
+            value["requested_c1_packet_mode"] = json!(self.c1_packet_mode());
+            value["c1_packet_mode"] = json!(actual);
+        }
+        Ok(())
     }
 }
 
@@ -521,7 +550,7 @@ fn run_with_timing(
             &artifacts,
         )?
     };
-    let configured = (|| {
+    let configured: Result<Value, String> = (|| {
         driver.configure_output_head_pruning(true)?;
         driver.configure_reduction(EngineeringTpReductionModeV3::DeviceTp1V3)?;
         driver.configure_projection(
@@ -538,8 +567,11 @@ fn run_with_timing(
                     return Err("actual V19 copy policy differs from requested mode".into());
                 }
             }
-            (Variant::V17 | Variant::RuntimeDiagnostic, None) => {
+            (Variant::V17 | Variant::RuntimeDiagnostic | Variant::PackedC1V22 { .. }, None) => {
                 driver.configure_ordered_c1_wave_target_v17(&artifacts, options.mode)?;
+                if let Variant::PackedC1V22 { enabled } = variant {
+                    driver.configure_c1_packet_packing_v22(enabled)?;
+                }
             }
             _ => return Err("copy artifact does not match controller variant".into()),
         }
@@ -550,12 +582,14 @@ fn run_with_timing(
         {
             return Err("live selector or packet contract differs".into());
         }
-        profile_metadata(
+        let mut profile = profile_metadata(
             options,
             driver.layer_projection_mode(),
             driver.attention_mode(),
             driver.rmsnorm_mode(),
-        )
+        )?;
+        variant.annotate_packet_mode(&mut profile, driver.c1_packet_mode())?;
+        Ok(profile)
     })();
     let mut performance_profile = match configured {
         Ok(profile) => profile,
@@ -576,6 +610,7 @@ fn run_with_timing(
     let layer_projection = driver.layer_projection_mode();
     let rmsnorm_mode = driver.rmsnorm_mode();
     let attention_mode = driver.attention_mode();
+    let c1_packet_mode = driver.c1_packet_mode();
     let transposed_weight_bytes = driver.transposed_weight_bytes();
     let fp32_workspace_bytes = driver.fp32_head_workspace_bytes();
     let mut runtime =
@@ -616,6 +651,10 @@ fn run_with_timing(
         setup["kv_copy_artifact_path"] = json!(artifact);
         setup["kv_copy_artifact"] = artifact_identity(copy);
     }
+    if matches!(variant, Variant::PackedC1V22 { .. }) {
+        setup["requested_c1_packet_mode"] = json!(variant.c1_packet_mode());
+        setup["c1_packet_mode"] = json!(c1_packet_mode);
+    }
     timing.setup = Some(setup.clone());
     let body = |runtime: &mut EngineeringTpBatchRuntimeV2<_>| {
         emit(&setup)?;
@@ -632,7 +671,9 @@ fn run_with_timing(
         check_retired(runtime, live.pages)
     };
     let (result, close) = match variant {
-        Variant::V17 | Variant::KvCopyV19 { .. } => run_and_close(&mut runtime, body),
+        Variant::V17 | Variant::KvCopyV19 { .. } | Variant::PackedC1V22 { .. } => {
+            run_and_close(&mut runtime, body)
+        }
         Variant::RuntimeDiagnostic => run_diagnostic_and_close(
             &mut runtime,
             &timing.timing,
@@ -654,6 +695,10 @@ fn run_with_timing(
         closed["kv_append_mode"] = json!(variant.kv_append_mode());
         closed["kv_copy_artifact_path"] = json!(artifact);
         closed["kv_copy_artifact"] = artifact_identity(copy);
+    }
+    if matches!(variant, Variant::PackedC1V22 { .. }) {
+        closed["requested_c1_packet_mode"] = json!(variant.c1_packet_mode());
+        closed["c1_packet_mode"] = json!(c1_packet_mode);
     }
     timing.closed = Some(closed.clone());
     let emitted = emit(&closed);
@@ -841,6 +886,54 @@ mod live_tests {
             options.mode = wave_target_v17_live_contract::Mode::Combined;
         }
         assert_eq!(Variant::V17.kv_append_mode(), "baseline");
+    }
+
+    #[test]
+    fn v22_runner_is_explicit_combined_only_and_binds_requested_actual_metadata() {
+        let mut options = fixture(wave_target_v17_live_contract::Mode::Combined);
+        for enabled in [false, true] {
+            let variant = Variant::PackedC1V22 { enabled };
+            assert!(variant.validate(&options).is_ok());
+            let base = Variant::V17.worker_runtime(&options).unwrap();
+            let candidate = variant.worker_runtime(&options).unwrap();
+            assert!(!candidate.profile);
+            assert_eq!(base.cache_admission, candidate.cache_admission);
+            assert_eq!(base.operational, candidate.operational);
+            assert_eq!(base.sequences, candidate.sequences);
+            assert_eq!(base.ordered_batches, candidate.ordered_batches);
+            assert_eq!(base.rollover, candidate.rollover);
+            assert_eq!(
+                base.shared_full_currentness,
+                candidate.shared_full_currentness
+            );
+            assert_eq!(variant.live_profile(), "c1-packed-v22-live-v1");
+            let mode = if enabled { "packed16-v22" } else { "baseline" };
+            let mut record = json!({"authority":"none"});
+            variant.annotate_packet_mode(&mut record, mode).unwrap();
+            assert_eq!(record["requested_c1_packet_mode"], mode);
+            assert_eq!(record["c1_packet_mode"], mode);
+            let before = record.clone();
+            assert!(
+                variant
+                    .annotate_packet_mode(&mut record, "unknown")
+                    .is_err()
+            );
+            assert_eq!(record, before);
+            for other in MODES {
+                options.mode = other;
+                assert_eq!(
+                    variant.validate(&options).is_ok(),
+                    other == wave_target_v17_live_contract::Mode::Combined
+                );
+            }
+            options.mode = wave_target_v17_live_contract::Mode::Combined;
+        }
+        let mut frozen = json!({"live_profile":LIVE_PROFILE});
+        let before = frozen.clone();
+        Variant::V17
+            .annotate_packet_mode(&mut frozen, "baseline")
+            .unwrap();
+        assert_eq!(frozen, before);
     }
 
     #[test]

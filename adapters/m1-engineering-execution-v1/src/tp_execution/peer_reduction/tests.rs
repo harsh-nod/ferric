@@ -227,6 +227,7 @@ fn fixture_with_capacity(world: u32, row_capacity: u32) -> EngineeringTpExecutio
         residual_arithmetic: None,
         sequences: None,
         ordered_batches: None,
+        packed_c1: None,
         timing: crate::host_timing::HostTiming::default(),
         closed: false,
     }

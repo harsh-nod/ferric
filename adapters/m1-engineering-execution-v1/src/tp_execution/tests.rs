@@ -286,6 +286,7 @@ fn fixture_model(
         residual_arithmetic: None,
         sequences: None,
         ordered_batches: None,
+        packed_c1: None,
         timing: crate::host_timing::HostTiming::default(),
         closed: false,
     }

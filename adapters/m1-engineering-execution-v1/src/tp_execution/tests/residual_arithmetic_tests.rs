@@ -57,7 +57,7 @@ fn single_row_o_and_down_share_explicit_projection_rounding() {
                     driver.hidden.fill(0x3b80);
                     for (rank, transport) in driver.ranks.iter().zip(&mut driver.transports) {
                         let value = if rank.geometry.rank == 0 {
-                            1.003_906_25_f32
+                            f32::from_bits(0x3f80_8000)
                         } else {
                             0.0
                         };

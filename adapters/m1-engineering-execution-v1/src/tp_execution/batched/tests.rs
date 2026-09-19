@@ -6,6 +6,7 @@
 mod argmax_v11;
 mod attention_argmax_v11;
 mod c1_kv_copy_v19;
+mod c1_packet_packing_v22;
 mod draft;
 mod large_kv;
 mod layer_c1_wave;
@@ -52,6 +53,8 @@ enum Failure {
     RuntimeCounter,
     OrderedSubmit,
     OrderedWait,
+    OrderedSubmitAt(usize),
+    OrderedWaitAt(usize),
     PreparePackets,
     ArgmaxSubmit,
     ArgmaxWait,
@@ -250,7 +253,15 @@ impl EngineeringTpRankTransportV1 for Recording {
         self.events
             .borrow_mut()
             .push(Event::OrderedSubmit(self.rank, commands.len()));
-        if self.failure == Some(Failure::OrderedSubmit) {
+        let ordinal = self
+            .events
+            .borrow()
+            .iter()
+            .filter(|event| matches!(event, Event::OrderedSubmit(..)))
+            .count();
+        if self.failure == Some(Failure::OrderedSubmit)
+            || self.failure == Some(Failure::OrderedSubmitAt(ordinal))
+        {
             return Err("injected ordered publication failure".into());
         }
         self.pending_ordered = Some(commands.to_vec());
@@ -263,7 +274,15 @@ impl EngineeringTpRankTransportV1 for Recording {
         self.events
             .borrow_mut()
             .push(Event::OrderedWait(self.rank, count));
-        if self.failure == Some(Failure::OrderedWait) {
+        let ordinal = self
+            .events
+            .borrow()
+            .iter()
+            .filter(|event| matches!(event, Event::OrderedWait(..)))
+            .count();
+        if self.failure == Some(Failure::OrderedWait)
+            || self.failure == Some(Failure::OrderedWaitAt(ordinal))
+        {
             return Err("injected ordered aggregate completion failure".into());
         }
         for command in commands {
@@ -793,6 +812,7 @@ fn fixture_for_model(
         residual_arithmetic: None,
         sequences: None,
         ordered_batches: None,
+        packed_c1: None,
         timing: crate::host_timing::HostTiming::default(),
         closed: false,
     };
@@ -825,6 +845,7 @@ fn fixture_for_model(
         admitted_wave_rmsnorm_v15: None,
         c1_kv_copy_v19: None,
         admitted_c1_kv_copy_v19: None,
+        c1_packet_packing_v22: None,
     }
 }
 
@@ -1929,7 +1950,7 @@ fn host_rounding_modes_match_between_staging_policies_for_o_and_down() {
                             driver.inner.ranks.iter().zip(&mut driver.inner.transports)
                         {
                             let value = if rank.geometry.rank == 0 {
-                                1.003_906_25_f32
+                                f32::from_bits(0x3f80_8000)
                             } else {
                                 0.0
                             };

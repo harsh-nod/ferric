@@ -107,6 +107,11 @@ path = "src/bin/ferric-qwen3-c1-kv-copy-v19-live.rs"
 required-features = ["tp-batch-engineering"]
 
 [[bin]]
+name = "ferric-qwen3-c1-packed-v22-live"
+path = "src/bin/ferric-qwen3-c1-packed-v22-live.rs"
+required-features = ["tp-batch-engineering"]
+
+[[bin]]
 name = "ferric-qwen3-wave-target-v17-runtime-diagnostic"
 path = "src/bin/ferric-qwen3-wave-target-v17-runtime-diagnostic.rs"
 required-features = ["tp-batch-engineering"]

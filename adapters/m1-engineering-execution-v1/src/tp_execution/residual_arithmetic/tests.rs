@@ -7,7 +7,7 @@ use super::{
 fn projection_materialization_is_distinct_and_after_the_complete_rank_sum() {
     let partials = [Partial {
         rank: 0,
-        values: &[1.003_906_25],
+        values: &[f32::from_bits(0x3f80_8000)],
     }];
     assert_eq!(
         reduce(Arithmetic::Fp32ResidualV1, 1, &partials, &[0x3b80]).unwrap(),
@@ -19,7 +19,7 @@ fn projection_materialization_is_distinct_and_after_the_complete_rank_sum() {
     );
     for world in [2, 8] {
         let mut values = vec![[0.0_f32]; world as usize];
-        values[0] = [1.003_906_25];
+        values[0] = [f32::from_bits(0x3f80_8000)];
         values[1] = [0.003_906_25];
         let partials = (0..world)
             .rev()
@@ -38,7 +38,7 @@ fn projection_materialization_is_distinct_and_after_the_complete_rank_sum() {
         [16_777_216.0_f32],
         [1.0],
         [-16_777_216.0],
-        [1.003_906_25],
+        [f32::from_bits(0x3f80_8000)],
         [0.003_906_25],
         [0.0],
         [0.0],
@@ -79,7 +79,7 @@ fn projection_overflow_is_rejected_before_residual_cancellation() {
         )
         .is_err()
     );
-    assert_eq!(values, [f32::MAX]);
+    assert_eq!(values.map(f32::to_bits), [f32::MAX.to_bits()]);
 }
 
 #[test]

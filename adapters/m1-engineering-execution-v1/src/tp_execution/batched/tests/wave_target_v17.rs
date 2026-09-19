@@ -157,11 +157,11 @@ fn wave_target_v17_rejects_every_missing_binding_and_incompatible_profile_atomic
                 16 => driver.prune_output_head = false,
                 17 => {
                     driver.projection.mode =
-                        super::super::super::EngineeringTpProjectionModeV3::Baseline
+                        super::super::super::EngineeringTpProjectionModeV3::Baseline;
                 }
                 18 => {
                     driver.projection.mode =
-                        super::super::super::EngineeringTpProjectionModeV3::Wave
+                        super::super::super::EngineeringTpProjectionModeV3::Wave;
                 }
                 19 => driver.last_batch = 1,
                 20 => driver.completed_batches = 1,
@@ -172,7 +172,7 @@ fn wave_target_v17_rejects_every_missing_binding_and_incompatible_profile_atomic
                 25 => driver.inner.ranks.clear(),
                 26 => {
                     driver.inner.reduction =
-                        super::super::super::reduction::ReductionWorkspace::Baseline
+                        super::super::super::reduction::ReductionWorkspace::Baseline;
                 }
                 27 => driver.inner.transports[0].ordered_supported = false,
                 28 => driver
@@ -187,7 +187,7 @@ fn wave_target_v17_rejects_every_missing_binding_and_incompatible_profile_atomic
                 31 => driver.fp32_argmax_v11 = Some(Fp32ArgmaxBindingV11::recording()),
                 32 => {
                     driver.projection.mode =
-                        super::super::super::EngineeringTpProjectionModeV3::Auto
+                        super::super::super::EngineeringTpProjectionModeV3::Auto;
                 }
                 33 => driver.row_capacity = 1,
                 _ => unreachable!(),

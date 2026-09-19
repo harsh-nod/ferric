@@ -186,14 +186,24 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpExecutionV1<R> {
         layer: u32,
         operation: Qwen3TensorParallelCollectiveV1,
     ) -> TpResult<()> {
-        let key = self.collective.expected();
+        let key = self
+            .packed_c1
+            .map_or(self.collective, |state| state.collective)
+            .expected();
         if key.layer != layer || key.operation != operation {
             return Err("device collective operation reordered".into());
         }
-        let ReductionWorkspace::DeviceTp1(scratch) = self.reduction else {
+        let ReductionWorkspace::DeviceTp1(committed_scratch) = self.reduction else {
             return Err("device residual workspace unavailable".into());
         };
-        let ordered_tail = self.ordered_batches.is_some() && !self.draft_v10;
+        let scratch = self
+            .packed_c1
+            .map_or(committed_scratch, |state| state.scratch);
+        let hidden = self
+            .packed_c1
+            .map_or(self.ranks[0].hidden, |state| state.hidden);
+        let ordered_tail =
+            self.ordered_batches.is_some() && !self.draft_v10 && self.packed_c1.is_none();
         if ordered_tail {
             let pending = self
                 .ordered_batches
@@ -235,11 +245,11 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpExecutionV1<R> {
             || elements != rows * width
             || !(1..=self.row_capacity as usize).contains(&rows)
             || elements > scratch.elements
-            || elements > rank.hidden.elements
+            || elements > hidden.elements
             || elements > rank.partial.elements
-            || scratch.id == rank.hidden.id
+            || scratch.id == hidden.id
             || scratch.id == rank.partial.id
-            || rank.hidden.id == rank.partial.id
+            || hidden.id == rank.partial.id
         {
             return Err("device residual extent or ownership drifted".into());
         }
@@ -252,11 +262,7 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpExecutionV1<R> {
                     ..rank.partial
                 }
                 .read(),
-                Tensor {
-                    elements,
-                    ..rank.hidden
-                }
-                .read(),
+                Tensor { elements, ..hidden }.read(),
                 Tensor {
                     elements,
                     ..scratch
@@ -267,6 +273,30 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpExecutionV1<R> {
                 ),
             ],
         );
+        if let Some(mut state) = self.packed_c1 {
+            let expected = match operation {
+                Qwen3TensorParallelCollectiveV1::AttentionOutputSum => 10,
+                Qwen3TensorParallelCollectiveV1::FeedForwardDownSum => 5,
+            };
+            if state.producer_packets != expected {
+                return Err("packed C1 residual producer segment drifted".into());
+            }
+            state
+                .collective
+                .arrive(0, key)
+                .map_err(|error| format!("packed collective arrival: {error:?}"))?;
+            state
+                .collective
+                .advance()
+                .map_err(|error| format!("packed collective advance: {error:?}"))?;
+            state.hidden = scratch;
+            state.scratch = hidden;
+            state.producer_packets = 0;
+            let command = super::row_profile::bind_mode(false, 32, false, command)?;
+            self.enqueue_packed_c1(command)?;
+            self.packed_c1 = Some(state);
+            return Ok(());
+        }
         if ordered_tail {
             // Keep the residual in the same completion frontier as its producer.
             self.dispatch_each(|_| command.clone())?;

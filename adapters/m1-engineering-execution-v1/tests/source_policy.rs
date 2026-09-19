@@ -400,6 +400,7 @@ fn wave_rmsnorm_v15_route_keeps_defaults_and_all_legacy_entrypoints_closed() {
                 "ferric-qwen3-wave-target-v17-live"
                     | "ferric-qwen3-wave-target-v17-runtime-diagnostic"
                     | "ferric-qwen3-c1-kv-copy-v19-live"
+                    | "ferric-qwen3-c1-packed-v22-live"
             )
         ) {
             assert!(source.contains("mod wave_target_v17_live_contract;"));
@@ -528,6 +529,7 @@ fn wave_target_v17_keeps_legacy_binaries_closed_and_preloads_every_comparison_im
                 "ferric-qwen3-wave-target-v17-live"
                     | "ferric-qwen3-wave-target-v17-runtime-diagnostic"
                     | "ferric-qwen3-c1-kv-copy-v19-live"
+                    | "ferric-qwen3-c1-packed-v22-live"
             )
         );
         for marker in [
@@ -544,7 +546,7 @@ fn wave_target_v17_keeps_legacy_binaries_closed_and_preloads_every_comparison_im
             );
         }
     }
-    assert_eq!(count, 3);
+    assert_eq!(count, 4);
     assert!(!ENGINE_MANIFEST.contains("ferric-qwen3-wave-target-v17-live"));
     let wrapper = include_str!("../src/bin/ferric-qwen3-wave-target-v17-live.rs");
     assert!(wrapper.contains("wave_target_v17_live_contract::Options::parse"));
@@ -747,6 +749,7 @@ fn query_hoist_v14_route_keeps_defaults_and_all_legacy_entrypoints_closed() {
                     "ferric-qwen3-wave-target-v17-live"
                         | "ferric-qwen3-wave-target-v17-runtime-diagnostic"
                         | "ferric-qwen3-c1-kv-copy-v19-live"
+                        | "ferric-qwen3-c1-packed-v22-live"
                 )
             )
         );

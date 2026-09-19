@@ -144,6 +144,7 @@ pub struct EngineeringTpBatchExecutionV2<R: EngineeringTpRankTransportV1> {
     admitted_wave_rmsnorm_v15: Option<crate::tp_artifact::WaveRmsNormBindingV15>,
     c1_kv_copy_v19: Option<crate::tp_artifact::C1KvCopyBindingV19>,
     admitted_c1_kv_copy_v19: Option<crate::tp_artifact::C1KvCopyBindingV19>,
+    c1_packet_packing_v22: Option<bool>,
 }
 
 impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
@@ -517,6 +518,7 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
             admitted_wave_rmsnorm_v15,
             c1_kv_copy_v19: None,
             admitted_c1_kv_copy_v19: None,
+            c1_packet_packing_v22: None,
         })
     }
 
@@ -775,6 +777,67 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
             self.wave_rmsnorm_v15 = Some(rmsnorm);
         }
         Ok(())
+    }
+
+    /// Selects a separate same-kernel C1 packet-packing experiment after combined V17.
+    /// Only one-row forwards publishing that row use the packed path; other batches are unchanged.
+    /// # Errors
+    /// Rejects repeated/late selection, unadmitted images, capture or incompatible execution.
+    pub fn configure_c1_packet_packing_v22(&mut self, enabled: bool) -> TpResult<()> {
+        if self.c1_packet_packing_v22.is_some()
+            || self.last_batch != 0
+            || self.completed_batches != 0
+            || self.poisoned
+            || self.inner.closed
+            || self.row_capacity != 32
+            || self.inner.row_capacity != 32
+            || self.inner.plan.world_size() != 1
+            || self.inner.plan.model().role != Qwen3ModelRole::Target8B
+            || self.inner.ranks.len() != 1
+            || self.inner.transports.len() != 1
+            || self.inner.draft_v10
+            || self.inner.large_kv
+            || self.inner.sequences.is_some()
+            || self.inner.packed_c1.is_some()
+            || self
+                .inner
+                .ordered_batches
+                .as_ref()
+                .is_none_or(|pending| !pending.is_empty())
+            || self.numerical.is_some()
+            || self.inner.residual_arithmetic.is_some()
+            || self.reduction_mode() != EngineeringTpReductionModeV3::DeviceTp1V3
+            || !self.c1_wave_layers
+            || !self.wave_attention
+            || !self.prune_output_head
+            || self.projection.mode != super::EngineeringTpProjectionModeV3::Mfma
+            || !self.head_profile_configured
+            || self.fp32_logits.is_none()
+            || self.fp32_argmax_v11.is_none()
+            || self.fp32_argmax_v11 != self.admitted_argmax_v11
+            || self.query_hoist_v14.is_none()
+            || self.query_hoist_v14 != self.admitted_query_hoist_v14
+            || self.wave_rmsnorm_v15.is_none()
+            || self.wave_rmsnorm_v15 != self.admitted_wave_rmsnorm_v15
+            || self.c1_kv_copy_v19.is_some()
+            || self.admitted_c1_kv_copy_v19.is_some()
+            || !self.inner.transports[0].supports_ordered_batches()
+            || self.inner.transports[0].peer_group_rank().is_some()
+        {
+            return Err("C1 packing requires fresh combined V17 target TP1, admitted images, ordered batches and no capture, peers or other candidate".into());
+        }
+        self.c1_packet_packing_v22 = Some(enabled);
+        Ok(())
+    }
+
+    /// Actual packet grouping selection; never a benchmark or serving admission.
+    #[must_use]
+    pub const fn c1_packet_mode(&self) -> &'static str {
+        if matches!(self.c1_packet_packing_v22, Some(true)) {
+            "packed16-v22"
+        } else {
+            "baseline"
+        }
     }
 
     /// Actual pure target-width `RMSNorm` policy; Q/K and all other norm profiles are unchanged.
@@ -1326,6 +1389,7 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
                 })
             }
             Err(error) => {
+                self.inner.discard_packed_c1();
                 self.poisoned = true;
                 Err(error)
             }
@@ -1530,7 +1594,11 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
         let zero = &self.inner.ranks[0];
         self.inner.transports[0].write(zero.token.id, 0, &tokens)?;
         drop(metadata_timing);
+        if self.c1_packet_packing_v22 == Some(true) && rows == 1 && output_rows == [0] {
+            self.inner.begin_packed_c1()?;
+        }
         let embedding_timing = self.inner.timing.scope("embedding");
+        let zero = &self.inner.ranks[0];
         self.inner.dispatch_zero(&dispatch(
             EMBEDDING,
             rows * model.hidden_size / 64,
@@ -1548,10 +1616,11 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
             let attention_timing = self.inner.timing.scope("attention");
             let li = layer as usize;
             let input_norm_timing = self.inner.timing.span("attention_input_norm", None);
+            let packed_hidden = self.inner.packed_c1.map(|state| state.hidden);
             self.inner.dispatch_each(|r| {
                 target_norm(
                     r,
-                    r.hidden,
+                    packed_hidden.unwrap_or(r.hidden),
                     r.layers[li].weight(Qwen3TensorKind::InputLayerNorm),
                     r.normalized,
                     rows,
@@ -1722,10 +1791,11 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
             self.inner
                 .reduce(layer, Qwen3TensorParallelCollectiveV1::AttentionOutputSum)?;
             let feed_forward_timing = self.inner.timing.scope("feed_forward");
+            let packed_hidden = self.inner.packed_c1.map(|state| state.hidden);
             self.inner.dispatch_each(|r| {
                 target_norm(
                     r,
-                    r.hidden,
+                    packed_hidden.unwrap_or(r.hidden),
                     r.layers[li].weight(Qwen3TensorKind::PostAttentionLayerNorm),
                     r.normalized,
                     rows,
@@ -1811,7 +1881,11 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
             self.inner
                 .reduce(layer, Qwen3TensorParallelCollectiveV1::FeedForwardDownSum)?;
         }
-        let expected = self.inner.collective.expected();
+        let expected = self
+            .inner
+            .packed_c1
+            .map_or(self.inner.collective, |state| state.collective)
+            .expected();
         if expected.epoch != self.completed_batches + 1
             || expected.layer != 0
             || expected.operation != Qwen3TensorParallelCollectiveV1::AttentionOutputSum
@@ -1824,9 +1898,10 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
         let head_timing = self.inner.timing.scope("output_head");
         let normalization_timing = self.inner.timing.scope("output_head_normalization");
         let r = &self.inner.ranks[0];
+        let hidden = self.inner.packed_c1.map_or(r.hidden, |state| state.hidden);
         self.inner.dispatch_zero(&target_norm(
             r,
-            r.hidden,
+            hidden,
             r.global(Qwen3TensorKind::FinalNorm),
             r.normalized,
             head_rows,
@@ -1875,6 +1950,7 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
         ))?;
         drop(argmax_timing);
         drop(head_timing);
+        self.inner.finish_packed_c1()?;
         let _readback_timing = self.inner.timing.scope("output_readback");
         let mut bytes = vec![0; head_rows as usize * 4];
         self.inner.transports[0].read(self.inner.ranks[0].choice.id, 0, &mut bytes)?;

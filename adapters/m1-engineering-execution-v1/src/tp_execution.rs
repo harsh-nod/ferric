@@ -304,6 +304,7 @@ pub struct EngineeringTpExecutionV1<R: EngineeringTpRankTransportV1> {
     residual_arithmetic: Option<EngineeringTpResidualArithmeticV1>,
     sequences: Option<Vec<Vec<EngineeringTpDispatchV1>>>,
     ordered_batches: Option<Vec<EngineeringTpDispatchV1>>,
+    packed_c1: Option<performance::PackedC1State>,
     timing: crate::host_timing::HostTiming,
     closed: bool,
 }
@@ -480,6 +481,7 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpExecutionV1<R> {
             residual_arithmetic: None,
             sequences: None,
             ordered_batches: None,
+            packed_c1: None,
             timing: crate::host_timing::HostTiming::default(),
             closed: false,
         })
@@ -562,6 +564,7 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpExecutionV1<R> {
     /// # Errors
     /// Reports all child teardown failures after attempting every close.
     pub fn close(&mut self) -> TpResult<()> {
+        self.discard_packed_c1();
         self.closed = true;
         let errors = self
             .transports
@@ -940,6 +943,9 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpExecutionV1<R> {
             None
         };
         let command = bound.as_ref().unwrap_or(command);
+        if self.packed_c1.is_some() {
+            return self.enqueue_packed_c1(command.clone());
+        }
         self.flush_dispatch_groups()?;
         if self.ranks[0].dispatches == u64::MAX {
             return Err("dispatch counter overflow".into());
@@ -955,6 +961,27 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpExecutionV1<R> {
         command: impl Fn(&Rank) -> EngineeringTpDispatchV1,
     ) -> TpResult<()> {
         let _timing = self.timing.span("dispatch_each", None);
+        if let Some(state) = self.packed_c1 {
+            let expected = match state.collective.expected().operation {
+                Qwen3TensorParallelCollectiveV1::AttentionOutputSum => 10,
+                Qwen3TensorParallelCollectiveV1::FeedForwardDownSum => 5,
+            };
+            if state.producer_packets >= expected {
+                return Err("packed C1 producer segment overflow".into());
+            }
+            let command = row_profile::bind_mode(
+                self.draft_v10,
+                self.row_capacity,
+                self.large_kv,
+                command(&self.ranks[0]),
+            )?;
+            self.enqueue_packed_c1(command)?;
+            self.packed_c1
+                .as_mut()
+                .expect("active packed C1")
+                .producer_packets += 1;
+            return Ok(());
+        }
         if let Some(pending) = &mut self.ordered_batches {
             if self.ranks.len() != 1 || self.sequences.is_some() || pending.len() >= 16 {
                 return Err("pending ordered dispatch batch bound drifted".into());
