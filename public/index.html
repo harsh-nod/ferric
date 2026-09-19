@@ -108,9 +108,15 @@
           <p>
             The V19 single-row KV-copy image has been emitted with fe2o3 5a503c04 and its
             device CPU tests pass on mi300x-2. The emitted ABI reports Wave64, six VGPRs,
-            zero scratch and zero LDS. Further validation and native control/candidate
-            correctness remain pending; no GPU gain is claimed. Neither V19 nor the
-            instrumented diagnostic is included in the completed HTTP pair.
+            zero scratch and zero LDS. All 68 isolated GPU cases and the eight-request
+            native control/candidate check pass, but the small A/B shows no performance
+            gain. Adapter library validation records 376 passes, seven ignored tests and
+            one existing resident-roster test excluded after exceeding the unchanged
+            memory cap; that coverage gap remains explicit. The operation-counter harness
+            passes 19 CPU tests and its 12-cell native diagnostic completes with successful
+            cleanup; those counters do not establish GPU durations or a TPOT gain.
+            Defaults remain unchanged.
+            Neither V19 nor the instrumented diagnostic is included in the completed HTTP pair.
             Compiler/runtime work stays in fe2o3; kernels and inference integration stay
             in Ferric. The source-bound V4 and earlier checkpoints below retain their original
             identities and measurement limits.
@@ -140,8 +146,71 @@
               <div class="section-label">Measured engineering progress</div>
               <h2 id="performance-title">Qwen3-8B measurements</h2>
             </div>
-            <p>New context8192 live HTTP cohorts, the retained first matched cell, then earlier fixed-workload observations. Not production-serving qualification.</p>
+            <p>A native KV-copy A/B, the context8192 live HTTP pair, then earlier fixed-workload observations. Not production-serving qualification.</p>
           </div>
+          <h3 id="native-v19-title">V19 native KV-copy A/B: no gain</h3>
+          <p class="performance-scope">
+            Qwen3-8B on mi350, TP1/C1, with 128 input tokens and 128 output tokens,
+            context 8192, BF16 decoder / FP32 head, speculation off and prefix caching off.
+            Each arm has one excluded warmup and three measured requests, in fixed control
+            then candidate order. Both arms load the same six images and use the same
+            controller, runtime and sequential arrivals; only the KV-copy selector changes.
+          </p>
+          <div class="transition-table-wrap" tabindex="0" role="region" aria-label="V19 native controller A/B">
+            <table class="transition-table performance-table" id="native-v19-results">
+              <caption class="visually-hidden">V19 native controller A/B, three measured requests per arm</caption>
+              <thead>
+                <tr>
+                  <th scope="col">KV-copy arm</th>
+                  <th scope="col">Mean TTFT (ms)</th>
+                  <th scope="col">Mean TPOT (ms)</th>
+                  <th scope="col">Output tokens/s</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr data-v19-arm="baseline">
+                  <th scope="row">Control: baseline</th>
+                  <td>2300.203</td>
+                  <td>84.754</td>
+                  <td>9.797679</td>
+                </tr>
+                <tr data-v19-arm="parallel-c1-v19">
+                  <th scope="row">Candidate: parallel-c1-v19</th>
+                  <td>2458.523</td>
+                  <td>90.230</td>
+                  <td>9.196630</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p>
+            The candidate is slower on average in this run, with measured TPOT samples of
+            81.875, 101.385 and 87.431 ms. Three samples in fixed order do not establish a
+            stable effect or a confidence interval. Defaults remain unchanged.
+          </p>
+          <p>
+            These are controller-ingress timings, not HTTP timings. TTFT spans request
+            arrival to first token completion; TPOT is the first-to-last token completion
+            span divided by 127. Output rate divides 384 tokens by the measured ingress
+            window, including inter-request gaps and excluding warmup. This is not
+            sustained throughput, a GPU duration, a vendor comparison or serving qualification.
+          </p>
+          <p>
+            All eight requests match all 1,024 reference token IDs and decoded bytes.
+            Each arm completes 540 batches and 332,556 dispatches with successful owned
+            cleanup. Both arms retain inherited CPU affinity and nice 0. Build receipts
+            bind engineering provenance, not independent source-to-binary authentication.
+            This native A/B does not replace or improve the frozen HTTP result below.
+          </p>
+          <details class="performance-identities">
+            <summary>V19 native report and retained evidence</summary>
+            <dl class="observation-facts">
+              <dt>V19 native report SHA-256</dt>
+              <dd>93817dcd9bb5d66ced2f03d639a89e152626097dc979783a82c6d76ea95600b3</dd>
+              <dt>V19 retained archive SHA-256</dt>
+              <dd>4f8e658d2c14bdb8ce1669aeab8ef382444d93fb4db258ed9cfd16e812a37a61</dd>
+            </dl>
+          </details>
           <h3 id="matched-v5-title">V5 matched Ferric / vLLM HTTP pair</h3>
           <p class="performance-scope">
             Qwen3-8B on mi350 physical GPU 0, TP1, concurrency 1, 128 input and 128 output

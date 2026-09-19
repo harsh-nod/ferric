@@ -70,10 +70,10 @@ jobs:
             test "$(stat -c %h "public/$file")" -eq 1
             total=$((total + $(stat -c %s "public/$file")))
           done
-          test "$total" -eq 795750
+          test "$total" -eq 799697
           test "$total" -le 2097152
 
-          # V5 static artifact archive SHA256: 370eb3238d4114279118a713bc7991ac0c1f3bd52d6565c1c428fc714d28aca4.
+          # V19 static artifact archive SHA256: e0a36727f660fb4fe4c590aec7d6584d43e949c6d9964fb0503b93cc23bef694.
           # Existing deploy-only protections retained; remote QA approval is recorded externally.
           sha256sum --check --strict <<'SHA256'
           a9c145b4643a7271896437012b293131c7d14ab2e5d4694726e555f5ce288275  public/app.js
@@ -81,7 +81,7 @@ jobs:
           5ddc6e2efcaa8eea3fd8f5607cae74813da636f180a34a5ba72cd879e1b6b809  public/assets/mark.svg
           05ad1f50575547c0b0c8244b2912e1d7518258772527f7ff236fdb8d2e42102f  public/data/performance.js
           268900528690b9de3acb80c4863dd86ac484f4184ab1970c25ecf5293a8ca4f8  public/data/project.js
-          72e89589a03f961bd59ef57bc83c9a050b60e2b8ca57299d5458674b2e4f4968  public/index.html
+          d31be47346f205cbb7f0c218755057d4522724d34270ddea80d68c38d462e138  public/index.html
           96dad9e9ae20db7a97d39b811ef17579955160d7238243b75b609c951675e9aa  public/styles.css
           SHA256
 
