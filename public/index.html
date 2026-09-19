@@ -88,19 +88,20 @@
             </div>
             <p>Private implementation progress. Host validation and canonical gfx942 extraction remain distinct from native qualification.</p>
           </div>
-          <h3>Matched optimization V5: first HTTP pair replayed</h3>
+          <h3>Matched optimization V5: V22 HTTP pair replayed</h3>
           <p>
-            The first sequential Ferric V17 combined and vLLM cohorts have completed on mi350.
-            Both raw receipts and independent paired replay pass; the replay checker also
-            passes eight CPU tests. The matched HTTP results below show Ferric is substantially
-            slower in this initial finite TP1/C1 cohort. This is not sustained serving, TP8,
-            or a performance win. All 33 M1 gates remain open.
+            The latest sequential Ferric V22 packed and vLLM cohorts have completed on mi350.
+            Raw receipts and paired replay pass, including correctness, sampled process
+            ownership and clean shutdown checks. Mean HTTP TPOT is 83.598 ms for Ferric
+            versus 4.252 ms for vLLM: Ferric remains 19.66 times slower in this finite TP1/C1
+            cell. This is not a performance win or sustained-serving qualification.
+            The earlier V17 pair remains separate history. All 33 M1 gates remain open.
           </p>
           <p>
             V22 packet packing has now passed an eight-request native Qwen3-8B A/B,
             matching all 1,024 reference token IDs and decoded bytes. Mean TPOT falls
             from 111.871 to 98.857 ms in this fixed-order, three-sample-per-arm check;
-            the HTTP comparison remains unchanged. The opt-in candidate retains the
+            this earlier native result is separate from the new HTTP pair. The opt-in candidate retains the
             same kernels and packet order while reducing completion groups. This is
             an initial native observation, not a stable gain or a vendor win.
           </p>
@@ -160,8 +161,84 @@
               <div class="section-label">Measured engineering progress</div>
               <h2 id="performance-title">Qwen3-8B measurements</h2>
             </div>
-            <p>Native packet-packing and KV-copy A/B checks, the context8192 live HTTP pair, then earlier fixed-workload observations. Not production-serving qualification.</p>
+            <p>The latest context8192 HTTP pair, separate native A/B checks, and preserved historical observations. Not production-serving qualification.</p>
           </div>
+          <h3 id="matched-v22-http-title">Latest V22 / vLLM HTTP pair: no win</h3>
+          <p class="performance-scope">
+            Qwen3-8B on mi350 physical GPU 0, TP1, concurrency 1, 128 input and 128 output
+            tokens, context 8192, BF16 decoder and FP32 output head. Both engines use the
+            same SSE client, greedy fixed-length output, speculation off and prefix caching off.
+            Each has 10 excluded warmups, 30 measured requests and two untimed output diagnostics.
+          </p>
+          <div class="transition-table-wrap" tabindex="0" role="region" aria-label="Latest V22 matched HTTP cohort">
+            <table class="transition-table performance-table" id="matched-v22-http-results">
+              <caption class="visually-hidden">Latest V22 matched HTTP cohort, 30 measured requests per engine</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Engine</th>
+                  <th scope="col">Mean TTFT (ms)</th>
+                  <th scope="col">Mean TPOT (ms)</th>
+                  <th scope="col">Output tokens/s</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr data-v22-http-engine="ferric">
+                  <th scope="row">Ferric V22 packed</th>
+                  <td>2329.922</td>
+                  <td>83.598</td>
+                  <td>9.885898</td>
+                </tr>
+                <tr data-v22-http-engine="vllm">
+                  <th scope="row">vLLM 0.28.0</th>
+                  <td>18.636</td>
+                  <td>4.252</td>
+                  <td>228.904359</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p>
+            Ferric has 19.66 times the mean TPOT and 125.02 times the mean TTFT of vLLM in
+            this cell. All 30 measured requests succeed for each engine. Cohorts run in fixed
+            order, vLLM then Ferric, with one server start each. There is no confidence interval
+            or stable-tail claim. This is not a stock BF16-head comparison.
+          </p>
+          <p>
+            TTFT is client send to first nonempty text. TPOT is the first-to-last text span
+            divided by 127, not true token interarrival latency. Output rate divides 3,840
+            tokens by the complete measured span, including request gaps and drain, excluding
+            warmups and diagnostics. It is not sustained throughput.
+          </p>
+          <p>
+            Ferric token IDs and decoded bytes match for all 42 requests. vLLM token IDs
+            match in two untimed diagnostics; its 40 timed requests match decoded text and
+            usage. Both engines use the same 500 ms process-ownership sampling policy, with
+            no observed contamination in the accepted cohorts. Sampling is not continuous
+            isolation proof. Earlier contention-rejected attempts remain excluded.
+            Owned cleanup and GPU-idle postflight pass for both engines.
+          </p>
+          <p>
+            Replay checks retained model/image hash receipts, not an independent model-file
+            rehash or source-to-binary authentication. This pair uses packed16-v22 with the
+            historical f68 worker from runtime 5ed3840a and five unchanged kernel images.
+            Ordered64, V19, V23 and V25 are not part of this HTTP result. The historical V17
+            pair below is not mixed into this baseline: cross-campaign differences do not
+            attribute a gain to packet packing alone. No TP8, speculative-decoding, SGLang,
+            general framework ranking or serving qualification is established.
+          </p>
+          <details class="performance-identities">
+            <summary>Latest V22 HTTP replay and receipt identities</summary>
+            <dl class="observation-facts">
+              <dt>Paired replay summary SHA-256</dt>
+              <dd>0283449b779015bffe0ba72954069ffcca7b809ae6aadf91aa24d6b3fb9d1c07</dd>
+              <dt>Shared plan SHA-256</dt>
+              <dd>71855e76d38c3d3ff11d21b7ff33d7c67303a5fc28dff07c8deebb0ee14cf7fd</dd>
+              <dt>Ferric receipt SHA-256</dt>
+              <dd>91cc42648156fbfedd44a03b704ad9c80a125efe8809b0fc4cff5441b9d2fe92</dd>
+              <dt>vLLM receipt SHA-256</dt>
+              <dd>e428d623aaece123ef80d926b93e9be409bfbeb3bef9dcd1023503bf132b35c2</dd>
+            </dl>
+          </details>
           <h3 id="native-v22-title">V22 native packet-packing A/B</h3>
           <p class="performance-scope">
             Qwen3-8B on mi350, TP1/C1, with 128 input tokens and 128 output tokens,
@@ -291,7 +368,7 @@
               <dd>4f8e658d2c14bdb8ce1669aeab8ef382444d93fb4db258ed9cfd16e812a37a61</dd>
             </dl>
           </details>
-          <h3 id="matched-v5-title">V5 matched Ferric / vLLM HTTP pair</h3>
+          <h3 id="matched-v5-title">Historical V5 matched Ferric / vLLM HTTP pair</h3>
           <p class="performance-scope">
             Qwen3-8B on mi350 physical GPU 0, TP1, concurrency 1, 128 input and 128 output
             tokens, context 8192, BF16 decoder and FP32 output-head profile. Both engines use
