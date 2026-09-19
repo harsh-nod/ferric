@@ -97,6 +97,20 @@
             or a performance win. All 33 M1 gates remain open.
           </p>
           <p>
+            V22 packet packing has now passed an eight-request native Qwen3-8B A/B,
+            matching all 1,024 reference token IDs and decoded bytes. Mean TPOT falls
+            from 111.871 to 98.857 ms in this fixed-order, three-sample-per-arm check;
+            the HTTP comparison remains unchanged. The opt-in candidate retains the
+            same kernels and packet order while reducing completion groups. This is
+            an initial native observation, not a stable gain or a vendor win.
+          </p>
+          <p id="ordered64-progress">
+            The separate ordered64 runtime path passes 251 synthetic dependent packets
+            and 594 full-buffer/guard checks, including idle queue rollover, with successful
+            owned cleanup. This is correctness-only: no model inference, timing result
+            or model-performance gain is established.
+          </p>
+          <p>
             The separate V17 runtime-counter diagnostic has completed one warmup and one
             diagnostic request with all 256 output IDs matching the reference, 270 batches,
             166,278 dispatches and successful owned cleanup. Its overlapping worker scopes
@@ -146,8 +160,74 @@
               <div class="section-label">Measured engineering progress</div>
               <h2 id="performance-title">Qwen3-8B measurements</h2>
             </div>
-            <p>A native KV-copy A/B, the context8192 live HTTP pair, then earlier fixed-workload observations. Not production-serving qualification.</p>
+            <p>Native packet-packing and KV-copy A/B checks, the context8192 live HTTP pair, then earlier fixed-workload observations. Not production-serving qualification.</p>
           </div>
+          <h3 id="native-v22-title">V22 native packet-packing A/B</h3>
+          <p class="performance-scope">
+            Qwen3-8B on mi350, TP1/C1, with 128 input tokens and 128 output tokens,
+            context 8192, BF16 decoder / FP32 head, speculation off and prefix caching off.
+            Each arm has one excluded warmup and three measured requests, in fixed baseline
+            then candidate order. Both arms use the same controller, f68 runtime, five
+            unchanged images and sequential arrivals; only the packet-grouping selector changes.
+          </p>
+          <div class="transition-table-wrap" tabindex="0" role="region" aria-label="V22 native controller A/B">
+            <table class="transition-table performance-table" id="native-v22-results">
+              <caption class="visually-hidden">V22 native controller A/B, three measured requests per arm</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Packet-grouping arm</th>
+                  <th scope="col">Mean TTFT (ms)</th>
+                  <th scope="col">Mean TPOT (ms)</th>
+                  <th scope="col">Output tokens/s</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr data-v22-arm="baseline">
+                  <th scope="row">Control: baseline</th>
+                  <td>2600.412</td>
+                  <td>111.871</td>
+                  <td>7.614984</td>
+                </tr>
+                <tr data-v22-arm="packed16-v22">
+                  <th scope="row">Candidate: packed16-v22</th>
+                  <td>2524.218</td>
+                  <td>98.857</td>
+                  <td>8.488262</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p>
+            In this run, mean TPOT is 11.63% lower and finite-window output rate is 11.47%
+            higher. Candidate TPOT samples are 98.199, 109.135 and 89.237 ms. Three measured
+            requests in fixed order do not establish a stable effect or confidence interval.
+            Defaults remain unchanged.
+          </p>
+          <p>
+            These are controller-ingress timings, not HTTP timings. TTFT spans request
+            arrival to first token completion; TPOT is the first-to-last token completion
+            span divided by 127. Output rate divides 384 tokens by the measured ingress
+            window, including inter-request gaps and excluding warmup. This is not
+            sustained throughput, a GPU duration, a vendor comparison or serving qualification.
+          </p>
+          <p>
+            All eight requests match all 1,024 reference token IDs and decoded bytes.
+            Each arm completes 540 batches and 332,556 dispatches with successful owned
+            cleanup. Inherited CPU affinity and nice 0 are unchanged. The separately tested
+            ordered64 worker is not used in this pair. This native A/B does not replace
+            or improve the frozen HTTP result below.
+          </p>
+          <details class="performance-identities">
+            <summary>V22 native report and retained evidence</summary>
+            <dl class="observation-facts">
+              <dt>V22 native report SHA-256</dt>
+              <dd>634c1634aac5a1a01fd7e436fe155a8d3300e14e5dca76bb0920dd0af54aa697</dd>
+              <dt>V22 retained archive SHA-256</dt>
+              <dd>a16078f0541f06857cad27a6e549ed83759535ba71db1b967b61cced223e7287</dd>
+              <dt>Ordered64 correctness report SHA-256</dt>
+              <dd>77e225baf226ef220234834207f6be8568b941ee35410da092bc7f014d5d0b33</dd>
+            </dl>
+          </details>
           <h3 id="native-v19-title">V19 native KV-copy A/B: no gain</h3>
           <p class="performance-scope">
             Qwen3-8B on mi350, TP1/C1, with 128 input tokens and 128 output tokens,
