@@ -88,6 +88,33 @@
             </div>
             <p>Private implementation progress. Host validation and canonical gfx942 extraction remain distinct from native qualification.</p>
           </div>
+          <h3>Matched optimization V5: first HTTP pair replayed</h3>
+          <p>
+            The first sequential Ferric V17 combined and vLLM cohorts have completed on mi350.
+            Both raw receipts and independent paired replay pass; the replay checker also
+            passes eight CPU tests. The matched HTTP results below show Ferric is substantially
+            slower in this initial finite TP1/C1 cohort. This is not sustained serving, TP8,
+            or a performance win. All 33 M1 gates remain open.
+          </p>
+          <p>
+            The separate V17 runtime-counter diagnostic has completed one warmup and one
+            diagnostic request with all 256 output IDs matching the reference, 270 batches,
+            166,278 dispatches and successful owned cleanup. Its overlapping worker scopes
+            record 23.0 seconds in dispatch waits and 1.9 seconds in currentness checks. Wait
+            includes GPU work, polling and scheduling; these are not additive GPU timings,
+            measured-only TPOT or an HTTP performance result. All 14 harness CPU tests pass;
+            the earlier fake-controller fixture failure is retained.
+          </p>
+          <p>
+            The V19 single-row KV-copy image has been emitted with fe2o3 5a503c04 and its
+            device CPU tests pass on mi300x-2. The emitted ABI reports Wave64, six VGPRs,
+            zero scratch and zero LDS. Further validation and native control/candidate
+            correctness remain pending; no GPU gain is claimed. Neither V19 nor the
+            instrumented diagnostic is included in the completed HTTP pair.
+            Compiler/runtime work stays in fe2o3; kernels and inference integration stay
+            in Ferric. The source-bound V4 and earlier checkpoints below retain their original
+            identities and measurement limits.
+          </p>
           <div data-resident-progress></div>
         </div>
       </section>
@@ -115,6 +142,78 @@
             </div>
             <p>New context8192 live HTTP cohorts, the retained first matched cell, then earlier fixed-workload observations. Not production-serving qualification.</p>
           </div>
+          <h3 id="matched-v5-title">V5 matched Ferric / vLLM HTTP pair</h3>
+          <p class="performance-scope">
+            Qwen3-8B on mi350 physical GPU 0, TP1, concurrency 1, 128 input and 128 output
+            tokens, context 8192, BF16 decoder and FP32 output-head profile. Both engines use
+            the same SSE client, with speculation and prefix caching disabled. Each cohort
+            has 10 excluded warmups, 30 measured requests and two untimed output diagnostics.
+          </p>
+          <div class="transition-table-wrap" tabindex="0" role="region" aria-label="V5 first matched HTTP cohort">
+            <table class="transition-table performance-table" id="matched-v5-results">
+              <caption class="visually-hidden">V5 first matched HTTP cohort, 30 measured requests per engine</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Engine</th>
+                  <th scope="col">Mean TTFT (ms)</th>
+                  <th scope="col">Mean TPOT (ms)</th>
+                  <th scope="col">Output tokens/s</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr data-v5-engine="ferric">
+                  <th scope="row">Ferric V17 combined</th>
+                  <td>2555.823</td>
+                  <td>114.619</td>
+                  <td>7.479295</td>
+                </tr>
+                <tr data-v5-engine="vllm">
+                  <th scope="row">vLLM 0.28.0</th>
+                  <td>19.909</td>
+                  <td>4.232</td>
+                  <td>229.358430</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p>
+            Ferric has 27.08 times the mean TPOT and 128.37 times the mean TTFT of vLLM in this
+            cell. All 30 measured requests succeed for each engine. Cohorts run in fixed order,
+            vLLM then Ferric, with one server start each; no confidence interval or stable tail
+            claim follows. This is not a stock BF16-output-head comparison.
+          </p>
+          <p>
+            TTFT is client send to first nonempty text. TPOT is the first-to-last text span
+            divided by 127, not true per-token inter-token latency. Output rate divides 3,840
+            tokens by the complete measured cohort window, including request gaps and drain,
+            excluding warmups and diagnostics. It is not sustained throughput.
+          </p>
+          <p>
+            Independent replay passes the same plan, client, model/image hash receipts and
+            reference checks. Ferric token IDs match for all 42 requests; vLLM token IDs match
+            in the two untimed diagnostics, while its 40 timed requests match decoded text
+            and usage. Owned processes and the vendor container are cleaned up, and GPU
+            postflight checks are idle. The replay checks retained hash receipts; it does not
+            independently rehash model files. The frozen
+            Ferric baseline keeps its 1fc45a52 implementation and 5ed3840a runtime attribution,
+            and existing kernel images retain their original producers. New compiler/runtime
+            adoption and the V19 candidate are separate work, not relabeled
+            baseline results. A finite matched cohort does not establish sustained throughput,
+            serving qualification, a general engine ranking or SGLang performance.
+          </p>
+          <details class="performance-identities">
+            <summary>V5 replay and receipt identities</summary>
+            <dl class="observation-facts">
+              <dt>Paired replay summary SHA-256</dt>
+              <dd>11c761a2e4408fc29a822a29f87ed10995c5799e407fc3233068f197836974a9</dd>
+              <dt>Shared plan SHA-256</dt>
+              <dd>b25fa9824afeac3b5531aa4748b708abfd8edf87e839a7e862d68f1d41f18175</dd>
+              <dt>Ferric receipt SHA-256</dt>
+              <dd>f6e4837cf1a613e41e28ec311476fbe77a9b1fab9c133a2c7140a8e6cc1be37a</dd>
+              <dt>vLLM receipt SHA-256</dt>
+              <dd>dc98f64b11228002526fe47184b3fe14de419347f45e467692d6ebe9991c94f2</dd>
+            </dl>
+          </details>
           <div data-live-http-progress></div>
           <div data-performance></div>
         </div>
