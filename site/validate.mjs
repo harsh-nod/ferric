@@ -2136,6 +2136,326 @@ for (const staleOrForbidden of [
 
 const indexSource = await readFile(join(siteRoot, "index.html"), "utf8");
 const appSource = await readFile(join(siteRoot, "app.js"), "utf8");
+
+function validateMatchedV22HttpSource(source) {
+  const start = source.indexOf('<h3 id="matched-v22-http-title">');
+  const end = source.indexOf('<h3 id="native-v22-title">', start);
+  assert(start >= 0 && end > start, "Latest V22 HTTP section boundaries are missing");
+  assert(start === source.lastIndexOf('<h3 id="matched-v22-http-title">'), "Latest V22 HTTP section must be unique");
+  const section = source.slice(start, end).replace(/\s+/g, " ");
+  for (const claim of [
+    "Latest V22 / vLLM HTTP pair: no win",
+    "Qwen3-8B on mi350 physical GPU 0, TP1, concurrency 1, 128 input and 128 output tokens, context 8192, BF16 decoder and FP32 output head.",
+    "same SSE client, greedy fixed-length output, speculation off and prefix caching off.",
+    "10 excluded warmups, 30 measured requests and two untimed output diagnostics.",
+    "Ferric has 19.66 times the mean TPOT and 125.02 times the mean TTFT of vLLM in this cell.",
+    "All 30 measured requests succeed for each engine.",
+    "Cohorts run in fixed order, vLLM then Ferric, with one server start each.",
+    "There is no confidence interval or stable-tail claim.",
+    "This is not a stock BF16-head comparison.",
+    "TTFT is client send to first nonempty text.",
+    "TPOT is the first-to-last text span divided by 127, not true token interarrival latency.",
+    "Output rate divides 3,840 tokens by the complete measured span, including request gaps and drain, excluding warmups and diagnostics.",
+    "It is not sustained throughput.",
+    "Ferric token IDs and decoded bytes match for all 42 requests.",
+    "vLLM token IDs match in two untimed diagnostics; its 40 timed requests match decoded text and usage.",
+    "Both engines use the same 500 ms process-ownership sampling policy",
+    "Sampling is not continuous isolation proof.",
+    "Earlier contention-rejected attempts remain excluded.",
+    "Owned cleanup and GPU-idle postflight pass for both engines.",
+    "Replay checks retained model/image hash receipts, not an independent model-file rehash or source-to-binary authentication.",
+    "packed16-v22 with the historical f68 worker from runtime 5ed3840a and five unchanged kernel images.",
+    "Ordered64, V19, V23 and V25 are not part of this HTTP result.",
+    "cross-campaign differences do not attribute a gain to packet packing alone.",
+    "No TP8, speculative-decoding, SGLang, general framework ranking or serving qualification is established.",
+  ]) assert(section.includes(claim), `Latest V22 HTTP claim missing: ${claim}`);
+  assert(!/\bFerric (?:is |runs )?(?:faster than|beats|outperforms|wins against|is competitive)\b/i.test(section),
+    "Latest V22 HTTP result cannot claim a vendor win");
+  assert(section.includes('id="matched-v22-http-results"') && (section.match(/<tr(?:\s|>)/g) ?? []).length === 3,
+    "Latest V22 HTTP table must contain only a header and two engines");
+  for (const heading of ["Engine", "Mean TTFT (ms)", "Mean TPOT (ms)", "Output tokens/s"]) {
+    assert(section.includes(`<th scope="col">${heading}</th>`), `Latest V22 HTTP column changed: ${heading}`);
+  }
+  for (const [engine, label, ttft, tpot, rate] of [
+    ["ferric", "Ferric V22 packed", "2329.922", "83.598", "9.885898"],
+    ["vllm", "vLLM 0.28.0", "18.636", "4.252", "228.904359"],
+  ]) assert(section.includes(`<tr data-v22-http-engine="${engine}"> <th scope="row">${label}</th> <td>${ttft}</td> <td>${tpot}</td> <td>${rate}</td> </tr>`),
+    `Latest V22 HTTP ${engine} values differ from accepted replay`);
+  for (const [label, digest] of [
+    ["Paired replay summary SHA-256", "0283449b779015bffe0ba72954069ffcca7b809ae6aadf91aa24d6b3fb9d1c07"],
+    ["Shared plan SHA-256", "71855e76d38c3d3ff11d21b7ff33d7c67303a5fc28dff07c8deebb0ee14cf7fd"],
+    ["Ferric receipt SHA-256", "91cc42648156fbfedd44a03b704ad9c80a125efe8809b0fc4cff5441b9d2fe92"],
+    ["vLLM receipt SHA-256", "e428d623aaece123ef80d926b93e9be409bfbeb3bef9dcd1023503bf132b35c2"],
+  ]) assert(section.includes(`<dt>${label}</dt> <dd>${digest}</dd>`), `Latest V22 HTTP receipt changed: ${label}`);
+}
+
+validateMatchedV22HttpSource(indexSource);
+const matchedV22HttpFixture = indexSource.replace(/\s+/g, " ");
+for (const [before, after] of [
+  ["<td>83.598</td>", "<td>3.598</td>"], ["<td>4.252</td>", "<td>42.520</td>"],
+  ["<td>9.885898</td>", "<td>98.858980</td>"], ["19.66 times the mean TPOT", "0.96 times the mean TPOT"],
+  ["Sampling is not continuous isolation proof.", "Sampling proves continuous isolation."],
+  ["Earlier contention-rejected attempts remain excluded.", "Earlier rejected attempts are accepted."],
+  ["cross-campaign differences do not attribute a gain", "cross-campaign differences attribute a gain"],
+  ["0283449b779015bffe0ba72954069ffcca7b809ae6aadf91aa24d6b3fb9d1c07", "1283449b779015bffe0ba72954069ffcca7b809ae6aadf91aa24d6b3fb9d1c07"],
+]) {
+  assert(matchedV22HttpFixture.includes(before), `Latest V22 HTTP rejection fixture missing: ${before}`);
+  let rejected = false;
+  try { validateMatchedV22HttpSource(matchedV22HttpFixture.replace(before, after)); } catch { rejected = true; }
+  assert(rejected, `Latest V22 HTTP accepted changed measurement or claim: ${before}`);
+}
+
+function validateNativeV22Source(source) {
+  const start = source.indexOf('<h3 id="native-v22-title">');
+  const end = source.indexOf('<h3 id="native-v19-title">', start);
+  assert(start >= 0 && end > start, "V22 native section boundaries are missing");
+  assert(source.indexOf('id="native-v22-title"') === source.lastIndexOf('id="native-v22-title"'),
+    "V22 native section must be unique");
+  const section = source.slice(start, end).replace(/\s+/g, " ");
+  for (const claim of [
+    "V22 native packet-packing A/B",
+    "Qwen3-8B on mi350, TP1/C1, with 128 input tokens and 128 output tokens, context 8192, BF16 decoder / FP32 head, speculation off and prefix caching off.",
+    "Each arm has one excluded warmup and three measured requests, in fixed baseline then candidate order.",
+    "Both arms use the same controller, f68 runtime, five unchanged images and sequential arrivals; only the packet-grouping selector changes.",
+    "In this run, mean TPOT is 11.63% lower and finite-window output rate is 11.47% higher.",
+    "Candidate TPOT samples are 98.199, 109.135 and 89.237 ms.",
+    "Three measured requests in fixed order do not establish a stable effect or confidence interval.",
+    "Defaults remain unchanged.",
+    "These are controller-ingress timings, not HTTP timings.",
+    "TTFT spans request arrival to first token completion; TPOT is the first-to-last token completion span divided by 127.",
+    "Output rate divides 384 tokens by the measured ingress window, including inter-request gaps and excluding warmup.",
+    "This is not sustained throughput, a GPU duration, a vendor comparison or serving qualification.",
+    "All eight requests match all 1,024 reference token IDs and decoded bytes.",
+    "Each arm completes 540 batches and 332,556 dispatches with successful owned cleanup.",
+    "Inherited CPU affinity and nice 0 are unchanged.",
+    "The separately tested ordered64 worker is not used in this pair.",
+    "This native A/B does not replace or improve the frozen HTTP result below.",
+  ]) {
+    assert(section.includes(claim), `V22 native section is missing: ${claim}`);
+  }
+  assert(!/\b(?:V22|Ferric|the candidate) (?:is |runs )?(?:faster than|beats|outperforms|wins against) (?:vLLM|SGLang)\b/i.test(section),
+    "V22 native cohort cannot claim a vendor win");
+  assert(section.includes('id="native-v22-results"') && (section.match(/<tr(?:\s|>)/g) ?? []).length === 3,
+    "V22 table requires exactly one header and two arms");
+  for (const heading of ["Packet-grouping arm", "Mean TTFT (ms)", "Mean TPOT (ms)", "Output tokens/s"]) {
+    assert(section.includes(`<th scope="col">${heading}</th>`), `V22 column changed: ${heading}`);
+  }
+  for (const [arm, label, ttft, tpot, rate] of [
+    ["baseline", "Control: baseline", "2600.412", "111.871", "7.614984"],
+    ["packed16-v22", "Candidate: packed16-v22", "2524.218", "98.857", "8.488262"],
+  ]) {
+    assert(section.includes(`<tr data-v22-arm="${arm}"> <th scope="row">${label}</th> <td>${ttft}</td> <td>${tpot}</td> <td>${rate}</td> </tr>`),
+      `V22 ${arm} values differ from the accepted native report`);
+  }
+  for (const [label, digest] of [
+    ["V22 native report SHA-256", "634c1634aac5a1a01fd7e436fe155a8d3300e14e5dca76bb0920dd0af54aa697"],
+    ["V22 retained archive SHA-256", "a16078f0541f06857cad27a6e549ed83759535ba71db1b967b61cced223e7287"],
+    ["Ordered64 correctness report SHA-256", "77e225baf226ef220234834207f6be8568b941ee35410da092bc7f014d5d0b33"],
+  ]) {
+    assert(section.includes(`<dt>${label}</dt> <dd>${digest}</dd>`), `V22 receipt changed: ${label}`);
+  }
+  const ordered = source.match(/<p id="ordered64-progress">([\s\S]*?)<\/p>/)?.[1].replace(/\s+/g, " ");
+  assert(ordered?.includes("passes 251 synthetic dependent packets and 594 full-buffer/guard checks, including idle queue rollover"),
+    "Ordered64 exact correctness scope changed");
+  assert(ordered.includes("This is correctness-only: no model inference, timing result or model-performance gain is established."),
+    "Ordered64 correctness-only limitation missing");
+}
+
+validateNativeV22Source(indexSource);
+const nativeV22FixtureSource = indexSource.replace(/\s+/g, " ");
+for (const [before, after] of [
+  ["<td>111.871</td>", "<td>11.187</td>"], ["<td>98.857</td>", "<td>9.886</td>"],
+  ["<td>7.614984</td>", "<td>76.149840</td>"], ["<td>8.488262</td>", "<td>84.882620</td>"],
+  ["11.63% lower", "90% lower"], ["11.47%", "900%"],
+  ["fixed baseline", "randomized baseline"], ["five unchanged images", "six unchanged images"],
+  ["passes 251 synthetic dependent packets", "passes 252 synthetic dependent packets"],
+  ["no model inference, timing result", "model inference and timing result"],
+  ["634c1634aac5a1a01fd7e436fe155a8d3300e14e5dca76bb0920dd0af54aa697", "034c1634aac5a1a01fd7e436fe155a8d3300e14e5dca76bb0920dd0af54aa697"],
+]) {
+  assert(nativeV22FixtureSource.includes(before), `V22 rejection fixture is missing: ${before}`);
+  let rejected = false;
+  try {
+    validateNativeV22Source(nativeV22FixtureSource.replace(before, after));
+  } catch {
+    rejected = true;
+  }
+  assert(rejected, `V22 accepted a changed measurement or claim: ${before}`);
+}
+
+function validateNativeV19Source(source) {
+  const start = source.indexOf('<h3 id="native-v19-title">');
+  const end = source.indexOf('<h3 id="matched-v5-title">', start);
+  assert(start >= 0 && end > start, "V19 native section boundaries are missing");
+  assert(source.indexOf('id="native-v19-title"') === source.lastIndexOf('id="native-v19-title"'),
+    "V19 native section must be unique");
+  const section = source.slice(start, end).replace(/\s+/g, " ");
+  for (const claim of [
+    "V19 native KV-copy A/B: no gain",
+    "Qwen3-8B on mi350, TP1/C1, with 128 input tokens and 128 output tokens, context 8192, BF16 decoder / FP32 head, speculation off and prefix caching off.",
+    "Each arm has one excluded warmup and three measured requests, in fixed control then candidate order.",
+    "Both arms load the same six images and use the same controller, runtime and sequential arrivals; only the KV-copy selector changes.",
+    "The candidate is slower on average in this run, with measured TPOT samples of 81.875, 101.385 and 87.431 ms.",
+    "Three samples in fixed order do not establish a stable effect or a confidence interval.",
+    "Defaults remain unchanged.",
+    "These are controller-ingress timings, not HTTP timings.",
+    "TTFT spans request arrival to first token completion; TPOT is the first-to-last token completion span divided by 127.",
+    "Output rate divides 384 tokens by the measured ingress window, including inter-request gaps and excluding warmup.",
+    "This is not sustained throughput, a GPU duration, a vendor comparison or serving qualification.",
+    "All eight requests match all 1,024 reference token IDs and decoded bytes.",
+    "Each arm completes 540 batches and 332,556 dispatches with successful owned cleanup.",
+    "Both arms retain inherited CPU affinity and nice 0.",
+    "Build receipts bind engineering provenance, not independent source-to-binary authentication.",
+    "This native A/B does not replace or improve the frozen HTTP result below.",
+  ]) {
+    assert(section.includes(claim), `V19 native section is missing: ${claim}`);
+  }
+  for (const claim of [
+    /\b(?:V19|the candidate|Ferric) (?:is |runs )?(?:faster|beats|outperforms|wins)\b/i,
+    /\b(?:V19|the candidate) (?:speedup|performance gain)\b/i,
+  ]) {
+    assert(!claim.test(section), `V19 native section contains a gain claim: ${claim}`);
+  }
+  assert(section.includes('id="native-v19-results"'), "V19 native table is missing");
+  for (const heading of ["KV-copy arm", "Mean TTFT (ms)", "Mean TPOT (ms)", "Output tokens/s"]) {
+    assert(section.includes(`<th scope="col">${heading}</th>`), `V19 native column changed: ${heading}`);
+  }
+  assert((section.match(/<tr(?:\s|>)/g) ?? []).length === 3, "V19 native table must contain only a header and two arms");
+  for (const [arm, label, ttft, tpot, rate] of [
+    ["baseline", "Control: baseline", "2300.203", "84.754", "9.797679"],
+    ["parallel-c1-v19", "Candidate: parallel-c1-v19", "2458.523", "90.230", "9.196630"],
+  ]) {
+    assert(section.includes(`<tr data-v19-arm="${arm}"> <th scope="row">${label}</th> <td>${ttft}</td> <td>${tpot}</td> <td>${rate}</td> </tr>`),
+      `V19 native ${arm} row differs from the accepted report`);
+  }
+  for (const [label, digest] of [
+    ["V19 native report SHA-256", "93817dcd9bb5d66ced2f03d639a89e152626097dc979783a82c6d76ea95600b3"],
+    ["V19 retained archive SHA-256", "4f8e658d2c14bdb8ce1669aeab8ef382444d93fb4db258ed9cfd16e812a37a61"],
+  ]) {
+    assert(section.includes(`<dt>${label}</dt> <dd>${digest}</dd>`), `V19 native receipt changed: ${label}`);
+  }
+}
+
+validateNativeV19Source(indexSource);
+const nativeV19Start = indexSource.indexOf('<h3 id="native-v19-title">');
+const nativeV19End = indexSource.indexOf('<h3 id="matched-v5-title">', nativeV19Start);
+const nativeV19Source = indexSource.slice(nativeV19Start, nativeV19End).replace(/\s+/g, " ");
+for (const [before, after] of [
+  ["2300.203", "230.203"],
+  ["84.754", "8.475"],
+  ["9.797679", "97.976790"],
+  ["2458.523", "245.852"],
+  ["90.230", "9.023"],
+  ["9.196630", "91.966300"],
+  ["TP1/C1", "TP8/C8"],
+  ["one excluded warmup and three measured requests", "one excluded warmup and thirty measured requests"],
+  ["in fixed control", "in randomized control"],
+  ["controller-ingress timings, not HTTP timings", "HTTP timings"],
+  ["This is not sustained throughput", "This is sustained throughput"],
+  ["1,024 reference token IDs", "128 reference token IDs"],
+  ["332,556 dispatches", "332,555 dispatches"],
+  ["not independent source-to-binary authentication", "independent source-to-binary authentication"],
+  ["93817dcd9bb5d66ced2f03d639a89e152626097dc979783a82c6d76ea95600b3", "03817dcd9bb5d66ced2f03d639a89e152626097dc979783a82c6d76ea95600b3"],
+  ["4f8e658d2c14bdb8ce1669aeab8ef382444d93fb4db258ed9cfd16e812a37a61", "0f8e658d2c14bdb8ce1669aeab8ef382444d93fb4db258ed9cfd16e812a37a61"],
+  ["Defaults remain unchanged.", "Defaults remain unchanged. V19 is faster."],
+]) {
+  assert(nativeV19Source.includes(before), `V19 rejection fixture is missing: ${before}`);
+  let rejected = false;
+  try {
+    validateNativeV19Source(indexSource.slice(0, nativeV19Start)
+      + nativeV19Source.replace(before, after) + indexSource.slice(nativeV19End));
+  } catch {
+    rejected = true;
+  }
+  assert(rejected, `V19 validation accepted a changed measurement or claim: ${before}`);
+}
+
+function validateMatchedV5Source(source) {
+  const start = source.indexOf('<h3 id="matched-v5-title">');
+  const end = source.indexOf('<div data-live-http-progress>', start);
+  assert(start >= 0 && end > start, "V5 matched section boundaries are missing");
+  assert(source.indexOf('id="matched-v5-title"') === source.lastIndexOf('id="matched-v5-title"'),
+    "V5 matched section must be unique");
+  const section = source.slice(start, end).replace(/\s+/g, " ");
+  for (const claim of [
+    "V5 matched Ferric / vLLM HTTP pair",
+    "Qwen3-8B on mi350 physical GPU 0, TP1, concurrency 1, 128 input and 128 output tokens, context 8192, BF16 decoder and FP32 output-head profile.",
+    "Both engines use the same SSE client, with speculation and prefix caching disabled.",
+    "10 excluded warmups, 30 measured requests and two untimed output diagnostics.",
+    "Ferric has 27.08 times the mean TPOT and 128.37 times the mean TTFT of vLLM in this cell.",
+    "All 30 measured requests succeed for each engine.",
+    "Cohorts run in fixed order, vLLM then Ferric, with one server start each; no confidence interval or stable tail claim follows.",
+    "This is not a stock BF16-output-head comparison.",
+    "TTFT is client send to first nonempty text.",
+    "TPOT is the first-to-last text span divided by 127, not true per-token inter-token latency.",
+    "Output rate divides 3,840 tokens by the complete measured cohort window, including request gaps and drain, excluding warmups and diagnostics.",
+    "It is not sustained throughput.",
+    "Independent replay passes the same plan, client, model/image hash receipts and reference checks.",
+    "Ferric token IDs match for all 42 requests; vLLM token IDs match in the two untimed diagnostics, while its 40 timed requests match decoded text and usage.",
+    "Owned processes and the vendor container are cleaned up, and GPU postflight checks are idle.",
+    "The replay checks retained hash receipts; it does not independently rehash model files.",
+    "Ferric baseline keeps its 1fc45a52 implementation and 5ed3840a runtime attribution",
+    "existing kernel images retain their original producers.",
+    "A finite matched cohort does not establish sustained throughput, serving qualification, a general engine ranking or SGLang performance.",
+  ]) {
+    assert(section.includes(claim), `V5 matched section is missing: ${claim}`);
+  }
+  for (const claim of [
+    /\bFerric (?:is |runs )?(?:faster than|beats|outperforms)\b/i,
+    /\bFerric (?:wins|is competitive|has achieved parity)\b/i,
+    /\b(?:general engine|framework) win\b/i,
+  ]) {
+    assert(!claim.test(section), `V5 matched section contains a win claim: ${claim}`);
+  }
+  assert(section.includes('id="matched-v5-results"'), "V5 matched table is missing");
+  for (const heading of ["Engine", "Mean TTFT (ms)", "Mean TPOT (ms)", "Output tokens/s"]) {
+    assert(section.includes(`<th scope="col">${heading}</th>`), `V5 matched column changed: ${heading}`);
+  }
+  assert((section.match(/<tr(?:\s|>)/g) ?? []).length === 3, "V5 matched table must contain only a header and two engines");
+  for (const [engine, label, ttft, tpot, rate] of [
+    ["ferric", "Ferric V17 combined", "2555.823", "114.619", "7.479295"],
+    ["vllm", "vLLM 0.28.0", "19.909", "4.232", "229.358430"],
+  ]) {
+    assert(section.includes(`<tr data-v5-engine="${engine}"> <th scope="row">${label}</th> <td>${ttft}</td> <td>${tpot}</td> <td>${rate}</td> </tr>`),
+      `V5 matched ${engine} row differs from the replay-confirmed summary`);
+  }
+  for (const [label, digest] of [
+    ["Paired replay summary SHA-256", "11c761a2e4408fc29a822a29f87ed10995c5799e407fc3233068f197836974a9"],
+    ["Shared plan SHA-256", "b25fa9824afeac3b5531aa4748b708abfd8edf87e839a7e862d68f1d41f18175"],
+    ["Ferric receipt SHA-256", "f6e4837cf1a613e41e28ec311476fbe77a9b1fab9c133a2c7140a8e6cc1be37a"],
+    ["vLLM receipt SHA-256", "dc98f64b11228002526fe47184b3fe14de419347f45e467692d6ebe9991c94f2"],
+  ]) {
+    assert(section.includes(`<dt>${label}</dt> <dd>${digest}</dd>`), `V5 matched receipt changed: ${label}`);
+  }
+}
+
+validateMatchedV5Source(indexSource);
+const matchedV5Start = indexSource.indexOf('<h3 id="matched-v5-title">');
+const matchedV5End = indexSource.indexOf('<div data-live-http-progress>', matchedV5Start);
+const matchedV5Fixture = indexSource.slice(matchedV5Start, matchedV5End).replace(/\s+/g, " ");
+for (const [before, after] of [
+  ["2555.823", "255.823"],
+  ["114.619", "11.461"],
+  ["229.358430", "22.935843"],
+  ["TP1, concurrency 1, 128 input and 128 output", "TP8, concurrency 8, 128 input and 128 output"],
+  ["BF16 decoder and FP32 output-head profile", "BF16 decoder and BF16 output-head profile"],
+  ["speculation and prefix caching disabled", "speculation and prefix caching enabled"],
+  ["30 measured requests and two untimed output diagnostics", "31 measured requests and two untimed output diagnostics"],
+  ["not true per-token inter-token latency", "true per-token inter-token latency"],
+  ["It is not sustained throughput.", "It is sustained throughput."],
+  ["11c761a2e4408fc29a822a29f87ed10995c5799e407fc3233068f197836974a9", "01c761a2e4408fc29a822a29f87ed10995c5799e407fc3233068f197836974a9"],
+  ["Ferric has 27.08 times", "Ferric beats vLLM. Ferric has 27.08 times"],
+]) {
+  assert(matchedV5Fixture.includes(before), `V5 rejection fixture is missing: ${before}`);
+  let rejected = false;
+  try {
+    validateMatchedV5Source(indexSource.slice(0, matchedV5Start)
+      + matchedV5Fixture.replace(before, after) + indexSource.slice(matchedV5End));
+  } catch {
+    rejected = true;
+  }
+  assert(rejected, `V5 validation accepted a changed measurement or claim: ${before}`);
+}
+
 for (const target of [
   "data-readiness",
   "data-resident-progress",

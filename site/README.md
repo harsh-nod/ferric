@@ -7,9 +7,117 @@ checked performance observations live in
 real browser checks. Run all checks on the designated remote build host, not
 locally, and remove the private stage after archiving evidence.
 
-## September 18 Performance Swarm V4
+## Latest V22 Matched HTTP Pair
 
-The current overview records private Ferric `1fc45a52`, published core runtime
+The new source records the accepted V2 HTTP pair and paired replay, separately
+from the preserved historical V17 HTTP and V22 native observations:
+
+| Engine | Mean TTFT (ms) | Mean TPOT (ms) | Output tokens/s |
+| --- | ---: | ---: | ---: |
+| Ferric V22 packed | 2329.922 | 83.598 | 9.885898 |
+| vLLM 0.28.0 | 18.636 | 4.252 | 228.904359 |
+
+Ferric remains 19.66 times higher in TPOT and 125.02 times higher in TTFT.
+This is not a win. The exact summary SHA256 is
+`0283449b779015bffe0ba72954069ffcca7b809ae6aadf91aa24d6b3fb9d1c07`.
+The same SSE client, Qwen3-8B BF16 decoder / FP32 head, TP1/C1, context 8192,
+128/128 tokens, cache/speculation off, ten warmups, thirty measured requests
+and two untimed diagnostics apply. Both engines pass correctness, sampled
+ownership and owned cleanup. The common 500 ms census records no observed
+contamination; it is not continuous isolation proof. Earlier rejected attempts
+remain excluded, not rehabilitated by this later pair.
+
+TTFT is client-send to first nonempty text; TPOT is first-to-last text / 127,
+not true token ITL. Rate is 3,840 tokens / full measured span including gaps/drain,
+excluding warmup/diagnostics, not sustained goodput. Cohort order is vLLM then
+Ferric, one start each; no confidence interval, stable-tail, stock BF16-head,
+TP8, speculative-decoding or SGLang claim. Ferric IDs match all 42 requests;
+vLLM IDs match two untimed diagnostics and all 40 timed text/usage checks pass.
+Retained model/image receipts are replayed, not independently rehashed here.
+The controller uses packed16-v22 with historical f68/5ed3840a and five images;
+newer source changes do not relabel those products. Cross-campaign differences
+against the old 114.619/4.232 ms pair do not isolate packet-packing causality.
+
+The new source and claim/render assertions await fresh remote QA/build using
+only cached dependencies/browser and the unchanged OCML-accounting guard.
+Expected scope remains eight viewports, widths 320..1440, 64 compact screenshots
+and seven public files. No new site build, artifact or publication is claimed
+by this source update; old published artifacts and failures remain unchanged.
+
+## September 18 Matched Optimization V5 Publication
+
+The additive V5 content in `index.html` records completion of the first
+sequential Ferric V17 combined / vLLM HTTP pair on mi350. Both retained raw
+receipts and independent paired replay pass; the replay checker passes eight
+CPU tests on mi300x-2. The initial finite-cohort table is:
+
+| Engine | Mean TTFT (ms) | Mean TPOT (ms) | Output tokens/s |
+| --- | ---: | ---: | ---: |
+| Ferric V17 combined | 2555.823 | 114.619 | 7.479295 |
+| vLLM 0.28.0 | 19.909 | 4.232 | 229.358430 |
+
+Ferric has 27.08 times the mean TPOT and 128.37 times the mean TTFT in this cell.
+This is a loss, not a performance win. Paired summary SHA256:
+`11c761a2e4408fc29a822a29f87ed10995c5799e407fc3233068f197836974a9`.
+
+The common cell is Qwen3-8B, TP1/C1, 128 input and 128 output tokens, context
+8192, BF16 decoder with the FP32 output-head profile, speculation and prefix
+caching off, the same SSE client, ten excluded warmups, thirty measured requests
+and two untimed output diagnostics per engine. The baseline retains private
+Ferric `1fc45a52` and runtime `5ed3840a`; subsequent compiler adoption does not
+relabel those products or the unchanged kernel images. This is an initial
+finite cohort, not sustained serving, TP8, SGLang or a performance-win claim.
+Cohorts run vLLM then Ferric with one server start each. TTFT uses client send
+to first nonempty text; TPOT divides first-to-last text time by 127, not true
+token ITL. Rate is 3,840 tokens over the full measured window including gaps
+and drain. Ferric token IDs match all 42 requests; vLLM token IDs match two
+untimed diagnostics and its 40 timed requests match decoded text and usage.
+Cleanup and GPU idle postflight pass for both. Retained model/image hash
+receipts are compared, not a fresh independent model-file rehash. No confidence
+interval, stable tail or stock BF16-head comparison is claimed.
+
+The separate instrumented runtime-counter diagnostic R2 is accepted: one
+warmup and one diagnostic request, all 256 output IDs matching the unchanged
+reference, 270 batches, 166,278 dispatches, completed execution and successful
+owned cleanup. Controller and worker inherit CPUs 0-255 and nice0; the two
+leader observations are not a scheduling trace or NUMA-placement proof.
+The retained report SHA-256 is
+`01869cfa796365849ef78d950dfef9e22f217996266abcdb8ea08306575c2642`.
+
+Overlapping worker counters record 23.000106146 seconds in dispatch waits,
+1.844776817 seconds in operational currentness and 0.061417113 seconds in full
+currentness, against 24.896958489 seconds of worker command time. These scopes
+must not be added. Wait includes GPU work, polling and scheduling; it is not
+GPU execution time or wholly removable delay. The interval includes warmup
+and snapshot overhead, not measured-only TPOT or an HTTP/competitive result.
+Operation-level isolation and the V19 native comparison are next; these
+counters do not identify currentness alone as the main performance bottleneck.
+
+V19 KV-copy is freshly emitted with fe2o3 `5a503c04`; its device CPU tests pass
+on mi300x-2. The emitted ABI reports Wave64, six VGPRs, zero scratch and zero
+LDS. Additional validation and native control/candidate correctness remain
+pending; no GPU gain or serving qualification is claimed. The runtime
+diagnostic's fresh CPU rerun passes all 14 harness tests with owned cleanup
+confirmed. Its original 13-pass/one-error run is retained; the fake-controller
+fixture collision is corrected and negative assertions reject premature EOF.
+Neither V19 nor the instrumented diagnostic is part of the completed HTTP pair.
+Historical `data/project.js`, `data/performance.js`, producer attribution,
+defaults and all 33 open gates remain unchanged.
+
+This snapshot is published through static-only `pages/prebuilt` commit
+`72b767485d3d50e56892471d7e0017538293232a`, deployment `35411581137`.
+Remote structural/negative checks, widths 320..1440, eight named viewports and
+64 screenshots pass. The seven-file artifact SHA256 is
+`370eb3238d4114279118a713bc7991ac0c1f3bd52d6565c1c428fc714d28aca4`.
+The fetched live index matches the validated artifact. The workflow only
+authenticates and deploys static files; no GitHub build is triggered. Private
+implementation ancestry, team tracker and raw evidence stay out of Pages.
+This published snapshot predates subsequent V19 native results, tracked in
+`docs/M1_MATCHED_OPTIMIZATION_V5.md`; it is not relabelled as that later run.
+
+## Historical September 18 Performance Swarm V4
+
+The retained V4 overview records private Ferric `1fc45a52`, published core runtime
 `5ed3840a`, final-pin CPU validation, and a four-arm native TP1 comparison.
 All 16 requests match the independent 128-output reference. Independent raw
 replay and six mutation/positive tests pass on mi300x-2.

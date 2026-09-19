@@ -1981,6 +1981,337 @@ try {
     assert(!/\bcurrent (?:fe2o3 )?(?:pin|dependency)\b/i.test(result.currentText), `${name}: rendered a current-dependency claim`);
     assert(browserErrors.length === 0, `${name}: ${browserErrors.join("; ")}`);
 
+    const latestHttp = page.getByRole("region", { name: "Latest V22 matched HTTP cohort", exact: true });
+    assert(await latestHttp.count() === 1 && await latestHttp.isVisible(), `${name}: latest HTTP table must be unique and visible`);
+    assert(await latestHttp.locator("tbody tr").count() === 2, `${name}: latest HTTP has exactly two admitted engines`);
+    assert(JSON.stringify(await latestHttp.locator("thead th").allTextContents())
+      === JSON.stringify(["Engine", "Mean TTFT (ms)", "Mean TPOT (ms)", "Output tokens/s"]), `${name}: latest HTTP columns changed`);
+    for (const [engine, expected] of [
+      ["ferric", ["Ferric V22 packed", "2329.922", "83.598", "9.885898"]],
+      ["vllm", ["vLLM 0.28.0", "18.636", "4.252", "228.904359"]],
+    ]) {
+      const row = latestHttp.locator(`[data-v22-http-engine="${engine}"]`);
+      assert(await row.count() === 1 && JSON.stringify((await row.locator("th, td").allTextContents()).map((s) => s.trim()))
+        === JSON.stringify(expected), `${name}: latest HTTP ${engine} accepted values changed`);
+    }
+    const latestHttpText = await page.locator("#matched-v22-http-title").evaluate((heading) => {
+      const parts = [];
+      for (let node = heading; node && node.id !== "native-v22-title"; node = node.nextElementSibling) {
+        if (!node.matches("details")) parts.push(node.innerText);
+      }
+      return parts.join(" ").replace(/\s+/g, " ").trim();
+    });
+    for (const claim of [
+      "Latest V22 / vLLM HTTP pair: no win",
+      "19.66 times the mean TPOT and 125.02 times the mean TTFT",
+      "10 excluded warmups, 30 measured requests and two untimed output diagnostics.",
+      "Cohorts run in fixed order, vLLM then Ferric, with one server start each.",
+      "There is no confidence interval or stable-tail claim.",
+      "This is not a stock BF16-head comparison.",
+      "not true token interarrival latency.", "It is not sustained throughput.",
+      "Ferric token IDs and decoded bytes match for all 42 requests.",
+      "vLLM token IDs match in two untimed diagnostics; its 40 timed requests match decoded text and usage.",
+      "same 500 ms process-ownership sampling policy", "Sampling is not continuous isolation proof.",
+      "Earlier contention-rejected attempts remain excluded.",
+      "not an independent model-file rehash or source-to-binary authentication.",
+      "Ordered64, V19, V23 and V25 are not part of this HTTP result.",
+      "cross-campaign differences do not attribute a gain to packet packing alone.",
+      "No TP8, speculative-decoding, SGLang, general framework ranking or serving qualification is established.",
+    ]) assert(latestHttpText.includes(claim), `${name}: latest HTTP limitation missing: ${claim}`);
+    const latestGeometry = await latestHttp.evaluate((region) => {
+      const table = region.querySelector("table");
+      const box = region.getBoundingClientRect();
+      const clipped = [...table.querySelectorAll("th, td")].filter((cell) => {
+        const range = document.createRange();
+        range.selectNodeContents(cell);
+        const text = range.getBoundingClientRect();
+        const rect = cell.getBoundingClientRect();
+        return text.left < rect.left - 1 || text.right > rect.right + 1 || text.top < rect.top - 1 || text.bottom > rect.bottom + 1;
+      }).map((cell) => cell.textContent.trim());
+      return { left: box.left, right: box.right, width: box.width, height: box.height, clipped,
+        tableWidth: table.getBoundingClientRect().width, clientWidth: region.clientWidth, overflowX: getComputedStyle(region).overflowX };
+    });
+    assert(latestGeometry.width > 0 && latestGeometry.height > 0 && latestGeometry.left >= -1
+      && latestGeometry.right <= width + 1 && latestGeometry.clipped.length === 0, `${name}: latest HTTP table text/viewport geometry`);
+    if (latestGeometry.tableWidth > latestGeometry.clientWidth + 1) {
+      assert(["auto", "scroll"].includes(latestGeometry.overflowX), `${name}: latest HTTP table must scroll within its region`);
+    }
+    const latestDisclosure = page.getByText("Latest V22 HTTP replay and receipt identities", { exact: true });
+    const latestDetails = page.locator("details.performance-identities").filter({ has: latestDisclosure });
+    assert(await latestDetails.count() === 1, `${name}: one latest HTTP receipt disclosure`);
+    await latestDisclosure.click();
+    for (const [label, digest] of [
+      ["Paired replay summary SHA-256", "0283449b779015bffe0ba72954069ffcca7b809ae6aadf91aa24d6b3fb9d1c07"],
+      ["Shared plan SHA-256", "71855e76d38c3d3ff11d21b7ff33d7c67303a5fc28dff07c8deebb0ee14cf7fd"],
+      ["Ferric receipt SHA-256", "91cc42648156fbfedd44a03b704ad9c80a125efe8809b0fc4cff5441b9d2fe92"],
+      ["vLLM receipt SHA-256", "e428d623aaece123ef80d926b93e9be409bfbeb3bef9dcd1023503bf132b35c2"],
+    ]) {
+      const term = latestDetails.getByText(label, { exact: true });
+      assert(await term.count() === 1 && await term.isVisible()
+        && await term.evaluate((node) => node.nextElementSibling.textContent.trim()) === digest,
+      `${name}: latest HTTP receipt missing or changed: ${label}`);
+    }
+    await latestDisclosure.click();
+
+    const nativeV22 = page.getByRole("region", { name: "V22 native controller A/B", exact: true });
+    assert(await nativeV22.count() === 1 && await nativeV22.isVisible(), `${name}: V22 native table must be unique and visible`);
+    assert(await nativeV22.locator("tbody tr").count() === 2, `${name}: V22 has exactly two native arms`);
+    assert(JSON.stringify(await nativeV22.locator("thead th").allTextContents())
+      === JSON.stringify(["Packet-grouping arm", "Mean TTFT (ms)", "Mean TPOT (ms)", "Output tokens/s"]),
+    `${name}: V22 metric columns changed`);
+    for (const [arm, expected] of [
+      ["baseline", ["Control: baseline", "2600.412", "111.871", "7.614984"]],
+      ["packed16-v22", ["Candidate: packed16-v22", "2524.218", "98.857", "8.488262"]],
+    ]) {
+      const row = nativeV22.locator(`[data-v22-arm="${arm}"]`);
+      assert(await row.count() === 1, `${name}: V22 ${arm} row must be unique`);
+      const cells = (await row.locator("th, td").allTextContents()).map((text) => text.trim());
+      assert(JSON.stringify(cells) === JSON.stringify(expected), `${name}: V22 ${arm} accepted values changed`);
+    }
+    const nativeV22Text = await page.locator("#native-v22-title").evaluate((heading) => {
+      const parts = [];
+      for (let node = heading; node && !node.matches("#native-v19-title"); node = node.nextElementSibling) {
+        parts.push(node.textContent);
+      }
+      return parts.join(" ").replace(/\s+/g, " ");
+    });
+    for (const claim of [
+      "one excluded warmup and three measured requests, in fixed baseline then candidate order",
+      "same controller, f68 runtime, five unchanged images",
+      "mean TPOT is 11.63% lower and finite-window output rate is 11.47% higher",
+      "98.199, 109.135 and 89.237 ms",
+      "do not establish a stable effect or confidence interval",
+      "controller-ingress timings, not HTTP timings",
+      "span divided by 127", "Output rate divides 384 tokens",
+      "not sustained throughput, a GPU duration, a vendor comparison or serving qualification",
+      "all 1,024 reference token IDs and decoded bytes", "540 batches and 332,556 dispatches",
+      "ordered64 worker is not used in this pair",
+      "does not replace or improve the frozen HTTP result below",
+    ]) {
+      assert(nativeV22Text.includes(claim), `${name}: V22 visible scope missing: ${claim}`);
+    }
+    const ordered64Text = (await page.locator("#ordered64-progress").textContent()).replace(/\s+/g, " ");
+    assert(ordered64Text.includes("251 synthetic dependent packets and 594 full-buffer/guard checks")
+      && ordered64Text.includes("no model inference, timing result or model-performance gain is established"),
+    `${name}: ordered64 correctness-only boundary changed`);
+    const nativeV22Geometry = await nativeV22.evaluate((region) => {
+      const box = region.getBoundingClientRect();
+      const table = region.querySelector("table");
+      return {
+        left: box.left, right: box.right, width: box.width, height: box.height,
+        tableWidth: table.getBoundingClientRect().width, clientWidth: region.clientWidth,
+        overflowX: getComputedStyle(region).overflowX,
+        clippedCells: [...table.querySelectorAll("th, td")].filter((cell) => cell.scrollWidth > cell.clientWidth + 1)
+          .map((cell) => cell.textContent.trim()),
+      };
+    });
+    assert(nativeV22Geometry.width > 0 && nativeV22Geometry.height > 0, `${name}: V22 table has no rendered area`);
+    assert(nativeV22Geometry.left >= -1 && nativeV22Geometry.right <= width + 1, `${name}: V22 region exceeds viewport`);
+    assert(nativeV22Geometry.clippedCells.length === 0, `${name}: V22 cell text is clipped: ${nativeV22Geometry.clippedCells.join(", ")}`);
+    if (nativeV22Geometry.tableWidth > nativeV22Geometry.clientWidth + 1) {
+      assert(["auto", "scroll"].includes(nativeV22Geometry.overflowX), `${name}: wide V22 table must scroll in its region`);
+    }
+    const nativeV22Disclosure = page.getByText("V22 native report and retained evidence", { exact: true });
+    const nativeV22Details = page.locator("details.performance-identities").filter({ has: nativeV22Disclosure });
+    assert(await nativeV22Details.count() === 1, `${name}: exactly one V22 receipt disclosure`);
+    await nativeV22Disclosure.click();
+    for (const [label, digest] of [
+      ["V22 native report SHA-256", "634c1634aac5a1a01fd7e436fe155a8d3300e14e5dca76bb0920dd0af54aa697"],
+      ["V22 retained archive SHA-256", "a16078f0541f06857cad27a6e549ed83759535ba71db1b967b61cced223e7287"],
+      ["Ordered64 correctness report SHA-256", "77e225baf226ef220234834207f6be8568b941ee35410da092bc7f014d5d0b33"],
+    ]) {
+      const term = nativeV22Details.getByText(label, { exact: true });
+      assert(await term.count() === 1 && await term.isVisible(), `${name}: V22 receipt label missing: ${label}`);
+      assert((await term.evaluate((element) => element.nextElementSibling.textContent)).trim() === digest,
+        `${name}: V22 receipt changed: ${label}`);
+    }
+    await nativeV22Disclosure.click();
+
+    const nativeV19 = page.getByRole("region", { name: "V19 native controller A/B", exact: true });
+    assert(await nativeV19.count() === 1 && await nativeV19.isVisible(), `${name}: V19 native table must be unique and visible`);
+    assert(await nativeV19.locator("tbody tr").count() === 2, `${name}: V19 has exactly two native arms`);
+    assert(JSON.stringify(await nativeV19.locator("thead th").allTextContents())
+      === JSON.stringify(["KV-copy arm", "Mean TTFT (ms)", "Mean TPOT (ms)", "Output tokens/s"]),
+    `${name}: V19 metric columns changed`);
+    for (const [arm, expected] of [
+      ["baseline", ["Control: baseline", "2300.203", "84.754", "9.797679"]],
+      ["parallel-c1-v19", ["Candidate: parallel-c1-v19", "2458.523", "90.230", "9.196630"]],
+    ]) {
+      const row = nativeV19.locator(`[data-v19-arm="${arm}"]`);
+      assert(await row.count() === 1, `${name}: V19 ${arm} row must be unique`);
+      const cells = (await row.locator("th, td").allTextContents()).map((text) => text.trim());
+      assert(JSON.stringify(cells) === JSON.stringify(expected), `${name}: V19 ${arm} accepted values changed`);
+    }
+    const nativeV19Text = await page.locator("#native-v19-title").evaluate((heading) => {
+      const parts = [];
+      for (let node = heading; node && !node.matches("#matched-v5-title"); node = node.nextElementSibling) {
+        if (!node.matches("details")) parts.push(node.innerText);
+      }
+      return parts.join(" ").replace(/\s+/g, " ").trim();
+    });
+    for (const claim of [
+      "V19 native KV-copy A/B: no gain",
+      "Qwen3-8B on mi350, TP1/C1, with 128 input tokens and 128 output tokens, context 8192, BF16 decoder / FP32 head, speculation off and prefix caching off.",
+      "Each arm has one excluded warmup and three measured requests, in fixed control then candidate order.",
+      "Both arms load the same six images and use the same controller, runtime and sequential arrivals; only the KV-copy selector changes.",
+      "The candidate is slower on average in this run, with measured TPOT samples of 81.875, 101.385 and 87.431 ms.",
+      "Three samples in fixed order do not establish a stable effect or a confidence interval.",
+      "Defaults remain unchanged.",
+      "These are controller-ingress timings, not HTTP timings.",
+      "TTFT spans request arrival to first token completion; TPOT is the first-to-last token completion span divided by 127.",
+      "Output rate divides 384 tokens by the measured ingress window, including inter-request gaps and excluding warmup.",
+      "This is not sustained throughput, a GPU duration, a vendor comparison or serving qualification.",
+      "All eight requests match all 1,024 reference token IDs and decoded bytes.",
+      "Each arm completes 540 batches and 332,556 dispatches with successful owned cleanup.",
+      "Both arms retain inherited CPU affinity and nice 0.",
+      "Build receipts bind engineering provenance, not independent source-to-binary authentication.",
+      "This native A/B does not replace or improve the frozen HTTP result below.",
+    ]) {
+      assert(nativeV19Text.includes(claim), `${name}: V19 visible scope or limitation missing: ${claim}`);
+    }
+    for (const claim of [
+      /\b(?:V19|the candidate|Ferric) (?:is |runs )?(?:faster|beats|outperforms|wins)\b/i,
+      /\b(?:V19|the candidate) (?:speedup|performance gain)\b/i,
+    ]) {
+      assert(!claim.test(nativeV19Text), `${name}: V19 contains a gain claim: ${claim}`);
+    }
+    const nativeV19Geometry = await nativeV19.evaluate((region) => {
+      const table = region.querySelector("table");
+      const rect = region.getBoundingClientRect();
+      const clippedCells = [...table.querySelectorAll("th, td")].filter((cell) => {
+        const range = document.createRange();
+        range.selectNodeContents(cell);
+        const text = range.getBoundingClientRect();
+        const box = cell.getBoundingClientRect();
+        return text.left < box.left - 1 || text.right > box.right + 1
+          || text.top < box.top - 1 || text.bottom > box.bottom + 1;
+      }).map((cell) => cell.textContent.trim());
+      return {
+        left: rect.left, right: rect.right, width: rect.width, height: rect.height,
+        tableWidth: table.getBoundingClientRect().width, clientWidth: region.clientWidth,
+        overflowX: getComputedStyle(region).overflowX, clippedCells,
+      };
+    });
+    assert(nativeV19Geometry.width > 0 && nativeV19Geometry.height > 0,
+      `${name}: V19 table has no rendered area`);
+    assert(nativeV19Geometry.left >= -1 && nativeV19Geometry.right <= width + 1,
+      `${name}: V19 table region exceeds the viewport`);
+    assert(nativeV19Geometry.clippedCells.length === 0,
+      `${name}: V19 table text exceeds cells: ${nativeV19Geometry.clippedCells.join(", ")}`);
+    if (nativeV19Geometry.tableWidth > nativeV19Geometry.clientWidth + 1) {
+      assert(["auto", "scroll"].includes(nativeV19Geometry.overflowX), `${name}: wide V19 table must scroll within its region`);
+    }
+    const nativeV19Disclosure = page.getByText("V19 native report and retained evidence", { exact: true });
+    const nativeV19Details = page.locator("details.performance-identities").filter({ has: nativeV19Disclosure });
+    assert(await nativeV19Details.count() === 1, `${name}: exactly one V19 receipt disclosure`);
+    await nativeV19Disclosure.click();
+    for (const [label, digest] of [
+      ["V19 native report SHA-256", "93817dcd9bb5d66ced2f03d639a89e152626097dc979783a82c6d76ea95600b3"],
+      ["V19 retained archive SHA-256", "4f8e658d2c14bdb8ce1669aeab8ef382444d93fb4db258ed9cfd16e812a37a61"],
+    ]) {
+      const term = nativeV19Details.getByText(label, { exact: true });
+      assert(await term.count() === 1 && await term.isVisible(), `${name}: V19 receipt label missing: ${label}`);
+      assert(await term.evaluate((node) => node.nextElementSibling.textContent.trim()) === digest,
+        `${name}: V19 receipt digest changed: ${label}`);
+    }
+    await nativeV19Disclosure.click();
+
+    const matchedV5 = page.getByRole("region", { name: "V5 first matched HTTP cohort", exact: true });
+    assert(await matchedV5.count() === 1 && await matchedV5.isVisible(), `${name}: V5 matched table must be unique and visible`);
+    assert(await matchedV5.locator("tbody tr").count() === 2, `${name}: V5 has exactly two admitted engines`);
+    assert(JSON.stringify(await matchedV5.locator("thead th").allTextContents())
+      === JSON.stringify(["Engine", "Mean TTFT (ms)", "Mean TPOT (ms)", "Output tokens/s"]),
+    `${name}: V5 metric columns changed`);
+    for (const [engine, expected] of [
+      ["ferric", ["Ferric V17 combined", "2555.823", "114.619", "7.479295"]],
+      ["vllm", ["vLLM 0.28.0", "19.909", "4.232", "229.358430"]],
+    ]) {
+      const row = matchedV5.locator(`[data-v5-engine="${engine}"]`);
+      assert(await row.count() === 1, `${name}: V5 ${engine} row must be unique`);
+      const cells = (await row.locator("th, td").allTextContents()).map((text) => text.trim());
+      assert(JSON.stringify(cells) === JSON.stringify(expected), `${name}: V5 ${engine} replay-confirmed values changed`);
+    }
+    const matchedV5Text = await page.locator("#matched-v5-title").evaluate((heading) => {
+      const parts = [];
+      for (let node = heading; node && !node.matches("[data-live-http-progress]"); node = node.nextElementSibling) {
+        if (!node.matches("details")) parts.push(node.innerText);
+      }
+      return parts.join(" ").replace(/\s+/g, " ").trim();
+    });
+    for (const claim of [
+      "V5 matched Ferric / vLLM HTTP pair",
+      "Qwen3-8B on mi350 physical GPU 0, TP1, concurrency 1, 128 input and 128 output tokens, context 8192, BF16 decoder and FP32 output-head profile.",
+      "Both engines use the same SSE client, with speculation and prefix caching disabled.",
+      "10 excluded warmups, 30 measured requests and two untimed output diagnostics.",
+      "Ferric has 27.08 times the mean TPOT and 128.37 times the mean TTFT of vLLM in this cell.",
+      "All 30 measured requests succeed for each engine.",
+      "Cohorts run in fixed order, vLLM then Ferric, with one server start each; no confidence interval or stable tail claim follows.",
+      "This is not a stock BF16-output-head comparison.",
+      "TTFT is client send to first nonempty text.",
+      "TPOT is the first-to-last text span divided by 127, not true per-token inter-token latency.",
+      "Output rate divides 3,840 tokens by the complete measured cohort window, including request gaps and drain, excluding warmups and diagnostics.",
+      "It is not sustained throughput.",
+      "Independent replay passes the same plan, client, model/image hash receipts and reference checks.",
+      "Ferric token IDs match for all 42 requests; vLLM token IDs match in the two untimed diagnostics, while its 40 timed requests match decoded text and usage.",
+      "Owned processes and the vendor container are cleaned up, and GPU postflight checks are idle.",
+      "The replay checks retained hash receipts; it does not independently rehash model files.",
+      "Ferric baseline keeps its 1fc45a52 implementation and 5ed3840a runtime attribution",
+      "existing kernel images retain their original producers.",
+      "A finite matched cohort does not establish sustained throughput, serving qualification, a general engine ranking or SGLang performance.",
+    ]) {
+      assert(matchedV5Text.includes(claim), `${name}: V5 visible scope or limitation missing: ${claim}`);
+    }
+    for (const claim of [
+      /\bFerric (?:is |runs )?(?:faster than|beats|outperforms)\b/i,
+      /\bFerric (?:wins|is competitive|has achieved parity)\b/i,
+      /\b(?:general engine|framework) win\b/i,
+    ]) {
+      assert(!claim.test(matchedV5Text), `${name}: V5 contains a win claim: ${claim}`);
+    }
+    const matchedV5Geometry = await matchedV5.evaluate((region) => {
+      const table = region.querySelector("table");
+      const rect = region.getBoundingClientRect();
+      const tableRect = table.getBoundingClientRect();
+      const clippedCells = [...table.querySelectorAll("th, td")].filter((cell) => {
+        const range = document.createRange();
+        range.selectNodeContents(cell);
+        const text = range.getBoundingClientRect();
+        const box = cell.getBoundingClientRect();
+        return text.left < box.left - 1 || text.right > box.right + 1
+          || text.top < box.top - 1 || text.bottom > box.bottom + 1;
+      }).map((cell) => cell.textContent.trim());
+      return {
+        left: rect.left, right: rect.right, width: rect.width, height: rect.height,
+        tableWidth: tableRect.width, clientWidth: region.clientWidth,
+        overflowX: getComputedStyle(region).overflowX, clippedCells,
+      };
+    });
+    assert(matchedV5Geometry.width > 0 && matchedV5Geometry.height > 0,
+      `${name}: V5 table has no rendered area`);
+    assert(matchedV5Geometry.left >= -1 && matchedV5Geometry.right <= width + 1,
+      `${name}: V5 table region exceeds the viewport`);
+    assert(matchedV5Geometry.clippedCells.length === 0,
+      `${name}: V5 table text exceeds cells: ${matchedV5Geometry.clippedCells.join(", ")}`);
+    if (matchedV5Geometry.tableWidth > matchedV5Geometry.clientWidth + 1) {
+      assert(["auto", "scroll"].includes(matchedV5Geometry.overflowX), `${name}: wide V5 table must scroll within its region`);
+    }
+    const matchedV5Disclosure = page.getByText("V5 replay and receipt identities", { exact: true });
+    const matchedV5Details = page.locator("details.performance-identities").filter({ has: matchedV5Disclosure });
+    assert(await matchedV5Details.count() === 1, `${name}: exactly one V5 receipt disclosure`);
+    await matchedV5Disclosure.click();
+    for (const [label, digest] of [
+      ["Paired replay summary SHA-256", "11c761a2e4408fc29a822a29f87ed10995c5799e407fc3233068f197836974a9"],
+      ["Shared plan SHA-256", "b25fa9824afeac3b5531aa4748b708abfd8edf87e839a7e862d68f1d41f18175"],
+      ["Ferric receipt SHA-256", "f6e4837cf1a613e41e28ec311476fbe77a9b1fab9c133a2c7140a8e6cc1be37a"],
+      ["vLLM receipt SHA-256", "dc98f64b11228002526fe47184b3fe14de419347f45e467692d6ebe9991c94f2"],
+    ]) {
+      const term = matchedV5Details.getByText(label, { exact: true });
+      assert(await term.count() === 1 && await term.isVisible(), `${name}: V5 receipt label missing: ${label}`);
+      assert(await term.evaluate((node) => node.nextElementSibling.textContent.trim()) === digest,
+        `${name}: V5 receipt digest changed: ${label}`);
+    }
+    await matchedV5Disclosure.click();
+
     const matchedTable = page.getByRole("region", { name: "Matched 128/128: client latency and output rate", exact: true });
     assert(await matchedTable.locator("tbody tr").count() === 2, `${name}: exactly two admitted matched engines`);
     assert((await matchedTable.textContent()).includes("1.879805"), `${name}: Ferric measured rate`);
