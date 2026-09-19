@@ -134,6 +134,13 @@ pub use wave_rmsnorm_v15::ENGINEERING_TP_WAVE_RMSNORM_EXPORTS_V15;
 #[cfg(feature = "tp-batch-engineering")]
 pub(crate) use wave_rmsnorm_v15::WaveRmsNormBindingV15;
 
+#[cfg(feature = "tp-batch-engineering")]
+mod c1_kv_copy_v19;
+#[cfg(feature = "tp-batch-engineering")]
+pub(crate) use c1_kv_copy_v19::C1KvCopyBindingV19;
+#[cfg(feature = "tp-batch-engineering")]
+pub use c1_kv_copy_v19::ENGINEERING_TP_C1_KV_COPY_EXPORTS_V19;
+
 /// Private identity minted only by the separate one-root v14 profile.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 #[cfg(feature = "tp-batch-engineering")]

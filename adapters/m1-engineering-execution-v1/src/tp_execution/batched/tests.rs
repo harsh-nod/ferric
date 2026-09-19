@@ -5,6 +5,7 @@
 
 mod argmax_v11;
 mod attention_argmax_v11;
+mod c1_kv_copy_v19;
 mod draft;
 mod large_kv;
 mod layer_c1_wave;
@@ -60,6 +61,8 @@ enum Failure {
     WaveProjectionWait,
     RmsNormSubmit(usize),
     RmsNormWait(usize),
+    KvCopySubmit,
+    KvCopyWait,
 }
 
 struct Recording {
@@ -86,6 +89,7 @@ struct Recording {
     argmax_v11_loaded: Option<[u8; 32]>,
     query_hoist_v14_loaded: Option<[u8; 32]>,
     wave_rmsnorm_v15_loaded: Option<[u8; 32]>,
+    c1_kv_copy_v19_loaded: Option<[u8; 32]>,
     argmax_peer: Option<(u32, u32, u32)>,
 }
 
@@ -164,7 +168,9 @@ impl EngineeringTpRankTransportV1 for Recording {
                 || (self.query_hoist_v14_loaded == Some(image)
                     && kernels == crate::tp_artifact::ENGINEERING_TP_QUERY_HOIST_EXPORTS_V14)
                 || (self.wave_rmsnorm_v15_loaded == Some(image)
-                    && kernels == crate::tp_artifact::ENGINEERING_TP_WAVE_RMSNORM_EXPORTS_V15))
+                    && kernels == crate::tp_artifact::ENGINEERING_TP_WAVE_RMSNORM_EXPORTS_V15)
+                || (self.c1_kv_copy_v19_loaded == Some(image)
+                    && kernels == crate::tp_artifact::ENGINEERING_TP_C1_KV_COPY_EXPORTS_V19))
         {
             Ok(())
         } else {
@@ -300,6 +306,11 @@ impl EngineeringTpRankTransportV1 for Recording {
     }
 
     fn submit(&mut self, command: &EngineeringTpDispatchV1) -> TpResult<()> {
+        if self.failure == Some(Failure::KvCopySubmit)
+            && command.kernel == crate::tp_artifact::ENGINEERING_TP_C1_KV_COPY_EXPORTS_V19[0]
+        {
+            return Err("injected C1 KV copy submit failure".into());
+        }
         if let Some(Failure::RmsNormSubmit(ordinal)) = self.failure
             && command.kernel == crate::tp_artifact::ENGINEERING_TP_WAVE_RMSNORM_EXPORTS_V15[0]
             && self
@@ -419,6 +430,11 @@ impl EngineeringTpRankTransportV1 for Recording {
             .borrow_mut()
             .push(Event::Wait(self.rank, command.kernel));
         // Reuse only the synthetic byte writer; retain the real v5 names/grids in receipts.
+        if self.failure == Some(Failure::KvCopyWait)
+            && command.kernel == crate::tp_artifact::ENGINEERING_TP_C1_KV_COPY_EXPORTS_V19[0]
+        {
+            return Err("injected C1 KV copy completion failure".into());
+        }
         let is_draft = command.kernel.starts_with("ferric_qwen3_draft_batch32_");
         let hidden = if is_draft { 1024 } else { 4096 };
         let query = if is_draft { 2048 } else { 4096 };
@@ -593,6 +609,17 @@ impl EngineeringTpRankTransportV1 for Recording {
                 }
                 assert_eq!(command.grid_workgroups, 1);
             }
+            "ferric_qwen3_tp_c1_kv_copy_bf16_v19" => {
+                assert_eq!(command.grid_workgroups, 16);
+                for (source, destination) in [(0, 2), (1, 3)] {
+                    let input = buffer(&command, source);
+                    let output = buffer(&command, destination);
+                    assert_eq!((input.2, output.2, input.3, output.3), (1024, 1024, 2, 2));
+                    let bytes = self.buffers[&input.0][input.1..input.1 + 2048].to_vec();
+                    self.buffers.get_mut(&output.0).unwrap()[output.1..output.1 + 2048]
+                        .copy_from_slice(&bytes);
+                }
+            }
             ATTENTION | "ferric_qwen3_tp_wave_paged_gqa_bf16_v3" => {
                 let rows = scalar(&command, 6);
                 let world = scalar(&command, 7);
@@ -682,6 +709,7 @@ fn fixture_for_model(
             argmax_v11_loaded: None,
             query_hoist_v14_loaded: None,
             wave_rmsnorm_v15_loaded: None,
+            c1_kv_copy_v19_loaded: None,
             argmax_peer: None,
             rank,
             buffers: BTreeMap::new(),
@@ -795,6 +823,8 @@ fn fixture_for_model(
         admitted_query_hoist_v14: None,
         wave_rmsnorm_v15: None,
         admitted_wave_rmsnorm_v15: None,
+        c1_kv_copy_v19: None,
+        admitted_c1_kv_copy_v19: None,
     }
 }
 

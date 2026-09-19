@@ -102,6 +102,16 @@ path = "src/bin/ferric-qwen3-wave-target-v17-live.rs"
 required-features = ["tp-batch-engineering"]
 
 [[bin]]
+name = "ferric-qwen3-c1-kv-copy-v19-live"
+path = "src/bin/ferric-qwen3-c1-kv-copy-v19-live.rs"
+required-features = ["tp-batch-engineering"]
+
+[[bin]]
+name = "ferric-qwen3-wave-target-v17-runtime-diagnostic"
+path = "src/bin/ferric-qwen3-wave-target-v17-runtime-diagnostic.rs"
+required-features = ["tp-batch-engineering"]
+
+[[bin]]
 name = "ferric-qwen3-layer-c1-wave-runtime-diagnostic"
 path = "src/bin/ferric-qwen3-layer-c1-wave-runtime-diagnostic.rs"
 required-features = ["tp-batch-engineering"]
@@ -130,6 +140,7 @@ tp-batch-engineering = [
     "dep:ferric-qwen3-tp-fp32-argmax-kernels-device-v11",
     "dep:ferric-qwen3-tp-wave-query-hoist-kernels-device-v14",
     "dep:ferric-qwen3-tp-wave-rmsnorm-kernels-device-v15",
+    "dep:ferric-qwen3-tp-c1-kv-copy-kernels-device-v19",
 ]
 qualification-fault-injection = [
     "ferric-engine/qualification-fault-injection",
@@ -137,12 +148,12 @@ qualification-fault-injection = [
 ]
 
 [dependencies]
-fe2o3-amdhsa-loader = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "5ed3840a90db3f03a2cded9becffc0459b737f36", version = "=0.1.0" }
-fe2o3-host = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "5ed3840a90db3f03a2cded9becffc0459b737f36", version = "=0.1.0" }
-fe2o3-hsaco = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "5ed3840a90db3f03a2cded9becffc0459b737f36", version = "=0.1.0", optional = true }
-fe2o3-hsaco-finalize = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "5ed3840a90db3f03a2cded9becffc0459b737f36", version = "=0.1.0" }
-fe2o3-kfd = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "5ed3840a90db3f03a2cded9becffc0459b737f36", version = "=0.1.0" }
-fe2o3-service-host = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "5ed3840a90db3f03a2cded9becffc0459b737f36", version = "=0.1.0", optional = true }
+fe2o3-amdhsa-loader = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "5a503c04f5ae107a3b3e951ec970b36c5d6a9a79", version = "=0.1.0" }
+fe2o3-host = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "5a503c04f5ae107a3b3e951ec970b36c5d6a9a79", version = "=0.1.0" }
+fe2o3-hsaco = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "5a503c04f5ae107a3b3e951ec970b36c5d6a9a79", version = "=0.1.0", optional = true }
+fe2o3-hsaco-finalize = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "5a503c04f5ae107a3b3e951ec970b36c5d6a9a79", version = "=0.1.0" }
+fe2o3-kfd = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "5a503c04f5ae107a3b3e951ec970b36c5d6a9a79", version = "=0.1.0" }
+fe2o3-service-host = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "5a503c04f5ae107a3b3e951ec970b36c5d6a9a79", version = "=0.1.0", optional = true }
 ferric-build = { path = "../../crates/ferric-build", version = "=0.1.0" }
 ferric-engine = { path = "../../crates/ferric-engine", version = "=0.1.0" }
 ferric-non-authoritative-program-source-v1 = { path = "../../crates/ferric-non-authoritative-program-source-v1", version = "=0.1.0" }
@@ -160,6 +171,7 @@ ferric-qwen3-draft-batch32-kernels-device-v10 = { path = "../../device/qwen3-dra
 ferric-qwen3-tp-fp32-argmax-kernels-device-v11 = { path = "../../device/qwen3-tp-fp32-argmax-kernels-v11", version = "=0.1.0", optional = true, default-features = false, features = ["gfx950"] }
 ferric-qwen3-tp-wave-query-hoist-kernels-device-v14 = { path = "../../device/qwen3-tp-wave-query-hoist-kernels-v14", version = "=0.1.0", optional = true, default-features = false, features = ["gfx950"] }
 ferric-qwen3-tp-wave-rmsnorm-kernels-device-v15 = { path = "../../device/qwen3-tp-wave-rmsnorm-kernels-v15", version = "=0.1.0", optional = true, default-features = false, features = ["gfx950"] }
+ferric-qwen3-tp-c1-kv-copy-kernels-device-v19 = { path = "../../device/qwen3-tp-c1-kv-copy-kernels-v19", version = "=0.1.0", optional = true, default-features = false, features = ["gfx950"] }
 ferric-qwen3-all-kernels-worker-v3-verifier-v1 = { path = "../qwen3-all-kernels-worker-v3-verifier-v1", version = "=0.1.0" }
 ferric-spec = { path = "../../crates/ferric-spec", version = "=0.1.0" }
 rustix = { version = "=1.1.4", features = ["event", "fs", "net", "process", "rand", "time"] }

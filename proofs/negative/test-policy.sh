@@ -323,7 +323,7 @@ compiler_dependency = next(
     d for d in qwen_package["dependencies"] if d["name"] == "fe2o3-compiler-ffi"
 )
 compiler_source = compiler_dependency["source"]
-compiler_revision = "5ed3840a90db3f03a2cded9becffc0459b737f36"
+compiler_revision = "5a503c04f5ae107a3b3e951ec970b36c5d6a9a79"
 if compiler_source.count(compiler_revision) != 1:
     raise SystemExit("fe2o3 compiler source mutation anchor drifted")
 compiler_dependency["source"] = compiler_source.replace(compiler_revision, "0" * 40, 1)
@@ -486,7 +486,7 @@ write_hostile("target", local_target)
 local_fe2o3 = copy.deepcopy(metadata)
 device_dependency = dependency(local_fe2o3, device_aggregate, "fe2o3-device")
 device_source = device_dependency["source"]
-device_revision = "5ed3840a90db3f03a2cded9becffc0459b737f36"
+device_revision = "5a503c04f5ae107a3b3e951ec970b36c5d6a9a79"
 if device_source.count(device_revision) != 1:
     raise SystemExit("fe2o3 device source mutation anchor drifted")
 device_dependency["source"] = device_source.replace(device_revision, "0" * 40, 1)

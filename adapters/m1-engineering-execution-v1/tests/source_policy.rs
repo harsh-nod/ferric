@@ -37,7 +37,7 @@ const CORE_SOURCE: &str =
 const CAPABILITY_SOURCE: &str =
     include_str!("../../../crates/ferric-non-authoritative-program-source-v1/src/lib.rs");
 
-const FE2O3_REVISION: &str = "5ed3840a90db3f03a2cded9becffc0459b737f36";
+const FE2O3_REVISION: &str = "5a503c04f5ae107a3b3e951ec970b36c5d6a9a79";
 
 fn explicit_mfma_route_policy(source: &str, cli: &str) -> bool {
     let compact = source
@@ -235,6 +235,7 @@ fn adapter_is_an_exact_standalone_workspace() {
             "ferric-qwen3-draft-batch32-kernels-device-v10",
             "ferric-qwen3-tp-batch-kernels-device-v2",
             "ferric-qwen3-tp-batch32-kernels-device-v5",
+            "ferric-qwen3-tp-c1-kv-copy-kernels-device-v19",
             "ferric-qwen3-tp-fp32-argmax-kernels-device-v11",
             "ferric-qwen3-tp-fp32-head-kernels-device-v7",
             "ferric-qwen3-tp-fp32-head32-kernels-device-v8",
@@ -288,7 +289,8 @@ fn batched_paged_runtime_requires_a_separate_engineering_opt_in() {
             Some("dep:ferric-qwen3-draft-batch32-kernels-device-v10"),
             Some("dep:ferric-qwen3-tp-fp32-argmax-kernels-device-v11"),
             Some("dep:ferric-qwen3-tp-wave-query-hoist-kernels-device-v14"),
-            Some("dep:ferric-qwen3-tp-wave-rmsnorm-kernels-device-v15")
+            Some("dep:ferric-qwen3-tp-wave-rmsnorm-kernels-device-v15"),
+            Some("dep:ferric-qwen3-tp-c1-kv-copy-kernels-device-v19")
         ]
     );
     let bin = manifest["bin"]
@@ -392,10 +394,19 @@ fn wave_rmsnorm_v15_route_keeps_defaults_and_all_legacy_entrypoints_closed() {
             assert!(source.contains("mod wave_rmsnorm_v15_live_contract;"));
             assert!(source.contains("configure_ordered_c1_wave_rmsnorm_v15"));
             assert!(source.contains("open_wave_rmsnorm_v15"));
-        } else if binary["name"].as_str() == Some("ferric-qwen3-wave-target-v17-live") {
+        } else if matches!(
+            binary["name"].as_str(),
+            Some(
+                "ferric-qwen3-wave-target-v17-live"
+                    | "ferric-qwen3-wave-target-v17-runtime-diagnostic"
+                    | "ferric-qwen3-c1-kv-copy-v19-live"
+            )
+        ) {
             assert!(source.contains("mod wave_target_v17_live_contract;"));
-            assert!(source.contains("configure_ordered_c1_wave_target_v17"));
-            assert!(source.contains("open_wave_rmsnorm_v15"));
+            assert!(source.contains("mod wave_target_v17_runner;"));
+            let runner = include_str!("../src/bin/wave_target_v17_runner.rs");
+            assert!(runner.contains("configure_ordered_c1_wave_target_v17"));
+            assert!(runner.contains("open_wave_rmsnorm_v15"));
             assert!(!source.contains("wave_rmsnorm_v15_live_contract"));
             assert!(!source.contains("configure_ordered_c1_wave_rmsnorm_v15"));
         } else {
@@ -511,11 +522,17 @@ fn wave_target_v17_keeps_legacy_binaries_closed_and_preloads_every_comparison_im
         let path =
             std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join(binary["path"].as_str().unwrap());
         let source = std::fs::read_to_string(path).unwrap();
-        let selected = binary["name"].as_str() == Some("ferric-qwen3-wave-target-v17-live");
+        let selected = matches!(
+            binary["name"].as_str(),
+            Some(
+                "ferric-qwen3-wave-target-v17-live"
+                    | "ferric-qwen3-wave-target-v17-runtime-diagnostic"
+                    | "ferric-qwen3-c1-kv-copy-v19-live"
+            )
+        );
         for marker in [
             "mod wave_target_v17_live_contract;",
-            "new_wide32_with_wave_target_v17",
-            "configure_ordered_c1_wave_target_v17",
+            "mod wave_target_v17_runner;",
         ] {
             assert_eq!(source.contains(marker), selected, "{marker}");
         }
@@ -527,9 +544,16 @@ fn wave_target_v17_keeps_legacy_binaries_closed_and_preloads_every_comparison_im
             );
         }
     }
-    assert_eq!(count, 1);
+    assert_eq!(count, 3);
     assert!(!ENGINE_MANIFEST.contains("ferric-qwen3-wave-target-v17-live"));
-    let source = include_str!("../src/bin/ferric-qwen3-wave-target-v17-live.rs");
+    let wrapper = include_str!("../src/bin/ferric-qwen3-wave-target-v17-live.rs");
+    assert!(wrapper.contains("wave_target_v17_live_contract::Options::parse"));
+    assert!(wrapper.contains("wave_target_v17_runner::run(&options)"));
+    assert!(!wrapper.contains("RuntimeDiagnostic"));
+    let diagnostic = include_str!("../src/bin/ferric-qwen3-wave-target-v17-runtime-diagnostic.rs");
+    assert!(diagnostic.contains("wave_target_v17_runtime_diagnostic_contract::Options::parse"));
+    assert!(diagnostic.contains("wave_target_v17_runner::Variant::RuntimeDiagnostic"));
+    let source = include_str!("../src/bin/wave_target_v17_runner.rs");
     let production = &source[..source.find("#[cfg(test)]").unwrap()];
     let ordered = [
         "EngineeringTpArtifactV1::open_query_hoist_v14",
@@ -563,8 +587,21 @@ fn wave_target_v17_keeps_legacy_binaries_closed_and_preloads_every_comparison_im
     ] {
         assert!(production.contains(marker), "{marker}");
     }
-    let run = &production[production.find("fn run(options:").unwrap()..];
-    assert!(run.find("options.validate()?").unwrap() < run.find("TimingFile::create(").unwrap());
+    let run = &production[production.find("fn run_variant(options:").unwrap()..];
+    assert!(
+        run.find("variant.validate(options)?").unwrap() < run.find("TimingFile::create(").unwrap()
+    );
+    for marker in [
+        "options.validate()?",
+        "runtime.profile = self == Self::RuntimeDiagnostic",
+        "\"wave-target-v17-runtime-diagnostic-v1\"",
+        "\"all live requests between snapshots, including any warmup; not a benchmark measurement\"",
+        "fn checked_snapshot(",
+        "runtime_snapshot_before",
+        "runtime_snapshot_after",
+    ] {
+        assert!(production.contains(marker), "{marker}");
+    }
     let contract = include_str!("../src/bin/wave_target_v17_live_contract.rs");
     for marker in [
         "layer.layer_projection != LayerProjection::C1Wave",
@@ -701,9 +738,20 @@ fn query_hoist_v14_route_keeps_defaults_and_all_legacy_entrypoints_closed() {
             assert!(!source.contains("--attention-mode"));
             assert!(!source.contains("--query-hoist-artifact"));
         }
+        assert!(!source.contains("open_query_hoist_v14"));
         assert_eq!(
-            source.contains("open_query_hoist_v14"),
-            binary["name"].as_str() == Some("ferric-qwen3-wave-target-v17-live")
+            source.contains("mod wave_target_v17_runner;"),
+            matches!(
+                binary["name"].as_str(),
+                Some(
+                    "ferric-qwen3-wave-target-v17-live"
+                        | "ferric-qwen3-wave-target-v17-runtime-diagnostic"
+                        | "ferric-qwen3-c1-kv-copy-v19-live"
+                )
+            )
+        );
+        assert!(
+            include_str!("../src/bin/wave_target_v17_runner.rs").contains("open_query_hoist_v14")
         );
         assert!(!source.contains("configure_ordered_c1_wave_query_hoist_v14"));
         assert!(!source.contains("--attention-kernel"));

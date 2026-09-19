@@ -3,6 +3,8 @@
 use super::{EngineeringTpArgumentV1, EngineeringTpDispatchV1, TpResult};
 
 #[cfg(feature = "tp-batch-engineering")]
+mod c1_kv_copy_v19;
+#[cfg(feature = "tp-batch-engineering")]
 mod draft;
 
 pub(super) fn bind_mode(
@@ -28,6 +30,10 @@ pub(super) fn bind_storage(
     large_kv: bool,
     command: EngineeringTpDispatchV1,
 ) -> TpResult<EngineeringTpDispatchV1> {
+    #[cfg(feature = "tp-batch-engineering")]
+    if command.kernel == crate::tp_artifact::ENGINEERING_TP_C1_KV_COPY_EXPORTS_V19[0] {
+        return c1_kv_copy_v19::bind(capacity, large_kv, command);
+    }
     if large_kv && capacity != 32 {
         return Err("large KV routing requires the separately admitted 32-row profile".into());
     }

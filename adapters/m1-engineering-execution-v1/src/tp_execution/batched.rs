@@ -20,6 +20,7 @@ use crate::tp_paged::{
 use ferric_build::AuthenticatedModelWeightLayout;
 use ferric_spec::{ModelConfig, Qwen3ModelRole};
 
+mod c1_kv_copy_v19;
 mod draft;
 pub use draft::EngineeringTpDraftBatchExecutionV10;
 
@@ -141,6 +142,8 @@ pub struct EngineeringTpBatchExecutionV2<R: EngineeringTpRankTransportV1> {
     admitted_query_hoist_v14: Option<crate::tp_artifact::QueryHoistBindingV14>,
     wave_rmsnorm_v15: Option<crate::tp_artifact::WaveRmsNormBindingV15>,
     admitted_wave_rmsnorm_v15: Option<crate::tp_artifact::WaveRmsNormBindingV15>,
+    c1_kv_copy_v19: Option<crate::tp_artifact::C1KvCopyBindingV19>,
+    admitted_c1_kv_copy_v19: Option<crate::tp_artifact::C1KvCopyBindingV19>,
 }
 
 impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
@@ -512,6 +515,8 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
             admitted_query_hoist_v14,
             wave_rmsnorm_v15: None,
             admitted_wave_rmsnorm_v15,
+            c1_kv_copy_v19: None,
+            admitted_c1_kv_copy_v19: None,
         })
     }
 
@@ -1466,6 +1471,7 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
             ATTENTION
         };
         let rows = u32::try_from(batch.rows().len()).map_err(|_| "batch row conversion")?;
+        let c1_copy_slot = self.prepare_c1_copy_v19(batch)?;
         let head_rows = u32::try_from(self.output_head_rows(batch.rows().len(), output_rows.len()))
             .map_err(|_| "output row conversion")?;
         let mut execution_order = Vec::with_capacity(batch.rows().len());
@@ -1642,6 +1648,9 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
             drop(rope_timing);
             let append_timing = self.inner.timing.span("attention_kv_append", None);
             self.inner.dispatch_each(|r| {
+                if let Some(slot) = c1_copy_slot {
+                    return slot.command(r, li);
+                }
                 dispatch(
                     APPEND,
                     1,

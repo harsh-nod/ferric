@@ -1,9 +1,119 @@
 # M1 Team Progress
 
-Updated: 2026-09-18 UTC. This is an implementation checkpoint, not a qualification
+Updated: 2026-09-19 UTC. This is an implementation checkpoint, not a qualification
 receipt. The 33 M1 roadmap gates remain open.
 
 ## Current Checkpoint
+
+Matched optimization V5 has completed its first sequential Ferric V17 combined
+and vLLM HTTP cohorts on mi350 physical GPU 0. Both raw receipts pass their run
+gates and are retained in `ferric-matched-optimization-v5/pair-retained-r1`.
+Independent paired replay and eight replay-checker CPU tests pass on mi300x-2.
+This is an initial finite cohort, not sustained throughput, a vendor win or
+serving qualification.
+
+| Engine | Mean TTFT (ms) | Mean TPOT (ms) | Output tokens/s |
+| --- | ---: | ---: | ---: |
+| Ferric V17 combined | 2555.823 | 114.619 | 7.479295 |
+| vLLM 0.28.0 | 19.909 | 4.232 | 229.358430 |
+
+Ferric has 27.08 times the mean TPOT and 128.37 times the mean TTFT in this
+cell. All thirty measured requests succeed per engine, but there is no win.
+Paired summary SHA256:
+`11c761a2e4408fc29a822a29f87ed10995c5799e407fc3233068f197836974a9`.
+
+Both cohorts use the same SSE client and Qwen3-8B TP1/C1, 128-input/128-output
+cell with context 8192, BF16 decoder and FP32 output-head profile, speculation
+and prefix caching off, ten excluded warmups, thirty measured requests and two
+untimed output diagnostics. The frozen Ferric products retain implementation
+`1fc45a52` and runtime `5ed3840a`; later compiler/runtime adoption does not relabel
+them or the existing kernel-image producers. No new TP8 or SGLang result follows.
+The fixed order is vLLM then Ferric, one server start each. TTFT is client send
+to first nonempty text; TPOT is first-to-last text time divided by 127, not true
+token ITL. Output rate includes gaps and drain across the measured window.
+Ferric checks token IDs for all 42 requests; vLLM checks token IDs in two
+untimed diagnostics and decoded text/usage for 40 timed requests. Cleanup and
+GPU idle postflight pass. Replay compares retained pre/post model and image
+hash receipts; it does not independently rehash the model. There is no stable
+tail, confidence interval or stock BF16-output-head comparison claim.
+
+| Team | V5 Progress | Next Dependency |
+| --- | --- | --- |
+| Measurement / integration | Matched HTTP pair and replay pass; V19 shows no gain; fourteen-request native control and timeline replay pass, with 84.535 ms TPOT at ordinals 12..14 | Compare new candidates after native correctness; no new HTTP or vendor gain claim |
+| Kernels | V19 passes CPU/ABI, isolated GPU and full-model parity; V20 passes eight CPU tests and strict Clippy; V21 passes twelve CPU tests and strict Clippy | Correct upstream trusted vendor fixture, then emit and validate new candidates on GPU |
+| Compiler / runtime | Frozen 5a503c04 V19 emission is separate from the HTTP baseline; newer c4c5cdd0 reviewed, KFD/runtime/AQL unchanged | Adopt new producer tools in a separate snapshot without relabelling historical images |
+| Runtime diagnostics | Instrumented V17 R2 accepted: all 256 output IDs match, 270 batches and 166,278 dispatches; execution and owned cleanup pass; 14 harness CPU tests pass, original fixture failure retained | Isolate operation-level costs; overlapping waits/currentness do not establish removable delay or an HTTP optimization gain |
+| Verification | Existing proof status unchanged; no new proof or M1 gate closure | Keep engineering observations separate from proof and protected-runtime qualification |
+| Site | V5 matched-result snapshot published at 72b76748; remote QA and deploy-only workflow pass; historical datasets unchanged | Publish later native results after evidence review, not a performance-win claim |
+
+Accepted runtime diagnostic R2 is retained at report SHA-256
+`01869cfa796365849ef78d950dfef9e22f217996266abcdb8ea08306575c2642`.
+It contains one warmup plus one diagnostic request, not a measured benchmark
+cohort. Worker deltas record 23.000106146 seconds in dispatch waits and
+1.906193930 seconds across operational/full currentness scopes, against
+24.896958489 seconds of command time. The scopes overlap and are not additive;
+wait includes GPU work, polling and scheduling rather than GPU time alone.
+The interval includes warmup and snapshot overhead, so it cannot yield
+measured-only TPOT or HTTP throughput. Both process leaders inherit CPUs 0-255,
+nice0/priority20; these observations are not a scheduling trace or a controlled
+comparison with the earlier one-core/nice19 profile. V19 native correctness
+and operation-level isolation take priority; the duplicate-fence candidate
+remains unactivated. No new competitive or proof claim follows.
+
+V19 adapter validation passes 376 library tests with seven ignored and one
+explicit exclusion: the existing twenty-row resident-roster test exceeds the
+unchanged 4 GiB RSS limit, even when isolated. Failed receipts remain retained;
+there is no full-suite pass claim. Actual-image admission, strict Clippy,
+legacy CLI regressions and source policy pass. The accepted native A/B report
+is `93817dcd9bb5d66ced2f03d639a89e152626097dc979783a82c6d76ea95600b3`.
+The short fixed-order A/B is noisy and not HTTP or a vendor comparison.
+V19 remains opt-in; its default is not promoted. The operation-level diagnostic
+passes 19 remote CPU tests and all twelve native cells with complete pre/post
+input, output and guard checks. At group size 16, worker wall time per packet is
+16.341 us for residual, 239.570 us for attention at context 192, 47.626 us for
+width-128 Q normalization and 167.854 us for down projection. Larger groups
+amortize overhead, but heavy operations remain distinct. These synthetic
+cache-hot timings are not GPU durations or model/HTTP performance claims.
+Accepted report: `421e0964c3dce1eb4c4aa59f764811106590387be05eea4c70acdca5df794907`.
+
+The same thirty measured HTTP requests retain controller mean TPOT
+114.622051 ms versus client 114.619229 ms, with a maximum absolute per-request
+difference of 0.004851 ms. The cross-run gap from short native results is not
+evidence of 30 ms/token of post-completion HTTP delivery delay. Controller
+TPOT within the HTTP run rises from 94.153257 ms for requests 2..9 to
+112.332222 ms for 10..11 and 114.622051 ms for measured 12..41. This is
+observed drift, not proof of a request-age bug; scheduling and synchronous
+stdout backpressure remain hypotheses. The old HTTP record lacks individual
+batch events, so active execution cannot be separated from inter-batch gaps.
+
+A distinct steady-native proposal preserves the frozen HTTP f562 controller,
+f68 worker and five images. It uses one pre-diagnostic, ten warmups and three
+measured requests at the same ordinals 12..14, retaining all output/batch events
+and bounded CPU/RSS observations without changing affinity or priority.
+Thirteen focused CPU tests pass, followed by all fourteen native requests.
+Measured mean TTFT is 2313.017469 ms and TPOT 84.534652 ms. Ordinals 4..14 stay
+near 84..85 ms, so the historical HTTP drift is not reproduced by request age
+alone. All 1,792 IDs, 1,890 batches and 1,163,946 dispatches match. Raw events,
+CPU/RSS observations and clean exit receipts are retained. Offline replay
+passes twelve CPU tests and actual evidence validation: 84.528997 ms/token
+inside decode batches, 0.005657 ms/token between them, stable measured RSS.
+Stage A has reached its unchanged 10 GiB minus 512 MiB reserve and receives no
+new builds. V20's first strict Clippy attempt was space-terminated; its retry
+in existing stage C passes. V21's twelve tests and strict Clippy pass there
+as well. No guard limits are relaxed. GPU emission is pending a four-file
+compiler fixture/closure repair on latest fetched main ca72d44b, not a vendor
+overlay. The repaired compiler backend and extractor build successfully;
+focused regression tests and strict Clippy remain pending. Two independent
+source reviews accept the split-attention native harness, whose nineteen CPU
+tests have not yet run. Historical images and the matched HTTP baseline retain
+their pins.
+
+All builds and CPU tests remain on mi300x-2; GPU validation remains on mi350.
+V5 site deployment `35411581137` succeeds, with no GitHub build. Private inference
+implementation, this tracker and raw evidence stay outside the Pages branch.
+All 33 M1 gates remain open.
+
+### Historical V4 Checkpoint
 
 The user-requested [performance swarm V4](M1_PERFORMANCE_SWARM_V4.md) is
 implemented privately at `1fc45a52`. Core-only runtime work is published on
