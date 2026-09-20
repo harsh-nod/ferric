@@ -83,7 +83,7 @@
         <div class="shell">
           <div class="section-heading">
             <div>
-              <div class="section-label">September 18 checkpoint</div>
+              <div class="section-label">September 20 engineering checkpoint</div>
               <h2 id="resident-progress-title">Authenticated resident serving</h2>
             </div>
             <p>Private implementation progress. Host validation and canonical gfx942 extraction remain distinct from native qualification.</p>
@@ -97,6 +97,39 @@
             cell. This is not a performance win or sustained-serving qualification.
             The earlier V17 pair remains separate history. All 33 M1 gates remain open.
           </p>
+          <h3 id="composition-progress-title">Native composition and runtime instrumentation</h3>
+          <p id="composition-progress">
+            Combining opt-in V22 packet packing with V25 split attention passes all
+            2,048 reference token IDs and decoded bytes across four native arms. In this
+            small fixed-order cohort, composed TPOT is 17.11% lower than its same-binary
+            baseline, while TTFT is 0.52% higher. This is separate from the latest HTTP
+            comparison above, not a new vLLM or SGLang win. Defaults remain unchanged.
+          </p>
+          <p id="timestamp-progress">
+            Core raw-timestamp instrumentation is published on fe2o3 main at 3d473f9ff.
+            Native validation passes 210 dependent operations and 528 guard checks.
+            These are raw ticks, not shader nanoseconds or isolated kernel durations;
+            no performance gain or proof qualification is claimed. Publication used
+            [skip ci], with no GitHub-hosted build or test. The composition measurement
+            still uses its historical f68 worker, not this newer runtime.
+          </p>
+          <p id="v27-progress">
+            V27 parallel full-page prefill copy has emitted an actual Wave64 image with
+            a 336-byte kernarg segment and 12 arguments, with no LDS, scratch, spills
+            or AGPR use reported. Isolated native validation passes 28 correctness
+            cases and retains 12 timing cells, with clean supervisor teardown. These
+            timings are diagnostics, not a full-model TTFT or TPOT result. V28 engine
+            integration has no accepted full-model result yet; no serving gain follows.
+          </p>
+          <details class="performance-identities">
+            <summary>V27 isolated validation evidence</summary>
+            <dl class="observation-facts">
+              <dt>V27 native report SHA-256</dt>
+              <dd>e501fb19d64e4c28168612eeaa6a5f06865da4399a78910af6070e3a116c58e8</dd>
+              <dt>V27 native archive SHA-256</dt>
+              <dd>32f5972eb1274bc0d3825e52e7c0cf65a09249f71f3aa36c44ce68c71223a32a</dd>
+            </dl>
+          </details>
           <p>
             V22 packet packing has now passed an eight-request native Qwen3-8B A/B,
             matching all 1,024 reference token IDs and decoded bytes. Mean TPOT falls
@@ -237,6 +270,92 @@
               <dd>91cc42648156fbfedd44a03b704ad9c80a125efe8809b0fc4cff5441b9d2fe92</dd>
               <dt>vLLM receipt SHA-256</dt>
               <dd>e428d623aaece123ef80d926b93e9be409bfbeb3bef9dcd1023503bf132b35c2</dd>
+            </dl>
+          </details>
+          <h3 id="native-composition-title">V22 + V25: four-arm native comparison</h3>
+          <p class="performance-scope">
+            Qwen3-8B on mi350, TP1/C1, 128 input and 128 output tokens, context 8192,
+            BF16 decoder / FP32 output head, speculation off and prefix caching off.
+            The fixed order is baseline, packing-only, split-only, then composed, with
+            one excluded warmup and three measured requests per arm. All arms use the
+            same controller binary, historical f68 worker and six historical images.
+            Packing and split-attention selectors are the only arm changes.
+          </p>
+          <div class="transition-table-wrap" tabindex="0" role="region" aria-label="V22 and V25 native composition cohort">
+            <table class="transition-table performance-table" id="native-composition-results">
+              <caption class="visually-hidden">Four native arms, three measured requests per arm, not HTTP</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Native arm</th>
+                  <th scope="col">Mean TTFT (ms)</th>
+                  <th scope="col">Mean TPOT (ms)</th>
+                  <th scope="col">Output tokens/s</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr data-composition-arm="baseline">
+                  <th scope="row">Baseline</th>
+                  <td>2299.826074</td>
+                  <td>84.737454</td>
+                  <td>9.799532</td>
+                </tr>
+                <tr data-composition-arm="packed-only">
+                  <th scope="row">V22 packing only</th>
+                  <td>2325.464341</td>
+                  <td>83.252562</td>
+                  <td>9.923006</td>
+                </tr>
+                <tr data-composition-arm="split-only">
+                  <th scope="row">V25 split only</th>
+                  <td>2302.796852</td>
+                  <td>73.957084</td>
+                  <td>10.944131</td>
+                </tr>
+                <tr data-composition-arm="composed">
+                  <th scope="row">V22 + V25 composed</th>
+                  <td>2311.805893</td>
+                  <td>70.241527</td>
+                  <td>11.395125</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p id="native-composition-deltas">
+            Relative to this run's baseline, composed mean TPOT is 17.11% lower,
+            mean TTFT is 0.52% higher and measured-window output rate is 16.28% higher.
+            These observed deltas are not an additive prediction from earlier separate
+            V22 and V25 runs. Three measured requests per arm in fixed order do not
+            establish confidence intervals, a stable gain or tail behavior.
+          </p>
+          <p id="native-composition-scope">
+            These are controller-ingress timings, not HTTP timings or GPU durations.
+            TTFT spans request arrival to first token completion; TPOT is the
+            first-to-last token completion span divided by 127. Each rate divides
+            384 output tokens by that arm's measured ingress window, including
+            inter-request gaps and excluding warmup. It is not sustained throughput.
+            The latest matched vLLM HTTP loss above remains unchanged; no vendor
+            comparison, SGLang measurement, TP8 result or serving qualification follows.
+          </p>
+          <p id="native-composition-correctness">
+            All 16 requests match all 2,048 reference token IDs and decoded bytes;
+            every arm completes and owned cleanup passes. Conditional split-attention
+            numerical assumptions, including the unverified OCML accuracy bound,
+            remain unchanged. Exact outputs for this input do not establish general
+            numerical or protected proof qualification. Defaults remain unchanged.
+            This is not a latest-runtime result; the newer timestamp instrumentation
+            is not part of this cohort. All 33 M1 gates remain open.
+          </p>
+          <details class="performance-identities">
+            <summary>Native composition report and retained evidence</summary>
+            <dl class="observation-facts">
+              <dt>Composition report SHA-256</dt>
+              <dd>86500d3357241488ac64692618c7a1bf05ab71062b79b7c75c2d5dfefdd77447</dd>
+              <dt>Composition retained archive SHA-256</dt>
+              <dd>bda385eba79356b7bb311eb83c44e0e064c7ec4a598bb6ab0dadff2a696aee43</dd>
+              <dt>Controller SHA-256</dt>
+              <dd>898b4ded4d93583c4421f3dbc87fb7beb8ce43e22e4ba18534e6425d91a8d900</dd>
+              <dt>Historical worker SHA-256</dt>
+              <dd>f68e42197f5f91854f7ec15c92b2fe1eee29a5620a6d313751e64f0af9598ebc</dd>
             </dl>
           </details>
           <h3 id="native-v22-title">V22 native packet-packing A/B</h3>
