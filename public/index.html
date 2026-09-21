@@ -97,6 +97,15 @@
             cell. This is not a performance win or sustained-serving qualification.
             The earlier V17 pair remains separate history. All 33 M1 gates remain open.
           </p>
+          <h3 id="v28-progress-title">V28 prefill copy: native screening</h3>
+          <p id="v28-progress">
+            The accepted V28 native A/B matches all 1,024 reference token IDs and decoded
+            bytes. Mean TTFT falls 65.0183%, from 2312.564 to 808.974 ms; TPOT is effectively
+            unchanged at 85.150 versus 85.154 ms. This small fixed-order comparison is not
+            HTTP or a vendor win. The V22 / vLLM HTTP gap above remains the latest matched
+            result. Prefill and decode gains have not been measured together; do not
+            multiply this reduction by the separate V22 + V25 result. Defaults stay unchanged.
+          </p>
           <h3 id="composition-progress-title">Native composition and runtime instrumentation</h3>
           <p id="composition-progress">
             Combining opt-in V22 packet packing with V25 split attention passes all
@@ -118,8 +127,8 @@
             a 336-byte kernarg segment and 12 arguments, with no LDS, scratch, spills
             or AGPR use reported. Isolated native validation passes 28 correctness
             cases and retains 12 timing cells, with clean supervisor teardown. These
-            timings are diagnostics, not a full-model TTFT or TPOT result. V28 engine
-            integration has no accepted full-model result yet; no serving gain follows.
+            timings are diagnostics, not a full-model TTFT or TPOT result. The separate
+            V28 full-model native screening is reported below; neither result is serving qualification.
           </p>
           <details class="performance-identities">
             <summary>V27 isolated validation evidence</summary>
@@ -270,6 +279,84 @@
               <dd>91cc42648156fbfedd44a03b704ad9c80a125efe8809b0fc4cff5441b9d2fe92</dd>
               <dt>vLLM receipt SHA-256</dt>
               <dd>e428d623aaece123ef80d926b93e9be409bfbeb3bef9dcd1023503bf132b35c2</dd>
+            </dl>
+          </details>
+          <h3 id="native-v28-title">V28 prefill copy: lower native TTFT, unchanged TPOT</h3>
+          <p class="performance-scope">
+            Qwen3-8B on mi350 physical GPU 0, TP1/C1, 128 input and 128 output tokens,
+            context 8192, BF16 decoder / FP32 head, speculation and prefix caching off.
+            Each arm has one excluded warmup followed by three measured requests, in fixed
+            baseline then parallel-prefill16-v27 order. Both use the same V28 controller,
+            historical f68 worker, five historical images and the same V27 image.
+            Only the prefill-copy selector changes; V22 packing and V25 split attention
+            are absent from both arms.
+          </p>
+          <div class="transition-table-wrap" tabindex="0" role="region" aria-label="V28 native prefill-copy screening">
+            <table class="transition-table performance-table" id="native-v28-results">
+              <caption class="visually-hidden">V28 native screening, three measured requests per arm, not HTTP</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Native prefill arm</th>
+                  <th scope="col">Mean TTFT (ms)</th>
+                  <th scope="col">Mean TPOT (ms)</th>
+                  <th scope="col">Output tokens/s</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr data-v28-arm="baseline">
+                  <th scope="row">Baseline</th>
+                  <td>2312.563649</td>
+                  <td>85.149690</td>
+                  <td>9.750891</td>
+                </tr>
+                <tr data-v28-arm="parallel-prefill16-v27">
+                  <th scope="row">V28 parallel prefill copy</th>
+                  <td>808.974061</td>
+                  <td>85.154418</td>
+                  <td>11.011655</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p id="native-v28-deltas">
+            Within this native cohort, mean TTFT is 65.0183% lower and TPOT is effectively
+            unchanged. Three measured requests per arm in a fixed order provide screening
+            evidence only: no confidence interval, stable gain or tail claim. The independent
+            decode-composition result below cannot be multiplied into this prefill result;
+            the combined candidate has no accepted comparison yet.
+          </p>
+          <p id="native-v28-scope">
+            These are controller-ingress measurements, neither HTTP timings nor GPU durations.
+            TTFT runs from request arrival to first token completion; TPOT divides the
+            first-to-last token completion span by 127. Each output rate is 384 tokens over
+            the measured ingress window, including gaps and excluding warmup, not sustained
+            throughput. The unchanged matched V22 / vLLM HTTP result remains a loss:
+            19.66 times the TPOT and 125.02 times the TTFT. No new vLLM or SGLang comparison,
+            TP8, speculation, latest-runtime or serving result follows.
+          </p>
+          <p id="native-v28-correctness">
+            All eight requests match all 1,024 reference token IDs and decoded bytes.
+            Both arms preserve 135 batches and 83,139 packets per request; V27 substitutes
+            288 prefill append kernels without reducing the packet count. Owned cleanup
+            passes: legacy inner arm teardown used owned TERM/KILL signals, while the outer
+            supervisor exited cleanly without signals. The earlier staging-path failure
+            remains excluded. Exact output parity for this input is not general numerical
+            or protected proof qualification. The 5a/d10 SDK name-string bridge provides
+            engineering custody, not independent source-to-binary authentication.
+            Defaults stay unchanged and all 33 M1 gates
+            remain open.
+          </p>
+          <details class="performance-identities">
+            <summary>V28 native screening report and retained evidence</summary>
+            <dl class="observation-facts">
+              <dt>V28 native report SHA-256</dt>
+              <dd>fd58ba7aa82f7bc7a18868e9837bf0de2929910ef519d74b8302a0b2d68ead17</dd>
+              <dt>V28 retained archive SHA-256</dt>
+              <dd>039561bd6c792e3e57c7685a65c27e787905aa7f8579850254852f7c17e6fee5</dd>
+              <dt>V28 controller SHA-256</dt>
+              <dd>3ea106b88e1e77c48ff9d32aa988ecd0554d9b6d5bc1d7eb62b5e4caeff0914c</dd>
+              <dt>Historical V28 worker SHA-256</dt>
+              <dd>f68e42197f5f91854f7ec15c92b2fe1eee29a5620a6d313751e64f0af9598ebc</dd>
             </dl>
           </details>
           <h3 id="native-composition-title">V22 + V25: four-arm native comparison</h3>
