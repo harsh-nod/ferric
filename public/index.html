@@ -83,7 +83,7 @@
         <div class="shell">
           <div class="section-heading">
             <div>
-              <div class="section-label">September 20 engineering checkpoint</div>
+              <div class="section-label">September 21 engineering checkpoint</div>
               <h2 id="resident-progress-title">Authenticated resident serving</h2>
             </div>
             <p>Private implementation progress. Host validation and canonical gfx942 extraction remain distinct from native qualification.</p>
@@ -96,6 +96,14 @@
             Pair3 Ferric was rejected after a foreign GPU process appeared; its timing
             is not admitted. Pair3 vLLM was never started. No replacement or splicing repairs this series. These are
             two finite TP1/C1 comparisons, not a vendor win or sustained-serving result.
+          </p>
+          <h3 id="partial-gemv-r4-progress-title">Partial GEMV R4: no demonstrated gain</h3>
+          <p id="partial-gemv-r4-progress">
+            Four native AB/BA starts match all 2,048 output IDs and decoded bytes.
+            Candidate/baseline TPOT ratios are 1.031366 in AB and 0.999751 in BA;
+            TTFT is higher in both orders. Each start excludes one warmup and measures
+            three requests. No gain is demonstrated, so the candidate is not promoted
+            to HTTP or made the default. The matched vLLM scoreboard remains unchanged.
           </p>
           <h3>Earlier V22 HTTP pair replayed</h3>
           <p>
@@ -412,6 +420,76 @@
               <dd>91cc42648156fbfedd44a03b704ad9c80a125efe8809b0fc4cff5441b9d2fe92</dd>
               <dt>vLLM receipt SHA-256</dt>
               <dd>e428d623aaece123ef80d926b93e9be409bfbeb3bef9dcd1023503bf132b35c2</dd>
+            </dl>
+          </details>
+          <h3 id="native-partial-gemv-r4-title">Partial GEMV R4: native AB/BA screening</h3>
+          <p class="performance-scope" id="native-partial-gemv-r4-scope">
+            Qwen3-8B on mi350, TP1/C1. AB runs baseline then candidate; BA reverses
+            that order. Each start excludes one warmup and measures three requests.
+            The candidate replaces only one-row attention-output/down partial GEMV;
+            both modes admit the same eight images and preserve grouping and reduction
+            order. These are native ingress measurements, not HTTP or vendor results.
+          </p>
+          <div class="transition-table-wrap" tabindex="0" role="region" aria-label="Partial GEMV R4 native AB/BA screening">
+            <table class="transition-table performance-table" id="native-partial-gemv-r4-results">
+              <caption class="visually-hidden">Partial GEMV R4, four native starts with three measured requests each, not HTTP</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Native start</th>
+                  <th scope="col">Mean TTFT (ms)</th>
+                  <th scope="col">Mean TPOT (ms)</th>
+                  <th scope="col">Output tokens/s</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr data-partial-gemv-r4-arm="baseline-ab">
+                  <th scope="row">Baseline AB</th>
+                  <td>877.878138</td>
+                  <td>79.613330</td>
+                  <td>11.647774</td>
+                </tr>
+                <tr data-partial-gemv-r4-arm="candidate-ab">
+                  <th scope="row">Candidate AB</th>
+                  <td>945.068094</td>
+                  <td>82.110499</td>
+                  <td>11.253843</td>
+                </tr>
+                <tr data-partial-gemv-r4-arm="candidate-ba">
+                  <th scope="row">Candidate BA</th>
+                  <td>1040.976727</td>
+                  <td>91.870497</td>
+                  <td>10.071339</td>
+                </tr>
+                <tr data-partial-gemv-r4-arm="baseline-ba">
+                  <th scope="row">Baseline BA</th>
+                  <td>885.450433</td>
+                  <td>91.893385</td>
+                  <td>10.194000</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p id="native-partial-gemv-r4-outcome">
+            Candidate/baseline TPOT ratios are 1.031366 in AB and 0.999751 in BA;
+            TTFT ratios are 1.076537 and 1.175647. No gain is demonstrated.
+            Orders are not pooled or cherry-picked; these finite-window output rates
+            are not sustained throughput. The candidate is not promoted to HTTP or
+            made the default. The earlier matched HTTP pairs still show roughly
+            16 times vLLM's TPOT. No SGLang, TP8 or speculative-decoding gain is established.
+          </p>
+          <p id="native-partial-gemv-r4-correctness">
+            All 16 requests match 2,048 reference output IDs and decoded bytes.
+            The supervisor completes cleanly without signals, with no remaining KFD
+            owners. Exact output parity is not source-to-binary authentication,
+            proof or serving qualification. All 33 M1 gates remain open.
+          </p>
+          <details class="performance-identities">
+            <summary>Partial GEMV R4 native report and supervisor</summary>
+            <dl class="observation-facts">
+              <dt>Partial GEMV R4 report SHA-256</dt>
+              <dd>2d5c5846318a93fd888cf35e27cd87f9d53914976bb8371bc1a4e3f92a4d05a4</dd>
+              <dt>Partial GEMV R4 supervisor SHA-256</dt>
+              <dd>ff36b8b0e62cd722cfc3c8b2acb091bee8283952d7e859bf082af8af92bf2ae0</dd>
             </dl>
           </details>
           <h3 id="native-composed-v28-title">Composition R6: prefill and decode together</h3>
