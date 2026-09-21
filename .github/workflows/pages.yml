@@ -70,10 +70,10 @@ jobs:
             test "$(stat -c %h "public/$file")" -eq 1
             total=$((total + $(stat -c %s "public/$file")))
           done
-          test "$total" -eq 821200
+          test "$total" -eq 834956
           test "$total" -le 2097152
 
-          # V28 native prefill progress static artifact archive SHA256: e44e69da1e9d040ed1f5f8a01941fd4433368f60485c351974b7a9ab877938be.
+          # HTTP R3 matched pairs and native composition static artifact archive SHA256: f43d28a1d2f2f7b62aa7254b832157e706411e52e445e9136905ae78c14b4aea.
           # Existing deploy-only protections retained; remote QA approval is recorded externally.
           sha256sum --check --strict <<'SHA256'
           a9c145b4643a7271896437012b293131c7d14ab2e5d4694726e555f5ce288275  public/app.js
@@ -81,7 +81,7 @@ jobs:
           5ddc6e2efcaa8eea3fd8f5607cae74813da636f180a34a5ba72cd879e1b6b809  public/assets/mark.svg
           05ad1f50575547c0b0c8244b2912e1d7518258772527f7ff236fdb8d2e42102f  public/data/performance.js
           268900528690b9de3acb80c4863dd86ac484f4184ab1970c25ecf5293a8ca4f8  public/data/project.js
-          ed378bad4404862989e3e8a5ad577eecd0933c41afe701a100e7fe38edd00311  public/index.html
+          d383434a320a6e9faca075b1a4ee3771fa010aff91289a724b0172c30ae547f3  public/index.html
           96dad9e9ae20db7a97d39b811ef17579955160d7238243b75b609c951675e9aa  public/styles.css
           SHA256
 

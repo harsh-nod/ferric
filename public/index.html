@@ -88,23 +88,43 @@
             </div>
             <p>Private implementation progress. Host validation and canonical gfx942 extraction remain distinct from native qualification.</p>
           </div>
-          <h3>Matched optimization V5: V22 HTTP pair replayed</h3>
+          <h3 id="http-r3-progress-title">Composed HTTP: two accepted pairs, incomplete series</h3>
+          <p id="http-r3-progress">
+            HTTP R3 Pair1 and Pair2 pass individual replay, but the declared three-pair
+            series is rejected and incomplete. Ferric mean TPOT is 69.587 and 69.186 ms
+            versus vLLM's 4.367 and 4.350 ms: 15.93 and 15.91 times vLLM, respectively.
+            Pair3 Ferric was rejected after a foreign GPU process appeared; its timing
+            is not admitted. Pair3 vLLM was never started. No replacement or splicing repairs this series. These are
+            two finite TP1/C1 comparisons, not a vendor win or sustained-serving result.
+          </p>
+          <h3>Earlier V22 HTTP pair replayed</h3>
           <p>
-            The latest sequential Ferric V22 packed and vLLM cohorts have completed on mi350.
+            The earlier sequential Ferric V22 packed and vLLM cohorts completed on mi350.
             Raw receipts and paired replay pass, including correctness, sampled process
             ownership and clean shutdown checks. Mean HTTP TPOT is 83.598 ms for Ferric
             versus 4.252 ms for vLLM: Ferric remains 19.66 times slower in this finite TP1/C1
             cell. This is not a performance win or sustained-serving qualification.
             The earlier V17 pair remains separate history. All 33 M1 gates remain open.
           </p>
+          <h3 id="composed-v28-progress-title">Prefill and decode: accepted native composition</h3>
+          <p id="composed-v28-progress">
+            Composition R6 matches 2,048 output token IDs and decoded bytes across four
+            native arms. Combined mean TTFT is 64.7884% lower and TPOT is 8.5933% lower
+            than its same-run baseline; the finite-window output rate is 22.1737% higher.
+            In this cohort, combined TPOT was also 12.0046% higher than decode-only;
+            repeated runs are needed to determine whether that difference persists.
+            Three measured requests per arm, in fixed order,
+            are screening evidence, not HTTP, sustained throughput or a vendor win.
+            The newer HTTP R3 pairs remain losses; their three-pair series is incomplete.
+          </p>
           <h3 id="v28-progress-title">V28 prefill copy: native screening</h3>
           <p id="v28-progress">
             The accepted V28 native A/B matches all 1,024 reference token IDs and decoded
             bytes. Mean TTFT falls 65.0183%, from 2312.564 to 808.974 ms; TPOT is effectively
             unchanged at 85.150 versus 85.154 ms. This small fixed-order comparison is not
-            HTTP or a vendor win. The V22 / vLLM HTTP gap above remains the latest matched
-            result. Prefill and decode gains have not been measured together; do not
-            multiply this reduction by the separate V22 + V25 result. Defaults stay unchanged.
+            HTTP or a vendor win. The newer HTTP R3 pairs above are still losses.
+            Composition R6 is measured separately below; do not multiply this reduction
+            by the separate V22 + V25 result. Defaults stay unchanged.
           </p>
           <h3 id="composition-progress-title">Native composition and runtime instrumentation</h3>
           <p id="composition-progress">
@@ -119,8 +139,16 @@
             Native validation passes 210 dependent operations and 528 guard checks.
             These are raw ticks, not shader nanoseconds or isolated kernel durations;
             no performance gain or proof qualification is claimed. Publication used
-            [skip ci], with no GitHub-hosted build or test. The composition measurement
+            [skip ci], with no GitHub-hosted build or test. The earlier V22 + V25 measurement
             still uses its historical f68 worker, not this newer runtime.
+          </p>
+          <p id="model-r8-progress">
+            Model R8 also validates four cold ordinary/diagnostic requests against all
+            512 output IDs and decoded bytes, retaining 166,278 raw timestamp records
+            across 20,478 groups. Both diagnostic modes use the same rebuilt 5e2 worker
+            as their ordinary controls. Raw tick intervals are not nanoseconds, additive
+            shader costs or a performance result; exact parity is not proof qualification.
+            Composition R6 itself is uninstrumented.
           </p>
           <p id="v27-progress">
             V27 parallel full-page prefill copy has emitted an actual Wave64 image with
@@ -203,18 +231,123 @@
               <div class="section-label">Measured engineering progress</div>
               <h2 id="performance-title">Qwen3-8B measurements</h2>
             </div>
-            <p>The latest context8192 HTTP pair, separate native A/B checks, and preserved historical observations. Not production-serving qualification.</p>
+            <p>Two accepted context8192 HTTP pairs within an incomplete series, separate native A/B checks, and preserved history. Not production-serving qualification.</p>
           </div>
-          <h3 id="matched-v22-http-title">Latest V22 / vLLM HTTP pair: no win</h3>
+          <h3 id="matched-http-r3-title">Composed HTTP R3: two pairs accepted, series rejected</h3>
+          <p class="performance-scope">
+            Qwen3-8B on mi350 physical GPU 0, TP1/C1, 128 input and 128 output tokens,
+            context 8192, BF16 decoder and FP32 output head. Each engine uses the same
+            SSE client, greedy fixed-length output, speculation off and prefix caching off.
+            Each start excludes 10 warmups, measures 30 requests and checks two untimed
+            output diagnostics. Pair1 runs Ferric then vLLM; Pair2 runs vLLM then Ferric.
+          </p>
+          <div class="transition-table-wrap" tabindex="0" role="region" aria-label="HTTP R3 accepted individual pairs">
+            <table class="transition-table performance-table" id="matched-http-r3-results">
+              <caption class="visually-hidden">HTTP R3 accepted Pair1 and Pair2, not a completed three-pair series</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Pair and engine</th>
+                  <th scope="col">Mean TTFT (ms)</th>
+                  <th scope="col">Mean TPOT (ms)</th>
+                  <th scope="col">Output tokens/s</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr data-http-r3-arm="pair1-ferric">
+                  <th scope="row">Pair1: Ferric composed</th>
+                  <td>810.928</td>
+                  <td>69.587</td>
+                  <td>13.265065</td>
+                </tr>
+                <tr data-http-r3-arm="pair1-vllm">
+                  <th scope="row">Pair1: vLLM 0.28.0</th>
+                  <td>20.148</td>
+                  <td>4.367</td>
+                  <td>222.524242</td>
+                </tr>
+                <tr data-http-r3-arm="pair2-ferric">
+                  <th scope="row">Pair2: Ferric composed</th>
+                  <td>811.404</td>
+                  <td>69.186</td>
+                  <td>13.335104</td>
+                </tr>
+                <tr data-http-r3-arm="pair2-vllm">
+                  <th scope="row">Pair2: vLLM 0.28.0</th>
+                  <td>18.835</td>
+                  <td>4.350</td>
+                  <td>223.905213</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p id="matched-http-r3-outcome">
+            Ferric mean TPOT is 15.93 times vLLM in Pair1 and 15.91 times in Pair2;
+            mean TTFT is 40.25 and 43.08 times vLLM, respectively. All 30 measured
+            requests succeed for each engine in each accepted pair. These are separate
+            per-pair observations, not a pooled result or confidence estimate.
+            Ferric does not beat vLLM in either accepted pair.
+          </p>
+          <p id="matched-http-r3-series">
+            The unchanged manifest declares three pairs. Pair3 Ferric was rejected by
+            sampled KFD ownership checks after a foreign process appeared. Its timing
+            is not admitted. An owned command required forced cleanup; cleanup completed.
+            Pair3 vLLM was never started. No accepted Pair3 summary exists.
+            The aggregator returned rejected-series, with acceptance,
+            competitiveness and framework-win flags false. The series remains incomplete:
+            no replacement, splicing, aggregate spread or completed-series claim is made.
+          </p>
+          <p id="matched-http-r3-semantics">
+            TTFT is client send to first nonempty text. TPOT is the first-to-last text
+            span divided by 127, not true token interarrival latency. Output rate is
+            3,840 tokens divided by each engine's complete measured span, including
+            request gaps and drain but excluding warmups and diagnostics. These finite
+            rates are not sustained throughput. No confidence interval, stable-tail,
+            equal-p99-SLO or release qualification follows from these pairs.
+          </p>
+          <p id="matched-http-r3-correctness">
+            For each accepted start, Ferric checks all 42 requests against full token IDs
+            and decoded bytes. vLLM checks exact token IDs only in two untimed diagnostics;
+            its 40 timed requests match decoded text and usage. Accepted pairs pass owned
+            cleanup and GPU-idle postflight. Process ownership is sampled every 500 ms,
+            not continuously proven; the rejected third attempt remains preserved.
+          </p>
+          <p id="matched-http-r3-identity">
+            Ferric uses the Composition R6 controller, rebuilt 5e2 worker and seven fixed
+            images with packed16-v22, split8-v21 and parallel-prefill16-v27 enabled.
+            The worker is uninstrumented in these HTTP runs. Replay compares retained
+            model/image hash receipts, not an independent model-file rehash or
+            source-to-binary authentication. This is not a stock BF16-head comparison.
+            Historical V22 and native cohorts stay separate; their differences do not
+            isolate individual optimization gains. No SGLang, TP8, speculative-decoding,
+            general framework ranking or serving qualification is established.
+          </p>
+          <details class="performance-identities">
+            <summary>HTTP R3 accepted pairs and rejected-series identities</summary>
+            <dl class="observation-facts">
+              <dt>HTTP R3 Pair1 summary SHA-256</dt>
+              <dd>d3fa11cce07e0181e155498b72191a47e88a3240abf8cd840dbd5c075c5e788e</dd>
+              <dt>HTTP R3 Pair2 summary SHA-256</dt>
+              <dd>e74214f1923eac3bbda26ae13acdaae0d0a2d1011ec3aa3cfce52338d5da4c97</dd>
+              <dt>HTTP R3 rejected series SHA-256</dt>
+              <dd>962bce221f76fee67bb40a71bd9e0302095eba742f60885ef0b6cd1fc2e03159</dd>
+              <dt>HTTP R3 Pair3 Ferric rejection SHA-256</dt>
+              <dd>c8a69e6f21cc9fe08d161617ef4a100630bc32674270d6634bb49bf60e4bbe11</dd>
+              <dt>HTTP R3 original series manifest SHA-256</dt>
+              <dd>1753e5cb0fd40b7f4b6dcedef54d8dfa506915de26e317515e93c3354a5d17ee</dd>
+              <dt>HTTP R3 shared plan SHA-256</dt>
+              <dd>981c0991d88692b36d53df47866b0292c16f843d281ffbbe74fdfc7c701b5e04</dd>
+            </dl>
+          </details>
+          <h3 id="matched-v22-http-title">Earlier V22 / vLLM HTTP pair: no win</h3>
           <p class="performance-scope">
             Qwen3-8B on mi350 physical GPU 0, TP1, concurrency 1, 128 input and 128 output
             tokens, context 8192, BF16 decoder and FP32 output head. Both engines use the
             same SSE client, greedy fixed-length output, speculation off and prefix caching off.
             Each has 10 excluded warmups, 30 measured requests and two untimed output diagnostics.
           </p>
-          <div class="transition-table-wrap" tabindex="0" role="region" aria-label="Latest V22 matched HTTP cohort">
+          <div class="transition-table-wrap" tabindex="0" role="region" aria-label="Earlier V22 matched HTTP cohort">
             <table class="transition-table performance-table" id="matched-v22-http-results">
-              <caption class="visually-hidden">Latest V22 matched HTTP cohort, 30 measured requests per engine</caption>
+              <caption class="visually-hidden">Earlier V22 matched HTTP cohort, 30 measured requests per engine</caption>
               <thead>
                 <tr>
                   <th scope="col">Engine</th>
@@ -269,7 +402,7 @@
             general framework ranking or serving qualification is established.
           </p>
           <details class="performance-identities">
-            <summary>Latest V22 HTTP replay and receipt identities</summary>
+            <summary>Earlier V22 HTTP replay and receipt identities</summary>
             <dl class="observation-facts">
               <dt>Paired replay summary SHA-256</dt>
               <dd>0283449b779015bffe0ba72954069ffcca7b809ae6aadf91aa24d6b3fb9d1c07</dd>
@@ -279,6 +412,97 @@
               <dd>91cc42648156fbfedd44a03b704ad9c80a125efe8809b0fc4cff5441b9d2fe92</dd>
               <dt>vLLM receipt SHA-256</dt>
               <dd>e428d623aaece123ef80d926b93e9be409bfbeb3bef9dcd1023503bf132b35c2</dd>
+            </dl>
+          </details>
+          <h3 id="native-composed-v28-title">Composition R6: prefill and decode together</h3>
+          <p class="performance-scope">
+            Qwen3-8B on mi350 physical GPU 0, TP1/C1, 128 input and 128 output tokens,
+            context 8192, BF16 decoder / FP32 head, speculation and prefix caching off.
+            The four arms run in this order: baseline, decode-only, prefill-only, combined.
+            Each excludes one warmup and measures three requests. All use one controller
+            binary, the rebuilt 5e2 worker and seven fixed images; instrumentation is off.
+            Decode-only enables V22 packing and V25 split attention. Prefill-only enables
+            V27 page copy through V28; combined enables both sets of selectors.
+          </p>
+          <div class="transition-table-wrap" tabindex="0" role="region" aria-label="Composition R6 native prefill and decode screening">
+            <table class="transition-table performance-table" id="native-composed-v28-results">
+              <caption class="visually-hidden">Composition R6, four native arms with three measured requests each, not HTTP</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Native arm</th>
+                  <th scope="col">Mean TTFT (ms)</th>
+                  <th scope="col">Mean TPOT (ms)</th>
+                  <th scope="col">Output tokens/s</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr data-composed-v28-arm="baseline">
+                  <th scope="row">Baseline</th>
+                  <td>2430.855653</td>
+                  <td>93.406125</td>
+                  <td>8.954908643</td>
+                </tr>
+                <tr data-composed-v28-arm="decode-only">
+                  <th scope="row">Decode only</th>
+                  <td>2365.162141</td>
+                  <td>76.228505</td>
+                  <td>10.625352362</td>
+                </tr>
+                <tr data-composed-v28-arm="prefill-only">
+                  <th scope="row">Prefill only</th>
+                  <td>1021.103724</td>
+                  <td>93.120622</td>
+                  <td>9.962451944</td>
+                </tr>
+                <tr data-composed-v28-arm="composed">
+                  <th scope="row">Prefill + decode</th>
+                  <td>855.944209</td>
+                  <td>85.379419</td>
+                  <td>10.940545624</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p id="native-composed-v28-deltas">
+            Against this run's baseline, combined TTFT is 64.7884% lower, TPOT is
+            8.5933% lower and finite-window output rate is 22.1737% higher. However,
+            in this cohort combined TPOT was 12.0046% higher than decode-only:
+            85.379419 versus 76.228505 ms. Repeated runs are needed to determine
+            whether that difference persists; this cohort does not establish a stable penalty.
+            These are measured same-run differences, not multiplied historical gains.
+            Three measured requests per arm in fixed order do not establish a confidence
+            interval, stable improvement or tail behavior.
+          </p>
+          <p id="native-composed-v28-scope">
+            Native TTFT measures controller arrival to first token completion; TPOT is
+            the first-to-last completion span divided by 127. Each rate uses 384 output
+            tokens over that arm's full measured ingress window, including gaps and
+            excluding warmup. These are not HTTP timings, GPU durations or sustained
+            throughput. The HTTP R3 pairs above remain losses; this native result adds no
+            vendor, SGLang, TP8, speculative-decoding or serving qualification.
+          </p>
+          <p id="native-composed-v28-correctness">
+            All 16 requests match 2,048 reference output IDs and decoded bytes. Each arm
+            retains 135 batches per request; baseline and prefill-only use 83,139 packets,
+            while decode-only and combined use 87,711. Reported group counts are expected
+            source schedules, not measured counters. Owned inner teardown used TERM/KILL;
+            the outer supervisor completed cleanly without signals. V21's OCML accuracy
+            premise remains unverified. SDK name-string bridges and exact output parity
+            are engineering evidence, not independent source-to-binary authentication or
+            protected proof. Historical images and prerequisite runs retain their original
+            identities. Defaults are unchanged; all 33 M1 gates remain open.
+          </p>
+          <details class="performance-identities">
+            <summary>Composition R6 native report and retained evidence</summary>
+            <dl class="observation-facts">
+              <dt>Composition R6 report SHA-256</dt>
+              <dd>dbf5e34ea6466d84211c85b778fe668d046c5de931491c32b1f4a8118498bcd6</dd>
+              <dt>Composition R6 archive SHA-256</dt>
+              <dd>eb1f97196a736c2b9512a12c966a8ddb25d5aa3f09153ead95489dcf70ef564c</dd>
+              <dt>Composition R6 controller SHA-256</dt>
+              <dd>1ffd68bc905ed6a1cc1bfb7dfad88f64b519ed1aede5aa2c079768982960afe6</dd>
+              <dt>Composition R6 worker SHA-256</dt>
+              <dd>dd6bd3b4a910478e85d2f3530be25819153fad1f08bf33bb14dd534514a601a2</dd>
             </dl>
           </details>
           <h3 id="native-v28-title">V28 prefill copy: lower native TTFT, unchanged TPOT</h3>
@@ -323,7 +547,7 @@
             unchanged. Three measured requests per arm in a fixed order provide screening
             evidence only: no confidence interval, stable gain or tail claim. The independent
             decode-composition result below cannot be multiplied into this prefill result;
-            the combined candidate has no accepted comparison yet.
+            the combined candidate is measured separately in Composition R6 above.
           </p>
           <p id="native-v28-scope">
             These are controller-ingress measurements, neither HTTP timings nor GPU durations.
@@ -420,7 +644,7 @@
             first-to-last token completion span divided by 127. Each rate divides
             384 output tokens by that arm's measured ingress window, including
             inter-request gaps and excluding warmup. It is not sustained throughput.
-            The latest matched vLLM HTTP loss above remains unchanged; no vendor
+            The HTTP R3 pairs above remain losses; no vendor
             comparison, SGLang measurement, TP8 result or serving qualification follows.
           </p>
           <p id="native-composition-correctness">
