@@ -70,10 +70,10 @@ jobs:
             test "$(stat -c %h "public/$file")" -eq 1
             total=$((total + $(stat -c %s "public/$file")))
           done
-          test "$total" -eq 839321
+          test "$total" -eq 844693
           test "$total" -le 2097152
 
-          # Partial GEMV R4 native outcome static artifact archive SHA256: ceabbb9db8640697a278a99eb2d1038ad68a46b305486f1a20859db6f965f270.
+          # Ordered64 native screening static artifact archive SHA256: 4a574377bb712c37137ddc14bcbc6af4541887941b50a0f5686c59363df9bd13.
           # Existing deploy-only protections retained; remote QA approval is recorded externally.
           sha256sum --check --strict <<'SHA256'
           a9c145b4643a7271896437012b293131c7d14ab2e5d4694726e555f5ce288275  public/app.js
@@ -81,7 +81,7 @@ jobs:
           5ddc6e2efcaa8eea3fd8f5607cae74813da636f180a34a5ba72cd879e1b6b809  public/assets/mark.svg
           05ad1f50575547c0b0c8244b2912e1d7518258772527f7ff236fdb8d2e42102f  public/data/performance.js
           268900528690b9de3acb80c4863dd86ac484f4184ab1970c25ecf5293a8ca4f8  public/data/project.js
-          47af5ec22d54944ce5f9f503bbd128d160315ad877b2d72b613470a0afea1876  public/index.html
+          b00f6db431cb3c9be32859fb972646a6ff641e74f76d3b73ad04cdfee0287530  public/index.html
           96dad9e9ae20db7a97d39b811ef17579955160d7238243b75b609c951675e9aa  public/styles.css
           SHA256
 

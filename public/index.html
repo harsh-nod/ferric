@@ -97,6 +97,14 @@
             is not admitted. Pair3 vLLM was never started. No replacement or splicing repairs this series. These are
             two finite TP1/C1 comparisons, not a vendor win or sustained-serving result.
           </p>
+          <h3 id="ordered64-native-progress-title">Ordered64: accepted native AB/BA screen</h3>
+          <p id="ordered64-native-progress">
+            All 2,048 output IDs and decoded bytes match across four native starts.
+            TPOT is 25.4061% lower in AB and 12.5733% lower in BA; the two orders
+            remain separate. Each start excludes one warmup and measures three requests.
+            This is native screening, not a new HTTP result or vLLM win.
+            Defaults and the matched HTTP scoreboard remain unchanged.
+          </p>
           <h3 id="partial-gemv-r4-progress-title">Partial GEMV R4: no demonstrated gain</h3>
           <p id="partial-gemv-r4-progress">
             Four native AB/BA starts match all 2,048 output IDs and decoded bytes.
@@ -184,7 +192,7 @@
             an initial native observation, not a stable gain or a vendor win.
           </p>
           <p id="ordered64-progress">
-            The separate ordered64 runtime path passes 251 synthetic dependent packets
+            Historical synthetic-only check. The separate ordered64 runtime path passes 251 synthetic dependent packets
             and 594 full-buffer/guard checks, including idle queue rollover, with successful
             owned cleanup. This is correctness-only: no model inference, timing result
             or model-performance gain is established.
@@ -490,6 +498,91 @@
               <dd>2d5c5846318a93fd888cf35e27cd87f9d53914976bb8371bc1a4e3f92a4d05a4</dd>
               <dt>Partial GEMV R4 supervisor SHA-256</dt>
               <dd>ff36b8b0e62cd722cfc3c8b2acb091bee8283952d7e859bf082af8af92bf2ae0</dd>
+            </dl>
+          </details>
+          <h3 id="native-ordered64-four-core-title">Ordered64: lower native TPOT in both orders</h3>
+          <p class="performance-scope" id="native-ordered64-four-core-scope">
+            Qwen3-8B on mi350, TP1/C1, sequential 128-input/128-output requests.
+            AB runs baseline then candidate; BA reverses that order.
+            Each start excludes one warmup and measures three requests.
+            Both arms use the same controller, dd6 worker built from 5e2 and eight
+            images. Only packed16 versus packed64 ordered submission changes;
+            parallel-prefill16-v27 and split8-v21 stay enabled, and partial GEMV stays off.
+          </p>
+          <div class="transition-table-wrap" tabindex="0" role="region" aria-label="Ordered64 native AB/BA screening">
+            <table class="transition-table performance-table" id="native-ordered64-four-core-results">
+              <caption class="visually-hidden">Ordered64, four native starts with three measured requests each, not HTTP</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Native start</th>
+                  <th scope="col">Mean TTFT (ms)</th>
+                  <th scope="col">Mean TPOT (ms)</th>
+                  <th scope="col">Output tokens/s</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr data-ordered64-four-core-arm="baseline-AB">
+                  <th scope="row">Baseline AB</th>
+                  <td>1024.554916</td>
+                  <td>94.799826</td>
+                  <td>9.797235</td>
+                </tr>
+                <tr data-ordered64-four-core-arm="candidate-AB">
+                  <th scope="row">Candidate AB</th>
+                  <td>858.870490</td>
+                  <td>70.714876</td>
+                  <td>13.007960</td>
+                </tr>
+                <tr data-ordered64-four-core-arm="candidate-BA">
+                  <th scope="row">Candidate BA</th>
+                  <td>865.604204</td>
+                  <td>70.180564</td>
+                  <td>13.089270</td>
+                </tr>
+                <tr data-ordered64-four-core-arm="baseline-BA">
+                  <th scope="row">Baseline BA</th>
+                  <td>876.261260</td>
+                  <td>80.273610</td>
+                  <td>11.561235</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p id="native-ordered64-four-core-outcome">
+            Candidate/baseline TPOT ratios are 0.745939 in AB and 0.874267 in BA:
+            TPOT is 25.4061% and 12.5733% lower, respectively.
+            TTFT ratios are 0.838286 and 0.987838; output-rate ratios are 1.327717
+            and 1.132169. Orders are not pooled or cherry-picked.
+            These finite-window output rates are not sustained throughput, shader
+            timings, confidence intervals or a stable gain.
+            This supports a separate matched HTTP test, not HTTP qualification or
+            a vLLM win. Defaults remain unchanged. The matched HTTP scoreboard
+            still shows roughly 16 times vLLM's TPOT.
+            No SGLang, TP8 or speculative-decoding gain is established.
+          </p>
+          <p id="native-ordered64-four-core-provenance">
+            CPU qualification retains 17 original R3 one-core gates and a separate
+            successful four-core controller build; it is not 18 fresh four-core gates.
+            The controller's opt-in runtime dependency is pinned to 13e; the worker
+            remains built from 5e2. The baseline profile is
+            prefill16-decode-partial-gemv-v28-live-v1 with GEMV off; the candidate
+            profile is prefill16-decode-ordered64-v29-live-v1.
+          </p>
+          <p id="native-ordered64-four-core-correctness">
+            All 16 requests match all 2,048 reference output IDs and decoded bytes.
+            The outer supervisor exits 0 without signals. Each arm records
+            cleanup_ok true and its owned group absent, with TERM and KILL flags
+            retained as sent. This is not a claim of signal-free arm teardown.
+            Exact output parity is not independent source-to-binary authentication,
+            protected proof or serving qualification. All 33 M1 gates remain open.
+          </p>
+          <details class="performance-identities">
+            <summary>Ordered64 native report and supervisor</summary>
+            <dl class="observation-facts">
+              <dt>Ordered64 native report SHA-256</dt>
+              <dd>cbef8172a332d0d3086889f8ac5cab4b1f913114a4c37535bcf23b062c812015</dd>
+              <dt>Ordered64 native supervisor SHA-256</dt>
+              <dd>e2e234a94971f996b4f4bb1167ed80664ee1362c45a7d091a816b6d3ce2d7617</dd>
             </dl>
           </details>
           <h3 id="native-composed-v28-title">Composition R6: prefill and decode together</h3>
