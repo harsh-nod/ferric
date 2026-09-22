@@ -89,6 +89,9 @@
             <p>Private implementation progress. Host validation and canonical gfx942 extraction remain distinct from native qualification.</p>
           </div>
           <p id="september22-progress">
+            Two independent ordered64 KV-copy native screens match all 4,096 output IDs and decoded bytes. J1 TPOT is 18.051% lower in AB and 17.413% lower in BA; J2 is 23.250% and 16.516% lower. J1 TTFT is 0.322% and 2.435% higher; J2 TTFT is lower, with absolute timing drift between campaigns. These small native screens are not HTTP, a vendor comparison or a stable win. Defaults are unchanged. All 33 M1 gates remain open.
+          </p>
+          <p id="september22-http-progress">
             The fresh ordered64 HTTP campaign completes all three alternating pairs;
             Ferric remains 15.100 to 18.157 times slower than vLLM by mean TPOT.
             A separate single-cold V7 diagnostic passes exact-output replay, with
@@ -255,8 +258,122 @@
               <div class="section-label">Measured engineering progress</div>
               <h2 id="performance-title">Qwen3-8B measurements</h2>
             </div>
-            <p>Three accepted ordered64 HTTP pairs, a separate V7 host diagnostic, and preserved earlier campaigns. Ferric remains slower than vLLM; no production-serving qualification.</p>
+            <p>Two independent KV-copy native screens, three accepted ordered64 HTTP pairs, and preserved earlier diagnostics. No new vendor win or production-serving qualification.</p>
           </div>
+          <h3 id="kv-copy-v7-title">KV copy: two native AB/BA screens</h3>
+          <p class="performance-scope" id="kv-copy-v7-scope">
+            September 22: Qwen3-8B on mi350, TP1/C1, 128 input and 128 output tokens, context 8192, BF16 checkpoint with an explicit FP32 head. Prefix caching and speculation are off. Two independent campaigns each use four fresh starts: AB runs baseline then candidate, BA reverses the order. Each start excludes one warmup and measures three requests: eight starts, 24 measured requests and eight excluded warmups in total. Both campaigns use the same controller, dd6 worker built from 5e2, and nine images. Only baseline versus parallel-c1-v19 KV append changes. Ordered64, parallel-prefill16-v27, split8-v21 and baseline partial GEMV remain fixed.
+          </p>
+          <div id="kv-copy-v7-tables">
+            <h4 id="kv-copy-v7-j1-title">Campaign J1: first screen</h4>
+            <div class="transition-table-wrap" tabindex="0" role="region" aria-label="J1 KV-copy native AB and BA screen">
+              <table class="transition-table performance-table" id="kv-copy-v7-results" data-kv-copy-v7-campaign="j1">
+                <caption class="visually-hidden">Campaign J1: first screen, separate AB and BA starts</caption>
+                <thead>
+                  <tr>
+                    <th scope="col">Native start</th>
+                    <th scope="col">Mean TTFT (ms)</th>
+                    <th scope="col">Mean TPOT (ms)</th>
+                    <th scope="col">Output tokens/s</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr data-kv-copy-v7-arm="j1-baseline-AB">
+                    <th scope="row">Baseline AB</th>
+                    <td>807.243</td>
+                    <td>64.455</td>
+                    <td>14.232567</td>
+                  </tr>
+                  <tr data-kv-copy-v7-arm="j1-candidate-AB">
+                    <th scope="row">KV copy AB</th>
+                    <td>809.845</td>
+                    <td>52.820</td>
+                    <td>17.024785</td>
+                  </tr>
+                  <tr data-kv-copy-v7-arm="j1-candidate-BA">
+                    <th scope="row">KV copy BA</th>
+                    <td>827.309</td>
+                    <td>52.755</td>
+                    <td>17.003771</td>
+                  </tr>
+                  <tr data-kv-copy-v7-arm="j1-baseline-BA">
+                    <th scope="row">Baseline BA</th>
+                    <td>807.647</td>
+                    <td>63.878</td>
+                    <td>14.348660</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <h4 id="kv-copy-v7-j2-title">Campaign J2: independent repeat</h4>
+            <div class="transition-table-wrap" tabindex="0" role="region" aria-label="J2 KV-copy native AB and BA screen">
+              <table class="transition-table performance-table" id="kv-copy-v7-repeat-results" data-kv-copy-v7-campaign="j2">
+                <caption class="visually-hidden">Campaign J2: independent repeat, separate AB and BA starts</caption>
+                <thead>
+                  <tr>
+                    <th scope="col">Native start</th>
+                    <th scope="col">Mean TTFT (ms)</th>
+                    <th scope="col">Mean TPOT (ms)</th>
+                    <th scope="col">Output tokens/s</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr data-kv-copy-v7-arm="j2-baseline-AB">
+                    <th scope="row">Baseline AB</th>
+                    <td>944.284</td>
+                    <td>77.743</td>
+                    <td>11.831300</td>
+                  </tr>
+                  <tr data-kv-copy-v7-arm="j2-candidate-AB">
+                    <th scope="row">KV copy AB</th>
+                    <td>858.399</td>
+                    <td>59.668</td>
+                    <td>15.171775</td>
+                  </tr>
+                  <tr data-kv-copy-v7-arm="j2-candidate-BA">
+                    <th scope="row">KV copy BA</th>
+                    <td>852.170</td>
+                    <td>59.939</td>
+                    <td>15.121163</td>
+                  </tr>
+                  <tr data-kv-copy-v7-arm="j2-baseline-BA">
+                    <th scope="row">Baseline BA</th>
+                    <td>892.749</td>
+                    <td>71.798</td>
+                    <td>12.785176</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <p id="kv-copy-v7-outcome">
+            J1 candidate TPOT is 18.051% lower in AB and 17.413% lower in BA. Finite-window ingress output rate is 19.619% and 18.504% higher; TTFT is 0.322% and 2.435% higher, respectively. The J1 BA TTFT regression is retained.
+          </p>
+          <p id="kv-copy-v7-repeat-outcome">
+            J2 candidate TPOT is 23.250% lower in AB and 16.516% lower in BA. Finite-window ingress output rate is 28.234% and 18.271% higher; TTFT is 9.095% and 4.545% lower, respectively.
+          </p>
+          <p id="kv-copy-v7-drift">
+            Absolute timings drift between campaigns: baseline mean TPOT is 63.878 to 64.455 ms in J1 and 71.798 to 77.743 ms in J2; candidate mean TPOT is 52.755 to 52.820 ms in J1 and 59.668 to 59.939 ms in J2. Campaigns and orders remain separate; no samples are pooled or dropped. These descriptive native measurements are not HTTP latency, sustained throughput, GPU time, confidence bounds or a stable gain.
+          </p>
+          <p id="kv-copy-v7-correctness">
+            All 32 requests, including eight excluded warmups, match all 4,096 reference output IDs and decoded bytes. Each request retains 135 model batches and 87,711 packets. All eight controller starts exit 0; worker closure is separately confirmed by all_workers_exited metadata. Reserved inner groups are absent after cleanup; their receipts retain TERM and KILL flags as sent, not signal-free teardown. Both outer supervisors exit 0 without TERM or KILL.
+          </p>
+          <p id="kv-copy-v7-limits">
+            Both campaigns are retained separately. No new HTTP or vendor comparison is established; the earlier vLLM numbers below are unchanged. This is not a vLLM or SGLang win, a TP8 or speculative-decoding result, serving qualification or a default change. All 33 M1 gates remain open.
+          </p>
+          <details class="performance-identities" id="kv-copy-v7-identities">
+            <summary>Both KV-copy native campaigns: evidence</summary>
+            <dl class="observation-facts">
+              <dt>J1 KV-copy native report SHA-256</dt>
+              <dd>ce74369df5b5ed52721f2ad043d1e0828060494bd7bfebf6da7fa5de9359bb68</dd>
+              <dt>J1 KV-copy supervisor SHA-256</dt>
+              <dd>9ed41c54a927adc53426342f3b3563703138a4507c152dc33772903f675caeee</dd>
+              <dt>J2 KV-copy native report SHA-256</dt>
+              <dd>55c1455bea17de55ca52aaaaa1ceb5b8bbe8f2d230f3c79ad423c4a0c22d6634</dd>
+              <dt>J2 KV-copy supervisor SHA-256</dt>
+              <dd>7a02e34c290c21cd932debb61bd37baf3e3c93bad8e34e69ab14a58e38b05479</dd>
+            </dl>
+          </details>
           <h3 id="matched-ordered64-http-title">Ordered64 HTTP: three accepted pairs, still slower</h3>
           <p class="performance-scope" id="matched-ordered64-http-scope">
             September 22: Qwen3-8B on mi350, TP1/C1, 128 input and 128 output tokens,
