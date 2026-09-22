@@ -83,11 +83,19 @@
         <div class="shell">
           <div class="section-heading">
             <div>
-              <div class="section-label">September 21 engineering checkpoint</div>
+              <div class="section-label">September 22 engineering checkpoint</div>
               <h2 id="resident-progress-title">Authenticated resident serving</h2>
             </div>
             <p>Private implementation progress. Host validation and canonical gfx942 extraction remain distinct from native qualification.</p>
           </div>
+          <p id="september22-progress">
+            The fresh ordered64 HTTP campaign completes all three alternating pairs;
+            Ferric remains 15.100 to 18.157 times slower than vLLM by mean TPOT.
+            A separate single-cold V7 diagnostic passes exact-output replay, with
+            TTFT 818.53 ms and TPOT 64.64 ms. Its worker interval is not GPU time.
+            No speedup is claimed. All 33 M1 gates remain open.
+          </p>
+          <p>Earlier checkpoints below retain their original measurements and limits. The completed ordered64 HTTP series does not repair the separate incomplete R3 series.</p>
           <h3 id="http-r3-progress-title">Composed HTTP: two accepted pairs, incomplete series</h3>
           <p id="http-r3-progress">
             HTTP R3 Pair1 and Pair2 pass individual replay, but the declared three-pair
@@ -247,8 +255,88 @@
               <div class="section-label">Measured engineering progress</div>
               <h2 id="performance-title">Qwen3-8B measurements</h2>
             </div>
-            <p>Two accepted context8192 HTTP pairs within an incomplete series, separate native A/B checks, and preserved history. Not production-serving qualification.</p>
+            <p>Three accepted ordered64 HTTP pairs, a separate V7 host diagnostic, and preserved earlier campaigns. Ferric remains slower than vLLM; no production-serving qualification.</p>
           </div>
+          <h3 id="matched-ordered64-http-title">Ordered64 HTTP: three accepted pairs, still slower</h3>
+          <p class="performance-scope" id="matched-ordered64-http-scope">
+            September 22: Qwen3-8B on mi350, TP1/C1, 128 input and 128 output tokens,
+            context 8192, BF16 checkpoint with an explicit FP32 head. Prefix caching
+            and speculation are off. All six starts and all three alternating paired
+            replays pass, including exact-output diagnostics, timing replay and owned cleanup.
+          </p>
+          <div class="transition-table-wrap" tabindex="0" role="region" aria-label="Ordered64 HTTP three accepted pairs">
+            <table class="transition-table performance-table" id="matched-ordered64-http-results">
+              <caption class="visually-hidden">September 22 ordered64 HTTP mean TPOT, three separate accepted pairs</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Pair</th>
+                  <th scope="col">Ferric TPOT (ms)</th>
+                  <th scope="col">vLLM TPOT (ms)</th>
+                  <th scope="col">Ferric / vLLM</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr data-ordered64-http-pair="pair1">
+                  <th scope="row">Pair 1</th>
+                  <td>63.833</td>
+                  <td>4.228</td>
+                  <td>15.100</td>
+                </tr>
+                <tr data-ordered64-http-pair="pair2">
+                  <th scope="row">Pair 2</th>
+                  <td>79.535</td>
+                  <td>4.380</td>
+                  <td>18.157</td>
+                </tr>
+                <tr data-ordered64-http-pair="pair3">
+                  <th scope="row">Pair 3</th>
+                  <td>67.801</td>
+                  <td>4.394</td>
+                  <td>15.432</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p id="matched-ordered64-http-outcome">
+            Ferric does not beat vLLM in any pair. The mean paired TPOT ratio is
+            16.229 times, not a pooled latency or confidence bound. TPOT is the
+            first-to-last text span divided by 127, not true token interarrival latency.
+            This is repeated-pair screening, not competitiveness, stable-tail,
+            sustained-throughput or framework-win qualification.
+          </p>
+          <h3 id="v7-host-diagnostic-title">V7 host diagnostic: attribution, not a speedup</h3>
+          <p id="v7-host-diagnostic-result">
+            One cold instrumented request passes exact-output native replay: 128 output
+            token IDs and decoded bytes match, with 135 model batches, 87,711 dispatches
+            and clean exit. TTFT is 818.53 ms and TPOT is 64.64 ms. This is a separate
+            diagnostic, not a new vendor comparison or a matched HTTP result.
+          </p>
+          <p id="v7-host-diagnostic-intervals">
+            Mean decode batch wall is 64.626 ms. Worker publication/completion accounts
+            for 58.473 ms (90.48%); controller packing is 0.171 ms (0.265%). The worker
+            interval includes GPU work, polling and fences, excludes preparation/staging,
+            and is not GPU time. Phase scopes overlap and cannot be added as kernel costs.
+          </p>
+          <p id="v7-host-diagnostic-limits">
+            All 127 decode batches are retained, including the seven slower final
+            batches. Instrumentation can perturb execution. No speedup is claimed;
+            defaults are unchanged and all 33 M1 gates remain open. No SGLang, TP8
+            or speculative-decoding performance result is established here.
+          </p>
+          <details class="performance-identities" id="september22-identities">
+            <summary>September 22 comparison and diagnostic evidence</summary>
+            <dl class="observation-facts">
+              <dt>Ordered64 three-pair series SHA-256</dt>
+              <dd>579c4abeda3f56ca2a77ec1e1f63d37c0961cec92381f90da6a368d79ab3a3ec</dd>
+              <dt>V7 host diagnostic report SHA-256</dt>
+              <dd>3ddeaf566cffd14d4503a5078de7f87d6a99c0da4227ffd9cf25606f622998fe</dd>
+            </dl>
+          </details>
+          <p id="september22-history">
+            The earlier HTTP R3 remains a separate rejected, incomplete series; its
+            third pair is not repaired, replaced or relabeled by the new campaign.
+            Historical native and HTTP measurements below retain their original scope.
+          </p>
           <h3 id="matched-http-r3-title">Composed HTTP R3: two pairs accepted, series rejected</h3>
           <p class="performance-scope">
             Qwen3-8B on mi350 physical GPU 0, TP1/C1, 128 input and 128 output tokens,
