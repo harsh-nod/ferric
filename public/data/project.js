@@ -1,5 +1,5 @@
 window.FERRIC_PROJECT = Object.freeze({
-  updated: "2026-09-18",
+  updated: "2026-09-26",
   residentCheckpoint: Object.freeze({
     date: "2026-09-18",
     scope: "Private resident integration; source-bound engineering observations, not qualification",

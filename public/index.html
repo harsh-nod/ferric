@@ -67,7 +67,7 @@
           <aside class="readiness" aria-labelledby="readiness-title">
             <div class="panel-heading">
               <h2 id="readiness-title">Current readiness</h2>
-              <time data-updated datetime="2026-09-18">Updated 2026-09-18</time>
+              <time data-updated datetime="2026-09-26">Updated 2026-09-26</time>
             </div>
             <div class="readiness-list" data-readiness></div>
           </aside>
@@ -83,11 +83,110 @@
         <div class="shell">
           <div class="section-heading">
             <div>
-              <div class="section-label">September 22 engineering checkpoint</div>
+              <div class="section-label">September 26 engineering checkpoint</div>
               <h2 id="resident-progress-title">Authenticated resident serving</h2>
             </div>
             <p>Private implementation progress. Host validation and canonical gfx942 extraction remain distinct from native qualification.</p>
           </div>
+          <div class="section-label">September 23 native prefill screen</div>
+          <h3 id="prefill32-v7-progress-title">Prefill32: lower TTFT, higher TPOT</h3>
+          <p id="september23-progress">
+            Four native starts match all 2,048 output IDs and decoded bytes. Candidate TTFT is 72.306% lower in AB and 69.447% lower in BA; TPOT is 7.575% higher in AB and 8.130% higher in BA. Finite-window output rate is 8.857% and 7.908% higher, respectively.
+          </p>
+          <p id="prefill32-v7-scope">
+            Qwen3-8B on mi350, TP1/C1, 128/128 tokens, context 8192, BF16 with an FP32 head; prefix caching and speculation off. Each start excludes one warmup and measures three requests. Both use chunk32, the same controller, dd6 worker built from 5e2 and nine images; only V5 versus two V27 prefill copies changes. V19 decode stays fixed.
+          </p>
+          <p id="prefill32-v7-limits">
+            AB and BA remain separate. This native screen is not HTTP, sustained throughput, a stable gain or a vendor win. Defaults remain unchanged.
+          </p>
+          <details class="performance-identities" id="prefill32-v7-identities">
+            <summary>Prefill32 native screen and isolated parity: evidence</summary>
+            <dl class="observation-facts">
+              <dt>Prefill32 native report SHA-256</dt>
+              <dd>5ef8c2f2e5a313e16c69401a72f633b9539afcee285d407fe94b65843693bfdc</dd>
+              <dt>Prefill32 native supervisor SHA-256</dt>
+              <dd>3443cba3e4030e19900e50d4e0875c14eb1a53a6cd3ade10c33503787a56853f</dd>
+              <dt>Isolated prefill-copy parity report SHA-256</dt>
+              <dd>d8a5df743cd9d30ca714d02e8aa7a24774b36067bda80afbbe3c633deb825508</dd>
+              <dt>Isolated prefill-copy parity supervisor SHA-256</dt>
+              <dd>3a381a2e184f9f9a1295984821da2f7882b235969732ee453bcf7d3c3397c277</dd>
+            </dl>
+          </details>
+          <p id="prefill32-v7-parity">
+            The separate isolated prefill-copy prerequisite passes all 20 native byte-and-guard parity cells on mi350, with clean unsignaled worker and supervisor exits. That parity check is not a timing result.
+          </p>
+          <h3 id="packet-ticks-v7-progress-title">Packet-tick attribution accepted</h3>
+          <p id="packet-ticks-v7-progress">
+            The opt-in ordered64 diagnostic has accepted CPU qualification with 2,585 passing Rust executions. Native replay matches all 128 output IDs and decoded bytes, retaining 87,711 packet records. Independent raw-interval and custody reviews pass. Raw ticks are uncalibrated, not nanoseconds, shader-only time, additive time shares or a speedup. No new vendor comparison is established.
+          </p>
+          <h3 id="packed-gate-up-v7-progress-title">Packed gate/up: accepted synthetic screen</h3>
+          <p id="packed-gate-up-v7-progress">
+            The fresh 33-cell campaign passes all 65,536 packing patterns, 16 finite-parity cells and 16 timing cells. Four separate ABBA cohorts observe 40.0% to 42.6% lower controller wall time, a 1.67 to 1.74x baseline/candidate ratio, including activation packing.
+          </p>
+          <p id="packed-gate-up-v7-currentness">
+            This is a cache-hot synthetic 12288x4096 gate/up pair, using historical compiler/SDK 413ba987 and the 5e2/dd6 worker. One-pair and five-pair groups, each in two queue epochs, stay separate. Earlier interrupted attempts remain failures; the historical binaries are not latest-qualified.
+          </p>
+          <p id="packed-gate-up-v7-limits">
+            This is not GPU time, model TTFT/TPOT or serving throughput. Numerical-trap and model qualification remain open. No vLLM win is claimed; prior vendor results, defaults and all 33 open M1 gates remain unchanged.
+          </p>
+          <h3 id="runtime-token-v8-progress-title">Runtime wait and token programs: native correctness</h3>
+          <p id="runtime-wait-v8-progress">
+            Default and active-poll wait arms each pass 210 dependent packets and 528 guarded readbacks. The active arm completes all six groups without fallback. These are synthetic correctness and accounting checks, not a measured latency gain.
+          </p>
+          <p id="runtime-token-v8-progress">
+            The separate token-program smoke passes 195 dependent packets across reuse, release and queue rollover, plus exact default-route and late-pointer rejections. All owned workers are reaped without signals; expected fatal exits are not clean exits. Zero GPU publication after the late error is not directly observed.
+          </p>
+          <h3 id="client-token-v8-progress-title">Token client: full-model parity</h3>
+          <p id="client-token-v8-progress">
+            An independently audited V4 CPU receipt covers all seven feature families and 32 test targets: five fresh R13 token-binary targets plus 27 explicitly inherited R12 targets. It records 5,168 passing test executions, not unique tests; 278 hardware/authored ignores and seven instances of the existing library exclusion remain disclosed. Compiler dependency and generated-input checks justify inheritance; R13 changes only one test file, with 1,320 other source files unchanged. R13's 14 production-check/strict-Clippy commands, diagnostic aggregate, both 52-test policy gates, all 10 actual-image checks and actual ABI producer/consumer pass. The stale test assertion omitted 290 required zero-extent RMSNorm fixups: 2,569 total equals 2,279 nonempty plus 290 empty fixups. R13 compiled both controllers successfully but failed retention; R14 independently copied the same binaries and completed final collection without a Rust source change or rebuild. The qualified 21-file client was integrated behind the default-off 652-packet token-program opt-in. R7 native-harness qualification passes all 24 CPU fixtures; both controllers pass cold parity and native ABBA. The fresh matched HTTP pair passes; no repeatable token-program gain, sustained-serving qualification or default promotion is established.
+          </p>
+          <p id="runtime-publication-v8-progress">
+            Runtime source 807f0bef70da75c81e56de6eb4fd6e9c1f78e5e2 was published to fe2o3 main with [skip ci]. Historical main 89c8c899 retained all nine runtime trees and 762 closure paths. Latest observed main 1f4d83c4 (September 26 UTC) retains the same 896 mapped inputs and complete runtime closure as fd1b32e8. Compared with qualified 807, eight of nine runtime trees and 759 prior paths remain unchanged; three paths are modified and two added, for 764 current paths. Its conditional gfx942 direct-dispatch path leaves existing gfx950 worker, token-program, ordered-batch and wait source files unchanged. Only 891 of 896 broadly mapped files match 807. Runtime source equivalence no longer holds. The measured worker/client qualification is exact 807, not a rebuild or native qualification of 1f4d83c4 and not latest-compiler qualification. Historical binaries retain their original identities; adopting newer runtime code requires fresh qualification.
+          </p>
+          <p id="runtime-token-v8-limits">
+            Synthetic runtime checks alone establish no model gain. The fresh single HTTP pair leaves Ferric 11.752 times slower than vLLM by mean TPOT; the historical three-pair series retains its original 15.100 to 18.157 range. Defaults and all 33 M1 gates remain unchanged.
+          </p>
+          <details class="performance-identities" id="runtime-v8-identities">
+            <summary>Packed, runtime and initial client evidence</summary>
+            <dl class="observation-facts">
+              <dt>Packed synthetic report SHA-256</dt>
+              <dd>7e3e71e09202d32e6192614af0fce90a3f43dd46c307c3c8788d1c6c2d0079ec</dd>
+              <dt>Wait native report SHA-256</dt>
+              <dd>592d5b1b21c24b3a97984dcc673f1981c14a8feb11974fe88d50fefaf380b1a2</dd>
+              <dt>Token native report SHA-256</dt>
+              <dd>77b77a3065af3a52ad15bc66933c7bfabf814d481e4f1e81a2151db10b102484</dd>
+              <dt>Initial client CPU custody SHA-256</dt>
+              <dd>b59a5339b1318d948d97a1070c3d3998115f736ce9d3faf7952094e042e8c958</dd>
+              <dt>Fresh HTTP pair summary SHA-256</dt>
+              <dd>8ea42b053b11716d805b7865fed98279163da959b8d43903d0b75d394d5a37f3</dd>
+              <dt>Token model ABBA report SHA-256</dt>
+              <dd>34ef4b4e3eff4e55c023c2b656b90f102b17964bac78a4d1d2e6b183ec4d4ab7</dd>
+              <dt>Packed draft fixture custody SHA-256</dt>
+              <dd>7522d19a9c1a84940512d4810de6c15be0056cf30e2ff9ba6ffcd35cb9892d82</dd>
+            </dl>
+          </details>
+          <h3 id="matched-http-v8-title">Fresh HTTP: vLLM remains faster</h3>
+          <p id="matched-http-v8-progress">
+            One fresh Ferric-to-vLLM 0.28.0 HTTP pair passes on September 26 UTC. Ferric mean TTFT is 890.522 ms versus 19.567 ms; mean TPOT is 51.443 ms versus 4.377 ms; finite output rate is 17.240 versus 222.219 tokens/s. Ferric remains 11.752 times slower by mean TPOT. All 60 measured requests succeed.
+          </p>
+          <p id="matched-http-v8-scope">
+            Each engine uses ten excluded warmups, thirty measured requests and two untimed exact-output diagnostics: Qwen3-8B on mi350 GPU0, TP1/C1, 128/128 tokens, context 8192, BF16 decoder with explicit FP32 output head, greedy fixed length, prefix caching and speculation off. Ferric retains the qualified 807 worker/client and opt-in token program, not latest-SDK qualification.
+          </p>
+          <p id="matched-http-v8-limits">
+            HTTP TTFT is client-send to first nonempty text; TPOT is first-to-last text divided by 127, not true per-token interarrival latency. Output rate is 3,840 tokens over the finite measured cohort including gaps and drain, not sustained loaded throughput. This is one fixed-order pair, not repeated-start confidence, a stable tail, a stock BF16-head ranking, TP8 or a speculative comparison. Historical three-pair and native-ingress measurements are not pooled with it.
+          </p>
+          <h3 id="token-model-v8-title">Token model ABBA: no repeatable gain</h3>
+          <p id="token-model-v8-progress">
+            Both cold paths match all 256 token IDs and decoded bytes. Four native ABBA starts match all 2,048 outputs including warmups, with clean unsignaled teardown. Ordinary/token TPOT is 60.702/55.296 ms in AB and 54.161/55.297 ms in BA: the candidate is 8.9% lower in one order but 2.1% higher in reverse. Baseline drift prevents a repeatable token-program speedup claim.
+          </p>
+          <p id="token-model-v8-limits">
+            Each native start excludes one warmup and measures three requests. These are controller-ingress timings, not HTTP or GPU-only duration; the fixed prompt reaches context 255 and does not qualify the 256-to-257 fallback transition, loaded serving or TP8. Both controllers and the worker keep their actual 807-qualified provenance.
+          </p>
+          <h3 id="packed-model-v8-title">Packed model: CPU qualification in progress</h3>
+          <p id="packed-model-v8-progress">
+            The default-off standalone packed gate/up route is integrated across exactly 20 files. R5 fast qualification passes all fourteen diagnostic commands, 44 focused tests and 53 policy tests after four test-only cfg guards repair the retained R4 failure. All 26 draft native-harness fixtures pass with fake controllers and clean temporary-directory cleanup. The all-fresh 36-target full CPU matrix, real packed model parity, cold/ABBA timing and HTTP comparison remain open. The ordinary 688-dispatch packed route is separate from the fixed 652-dispatch token program; no packed model speedup or default promotion is claimed.
+          </p>
+          <h3>September 22 engineering checkpoint</h3>
           <p id="september22-progress">
             Two independent ordered64 KV-copy native screens match all 4,096 output IDs and decoded bytes. J1 TPOT is 18.051% lower in AB and 17.413% lower in BA; J2 is 23.250% and 16.516% lower. J1 TTFT is 0.322% and 2.435% higher; J2 TTFT is lower, with absolute timing drift between campaigns. These small native screens are not HTTP, a vendor comparison or a stable win. Defaults are unchanged. All 33 M1 gates remain open.
           </p>

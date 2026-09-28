@@ -866,6 +866,7 @@ h3 {
   margin: 16px 0;
 }
 
+#resident-progress > .shell > p,
 [data-resident-progress] > p {
   overflow-wrap: anywhere;
 }
