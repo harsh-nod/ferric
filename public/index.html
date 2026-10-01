@@ -67,7 +67,7 @@
           <aside class="readiness" aria-labelledby="readiness-title">
             <div class="panel-heading">
               <h2 id="readiness-title">Current readiness</h2>
-              <time data-updated datetime="2026-09-26">Updated 2026-09-26</time>
+              <time data-updated datetime="2026-09-29">Updated 2026-09-29</time>
             </div>
             <div class="readiness-list" data-readiness></div>
           </aside>
@@ -83,11 +83,64 @@
         <div class="shell">
           <div class="section-heading">
             <div>
-              <div class="section-label">September 26 engineering checkpoint</div>
+              <div class="section-label">September 29 engineering checkpoint</div>
               <h2 id="resident-progress-title">Authenticated resident serving</h2>
             </div>
             <p>Private implementation progress. Host validation and canonical gfx942 extraction remain distinct from native qualification.</p>
           </div>
+          <h3 id="fixed-safe-v10-title">Fixed-safe gate/up: no useful measured gain</h3>
+          <p id="fixed-safe-v10-progress">
+            On one MI350X on mi350-2, all 36 cells pass: ten finite cases in each of two activation epochs and 16 timing cells in A/B/B/A order. All seven full-buffer and guard records pass, including final timing checks, with clean unsignaled worker and supervisor teardown. R3 shows no useful measured gain and is not promoted.
+          </p>
+          <p id="fixed-safe-v10-scope">
+            This is a cache-hot synthetic 12288x4096 gate/up pair, not Qwen inference. Both arms use compiler/SDK 1a5999f6 plus the same capture patch and the historical 5e2/dd6 runtime. Each timing cell has a fresh worker, two excluded warmup groups and 32 measured groups, for 512 retained samples. One-pair and five-pair groups, activation epochs and AB/BA orders remain separate; inner groups are not independent worker repetitions.
+          </p>
+          <p id="fixed-safe-v10-measurement">
+            The metric is instrumented controller wall per cache-hot gate/up pair, in microseconds, with prepacking and uploads excluded. Worker and controller scopes overlap and cannot be added or subtracted to infer GPU time. Positive improvement means lower candidate latency. The final 206.882 us baseline is retained, not discarded or pooled away.
+          </p>
+          <details class="performance-identities" id="fixed-safe-v10-evidence">
+            <summary>Fixed-safe R3: all eight comparisons and evidence</summary>
+            <div class="transition-table-wrap" tabindex="0" role="region" aria-label="Fixed-safe R3 isolated AB and BA comparisons">
+              <table class="transition-table performance-table" id="fixed-safe-v10-results">
+                <caption>Instrumented controller wall per cache-hot gate/up pair; positive improvement means lower candidate latency.</caption>
+                <thead>
+                  <tr><th scope="col">Pairs/group</th><th scope="col">Epoch</th><th scope="col">Order</th><th scope="col">Baseline (us/pair)</th><th scope="col">R3 (us/pair)</th><th scope="col">Improvement</th></tr>
+                </thead>
+                <tbody>
+                  <tr data-fixed-safe-v10-row="1-0-AB"><th scope="row">1</th><td>0</td><td>AB</td><td>624.215</td><td>623.537</td><td>+0.1086%</td></tr>
+                  <tr data-fixed-safe-v10-row="1-0-BA"><th scope="row">1</th><td>0</td><td>BA</td><td>624.504</td><td>624.165</td><td>+0.0543%</td></tr>
+                  <tr data-fixed-safe-v10-row="1-1-AB"><th scope="row">1</th><td>1</td><td>AB</td><td>626.242</td><td>625.710</td><td>+0.0851%</td></tr>
+                  <tr data-fixed-safe-v10-row="1-1-BA"><th scope="row">1</th><td>1</td><td>BA</td><td>623.300</td><td>625.341</td><td>-0.3275%</td></tr>
+                  <tr data-fixed-safe-v10-row="5-0-AB"><th scope="row">5</th><td>0</td><td>AB</td><td>217.030</td><td>217.230</td><td>-0.0920%</td></tr>
+                  <tr data-fixed-safe-v10-row="5-0-BA"><th scope="row">5</th><td>0</td><td>BA</td><td>218.166</td><td>218.418</td><td>-0.1153%</td></tr>
+                  <tr data-fixed-safe-v10-row="5-1-AB"><th scope="row">5</th><td>1</td><td>AB</td><td>218.988</td><td>219.872</td><td>-0.4037%</td></tr>
+                  <tr data-fixed-safe-v10-row="5-1-BA"><th scope="row">5</th><td>1</td><td>BA</td><td>206.882</td><td>217.991</td><td>-5.3698%</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <dl class="observation-facts">
+              <dt>R3 native results archive SHA-256</dt>
+              <dd>ceed68468e5b30e30dc64fa89b9cdf79cc3cc421b9703fe5141a8a8bf352a5c0</dd>
+              <dt>Compiler and SDK source</dt>
+              <dd>1a5999f6e1c5f2363bc2d525af65e84c46502ce6</dd>
+              <dt>Baseline image SHA-256</dt>
+              <dd>fdffa040ad94723460a0891cfb5be22be25cd90c440008067f81bde37fed453e</dd>
+              <dt>R3 image SHA-256</dt>
+              <dd>4f6ebd3d2294f20ece54a40b20a040129363886fb05b6b7e512bdd9bce447f89</dd>
+              <dt>Historical runtime worker SHA-256</dt>
+              <dd>dd6bd3b4a910478e85d2f3530be25819153fad1f08bf33bb14dd534514a601a2</dd>
+            </dl>
+          </details>
+          <p id="fixed-safe-v10-runtime">
+            Every 32-group timing cell records 321 operational-currentness checks. Their overlapping host scope records about 384-387 us per pair with one pair per group and 77-79 us with five; measured transfer and kernel-admission deltas are zero. Token programs are already integrated and measured on historical 807f0: ordinary/token TPOT is 60.702/55.296 ms in AB and 54.161/55.297 ms in BA, with no repeatable gain. Latest source review indicates the same minimum ten currentness checks per backend group for token and matched ordered64 paths, plus five outer token checks; these are source counts, not measured token counters. Next priorities are latest-client qualification and measured group utilization/batching analysis, not a demonstrated GPU bottleneck or model gain.
+          </p>
+          <p id="fixed-safe-v10-next">
+            Separate R4 finite-check-hoist CPU validation passes 36 tests per feature mode and strict Clippy, plus 16 native-harness and 11 launcher fixtures. Emission a002 succeeds and actual ISA/ELF metadata are captured; independent static review accepts the finite-only diagnostic, with no completed R3-versus-R4 native result recorded here. The separately built 4fb8ae50 core worker passes 106 library and six CLI tests. Latest client source and wire migration remain CPU-unqualified, with the lock not regenerated and full-model qualification pending.
+          </p>
+          <p id="fixed-safe-v10-limits">
+            Finite parity is not invalid-input or numerical-trap qualification. This screen establishes no GPU duration, TTFT/TPOT, serving throughput, stable gain, TP8 or vendor comparison. No default or model promotion follows. Historical HTTP results remain separate and unchanged, and all 33 M1 gates remain open.
+          </p>
+          <div class="section-label">September 26 engineering checkpoint</div>
           <div class="section-label">September 23 native prefill screen</div>
           <h3 id="prefill32-v7-progress-title">Prefill32: lower TTFT, higher TPOT</h3>
           <p id="september23-progress">

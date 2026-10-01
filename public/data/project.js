@@ -1,5 +1,5 @@
 window.FERRIC_PROJECT = Object.freeze({
-  updated: "2026-09-26",
+  updated: "2026-09-29",
   residentCheckpoint: Object.freeze({
     date: "2026-09-18",
     scope: "Private resident integration; source-bound engineering observations, not qualification",
@@ -5275,6 +5275,12 @@ window.FERRIC_PROJECT = Object.freeze({
       "Authority: none; benchmark_comparable=false. This is technical prequalification only. One raw-prompt target-only observation is not numerical qualification, authenticated R33, serving, a vLLM/SGLang baseline, or a controlled K3 speedup comparison. Compiler origin, current protected publication, and Worker V3 are unauthenticated. r33_tpot_eligible=true reflects arithmetic cardinality only, not R33 authority; all 33 M1 exit gates remain open. Observation SHA-256 d894caf042156abf21436c98fa3de7d40af124ba7374baa0b879bf7df582af44.",
   },
   recentProgress: [
+    {
+      sourceStatus: "fc0d445",
+      title: "October 1: measured kernel and active-poll results, with limits retained",
+      state: "observed",
+      detail: "The current fe0b352 worker passes 112 tests (106 library and six CLI). The V5 roster bridge fixes the mixed-SDK boundary; the ordered64 host release build, strict Clippy, focused CPU checks, 48 harness fixtures and nine-phase build binding pass. Seven selector tests pass in each of three feature configurations, alongside 54 source-policy tests and explicit V5 artifact-admission and roster checks. Six full-model TP1/C1 runs each match all 128 tokens and exit cleanly: 768 exact tokens total. The two correctness runs are excluded from timing comparisons. In the two measured default/active pairs, active polling changes TPOT from 70.378 to 69.782 ms in AB order (-0.8475%) and 63.099 to 62.188 ms in BA order (-1.4440%); TTFT changes from 859.967 to 835.992 ms and 814.453 to 785.728 ms. Worker CPU time rises from 0.95 to 9.43 seconds and 0.82 to 8.53 seconds. Active polling remains off by default: these two pairs do not establish a statistical, sustained or vendor win. Separately, R4 a006 completes 20 parity and 16 timing cells with 512 samples and clean teardown. Grouped five-pair comparisons reduce finite controller-wall latency by 8.6454% to 10.5860%, while single-pair results are inconsistent; this is not a full-model gain or a promotion. Earlier interrupted and pre-child staging failures remain retained. The September 28 matched vLLM loss, historical measurements and qualification flags are unchanged; all 33 M1 gates remain open.",
+    },
     {
       sourceStatus: "0626000",
       title: "Page-return proofs pass; maintenance fix is host-tested, GPU retry pending",

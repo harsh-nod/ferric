@@ -70,18 +70,18 @@ jobs:
             test "$(stat -c %h "public/$file")" -eq 1
             total=$((total + $(stat -c %s "public/$file")))
           done
-          test "$total" -eq 869442
+          test "$total" -eq 877210
           test "$total" -le 2097152
 
-          # September 26 snapshot with mobile-wrap repair: static artifact archive SHA256: 039bb73b8b9f73c0656aa4dbb7d3ad51ee1f3d3ab5adbb68535c0ee9072c6bfc.
+          # October 1 measured checkpoint: static artifact archive SHA256: 1f436787b4d9154b0ee7ffc36be5ad25dd63311f3f319f67618770287d1878c6.
           # Existing deploy-only protections retained; remote QA approval is recorded externally.
           sha256sum --check --strict <<'SHA256'
           a9c145b4643a7271896437012b293131c7d14ab2e5d4694726e555f5ce288275  public/app.js
           07291c88f57be83ac12bccc73876fb67158ed96ca8efc2e5717d50d98ad9cb69  public/assets/architecture.svg
           5ddc6e2efcaa8eea3fd8f5607cae74813da636f180a34a5ba72cd879e1b6b809  public/assets/mark.svg
           05ad1f50575547c0b0c8244b2912e1d7518258772527f7ff236fdb8d2e42102f  public/data/performance.js
-          1dd70ec0d67e03bfa878623e72f0c36243c6817b4e868b93a820a10024dd72b7  public/data/project.js
-          97782cceec7aa1c365536176eacd5ba75d2885f6650b392d14cccdf3fb2d552f  public/index.html
+          ccf5a996c35bde3b09635495ee5fe218fc124bd4f633810cffbd64b2c76451e7  public/data/project.js
+          c44bf010ba6b00a7fa2473fa3c3f94717d2e7b26619bb9f5ac1a5c14dae6047d  public/index.html
           41921ee0f120656ab2b13075077948324e6c56d124497886169dbd20d51fdc58  public/styles.css
           SHA256
 
