@@ -5276,6 +5276,12 @@ window.FERRIC_PROJECT = Object.freeze({
   },
   recentProgress: [
     {
+      sourceStatus: "18cc733",
+      title: "October 1: prefill TTFT improves in both orders; decode results remain mixed",
+      state: "observed",
+      detail: "The default-off prefill16 scheduling candidate passes 21 library tests, 11 selector/metadata tests, 54 source-policy tests, release build, strict Clippy, 60 harness fixtures and ten-phase source/build binding. Six fresh TP1/C1 128/128 requests match all 768 tokens with clean exits; two correctness requests are excluded from timing. With the same binary, fe0 worker and eight historical GPU images, prefill ordered groups fall from 576 to 80 while all 87,711 request dispatches remain unchanged. Active polling is off. In the two measured baseline/candidate pairs, TTFT falls from 902.791 to 781.450 ms in AB order (-13.4406%) and 879.712 to 786.839 ms in BA order (-10.5572%). TPOT worsens 2.3508% in AB and improves 2.6411% in BA; finite output rate changes -0.9015% and +3.4528%. These are cold, instrumented requests, n=2 per policy, not warmed HTTP, sustained serving or a vendor win; the selector stays off by default. A separate warmed vLLM run has 30 measured requests after ten warmups: mean TTFT 17.807954 ms and TPOT 4.287830 ms, not a matched comparison with this Ferric cohort. Its instrumented trace shows 127 decode graph replays with 434 kernels each, excluding additional head/sampling work; 434 must not be compared directly with Ferric's complete 652-dispatch decode. Profiling inflated vendor TPOT about 5.2 times and did not establish exact decode matrix shapes. Full prefill raw results and independent replay are retained in prefill16-campaign-a001. Two guarded cleanup attempts refused before deletion when the all-process census did not converge; ten campaign roots and their small cleanup-control directory remain, with no safeguards weakened. The September 28 matched vLLM loss and all 33 open M1 gates remain unchanged.",
+    },
+    {
       sourceStatus: "fc0d445",
       title: "October 1: measured kernel and active-poll results, with limits retained",
       state: "observed",
