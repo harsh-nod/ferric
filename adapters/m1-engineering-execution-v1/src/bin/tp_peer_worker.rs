@@ -3,15 +3,21 @@
 
 #[path = "../../../tp-peer-engineering-worker-v4/src/wire.rs"]
 #[allow(dead_code)]
-mod peer_wire;
+pub(super) mod peer_wire;
+use self::peer_wire as wire;
+#[path = "tp_peer_dependency.rs"]
+mod dependency;
+#[path = "../../../tp-peer-engineering-worker-v4/src/dependency_wire.rs"]
+#[allow(dead_code)]
+pub(super) mod dependency_wire;
 
 use super::tp_worker::{LoadedKernel, RuntimeOptions, metadata_matches, pack_dispatch};
 use fe2o3_kfd::engineering_wire::{CommandV1, ResponseV1, SequenceDispatchV1};
 use ferric_m1_engineering_execution_v1::host_timing::{HostTiming, IpcTiming};
 use ferric_m1_engineering_execution_v1::tp_artifact::EngineeringTpArtifactV1;
 use ferric_m1_engineering_execution_v1::tp_execution::{
-    EngineeringTpArgumentV1, EngineeringTpBufferAccessV1, EngineeringTpDispatchV1,
-    EngineeringTpRankTransportV1, TpResult,
+    EngineeringTp2CollectiveReceiptV1, EngineeringTp2CollectiveRequestV1, EngineeringTpArgumentV1,
+    EngineeringTpBufferAccessV1, EngineeringTpDispatchV1, EngineeringTpRankTransportV1, TpResult,
 };
 use sha2::{Digest, Sha256};
 use std::cell::RefCell;
@@ -25,8 +31,14 @@ use std::time::{Duration, Instant};
 
 const TIMEOUT: Duration = Duration::from_mins(2);
 const EXIT_TIMEOUT: Duration = Duration::from_secs(5);
-type Incoming = (peer_wire::Response, Vec<u8>);
-type Outgoing = (peer_wire::Request, Vec<u8>);
+enum Incoming {
+    Rank(peer_wire::Response, Vec<u8>),
+    Dependency(dependency_wire::Response, Vec<u8>),
+}
+enum Outgoing {
+    Rank(peer_wire::Request, Vec<u8>),
+    Dependency(dependency_wire::Request, Vec<u8>),
+}
 
 struct Connection {
     child: Child,
@@ -48,16 +60,37 @@ struct Connection {
     queued_round: Vec<(usize, SequenceDispatchV1, Vec<u8>)>,
     timing: HostTiming,
     tickets: BTreeMap<u64, IpcTiming>,
+    dependency: Option<dependency::State>,
 }
 
 impl Connection {
     fn connect_profile(
+        child: Child,
+        ids: &[u64],
+        timeout: Duration,
+        concurrent_rounds: bool,
+        shared_full_currentness: bool,
+        timing: HostTiming,
+    ) -> TpResult<Self> {
+        Self::connect_mode(
+            child,
+            ids,
+            timeout,
+            concurrent_rounds,
+            shared_full_currentness,
+            timing,
+            false,
+        )
+    }
+
+    fn connect_mode(
         mut child: Child,
         ids: &[u64],
         timeout: Duration,
         concurrent_rounds: bool,
         shared_full_currentness: bool,
         timing: HostTiming,
+        dependency_mode: bool,
     ) -> TpResult<Self> {
         let Some(mut input) = child.stdin.take() else {
             let _ = child.kill();
@@ -72,9 +105,24 @@ impl Connection {
         let (writer, outgoing) = mpsc::sync_channel::<Outgoing>(1);
         let (written, acknowledgments) = mpsc::sync_channel(1);
         let writing = thread::spawn(move || {
-            while let Ok((header, bytes)) = outgoing.recv() {
-                let result = peer_wire::write_request(&mut input, &header, &bytes)
-                    .map_err(|e| e.to_string());
+            while let Ok(frame) = outgoing.recv() {
+                let result = match frame {
+                    Outgoing::Rank(header, bytes) if !dependency_mode => {
+                        peer_wire::write_request(&mut input, &header, &bytes)
+                    }
+                    Outgoing::Rank(header, bytes) => dependency_wire::write_request(
+                        &mut input,
+                        &dependency_wire::Request::Rank { request: header },
+                        &bytes,
+                    ),
+                    Outgoing::Dependency(header, bytes) if dependency_mode => {
+                        dependency_wire::write_request(&mut input, &header, &bytes)
+                    }
+                    Outgoing::Dependency(..) => Err(std::io::Error::other(
+                        "dependency frame on legacy connection",
+                    )),
+                }
+                .map_err(|e| e.to_string());
                 let failed = result.is_err();
                 if written.send(result).is_err() || failed {
                     break;
@@ -84,7 +132,20 @@ impl Connection {
         let (incoming, reader) = mpsc::sync_channel(ids.len() + 1);
         let reading = thread::spawn(move || {
             loop {
-                let result = peer_wire::read_response(&mut output).map_err(|e| e.to_string());
+                let result = if dependency_mode {
+                    dependency_wire::read_response(&mut output).map(
+                        |(header, bytes)| match header {
+                            dependency_wire::Response::Rank { response } => {
+                                Incoming::Rank(response, bytes)
+                            }
+                            other => Incoming::Dependency(other, bytes),
+                        },
+                    )
+                } else {
+                    peer_wire::read_response(&mut output)
+                        .map(|(header, bytes)| Incoming::Rank(header, bytes))
+                }
+                .map_err(|e| e.to_string());
                 let failed = result.is_err();
                 if incoming.send(result).is_err() || failed {
                     break;
@@ -111,9 +172,23 @@ impl Connection {
             queued_round: Vec::new(),
             timing,
             tickets: BTreeMap::new(),
+            dependency: None,
         };
         let ready = connection.reader.recv_timeout(timeout);
-        if !matches!(ready, Ok(Ok((peer_wire::Response::Ready { protocol, mode, target,
+        if dependency_mode {
+            let Ok(Ok(Incoming::Dependency(header, payload))) = ready else {
+                return connection.reject("TP2 dependency explicit ready missing");
+            };
+            if concurrent_rounds
+                || shared_full_currentness
+                || !payload.is_empty()
+                || !dependency::valid_ready(&header, ids, connection.child.id())
+            {
+                return connection
+                    .reject("TP2 dependency ready identity, policy or roster mismatch");
+            }
+            connection.dependency = Some(dependency::State::new([ids[0], ids[1]]));
+        } else if !matches!(ready, Ok(Ok(Incoming::Rank(peer_wire::Response::Ready { protocol, mode, target,
             unique_ids, process_id, authority, shared_full_currentness: observed_shared }, payload))) if protocol == peer_wire::PROTOCOL
                 && mode == if concurrent_rounds { peer_wire::ROUND_MODE } else { peer_wire::MODE }
                 && observed_shared == shared_full_currentness
@@ -196,7 +271,7 @@ impl Connection {
         let Some(writer) = &self.writer else {
             return self.reject("peer writer closed");
         };
-        if writer.try_send((header, payload)).is_err() {
+        if writer.try_send(Outgoing::Rank(header, payload)).is_err() {
             return self.reject("peer writer unavailable");
         }
         match self.written.recv_timeout(self.timeout) {
@@ -230,7 +305,7 @@ impl Connection {
                     return self.reject(format!("peer response deadline/disconnect: {error}"));
                 }
             };
-            let (
+            let Incoming::Rank(
                 peer_wire::Response::Done {
                     request,
                     rank: actual_rank,
@@ -354,7 +429,7 @@ impl Connection {
         let Some(writer) = &self.writer else {
             return self.reject("peer writer closed");
         };
-        if writer.try_send((header, payload)).is_err() {
+        if writer.try_send(Outgoing::Rank(header, payload)).is_err() {
             return self.reject("peer round writer unavailable");
         }
         match self.written.recv_timeout(self.timeout) {
@@ -374,7 +449,7 @@ impl Connection {
                 return self.reject(format!("peer round response deadline/disconnect: {error}"));
             }
         };
-        let (
+        let Incoming::Rank(
             peer_wire::Response::RoundDone {
                 request: actual_request,
                 ranks: actual_ranks,
@@ -546,6 +621,41 @@ impl PeerWorker {
         concurrent_rounds: bool,
         timing: HostTiming,
     ) -> TpResult<Vec<Self>> {
+        Self::spawn_profile(
+            executable,
+            unique_ids,
+            artifacts,
+            options,
+            concurrent_rounds,
+            timing,
+            false,
+        )
+    }
+
+    pub fn spawn_dependency_with_timing(
+        executable: &Path,
+        unique_ids: &[u64],
+        artifacts: &[&EngineeringTpArtifactV1],
+        options: RuntimeOptions,
+        timing: HostTiming,
+    ) -> TpResult<Vec<Self>> {
+        Self::spawn_profile(
+            executable, unique_ids, artifacts, options, false, timing, true,
+        )
+    }
+
+    fn spawn_profile(
+        executable: &Path,
+        unique_ids: &[u64],
+        artifacts: &[&EngineeringTpArtifactV1],
+        options: RuntimeOptions,
+        concurrent_rounds: bool,
+        timing: HostTiming,
+        dependency_mode: bool,
+    ) -> TpResult<Vec<Self>> {
+        if dependency_mode {
+            dependency::validate_options(unique_ids, options)?;
+        }
         if options.profile {
             return Err("peer runtime diagnostic profiling is unsupported".into());
         }
@@ -582,20 +692,27 @@ impl PeerWorker {
         if options.shared_full_currentness {
             command.arg("--shared-full-currentness");
         }
+        if dependency_mode {
+            command.arg("--tp2-dependency-collectives");
+        }
         let child = command
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
             .stderr(Stdio::inherit())
             .spawn()
             .map_err(|e| format!("spawn peer child: {e}"))?;
-        let connection = Rc::new(RefCell::new(Connection::connect_profile(
-            child,
-            unique_ids,
-            TIMEOUT,
-            concurrent_rounds,
-            options.shared_full_currentness,
-            timing,
-        )?));
+        let connection = Rc::new(RefCell::new(if dependency_mode {
+            Connection::connect_mode(child, unique_ids, TIMEOUT, false, false, timing, true)?
+        } else {
+            Connection::connect_profile(
+                child,
+                unique_ids,
+                TIMEOUT,
+                concurrent_rounds,
+                options.shared_full_currentness,
+                timing,
+            )?
+        }));
         connection.borrow_mut().configure_performance(
             options.cache_admission,
             options.operational,
@@ -614,6 +731,17 @@ impl PeerWorker {
                 worker.load_artifact(artifact)?;
             }
             workers.push(worker);
+        }
+        if dependency_mode {
+            for worker in &workers {
+                if !worker.kernels.contains_key(dependency_wire::PRODUCER_ROOT)
+                    || !worker.kernels.contains_key(dependency_wire::CONSUMER_ROOT)
+                {
+                    return connection
+                        .borrow_mut()
+                        .reject("TP2 dependency closed kernel roster missing");
+                }
+            }
         }
         Ok(workers)
     }
@@ -658,6 +786,16 @@ impl PeerWorker {
                     metadata: metadata.clone(),
                 },
             );
+            if let Some(state) = &mut connection.dependency {
+                state.kernels[self.rank].insert(
+                    metadata.name().into(),
+                    LoadedKernel {
+                        id: kernel,
+                        image: hash,
+                        metadata: metadata.clone(),
+                    },
+                );
+            }
         }
         Ok(())
     }
@@ -671,6 +809,9 @@ impl PeerWorker {
         connection: &Connection,
         dispatch: &EngineeringTpDispatchV1,
     ) -> TpResult<(CommandV1, Vec<u8>)> {
+        if connection.dependency.is_some() && dependency_wire::is_collective_root(dispatch.kernel) {
+            return Err("TP2 dependency collective roots require the atomic request".into());
+        }
         for argument in &dispatch.arguments {
             if let EngineeringTpArgumentV1::Buffer { id, access, .. } = argument
                 && !connection.ownership.get(id).is_some_and(|&(owner, peers)| {
@@ -718,6 +859,24 @@ impl PeerWorker {
 }
 
 impl EngineeringTpRankTransportV1 for PeerWorker {
+    fn supports_peer_dependency_collectives(&self) -> bool {
+        let connection = self.connection.borrow();
+        connection.dependency.is_some()
+            && !connection.failed
+            && !connection.exited
+            && !connection.closed.iter().any(|closed| *closed)
+    }
+
+    fn execute_peer_dependency_collective(
+        &mut self,
+        request: &EngineeringTp2CollectiveRequestV1,
+    ) -> TpResult<EngineeringTp2CollectiveReceiptV1> {
+        let mut connection = self.connection.borrow_mut();
+        if self.rank != 0 || self.pending.is_some() {
+            return connection.reject("TP2 dependency requires idle rank-zero owner");
+        }
+        dependency::execute(&mut connection, request)
+    }
     fn supports_concurrent_rounds(&self) -> bool {
         self.connection.borrow().concurrent_rounds
     }

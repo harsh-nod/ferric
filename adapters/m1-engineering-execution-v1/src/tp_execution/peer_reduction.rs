@@ -10,7 +10,7 @@ const REDUCE: &str = "ferric_qwen3_tp_peer_ordered_residual_bf16_v4";
 const COPY: &str = "ferric_qwen3_tp_peer_copy_bf16_v4";
 
 impl<R: EngineeringTpRankTransportV1> EngineeringTpExecutionV1<R> {
-    fn check_peer_group(&self) -> TpResult<()> {
+    pub(super) fn check_peer_group(&self) -> TpResult<()> {
         let world = self.plan.world_size();
         let Some((pid, 0, reported_world)) = self.transports[0].peer_group_rank() else {
             return Err("peer reduction requires an explicit rank-zero group owner".into());
@@ -121,13 +121,44 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpExecutionV1<R> {
         layer: u32,
         operation: Qwen3TensorParallelCollectiveV1,
     ) -> TpResult<()> {
+        let commands = self.peer_reduction_commands(layer, operation)?;
+        let key = self.collective.expected();
+        self.dispatch_peer_commands(0, &commands)?;
+        for rank in &self.ranks {
+            self.collective
+                .arrive(rank.geometry.rank, key)
+                .map_err(|e| format!("peer collective arrival: {e:?}"))?;
+        }
+        self.collective
+            .advance()
+            .map_err(|e| format!("peer collective advance: {e:?}"))?;
+        let ReductionWorkspace::DevicePeer(scratch, _) = &mut self.reduction else {
+            return Err("peer workspace disappeared".into());
+        };
+        // No rank publishes the new hidden state until every destination completed.
+        for (rank, output) in self.ranks.iter_mut().zip(scratch) {
+            std::mem::swap(&mut rank.hidden, output);
+        }
+        Ok(())
+    }
+
+    pub(super) fn peer_reduction_commands(
+        &self,
+        layer: u32,
+        operation: Qwen3TensorParallelCollectiveV1,
+    ) -> TpResult<Vec<EngineeringTpDispatchV1>> {
         let (elements, rows) = self.peer_geometry()?;
         let key = self.collective.expected();
         if key.layer != layer || key.operation != operation {
             return Err("peer collective reordered".into());
         }
-        let ReductionWorkspace::DevicePeer(scratch, _) = &self.reduction else {
+        let ReductionWorkspace::DevicePeer(scratch, mode) = &self.reduction else {
             return Err("peer workspace unavailable".into());
+        };
+        let kernel = if *mode == super::EngineeringTpReductionModeV3::DevicePeerDependencyV1 {
+            super::peer_dependency::CONSUMER
+        } else {
+            REDUCE
         };
         if scratch.len() != self.ranks.len() {
             return Err("peer scratch roster drift".into());
@@ -145,8 +176,7 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpExecutionV1<R> {
                 })
             })
             .collect::<TpResult<Vec<_>>>()?;
-        let commands = self
-            .ranks
+        self.ranks
             .iter()
             .zip(scratch)
             .map(|(rank, &output)| {
@@ -180,29 +210,12 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpExecutionV1<R> {
                     EngineeringTpArgumentV1::U32(self.plan.world_size()),
                 ]);
                 Ok(dispatch(
-                    REDUCE,
+                    kernel,
                     u32::try_from(elements / 64).map_err(|_| "peer reduction grid overflow")?,
                     arguments,
                 ))
             })
-            .collect::<TpResult<Vec<_>>>()?;
-        self.dispatch_peer_commands(0, &commands)?;
-        for rank in &self.ranks {
-            self.collective
-                .arrive(rank.geometry.rank, key)
-                .map_err(|e| format!("peer collective arrival: {e:?}"))?;
-        }
-        self.collective
-            .advance()
-            .map_err(|e| format!("peer collective advance: {e:?}"))?;
-        let ReductionWorkspace::DevicePeer(scratch, _) = &mut self.reduction else {
-            return Err("peer workspace disappeared".into());
-        };
-        // No rank publishes the new hidden state until every destination completed.
-        for (rank, output) in self.ranks.iter_mut().zip(scratch) {
-            std::mem::swap(&mut rank.hidden, output);
-        }
-        Ok(())
+            .collect::<TpResult<Vec<_>>>()
     }
 
     fn dispatch_peer_commands(

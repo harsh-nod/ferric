@@ -25,8 +25,9 @@ pub const MAX_TOKENIZER_INPUT_BYTES: usize = 32 * 1_024;
 pub const MAX_TOKENIZER_OUTPUT_TOKENS: usize = 8_192;
 /// Hard upper bound for bytes produced by one decode call.
 pub const MAX_TOKENIZER_OUTPUT_BYTES: usize = 128 * 1_024;
-/// Hard upper bound for charged finite tokenizer operations in one call.
+/// M1 bound for charged finite tokenizer operations in one call.
 pub const MAX_TOKENIZER_WORK: usize = 16 * 1_024 * 1_024;
+const LONG_CONTEXT_TOKENIZER_WORK: usize = 128 * 1_024 * 1_024;
 
 } // verus!
 
@@ -84,7 +85,7 @@ impl TokenizerExecutionLimits {
         &&& 0 < self.input_bytes <= MAX_TOKENIZER_INPUT_BYTES
         &&& 0 < self.tokens <= MAX_TOKENIZER_OUTPUT_TOKENS
         &&& 0 < self.output_bytes <= MAX_TOKENIZER_OUTPUT_BYTES
-        &&& 0 < self.work <= MAX_TOKENIZER_WORK
+        &&& 0 < self.work <= LONG_CONTEXT_TOKENIZER_WORK
     }
 
     /// The closed M1 tokenizer execution envelope.
@@ -100,6 +101,23 @@ impl TokenizerExecutionLimits {
         }
     }
 
+    /// Opt-in long-context envelope with 128 Mi charged operations.
+    ///
+    /// Byte and token limits, BPE semantics, and per-operation charges remain
+    /// unchanged. This finite budget does not guarantee every bounded input
+    /// succeeds: repeated BPE scans can still exhaust it on a long single piece.
+    #[must_use]
+    pub const fn long_context() -> (limits: Self)
+        ensures limits.valid(),
+    {
+        Self {
+            input_bytes: MAX_TOKENIZER_INPUT_BYTES,
+            tokens: MAX_TOKENIZER_OUTPUT_TOKENS,
+            output_bytes: MAX_TOKENIZER_OUTPUT_BYTES,
+            work: LONG_CONTEXT_TOKENIZER_WORK,
+        }
+    }
+
     fn validate(self) -> (result: Result<(), TokenizerExecutionError>)
         ensures result.is_ok() == self.valid(),
     {
@@ -110,7 +128,7 @@ impl TokenizerExecutionLimits {
             || self.output_bytes == 0
             || self.output_bytes > MAX_TOKENIZER_OUTPUT_BYTES
             || self.work == 0
-            || self.work > MAX_TOKENIZER_WORK
+            || self.work > LONG_CONTEXT_TOKENIZER_WORK
         {
             return Err(TokenizerExecutionError::InvalidLimits);
         }
@@ -140,7 +158,7 @@ pub enum SpecialTokenDecodePolicy {
 #[verifier::allow(autoderive_clone_without_spec)]
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum TokenizerExecutionError {
-    /// At least one caller bound was zero or exceeded the closed M1 ceiling.
+    /// At least one caller bound was zero or exceeded the closed execution ceiling.
     InvalidLimits,
     /// Input bytes exceeded the caller-selected encode bound.
     InputTooLarge { limit: usize, actual: usize },
@@ -1884,6 +1902,80 @@ mod tests {
             assert_eq!(&first, expected, "fixture {input:?}");
             assert_eq!(second, first, "determinism {input:?}");
         }
+    }
+
+    #[test]
+    fn long_context_budget_preserves_m1_and_rejects_invalid_work() {
+        let short = TokenizerExecutionLimits::m1();
+        let long = TokenizerExecutionLimits::long_context();
+        assert_eq!(short.work, 16 * 1_024 * 1_024);
+        assert_eq!(long.work, 128 * 1_024 * 1_024);
+        assert_eq!(short.input_bytes, long.input_bytes);
+        assert_eq!(short.tokens, long.tokens);
+        assert_eq!(short.output_bytes, long.output_bytes);
+        assert_eq!(short.validate(), Ok(()));
+        assert_eq!(long.validate(), Ok(()));
+        for work in [0, long.work + 1, usize::MAX] {
+            assert_eq!(
+                TokenizerExecutionLimits { work, ..long }.validate(),
+                Err(TokenizerExecutionError::InvalidLimits),
+            );
+        }
+    }
+
+    #[test]
+    fn long_context_prompt_matches_independent_2048_ids() {
+        // Pinned input from the independent Transformers reference, not a
+        // second invocation of this tokenizer used to generate expectations.
+        use crate::json::{self, Value};
+        let Value::Object(fixture) = json::parse(include_bytes!(
+            "fixtures/tokenizer/qwen3-long-context-v1.json"
+        ))
+        .unwrap() else {
+            panic!("long-context fixture object");
+        };
+        let Value::String(prompt) = &fixture["prompt"] else {
+            panic!("long-context prompt string");
+        };
+        let Value::Array(ids) = &fixture["input_token_ids"] else {
+            panic!("independent prompt IDs");
+        };
+        let expected: Vec<u32> = ids
+            .iter()
+            .map(|id| match id {
+                Value::Number(number) => number.parse().unwrap(),
+                _ => panic!("unsigned token ID"),
+            })
+            .collect();
+        assert_eq!(prompt.len(), 11_224);
+        assert_eq!(expected.len(), 2_048);
+        let tokenizer = tokenizer();
+        assert_eq!(
+            tokenizer.encode(
+                prompt,
+                TokenizerExecutionLimits::m1(),
+                SpecialTokenEncodePolicy::Reject,
+            ),
+            Err(TokenizerExecutionError::WorkLimit { limit: MAX_TOKENIZER_WORK }),
+        );
+        let limits = TokenizerExecutionLimits::long_context();
+        let actual = tokenizer
+            .encode(prompt, limits, SpecialTokenEncodePolicy::Reject)
+            .unwrap();
+        assert_eq!(actual, expected);
+        assert_eq!(
+            tokenizer.decode_to_bytes(&actual, limits, SpecialTokenDecodePolicy::Preserve)
+                .unwrap(),
+            prompt.as_bytes(),
+        );
+        assert!(matches!(
+            tokenizer.encode(
+                prompt,
+                TokenizerExecutionLimits { tokens: 2_047, ..limits },
+                SpecialTokenEncodePolicy::Reject,
+            ),
+            Err(TokenizerExecutionError::TokenLimit { .. }),
+        ));
     }
 
     #[test]

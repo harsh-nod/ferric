@@ -3,7 +3,7 @@
 use super::{
     AuthenticatedModelWeightLayout, EngineeringTpDispatchV1, EngineeringTpExecutionV1,
     EngineeringTpRankTransportV1, QWEN3_NO_LAYER, Qwen3TensorKind, Tensor, TpResult,
-    UPLOAD_CHUNK_BYTES, allocate_tensor, section_bytes,
+    allocate_tensor, section_bytes, setup_upload,
 };
 use ferric_engine::tensor_parallel::Qwen3TensorParallelTensorV1;
 use sha2::{Digest, Sha256};
@@ -50,6 +50,81 @@ pub(super) struct ProjectionPolicy {
 }
 
 impl ProjectionPolicy {
+    /// Rebuild one fixed row-one TP2 dispatch from its original model tensor.
+    /// The complete old MFMA descriptor must bind that tensor's retained transpose.
+    pub(super) fn rowone_graph_replacement(
+        &self,
+        rank: usize,
+        kind: Qwen3TensorKind,
+        input: Tensor,
+        original: Tensor,
+        output: Tensor,
+        prior: &EngineeringTpDispatchV1,
+    ) -> TpResult<EngineeringTpDispatchV1> {
+        let (baseline, n, k, tag, width) = match kind {
+            Qwen3TensorKind::KeyProjection => (super::batched::GEMM, 512, 4096, 2, 2),
+            Qwen3TensorKind::ValueProjection => (super::batched::GEMM, 512, 4096, 3, 2),
+            Qwen3TensorKind::GateProjection => (super::batched::GEMM, 6144, 4096, 4, 2),
+            Qwen3TensorKind::UpProjection => (super::batched::GEMM, 6144, 4096, 5, 2),
+            Qwen3TensorKind::DownProjection => (super::batched::PARTIAL, 4096, 6144, 2, 4),
+            _ => return Err("row-one graph rejects unrelated projection kinds".into()),
+        };
+        if self.mode != EngineeringTpProjectionModeV3::Mfma
+            || self.transposed.len() != 2
+            || rank >= 2
+            || input.elements != 16 * k
+            || input.element_bytes != 2
+            || original.elements != n * k
+            || original.element_bytes != 2
+            || output.elements != 16 * n
+            || output.element_bytes != width
+        {
+            return Err("row-one graph requires exact TP2 capacity and output precision".into());
+        }
+        let transposed = self.transposed[rank]
+            .get(&original.id)
+            .ok_or("row-one graph original weight lacks its retained transpose")?;
+        if transposed.id == original.id
+            || transposed.elements != original.elements
+            || transposed.element_bytes != 2
+        {
+            return Err("row-one graph original/transpose identity or extent mismatch".into());
+        }
+        let shape = [
+            1,
+            u32::try_from(n).map_err(|_| "projection output bound")?,
+            u32::try_from(k).map_err(|_| "projection reduction bound")?,
+            2,
+            tag,
+        ];
+        if prior != &self.command(rank, baseline, input, original, output, shape) {
+            return Err(
+                "row-one graph prior descriptor does not bind the authenticated MFMA weight".into(),
+            );
+        }
+        Ok(self.command_with_mode(
+            EngineeringTpProjectionModeV3::Wave,
+            rank,
+            baseline,
+            input,
+            original,
+            output,
+            shape,
+        ))
+    }
+
+    #[cfg(test)]
+    pub(super) fn synthetic_mfma_ranks_for_recording(
+        transposed: Vec<BTreeMap<u64, Tensor>>,
+        bytes: u64,
+    ) -> Self {
+        Self {
+            mode: EngineeringTpProjectionModeV3::Mfma,
+            transposed,
+            bytes,
+        }
+    }
+
     #[cfg(test)]
     pub(super) fn synthetic_mfma_for_recording(original: u64, transposed: Tensor) -> Self {
         Self {
@@ -124,9 +199,7 @@ impl ProjectionPolicy {
                     vec![0; elements.checked_mul(2).ok_or("transposed byte overflow")?];
                 transpose_shard(source, &shard, &mut transposed)?;
                 let tensor = allocate_tensor(transport, elements, 2)?;
-                for (chunk, bytes) in transposed.chunks(UPLOAD_CHUNK_BYTES).enumerate() {
-                    transport.write(tensor.id, chunk * UPLOAD_CHUNK_BYTES, bytes)?;
-                }
+                setup_upload::write_contiguous(transport, tensor.id, &transposed)?;
                 policy.bytes = policy
                     .bytes
                     .checked_add(transposed.len() as u64)

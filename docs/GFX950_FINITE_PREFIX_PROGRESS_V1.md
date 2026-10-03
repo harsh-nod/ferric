@@ -31,6 +31,36 @@ rounded FP32 division. A universal proof of these instruction sequences is
 still open. The candidate cap and numerical policy were not loosened to obtain
 these results. The older attention/output-projection check remains separate.
 
+A subsequent exact binary32 CPU diagnostic found six standalone reciprocal
+counterexamples and 21 chained counterexamples over permitted synthetic raw
+seeds. For example, with denominator `1 - 2^-24` and reciprocal seed `1`, the
+correction can round a midpoint back to `1`, although the correctly rounded
+reciprocal is the next FP32 value. These are not observations of the GPU's
+actual seed selection or model failures. They show that the assumed division
+rounding does not follow from the tested instruction model and seed envelope;
+the prerequisite remains unresolved. No threshold was widened. The diagnostic
+receipt is `9af99ee3b0b4247a0a7b504f8364fc6ad1dd6f8c825b37f05aedc330140722d8`.
+
+## Source Publication
+
+The [source index](assets/finite-prefix-v227/source-index.json) binds the 289
+imported files to the build-host source snapshot. All 355 Ferric paths in the
+CPU cohort's source map were checked against the published tree. Cargo path
+dependencies and literal source/fixture includes were audited separately;
+the 167-file finite test census alone was not a complete source closure.
+
+This includes the finite parent/worker, shared wire imports, consumed tokenizer
+fixtures, and required device source/test dependencies. Only the four shared
+wire files were added under the legacy v4 worker. Its Cargo manifest, lockfile,
+main program and unrelated experiment additions were left unchanged.
+
+The finite worker still requires a separately retained sibling fe2o3 source
+generation. The parent uses its own locked fe2o3 Git dependency; they are not
+interchangeable. See the [worker notes](../adapters/tp-peer-finite-engineering-worker-v1/README.md).
+This checkpoint is not a clean-clone reproduction claim, a workspace-wide test
+pass, or a newly qualified legacy-worker build. Full workspace formatting,
+Clippy and regression gates remain required before merging to production.
+
 ## Changes And Retained Failures
 
 The finite route uses an explicit bounded parent/worker protocol, typed
@@ -72,8 +102,8 @@ alone is not a self-contained reproducer or proof.
 
 ## Next Gates
 
-1. Publish the exact tested Ferric source closure with explicit sibling fe2o3
-   dependencies, without importing unrelated worktree changes.
+1. Publish and qualify the matching sibling fe2o3 dependency so the Ferric
+   engineering snapshot can be reproduced from clean checkouts.
 2. Deploy and audit the instrumented binaries, then run the bounded host
    observation on `mi350`. Use it to locate overhead before changing execution.
 3. Close independent numerical obligations and validate the longer resident

@@ -1,0 +1,1464 @@
+{
+  "base_commit": "92538e66ed63341243e255db03e94e8c7f399d5b",
+  "copied_files": [
+    {
+      "bytes": 51664,
+      "path": "adapters/m1-engineering-execution-v1/Cargo.lock",
+      "sha256": "ec06e964ed72dc9b97d9f5769bd867bf05398781b6e17a9f605137742d6e19ea"
+    },
+    {
+      "bytes": 11486,
+      "path": "adapters/m1-engineering-execution-v1/Cargo.toml",
+      "sha256": "848da576fa2dfad5c62338b0ca29ef78eb24d301565448687a4fd1319ed51ad7"
+    },
+    {
+      "bytes": 3809,
+      "path": "adapters/m1-engineering-execution-v1/src/bin/ferric-qwen3-finite-long-engineering.rs",
+      "sha256": "c8c911a438f1a92456852f0d59472049f6411eb992d079e964cbc000c5f59e90"
+    },
+    {
+      "bytes": 4168,
+      "path": "adapters/m1-engineering-execution-v1/src/bin/ferric-qwen3-finite-mlp-tiles-comparison-engineering.rs",
+      "sha256": "9e69670f70ca52cac955f47151db8cf480e1f11d227533e7b14fa652ed862e84"
+    },
+    {
+      "bytes": 2883,
+      "path": "adapters/m1-engineering-execution-v1/src/bin/ferric-qwen3-finite-prefix-decode-engineering.rs",
+      "sha256": "bda29109ccff5cf7f30a2ebb3102ee41cc722ab2e164cd34467cc6112a9e21c2"
+    },
+    {
+      "bytes": 2901,
+      "path": "adapters/m1-engineering-execution-v1/src/bin/ferric-qwen3-finite-prefix-decode-host-engineering.rs",
+      "sha256": "668bae6b9e88aa5e2fb2de075a0b6d77a5aecba896484fddf31eccefd7b6bf43"
+    },
+    {
+      "bytes": 2860,
+      "path": "adapters/m1-engineering-execution-v1/src/bin/ferric-qwen3-finite-prefix-layer-engineering.rs",
+      "sha256": "e97966e4a9ce04b94ea3fee50463955010cad27c3b76b23fdea2ae389e5569f3"
+    },
+    {
+      "bytes": 4176,
+      "path": "adapters/m1-engineering-execution-v1/src/bin/ferric-qwen3-finite-queued-mlp-comparison-engineering.rs",
+      "sha256": "7ca8b3b70169e4a097314255670ca416fd9371bfcb28865ee1e463390f84aff0"
+    },
+    {
+      "bytes": 4239,
+      "path": "adapters/m1-engineering-execution-v1/src/bin/ferric-qwen3-finite-queued-projection-comparison-engineering.rs",
+      "sha256": "a269301ddaeaf0bb821eaeb7686e7b1a0ae5633448a62b3e76fde833d9c07e73"
+    },
+    {
+      "bytes": 4609,
+      "path": "adapters/m1-engineering-execution-v1/src/bin/ferric-qwen3-finite-rearm-smoke-engineering.rs",
+      "sha256": "1fca6232f3306acf1ce6f12889ddc9739a9563da951a035db74db4def98d20a1"
+    },
+    {
+      "bytes": 4496,
+      "path": "adapters/m1-engineering-execution-v1/src/bin/ferric-qwen3-finite-tiles-decode-engineering.rs",
+      "sha256": "7928d37aab3aa33cab5c32f799398d6faa407a82d88578aedae6bb406c0e2379"
+    },
+    {
+      "bytes": 3038,
+      "path": "adapters/m1-engineering-execution-v1/src/bin/ferric-qwen3-finite-two-forward-engineering.rs",
+      "sha256": "5f4e747489d49f88e7b147842d4710f7a46faeccbe4a51f4bfb0efa3c006694b"
+    },
+    {
+      "bytes": 194215,
+      "path": "adapters/m1-engineering-execution-v1/src/bin/ferric-qwen3-tp-batch-engineering.rs",
+      "sha256": "99c69d104b68190455459d2819f36357fbe590023f43d1c20695a56bd6b036b3"
+    },
+    {
+      "bytes": 31316,
+      "path": "adapters/m1-engineering-execution-v1/src/bin/finite-request-2048-fixture.json",
+      "sha256": "f0498d403e808983d9acbf7b6ef7b98b6c2a5873734cd64a00d9c7df1fc2065f"
+    },
+    {
+      "bytes": 4726,
+      "path": "adapters/m1-engineering-execution-v1/src/bin/tp_closed_token_cli_tests.rs",
+      "sha256": "a4b3105ae6076b9836cbcb55392574f31243ae61c98879d69c94dfe3f89140a6"
+    },
+    {
+      "bytes": 9052,
+      "path": "adapters/m1-engineering-execution-v1/src/bin/tp_finite_request_cli_tests.rs",
+      "sha256": "d2fb33d457b14ad6783c489c2bc1898ff7c42bc73f99c9e5c01de45d6033d7fb"
+    },
+    {
+      "bytes": 11909,
+      "path": "adapters/m1-engineering-execution-v1/src/bin/tp_peer_dependency.rs",
+      "sha256": "a67a8d949f2b9e6e9a0e1b30204bed3ed872a1fefa45b9aec83b540c7f3e5829"
+    },
+    {
+      "bytes": 15303,
+      "path": "adapters/m1-engineering-execution-v1/src/bin/tp_peer_dependency_tests.rs",
+      "sha256": "243153ea25d88dd4a99fc90ad4113431bb390401553386047a3d0b9a0684b394"
+    },
+    {
+      "bytes": 57302,
+      "path": "adapters/m1-engineering-execution-v1/src/bin/tp_peer_worker.rs",
+      "sha256": "4a4bd9328c2a7b1f21a9eb5da26fcbf197230cafac1584ca5045c71f0bcbfa72"
+    },
+    {
+      "bytes": 6505,
+      "path": "adapters/m1-engineering-execution-v1/src/bin/tp_prepared_closed_token_tests.rs",
+      "sha256": "a16763cdbc7471312a96943691a4bb757b0ef7beaac817a6af2dc4deea4fe814"
+    },
+    {
+      "bytes": 3024,
+      "path": "adapters/m1-engineering-execution-v1/src/bin/tp_prepared_finite_begin_tests.rs",
+      "sha256": "a93cf8377a8ff497177b478c1fccda4364601b323f9ed19d9610fbbf8d823007"
+    },
+    {
+      "bytes": 6563,
+      "path": "adapters/m1-engineering-execution-v1/src/bin/tp_prepared_finite_request_tests.rs",
+      "sha256": "1528942352bc2f1662b4e88246a10d4e2fffa9d8ee461b0622658bec7688f610"
+    },
+    {
+      "bytes": 10693,
+      "path": "adapters/m1-engineering-execution-v1/src/bin/tp_prepared_graph.rs",
+      "sha256": "0f1c5d85f791cbed3f5864f8bfd078502b91390a9b56c0f86d02e4a62773b83d"
+    },
+    {
+      "bytes": 26276,
+      "path": "adapters/m1-engineering-execution-v1/src/bin/tp_prepared_graph_tests.rs",
+      "sha256": "9c8ef4647757724dc28e1ba4fa185ffa962e8be70af0ad0fc1f1ef7ab91592df"
+    },
+    {
+      "bytes": 33175,
+      "path": "adapters/m1-engineering-execution-v1/src/bin/tp_prepared_scope.rs",
+      "sha256": "b8c9ed2c89c1efd767aa3f02656eb40abd835aafdd4087b39675721527c02776"
+    },
+    {
+      "bytes": 97624,
+      "path": "adapters/m1-engineering-execution-v1/src/bin/tp_prepared_worker.rs",
+      "sha256": "9c1c2f6481f127aca95ac92b66f13dfbb7edffb043f3f96e1c3fc101f33e01e1"
+    },
+    {
+      "bytes": 26769,
+      "path": "adapters/m1-engineering-execution-v1/src/bin/tp_prepared_worker_fixture.rs",
+      "sha256": "67344ad8baba1a5bd507ee3444f86ca25c65e04ef47e5ae6463350c46d13cb0a"
+    },
+    {
+      "bytes": 10714,
+      "path": "adapters/m1-engineering-execution-v1/src/bin/tp_rank_worker.rs",
+      "sha256": "99e37c2d7359303ccfaf5ace40f13f3b3c3a862843aaa31251280ebddd9d7356"
+    },
+    {
+      "bytes": 87681,
+      "path": "adapters/m1-engineering-execution-v1/src/lib.rs",
+      "sha256": "840835d69a6bb02002203df0c1d0dba3d006429665edb3b878df417dc6ca0d78"
+    },
+    {
+      "bytes": 50505,
+      "path": "adapters/m1-engineering-execution-v1/src/tp_artifact.rs",
+      "sha256": "73d14780e5e199ba7f24b2a52c8a0705a2eb2c8440a15a4949ab762a1221e56f"
+    },
+    {
+      "bytes": 5799,
+      "path": "adapters/m1-engineering-execution-v1/src/tp_artifact/graph_bf16_argmax_v22.rs",
+      "sha256": "bb462a3bac9da91466689e886cceb4b93bc98537bf103d8d3c79ec319318d49a"
+    },
+    {
+      "bytes": 6935,
+      "path": "adapters/m1-engineering-execution-v1/src/tp_artifact/graph_split_attention_v1.rs",
+      "sha256": "72d85e6382bae33d3f8df52b81bf1ac2f6608e02d29851fe9c8d053e775a393b"
+    },
+    {
+      "bytes": 2613,
+      "path": "adapters/m1-engineering-execution-v1/src/tp_artifact/graph_wave_rmsnorm_v15.rs",
+      "sha256": "19637adec127ed21509e25d42b032530d26ad21640a77e6517c18f0d16bc8231"
+    },
+    {
+      "bytes": 51737,
+      "path": "adapters/m1-engineering-execution-v1/src/tp_execution.rs",
+      "sha256": "23f8b510ca49bc82495440e40dbc3ea7c83107e3cfaa70d50a2505b1cbb4e721"
+    },
+    {
+      "bytes": 107249,
+      "path": "adapters/m1-engineering-execution-v1/src/tp_execution/batched.rs",
+      "sha256": "8f7a99c17cda0ceac583f6ee8591dd4bfde19187199a04f5124663fd3505d4f6"
+    },
+    {
+      "bytes": 40696,
+      "path": "adapters/m1-engineering-execution-v1/src/tp_execution/batched/prepared.rs",
+      "sha256": "82322728e986544b6f22552c4211040bf65388aa851e7f7f593ffb55da6e5fd7"
+    },
+    {
+      "bytes": 27055,
+      "path": "adapters/m1-engineering-execution-v1/src/tp_execution/batched/prepared/finite_composition.rs",
+      "sha256": "7e1fadb1077af83f6ecb8b54101901c359e22271a58788775d1830f534dd9251"
+    },
+    {
+      "bytes": 10533,
+      "path": "adapters/m1-engineering-execution-v1/src/tp_execution/batched/prepared/finite_composition_wire_projection.rs",
+      "sha256": "729cbfa2fc32263f2df9db08d5763028867d703dd31e79d8db5ace8a21b9dbd3"
+    },
+    {
+      "bytes": 5345,
+      "path": "adapters/m1-engineering-execution-v1/src/tp_execution/batched/prepared/finite_head_transpose.rs",
+      "sha256": "5ea40344a6747c71402e43e751e61f7f723348762bc3055585cb50116218aff5"
+    },
+    {
+      "bytes": 2465,
+      "path": "adapters/m1-engineering-execution-v1/src/tp_execution/batched/prepared/finite_head_transpose_tests.rs",
+      "sha256": "4b38fa9dca07f8532dbd434d3521256de9a195df3abb578500ab31bdcf842abc"
+    },
+    {
+      "bytes": 16444,
+      "path": "adapters/m1-engineering-execution-v1/src/tp_execution/batched/prepared/finite_packing.rs",
+      "sha256": "78cecff363f9d38676e8628687f6b16970f4d5f081d6556adcf273f11c985a1b"
+    },
+    {
+      "bytes": 17799,
+      "path": "adapters/m1-engineering-execution-v1/src/tp_execution/batched/prepared/finite_packing_authentic_tests.rs",
+      "sha256": "a3ad643df4fa40544ee55d4cc129a97fa72eb916b5e6c18fab54f7c5d052a580"
+    },
+    {
+      "bytes": 13929,
+      "path": "adapters/m1-engineering-execution-v1/src/tp_execution/batched/prepared/finite_packing_tests.rs",
+      "sha256": "aed09cafecac287947f7fe77ddf8aec6208470b82eb2b0e0519a7e336daaad9e"
+    },
+    {
+      "bytes": 13499,
+      "path": "adapters/m1-engineering-execution-v1/src/tp_execution/batched/prepared/finite_source_recorder.rs",
+      "sha256": "7f5f24dfc5fe054fbd43be1be155d807cf942c2238e105d9674951cf5188077a"
+    },
+    {
+      "bytes": 11315,
+      "path": "adapters/m1-engineering-execution-v1/src/tp_execution/batched/prepared/finite_source_recorder_tests.rs",
+      "sha256": "4b1b71c79f0d30bea0d6917f430f4ace3f61c407d29fc6c54d412866c3127a2a"
+    },
+    {
+      "bytes": 97760,
+      "path": "adapters/m1-engineering-execution-v1/src/tp_execution/batched/tests.rs",
+      "sha256": "209c0b6e9978e170c66101b2097f2b3291900d8c2c4ca6da7c17e69843f16385"
+    },
+    {
+      "bytes": 19337,
+      "path": "adapters/m1-engineering-execution-v1/src/tp_execution/batched/tests/finite_composition.rs",
+      "sha256": "02cbcf5892a3a1f63dfe29fc8ff9e63f1f9366ee095f000d39fb5662a9ce9344"
+    },
+    {
+      "bytes": 28652,
+      "path": "adapters/m1-engineering-execution-v1/src/tp_execution/batched/tests/prepared_builder.rs",
+      "sha256": "e293902eb31419abdf24bdce94bf559022c9bbfa728674a105db169ff8a3da67"
+    },
+    {
+      "bytes": 6682,
+      "path": "adapters/m1-engineering-execution-v1/src/tp_execution/batched/tests/prepared_context2304.rs",
+      "sha256": "e426e481e8d59d0d51ef467c85773bac16adc908fe89a88549a5953733dc4187"
+    },
+    {
+      "bytes": 22554,
+      "path": "adapters/m1-engineering-execution-v1/src/tp_execution/batched/tests/prepared_graph.rs",
+      "sha256": "a262ed263dd76623a761a5b61a4b19da03d3d679a2cf1b4a01291331cb8fec0e"
+    },
+    {
+      "bytes": 10183,
+      "path": "adapters/m1-engineering-execution-v1/src/tp_execution/batched/tests/prepared_split_attention.rs",
+      "sha256": "a32a4f7274ef0c58a4eb5daeabfd463e9ef9eadf397c5fa672a1e8d9eb11be90"
+    },
+    {
+      "bytes": 12796,
+      "path": "adapters/m1-engineering-execution-v1/src/tp_execution/batched/tests/prepared_wave_stack.rs",
+      "sha256": "1136a9de4ec838a38d1f7c84cd9499c7f29269fefa7df31757e4e460acc64aed"
+    },
+    {
+      "bytes": 4355,
+      "path": "adapters/m1-engineering-execution-v1/src/tp_execution/finite_metadata.rs",
+      "sha256": "33cfb112343c0c587207885239cc32a656c1493820d41bc114fdb0f5d10a1ebe"
+    },
+    {
+      "bytes": 7029,
+      "path": "adapters/m1-engineering-execution-v1/src/tp_execution/finite_metadata_tests.rs",
+      "sha256": "5f7d048b33153ea20c136b2865e826720a1f52d0304d917c654e9749d59620f3"
+    },
+    {
+      "bytes": 13010,
+      "path": "adapters/m1-engineering-execution-v1/src/tp_execution/peer_dependency.rs",
+      "sha256": "114dad0e38f7d659e46bfddcea313e643568997722a8ad39cc45ca7057ba401d"
+    },
+    {
+      "bytes": 6344,
+      "path": "adapters/m1-engineering-execution-v1/src/tp_execution/peer_dependency_driver.rs",
+      "sha256": "79f654f74a2669797e740ca3fc581646b0dffc717df09a4d147deaeaa4bd2860"
+    },
+    {
+      "bytes": 10680,
+      "path": "adapters/m1-engineering-execution-v1/src/tp_execution/peer_reduction.rs",
+      "sha256": "6a94dff659c8e9a7a063936c786f3559e871fcbbff5f21b1512ade5638c2dcd8"
+    },
+    {
+      "bytes": 16214,
+      "path": "adapters/m1-engineering-execution-v1/src/tp_execution/peer_reduction/tests.rs",
+      "sha256": "362cd906b688723d82c1853a65cb4d7b4f90453c7ce22edd570899a40250badf"
+    },
+    {
+      "bytes": 11369,
+      "path": "adapters/m1-engineering-execution-v1/src/tp_execution/peer_reduction/tests/dependency.rs",
+      "sha256": "4198d1ef835d6dfca860ab8672e248e49fe7173372aa6abb1320bf3db669b258"
+    },
+    {
+      "bytes": 33295,
+      "path": "adapters/m1-engineering-execution-v1/src/tp_execution/prepared_graph.rs",
+      "sha256": "6b46af3580073052a39e6c5669829b095ba787dcf295b097242268ee9b6884bb"
+    },
+    {
+      "bytes": 25812,
+      "path": "adapters/m1-engineering-execution-v1/src/tp_execution/prepared_graph_tests.rs",
+      "sha256": "0758ba648c61dbfaf0d44efe274d7f415d7267c15aa4055c502bbbd26abe0d36"
+    },
+    {
+      "bytes": 16142,
+      "path": "adapters/m1-engineering-execution-v1/src/tp_execution/prepared_peer.rs",
+      "sha256": "087fe5078ce649b7eb97c738dafd8ea51e27bdfac82068787a798fd62ec92258"
+    },
+    {
+      "bytes": 26997,
+      "path": "adapters/m1-engineering-execution-v1/src/tp_execution/projection.rs",
+      "sha256": "ef8eab28c37713b2139f63c2efbd6736c9dd89ab1697399ca602787ca3d6eb75"
+    },
+    {
+      "bytes": 15279,
+      "path": "adapters/m1-engineering-execution-v1/src/tp_execution/reduction.rs",
+      "sha256": "97ef275706644748f4b3817d9c919a18ba3cb3db8158f6fd9d0e47a938fe8f93"
+    },
+    {
+      "bytes": 2359,
+      "path": "adapters/m1-engineering-execution-v1/src/tp_execution/setup_upload.rs",
+      "sha256": "6f66c80f9cd0f2d770cd8dbeffc0f3bdde4adf764b7b3b85f5caae301b6f988f"
+    },
+    {
+      "bytes": 9491,
+      "path": "adapters/m1-engineering-execution-v1/src/tp_execution/setup_upload/tests.rs",
+      "sha256": "47f851eee04aa259c63cd6db8c0ead0b7331605703b5d773b242136746ec1b07"
+    },
+    {
+      "bytes": 17275,
+      "path": "adapters/m1-engineering-execution-v1/src/tp_execution/tests.rs",
+      "sha256": "23520ec049ff98a51d29a1ecc0b93a6f631a063478c03565c4f22d9714cbebe0"
+    },
+    {
+      "bytes": 22322,
+      "path": "adapters/m1-engineering-execution-v1/src/tp_finite_client.rs",
+      "sha256": "042facc4e6068756f77cb587af6eedcf7c1b4d05e9e74484d893a4c899b824d9"
+    },
+    {
+      "bytes": 24104,
+      "path": "adapters/m1-engineering-execution-v1/src/tp_finite_client/long.rs",
+      "sha256": "0fa71b14b46716aedc17e6e9ac15fa0e1e98b2ad3757558c0eaf9857a04c8a29"
+    },
+    {
+      "bytes": 14050,
+      "path": "adapters/m1-engineering-execution-v1/src/tp_finite_client/long/evidence.rs",
+      "sha256": "925a70930c66a4304d321db9b3a0f89b0309036fadf545b0f4645c55c111c9ec"
+    },
+    {
+      "bytes": 12375,
+      "path": "adapters/m1-engineering-execution-v1/src/tp_finite_client/long/tests.rs",
+      "sha256": "4f8e0e7c689b4cdb434d0dc7012d6f0d4bcaa33cc0dcac05940a9075ca537a60"
+    },
+    {
+      "bytes": 26135,
+      "path": "adapters/m1-engineering-execution-v1/src/tp_finite_client/mlp_tiles_comparison.rs",
+      "sha256": "c04a00cd89852839b2b30fc804e31480e7baab9853dd2e7acf357093fece6f3a"
+    },
+    {
+      "bytes": 11355,
+      "path": "adapters/m1-engineering-execution-v1/src/tp_finite_client/mlp_tiles_comparison/evidence.rs",
+      "sha256": "72f33ae9c1dcf7b4b81fc2d2247b0e7b1cec31faf66a8102c6ae749f37f88547"
+    },
+    {
+      "bytes": 21627,
+      "path": "adapters/m1-engineering-execution-v1/src/tp_finite_client/mlp_tiles_comparison/tests.rs",
+      "sha256": "8b78d25414b0ecf510d2eac1a34b6cdf530a934545317711e3ac810dd05f5699"
+    },
+    {
+      "bytes": 28053,
+      "path": "adapters/m1-engineering-execution-v1/src/tp_finite_client/prefix_decode.rs",
+      "sha256": "7cc459db5fc127182489e94833ddd693ec1f7b67a4312a317544c7b598fdf1da"
+    },
+    {
+      "bytes": 10015,
+      "path": "adapters/m1-engineering-execution-v1/src/tp_finite_client/prefix_decode/evidence.rs",
+      "sha256": "c6d5fdb623500807e193daa617347789b8e9ecef5c27db233836ce98cd19cd4e"
+    },
+    {
+      "bytes": 5240,
+      "path": "adapters/m1-engineering-execution-v1/src/tp_finite_client/prefix_decode/evidence_tests.rs",
+      "sha256": "ec19bcb2abb9315a23798e139c33ff65928589d78d3b4b4d651e9be31bae0f87"
+    },
+    {
+      "bytes": 7191,
+      "path": "adapters/m1-engineering-execution-v1/src/tp_finite_client/prefix_decode/host_observation.rs",
+      "sha256": "2484e6d772275335d4cb0d4a73f824f80db78805501050ae4066730be97efa04"
+    },
+    {
+      "bytes": 6457,
+      "path": "adapters/m1-engineering-execution-v1/src/tp_finite_client/prefix_decode/host_observation/tests.rs",
+      "sha256": "4b80396510677a364ca6a03b5de57bee100e12ffe74d750f3f9ec36b5c6b2740"
+    },
+    {
+      "bytes": 12415,
+      "path": "adapters/m1-engineering-execution-v1/src/tp_finite_client/prefix_decode/tests.rs",
+      "sha256": "a2311b57d73352027080a755092a208af12f7648341acdf4e906acb981862b6e"
+    },
+    {
+      "bytes": 22091,
+      "path": "adapters/m1-engineering-execution-v1/src/tp_finite_client/prefix_layer.rs",
+      "sha256": "5922ffba2e4a1f88fcb0754fe7f7cef866986a375a5654a5cdd6c44718338ffd"
+    },
+    {
+      "bytes": 4272,
+      "path": "adapters/m1-engineering-execution-v1/src/tp_finite_client/prefix_layer/evidence.rs",
+      "sha256": "5dd9e04d0607b0d2e840446e9685b6c25210c13a500b9a63e4589ba673df481d"
+    },
+    {
+      "bytes": 3011,
+      "path": "adapters/m1-engineering-execution-v1/src/tp_finite_client/prefix_layer/evidence_tests.rs",
+      "sha256": "976c0544a2ff16a223a3e78d2df71dd66a538b2013e2fb19dc80fbd7bc31f52e"
+    },
+    {
+      "bytes": 7402,
+      "path": "adapters/m1-engineering-execution-v1/src/tp_finite_client/prefix_layer/provenance.rs",
+      "sha256": "4ed8579c74e27f01b1088a7879eb6f44a3ec56a1aba81528df8ab495c89f6eee"
+    },
+    {
+      "bytes": 5087,
+      "path": "adapters/m1-engineering-execution-v1/src/tp_finite_client/prefix_layer/provenance_tests.rs",
+      "sha256": "c8d74424acf8c765e738e916ebda873604bdde777ea8af511ff50afbe14fd4d0"
+    },
+    {
+      "bytes": 8870,
+      "path": "adapters/m1-engineering-execution-v1/src/tp_finite_client/prefix_layer/tests.rs",
+      "sha256": "191d1ea681ba92957dc847c4affbc8854eceecd804b047807774b047edbda1c0"
+    },
+    {
+      "bytes": 16704,
+      "path": "adapters/m1-engineering-execution-v1/src/tp_finite_client/process.rs",
+      "sha256": "e11f34219bbf8366559be1e01122e70394eec12b812d20432c320dc1f5e31900"
+    },
+    {
+      "bytes": 26090,
+      "path": "adapters/m1-engineering-execution-v1/src/tp_finite_client/queued_mlp_comparison.rs",
+      "sha256": "f8ced697a8fa7b1acbb7cca2e01a87f6a10aaf7f3bc8532f88cff965ddf19b04"
+    },
+    {
+      "bytes": 11377,
+      "path": "adapters/m1-engineering-execution-v1/src/tp_finite_client/queued_mlp_comparison/evidence.rs",
+      "sha256": "a9d40a0326c2956fd536aa64c94356776b1f985f76fb603cc7cedb4a735f023b"
+    },
+    {
+      "bytes": 21508,
+      "path": "adapters/m1-engineering-execution-v1/src/tp_finite_client/queued_mlp_comparison/tests.rs",
+      "sha256": "a3c46a3072c1ca2384bd75d2602878104a448589e234b7c0fe6dfc71db180491"
+    },
+    {
+      "bytes": 25703,
+      "path": "adapters/m1-engineering-execution-v1/src/tp_finite_client/queued_projection_comparison.rs",
+      "sha256": "1a7f2b5f487447f3368ee4ed3f8a1b0d9cb25d287546bb3e22042158fcd4c4be"
+    },
+    {
+      "bytes": 11393,
+      "path": "adapters/m1-engineering-execution-v1/src/tp_finite_client/queued_projection_comparison/evidence.rs",
+      "sha256": "dace492b1f983a4857b85331f7b59cb726551a3338d2b27f215d8952da0e21bf"
+    },
+    {
+      "bytes": 22559,
+      "path": "adapters/m1-engineering-execution-v1/src/tp_finite_client/queued_projection_comparison/tests.rs",
+      "sha256": "9b40e439606664189451932421b61d5126fcdeb43edef8259b0ea8dd83bc2138"
+    },
+    {
+      "bytes": 27194,
+      "path": "adapters/m1-engineering-execution-v1/src/tp_finite_client/rearm_smoke.rs",
+      "sha256": "e0466fd6f9b3f82db803003579c19bd88bf40581d2d4c0258f0912f66ec08fa0"
+    },
+    {
+      "bytes": 9555,
+      "path": "adapters/m1-engineering-execution-v1/src/tp_finite_client/rearm_smoke/evidence.rs",
+      "sha256": "6517a6bf30b7776b55cd187ce4b06be64d70a63f90e0c8a9abd3f1e3615e712a"
+    },
+    {
+      "bytes": 18040,
+      "path": "adapters/m1-engineering-execution-v1/src/tp_finite_client/rearm_smoke/tests.rs",
+      "sha256": "3b51a7459dcbd2155ab79b213bdd3f5e9dd579b7e31eae559219f210581606d2"
+    },
+    {
+      "bytes": 12460,
+      "path": "adapters/m1-engineering-execution-v1/src/tp_finite_client/setup.rs",
+      "sha256": "a960792f08e6f13c3445882babc638be0829a988e4fe1c9403a11f4fa5092555"
+    },
+    {
+      "bytes": 11019,
+      "path": "adapters/m1-engineering-execution-v1/src/tp_finite_client/tests.rs",
+      "sha256": "0d03070c47b42c102c56ba333945d615f6343420c7089cf04ef40235f2ef9c52"
+    },
+    {
+      "bytes": 26906,
+      "path": "adapters/m1-engineering-execution-v1/src/tp_finite_client/tiles_decode.rs",
+      "sha256": "543f853095d2c4279eb9062a497bea2ed652889da360a4050a216fcf21aa4f47"
+    },
+    {
+      "bytes": 9897,
+      "path": "adapters/m1-engineering-execution-v1/src/tp_finite_client/tiles_decode/evidence.rs",
+      "sha256": "521b21fb5c9dee063f10c2718cdd62c976b4c9d2e87df0067202bf0a0987d637"
+    },
+    {
+      "bytes": 22143,
+      "path": "adapters/m1-engineering-execution-v1/src/tp_finite_client/tiles_decode/tests.rs",
+      "sha256": "35762c97ce245fecb04eba47f9349604485274ec80689098f47d0562d8a120c9"
+    },
+    {
+      "bytes": 18408,
+      "path": "adapters/m1-engineering-execution-v1/src/tp_model.rs",
+      "sha256": "e18cdc795cbaf4ece586ec8d866e573b0512ed8ab8eeb38359f07067457b9667"
+    },
+    {
+      "bytes": 365,
+      "path": "adapters/m1-engineering-execution-v1/tests/finite_composition_wire.rs",
+      "sha256": "e67cc678e11c23c21cf8361390c02f4efd515332fd771e201481c140e8d82cb2"
+    },
+    {
+      "bytes": 14487,
+      "path": "adapters/tp-peer-engineering-worker-v4/src/dependency_wire.rs",
+      "sha256": "091f09b3bcc5c6d5028fdf960ab06183734a773f29e7aa775c4335a354222f63"
+    },
+    {
+      "bytes": 17516,
+      "path": "adapters/tp-peer-engineering-worker-v4/src/prepared_forward_wire.rs",
+      "sha256": "13914e2e582a4821e953c7923d4baf989ef2a5022732744ee02b55835ad5154d"
+    },
+    {
+      "bytes": 33465,
+      "path": "adapters/tp-peer-engineering-worker-v4/src/prepared_graph_wire.rs",
+      "sha256": "5c68ac6c8c12a0b61858b5011713828d6ebc494f4edd420b41433c16d33c6fc7"
+    },
+    {
+      "bytes": 2433,
+      "path": "adapters/tp-peer-engineering-worker-v4/src/prepared_program_wire.rs",
+      "sha256": "1a04baae410bd11d6af8941f143a568c6f7ac4965b95a714c8104f7888af842e"
+    },
+    {
+      "bytes": 7470,
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/Cargo.lock",
+      "sha256": "df2a4e0b9cf96687328a5b1e41937eb940e62144314d7f903c8c961da947f7aa"
+    },
+    {
+      "bytes": 581,
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/Cargo.toml",
+      "sha256": "bca0026055d76e9178b867589e8c6573ce74d0ebfe7d5144265124ead23784e1"
+    },
+    {
+      "bytes": 21103,
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/finite_composition_wire.rs",
+      "sha256": "3db06cb2d06edd63d36811be2d0bdfe8606d1987b95cfda0c7db4422ac6c332f"
+    },
+    {
+      "bytes": 11676,
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/finite_forward_wire_v1.rs",
+      "sha256": "7152e01e863636b66c17c684818aa87a1c48ef65d772f1ac61a7468167faeff1"
+    },
+    {
+      "bytes": 7638,
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/finite_forward_wire_v1_tests.rs",
+      "sha256": "4cb51220e6500cfb0259f6733f9215bd6727b3fcf674344b5d3397f7123274d9"
+    },
+    {
+      "bytes": 19254,
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/finite_long_wire_v1.rs",
+      "sha256": "930cb7a2e29d2bee532473ea55b13d915b838472595795be4995748ce5233eca"
+    },
+    {
+      "bytes": 10906,
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/finite_long_wire_v1_tests.rs",
+      "sha256": "50c6074db295bc13d659c54572b354511830e94af3db487a0603f8ab91999cdc"
+    },
+    {
+      "bytes": 17339,
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/finite_mlp_tiles_comparison_wire_v1.rs",
+      "sha256": "d006a449e375970ddfd30544418ed9152f024de6032998ab3016049e199aea20"
+    },
+    {
+      "bytes": 14191,
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/finite_mlp_tiles_comparison_wire_v1_tests.rs",
+      "sha256": "fc7200f34308f76e4c71c1c257b48a48ae4ddaa336fe255565297097270b149a"
+    },
+    {
+      "bytes": 21984,
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/finite_prefix_decode_wire_v1.rs",
+      "sha256": "5dbc804123b577664702af88af84570e3a053b54a278f6508b1b9992e37727d5"
+    },
+    {
+      "bytes": 15762,
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/finite_prefix_decode_wire_v1_tests.rs",
+      "sha256": "f4f298504c7a399aab2eba09ba212b475096617fa1ecbab9ac7cb49925b205b0"
+    },
+    {
+      "bytes": 15979,
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/finite_prefix_layer_wire_v1.rs",
+      "sha256": "6aa4834048c329530257db2f10330b5332c22abd5308ae37eba4caec0781fd0a"
+    },
+    {
+      "bytes": 9287,
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/finite_prefix_layer_wire_v1_tests.rs",
+      "sha256": "ea25876eea1243e903907eac4ad06d0b2cb8dcb19885e0545a83b388c6e5abb3"
+    },
+    {
+      "bytes": 16919,
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/finite_queued_mlp_comparison_wire_v1.rs",
+      "sha256": "92fb716a5118ec8451356f7b4ef0aefc60c36ba60069113cbc6a45468e1315ef"
+    },
+    {
+      "bytes": 11592,
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/finite_queued_mlp_comparison_wire_v1_tests.rs",
+      "sha256": "ac65a696900d3139225c705ebb1b3434ab03e003ea78422a959f1531f89dfd87"
+    },
+    {
+      "bytes": 16009,
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/finite_queued_projection_comparison_wire_v1.rs",
+      "sha256": "1624c445d8572d4f1e331fbd0e18ab710587ea773977b2b77acae41f14eeadad"
+    },
+    {
+      "bytes": 12535,
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/finite_queued_projection_comparison_wire_v1_tests.rs",
+      "sha256": "262c13cdb5498bcc113c80a9d1f9d3d46de0ca582ed3bc1263153793609c518d"
+    },
+    {
+      "bytes": 8191,
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/finite_rearm_smoke_stage_v1.rs",
+      "sha256": "f605b8a9abe82d333c6740106e9a14b4687390b19780515b9bc2bc2b52f32457"
+    },
+    {
+      "bytes": 14065,
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/finite_rearm_smoke_wire_v1.rs",
+      "sha256": "96cc26b76defcacb9ab67c1571e9682e5721fe081a4340ea828a7e0dfd750941"
+    },
+    {
+      "bytes": 9480,
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/finite_rearm_smoke_wire_v1_tests.rs",
+      "sha256": "7a6fde9f9e7d9392a064fd2b004735109f57d8cf926309236337723f93f37223"
+    },
+    {
+      "bytes": 10404,
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/finite_setup_wire_v1.rs",
+      "sha256": "7fc149a4e1014dc03ff3252075417e2cad578a24280db41d209010879c760294"
+    },
+    {
+      "bytes": 5102,
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/finite_setup_wire_v1_tests.rs",
+      "sha256": "c168dd098b53ed425df2e52fb3924e125a1c91e6784761f7a5475287b7697a16"
+    },
+    {
+      "bytes": 20334,
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/finite_tiles_decode_wire_v1.rs",
+      "sha256": "5441c410a66cccb7b3d90387f8dbb5eb9f84bd9ca42e56c1d69ee037c8db78b9"
+    },
+    {
+      "bytes": 13468,
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/finite_tiles_decode_wire_v1_tests.rs",
+      "sha256": "21443ffc79304791d5419e5d9ed444677d84606dad924ae82a082fbde605f19c"
+    },
+    {
+      "bytes": 5462,
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/forward_sequence.rs",
+      "sha256": "c70205794fa36a745c66ed5c2121a13ccc754cedc1f9639d309ff194538e38fe"
+    },
+    {
+      "bytes": 6967,
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/forward_sequence_tests.rs",
+      "sha256": "4c3617dee62009fab1eeb3bc3789e79aea517b37f7d9aeb3e4df1e2a9ebea157"
+    },
+    {
+      "bytes": 1577,
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/lib.rs",
+      "sha256": "26c21d84290f1dcf1a8b3e2c29cede0a8ad20fe2c97b1487a0298a3aa0d38bf1"
+    },
+    {
+      "bytes": 4149,
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/long_forward_sequence_v1.rs",
+      "sha256": "53b74bbc91c73ac7f83f8be7d44e77c323fc81d55062e91af95dec868572d70e"
+    },
+    {
+      "bytes": 5973,
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/long_forward_sequence_v1_tests.rs",
+      "sha256": "06b9a918f7491ab98cc8b0f8f26c2e23ed1e56ebdac9cd26f9346ea028ad77ac"
+    },
+    {
+      "bytes": 7366,
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/main.rs",
+      "sha256": "ea46ee64fb211e508217ef95d9dd7cb1b5f9fe97263f3d4c99fb9812b4d692fb"
+    },
+    {
+      "bytes": 47960,
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_catalog.rs",
+      "sha256": "67ba5a41268467beaad82f4630474e75d40f479dafd3fcc5f3441480a82a5922"
+    },
+    {
+      "bytes": 32197,
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_catalog_tests.rs",
+      "sha256": "3aba3787c67ab319396152d2d5974d9f283e909267d76e218ae7b58992765657"
+    },
+    {
+      "bytes": 11412,
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_cli_v1.rs",
+      "sha256": "449db38b9c7c933ece2ff65a4c8ab5acb3859b4c025de5a675ab308deb7266d7"
+    },
+    {
+      "bytes": 9561,
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_cli_v1_tests.rs",
+      "sha256": "00089635ef97a3032b6644ee64aa43b8d424a74d7e2be7f377c42563f92964a9"
+    },
+    {
+      "bytes": 15971,
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_forward.rs",
+      "sha256": "916002c4f77deaa7a240620373c10833cb0ecfa3584125e3ca033c4d611c1c2b"
+    },
+    {
+      "bytes": 1341,
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_forward_tests.rs",
+      "sha256": "26eb93d267b17a8c9231df94788d2bcc98391bc94f594ffebcdb09ac3bc834be"
+    },
+    {
+      "bytes": 12312,
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_long_cli_v1.rs",
+      "sha256": "14d11dd4337b5071f5fce60abed14cd61f89189118f4d77b465696393e139ae6"
+    },
+    {
+      "bytes": 6422,
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_long_cli_v1_tests.rs",
+      "sha256": "d22bf3abe58c76dc7f238cbc1f7170609fdfc9fb711b0d57cd6e3290ffccd134"
+    },
+    {
+      "bytes": 3348,
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_long_forward_v1.rs",
+      "sha256": "3bf47fa8e351e76b350f32db4fa8df57e6feef5c89091ad80c46694d605402ae"
+    },
+    {
+      "bytes": 12756,
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_mlp_tiles_comparison_cli_v1.rs",
+      "sha256": "d1877f6bd3628ef5d45d66892ea65fe193a87aca377fc00b64451f083c0b6104"
+    },
+    {
+      "bytes": 10071,
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_mlp_tiles_comparison_cli_v1_tests.rs",
+      "sha256": "0de258bc01a2bed55e1649e7b49b63cb4e1e4bc64cd9e15660b31d3eae616275"
+    },
+    {
+      "bytes": 8054,
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_mlp_tiles_comparison_v1.rs",
+      "sha256": "8612911b532098bf1af08e69048d09d5e5c3001baff3c0e3eec96ae9100ab2ef"
+    },
+    {
+      "bytes": 5138,
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_mlp_tiles_comparison_v1_tests.rs",
+      "sha256": "83d5f814c094d644d1a8ed9ab968decaccd8221f72cf04f2e93e543304e5e019"
+    },
+    {
+      "bytes": 13882,
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_decode_cli_v1.rs",
+      "sha256": "3782bbdbb1e261290f719cd44e53017b57f8983d1bce972b92b4393b96fc0d57"
+    },
+    {
+      "bytes": 11392,
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_decode_cli_v1_tests.rs",
+      "sha256": "ee25b53b99cbc373b64a94dce52db63e795e962348ce01416c8551d46ebdd291"
+    },
+    {
+      "bytes": 4502,
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_decode_host_cli_tests.rs",
+      "sha256": "ffcefda72321098f111da0077dfa9a849e125ca7255363a5d6bfcf97615f55ab"
+    },
+    {
+      "bytes": 10373,
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_decode_host_v1.rs",
+      "sha256": "8690488e29c78cd441d212760791760e16c2d621977bb5ba2a3600772fbb43c6"
+    },
+    {
+      "bytes": 2317,
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_decode_host_v1_tests.rs",
+      "sha256": "7c03e43432ac7fefcc58583a14dedf7636286fbfa5dff07f84974caa26f40e11"
+    },
+    {
+      "bytes": 9137,
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_layer_cli_v1.rs",
+      "sha256": "8a78ec7a7f933835b769e91101e6833cc669bea1a5f278c49d8b6b2c60b35b53"
+    },
+    {
+      "bytes": 10589,
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_layer_cli_v1_tests.rs",
+      "sha256": "e77cf867df1e3921565223f0283cf98817913e1c7ace351a620cfd76bd72f318"
+    },
+    {
+      "bytes": 10017,
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_tiles_decode_v6.rs",
+      "sha256": "66dab0e25a2bf6ca8769067508709997262bd27380eb3f7e7c1e7ee8484172d5"
+    },
+    {
+      "bytes": 4204,
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_tiles_decode_v6/sequence.rs",
+      "sha256": "652b4da0b720e550e017fd9df454e7a2dae7b5d283e221375fe25ad5a19ef8bf"
+    },
+    {
+      "bytes": 10457,
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_tiles_decode_v6/tests.rs",
+      "sha256": "88e03e564e6ff19f717758b26026151ce7b39898af9375fc74d4ac709f30d1a4"
+    },
+    {
+      "bytes": 13289,
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_tiles_layer_v6.rs",
+      "sha256": "4d5fac79aa18bfb968449c6222b09884a2127a577660183a7b8e98f5f5f2d3be"
+    },
+    {
+      "bytes": 8239,
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_tiles_layer_v6/tests.rs",
+      "sha256": "2937972ab82d70825b5d00c0dadc2d213b598d7ecb4d6f82284bd2611b005cf6"
+    },
+    {
+      "bytes": 14034,
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_queued_mlp_comparison_cli_v1.rs",
+      "sha256": "ba257db03426eae91aeb2067237d1bd15c3fff52fae7c606d08093d55df4c126"
+    },
+    {
+      "bytes": 11224,
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_queued_mlp_comparison_cli_v1_tests.rs",
+      "sha256": "5174c1435732d47c40c76a095de743e50f0c08efdf88e01c98a7af8d10fedc0f"
+    },
+    {
+      "bytes": 15560,
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_queued_mlp_comparison_v1.rs",
+      "sha256": "f1a0278866db1a9c7568193ecf82852632cfe86c08e0fa122a1afd36f09af447"
+    },
+    {
+      "bytes": 12957,
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_queued_projection_comparison_cli_v1.rs",
+      "sha256": "f0856034924fb27fcb5af18c0e5a4d2c56a38e41dfffc76c368793f431ac7a54"
+    },
+    {
+      "bytes": 11921,
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_queued_projection_comparison_cli_v1_tests.rs",
+      "sha256": "aa292a6b25aaad648886f4f2f1b4048f81a67a8ee6ad99f451a87f3ec7812ae7"
+    },
+    {
+      "bytes": 12626,
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_rearm_smoke_cli_v1.rs",
+      "sha256": "24c0ad860e40fd7f1410c81974e15c5a85f1779eb49c8de7f610ccd962c70ceb"
+    },
+    {
+      "bytes": 8849,
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_rearm_smoke_cli_v1_tests.rs",
+      "sha256": "9b2f0cadc16333b7f5a75d398c70083e37776b74e81f3bfd293c3b2c761e6677"
+    },
+    {
+      "bytes": 4396,
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_rearm_smoke_v1.rs",
+      "sha256": "36c2d05300cac98cf5fb7488d7d36b635e21724e83971c8c94ebfcfb45ad1579"
+    },
+    {
+      "bytes": 26358,
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_setup.rs",
+      "sha256": "13f88ee2684c436f4c6f7124a8956a1212fdda7172b854b0af6d796c00f5d191"
+    },
+    {
+      "bytes": 2776,
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_setup/prefix_decode_v6.rs",
+      "sha256": "f053a64b9681f955a5aa69ec26a640d1091961ca69feb50af1537bfc2040f29d"
+    },
+    {
+      "bytes": 1027,
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_setup/prefix_decode_v6/tests.rs",
+      "sha256": "bc781643ff5c8551c352327ec649c1db4d960a19c1f6a2d7f5ae378771cb52ce"
+    },
+    {
+      "bytes": 2925,
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_setup/prefix_layer_v6.rs",
+      "sha256": "19c51216d7754bfe23c0a776923a867a1ec02705abb7250a19719dfb2a54273d"
+    },
+    {
+      "bytes": 265,
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_setup/prefix_layer_v6/tests.rs",
+      "sha256": "ff71f236c28f4f26c2b6cb9958b79aff8791a4ea9146ba83754a4bb16446b084"
+    },
+    {
+      "bytes": 22768,
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_setup_tests.rs",
+      "sha256": "e2a7db4bdfffb891bcb2a50503e63d74e1ab7baf1e511e8ee2cc1dbac5a4ef80"
+    },
+    {
+      "bytes": 12965,
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_tiles_decode_cli_v1.rs",
+      "sha256": "f1d1bcdae3f75406f2103844c19a942e2df8fed080540e8538d94dea1c6bef9a"
+    },
+    {
+      "bytes": 17761,
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_tiles_decode_cli_v1_tests.rs",
+      "sha256": "69e217df855347ed1d9191a2bb721e29c3b44b0e289aabff5047395c54a2d73a"
+    },
+    {
+      "bytes": 10699,
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_tiles_decode_v1.rs",
+      "sha256": "cf0f7814d6e298146df2d8ed1c95f2867c62105b0d3dd3d3fd531c3a79db1c06"
+    },
+    {
+      "bytes": 4193,
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_tiles_decode_v1/sequence.rs",
+      "sha256": "b76617cf55cd8acbd8b4a20ab717aa0349538742f6274a12d8897bfa0139311a"
+    },
+    {
+      "bytes": 10783,
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_tiles_decode_v1/tests.rs",
+      "sha256": "0013c5fc4095831ba4d42bdbb47dfdcb390af6e5bec5a304ee304bbb9e14e660"
+    },
+    {
+      "bytes": 8157,
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/prefix_decode_host_observation_v1.rs",
+      "sha256": "fd7e80018b10ea1fd74d35713eb1e71951cd2eb1adc108574b3912af8d7d2ab6"
+    },
+    {
+      "bytes": 7712,
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/prefix_decode_host_observation_v1_tests.rs",
+      "sha256": "bd87333385701a90b9159301d4746a6aee26942a4f10739f0b97ef32b9b956b0"
+    },
+    {
+      "bytes": 3707,
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/rearm_smoke_sequence_v1.rs",
+      "sha256": "2ba10a71d5c61f662efb5c6643d7226eb2338af9459f78707b02c6ee2db632cc"
+    },
+    {
+      "bytes": 5300,
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/rearm_smoke_sequence_v1_tests.rs",
+      "sha256": "575462c199087c1811de3c52a1950f6ddf98e626916eddd3fd354606f9a3ff92"
+    },
+    {
+      "bytes": 8212,
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/resident_artifacts.rs",
+      "sha256": "04f3e82eb7b21abf8d6c820b9c598f659d1565ed5ecd15ad95fbf4e79c8bc8aa"
+    },
+    {
+      "bytes": 5728,
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/resident_artifacts_tests.rs",
+      "sha256": "57375b5f6ea2a8710d8266b851684853bc4ec72e1d5e5e7995089fc3208bf1b1"
+    },
+    {
+      "bytes": 21877,
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/resident_layer.rs",
+      "sha256": "41ac228cc8bd6857c040a82221bb58c715392fcf3afeab73f983d2c6636a0982"
+    },
+    {
+      "bytes": 10086,
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/resident_layer/capture_v1.rs",
+      "sha256": "40ba8577feb8224f0e8ccab41f8591b79765f615018b25567b3f3e9bcd16eafa"
+    },
+    {
+      "bytes": 13535,
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/resident_layer/capture_v1/tests.rs",
+      "sha256": "1752a39dc7d3d51db0afb572d9b2937ffd55f8b99c774a630e4b48f16c277ab7"
+    },
+    {
+      "bytes": 9709,
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/resident_layer/mlp_tiles_v2.rs",
+      "sha256": "90e078103ed0fdc26cf7552d771ec6ec0f4d233cf1346c75bb40d13b6cb097cd"
+    },
+    {
+      "bytes": 5756,
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/resident_layer/mlp_tiles_v2/artifacts.rs",
+      "sha256": "b0e4357f26e37603a2de0a1afbdf19f89af957623c4ea38bc78b08647762297e"
+    },
+    {
+      "bytes": 5826,
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/resident_layer/mlp_tiles_v2/artifacts/tests.rs",
+      "sha256": "b74eff90ee71eb2ca867d21e13feba5ab0f3907a8694ea8ab6f961837e1b9509"
+    },
+    {
+      "bytes": 7662,
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/resident_layer/mlp_tiles_v2/tests.rs",
+      "sha256": "554f41a48c727f0023af25d6e117f7662a5d1afd25d6f74e104641b358799ef5"
+    },
+    {
+      "bytes": 7681,
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/resident_layer/prefix_tiles_decode_v6.rs",
+      "sha256": "2858667ec134f5eee42a2cfd71a83ecf90fd220f3dd4c818eef1100fd6e37484"
+    },
+    {
+      "bytes": 2126,
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/resident_layer/prefix_tiles_decode_v6/tests.rs",
+      "sha256": "40866fe9c12a2e02839f37031a1560ac09c2d2a9c56a76db9ff95731326375a9"
+    },
+    {
+      "bytes": 14246,
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/resident_layer/prefix_tiles_v6.rs",
+      "sha256": "51ca180f410768d088a3ff1c39f1a11705d4b3aedb95190468202fc096cc7b35"
+    },
+    {
+      "bytes": 3196,
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/resident_layer/prefix_tiles_v6/artifacts.rs",
+      "sha256": "b750c7d31fc08636540e0381e65f4aaf606ce58b288fc7b70ad282c65405f751"
+    },
+    {
+      "bytes": 2977,
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/resident_layer/prefix_tiles_v6/artifacts/tests.rs",
+      "sha256": "2388ee8e3fb5c258c92da8161b458ea56cffa38d505bded0140969bdac0d2dc2"
+    },
+    {
+      "bytes": 3976,
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/resident_layer/prefix_tiles_v6/tests.rs",
+      "sha256": "a3a8040a8b0585497a6619f8c10a8d659d2348d42ce0ed9f0373713e448d8a84"
+    },
+    {
+      "bytes": 12429,
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/resident_layer/queued_mlp_v1.rs",
+      "sha256": "5e5004e59827dcbdcd5535ee48bfd2e805725119aba6ddf23cccd8d5c810f0ec"
+    },
+    {
+      "bytes": 13522,
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/resident_layer/queued_mlp_v1/artifacts.rs",
+      "sha256": "154b10355135830abe1a58625dc7e76ad221f046e8fa383d18eb10753dd36561"
+    },
+    {
+      "bytes": 11675,
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/resident_layer/queued_mlp_v1/tests.rs",
+      "sha256": "542821f823e230a201d1c063b051c8081a7267bfc396ffa38a412857b1fb339d"
+    },
+    {
+      "bytes": 12753,
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/resident_layer/queued_projection_v1.rs",
+      "sha256": "f7d4e1592f85cb88eb125715bf27cf5a2228e26e97987162e650d781f6d0b091"
+    },
+    {
+      "bytes": 11135,
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/resident_layer/queued_projection_v1/artifacts.rs",
+      "sha256": "5e84cfa3e77e71619831c0568ae294704a7d946a3abe9f1761b75a5c3358b972"
+    },
+    {
+      "bytes": 13025,
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/resident_layer/queued_projection_v1/tests.rs",
+      "sha256": "a1df7540054b8ebe5a09a912c3c0790c92d6cab3718fdbfbad0a3cacd9f144c8"
+    },
+    {
+      "bytes": 8283,
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/resident_layer/tiles_decode_v1.rs",
+      "sha256": "23fc60e19d0e308c534718db0e6bf8b67bce564992b4546d697801cc83c1f90b"
+    },
+    {
+      "bytes": 1860,
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/resident_layer/tiles_decode_v1/tests.rs",
+      "sha256": "48b65d0cbe6ca23a4b4cd0ec075dd846e6ef642afc9c706f0d0dabaa9abef558"
+    },
+    {
+      "bytes": 11673,
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/resident_layer_tests.rs",
+      "sha256": "6f97b7e8f9652fc5a9db6f73efa96d09803fdc5bb1c7c642c4687c2b4b336d67"
+    },
+    {
+      "bytes": 15178,
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/state_roster.rs",
+      "sha256": "9c96a26551413d54f3566425c0805dd8ff77937bb8dcf0e68d86eef203d53466"
+    },
+    {
+      "bytes": 9312,
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/state_roster/prefix_tiles_decode_v6.rs",
+      "sha256": "a014a361492d9eab2aacbfb7418dacf05aa49364c67738201978bdd594287fc3"
+    },
+    {
+      "bytes": 6285,
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/state_roster/prefix_tiles_decode_v6/reuse.rs",
+      "sha256": "8ab273c276a13ee2fd198418acc9517b93ceb42ed53448cc23a63f625f99e458"
+    },
+    {
+      "bytes": 11389,
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/state_roster/prefix_tiles_decode_v6/tests.rs",
+      "sha256": "b9782525159d2e2c0585a2e7c050f5bb5310155b37ba35006e2e2313dd6737ec"
+    },
+    {
+      "bytes": 7938,
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/state_roster/prefix_tiles_v6.rs",
+      "sha256": "19a9c76cc7289680bdf0ca54d8a4132b8830cb39632213b210726d57f4d7984a"
+    },
+    {
+      "bytes": 3916,
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/state_roster/prefix_tiles_v6/tests.rs",
+      "sha256": "11d171f7bda7cd356a22ee5b6fbfc8d50a18e19ebf7cd205dafc98fa3b058162"
+    },
+    {
+      "bytes": 11169,
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/state_roster/state_reuse_v1.rs",
+      "sha256": "f633f6b4aa2af5721cf39a7c504cfeb79893130f966da1893a8775c58d66afdf"
+    },
+    {
+      "bytes": 10325,
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/state_roster/state_reuse_v1/tests.rs",
+      "sha256": "d21eb75f9ff5b6723d5fd4d7f182c9de53b59cdef3164df4dccf39956cf10469"
+    },
+    {
+      "bytes": 8934,
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/state_roster/tiles_decode_v1.rs",
+      "sha256": "c0f66638a6697840f730a2f74dd788a7125749f1667e2a4544450795295d25f0"
+    },
+    {
+      "bytes": 6441,
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/state_roster/tiles_decode_v1/reuse.rs",
+      "sha256": "2cdecf5b9d2463c1db9863bdabe9ba9db7b3e86d1353de51a7e927e6eaee2990"
+    },
+    {
+      "bytes": 9578,
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/state_roster/tiles_decode_v1/tests.rs",
+      "sha256": "59a8cb1ba47287689de6f20161306b3bb6559feb9522ba4822de4d8ec730c794"
+    },
+    {
+      "bytes": 16693,
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/state_roster_tests.rs",
+      "sha256": "d09e459c1a29a62453fc682974d0c901617e58684c2ea15f959e7266d52d9d8a"
+    },
+    {
+      "bytes": 8003,
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/tail_artifacts.rs",
+      "sha256": "fd3eba21656a0178262a1a17a8b70e176d084081b94cbc29e07dbbf84dcece5a"
+    },
+    {
+      "bytes": 4906,
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/tail_artifacts_tests.rs",
+      "sha256": "f9d382b00a134e3afd502c6262c39ae637e19b4b6c7d37a2704679f2c5b1215d"
+    },
+    {
+      "bytes": 10210,
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/tail_bindings.rs",
+      "sha256": "ffc5e7b6f1fb936aba20311a930a0fa345f228a3b74ff7317de992dd6e1c1dab"
+    },
+    {
+      "bytes": 6234,
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/tail_bindings_tests.rs",
+      "sha256": "4012ee1428a94f3d9eda9590e45ab6a7a591f247ac522251f90f1ff03bb47903"
+    },
+    {
+      "bytes": 5305,
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/tail_head.rs",
+      "sha256": "a6c5bc632b4bccea7d12826666b773c644a863809d17e3f85015661308ddf3bb"
+    },
+    {
+      "bytes": 4250,
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/tail_head_tests.rs",
+      "sha256": "9dd794419047d5e9e9290f8fe44f090c9b293f2b80407fc7aa76148ad6230884"
+    },
+    {
+      "bytes": 17813,
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/wire_golden_tests.rs",
+      "sha256": "ef74681142cdc3d6f1470256626c654f942e6752350b3e210d31b80b0997e6eb"
+    },
+    {
+      "bytes": 394,
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/tests/shared_wire.rs",
+      "sha256": "f0e83d4d46ad8f926020f3bfc0e61db3904067381c316e79f9d6365fb704d30b"
+    },
+    {
+      "bytes": 31316,
+      "path": "crates/ferric-build/src/fixtures/tokenizer/qwen3-long-context-v1.json",
+      "sha256": "f0498d403e808983d9acbf7b6ef7b98b6c2a5873734cd64a00d9c7df1fc2065f"
+    },
+    {
+      "bytes": 82616,
+      "path": "crates/ferric-build/src/tokenizer_execution.rs",
+      "sha256": "fa7ea497e37dde8f525bccc562654c749ace3dc9fb877086608336f6132a54a2"
+    },
+    {
+      "bytes": 155335,
+      "path": "crates/ferric-qwen-kernels/src/gemm.rs",
+      "sha256": "04448c23bd2738d4172a6bd8c82a1f74acb8a16b21e60dfe047bc6bef968925b"
+    },
+    {
+      "bytes": 149172,
+      "path": "crates/ferric-qwen-kernels/src/logits.rs",
+      "sha256": "a8f32db2afd8a5e835515f805f84b40b3b71512ebb6b273a6fa9dcb55a5253e5"
+    },
+    {
+      "bytes": 41291,
+      "path": "device/qwen3-tp-bf16-wave-argmax-kernels-v22/Cargo.lock",
+      "sha256": "1b11957321b10c8ba75ee546b17aa09ef42f2932103a95f3a0c298ab15575d1c"
+    },
+    {
+      "bytes": 706,
+      "path": "device/qwen3-tp-bf16-wave-argmax-kernels-v22/Cargo.toml",
+      "sha256": "d68b7e653a44041b16ece3fa0e340f7ea19e16f3cdf8bbef01f9aba7e50ee55b"
+    },
+    {
+      "bytes": 1823,
+      "path": "device/qwen3-tp-bf16-wave-argmax-kernels-v22/README.md",
+      "sha256": "728063a83ccd9c3a39e2124db6c227f4afda1f599d465776f6f3ab7a43059a5e"
+    },
+    {
+      "bytes": 1150,
+      "path": "device/qwen3-tp-bf16-wave-argmax-kernels-v22/build.rs",
+      "sha256": "399e8a7dbe72a1e2daf008c52cf90d6538f8e9eb9cd428703a7a36cad3599f3c"
+    },
+    {
+      "bytes": 1351,
+      "path": "device/qwen3-tp-bf16-wave-argmax-kernels-v22/build/target_contract.rs",
+      "sha256": "590e235c06df8041b8717caffaea9d1f56e40738d03d6947f4a3324cb171865a"
+    },
+    {
+      "bytes": 822,
+      "path": "device/qwen3-tp-bf16-wave-argmax-kernels-v22/src/lib.rs",
+      "sha256": "91efae8921bd5fa44afc57d518d27ec1794115114fea191fb054ad3944df6006"
+    },
+    {
+      "bytes": 5979,
+      "path": "device/qwen3-tp-bf16-wave-argmax-kernels-v22/src/logits.rs",
+      "sha256": "8d8928244876094536934be3f52c2d019c7833b987ba13d3180a32ddc3d85704"
+    },
+    {
+      "bytes": 7650,
+      "path": "device/qwen3-tp-bf16-wave-argmax-kernels-v22/src/logits/tests.rs",
+      "sha256": "c21db334de0f350760acc14c0fa8db4d4b286fc77ca99ad452a22911c346bf25"
+    },
+    {
+      "bytes": 5109,
+      "path": "device/qwen3-tp-bf16-wave-argmax-kernels-v22/tests/contract.rs",
+      "sha256": "9628be7bfaa8188dbc638ac0930698df2fd0a9af1370daa560ac0e689ce50cbf"
+    },
+    {
+      "bytes": 41300,
+      "path": "device/qwen3-tp-peer-tp2-kernels-v18/Cargo.lock",
+      "sha256": "e69451fab45d0855bb7a6dc08bc1dc6474d0271bed9d1e53d94dfc30292c8470"
+    },
+    {
+      "bytes": 690,
+      "path": "device/qwen3-tp-peer-tp2-kernels-v18/Cargo.toml",
+      "sha256": "981fb820206bab880607f58f0c54f0edbb2a0c89f42cbadd66f18c3ea308b33a"
+    },
+    {
+      "bytes": 2075,
+      "path": "device/qwen3-tp-peer-tp2-kernels-v18/README.md",
+      "sha256": "affc97a8407492faea0d7d578d26b37ae7096346e80e4ebf15d1a1089f6da3cd"
+    },
+    {
+      "bytes": 1406,
+      "path": "device/qwen3-tp-peer-tp2-kernels-v18/build.rs",
+      "sha256": "cc114acdcb7648b9668bd1f3dcfd6d2d5ed249b2cff3852f8288e39632d94813"
+    },
+    {
+      "bytes": 117,
+      "path": "device/qwen3-tp-peer-tp2-kernels-v18/rust-toolchain.toml",
+      "sha256": "ba50d1103ca205adaabf39f6321d74653fdf38123b31e2c2003c45417dd58907"
+    },
+    {
+      "bytes": 6560,
+      "path": "device/qwen3-tp-peer-tp2-kernels-v18/src/collective.rs",
+      "sha256": "dac509f21bdd5f43c5f6334f4d36a9ddb6c3fda2de710c9d4f8936df233541f0"
+    },
+    {
+      "bytes": 926,
+      "path": "device/qwen3-tp-peer-tp2-kernels-v18/src/copy.rs",
+      "sha256": "3d4de38cfa0544af7442fb91b7c52593fe7a0056d56f4bea21f163a887ec21dd"
+    },
+    {
+      "bytes": 1081,
+      "path": "device/qwen3-tp-peer-tp2-kernels-v18/src/lib.rs",
+      "sha256": "6800ea442ac0a656ab3ae01f43f772d0809d307cd74aebea17db11195475843b"
+    },
+    {
+      "bytes": 6425,
+      "path": "device/qwen3-tp-peer-tp2-kernels-v18/tests/contract.rs",
+      "sha256": "abd1d0bb007c9faae6b57e6e1d9c143fdf11e11e635d3bf1b5d305c4bcbff97d"
+    },
+    {
+      "bytes": 779,
+      "path": "device/qwen3-tp-perf-kernels-v3/Cargo.toml",
+      "sha256": "f94d97b9d1ec6a70cb709b5c06b959e63f5b9bdae7b098858ab286ac566c97e5"
+    },
+    {
+      "bytes": 7739,
+      "path": "device/qwen3-tp-perf-kernels-v3/README.md",
+      "sha256": "8e577cd42017dcfd752f7aaabda4013fc664a195f1789290150e70585c0c40d1"
+    },
+    {
+      "bytes": 8320,
+      "path": "device/qwen3-tp-perf-kernels-v3/src/attention.rs",
+      "sha256": "58c60ba824e8c76d2c88037c8447fe25081999a94a393724f7c9f961731bd71d"
+    },
+    {
+      "bytes": 3066,
+      "path": "device/qwen3-tp-perf-kernels-v3/src/attention_online.rs",
+      "sha256": "105a7065a7856d1c6f14e3edb743887e734231b1f42a3e0d42727a5b64ffde7b"
+    },
+    {
+      "bytes": 5547,
+      "path": "device/qwen3-tp-perf-kernels-v3/tests/attention_extraction.rs",
+      "sha256": "07a5c52068dd192ea42474e5f78a3579f3fbd9a5f7e288d006d91712f0757a1d"
+    },
+    {
+      "bytes": 13432,
+      "path": "device/qwen3-tp-perf-kernels-v3/tests/attention_numerics.rs",
+      "sha256": "28b7241d40db614dc639ca33c9ec9be38feb0cd7f1981c89b5ac25b0f2587adf"
+    },
+    {
+      "bytes": 7734,
+      "path": "device/qwen3-tp-perf-kernels-v3/tests/contract.rs",
+      "sha256": "a8e96a3678a40b41f2fe00cbadcf0384f8b0afd2031730ae37ccf82a98558df2"
+    },
+    {
+      "bytes": 9986,
+      "path": "device/qwen3-tp-perf-kernels-v3/tests/fixtures/attention_before_composition.rs",
+      "sha256": "45cffafa9c5c51f8fb196798e371daa750fbacf4d6f95bbeb3227111b1e2d10e"
+    },
+    {
+      "bytes": 6192,
+      "path": "device/qwen3-tp-perf-kernels-v3/tests/support/attention_expansion.rs",
+      "sha256": "506be2790b834ba40add5ee13b49c0484bd4af1fc93a327d4a59b6d9fc309fce"
+    },
+    {
+      "bytes": 41289,
+      "path": "device/qwen3-tp-split-context-attention-v1/Cargo.lock",
+      "sha256": "7ceea31e01e8efdf920a7d3204abc822f17b5708cd3f0373bbefcd19745232e3"
+    },
+    {
+      "bytes": 787,
+      "path": "device/qwen3-tp-split-context-attention-v1/Cargo.toml",
+      "sha256": "69723107c1652f76463cabaa5c726e86e9aac35d481c88622b13ea86be358a33"
+    },
+    {
+      "bytes": 1151,
+      "path": "device/qwen3-tp-split-context-attention-v1/build.rs",
+      "sha256": "e27b1b5b306d07a447f96dcacb073aedf4650764c00bfc371bfa8bfce0c9260b"
+    },
+    {
+      "bytes": 1351,
+      "path": "device/qwen3-tp-split-context-attention-v1/build/target_contract.rs",
+      "sha256": "590e235c06df8041b8717caffaea9d1f56e40738d03d6947f4a3324cb171865a"
+    },
+    {
+      "bytes": 13676,
+      "path": "device/qwen3-tp-split-context-attention-v1/src/attention.rs",
+      "sha256": "f6b871d6eba56cadfad501ac74b6c8a5227dae47a9cbdf982b324c00e616557a"
+    },
+    {
+      "bytes": 1047,
+      "path": "device/qwen3-tp-split-context-attention-v1/src/lib.rs",
+      "sha256": "24a5313e3a12404b30b328dc8011ffdebea94295e15e7da41db903140b14eae4"
+    },
+    {
+      "bytes": 3974,
+      "path": "device/qwen3-tp-wave-rmsnorm-kernels-v15/src/attention_numerics_v4.rs",
+      "sha256": "f23a9f80b4aa4fd6f8ca241f593b2c241b91fdab10425a7281b06db6da866174"
+    },
+    {
+      "bytes": 3066,
+      "path": "device/qwen3-tp-wave-rmsnorm-kernels-v15/src/attention_online.rs",
+      "sha256": "105a7065a7856d1c6f14e3edb743887e734231b1f42a3e0d42727a5b64ffde7b"
+    },
+    {
+      "bytes": 3438,
+      "path": "device/qwen3-tp-wave-rmsnorm-kernels-v15/src/finite_mlp_tasks.rs",
+      "sha256": "561d4ad101801c416bd4c689bc9b2bf078798c87fd292eb75a33b808b4c62a30"
+    },
+    {
+      "bytes": 3534,
+      "path": "device/qwen3-tp-wave-rmsnorm-kernels-v15/src/finite_mlp_tiles_v2.rs",
+      "sha256": "d421ea6dfeda8cecb1049f90ae7049c437b1a26c93e998bcfa1d62b5d2760d9b"
+    },
+    {
+      "bytes": 7583,
+      "path": "device/qwen3-tp-wave-rmsnorm-kernels-v15/src/finite_qkv_attention_output_tasks.rs",
+      "sha256": "cab909255be3077fc5f6c6532ebf454563e855ff655aa93321fcf29e09d28a77"
+    },
+    {
+      "bytes": 6998,
+      "path": "device/qwen3-tp-wave-rmsnorm-kernels-v15/src/finite_qkv_attention_output_tiles_v6.rs",
+      "sha256": "3a18e3cb7bab842249bbbef1fd3d5470ead1e7ab5760ae2c5a3b8fae08499bcd"
+    },
+    {
+      "bytes": 6937,
+      "path": "device/qwen3-tp-wave-rmsnorm-kernels-v15/src/finite_qkv_attention_tasks.rs",
+      "sha256": "821905b2814488f424ebee23b990e9036d74595ffd28f8a542ff3dad810ebdb4"
+    },
+    {
+      "bytes": 6345,
+      "path": "device/qwen3-tp-wave-rmsnorm-kernels-v15/src/finite_qkv_post_tasks.rs",
+      "sha256": "344b77699912bbd834d21a05938d65e84074f19f18ee7b975fb305eb991ad792"
+    },
+    {
+      "bytes": 6328,
+      "path": "device/qwen3-tp-wave-rmsnorm-kernels-v15/src/finite_qkv_tasks.rs",
+      "sha256": "4da57dd76870233ab0c01d4c95ecbf077b99fdc5673211de92033882474e7f8c"
+    },
+    {
+      "bytes": 6078,
+      "path": "device/qwen3-tp-wave-rmsnorm-kernels-v15/src/finite_tasks.rs",
+      "sha256": "434b668aff5f00318e22b5634b82e972af03e60cd83715a9dbf6403e0f667ae4"
+    },
+    {
+      "bytes": 5884,
+      "path": "device/qwen3-tp-wave-rmsnorm-kernels-v15/src/head_rope_numerics_v3.rs",
+      "sha256": "4b88b9ce6608c791a0df8d0d2c5166de7aad77d63e7b2c52383cce068a1996e9"
+    },
+    {
+      "bytes": 7417,
+      "path": "device/qwen3-tp-wave-rmsnorm-kernels-v15/src/mlp_numerics_v1.rs",
+      "sha256": "2e0edf9efdc1caf19ea574ba9dfeffa375072584d27e21a31308539a6b8115d1"
+    },
+    {
+      "bytes": 2231,
+      "path": "device/qwen3-tp-wave-rmsnorm-kernels-v15/src/mlp_tile_numerics_v2.rs",
+      "sha256": "1277f4cf1f7fec1d900f6704ea4a13e3b597128e91137e1f6774e5d19823ae5f"
+    },
+    {
+      "bytes": 2033,
+      "path": "device/qwen3-tp-wave-rmsnorm-kernels-v15/src/output_projection_numerics_v5.rs",
+      "sha256": "ef397ea5bfe59d6284172e0b2dda6c0f37eef69b48c1392274941d5b521cffd5"
+    },
+    {
+      "bytes": 6092,
+      "path": "device/qwen3-tp-wave-rmsnorm-kernels-v15/src/prefix_tiles_numerics_v6.rs",
+      "sha256": "3f729b83bc50d4e252a73911ac69bb4e4e1829e1cb05ca3f0bcffa36f09475ad"
+    },
+    {
+      "bytes": 2235,
+      "path": "device/qwen3-tp-wave-rmsnorm-kernels-v15/src/wave_numerics_v1.rs",
+      "sha256": "22ef471c341936b3bc6f7b5812405c60152292cef07dcbd03173bf2dd7ee49ea"
+    },
+    {
+      "bytes": 15214,
+      "path": "device/qwen3-tp-wave-rmsnorm-kernels-v15/tests/attention_claimed_numerics_v4.rs",
+      "sha256": "606db11b1d6729876411a1830e2ec18be434507c64f68f7254d63e808c294f74"
+    },
+    {
+      "bytes": 8839,
+      "path": "device/qwen3-tp-wave-rmsnorm-kernels-v15/tests/finite_qkv_post_reference.rs",
+      "sha256": "5c5adb3460c2064f9e5e394598388db98fee79d81c1b2ab5687545cdd433f5bb"
+    },
+    {
+      "bytes": 21273,
+      "path": "device/qwen3-tp-wave-rmsnorm-kernels-v15/tests/mlp_claimed_numerics_v1.rs",
+      "sha256": "a5898ea3a8f4cc549392684c43f5182258e501c5f1802eac64ccbf281b934c0d"
+    },
+    {
+      "bytes": 11952,
+      "path": "device/qwen3-tp-wave-rmsnorm-kernels-v15/tests/mlp_tiles_numerics_v2.rs",
+      "sha256": "a3b3d357afe33b3611ef31deede720f1d0ca899a05badc948d593ac0a2ab81a9"
+    },
+    {
+      "bytes": 17373,
+      "path": "device/qwen3-tp-wave-rmsnorm-kernels-v15/tests/output_projection_claimed_numerics_v5.rs",
+      "sha256": "207a22789c6d4c26d9daee5d35d7fb10ef688b0a2af24d948473cbaa9ee24982"
+    },
+    {
+      "bytes": 21154,
+      "path": "device/qwen3-tp-wave-rmsnorm-kernels-v15/tests/prefix_tiles_numerics_v6.rs",
+      "sha256": "de5a76a921cfea6f9caea166082ae44d5111ecce55912254baa961750fbaa2cc"
+    },
+    {
+      "bytes": 9062,
+      "path": "device/qwen3-tp-wave-rmsnorm-kernels-v15/tests/prefix_tiles_source_contract_v6.rs",
+      "sha256": "2ba37e09ceed6e181d0aa1597b81dd3742b0d973424f673c17a67867a3639114"
+    }
+  ],
+  "cpu_coverage": "605 selected tests; not a workspace-wide or legacy-v4 suite",
+  "cpu_receipt_sha256": "f9b4da95d00cb62a3eadb33d86ee942d0bdf0ecb5c559650161846f4dcd081e8",
+  "external_finite_worker_dependency": "separately retained sibling fe2o3 source generation, not published by this index",
+  "full_model_acceptance": false,
+  "performance_claim": false,
+  "production_authority": false,
+  "root_map_ferric_paths_verified": 355,
+  "root_map_sha256": "948ad340f98a3db7b624d8177fd947edde1d4da25dd3fbd5e12a251258534c3b",
+  "schema": "ferric-finite-source-publication-v1",
+  "source_export_sha256": "e6a6a3f0aea6e636902e87c92b2e3f6ec966f63b3cb98d214cb14f16940a9757",
+  "source_relocations": [
+    "ferric-performance/ prefix removed; module-relative layout unchanged"
+  ],
+  "standalone_reproducer": false
+}

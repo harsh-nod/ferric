@@ -1,0 +1,27 @@
+#[path = "build/target_contract.rs"]
+mod target_contract;
+
+fn main() {
+    println!("cargo:rerun-if-env-changed=CARGO_ENCODED_RUSTFLAGS");
+    println!("cargo:rerun-if-env-changed=CARGO_CFG_TARGET_ARCH");
+    let arch = std::env::var("CARGO_CFG_TARGET_ARCH").expect("Cargo target architecture");
+    let flags = std::env::var("CARGO_ENCODED_RUSTFLAGS").unwrap_or_default();
+    target_contract::validate_device_build(
+        &arch,
+        &flags,
+        "gfx950",
+        "-wavefrontsize32,+wavefrontsize64,-xnack",
+    )
+    .expect("split-context attention target differs from its source contract");
+    println!("cargo:rerun-if-env-changed=FE2O3_BINDING_CHECK_WRAPPER_MODE_V1");
+    println!("cargo:rerun-if-env-changed=FE2O3_BINDING_WRAPPER_MODE_V1");
+    if std::env::var_os("FE2O3_BINDING_CHECK_WRAPPER_MODE_V1").is_some()
+        || std::env::var_os("FE2O3_BINDING_WRAPPER_MODE_V1").is_some()
+    {
+        return;
+    }
+    // Host fixture only; engineering extraction installs its measured binding.
+    println!(
+        "cargo:rustc-env=FE2O3_CRATE_BINDING_ID_V1=378dd3b479458e7a1a3c862357bc9b95e013030e571256dd5e0946dbaec47586"
+    );
+}

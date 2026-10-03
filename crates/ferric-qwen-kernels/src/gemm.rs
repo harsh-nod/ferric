@@ -3608,6 +3608,137 @@ mod tests {
         }
     }
 
+    // Tiny finite probes only: every sum/product below is exact in binary64
+    // before its explicit binary32 rounding. Literal goldens were derived by
+    // the independent integer-bit P225 boundary oracle, not a GPU reduction.
+    fn m0_fixture_add(left: f32, right: f32) -> f32 {
+        assert!(left.is_finite() && right.is_finite());
+        let result = (f64::from(left) + f64::from(right)) as f32;
+        assert!(result.is_finite());
+        result
+    }
+
+    fn m0_fixture_bf16(value: f32) -> u16 {
+        assert!(value.is_finite());
+        let bits = value.to_bits();
+        let rounded = bits.wrapping_add(0x7fff + ((bits >> 16) & 1)) >> 16;
+        assert_ne!(rounded & 0x7f80, 0x7f80);
+        rounded as u16
+    }
+
+    fn m0_fixture_widen(word: u16) -> f32 {
+        let value = f32::from_bits(u32::from(word) << 16);
+        assert!(value.is_finite());
+        value
+    }
+
+    fn m0_fixture_dot(inputs: &[u16], weights: &[u16]) -> f32 {
+        assert!(!inputs.is_empty() && inputs.len() == weights.len() && inputs.len() <= 4);
+        let mut accumulator = 0.0_f32;
+        for (&input, &weight) in inputs.iter().zip(weights) {
+            let product =
+                (f64::from(m0_fixture_widen(input)) * f64::from(m0_fixture_widen(weight))) as f32;
+            accumulator = m0_fixture_add(accumulator, product);
+        }
+        accumulator
+    }
+
+    fn m0_fixture_tp2(rank0: f32, rank1: f32, residual: u16) -> u16 {
+        let first = m0_fixture_add(0.0, rank0);
+        let ranks = m0_fixture_add(first, rank1);
+        m0_fixture_bf16(m0_fixture_add(ranks, m0_fixture_widen(residual)))
+    }
+
+    #[test]
+    fn m0_projection_rounding_before_residual_disagrees_with_scalar_policy() {
+        let selected = profile(
+            Qwen3GemmModelRoleV1::Target8B,
+            Qwen3GemmBucketKindV1::DecodeS1C8192,
+            Qwen3GemmOperationV1::AttentionOutputResidual,
+        );
+        assert_eq!(
+            selected.numerical_policy(),
+            Qwen3GemmNumericalPolicyV1::Bf16StorageAscendingFp32Bf16Rne
+        );
+        assert!(!selected.proves_machine_arithmetic());
+        for (weights, residual, dot_bits, expected) in [
+            ([0x3f80, 0x3b80], 0xbf80, 0x3f80_8000, 0x3b80),
+            ([0xbf80, 0xbb80], 0x3f80, 0xbf80_8000, 0xbb80),
+        ] {
+            let dot = m0_fixture_dot(&[0x3f80; 2], &weights);
+            assert_eq!(dot.to_bits(), dot_bits);
+            let upstream = m0_fixture_bf16(m0_fixture_add(dot, m0_fixture_widen(residual)));
+            let historical = m0_fixture_bf16(m0_fixture_add(
+                m0_fixture_widen(m0_fixture_bf16(dot)),
+                m0_fixture_widen(residual),
+            ));
+            assert_eq!(upstream, expected);
+            assert_eq!(historical, 0x0000);
+            assert_ne!(upstream, historical);
+            assert_eq!(
+                m0_fixture_tp2(
+                    m0_fixture_widen(weights[0]),
+                    m0_fixture_widen(weights[1]),
+                    residual,
+                ),
+                expected
+            );
+        }
+    }
+
+    #[test]
+    fn m0_tp2_partitioned_partials_are_not_single_device_scalar_refinement() {
+        let inputs = [0x3f80; 4];
+        let weights = [0x4b80, 0x0000, 0x3f80, 0xcb80];
+        let single = m0_fixture_dot(&inputs, &weights);
+        let rank0 = m0_fixture_dot(&inputs[..2], &weights[..2]);
+        let rank1 = m0_fixture_dot(&inputs[2..], &weights[2..]);
+        assert_eq!(single.to_bits(), 0x0000_0000);
+        assert_eq!(rank0.to_bits(), 0x4b80_0000);
+        assert_eq!(rank1.to_bits(), 0xcb7f_ffff);
+        assert_eq!(m0_fixture_tp2(rank0, rank1, 0), 0x3f80);
+        assert_ne!(m0_fixture_bf16(single), m0_fixture_tp2(rank0, rank1, 0));
+        assert_eq!(
+            m0_fixture_tp2(
+                m0_fixture_widen(m0_fixture_bf16(rank0)),
+                m0_fixture_widen(m0_fixture_bf16(rank1)),
+                0,
+            ),
+            0x0000
+        );
+        // These two scalar partitions are a counterexample, not an MFMA or
+        // current tiled-kernel interpreter or a new catalog policy.
+        assert_ne!(
+            Qwen3GemmNumericalPolicyV1::Bf16StorageAscendingFp32Bf16Rne,
+            Qwen3GemmNumericalPolicyV1::Bf16StorageMfmaK16Fp32Bf16Rne
+        );
+    }
+
+    #[test]
+    fn m0_tp2_residual_last_and_explicit_fp32_steps_have_distinct_goldens() {
+        let large = f32::from_bits(0x4b80_0000);
+        assert_eq!(m0_fixture_tp2(large, -large, 0x3f80), 0x3f80);
+        let residual_first = m0_fixture_add(m0_fixture_add(large, 1.0), -large);
+        assert_eq!(m0_fixture_bf16(residual_first), 0x0000);
+        assert_eq!(m0_fixture_tp2(large, 1.0, 0xcb80), 0x0000);
+        let exact_real = (1_i64 << 24) + 1 - (1_i64 << 24);
+        assert_eq!(exact_real, 1);
+        assert_ne!(
+            m0_fixture_tp2(large, 1.0, 0xcb80),
+            m0_fixture_bf16(exact_real as f32)
+        );
+    }
+
+    #[test]
+    fn m0_tp2_positive_zero_seed_is_a_bitwise_boundary() {
+        let negative_zero = f32::from_bits(0x8000_0000);
+        assert_eq!(m0_fixture_tp2(negative_zero, negative_zero, 0x8000), 0x0000);
+        let unseeded = m0_fixture_add(m0_fixture_add(negative_zero, negative_zero), negative_zero);
+        assert_eq!(m0_fixture_bf16(unseeded), 0x8000);
+        assert_eq!(unseeded, 0.0);
+        assert_ne!(unseeded.to_bits(), 0.0_f32.to_bits());
+    }
+
     #[test]
     fn exhaustive_admitted_index_grid_and_extent_arithmetic_is_checked() {
         let catalog = Qwen3GemmProfileCatalogV1::canonical().unwrap();

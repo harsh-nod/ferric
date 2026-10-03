@@ -231,6 +231,7 @@ fn fixture_model(
         ranks.push(rank);
     }
     EngineeringTpExecutionV1 {
+        finite_model_binding: None,
         transports,
         ranks,
         plan,
@@ -246,6 +247,7 @@ fn fixture_model(
         ordered_batches: None,
         full_forward_enabled: false,
         full_forward: None,
+        peer_dependency_pending: None,
         timing: crate::host_timing::HostTiming::default(),
         closed: false,
     }

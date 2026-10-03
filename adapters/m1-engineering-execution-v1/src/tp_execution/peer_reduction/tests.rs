@@ -1,6 +1,8 @@
 //! Tests actual driver transitions with host-simulated collective outputs.
 //! These are not GPU arithmetic, visibility, or performance evidence.
 
+mod dependency;
+
 use super::*;
 use crate::tp_execution::{
     EngineeringTpBufferAccessV1, HostStagedPartialV1, Qwen3TensorParallelCollectiveStateV1,
@@ -20,6 +22,8 @@ struct Memory {
     events: Vec<(bool, u32, &'static str)>,
     commands: Vec<(u32, EngineeringTpDispatchV1)>,
     closed: Vec<u32>,
+    dependency_requests:
+        Vec<crate::tp_execution::peer_dependency::EngineeringTp2CollectiveRequestV1>,
 }
 
 struct Transport {
@@ -30,6 +34,8 @@ struct Transport {
     pending: Option<EngineeringTpDispatchV1>,
     fail_submit: bool,
     fail_wait: bool,
+    dependency_supported: bool,
+    dependency_failure: Option<dependency::ReceiptFailure>,
 }
 
 fn tensor(command: &EngineeringTpDispatchV1, index: usize) -> (u64, usize, usize) {
@@ -59,6 +65,15 @@ impl Transport {
 }
 
 impl EngineeringTpRankTransportV1 for Transport {
+    fn supports_peer_dependency_collectives(&self) -> bool {
+        self.dependency_supported
+    }
+    fn execute_peer_dependency_collective(
+        &mut self,
+        request: &crate::tp_execution::peer_dependency::EngineeringTp2CollectiveRequestV1,
+    ) -> TpResult<crate::tp_execution::peer_dependency::EngineeringTp2CollectiveReceiptV1> {
+        dependency::record_transaction(self, request)
+    }
     fn peer_group_rank(&self) -> Option<(u32, u32, u32)> {
         Some((self.pid, self.rank, self.world))
     }
@@ -195,6 +210,8 @@ fn fixture_with_capacity(world: u32, row_capacity: u32) -> EngineeringTpExecutio
             pending: None,
             fail_submit: false,
             fail_wait: false,
+            dependency_supported: false,
+            dependency_failure: None,
         })
         .collect::<Vec<_>>();
     let ranks = transports
@@ -212,6 +229,7 @@ fn fixture_with_capacity(world: u32, row_capacity: u32) -> EngineeringTpExecutio
         })
         .collect();
     EngineeringTpExecutionV1 {
+        finite_model_binding: None,
         transports,
         ranks,
         plan,
@@ -227,6 +245,7 @@ fn fixture_with_capacity(world: u32, row_capacity: u32) -> EngineeringTpExecutio
         ordered_batches: None,
         full_forward_enabled: false,
         full_forward: None,
+        peer_dependency_pending: None,
         timing: crate::host_timing::HostTiming::default(),
         closed: false,
     }

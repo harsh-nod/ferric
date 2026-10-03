@@ -1022,6 +1022,7 @@ dependencies = [
  "ferric-qwen3-draft-batch32-kernels-device-v10",
  "ferric-qwen3-tp-batch-kernels-device-v2",
  "ferric-qwen3-tp-batch32-kernels-device-v5",
+ "ferric-qwen3-tp-bf16-wave-argmax-kernels-device-v22",
  "ferric-qwen3-tp-fp32-argmax-kernels-device-v11",
  "ferric-qwen3-tp-fp32-head-kernels-device-v7",
  "ferric-qwen3-tp-fp32-head32-kernels-device-v8",
@@ -1029,8 +1030,10 @@ dependencies = [
  "ferric-qwen3-tp-large-kv-kernels-device-v9",
  "ferric-qwen3-tp-parallel-kv-kernels-device-v16",
  "ferric-qwen3-tp-peer-kernels-device-v4",
+ "ferric-qwen3-tp-peer-tp2-kernels-device-v18",
  "ferric-qwen3-tp-peer32-kernels-device-v6",
  "ferric-qwen3-tp-perf-kernels-device-v3",
+ "ferric-qwen3-tp-split-context-attention-device-v1",
  "ferric-qwen3-tp-wave-query-hoist-kernels-device-v14",
  "ferric-qwen3-tp-wave-rmsnorm-kernels-device-v15",
  "ferric-spec",
@@ -1125,6 +1128,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "ferric-qwen3-tp-bf16-wave-argmax-kernels-device-v22"
+version = "0.1.0"
+dependencies = [
+ "fe2o3-device",
+ "fe2o3-host",
+]
+
+[[package]]
 name = "ferric-qwen3-tp-fp32-argmax-kernels-device-v11"
 version = "0.1.0"
 dependencies = [
@@ -1181,6 +1192,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "ferric-qwen3-tp-peer-tp2-kernels-device-v18"
+version = "0.1.0"
+dependencies = [
+ "fe2o3-device",
+ "fe2o3-host",
+]
+
+[[package]]
 name = "ferric-qwen3-tp-peer32-kernels-device-v6"
 version = "0.1.0"
 dependencies = [
@@ -1190,6 +1209,14 @@ dependencies = [
 
 [[package]]
 name = "ferric-qwen3-tp-perf-kernels-device-v3"
+version = "0.1.0"
+dependencies = [
+ "fe2o3-device",
+ "fe2o3-host",
+]
+
+[[package]]
+name = "ferric-qwen3-tp-split-context-attention-device-v1"
 version = "0.1.0"
 dependencies = [
  "fe2o3-device",

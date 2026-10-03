@@ -3468,6 +3468,96 @@ mod tests {
         assert!(source.contains("%logit.exp = and i16 %logit.bf16, 32640"));
     }
 
+    fn m0_fixture_narrow_logits(words: &[u32]) -> Option<Vec<u16>> {
+        words
+            .iter()
+            .map(|&bits| {
+                if bits & 0x7f80_0000 == 0x7f80_0000 {
+                    return None;
+                }
+                let rounded = (bits.wrapping_add(0x7fff + ((bits >> 16) & 1)) >> 16) as u16;
+                (rounded & 0x7f80 != 0x7f80).then_some(rounded)
+            })
+            .collect()
+    }
+
+    fn m0_fixture_argmax(values: &[f32]) -> Option<usize> {
+        if values.is_empty() || values.iter().any(|value| !value.is_finite()) {
+            return None;
+        }
+        let mut winner = 0;
+        for index in 1..values.len() {
+            if values[index] > values[winner] {
+                winner = index;
+            }
+        }
+        Some(winner)
+    }
+
+    fn m0_fixture_bf16_argmax(words: &[u16]) -> Option<usize> {
+        let values: Vec<_> = words
+            .iter()
+            .map(|&word| f32::from_bits(u32::from(word) << 16))
+            .collect();
+        m0_fixture_argmax(&values)
+    }
+
+    #[test]
+    fn m0_fp32_argmax_disagrees_after_the_required_bf16_logit_boundary() {
+        // Independent integer-oracle goldens: scalar BF16 dot products for
+        // [1,1]*[1,0] and [1,1]*[1,2^-8]. No MFMA reduction equivalence claim.
+        let fp32 = [0x3f80_0000, 0x3f80_8000];
+        let values = fp32.map(f32::from_bits);
+        assert_eq!(m0_fixture_argmax(&values), Some(1));
+        let stored = m0_fixture_narrow_logits(&fp32).unwrap();
+        assert_eq!(stored, [0x3f80, 0x3f80]);
+        assert_eq!(m0_fixture_bf16_argmax(&stored), Some(0));
+        let selected = profile(
+            Qwen3LogitsModelRoleV1::Target8B,
+            Qwen3LogitsBucketKindV1::DecodeS1C8192,
+        );
+        let (argmax_lengths, _) = exact_lengths(selected);
+        assert_eq!(argmax_lengths[0], selected.storage_extents()[0] * 2);
+    }
+
+    #[test]
+    fn m0_bf16_logit_midpoint_parity_and_lowest_id_ties_are_distinct() {
+        assert_eq!(
+            m0_fixture_narrow_logits(&[0x3f80_8000, 0x3f81_8000]).unwrap(),
+            [0x3f80, 0x3f82]
+        );
+        let rounded_up = m0_fixture_narrow_logits(&[0x3f81_0000, 0x3f81_8000]).unwrap();
+        assert_eq!(m0_fixture_bf16_argmax(&rounded_up), Some(1));
+        let negative = [0xbf80_8000, 0xbf80_0000];
+        assert_eq!(m0_fixture_argmax(&negative.map(f32::from_bits)), Some(1));
+        let tied = m0_fixture_narrow_logits(&negative).unwrap();
+        assert_eq!(tied, [0xbf80, 0xbf80]);
+        assert_eq!(m0_fixture_bf16_argmax(&tied), Some(0));
+        for words in [[0x0000, 0x8000], [0x8000, 0x0000], [0xbf80, 0xbf80]] {
+            assert_eq!(m0_fixture_bf16_argmax(&words), Some(0));
+        }
+        assert_eq!(
+            m0_fixture_bf16_argmax(&[0xc040, 0x4110, 0x4110, 0x4100]),
+            Some(1)
+        );
+    }
+
+    #[test]
+    fn m0_logit_boundary_reference_refuses_nonfinite_and_empty_inputs() {
+        for word in [0x7f80_0000, 0xff80_0000, 0x7fc0_0001, 0x7f7f_ffff] {
+            assert!(m0_fixture_narrow_logits(&[word]).is_none());
+        }
+        assert_eq!(m0_fixture_argmax(&[]), None);
+        assert_eq!(m0_fixture_bf16_argmax(&[]), None);
+        for word in [0x7f80, 0xff80, 0x7fc1] {
+            assert_eq!(m0_fixture_bf16_argmax(&[0x3f80, word]), None);
+        }
+        assert_eq!(
+            m0_fixture_narrow_logits(&[0x8000_0000, 0x0000_0000]),
+            Some(vec![0x8000, 0])
+        );
+    }
+
     #[test]
     fn compact_record_layout_is_exact_120_bytes_and_reserved_bytes_are_zeroed() {
         let source = canonical_qwen3_logits_llvm();

@@ -17,6 +17,7 @@ mod layer_c1_wave;
 mod ordered_attention_argmax_v11;
 mod ordered_batches;
 mod ordered_scalar_v3;
+mod prepared_builder;
 mod query_hoist_v14;
 mod speculative;
 mod v7_wave_attention;
@@ -847,6 +848,7 @@ fn fixture_for_model(
         page_tables.push(allocate_tensor(transport, row_capacity * 4, 4).unwrap());
     }
     let inner = EngineeringTpExecutionV1 {
+        finite_model_binding: None,
         transports,
         ranks,
         plan,
@@ -862,6 +864,7 @@ fn fixture_for_model(
         ordered_batches: None,
         full_forward_enabled: false,
         full_forward: None,
+        peer_dependency_pending: None,
         timing: crate::host_timing::HostTiming::default(),
         closed: false,
     };
@@ -894,6 +897,8 @@ fn fixture_for_model(
         admitted_wave_rmsnorm_v15: None,
         parallel_kv_v16: None,
         admitted_parallel_kv_v16: None,
+        prepared_peer: None,
+        split_attention_scratch: None,
     }
 }
 

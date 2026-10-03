@@ -54,8 +54,9 @@ operation, not a TP collective or permission to access peer allocations.
 
 ## Verification
 
-Host tests, formatting, Clippy and emission run only on the private mi300x build
-stage. Format this crate with `rustfmt --config skip_children=true` on its own
+Run host tests, formatting and emission on the designated remote build host;
+the attention-composition checkpoint below used `mi350-2`. Format this crate
+with `rustfmt --config skip_children=true` on its own
 Rust files, preserving imported baseline modules byte-for-byte. Baseline unit
 tests belong to the original v2 crate; v3 integration tests check the complete
 15- or 13-entry generated roster and the six source ABIs.
@@ -79,3 +80,44 @@ for a generic checked-layout control-convergence admission failure.
 The probe's single-dispatch wall times are diagnostic receipts, not an inference
 benchmark. TTFT, TPOT and throughput need repeated, matched end-to-end workloads
 with setup, cache state, active row count, variant and hardware identity recorded.
+
+## Attention Composition
+
+`src/attention_online.rs` contains one reusable online-softmax recurrence for
+each lane's two output components. The selected v3 wrapper retains all shape,
+page, subgroup, and output-ownership checks. It supplies a checked token loader
+and receives two BF16 words plus a finite-status flag. The existing immediate
+nonfinite-dot trap still precedes V loads; final rejection still precedes stores.
+The recurrence does not grant task claims, storage access, or completion rights.
+
+The kernel uses an item-level macro callback so the full loop is expanded
+before `#[kernel]` checks its control flow. The three bracket groups contain
+the function header, validated setup/result binding, and rejection/output
+stores. The final arguments supply the causal loop bounds, token identifier,
+loader, and math provider. Callbacks capture the body as raw token trees:
+an expression macro under `#[kernel]` is opaque, and a forwarded `block`
+fragment adds an expression group unsupported by the pinned sidecar. Neither
+restriction is bypassed or disabled here.
+
+`tests/attention_extraction.rs` compares the entire expanded source with a
+frozen pre-extraction kernel, allowing only the explicit extraction changes.
+It tests 21 arithmetic, masking, indexing, routing, attribute, and opaque-macro
+mutations. `tests/attention_numerics.rs` executes the same recurrence against
+an independent unpaged, two-pass FP64 reference, with a separate BF16 rounding
+oracle. It covers TP1/2/8, both halves, page boundaries, poisoned future slots,
+contexts 2048/2304, exceptional inputs, and ties-to-even rounding.
+
+The 2026-09-30 `wave-attention-composition-v200` checkpoint on `mi350-2`
+(`asrock-1w300-g2-2b`) passed all 28 host tests. Of 39,936 dense-reference
+outputs, 39,924 matched BF16 bits exactly and 12 differed by one BF16 step.
+Fresh ordinary-source Rust-to-gfx950 COV6 compilation used the existing
+`faaaf15d` compiler/LLVM22 route and emitted all 15 roots with exact replay.
+Four attention-only GPU fixtures passed exact output, input-immutability,
+inactive-tail, and guard comparisons: nonzero-QK TP8, TP2 context2048/position2047,
+TP2 context2304/position2047, and TP2 context2304/position2303.
+
+The long GPU cases use analytically equal scores, not real-model Q/K values.
+These results do not qualify the finite-worker LLVM23 path, claim attention
+inside a persistent worker, establish full-model correctness, or measure a
+speedup. The next integration step still needs authenticated claimed-task
+attention storage, DAG/fan-in coverage, and a fresh admitted descriptor.

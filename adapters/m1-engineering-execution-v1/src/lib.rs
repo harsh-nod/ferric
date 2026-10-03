@@ -7,7 +7,50 @@
 //! `EngineeringHsacoObservationV1` JSON schema. Any schema or canonical field
 //! order change fails closed until Ferric audits and updates this decoder.
 
+/// Inert finite-worker DTOs shared byte-for-byte with the separate native generation.
+#[cfg(feature = "tp-batch-engineering")]
+#[path = "../../tp-peer-finite-engineering-worker-v1/src/finite_composition_wire.rs"]
+pub mod finite_composition_wire;
+/// Fixed two-forward observation DTOs shared with the separate native child.
+#[cfg(feature = "tp-batch-engineering")]
+#[path = "../../tp-peer-finite-engineering-worker-v1/src/finite_forward_wire_v1.rs"]
+pub mod finite_forward_wire_v1;
+/// Separately selected long profile; the two-forward source grammar is unchanged.
+#[cfg(feature = "tp-batch-engineering")]
+#[path = "../../tp-peer-finite-engineering-worker-v1/src/finite_long_wire_v1.rs"]
+pub mod finite_long_wire_v1;
+#[cfg(feature = "tp-batch-engineering")]
+#[path = "../../tp-peer-finite-engineering-worker-v1/src/finite_mlp_tiles_comparison_wire_v1.rs"]
+pub mod finite_mlp_tiles_comparison_wire_v1;
+#[cfg(feature = "tp-batch-engineering")]
+#[path = "../../tp-peer-finite-engineering-worker-v1/src/finite_prefix_decode_wire_v1.rs"]
+pub mod finite_prefix_decode_wire_v1;
+#[cfg(feature = "tp-batch-engineering")]
+#[path = "../../tp-peer-finite-engineering-worker-v1/src/finite_prefix_layer_wire_v1.rs"]
+pub mod finite_prefix_layer_wire_v1;
+/// Explicit one-forward finite-versus-queued layer-zero MLP diagnostic.
+#[cfg(feature = "tp-batch-engineering")]
+#[path = "../../tp-peer-finite-engineering-worker-v1/src/finite_queued_mlp_comparison_wire_v1.rs"]
+pub mod finite_queued_mlp_comparison_wire_v1;
+/// Explicit one-forward finite-versus-queued layer-zero Q/K/V/O diagnostic.
+#[cfg(feature = "tp-batch-engineering")]
+#[path = "../../tp-peer-finite-engineering-worker-v1/src/finite_queued_projection_comparison_wire_v1.rs"]
+pub mod finite_queued_projection_comparison_wire_v1;
+/// Fixed four-forward rearm smoke with explicitly selected diagnostic annex.
+#[cfg(feature = "tp-batch-engineering")]
+#[path = "../../tp-peer-finite-engineering-worker-v1/src/finite_rearm_smoke_wire_v1.rs"]
+pub mod finite_rearm_smoke_wire_v1;
+/// Separate bounded setup DTOs; not production or queued-runtime authority.
+#[cfg(feature = "tp-batch-engineering")]
+#[path = "../../tp-peer-finite-engineering-worker-v1/src/finite_setup_wire_v1.rs"]
+pub mod finite_setup_wire_v1;
+#[cfg(feature = "tp-batch-engineering")]
+#[path = "../../tp-peer-finite-engineering-worker-v1/src/finite_tiles_decode_wire_v1.rs"]
+pub mod finite_tiles_decode_wire_v1;
 pub mod host_timing;
+#[cfg(feature = "tp-batch-engineering")]
+#[path = "../../tp-peer-finite-engineering-worker-v1/src/prefix_decode_host_observation_v1.rs"]
+pub mod prefix_decode_host_observation_v1;
 pub mod r33_lifecycle;
 pub mod r33_production_backend;
 #[allow(dead_code)] // Reviewed custody shell awaits its concrete daemon join.
@@ -18,6 +61,8 @@ pub mod tp_artifact;
 #[cfg(feature = "tp-batch-engineering")]
 pub mod tp_batch_runtime;
 pub mod tp_execution;
+#[cfg(feature = "tp-batch-engineering")]
+pub mod tp_finite_client;
 #[cfg(feature = "tp-batch-engineering")]
 pub mod tp_live_ingress;
 pub mod tp_model;

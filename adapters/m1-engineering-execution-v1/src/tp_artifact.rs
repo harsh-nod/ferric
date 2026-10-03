@@ -73,6 +73,12 @@ pub const ENGINEERING_TP_PEER_EXPORTS_V4: [&str; 2] = [
     "ferric_qwen3_tp_peer_copy_bf16_v4",
 ];
 
+/// Separate one-row TP2 reduction image; the copy root retains its v4 contract.
+pub const ENGINEERING_TP_PEER_TP2_EXPORTS_V18: [&str; 2] = [
+    "ferric_qwen3_tp_peer_tp2_ordered_residual_bf16_v18",
+    "ferric_qwen3_tp_peer_copy_bf16_v4",
+];
+
 /// Exact separate image required for peer arithmetic with the 32-row profile.
 pub const ENGINEERING_TP_PEER32_EXPORTS_V6: [&str; 2] = [
     "ferric_qwen3_tp_batch32_peer_ordered_residual_bf16_v6",
@@ -140,6 +146,17 @@ mod parallel_kv_v16;
 pub use parallel_kv_v16::ENGINEERING_TP_PARALLEL_KV_EXPORTS_V16;
 #[cfg(feature = "tp-batch-engineering")]
 pub(crate) use parallel_kv_v16::ParallelKvBindingV16;
+
+#[cfg(feature = "tp-batch-engineering")]
+mod graph_bf16_argmax_v22;
+#[cfg(feature = "tp-batch-engineering")]
+mod graph_split_attention_v1;
+#[cfg(feature = "tp-batch-engineering")]
+mod graph_wave_rmsnorm_v15;
+#[cfg(feature = "tp-batch-engineering")]
+pub use graph_bf16_argmax_v22::ENGINEERING_TP_GRAPH_ARGMAX_ROOT_V22;
+#[cfg(feature = "tp-batch-engineering")]
+pub use graph_split_attention_v1::ENGINEERING_TP_GRAPH_SPLIT_ATTENTION_ROOTS_V1;
 
 /// Private identity minted only by the separate one-root v14 profile.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -335,6 +352,22 @@ impl EngineeringTpArtifactV1 {
             expected,
             "ferric_qwen3_tp_peer_kernels_device_v4",
             &ENGINEERING_TP_PEER_EXPORTS_V4,
+        )
+    }
+
+    /// Opens the closed one-row TP2 image for dependency collectives only.
+    /// # Errors
+    /// Rejects generic peer images and any root, target, source or identity drift.
+    #[cfg(feature = "tp-batch-engineering")]
+    pub fn open_peer_tp2_v18(
+        root: &Path,
+        expected: &[CompilerGeneratedKernelExpectationRosterEntryV1],
+    ) -> Result<Self, M1EngineeringAggregateArtifactOpenErrorV1> {
+        Self::open_profile(
+            root,
+            expected,
+            "ferric_qwen3_tp_peer_tp2_kernels_device_v18",
+            &ENGINEERING_TP_PEER_TP2_EXPORTS_V18,
         )
     }
 
@@ -1136,5 +1169,88 @@ mod tests {
             [ENGINEERING_TP_PEER_EXPORTS_V4[0]; 2].into_iter(),
             &ENGINEERING_TP_PEER_EXPORTS_V4
         ));
+    }
+
+    #[test]
+    fn peer_tp2_roster_is_closed_and_cannot_substitute_for_generic_peer() {
+        use super::{
+            ENGINEERING_TP_PEER_EXPORTS_V4 as GENERIC, ENGINEERING_TP_PEER_TP2_EXPORTS_V18 as TP2,
+            exact_roster,
+        };
+        assert!(exact_roster(TP2.into_iter().rev(), &TP2));
+        assert!(!exact_roster(TP2.into_iter().take(1), &TP2));
+        assert!(!exact_roster([TP2[0]; 2].into_iter(), &TP2));
+        assert!(!exact_roster(TP2.into_iter().chain([GENERIC[0]]), &TP2));
+        assert!(!exact_roster(GENERIC.into_iter(), &TP2));
+        assert!(!exact_roster(TP2.into_iter(), &GENERIC));
+        assert_eq!(TP2[1], GENERIC[1]);
+        #[cfg(feature = "tp-batch-engineering")]
+        assert!(exact_roster(
+            ferric_qwen3_tp_peer_tp2_kernels_device_v18::compiler_expectation_roster_v18()
+                .iter()
+                .map(fe2o3_host::CompilerGeneratedKernelExpectationRosterEntryV1::export_name),
+            &TP2,
+        ));
+    }
+
+    #[test]
+    #[ignore = "requires the separately emitted canonical v18 image; host admission only"]
+    #[cfg(feature = "tp-batch-engineering")]
+    fn peer_tp2_v18_image_admission_requires_its_own_roster_and_exact_abi() {
+        use super::{ENGINEERING_TP_PEER_TP2_EXPORTS_V18 as ROOTS, EngineeringTpArtifactV1};
+        let root = std::path::PathBuf::from(
+            std::env::var_os("FERRIC_TEST_PEER_TP2_V18_ARTIFACT").expect("explicit v18 image"),
+        );
+        let expected =
+            ferric_qwen3_tp_peer_tp2_kernels_device_v18::compiler_expectation_roster_v18();
+        let artifact = EngineeringTpArtifactV1::open_peer_tp2_v18(&root, &expected).unwrap();
+        let kernels = artifact.inspection().hsaco().kernels();
+        assert!(super::exact_roster(
+            kernels.iter().map(|kernel| kernel.name()),
+            &ROOTS
+        ));
+        for kernel in kernels {
+            let (slices, scalars, implicit) = if kernel.name() == ROOTS[0] {
+                (10, 2, 168)
+            } else {
+                (2, 1, 40)
+            };
+            assert_eq!(kernel.kernarg_segment_size(), implicit + 256);
+            assert_eq!(kernel.kernarg_segment_alignment(), 8);
+            assert_eq!(kernel.implicit_argument_offset(), Some(implicit));
+            assert_eq!(kernel.implicit_argument_size(), 256);
+            assert_eq!(kernel.wavefront_size(), 64);
+            assert_eq!(kernel.required_workgroup_size(), Some([64, 1, 1]));
+            assert_eq!(kernel.max_flat_workgroup_size(), 64);
+            assert_eq!(kernel.group_segment_fixed_size(), 0);
+            assert_eq!(kernel.private_segment_fixed_size(), 0);
+            assert!(!kernel.uses_dynamic_stack());
+            assert_eq!(kernel.explicit_arguments().len(), slices * 2 + scalars);
+            for (index, argument) in kernel.explicit_arguments().iter().enumerate() {
+                let (offset, size, pointer) = if index < slices * 2 {
+                    (index * 8, 8, index.is_multiple_of(2))
+                } else {
+                    (slices * 16 + (index - slices * 2) * 4, 4, false)
+                };
+                assert_eq!(argument.offset(), offset as u64);
+                assert_eq!(argument.size(), size);
+                assert_eq!(
+                    argument.value_kind(),
+                    if pointer {
+                        fe2o3_hsaco::ExplicitValueKind::GlobalBuffer
+                    } else {
+                        fe2o3_hsaco::ExplicitValueKind::ByValue
+                    }
+                );
+            }
+        }
+        assert!(EngineeringTpArtifactV1::open_peer_tp2_v18(&root, &[]).is_err());
+        assert!(
+            EngineeringTpArtifactV1::open_peer(
+                &root,
+                &ferric_qwen3_tp_peer_kernels_device_v4::compiler_expectation_roster_v4(),
+            )
+            .is_err()
+        );
     }
 }

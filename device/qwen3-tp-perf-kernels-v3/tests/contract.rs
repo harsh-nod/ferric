@@ -1,8 +1,12 @@
 use ferric_qwen3_tp_perf_kernels_device_v3::{compiler_expectation_roster_v3, contract};
 use syn::{FnArg, Item, Type};
 
+#[path = "support/attention_expansion.rs"]
+mod attention_expansion;
+
 const PROJECTION: &str = include_str!("../src/projection.rs");
 const ATTENTION: &str = include_str!("../src/attention.rs");
+const ATTENTION_ONLINE: &str = include_str!("../src/attention_online.rs");
 const COLLECTIVE: &str = include_str!("../src/collective.rs");
 
 #[test]
@@ -36,8 +40,12 @@ fn exact_closed_roster_keeps_all_baseline_symbols() {
 #[test]
 fn exact_six_new_typed_abi_widths() {
     let mut roots = Vec::new();
-    for source in [PROJECTION, ATTENTION, COLLECTIVE] {
-        for item in syn::parse_file(source).unwrap().items {
+    for source in [
+        syn::parse_file(PROJECTION).unwrap(),
+        attention_expansion::expand(ATTENTION, ATTENTION_ONLINE),
+        syn::parse_file(COLLECTIVE).unwrap(),
+    ] {
+        for item in source.items {
             if let Item::Fn(function) = item
                 && function.attrs.iter().any(|a| a.path().is_ident("kernel"))
             {
@@ -103,17 +111,18 @@ fn actual_sources_keep_finite_causal_and_active_row_checks() {
     assert!(PROJECTION.contains("Bf16MfmaAMatrix::row_major(a, 0, rows, 4096, 4096)"));
     assert!(PROJECTION.contains("Bf16MfmaAMatrix::row_major(a, 0, rows, k, k)"));
     assert!(!PROJECTION.contains("wrapping_"));
-    assert!(ATTENTION.contains("token <= position"));
+    assert!(ATTENTION_ONLINE.contains("$token <= $position"));
+    assert!(ATTENTION.contains("qwen_attention_online_pair_v1!("));
     assert!(ATTENTION.contains("physical_page < physical_pages"));
     assert!(ATTENTION.contains("physical_page < 512"));
     assert!(ATTENTION.contains("product_0 + product_1"));
     assert!(ATTENTION.contains("reduce_sum_f32::<64>(partial)"));
     assert!(!ATTENTION.contains("while dimension"));
     assert!(ATTENTION.contains("product_0.is_finite() & product_1.is_finite()"));
-    assert!(ATTENTION.contains("& denominator.is_finite()"));
+    assert!(ATTENTION_ONLINE.contains("& denominator.is_finite()"));
     assert!(ATTENTION.contains("if !finite"));
     assert_eq!(ATTENTION.matches("broadcast_f32::<64>").count(), 2);
-    assert!(ATTENTION.contains("!narrowed_1.is_finite()"));
+    assert!(ATTENTION_ONLINE.contains("& narrowed_1.is_finite()"));
 }
 
 #[test]

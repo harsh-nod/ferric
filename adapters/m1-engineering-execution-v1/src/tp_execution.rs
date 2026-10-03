@@ -8,11 +8,17 @@
 //! protected M1 execution or a source-to-device correctness proof.
 
 mod collective;
+mod finite_metadata;
 mod full_forward;
+mod peer_dependency;
+mod peer_dependency_driver;
 mod peer_reduction;
 mod performance;
+mod prepared_graph;
+mod prepared_peer;
 mod reduction;
 mod row_profile;
+mod setup_upload;
 
 #[cfg(feature = "tp-batch-engineering")]
 pub mod batched;
@@ -24,6 +30,18 @@ mod projection;
 pub use projection::EngineeringTpProjectionModeV3;
 
 pub use collective::{HostStagedPartialV1, reduce_residual_bf16_v1};
+pub use finite_metadata::EngineeringTp2Finite2304MetadataV1;
+pub use peer_dependency::{EngineeringTp2CollectiveReceiptV1, EngineeringTp2CollectiveRequestV1};
+pub use prepared_graph::{
+    EngineeringTp2GraphCollectiveBindingV1, EngineeringTp2GraphCompletionV1,
+    EngineeringTp2GraphGeometryV1, EngineeringTp2GraphInputV1, EngineeringTp2GraphKernelProfileV1,
+    EngineeringTp2GraphPolicyEvidenceV1, EngineeringTp2GraphPolicyV1, EngineeringTp2GraphRankV1,
+    EngineeringTp2PreparedGraphReceiptV1,
+};
+pub use prepared_peer::{
+    EngineeringTp2PreparedInputV1, EngineeringTp2PreparedMetadataV1,
+    EngineeringTp2PreparedProgramV1, EngineeringTp2PreparedReceiptV1, EngineeringTp2PreparedStepV1,
+};
 pub use reduction::EngineeringTpReductionModeV3;
 use reduction::ReductionWorkspace;
 
@@ -93,6 +111,106 @@ pub struct EngineeringTpDispatchV1 {
 /// exact artifact, scalar ABI, allocation extents and pointer-fixup ownership.
 /// These are external Contracted prerequisites, not proved by this driver.
 pub trait EngineeringTpRankTransportV1 {
+    /// Explicit support for one immutable jointly drained graph policy.
+    fn supports_prepared_peer_graph(&self, _policy: EngineeringTp2GraphPolicyV1) -> bool {
+        false
+    }
+    /// A nonbaseline profile requires an explicit immutable transport capability.
+    fn supports_prepared_peer_graph_profile(
+        &self,
+        policy: EngineeringTp2GraphPolicyV1,
+        profile: EngineeringTp2GraphKernelProfileV1,
+    ) -> bool {
+        profile == EngineeringTp2GraphKernelProfileV1::Baseline
+            && self.supports_prepared_peer_graph(policy)
+    }
+    /// Long geometry requires an explicit immutable transport capability.
+    fn supports_prepared_peer_graph_geometry(
+        &self,
+        policy: EngineeringTp2GraphPolicyV1,
+        profile: EngineeringTp2GraphKernelProfileV1,
+        geometry: EngineeringTp2GraphGeometryV1,
+    ) -> bool {
+        geometry == EngineeringTp2GraphGeometryV1::Short64
+            && self.supports_prepared_peer_graph_profile(policy, profile)
+    }
+    /// Registers a program under an explicit geometry-bound graph contract.
+    /// # Errors
+    /// Rejects unsupported geometry rather than reinterpreting the old protocol.
+    fn register_prepared_peer_graph_geometry(
+        &mut self,
+        program: &EngineeringTp2PreparedProgramV1,
+        policy: EngineeringTp2GraphPolicyV1,
+        geometry: EngineeringTp2GraphGeometryV1,
+    ) -> TpResult<[u8; 32]> {
+        if geometry != EngineeringTp2GraphGeometryV1::Short64 {
+            return Err("transport does not support long graph registration".into());
+        }
+        self.register_prepared_peer_graph(program, policy)
+    }
+    /// Executes a graph input only under its separately admitted geometry.
+    /// # Errors
+    /// Rejects unsupported long geometry or any incomplete/failed execution.
+    fn execute_prepared_peer_graph_geometry(
+        &mut self,
+        input: &EngineeringTp2GraphInputV1,
+    ) -> TpResult<EngineeringTp2PreparedGraphReceiptV1> {
+        self.execute_prepared_peer_graph(&input.short_input()?)
+    }
+    /// Registers a graph without reinterpreting the legacy serial completion contract.
+    /// # Errors
+    /// Rejects unsupported policies, nonfresh state or mutable program bindings.
+    fn register_prepared_peer_graph(
+        &mut self,
+        _program: &EngineeringTp2PreparedProgramV1,
+        _policy: EngineeringTp2GraphPolicyV1,
+    ) -> TpResult<[u8; 32]> {
+        Err("transport does not support prepared TP2 graph registration".into())
+    }
+    /// Returns actual final graph observations and GPU argmax readback.
+    /// # Errors
+    /// Rejects partial drains, stale identities, changed policies or terminal state.
+    fn execute_prepared_peer_graph(
+        &mut self,
+        _input: &EngineeringTp2PreparedInputV1,
+    ) -> TpResult<EngineeringTp2PreparedGraphReceiptV1> {
+        Err("transport does not support prepared TP2 graph execution".into())
+    }
+    /// Explicit whole-token TP2 interpreter support, distinct from GPU scheduling.
+    fn supports_prepared_peer(&self) -> bool {
+        false
+    }
+    /// Registers the exact immutable program after all allocations and kernel loads.
+    /// # Errors
+    /// Rejects unsupported profiles, mutable bindings or registration after execution.
+    fn register_prepared_peer(
+        &mut self,
+        _program: &EngineeringTp2PreparedProgramV1,
+    ) -> TpResult<[u8; 32]> {
+        Err("transport does not support prepared TP2 registration".into())
+    }
+    /// Completes one registered token including the actual GPU choice readback.
+    /// # Errors
+    /// Rejects any failed, partial, stale or identity-mismatched completion.
+    fn execute_prepared_peer(
+        &mut self,
+        _input: &EngineeringTp2PreparedInputV1,
+    ) -> TpResult<EngineeringTp2PreparedReceiptV1> {
+        Err("transport does not support prepared TP2 execution".into())
+    }
+    /// Explicit all-or-terminal TP2 dependency support; never inferred from PID.
+    fn supports_peer_dependency_collectives(&self) -> bool {
+        false
+    }
+    /// Synchronously completes one closed collective through the rank-zero owner.
+    /// # Errors
+    /// Rejects unsupported profiles or any incomplete, stale or failed receipt.
+    fn execute_peer_dependency_collective(
+        &mut self,
+        _request: &EngineeringTp2CollectiveRequestV1,
+    ) -> TpResult<EngineeringTp2CollectiveReceiptV1> {
+        Err("transport does not support TP2 dependency collectives".into())
+    }
     /// Checks retained successful load receipts before any allocation or dispatch.
     /// # Errors
     /// Rejects unsupported transport, non-fresh state, or any image/root mismatch.
@@ -124,6 +242,11 @@ pub trait EngineeringTpRankTransportV1 {
     /// # Errors
     /// Rejects allocation limits, closed state, or child failure.
     fn allocate(&mut self, byte_len: usize) -> TpResult<u64>;
+    /// Preferred setup-only weight upload size; legacy transports retain 1 MiB.
+    /// This does not widen the transport's existing ownership or transfer limits.
+    fn setup_upload_chunk_bytes(&self) -> usize {
+        UPLOAD_CHUNK_BYTES
+    }
     /// Completes a bounded host-to-device byte copy.
     /// # Errors
     /// Rejects invalid ownership/extents, pending work, or child failure.
@@ -304,6 +427,8 @@ impl Rank {
 /// retains allocations but starts KV at position zero; no stale suffix is read.
 #[allow(clippy::struct_excessive_bools)] // Independent storage/profile flags and terminal lifecycle state.
 pub struct EngineeringTpExecutionV1<R: EngineeringTpRankTransportV1> {
+    // Retained only after authenticated layout intake and successful uploads.
+    finite_model_binding: Option<([u8; 32], ModelConfig)>,
     transports: Vec<R>,
     ranks: Vec<Rank>,
     plan: Qwen3TensorParallelPlanV1,
@@ -319,6 +444,7 @@ pub struct EngineeringTpExecutionV1<R: EngineeringTpRankTransportV1> {
     ordered_batches: Option<Vec<EngineeringTpDispatchV1>>,
     full_forward_enabled: bool,
     full_forward: Option<full_forward::FullForwardRecording>,
+    peer_dependency_pending: Option<peer_dependency::EngineeringTp2CollectiveRequestV1>,
     timing: crate::host_timing::HostTiming,
     closed: bool,
 }
@@ -438,26 +564,7 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpExecutionV1<R> {
                             .ok_or("tensor size overflow")?,
                         2,
                     )?;
-                    let chunk_rows = (UPLOAD_CHUNK_BYTES / row_bytes).max(1);
-                    let mut chunk = vec![0; chunk_rows.min(rows) * row_bytes];
-                    for row_start in (0..rows).step_by(chunk_rows) {
-                        let count = chunk_rows.min(rows - row_start);
-                        for local in 0..count {
-                            shard
-                                .copy_bf16_row_into(
-                                    source,
-                                    u32::try_from(row_start + local)
-                                        .map_err(|_| "shard row overflow")?,
-                                    &mut chunk[local * row_bytes..(local + 1) * row_bytes],
-                                )
-                                .map_err(|e| format!("BF16 shard copy: {e:?}"))?;
-                        }
-                        transport.write(
-                            tensor.id,
-                            row_start * row_bytes,
-                            &chunk[..count * row_bytes],
-                        )?;
-                    }
+                    setup_upload::write_shard(transport, tensor.id, source, &shard)?;
                     if metadata.layer == QWEN3_NO_LAYER {
                         rank.globals.push((metadata.kind, tensor));
                     } else {
@@ -485,6 +592,22 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpExecutionV1<R> {
             plan,
             sequence,
             collective,
+            finite_model_binding: (model
+                == layout
+                    .admission()
+                    .prepacked()
+                    .deployment()
+                    .target_model
+                    .config)
+                .then_some((
+                    *layout
+                        .admission()
+                        .prepacked()
+                        .deployment()
+                        .bundle_id
+                        .as_bytes(),
+                    model,
+                )),
             capacity,
             row_capacity: rows,
             large_kv,
@@ -495,6 +618,7 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpExecutionV1<R> {
             ordered_batches: None,
             full_forward_enabled: false,
             full_forward: None,
+            peer_dependency_pending: None,
             timing: crate::host_timing::HostTiming::default(),
             closed: false,
         })
@@ -516,7 +640,7 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpExecutionV1<R> {
     /// # Errors
     /// Rejects closed, poisoned, in-flight, or epoch-exhausted state.
     pub fn reset_sequence(&mut self) -> TpResult<()> {
-        if self.closed {
+        if self.closed || self.peer_dependency_pending.is_some() {
             return Err("TP execution is closed".into());
         }
         self.sequence
@@ -862,6 +986,9 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpExecutionV1<R> {
     }
 
     fn dispatch_zero(&mut self, command: &EngineeringTpDispatchV1) -> TpResult<()> {
+        if self.peer_dependency_pending.is_some() {
+            return Err("pending peer producers must complete their collective first".into());
+        }
         let _timing = self.timing.span("dispatch_zero", None);
         if self.full_forward_enabled {
             return self.record_full_forward_command(command.clone());
@@ -891,6 +1018,9 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpExecutionV1<R> {
         &mut self,
         command: impl Fn(&Rank) -> EngineeringTpDispatchV1,
     ) -> TpResult<()> {
+        if self.peer_dependency_pending.is_some() {
+            return Err("pending peer producers must complete their collective first".into());
+        }
         let _timing = self.timing.span("dispatch_each", None);
         if self.full_forward_enabled {
             let command = command(self.binding_rank_zero());
@@ -977,6 +1107,9 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpExecutionV1<R> {
         if self.full_forward_enabled {
             return self.reduce_device_tp1(layer, operation);
         }
+        if self.reduction.mode() == EngineeringTpReductionModeV3::DevicePeerDependencyV1 {
+            return self.reduce_peer_dependency(layer, operation);
+        }
         if self.ordered_batches.is_none()
             || self.draft_v10
             || self.reduction.mode() != EngineeringTpReductionModeV3::DeviceTp1V3
@@ -993,6 +1126,9 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpExecutionV1<R> {
             EngineeringTpReductionModeV3::DevicePeerV4
             | EngineeringTpReductionModeV3::DevicePeerConcurrentV1 => {
                 return self.reduce_device_peer(layer, operation);
+            }
+            EngineeringTpReductionModeV3::DevicePeerDependencyV1 => {
+                return Err("peer dependency collective bypassed its closed route".into());
             }
             EngineeringTpReductionModeV3::HostStagedV1 => {}
         }
@@ -1215,7 +1351,7 @@ fn decode_bf16(bytes: &[u8]) -> TpResult<Vec<u16>> {
 }
 
 #[allow(clippy::cast_possible_truncation)]
-fn rope_bytes(position: u32, theta: u32) -> (Vec<u8>, Vec<u8>) {
+pub(crate) fn rope_bytes(position: u32, theta: u32) -> (Vec<u8>, Vec<u8>) {
     let mut cos = Vec::with_capacity(256);
     let mut sin = Vec::with_capacity(256);
     for pair in 0..64 {

@@ -21,7 +21,21 @@ use ferric_build::AuthenticatedModelWeightLayout;
 use ferric_spec::{ModelConfig, Qwen3ModelRole};
 
 mod draft;
+mod prepared;
 pub use draft::EngineeringTpDraftBatchExecutionV10;
+pub use prepared::finite_composition::{
+    EngineeringTp2FiniteAuxiliaryKindV1, EngineeringTp2FiniteBufferV1,
+    EngineeringTp2FiniteCompositionV1, EngineeringTp2FiniteLayerV1,
+    EngineeringTp2FinitePendingBufferKindV1, EngineeringTp2FinitePendingBufferV1,
+    EngineeringTp2FiniteScratchRoleV1, EngineeringTp2FiniteStateKindV1,
+    EngineeringTp2FiniteStateSlotV1,
+};
+pub use prepared::finite_packing::{
+    EngineeringTp2FiniteHeadTransposeV1, EngineeringTp2FiniteSourcePartV1,
+    EngineeringTp2FiniteUploadKeyV1, EngineeringTp2FiniteUploadV1,
+    EngineeringTp2FiniteWeightSourceV1,
+};
+pub use prepared::finite_source_recorder::EngineeringTp2FiniteSourceRecorderV1;
 
 #[derive(Clone, Copy)]
 enum BatchedProfile<'a> {
@@ -49,7 +63,7 @@ enum FullForwardProfile {
 const MAX_ROWS: usize = 16;
 const PAGE_TOKENS: u32 = 16;
 const EMBEDDING: &str = "ferric_qwen3_tp_batch_embedding_bf16_v2";
-const GEMM: &str = "ferric_qwen3_tp_batch_gemm_bf16_f32_bf16_v2";
+pub(super) const GEMM: &str = "ferric_qwen3_tp_batch_gemm_bf16_f32_bf16_v2";
 pub(super) const PARTIAL: &str = "ferric_qwen3_tp_batch_gemm_partial_bf16_f32_v2";
 const SWIGLU: &str = "ferric_qwen3_tp_batch_swiglu_bf16_f32_v2";
 const ROPE: &str = "ferric_qwen3_tp_batch_rope_v2";
@@ -100,6 +114,8 @@ pub struct EngineeringTpBatchExecutionV2<R: EngineeringTpRankTransportV1> {
     admitted_wave_rmsnorm_v15: Option<crate::tp_artifact::WaveRmsNormBindingV15>,
     parallel_kv_v16: Option<crate::tp_artifact::ParallelKvBindingV16>,
     admitted_parallel_kv_v16: Option<crate::tp_artifact::ParallelKvBindingV16>,
+    prepared_peer: Option<prepared::State>,
+    split_attention_scratch: Option<[Tensor; 2]>,
 }
 
 impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
@@ -588,6 +604,8 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
             admitted_wave_rmsnorm_v15,
             parallel_kv_v16: None,
             admitted_parallel_kv_v16,
+            prepared_peer: None,
+            split_attention_scratch: None,
         })
     }
 
@@ -1035,6 +1053,16 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
     /// # Errors
     /// Rejects a started/poisoned stream, unsupported profile, or allocation failure.
     pub fn configure_reduction(&mut self, mode: EngineeringTpReductionModeV3) -> TpResult<()> {
+        if mode == EngineeringTpReductionModeV3::DevicePeerDependencyV1
+            && (!self.projection_configured
+                || self.projection.mode != super::EngineeringTpProjectionModeV3::Mfma
+                || self.c1_wave_layers
+                || self.prune_output_head
+                || self.row_capacity != 16
+                || self.head_profile_configured)
+        {
+            return Err("peer dependency reduction requires explicit MFMA setup and an unpruned capacity16 target profile".into());
+        }
         if self.poisoned
             || self.fp32_argmax_v11.is_some()
             || self.last_batch != 0
@@ -1086,6 +1114,11 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
                 "full-forward execution is target-only, not speculative verification".into(),
             );
         }
+        if self.reduction_mode() == EngineeringTpReductionModeV3::DevicePeerDependencyV1 {
+            return Err(
+                "peer dependency execution is target-only, not speculative verification".into(),
+            );
+        }
         if !work.validate()
             || self.numerical.is_some()
             || self.inner.plan.model().role != Qwen3ModelRole::Target8B
@@ -1114,6 +1147,8 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
             || self.numerical.is_some()
             || self.inner.ordered_batches.is_some()
             || self.inner.full_forward_enabled
+            || (enabled
+                && self.reduction_mode() == EngineeringTpReductionModeV3::DevicePeerDependencyV1)
         {
             return Err("output-head policy must be configured before execution".into());
         }
@@ -1229,6 +1264,8 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
             || self.fp32_argmax_v11.is_some()
             || self.inner.ordered_batches.is_some()
             || self.inner.full_forward_enabled
+            || (enabled
+                && self.reduction_mode() == EngineeringTpReductionModeV3::DevicePeerDependencyV1)
             || (enabled
                 && (self.numerical.is_some()
                     || self.head_profile_configured
@@ -1579,6 +1616,13 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
     /// Expected per-rank dispatch increments under the frozen execution policy.
     #[must_use]
     pub fn expected_dispatch_counts(&self, published: usize) -> Vec<u64> {
+        if let Some(state) = self
+            .prepared_peer
+            .as_ref()
+            .filter(|state| state.split_attention())
+        {
+            return state.kernel_counts().map(u64::from).to_vec();
+        }
         let head = if self.prune_output_head && published == 0 {
             0
         } else {
@@ -1594,6 +1638,40 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
                     + self.reduction_mode().extra_dispatches_per_forward(rank)
             })
             .collect()
+    }
+
+    fn packet_budget_for_batch(&self, next: u64, per_rank: u64, rollover: bool) -> TpResult<u64> {
+        let limit = fe2o3_kfd::engineering_wire::MAX_UNRETIRED_RING_PACKETS_V1;
+        let per_rank = self
+            .prepared_peer
+            .as_ref()
+            .filter(|state| state.split_attention())
+            .map_or(per_rank, prepared::State::max_packets);
+        if self
+            .prepared_peer
+            .as_ref()
+            .is_some_and(prepared::State::reuses_completed_ring)
+        {
+            // Only this registered geometry validates both final queue reads and
+            // all completion signals before permitting the next forward.
+            let graph_packets = self
+                .prepared_peer
+                .as_ref()
+                .ok_or("prepared graph state missing")?
+                .max_packets();
+            if graph_packets > limit {
+                return Err("long graph forward exceeds physical ring capacity".into());
+            }
+            return Ok(graph_packets);
+        }
+        if !rollover
+            && next
+                .checked_mul(per_rank)
+                .is_none_or(|packets| packets > limit)
+        {
+            return Err("batched stream exceeds the conservative no-ring-rollover budget".into());
+        }
+        Ok(per_rank)
     }
 
     /// Executes all physical rows but returns only the requested, ascending output rows.
@@ -1619,13 +1697,20 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
         if self.inner.full_forward_enabled && batch.rows().len() != 1 {
             return Err("full-forward execution requires exactly one physical row".into());
         }
+        if self.reduction_mode() == EngineeringTpReductionModeV3::DevicePeerDependencyV1
+            && batch.rows().len() != 1
+        {
+            return Err("peer dependency collective requires exactly one physical row".into());
+        }
         if output_rows.iter().any(|&row| row >= batch.rows().len())
             || output_rows.windows(2).any(|pair| pair[0] >= pair[1])
         {
             return Err("output rows must be unique, ascending, and within the batch".into());
         }
         let per_rank = u64::from(self.inner.plan.model().layers)
-            * (15 + self.reduction_mode().extra_dispatches_per_layer())
+            * (15
+                + self.reduction_mode().extra_dispatches_per_layer()
+                + self.reduction_mode().barrier_packets_per_layer())
             + 4;
         let next = self
             .completed_batches
@@ -1636,13 +1721,7 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
             .transports
             .iter()
             .all(EngineeringTpRankTransportV1::supports_queue_rollover);
-        if !rollover
-            && next.checked_mul(per_rank).is_none_or(|packets| {
-                packets > fe2o3_kfd::engineering_wire::MAX_UNRETIRED_RING_PACKETS_V1
-            })
-        {
-            return Err("batched stream exceeds the conservative no-ring-rollover budget".into());
-        }
+        let per_rank = self.packet_budget_for_batch(next, per_rank, rollover)?;
         for index in 0..self.inner.transports.len() {
             if let Err(error) = self.inner.transports[index].prepare_packets(per_rank) {
                 self.poisoned = true;
@@ -1652,7 +1731,7 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
                 });
             }
         }
-        if !self.inner.full_forward_enabled {
+        if !self.inner.full_forward_enabled && self.prepared_peer.is_none() {
             self.last_batch = batch.id();
         }
         match self.forward(batch, output_rows) {
@@ -1796,6 +1875,9 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
         output_rows: &[usize],
     ) -> TpResult<Vec<u32>> {
         use EngineeringTpArgumentV1::U32;
+        if self.prepared_peer.is_some() {
+            return self.forward_prepared_peer(batch, output_rows);
+        }
         let metadata_timing = self.inner.timing.scope("metadata");
         let model = self.inner.plan.model();
         let world = self.inner.plan.world_size();
@@ -2035,23 +2117,27 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
             })?;
             drop(gqa_timing);
             let output_timing = self.inner.timing.span("attention_output_projection", None);
-            self.inner.dispatch_each(|r| {
-                projection.layer_command(
-                    c1_wave_layers,
-                    r.geometry.rank as usize,
-                    PARTIAL,
-                    r.attention,
-                    r.layers[li].weight(Qwen3TensorKind::OutputProjection),
-                    r.partial,
-                    [
-                        rows,
-                        model.hidden_size,
-                        r.geometry.query_channels.count,
-                        world,
-                        1,
-                    ],
-                )
-            })?;
+            self.inner.dispatch_collective_producers(
+                layer,
+                Qwen3TensorParallelCollectiveV1::AttentionOutputSum,
+                |r| {
+                    projection.layer_command(
+                        c1_wave_layers,
+                        r.geometry.rank as usize,
+                        PARTIAL,
+                        r.attention,
+                        r.layers[li].weight(Qwen3TensorKind::OutputProjection),
+                        r.partial,
+                        [
+                            rows,
+                            model.hidden_size,
+                            r.geometry.query_channels.count,
+                            world,
+                            1,
+                        ],
+                    )
+                },
+            )?;
             drop(output_timing);
             drop(attention_timing);
             capture_projection(
@@ -2125,23 +2211,27 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
                     ],
                 )
             })?;
-            self.inner.dispatch_each(|r| {
-                projection.layer_command(
-                    c1_wave_layers,
-                    r.geometry.rank as usize,
-                    PARTIAL,
-                    r.activation,
-                    r.layers[li].weight(Qwen3TensorKind::DownProjection),
-                    r.partial,
-                    [
-                        rows,
-                        model.hidden_size,
-                        r.geometry.intermediate.count,
-                        world,
-                        2,
-                    ],
-                )
-            })?;
+            self.inner.dispatch_collective_producers(
+                layer,
+                Qwen3TensorParallelCollectiveV1::FeedForwardDownSum,
+                |r| {
+                    projection.layer_command(
+                        c1_wave_layers,
+                        r.geometry.rank as usize,
+                        PARTIAL,
+                        r.activation,
+                        r.layers[li].weight(Qwen3TensorKind::DownProjection),
+                        r.partial,
+                        [
+                            rows,
+                            model.hidden_size,
+                            r.geometry.intermediate.count,
+                            world,
+                            2,
+                        ],
+                    )
+                },
+            )?;
             drop(feed_forward_timing);
             capture_projection(
                 &mut self.numerical,

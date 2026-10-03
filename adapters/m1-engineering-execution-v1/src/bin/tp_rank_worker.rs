@@ -1,13 +1,19 @@
 //! One transport type for independent and explicitly named peer profiles.
 
-use super::{tp_peer_worker::PeerWorker, tp_worker::Worker};
+use super::{tp_peer_worker::PeerWorker, tp_prepared_worker::PreparedWorker, tp_worker::Worker};
 use ferric_m1_engineering_execution_v1::tp_execution::{
-    EngineeringTpDispatchV1, EngineeringTpRankTransportV1, TpResult,
+    EngineeringTp2CollectiveReceiptV1, EngineeringTp2CollectiveRequestV1,
+    EngineeringTp2GraphGeometryV1, EngineeringTp2GraphInputV1, EngineeringTp2GraphKernelProfileV1,
+    EngineeringTp2GraphPolicyV1, EngineeringTp2PreparedGraphReceiptV1,
+    EngineeringTp2PreparedInputV1, EngineeringTp2PreparedProgramV1,
+    EngineeringTp2PreparedReceiptV1, EngineeringTpDispatchV1, EngineeringTpRankTransportV1,
+    TpResult,
 };
 
 pub enum RankWorker {
     Independent(Worker),
     Peer(PeerWorker),
+    PreparedPeer(PreparedWorker),
 }
 
 impl RankWorker {
@@ -15,23 +21,104 @@ impl RankWorker {
         match self {
             Self::Independent(worker) => worker,
             Self::Peer(worker) => worker,
+            Self::PreparedPeer(worker) => worker,
         }
     }
     fn transport_mut(&mut self) -> &mut dyn EngineeringTpRankTransportV1 {
         match self {
             Self::Independent(worker) => worker,
             Self::Peer(worker) => worker,
+            Self::PreparedPeer(worker) => worker,
         }
     }
     pub fn pid(&self) -> u32 {
         match self {
             Self::Independent(worker) => worker.pid(),
             Self::Peer(worker) => worker.pid(),
+            Self::PreparedPeer(worker) => worker.pid(),
         }
     }
 }
 
 impl EngineeringTpRankTransportV1 for RankWorker {
+    fn setup_upload_chunk_bytes(&self) -> usize {
+        self.transport().setup_upload_chunk_bytes()
+    }
+    fn supports_prepared_peer_graph(&self, policy: EngineeringTp2GraphPolicyV1) -> bool {
+        self.transport().supports_prepared_peer_graph(policy)
+    }
+    fn supports_prepared_peer_graph_profile(
+        &self,
+        policy: EngineeringTp2GraphPolicyV1,
+        profile: EngineeringTp2GraphKernelProfileV1,
+    ) -> bool {
+        self.transport()
+            .supports_prepared_peer_graph_profile(policy, profile)
+    }
+    fn register_prepared_peer_graph(
+        &mut self,
+        program: &EngineeringTp2PreparedProgramV1,
+        policy: EngineeringTp2GraphPolicyV1,
+    ) -> TpResult<[u8; 32]> {
+        self.transport_mut()
+            .register_prepared_peer_graph(program, policy)
+    }
+    fn execute_prepared_peer_graph(
+        &mut self,
+        input: &EngineeringTp2PreparedInputV1,
+    ) -> TpResult<EngineeringTp2PreparedGraphReceiptV1> {
+        self.transport_mut().execute_prepared_peer_graph(input)
+    }
+    fn supports_prepared_peer_graph_geometry(
+        &self,
+        policy: EngineeringTp2GraphPolicyV1,
+        profile: EngineeringTp2GraphKernelProfileV1,
+        geometry: EngineeringTp2GraphGeometryV1,
+    ) -> bool {
+        self.transport()
+            .supports_prepared_peer_graph_geometry(policy, profile, geometry)
+    }
+    fn register_prepared_peer_graph_geometry(
+        &mut self,
+        program: &EngineeringTp2PreparedProgramV1,
+        policy: EngineeringTp2GraphPolicyV1,
+        geometry: EngineeringTp2GraphGeometryV1,
+    ) -> TpResult<[u8; 32]> {
+        self.transport_mut()
+            .register_prepared_peer_graph_geometry(program, policy, geometry)
+    }
+    fn execute_prepared_peer_graph_geometry(
+        &mut self,
+        input: &EngineeringTp2GraphInputV1,
+    ) -> TpResult<EngineeringTp2PreparedGraphReceiptV1> {
+        self.transport_mut()
+            .execute_prepared_peer_graph_geometry(input)
+    }
+    fn supports_prepared_peer(&self) -> bool {
+        self.transport().supports_prepared_peer()
+    }
+    fn register_prepared_peer(
+        &mut self,
+        program: &EngineeringTp2PreparedProgramV1,
+    ) -> TpResult<[u8; 32]> {
+        self.transport_mut().register_prepared_peer(program)
+    }
+    fn execute_prepared_peer(
+        &mut self,
+        input: &EngineeringTp2PreparedInputV1,
+    ) -> TpResult<EngineeringTp2PreparedReceiptV1> {
+        self.transport_mut().execute_prepared_peer(input)
+    }
+    fn supports_peer_dependency_collectives(&self) -> bool {
+        self.transport().supports_peer_dependency_collectives()
+    }
+    fn execute_peer_dependency_collective(
+        &mut self,
+        request: &EngineeringTp2CollectiveRequestV1,
+    ) -> TpResult<EngineeringTp2CollectiveReceiptV1> {
+        self.transport_mut()
+            .execute_peer_dependency_collective(request)
+    }
     fn require_loaded_image(&mut self, image: [u8; 32], kernels: &[&str]) -> TpResult<()> {
         self.transport_mut().require_loaded_image(image, kernels)
     }
@@ -110,6 +197,8 @@ mod tests {
         for enabled in [false, true] {
             let mut worker = RankWorker::Independent(full_forward_wrapper_fixture(enabled, None));
             assert_eq!(worker.supports_full_forward(), enabled);
+            assert!(!worker.supports_peer_dependency_collectives());
+            assert!(!worker.supports_prepared_peer());
             // The wrapper must preserve the inner rejection, including closure.
             assert!(worker.submit_full_forward(&[]).is_err());
             assert!(worker.allocate(4).is_err());
@@ -123,6 +212,8 @@ mod tests {
         for peer in peers {
             let mut worker = RankWorker::Peer(peer);
             assert!(!worker.supports_full_forward());
+            assert!(!worker.supports_peer_dependency_collectives());
+            assert!(!worker.supports_prepared_peer());
             assert!(worker.submit_full_forward(&[]).is_err());
             assert!(worker.wait_full_forward(616).is_err());
             worker.close().unwrap();

@@ -7,6 +7,56 @@ publish = false
 autobins = false
 
 [[bin]]
+name = "ferric-qwen3-finite-tiles-decode-engineering"
+path = "src/bin/ferric-qwen3-finite-tiles-decode-engineering.rs"
+required-features = ["tp-batch-engineering"]
+
+[[bin]]
+name = "ferric-qwen3-finite-prefix-decode-engineering"
+path = "src/bin/ferric-qwen3-finite-prefix-decode-engineering.rs"
+required-features = ["tp-batch-engineering"]
+
+[[bin]]
+name = "ferric-qwen3-finite-prefix-decode-host-engineering"
+path = "src/bin/ferric-qwen3-finite-prefix-decode-host-engineering.rs"
+required-features = ["tp-batch-engineering"]
+
+[[bin]]
+name = "ferric-qwen3-finite-prefix-layer-engineering"
+path = "src/bin/ferric-qwen3-finite-prefix-layer-engineering.rs"
+required-features = ["tp-batch-engineering"]
+
+[[bin]]
+name = "ferric-qwen3-finite-queued-projection-comparison-engineering"
+path = "src/bin/ferric-qwen3-finite-queued-projection-comparison-engineering.rs"
+required-features = ["tp-batch-engineering"]
+
+[[bin]]
+name = "ferric-qwen3-finite-mlp-tiles-comparison-engineering"
+path = "src/bin/ferric-qwen3-finite-mlp-tiles-comparison-engineering.rs"
+required-features = ["tp-batch-engineering"]
+
+[[bin]]
+name = "ferric-qwen3-finite-queued-mlp-comparison-engineering"
+path = "src/bin/ferric-qwen3-finite-queued-mlp-comparison-engineering.rs"
+required-features = ["tp-batch-engineering"]
+
+[[bin]]
+name = "ferric-qwen3-finite-rearm-smoke-engineering"
+path = "src/bin/ferric-qwen3-finite-rearm-smoke-engineering.rs"
+required-features = ["tp-batch-engineering"]
+
+[[bin]]
+name = "ferric-qwen3-finite-long-engineering"
+path = "src/bin/ferric-qwen3-finite-long-engineering.rs"
+required-features = ["tp-batch-engineering"]
+
+[[bin]]
+name = "ferric-qwen3-finite-two-forward-engineering"
+path = "src/bin/ferric-qwen3-finite-two-forward-engineering.rs"
+required-features = ["tp-batch-engineering"]
+
+[[bin]]
 name = "ferric-m1-engineering-target-smoke"
 path = "src/bin/ferric-m1-engineering-target-smoke.rs"
 
@@ -121,6 +171,7 @@ tp-batch-engineering = [
     "dep:ferric-qwen3-tp-batch-kernels-device-v2",
     "dep:ferric-qwen3-tp-perf-kernels-device-v3",
     "dep:ferric-qwen3-tp-peer-kernels-device-v4",
+    "dep:ferric-qwen3-tp-peer-tp2-kernels-device-v18",
     "dep:ferric-qwen3-tp-batch32-kernels-device-v5",
     "dep:ferric-qwen3-tp-peer32-kernels-device-v6",
     "dep:ferric-qwen3-tp-fp32-head-kernels-device-v7",
@@ -131,6 +182,8 @@ tp-batch-engineering = [
     "dep:ferric-qwen3-tp-wave-query-hoist-kernels-device-v14",
     "dep:ferric-qwen3-tp-wave-rmsnorm-kernels-device-v15",
     "dep:ferric-qwen3-tp-parallel-kv-kernels-device-v16",
+    "dep:ferric-qwen3-tp-bf16-wave-argmax-kernels-device-v22",
+    "dep:ferric-qwen3-tp-split-context-attention-device-v1",
 ]
 qualification-fault-injection = [
     "ferric-engine/qualification-fault-injection",
@@ -152,6 +205,7 @@ ferric-qwen3-tp-kernels-device-v1 = { path = "../../device/qwen3-tp-kernels-v1",
 ferric-qwen3-tp-batch-kernels-device-v2 = { path = "../../device/qwen3-tp-batch-kernels-v2", version = "=0.1.0", optional = true, default-features = false, features = ["gfx950"] }
 ferric-qwen3-tp-perf-kernels-device-v3 = { path = "../../device/qwen3-tp-perf-kernels-v3", version = "=0.1.0", optional = true, default-features = false, features = ["gfx950", "mfma"] }
 ferric-qwen3-tp-peer-kernels-device-v4 = { path = "../../device/qwen3-tp-peer-kernels-v4", version = "=0.1.0", optional = true, default-features = false, features = ["gfx950"] }
+ferric-qwen3-tp-peer-tp2-kernels-device-v18 = { path = "../../device/qwen3-tp-peer-tp2-kernels-v18", version = "=0.1.0", optional = true, default-features = false, features = ["gfx950"] }
 ferric-qwen3-tp-batch32-kernels-device-v5 = { path = "../../device/qwen3-tp-batch32-kernels-v5", version = "=0.1.0", optional = true, default-features = false, features = ["gfx950", "mfma"] }
 ferric-qwen3-tp-peer32-kernels-device-v6 = { path = "../../device/qwen3-tp-peer32-kernels-v6", version = "=0.1.0", optional = true, default-features = false, features = ["gfx950"] }
 ferric-qwen3-tp-fp32-head-kernels-device-v7 = { path = "../../device/qwen3-tp-fp32-head-kernels-v7", version = "=0.1.0", optional = true, default-features = false, features = ["gfx950"] }
@@ -162,6 +216,8 @@ ferric-qwen3-tp-fp32-argmax-kernels-device-v11 = { path = "../../device/qwen3-tp
 ferric-qwen3-tp-wave-query-hoist-kernels-device-v14 = { path = "../../device/qwen3-tp-wave-query-hoist-kernels-v14", version = "=0.1.0", optional = true, default-features = false, features = ["gfx950"] }
 ferric-qwen3-tp-wave-rmsnorm-kernels-device-v15 = { path = "../../device/qwen3-tp-wave-rmsnorm-kernels-v15", version = "=0.1.0", optional = true, default-features = false, features = ["gfx950"] }
 ferric-qwen3-tp-parallel-kv-kernels-device-v16 = { path = "../../device/qwen3-tp-parallel-kv-kernels-v16", version = "=0.1.0", optional = true, default-features = false, features = ["gfx950"] }
+ferric-qwen3-tp-bf16-wave-argmax-kernels-device-v22 = { path = "../../device/qwen3-tp-bf16-wave-argmax-kernels-v22", version = "=0.1.0", optional = true, default-features = false, features = ["gfx950"] }
+ferric-qwen3-tp-split-context-attention-device-v1 = { path = "../../device/qwen3-tp-split-context-attention-v1", version = "=0.1.0", optional = true, default-features = false, features = ["gfx950"] }
 ferric-qwen3-all-kernels-worker-v3-verifier-v1 = { path = "../qwen3-all-kernels-worker-v3-verifier-v1", version = "=0.1.0" }
 ferric-spec = { path = "../../crates/ferric-spec", version = "=0.1.0" }
 rustix = { version = "=1.1.4", features = ["event", "fs", "net", "process", "rand", "time"] }

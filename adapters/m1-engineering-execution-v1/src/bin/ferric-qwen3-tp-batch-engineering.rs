@@ -3,6 +3,7 @@
 mod tp_benchmark_control;
 mod tp_host_timing;
 mod tp_peer_worker;
+mod tp_prepared_worker;
 mod tp_rank_worker;
 mod tp_worker;
 
@@ -11,6 +12,7 @@ use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 use std::time::Instant;
 
+use ferric_build::TokenizerExecutionLimits;
 use ferric_m1_engineering_execution_v1::tp_artifact::EngineeringTpArtifactV1;
 use ferric_m1_engineering_execution_v1::tp_batch_runtime::EngineeringTpBatchRuntimeV2;
 use ferric_m1_engineering_execution_v1::tp_execution::batched::EngineeringTpBatchExecutionV2;
@@ -18,6 +20,8 @@ use ferric_m1_engineering_execution_v1::tp_execution::numerical::{
     EngineeringTpNumericalCaptureV1, EngineeringTpNumericalProjectionV1 as NumericalRole,
 };
 use ferric_m1_engineering_execution_v1::tp_execution::{
+    EngineeringTp2GraphGeometryV1 as GraphGeometry,
+    EngineeringTp2GraphKernelProfileV1 as GraphKernels, EngineeringTp2GraphPolicyV1 as GraphPolicy,
     EngineeringTpProjectionModeV3 as ProjectionMode, EngineeringTpReductionModeV3,
 };
 use ferric_m1_engineering_execution_v1::tp_live_ingress;
@@ -33,6 +37,9 @@ use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use tp_benchmark_control::{BenchmarkClock, ControlConfig};
 use tp_peer_worker::PeerWorker;
+use tp_prepared_worker::{
+    GraphGeometryLaunchOptions, GraphLaunchOptions, MetadataUploadMode, PreparedWorker,
+};
 use tp_rank_worker::RankWorker;
 use tp_worker::{NativeFullForwardTimestamps, RuntimeOptions, Worker};
 
@@ -43,7 +50,12 @@ const USAGE: &str = concat!(
     "[--cache-ttl 1024] [--max-batches 240] [--disable-prefix-cache] [--prune-output-head] ",
     "[--runtime-cache-admission] [--runtime-operational] [--dispatch-sequences] [--queue-rollover] ",
     "[--runtime-profile] [--peer-shared-full-currentness] [--runtime-ordered-batches | --runtime-ordered-scalar-v3 | --runtime-full-forward | --runtime-full-forward-mfma-v7 | --runtime-full-forward-mfma-v7-wave] ",
-    "[--collective host-staged-v1|host-staged-reuse-v3|device-tp1-v3|device-peer-serial-v4|device-peer-concurrent-round-v1] ",
+    "[--runtime-tp2-prepared | --runtime-tp2-program-scope | --runtime-tp2-queued-graph queued-baseline|transaction-fences|transaction-fences-admission-cache|transaction-fences-admission-cache-scoped-observations|closed-token-admission-cache] ",
+    "[--tp2-graph-kernel-profile baseline|bf16-argmax-v22-scalar|bf16-argmax-v22-wave|wave-stack-control|wave-stack-norm|wave-stack-norm-attention|wave-stack-norm-attention-kv|wave-stack-norm-attention-kv-mlp|wave-stack-norm-split-attention-kv-mlp --tp2-graph-argmax-artifact DIR] ",
+    "[--tp2-graph-norm-artifact DIR] [--tp2-graph-split-attention-artifact DIR] ",
+    "[--tp2-graph-geometry short64|long2304] ",
+    "[--runtime-tp2-metadata-uploads separate-writes|batched] ",
+    "[--collective host-staged-v1|host-staged-reuse-v3|device-tp1-v3|device-peer-serial-v4|device-peer-concurrent-round-v1|device-peer-dependency-collective-v1] ",
     "[--peer-artifact DIR] [--kernel-profile v2|v3-wave|v3-mfma|v5-wave32|v5-mfma32] ",
     "[--projection baseline|wave|mfma|auto] [--attention baseline|wave] ",
     "[--head-precision bf16-v7-control|fp32-v7|bf16-v8-control|fp32-v8 --fp32-head-artifact DIR] ",
@@ -90,6 +102,15 @@ struct Options {
     ordered_scalar_v3: bool,
     full_forward_mfma_v7: bool,
     full_forward_mfma_v7_wave: bool,
+    prepared_peer: bool,
+    prepared_program: bool,
+    prepared_graph: Option<GraphPolicy>,
+    graph_kernel_profile: GraphKernels,
+    graph_geometry: GraphGeometry,
+    graph_argmax_artifact: Option<PathBuf>,
+    graph_norm_artifact: Option<PathBuf>,
+    graph_split_attention_artifact: Option<PathBuf>,
+    graph_metadata_uploads: Option<MetadataUploadMode>,
     collective: EngineeringTpReductionModeV3,
     kernel_profile: KernelProfile,
     projection: ProjectionMode,
@@ -222,6 +243,15 @@ impl Options {
         let mut ordered_scalar_v3 = false;
         let mut full_forward_mfma_v7 = false;
         let mut full_forward_mfma_v7_wave = false;
+        let mut prepared_peer = false;
+        let mut prepared_program = false;
+        let mut prepared_graph = None;
+        let mut graph_kernel_profile = None;
+        let mut graph_geometry = None;
+        let mut graph_argmax_artifact = None;
+        let mut graph_norm_artifact = None;
+        let mut graph_split_attention_artifact = None;
+        let mut graph_metadata_uploads = None;
         let mut collective = EngineeringTpReductionModeV3::HostStagedV1;
         let mut kernel_profile = KernelProfile::V2;
         let mut projection = ProjectionMode::Baseline;
@@ -285,6 +315,14 @@ impl Options {
                 }
                 "--runtime-full-forward" => {
                     runtime.full_forward = true;
+                    continue;
+                }
+                "--runtime-tp2-prepared" => {
+                    prepared_peer = true;
+                    continue;
+                }
+                "--runtime-tp2-program-scope" => {
+                    prepared_program = true;
                     continue;
                 }
                 "--runtime-full-forward-mfma-v7" => {
@@ -391,6 +429,9 @@ impl Options {
                         "device-peer-concurrent-round-v1" => {
                             EngineeringTpReductionModeV3::DevicePeerConcurrentV1
                         }
+                        "device-peer-dependency-collective-v1" => {
+                            EngineeringTpReductionModeV3::DevicePeerDependencyV1
+                        }
                         _ => return Err("unsupported collective".into()),
                     }
                 }
@@ -419,6 +460,61 @@ impl Options {
                         "wave" => true,
                         _ => return Err("unknown attention mode".into()),
                     }
+                }
+                "--runtime-tp2-queued-graph" => {
+                    prepared_graph = Some(match value.as_str() {
+                        "queued-baseline" => GraphPolicy::QueuedBaseline,
+                        "transaction-fences" => GraphPolicy::TransactionFences,
+                        "transaction-fences-admission-cache" => {
+                            GraphPolicy::TransactionFencesAdmissionCache
+                        }
+                        "transaction-fences-admission-cache-scoped-observations" => {
+                            GraphPolicy::TransactionFencesAdmissionCacheScopedObservations
+                        }
+                        "closed-token-admission-cache" => GraphPolicy::ClosedTokenAdmissionCache,
+                        "finite-request-admission-cache" => {
+                            GraphPolicy::FiniteRequestAdmissionCache
+                        }
+                        _ => return Err("unknown TP2 graph observation policy".into()),
+                    });
+                }
+                "--tp2-graph-kernel-profile" => {
+                    graph_kernel_profile = Some(match value.as_str() {
+                        "baseline" => GraphKernels::Baseline,
+                        "bf16-argmax-v22-scalar" => GraphKernels::V22Scalar,
+                        "bf16-argmax-v22-wave" => GraphKernels::V22Wave,
+                        "wave-stack-control" => GraphKernels::WaveStackControl,
+                        "wave-stack-norm" => GraphKernels::WaveStackNorm,
+                        "wave-stack-norm-attention" => GraphKernels::WaveStackNormAttention,
+                        "wave-stack-norm-attention-kv" => GraphKernels::WaveStackNormAttentionKv,
+                        "wave-stack-norm-attention-kv-mlp" => {
+                            GraphKernels::WaveStackNormAttentionKvMlp
+                        }
+                        "wave-stack-norm-split-attention-kv-mlp" => {
+                            GraphKernels::WaveStackNormSplitAttentionKvMlp
+                        }
+                        _ => return Err("unknown closed TP2 graph kernel profile".into()),
+                    });
+                }
+                "--tp2-graph-argmax-artifact" => {
+                    graph_argmax_artifact = Some(PathBuf::from(value));
+                }
+                "--tp2-graph-norm-artifact" => {
+                    graph_norm_artifact = Some(PathBuf::from(value));
+                }
+                "--tp2-graph-split-attention-artifact" => {
+                    graph_split_attention_artifact = Some(PathBuf::from(value));
+                }
+                "--tp2-graph-geometry" => {
+                    graph_geometry = Some(match value.as_str() {
+                        "short64" => GraphGeometry::Short64,
+                        "long2304" => GraphGeometry::Long2304,
+                        _ => return Err("unknown closed TP2 graph geometry".into()),
+                    });
+                }
+                "--runtime-tp2-metadata-uploads" => {
+                    graph_metadata_uploads =
+                        Some(MetadataUploadMode::parse(&value).map_err(|error| error.to_string())?);
                 }
                 "--kv-pool-profile" => {
                     if value != "large-kv-v9" {
@@ -453,6 +549,108 @@ impl Options {
             );
         }
         let peer = collective.is_peer();
+        if usize::from(prepared_peer)
+            + usize::from(prepared_program)
+            + usize::from(prepared_graph.is_some())
+            > 1
+        {
+            return Err(
+                "prepared interpreter, native program and queued graph scopes are exclusive".into(),
+            );
+        }
+        if (prepared_program && runtime.cache_admission)
+            || prepared_graph
+                .is_some_and(|policy| runtime.cache_admission != policy.admission_cache())
+        {
+            return Err(
+                "native graph requires an admission option matching its immutable mode".into(),
+            );
+        }
+        if prepared_graph.is_none()
+            && (graph_kernel_profile.is_some()
+                || graph_geometry.is_some()
+                || graph_argmax_artifact.is_some()
+                || graph_norm_artifact.is_some()
+                || graph_split_attention_artifact.is_some()
+                || graph_metadata_uploads.is_some())
+        {
+            return Err(
+                "TP2 graph kernel or metadata selection requires an explicit queued graph scope"
+                    .into(),
+            );
+        }
+        if prepared_graph.is_some_and(GraphPolicy::decode_token)
+            && graph_metadata_uploads != Some(MetadataUploadMode::Batched)
+        {
+            return Err("closed-token graph requires explicit batched metadata uploads".into());
+        }
+        let graph_kernel_profile = graph_kernel_profile.unwrap_or(GraphKernels::Baseline);
+        let graph_geometry = graph_geometry.unwrap_or_default();
+        if prepared_graph.is_some_and(GraphPolicy::finite_request)
+            && (graph_kernel_profile != GraphKernels::WaveStackNormAttentionKvMlp
+                || rows != 1
+                || chunk != 1
+                || cache
+                || live_stdin
+                || benchmark_control.is_some()
+                || host_timing.is_some()
+                || native_timestamp_mode.is_some()
+                || native_timestamp_output.is_some()
+                || numerical_directory.is_some()
+                || numerical_batch.is_some()
+                || numerical_layer.is_some()
+                || numerical_role.is_some())
+        {
+            return Err("finite request requires single-row fresh full-wave static workload without diagnostics".into());
+        }
+        if graph_kernel_profile.has_v22() != graph_argmax_artifact.is_some() {
+            return Err(
+                "nonbaseline graph profiles require exactly the V22 argmax artifact; baseline forbids it"
+                    .into(),
+            );
+        }
+        if graph_kernel_profile.has_v15() != graph_norm_artifact.is_some() {
+            return Err("wave-stack graph arms require exactly the V15 norm artifact; other profiles forbid it".into());
+        }
+        if graph_kernel_profile.split_attention() != graph_split_attention_artifact.is_some() {
+            return Err("only the split-attention graph profile requires its exact sidecar".into());
+        }
+        let prepared_peer = prepared_peer || prepared_program || prepared_graph.is_some();
+        if prepared_peer
+            && (collective != EngineeringTpReductionModeV3::DevicePeerDependencyV1
+                || benchmark_control.is_some()
+                || host_timing.is_some())
+        {
+            return Err("prepared TP2 requires the explicit dependency profile without replica control or diagnostic timing".into());
+        }
+        if collective == EngineeringTpReductionModeV3::DevicePeerDependencyV1
+            && (devices.len() != 2
+                || kernel_profile != KernelProfile::Mfma
+                || projection != ProjectionMode::Mfma
+                || wave_attention
+                || rows != 1
+                || chunk != 1
+                || context != graph_geometry.context_tokens()
+                || pages != graph_geometry.pages()
+                || cache
+                || prune_output_head
+                || runtime.operational
+                || runtime.sequences
+                || runtime.ordered_batches
+                || runtime.full_forward
+                || runtime.rollover
+                || runtime.profile
+                || runtime.shared_full_currentness
+                || numerical_directory.is_some()
+                || head_precision.is_some()
+                || fp32_head_artifact.is_some()
+                || fp32_argmax_artifact.is_some()
+                || rmsnorm_artifact.is_some()
+                || kv_append_artifact.is_some()
+                || large_kv)
+        {
+            return Err("dependency collectives require TP2, explicit v3-MFMA, one row/chunk, exact selected graph geometry (legacy context64/pages4), unpruned BF16 head, disabled prefix cache and full currentness without other execution modes".into());
+        }
         if runtime.shared_full_currentness && !peer {
             return Err(
                 "--peer-shared-full-currentness requires an explicit peer transport".into(),
@@ -466,8 +664,28 @@ impl Options {
         {
             return Err("peer transport requires TP2/8 and --peer-artifact; rollover and concurrent same-rank sequences are unsupported".into());
         }
-        let packets_per_batch = 36 * (15 + collective.extra_dispatches_per_layer()) + 4;
-        if !seen.contains("--max-batches") && !runtime.rollover {
+        let packets_per_batch =
+            if prepared_graph.is_some() && graph_kernel_profile.split_attention() {
+                graph_kernel_profile.graph_packet_counts()[0]
+            } else {
+                36 * (15
+                    + collective.extra_dispatches_per_layer()
+                    + collective.barrier_packets_per_layer())
+                    + 4
+            };
+        // Only the explicit long graph path proves complete per-forward drain before
+        // reuse. Legacy scopes retain the conservative cumulative packet bound.
+        let drained_long_graph =
+            prepared_graph.is_some() && graph_geometry == GraphGeometry::Long2304;
+        let retained_per_forward_packets = if drained_long_graph {
+            graph_kernel_profile.graph_packet_counts()[0]
+        } else {
+            packets_per_batch
+        };
+        if drained_long_graph && !seen.contains("--max-batches") {
+            max_batches = 2303;
+        }
+        if !seen.contains("--max-batches") && !runtime.rollover && !drained_long_graph {
             max_batches = max_batches.min(
                 fe2o3_kfd::engineering_wire::MAX_UNRETIRED_RING_PACKETS_V1 / packets_per_batch,
             );
@@ -476,7 +694,11 @@ impl Options {
             || !(1..=rows).contains(&chunk)
             || max_batches == 0
             || max_batches > 1_000_000
+            || retained_per_forward_packets
+                > fe2o3_kfd::engineering_wire::MAX_UNRETIRED_RING_PACKETS_V1
+            || (drained_long_graph && max_batches < 2303)
             || (!runtime.rollover
+                && !drained_long_graph
                 && max_batches
                     .checked_mul(packets_per_batch)
                     .is_none_or(|n| n > fe2o3_kfd::engineering_wire::MAX_UNRETIRED_RING_PACKETS_V1))
@@ -694,6 +916,15 @@ impl Options {
             ordered_scalar_v3,
             full_forward_mfma_v7,
             full_forward_mfma_v7_wave,
+            prepared_peer,
+            prepared_program,
+            prepared_graph,
+            graph_kernel_profile,
+            graph_geometry,
+            graph_argmax_artifact,
+            graph_norm_artifact,
+            graph_split_attention_artifact,
+            graph_metadata_uploads,
             collective,
             kernel_profile,
             projection,
@@ -761,6 +992,13 @@ impl Workload {
             .map_err(|e| e.to_string())?;
         let workload = Self::parse(&bytes)?;
         Ok((workload, hex(&Sha256::digest(&bytes))))
+    }
+}
+
+fn prompt_tokenizer_limits(geometry: GraphGeometry) -> TokenizerExecutionLimits {
+    match geometry {
+        GraphGeometry::Short64 => TokenizerExecutionLimits::m1(),
+        GraphGeometry::Long2304 => TokenizerExecutionLimits::long_context(),
     }
 }
 
@@ -833,6 +1071,14 @@ fn emit_request(
     record: &TpRequestRecordV1,
     model: &EngineeringQwenModelV1,
 ) -> Result<(), String> {
+    emit(&request_record(name, record, model)?)
+}
+
+fn request_record(
+    name: &str,
+    record: &TpRequestRecordV1,
+    model: &EngineeringQwenModelV1,
+) -> Result<serde_json::Value, String> {
     let decoded = model.decode(&record.generated_tokens)?;
     let intervals = record
         .output_timestamps_ns
@@ -843,7 +1089,7 @@ fn emit_request(
         .output_timestamps_ns
         .first()
         .map(|time| time - record.arrival_ns);
-    emit(&serde_json::json!({
+    Ok(serde_json::json!({
         "schema":"FerricQwen3TpBatchRequestV2", "authority":"none", "name":name,
         "slot":record.id.slot, "generation":record.id.generation,
         "state":format!("{:?}", record.state()), "prompt_tokens":record.prompt_tokens,
@@ -857,6 +1103,158 @@ fn emit_request(
     }))
 }
 
+struct FiniteRecords {
+    values: Vec<serde_json::Value>,
+    bytes: usize,
+    forwards: u64,
+    batches: u64,
+    finished: bool,
+}
+
+impl FiniteRecords {
+    fn new(forwards: u64) -> Self {
+        Self {
+            values: Vec::new(),
+            bytes: 0,
+            forwards,
+            batches: 0,
+            finished: false,
+        }
+    }
+
+    fn push(&mut self, mut value: serde_json::Value) -> Result<(), String> {
+        let (schema, limit) = match value["schema"].as_str() {
+            Some("FerricQwen3TpBatchAdmissionV2")
+                if self.values.is_empty()
+                    && matches!(self.forwards, 36 | 2303)
+                    && value["prompt_tokens"].as_array().is_some_and(|ids| {
+                        ids.len() == if self.forwards == 36 { 5 } else { 2048 }
+                    }) =>
+            {
+                ("FerricQwen3TpFiniteBufferedAdmissionV1", 65_536)
+            }
+            Some("FerricQwen3TpBatchCompletedV2")
+                if !self.values.is_empty() && !self.finished && self.batches < self.forwards =>
+            {
+                ("FerricQwen3TpFiniteBufferedBatchV1", 4_096)
+            }
+            Some("FerricQwen3TpBatchRequestV2")
+                if !self.values.is_empty() && !self.finished && self.batches == self.forwards =>
+            {
+                ("FerricQwen3TpFiniteBufferedRequestV1", 65_536)
+            }
+            _ => return Err("finite withheld record schema/order/cardinality".into()),
+        };
+        value["metric_basis"] =
+            serde_json::json!("internal-generation-nonstreaming-unaccepted-until-clean-close");
+        value["schema"] = serde_json::json!(schema);
+        for key in [
+            "ttft_ns",
+            "tpot_ns",
+            "decode_intervals_ns",
+            "output_timestamps_ns",
+        ] {
+            if let Some(object) = value.as_object_mut()
+                && let Some(v) = object.remove(key)
+            {
+                object.insert(format!("internal_{key}"), v);
+            }
+        }
+        let bytes = serde_json::to_vec(&value).map_err(|e| e.to_string())?.len();
+        let total = self
+            .bytes
+            .checked_add(bytes)
+            .ok_or("finite record length overflow")?;
+        if bytes > limit || total > 10 << 20 {
+            return Err("finite withheld record bound".into());
+        }
+        self.bytes = total;
+        self.batches += u64::from(schema == "FerricQwen3TpFiniteBufferedBatchV1");
+        self.finished = schema == "FerricQwen3TpFiniteBufferedRequestV1";
+        self.values.push(value);
+        Ok(())
+    }
+
+    fn finish(self) -> Result<Vec<serde_json::Value>, String> {
+        if !self.finished
+            || self.batches != self.forwards
+            || self.values.len() as u64 != self.forwards + 2
+        {
+            return Err("finite withheld records incomplete".into());
+        }
+        Ok(self.values)
+    }
+}
+
+fn workload_record(
+    value: serde_json::Value,
+    held: &mut Option<FiniteRecords>,
+) -> Result<(), String> {
+    match held {
+        Some(held) => held.push(value),
+        None => emit(&value),
+    }
+}
+
+fn publish_finite_after_close(
+    workload: &Result<(), String>,
+    close: &Result<(), String>,
+    value: &serde_json::Value,
+    sink: impl FnOnce(&serde_json::Value) -> Result<(), String>,
+) -> Result<(), String> {
+    if workload.is_ok() && close.is_ok() {
+        sink(value)
+    } else {
+        Ok(())
+    }
+}
+
+fn finite_acceptance_record(
+    records: &[serde_json::Value],
+    setup_ns: u64,
+    request_ns: u64,
+    close_ns: u64,
+    acceptance_ns: u64,
+) -> serde_json::Value {
+    serde_json::json!({"schema":"FerricQwen3TpFiniteRequestCompletedV1",
+        "authority":"none", "metric_basis":"internal-generation-nonstreaming",
+        "client_visible_streaming_qualified":false, "accepted_after_clean_close":true,
+        "setup_elapsed_ns":setup_ns, "request_elapsed_ns":request_ns,
+        "close_elapsed_ns":close_ns, "acceptance_elapsed_ns":acceptance_ns,
+        "records":records})
+}
+
+fn validate_finite_workload(
+    options: &Options,
+    workload: Option<&Workload>,
+    prompts: &[Vec<u32>],
+) -> Result<(), String> {
+    if !options
+        .prepared_graph
+        .is_some_and(GraphPolicy::finite_request)
+    {
+        return Ok(());
+    }
+    let workload = workload.ok_or("finite static workload missing")?;
+    let (prompt, outputs, forwards) = match options.graph_geometry {
+        GraphGeometry::Short64 => (5, 32, 36),
+        GraphGeometry::Long2304 => (2048, 256, 2303),
+    };
+    if workload.requests.len() != 1
+        || prompts.len() != 1
+        || prompts[0].len() != prompt
+        || workload.requests[0].new_tokens != outputs
+        || workload.requests[0].arrival_tick != 0
+        || workload.requests[0].cancel_tick.is_some()
+        || options.max_batches != forwards
+    {
+        return Err(
+            "finite request exact Short5/32/36 or Long2048/256/2303 budget required".into(),
+        );
+    }
+    Ok(())
+}
+
 fn run_workload(
     runtime: &mut EngineeringTpBatchRuntimeV2<EngineeringTpBatchExecutionV2<RankWorker>>,
     model: &EngineeringQwenModelV1,
@@ -865,8 +1263,12 @@ fn run_workload(
     options: &Options,
     benchmark_clock: Option<&BenchmarkClock>,
     timing: &ferric_m1_engineering_execution_v1::host_timing::HostTiming,
-) -> Result<(), String> {
+) -> Result<Vec<serde_json::Value>, String> {
     let clock = Instant::now();
+    let finite = options
+        .prepared_graph
+        .is_some_and(GraphPolicy::finite_request);
+    let mut held = finite.then(|| FiniteRecords::new(options.max_batches));
     let now = || benchmark_clock.map_or_else(|| elapsed_ns(clock), BenchmarkClock::elapsed_ns);
     let mut active: Vec<(usize, TpRequestIdV1)> = Vec::new();
     let mut admitted = vec![false; workload.requests.len()];
@@ -890,11 +1292,12 @@ fn run_workload(
             )?;
             admitted[index] = true;
             active.push((index, hit.request));
-            emit(
-                &serde_json::json!({"schema":"FerricQwen3TpBatchAdmissionV2", "authority":"none",
+            workload_record(
+                serde_json::json!({"schema":"FerricQwen3TpBatchAdmissionV2", "authority":"none",
                 "name":request.name, "slot":hit.request.slot, "generation":hit.request.generation,
                 "tick":tick, "arrival_ns":now, "prompt_tokens":prompts[index],
                 "cached_tokens":hit.cached_tokens, "cached_pages":hit.cached_pages}),
+                &mut held,
             )?;
         }
         for &(index, id) in &active {
@@ -905,7 +1308,7 @@ fn run_workload(
                 runtime.cancel(id, now()?)?;
             }
         }
-        retire_finished(runtime, &mut active, workload, model, tick)?;
+        retire_finished(runtime, &mut active, workload, model, tick, &mut held)?;
         if active.is_empty() {
             let next = workload
                 .requests
@@ -918,7 +1321,10 @@ fn run_workload(
                 tick = next;
                 continue;
             }
-            return Ok(());
+            if finite && batches != options.max_batches {
+                return Err("finite request incomplete scheduler budget".into());
+            }
+            return held.map_or(Ok(Vec::new()), FiniteRecords::finish);
         }
         if batches >= options.max_batches {
             return Err("workload exhausted its conservative batch/packet budget".into());
@@ -938,8 +1344,8 @@ fn run_workload(
             "index":out.output_index, "completed_ns":out.completed_ns, "finished":out.finished
         })).collect::<Vec<_>>();
         let stats = runtime.page_stats();
-        emit(
-            &serde_json::json!({"schema":"FerricQwen3TpBatchCompletedV2", "authority":"none",
+        workload_record(
+            serde_json::json!({"schema":"FerricQwen3TpBatchCompletedV2", "authority":"none",
             "tick":tick, "batch_id":report.batch_id, "pool_batch_id":report.pool_batch_id,
             "rows":rows, "outputs":outputs, "started_ns":report.started_ns, "completed_ns":report.completed_ns,
             "rank_dispatch_counts":report.rank_dispatch_counts,
@@ -947,8 +1353,9 @@ fn run_workload(
             "free_pages":stats.free_pages, "retained_pages":stats.retained_pages,
             "cached_pages":stats.cached_pages, "prefix_hits":stats.prefix_hits,
             "hit_tokens":stats.hit_tokens, "evicted_pages":stats.evicted_pages}),
+            &mut held,
         )?;
-        retire_finished(runtime, &mut active, workload, model, tick)?;
+        retire_finished(runtime, &mut active, workload, model, tick, &mut held)?;
         batches += 1;
         tick += 1;
     }
@@ -960,6 +1367,7 @@ fn retire_finished(
     workload: &Workload,
     model: &EngineeringQwenModelV1,
     tick: u64,
+    held: &mut Option<FiniteRecords>,
 ) -> Result<(), String> {
     let mut done = Vec::new();
     for &(index, id) in active.iter() {
@@ -968,7 +1376,14 @@ fn retire_finished(
             TpRequestStateV1::Completed | TpRequestStateV1::Cancelled
         ) {
             let record = runtime.retire(id, tick)?;
-            emit_request(&workload.requests[index].name, &record, model)?;
+            if held.is_some() {
+                workload_record(
+                    request_record(&workload.requests[index].name, &record, model)?,
+                    held,
+                )?;
+            } else {
+                emit_request(&workload.requests[index].name, &record, model)?;
+            }
             done.push(id);
         }
     }
@@ -1017,6 +1432,13 @@ fn run_with_timing(
     let (workload, loaded_requests_sha256) = loaded.map_or((None, None), |(workload, hash)| {
         (Some(workload), Some(hash))
     });
+    if options.prepared_peer
+        && workload
+            .as_ref()
+            .is_none_or(|workload| workload.requests.len() != 1)
+    {
+        return Err("prepared TP2 admits exactly one finite target request".into());
+    }
     if timing.is_enabled() {
         diagnostics
             .workload_sha256
@@ -1070,7 +1492,12 @@ fn run_with_timing(
         .peer_artifact
         .as_ref()
         .map(|path| {
-            if options.kernel_profile.wide32() {
+            if options.collective == EngineeringTpReductionModeV3::DevicePeerDependencyV1 {
+                EngineeringTpArtifactV1::open_peer_tp2_v18(
+                    path,
+                    &ferric_qwen3_tp_peer_tp2_kernels_device_v18::compiler_expectation_roster_v18(),
+                )
+            } else if options.kernel_profile.wide32() {
                 EngineeringTpArtifactV1::open_peer32(
                     path,
                     &ferric_qwen3_tp_peer32_kernels_device_v6::compiler_expectation_roster_v6(),
@@ -1121,6 +1548,14 @@ fn run_with_timing(
             EngineeringTpArtifactV1::open_fp32_argmax32_v11(path).map_err(|error| error.to_string())
         })
         .transpose()?;
+    let graph_argmax_artifact = options
+        .graph_argmax_artifact
+        .as_ref()
+        .map(|path| {
+            EngineeringTpArtifactV1::open_graph_bf16_argmax_v22(path)
+                .map_err(|error| error.to_string())
+        })
+        .transpose()?;
     let rmsnorm_artifact = options
         .rmsnorm_artifact
         .as_ref()
@@ -1128,11 +1563,27 @@ fn run_with_timing(
             EngineeringTpArtifactV1::open_wave_rmsnorm_v15(path).map_err(|error| error.to_string())
         })
         .transpose()?;
+    let graph_norm_artifact = options
+        .graph_norm_artifact
+        .as_ref()
+        .map(|path| {
+            EngineeringTpArtifactV1::open_graph_wave_rmsnorm_v15(path)
+                .map_err(|error| error.to_string())
+        })
+        .transpose()?;
     let kv_append_artifact = options
         .kv_append_artifact
         .as_ref()
         .map(|path| {
             EngineeringTpArtifactV1::open_parallel_kv_v16(path).map_err(|error| error.to_string())
+        })
+        .transpose()?;
+    let graph_split_attention_artifact = options
+        .graph_split_attention_artifact
+        .as_ref()
+        .map(|path| {
+            EngineeringTpArtifactV1::open_graph_split_attention_v1(path)
+                .map_err(|error| error.to_string())
         })
         .transpose()?;
     drop(admission_timing);
@@ -1143,7 +1594,8 @@ fn run_with_timing(
         .into_iter()
         .flat_map(|workload| &workload.requests)
         .map(|r| {
-            let tokens = model.encode(&r.prompt)?;
+            let tokens = model
+                .encode_with_limits(&r.prompt, prompt_tokenizer_limits(options.graph_geometry))?;
             if tokens.is_empty()
                 || tokens.len() + r.new_tokens as usize - 1 > options.context as usize
             {
@@ -1153,6 +1605,7 @@ fn run_with_timing(
         })
         .collect::<Result<Vec<_>, String>>()?;
     drop(model_timing);
+    validate_finite_workload(options, workload.as_ref(), &prompts)?;
     let scheduler_timing = timing.scope("setup_scheduler");
     let mut session = [0; 32];
     std::fs::File::open("/dev/urandom")
@@ -1188,18 +1641,103 @@ fn run_with_timing(
     .map_err(|e| format!("scheduler: {e:?}"))?;
     drop(scheduler_timing);
     let workers_timing = timing.scope("setup_workers");
-    let workers = if let Some(peer) = &peer_artifact {
-        PeerWorker::spawn_with_timing(
-            &options.worker,
-            &options.devices,
-            &[&artifact, peer],
-            options.runtime,
-            options.collective == EngineeringTpReductionModeV3::DevicePeerConcurrentV1,
-            timing.clone(),
-        )?
-        .into_iter()
-        .map(RankWorker::Peer)
-        .collect::<Vec<_>>()
+    let workers = if options.prepared_peer {
+        let mut images = vec![
+            &artifact,
+            peer_artifact
+                .as_ref()
+                .ok_or("prepared peer artifact missing")?,
+        ];
+        if let Some(argmax) = &graph_argmax_artifact {
+            images.push(argmax);
+        }
+        if let Some(norm) = &graph_norm_artifact {
+            images.push(norm);
+        }
+        if let Some(split) = &graph_split_attention_artifact {
+            images.push(split);
+        }
+        let prepared = if let Some(policy) = options.prepared_graph {
+            if options.graph_geometry == GraphGeometry::Long2304 {
+                PreparedWorker::spawn_graph_with_geometry_options(
+                    &options.worker,
+                    &options.devices,
+                    &images,
+                    options.runtime,
+                    timing.clone(),
+                    policy,
+                    GraphGeometryLaunchOptions {
+                        kernel_profile: options.graph_kernel_profile,
+                        metadata_upload_mode: options.graph_metadata_uploads.unwrap_or_default(),
+                        geometry: options.graph_geometry,
+                    },
+                )
+            } else if options.graph_kernel_profile.has_v22()
+                || options.graph_metadata_uploads.is_some()
+            {
+                PreparedWorker::spawn_graph_with_options(
+                    &options.worker,
+                    &options.devices,
+                    &images,
+                    options.runtime,
+                    timing.clone(),
+                    policy,
+                    GraphLaunchOptions {
+                        kernel_profile: options.graph_kernel_profile,
+                        metadata_upload_mode: options.graph_metadata_uploads.unwrap_or_default(),
+                    },
+                )
+            } else {
+                PreparedWorker::spawn_graph_with_timing(
+                    &options.worker,
+                    &options.devices,
+                    &images,
+                    options.runtime,
+                    timing.clone(),
+                    policy,
+                )
+            }
+        } else if options.prepared_program {
+            PreparedWorker::spawn_program_with_timing(
+                &options.worker,
+                &options.devices,
+                &images,
+                options.runtime,
+                timing.clone(),
+            )
+        } else {
+            PreparedWorker::spawn_with_timing(
+                &options.worker,
+                &options.devices,
+                &images,
+                options.runtime,
+                timing.clone(),
+            )
+        };
+        prepared?
+            .into_iter()
+            .map(RankWorker::PreparedPeer)
+            .collect::<Vec<_>>()
+    } else if let Some(peer) = &peer_artifact {
+        let peers = if options.collective == EngineeringTpReductionModeV3::DevicePeerDependencyV1 {
+            PeerWorker::spawn_dependency_with_timing(
+                &options.worker,
+                &options.devices,
+                &[&artifact, peer],
+                options.runtime,
+                timing.clone(),
+            )?
+        } else {
+            PeerWorker::spawn_with_timing(
+                &options.worker,
+                &options.devices,
+                &[&artifact, peer],
+                options.runtime,
+                options.collective == EngineeringTpReductionModeV3::DevicePeerConcurrentV1,
+                timing.clone(),
+            )?
+        };
+        peers.into_iter().map(RankWorker::Peer).collect::<Vec<_>>()
     } else {
         options
             .devices
@@ -1291,11 +1829,18 @@ fn run_with_timing(
     gpu.configure_host_timing(timing.clone())?;
     let policies_timing = timing.scope("setup_execution_policies");
     gpu.configure_output_head_pruning(options.prune_output_head)?;
-    gpu.configure_reduction(options.collective)?;
+    let dependent = options.collective == EngineeringTpReductionModeV3::DevicePeerDependencyV1;
+    if !dependent {
+        gpu.configure_reduction(options.collective)?;
+    }
     gpu.configure_dispatch_sequences(options.runtime.sequences)?;
     {
         let _projection_timing = timing.scope("setup_projection");
         gpu.configure_projection(options.projection, model.target_weights(), model.layout())?;
+    }
+    if dependent {
+        // The closed collective is sealed only after its MFMA weight layout exists.
+        gpu.configure_reduction(options.collective)?;
     }
     gpu.configure_wave_attention(options.wave_attention)?;
     if let Some(precision) = options.head_precision {
@@ -1343,6 +1888,50 @@ fn run_with_timing(
             gpu.configure_scalar_v3_full_forward()?;
         }
     }
+    if options.prepared_peer {
+        if let Some(policy) = options.prepared_graph {
+            if let Some(split) = &graph_split_attention_artifact {
+                gpu.configure_prepared_peer_graph_split_attention(
+                    policy,
+                    options.graph_geometry,
+                    graph_argmax_artifact
+                        .as_ref()
+                        .ok_or("missing split argmax admission")?,
+                    graph_norm_artifact
+                        .as_ref()
+                        .ok_or("missing split norm admission")?,
+                    split,
+                )?;
+            } else if options.graph_geometry == GraphGeometry::Long2304 {
+                gpu.configure_prepared_peer_graph_geometry(
+                    policy,
+                    options.graph_kernel_profile,
+                    options.graph_geometry,
+                    graph_argmax_artifact.as_ref(),
+                    graph_norm_artifact.as_ref(),
+                )?;
+            } else if let Some(norm) = &graph_norm_artifact {
+                gpu.configure_prepared_peer_graph_with_wave_stack(
+                    policy,
+                    options.graph_kernel_profile,
+                    graph_argmax_artifact
+                        .as_ref()
+                        .ok_or("missing wave-stack argmax admission")?,
+                    norm,
+                )?;
+            } else if let Some(argmax) = &graph_argmax_artifact {
+                gpu.configure_prepared_peer_graph_with_argmax_v22(
+                    policy,
+                    options.graph_kernel_profile,
+                    argmax,
+                )?;
+            } else {
+                gpu.configure_prepared_peer_graph(policy)?;
+            }
+        } else {
+            gpu.configure_prepared_peer()?;
+        }
+    }
     let fp32_head_workspace_bytes = gpu.fp32_head_workspace_bytes();
     if let Some(selection) = &options.numerical {
         let identity = serde_json::json!({
@@ -1388,6 +1977,9 @@ fn run_with_timing(
     let mut runtime = runtime_constructor(gpu, pool, scheduler, options.rows, options.cache)?;
     let mut benchmark_clock = None;
     drop(setup_timing);
+    let mut finite_records = Vec::new();
+    let mut finite_setup_ns = 0;
+    let mut finite_request_ns = 0;
     let result = (|| {
         let setup_seconds = whole.elapsed().as_secs_f64();
         if let Some(config) = control {
@@ -1418,6 +2010,141 @@ fn run_with_timing(
             "prefill":"true_multirow_chunked", "attention":"paged_causal_gqa", "cache":"complete_page_radix_after_retirement",
             "arrival_policy":"logical batch ticks; elapsed latency starts at admission",
             "numerical_status":"Contracted; independently compare emitted token IDs; not a serving qualification"});
+        if options.prepared_peer {
+            setup["runtime_tp2_prepared"] = serde_json::json!({
+                "mode":"device-peer-tp2-prepared-interpreter-v1",
+                "steps":1013, "kernel_counts":[616,613], "barrier_counts":[72,72],
+                "packet_counts":[688,685], "gpu_waits_preserved":true,
+                "gpu_overlap_claim":false
+            });
+            if options.prepared_program {
+                setup["runtime_tp2_prepared"]["mode"] =
+                    serde_json::json!("device-peer-tp2-prepared-native-program-v1");
+                setup["runtime_tp2_prepared"]["currentness"] =
+                    serde_json::json!("full-program-boundaries-operational-inner");
+                setup["runtime_tp2_prepared"]["native_program_deadline_ms"] =
+                    serde_json::json!(30000);
+                setup["runtime_tp2_prepared"]["native_program_api_calls_per_forward"] =
+                    serde_json::json!(1);
+                setup["runtime_tp2_prepared"]["ordinary_rank_dispatches"] = serde_json::json!(941);
+                setup["runtime_tp2_prepared"]["native_collective_receipts_validated"] =
+                    serde_json::json!(72);
+            }
+            if let Some(policy) = options.prepared_graph {
+                let (mode, currentness) = match policy {
+                    GraphPolicy::QueuedBaseline => {
+                        ("queued-baseline", "queued-baseline-per-packet-validation")
+                    }
+                    GraphPolicy::TransactionFences => (
+                        "transaction-fences",
+                        "transaction-boundaries-paced-reset-observation",
+                    ),
+                    GraphPolicy::TransactionFencesAdmissionCache => (
+                        "transaction-fences-admission-cache",
+                        "transaction-boundaries-paced-reset-observation-immutable-admission-cache",
+                    ),
+                    GraphPolicy::TransactionFencesAdmissionCacheScopedObservations => (
+                        "transaction-fences-admission-cache-scoped-observations",
+                        "scoped-operation-v1-full-entry-exit-operational-inner-immutable-admission-cache",
+                    ),
+                    GraphPolicy::ClosedTokenAdmissionCache => (
+                        "closed-token-admission-cache",
+                        "closed-token-v1-full-entry-exit-operational-inner-immutable-admission-cache",
+                    ),
+                    GraphPolicy::FiniteRequestAdmissionCache => (
+                        "finite-request-admission-cache",
+                        "finite-request-v1-full-begin-completion-operational-inner-provisional",
+                    ),
+                };
+                setup["runtime_tp2_prepared"] = serde_json::json!({
+                    "mode":"device-peer-tp2-prepared-queued-graph-v1",
+                    "execution_mode":mode, "currentness":currentness,
+                    "immutable_kernel_admission_cache":policy.admission_cache(),
+                    "kernel_profile":options.graph_kernel_profile.argument(),
+                    "metadata_upload_mode":options.graph_metadata_uploads.unwrap_or_default().argument(),
+                    "loaded_kernel_counts":options.graph_kernel_profile.loaded_kernel_counts(),
+                    "argmax_root":if options.graph_kernel_profile.wave_argmax() {
+                        ferric_m1_engineering_execution_v1::tp_artifact::ENGINEERING_TP_GRAPH_ARGMAX_ROOT_V22
+                    } else { "ferric_qwen3_tp_batch_argmax_bf16_v2" },
+                    "steps":options.graph_kernel_profile.steps(),
+                    "kernel_counts":options.graph_kernel_profile.kernel_counts(), "barrier_counts":[143,144],
+                    "packet_counts":options.graph_kernel_profile.graph_packet_counts(),
+                    "ordinary_rank_dispatches":options.graph_kernel_profile.rank_dispatches(),
+                    "native_program_deadline_ms":30000, "native_queued_deadline_ms":2000,
+                    "native_graph_api_calls_per_forward":1,
+                    "collective_schedule_bindings_validated":72,
+                    "completion_slots_validated":options.graph_kernel_profile.graph_packet_counts().iter().sum::<u64>(),
+                    "joint_drain":true, "gpu_overlap_claim":false
+                });
+                setup["performance_profile"]["tp2_graph_kernel_profile"] =
+                    serde_json::json!(options.graph_kernel_profile.argument());
+                if policy.scoped_operation_observations() {
+                    setup["runtime_tp2_prepared"]["scoped_operation_observations"] =
+                        serde_json::json!(true);
+                    setup["runtime_tp2_prepared"]["transient_currentness_equivalence_claim"] =
+                        serde_json::json!(false);
+                    setup["performance_profile"]["tp2_graph_observation_policy"] =
+                        serde_json::json!("ScopedOperationV1");
+                }
+                record_closed_token_policy(&mut setup, policy);
+                if options.graph_geometry == GraphGeometry::Long2304 {
+                    setup["runtime_tp2_prepared"]["mode"] =
+                        serde_json::json!("device-peer-tp2-prepared-queued-graph-context2304-v2");
+                    setup["runtime_tp2_prepared"]["geometry"] =
+                        serde_json::json!(options.graph_geometry.argument());
+                    setup["runtime_tp2_prepared"]["context_tokens"] = serde_json::json!(2304);
+                    setup["runtime_tp2_prepared"]["physical_pages"] = serde_json::json!(144);
+                    setup["runtime_tp2_prepared"]["page_table_stride"] = serde_json::json!(144);
+                    setup["runtime_tp2_prepared"]["completed_drain_ring_reuse"] =
+                        serde_json::json!(true);
+                    setup["performance_profile"]["tp2_graph_geometry"] =
+                        serde_json::json!(options.graph_geometry.argument());
+                }
+                setup["performance_profile"]["tp2_graph_metadata_upload_mode"] = serde_json::json!(
+                    options
+                        .graph_metadata_uploads
+                        .unwrap_or_default()
+                        .argument()
+                );
+                if let Some(argmax) = &graph_argmax_artifact {
+                    setup["runtime_tp2_prepared"]["argmax_artifact"] = serde_json::json!({
+                        "hsaco_id":hex(argmax.hsaco_id().as_bytes()),
+                        "manifest_id":hex(argmax.manifest_id().as_bytes()),
+                        "handoff_id":hex(argmax.handoff_id().as_bytes()),
+                        "rank":0
+                    });
+                }
+                if let Some(norm) = &graph_norm_artifact {
+                    setup["runtime_tp2_prepared"]["norm_artifact"] = serde_json::json!({
+                        "hsaco_id":hex(norm.hsaco_id().as_bytes()),
+                        "manifest_id":hex(norm.manifest_id().as_bytes()),
+                        "handoff_id":hex(norm.handoff_id().as_bytes()), "ranks":[0,1]
+                    });
+                    setup["runtime_tp2_prepared"]["wave_stack_dispatches"] = serde_json::json!({
+                        "hidden_norm":if options.graph_kernel_profile.wave_hidden_norm() { 145 } else { 0 },
+                        "attention":if options.graph_kernel_profile.wave_attention() { 72 } else { 0 },
+                        "kv":if options.graph_kernel_profile.wave_kv() { 144 } else { 0 },
+                        "gate_up":if options.graph_kernel_profile.wave_mlp() { 144 } else { 0 },
+                        "down_partials":if options.graph_kernel_profile.wave_mlp() { 72 } else { 0 },
+                        "original_and_transposed_weights_retained":true,
+                        "gate_up_output":"BF16", "down_partial_output":"FP32",
+                        "output_head_unchanged":true
+                    });
+                }
+                if let Some(split) = &graph_split_attention_artifact {
+                    setup["runtime_tp2_prepared"]["split_attention_artifact"] = serde_json::json!({
+                        "hsaco_id":hex(split.hsaco_id().as_bytes()),
+                        "manifest_id":hex(split.manifest_id().as_bytes()),
+                        "handoff_id":hex(split.handoff_id().as_bytes()), "ranks":[0,1],
+                        "partial_dispatches":72, "merge_dispatches":72,
+                        "splits":options.graph_geometry.attention_splits(),
+                        "scratch_values_per_rank":options.graph_geometry.attention_scratch_values(),
+                        "scratch_bytes_per_rank":options.graph_geometry.attention_scratch_values()*4,
+                        "scratch_lifetime":"batch-owned-rank-local", "output":"BF16"
+                    });
+                }
+            }
+        }
         if let Some(clock) = &benchmark_clock {
             setup["replica_benchmark"] =
                 serde_json::to_value(clock.metadata()).map_err(|e| e.to_string())?;
@@ -1562,7 +2289,9 @@ fn run_with_timing(
                     emit,
                 )
             } else {
-                run_workload(
+                let request_started = Instant::now();
+                finite_setup_ns = elapsed_ns(whole)?;
+                finite_records = run_workload(
                     &mut runtime,
                     &model,
                     workload.as_ref().ok_or("static workload missing")?,
@@ -1570,7 +2299,9 @@ fn run_with_timing(
                     options,
                     benchmark_clock.as_ref(),
                     &timing,
-                )
+                )?;
+                finite_request_ns = elapsed_ns(request_started)?;
+                Ok(())
             }
         };
         if options.runtime.profile && result.is_ok() {
@@ -1578,10 +2309,28 @@ fn run_with_timing(
         }
         result
     })();
+    let close_started = Instant::now();
     let close = {
         let _close_timing = timing.scope("close");
         runtime.close()
     };
+    if options
+        .prepared_graph
+        .is_some_and(GraphPolicy::finite_request)
+    {
+        publish_finite_after_close(
+            &result,
+            &close,
+            &finite_acceptance_record(
+                &finite_records,
+                finite_setup_ns,
+                finite_request_ns,
+                elapsed_ns(close_started)?,
+                elapsed_ns(whole)?,
+            ),
+            emit,
+        )?;
+    }
     match (result, close) {
         (Ok(()), Ok(())) => {
             let numerical_closed = runtime.finish_numerical_capture()?;
@@ -1605,6 +2354,33 @@ fn run_with_timing(
         (Ok(()), Err(error)) => Err(format!("worker teardown: {error}")),
         (Err(error), Err(close)) => Err(format!("{error}; worker teardown: {close}")),
     }
+}
+
+fn record_closed_token_policy(setup: &mut serde_json::Value, policy: GraphPolicy) {
+    if policy.finite_request() {
+        setup["runtime_tp2_prepared"]["observation_policy"] = serde_json::json!("FiniteRequestV1");
+        setup["runtime_tp2_prepared"]["provisional_outputs"] = serde_json::json!(true);
+        setup["runtime_tp2_prepared"]["metric_basis"] =
+            serde_json::json!("internal-generation-nonstreaming");
+        setup["runtime_tp2_prepared"]["transient_currentness_equivalence_claim"] =
+            serde_json::json!(false);
+        setup["performance_profile"]["tp2_graph_observation_policy"] =
+            serde_json::json!("FiniteRequestV1");
+        return;
+    }
+    if !policy.closed_token() {
+        return;
+    }
+    let prepared = &mut setup["runtime_tp2_prepared"];
+    prepared["closed_token"] = serde_json::json!(true);
+    prepared["observation_policy"] = serde_json::json!("TokenBoundariesV1");
+    prepared["native_token_api_calls_per_forward"] = serde_json::json!(1);
+    prepared["scoped_operation_observations"] = serde_json::json!(false);
+    prepared["provisional_outputs"] = serde_json::json!(false);
+    prepared["transient_currentness_equivalence_claim"] = serde_json::json!(false);
+    prepared["legacy_three_operation_timing_claim"] = serde_json::json!(false);
+    setup["performance_profile"]["tp2_graph_observation_policy"] =
+        serde_json::json!("TokenBoundariesV1");
 }
 
 fn add_native_timestamp_setup(
@@ -1632,6 +2408,21 @@ fn main() -> std::process::ExitCode {
 #[cfg(test)]
 mod tests {
     use super::*;
+    include!("tp_closed_token_cli_tests.rs");
+    include!("tp_finite_request_cli_tests.rs");
+
+    #[test]
+    fn tokenizer_work_budget_is_explicit_for_long_geometry_only() {
+        let short = prompt_tokenizer_limits(GraphGeometry::Short64);
+        let long = prompt_tokenizer_limits(GraphGeometry::Long2304);
+        assert_eq!(short, TokenizerExecutionLimits::m1());
+        assert_eq!(short.work, 16 * 1_024 * 1_024);
+        assert_eq!(long, TokenizerExecutionLimits::long_context());
+        assert_eq!(long.work, 128 * 1_024 * 1_024);
+        assert_eq!(short.input_bytes, long.input_bytes);
+        assert_eq!(short.tokens, long.tokens);
+        assert_eq!(short.output_bytes, long.output_bytes);
+    }
     #[test]
     fn parallel_kv_v16_cli_requires_exact_paired_full_forward_stack() {
         for (mode, expected) in [
@@ -1944,6 +2735,661 @@ mod tests {
         ];
         base.extend(extra);
         Options::parse(base.into_iter().map(str::to_owned))
+    }
+
+    fn dependency_options() -> Vec<&'static str> {
+        vec![
+            "--devices",
+            "1,2",
+            "--collective",
+            "device-peer-dependency-collective-v1",
+            "--peer-artifact",
+            "/peer",
+            "--kernel-profile",
+            "v3-mfma",
+            "--projection",
+            "mfma",
+            "--batch-tokens",
+            "1",
+            "--prefill-chunk",
+            "1",
+            "--context",
+            "64",
+            "--pages",
+            "4",
+            "--disable-prefix-cache",
+        ]
+    }
+
+    #[test]
+    fn queued_graph_admission_cache_requires_both_explicit_flags() {
+        let mut selected = dependency_options();
+        selected.extend([
+            "--runtime-tp2-queued-graph",
+            "transaction-fences-admission-cache",
+        ]);
+        assert!(args(&selected).is_err());
+        selected.push("--runtime-cache-admission");
+        let options = args(&selected).unwrap();
+        assert_eq!(
+            options.prepared_graph,
+            Some(GraphPolicy::TransactionFencesAdmissionCache)
+        );
+        assert!(options.runtime.cache_admission);
+        for extra in [
+            "--runtime-operational",
+            "--runtime-profile",
+            "--peer-shared-full-currentness",
+            "--runtime-tp2-program-scope",
+        ] {
+            let mut invalid = selected.clone();
+            invalid.push(extra);
+            assert!(args(&invalid).is_err());
+        }
+    }
+
+    #[test]
+    fn scoped_graph_cli_is_explicit_for_both_geometries_and_rejects_mixed_currentness() {
+        let selected = "transaction-fences-admission-cache-scoped-observations";
+        assert!(
+            args(&dependency_options())
+                .unwrap()
+                .prepared_graph
+                .is_none()
+        );
+        for geometry in [GraphGeometry::Short64, GraphGeometry::Long2304] {
+            let mut base = dependency_options();
+            if geometry == GraphGeometry::Long2304 {
+                for (flag, value) in [("--context", "2304"), ("--pages", "144")] {
+                    let index = base.iter().position(|item| *item == flag).unwrap();
+                    base[index + 1] = value;
+                }
+                base.extend(["--tp2-graph-geometry", "long2304"]);
+            }
+            base.extend(["--runtime-tp2-queued-graph", selected]);
+            assert!(args(&base).is_err());
+            base.push("--runtime-cache-admission");
+            let options = args(&base).unwrap();
+            assert_eq!(
+                options.prepared_graph,
+                Some(GraphPolicy::TransactionFencesAdmissionCacheScopedObservations)
+            );
+            assert_eq!(options.graph_geometry, geometry);
+            assert!(options.runtime.cache_admission);
+            assert!(!options.runtime.operational);
+            assert!(!options.runtime.profile);
+            assert!(!options.runtime.shared_full_currentness);
+            for flag in [
+                "--runtime-operational",
+                "--runtime-profile",
+                "--peer-shared-full-currentness",
+                "--runtime-tp2-program-scope",
+            ] {
+                let mut invalid = base.clone();
+                invalid.push(flag);
+                assert!(args(&invalid).is_err(), "{flag}");
+            }
+            let mut duplicate = base.clone();
+            duplicate.extend(["--runtime-tp2-queued-graph", selected]);
+            assert!(args(&duplicate).is_err());
+            let index = base
+                .iter()
+                .position(|item| *item == "--runtime-tp2-queued-graph")
+                .unwrap();
+            base[index + 1] = "transaction-fences-scoped-observations";
+            assert!(args(&base).is_err());
+        }
+    }
+
+    #[test]
+    fn graph_argmax_cli_binds_profile_and_sidecar_to_explicit_graph_scope() {
+        for mode in [
+            "queued-baseline",
+            "transaction-fences",
+            "transaction-fences-admission-cache",
+        ] {
+            let mut base = dependency_options();
+            base.extend(["--runtime-tp2-queued-graph", mode]);
+            if mode == "transaction-fences-admission-cache" {
+                base.push("--runtime-cache-admission");
+            }
+            assert_eq!(
+                args(&base).unwrap().graph_kernel_profile,
+                GraphKernels::Baseline
+            );
+            for (name, profile) in [
+                ("bf16-argmax-v22-scalar", GraphKernels::V22Scalar),
+                ("bf16-argmax-v22-wave", GraphKernels::V22Wave),
+            ] {
+                let mut selected = base.clone();
+                selected.extend(["--tp2-graph-kernel-profile", name]);
+                assert!(args(&selected).is_err());
+                selected.extend(["--tp2-graph-argmax-artifact", "/v22"]);
+                let options = args(&selected).unwrap();
+                assert_eq!(options.graph_kernel_profile, profile);
+                assert_eq!(
+                    options.graph_argmax_artifact.as_deref(),
+                    Some(Path::new("/v22"))
+                );
+                for incompatible in [
+                    vec!["--runtime-tp2-program-scope"],
+                    vec!["--runtime-tp2-prepared"],
+                    vec!["--attention", "wave"],
+                    vec!["--head-precision", "fp32-v7"],
+                ] {
+                    let mut rejected = selected.clone();
+                    rejected.extend(incompatible);
+                    assert!(args(&rejected).is_err());
+                }
+            }
+            for rejected in [
+                vec!["--tp2-graph-argmax-artifact", "/v22"],
+                vec!["--tp2-graph-kernel-profile", "wave"],
+                vec![
+                    "--tp2-graph-kernel-profile",
+                    "baseline",
+                    "--tp2-graph-argmax-artifact",
+                    "/v22",
+                ],
+            ] {
+                let mut selected = base.clone();
+                selected.extend(rejected);
+                assert!(args(&selected).is_err());
+            }
+        }
+        for profile in ["baseline", "bf16-argmax-v22-scalar", "bf16-argmax-v22-wave"] {
+            let mut rejected = dependency_options();
+            rejected.extend(["--tp2-graph-kernel-profile", profile]);
+            assert!(args(&rejected).is_err());
+        }
+    }
+
+    #[test]
+    fn graph_split_attention_cli_requires_exact_profile_sidecar_pair_and_scope() {
+        for geometry in GraphGeometry::ALL {
+            for policy in GraphPolicy::PRE_FINITE {
+                for metadata in MetadataUploadMode::ALL {
+                    let mut selected = dependency_options();
+                    if geometry == GraphGeometry::Long2304 {
+                        for (flag, value) in [("--context", "2304"), ("--pages", "144")] {
+                            let index = selected.iter().position(|item| *item == flag).unwrap();
+                            selected[index + 1] = value;
+                        }
+                    }
+                    let policy_name = match policy {
+                        GraphPolicy::QueuedBaseline => "queued-baseline",
+                        GraphPolicy::TransactionFences => "transaction-fences",
+                        GraphPolicy::TransactionFencesAdmissionCache => {
+                            "transaction-fences-admission-cache"
+                        }
+                        GraphPolicy::TransactionFencesAdmissionCacheScopedObservations => {
+                            "transaction-fences-admission-cache-scoped-observations"
+                        }
+                        GraphPolicy::ClosedTokenAdmissionCache => "closed-token-admission-cache",
+                        GraphPolicy::FiniteRequestAdmissionCache => {
+                            "finite-request-admission-cache"
+                        }
+                    };
+                    selected.extend([
+                        "--runtime-tp2-queued-graph",
+                        policy_name,
+                        "--tp2-graph-geometry",
+                        geometry.argument(),
+                        "--tp2-graph-kernel-profile",
+                        "wave-stack-norm-split-attention-kv-mlp",
+                        "--tp2-graph-argmax-artifact",
+                        "/v22",
+                        "--tp2-graph-norm-artifact",
+                        "/v15",
+                        "--tp2-graph-split-attention-artifact",
+                        "/split",
+                        "--runtime-tp2-metadata-uploads",
+                        metadata.argument(),
+                    ]);
+                    if policy.admission_cache() {
+                        selected.push("--runtime-cache-admission");
+                    }
+                    if policy.closed_token() && metadata != MetadataUploadMode::Batched {
+                        assert!(args(&selected).is_err());
+                        continue;
+                    }
+                    let options = args(&selected).unwrap();
+                    assert!(options.graph_kernel_profile.split_attention());
+                    assert_eq!(
+                        options.graph_split_attention_artifact.as_deref(),
+                        Some(Path::new("/split"))
+                    );
+                    for required in [
+                        "--runtime-tp2-queued-graph",
+                        "--tp2-graph-argmax-artifact",
+                        "--tp2-graph-norm-artifact",
+                        "--tp2-graph-split-attention-artifact",
+                    ] {
+                        let mut missing = selected.clone();
+                        let index = missing.iter().position(|item| *item == required).unwrap();
+                        missing.drain(index..index + 2);
+                        assert!(args(&missing).is_err());
+                    }
+                    let mut duplicate = selected.clone();
+                    duplicate.extend(["--tp2-graph-split-attention-artifact", "/other"]);
+                    assert!(args(&duplicate).is_err());
+                    let mut wrong_profile = selected;
+                    let index = wrong_profile
+                        .iter()
+                        .position(|item| *item == "--tp2-graph-kernel-profile")
+                        .unwrap();
+                    wrong_profile[index + 1] = "wave-stack-norm-attention-kv-mlp";
+                    assert!(args(&wrong_profile).is_err());
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn graph_metadata_cli_is_explicit_closed_and_independent_of_profile_and_policy() {
+        for policy in [
+            "queued-baseline",
+            "transaction-fences",
+            "transaction-fences-admission-cache",
+        ] {
+            let mut base = dependency_options();
+            base.extend(["--runtime-tp2-queued-graph", policy]);
+            if policy == "transaction-fences-admission-cache" {
+                base.push("--runtime-cache-admission");
+            }
+            assert!(args(&base).unwrap().graph_metadata_uploads.is_none());
+            for profile in GraphKernels::ALL {
+                let mut profiled = base.clone();
+                profiled.extend(["--tp2-graph-kernel-profile", profile.argument()]);
+                if profile.has_v22() {
+                    profiled.extend(["--tp2-graph-argmax-artifact", "/v22"]);
+                }
+                if profile.has_v15() {
+                    profiled.extend(["--tp2-graph-norm-artifact", "/v15"]);
+                }
+                if profile.split_attention() {
+                    profiled.extend(["--tp2-graph-split-attention-artifact", "/split"]);
+                }
+                for metadata in MetadataUploadMode::ALL {
+                    let mut selected = profiled.clone();
+                    selected.extend(["--runtime-tp2-metadata-uploads", metadata.argument()]);
+                    let options = args(&selected).unwrap();
+                    assert_eq!(options.graph_metadata_uploads, Some(metadata));
+                    assert_eq!(options.graph_kernel_profile, profile);
+                    assert_eq!(
+                        options.runtime.cache_admission,
+                        policy == "transaction-fences-admission-cache"
+                    );
+                    selected.extend(["--runtime-tp2-metadata-uploads", metadata.argument()]);
+                    assert!(args(&selected).is_err());
+                }
+            }
+            for invalid in ["", "batch", "Batched", "batched ", "cached"] {
+                let mut selected = base.clone();
+                selected.extend(["--runtime-tp2-metadata-uploads", invalid]);
+                assert!(args(&selected).is_err());
+            }
+            base.push("--runtime-tp2-metadata-uploads");
+            assert!(args(&base).is_err());
+        }
+    }
+
+    #[test]
+    fn graph_wave_stack_cli_requires_exact_sidecar_scope_and_rejects_duplicates() {
+        for profile in GraphKernels::ALL {
+            let mut selected = dependency_options();
+            selected.extend(["--tp2-graph-kernel-profile", profile.argument()]);
+            if profile.has_v22() {
+                selected.extend(["--tp2-graph-argmax-artifact", "/v22"]);
+            }
+            selected.extend(["--tp2-graph-norm-artifact", "/v15"]);
+            if profile.split_attention() {
+                selected.extend(["--tp2-graph-split-attention-artifact", "/split"]);
+            }
+            assert!(args(&selected).is_err());
+            selected.extend(["--runtime-tp2-queued-graph", "transaction-fences"]);
+            if profile.has_v15() {
+                let options = args(&selected).unwrap();
+                assert_eq!(options.graph_kernel_profile, profile);
+                assert_eq!(
+                    options.graph_norm_artifact.as_deref(),
+                    Some(Path::new("/v15"))
+                );
+                for required in ["--tp2-graph-norm-artifact", "--tp2-graph-argmax-artifact"] {
+                    let mut missing = selected.clone();
+                    let index = missing.iter().position(|flag| *flag == required).unwrap();
+                    missing.drain(index..index + 2);
+                    assert!(args(&missing).is_err());
+                }
+                for extra in [
+                    vec!["--tp2-graph-norm-artifact", "/other-v15"],
+                    vec!["--tp2-graph-kernel-profile", profile.argument()],
+                    vec!["--runtime-tp2-prepared"],
+                    vec!["--runtime-tp2-program-scope"],
+                    vec!["--attention", "wave"],
+                ] {
+                    let mut invalid = selected.clone();
+                    invalid.extend(extra);
+                    assert!(args(&invalid).is_err());
+                }
+            } else {
+                assert!(args(&selected).is_err());
+            }
+        }
+        let mut missing_value = dependency_options();
+        missing_value.push("--tp2-graph-norm-artifact");
+        assert!(args(&missing_value).is_err());
+    }
+
+    #[test]
+    fn graph_context2304_cli_binds_geometry_and_only_exempts_completed_graph_drains() {
+        for policy in [
+            "queued-baseline",
+            "transaction-fences",
+            "transaction-fences-admission-cache",
+        ] {
+            for profile in GraphKernels::ALL {
+                for metadata in MetadataUploadMode::ALL {
+                    let mut selected = dependency_options();
+                    for (flag, value) in [("--context", "2304"), ("--pages", "144")] {
+                        let index = selected.iter().position(|item| *item == flag).unwrap();
+                        selected[index + 1] = value;
+                    }
+                    selected.extend([
+                        "--runtime-tp2-queued-graph",
+                        policy,
+                        "--tp2-graph-geometry",
+                        "long2304",
+                        "--tp2-graph-kernel-profile",
+                        profile.argument(),
+                        "--runtime-tp2-metadata-uploads",
+                        metadata.argument(),
+                    ]);
+                    if policy == "transaction-fences-admission-cache" {
+                        selected.push("--runtime-cache-admission");
+                    }
+                    if profile.has_v22() {
+                        selected.extend(["--tp2-graph-argmax-artifact", "/v22"]);
+                    }
+                    if profile.has_v15() {
+                        selected.extend(["--tp2-graph-norm-artifact", "/v15"]);
+                    }
+                    if profile.split_attention() {
+                        selected.extend(["--tp2-graph-split-attention-artifact", "/split"]);
+                    }
+                    let parsed = args(&selected).unwrap();
+                    assert_eq!(parsed.graph_geometry, GraphGeometry::Long2304);
+                    assert_eq!(parsed.max_batches, 2303);
+                    assert_eq!(parsed.graph_kernel_profile, profile);
+                    for bad in [
+                        vec!["--tp2-graph-geometry", "long2304"],
+                        vec!["--queue-rollover"],
+                        vec!["--runtime-tp2-prepared"],
+                        vec!["--runtime-tp2-program-scope"],
+                        vec!["--max-batches", "2302"],
+                    ] {
+                        let mut invalid = selected.clone();
+                        invalid.extend(bad);
+                        assert!(args(&invalid).is_err());
+                    }
+                    for (flag, wrong) in [
+                        ("--context", "64"),
+                        ("--pages", "4"),
+                        ("--tp2-graph-geometry", "short64"),
+                    ] {
+                        let mut invalid = selected.clone();
+                        let index = invalid.iter().position(|item| *item == flag).unwrap();
+                        invalid[index + 1] = wrong;
+                        assert!(args(&invalid).is_err());
+                    }
+                }
+            }
+        }
+        for scope in [
+            None,
+            Some("--runtime-tp2-prepared"),
+            Some("--runtime-tp2-program-scope"),
+        ] {
+            let mut invalid = dependency_options();
+            if let Some(flag) = scope {
+                invalid.push(flag);
+            }
+            invalid.extend(["--tp2-graph-geometry", "long2304", "--max-batches", "2303"]);
+            assert!(args(&invalid).is_err());
+        }
+        let mut short = dependency_options();
+        short.extend([
+            "--runtime-tp2-queued-graph",
+            "transaction-fences",
+            "--max-batches",
+            "2303",
+        ]);
+        assert!(args(&short).is_err());
+        for name in ["long", "2304", "Long2304", "long2304 "] {
+            let mut invalid = dependency_options();
+            invalid.extend([
+                "--runtime-tp2-queued-graph",
+                "transaction-fences",
+                "--tp2-graph-geometry",
+                name,
+            ]);
+            assert!(args(&invalid).is_err());
+        }
+    }
+
+    #[test]
+    fn graph_metadata_cli_rejects_explicit_defaults_outside_graph_scope() {
+        for metadata in MetadataUploadMode::ALL {
+            for scope in [
+                None,
+                Some("--runtime-tp2-prepared"),
+                Some("--runtime-tp2-program-scope"),
+            ] {
+                let mut selected = dependency_options();
+                if let Some(flag) = scope {
+                    selected.push(flag);
+                }
+                selected.extend(["--runtime-tp2-metadata-uploads", metadata.argument()]);
+                assert!(args(&selected).is_err());
+            }
+        }
+    }
+
+    #[test]
+    fn queued_graph_cli_has_two_explicit_closed_policies() {
+        assert!(
+            args(&dependency_options())
+                .unwrap()
+                .prepared_graph
+                .is_none()
+        );
+        for (name, policy) in [
+            ("queued-baseline", GraphPolicy::QueuedBaseline),
+            ("transaction-fences", GraphPolicy::TransactionFences),
+        ] {
+            let mut base = dependency_options();
+            base.extend(["--runtime-tp2-queued-graph", name]);
+            let options = args(&base).unwrap();
+            assert!(options.prepared_peer && !options.prepared_program);
+            assert_eq!(options.prepared_graph, Some(policy));
+            for extra in [
+                vec!["--runtime-tp2-prepared"],
+                vec!["--runtime-tp2-program-scope"],
+                vec!["--runtime-cache-admission"],
+                vec!["--runtime-operational"],
+                vec!["--dispatch-sequences"],
+                vec!["--runtime-full-forward"],
+                vec!["--runtime-tp2-queued-graph", name],
+                vec!["--host-timing", "/tmp/timing.json"],
+                vec!["--prune-output-head"],
+                vec!["--head-precision", "fp32-v7"],
+                vec!["--queue-rollover"],
+            ] {
+                let mut invalid = base.clone();
+                invalid.extend(extra);
+                assert!(args(&invalid).is_err());
+            }
+            assert!(args(&["--devices", "1,2", "--runtime-tp2-queued-graph", name]).is_err());
+        }
+        for value in [
+            "",
+            "baseline",
+            "epoch-admission",
+            "transaction-fences-extra",
+        ] {
+            let mut invalid = dependency_options();
+            invalid.extend(["--runtime-tp2-queued-graph", value]);
+            assert!(args(&invalid).is_err());
+        }
+    }
+
+    #[test]
+    fn native_program_scope_cli_requires_the_closed_prepared_profile() {
+        let mut base = dependency_options();
+        assert!(!args(&base).unwrap().prepared_program);
+        base.push("--runtime-tp2-program-scope");
+        let selected = args(&base).unwrap();
+        assert!(selected.prepared_peer && selected.prepared_program);
+        for extra in [
+            vec!["--runtime-tp2-prepared"],
+            vec!["--runtime-tp2-program-scope"],
+            vec!["--runtime-cache-admission"],
+            vec!["--runtime-operational"],
+            vec!["--runtime-full-forward"],
+            vec!["--dispatch-sequences"],
+            vec!["--queue-rollover"],
+            vec!["--attention", "wave"],
+            vec!["--batch-tokens", "2"],
+            vec!["--context", "32"],
+            vec!["--host-timing", "/tmp/timing.json"],
+        ] {
+            let mut invalid = base.clone();
+            invalid.extend(extra);
+            assert!(args(&invalid).is_err());
+        }
+        assert!(args(&["--devices", "1,2", "--runtime-tp2-program-scope"]).is_err());
+    }
+
+    #[test]
+    fn prepared_peer_cli_is_explicit_and_preserves_closed_dependency_profile() {
+        let mut base = dependency_options();
+        assert!(!args(&base).unwrap().prepared_peer);
+        base.push("--runtime-tp2-prepared");
+        assert!(args(&base).unwrap().prepared_peer);
+        for extra in [
+            vec!["--runtime-full-forward"],
+            vec!["--runtime-operational"],
+            vec!["--dispatch-sequences"],
+            vec!["--queue-rollover"],
+            vec!["--attention", "wave"],
+            vec!["--batch-tokens", "2"],
+            vec!["--host-timing", "/tmp/timing.json"],
+            vec!["--runtime-tp2-prepared"],
+        ] {
+            let mut invalid = base.clone();
+            invalid.extend(extra);
+            assert!(args(&invalid).is_err());
+        }
+        assert!(args(&["--devices", "1,2", "--runtime-tp2-prepared"]).is_err());
+    }
+
+    #[test]
+    fn dependency_collective_cli_is_explicit_and_counts_barriers_as_packets() {
+        let base = dependency_options();
+        let options = args(&base).unwrap();
+        assert_eq!(
+            options.collective,
+            EngineeringTpReductionModeV3::DevicePeerDependencyV1
+        );
+        assert_eq!(options.collective.extra_dispatches_per_layer(), 2);
+        assert_eq!(options.collective.barrier_packets_per_layer(), 2);
+        let limit = fe2o3_kfd::engineering_wire::MAX_UNRETIRED_RING_PACKETS_V1 / 688;
+        assert_eq!(options.max_batches, limit);
+        let exact = limit.to_string();
+        let mut bounded = base.clone();
+        bounded.extend(["--max-batches", exact.as_str()]);
+        assert!(args(&bounded).is_ok());
+        let exceeded = (limit + 1).to_string();
+        let mut too_many = base.clone();
+        too_many.extend(["--max-batches", exceeded.as_str()]);
+        assert!(args(&too_many).is_err());
+        let mut cached = base;
+        cached.push("--runtime-cache-admission");
+        assert!(args(&cached).is_ok());
+        assert_eq!(
+            args(&["--devices", "1,2"]).unwrap().collective,
+            EngineeringTpReductionModeV3::HostStagedV1
+        );
+    }
+
+    #[test]
+    fn dependency_collective_cli_rejects_other_shapes_and_execution_modes() {
+        let base = dependency_options();
+        for (flag, value) in [
+            ("--devices", "1"),
+            ("--devices", "1,2,3,4,5,6,7,8"),
+            ("--kernel-profile", "v2"),
+            ("--kernel-profile", "v3-wave"),
+            ("--kernel-profile", "v5-mfma32"),
+            ("--projection", "baseline"),
+            ("--projection", "auto"),
+            ("--batch-tokens", "2"),
+            ("--prefill-chunk", "2"),
+            ("--context", "128"),
+            ("--pages", "8"),
+        ] {
+            let mut invalid = base.clone();
+            let index = invalid.iter().position(|&entry| entry == flag).unwrap();
+            invalid[index + 1] = value;
+            assert!(args(&invalid).is_err(), "{flag}={value}");
+        }
+        for extra in [
+            vec!["--runtime-operational"],
+            vec!["--dispatch-sequences"],
+            vec!["--runtime-ordered-batches"],
+            vec!["--runtime-full-forward"],
+            vec!["--queue-rollover"],
+            vec!["--runtime-profile"],
+            vec!["--peer-shared-full-currentness"],
+            vec!["--prune-output-head"],
+            vec!["--attention", "wave"],
+            vec![
+                "--head-precision",
+                "fp32-v7",
+                "--fp32-head-artifact",
+                "/head",
+            ],
+            vec![
+                "--kv-pool-profile",
+                "large-kv-v9",
+                "--large-kv-artifact",
+                "/kv",
+            ],
+            vec![
+                "--numerical-capture",
+                "/capture",
+                "--numerical-batch",
+                "1",
+                "--numerical-layer",
+                "0",
+                "--numerical-projection",
+                "q",
+            ],
+        ] {
+            let mut invalid = base.clone();
+            invalid.extend(extra);
+            assert!(args(&invalid).is_err(), "{invalid:?}");
+        }
+        let mut cached_prefix = base.clone();
+        cached_prefix.pop();
+        assert!(args(&cached_prefix).is_err());
+        let mut missing_peer = base;
+        let index = missing_peer
+            .iter()
+            .position(|&entry| entry == "--peer-artifact")
+            .unwrap();
+        missing_peer.drain(index..index + 2);
+        assert!(args(&missing_peer).is_err());
     }
 
     #[test]

@@ -5,6 +5,14 @@ use fe2o3_device::{
 
 const ATTENTION_SCALE: f32 = f32::from_bits(0x3db5_04f3);
 
+#[macro_use]
+#[path = "attention_online.rs"]
+mod online;
+
+// The item callback exposes the complete expanded loop to #[kernel].
+qwen_attention_online_pair_v1!(
+    qwen_attention_emit_kernel_v1,
+    ([
 /// One Wave64 per token-row/query-head pair over its own logical page table.
 #[kernel(typed, launch(required = [64, 1, 1], max = [64, 1, 1], max_grid = [512, 1, 1]), control_flow(loop_bounds(8192)))]
 #[allow(clippy::too_many_arguments)]
@@ -20,7 +28,8 @@ pub fn ferric_qwen3_tp_wave_paged_gqa_bf16_v3(
     max_pages_per_sequence: u32,
     physical_pages: u32,
     max_context_tokens: u32,
-) {
+)
+] [
     if rows == 0
         || rows > 16
         || !(world_size == 1 || world_size == 2 || world_size == 8)
@@ -172,16 +181,26 @@ pub fn ferric_qwen3_tp_wave_paged_gqa_bf16_v3(
         fe2o3_device::trap();
     }
     let math = Math::current();
-    let (first, second) = {
+    let (first, second, finite) =
+] [
+    // Preserve the wrapper's deferred rejection before any output is stored.
+    if !finite {
+        fe2o3_device::trap();
+    }
+    let Some(stripe) = invocation.checked_row_striped_2d::<64, 2>() else {
+        fe2o3_device::trap();
+    };
+    if !output.write_row_striped_2d(&stripe, 0, head_rows, 128, 128, first)
+        || !output.write_row_striped_2d(&stripe, 1, head_rows, 128, 128, second)
+    {
+        fe2o3_device::trap();
+    }
+]),
+        max_context_tokens,
+        position,
+        token,
+        {
         // Each lane computes two QK products; six shuffles share the full score.
-        let mut maximum = 0.0_f32;
-        let mut denominator = 0.0_f32;
-        let mut numerator_0 = 0.0_f32;
-        let mut numerator_1 = 0.0_f32;
-        let mut finite = true;
-        let mut token = 0_usize;
-        while token < max_context_tokens {
-            if token <= position {
                 let table_index = row * max_pages_per_sequence + token / 16;
                 if table_index < page_table.len() {
                 } else {
@@ -213,7 +232,8 @@ pub fn ferric_qwen3_tp_wave_paged_gqa_bf16_v3(
                 let product_0 = query_0 * key_0;
                 let product_1 = query_1 * key_1;
                 let partial = product_0 + product_1;
-                finite &= product_0.is_finite() & product_1.is_finite() & partial.is_finite();
+                let product_finite =
+                    product_0.is_finite() & product_1.is_finite() & partial.is_finite();
                 let dot = subgroup.reduce_sum_f32::<64>(partial);
                 if !dot.is_finite() {
                     fe2o3_device::trap();
@@ -223,53 +243,7 @@ pub fn ferric_qwen3_tp_wave_paged_gqa_bf16_v3(
                     Bf16::from_bits(value_view.load_or(cache_row, cache_column, 0)).to_f32();
                 let value_1 =
                     Bf16::from_bits(value_view.load_or(cache_row, cache_column + 64, 0)).to_f32();
-                finite &= score.is_finite() & value_0.is_finite() & value_1.is_finite();
-                if token == 0 {
-                    maximum = score;
-                    denominator = 1.0;
-                    numerator_0 = value_0;
-                    numerator_1 = value_1;
-                } else {
-                    let next_maximum = if score > maximum { score } else { maximum };
-                    let previous_weight = math.exp_f32(maximum - next_maximum);
-                    let current_weight = math.exp_f32(score - next_maximum);
-                    denominator = denominator * previous_weight + current_weight;
-                    numerator_0 = numerator_0 * previous_weight + value_0 * current_weight;
-                    numerator_1 = numerator_1 * previous_weight + value_1 * current_weight;
-                    finite &= previous_weight.is_finite()
-                        & (previous_weight >= 0.0)
-                        & current_weight.is_finite()
-                        & (current_weight >= 0.0)
-                        & denominator.is_finite()
-                        & (denominator > 0.0)
-                        & numerator_0.is_finite()
-                        & numerator_1.is_finite();
-                    maximum = next_maximum;
-                }
-            }
-            token += 1;
-        }
-        let output_0 = numerator_0 / denominator;
-        let output_1 = numerator_1 / denominator;
-        let narrowed_0 = Bf16::from_f32(output_0);
-        let narrowed_1 = Bf16::from_f32(output_1);
-        // Numeric failures cannot terminate individual lanes before a collective.
-        if !finite
-            || !output_0.is_finite()
-            || !output_1.is_finite()
-            || !narrowed_0.is_finite()
-            || !narrowed_1.is_finite()
-        {
-            fe2o3_device::trap();
-        }
-        (narrowed_0.to_bits(), narrowed_1.to_bits())
-    };
-    let Some(stripe) = invocation.checked_row_striped_2d::<64, 2>() else {
-        fe2o3_device::trap();
-    };
-    if !output.write_row_striped_2d(&stripe, 0, head_rows, 128, 128, first)
-        || !output.write_row_striped_2d(&stripe, 1, head_rows, 128, 128, second)
-    {
-        fe2o3_device::trap();
-    }
-}
+                (score, value_0, value_1, product_finite)
+        },
+        math
+);

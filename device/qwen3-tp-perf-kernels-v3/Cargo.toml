@@ -21,7 +21,7 @@ fe2o3-device = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "faaaf15d
 fe2o3-host = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "faaaf15d68eff996b22951758b1a9fa83317d6d2", version = "=0.1.0" }
 
 [dev-dependencies]
-syn = { version = "=2.0.119", features = ["full", "visit"] }
+syn = { version = "=2.0.119", features = ["full", "visit", "extra-traits"] }
 
 [lib]
 name = "ferric_qwen3_tp_perf_kernels_device_v3"

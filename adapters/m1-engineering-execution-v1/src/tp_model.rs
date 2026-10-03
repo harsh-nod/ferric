@@ -211,10 +211,23 @@ impl EngineeringQwenModelV1 {
     ///
     /// Rejects unsupported special tokens or tokenizer execution limits.
     pub fn encode(&self, prompt: &str) -> Result<Vec<u32>, String> {
+        self.encode_with_limits(prompt, TokenizerExecutionLimits::m1())
+    }
+
+    /// Tokenizes the same raw prompt with explicitly selected finite limits.
+    ///
+    /// # Errors
+    ///
+    /// Rejects unsupported special tokens, invalid bounds, or exhausted limits.
+    pub fn encode_with_limits(
+        &self,
+        prompt: &str,
+        limits: TokenizerExecutionLimits,
+    ) -> Result<Vec<u32>, String> {
         self.tokenizer
             .encode(
                 prompt,
-                TokenizerExecutionLimits::m1(),
+                limits,
                 SpecialTokenEncodePolicy::Reject,
             )
             .map_err(|error| format!("cannot tokenize TP prompt: {error}"))

@@ -22,6 +22,8 @@ pub enum EngineeringTpReductionModeV3 {
     DevicePeerV4,
     /// TP2/8: all-rank publication before waiting, within one retained peer owner.
     DevicePeerConcurrentV1,
+    /// TP2, one active row: two MFMA partials and ordered peer residuals in one transaction.
+    DevicePeerDependencyV1,
 }
 
 impl EngineeringTpReductionModeV3 {
@@ -34,6 +36,7 @@ impl EngineeringTpReductionModeV3 {
             Self::DeviceTp1V3 => "device-tp1-v3",
             Self::DevicePeerV4 => "device-peer-serial-v4",
             Self::DevicePeerConcurrentV1 => "device-peer-concurrent-round-v1",
+            Self::DevicePeerDependencyV1 => "device-peer-dependency-collective-v1",
         }
     }
 
@@ -41,7 +44,10 @@ impl EngineeringTpReductionModeV3 {
     #[must_use]
     pub const fn extra_dispatches_per_layer(self) -> u64 {
         match self {
-            Self::DeviceTp1V3 | Self::DevicePeerV4 | Self::DevicePeerConcurrentV1 => 2,
+            Self::DeviceTp1V3
+            | Self::DevicePeerV4
+            | Self::DevicePeerConcurrentV1
+            | Self::DevicePeerDependencyV1 => 2,
             Self::HostStagedV1 | Self::HostStagedReuseV3 => 0,
         }
     }
@@ -49,17 +55,26 @@ impl EngineeringTpReductionModeV3 {
     /// Explicit embedding broadcast copy on every nonzero peer rank.
     #[must_use]
     pub const fn extra_dispatches_per_forward(self, rank: u32) -> u64 {
-        if matches!(self, Self::DevicePeerV4 | Self::DevicePeerConcurrentV1) && rank != 0 {
-            1
+        if self.is_peer() && rank != 0 { 1 } else { 0 }
+    }
+
+    /// Peer profiles share reduction arithmetic but have different execution contracts.
+    #[must_use]
+    pub const fn is_peer(self) -> bool {
+        matches!(
+            self,
+            Self::DevicePeerV4 | Self::DevicePeerConcurrentV1 | Self::DevicePeerDependencyV1
+        )
+    }
+
+    /// Dependency barriers consume queue slots but are not kernel dispatches.
+    #[must_use]
+    pub const fn barrier_packets_per_layer(self) -> u64 {
+        if matches!(self, Self::DevicePeerDependencyV1) {
+            2
         } else {
             0
         }
-    }
-
-    /// Both peer profiles share arithmetic but have different execution contracts.
-    #[must_use]
-    pub const fn is_peer(self) -> bool {
-        matches!(self, Self::DevicePeerV4 | Self::DevicePeerConcurrentV1)
     }
 }
 
@@ -121,6 +136,10 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpExecutionV1<R> {
             return Err("reduction mode is already configured".into());
         }
         match mode {
+            EngineeringTpReductionModeV3::DevicePeerDependencyV1 => {
+                self.check_peer_dependency_profile()?;
+                self.configure_device_peer(mode)?;
+            }
             EngineeringTpReductionModeV3::DevicePeerV4
             | EngineeringTpReductionModeV3::DevicePeerConcurrentV1 => {
                 let concurrent = mode == EngineeringTpReductionModeV3::DevicePeerConcurrentV1;
