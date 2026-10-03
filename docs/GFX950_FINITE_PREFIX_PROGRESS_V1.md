@@ -18,9 +18,9 @@ engineering branch; it does not change the production execution path.
 
 Both four-forward runs completed their Close protocol, reaped their owned
 processes, and passed their six surrounding device-state audits. The CPU suite
-also completed with no forced cleanup. The newer instrumented parent/worker
-binaries have **not** yet completed their GPU observation run; do not attribute
-the earlier four-forward GPU results to those binaries.
+also completed with no forced cleanup. The newer instrumented generation has
+now independently completed its teacher-forced run, described below. Its
+autoregressive run has not yet been repeated with instrumentation.
 
 The six numerical cases cover genuine positions 0 and 4, plus patterned
 positions 15, 16, 2,047 and 2,048. They check first normalization, QKV projection,
@@ -60,6 +60,47 @@ interchangeable. See the [worker notes](../adapters/tp-peer-finite-engineering-w
 This checkpoint is not a clean-clone reproduction claim, a workspace-wide test
 pass, or a newly qualified legacy-worker build. Full workspace formatting,
 Clippy and regression gates remain required before merging to production.
+
+## Measured Host Overhead
+
+The instrumented teacher-forced run completed on `mi350`: all 152 native
+tensor rows matched the prior native baseline bit-for-bit, all three pre-run
+and three post-run device audits passed, and Close/EOF/owned process reap
+completed without forced cleanup. Its receipt is
+`5825e7859db0066b13f3f844d6a103dec5d0d6ec428973426a2d6d4529bc6304`.
+The selected parent and worker are the corrected CPU605 binaries, not the
+earlier uninstrumented binaries. All 57 pinned case outputs were independently
+rehashed after retention on the local machine.
+
+The [machine-readable host summary](assets/finite-prefix-v227/host-observation.json)
+retains nanosecond values and counter names. These are **inclusive, nested host
+scopes**, not calibrated GPU durations or additive contributions. Currentness
+checks revalidate device, topology, allocation and queue state. Do not add
+rank times, subtract them from wall time, infer overlap, or turn four
+teacher-forced forwards into a target-workload tokens/s result.
+
+| Position | Forward Wall (ms) | Full Currentness R0 (ms) | Full Currentness R1 (ms) | Admission R0 (ms) | Admission R1 (ms) | Full Checks R0 / R1 |
+| --- | ---: | ---: | ---: | ---: | ---: | --- |
+| 0 | 18,240.289 | 8,512.988 | 8,477.279 | 14.444 | 10.846 | 5,068 / 5,048 |
+| 1 | 18,252.250 | 8,523.919 | 8,486.701 | 14.496 | 10.812 | 5,068 / 5,048 |
+| 2 | 20,186.874 | 9,484.764 | 9,451.487 | 14.461 | 10.819 | 5,644 / 5,624 |
+| 3 | 20,203.428 | 9,499.867 | 9,463.653 | 14.412 | 10.813 | 5,644 / 5,624 |
+
+The setup snapshot interval was 167.644 seconds and Close took 26.703 seconds.
+The parent diagnostic took 413.571 seconds including its setup, forwards,
+readbacks and teardown; the surrounding controller took 430.597 seconds.
+These boundaries differ and must not be mixed into a performance comparison.
+This is one diagnostic run with all performance opt-ins off, not an ablation
+or a statistically qualified latency measurement.
+
+The observations make repeated currentness checks the first optimization
+candidate to investigate. The next controlled comparisons will separately
+enable immutable kernel-admission caching and sharing a fresh full-currentness
+observation within a group fence. Mutable allocation, pointer, ABI, geometry
+and queue checks must remain. Round publication already shares a fresh
+observation in the baseline, so that existing behavior cannot be claimed as a
+new optimization. No speedup is claimed until the separate variants pass their
+own numerical, ownership and measurement checks.
 
 ## Changes And Retained Failures
 
@@ -104,8 +145,8 @@ alone is not a self-contained reproducer or proof.
 
 1. Publish and qualify the matching sibling fe2o3 dependency so the Ferric
    engineering snapshot can be reproduced from clean checkouts.
-2. Deploy and audit the instrumented binaries, then run the bounded host
-   observation on `mi350`. Use it to locate overhead before changing execution.
+2. Run separately versioned, one-factor host-overhead variants on `mi350`,
+   preserving the measured baseline and its exact numerical checks.
 3. Close independent numerical obligations and validate the longer resident
    request, multiple requests, KV lifetime and cleanup boundaries.
 4. Qualify the full target workload: single-request Qwen3-8B, BF16,

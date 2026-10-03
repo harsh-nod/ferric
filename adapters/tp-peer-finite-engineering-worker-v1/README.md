@@ -58,8 +58,9 @@ checks. CPU tests do not launch the GPU experiment.
 The current CPU cohort passed 605 tests with four ignored. The earlier
 uninstrumented GPU generation passed four teacher-forced and four
 autoregressive forwards with bitwise native-baseline parity. The newer
-host-instrumented generation is separately qualified; it cannot inherit that
-GPU result merely because its CPU tests pass.
+host-instrumented generation has now separately completed its teacher-forced
+run with all 152 native tensor rows bitwise equal, six passing device audits,
+and clean Close/reap. Its instrumented autoregressive run is still pending.
 
 Host counters are inclusive and nested. Do not sum them as disjoint costs or
 label them GPU time, kernel overlap, or tokens/s. Admission caching, shared
