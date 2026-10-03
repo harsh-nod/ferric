@@ -17,6 +17,9 @@ accepted numerical observations, rejected candidates and actual host-time plots.
 The separate [native two-GPU dependency milestone](GFX950_NATIVE_TP2_DEPENDENCY_V1.md)
 retains two rejected attempts and one accepted primitive canary. It is not a
 tensor-parallel model result, dependency-latency benchmark, or overlap measurement.
+The [finite-prefix engineering checkpoint](GFX950_FINITE_PREFIX_PROGRESS_V1.md)
+records later short TP2 forward checks, conditional numerical checks and the
+corrected parent/worker CPU suite. It is not a sustained performance result.
 
 ## Execution And Numerical Scope
 
