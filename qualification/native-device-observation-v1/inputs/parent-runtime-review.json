@@ -1,0 +1,59 @@
+{
+  "authority": "none",
+  "binary": {
+    "bytes": 13691232,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/device-timing-runtime-v228-v1/ferric-qwen3-finite-prefix-decode-device-engineering",
+    "sha256": "cfb38b6c06bf39bd0928e3066204753cd6b5998e9331c5aa77295aa246323a7d"
+  },
+  "boot_id": "2dbbbc5a-d8b7-46ac-bd1f-236e5847e24a",
+  "gpu_execution": false,
+  "host": "smci350-rck-g03-b19-03",
+  "ldd": {
+    "bytes": 755,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/device-timing-runtime-parent-v228-v1/ldd/audit.json",
+    "sha256": "9d6db4e02947d627069489102d22788b25485212766160eaeb577446b4e25601"
+  },
+  "libraries": [
+    {
+      "path": "/lib/x86_64-linux-gnu/libgcc_s.so.1",
+      "resolved": {
+        "bytes": 183024,
+        "path": "/usr/lib/x86_64-linux-gnu/libgcc_s.so.1",
+        "sha256": "d93224d2b0dab4247598be683adca02f5cf00586f99c187579cd7e92058fb7cb"
+      }
+    },
+    {
+      "path": "/lib/x86_64-linux-gnu/libm.so.6",
+      "resolved": {
+        "bytes": 952616,
+        "path": "/usr/lib/x86_64-linux-gnu/libm.so.6",
+        "sha256": "1b87a1a50b496cfead2b0ad134c2ff536705c82608db240c7e8aa48d6c0e4217"
+      }
+    },
+    {
+      "path": "/lib/x86_64-linux-gnu/libc.so.6",
+      "resolved": {
+        "bytes": 2125328,
+        "path": "/usr/lib/x86_64-linux-gnu/libc.so.6",
+        "sha256": "d8db8739a1633c972cec6a4fe0566bdcec6fd088f98723492ab0361f66238f75"
+      }
+    },
+    {
+      "path": "/lib64/ld-linux-x86-64.so.2",
+      "resolved": {
+        "bytes": 236616,
+        "path": "/usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2",
+        "sha256": "1cd555ac46b7887edeaf3c42aac5408c8135e52f6b37870da2cf82d5fe14e829"
+      }
+    }
+  ],
+  "notes": "Root reviewed the actual parent ELF from its separate fresh-source CPU qualification. Both owned readelf/ldd commands exited zero and reaped naturally with empty stderr. Only the recorded system libc, libgcc_s, loader and (for the parent) libm are needed; no RPATH/RUNPATH or unresolved library was observed. Before/after topology and current boot bind the same two selected MI350 GPUs. Exact library aliases and bytes are rechecked by intake. This compatibility review does not execute either binary, discharge runtime proof premises, or grant numerical, performance or production authority.",
+  "production_authority": false,
+  "readelf": {
+    "bytes": 778,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/device-timing-runtime-parent-v228-v1/readelf/audit.json",
+    "sha256": "440036591a6cd4bbee156d51b637b82c5504a64cb45510491587341c8cb3842e"
+  },
+  "reviewed": true,
+  "schema": "ferric-p227-prefix-parity-runtime-review-v1"
+}

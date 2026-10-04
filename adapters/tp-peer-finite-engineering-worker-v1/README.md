@@ -44,10 +44,13 @@ the Closed response. The output is bounded to 2 MiB. Existing ordinary and host
 diagnostic selectors do not enable timestamp queues.
 
 The [matching parent diagnostic](../m1-engineering-execution-v1/README.md#finite-prefix-device-tick-diagnostic)
-is now implemented and separately CPU-qualified. An owned-process GPU run and
-full output-invariance comparison of this new pair are still required.
+is now implemented and separately CPU-qualified. The pair's
+[MI350 GPU capture](../../qualification/native-device-observation-v1/README.md)
+passed: all 1,172 raw rows, four unchanged payloads and 152 unchanged tensors,
+six audits, consuming Close and natural reap.
 Both transported binaries pass [MI350 runtime dependency audits](../../qualification/native-device-runtime-v1/README.md);
 the first controller admission stopped on a legacy-import defect before native launch.
+The corrected controller passed 47 tests before this successful attempt.
 Raw ticks are not nanoseconds; cross-device alignment and
 overlap graphs require separate clock calibration. Single-command raw rounds
 also add a publication fence, so their host timings are not a like-for-like

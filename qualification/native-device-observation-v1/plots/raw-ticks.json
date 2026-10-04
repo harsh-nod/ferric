@@ -1,0 +1,161 @@
+{
+  "calibrated_nanoseconds": false,
+  "complete_sha256": "f11abfb09c0713f17f26fede32a98d525c85480c0bf88b0c1b8342a0b0de3e5a",
+  "cross_device_clock_alignment": false,
+  "device_sidecar": {
+    "bytes": 567012,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-device-timing-tf4-shared-full-currentness-gpu-v228-v1/native-device-v1.json",
+    "sha256": "fb54a5168babde81b1e3438870316935ab988dfcd8b6cb5193e8054c48d852e0"
+  },
+  "full_model_acceptance": false,
+  "numerical_acceptance": false,
+  "overlap_claim": false,
+  "performance_claim": false,
+  "production_authority": false,
+  "raw_rows": 1172,
+  "stages": [
+    {
+      "count": 4,
+      "max_ticks": 1184,
+      "median_ticks": "956",
+      "min_ticks": 912,
+      "queue_epoch": 0,
+      "rank": 0,
+      "stage": "embedding",
+      "unique_id": 16366993098680759275,
+      "zero_deltas": 0
+    },
+    {
+      "count": 144,
+      "max_ticks": 1351972,
+      "median_ticks": "1287468",
+      "min_ticks": 1229604,
+      "queue_epoch": 0,
+      "rank": 0,
+      "stage": "prefix",
+      "unique_id": 16366993098680759275,
+      "zero_deltas": 0
+    },
+    {
+      "count": 144,
+      "max_ticks": 1556,
+      "median_ticks": "1072",
+      "min_ticks": 800,
+      "queue_epoch": 0,
+      "rank": 0,
+      "stage": "post-attention-residual",
+      "unique_id": 16366993098680759275,
+      "zero_deltas": 0
+    },
+    {
+      "count": 144,
+      "max_ticks": 2372576,
+      "median_ticks": "2270702",
+      "min_ticks": 2186880,
+      "queue_epoch": 0,
+      "rank": 0,
+      "stage": "mlp",
+      "unique_id": 16366993098680759275,
+      "zero_deltas": 0
+    },
+    {
+      "count": 144,
+      "max_ticks": 1456,
+      "median_ticks": "1060",
+      "min_ticks": 1008,
+      "queue_epoch": 0,
+      "rank": 0,
+      "stage": "post-mlp-residual",
+      "unique_id": 16366993098680759275,
+      "zero_deltas": 0
+    },
+    {
+      "count": 4,
+      "max_ticks": 75144,
+      "median_ticks": "74644",
+      "min_ticks": 74044,
+      "queue_epoch": 0,
+      "rank": 0,
+      "stage": "final-norm",
+      "unique_id": 16366993098680759275,
+      "zero_deltas": 0
+    },
+    {
+      "count": 4,
+      "max_ticks": 88168,
+      "median_ticks": "87008",
+      "min_ticks": 86392,
+      "queue_epoch": 0,
+      "rank": 0,
+      "stage": "head",
+      "unique_id": 16366993098680759275,
+      "zero_deltas": 0
+    },
+    {
+      "count": 4,
+      "max_ticks": 2249884,
+      "median_ticks": "2115788",
+      "min_ticks": 2071220,
+      "queue_epoch": 0,
+      "rank": 0,
+      "stage": "argmax",
+      "unique_id": 16366993098680759275,
+      "zero_deltas": 0
+    },
+    {
+      "count": 4,
+      "max_ticks": 1196,
+      "median_ticks": "954",
+      "min_ticks": 912,
+      "queue_epoch": 0,
+      "rank": 1,
+      "stage": "copy",
+      "unique_id": 10838076764495710945,
+      "zero_deltas": 0
+    },
+    {
+      "count": 144,
+      "max_ticks": 1354332,
+      "median_ticks": "1281532",
+      "min_ticks": 1221476,
+      "queue_epoch": 0,
+      "rank": 1,
+      "stage": "prefix",
+      "unique_id": 10838076764495710945,
+      "zero_deltas": 0
+    },
+    {
+      "count": 144,
+      "max_ticks": 2588,
+      "median_ticks": "1048",
+      "min_ticks": 1000,
+      "queue_epoch": 0,
+      "rank": 1,
+      "stage": "post-attention-residual",
+      "unique_id": 10838076764495710945,
+      "zero_deltas": 0
+    },
+    {
+      "count": 144,
+      "max_ticks": 2361512,
+      "median_ticks": "2262504",
+      "min_ticks": 2163216,
+      "queue_epoch": 0,
+      "rank": 1,
+      "stage": "mlp",
+      "unique_id": 10838076764495710945,
+      "zero_deltas": 0
+    },
+    {
+      "count": 144,
+      "max_ticks": 1904,
+      "median_ticks": "1044",
+      "min_ticks": 1004,
+      "queue_epoch": 0,
+      "rank": 1,
+      "stage": "post-mlp-residual",
+      "unique_id": 10838076764495710945,
+      "zero_deltas": 0
+    }
+  ]
+}

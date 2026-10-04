@@ -1,0 +1,751 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1210" viewBox="0 0 1080 1210" role="img">
+<title>Raw prefix and MLP tick deltas by layer and position</title>
+<style>text{font-family:Arial,sans-serif;fill:#20242a;font-size:12px}</style>
+<rect width="1080" height="1210" fill="white"/>
+<text x="20" y="27" style="font-size:20px">Layer and position: raw dispatch ticks</text>
+<text x="20" y="50" style="font-size:12px">Each panel has its own scale. No device alignment or calibrated duration is implied.</text>
+<text x="65" y="74" style="font-size:14px">Rank 0 / prefix: 1229604 to 1351972 raw ticks</text>
+<text x="87" y="95" style="font-size:12px">pos 0</text>
+<text x="181" y="95" style="font-size:12px">pos 1</text>
+<text x="275" y="95" style="font-size:12px">pos 2</text>
+<text x="369" y="95" style="font-size:12px">pos 3</text>
+<text x="31" y="115" style="font-size:12px">0</text>
+<rect x="65" y="104" width="92" height="12" fill="#639e95"><title>rank=0, prefix, layer=0, position=0, ticks=1308972</title></rect>
+<rect x="159" y="104" width="92" height="12" fill="#bfd7d2"><title>rank=0, prefix, layer=0, position=1, ticks=1255420</title></rect>
+<rect x="253" y="104" width="92" height="12" fill="#649e95"><title>rank=0, prefix, layer=0, position=2, ticks=1308560</title></rect>
+<rect x="347" y="104" width="92" height="12" fill="#98bfb8"><title>rank=0, prefix, layer=0, position=3, ticks=1278096</title></rect>
+<text x="31" y="128" style="font-size:12px">1</text>
+<rect x="65" y="117" width="92" height="12" fill="#5a988e"><title>rank=0, prefix, layer=1, position=0, ticks=1314548</title></rect>
+<rect x="159" y="117" width="92" height="12" fill="#519288"><title>rank=0, prefix, layer=1, position=1, ticks=1319984</title></rect>
+<rect x="253" y="117" width="92" height="12" fill="#d7e6e2"><title>rank=0, prefix, layer=1, position=2, ticks=1241572</title></rect>
+<rect x="347" y="117" width="92" height="12" fill="#8eb9b1"><title>rank=0, prefix, layer=1, position=3, ticks=1284156</title></rect>
+<text x="31" y="141" style="font-size:12px">2</text>
+<rect x="65" y="130" width="92" height="12" fill="#91bbb4"><title>rank=0, prefix, layer=2, position=0, ticks=1282064</title></rect>
+<rect x="159" y="130" width="92" height="12" fill="#4f9187"><title>rank=0, prefix, layer=2, position=1, ticks=1320760</title></rect>
+<rect x="253" y="130" width="92" height="12" fill="#b8d3cd"><title>rank=0, prefix, layer=2, position=2, ticks=1259548</title></rect>
+<rect x="347" y="130" width="92" height="12" fill="#bed7d2"><title>rank=0, prefix, layer=2, position=3, ticks=1255792</title></rect>
+<text x="31" y="154" style="font-size:12px">3</text>
+<rect x="65" y="143" width="92" height="12" fill="#bad4cf"><title>rank=0, prefix, layer=3, position=0, ticks=1258404</title></rect>
+<rect x="159" y="143" width="92" height="12" fill="#388377"><title>rank=0, prefix, layer=3, position=1, ticks=1334376</title></rect>
+<rect x="253" y="143" width="92" height="12" fill="#7daea6"><title>rank=0, prefix, layer=3, position=2, ticks=1294152</title></rect>
+<rect x="347" y="143" width="92" height="12" fill="#458b80"><title>rank=0, prefix, layer=3, position=3, ticks=1326856</title></rect>
+<text x="31" y="167" style="font-size:12px">4</text>
+<rect x="65" y="156" width="92" height="12" fill="#96beb7"><title>rank=0, prefix, layer=4, position=0, ticks=1279196</title></rect>
+<rect x="159" y="156" width="92" height="12" fill="#3c857a"><title>rank=0, prefix, layer=4, position=1, ticks=1332164</title></rect>
+<rect x="253" y="156" width="92" height="12" fill="#6fa59d"><title>rank=0, prefix, layer=4, position=2, ticks=1302000</title></rect>
+<rect x="347" y="156" width="92" height="12" fill="#478c81"><title>rank=0, prefix, layer=4, position=3, ticks=1325716</title></rect>
+<text x="31" y="180" style="font-size:12px">5</text>
+<rect x="65" y="169" width="92" height="12" fill="#e3eeea"><title>rank=0, prefix, layer=5, position=0, ticks=1234388</title></rect>
+<rect x="159" y="169" width="92" height="12" fill="#7eafa7"><title>rank=0, prefix, layer=5, position=1, ticks=1293304</title></rect>
+<rect x="253" y="169" width="92" height="12" fill="#b2cfca"><title>rank=0, prefix, layer=5, position=2, ticks=1262776</title></rect>
+<rect x="347" y="169" width="92" height="12" fill="#9cc1bb"><title>rank=0, prefix, layer=5, position=3, ticks=1275988</title></rect>
+<text x="31" y="193" style="font-size:12px">6</text>
+<rect x="65" y="182" width="92" height="12" fill="#488d82"><title>rank=0, prefix, layer=6, position=0, ticks=1324880</title></rect>
+<rect x="159" y="182" width="92" height="12" fill="#d5e5e1"><title>rank=0, prefix, layer=6, position=1, ticks=1242584</title></rect>
+<rect x="253" y="182" width="92" height="12" fill="#5a988e"><title>rank=0, prefix, layer=6, position=2, ticks=1314264</title></rect>
+<rect x="347" y="182" width="92" height="12" fill="#a6c8c1"><title>rank=0, prefix, layer=6, position=3, ticks=1269988</title></rect>
+<text x="31" y="206" style="font-size:12px">7</text>
+<rect x="65" y="195" width="92" height="12" fill="#6ea59c"><title>rank=0, prefix, layer=7, position=0, ticks=1302820</title></rect>
+<rect x="159" y="195" width="92" height="12" fill="#9ac0ba"><title>rank=0, prefix, layer=7, position=1, ticks=1276804</title></rect>
+<rect x="253" y="195" width="92" height="12" fill="#509287"><title>rank=0, prefix, layer=7, position=2, ticks=1320612</title></rect>
+<rect x="347" y="195" width="92" height="12" fill="#73a89f"><title>rank=0, prefix, layer=7, position=3, ticks=1299768</title></rect>
+<text x="31" y="219" style="font-size:12px">8</text>
+<rect x="65" y="208" width="92" height="12" fill="#a4c6c0"><title>rank=0, prefix, layer=8, position=0, ticks=1271464</title></rect>
+<rect x="159" y="208" width="92" height="12" fill="#b2cfca"><title>rank=0, prefix, layer=8, position=1, ticks=1262776</title></rect>
+<rect x="253" y="208" width="92" height="12" fill="#c1d9d4"><title>rank=0, prefix, layer=8, position=2, ticks=1253996</title></rect>
+<rect x="347" y="208" width="92" height="12" fill="#b3d0ca"><title>rank=0, prefix, layer=8, position=3, ticks=1262600</title></rect>
+<text x="31" y="232" style="font-size:12px">9</text>
+<rect x="65" y="221" width="92" height="12" fill="#b9d3ce"><title>rank=0, prefix, layer=9, position=0, ticks=1259048</title></rect>
+<rect x="159" y="221" width="92" height="12" fill="#7cada5"><title>rank=0, prefix, layer=9, position=1, ticks=1294668</title></rect>
+<rect x="253" y="221" width="92" height="12" fill="#73a89f"><title>rank=0, prefix, layer=9, position=2, ticks=1300036</title></rect>
+<rect x="347" y="221" width="92" height="12" fill="#bfd8d3"><title>rank=0, prefix, layer=9, position=3, ticks=1255088</title></rect>
+<text x="31" y="245" style="font-size:12px">10</text>
+<rect x="65" y="234" width="92" height="12" fill="#6fa59c"><title>rank=0, prefix, layer=10, position=0, ticks=1302084</title></rect>
+<rect x="159" y="234" width="92" height="12" fill="#9ac1ba"><title>rank=0, prefix, layer=10, position=1, ticks=1276772</title></rect>
+<rect x="253" y="234" width="92" height="12" fill="#c3dad5"><title>rank=0, prefix, layer=10, position=2, ticks=1253152</title></rect>
+<rect x="347" y="234" width="92" height="12" fill="#89b6ae"><title>rank=0, prefix, layer=10, position=3, ticks=1286764</title></rect>
+<text x="31" y="258" style="font-size:12px">11</text>
+<rect x="65" y="247" width="92" height="12" fill="#b5d1cc"><title>rank=0, prefix, layer=11, position=0, ticks=1261184</title></rect>
+<rect x="159" y="247" width="92" height="12" fill="#74a89f"><title>rank=0, prefix, layer=11, position=1, ticks=1299484</title></rect>
+<rect x="253" y="247" width="92" height="12" fill="#9fc4bd"><title>rank=0, prefix, layer=11, position=2, ticks=1273884</title></rect>
+<rect x="347" y="247" width="92" height="12" fill="#7eafa7"><title>rank=0, prefix, layer=11, position=3, ticks=1293332</title></rect>
+<text x="31" y="271" style="font-size:12px">12</text>
+<rect x="65" y="260" width="92" height="12" fill="#79aba3"><title>rank=0, prefix, layer=12, position=0, ticks=1296544</title></rect>
+<rect x="159" y="260" width="92" height="12" fill="#8db8b1"><title>rank=0, prefix, layer=12, position=1, ticks=1284692</title></rect>
+<rect x="253" y="260" width="92" height="12" fill="#86b4ac"><title>rank=0, prefix, layer=12, position=2, ticks=1288576</title></rect>
+<rect x="347" y="260" width="92" height="12" fill="#adccc6"><title>rank=0, prefix, layer=12, position=3, ticks=1265852</title></rect>
+<text x="31" y="284" style="font-size:12px">13</text>
+<rect x="65" y="273" width="92" height="12" fill="#43897e"><title>rank=0, prefix, layer=13, position=0, ticks=1328220</title></rect>
+<rect x="159" y="273" width="92" height="12" fill="#9ac0b9"><title>rank=0, prefix, layer=13, position=1, ticks=1277256</title></rect>
+<rect x="253" y="273" width="92" height="12" fill="#88b5ad"><title>rank=0, prefix, layer=13, position=2, ticks=1287752</title></rect>
+<rect x="347" y="273" width="92" height="12" fill="#c6dcd7"><title>rank=0, prefix, layer=13, position=3, ticks=1251484</title></rect>
+<text x="31" y="297" style="font-size:12px">14</text>
+<rect x="65" y="286" width="92" height="12" fill="#5f9b92"><title>rank=0, prefix, layer=14, position=0, ticks=1311532</title></rect>
+<rect x="159" y="286" width="92" height="12" fill="#8cb7b0"><title>rank=0, prefix, layer=14, position=1, ticks=1285308</title></rect>
+<rect x="253" y="286" width="92" height="12" fill="#b1cec9"><title>rank=0, prefix, layer=14, position=2, ticks=1263800</title></rect>
+<rect x="347" y="286" width="92" height="12" fill="#55958b"><title>rank=0, prefix, layer=14, position=3, ticks=1317332</title></rect>
+<text x="31" y="310" style="font-size:12px">15</text>
+<rect x="65" y="299" width="92" height="12" fill="#619c93"><title>rank=0, prefix, layer=15, position=0, ticks=1310620</title></rect>
+<rect x="159" y="299" width="92" height="12" fill="#629d94"><title>rank=0, prefix, layer=15, position=1, ticks=1309724</title></rect>
+<rect x="253" y="299" width="92" height="12" fill="#80b0a8"><title>rank=0, prefix, layer=15, position=2, ticks=1292052</title></rect>
+<rect x="347" y="299" width="92" height="12" fill="#7fafa7"><title>rank=0, prefix, layer=15, position=3, ticks=1292964</title></rect>
+<text x="31" y="323" style="font-size:12px">16</text>
+<rect x="65" y="312" width="92" height="12" fill="#72a79e"><title>rank=0, prefix, layer=16, position=0, ticks=1300652</title></rect>
+<rect x="159" y="312" width="92" height="12" fill="#88b5ad"><title>rank=0, prefix, layer=16, position=1, ticks=1287812</title></rect>
+<rect x="253" y="312" width="92" height="12" fill="#76a9a1"><title>rank=0, prefix, layer=16, position=2, ticks=1298328</title></rect>
+<rect x="347" y="312" width="92" height="12" fill="#77aaa2"><title>rank=0, prefix, layer=16, position=3, ticks=1297576</title></rect>
+<text x="31" y="336" style="font-size:12px">17</text>
+<rect x="65" y="325" width="92" height="12" fill="#89b6ae"><title>rank=0, prefix, layer=17, position=0, ticks=1286760</title></rect>
+<rect x="159" y="325" width="92" height="12" fill="#71a69e"><title>rank=0, prefix, layer=17, position=1, ticks=1301188</title></rect>
+<rect x="253" y="325" width="92" height="12" fill="#d2e3df"><title>rank=0, prefix, layer=17, position=2, ticks=1244324</title></rect>
+<rect x="347" y="325" width="92" height="12" fill="#7eafa7"><title>rank=0, prefix, layer=17, position=3, ticks=1293180</title></rect>
+<text x="31" y="349" style="font-size:12px">18</text>
+<rect x="65" y="338" width="92" height="12" fill="#93bcb5"><title>rank=0, prefix, layer=18, position=0, ticks=1280908</title></rect>
+<rect x="159" y="338" width="92" height="12" fill="#a5c7c1"><title>rank=0, prefix, layer=18, position=1, ticks=1270676</title></rect>
+<rect x="253" y="338" width="92" height="12" fill="#7aaca4"><title>rank=0, prefix, layer=18, position=2, ticks=1295944</title></rect>
+<rect x="347" y="338" width="92" height="12" fill="#7bada5"><title>rank=0, prefix, layer=18, position=3, ticks=1295044</title></rect>
+<text x="31" y="362" style="font-size:12px">19</text>
+<rect x="65" y="351" width="92" height="12" fill="#79aba3"><title>rank=0, prefix, layer=19, position=0, ticks=1296468</title></rect>
+<rect x="159" y="351" width="92" height="12" fill="#5d9a90"><title>rank=0, prefix, layer=19, position=1, ticks=1312672</title></rect>
+<rect x="253" y="351" width="92" height="12" fill="#78aba2"><title>rank=0, prefix, layer=19, position=2, ticks=1297112</title></rect>
+<rect x="347" y="351" width="92" height="12" fill="#40887c"><title>rank=0, prefix, layer=19, position=3, ticks=1330012</title></rect>
+<text x="31" y="375" style="font-size:12px">20</text>
+<rect x="65" y="364" width="92" height="12" fill="#84b2aa"><title>rank=0, prefix, layer=20, position=0, ticks=1290060</title></rect>
+<rect x="159" y="364" width="92" height="12" fill="#8fb9b2"><title>rank=0, prefix, layer=20, position=1, ticks=1283740</title></rect>
+<rect x="253" y="364" width="92" height="12" fill="#6fa59c"><title>rank=0, prefix, layer=20, position=2, ticks=1302476</title></rect>
+<rect x="347" y="364" width="92" height="12" fill="#8ab6af"><title>rank=0, prefix, layer=20, position=3, ticks=1286304</title></rect>
+<text x="31" y="388" style="font-size:12px">21</text>
+<rect x="65" y="377" width="92" height="12" fill="#5d9a90"><title>rank=0, prefix, layer=21, position=0, ticks=1312792</title></rect>
+<rect x="159" y="377" width="92" height="12" fill="#91bab3"><title>rank=0, prefix, layer=21, position=1, ticks=1282400</title></rect>
+<rect x="253" y="377" width="92" height="12" fill="#95bdb6"><title>rank=0, prefix, layer=21, position=2, ticks=1279880</title></rect>
+<rect x="347" y="377" width="92" height="12" fill="#b6d2cc"><title>rank=0, prefix, layer=21, position=3, ticks=1260700</title></rect>
+<text x="31" y="401" style="font-size:12px">22</text>
+<rect x="65" y="390" width="92" height="12" fill="#539489"><title>rank=0, prefix, layer=22, position=0, ticks=1318768</title></rect>
+<rect x="159" y="390" width="92" height="12" fill="#6ba39a"><title>rank=0, prefix, layer=22, position=1, ticks=1304540</title></rect>
+<rect x="253" y="390" width="92" height="12" fill="#97beb7"><title>rank=0, prefix, layer=22, position=2, ticks=1278908</title></rect>
+<rect x="347" y="390" width="92" height="12" fill="#7bada4"><title>rank=0, prefix, layer=22, position=3, ticks=1295384</title></rect>
+<text x="31" y="414" style="font-size:12px">23</text>
+<rect x="65" y="403" width="92" height="12" fill="#86b4ac"><title>rank=0, prefix, layer=23, position=0, ticks=1288848</title></rect>
+<rect x="159" y="403" width="92" height="12" fill="#7daea6"><title>rank=0, prefix, layer=23, position=1, ticks=1293960</title></rect>
+<rect x="253" y="403" width="92" height="12" fill="#ebf3f0"><title>rank=0, prefix, layer=23, position=2, ticks=1229604</title></rect>
+<rect x="347" y="403" width="92" height="12" fill="#87b4ac"><title>rank=0, prefix, layer=23, position=3, ticks=1288264</title></rect>
+<text x="31" y="427" style="font-size:12px">24</text>
+<rect x="65" y="416" width="92" height="12" fill="#9dc2bc"><title>rank=0, prefix, layer=24, position=0, ticks=1275100</title></rect>
+<rect x="159" y="416" width="92" height="12" fill="#8cb8b0"><title>rank=0, prefix, layer=24, position=1, ticks=1285000</title></rect>
+<rect x="253" y="416" width="92" height="12" fill="#1a7063"><title>rank=0, prefix, layer=24, position=2, ticks=1351972</title></rect>
+<rect x="347" y="416" width="92" height="12" fill="#d4e5e1"><title>rank=0, prefix, layer=24, position=3, ticks=1243000</title></rect>
+<text x="31" y="440" style="font-size:12px">25</text>
+<rect x="65" y="429" width="92" height="12" fill="#85b3ab"><title>rank=0, prefix, layer=25, position=0, ticks=1289060</title></rect>
+<rect x="159" y="429" width="92" height="12" fill="#8bb7af"><title>rank=0, prefix, layer=25, position=1, ticks=1285592</title></rect>
+<rect x="253" y="429" width="92" height="12" fill="#b9d4ce"><title>rank=0, prefix, layer=25, position=2, ticks=1258992</title></rect>
+<rect x="347" y="429" width="92" height="12" fill="#8fb9b2"><title>rank=0, prefix, layer=25, position=3, ticks=1283716</title></rect>
+<text x="31" y="453" style="font-size:12px">26</text>
+<rect x="65" y="442" width="92" height="12" fill="#79aca3"><title>rank=0, prefix, layer=26, position=0, ticks=1296064</title></rect>
+<rect x="159" y="442" width="92" height="12" fill="#8cb8b0"><title>rank=0, prefix, layer=26, position=1, ticks=1285032</title></rect>
+<rect x="253" y="442" width="92" height="12" fill="#74a9a0"><title>rank=0, prefix, layer=26, position=2, ticks=1299188</title></rect>
+<rect x="347" y="442" width="92" height="12" fill="#6ca39a"><title>rank=0, prefix, layer=26, position=3, ticks=1304196</title></rect>
+<text x="31" y="466" style="font-size:12px">27</text>
+<rect x="65" y="455" width="92" height="12" fill="#9ec2bc"><title>rank=0, prefix, layer=27, position=0, ticks=1274940</title></rect>
+<rect x="159" y="455" width="92" height="12" fill="#4a8e83"><title>rank=0, prefix, layer=27, position=1, ticks=1323784</title></rect>
+<rect x="253" y="455" width="92" height="12" fill="#b9d3ce"><title>rank=0, prefix, layer=27, position=2, ticks=1259064</title></rect>
+<rect x="347" y="455" width="92" height="12" fill="#82b1a9"><title>rank=0, prefix, layer=27, position=3, ticks=1291148</title></rect>
+<text x="31" y="479" style="font-size:12px">28</text>
+<rect x="65" y="468" width="92" height="12" fill="#80b0a8"><title>rank=0, prefix, layer=28, position=0, ticks=1291964</title></rect>
+<rect x="159" y="468" width="92" height="12" fill="#97beb7"><title>rank=0, prefix, layer=28, position=1, ticks=1278972</title></rect>
+<rect x="253" y="468" width="92" height="12" fill="#90bab2"><title>rank=0, prefix, layer=28, position=2, ticks=1283108</title></rect>
+<rect x="347" y="468" width="92" height="12" fill="#c0d8d3"><title>rank=0, prefix, layer=28, position=3, ticks=1254704</title></rect>
+<text x="31" y="492" style="font-size:12px">29</text>
+<rect x="65" y="481" width="92" height="12" fill="#8db8b1"><title>rank=0, prefix, layer=29, position=0, ticks=1284372</title></rect>
+<rect x="159" y="481" width="92" height="12" fill="#c0d8d3"><title>rank=0, prefix, layer=29, position=1, ticks=1254612</title></rect>
+<rect x="253" y="481" width="92" height="12" fill="#bdd6d1"><title>rank=0, prefix, layer=29, position=2, ticks=1256756</title></rect>
+<rect x="347" y="481" width="92" height="12" fill="#b1cfc9"><title>rank=0, prefix, layer=29, position=3, ticks=1263512</title></rect>
+<text x="31" y="505" style="font-size:12px">30</text>
+<rect x="65" y="494" width="92" height="12" fill="#75a9a0"><title>rank=0, prefix, layer=30, position=0, ticks=1298684</title></rect>
+<rect x="159" y="494" width="92" height="12" fill="#bad4cf"><title>rank=0, prefix, layer=30, position=1, ticks=1258256</title></rect>
+<rect x="253" y="494" width="92" height="12" fill="#c2d9d4"><title>rank=0, prefix, layer=30, position=2, ticks=1253724</title></rect>
+<rect x="347" y="494" width="92" height="12" fill="#b8d3ce"><title>rank=0, prefix, layer=30, position=3, ticks=1259376</title></rect>
+<text x="31" y="518" style="font-size:12px">31</text>
+<rect x="65" y="507" width="92" height="12" fill="#82b1a9"><title>rank=0, prefix, layer=31, position=0, ticks=1290916</title></rect>
+<rect x="159" y="507" width="92" height="12" fill="#6ca39a"><title>rank=0, prefix, layer=31, position=1, ticks=1304040</title></rect>
+<rect x="253" y="507" width="92" height="12" fill="#97beb7"><title>rank=0, prefix, layer=31, position=2, ticks=1278976</title></rect>
+<rect x="347" y="507" width="92" height="12" fill="#6aa299"><title>rank=0, prefix, layer=31, position=3, ticks=1305396</title></rect>
+<text x="31" y="531" style="font-size:12px">32</text>
+<rect x="65" y="520" width="92" height="12" fill="#bbd5d0"><title>rank=0, prefix, layer=32, position=0, ticks=1257532</title></rect>
+<rect x="159" y="520" width="92" height="12" fill="#5c998f"><title>rank=0, prefix, layer=32, position=1, ticks=1313440</title></rect>
+<rect x="253" y="520" width="92" height="12" fill="#89b5ae"><title>rank=0, prefix, layer=32, position=2, ticks=1287184</title></rect>
+<rect x="347" y="520" width="92" height="12" fill="#74a9a0"><title>rank=0, prefix, layer=32, position=3, ticks=1299124</title></rect>
+<text x="31" y="544" style="font-size:12px">33</text>
+<rect x="65" y="533" width="92" height="12" fill="#7caea5"><title>rank=0, prefix, layer=33, position=0, ticks=1294440</title></rect>
+<rect x="159" y="533" width="92" height="12" fill="#b4d0cb"><title>rank=0, prefix, layer=33, position=1, ticks=1262084</title></rect>
+<rect x="253" y="533" width="92" height="12" fill="#7daea6"><title>rank=0, prefix, layer=33, position=2, ticks=1293980</title></rect>
+<rect x="347" y="533" width="92" height="12" fill="#d2e3df"><title>rank=0, prefix, layer=33, position=3, ticks=1244116</title></rect>
+<text x="31" y="557" style="font-size:12px">34</text>
+<rect x="65" y="546" width="92" height="12" fill="#5b998f"><title>rank=0, prefix, layer=34, position=0, ticks=1313692</title></rect>
+<rect x="159" y="546" width="92" height="12" fill="#94bcb5"><title>rank=0, prefix, layer=34, position=1, ticks=1280560</title></rect>
+<rect x="253" y="546" width="92" height="12" fill="#609c92"><title>rank=0, prefix, layer=34, position=2, ticks=1311104</title></rect>
+<rect x="347" y="546" width="92" height="12" fill="#93bcb4"><title>rank=0, prefix, layer=34, position=3, ticks=1281288</title></rect>
+<text x="31" y="570" style="font-size:12px">35</text>
+<rect x="65" y="559" width="92" height="12" fill="#99bfb8"><title>rank=0, prefix, layer=35, position=0, ticks=1277812</title></rect>
+<rect x="159" y="559" width="92" height="12" fill="#a4c6c0"><title>rank=0, prefix, layer=35, position=1, ticks=1271404</title></rect>
+<rect x="253" y="559" width="92" height="12" fill="#59988e"><title>rank=0, prefix, layer=35, position=2, ticks=1314948</title></rect>
+<rect x="347" y="559" width="92" height="12" fill="#b8d3cd"><title>rank=0, prefix, layer=35, position=3, ticks=1259632</title></rect>
+<text x="65" y="594" style="font-size:12px">Rows: layers 0-35; lighter = lower, darker = higher</text>
+<text x="585" y="74" style="font-size:14px">Rank 0 / mlp: 2186880 to 2372576 raw ticks</text>
+<text x="607" y="95" style="font-size:12px">pos 0</text>
+<text x="701" y="95" style="font-size:12px">pos 1</text>
+<text x="795" y="95" style="font-size:12px">pos 2</text>
+<text x="889" y="95" style="font-size:12px">pos 3</text>
+<text x="551" y="115" style="font-size:12px">0</text>
+<rect x="585" y="104" width="92" height="12" fill="#83b2aa"><title>rank=0, mlp, layer=0, position=0, ticks=2278840</title></rect>
+<rect x="679" y="104" width="92" height="12" fill="#8bb7af"><title>rank=0, mlp, layer=0, position=1, ticks=2272252</title></rect>
+<rect x="773" y="104" width="92" height="12" fill="#b4d1cb"><title>rank=0, mlp, layer=0, position=2, ticks=2235380</title></rect>
+<rect x="867" y="104" width="92" height="12" fill="#78aba3"><title>rank=0, mlp, layer=0, position=3, ticks=2288724</title></rect>
+<text x="551" y="128" style="font-size:12px">1</text>
+<rect x="585" y="117" width="92" height="12" fill="#77aaa2"><title>rank=0, mlp, layer=1, position=0, ticks=2289892</title></rect>
+<rect x="679" y="117" width="92" height="12" fill="#bed7d2"><title>rank=0, mlp, layer=1, position=1, ticks=2226856</title></rect>
+<rect x="773" y="117" width="92" height="12" fill="#8fb9b2"><title>rank=0, mlp, layer=1, position=2, ticks=2268544</title></rect>
+<rect x="867" y="117" width="92" height="12" fill="#a0c4bd"><title>rank=0, mlp, layer=1, position=3, ticks=2253780</title></rect>
+<text x="551" y="141" style="font-size:12px">2</text>
+<rect x="585" y="130" width="92" height="12" fill="#6fa59c"><title>rank=0, mlp, layer=2, position=0, ticks=2296900</title></rect>
+<rect x="679" y="130" width="92" height="12" fill="#86b4ac"><title>rank=0, mlp, layer=2, position=1, ticks=2276344</title></rect>
+<rect x="773" y="130" width="92" height="12" fill="#7bada4"><title>rank=0, mlp, layer=2, position=2, ticks=2286700</title></rect>
+<rect x="867" y="130" width="92" height="12" fill="#498d83"><title>rank=0, mlp, layer=2, position=3, ticks=2331044</title></rect>
+<text x="551" y="154" style="font-size:12px">3</text>
+<rect x="585" y="143" width="92" height="12" fill="#87b4ac"><title>rank=0, mlp, layer=3, position=0, ticks=2275912</title></rect>
+<rect x="679" y="143" width="92" height="12" fill="#79aca3"><title>rank=0, mlp, layer=3, position=1, ticks=2288136</title></rect>
+<rect x="773" y="143" width="92" height="12" fill="#87b4ad"><title>rank=0, mlp, layer=3, position=2, ticks=2275648</title></rect>
+<rect x="867" y="143" width="92" height="12" fill="#55958b"><title>rank=0, mlp, layer=3, position=3, ticks=2320216</title></rect>
+<text x="551" y="167" style="font-size:12px">4</text>
+<rect x="585" y="156" width="92" height="12" fill="#afcec8"><title>rank=0, mlp, layer=4, position=0, ticks=2239836</title></rect>
+<rect x="679" y="156" width="92" height="12" fill="#8ab6af"><title>rank=0, mlp, layer=4, position=1, ticks=2273100</title></rect>
+<rect x="773" y="156" width="92" height="12" fill="#8eb9b1"><title>rank=0, mlp, layer=4, position=2, ticks=2269748</title></rect>
+<rect x="867" y="156" width="92" height="12" fill="#67a097"><title>rank=0, mlp, layer=4, position=3, ticks=2304416</title></rect>
+<text x="551" y="180" style="font-size:12px">5</text>
+<rect x="585" y="169" width="92" height="12" fill="#abcbc5"><title>rank=0, mlp, layer=5, position=0, ticks=2244128</title></rect>
+<rect x="679" y="169" width="92" height="12" fill="#c2d9d4"><title>rank=0, mlp, layer=5, position=1, ticks=2223116</title></rect>
+<rect x="773" y="169" width="92" height="12" fill="#95bdb6"><title>rank=0, mlp, layer=5, position=2, ticks=2262904</title></rect>
+<rect x="867" y="169" width="92" height="12" fill="#a7c8c2"><title>rank=0, mlp, layer=5, position=3, ticks=2247340</title></rect>
+<text x="551" y="193" style="font-size:12px">6</text>
+<rect x="585" y="182" width="92" height="12" fill="#9fc3bd"><title>rank=0, mlp, layer=6, position=0, ticks=2254704</title></rect>
+<rect x="679" y="182" width="92" height="12" fill="#7daea6"><title>rank=0, mlp, layer=6, position=1, ticks=2284920</title></rect>
+<rect x="773" y="182" width="92" height="12" fill="#b4d0cb"><title>rank=0, mlp, layer=6, position=2, ticks=2236064</title></rect>
+<rect x="867" y="182" width="92" height="12" fill="#b3d0ca"><title>rank=0, mlp, layer=6, position=3, ticks=2236624</title></rect>
+<text x="551" y="206" style="font-size:12px">7</text>
+<rect x="585" y="195" width="92" height="12" fill="#b8d3ce"><title>rank=0, mlp, layer=7, position=0, ticks=2232252</title></rect>
+<rect x="679" y="195" width="92" height="12" fill="#b2cfc9"><title>rank=0, mlp, layer=7, position=1, ticks=2237848</title></rect>
+<rect x="773" y="195" width="92" height="12" fill="#9dc2bb"><title>rank=0, mlp, layer=7, position=2, ticks=2256512</title></rect>
+<rect x="867" y="195" width="92" height="12" fill="#a2c5bf"><title>rank=0, mlp, layer=7, position=3, ticks=2251784</title></rect>
+<text x="551" y="219" style="font-size:12px">8</text>
+<rect x="585" y="208" width="92" height="12" fill="#74a8a0"><title>rank=0, mlp, layer=8, position=0, ticks=2292708</title></rect>
+<rect x="679" y="208" width="92" height="12" fill="#a6c8c2"><title>rank=0, mlp, layer=8, position=1, ticks=2247976</title></rect>
+<rect x="773" y="208" width="92" height="12" fill="#639e94"><title>rank=0, mlp, layer=8, position=2, ticks=2307672</title></rect>
+<rect x="867" y="208" width="92" height="12" fill="#8bb7af"><title>rank=0, mlp, layer=8, position=3, ticks=2272364</title></rect>
+<text x="551" y="232" style="font-size:12px">9</text>
+<rect x="585" y="221" width="92" height="12" fill="#bfd7d2"><title>rank=0, mlp, layer=9, position=0, ticks=2225932</title></rect>
+<rect x="679" y="221" width="92" height="12" fill="#6aa299"><title>rank=0, mlp, layer=9, position=1, ticks=2301188</title></rect>
+<rect x="773" y="221" width="92" height="12" fill="#8db8b1"><title>rank=0, mlp, layer=9, position=2, ticks=2270404</title></rect>
+<rect x="867" y="221" width="92" height="12" fill="#93bcb4"><title>rank=0, mlp, layer=9, position=3, ticks=2265352</title></rect>
+<text x="551" y="245" style="font-size:12px">10</text>
+<rect x="585" y="234" width="92" height="12" fill="#69a198"><title>rank=0, mlp, layer=10, position=0, ticks=2302520</title></rect>
+<rect x="679" y="234" width="92" height="12" fill="#aacac4"><title>rank=0, mlp, layer=10, position=1, ticks=2244368</title></rect>
+<rect x="773" y="234" width="92" height="12" fill="#9fc3bd"><title>rank=0, mlp, layer=10, position=2, ticks=2254348</title></rect>
+<rect x="867" y="234" width="92" height="12" fill="#5e9a91"><title>rank=0, mlp, layer=10, position=3, ticks=2312332</title></rect>
+<text x="551" y="258" style="font-size:12px">11</text>
+<rect x="585" y="247" width="92" height="12" fill="#629d94"><title>rank=0, mlp, layer=11, position=0, ticks=2308356</title></rect>
+<rect x="679" y="247" width="92" height="12" fill="#4d9085"><title>rank=0, mlp, layer=11, position=1, ticks=2327488</title></rect>
+<rect x="773" y="247" width="92" height="12" fill="#c9ded9"><title>rank=0, mlp, layer=11, position=2, ticks=2216788</title></rect>
+<rect x="867" y="247" width="92" height="12" fill="#95bdb6"><title>rank=0, mlp, layer=11, position=3, ticks=2263340</title></rect>
+<text x="551" y="271" style="font-size:12px">12</text>
+<rect x="585" y="260" width="92" height="12" fill="#83b2aa"><title>rank=0, mlp, layer=12, position=0, ticks=2279220</title></rect>
+<rect x="679" y="260" width="92" height="12" fill="#9bc1ba"><title>rank=0, mlp, layer=12, position=1, ticks=2257744</title></rect>
+<rect x="773" y="260" width="92" height="12" fill="#2d7c70"><title>rank=0, mlp, layer=12, position=2, ticks=2355600</title></rect>
+<rect x="867" y="260" width="92" height="12" fill="#c5dbd7"><title>rank=0, mlp, layer=12, position=3, ticks=2220292</title></rect>
+<text x="551" y="284" style="font-size:12px">13</text>
+<rect x="585" y="273" width="92" height="12" fill="#afcdc7"><title>rank=0, mlp, layer=13, position=0, ticks=2240372</title></rect>
+<rect x="679" y="273" width="92" height="12" fill="#43897e"><title>rank=0, mlp, layer=13, position=1, ticks=2336544</title></rect>
+<rect x="773" y="273" width="92" height="12" fill="#9cc2bb"><title>rank=0, mlp, layer=13, position=2, ticks=2256964</title></rect>
+<rect x="867" y="273" width="92" height="12" fill="#77aba2"><title>rank=0, mlp, layer=13, position=3, ticks=2289552</title></rect>
+<text x="551" y="297" style="font-size:12px">14</text>
+<rect x="585" y="286" width="92" height="12" fill="#9ac0b9"><title>rank=0, mlp, layer=14, position=0, ticks=2259128</title></rect>
+<rect x="679" y="286" width="92" height="12" fill="#6da49b"><title>rank=0, mlp, layer=14, position=1, ticks=2299048</title></rect>
+<rect x="773" y="286" width="92" height="12" fill="#97bfb8"><title>rank=0, mlp, layer=14, position=2, ticks=2261096</title></rect>
+<rect x="867" y="286" width="92" height="12" fill="#5f9b91"><title>rank=0, mlp, layer=14, position=3, ticks=2311628</title></rect>
+<text x="551" y="310" style="font-size:12px">15</text>
+<rect x="585" y="299" width="92" height="12" fill="#98bfb8"><title>rank=0, mlp, layer=15, position=0, ticks=2260296</title></rect>
+<rect x="679" y="299" width="92" height="12" fill="#73a89f"><title>rank=0, mlp, layer=15, position=1, ticks=2293704</title></rect>
+<rect x="773" y="299" width="92" height="12" fill="#86b4ac"><title>rank=0, mlp, layer=15, position=2, ticks=2276284</title></rect>
+<rect x="867" y="299" width="92" height="12" fill="#a5c7c1"><title>rank=0, mlp, layer=15, position=3, ticks=2249308</title></rect>
+<text x="551" y="323" style="font-size:12px">16</text>
+<rect x="585" y="312" width="92" height="12" fill="#adccc6"><title>rank=0, mlp, layer=16, position=0, ticks=2242136</title></rect>
+<rect x="679" y="312" width="92" height="12" fill="#72a79e"><title>rank=0, mlp, layer=16, position=1, ticks=2294332</title></rect>
+<rect x="773" y="312" width="92" height="12" fill="#90bab3"><title>rank=0, mlp, layer=16, position=2, ticks=2267340</title></rect>
+<rect x="867" y="312" width="92" height="12" fill="#96beb7"><title>rank=0, mlp, layer=16, position=3, ticks=2262496</title></rect>
+<text x="551" y="336" style="font-size:12px">17</text>
+<rect x="585" y="325" width="92" height="12" fill="#639e94"><title>rank=0, mlp, layer=17, position=0, ticks=2307464</title></rect>
+<rect x="679" y="325" width="92" height="12" fill="#6da49b"><title>rank=0, mlp, layer=17, position=1, ticks=2298428</title></rect>
+<rect x="773" y="325" width="92" height="12" fill="#95bdb6"><title>rank=0, mlp, layer=17, position=2, ticks=2263668</title></rect>
+<rect x="867" y="325" width="92" height="12" fill="#a8c9c3"><title>rank=0, mlp, layer=17, position=3, ticks=2246520</title></rect>
+<text x="551" y="349" style="font-size:12px">18</text>
+<rect x="585" y="338" width="92" height="12" fill="#c2d9d4"><title>rank=0, mlp, layer=18, position=0, ticks=2223224</title></rect>
+<rect x="679" y="338" width="92" height="12" fill="#80b0a8"><title>rank=0, mlp, layer=18, position=1, ticks=2282108</title></rect>
+<rect x="773" y="338" width="92" height="12" fill="#81b0a8"><title>rank=0, mlp, layer=18, position=2, ticks=2281368</title></rect>
+<rect x="867" y="338" width="92" height="12" fill="#7daea6"><title>rank=0, mlp, layer=18, position=3, ticks=2284956</title></rect>
+<text x="551" y="362" style="font-size:12px">19</text>
+<rect x="585" y="351" width="92" height="12" fill="#529389"><title>rank=0, mlp, layer=19, position=0, ticks=2323000</title></rect>
+<rect x="679" y="351" width="92" height="12" fill="#85b3ab"><title>rank=0, mlp, layer=19, position=1, ticks=2277924</title></rect>
+<rect x="773" y="351" width="92" height="12" fill="#86b4ac"><title>rank=0, mlp, layer=19, position=2, ticks=2276388</title></rect>
+<rect x="867" y="351" width="92" height="12" fill="#83b2aa"><title>rank=0, mlp, layer=19, position=3, ticks=2279176</title></rect>
+<text x="551" y="375" style="font-size:12px">20</text>
+<rect x="585" y="364" width="92" height="12" fill="#dfebe8"><title>rank=0, mlp, layer=20, position=0, ticks=2197640</title></rect>
+<rect x="679" y="364" width="92" height="12" fill="#ebf3f0"><title>rank=0, mlp, layer=20, position=1, ticks=2186880</title></rect>
+<rect x="773" y="364" width="92" height="12" fill="#c4dbd6"><title>rank=0, mlp, layer=20, position=2, ticks=2221184</title></rect>
+<rect x="867" y="364" width="92" height="12" fill="#8cb8b0"><title>rank=0, mlp, layer=20, position=3, ticks=2271000</title></rect>
+<text x="551" y="388" style="font-size:12px">21</text>
+<rect x="585" y="377" width="92" height="12" fill="#80b0a8"><title>rank=0, mlp, layer=21, position=0, ticks=2282344</title></rect>
+<rect x="679" y="377" width="92" height="12" fill="#aacac4"><title>rank=0, mlp, layer=21, position=1, ticks=2244644</title></rect>
+<rect x="773" y="377" width="92" height="12" fill="#afcec8"><title>rank=0, mlp, layer=21, position=2, ticks=2239908</title></rect>
+<rect x="867" y="377" width="92" height="12" fill="#73a89f"><title>rank=0, mlp, layer=21, position=3, ticks=2293176</title></rect>
+<text x="551" y="401" style="font-size:12px">22</text>
+<rect x="585" y="390" width="92" height="12" fill="#96beb7"><title>rank=0, mlp, layer=22, position=0, ticks=2262372</title></rect>
+<rect x="679" y="390" width="92" height="12" fill="#659f96"><title>rank=0, mlp, layer=22, position=1, ticks=2305952</title></rect>
+<rect x="773" y="390" width="92" height="12" fill="#509288"><title>rank=0, mlp, layer=22, position=2, ticks=2324464</title></rect>
+<rect x="867" y="390" width="92" height="12" fill="#2e7d71"><title>rank=0, mlp, layer=22, position=3, ticks=2354776</title></rect>
+<text x="551" y="414" style="font-size:12px">23</text>
+<rect x="585" y="403" width="92" height="12" fill="#d7e7e3"><title>rank=0, mlp, layer=23, position=0, ticks=2204300</title></rect>
+<rect x="679" y="403" width="92" height="12" fill="#a6c8c2"><title>rank=0, mlp, layer=23, position=1, ticks=2248100</title></rect>
+<rect x="773" y="403" width="92" height="12" fill="#509288"><title>rank=0, mlp, layer=23, position=2, ticks=2324300</title></rect>
+<rect x="867" y="403" width="92" height="12" fill="#9bc1ba"><title>rank=0, mlp, layer=23, position=3, ticks=2257628</title></rect>
+<text x="551" y="427" style="font-size:12px">24</text>
+<rect x="585" y="416" width="92" height="12" fill="#bad4cf"><title>rank=0, mlp, layer=24, position=0, ticks=2230572</title></rect>
+<rect x="679" y="416" width="92" height="12" fill="#70a69d"><title>rank=0, mlp, layer=24, position=1, ticks=2295920</title></rect>
+<rect x="773" y="416" width="92" height="12" fill="#82b1a9"><title>rank=0, mlp, layer=24, position=2, ticks=2280364</title></rect>
+<rect x="867" y="416" width="92" height="12" fill="#a1c5be"><title>rank=0, mlp, layer=24, position=3, ticks=2252292</title></rect>
+<text x="551" y="440" style="font-size:12px">25</text>
+<rect x="585" y="429" width="92" height="12" fill="#c9ddd9"><title>rank=0, mlp, layer=25, position=0, ticks=2217468</title></rect>
+<rect x="679" y="429" width="92" height="12" fill="#85b3ab"><title>rank=0, mlp, layer=25, position=1, ticks=2277676</title></rect>
+<rect x="773" y="429" width="92" height="12" fill="#9ac0b9"><title>rank=0, mlp, layer=25, position=2, ticks=2259220</title></rect>
+<rect x="867" y="429" width="92" height="12" fill="#1a7063"><title>rank=0, mlp, layer=25, position=3, ticks=2372576</title></rect>
+<text x="551" y="453" style="font-size:12px">26</text>
+<rect x="585" y="442" width="92" height="12" fill="#6ba39a"><title>rank=0, mlp, layer=26, position=0, ticks=2300640</title></rect>
+<rect x="679" y="442" width="92" height="12" fill="#27786c"><title>rank=0, mlp, layer=26, position=1, ticks=2361036</title></rect>
+<rect x="773" y="442" width="92" height="12" fill="#89b5ae"><title>rank=0, mlp, layer=26, position=2, ticks=2274136</title></rect>
+<rect x="867" y="442" width="92" height="12" fill="#99bfb9"><title>rank=0, mlp, layer=26, position=3, ticks=2259924</title></rect>
+<text x="551" y="466" style="font-size:12px">27</text>
+<rect x="585" y="455" width="92" height="12" fill="#68a198"><title>rank=0, mlp, layer=27, position=0, ticks=2302840</title></rect>
+<rect x="679" y="455" width="92" height="12" fill="#79aba3"><title>rank=0, mlp, layer=27, position=1, ticks=2288260</title></rect>
+<rect x="773" y="455" width="92" height="12" fill="#74a9a0"><title>rank=0, mlp, layer=27, position=2, ticks=2292428</title></rect>
+<rect x="867" y="455" width="92" height="12" fill="#a5c7c1"><title>rank=0, mlp, layer=27, position=3, ticks=2249352</title></rect>
+<text x="551" y="479" style="font-size:12px">28</text>
+<rect x="585" y="468" width="92" height="12" fill="#7aaca4"><title>rank=0, mlp, layer=28, position=0, ticks=2286852</title></rect>
+<rect x="679" y="468" width="92" height="12" fill="#a6c8c2"><title>rank=0, mlp, layer=28, position=1, ticks=2247944</title></rect>
+<rect x="773" y="468" width="92" height="12" fill="#659f95"><title>rank=0, mlp, layer=28, position=2, ticks=2306140</title></rect>
+<rect x="867" y="468" width="92" height="12" fill="#86b4ac"><title>rank=0, mlp, layer=28, position=3, ticks=2276480</title></rect>
+<text x="551" y="492" style="font-size:12px">29</text>
+<rect x="585" y="481" width="92" height="12" fill="#a6c8c2"><title>rank=0, mlp, layer=29, position=0, ticks=2247804</title></rect>
+<rect x="679" y="481" width="92" height="12" fill="#92bbb4"><title>rank=0, mlp, layer=29, position=1, ticks=2266196</title></rect>
+<rect x="773" y="481" width="92" height="12" fill="#95bdb6"><title>rank=0, mlp, layer=29, position=2, ticks=2263616</title></rect>
+<rect x="867" y="481" width="92" height="12" fill="#b7d2cd"><title>rank=0, mlp, layer=29, position=3, ticks=2233252</title></rect>
+<text x="551" y="505" style="font-size:12px">30</text>
+<rect x="585" y="494" width="92" height="12" fill="#6ca49a"><title>rank=0, mlp, layer=30, position=0, ticks=2299532</title></rect>
+<rect x="679" y="494" width="92" height="12" fill="#82b1a9"><title>rank=0, mlp, layer=30, position=1, ticks=2279844</title></rect>
+<rect x="773" y="494" width="92" height="12" fill="#a8c9c3"><title>rank=0, mlp, layer=30, position=2, ticks=2246416</title></rect>
+<rect x="867" y="494" width="92" height="12" fill="#bbd5d0"><title>rank=0, mlp, layer=30, position=3, ticks=2229584</title></rect>
+<text x="551" y="518" style="font-size:12px">31</text>
+<rect x="585" y="507" width="92" height="12" fill="#7aaca4"><title>rank=0, mlp, layer=31, position=0, ticks=2286952</title></rect>
+<rect x="679" y="507" width="92" height="12" fill="#66a096"><title>rank=0, mlp, layer=31, position=1, ticks=2304988</title></rect>
+<rect x="773" y="507" width="92" height="12" fill="#84b2ab"><title>rank=0, mlp, layer=31, position=2, ticks=2278400</title></rect>
+<rect x="867" y="507" width="92" height="12" fill="#69a198"><title>rank=0, mlp, layer=31, position=3, ticks=2302616</title></rect>
+<text x="551" y="531" style="font-size:12px">32</text>
+<rect x="585" y="520" width="92" height="12" fill="#348074"><title>rank=0, mlp, layer=32, position=0, ticks=2349696</title></rect>
+<rect x="679" y="520" width="92" height="12" fill="#c1d9d4"><title>rank=0, mlp, layer=32, position=1, ticks=2224380</title></rect>
+<rect x="773" y="520" width="92" height="12" fill="#7cada5"><title>rank=0, mlp, layer=32, position=2, ticks=2285644</title></rect>
+<rect x="867" y="520" width="92" height="12" fill="#a3c6c0"><title>rank=0, mlp, layer=32, position=3, ticks=2250704</title></rect>
+<text x="551" y="544" style="font-size:12px">33</text>
+<rect x="585" y="533" width="92" height="12" fill="#cbdfdb"><title>rank=0, mlp, layer=33, position=0, ticks=2215144</title></rect>
+<rect x="679" y="533" width="92" height="12" fill="#bfd7d2"><title>rank=0, mlp, layer=33, position=1, ticks=2226272</title></rect>
+<rect x="773" y="533" width="92" height="12" fill="#a8c9c2"><title>rank=0, mlp, layer=33, position=2, ticks=2246828</title></rect>
+<rect x="867" y="533" width="92" height="12" fill="#92bbb4"><title>rank=0, mlp, layer=33, position=3, ticks=2266200</title></rect>
+<text x="551" y="557" style="font-size:12px">34</text>
+<rect x="585" y="546" width="92" height="12" fill="#bcd5d0"><title>rank=0, mlp, layer=34, position=0, ticks=2228872</title></rect>
+<rect x="679" y="546" width="92" height="12" fill="#89b5ae"><title>rank=0, mlp, layer=34, position=1, ticks=2274360</title></rect>
+<rect x="773" y="546" width="92" height="12" fill="#c0d8d3"><title>rank=0, mlp, layer=34, position=2, ticks=2225332</title></rect>
+<rect x="867" y="546" width="92" height="12" fill="#71a69d"><title>rank=0, mlp, layer=34, position=3, ticks=2295612</title></rect>
+<text x="551" y="570" style="font-size:12px">35</text>
+<rect x="585" y="559" width="92" height="12" fill="#c5dbd6"><title>rank=0, mlp, layer=35, position=0, ticks=2220716</title></rect>
+<rect x="679" y="559" width="92" height="12" fill="#91bab3"><title>rank=0, mlp, layer=35, position=1, ticks=2267212</title></rect>
+<rect x="773" y="559" width="92" height="12" fill="#9cc2bb"><title>rank=0, mlp, layer=35, position=2, ticks=2256744</title></rect>
+<rect x="867" y="559" width="92" height="12" fill="#5c998f"><title>rank=0, mlp, layer=35, position=3, ticks=2314212</title></rect>
+<text x="585" y="594" style="font-size:12px">Rows: layers 0-35; lighter = lower, darker = higher</text>
+<text x="65" y="629" style="font-size:14px">Rank 1 / prefix: 1221476 to 1354332 raw ticks</text>
+<text x="87" y="650" style="font-size:12px">pos 0</text>
+<text x="181" y="650" style="font-size:12px">pos 1</text>
+<text x="275" y="650" style="font-size:12px">pos 2</text>
+<text x="369" y="650" style="font-size:12px">pos 3</text>
+<text x="31" y="670" style="font-size:12px">0</text>
+<rect x="65" y="659" width="92" height="12" fill="#327f73"><title>rank=1, prefix, layer=0, position=0, ticks=1338812</title></rect>
+<rect x="159" y="659" width="92" height="12" fill="#76aaa1"><title>rank=1, prefix, layer=0, position=1, ticks=1295824</title></rect>
+<rect x="253" y="659" width="92" height="12" fill="#aecdc7"><title>rank=1, prefix, layer=0, position=2, ticks=1260248</title></rect>
+<rect x="347" y="659" width="92" height="12" fill="#7cada5"><title>rank=1, prefix, layer=0, position=3, ticks=1292244</title></rect>
+<text x="31" y="683" style="font-size:12px">1</text>
+<rect x="65" y="672" width="92" height="12" fill="#95bdb6"><title>rank=1, prefix, layer=1, position=0, ticks=1276424</title></rect>
+<rect x="159" y="672" width="92" height="12" fill="#b3d0ca"><title>rank=1, prefix, layer=1, position=1, ticks=1257296</title></rect>
+<rect x="253" y="672" width="92" height="12" fill="#78aba3"><title>rank=1, prefix, layer=1, position=2, ticks=1294356</title></rect>
+<rect x="347" y="672" width="92" height="12" fill="#76aaa1"><title>rank=1, prefix, layer=1, position=3, ticks=1295748</title></rect>
+<text x="31" y="696" style="font-size:12px">2</text>
+<rect x="65" y="685" width="92" height="12" fill="#76aaa1"><title>rank=1, prefix, layer=2, position=0, ticks=1295672</title></rect>
+<rect x="159" y="685" width="92" height="12" fill="#adccc6"><title>rank=1, prefix, layer=2, position=1, ticks=1260948</title></rect>
+<rect x="253" y="685" width="92" height="12" fill="#afcdc8"><title>rank=1, prefix, layer=2, position=2, ticks=1259524</title></rect>
+<rect x="347" y="685" width="92" height="12" fill="#4c8f85"><title>rank=1, prefix, layer=2, position=3, ticks=1322632</title></rect>
+<text x="31" y="709" style="font-size:12px">3</text>
+<rect x="65" y="698" width="92" height="12" fill="#92bbb4"><title>rank=1, prefix, layer=3, position=0, ticks=1278072</title></rect>
+<rect x="159" y="698" width="92" height="12" fill="#79aca3"><title>rank=1, prefix, layer=3, position=1, ticks=1293808</title></rect>
+<rect x="253" y="698" width="92" height="12" fill="#99c0b9"><title>rank=1, prefix, layer=3, position=2, ticks=1273424</title></rect>
+<rect x="347" y="698" width="92" height="12" fill="#85b3ab"><title>rank=1, prefix, layer=3, position=3, ticks=1286464</title></rect>
+<text x="31" y="722" style="font-size:12px">4</text>
+<rect x="65" y="711" width="92" height="12" fill="#90bab2"><title>rank=1, prefix, layer=4, position=0, ticks=1279536</title></rect>
+<rect x="159" y="711" width="92" height="12" fill="#90bab2"><title>rank=1, prefix, layer=4, position=1, ticks=1279560</title></rect>
+<rect x="253" y="711" width="92" height="12" fill="#6ca39a"><title>rank=1, prefix, layer=4, position=2, ticks=1302388</title></rect>
+<rect x="347" y="711" width="92" height="12" fill="#b6d2cc"><title>rank=1, prefix, layer=4, position=3, ticks=1255404</title></rect>
+<text x="31" y="735" style="font-size:12px">5</text>
+<rect x="65" y="724" width="92" height="12" fill="#b8d3ce"><title>rank=1, prefix, layer=5, position=0, ticks=1253644</title></rect>
+<rect x="159" y="724" width="92" height="12" fill="#368276"><title>rank=1, prefix, layer=5, position=1, ticks=1336304</title></rect>
+<rect x="253" y="724" width="92" height="12" fill="#a6c8c1"><title>rank=1, prefix, layer=5, position=2, ticks=1265432</title></rect>
+<rect x="347" y="724" width="92" height="12" fill="#87b4ad"><title>rank=1, prefix, layer=5, position=3, ticks=1285064</title></rect>
+<text x="31" y="748" style="font-size:12px">6</text>
+<rect x="65" y="737" width="92" height="12" fill="#a5c7c1"><title>rank=1, prefix, layer=6, position=0, ticks=1266228</title></rect>
+<rect x="159" y="737" width="92" height="12" fill="#bbd5cf"><title>rank=1, prefix, layer=6, position=1, ticks=1252184</title></rect>
+<rect x="253" y="737" width="92" height="12" fill="#ebf3f0"><title>rank=1, prefix, layer=6, position=2, ticks=1221476</title></rect>
+<rect x="347" y="737" width="92" height="12" fill="#aacac4"><title>rank=1, prefix, layer=6, position=3, ticks=1262972</title></rect>
+<text x="31" y="761" style="font-size:12px">7</text>
+<rect x="65" y="750" width="92" height="12" fill="#8cb8b0"><title>rank=1, prefix, layer=7, position=0, ticks=1281704</title></rect>
+<rect x="159" y="750" width="92" height="12" fill="#7bada5"><title>rank=1, prefix, layer=7, position=1, ticks=1292392</title></rect>
+<rect x="253" y="750" width="92" height="12" fill="#7caea5"><title>rank=1, prefix, layer=7, position=2, ticks=1291740</title></rect>
+<rect x="347" y="750" width="92" height="12" fill="#83b2aa"><title>rank=1, prefix, layer=7, position=3, ticks=1287544</title></rect>
+<text x="31" y="774" style="font-size:12px">8</text>
+<rect x="65" y="763" width="92" height="12" fill="#71a69d"><title>rank=1, prefix, layer=8, position=0, ticks=1299320</title></rect>
+<rect x="159" y="763" width="92" height="12" fill="#529389"><title>rank=1, prefix, layer=8, position=1, ticks=1318460</title></rect>
+<rect x="253" y="763" width="92" height="12" fill="#5f9b92"><title>rank=1, prefix, layer=8, position=2, ticks=1310240</title></rect>
+<rect x="347" y="763" width="92" height="12" fill="#aeccc7"><title>rank=1, prefix, layer=8, position=3, ticks=1260524</title></rect>
+<text x="31" y="787" style="font-size:12px">9</text>
+<rect x="65" y="776" width="92" height="12" fill="#81b0a8"><title>rank=1, prefix, layer=9, position=0, ticks=1289064</title></rect>
+<rect x="159" y="776" width="92" height="12" fill="#8eb9b1"><title>rank=1, prefix, layer=9, position=1, ticks=1280384</title></rect>
+<rect x="253" y="776" width="92" height="12" fill="#7aaca4"><title>rank=1, prefix, layer=9, position=2, ticks=1293292</title></rect>
+<rect x="347" y="776" width="92" height="12" fill="#96beb7"><title>rank=1, prefix, layer=9, position=3, ticks=1275468</title></rect>
+<text x="31" y="800" style="font-size:12px">10</text>
+<rect x="65" y="789" width="92" height="12" fill="#a2c5bf"><title>rank=1, prefix, layer=10, position=0, ticks=1267848</title></rect>
+<rect x="159" y="789" width="92" height="12" fill="#79aca3"><title>rank=1, prefix, layer=10, position=1, ticks=1293948</title></rect>
+<rect x="253" y="789" width="92" height="12" fill="#c9ded9"><title>rank=1, prefix, layer=10, position=2, ticks=1243252</title></rect>
+<rect x="347" y="789" width="92" height="12" fill="#acccc6"><title>rank=1, prefix, layer=10, position=3, ticks=1261400</title></rect>
+<text x="31" y="813" style="font-size:12px">11</text>
+<rect x="65" y="802" width="92" height="12" fill="#8db8b1"><title>rank=1, prefix, layer=11, position=0, ticks=1280988</title></rect>
+<rect x="159" y="802" width="92" height="12" fill="#8cb7b0"><title>rank=1, prefix, layer=11, position=1, ticks=1281952</title></rect>
+<rect x="253" y="802" width="92" height="12" fill="#dceae6"><title>rank=1, prefix, layer=11, position=2, ticks=1230844</title></rect>
+<rect x="347" y="802" width="92" height="12" fill="#cde0dc"><title>rank=1, prefix, layer=11, position=3, ticks=1240524</title></rect>
+<text x="31" y="826" style="font-size:12px">12</text>
+<rect x="65" y="815" width="92" height="12" fill="#b1cfc9"><title>rank=1, prefix, layer=12, position=0, ticks=1258060</title></rect>
+<rect x="159" y="815" width="92" height="12" fill="#609c92"><title>rank=1, prefix, layer=12, position=1, ticks=1310140</title></rect>
+<rect x="253" y="815" width="92" height="12" fill="#abcbc5"><title>rank=1, prefix, layer=12, position=2, ticks=1262288</title></rect>
+<rect x="347" y="815" width="92" height="12" fill="#7fafa7"><title>rank=1, prefix, layer=12, position=3, ticks=1290200</title></rect>
+<text x="31" y="839" style="font-size:12px">13</text>
+<rect x="65" y="828" width="92" height="12" fill="#53948a"><title>rank=1, prefix, layer=13, position=0, ticks=1317968</title></rect>
+<rect x="159" y="828" width="92" height="12" fill="#e7f1ee"><title>rank=1, prefix, layer=13, position=1, ticks=1223756</title></rect>
+<rect x="253" y="828" width="92" height="12" fill="#66a097"><title>rank=1, prefix, layer=13, position=2, ticks=1305780</title></rect>
+<rect x="347" y="828" width="92" height="12" fill="#448b80"><title>rank=1, prefix, layer=13, position=3, ticks=1327344</title></rect>
+<text x="31" y="852" style="font-size:12px">14</text>
+<rect x="65" y="841" width="92" height="12" fill="#9ac0b9"><title>rank=1, prefix, layer=14, position=0, ticks=1273164</title></rect>
+<rect x="159" y="841" width="92" height="12" fill="#b7d2cd"><title>rank=1, prefix, layer=14, position=1, ticks=1254576</title></rect>
+<rect x="253" y="841" width="92" height="12" fill="#c3dad5"><title>rank=1, prefix, layer=14, position=2, ticks=1247092</title></rect>
+<rect x="347" y="841" width="92" height="12" fill="#a3c6bf"><title>rank=1, prefix, layer=14, position=3, ticks=1267528</title></rect>
+<text x="31" y="865" style="font-size:12px">15</text>
+<rect x="65" y="854" width="92" height="12" fill="#74a9a0"><title>rank=1, prefix, layer=15, position=0, ticks=1296816</title></rect>
+<rect x="159" y="854" width="92" height="12" fill="#95bdb6"><title>rank=1, prefix, layer=15, position=1, ticks=1276160</title></rect>
+<rect x="253" y="854" width="92" height="12" fill="#7eafa7"><title>rank=1, prefix, layer=15, position=2, ticks=1290640</title></rect>
+<rect x="347" y="854" width="92" height="12" fill="#1a7063"><title>rank=1, prefix, layer=15, position=3, ticks=1354332</title></rect>
+<text x="31" y="878" style="font-size:12px">16</text>
+<rect x="65" y="867" width="92" height="12" fill="#accbc5"><title>rank=1, prefix, layer=16, position=0, ticks=1261784</title></rect>
+<rect x="159" y="867" width="92" height="12" fill="#6ea59c"><title>rank=1, prefix, layer=16, position=1, ticks=1300884</title></rect>
+<rect x="253" y="867" width="92" height="12" fill="#7daea6"><title>rank=1, prefix, layer=16, position=2, ticks=1291156</title></rect>
+<rect x="347" y="867" width="92" height="12" fill="#9ec3bc"><title>rank=1, prefix, layer=16, position=3, ticks=1270596</title></rect>
+<text x="31" y="891" style="font-size:12px">17</text>
+<rect x="65" y="880" width="92" height="12" fill="#aacac4"><title>rank=1, prefix, layer=17, position=0, ticks=1262812</title></rect>
+<rect x="159" y="880" width="92" height="12" fill="#a4c7c0"><title>rank=1, prefix, layer=17, position=1, ticks=1266488</title></rect>
+<rect x="253" y="880" width="92" height="12" fill="#83b2aa"><title>rank=1, prefix, layer=17, position=2, ticks=1287676</title></rect>
+<rect x="347" y="880" width="92" height="12" fill="#81b1a9"><title>rank=1, prefix, layer=17, position=3, ticks=1288620</title></rect>
+<text x="31" y="904" style="font-size:12px">18</text>
+<rect x="65" y="893" width="92" height="12" fill="#2d7c70"><title>rank=1, prefix, layer=18, position=0, ticks=1342140</title></rect>
+<rect x="159" y="893" width="92" height="12" fill="#abcbc5"><title>rank=1, prefix, layer=18, position=1, ticks=1262428</title></rect>
+<rect x="253" y="893" width="92" height="12" fill="#91bab3"><title>rank=1, prefix, layer=18, position=2, ticks=1278924</title></rect>
+<rect x="347" y="893" width="92" height="12" fill="#78aba2"><title>rank=1, prefix, layer=18, position=3, ticks=1294580</title></rect>
+<text x="31" y="917" style="font-size:12px">19</text>
+<rect x="65" y="906" width="92" height="12" fill="#70a69d"><title>rank=1, prefix, layer=19, position=0, ticks=1299348</title></rect>
+<rect x="159" y="906" width="92" height="12" fill="#b9d3ce"><title>rank=1, prefix, layer=19, position=1, ticks=1253512</title></rect>
+<rect x="253" y="906" width="92" height="12" fill="#a5c7c1"><title>rank=1, prefix, layer=19, position=2, ticks=1266100</title></rect>
+<rect x="347" y="906" width="92" height="12" fill="#acccc6"><title>rank=1, prefix, layer=19, position=3, ticks=1261356</title></rect>
+<text x="31" y="930" style="font-size:12px">20</text>
+<rect x="65" y="919" width="92" height="12" fill="#d4e4e0"><title>rank=1, prefix, layer=20, position=0, ticks=1236260</title></rect>
+<rect x="159" y="919" width="92" height="12" fill="#afcdc7"><title>rank=1, prefix, layer=20, position=1, ticks=1259908</title></rect>
+<rect x="253" y="919" width="92" height="12" fill="#99c0b9"><title>rank=1, prefix, layer=20, position=2, ticks=1273636</title></rect>
+<rect x="347" y="919" width="92" height="12" fill="#89b6ae"><title>rank=1, prefix, layer=20, position=3, ticks=1283680</title></rect>
+<text x="31" y="943" style="font-size:12px">21</text>
+<rect x="65" y="932" width="92" height="12" fill="#2b7b6e"><title>rank=1, prefix, layer=21, position=0, ticks=1343612</title></rect>
+<rect x="159" y="932" width="92" height="12" fill="#42897e"><title>rank=1, prefix, layer=21, position=1, ticks=1328704</title></rect>
+<rect x="253" y="932" width="92" height="12" fill="#59988e"><title>rank=1, prefix, layer=21, position=2, ticks=1314232</title></rect>
+<rect x="347" y="932" width="92" height="12" fill="#8fb9b2"><title>rank=1, prefix, layer=21, position=3, ticks=1279952</title></rect>
+<text x="31" y="956" style="font-size:12px">22</text>
+<rect x="65" y="945" width="92" height="12" fill="#87b5ad"><title>rank=1, prefix, layer=22, position=0, ticks=1284768</title></rect>
+<rect x="159" y="945" width="92" height="12" fill="#9cc2bb"><title>rank=1, prefix, layer=22, position=1, ticks=1271512</title></rect>
+<rect x="253" y="945" width="92" height="12" fill="#54948a"><title>rank=1, prefix, layer=22, position=2, ticks=1317524</title></rect>
+<rect x="347" y="945" width="92" height="12" fill="#7cada5"><title>rank=1, prefix, layer=22, position=3, ticks=1292176</title></rect>
+<text x="31" y="969" style="font-size:12px">23</text>
+<rect x="65" y="958" width="92" height="12" fill="#8cb7b0"><title>rank=1, prefix, layer=23, position=0, ticks=1281964</title></rect>
+<rect x="159" y="958" width="92" height="12" fill="#a7c8c2"><title>rank=1, prefix, layer=23, position=1, ticks=1264708</title></rect>
+<rect x="253" y="958" width="92" height="12" fill="#9cc2bb"><title>rank=1, prefix, layer=23, position=2, ticks=1271548</title></rect>
+<rect x="347" y="958" width="92" height="12" fill="#3b857a"><title>rank=1, prefix, layer=23, position=3, ticks=1333104</title></rect>
+<text x="31" y="982" style="font-size:12px">24</text>
+<rect x="65" y="971" width="92" height="12" fill="#458b80"><title>rank=1, prefix, layer=24, position=0, ticks=1327080</title></rect>
+<rect x="159" y="971" width="92" height="12" fill="#5c998f"><title>rank=1, prefix, layer=24, position=1, ticks=1312476</title></rect>
+<rect x="253" y="971" width="92" height="12" fill="#a3c6bf"><title>rank=1, prefix, layer=24, position=2, ticks=1267176</title></rect>
+<rect x="347" y="971" width="92" height="12" fill="#58978d"><title>rank=1, prefix, layer=24, position=3, ticks=1314892</title></rect>
+<text x="31" y="995" style="font-size:12px">25</text>
+<rect x="65" y="984" width="92" height="12" fill="#97beb7"><title>rank=1, prefix, layer=25, position=0, ticks=1274836</title></rect>
+<rect x="159" y="984" width="92" height="12" fill="#b4d0cb"><title>rank=1, prefix, layer=25, position=1, ticks=1256624</title></rect>
+<rect x="253" y="984" width="92" height="12" fill="#6ca49b"><title>rank=1, prefix, layer=25, position=2, ticks=1301968</title></rect>
+<rect x="347" y="984" width="92" height="12" fill="#bad4cf"><title>rank=1, prefix, layer=25, position=3, ticks=1252792</title></rect>
+<text x="31" y="1008" style="font-size:12px">26</text>
+<rect x="65" y="997" width="92" height="12" fill="#509288"><title>rank=1, prefix, layer=26, position=0, ticks=1319792</title></rect>
+<rect x="159" y="997" width="92" height="12" fill="#92bbb4"><title>rank=1, prefix, layer=26, position=1, ticks=1278144</title></rect>
+<rect x="253" y="997" width="92" height="12" fill="#adccc6"><title>rank=1, prefix, layer=26, position=2, ticks=1260788</title></rect>
+<rect x="347" y="997" width="92" height="12" fill="#77aaa2"><title>rank=1, prefix, layer=26, position=3, ticks=1295316</title></rect>
+<text x="31" y="1021" style="font-size:12px">27</text>
+<rect x="65" y="1010" width="92" height="12" fill="#abcbc5"><title>rank=1, prefix, layer=27, position=0, ticks=1262268</title></rect>
+<rect x="159" y="1010" width="92" height="12" fill="#87b4ac"><title>rank=1, prefix, layer=27, position=1, ticks=1285284</title></rect>
+<rect x="253" y="1010" width="92" height="12" fill="#6fa59c"><title>rank=1, prefix, layer=27, position=2, ticks=1300220</title></rect>
+<rect x="347" y="1010" width="92" height="12" fill="#b3d0ca"><title>rank=1, prefix, layer=27, position=3, ticks=1257240</title></rect>
+<text x="31" y="1034" style="font-size:12px">28</text>
+<rect x="65" y="1023" width="92" height="12" fill="#bfd7d2"><title>rank=1, prefix, layer=28, position=0, ticks=1249556</title></rect>
+<rect x="159" y="1023" width="92" height="12" fill="#a2c5bf"><title>rank=1, prefix, layer=28, position=1, ticks=1268056</title></rect>
+<rect x="253" y="1023" width="92" height="12" fill="#afcec8"><title>rank=1, prefix, layer=28, position=2, ticks=1259364</title></rect>
+<rect x="347" y="1023" width="92" height="12" fill="#a0c4bd"><title>rank=1, prefix, layer=28, position=3, ticks=1269332</title></rect>
+<text x="31" y="1047" style="font-size:12px">29</text>
+<rect x="65" y="1036" width="92" height="12" fill="#97beb7"><title>rank=1, prefix, layer=29, position=0, ticks=1275004</title></rect>
+<rect x="159" y="1036" width="92" height="12" fill="#7aaca4"><title>rank=1, prefix, layer=29, position=1, ticks=1293360</title></rect>
+<rect x="253" y="1036" width="92" height="12" fill="#629d94"><title>rank=1, prefix, layer=29, position=2, ticks=1308572</title></rect>
+<rect x="347" y="1036" width="92" height="12" fill="#8db8b0"><title>rank=1, prefix, layer=29, position=3, ticks=1281360</title></rect>
+<text x="31" y="1060" style="font-size:12px">30</text>
+<rect x="65" y="1049" width="92" height="12" fill="#609c92"><title>rank=1, prefix, layer=30, position=0, ticks=1309988</title></rect>
+<rect x="159" y="1049" width="92" height="12" fill="#9ec3bc"><title>rank=1, prefix, layer=30, position=1, ticks=1270496</title></rect>
+<rect x="253" y="1049" width="92" height="12" fill="#adccc6"><title>rank=1, prefix, layer=30, position=2, ticks=1260860</title></rect>
+<rect x="347" y="1049" width="92" height="12" fill="#bed7d2"><title>rank=1, prefix, layer=30, position=3, ticks=1250188</title></rect>
+<text x="31" y="1073" style="font-size:12px">31</text>
+<rect x="65" y="1062" width="92" height="12" fill="#81b0a8"><title>rank=1, prefix, layer=31, position=0, ticks=1289092</title></rect>
+<rect x="159" y="1062" width="92" height="12" fill="#5e9a91"><title>rank=1, prefix, layer=31, position=1, ticks=1311292</title></rect>
+<rect x="253" y="1062" width="92" height="12" fill="#c3dad5"><title>rank=1, prefix, layer=31, position=2, ticks=1246644</title></rect>
+<rect x="347" y="1062" width="92" height="12" fill="#adccc6"><title>rank=1, prefix, layer=31, position=3, ticks=1260608</title></rect>
+<text x="31" y="1086" style="font-size:12px">32</text>
+<rect x="65" y="1075" width="92" height="12" fill="#2a7a6e"><title>rank=1, prefix, layer=32, position=0, ticks=1343856</title></rect>
+<rect x="159" y="1075" width="92" height="12" fill="#85b3ab"><title>rank=1, prefix, layer=32, position=1, ticks=1286384</title></rect>
+<rect x="253" y="1075" width="92" height="12" fill="#80b0a8"><title>rank=1, prefix, layer=32, position=2, ticks=1289460</title></rect>
+<rect x="347" y="1075" width="92" height="12" fill="#afcdc8"><title>rank=1, prefix, layer=32, position=3, ticks=1259588</title></rect>
+<text x="31" y="1099" style="font-size:12px">33</text>
+<rect x="65" y="1088" width="92" height="12" fill="#88b5ad"><title>rank=1, prefix, layer=33, position=0, ticks=1284168</title></rect>
+<rect x="159" y="1088" width="92" height="12" fill="#81b1a9"><title>rank=1, prefix, layer=33, position=1, ticks=1288812</title></rect>
+<rect x="253" y="1088" width="92" height="12" fill="#4f9186"><title>rank=1, prefix, layer=33, position=2, ticks=1320908</title></rect>
+<rect x="347" y="1088" width="92" height="12" fill="#93bcb4"><title>rank=1, prefix, layer=33, position=3, ticks=1277648</title></rect>
+<text x="31" y="1112" style="font-size:12px">34</text>
+<rect x="65" y="1101" width="92" height="12" fill="#98bfb8"><title>rank=1, prefix, layer=34, position=0, ticks=1274492</title></rect>
+<rect x="159" y="1101" width="92" height="12" fill="#478c82"><title>rank=1, prefix, layer=34, position=1, ticks=1325468</title></rect>
+<rect x="253" y="1101" width="92" height="12" fill="#7bada4"><title>rank=1, prefix, layer=34, position=2, ticks=1292644</title></rect>
+<rect x="347" y="1101" width="92" height="12" fill="#57968c"><title>rank=1, prefix, layer=34, position=3, ticks=1315464</title></rect>
+<text x="31" y="1125" style="font-size:12px">35</text>
+<rect x="65" y="1114" width="92" height="12" fill="#509287"><title>rank=1, prefix, layer=35, position=0, ticks=1319992</title></rect>
+<rect x="159" y="1114" width="92" height="12" fill="#9dc2bb"><title>rank=1, prefix, layer=35, position=1, ticks=1271240</title></rect>
+<rect x="253" y="1114" width="92" height="12" fill="#519388"><title>rank=1, prefix, layer=35, position=2, ticks=1319128</title></rect>
+<rect x="347" y="1114" width="92" height="12" fill="#649e95"><title>rank=1, prefix, layer=35, position=3, ticks=1307264</title></rect>
+<text x="65" y="1149" style="font-size:12px">Rows: layers 0-35; lighter = lower, darker = higher</text>
+<text x="585" y="629" style="font-size:14px">Rank 1 / mlp: 2163216 to 2361512 raw ticks</text>
+<text x="607" y="650" style="font-size:12px">pos 0</text>
+<text x="701" y="650" style="font-size:12px">pos 1</text>
+<text x="795" y="650" style="font-size:12px">pos 2</text>
+<text x="889" y="650" style="font-size:12px">pos 3</text>
+<text x="551" y="670" style="font-size:12px">0</text>
+<rect x="585" y="659" width="92" height="12" fill="#83b2aa"><title>rank=1, mlp, layer=0, position=0, ticks=2261760</title></rect>
+<rect x="679" y="659" width="92" height="12" fill="#529389"><title>rank=1, mlp, layer=0, position=1, ticks=2308664</title></rect>
+<rect x="773" y="659" width="92" height="12" fill="#7bada4"><title>rank=1, mlp, layer=0, position=2, ticks=2269496</title></rect>
+<rect x="867" y="659" width="92" height="12" fill="#659f95"><title>rank=1, mlp, layer=0, position=3, ticks=2290492</title></rect>
+<text x="551" y="683" style="font-size:12px">1</text>
+<rect x="585" y="672" width="92" height="12" fill="#41887d"><title>rank=1, mlp, layer=1, position=0, ticks=2324620</title></rect>
+<rect x="679" y="672" width="92" height="12" fill="#96beb6"><title>rank=1, mlp, layer=1, position=1, ticks=2244120</title></rect>
+<rect x="773" y="672" width="92" height="12" fill="#59988e"><title>rank=1, mlp, layer=1, position=2, ticks=2301576</title></rect>
+<rect x="867" y="672" width="92" height="12" fill="#80b0a8"><title>rank=1, mlp, layer=1, position=3, ticks=2264952</title></rect>
+<text x="551" y="696" style="font-size:12px">2</text>
+<rect x="585" y="685" width="92" height="12" fill="#72a79e"><title>rank=1, mlp, layer=2, position=0, ticks=2278100</title></rect>
+<rect x="679" y="685" width="92" height="12" fill="#66a096"><title>rank=1, mlp, layer=2, position=1, ticks=2289140</title></rect>
+<rect x="773" y="685" width="92" height="12" fill="#88b5ad"><title>rank=1, mlp, layer=2, position=2, ticks=2257444</title></rect>
+<rect x="867" y="685" width="92" height="12" fill="#9bc1ba"><title>rank=1, mlp, layer=2, position=3, ticks=2238824</title></rect>
+<text x="551" y="709" style="font-size:12px">3</text>
+<rect x="585" y="698" width="92" height="12" fill="#8bb7af"><title>rank=1, mlp, layer=3, position=0, ticks=2254008</title></rect>
+<rect x="679" y="698" width="92" height="12" fill="#8ab6ae"><title>rank=1, mlp, layer=3, position=1, ticks=2255624</title></rect>
+<rect x="773" y="698" width="92" height="12" fill="#74a8a0"><title>rank=1, mlp, layer=3, position=2, ticks=2276052</title></rect>
+<rect x="867" y="698" width="92" height="12" fill="#5b998f"><title>rank=1, mlp, layer=3, position=3, ticks=2299896</title></rect>
+<text x="551" y="722" style="font-size:12px">4</text>
+<rect x="585" y="711" width="92" height="12" fill="#9dc2bc"><title>rank=1, mlp, layer=4, position=0, ticks=2236888</title></rect>
+<rect x="679" y="711" width="92" height="12" fill="#99c0b9"><title>rank=1, mlp, layer=4, position=1, ticks=2240888</title></rect>
+<rect x="773" y="711" width="92" height="12" fill="#aacbc4"><title>rank=1, mlp, layer=4, position=2, ticks=2224424</title></rect>
+<rect x="867" y="711" width="92" height="12" fill="#58978d"><title>rank=1, mlp, layer=4, position=3, ticks=2302744</title></rect>
+<text x="551" y="735" style="font-size:12px">5</text>
+<rect x="585" y="724" width="92" height="12" fill="#3f877c"><title>rank=1, mlp, layer=5, position=0, ticks=2326256</title></rect>
+<rect x="679" y="724" width="92" height="12" fill="#ebf3f0"><title>rank=1, mlp, layer=5, position=1, ticks=2163216</title></rect>
+<rect x="773" y="724" width="92" height="12" fill="#4f9187"><title>rank=1, mlp, layer=5, position=2, ticks=2311520</title></rect>
+<rect x="867" y="724" width="92" height="12" fill="#5d9a90"><title>rank=1, mlp, layer=5, position=3, ticks=2297976</title></rect>
+<text x="551" y="748" style="font-size:12px">6</text>
+<rect x="585" y="737" width="92" height="12" fill="#b6d2cc"><title>rank=1, mlp, layer=6, position=0, ticks=2213604</title></rect>
+<rect x="679" y="737" width="92" height="12" fill="#55958b"><title>rank=1, mlp, layer=6, position=1, ticks=2305904</title></rect>
+<rect x="773" y="737" width="92" height="12" fill="#84b2aa"><title>rank=1, mlp, layer=6, position=2, ticks=2261240</title></rect>
+<rect x="867" y="737" width="92" height="12" fill="#4f9187"><title>rank=1, mlp, layer=6, position=3, ticks=2311336</title></rect>
+<text x="551" y="761" style="font-size:12px">7</text>
+<rect x="585" y="750" width="92" height="12" fill="#619c93"><title>rank=1, mlp, layer=7, position=0, ticks=2294244</title></rect>
+<rect x="679" y="750" width="92" height="12" fill="#85b3ab"><title>rank=1, mlp, layer=7, position=1, ticks=2260112</title></rect>
+<rect x="773" y="750" width="92" height="12" fill="#70a69d"><title>rank=1, mlp, layer=7, position=2, ticks=2279804</title></rect>
+<rect x="867" y="750" width="92" height="12" fill="#3c867a"><title>rank=1, mlp, layer=7, position=3, ticks=2328816</title></rect>
+<text x="551" y="774" style="font-size:12px">8</text>
+<rect x="585" y="763" width="92" height="12" fill="#d9e8e4"><title>rank=1, mlp, layer=8, position=0, ticks=2180016</title></rect>
+<rect x="679" y="763" width="92" height="12" fill="#99bfb8"><title>rank=1, mlp, layer=8, position=1, ticks=2241292</title></rect>
+<rect x="773" y="763" width="92" height="12" fill="#98bfb8"><title>rank=1, mlp, layer=8, position=2, ticks=2242092</title></rect>
+<rect x="867" y="763" width="92" height="12" fill="#a6c8c2"><title>rank=1, mlp, layer=8, position=3, ticks=2228356</title></rect>
+<text x="551" y="787" style="font-size:12px">9</text>
+<rect x="585" y="776" width="92" height="12" fill="#acccc6"><title>rank=1, mlp, layer=9, position=0, ticks=2222520</title></rect>
+<rect x="679" y="776" width="92" height="12" fill="#7fafa7"><title>rank=1, mlp, layer=9, position=1, ticks=2265992</title></rect>
+<rect x="773" y="776" width="92" height="12" fill="#6da49b"><title>rank=1, mlp, layer=9, position=2, ticks=2282352</title></rect>
+<rect x="867" y="776" width="92" height="12" fill="#72a79f"><title>rank=1, mlp, layer=9, position=3, ticks=2277580</title></rect>
+<text x="551" y="800" style="font-size:12px">10</text>
+<rect x="585" y="789" width="92" height="12" fill="#1a7063"><title>rank=1, mlp, layer=10, position=0, ticks=2361512</title></rect>
+<rect x="679" y="789" width="92" height="12" fill="#75a9a1"><title>rank=1, mlp, layer=10, position=1, ticks=2274728</title></rect>
+<rect x="773" y="789" width="92" height="12" fill="#85b3ab"><title>rank=1, mlp, layer=10, position=2, ticks=2259580</title></rect>
+<rect x="867" y="789" width="92" height="12" fill="#88b5ad"><title>rank=1, mlp, layer=10, position=3, ticks=2257064</title></rect>
+<text x="551" y="813" style="font-size:12px">11</text>
+<rect x="585" y="802" width="92" height="12" fill="#accbc5"><title>rank=1, mlp, layer=11, position=0, ticks=2223420</title></rect>
+<rect x="679" y="802" width="92" height="12" fill="#70a69d"><title>rank=1, mlp, layer=11, position=1, ticks=2279992</title></rect>
+<rect x="773" y="802" width="92" height="12" fill="#76aaa1"><title>rank=1, mlp, layer=11, position=2, ticks=2274440</title></rect>
+<rect x="867" y="802" width="92" height="12" fill="#98bfb8"><title>rank=1, mlp, layer=11, position=3, ticks=2242344</title></rect>
+<text x="551" y="826" style="font-size:12px">12</text>
+<rect x="585" y="815" width="92" height="12" fill="#4a8e84"><title>rank=1, mlp, layer=12, position=0, ticks=2315672</title></rect>
+<rect x="679" y="815" width="92" height="12" fill="#58978d"><title>rank=1, mlp, layer=12, position=1, ticks=2302912</title></rect>
+<rect x="773" y="815" width="92" height="12" fill="#70a69d"><title>rank=1, mlp, layer=12, position=2, ticks=2279964</title></rect>
+<rect x="867" y="815" width="92" height="12" fill="#84b2ab"><title>rank=1, mlp, layer=12, position=3, ticks=2260948</title></rect>
+<text x="551" y="839" style="font-size:12px">13</text>
+<rect x="585" y="828" width="92" height="12" fill="#90bab3"><title>rank=1, mlp, layer=13, position=0, ticks=2249452</title></rect>
+<rect x="679" y="828" width="92" height="12" fill="#83b2aa"><title>rank=1, mlp, layer=13, position=1, ticks=2261468</title></rect>
+<rect x="773" y="828" width="92" height="12" fill="#90bab3"><title>rank=1, mlp, layer=13, position=2, ticks=2249452</title></rect>
+<rect x="867" y="828" width="92" height="12" fill="#b7d3cd"><title>rank=1, mlp, layer=13, position=3, ticks=2212108</title></rect>
+<text x="551" y="852" style="font-size:12px">14</text>
+<rect x="585" y="841" width="92" height="12" fill="#b4d0cb"><title>rank=1, mlp, layer=14, position=0, ticks=2215828</title></rect>
+<rect x="679" y="841" width="92" height="12" fill="#629d94"><title>rank=1, mlp, layer=14, position=1, ticks=2292840</title></rect>
+<rect x="773" y="841" width="92" height="12" fill="#8eb9b1"><title>rank=1, mlp, layer=14, position=2, ticks=2251468</title></rect>
+<rect x="867" y="841" width="92" height="12" fill="#aecdc7"><title>rank=1, mlp, layer=14, position=3, ticks=2220800</title></rect>
+<text x="551" y="865" style="font-size:12px">15</text>
+<rect x="585" y="854" width="92" height="12" fill="#7fafa7"><title>rank=1, mlp, layer=15, position=0, ticks=2265720</title></rect>
+<rect x="679" y="854" width="92" height="12" fill="#6ca39a"><title>rank=1, mlp, layer=15, position=1, ticks=2283596</title></rect>
+<rect x="773" y="854" width="92" height="12" fill="#609c92"><title>rank=1, mlp, layer=15, position=2, ticks=2295324</title></rect>
+<rect x="867" y="854" width="92" height="12" fill="#b7d3cd"><title>rank=1, mlp, layer=15, position=3, ticks=2212176</title></rect>
+<text x="551" y="878" style="font-size:12px">16</text>
+<rect x="585" y="867" width="92" height="12" fill="#b4d0cb"><title>rank=1, mlp, layer=16, position=0, ticks=2215600</title></rect>
+<rect x="679" y="867" width="92" height="12" fill="#79aca3"><title>rank=1, mlp, layer=16, position=1, ticks=2271028</title></rect>
+<rect x="773" y="867" width="92" height="12" fill="#66a096"><title>rank=1, mlp, layer=16, position=2, ticks=2289128</title></rect>
+<rect x="867" y="867" width="92" height="12" fill="#85b3ab"><title>rank=1, mlp, layer=16, position=3, ticks=2260436</title></rect>
+<text x="551" y="891" style="font-size:12px">17</text>
+<rect x="585" y="880" width="92" height="12" fill="#88b5ad"><title>rank=1, mlp, layer=17, position=0, ticks=2256868</title></rect>
+<rect x="679" y="880" width="92" height="12" fill="#70a69d"><title>rank=1, mlp, layer=17, position=1, ticks=2280328</title></rect>
+<rect x="773" y="880" width="92" height="12" fill="#9dc2bb"><title>rank=1, mlp, layer=17, position=2, ticks=2237620</title></rect>
+<rect x="867" y="880" width="92" height="12" fill="#73a89f"><title>rank=1, mlp, layer=17, position=3, ticks=2276940</title></rect>
+<text x="551" y="904" style="font-size:12px">18</text>
+<rect x="585" y="893" width="92" height="12" fill="#8ab6af"><title>rank=1, mlp, layer=18, position=0, ticks=2254840</title></rect>
+<rect x="679" y="893" width="92" height="12" fill="#c3dad5"><title>rank=1, mlp, layer=18, position=1, ticks=2201368</title></rect>
+<rect x="773" y="893" width="92" height="12" fill="#81b1a8"><title>rank=1, mlp, layer=18, position=2, ticks=2263848</title></rect>
+<rect x="867" y="893" width="92" height="12" fill="#94bdb5"><title>rank=1, mlp, layer=18, position=3, ticks=2245572</title></rect>
+<text x="551" y="917" style="font-size:12px">19</text>
+<rect x="585" y="906" width="92" height="12" fill="#9fc3bd"><title>rank=1, mlp, layer=19, position=0, ticks=2235356</title></rect>
+<rect x="679" y="906" width="92" height="12" fill="#9cc1bb"><title>rank=1, mlp, layer=19, position=1, ticks=2238400</title></rect>
+<rect x="773" y="906" width="92" height="12" fill="#76aaa1"><title>rank=1, mlp, layer=19, position=2, ticks=2274316</title></rect>
+<rect x="867" y="906" width="92" height="12" fill="#cbdfda"><title>rank=1, mlp, layer=19, position=3, ticks=2193576</title></rect>
+<text x="551" y="930" style="font-size:12px">20</text>
+<rect x="585" y="919" width="92" height="12" fill="#69a198"><title>rank=1, mlp, layer=20, position=0, ticks=2286944</title></rect>
+<rect x="679" y="919" width="92" height="12" fill="#9ac0ba"><title>rank=1, mlp, layer=20, position=1, ticks=2239704</title></rect>
+<rect x="773" y="919" width="92" height="12" fill="#85b3ab"><title>rank=1, mlp, layer=20, position=2, ticks=2260316</title></rect>
+<rect x="867" y="919" width="92" height="12" fill="#a6c8c1"><title>rank=1, mlp, layer=20, position=3, ticks=2228940</title></rect>
+<text x="551" y="943" style="font-size:12px">21</text>
+<rect x="585" y="932" width="92" height="12" fill="#82b1a9"><title>rank=1, mlp, layer=21, position=0, ticks=2262680</title></rect>
+<rect x="679" y="932" width="92" height="12" fill="#a2c5bf"><title>rank=1, mlp, layer=21, position=1, ticks=2232436</title></rect>
+<rect x="773" y="932" width="92" height="12" fill="#57968c"><title>rank=1, mlp, layer=21, position=2, ticks=2303616</title></rect>
+<rect x="867" y="932" width="92" height="12" fill="#99c0b9"><title>rank=1, mlp, layer=21, position=3, ticks=2240924</title></rect>
+<text x="551" y="956" style="font-size:12px">22</text>
+<rect x="585" y="945" width="92" height="12" fill="#4e9186"><title>rank=1, mlp, layer=22, position=0, ticks=2311944</title></rect>
+<rect x="679" y="945" width="92" height="12" fill="#438a7f"><title>rank=1, mlp, layer=22, position=1, ticks=2322304</title></rect>
+<rect x="773" y="945" width="92" height="12" fill="#3a8479"><title>rank=1, mlp, layer=22, position=2, ticks=2330748</title></rect>
+<rect x="867" y="945" width="92" height="12" fill="#87b4ac"><title>rank=1, mlp, layer=22, position=3, ticks=2258420</title></rect>
+<text x="551" y="969" style="font-size:12px">23</text>
+<rect x="585" y="958" width="92" height="12" fill="#498d83"><title>rank=1, mlp, layer=23, position=0, ticks=2317112</title></rect>
+<rect x="679" y="958" width="92" height="12" fill="#7aaca4"><title>rank=1, mlp, layer=23, position=1, ticks=2270712</title></rect>
+<rect x="773" y="958" width="92" height="12" fill="#58978d"><title>rank=1, mlp, layer=23, position=2, ticks=2302748</title></rect>
+<rect x="867" y="958" width="92" height="12" fill="#368276"><title>rank=1, mlp, layer=23, position=3, ticks=2334664</title></rect>
+<text x="551" y="982" style="font-size:12px">24</text>
+<rect x="585" y="971" width="92" height="12" fill="#5d9a90"><title>rank=1, mlp, layer=24, position=0, ticks=2297832</title></rect>
+<rect x="679" y="971" width="92" height="12" fill="#d6e6e2"><title>rank=1, mlp, layer=24, position=1, ticks=2183144</title></rect>
+<rect x="773" y="971" width="92" height="12" fill="#86b4ac"><title>rank=1, mlp, layer=24, position=2, ticks=2259264</title></rect>
+<rect x="867" y="971" width="92" height="12" fill="#6aa299"><title>rank=1, mlp, layer=24, position=3, ticks=2285808</title></rect>
+<text x="551" y="995" style="font-size:12px">25</text>
+<rect x="585" y="984" width="92" height="12" fill="#78aba2"><title>rank=1, mlp, layer=25, position=0, ticks=2272476</title></rect>
+<rect x="679" y="984" width="92" height="12" fill="#77aaa2"><title>rank=1, mlp, layer=25, position=1, ticks=2273316</title></rect>
+<rect x="773" y="984" width="92" height="12" fill="#5a988e"><title>rank=1, mlp, layer=25, position=2, ticks=2300836</title></rect>
+<rect x="867" y="984" width="92" height="12" fill="#77aaa2"><title>rank=1, mlp, layer=25, position=3, ticks=2273244</title></rect>
+<text x="551" y="1008" style="font-size:12px">26</text>
+<rect x="585" y="997" width="92" height="12" fill="#73a89f"><title>rank=1, mlp, layer=26, position=0, ticks=2276680</title></rect>
+<rect x="679" y="997" width="92" height="12" fill="#e8f1ee"><title>rank=1, mlp, layer=26, position=1, ticks=2166036</title></rect>
+<rect x="773" y="997" width="92" height="12" fill="#75a9a0"><title>rank=1, mlp, layer=26, position=2, ticks=2275292</title></rect>
+<rect x="867" y="997" width="92" height="12" fill="#d6e6e2"><title>rank=1, mlp, layer=26, position=3, ticks=2183008</title></rect>
+<text x="551" y="1021" style="font-size:12px">27</text>
+<rect x="585" y="1010" width="92" height="12" fill="#83b2aa"><title>rank=1, mlp, layer=27, position=0, ticks=2261524</title></rect>
+<rect x="679" y="1010" width="92" height="12" fill="#a8c9c3"><title>rank=1, mlp, layer=27, position=1, ticks=2226784</title></rect>
+<rect x="773" y="1010" width="92" height="12" fill="#96beb7"><title>rank=1, mlp, layer=27, position=2, ticks=2243972</title></rect>
+<rect x="867" y="1010" width="92" height="12" fill="#40887c"><title>rank=1, mlp, layer=27, position=3, ticks=2325796</title></rect>
+<text x="551" y="1034" style="font-size:12px">28</text>
+<rect x="585" y="1023" width="92" height="12" fill="#88b5ad"><title>rank=1, mlp, layer=28, position=0, ticks=2256752</title></rect>
+<rect x="679" y="1023" width="92" height="12" fill="#9ec3bc"><title>rank=1, mlp, layer=28, position=1, ticks=2235956</title></rect>
+<rect x="773" y="1023" width="92" height="12" fill="#8ab6ae"><title>rank=1, mlp, layer=28, position=2, ticks=2255680</title></rect>
+<rect x="867" y="1023" width="92" height="12" fill="#6ea49b"><title>rank=1, mlp, layer=28, position=3, ticks=2282116</title></rect>
+<text x="551" y="1047" style="font-size:12px">29</text>
+<rect x="585" y="1036" width="92" height="12" fill="#9dc2bc"><title>rank=1, mlp, layer=29, position=0, ticks=2236884</title></rect>
+<rect x="679" y="1036" width="92" height="12" fill="#86b4ac"><title>rank=1, mlp, layer=29, position=1, ticks=2259148</title></rect>
+<rect x="773" y="1036" width="92" height="12" fill="#358175"><title>rank=1, mlp, layer=29, position=2, ticks=2335536</title></rect>
+<rect x="867" y="1036" width="92" height="12" fill="#83b2aa"><title>rank=1, mlp, layer=29, position=3, ticks=2261432</title></rect>
+<text x="551" y="1060" style="font-size:12px">30</text>
+<rect x="585" y="1049" width="92" height="12" fill="#609c92"><title>rank=1, mlp, layer=30, position=0, ticks=2294732</title></rect>
+<rect x="679" y="1049" width="92" height="12" fill="#77aba2"><title>rank=1, mlp, layer=30, position=1, ticks=2272852</title></rect>
+<rect x="773" y="1049" width="92" height="12" fill="#89b6ae"><title>rank=1, mlp, layer=30, position=2, ticks=2255772</title></rect>
+<rect x="867" y="1049" width="92" height="12" fill="#94bcb5"><title>rank=1, mlp, layer=30, position=3, ticks=2245992</title></rect>
+<text x="551" y="1073" style="font-size:12px">31</text>
+<rect x="585" y="1062" width="92" height="12" fill="#91bbb3"><title>rank=1, mlp, layer=31, position=0, ticks=2248448</title></rect>
+<rect x="679" y="1062" width="92" height="12" fill="#7caea5"><title>rank=1, mlp, layer=31, position=1, ticks=2268068</title></rect>
+<rect x="773" y="1062" width="92" height="12" fill="#a3c6bf"><title>rank=1, mlp, layer=31, position=2, ticks=2231512</title></rect>
+<rect x="867" y="1062" width="92" height="12" fill="#d1e3df"><title>rank=1, mlp, layer=31, position=3, ticks=2187508</title></rect>
+<text x="551" y="1086" style="font-size:12px">32</text>
+<rect x="585" y="1075" width="92" height="12" fill="#5b998f"><title>rank=1, mlp, layer=32, position=0, ticks=2299716</title></rect>
+<rect x="679" y="1075" width="92" height="12" fill="#4a8e83"><title>rank=1, mlp, layer=32, position=1, ticks=2315884</title></rect>
+<rect x="773" y="1075" width="92" height="12" fill="#69a198"><title>rank=1, mlp, layer=32, position=2, ticks=2286780</title></rect>
+<rect x="867" y="1075" width="92" height="12" fill="#e1edea"><title>rank=1, mlp, layer=32, position=3, ticks=2172304</title></rect>
+<text x="551" y="1099" style="font-size:12px">33</text>
+<rect x="585" y="1088" width="92" height="12" fill="#99bfb8"><title>rank=1, mlp, layer=33, position=0, ticks=2241288</title></rect>
+<rect x="679" y="1088" width="92" height="12" fill="#41887d"><title>rank=1, mlp, layer=33, position=1, ticks=2324672</title></rect>
+<rect x="773" y="1088" width="92" height="12" fill="#337f74"><title>rank=1, mlp, layer=33, position=2, ticks=2338076</title></rect>
+<rect x="867" y="1088" width="92" height="12" fill="#629d94"><title>rank=1, mlp, layer=33, position=3, ticks=2292976</title></rect>
+<text x="551" y="1112" style="font-size:12px">34</text>
+<rect x="585" y="1101" width="92" height="12" fill="#83b2aa"><title>rank=1, mlp, layer=34, position=0, ticks=2262328</title></rect>
+<rect x="679" y="1101" width="92" height="12" fill="#80b0a8"><title>rank=1, mlp, layer=34, position=1, ticks=2265048</title></rect>
+<rect x="773" y="1101" width="92" height="12" fill="#b2cfca"><title>rank=1, mlp, layer=34, position=2, ticks=2217252</title></rect>
+<rect x="867" y="1101" width="92" height="12" fill="#27786c"><title>rank=1, mlp, layer=34, position=3, ticks=2349152</title></rect>
+<text x="551" y="1125" style="font-size:12px">35</text>
+<rect x="585" y="1114" width="92" height="12" fill="#9ec3bc"><title>rank=1, mlp, layer=35, position=0, ticks=2236396</title></rect>
+<rect x="679" y="1114" width="92" height="12" fill="#5c9a90"><title>rank=1, mlp, layer=35, position=1, ticks=2298620</title></rect>
+<rect x="773" y="1114" width="92" height="12" fill="#dae8e5"><title>rank=1, mlp, layer=35, position=2, ticks=2179208</title></rect>
+<rect x="867" y="1114" width="92" height="12" fill="#9ac0ba"><title>rank=1, mlp, layer=35, position=3, ticks=2239728</title></rect>
+<text x="585" y="1149" style="font-size:12px">Rows: layers 0-35; lighter = lower, darker = higher</text>
+</svg>

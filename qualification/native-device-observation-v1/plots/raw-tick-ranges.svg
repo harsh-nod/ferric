@@ -1,0 +1,92 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1060" height="730" viewBox="0 0 1060 730" role="img">
+<title>Raw tick ranges and medians, separate device panels</title>
+<style>text{font-family:Arial,sans-serif;fill:#20242a;font-size:12px}</style>
+<rect width="1060" height="730" fill="white"/>
+<text x="20" y="26" style="font-size:20px">Raw tick ranges and medians</text>
+<text x="20" y="49" style="font-size:12px">No nanosecond conversion or cross-device alignment. Position 0 and zero deltas are retained.</text>
+<text x="20" y="88" style="font-size:14px">Rank 0: GPU 16366993098680759275; queue epoch 0</text>
+<path d="M250.00,100 V338" stroke="#e0e3e7"/>
+<text x="243.0" y="358" style="font-size:12px">0</text>
+<path d="M355.00,100 V338" stroke="#e0e3e7"/>
+<text x="348.0" y="358" style="font-size:12px">10^1-1</text>
+<path d="M460.00,100 V338" stroke="#e0e3e7"/>
+<text x="453.0" y="358" style="font-size:12px">10^2-1</text>
+<path d="M565.00,100 V338" stroke="#e0e3e7"/>
+<text x="558.0" y="358" style="font-size:12px">10^3-1</text>
+<path d="M670.00,100 V338" stroke="#e0e3e7"/>
+<text x="663.0" y="358" style="font-size:12px">10^4-1</text>
+<path d="M775.00,100 V338" stroke="#e0e3e7"/>
+<text x="768.0" y="358" style="font-size:12px">10^5-1</text>
+<path d="M880.00,100 V338" stroke="#e0e3e7"/>
+<text x="873.0" y="358" style="font-size:12px">10^6-1</text>
+<path d="M985.00,100 V338" stroke="#e0e3e7"/>
+<text x="978.0" y="358" style="font-size:12px">10^7-1</text>
+<text x="20" y="120" style="font-size:12px">embedding</text>
+<path d="M560.85,116 H572.74" stroke="#25816d" stroke-width="3"/>
+<circle cx="563.00" cy="116" r="4" fill="#bc4b38"><title>embedding: n=4, min=912, median=956, max=1184</title></circle>
+<text x="20" y="145" style="font-size:12px">copy</text>
+<text x="255" y="145" style="font-size:12px">not dispatched on this rank</text>
+<text x="20" y="170" style="font-size:12px">prefix</text>
+<path d="M889.43,166 H893.75" stroke="#25816d" stroke-width="3"/>
+<circle cx="891.52" cy="166" r="4" fill="#bc4b38"><title>prefix: n=144, min=1229604, median=1287468, max=1351972</title></circle>
+<text x="20" y="195" style="font-size:12px">post-attention-residual</text>
+<path d="M554.88,191 H585.19" stroke="#25816d" stroke-width="3"/>
+<circle cx="568.21" cy="191" r="4" fill="#bc4b38"><title>post-attention-residual: n=144, min=800, median=1072, max=1556</title></circle>
+<text x="20" y="220" style="font-size:12px">mlp</text>
+<path d="M915.68,216 H919.40" stroke="#25816d" stroke-width="3"/>
+<circle cx="917.40" cy="216" r="4" fill="#bc4b38"><title>mlp: n=144, min=2186880, median=2270702, max=2372576</title></circle>
+<text x="20" y="245" style="font-size:12px">post-mlp-residual</text>
+<path d="M565.41,241 H582.16" stroke="#25816d" stroke-width="3"/>
+<circle cx="567.70" cy="241" r="4" fill="#bc4b38"><title>post-mlp-residual: n=144, min=1008, median=1060, max=1456</title></circle>
+<text x="20" y="270" style="font-size:12px">final-norm</text>
+<path d="M761.30,266 H761.97" stroke="#25816d" stroke-width="3"/>
+<circle cx="761.67" cy="266" r="4" fill="#bc4b38"><title>final-norm: n=4, min=74044, median=74644, max=75144</title></circle>
+<text x="20" y="295" style="font-size:12px">head</text>
+<path d="M768.33,291 H769.26" stroke="#25816d" stroke-width="3"/>
+<circle cx="768.65" cy="291" r="4" fill="#bc4b38"><title>head: n=4, min=86392, median=87008, max=88168</title></circle>
+<text x="20" y="320" style="font-size:12px">argmax</text>
+<path d="M913.20,316 H916.98" stroke="#25816d" stroke-width="3"/>
+<circle cx="914.17" cy="316" r="4" fill="#bc4b38"><title>argmax: n=4, min=2071220, median=2115788, max=2249884</title></circle>
+<text x="250" y="380" style="font-size:12px">Axis: log10(1 + raw ticks); line = min/max, point = median</text>
+<text x="20" y="408" style="font-size:14px">Rank 1: GPU 10838076764495710945; queue epoch 0</text>
+<path d="M250.00,420 V658" stroke="#e0e3e7"/>
+<text x="243.0" y="678" style="font-size:12px">0</text>
+<path d="M355.00,420 V658" stroke="#e0e3e7"/>
+<text x="348.0" y="678" style="font-size:12px">10^1-1</text>
+<path d="M460.00,420 V658" stroke="#e0e3e7"/>
+<text x="453.0" y="678" style="font-size:12px">10^2-1</text>
+<path d="M565.00,420 V658" stroke="#e0e3e7"/>
+<text x="558.0" y="678" style="font-size:12px">10^3-1</text>
+<path d="M670.00,420 V658" stroke="#e0e3e7"/>
+<text x="663.0" y="678" style="font-size:12px">10^4-1</text>
+<path d="M775.00,420 V658" stroke="#e0e3e7"/>
+<text x="768.0" y="678" style="font-size:12px">10^5-1</text>
+<path d="M880.00,420 V658" stroke="#e0e3e7"/>
+<text x="873.0" y="678" style="font-size:12px">10^6-1</text>
+<path d="M985.00,420 V658" stroke="#e0e3e7"/>
+<text x="978.0" y="678" style="font-size:12px">10^7-1</text>
+<text x="20" y="440" style="font-size:12px">embedding</text>
+<text x="255" y="440" style="font-size:12px">not dispatched on this rank</text>
+<text x="20" y="465" style="font-size:12px">copy</text>
+<path d="M560.85,461 H573.20" stroke="#25816d" stroke-width="3"/>
+<circle cx="562.90" cy="461" r="4" fill="#bc4b38"><title>copy: n=4, min=912, median=954, max=1196</title></circle>
+<text x="20" y="490" style="font-size:12px">prefix</text>
+<path d="M889.12,486 H893.83" stroke="#25816d" stroke-width="3"/>
+<circle cx="891.31" cy="486" r="4" fill="#bc4b38"><title>prefix: n=144, min=1221476, median=1281532, max=1354332</title></circle>
+<text x="20" y="515" style="font-size:12px">post-attention-residual</text>
+<path d="M565.05,511 H608.38" stroke="#25816d" stroke-width="3"/>
+<circle cx="567.18" cy="511" r="4" fill="#bc4b38"><title>post-attention-residual: n=144, min=1000, median=1048, max=2588</title></circle>
+<text x="20" y="540" style="font-size:12px">mlp</text>
+<path d="M915.19,536 H919.18" stroke="#25816d" stroke-width="3"/>
+<circle cx="917.23" cy="536" r="4" fill="#bc4b38"><title>mlp: n=144, min=2163216, median=2262504, max=2361512</title></circle>
+<text x="20" y="565" style="font-size:12px">post-mlp-residual</text>
+<path d="M565.23,561 H594.39" stroke="#25816d" stroke-width="3"/>
+<circle cx="567.01" cy="561" r="4" fill="#bc4b38"><title>post-mlp-residual: n=144, min=1004, median=1044, max=1904</title></circle>
+<text x="20" y="590" style="font-size:12px">final-norm</text>
+<text x="255" y="590" style="font-size:12px">not dispatched on this rank</text>
+<text x="20" y="615" style="font-size:12px">head</text>
+<text x="255" y="615" style="font-size:12px">not dispatched on this rank</text>
+<text x="20" y="640" style="font-size:12px">argmax</text>
+<text x="255" y="640" style="font-size:12px">not dispatched on this rank</text>
+<text x="250" y="700" style="font-size:12px">Axis: log10(1 + raw ticks); line = min/max, point = median</text>
+</svg>

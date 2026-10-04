@@ -6,23 +6,23 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Latest: the [device-tick parent](../adapters/m1-engineering-execution-v1/README.md#finite-prefix-device-tick-diagnostic)
-is implemented and [CPU-qualified](../qualification/native-device-parent-v1/README.md)
-on `mi350-2`: 257 Rust tests passed with no ignores, 16 controller tests passed,
-all 12 parent executables built, and the default-feature check passed. All 41
-owned phases exited naturally and source postchecks passed. Its report checks
-all 1,172 raw dispatch rows against four actual Control/capture pairs, only
-after worker Close and reap. Existing plain and host-only selectors are unchanged.
-The separately [qualified worker](../qualification/native-device-routing-v1/README.md)
-passed 609 Rust tests with four existing ignores and 13 controller tests.
-These are distinct CPU cohorts, not a combined new test run. The matching pair's
-transported binaries now pass [runtime dependency audits](../qualification/native-device-runtime-v1/README.md)
-on `mi350`: four natural inspection exits/reaps, seven auditor tests and a
-separate 44-test controller cohort. Real admission then exposed a legacy-import
-wiring defect before any native launch. GPU execution and output-invariance comparison are pending; raw ticks still
-provide no calibrated latency, cross-device alignment or overlap claim.
-The retained parent history includes the first failed test fixture and its
-test-only overflow correction; that attempt is not counted as a passing run.
+Latest: the [timestamp-enabled parent and worker now run on MI350](../qualification/native-device-observation-v1/README.md).
+The four-forward Qwen3-8B BF16 TP2 capture contains all 1,172 raw dispatch rows,
+with 592/580 per rank. All four payloads, 152 tensors and output tokens are
+byte-identical to the native baseline. All six audits and natural Close/reap
+passed. The page includes actual per-device tick tables, ranges and layer/position
+heatmaps. Raw ticks still provide no calibrated latency, cross-device alignment,
+overlap, full-model numerical acceptance or sustained 2,048/256 result.
+
+The first controller's real admission failed on a legacy-import dependency
+before native launch. The successor binds all five authenticated dependencies
+and restores imports on success/failure; all 47 tests passed on MI350 before the
+successful GPU run. The original controller and failure account are retained. The native binaries
+remain the separate [257-test parent](../qualification/native-device-parent-v1/README.md)
+and [609-test worker](../qualification/native-device-routing-v1/README.md)
+cohorts, with [actual runtime audits](../qualification/native-device-runtime-v1/README.md).
+Those tests are distinct runs, not a combined suite. Existing plain/host-only
+selectors and the V7 kernel image are unchanged.
 
 The [resident-state GPU comparison](../qualification/resident-state-decode-observation-v1/tf4/README.md)
 passes on MI350: all 152 tensors and four tokens are bitwise unchanged, with
@@ -78,6 +78,7 @@ earlier checkpoints and their limitations at the time they were recorded.
 
 | Check | Observed result | Boundary |
 | --- | --- | --- |
+| Timestamp-enabled parent/worker on `mi350` | 1,172 raw rows; 152 tensors and four payloads/tokens unchanged; six audits and clean Close/reap; 47 controller tests | Per-device raw-tick plots, not calibrated GPU latency, overlap or sustained throughput |
 | Device-tick parent/worker runtime audits on `mi350` | Both exact CPU-qualified ELFs inspected; four natural exits/reaps; all dependencies resolved | Seven auditor tests and 44 controller tests are separate; real admission failed before native launch |
 | Corrected finite parent/worker CPU suite on `mi350-2` | 605 passed, 4 ignored; 34 owned commands | Includes 24 tests for the opt-in host-observation extension; no GPU execution |
 | Historical KFD host-observation suite on `mi350-2` | 1,776 selected tests passed | Overlapping selections, including 15 new tests; separate source generation |

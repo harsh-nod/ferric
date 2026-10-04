@@ -49,6 +49,10 @@ a GPU result. The original 44-test pass does not establish integration success.
 A successor must bind all legacy imports explicitly and test restoration on
 success and failure before another admission attempt.
 
+The [follow-on GPU checkpoint](../native-device-observation-v1/README.md) now
+records that correction, 47 passing tests and a successful raw-tick capture.
+Those later results are separate from the runtime-only evidence above.
+
 No calibrated latency, cross-device alignment, overlap, sustained 2,048/256
 throughput, independent numerical acceptance or production authority is
 established. All issue #42 milestones and the 700 tokens/s target remain open.
