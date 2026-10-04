@@ -39,6 +39,13 @@ fixture and local provider, not the device crate's unchanged Git dependency.
 
 ## Remaining Gates
 
+The [fresh checked probe](checked-probe-result.json) passed metadata but failed
+semantic-SSA partial-move validation at cumulative charge 2,097,153 against the
+unchanged 2,097,152-word budget. It emitted no semantic capture or HSACO. The
+checked counter changes the MIR, so V3's storage and CFG successes do not
+transfer to V4. The latch fix is not qualified. All source/tool/dependency and
+prior-target postchecks passed; the owned tree exited naturally and was reaped.
+
 Checked lowering, actual replay, inert join, emission and metadata/ISA review
 must pass before independent MI350 numerical validation. Compiler limits,
 numerical tolerances and runtime admission requirements are unchanged. No GPU,

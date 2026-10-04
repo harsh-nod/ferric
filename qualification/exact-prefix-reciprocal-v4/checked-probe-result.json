@@ -1,0 +1,136 @@
+{
+  "candidate": "canonical-counter exact reciprocal V4 with idempotent partial-move compiler",
+  "candidate_cpu_exact_source_join": true,
+  "compiler_exit_code": 101,
+  "compiler_generation": {
+    "backend_dynamic_library": {
+      "bytes": 205454400,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/idempotent-compiler-cpu-v228-v2/target/debug/deps/librustc_codegen_fe2o3.so",
+      "sha256": "7aff786b4f8ce7105106d9e49d26f5b930524106438ba8452c3ad78bfb4bc294"
+    },
+    "prerequisites": {
+      "cpu": {
+        "bytes": 364397,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/idempotent-compiler-cpu-v228-v2/complete.json",
+        "sha256": "52245c1a713a87c1d60a464bf56998cca612f421386efe715533cfafedc3f9ac"
+      },
+      "cpu_owner": {
+        "bytes": 53278,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/idempotent-compiler-cpu-owner-v228-v2/complete.json",
+        "sha256": "1365634ddf51a0b041939646d00b0ec609d8683f12570d1dde573681e99f8741"
+      },
+      "tools": {
+        "bytes": 41703,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/idempotent-finalizer-tools-v228-v1/complete.json",
+        "sha256": "ed13e895138d79acc164778502b6a2a07097e43b3c2543d7389e3a190d34f679"
+      },
+      "tools_owner": {
+        "bytes": 8398,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/idempotent-finalizer-tools-owner-v228-v1/complete.json",
+        "sha256": "4bf0f9ffb68e5c47ece94d45d0de3786f1ddbf244bfc63bd8c5aecf7b58fc6e9"
+      }
+    },
+    "roles": {
+      "compiler-tests": {
+        "bytes": 128877928,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/idempotent-compiler-cpu-v228-v2/target/debug/deps/rustc_codegen_fe2o3-5db184f14eef1d1c",
+        "sha256": "4c1ace474ae0a28bc1f6abeaef5239e767a8eb2bd277e7bb906b606cdaa36833"
+      },
+      "fe2o3-rustc-extract": {
+        "bytes": 205648,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/idempotent-compiler-cpu-v228-v2/target/debug/fe2o3-rustc-extract",
+        "sha256": "cece2097c34ed019e380a512132e8f4d932f127e8dd87793bcd9f0cf620cf3ca"
+      },
+      "finalizer": {
+        "bytes": 33044032,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/idempotent-compiler-cpu-v228-v2/target/debug/examples/finite_join_engineering_hsaco_v1",
+        "sha256": "1ae67526442f52806b8bd4aa4df6f3a857603088118bc0dde0e5e376cb7c1e3c"
+      },
+      "finalizer-tests": {
+        "bytes": 35542224,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/idempotent-compiler-cpu-v228-v2/target/debug/examples/finite_join_engineering_hsaco_v1-d165b82509d45fc9",
+        "sha256": "bc13a8702fa27e9c48ede642ad302e1f3ec1e6475faa6d6c73bb8ffcdc238673"
+      },
+      "librustc_codegen_fe2o3.so": {
+        "bytes": 205454400,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/idempotent-compiler-cpu-v228-v2/target/debug/librustc_codegen_fe2o3.so",
+        "sha256": "7aff786b4f8ce7105106d9e49d26f5b930524106438ba8452c3ad78bfb4bc294"
+      },
+      "metadata": {
+        "bytes": 23544336,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/idempotent-compiler-cpu-v228-v2/target/debug/examples/finite_join_request_metadata_v1",
+        "sha256": "3c024e79a263a286dc6ab46c5cd3c69e1173c46ba61d1eb415ecde903f74cdb8"
+      }
+    },
+    "source": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/idempotent-compiler-cpu-v228-v2/source/fe2o3",
+    "target": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/idempotent-compiler-cpu-v228-v2/target"
+  },
+  "compiler_host_seconds": 92.74865443399176,
+  "compiler_limits_unchanged": true,
+  "cpu_joined_provider_sources": 53,
+  "cpu_joined_rust_sources": 7,
+  "date": "2026-10-03",
+  "diagnostic": "production semantic SSA partial-move validation for function 0 requires 2097153 storage words, limit is 2097152",
+  "failed_stage": "checked-lowering",
+  "fresh_hsaco_emitted": false,
+  "fresh_target_bytes": 257913282,
+  "full_model_acceptance": false,
+  "gpu_execution": false,
+  "host": "mi350-2",
+  "limitations": [
+    "V4 CPU arithmetic passes, but its checked-counter MIR fails before semantic capture.",
+    "The prior V3 CFG-size and storage successes do not transfer to this changed source.",
+    "2097153 is the first rejected cumulative charge, not a peak or total storage requirement.",
+    "No limits or numerical tolerances were increased; the induction fix is not qualified.",
+    "Old-target postchecks are stat inventories, not content hashes or proof of no transient writes.",
+    "Receipt identities are not a publicly downloadable self-contained reproducer."
+  ],
+  "metadata_passed": true,
+  "numerical_acceptance": false,
+  "owned_outcome": {
+    "cleanup_signalled": false,
+    "exit_code": 1,
+    "owned_groups_absent": true,
+    "owned_processes_reaped": true,
+    "reason": null
+  },
+  "passed": false,
+  "performance_claim": false,
+  "production_authority": false,
+  "receipts": {
+    "candidate_cpu": {
+      "bytes": 24869,
+      "sha256": "2c784aec7d1a918208abca9cf48cffd0f0fd837421894ad8da58f124ed30adae"
+    },
+    "compiler_stderr": {
+      "bytes": 6718,
+      "sha256": "62d14ba12159b63a999dcb4b19beb07f90b2e33f77da0bf1475c525485a8ed95"
+    },
+    "outer_pure_tests": {
+      "bytes": 453,
+      "sha256": "96c00010cc543ef299a230ac66cb0555bea00dd4dc0fcddb19d1258265730b16"
+    },
+    "owner": {
+      "bytes": 17635,
+      "sha256": "22cd8e4077642203c60450a91c4ce3054de54d176f551e1fff46596d7b11d117"
+    },
+    "probe": {
+      "bytes": 7294,
+      "sha256": "1e7cf6d6873dfbcf44558adda751bf6c780c39d31e85b721f30f41aad38e710a"
+    },
+    "probe_pure_tests": {
+      "bytes": 453,
+      "sha256": "654f0e314bc9dfb084306b846258e9d2e8195f4bd5f0611f222df8691e9a444a"
+    },
+    "retained_archive": {
+      "bytes": 6699205,
+      "sha256": "92a1b9283acd96663a518a9820e6f01f8d6a20290ab4ad84181a4131b2d1b2b0"
+    }
+  },
+  "rejected_cumulative_storage_charge_words": 2097153,
+  "schema": "FerricReciprocalCheckedProbeFailureV5",
+  "semantic_capture": null,
+  "semantic_pre_ranked_passed": false,
+  "source_and_old_target_postchecks_passed": true,
+  "storage_limit_words": 2097152
+}

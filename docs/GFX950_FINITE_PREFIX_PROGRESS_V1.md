@@ -27,6 +27,7 @@ engineering branch; it does not change the production execution path.
 | Matching finalizer tools on `mi350-2` | 190 default example tests passed, 15 ignored; three tools rebuilt | Same compiler source generation; actual-capture inert join remains ignored, no new HSACO |
 | Checked reciprocal probe with new compiler on `mi350-2` | Previous storage gate cleared; canonical semantic capture emitted | Ranked projection rejects 1,027 blocks against the unchanged 1,024 limit; no HSACO or GPU run |
 | Reduced-CFG reciprocal V3 on `mi350-2` | Exact census measures 1,013 blocks, 14 fewer; CFG-size gate cleared | Checked lowering now rejects an unsupported induction-latch form; no HSACO or GPU run |
+| Canonical-counter reciprocal V4 on `mi350-2` | CPU arithmetic passes; fresh checked probe fails cumulative partial-move storage limit | No semantic capture or HSACO; prior V3 compiler successes do not transfer |
 
 Both four-forward runs completed their Close protocol, reaped their owned
 processes, and passed their six surrounding device-state audits. The CPU suite
@@ -151,7 +152,13 @@ matching macro contract. The actual V3 capture identifies both rejected
 counter latches as plain temporary copies. V4 passed the same 12 ordinary
 tests, six contracts, explicit exhaustive test and 1,007 Fraction vectors on
 `mi350-2`. The source patch and exact CPU result are published separately from
-runtime adoption; a fresh checked probe must establish the latch fix.
+runtime adoption. Its [fresh checked probe](../qualification/exact-prefix-reciprocal-v4/checked-probe-result.json)
+has now failed semantic-SSA partial-move validation before emitting a capture:
+the first rejected cumulative charge is 2,097,153 against the unchanged
+2,097,152-word budget. The new checked counter changes the MIR; V3's successful
+storage and CFG checks cannot be carried forward. All postchecks passed and
+the owned tree exited naturally and was reaped. The latch fix remains
+unqualified, with no new HSACO or GPU result.
 
 ## Source Publication
 
