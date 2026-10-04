@@ -1,0 +1,61 @@
+{
+  "schema": "ferric-p228-projection-residual-capture-gpu-package-v1",
+  "pure_tests": 34,
+  "test_census": {
+    "test_capture_validation.py": 13,
+    "test_intake.py": 10,
+    "test_run.py": 11
+  },
+  "files": [
+    {
+      "path": "capture_validation.py",
+      "bytes": 8279,
+      "sha256": "4851d64b5c6c49c7fa0dbb255309229fc03004fbf72dd6f11caa0390c4186436"
+    },
+    {
+      "path": "INTAKE.md",
+      "bytes": 3004,
+      "sha256": "844ff9fa01d275e27e9b104baa6399084a188b8bfcfcb8dfe9c556c321730a50"
+    },
+    {
+      "path": "intake.py",
+      "bytes": 28616,
+      "sha256": "740d305771ec755dd008fe06d3f1b408cd664a083534c54f55ca26abb1829363"
+    },
+    {
+      "path": "layer_validation.py",
+      "bytes": 16186,
+      "sha256": "757c077979b7ee02d4c0e7d222e75292cd9d417927f84ae9a8134344f8e217b9"
+    },
+    {
+      "path": "README.md",
+      "bytes": 3384,
+      "sha256": "35bacfd965163c558ad9d9545ca81e4bbbdfff1ae25f07d964d1b8387550195c"
+    },
+    {
+      "path": "run_row_facts_v2.py",
+      "bytes": 12424,
+      "sha256": "244c12f62c8a439aa01b44380fc464008b94006bc919201c8d510c64177fc820"
+    },
+    {
+      "path": "run.py",
+      "bytes": 14884,
+      "sha256": "6edf1ba4e2f634b24db4bfd4d1fba302c8ebbb3d516610fe6d119a34b2a07736"
+    },
+    {
+      "path": "test_capture_validation.py",
+      "bytes": 15074,
+      "sha256": "03554660483c95fb959feef63ef3474e0d010c91d3fb9be640cf0cc1f719af9c"
+    },
+    {
+      "path": "test_intake.py",
+      "bytes": 9392,
+      "sha256": "e5ec23c5825cc460c91a900a4d189ed10e55c7f09ff8ba964446846ac5084c63"
+    },
+    {
+      "path": "test_run.py",
+      "bytes": 13317,
+      "sha256": "ce8984095fd5ea2c54e0e063402626bca3621e4a7f0f6db180030ccd360f5798"
+    }
+  ]
+}

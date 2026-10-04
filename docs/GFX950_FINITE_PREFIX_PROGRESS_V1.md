@@ -6,7 +6,12 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Latest: the [additive projection-residual parent/worker route](../qualification/projection-residual-runtime-v1/README.md)
+Latest: the [projection-residual capture supervisor](../qualification/projection-residual-capture-supervisor-v1/README.md)
+passed all 34 synthetic policy tests on `mi350`, with unchanged sources and no
+skips. No model binary or GPU kernel ran in this suite. Fresh runtime checks,
+the genuine candidate capture and its independent numerical comparison are next.
+
+The [additive projection-residual parent/worker route](../qualification/projection-residual-runtime-v1/README.md)
 passed joint CPU qualification on `mi350-2`: 988 passed, four unchanged worker
 ignores, all 84 commands naturally completed and reaped. Both executables built;
 the default-feature check and all postchecks passed. All 22 integrated source
