@@ -1,0 +1,101 @@
+{
+  "arithmetic_evidence": {
+    "elf_notes": {
+      "bytes": 5890,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-reciprocal-checked-probe-v228-v7/elf-notes-stdout",
+      "sha256": "8bb5d8cca4b410e1d0badeba82bccdaef9870f493ca4faaa73a3e30efb2e8fa8"
+    },
+    "isa": {
+      "bytes": 438594,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-reciprocal-checked-probe-v228-v7/disassembly-stdout",
+      "sha256": "ff67d340bb61e2b7b22f202cbfd23ca56ab7dfe9a152b9bf581241a81dbac7b5"
+    },
+    "llvm": {
+      "bytes": 442931,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-reciprocal-checked-probe-v228-v7/extracted/module.ll",
+      "sha256": "df75a6fd370774e05568031fffdbfeca026059542c9cddb6db79b4b881b1e94a"
+    },
+    "reciprocal_source": {
+      "bytes": 6056,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-reciprocal-checked-probe-v228-v7/fixture/src/prefix_reciprocal_numerics_v1.rs",
+      "sha256": "d2da6d5c02474556ab606a923c065d7146a2527a36400999431df0111fd2cca6"
+    },
+    "source_entry": {
+      "bytes": 7072,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-reciprocal-checked-probe-v228-v7/fixture/src/lib.rs",
+      "sha256": "d5c2ee3ca4f619080a8b544bc4e47b8ae4a55642ba2eb84448c8d32e91056c37"
+    }
+  },
+  "arithmetic_prerequisites_verified": false,
+  "artifact_review": {
+    "bytes": 16838,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-root-inputs-v228-v1/artifact-review.json",
+    "sha256": "a2fc2f1f217ad331e61c7ec93399a159daaa92cc6ed06b623448ca4824a7b152"
+  },
+  "attention_output_assumptions": [
+    "binary32-rne-gradual-underflow",
+    "separate-dot-multiply-add",
+    "wave64-xor-1-2-4-8-16-32",
+    "ascending-causal-online-attention",
+    "reviewed-ocml-exp",
+    "attention-f32-then-bf16-rne",
+    "o-k2048-f32-partial"
+  ],
+  "attention_policy_sha256": "438b10d7cf2bdc7cd693024edcfa7f3f84929e4a852787d72964c43263cd0fc2",
+  "authority": "none",
+  "baseline_image_sha256": "4d0fe835eef3b76bc1b60ca560e6a8028f85bb9ce292bac77ccf6c6da65e6285",
+  "candidate_cpu_receipt": {
+    "bytes": 24867,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/reciprocal-cpu-v228-v3/complete.json",
+    "sha256": "6b02d358eca33d31d6839e9c28de38276b4f968cfaec93b7ddb97963a77956d3"
+  },
+  "case": "patterned-pos2048",
+  "compiler_complete": {
+    "bytes": 25107,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-reciprocal-checked-probe-v228-v7/complete.json",
+    "sha256": "6ba25826b71e30f5106e1efc9e786c021c56f5bab397add20b365373685081a9"
+  },
+  "isa_review": {
+    "bytes": 1698,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-root-inputs-v228-v1/patterned-pos2048-isa.json",
+    "sha256": "4cb063cf83592f16e74220f43dce9b7a995c6a8b5a505a663a98457a00820540"
+  },
+  "notes": "Root-reviewed engineering assumptions for the exact V7 integer reciprocal image and this case. The pinned source/LLVM/ISA inspection identifies two normalization sqrt sites followed by 24-step integer quotient/remainder reciprocal paths with ties-to-even packing and invalid-input NaN masking. Candidate reciprocal CPU V3 passed its ordinary, source-contract, exhaustive and Fraction checks. Two dynamic attention divisions and the pinned OCML exp path remain; LLVM IEEE-denormal/no-fast-math/no-contraction attributes do not prove every numerical bound. Reuse the exact S.PREREQUISITES and N.PREREQUISITES without widening any tolerance. This permits conditional engineering reference checks only, grants no numerical or runtime authority, and does not require equality with the old approximate normalization profile.",
+  "numerical_acceptance": false,
+  "output_reference_sha256": "34d86aa6e02f872b219cbb105c335633ca0dc8ed666e97a29376606cd97137cc",
+  "prefix_assumptions": [
+    "binary32-rne-gradual-underflow",
+    "bf16-rne-finite-boundaries",
+    "separate-product-add-no-reassociation",
+    "wave64-xor-1-2-4-8-16-32",
+    "sqrt-within-one-binary32-ulp",
+    "correctly-rounded-binary32-divide",
+    "dual-bf16-normalization",
+    "serial128-head-squares",
+    "split-half-rope-no-contraction",
+    "authenticated-supplied-rotary-not-trig-recomputed"
+  ],
+  "prefix_policy_sha256": "c3f085ad8230f4dcac7a36dd2a72872f00bc454f0996467af90ea4fde69a0f8d",
+  "production_authority": false,
+  "remaining_limitations": [
+    "The universal sqrt-within-one-binary32-ULP, ordinary attention division, and OCML exp error premises are recorded assumptions, not discharged by compiler attributes or this review.",
+    "The reciprocal CPU qualification covers the exact integer normalization algorithm; it is not a GPU numerical or full-prefix acceptance receipt.",
+    "Each profile is checked conditionally against the unchanged references using its actual preceding stages and authenticated supplied rotary values; no paired-bitwise comparison is performed.",
+    "Runtime convergence, scheduler progress, publication, allocation lifetime and all eight emitted runtime requirements remain undischarged as universal claims.",
+    "Root must independently ensure the top-level GPU observer has exited and task-owned descendants are reaped before CPU comparison. This data builder does not verify that process state."
+  ],
+  "request": {
+    "bytes": 2908,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-prepared-v228-v1/patterned-pos2048.json",
+    "sha256": "a62249f2ac468acf93a131f7d2973bea16890e234cb48879a01d0e0711e1282b"
+  },
+  "reviewed": true,
+  "runtime_premises_discharged": false,
+  "schema": "ferric-p228-independent-profile-arithmetic-assumptions-review-v1",
+  "source_lineage_review": {
+    "bytes": 1568,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-root-inputs-v228-v1/patterned-pos2048-source_lineage.json",
+    "sha256": "fe11e0af361cbf02752cec37288f9d04b84c0b06e62c258613efa43918c74003"
+  },
+  "tiles_image_sha256": "4885204c8d510122588549107f42d2bc6f180f48fbc4eddd3bb1260e8d6629c5"
+}

@@ -1,0 +1,1316 @@
+{
+  "actual_remote_conditional_reference_checks_passed": true,
+  "attention_exact_bf16_elements": 49144,
+  "attention_max_abs_error": 0.0007543143061218283,
+  "attention_max_bf16_steps": 1,
+  "attention_tolerated_elements": 8,
+  "cases": [
+    {
+      "actual_gpu_observation_passed": true,
+      "actual_remote_conditional_reference_checks_passed": true,
+      "arithmetic_review": {
+        "bytes": 6306,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-numerical-inputs-v228-v1/arithmetic-review.json",
+        "sha256": "5526a7cf140cc33f0dce032d78bff2f31e72627624ec48f31056264baa8d258e"
+      },
+      "assumptions": {
+        "attention_output": [
+          "binary32-rne-gradual-underflow",
+          "separate-dot-multiply-add",
+          "wave64-xor-1-2-4-8-16-32",
+          "ascending-causal-online-attention",
+          "reviewed-ocml-exp",
+          "attention-f32-then-bf16-rne",
+          "o-k2048-f32-partial"
+        ],
+        "prefix": [
+          "binary32-rne-gradual-underflow",
+          "bf16-rne-finite-boundaries",
+          "separate-product-add-no-reassociation",
+          "wave64-xor-1-2-4-8-16-32",
+          "sqrt-within-one-binary32-ulp",
+          "correctly-rounded-binary32-divide",
+          "dual-bf16-normalization",
+          "serial128-head-squares",
+          "split-half-rope-no-contraction",
+          "authenticated-supplied-rotary-not-trig-recomputed"
+        ],
+        "remaining_limitations": [
+          "The universal sqrt-within-one-binary32-ULP, ordinary attention division, and OCML exp error premises are recorded assumptions, not discharged by compiler attributes or this review.",
+          "The reciprocal CPU qualification covers the exact integer normalization algorithm; it is not a GPU numerical or full-prefix acceptance receipt.",
+          "Each profile is checked conditionally against the unchanged references using its actual preceding stages and authenticated supplied rotary values; no paired-bitwise comparison is performed.",
+          "Runtime convergence, scheduler progress, publication, allocation lifetime and all eight emitted runtime requirements remain undischarged as universal claims.",
+          "Root must independently ensure the top-level GPU observer has exited and task-owned descendants are reaped before CPU comparison. This data builder does not verify that process state."
+        ]
+      },
+      "attention_exact_bf16_elements": 8192,
+      "attention_max_abs_error": 0.0,
+      "attention_max_bf16_steps": 0,
+      "attention_tolerated_elements": 0,
+      "binary": {
+        "bytes": 11759152,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-deployment-v228-v1/gfx950-qwen-prefix-tiles-comparison-v6",
+        "sha256": "017e0d3a5c79b1c64a4dccdb0251e53c8e7f8c17ab47e92bbe1309b40760c607"
+      },
+      "case": "genuine-pos0",
+      "child_sidecars": 10,
+      "compiler_complete": {
+        "bytes": 25107,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-reciprocal-checked-probe-v228-v7/complete.json",
+        "sha256": "6ba25826b71e30f5106e1efc9e786c021c56f5bab397add20b365373685081a9"
+      },
+      "gpu_case_artifact_census_sha256": "3783923980c2505e2ce0f98d405bca8441bfc1ea9f3868d6393fc39a5ea62c74",
+      "gpu_case_bytes": 19367195,
+      "gpu_case_files": 61,
+      "gpu_observation": {
+        "bytes": 259746,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-profile-gpu-v228-v1/genuine-pos0/complete.json",
+        "sha256": "41d4674c3f6665e24a38d08074a6d91be5118d012f51bce87298d8b69eccd76f"
+      },
+      "history_kind": "genuine",
+      "image": {
+        "bytes": 53560,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-deployment-v228-v1/image/prefix-tiles.hsaco",
+        "sha256": "4885204c8d510122588549107f42d2bc6f180f48fbc4eddd3bb1260e8d6629c5"
+      },
+      "limitations": [
+        "Root must serialize this CPU leaf after the GPU observer exits and its task-owned descendants are reaped; this wrapper does not independently prove top-level observer reaping.",
+        "Checks are conditional on actual preceding stages, supplied rotary values and the explicitly recorded arithmetic assumptions; they do not discharge every arithmetic premise.",
+        "Both profiles are checked independently. Neither matching profiles nor an old source/arithmetic review is used as numerical acceptance.",
+        "No full-model correctness, production authority, GPU timing or 700 tokens/s claim follows from this result."
+      ],
+      "local_byte_audit_passed": true,
+      "local_reference_rerun": false,
+      "native_attempts": 1,
+      "native_complete": {
+        "bytes": 30587,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/independent-native-profile-cpu-v228-v1/complete.json",
+        "sha256": "40fc164c535628fb3b1a4f7ee929e9717f57e57b18e7f45dcec2b87d3a8dcde1"
+      },
+      "normalization_violations": 0,
+      "numerical_inputs": {
+        "bytes": 1448,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-numerical-inputs-v228-v1/inputs.json",
+        "sha256": "715d7d6094e789a48ad1b197f4c90d72eb226c484c8319696cd89e3cdb5d5879"
+      },
+      "numerical_receipt": {
+        "bytes": 487421,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-numerical-v228-v1/complete.json",
+        "sha256": "6185d809002e61f53edb1a47f3fbf58cfa815e23daae70c108a7d12dfeeec62e"
+      },
+      "output_max_abs_error_upper": 6.035406840965153e-08,
+      "output_max_bound_ratio": 0.015052407427894559,
+      "owned_leaves": 8,
+      "owner_counts_are_observations_not_scheduler_guarantees": true,
+      "policies": {
+        "attention_policy_sha256": "438b10d7cf2bdc7cd693024edcfa7f3f84929e4a852787d72964c43263cd0fc2",
+        "output_reference_sha256": "34d86aa6e02f872b219cbb105c335633ca0dc8ed666e97a29376606cd97137cc",
+        "prefix_policy_sha256": "c3f085ad8230f4dcac7a36dd2a72872f00bc454f0996467af90ea4fde69a0f8d"
+      },
+      "position": 0,
+      "post_audits": 3,
+      "pre_audits": 3,
+      "prepared": {
+        "bytes": 37422,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-prepared-v228-v1/complete.json",
+        "sha256": "83013e40a7ef2e54c8c6dee59873cf04586dc854555898539f2534697c858946"
+      },
+      "profile_attempts": 2,
+      "profile_rows": [
+        {
+          "attention": {
+            "exact": 2048,
+            "max_abs_error": 0.0,
+            "max_bf16_steps": 0,
+            "tolerated": 0
+          },
+          "capture": {
+            "bytes": 4757504,
+            "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-profile-gpu-v228-v1/genuine-pos0/captures/baseline-v5-rank0.bin",
+            "sha256": "450aae6fd997683d75f7a86401e2b45b0ceeadec76453d28633c0e52b516b291"
+          },
+          "normalization_violations": 0,
+          "output_partial": {
+            "elements": 4096,
+            "max_abs_error_upper": 6.035406840965153e-08,
+            "max_bound_ratio": 0.015052407427894559
+          },
+          "profile": "baseline_v5",
+          "qkv_projection_violations": 0,
+          "rank": 0
+        },
+        {
+          "attention": {
+            "exact": 2048,
+            "max_abs_error": 0.0,
+            "max_bf16_steps": 0,
+            "tolerated": 0
+          },
+          "capture": {
+            "bytes": 4757504,
+            "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-profile-gpu-v228-v1/genuine-pos0/captures/baseline-v5-rank1.bin",
+            "sha256": "362f4fea9c5a7852fd12e68788683b4fdbf150ca80a08f4fb94a48a17c66a1f0"
+          },
+          "normalization_violations": 0,
+          "output_partial": {
+            "elements": 4096,
+            "max_abs_error_upper": 4.956655175192282e-08,
+            "max_bound_ratio": 0.01291325195649364
+          },
+          "profile": "baseline_v5",
+          "qkv_projection_violations": 0,
+          "rank": 1
+        },
+        {
+          "attention": {
+            "exact": 2048,
+            "max_abs_error": 0.0,
+            "max_bf16_steps": 0,
+            "tolerated": 0
+          },
+          "capture": {
+            "bytes": 4757504,
+            "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-profile-gpu-v228-v1/genuine-pos0/captures/tiles-v6-rank0.bin",
+            "sha256": "450aae6fd997683d75f7a86401e2b45b0ceeadec76453d28633c0e52b516b291"
+          },
+          "normalization_violations": 0,
+          "output_partial": {
+            "elements": 4096,
+            "max_abs_error_upper": 6.035406840965153e-08,
+            "max_bound_ratio": 0.015052407427894559
+          },
+          "profile": "tiles_v6",
+          "qkv_projection_violations": 0,
+          "rank": 0
+        },
+        {
+          "attention": {
+            "exact": 2048,
+            "max_abs_error": 0.0,
+            "max_bf16_steps": 0,
+            "tolerated": 0
+          },
+          "capture": {
+            "bytes": 4757504,
+            "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-profile-gpu-v228-v1/genuine-pos0/captures/tiles-v6-rank1.bin",
+            "sha256": "362f4fea9c5a7852fd12e68788683b4fdbf150ca80a08f4fb94a48a17c66a1f0"
+          },
+          "normalization_violations": 0,
+          "output_partial": {
+            "elements": 4096,
+            "max_abs_error_upper": 4.956655175192282e-08,
+            "max_bound_ratio": 0.01291325195649364
+          },
+          "profile": "tiles_v6",
+          "qkv_projection_violations": 0,
+          "rank": 1
+        }
+      ],
+      "qkv_projection_violations": 0,
+      "retained_capture_bytes": 19030016,
+      "retries": 0,
+      "useful_candidate_workgroups_per_rank": [
+        64,
+        64
+      ]
+    },
+    {
+      "actual_gpu_observation_passed": true,
+      "actual_remote_conditional_reference_checks_passed": true,
+      "arithmetic_review": {
+        "bytes": 6306,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-numerical-inputs-v228-v2/arithmetic-review.json",
+        "sha256": "a26b07bd3af51707fc8741800e7d98f5c7b533df8c2e698ef4a2ca016120a63e"
+      },
+      "assumptions": {
+        "attention_output": [
+          "binary32-rne-gradual-underflow",
+          "separate-dot-multiply-add",
+          "wave64-xor-1-2-4-8-16-32",
+          "ascending-causal-online-attention",
+          "reviewed-ocml-exp",
+          "attention-f32-then-bf16-rne",
+          "o-k2048-f32-partial"
+        ],
+        "prefix": [
+          "binary32-rne-gradual-underflow",
+          "bf16-rne-finite-boundaries",
+          "separate-product-add-no-reassociation",
+          "wave64-xor-1-2-4-8-16-32",
+          "sqrt-within-one-binary32-ulp",
+          "correctly-rounded-binary32-divide",
+          "dual-bf16-normalization",
+          "serial128-head-squares",
+          "split-half-rope-no-contraction",
+          "authenticated-supplied-rotary-not-trig-recomputed"
+        ],
+        "remaining_limitations": [
+          "The universal sqrt-within-one-binary32-ULP, ordinary attention division, and OCML exp error premises are recorded assumptions, not discharged by compiler attributes or this review.",
+          "The reciprocal CPU qualification covers the exact integer normalization algorithm; it is not a GPU numerical or full-prefix acceptance receipt.",
+          "Each profile is checked conditionally against the unchanged references using its actual preceding stages and authenticated supplied rotary values; no paired-bitwise comparison is performed.",
+          "Runtime convergence, scheduler progress, publication, allocation lifetime and all eight emitted runtime requirements remain undischarged as universal claims.",
+          "Root must independently ensure the top-level GPU observer has exited and task-owned descendants are reaped before CPU comparison. This data builder does not verify that process state."
+        ]
+      },
+      "attention_exact_bf16_elements": 8192,
+      "attention_max_abs_error": 0.0004643074105864231,
+      "attention_max_bf16_steps": 0,
+      "attention_tolerated_elements": 0,
+      "binary": {
+        "bytes": 11759152,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-deployment-v228-v1/gfx950-qwen-prefix-tiles-comparison-v6",
+        "sha256": "017e0d3a5c79b1c64a4dccdb0251e53c8e7f8c17ab47e92bbe1309b40760c607"
+      },
+      "case": "genuine-pos4",
+      "child_sidecars": 10,
+      "compiler_complete": {
+        "bytes": 25107,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-reciprocal-checked-probe-v228-v7/complete.json",
+        "sha256": "6ba25826b71e30f5106e1efc9e786c021c56f5bab397add20b365373685081a9"
+      },
+      "gpu_case_artifact_census_sha256": "9e77a484e0abb5ecd4a5d66b82ed44e31a67cf178c8a06f018996b28edcf4ad5",
+      "gpu_case_bytes": 19393625,
+      "gpu_case_files": 61,
+      "gpu_observation": {
+        "bytes": 286191,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-profile-gpu-v228-v1/genuine-pos4/complete.json",
+        "sha256": "1f750946bbb066417efdc8c080e57f26135cb96ee2a0ae45c20e9cb743da95c7"
+      },
+      "history_kind": "genuine",
+      "image": {
+        "bytes": 53560,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-deployment-v228-v1/image/prefix-tiles.hsaco",
+        "sha256": "4885204c8d510122588549107f42d2bc6f180f48fbc4eddd3bb1260e8d6629c5"
+      },
+      "limitations": [
+        "Root must serialize this CPU leaf after the GPU observer exits and its task-owned descendants are reaped; this wrapper does not independently prove top-level observer reaping.",
+        "Checks are conditional on actual preceding stages, supplied rotary values and the explicitly recorded arithmetic assumptions; they do not discharge every arithmetic premise.",
+        "Both profiles are checked independently. Neither matching profiles nor an old source/arithmetic review is used as numerical acceptance.",
+        "No full-model correctness, production authority, GPU timing or 700 tokens/s claim follows from this result."
+      ],
+      "local_byte_audit_passed": true,
+      "local_reference_rerun": false,
+      "native_attempts": 1,
+      "native_complete": {
+        "bytes": 30587,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/independent-native-profile-cpu-v228-v1/complete.json",
+        "sha256": "40fc164c535628fb3b1a4f7ee929e9717f57e57b18e7f45dcec2b87d3a8dcde1"
+      },
+      "normalization_violations": 0,
+      "numerical_inputs": {
+        "bytes": 1448,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-numerical-inputs-v228-v2/inputs.json",
+        "sha256": "552103516872591761b9d12001a8e700256b127041f77fef558dc0e9365b994b"
+      },
+      "numerical_receipt": {
+        "bytes": 541009,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-numerical-v228-v2/complete.json",
+        "sha256": "24b4a5ea414858e362ae0a6c2e6e1bc5cb1ad1d144c3e0ff8cac7289d232504a"
+      },
+      "output_max_abs_error_upper": 6.433401722460987e-08,
+      "output_max_bound_ratio": 0.020596354995021455,
+      "owned_leaves": 8,
+      "owner_counts_are_observations_not_scheduler_guarantees": true,
+      "policies": {
+        "attention_policy_sha256": "438b10d7cf2bdc7cd693024edcfa7f3f84929e4a852787d72964c43263cd0fc2",
+        "output_reference_sha256": "34d86aa6e02f872b219cbb105c335633ca0dc8ed666e97a29376606cd97137cc",
+        "prefix_policy_sha256": "c3f085ad8230f4dcac7a36dd2a72872f00bc454f0996467af90ea4fde69a0f8d"
+      },
+      "position": 4,
+      "post_audits": 3,
+      "pre_audits": 3,
+      "prepared": {
+        "bytes": 37422,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-prepared-v228-v1/complete.json",
+        "sha256": "83013e40a7ef2e54c8c6dee59873cf04586dc854555898539f2534697c858946"
+      },
+      "profile_attempts": 2,
+      "profile_rows": [
+        {
+          "attention": {
+            "exact": 2048,
+            "max_abs_error": 0.00041952556936677987,
+            "max_bf16_steps": 0,
+            "tolerated": 0
+          },
+          "capture": {
+            "bytes": 4757504,
+            "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-profile-gpu-v228-v1/genuine-pos4/captures/baseline-v5-rank0.bin",
+            "sha256": "44444ff5ff44e257c7c755bfd21e33c3d7b60db5e00cf4c2b681cdd7388a6e2a"
+          },
+          "normalization_violations": 0,
+          "output_partial": {
+            "elements": 4096,
+            "max_abs_error_upper": 6.433401722460987e-08,
+            "max_bound_ratio": 0.020596354995021455
+          },
+          "profile": "baseline_v5",
+          "qkv_projection_violations": 0,
+          "rank": 0
+        },
+        {
+          "attention": {
+            "exact": 2048,
+            "max_abs_error": 0.0004643074105864231,
+            "max_bf16_steps": 0,
+            "tolerated": 0
+          },
+          "capture": {
+            "bytes": 4757504,
+            "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-profile-gpu-v228-v1/genuine-pos4/captures/baseline-v5-rank1.bin",
+            "sha256": "0d4c855009adbb6bfd5dfbbe0db02c4aa6700f6cf6327ebed87b3f19c240c292"
+          },
+          "normalization_violations": 0,
+          "output_partial": {
+            "elements": 4096,
+            "max_abs_error_upper": 5.672882252838463e-08,
+            "max_bound_ratio": 0.019530201856252743
+          },
+          "profile": "baseline_v5",
+          "qkv_projection_violations": 0,
+          "rank": 1
+        },
+        {
+          "attention": {
+            "exact": 2048,
+            "max_abs_error": 0.00041952556936677987,
+            "max_bf16_steps": 0,
+            "tolerated": 0
+          },
+          "capture": {
+            "bytes": 4757504,
+            "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-profile-gpu-v228-v1/genuine-pos4/captures/tiles-v6-rank0.bin",
+            "sha256": "44444ff5ff44e257c7c755bfd21e33c3d7b60db5e00cf4c2b681cdd7388a6e2a"
+          },
+          "normalization_violations": 0,
+          "output_partial": {
+            "elements": 4096,
+            "max_abs_error_upper": 6.433401722460987e-08,
+            "max_bound_ratio": 0.020596354995021455
+          },
+          "profile": "tiles_v6",
+          "qkv_projection_violations": 0,
+          "rank": 0
+        },
+        {
+          "attention": {
+            "exact": 2048,
+            "max_abs_error": 0.0004643074105864231,
+            "max_bf16_steps": 0,
+            "tolerated": 0
+          },
+          "capture": {
+            "bytes": 4757504,
+            "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-profile-gpu-v228-v1/genuine-pos4/captures/tiles-v6-rank1.bin",
+            "sha256": "0d4c855009adbb6bfd5dfbbe0db02c4aa6700f6cf6327ebed87b3f19c240c292"
+          },
+          "normalization_violations": 0,
+          "output_partial": {
+            "elements": 4096,
+            "max_abs_error_upper": 5.672882252838463e-08,
+            "max_bound_ratio": 0.019530201856252743
+          },
+          "profile": "tiles_v6",
+          "qkv_projection_violations": 0,
+          "rank": 1
+        }
+      ],
+      "qkv_projection_violations": 0,
+      "retained_capture_bytes": 19030016,
+      "retries": 0,
+      "useful_candidate_workgroups_per_rank": [
+        64,
+        64
+      ]
+    },
+    {
+      "actual_gpu_observation_passed": true,
+      "actual_remote_conditional_reference_checks_passed": true,
+      "arithmetic_review": {
+        "bytes": 6318,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-numerical-inputs-v228-v3/arithmetic-review.json",
+        "sha256": "f068ed662446afdb7016a8ce4281879b17768d8135c7e6a18ae0d28af3f7cd2f"
+      },
+      "assumptions": {
+        "attention_output": [
+          "binary32-rne-gradual-underflow",
+          "separate-dot-multiply-add",
+          "wave64-xor-1-2-4-8-16-32",
+          "ascending-causal-online-attention",
+          "reviewed-ocml-exp",
+          "attention-f32-then-bf16-rne",
+          "o-k2048-f32-partial"
+        ],
+        "prefix": [
+          "binary32-rne-gradual-underflow",
+          "bf16-rne-finite-boundaries",
+          "separate-product-add-no-reassociation",
+          "wave64-xor-1-2-4-8-16-32",
+          "sqrt-within-one-binary32-ulp",
+          "correctly-rounded-binary32-divide",
+          "dual-bf16-normalization",
+          "serial128-head-squares",
+          "split-half-rope-no-contraction",
+          "authenticated-supplied-rotary-not-trig-recomputed"
+        ],
+        "remaining_limitations": [
+          "The universal sqrt-within-one-binary32-ULP, ordinary attention division, and OCML exp error premises are recorded assumptions, not discharged by compiler attributes or this review.",
+          "The reciprocal CPU qualification covers the exact integer normalization algorithm; it is not a GPU numerical or full-prefix acceptance receipt.",
+          "Each profile is checked conditionally against the unchanged references using its actual preceding stages and authenticated supplied rotary values; no paired-bitwise comparison is performed.",
+          "Runtime convergence, scheduler progress, publication, allocation lifetime and all eight emitted runtime requirements remain undischarged as universal claims.",
+          "Root must independently ensure the top-level GPU observer has exited and task-owned descendants are reaped before CPU comparison. This data builder does not verify that process state."
+        ]
+      },
+      "attention_exact_bf16_elements": 8192,
+      "attention_max_abs_error": 0.0007543143061218283,
+      "attention_max_bf16_steps": 0,
+      "attention_tolerated_elements": 0,
+      "binary": {
+        "bytes": 11759152,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-deployment-v228-v1/gfx950-qwen-prefix-tiles-comparison-v6",
+        "sha256": "017e0d3a5c79b1c64a4dccdb0251e53c8e7f8c17ab47e92bbe1309b40760c607"
+      },
+      "case": "patterned-pos15",
+      "child_sidecars": 10,
+      "compiler_complete": {
+        "bytes": 25107,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-reciprocal-checked-probe-v228-v7/complete.json",
+        "sha256": "6ba25826b71e30f5106e1efc9e786c021c56f5bab397add20b365373685081a9"
+      },
+      "gpu_case_artifact_census_sha256": "96b9937d2994040ff985befc95621981f627d399ee2489f07d55d45acf812a1a",
+      "gpu_case_bytes": 19420900,
+      "gpu_case_files": 61,
+      "gpu_observation": {
+        "bytes": 313237,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-profile-gpu-v228-v1/patterned-pos15/complete.json",
+        "sha256": "fc0933062e18fe002f4486ab9fdb468778de1005f887d42fffa28bede4a38afe"
+      },
+      "history_kind": "patterned",
+      "image": {
+        "bytes": 53560,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-deployment-v228-v1/image/prefix-tiles.hsaco",
+        "sha256": "4885204c8d510122588549107f42d2bc6f180f48fbc4eddd3bb1260e8d6629c5"
+      },
+      "limitations": [
+        "Root must serialize this CPU leaf after the GPU observer exits and its task-owned descendants are reaped; this wrapper does not independently prove top-level observer reaping.",
+        "Checks are conditional on actual preceding stages, supplied rotary values and the explicitly recorded arithmetic assumptions; they do not discharge every arithmetic premise.",
+        "Both profiles are checked independently. Neither matching profiles nor an old source/arithmetic review is used as numerical acceptance.",
+        "No full-model correctness, production authority, GPU timing or 700 tokens/s claim follows from this result."
+      ],
+      "local_byte_audit_passed": true,
+      "local_reference_rerun": false,
+      "native_attempts": 1,
+      "native_complete": {
+        "bytes": 30587,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/independent-native-profile-cpu-v228-v1/complete.json",
+        "sha256": "40fc164c535628fb3b1a4f7ee929e9717f57e57b18e7f45dcec2b87d3a8dcde1"
+      },
+      "normalization_violations": 0,
+      "numerical_inputs": {
+        "bytes": 1451,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-numerical-inputs-v228-v3/inputs.json",
+        "sha256": "b44ed1578fd28fde2738f904ab1acc884efb18d5a9cc333ed33522c43bd6c4a3"
+      },
+      "numerical_receipt": {
+        "bytes": 595440,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-numerical-v228-v3/complete.json",
+        "sha256": "eec4e9dd9d501775ec1d1c9dfd2fb778d666d91631256994402a9618fb97b9f7"
+      },
+      "output_max_abs_error_upper": 7.988717243279099e-08,
+      "output_max_bound_ratio": 0.008317359468120285,
+      "owned_leaves": 8,
+      "owner_counts_are_observations_not_scheduler_guarantees": true,
+      "policies": {
+        "attention_policy_sha256": "438b10d7cf2bdc7cd693024edcfa7f3f84929e4a852787d72964c43263cd0fc2",
+        "output_reference_sha256": "34d86aa6e02f872b219cbb105c335633ca0dc8ed666e97a29376606cd97137cc",
+        "prefix_policy_sha256": "c3f085ad8230f4dcac7a36dd2a72872f00bc454f0996467af90ea4fde69a0f8d"
+      },
+      "position": 15,
+      "post_audits": 3,
+      "pre_audits": 3,
+      "prepared": {
+        "bytes": 37422,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-prepared-v228-v1/complete.json",
+        "sha256": "83013e40a7ef2e54c8c6dee59873cf04586dc854555898539f2534697c858946"
+      },
+      "profile_attempts": 2,
+      "profile_rows": [
+        {
+          "attention": {
+            "exact": 2048,
+            "max_abs_error": 0.0007543143061218283,
+            "max_bf16_steps": 0,
+            "tolerated": 0
+          },
+          "capture": {
+            "bytes": 4757504,
+            "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-profile-gpu-v228-v1/patterned-pos15/captures/baseline-v5-rank0.bin",
+            "sha256": "88c85dce16115db9a0e2a896010529e4e7c934e6aa2c6f7c6a1bf77b1b2a4760"
+          },
+          "normalization_violations": 0,
+          "output_partial": {
+            "elements": 4096,
+            "max_abs_error_upper": 5.762922228313983e-08,
+            "max_bound_ratio": 0.008317359468120285
+          },
+          "profile": "baseline_v5",
+          "qkv_projection_violations": 0,
+          "rank": 0
+        },
+        {
+          "attention": {
+            "exact": 2048,
+            "max_abs_error": 0.00048700143162230813,
+            "max_bf16_steps": 0,
+            "tolerated": 0
+          },
+          "capture": {
+            "bytes": 4757504,
+            "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-profile-gpu-v228-v1/patterned-pos15/captures/baseline-v5-rank1.bin",
+            "sha256": "82e4f000996f06082707fec818f1c9bddb371defb2f72434a17802c49b5fb51d"
+          },
+          "normalization_violations": 0,
+          "output_partial": {
+            "elements": 4096,
+            "max_abs_error_upper": 7.988717243279099e-08,
+            "max_bound_ratio": 0.008176172057039481
+          },
+          "profile": "baseline_v5",
+          "qkv_projection_violations": 0,
+          "rank": 1
+        },
+        {
+          "attention": {
+            "exact": 2048,
+            "max_abs_error": 0.0007543143061218283,
+            "max_bf16_steps": 0,
+            "tolerated": 0
+          },
+          "capture": {
+            "bytes": 4757504,
+            "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-profile-gpu-v228-v1/patterned-pos15/captures/tiles-v6-rank0.bin",
+            "sha256": "88c85dce16115db9a0e2a896010529e4e7c934e6aa2c6f7c6a1bf77b1b2a4760"
+          },
+          "normalization_violations": 0,
+          "output_partial": {
+            "elements": 4096,
+            "max_abs_error_upper": 5.762922228313983e-08,
+            "max_bound_ratio": 0.008317359468120285
+          },
+          "profile": "tiles_v6",
+          "qkv_projection_violations": 0,
+          "rank": 0
+        },
+        {
+          "attention": {
+            "exact": 2048,
+            "max_abs_error": 0.00048700143162230813,
+            "max_bf16_steps": 0,
+            "tolerated": 0
+          },
+          "capture": {
+            "bytes": 4757504,
+            "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-profile-gpu-v228-v1/patterned-pos15/captures/tiles-v6-rank1.bin",
+            "sha256": "82e4f000996f06082707fec818f1c9bddb371defb2f72434a17802c49b5fb51d"
+          },
+          "normalization_violations": 0,
+          "output_partial": {
+            "elements": 4096,
+            "max_abs_error_upper": 7.988717243279099e-08,
+            "max_bound_ratio": 0.008176172057039481
+          },
+          "profile": "tiles_v6",
+          "qkv_projection_violations": 0,
+          "rank": 1
+        }
+      ],
+      "qkv_projection_violations": 0,
+      "retained_capture_bytes": 19030016,
+      "retries": 0,
+      "useful_candidate_workgroups_per_rank": [
+        64,
+        64
+      ]
+    },
+    {
+      "actual_gpu_observation_passed": true,
+      "actual_remote_conditional_reference_checks_passed": true,
+      "arithmetic_review": {
+        "bytes": 6318,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-numerical-inputs-v228-v4/arithmetic-review.json",
+        "sha256": "1a800229556f7f5ad87a4860e521c2b4a0d385415ad2333a7b743f5fa04ef5f6"
+      },
+      "assumptions": {
+        "attention_output": [
+          "binary32-rne-gradual-underflow",
+          "separate-dot-multiply-add",
+          "wave64-xor-1-2-4-8-16-32",
+          "ascending-causal-online-attention",
+          "reviewed-ocml-exp",
+          "attention-f32-then-bf16-rne",
+          "o-k2048-f32-partial"
+        ],
+        "prefix": [
+          "binary32-rne-gradual-underflow",
+          "bf16-rne-finite-boundaries",
+          "separate-product-add-no-reassociation",
+          "wave64-xor-1-2-4-8-16-32",
+          "sqrt-within-one-binary32-ulp",
+          "correctly-rounded-binary32-divide",
+          "dual-bf16-normalization",
+          "serial128-head-squares",
+          "split-half-rope-no-contraction",
+          "authenticated-supplied-rotary-not-trig-recomputed"
+        ],
+        "remaining_limitations": [
+          "The universal sqrt-within-one-binary32-ULP, ordinary attention division, and OCML exp error premises are recorded assumptions, not discharged by compiler attributes or this review.",
+          "The reciprocal CPU qualification covers the exact integer normalization algorithm; it is not a GPU numerical or full-prefix acceptance receipt.",
+          "Each profile is checked conditionally against the unchanged references using its actual preceding stages and authenticated supplied rotary values; no paired-bitwise comparison is performed.",
+          "Runtime convergence, scheduler progress, publication, allocation lifetime and all eight emitted runtime requirements remain undischarged as universal claims.",
+          "Root must independently ensure the top-level GPU observer has exited and task-owned descendants are reaped before CPU comparison. This data builder does not verify that process state."
+        ]
+      },
+      "attention_exact_bf16_elements": 8192,
+      "attention_max_abs_error": 0.0004827674311725094,
+      "attention_max_bf16_steps": 0,
+      "attention_tolerated_elements": 0,
+      "binary": {
+        "bytes": 11759152,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-deployment-v228-v1/gfx950-qwen-prefix-tiles-comparison-v6",
+        "sha256": "017e0d3a5c79b1c64a4dccdb0251e53c8e7f8c17ab47e92bbe1309b40760c607"
+      },
+      "case": "patterned-pos16",
+      "child_sidecars": 10,
+      "compiler_complete": {
+        "bytes": 25107,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-reciprocal-checked-probe-v228-v7/complete.json",
+        "sha256": "6ba25826b71e30f5106e1efc9e786c021c56f5bab397add20b365373685081a9"
+      },
+      "gpu_case_artifact_census_sha256": "5b9d37e38f9f88ae035412451ebf4f3358af42d26e13352c77bc2be7e097df48",
+      "gpu_case_bytes": 19447720,
+      "gpu_case_files": 61,
+      "gpu_observation": {
+        "bytes": 340058,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-profile-gpu-v228-v1/patterned-pos16/complete.json",
+        "sha256": "bbf1f86d90c9e45e6a970480f0cf7daaccd35a3e2893f35dbda0ff9337b8e64e"
+      },
+      "history_kind": "patterned",
+      "image": {
+        "bytes": 53560,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-deployment-v228-v1/image/prefix-tiles.hsaco",
+        "sha256": "4885204c8d510122588549107f42d2bc6f180f48fbc4eddd3bb1260e8d6629c5"
+      },
+      "limitations": [
+        "Root must serialize this CPU leaf after the GPU observer exits and its task-owned descendants are reaped; this wrapper does not independently prove top-level observer reaping.",
+        "Checks are conditional on actual preceding stages, supplied rotary values and the explicitly recorded arithmetic assumptions; they do not discharge every arithmetic premise.",
+        "Both profiles are checked independently. Neither matching profiles nor an old source/arithmetic review is used as numerical acceptance.",
+        "No full-model correctness, production authority, GPU timing or 700 tokens/s claim follows from this result."
+      ],
+      "local_byte_audit_passed": true,
+      "local_reference_rerun": false,
+      "native_attempts": 1,
+      "native_complete": {
+        "bytes": 30587,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/independent-native-profile-cpu-v228-v1/complete.json",
+        "sha256": "40fc164c535628fb3b1a4f7ee929e9717f57e57b18e7f45dcec2b87d3a8dcde1"
+      },
+      "normalization_violations": 0,
+      "numerical_inputs": {
+        "bytes": 1451,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-numerical-inputs-v228-v4/inputs.json",
+        "sha256": "69941347505795d446a0f8277df6c13e1de78e63509c895e7aeb693a8eb35f63"
+      },
+      "numerical_receipt": {
+        "bytes": 649694,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-numerical-v228-v4/complete.json",
+        "sha256": "c4a35d01f6ec4f838e3fdd4d2fbf6327000caf425049e9b419a1125690411c1c"
+      },
+      "output_max_abs_error_upper": 8.228698789025658e-08,
+      "output_max_bound_ratio": 0.01103802092584877,
+      "owned_leaves": 8,
+      "owner_counts_are_observations_not_scheduler_guarantees": true,
+      "policies": {
+        "attention_policy_sha256": "438b10d7cf2bdc7cd693024edcfa7f3f84929e4a852787d72964c43263cd0fc2",
+        "output_reference_sha256": "34d86aa6e02f872b219cbb105c335633ca0dc8ed666e97a29376606cd97137cc",
+        "prefix_policy_sha256": "c3f085ad8230f4dcac7a36dd2a72872f00bc454f0996467af90ea4fde69a0f8d"
+      },
+      "position": 16,
+      "post_audits": 3,
+      "pre_audits": 3,
+      "prepared": {
+        "bytes": 37422,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-prepared-v228-v1/complete.json",
+        "sha256": "83013e40a7ef2e54c8c6dee59873cf04586dc854555898539f2534697c858946"
+      },
+      "profile_attempts": 2,
+      "profile_rows": [
+        {
+          "attention": {
+            "exact": 2048,
+            "max_abs_error": 0.00047016719157022546,
+            "max_bf16_steps": 0,
+            "tolerated": 0
+          },
+          "capture": {
+            "bytes": 4757504,
+            "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-profile-gpu-v228-v1/patterned-pos16/captures/baseline-v5-rank0.bin",
+            "sha256": "7dbb96dbb0501586a1c403fa29854722f26376411d2af9103dcf031b7b3143e7"
+          },
+          "normalization_violations": 0,
+          "output_partial": {
+            "elements": 4096,
+            "max_abs_error_upper": 6.039044819772245e-08,
+            "max_bound_ratio": 0.01103802092584877
+          },
+          "profile": "baseline_v5",
+          "qkv_projection_violations": 0,
+          "rank": 0
+        },
+        {
+          "attention": {
+            "exact": 2048,
+            "max_abs_error": 0.0004827674311725094,
+            "max_bf16_steps": 0,
+            "tolerated": 0
+          },
+          "capture": {
+            "bytes": 4757504,
+            "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-profile-gpu-v228-v1/patterned-pos16/captures/baseline-v5-rank1.bin",
+            "sha256": "99410aa7651003b8f8805b219283983345c3e726b7a8599e4e7811248e4ac1ed"
+          },
+          "normalization_violations": 0,
+          "output_partial": {
+            "elements": 4096,
+            "max_abs_error_upper": 8.228698789025658e-08,
+            "max_bound_ratio": 0.0077022965281536016
+          },
+          "profile": "baseline_v5",
+          "qkv_projection_violations": 0,
+          "rank": 1
+        },
+        {
+          "attention": {
+            "exact": 2048,
+            "max_abs_error": 0.00047016719157022546,
+            "max_bf16_steps": 0,
+            "tolerated": 0
+          },
+          "capture": {
+            "bytes": 4757504,
+            "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-profile-gpu-v228-v1/patterned-pos16/captures/tiles-v6-rank0.bin",
+            "sha256": "7dbb96dbb0501586a1c403fa29854722f26376411d2af9103dcf031b7b3143e7"
+          },
+          "normalization_violations": 0,
+          "output_partial": {
+            "elements": 4096,
+            "max_abs_error_upper": 6.039044819772245e-08,
+            "max_bound_ratio": 0.01103802092584877
+          },
+          "profile": "tiles_v6",
+          "qkv_projection_violations": 0,
+          "rank": 0
+        },
+        {
+          "attention": {
+            "exact": 2048,
+            "max_abs_error": 0.0004827674311725094,
+            "max_bf16_steps": 0,
+            "tolerated": 0
+          },
+          "capture": {
+            "bytes": 4757504,
+            "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-profile-gpu-v228-v1/patterned-pos16/captures/tiles-v6-rank1.bin",
+            "sha256": "99410aa7651003b8f8805b219283983345c3e726b7a8599e4e7811248e4ac1ed"
+          },
+          "normalization_violations": 0,
+          "output_partial": {
+            "elements": 4096,
+            "max_abs_error_upper": 8.228698789025658e-08,
+            "max_bound_ratio": 0.0077022965281536016
+          },
+          "profile": "tiles_v6",
+          "qkv_projection_violations": 0,
+          "rank": 1
+        }
+      ],
+      "qkv_projection_violations": 0,
+      "retained_capture_bytes": 19030016,
+      "retries": 0,
+      "useful_candidate_workgroups_per_rank": [
+        64,
+        64
+      ]
+    },
+    {
+      "actual_gpu_observation_passed": true,
+      "actual_remote_conditional_reference_checks_passed": true,
+      "arithmetic_review": {
+        "bytes": 6326,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-numerical-inputs-v228-v5/arithmetic-review.json",
+        "sha256": "0219ed14c682f4fcae70ed5f4592e188c9976c88d592f7f3ce7d45bb16e9222d"
+      },
+      "assumptions": {
+        "attention_output": [
+          "binary32-rne-gradual-underflow",
+          "separate-dot-multiply-add",
+          "wave64-xor-1-2-4-8-16-32",
+          "ascending-causal-online-attention",
+          "reviewed-ocml-exp",
+          "attention-f32-then-bf16-rne",
+          "o-k2048-f32-partial"
+        ],
+        "prefix": [
+          "binary32-rne-gradual-underflow",
+          "bf16-rne-finite-boundaries",
+          "separate-product-add-no-reassociation",
+          "wave64-xor-1-2-4-8-16-32",
+          "sqrt-within-one-binary32-ulp",
+          "correctly-rounded-binary32-divide",
+          "dual-bf16-normalization",
+          "serial128-head-squares",
+          "split-half-rope-no-contraction",
+          "authenticated-supplied-rotary-not-trig-recomputed"
+        ],
+        "remaining_limitations": [
+          "The universal sqrt-within-one-binary32-ULP, ordinary attention division, and OCML exp error premises are recorded assumptions, not discharged by compiler attributes or this review.",
+          "The reciprocal CPU qualification covers the exact integer normalization algorithm; it is not a GPU numerical or full-prefix acceptance receipt.",
+          "Each profile is checked conditionally against the unchanged references using its actual preceding stages and authenticated supplied rotary values; no paired-bitwise comparison is performed.",
+          "Runtime convergence, scheduler progress, publication, allocation lifetime and all eight emitted runtime requirements remain undischarged as universal claims.",
+          "Root must independently ensure the top-level GPU observer has exited and task-owned descendants are reaped before CPU comparison. This data builder does not verify that process state."
+        ]
+      },
+      "attention_exact_bf16_elements": 8188,
+      "attention_max_abs_error": 0.00029378653574954616,
+      "attention_max_bf16_steps": 1,
+      "attention_tolerated_elements": 4,
+      "binary": {
+        "bytes": 11759152,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-deployment-v228-v1/gfx950-qwen-prefix-tiles-comparison-v6",
+        "sha256": "017e0d3a5c79b1c64a4dccdb0251e53c8e7f8c17ab47e92bbe1309b40760c607"
+      },
+      "case": "patterned-pos2047",
+      "child_sidecars": 10,
+      "compiler_complete": {
+        "bytes": 25107,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-reciprocal-checked-probe-v228-v7/complete.json",
+        "sha256": "6ba25826b71e30f5106e1efc9e786c021c56f5bab397add20b365373685081a9"
+      },
+      "gpu_case_artifact_census_sha256": "b1ed5f67c6c6bbe7f77fc18e67025be68e6b9af31168cd57fdfb6f415a1a4788",
+      "gpu_case_bytes": 19475072,
+      "gpu_case_files": 61,
+      "gpu_observation": {
+        "bytes": 367266,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-profile-gpu-v228-v1/patterned-pos2047/complete.json",
+        "sha256": "f3ba008cb8358021fb01f15a88ae7ab61490c8e49e2070c1df705d4e0ddf1bf4"
+      },
+      "history_kind": "patterned",
+      "image": {
+        "bytes": 53560,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-deployment-v228-v1/image/prefix-tiles.hsaco",
+        "sha256": "4885204c8d510122588549107f42d2bc6f180f48fbc4eddd3bb1260e8d6629c5"
+      },
+      "limitations": [
+        "Root must serialize this CPU leaf after the GPU observer exits and its task-owned descendants are reaped; this wrapper does not independently prove top-level observer reaping.",
+        "Checks are conditional on actual preceding stages, supplied rotary values and the explicitly recorded arithmetic assumptions; they do not discharge every arithmetic premise.",
+        "Both profiles are checked independently. Neither matching profiles nor an old source/arithmetic review is used as numerical acceptance.",
+        "No full-model correctness, production authority, GPU timing or 700 tokens/s claim follows from this result."
+      ],
+      "local_byte_audit_passed": true,
+      "local_reference_rerun": false,
+      "native_attempts": 1,
+      "native_complete": {
+        "bytes": 30587,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/independent-native-profile-cpu-v228-v1/complete.json",
+        "sha256": "40fc164c535628fb3b1a4f7ee929e9717f57e57b18e7f45dcec2b87d3a8dcde1"
+      },
+      "normalization_violations": 0,
+      "numerical_inputs": {
+        "bytes": 1453,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-numerical-inputs-v228-v5/inputs.json",
+        "sha256": "f437df4f96d9bb3200d2a1cce26c5b56401fb84981ccfbbff236ec342a7bb287"
+      },
+      "numerical_receipt": {
+        "bytes": 704575,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-numerical-v228-v5/complete.json",
+        "sha256": "d3df53b2979917e1b72c03003c5407bcd1ddd43be65438942cc631c4588f0c66"
+      },
+      "output_max_abs_error_upper": 3.763000222534175e-08,
+      "output_max_bound_ratio": 0.02298022543772913,
+      "owned_leaves": 8,
+      "owner_counts_are_observations_not_scheduler_guarantees": true,
+      "policies": {
+        "attention_policy_sha256": "438b10d7cf2bdc7cd693024edcfa7f3f84929e4a852787d72964c43263cd0fc2",
+        "output_reference_sha256": "34d86aa6e02f872b219cbb105c335633ca0dc8ed666e97a29376606cd97137cc",
+        "prefix_policy_sha256": "c3f085ad8230f4dcac7a36dd2a72872f00bc454f0996467af90ea4fde69a0f8d"
+      },
+      "position": 2047,
+      "post_audits": 3,
+      "pre_audits": 3,
+      "prepared": {
+        "bytes": 37422,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-prepared-v228-v1/complete.json",
+        "sha256": "83013e40a7ef2e54c8c6dee59873cf04586dc854555898539f2534697c858946"
+      },
+      "profile_attempts": 2,
+      "profile_rows": [
+        {
+          "attention": {
+            "exact": 2047,
+            "max_abs_error": 0.00029378653574954616,
+            "max_bf16_steps": 1,
+            "tolerated": 1
+          },
+          "capture": {
+            "bytes": 4757504,
+            "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-profile-gpu-v228-v1/patterned-pos2047/captures/baseline-v5-rank0.bin",
+            "sha256": "365631d356c9df4b6880b4449ec27a61d72d71ad9d5cfc2dae7254e1f011ce09"
+          },
+          "normalization_violations": 0,
+          "output_partial": {
+            "elements": 4096,
+            "max_abs_error_upper": 3.763000222534175e-08,
+            "max_bound_ratio": 0.02298022543772913
+          },
+          "profile": "baseline_v5",
+          "qkv_projection_violations": 0,
+          "rank": 0
+        },
+        {
+          "attention": {
+            "exact": 2047,
+            "max_abs_error": 0.00013877543359466782,
+            "max_bf16_steps": 1,
+            "tolerated": 1
+          },
+          "capture": {
+            "bytes": 4757504,
+            "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-profile-gpu-v228-v1/patterned-pos2047/captures/baseline-v5-rank1.bin",
+            "sha256": "fd66685b2e8a5b4f7bb97a62c3f1e9d194bb17de7d586280113b901a5afc43ee"
+          },
+          "normalization_violations": 0,
+          "output_partial": {
+            "elements": 4096,
+            "max_abs_error_upper": 2.2080882899899737e-08,
+            "max_bound_ratio": 0.01666929216433848
+          },
+          "profile": "baseline_v5",
+          "qkv_projection_violations": 0,
+          "rank": 1
+        },
+        {
+          "attention": {
+            "exact": 2047,
+            "max_abs_error": 0.00029378653574954616,
+            "max_bf16_steps": 1,
+            "tolerated": 1
+          },
+          "capture": {
+            "bytes": 4757504,
+            "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-profile-gpu-v228-v1/patterned-pos2047/captures/tiles-v6-rank0.bin",
+            "sha256": "365631d356c9df4b6880b4449ec27a61d72d71ad9d5cfc2dae7254e1f011ce09"
+          },
+          "normalization_violations": 0,
+          "output_partial": {
+            "elements": 4096,
+            "max_abs_error_upper": 3.763000222534175e-08,
+            "max_bound_ratio": 0.02298022543772913
+          },
+          "profile": "tiles_v6",
+          "qkv_projection_violations": 0,
+          "rank": 0
+        },
+        {
+          "attention": {
+            "exact": 2047,
+            "max_abs_error": 0.00013877543359466782,
+            "max_bf16_steps": 1,
+            "tolerated": 1
+          },
+          "capture": {
+            "bytes": 4757504,
+            "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-profile-gpu-v228-v1/patterned-pos2047/captures/tiles-v6-rank1.bin",
+            "sha256": "fd66685b2e8a5b4f7bb97a62c3f1e9d194bb17de7d586280113b901a5afc43ee"
+          },
+          "normalization_violations": 0,
+          "output_partial": {
+            "elements": 4096,
+            "max_abs_error_upper": 2.2080882899899737e-08,
+            "max_bound_ratio": 0.01666929216433848
+          },
+          "profile": "tiles_v6",
+          "qkv_projection_violations": 0,
+          "rank": 1
+        }
+      ],
+      "qkv_projection_violations": 0,
+      "retained_capture_bytes": 19030016,
+      "retries": 0,
+      "useful_candidate_workgroups_per_rank": [
+        64,
+        64
+      ]
+    },
+    {
+      "actual_gpu_observation_passed": true,
+      "actual_remote_conditional_reference_checks_passed": true,
+      "arithmetic_review": {
+        "bytes": 6326,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-numerical-inputs-v228-v6/arithmetic-review.json",
+        "sha256": "61599e005804e51613c5e9652550674aaaffdac424f821fa3a6d12e00539198a"
+      },
+      "assumptions": {
+        "attention_output": [
+          "binary32-rne-gradual-underflow",
+          "separate-dot-multiply-add",
+          "wave64-xor-1-2-4-8-16-32",
+          "ascending-causal-online-attention",
+          "reviewed-ocml-exp",
+          "attention-f32-then-bf16-rne",
+          "o-k2048-f32-partial"
+        ],
+        "prefix": [
+          "binary32-rne-gradual-underflow",
+          "bf16-rne-finite-boundaries",
+          "separate-product-add-no-reassociation",
+          "wave64-xor-1-2-4-8-16-32",
+          "sqrt-within-one-binary32-ulp",
+          "correctly-rounded-binary32-divide",
+          "dual-bf16-normalization",
+          "serial128-head-squares",
+          "split-half-rope-no-contraction",
+          "authenticated-supplied-rotary-not-trig-recomputed"
+        ],
+        "remaining_limitations": [
+          "The universal sqrt-within-one-binary32-ULP, ordinary attention division, and OCML exp error premises are recorded assumptions, not discharged by compiler attributes or this review.",
+          "The reciprocal CPU qualification covers the exact integer normalization algorithm; it is not a GPU numerical or full-prefix acceptance receipt.",
+          "Each profile is checked conditionally against the unchanged references using its actual preceding stages and authenticated supplied rotary values; no paired-bitwise comparison is performed.",
+          "Runtime convergence, scheduler progress, publication, allocation lifetime and all eight emitted runtime requirements remain undischarged as universal claims.",
+          "Root must independently ensure the top-level GPU observer has exited and task-owned descendants are reaped before CPU comparison. This data builder does not verify that process state."
+        ]
+      },
+      "attention_exact_bf16_elements": 8188,
+      "attention_max_abs_error": 0.00031333764155111465,
+      "attention_max_bf16_steps": 1,
+      "attention_tolerated_elements": 4,
+      "binary": {
+        "bytes": 11759152,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-deployment-v228-v1/gfx950-qwen-prefix-tiles-comparison-v6",
+        "sha256": "017e0d3a5c79b1c64a4dccdb0251e53c8e7f8c17ab47e92bbe1309b40760c607"
+      },
+      "case": "patterned-pos2048",
+      "child_sidecars": 10,
+      "compiler_complete": {
+        "bytes": 25107,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-reciprocal-checked-probe-v228-v7/complete.json",
+        "sha256": "6ba25826b71e30f5106e1efc9e786c021c56f5bab397add20b365373685081a9"
+      },
+      "gpu_case_artifact_census_sha256": "6602ac119df02883cf40a19820a895194a3f59cadc7327d3fc3399594423193b",
+      "gpu_case_bytes": 19502140,
+      "gpu_case_files": 61,
+      "gpu_observation": {
+        "bytes": 394331,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-profile-gpu-v228-v1/patterned-pos2048/complete.json",
+        "sha256": "e69d9e7b4587e3a520b354dd40b013aa1663b521b02bed573b468085b634d6ff"
+      },
+      "history_kind": "patterned",
+      "image": {
+        "bytes": 53560,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-deployment-v228-v1/image/prefix-tiles.hsaco",
+        "sha256": "4885204c8d510122588549107f42d2bc6f180f48fbc4eddd3bb1260e8d6629c5"
+      },
+      "limitations": [
+        "Root must serialize this CPU leaf after the GPU observer exits and its task-owned descendants are reaped; this wrapper does not independently prove top-level observer reaping.",
+        "Checks are conditional on actual preceding stages, supplied rotary values and the explicitly recorded arithmetic assumptions; they do not discharge every arithmetic premise.",
+        "Both profiles are checked independently. Neither matching profiles nor an old source/arithmetic review is used as numerical acceptance.",
+        "No full-model correctness, production authority, GPU timing or 700 tokens/s claim follows from this result."
+      ],
+      "local_byte_audit_passed": true,
+      "local_reference_rerun": false,
+      "native_attempts": 1,
+      "native_complete": {
+        "bytes": 30587,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/independent-native-profile-cpu-v228-v1/complete.json",
+        "sha256": "40fc164c535628fb3b1a4f7ee929e9717f57e57b18e7f45dcec2b87d3a8dcde1"
+      },
+      "normalization_violations": 0,
+      "numerical_inputs": {
+        "bytes": 1453,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-numerical-inputs-v228-v6/inputs.json",
+        "sha256": "3ae6e1245eec2b144f20acfcdc75df9586b080b4192b68f741f3b64a86687ad0"
+      },
+      "numerical_receipt": {
+        "bytes": 759320,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-numerical-v228-v6/complete.json",
+        "sha256": "f4cf48160c02c7acbbcafc785f57234cd7cffe80ee8fc5c5c2cac170e959b0f5"
+      },
+      "output_max_abs_error_upper": 3.7462314139702364e-08,
+      "output_max_bound_ratio": 0.022995471245856946,
+      "owned_leaves": 8,
+      "owner_counts_are_observations_not_scheduler_guarantees": true,
+      "policies": {
+        "attention_policy_sha256": "438b10d7cf2bdc7cd693024edcfa7f3f84929e4a852787d72964c43263cd0fc2",
+        "output_reference_sha256": "34d86aa6e02f872b219cbb105c335633ca0dc8ed666e97a29376606cd97137cc",
+        "prefix_policy_sha256": "c3f085ad8230f4dcac7a36dd2a72872f00bc454f0996467af90ea4fde69a0f8d"
+      },
+      "position": 2048,
+      "post_audits": 3,
+      "pre_audits": 3,
+      "prepared": {
+        "bytes": 37422,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-prepared-v228-v1/complete.json",
+        "sha256": "83013e40a7ef2e54c8c6dee59873cf04586dc854555898539f2534697c858946"
+      },
+      "profile_attempts": 2,
+      "profile_rows": [
+        {
+          "attention": {
+            "exact": 2047,
+            "max_abs_error": 0.00031333764155111465,
+            "max_bf16_steps": 1,
+            "tolerated": 1
+          },
+          "capture": {
+            "bytes": 4757504,
+            "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-profile-gpu-v228-v1/patterned-pos2048/captures/baseline-v5-rank0.bin",
+            "sha256": "6084fc94e2c83732cd0f72029413e782ed6877e7dda45b8c0b5ec917f320f1b3"
+          },
+          "normalization_violations": 0,
+          "output_partial": {
+            "elements": 4096,
+            "max_abs_error_upper": 3.7462314139702364e-08,
+            "max_bound_ratio": 0.022995471245856946
+          },
+          "profile": "baseline_v5",
+          "qkv_projection_violations": 0,
+          "rank": 0
+        },
+        {
+          "attention": {
+            "exact": 2047,
+            "max_abs_error": 0.0001572125394162932,
+            "max_bf16_steps": 1,
+            "tolerated": 1
+          },
+          "capture": {
+            "bytes": 4757504,
+            "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-profile-gpu-v228-v1/patterned-pos2048/captures/baseline-v5-rank1.bin",
+            "sha256": "468b6b36bd7caf7547bb35a55ee0bf0797c44403ff7d48eea8d6c189343e74e7"
+          },
+          "normalization_violations": 0,
+          "output_partial": {
+            "elements": 4096,
+            "max_abs_error_upper": 1.1185193216078916e-08,
+            "max_bound_ratio": 0.014257611506023102
+          },
+          "profile": "baseline_v5",
+          "qkv_projection_violations": 0,
+          "rank": 1
+        },
+        {
+          "attention": {
+            "exact": 2047,
+            "max_abs_error": 0.00031333764155111465,
+            "max_bf16_steps": 1,
+            "tolerated": 1
+          },
+          "capture": {
+            "bytes": 4757504,
+            "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-profile-gpu-v228-v1/patterned-pos2048/captures/tiles-v6-rank0.bin",
+            "sha256": "6084fc94e2c83732cd0f72029413e782ed6877e7dda45b8c0b5ec917f320f1b3"
+          },
+          "normalization_violations": 0,
+          "output_partial": {
+            "elements": 4096,
+            "max_abs_error_upper": 3.7462314139702364e-08,
+            "max_bound_ratio": 0.022995471245856946
+          },
+          "profile": "tiles_v6",
+          "qkv_projection_violations": 0,
+          "rank": 0
+        },
+        {
+          "attention": {
+            "exact": 2047,
+            "max_abs_error": 0.0001572125394162932,
+            "max_bf16_steps": 1,
+            "tolerated": 1
+          },
+          "capture": {
+            "bytes": 4757504,
+            "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-profile-gpu-v228-v1/patterned-pos2048/captures/tiles-v6-rank1.bin",
+            "sha256": "468b6b36bd7caf7547bb35a55ee0bf0797c44403ff7d48eea8d6c189343e74e7"
+          },
+          "normalization_violations": 0,
+          "output_partial": {
+            "elements": 4096,
+            "max_abs_error_upper": 1.1185193216078916e-08,
+            "max_bound_ratio": 0.014257611506023102
+          },
+          "profile": "tiles_v6",
+          "qkv_projection_violations": 0,
+          "rank": 1
+        }
+      ],
+      "qkv_projection_violations": 0,
+      "retained_capture_bytes": 19030016,
+      "retries": 0,
+      "useful_candidate_workgroups_per_rank": [
+        64,
+        64
+      ]
+    }
+  ],
+  "cases_passed": 6,
+  "child_sidecars": 60,
+  "date": "2026-10-03",
+  "devices": [
+    16366993098680759275,
+    10838076764495710945
+  ],
+  "full_model_acceptance": false,
+  "full_prefix_acceptance": false,
+  "gpu_case_files": 366,
+  "host": "smci350-rck-g03-b19-03",
+  "independent_numerical_acceptance": false,
+  "limitations": [
+    "These are six selected prefix cases, not a complete model or sustained decode workload.",
+    "Actual independent mathematical checks ran on MI350 after each GPU case and its post-audits.",
+    "This publisher hashes retained bytes and joins the recorded results; it does not rerun mathematical references.",
+    "Nonzero-position attention uses the unchanged preregistered one-step OR cancellation bound; a large BF16 step count can pass through the cancellation clause.",
+    "Arithmetic checks remain conditional on actual preceding stages, supplied rotary values and each recorded assumption review.",
+    "Observed workgroup use does not establish scheduler fairness, universal progress, or performance.",
+    "Large captures remain in session evidence and are not committed. No 700 tokens/s claim is made."
+  ],
+  "local_byte_audit_passed": true,
+  "local_reference_rerun": false,
+  "native_attempts": 6,
+  "normalization_violations": 0,
+  "output_max_abs_error_upper": 8.228698789025658e-08,
+  "output_max_bound_ratio": 0.022995471245856946,
+  "owned_leaves": 48,
+  "paired_comparison_performed": false,
+  "passed": true,
+  "performance_claim": false,
+  "policies": {
+    "attention_policy_sha256": "438b10d7cf2bdc7cd693024edcfa7f3f84929e4a852787d72964c43263cd0fc2",
+    "output_reference_sha256": "34d86aa6e02f872b219cbb105c335633ca0dc8ed666e97a29376606cd97137cc",
+    "prefix_policy_sha256": "c3f085ad8230f4dcac7a36dd2a72872f00bc454f0996467af90ea4fde69a0f8d"
+  },
+  "post_audits": 18,
+  "pre_audits": 18,
+  "production_authority": false,
+  "profile_attempts": 12,
+  "publisher_gpu_execution": false,
+  "qkv_projection_violations": 0,
+  "recorded_attention_policy": {
+    "acceptance": "exact at position 0; otherwise steps <= 1 OR abs_error <= 5e-5 * per_kv_head_max_abs_V",
+    "adaptive_tolerance": false,
+    "bf16_steps": 1,
+    "cancellation_coefficient": 5e-05,
+    "exact_position_zero": true
+  },
+  "retained_capture_bytes": 114180096,
+  "retries": 0,
+  "schema": "FerricIndependentPrefixCaseMatrixQualificationV1",
+  "universal_arithmetic_premises_discharged": false
+}

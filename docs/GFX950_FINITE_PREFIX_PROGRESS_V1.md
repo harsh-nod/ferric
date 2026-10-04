@@ -6,6 +6,12 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
+Latest: the [six-case new-image matrix](../qualification/independent-prefix-case-matrix-v1/README.md)
+passes GPU execution and separate conditional numerical checks on MI350.
+It covers genuine positions 0/4 and patterned positions 15/16/2,047/2,048,
+not a full-model prefill or sustained decode. The observations below preserve
+earlier checkpoints and their limitations at the time they were recorded.
+
 ## Observed Results
 
 | Check | Observed result | Boundary |
@@ -36,6 +42,7 @@ engineering branch; it does not change the production execution path.
 | Independent native-profile adapter on `mi350-2` | 98 tests passed, one ignored; fresh test and native executables built | All 14 new tests ran; no deployment or new GPU execution yet |
 | Independent runtime-audit collector on `mi350-2` | 18 synthetic policy tests passed, no skips | New deployment namespace; actual MI350 ELF/library audit still pending |
 | First new independent prefix case on `mi350` | Both profiles and both ranks pass GPU execution and separate conditional numerical checks at genuine position 0 | 8,192 attention BF16 values exact; maximum output error/bound ratio 0.015053; not full-model or throughput acceptance |
+| Complete new-image prefix matrix on `mi350` | Six cases and 24 profile/rank rows pass; 49,144 attention values exact and eight within one BF16 step | No norm/QKV bound violations; maximum output error/bound ratio 0.0229955; patterned long KV is not authentic model prefill |
 
 Both four-forward runs completed their Close protocol, reaped their owned
 processes, and passed their six surrounding device-state audits. The CPU suite
@@ -264,6 +271,17 @@ covers only genuine position 0 and preserves the conditional arithmetic and
 runtime limitations. It does not establish complete model decoding or the
 700 tokens/s target.
 
+The subsequent [complete matrix](../qualification/independent-prefix-case-matrix-v1/README.md)
+now covers all six selected positions with the same image, executable and
+fixed numerical policies. All 48 owned leaves completed naturally and all 36
+surrounding device/process audits passed. The local audit rehashed all 366
+case files, including 24 full rank captures. Eight of the 49,152 attention
+values differ by one BF16 step; all others match exactly. The largest output
+error/bound ratio is 0.0229954713, about 2.30% of the allowed bound. Every case
+observed useful work from all 64 candidate workgroups on each rank. No bound
+was widened, and no full-model or performance acceptance follows from this
+prefix-only result. The matrix page reports each case separately.
+
 ## Source Publication
 
 The [source index](assets/finite-prefix-v227/source-index.json) binds the 289
@@ -436,15 +454,21 @@ alone is not a self-contained reproducer or proof.
 
 ## Next Gates
 
-1. Extend the freshly built parent/worker source pair to reproducible
-   compiler/HSACO builds. Use the tested idempotent compiler and newly rebuilt
-   matching finalizer tools to retry checked reciprocal lowering;
-   the full pipeline is not yet reproduced.
-2. Follow the consolidated worker's completed teacher-forced GPU comparison
-   with its autoregressive check and repeated shared-currentness timing on
-   `mi350`, preserving the exact numerical checks and retained-device review.
-3. Close independent numerical obligations and validate the longer resident
-   request, multiple requests, KV lifetime and cleanup boundaries.
+1. Exercise the six-case-tested V7 image in the existing 36-layer
+   four-forward teacher-forced and
+   own-output autoregressive paths. Checked source lowering, actual replay,
+   inert join, HSACO emission and MI350 deployment now pass for this image;
+   they do not establish full-model correctness.
+2. Validate TP residuals, MLP, final normalization, logits and token selection
+   independently, including cumulative layer error and authentic KV history.
+   Preserve the old bitwise-comparison mode as a separate historical check;
+   do not equate native parity with an independent model reference.
+3. Extend the tiled runtime through a separately bounded long-request
+   profile, retaining two-bank retirement, exact completion and terminal
+   failure behavior. The current tiled path executes only four forwards.
+   Test page transitions, multiple requests, KV lifetime and cleanup before
+   treating it as sustained decode. Production runtime and arithmetic
+   obligations remain separate from these engineering observations.
 4. Qualify the full target workload: single-request Qwen3-8B, BF16,
    target-only decoding, 2,048 prompt tokens and 256 generated tokens. Report
    post-first-token throughput as `255 / (last_delivery - first_delivery)`.
