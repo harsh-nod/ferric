@@ -26,6 +26,7 @@ engineering branch; it does not change the production execution path.
 | Idempotent partial-move compiler candidate on `mi350-2` | 2,675 CPU tests passed, 25 ignored; fresh compiler built | Six new regressions executed; actual prefix-tile replay remains ignored |
 | Matching finalizer tools on `mi350-2` | 190 default example tests passed, 15 ignored; three tools rebuilt | Same compiler source generation; actual-capture inert join remains ignored, no new HSACO |
 | Checked reciprocal probe with new compiler on `mi350-2` | Previous storage gate cleared; canonical semantic capture emitted | Ranked projection rejects 1,027 blocks against the unchanged 1,024 limit; no HSACO or GPU run |
+| Reduced-CFG reciprocal V3 on `mi350-2` | Exact census measures 1,013 blocks, 14 fewer; CFG-size gate cleared | Checked lowering now rejects an unsupported induction-latch form; no HSACO or GPU run |
 
 Both four-forward runs completed their Close protocol, reaped their owned
 processes, and passed their six surrounding device-state audits. The CPU suite
@@ -134,8 +135,15 @@ the 24-step recurrence and rejection sentinel. Its actual `mi350-2` CPU run
 passed 12 ordinary tests, six source contracts, the explicit exhaustive
 8,388,608-significand test and all 1,007 Fraction vectors. The unapplied source
 patch and exact source pins are published with the result. All nine commands
-exited naturally and source/dependency checks passed. This does not yet
-establish a smaller compiled CFG or a new GPU image.
+exited naturally and source/dependency checks passed.
+
+Its [fresh checked probe](../qualification/exact-prefix-reciprocal-v3/checked-probe-result.json)
+has now cleared the CFG-size gate. The new exact-decoder census measures
+1,013 stored blocks, 14 fewer than V2 and 11 below the unchanged cap. Lowering
+then rejects an induction latch that does not copy field zero of a checked
+result. The owned tree exits naturally and is reaped; all source/tool/dependency
+and prior-target checks pass. There is still no new ranked/target KIR, handoff,
+HSACO or GPU result. This block-count reduction is not a GPU speedup.
 
 ## Source Publication
 

@@ -51,10 +51,23 @@ not the device crate's unchanged Git dependency. The independent u64 and
 Fraction references retain their original implementations. The AST contract
 checks source structure; it is not a numerical proof.
 
+## Checked Compiler Result
+
+The [fresh checked probe](checked-probe-result.json) cleared the CFG-size
+gate. A matching-decoder [census](semantic-census.json) measured 1,013 stored
+blocks, down from 1,027: 14 blocks removed, with 11 below the unchanged cap.
+This is a compiler-structure result, not a GPU performance measurement.
+
+Lowering then stopped at a new diagnostic: `a checked induction latch does
+not copy field zero of one checked result`. Cargo exited 101; owned processes
+exited naturally and were reaped. Source, tool, configuration, dependency and
+prior-target checks passed. No ranked/target KIR, handoff or HSACO was emitted.
+The probe and supervisor passed 35 and 15 policy tests before execution.
+
 ## Remaining Gates
 
-A fresh checked-lowering probe must establish the actual CFG reduction and
-complete replay, inert join, emission and metadata/ISA review. Only then can
+A successor must resolve the loop-latch rejection, complete checked lowering,
+replay, inert join, emission and metadata/ISA review. Only then can
 a new image undergo independent MI350 numerical validation. Compiler caps,
 numerical tolerances and production requirements remain unchanged. No GPU
 performance gain, full-model acceptance or 700 tokens/s result is claimed.

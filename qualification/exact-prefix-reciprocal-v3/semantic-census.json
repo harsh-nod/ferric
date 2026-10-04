@@ -1,0 +1,108 @@
+{
+  "binary": {
+    "bytes": 8559592,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/reciprocal-semantic-census-v228-v2/target/inspect",
+    "sha256": "dc58d72cb72b54990b13fae3ffd38f4b5856648939c3a2e2f77bb635ff8d438b"
+  },
+  "capture": {
+    "bytes": 1283032,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-reciprocal-checked-probe-v228-v5/prefix-tiles-semantic.bin",
+    "sha256": "75c582adb520848e4fc6618e92dfc97a0f43267b6bf4e0aef27dcaa6cc2a17d0"
+  },
+  "census": {
+    "compiler_acceptance": false,
+    "functions": [
+      {
+        "blocks": 1013,
+        "branching_blocks": 334,
+        "edges": 1377,
+        "entry": 210,
+        "export": "ferric_qwen3_claimed_rmsnorm_qkv_attention_output_tiles_bf16_f32_v6",
+        "function": 0,
+        "locals": 1445,
+        "role": "KernelRoot",
+        "statements": 4578
+      }
+    ],
+    "gpu_execution": false,
+    "input_bytes": 1283032,
+    "input_sha256": "75c582adb520848e4fc6618e92dfc97a0f43267b6bf4e0aef27dcaa6cc2a17d0",
+    "production_authority": false,
+    "ranked_acceptance": false,
+    "roots": [
+      {
+        "root": 0,
+        "selected_body": "Some(SemanticKernelBodySelectionV1 { root: SemanticFunctionIdV1(0), body: SemanticFunctionIdV1(0) })"
+      }
+    ],
+    "schema": "Fe2o3SemanticCaptureCensusV1",
+    "wire": "V41"
+  },
+  "compiler_acceptance": false,
+  "date": "2026-10-03",
+  "diagnostic_only": true,
+  "excess_blocks": 0,
+  "gpu_execution": false,
+  "headroom_blocks": 11,
+  "host": "mi350-2",
+  "libraries": {
+    "fe2o3_mir_model": {
+      "bytes": 32392038,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/idempotent-compiler-cpu-v228-v2/target/debug/deps/libfe2o3_mir_model-2728fc5bcda4deaf.rlib",
+      "sha256": "5e83855d8de25ba51c7b0bf86e9484f93d14134e4d26aba5abf7b08e9371cbfb"
+    },
+    "serde_json": {
+      "bytes": 2496276,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/idempotent-compiler-cpu-v228-v2/target/debug/deps/libserde_json-2b631fea7ec9137b.rlib",
+      "sha256": "d2cf314e417249f2e7092095c9a609d1a3581f4db495e6ae125e78f92c020004"
+    }
+  },
+  "limitations": [
+    "Counts all stored semantic blocks, including unreachable blocks, as the ranked guard does.",
+    "Read-only V41 decode does not perform ranked lowering, replay, emission or GPU execution.",
+    "Old-target postchecks are stat inventories, not a proof of no transient writes.",
+    "Raw evidence is retained locally; these hashes are not a self-contained public reproducer."
+  ],
+  "passed": true,
+  "performance_claim": false,
+  "phases": {
+    "build": {
+      "cache_bytes": 8563688,
+      "elapsed_seconds": 2.0144783940631896,
+      "exit_code": 0,
+      "group_absent": true,
+      "reason": null,
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "census": {
+      "cache_bytes": 8563688,
+      "elapsed_seconds": 2.0131525949109346,
+      "exit_code": 0,
+      "group_absent": true,
+      "reason": null,
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdout_sha256": "523e0f00ec67da49072acbce09c552c870437c100422661c4aa772161e97f855"
+    }
+  },
+  "predecessor_blocks": 1027,
+  "ranked_block_limit": 1024,
+  "raw_records_rehashed_locally": 12,
+  "receipt": {
+    "bytes": 5405,
+    "sha256": "c5a5a84c839c1daebbd613cb1ea7851007250429722df65f7c68b8578762b6bf"
+  },
+  "removed_blocks": 14,
+  "schema": "FerricSemanticCaptureCensusV1",
+  "source_and_target_postchecks_passed": true,
+  "sources": {
+    "inspect.rs": {
+      "bytes": 3980,
+      "sha256": "73aa7621b0b8d18707dc15317d14fb2ad9eafc17a7fce06268e708768de78263"
+    },
+    "run.py": {
+      "bytes": 5187,
+      "sha256": "f7871d2aa8d1ccb6c236812059e52ff241efd30802d5605e2a0af4d6b3685191"
+    }
+  }
+}
