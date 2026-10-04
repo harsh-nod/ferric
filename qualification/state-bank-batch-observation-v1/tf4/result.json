@@ -1,0 +1,81 @@
+{
+  "authority": "none",
+  "comparison": {
+    "bytes": 161957,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-comparison-cpu-v228-v1/comparison/complete.json",
+    "sha256": "1ac3c18440730526d166ef0a77dded008c2d675a0ffd1d4ddc867695da13a2d2"
+  },
+  "comparison_cpu": {
+    "bytes": 1739,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-comparison-cpu-v228-v1/complete.json",
+    "sha256": "c9e6a27c06632b91dda28aacac2d555d5c77eaa72948f0f4003c7a6ae4e4abd7"
+  },
+  "device_audits": 6,
+  "full_model_acceptance": false,
+  "gpu_observation": {
+    "bytes": 1116281,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-state-bank-batch-tf4-shared-full-currentness-gpu-v228-v1/complete.json",
+    "sha256": "9917a07aba38ecdf4ca1c9289774c9b9c040bdf5bf850157126c87ca1ab7595c"
+  },
+  "gpu_time": false,
+  "host_totals": {
+    "new_forward_host_ns": 22040561002,
+    "old_forward_host_ns": 26212401198,
+    "publication_full_checks": 1152,
+    "removed_group_full_checks": 2288
+  },
+  "independent_tensor_acceptance": false,
+  "native_attempts": 1,
+  "natural_owned_leaf_exits": 7,
+  "numerical_acceptance": false,
+  "performance_claim": false,
+  "production_authority": false,
+  "pure": {
+    "bytes": 1519,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-comparison-pure-v228-v1/complete.json",
+    "sha256": "06009c7382e1a1d80df920c92b045326cb95e4cf218b680b10bbb98c089431e7"
+  },
+  "retained_trees": {
+    "prefix-state-bank-batch-tf4-shared-full-currentness-gpu-v228-v1": {
+      "bytes": 4714737,
+      "files": 58
+    },
+    "state-bank-comparison-cpu-v228-v1": {
+      "bytes": 236020,
+      "files": 7
+    },
+    "state-bank-comparison-pure-v228-v1": {
+      "bytes": 6521,
+      "files": 4
+    }
+  },
+  "retries": 0,
+  "schema": "ferric-p228-state-bank-tf4-public-result-v1",
+  "selected_runtime": {
+    "image": {
+      "bytes": 53560,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-deployment-v228-v1/image/prefix-tiles.hsaco",
+      "sha256": "4885204c8d510122588549107f42d2bc6f180f48fbc4eddd3bb1260e8d6629c5"
+    },
+    "parent": {
+      "bytes": 13618248,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-decode-host-policy-deployment-v228-v1/bin/ferric-qwen3-finite-prefix-decode-host-policy-engineering",
+      "sha256": "830f90b17bde546fb0d236a127f4bff055b31b4f0b46e2381e22ec072cb9d4d0"
+    },
+    "worker": {
+      "bytes": 4797496,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-deployment-v228-v1/bin/ferric-tp-peer-finite-engineering-worker-v1",
+      "sha256": "6901a1319352d0401e452d616efa50d2de08c40943f50cb054d89f3f26d7fd52"
+    }
+  },
+  "summary": {
+    "all152_tensors_equal": true,
+    "all_counter_invariants_and_expected_removals_observed": true,
+    "all_payloads_and_tokens_equal": true,
+    "byte_equal_tensor_rows": 152,
+    "compared_payloads": 4,
+    "compared_tensor_rows": 152,
+    "observed_invariance_passed": true
+  },
+  "sustained_2048_256": false
+}

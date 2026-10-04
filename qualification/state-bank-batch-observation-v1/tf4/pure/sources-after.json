@@ -1,0 +1,17 @@
+{
+  "README.md": {
+    "bytes": 4315,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-state-bank-runtime-comparison-v1/README.md",
+    "sha256": "251bb35bd77d24db9522b71e9ebfea8fbc94452669b43112e8c4a80e2156887c"
+  },
+  "run.py": {
+    "bytes": 21802,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-state-bank-runtime-comparison-v1/run.py",
+    "sha256": "413e8bb4ea5637cb3ca67003433b62bf7cb90832c4f88101d2c9ea9fa7bcc512"
+  },
+  "test_run.py": {
+    "bytes": 15820,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-state-bank-runtime-comparison-v1/test_run.py",
+    "sha256": "a65c40c497a6c32b8cdd930d73ecb6ef25cf46946521b9711839467ff1046dde"
+  }
+}

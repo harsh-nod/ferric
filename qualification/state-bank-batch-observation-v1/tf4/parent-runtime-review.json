@@ -1,0 +1,59 @@
+{
+  "authority": "none",
+  "binary": {
+    "bytes": 13618248,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-decode-host-policy-deployment-v228-v1/bin/ferric-qwen3-finite-prefix-decode-host-policy-engineering",
+    "sha256": "830f90b17bde546fb0d236a127f4bff055b31b4f0b46e2381e22ec072cb9d4d0"
+  },
+  "boot_id": "2dbbbc5a-d8b7-46ac-bd1f-236e5847e24a",
+  "gpu_execution": false,
+  "host": "smci350-rck-g03-b19-03",
+  "ldd": {
+    "bytes": 785,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-runtime-parent-v228-v1/ldd/audit.json",
+    "sha256": "544b40aef1bee7dddbbfe61e8491f3c81b0ce900b2b035de78746882cac0071a"
+  },
+  "libraries": [
+    {
+      "path": "/lib/x86_64-linux-gnu/libgcc_s.so.1",
+      "resolved": {
+        "bytes": 183024,
+        "path": "/usr/lib/x86_64-linux-gnu/libgcc_s.so.1",
+        "sha256": "d93224d2b0dab4247598be683adca02f5cf00586f99c187579cd7e92058fb7cb"
+      }
+    },
+    {
+      "path": "/lib/x86_64-linux-gnu/libm.so.6",
+      "resolved": {
+        "bytes": 952616,
+        "path": "/usr/lib/x86_64-linux-gnu/libm.so.6",
+        "sha256": "1b87a1a50b496cfead2b0ad134c2ff536705c82608db240c7e8aa48d6c0e4217"
+      }
+    },
+    {
+      "path": "/lib/x86_64-linux-gnu/libc.so.6",
+      "resolved": {
+        "bytes": 2125328,
+        "path": "/usr/lib/x86_64-linux-gnu/libc.so.6",
+        "sha256": "d8db8739a1633c972cec6a4fe0566bdcec6fd088f98723492ab0361f66238f75"
+      }
+    },
+    {
+      "path": "/lib64/ld-linux-x86-64.so.2",
+      "resolved": {
+        "bytes": 236616,
+        "path": "/usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2",
+        "sha256": "1cd555ac46b7887edeaf3c42aac5408c8135e52f6b37870da2cf82d5fe14e829"
+      }
+    }
+  ],
+  "notes": "Root reviewed the actual CPU553-generation parent executable audit after retained and receiver-verified deployment transfer. Both readelf and ldd completed naturally with zero exit, empty stderr, no forced cleanup, absent owned groups and reaped processes. The actual audit and15 referenced raw records were rehashed locally. Selected system libraries and tools exactly match the CPU522 predecessor, with no added ELF search path or unresolved dependency. The host, boot, device identities and topology identity are unchanged; both retained topology samples were idle SPX/NPS1 gfx950. This review binds this selected executable and library identity only. It does not establish current GPU isolation, numerical correctness, runtime-premise discharge, performance or production admission. The GPU controller must still run all three live pre-audits, one owned attempt and three post-audits with Close/reaping.",
+  "production_authority": false,
+  "readelf": {
+    "bytes": 808,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-runtime-parent-v228-v1/readelf/audit.json",
+    "sha256": "7fa35a67f642e4f7b9fe63041d487167fed3a5af85e816816611900d8e1bc72f"
+  },
+  "reviewed": true,
+  "schema": "ferric-p227-prefix-parity-runtime-review-v1"
+}

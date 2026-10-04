@@ -1,0 +1,43 @@
+{
+  "controller": {
+    "bytes": 5646,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/run_state_bank_comparison_cpu_p228_v1.py",
+    "sha256": "f576f2cf5614ce032a1973b7edd7cc00bd36cb42be9b06166491ff6950fb89b4"
+  },
+  "details": {
+    "comparison": {
+      "bytes": 161957,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-comparison-cpu-v228-v1/comparison/complete.json",
+      "sha256": "1ac3c18440730526d166ef0a77dded008c2d675a0ffd1d4ddc867695da13a2d2"
+    },
+    "summary": {
+      "all152_tensors_equal": true,
+      "all_counter_invariants_and_expected_removals_observed": true,
+      "all_payloads_and_tokens_equal": true,
+      "byte_equal_tensor_rows": 152,
+      "compared_payloads": 4,
+      "compared_tensor_rows": 152,
+      "observed_invariance_passed": true
+    }
+  },
+  "elapsed_seconds": 0.9991337999817915,
+  "full_model_acceptance": false,
+  "gpu_execution": false,
+  "mode": "compare",
+  "numerical_acceptance": false,
+  "passed": true,
+  "performance_claim": false,
+  "production_authority": false,
+  "schema": "ferric-p228-state-bank-comparison-cpu-v1",
+  "source_postchecks_passed": true,
+  "sources_after": {
+    "bytes": 780,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-comparison-cpu-v228-v1/sources-after.json",
+    "sha256": "22ac9a37fe045b9d55803d8145a8a637e2134e3c41c80f43645bea8bb20c7c3d"
+  },
+  "sources_before": {
+    "bytes": 780,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-comparison-cpu-v228-v1/sources-before.json",
+    "sha256": "22ac9a37fe045b9d55803d8145a8a637e2134e3c41c80f43645bea8bb20c7c3d"
+  }
+}

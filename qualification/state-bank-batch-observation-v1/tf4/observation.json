@@ -1,0 +1,1157 @@
+{
+  "captured_tensor_rows": 152,
+  "current_platform_idle_audits_verified": false,
+  "current_source_binary_image_authority_verified": false,
+  "full_model_acceptance": false,
+  "gpu_launched": false,
+  "host_observation": {
+    "calibrated_device_time": false,
+    "close_host_ns": 12382156756,
+    "counter_names": [
+      "commands",
+      "command_ns",
+      "full_currentness_checks",
+      "full_currentness_ns",
+      "operational_currentness_checks",
+      "operational_currentness_ns",
+      "kernel_admissions",
+      "kernel_admission_ns",
+      "dispatches",
+      "dispatch_prepare_ns",
+      "dispatch_publish_ns",
+      "dispatch_wait_ns",
+      "completion_polls",
+      "reads",
+      "read_bytes",
+      "read_ns",
+      "writes",
+      "write_bytes",
+      "write_ns"
+    ],
+    "forward_host_ns": [
+      5258709160,
+      5267448495,
+      5754206357,
+      5760196990
+    ],
+    "gpu_time": false,
+    "inclusive_nested_host_scopes": true,
+    "intervals": [
+      {
+        "host_elapsed_ns": 89671804377,
+        "ranks": [
+          [
+            0,
+            0,
+            8302,
+            14024253600,
+            0,
+            0,
+            9,
+            2475822,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            3134,
+            11761389830,
+            10868334951
+          ],
+          [
+            0,
+            0,
+            6454,
+            10919306944,
+            0,
+            0,
+            6,
+            476112,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            2222,
+            8022540552,
+            7709472359
+          ]
+        ],
+        "shared": [
+          15320,
+          26371233143,
+          0,
+          0
+        ]
+      },
+      {
+        "host_elapsed_ns": 5259465120,
+        "ranks": [
+          [
+            0,
+            0,
+            676,
+            1133221103,
+            0,
+            0,
+            148,
+            13903065,
+            148,
+            262026554,
+            249022400,
+            1560080086,
+            5978,
+            39,
+            606980,
+            150815641,
+            3,
+            1096,
+            10020406
+          ],
+          [
+            0,
+            0,
+            656,
+            1100498681,
+            0,
+            0,
+            145,
+            10462899,
+            145,
+            255008390,
+            243337371,
+            1399500206,
+            6864,
+            36,
+            294912,
+            129825423,
+            2,
+            1092,
+            6727544
+          ]
+        ],
+        "shared": [
+          1048,
+          1781376755,
+          288,
+          492454720
+        ]
+      },
+      {
+        "host_elapsed_ns": 5274044479,
+        "ranks": [
+          [
+            0,
+            0,
+            676,
+            1136348219,
+            0,
+            0,
+            148,
+            14035995,
+            148,
+            262606251,
+            249382146,
+            1560365503,
+            5949,
+            39,
+            606980,
+            145976054,
+            3,
+            1096,
+            10083826
+          ],
+          [
+            0,
+            0,
+            656,
+            1102603647,
+            0,
+            0,
+            145,
+            10529786,
+            145,
+            255925216,
+            243592860,
+            1403908623,
+            6877,
+            36,
+            294912,
+            129859412,
+            2,
+            1092,
+            6705624
+          ]
+        ],
+        "shared": [
+          1048,
+          1786692127,
+          288,
+          493555631
+        ]
+      },
+      {
+        "host_elapsed_ns": 5761027572,
+        "ranks": [
+          [
+            0,
+            0,
+            676,
+            1135433729,
+            0,
+            0,
+            148,
+            14040907,
+            148,
+            262452760,
+            249362672,
+            1557670043,
+            5943,
+            39,
+            606980,
+            151059541,
+            3,
+            1096,
+            10041016
+          ],
+          [
+            0,
+            0,
+            656,
+            1101868685,
+            0,
+            0,
+            145,
+            10447006,
+            145,
+            255787578,
+            243405595,
+            1397071066,
+            6826,
+            36,
+            294912,
+            129924100,
+            2,
+            1092,
+            6710755
+          ]
+        ],
+        "shared": [
+          1336,
+          2276597374,
+          288,
+          493109787
+        ]
+      },
+      {
+        "host_elapsed_ns": 5766550914,
+        "ranks": [
+          [
+            0,
+            0,
+            676,
+            1134275651,
+            0,
+            0,
+            148,
+            14052971,
+            148,
+            262353255,
+            249056852,
+            1556123711,
+            5926,
+            39,
+            606980,
+            150896222,
+            3,
+            1096,
+            10046696
+          ],
+          [
+            0,
+            0,
+            656,
+            1101212107,
+            0,
+            0,
+            145,
+            10457057,
+            145,
+            255670457,
+            243277060,
+            1406222533,
+            6910,
+            36,
+            294912,
+            129595091,
+            2,
+            1092,
+            6690524
+          ]
+        ],
+        "shared": [
+          1336,
+          2274095635,
+          288,
+          492660040
+        ]
+      },
+      {
+        "host_elapsed_ns": 6500494,
+        "ranks": [
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        ],
+        "shared": [
+          0,
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "native_closed": true,
+    "numerical_acceptance": false,
+    "performance_claim": false,
+    "policy": "shared-full-currentness",
+    "production_authority": false,
+    "schema": "ferric-p228-prefix-decode-host-policy-counters-v2",
+    "shared_counter_names": [
+      "group_full_checks",
+      "group_full_ns",
+      "publication_full_checks",
+      "publication_full_ns"
+    ],
+    "sidecar": {
+      "bytes": 33601,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-state-bank-batch-tf4-shared-full-currentness-gpu-v228-v1/native-host-policy-v2.json",
+      "sha256": "bba1df3138ad919db4627a124ac8b969dd770e018f9e873fe7c5e5ee2c7da74b"
+    },
+    "snapshots": [
+      {
+        "group_incarnation": 1,
+        "phase": "fresh_enabled",
+        "ranks": [
+          {
+            "cache_kernel_admission": false,
+            "counters": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "queue_epoch": 0,
+            "rank": 0,
+            "raw_timestamp_queue": false,
+            "unique_id": 16366993098680759275
+          },
+          {
+            "cache_kernel_admission": false,
+            "counters": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "queue_epoch": 0,
+            "rank": 1,
+            "raw_timestamp_queue": false,
+            "unique_id": 10838076764495710945
+          }
+        ],
+        "shared": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "shared_full_currentness": true
+      },
+      {
+        "group_incarnation": 1,
+        "phase": "setup_sealed",
+        "ranks": [
+          {
+            "cache_kernel_admission": false,
+            "counters": [
+              0,
+              0,
+              8302,
+              14024253600,
+              0,
+              0,
+              9,
+              2475822,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              3134,
+              11761389830,
+              10868334951
+            ],
+            "queue_epoch": 0,
+            "rank": 0,
+            "raw_timestamp_queue": false,
+            "unique_id": 16366993098680759275
+          },
+          {
+            "cache_kernel_admission": false,
+            "counters": [
+              0,
+              0,
+              6454,
+              10919306944,
+              0,
+              0,
+              6,
+              476112,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              2222,
+              8022540552,
+              7709472359
+            ],
+            "queue_epoch": 0,
+            "rank": 1,
+            "raw_timestamp_queue": false,
+            "unique_id": 10838076764495710945
+          }
+        ],
+        "shared": [
+          15320,
+          26371233143,
+          0,
+          0
+        ],
+        "shared_full_currentness": true
+      },
+      {
+        "group_incarnation": 1,
+        "phase": "forward_0",
+        "ranks": [
+          {
+            "cache_kernel_admission": false,
+            "counters": [
+              0,
+              0,
+              8978,
+              15157474703,
+              0,
+              0,
+              157,
+              16378887,
+              148,
+              262026554,
+              249022400,
+              1560080086,
+              5978,
+              39,
+              606980,
+              150815641,
+              3137,
+              11761390926,
+              10878355357
+            ],
+            "queue_epoch": 0,
+            "rank": 0,
+            "raw_timestamp_queue": false,
+            "unique_id": 16366993098680759275
+          },
+          {
+            "cache_kernel_admission": false,
+            "counters": [
+              0,
+              0,
+              7110,
+              12019805625,
+              0,
+              0,
+              151,
+              10939011,
+              145,
+              255008390,
+              243337371,
+              1399500206,
+              6864,
+              36,
+              294912,
+              129825423,
+              2224,
+              8022541644,
+              7716199903
+            ],
+            "queue_epoch": 0,
+            "rank": 1,
+            "raw_timestamp_queue": false,
+            "unique_id": 10838076764495710945
+          }
+        ],
+        "shared": [
+          16368,
+          28152609898,
+          288,
+          492454720
+        ],
+        "shared_full_currentness": true
+      },
+      {
+        "group_incarnation": 1,
+        "phase": "forward_1",
+        "ranks": [
+          {
+            "cache_kernel_admission": false,
+            "counters": [
+              0,
+              0,
+              9654,
+              16293822922,
+              0,
+              0,
+              305,
+              30414882,
+              296,
+              524632805,
+              498404546,
+              3120445589,
+              11927,
+              78,
+              1213960,
+              296791695,
+              3140,
+              11761392022,
+              10888439183
+            ],
+            "queue_epoch": 0,
+            "rank": 0,
+            "raw_timestamp_queue": false,
+            "unique_id": 16366993098680759275
+          },
+          {
+            "cache_kernel_admission": false,
+            "counters": [
+              0,
+              0,
+              7766,
+              13122409272,
+              0,
+              0,
+              296,
+              21468797,
+              290,
+              510933606,
+              486930231,
+              2803408829,
+              13741,
+              72,
+              589824,
+              259684835,
+              2226,
+              8022542736,
+              7722905527
+            ],
+            "queue_epoch": 0,
+            "rank": 1,
+            "raw_timestamp_queue": false,
+            "unique_id": 10838076764495710945
+          }
+        ],
+        "shared": [
+          17416,
+          29939302025,
+          576,
+          986010351
+        ],
+        "shared_full_currentness": true
+      },
+      {
+        "group_incarnation": 1,
+        "phase": "forward_2",
+        "ranks": [
+          {
+            "cache_kernel_admission": false,
+            "counters": [
+              0,
+              0,
+              10330,
+              17429256651,
+              0,
+              0,
+              453,
+              44455789,
+              444,
+              787085565,
+              747767218,
+              4678115632,
+              17870,
+              117,
+              1820940,
+              447851236,
+              3143,
+              11761393118,
+              10898480199
+            ],
+            "queue_epoch": 0,
+            "rank": 0,
+            "raw_timestamp_queue": false,
+            "unique_id": 16366993098680759275
+          },
+          {
+            "cache_kernel_admission": false,
+            "counters": [
+              0,
+              0,
+              8422,
+              14224277957,
+              0,
+              0,
+              441,
+              31915803,
+              435,
+              766721184,
+              730335826,
+              4200479895,
+              20567,
+              108,
+              884736,
+              389608935,
+              2228,
+              8022543828,
+              7729616282
+            ],
+            "queue_epoch": 0,
+            "rank": 1,
+            "raw_timestamp_queue": false,
+            "unique_id": 10838076764495710945
+          }
+        ],
+        "shared": [
+          18752,
+          32215899399,
+          864,
+          1479120138
+        ],
+        "shared_full_currentness": true
+      },
+      {
+        "group_incarnation": 1,
+        "phase": "forward_3",
+        "ranks": [
+          {
+            "cache_kernel_admission": false,
+            "counters": [
+              0,
+              0,
+              11006,
+              18563532302,
+              0,
+              0,
+              601,
+              58508760,
+              592,
+              1049438820,
+              996824070,
+              6234239343,
+              23796,
+              156,
+              2427920,
+              598747458,
+              3146,
+              11761394214,
+              10908526895
+            ],
+            "queue_epoch": 0,
+            "rank": 0,
+            "raw_timestamp_queue": false,
+            "unique_id": 16366993098680759275
+          },
+          {
+            "cache_kernel_admission": false,
+            "counters": [
+              0,
+              0,
+              9078,
+              15325490064,
+              0,
+              0,
+              586,
+              42372860,
+              580,
+              1022391641,
+              973612886,
+              5606702428,
+              27477,
+              144,
+              1179648,
+              519204026,
+              2230,
+              8022544920,
+              7736306806
+            ],
+            "queue_epoch": 0,
+            "rank": 1,
+            "raw_timestamp_queue": false,
+            "unique_id": 10838076764495710945
+          }
+        ],
+        "shared": [
+          20088,
+          34489995034,
+          1152,
+          1971780178
+        ],
+        "shared_full_currentness": true
+      },
+      {
+        "group_incarnation": 1,
+        "phase": "before_close",
+        "ranks": [
+          {
+            "cache_kernel_admission": false,
+            "counters": [
+              0,
+              0,
+              11006,
+              18563532302,
+              0,
+              0,
+              601,
+              58508760,
+              592,
+              1049438820,
+              996824070,
+              6234239343,
+              23796,
+              156,
+              2427920,
+              598747458,
+              3146,
+              11761394214,
+              10908526895
+            ],
+            "queue_epoch": 0,
+            "rank": 0,
+            "raw_timestamp_queue": false,
+            "unique_id": 16366993098680759275
+          },
+          {
+            "cache_kernel_admission": false,
+            "counters": [
+              0,
+              0,
+              9078,
+              15325490064,
+              0,
+              0,
+              586,
+              42372860,
+              580,
+              1022391641,
+              973612886,
+              5606702428,
+              27477,
+              144,
+              1179648,
+              519204026,
+              2230,
+              8022544920,
+              7736306806
+            ],
+            "queue_epoch": 0,
+            "rank": 1,
+            "raw_timestamp_queue": false,
+            "unique_id": 10838076764495710945
+          }
+        ],
+        "shared": [
+          20088,
+          34489995034,
+          1152,
+          1971780178
+        ],
+        "shared_full_currentness": true
+      }
+    ]
+  },
+  "independent_framework_comparison_performed": false,
+  "independent_tensor_acceptance": false,
+  "independent_tensor_threshold": null,
+  "inputs": {
+    "candidate": {
+      "command": {
+        "bytes": 1011,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-state-bank-batch-tf4-shared-full-currentness-gpu-v228-v1/parent/command.json",
+        "sha256": "9800829ad1ba08e86fff4013e5ea507cf5f07e078218bcb3f50cf9290d8ea704"
+      },
+      "host_sidecar": {
+        "bytes": 33601,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-state-bank-batch-tf4-shared-full-currentness-gpu-v228-v1/native-host-policy-v2.json",
+        "sha256": "bba1df3138ad919db4627a124ac8b969dd770e018f9e873fe7c5e5ee2c7da74b"
+      },
+      "native_files": {
+        "child-stderr.bin": {
+          "bytes": 0,
+          "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-state-bank-batch-tf4-shared-full-currentness-gpu-v228-v1/native/child-stderr.bin",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "complete.json": {
+          "bytes": 39640,
+          "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-state-bank-batch-tf4-shared-full-currentness-gpu-v228-v1/native/complete.json",
+          "sha256": "cc6036219efcb8b0719a2374d0ac0c5c7cd6f343d105ee35e022d738d8942fc9"
+        },
+        "control-0.bin": {
+          "bytes": 241960,
+          "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-state-bank-batch-tf4-shared-full-currentness-gpu-v228-v1/native/control-0.bin",
+          "sha256": "8671772c24d8b2f9e678a3ae659195ece5bef3dc06f7eb85a87548d4ff751177"
+        },
+        "control-1.bin": {
+          "bytes": 241960,
+          "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-state-bank-batch-tf4-shared-full-currentness-gpu-v228-v1/native/control-1.bin",
+          "sha256": "ac2f3abcf2f425b8a234b5980eb516233724b4548c5b521e700bc2facdc7a3c6"
+        },
+        "control-2.bin": {
+          "bytes": 241960,
+          "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-state-bank-batch-tf4-shared-full-currentness-gpu-v228-v1/native/control-2.bin",
+          "sha256": "b6ea2b1d9e71e559fb1fdb566434f552a07853b52e1ffee6763ffc6f02204456"
+        },
+        "control-3.bin": {
+          "bytes": 241960,
+          "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-state-bank-batch-tf4-shared-full-currentness-gpu-v228-v1/native/control-3.bin",
+          "sha256": "54ecebc1b9588d004fe8bcccd8e89a67c5e862424e683dd2ab1e5e7ac1cd02e6"
+        },
+        "observation-0.bin": {
+          "bytes": 606976,
+          "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-state-bank-batch-tf4-shared-full-currentness-gpu-v228-v1/native/observation-0.bin",
+          "sha256": "27f35fd0e06ee8d0eaabf67a01999ab3d9d1bc3d5fa2241a48f56cb46345aaf2"
+        },
+        "observation-1.bin": {
+          "bytes": 606976,
+          "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-state-bank-batch-tf4-shared-full-currentness-gpu-v228-v1/native/observation-1.bin",
+          "sha256": "4dac2b3f2709f04444f24b5be2aec9b50d4278639165b8ac969cc5b315447fb8"
+        },
+        "observation-2.bin": {
+          "bytes": 606976,
+          "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-state-bank-batch-tf4-shared-full-currentness-gpu-v228-v1/native/observation-2.bin",
+          "sha256": "49c5420bf8ea9277ddbf06ea0512716a0c5f49c34f2130f33c8aa065f3fbaa78"
+        },
+        "observation-3.bin": {
+          "bytes": 606976,
+          "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-state-bank-batch-tf4-shared-full-currentness-gpu-v228-v1/native/observation-3.bin",
+          "sha256": "8b9c991deecbaf847c05f033e1b2f730e11eccae3891cee3331919ad7693101b"
+        },
+        "request-0.json": {
+          "bytes": 1861,
+          "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-state-bank-batch-tf4-shared-full-currentness-gpu-v228-v1/native/request-0.json",
+          "sha256": "023e872617acef8e91a15fef38c0a382426d5724b51f26140632e993f098499c"
+        },
+        "request-1.json": {
+          "bytes": 2398,
+          "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-state-bank-batch-tf4-shared-full-currentness-gpu-v228-v1/native/request-1.json",
+          "sha256": "6fdfd8165910c647a8ce9beb68977dbb9eeee023ae3d016050b6e19c8cf49ccc"
+        },
+        "request-2.json": {
+          "bytes": 2402,
+          "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-state-bank-batch-tf4-shared-full-currentness-gpu-v228-v1/native/request-2.json",
+          "sha256": "d86bd3c3d83fe234c9d7ce19b2faf479f65aed0f112260e70665d3017f048961"
+        },
+        "request-3.json": {
+          "bytes": 2401,
+          "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-state-bank-batch-tf4-shared-full-currentness-gpu-v228-v1/native/request-3.json",
+          "sha256": "f337144768cab413662537bc61aa444b5355b47933c3342ea400e1e1bfcc9316"
+        }
+      },
+      "owner": {
+        "bytes": 1969,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-state-bank-batch-tf4-shared-full-currentness-gpu-v228-v1/parent/result.json",
+        "sha256": "9bc096f1a67f88cdc9128dcbfca8e701365d32213a5a8cd0ba61497b546c5182"
+      },
+      "parent": {
+        "bytes": 13618248,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-decode-host-policy-deployment-v228-v1/bin/ferric-qwen3-finite-prefix-decode-host-policy-engineering",
+        "sha256": "830f90b17bde546fb0d236a127f4bff055b31b4f0b46e2381e22ec072cb9d4d0"
+      },
+      "request": {
+        "bytes": 8121,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-state-bank-batch-tf4-inputs-v228-v1/request.json",
+        "sha256": "426e2807b8ff7a6b5a10c9cba3e76258b06e4558e4522ad4559fd49eb6e926d0"
+      },
+      "started": {
+        "bytes": 282,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-state-bank-batch-tf4-shared-full-currentness-gpu-v228-v1/parent/started.json",
+        "sha256": "b31b0f59cbdf7f65681b26772ebde3952b4c861b8bc6af9f90d69885c9d03b65"
+      },
+      "stderr": {
+        "bytes": 374,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-state-bank-batch-tf4-shared-full-currentness-gpu-v228-v1/parent/stderr",
+        "sha256": "7a7a78e8a1405307b2546a3076d37c4996b4db69a978377ecd5bc229f9c29b4d"
+      },
+      "stdout": {
+        "bytes": 40703,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-state-bank-batch-tf4-shared-full-currentness-gpu-v228-v1/parent/stdout",
+        "sha256": "f14f154f91b233da996008175562f9ce6e10d5cec435a3773e97c903f31f15ed"
+      }
+    },
+    "mode": "teacher_forced",
+    "policy": "shared-full-currentness",
+    "prefix_image": {
+      "bytes": 53560,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-deployment-v228-v1/image/prefix-tiles.hsaco",
+      "sha256": "4885204c8d510122588549107f42d2bc6f180f48fbc4eddd3bb1260e8d6629c5"
+    },
+    "request": {
+      "bytes": 8121,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-state-bank-batch-tf4-inputs-v228-v1/request.json",
+      "sha256": "426e2807b8ff7a6b5a10c9cba3e76258b06e4558e4522ad4559fd49eb6e926d0"
+    },
+    "schema": "ferric-p228-prefix-decode-independent-observation-inputs-v1"
+  },
+  "mode": "teacher_forced",
+  "native_baseline_comparison_performed": false,
+  "numerical_acceptance": false,
+  "owned_record_checks": {
+    "child": {
+      "pgid": 2419965,
+      "pid": 2419965,
+      "ppid": 2409265,
+      "sid": 2409265,
+      "starttime": 50526306,
+      "state": "S",
+      "uid": 9661
+    },
+    "child_pid": 2419965,
+    "outer_pidfd_observed": true,
+    "parent": {
+      "pgid": 2409265,
+      "pid": 2409265,
+      "ppid": 2403589,
+      "sid": 2409265,
+      "starttime": 50517092,
+      "state": "R",
+      "uid": 9661
+    },
+    "parent_asserted_close_and_reap": true
+  },
+  "performance_claim": false,
+  "policy": "shared-full-currentness",
+  "prefix_image": {
+    "bytes": 53560,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-deployment-v228-v1/image/prefix-tiles.hsaco",
+    "sha256": "4885204c8d510122588549107f42d2bc6f180f48fbc4eddd3bb1260e8d6629c5"
+  },
+  "production_authority": false,
+  "recorded_close_and_owner_reap_checked": true,
+  "request": {
+    "bytes": 8121,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-state-bank-batch-tf4-inputs-v228-v1/request.json",
+    "sha256": "426e2807b8ff7a6b5a10c9cba3e76258b06e4558e4522ad4559fd49eb6e926d0"
+  },
+  "schema": "ferric-p228-prefix-decode-independent-observation-v1",
+  "status": "FINITE_FOUR_FORWARD_OBSERVED",
+  "structural": {
+    "bank_reuse_order_independently_observed": false,
+    "child_pid": 2419965,
+    "expected_banks": [
+      0,
+      1,
+      0,
+      1
+    ],
+    "external_supervisor_lifecycle_verified": false,
+    "full_long_workload": false,
+    "input_tokens": [
+      9112,
+      2190,
+      3772,
+      220
+    ],
+    "logical_generations": [
+      1,
+      2,
+      3,
+      4
+    ],
+    "mode": "teacher_forced",
+    "numerical_acceptance": false,
+    "output_tokens": [
+      67,
+      198,
+      25,
+      16
+    ],
+    "parent_close_and_exit_flags_checked": true,
+    "performance_claim": false,
+    "positions": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "prefix_terminal_state_count": 288,
+    "production_authority": false,
+    "profile_sha256": "6d012e76a0f591dddb56f8a54318cc245133819ce16a7c2470be6c85cef4b914",
+    "registration_sha256": "77710fe5a7f50a1336888ec795e591a05272d91e0e63ddea5457d9a5d1b10ab2",
+    "retained_files": [
+      {
+        "bytes": 1861,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-state-bank-batch-tf4-shared-full-currentness-gpu-v228-v1/native/request-0.json",
+        "sha256": "023e872617acef8e91a15fef38c0a382426d5724b51f26140632e993f098499c"
+      },
+      {
+        "bytes": 241960,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-state-bank-batch-tf4-shared-full-currentness-gpu-v228-v1/native/control-0.bin",
+        "sha256": "8671772c24d8b2f9e678a3ae659195ece5bef3dc06f7eb85a87548d4ff751177"
+      },
+      {
+        "bytes": 606976,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-state-bank-batch-tf4-shared-full-currentness-gpu-v228-v1/native/observation-0.bin",
+        "sha256": "27f35fd0e06ee8d0eaabf67a01999ab3d9d1bc3d5fa2241a48f56cb46345aaf2"
+      },
+      {
+        "bytes": 2398,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-state-bank-batch-tf4-shared-full-currentness-gpu-v228-v1/native/request-1.json",
+        "sha256": "6fdfd8165910c647a8ce9beb68977dbb9eeee023ae3d016050b6e19c8cf49ccc"
+      },
+      {
+        "bytes": 241960,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-state-bank-batch-tf4-shared-full-currentness-gpu-v228-v1/native/control-1.bin",
+        "sha256": "ac2f3abcf2f425b8a234b5980eb516233724b4548c5b521e700bc2facdc7a3c6"
+      },
+      {
+        "bytes": 606976,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-state-bank-batch-tf4-shared-full-currentness-gpu-v228-v1/native/observation-1.bin",
+        "sha256": "4dac2b3f2709f04444f24b5be2aec9b50d4278639165b8ac969cc5b315447fb8"
+      },
+      {
+        "bytes": 2402,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-state-bank-batch-tf4-shared-full-currentness-gpu-v228-v1/native/request-2.json",
+        "sha256": "d86bd3c3d83fe234c9d7ce19b2faf479f65aed0f112260e70665d3017f048961"
+      },
+      {
+        "bytes": 241960,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-state-bank-batch-tf4-shared-full-currentness-gpu-v228-v1/native/control-2.bin",
+        "sha256": "b6ea2b1d9e71e559fb1fdb566434f552a07853b52e1ffee6763ffc6f02204456"
+      },
+      {
+        "bytes": 606976,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-state-bank-batch-tf4-shared-full-currentness-gpu-v228-v1/native/observation-2.bin",
+        "sha256": "49c5420bf8ea9277ddbf06ea0512716a0c5f49c34f2130f33c8aa065f3fbaa78"
+      },
+      {
+        "bytes": 2401,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-state-bank-batch-tf4-shared-full-currentness-gpu-v228-v1/native/request-3.json",
+        "sha256": "f337144768cab413662537bc61aa444b5355b47933c3342ea400e1e1bfcc9316"
+      },
+      {
+        "bytes": 241960,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-state-bank-batch-tf4-shared-full-currentness-gpu-v228-v1/native/control-3.bin",
+        "sha256": "54ecebc1b9588d004fe8bcccd8e89a67c5e862424e683dd2ab1e5e7ac1cd02e6"
+      },
+      {
+        "bytes": 606976,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-state-bank-batch-tf4-shared-full-currentness-gpu-v228-v1/native/observation-3.bin",
+        "sha256": "8b9c991deecbaf847c05f033e1b2f730e11eccae3891cee3331919ad7693101b"
+      },
+      {
+        "bytes": 0,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-state-bank-batch-tf4-shared-full-currentness-gpu-v228-v1/native/child-stderr.bin",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    ],
+    "rotary_nonzero_positions_independently_recomputed": false,
+    "schema": "ferric-p227-checked-prefix-decode-structure-v1",
+    "source_image_payloads_rehashed": false,
+    "summary_sha256": "cc6036219efcb8b0719a2374d0ac0c5c7cd6f343d105ee35e022d738d8942fc9",
+    "terminal_state_count": 576,
+    "tiles_terminal_state_count": 288,
+    "transcript_sha256": "b8c1d09b0fba1aa0bf4824c1d24ef440bd4b25602d1bb98f6bc0d7978571d290"
+  },
+  "structural_observation_complete": true,
+  "sustained_2048_256": false,
+  "top_level_observer_reaping_verified": false
+}

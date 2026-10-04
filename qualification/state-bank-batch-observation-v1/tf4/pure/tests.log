@@ -1,0 +1,30 @@
+test_candidate_requires_actual_distinct_worker_and_closed_imports (test_run.CandidatePolicyTests.test_candidate_requires_actual_distinct_worker_and_closed_imports) ... ok
+test_pending_candidate_pin_refuses_before_reader_loading (test_run.CandidatePolicyTests.test_pending_candidate_pin_refuses_before_reader_loading) ... ok
+test_batch_exit_and_entry_checks_prevent_old576_expectation (test_run.CounterTests.test_batch_exit_and_entry_checks_prevent_old576_expectation) ... ok
+test_bool_negative_duration_and_wrong_layout_refused (test_run.CounterTests.test_bool_negative_duration_and_wrong_layout_refused) ... ok
+test_each_rank_count_read_write_or_dispatch_change_is_flagged (test_run.CounterTests.test_each_rank_count_read_write_or_dispatch_change_is_flagged) ... ok
+test_equal_publication_counts_are_not_enough_without_actual288 (test_run.CounterTests.test_equal_publication_counts_are_not_enough_without_actual288) ... ok
+test_expected572_and_rank_invariance_with_variable_polls (test_run.CounterTests.test_expected572_and_rank_invariance_with_variable_polls) ... ok
+test_policy_and_device_time_claim_refused (test_run.CounterTests.test_policy_and_device_time_claim_refused) ... ok
+test_wrong_removal_and_publication_counts_remain_failed_results (test_run.CounterTests.test_wrong_removal_and_publication_counts_remain_failed_results) ... ok
+test_main_publishes_pin_before_nonzero_invariance_exit (test_run.ReportTests.test_main_publishes_pin_before_nonzero_invariance_exit) ... ok
+test_summary_requires_every_invariance (test_run.ReportTests.test_summary_requires_every_invariance) ... ok
+test_table_is_explicitly_host_only_and_uses_supplied_measurements (test_run.ReportTests.test_table_is_explicitly_host_only_and_uses_supplied_measurements) ... ok
+test_all152_actual_slice_hashes_and_records (test_run.TensorTests.test_all152_actual_slice_hashes_and_records) ... ok
+test_real_validator_failure_is_propagated (test_run.TensorTests.test_real_validator_failure_is_propagated) ... ok
+test_single_tensor_difference_is_retained (test_run.TensorTests.test_single_tensor_difference_is_retained) ... ok
+test_token_difference_is_retained (test_run.TensorTests.test_token_difference_is_retained) ... ok
+test_truncated_payload_or_missing_forward_refused (test_run.TensorTests.test_truncated_payload_or_missing_forward_refused) ... ok
+test_each_forward_must_bind_its_own_profile_registration_and_session (test_run.WorkloadTests.test_each_forward_must_bind_its_own_profile_registration_and_session) ... ok
+test_forward_command_and_mapping_drift_refused (test_run.WorkloadTests.test_forward_command_and_mapping_drift_refused) ... ok
+test_fresh_session_bound_profiles_need_not_match (test_run.WorkloadTests.test_fresh_session_bound_profiles_need_not_match) ... ok
+test_only_expected_changes_are_allowed (test_run.WorkloadTests.test_only_expected_changes_are_allowed) ... ok
+test_prerequisite_or_prior_deployment_drift_refused (test_run.WorkloadTests.test_prerequisite_or_prior_deployment_drift_refused) ... ok
+test_request_field_and_bool_drift_are_refused (test_run.WorkloadTests.test_request_field_and_bool_drift_are_refused) ... ok
+test_same_session_is_refused (test_run.WorkloadTests.test_same_session_is_refused) ... ok
+test_workload_and_parent_image_drift_are_refused (test_run.WorkloadTests.test_workload_and_parent_image_drift_are_refused) ... ok
+
+----------------------------------------------------------------------
+Ran 25 tests in 0.038s
+
+OK

@@ -2,8 +2,10 @@
 
 Engineering checkpoint, 2026-10-04. The successor controller passed **144 CPU
 policy tests** on `mi350`, with no failures, errors or skips. Build-host export
-of the new worker also passed. This does not report a new GPU result, numerical
-acceptance, or a performance improvement.
+of the new worker also passed. The subsequent [same-image GPU comparison](tf4/README.md)
+preserved all 152 tensors, four complete captures and four tokens, and measured
+572 fewer group checks per forward. This is not independent numerical
+acceptance or a qualified performance improvement.
 
 ## Verified Scope
 
@@ -14,6 +16,10 @@ acceptance, or a performance improvement.
 | New worker build | 553 passed, four unchanged ignored | Separate [paired-source checkpoint](../state-bank-batch-v1/README.md) |
 | Build-host deployment export | Source, named test, command and Cargo-artifact replay passed | No GPU launch |
 | Local and MI350 transfer integrity | 129 artifact references, 115 files, 14,377,883 bytes verified on both | Executable/library and live GPU audits are separate |
+| Fresh executable/library audits | Parent and worker passed; same host, boot, devices and dependency identities | Separate reviewed engineering admission |
+| GPU TF4 observation | One attempt, six device audits, seven natural owned exits, clean Close/reap | Four early teacher-forced forwards only |
+| Same-image comparison | 152 tensors, four payloads and tokens exactly equal; 572 fewer checks per forward | Not independent model correctness |
+| Comparison policy tests | 25 passed, no errors, failures or skips | Separate synthetic CPU suite |
 
 The deployment adds only the new worker and its evidence. It retains explicit
 CPU522, CPU475 and CPU633 predecessor manifests and the original parent and
@@ -50,10 +56,9 @@ pinned paths. No shared dependency cache or another user's files were removed.
 
 ## Remaining Gates
 
-Receiver byte verification passed. Fresh executable/library review and the
-same-V7 TF4 GPU comparison remain required. That comparison must preserve all 152 tensors,
-four complete captures and tokens, measure the predicted 572 fewer group
-checks per forward, and exercise reused banks on forwards three and four.
+Receiver byte verification, fresh executable/library review and the same-V7
+TF4 GPU comparison passed, including reused banks on forwards three and four.
 Independent full-model numerical acceptance, sustained BF16 Qwen3-8B
 2,048/256 throughput, production admission, and the 700 tok/s target remain
-open. No `main` or tutorial-site branch is changed by this checkpoint.
+open. All issue #42 M0-M7 milestones remain open. No `main` or tutorial-site
+branch is changed by this checkpoint.
