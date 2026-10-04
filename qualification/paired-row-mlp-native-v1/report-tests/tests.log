@@ -1,0 +1,17 @@
+test_decreasing_or_zero_endpoint_and_noninteger_host_time_fail (test_report.Report.test_decreasing_or_zero_endpoint_and_noninteger_host_time_fail) ... ok
+test_descriptive_summary_contains_absolute_values_not_ratios (test_report.Report.test_descriptive_summary_contains_absolute_values_not_ratios) ... ok
+test_full_1172_rows_include_288_exact_mlp_image_bindings (test_report.Report.test_full_1172_rows_include_288_exact_mlp_image_bindings) ... ok
+test_missing_reordered_or_wrong_rank_packet_fails (test_report.Report.test_missing_reordered_or_wrong_rank_packet_fails) ... ok
+test_numerical_or_performance_claim_is_rejected (test_report.Report.test_numerical_or_performance_claim_is_rejected) ... ok
+test_one_wrong_mlp_image_fails_even_if_counts_match (test_report.Report.test_one_wrong_mlp_image_fails_even_if_counts_match) ... ok
+test_same_case_join_allows_only_tiles_image_session_and_output (test_report.Report.test_same_case_join_allows_only_tiles_image_session_and_output) ... ok
+test_signed_half_integer_display_does_not_floor_negative_differences (test_report.Report.test_signed_half_integer_display_does_not_floor_negative_differences) ... ok
+test_strict_sha_json_and_uint_parsers (test_report.Report.test_strict_sha_json_and_uint_parsers) ... ok
+test_wrong_bootstrap_image_extent_or_hash_fails (test_report.Report.test_wrong_bootstrap_image_extent_or_hash_fails) ... ok
+test_wrong_queue_group_worker_or_session_fails (test_report.Report.test_wrong_queue_group_worker_or_session_fails) ... ok
+test_zero_raw_deltas_are_retained (test_report.Report.test_zero_raw_deltas_are_retained) ... ok
+
+----------------------------------------------------------------------
+Ran 12 tests in 0.019s
+
+OK

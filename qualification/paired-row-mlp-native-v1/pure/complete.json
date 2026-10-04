@@ -1,0 +1,35 @@
+{
+  "controller_sha256": "5995bcb2ee48f95b9f1c11e8eb9942ecae41e49032fc2fc56d9f9c909f33123b",
+  "elapsed_seconds": 3.5417252149782144,
+  "errors": 0,
+  "failures": 0,
+  "full_model_acceptance": false,
+  "gpu_execution": false,
+  "manifest_sha256": "09cb794c667a89f033128a588d6cf558e7306f0e1f7200bd341995113bc64b57",
+  "native_execution": false,
+  "numerical_acceptance": false,
+  "passed": true,
+  "performance_claim": false,
+  "production_authority": false,
+  "schema": "ferric-p228-down2-clock-pure-v1",
+  "skipped": 0,
+  "source_postchecks_passed": true,
+  "source_sha256": "e9cde4479fb166a0993cb1ceab3c4e95cd2745c59a513f6cc72024cb827d83b2",
+  "sources_after": {
+    "bytes": 4401,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/down2-clock-gpu-pure-v228-v1/sources-after.json",
+    "sha256": "e9cde4479fb166a0993cb1ceab3c4e95cd2745c59a513f6cc72024cb827d83b2"
+  },
+  "sources_before": {
+    "bytes": 4401,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/down2-clock-gpu-pure-v228-v1/sources-before.json",
+    "sha256": "e9cde4479fb166a0993cb1ceab3c4e95cd2745c59a513f6cc72024cb827d83b2"
+  },
+  "synthetic_policy_tests_only": true,
+  "tests": 75,
+  "transcript": {
+    "bytes": 11683,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/down2-clock-gpu-pure-v228-v1/tests.log",
+    "sha256": "6ee32af89a089d29f55cba647eb82376472199aa20f38ab5cc0d7bb02b1cdf7e"
+  }
+}

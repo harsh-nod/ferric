@@ -79,7 +79,8 @@ preparation and host checks and must not be reported as decode throughput.
 Establish the dispatch/counter clock-domain relationship and bounded clock
 calibration before reporting GPU durations or overlap. The
 [paired-row MLP candidate](../paired-row-mlp-lowering-v1/README.md) subsequently
-passed checked HSACO lowering and resource inspection. It still needs GPU
-output comparison before an equal-workload timing ablation.
+passed checked HSACO lowering and resource inspection, followed by an exact
+[GPU output comparison](../paired-row-mlp-native-v1/README.md). Repeated
+equal-workload timing remains pending.
 Full-model numerical acceptance and the sustained 2,048/256 benchmark remain
 separate requirements.

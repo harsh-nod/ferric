@@ -1,0 +1,12 @@
+{
+  "report.py": {
+    "bytes": 16401,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-down2-clock-report-v1/report.py",
+    "sha256": "0ff94db9dafa1c7b981088595661d5c101b0ccc0305b37e33852aad576f1487a"
+  },
+  "test_report.py": {
+    "bytes": 7239,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-down2-clock-report-v1/test_report.py",
+    "sha256": "0bb9179748301022f376db98e2a1472c187b7e5acf97e2a996e4fd10bad1a1e0"
+  }
+}

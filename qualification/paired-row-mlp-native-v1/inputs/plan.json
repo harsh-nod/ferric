@@ -1,0 +1,154 @@
+{
+  "baseline": {
+    "bytes": 1116281,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-state-bank-batch-tf4-shared-full-currentness-gpu-v228-v1/complete.json",
+    "sha256": "9917a07aba38ecdf4ca1c9289774c9b9c040bdf5bf850157126c87ca1ab7595c"
+  },
+  "clock_baseline": {
+    "bytes": 902162,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-device-clock-tf4-shared-full-currentness-gpu-v228-v1/complete.json",
+    "sha256": "e34189597dc7db7a7c325040f5381932e84390c1a2cf32055830858cb9278ddb"
+  },
+  "decode_review": {
+    "bytes": 46951,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-down2-clock-tf4-inputs-v228-v1/decode-review.json",
+    "sha256": "4668c8b8b1cd6b7ed344f67df204cc19a0d67e8cceac02b115ef688cb81cbdf8"
+  },
+  "down2_image": {
+    "bytes": 33112,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-down2-clock-tf4-inputs-v228-v1/tiles.hsaco",
+    "sha256": "65a76f917c12476f4814174ee39d515642a643a0352c6609ee514955a6a97449"
+  },
+  "down2_lowering": {
+    "bytes": 23895,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-down2-checked-probe-v228-v1/complete.json",
+    "sha256": "0ba363b9b4106e5293e4e6152d719c795c2d58f05e062b6a67570f194e0eb68e"
+  },
+  "down2_review": {
+    "bytes": 14982,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-down2-clock-tf4-inputs-v228-v1/down2-review.json",
+    "sha256": "c64893ad99169152406ea71b78fe89dd8666225ed11ad338d370892e6a290847"
+  },
+  "image_deployment": {
+    "bytes": 4048,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-deployment-v228-v1/deployment.json",
+    "sha256": "fb73435a16d3be7d1069a776270e2901b71d31fa352ae3cec352832bbea058aa"
+  },
+  "numericals": [
+    {
+      "bytes": 487421,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-numerical-v228-v1/complete.json",
+      "sha256": "6185d809002e61f53edb1a47f3fbf58cfa815e23daae70c108a7d12dfeeec62e"
+    },
+    {
+      "bytes": 541009,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-numerical-v228-v2/complete.json",
+      "sha256": "24b4a5ea414858e362ae0a6c2e6e1bc5cb1ad1d144c3e0ff8cac7289d232504a"
+    },
+    {
+      "bytes": 595440,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-numerical-v228-v3/complete.json",
+      "sha256": "eec4e9dd9d501775ec1d1c9dfd2fb778d666d91631256994402a9618fb97b9f7"
+    },
+    {
+      "bytes": 649694,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-numerical-v228-v4/complete.json",
+      "sha256": "c4a35d01f6ec4f838e3fdd4d2fbf6327000caf425049e9b419a1125690411c1c"
+    },
+    {
+      "bytes": 704575,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-numerical-v228-v5/complete.json",
+      "sha256": "d3df53b2979917e1b72c03003c5407bcd1ddd43be65438942cc631c4588f0c66"
+    },
+    {
+      "bytes": 759320,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-numerical-v228-v6/complete.json",
+      "sha256": "f4cf48160c02c7acbbcafc785f57234cd7cffe80ee8fc5c5c2cac170e959b0f5"
+    }
+  ],
+  "output_label": "prefix-down2-clock-tf4-shared-full-currentness-gpu-v228-v1",
+  "parent": {
+    "bytes": 13771584,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/device-clock-runtime-v228-v1/ferric-qwen3-finite-prefix-decode-device-clock-engineering",
+    "sha256": "8d8c8786b159ad959a6fa9ec6635915dfe2fde8214ce52a9254bf463c64aa2ca"
+  },
+  "parent_cpu": {
+    "bytes": 316284,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/gfx950-clock-parent-cpu-v228-v1/complete.json",
+    "sha256": "d2a118dd2a3bfac749b18de26883a661a1078a22ebf374853a11b081f43b1484"
+  },
+  "parent_runtime_review": {
+    "bytes": 2792,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-device-clock-tf4-inputs-v228-v1/parent-runtime-review.json",
+    "sha256": "eea09676b1c8cb2599fe8fb73fe1ae9652112642612dc460185c7cda6006b0f0"
+  },
+  "policy": "shared-full-currentness",
+  "request": {
+    "bytes": 8114,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-down2-clock-tf4-inputs-v228-v1/request.json",
+    "sha256": "a413a006b377e2a4fe9bfc4decd9aebe7e3a933a5ddd154e1953132af1d401ec"
+  },
+  "schema": "ferric-p228-down2-clock-inputs-v1",
+  "standalone_cases": [
+    {
+      "bytes": 259746,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-profile-gpu-v228-v1/genuine-pos0/complete.json",
+      "sha256": "41d4674c3f6665e24a38d08074a6d91be5118d012f51bce87298d8b69eccd76f"
+    },
+    {
+      "bytes": 286191,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-profile-gpu-v228-v1/genuine-pos4/complete.json",
+      "sha256": "1f750946bbb066417efdc8c080e57f26135cb96ee2a0ae45c20e9cb743da95c7"
+    },
+    {
+      "bytes": 313237,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-profile-gpu-v228-v1/patterned-pos15/complete.json",
+      "sha256": "fc0933062e18fe002f4486ab9fdb468778de1005f887d42fffa28bede4a38afe"
+    },
+    {
+      "bytes": 340058,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-profile-gpu-v228-v1/patterned-pos16/complete.json",
+      "sha256": "bbf1f86d90c9e45e6a970480f0cf7daaccd35a3e2893f35dbda0ff9337b8e64e"
+    },
+    {
+      "bytes": 367266,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-profile-gpu-v228-v1/patterned-pos2047/complete.json",
+      "sha256": "f3ba008cb8358021fb01f15a88ae7ab61490c8e49e2070c1df705d4e0ddf1bf4"
+    },
+    {
+      "bytes": 394331,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-profile-gpu-v228-v1/patterned-pos2048/complete.json",
+      "sha256": "e69d9e7b4587e3a520b354dd40b013aa1663b521b02bed573b468085b634d6ff"
+    }
+  ],
+  "standalone_prepared": {
+    "bytes": 37422,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-prepared-v228-v1/complete.json",
+    "sha256": "83013e40a7ef2e54c8c6dee59873cf04586dc854555898539f2534697c858946"
+  },
+  "supervisor_test_sources": {
+    "bytes": 4401,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/down2-clock-gpu-pure-v228-v1/sources-before.json",
+    "sha256": "e9cde4479fb166a0993cb1ceab3c4e95cd2745c59a513f6cc72024cb827d83b2"
+  },
+  "supervisor_tests": {
+    "bytes": 1479,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/down2-clock-gpu-pure-v228-v1/complete.json",
+    "sha256": "fa702a1c96a0a326243cc4a0d4155623af28d8b868ac596b13a29d2c5efedbc4"
+  },
+  "worker": {
+    "bytes": 5018856,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/device-clock-runtime-v228-v1/ferric-tp-peer-finite-engineering-worker-v1",
+    "sha256": "d2af909e7fef88af5b20f4ae8f2a5779a7aee93a187169e97a939bec7d3a0fed"
+  },
+  "worker_cpu": {
+    "bytes": 213924,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/gfx950-clock-recorder-cpu-v228-v1/complete.json",
+    "sha256": "41ddcf8a9cb48b970d4f9a4187de6f6de1fd0506ba098d524e82d17335030f1d"
+  },
+  "worker_runtime_review": {
+    "bytes": 2521,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-device-clock-tf4-inputs-v228-v1/worker-runtime-review.json",
+    "sha256": "4fbee0a79525f45dc1c36345b94fd218aaa713dc4d95032f4ca780a3c774abe0"
+  }
+}

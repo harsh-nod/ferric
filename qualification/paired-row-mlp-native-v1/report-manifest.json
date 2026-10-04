@@ -1,0 +1,122 @@
+{
+  "schema": "ferric-p228-down2-clock-report-publication-v1",
+  "scope": "Supplement to the unchanged native result.json publication ledger; covers the actual CPU-only report, tested source and receipts.",
+  "native_publication": {
+    "path": "result.json",
+    "bytes": 43518,
+    "sha256": "27796747d3762917f048fc8b495cacd019705e61401f72767d1e6613904e105c"
+  },
+  "baseline": {
+    "bytes": 902162,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-device-clock-tf4-shared-full-currentness-gpu-v228-v1/complete.json",
+    "sha256": "e34189597dc7db7a7c325040f5381932e84390c1a2cf32055830858cb9278ddb"
+  },
+  "candidate": {
+    "bytes": 963187,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-down2-clock-tf4-shared-full-currentness-gpu-v228-v1/complete.json",
+    "sha256": "00e1af86b1a61894797dc1eeb3202a113d62bd3d11c8069ba6299d63f8875073"
+  },
+  "report": {
+    "path": "report/comparison.json",
+    "bytes": 22595,
+    "sha256": "a9808d3da5bb36a84617fa071eed100ba6c2bd664f59d32b88cc202c78037c6d"
+  },
+  "plotting_helper": {
+    "path": "../native-device-clock-observation-v1/report.py",
+    "bytes": 17146,
+    "sha256": "2dff8e703bde0e2370ada6190d635e023f4929ec502a70d8a536979d8a7898d3"
+  },
+  "report_tests": {
+    "path": "report-tests/complete.json",
+    "bytes": 1407,
+    "sha256": "f85633f7a8dba27a42890d6977556a39a0abc64e718f9c16d2768f691700d8e1",
+    "passed": true,
+    "tests": 12,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "retained": [
+    {
+      "path": "report/baseline-heatmaps.svg",
+      "bytes": 86232,
+      "sha256": "59e4cc1f528cdc245656d22e0fd673f384a26633043fe61cff78e7a82e86f9fd"
+    },
+    {
+      "path": "report/baseline-ranges.svg",
+      "bytes": 6661,
+      "sha256": "35d8f233bf091958a2f835a552ea5ea170440c9d4420055ec40414f6bddd63b8"
+    },
+    {
+      "path": "report/comparison.json",
+      "bytes": 22595,
+      "sha256": "a9808d3da5bb36a84617fa071eed100ba6c2bd664f59d32b88cc202c78037c6d"
+    },
+    {
+      "path": "report/comparison.md",
+      "bytes": 2760,
+      "sha256": "5bc8af7acf06482078ed8291ad1bf3cb81ac295f2e6ef0c9c3b228a7d90db883"
+    },
+    {
+      "path": "report/down2-heatmaps.svg",
+      "bytes": 86232,
+      "sha256": "ec1c4a15eddcac9552eda882e30fb4dadd294d0f6eb572f32a2b25a6f2f5b520"
+    },
+    {
+      "path": "report/down2-ranges.svg",
+      "bytes": 6660,
+      "sha256": "f71c88c435830f7c7cd8d9c88c2b020fa99faaf30edf08ac38d94470fec82cb7"
+    },
+    {
+      "path": "report-source/README.md",
+      "bytes": 2688,
+      "sha256": "c05d2a3431574ab294e5ca39a73353432e18a106a6fafe7e3053808785ff58cf"
+    },
+    {
+      "path": "report-source/report.py",
+      "bytes": 16401,
+      "sha256": "0ff94db9dafa1c7b981088595661d5c101b0ccc0305b37e33852aad576f1487a"
+    },
+    {
+      "path": "report-source/test_report.py",
+      "bytes": 7239,
+      "sha256": "0bb9179748301022f376db98e2a1472c187b7e5acf97e2a996e4fd10bad1a1e0"
+    },
+    {
+      "path": "report-tests/complete.json",
+      "bytes": 1407,
+      "sha256": "f85633f7a8dba27a42890d6977556a39a0abc64e718f9c16d2768f691700d8e1"
+    },
+    {
+      "path": "report-tests/sources-after.json",
+      "bytes": 510,
+      "sha256": "911fa59919d530db598d7498b8f95236fe5dd163a6a0f9ce70af45ad51116ff6"
+    },
+    {
+      "path": "report-tests/sources-before.json",
+      "bytes": 510,
+      "sha256": "911fa59919d530db598d7498b8f95236fe5dd163a6a0f9ce70af45ad51116ff6"
+    },
+    {
+      "path": "report-tests/tests.log",
+      "bytes": 1695,
+      "sha256": "f08bdc6d70af9ed61030040d8d4e379026001c36f2d67ad5347feeb9025ec8ca"
+    },
+    {
+      "path": "tools/run_down2_clock_report_pure_p228_v1.py",
+      "bytes": 3991,
+      "sha256": "8129e7791e932698c8325247582a0a58f63d3095ac9486df91c10eb8a0ce05f5"
+    }
+  ],
+  "descriptive_only": true,
+  "numerical_acceptance": false,
+  "full_model_acceptance": false,
+  "clock_domain_validated": false,
+  "calibrated_nanoseconds": false,
+  "cross_device_clock_alignment": false,
+  "speedup_claim": false,
+  "overlap_claim": false,
+  "throughput_claim": false,
+  "production_authority": false,
+  "sustained_2048_256": false
+}

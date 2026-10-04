@@ -1,0 +1,98 @@
+{
+  "files": [
+    {
+      "bytes": 3904,
+      "path": "INTAKE.md",
+      "sha256": "728ab955603ba912397f96a491ee7d0dd6bccd4c274de868ee95328031bca3bb"
+    },
+    {
+      "bytes": 5083,
+      "path": "README.md",
+      "sha256": "c6539d8796d98f09ecc9eab4213ab765e8b9128a214cbaa4d1e759e46117a420"
+    },
+    {
+      "bytes": 21802,
+      "path": "baseline_comparison.py",
+      "sha256": "413e8bb4ea5637cb3ca67003433b62bf7cb90832c4f88101d2c9ea9fa7bcc512"
+    },
+    {
+      "bytes": 13589,
+      "path": "baseline_diagnostic.py",
+      "sha256": "259f6f233be23da36eac213bfb5e0c905afa43461461fbb0305efcc45c08d930"
+    },
+    {
+      "bytes": 9616,
+      "path": "device_validation.py",
+      "sha256": "8ea4654557bb01e181e13da8d502643736ed80576ba5b2bfc06a7f64080cd525"
+    },
+    {
+      "bytes": 13069,
+      "path": "down2.py",
+      "sha256": "0116af05c504f5747257c5265ff404cb763d8709a5f63f2ec036c29374a17730"
+    },
+    {
+      "bytes": 10099,
+      "path": "host_validation.py",
+      "sha256": "2f32426a80aca05125112ee3f023c075caea2f9360cbbde1fcb6c3b54cc4f73f"
+    },
+    {
+      "bytes": 22858,
+      "path": "intake.py",
+      "sha256": "8c8218950490b18bd8183e03333dc6c0771256770917968f01f992c3d27dd3c8"
+    },
+    {
+      "bytes": 16186,
+      "path": "layer_validation.py",
+      "sha256": "757c077979b7ee02d4c0e7d222e75292cd9d417927f84ae9a8134344f8e217b9"
+    },
+    {
+      "bytes": 15293,
+      "path": "raw_validation.py",
+      "sha256": "b07590d64d17627cc09c7bcf6312d7c62360329967078e31b5e5cb9adb1b1771"
+    },
+    {
+      "bytes": 15795,
+      "path": "run.py",
+      "sha256": "879c3a63a743af4dc341959e2b875d5b0ae03b7a42ea2c06844420f6efc3bc19"
+    },
+    {
+      "bytes": 12424,
+      "path": "run_row_facts_v2.py",
+      "sha256": "244c12f62c8a439aa01b44380fc464008b94006bc919201c8d510c64177fc820"
+    },
+    {
+      "bytes": 10336,
+      "path": "test_device_validation.py",
+      "sha256": "deb2ea75ff5d039232e1e22ecc0b11b87eed4fdee709c42ca9ffdddde806ec9e"
+    },
+    {
+      "bytes": 9427,
+      "path": "test_down2.py",
+      "sha256": "713c310c63f082b15891ed10cb623779360eccb2138be344fe403fef5c8ed0ea"
+    },
+    {
+      "bytes": 16205,
+      "path": "test_intake.py",
+      "sha256": "30a1f503a52481d4af20047b913fba25058f673984b7cfd0f98759ad3f3b58ff"
+    },
+    {
+      "bytes": 15654,
+      "path": "test_raw_validation.py",
+      "sha256": "599c6226f5b75a1ac19e027211f78cfdce0385f06e822932a56d1a1796238cff"
+    },
+    {
+      "bytes": 15833,
+      "path": "test_run.py",
+      "sha256": "c7745fc8330c7ba30ce1bc3269fe99c220051099c0dcdc98245dfcec32b35285"
+    }
+  ],
+  "pure_tests": 75,
+  "schema": "ferric-p228-down2-clock-package-v1",
+  "test_census": {
+    "test_device_validation.py": 12,
+    "test_down2.py": 14,
+    "test_intake.py": 19,
+    "test_raw_validation.py": 17,
+    "test_run.py": 13
+  }
+}

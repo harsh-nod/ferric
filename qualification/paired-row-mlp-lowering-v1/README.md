@@ -2,9 +2,11 @@
 
 The paired-row BF16 down-projection candidate passed fourteen CPU tests and
 the complete nine-stage checked Rust-to-HSACO pipeline on `mi350-2`. It has
-not been selected in the live worker or executed on GPU. This checkpoint
-qualifies compilation and host-side equivalence tests, not a speedup or
-independent full-model numerical acceptance.
+not been selected in the production path. This checkpoint qualifies compilation
+and host-side equivalence tests, not a speedup or independent full-model
+numerical acceptance. The subsequent [native GPU comparison](../paired-row-mlp-native-v1/README.md)
+passed with four complete byte-identical output buffers and 152 equal tensor
+comparisons against the unchanged baseline.
 
 ## Optimization
 
@@ -85,9 +87,9 @@ The [paired-row macro](source/device/qwen3-tp-wave-rmsnorm-kernels-v15/src/mlp_t
 and [regression tests](source/device/qwen3-tp-wave-rmsnorm-kernels-v15/tests/mlp_down_two_row_v1.rs)
 are the exact formatted candidate sources.
 
-Next, qualify the exact image through the GPU admission and lifecycle checks,
-compare complete state and output buffers against the unchanged workload, and
-then run a timing ablation. The [native clock baseline](../native-device-clock-observation-v1/README.md)
+The subsequent native experiment passed image admission, lifecycle and output
+invariance checks for the four-forward workload. Repeated equal-workload timing
+remains pending. The [native clock baseline](../native-device-clock-observation-v1/README.md)
 is available, but its raw ticks are not calibrated nanoseconds. Independent
 model-reference acceptance and the sustained single-request Qwen3-8B BF16
 target-only 2,048/256, 700 tokens/s target remain open.

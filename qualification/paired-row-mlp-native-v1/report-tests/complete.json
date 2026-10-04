@@ -1,0 +1,35 @@
+{
+  "controller": {
+    "bytes": 3991,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/run_down2_clock_report_pure_p228_v1.py",
+    "sha256": "8129e7791e932698c8325247582a0a58f63d3095ac9486df91c10eb8a0ce05f5"
+  },
+  "errors": 0,
+  "failures": 0,
+  "gpu_execution": false,
+  "numerical_acceptance": false,
+  "passed": true,
+  "performance_claim": false,
+  "production_authority": false,
+  "runtime_audit_executed": false,
+  "schema": "ferric-p228-down2-clock-report-pure-v1",
+  "skipped": 0,
+  "source_postchecks_passed": true,
+  "sources_after": {
+    "bytes": 510,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/down2-clock-report-pure-v228-v1/sources-after.json",
+    "sha256": "911fa59919d530db598d7498b8f95236fe5dd163a6a0f9ce70af45ad51116ff6"
+  },
+  "sources_before": {
+    "bytes": 510,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/down2-clock-report-pure-v228-v1/sources-before.json",
+    "sha256": "911fa59919d530db598d7498b8f95236fe5dd163a6a0f9ce70af45ad51116ff6"
+  },
+  "synthetic_policy_tests_only": true,
+  "tests": 12,
+  "transcript": {
+    "bytes": 1695,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/down2-clock-report-pure-v228-v1/tests.log",
+    "sha256": "f08bdc6d70af9ed61030040d8d4e379026001c36f2d67ad5347feeb9025ec8ca"
+  }
+}

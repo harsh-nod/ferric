@@ -6,11 +6,15 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Latest: the [paired-row MLP candidate](../qualification/paired-row-mlp-lowering-v1/README.md)
-passed fourteen CPU tests and all nine checked lowering/replay/emission stages
-on `mi350-2`. Its emitted gfx950 image uses 106 VGPRs, 106 SGPRs and 512 bytes
-of shared memory, without spills. It is not live-selected or GPU-qualified;
-equal-workload output comparison and timing remain pending.
+Latest: the [paired-row MLP GPU comparison](../qualification/paired-row-mlp-native-v1/README.md)
+passed on `mi350`: four complete output buffers and all 152 tensor comparisons
+were byte-identical to the unchanged clock-enabled baseline. All 288 MLP
+dispatches bind the new checked image. One attempt, six audits and seven
+natural/reaped process leaves completed without retries or forced cleanup.
+This follows fourteen CPU tests and nine checked lowering/replay/emission
+stages on `mi350-2`. The checkpoint includes baseline/candidate raw-counter
+tables and four plots; the report's twelve tests passed separately on `mi350`.
+Independent numerical acceptance and calibrated/repeated timing remain open.
 
 The [native clock V2 capture](../qualification/native-device-clock-observation-v1/README.md)
 passed on `mi350`: sixteen clock samples, all 1,172 dispatch rows and exact

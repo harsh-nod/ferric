@@ -1,0 +1,61 @@
+{
+  "cleanup_signalled": false,
+  "command": {
+    "bytes": 989,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-down2-clock-tf4-shared-full-currentness-gpu-v228-v1/parent/command.json",
+    "sha256": "ec86bc5dc30c903781f07f0596fa2ae3c5f61d74291c17929dbf633a559e166f"
+  },
+  "elapsed_seconds": 268.0149736900348,
+  "exit_code": 0,
+  "gpu_execution_requested": true,
+  "lineage": [
+    {
+      "event": "owned",
+      "identity": {
+        "pgid": 3582008,
+        "pid": 3582008,
+        "ppid": 3581984,
+        "sid": 3582008,
+        "starttime": 51996172,
+        "state": "R",
+        "uid": 9661
+      },
+      "reason": "spawned-parent"
+    },
+    {
+      "event": "owned",
+      "identity": {
+        "pgid": 3586696,
+        "pid": 3586696,
+        "ppid": 3582008,
+        "sid": 3582008,
+        "starttime": 52005396,
+        "state": "S",
+        "uid": 9661
+      },
+      "reason": "ancestry"
+    }
+  ],
+  "owned_groups": [
+    3582008,
+    3586696
+  ],
+  "owned_groups_absent": true,
+  "owned_processes_reaped": true,
+  "reason": null,
+  "started": {
+    "bytes": 282,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-down2-clock-tf4-shared-full-currentness-gpu-v228-v1/parent/started.json",
+    "sha256": "d4f4b64fa7af3adc9a803c1e15e9ccb1acef6f42286cc0fda46582900cbc43d1"
+  },
+  "stderr": {
+    "bytes": 374,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-down2-clock-tf4-shared-full-currentness-gpu-v228-v1/parent/stderr",
+    "sha256": "1968f3b8ca64473afc761dd593b4915522314253e5daf7de2c5b6edf2b59ee23"
+  },
+  "stdout": {
+    "bytes": 40736,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-down2-clock-tf4-shared-full-currentness-gpu-v228-v1/parent/stdout",
+    "sha256": "0bebb892673340af52fc860ac67cb1b4aca34df5e56e73318f47fd79a7e934e3"
+  }
+}
