@@ -1,0 +1,113 @@
+{
+  "authority": "none",
+  "case_bytes_rehashed": 4594564,
+  "case_files_rehashed": 58,
+  "device_audits": 6,
+  "forward_host_ns": [
+    7221280927,
+    7270357637,
+    7770758137,
+    7759656590
+  ],
+  "framework_diagnostic": {
+    "bytes": 154238,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-ar4-framework-diagnostic-v228-v1/complete.json",
+    "sha256": "fd05c7160e6c2ecd2d05dc05675d5a74fa1a200b0f625d74fbd25ebbb2a7ced1"
+  },
+  "full_model_acceptance": false,
+  "gpu_observation": {
+    "bytes": 996232,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-ar4-shared-full-currentness-gpu-v228-v1/complete.json",
+    "sha256": "d95058a58f72eff8b46d2d88fae2ec2ef31bdfb2e1f46ead93a1f50d376bc306"
+  },
+  "gpu_time": false,
+  "independent_tensor_acceptance": false,
+  "native_attempts": 1,
+  "natural_owned_leaf_exits": 7,
+  "numerical_acceptance": false,
+  "per_position": [
+    {
+      "candidate_output": 67,
+      "input_token": 9112,
+      "logits_elements": 151936,
+      "logits_exact_words": 54975,
+      "logits_max_abs_error": 0.07421875,
+      "logits_relative_l2": 0.004719594888140337,
+      "output_equal": true,
+      "position": 0,
+      "reference_output": 67,
+      "same_input_history": true
+    },
+    {
+      "candidate_output": 25,
+      "input_token": 67,
+      "logits_elements": 151936,
+      "logits_exact_words": 42584,
+      "logits_max_abs_error": 0.125,
+      "logits_relative_l2": 0.006601557577165703,
+      "output_equal": true,
+      "position": 1,
+      "reference_output": 25,
+      "same_input_history": true
+    },
+    {
+      "candidate_output": 576,
+      "input_token": 25,
+      "logits_elements": 151936,
+      "logits_exact_words": 39797,
+      "logits_max_abs_error": 0.125,
+      "logits_relative_l2": 0.0059849496108197245,
+      "output_equal": true,
+      "position": 2,
+      "reference_output": 576,
+      "same_input_history": true
+    },
+    {
+      "candidate_output": 2701,
+      "input_token": 576,
+      "logits_elements": 151936,
+      "logits_exact_words": 81279,
+      "logits_max_abs_error": 0.1875,
+      "logits_relative_l2": 0.0038754508117878465,
+      "output_equal": true,
+      "position": 3,
+      "reference_output": 2701,
+      "same_input_history": true
+    }
+  ],
+  "performance_claim": false,
+  "production_authority": false,
+  "retries": 0,
+  "schema": "ferric-p228-independent-ar4-public-result-v1",
+  "selected_runtime": {
+    "image": {
+      "bytes": 53560,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-deployment-v228-v1/image/prefix-tiles.hsaco",
+      "sha256": "4885204c8d510122588549107f42d2bc6f180f48fbc4eddd3bb1260e8d6629c5"
+    },
+    "parent": {
+      "bytes": 13618248,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-decode-host-policy-deployment-v228-v1/bin/ferric-qwen3-finite-prefix-decode-host-policy-engineering",
+      "sha256": "830f90b17bde546fb0d236a127f4bff055b31b4f0b46e2381e22ec072cb9d4d0"
+    },
+    "worker": {
+      "bytes": 4777488,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/group-fence-deployment-v228-v1/bin/ferric-tp-peer-finite-engineering-worker-v1",
+      "sha256": "3a16059a96c2050b654e4998b395b9672a19a593f08bf0c5df893d181a1f5294"
+    }
+  },
+  "summary": {
+    "byte_equal_tensor_rows": 0,
+    "captured_tensor_rows": 152,
+    "comparable_positions": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "compared_tensor_rows": 152,
+    "differing_tensor_rows": 152,
+    "incomparable_positions": []
+  },
+  "sustained_2048_256": false
+}

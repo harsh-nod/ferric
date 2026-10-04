@@ -6,7 +6,13 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Latest: the [V7 all-layer teacher-forced run](../qualification/independent-decode-observation-v1/tf4/README.md)
+Latest: the [V7 all-layer autoregressive run](../qualification/independent-decode-observation-v1/ar4/README.md)
+completed four own-token forwards on MI350 with six audits and clean Close/reap.
+Outputs 67, 25, 576 and 2701 match the independent framework; all 152 complete
+tensor rows still differ. Logit relative-L2 errors range from 0.00387545 to
+0.00660156. This is not the sustained 2,048/256 target or numerical acceptance.
+
+The [V7 all-layer teacher-forced run](../qualification/independent-decode-observation-v1/tf4/README.md)
 completed four forwards through all 36 layers on MI350 with clean Close/reap
 and all six audits. All four tokens match the independent framework reference,
 but all 152 complete tensor rows differ; logit relative-L2 errors range from
@@ -58,6 +64,7 @@ earlier checkpoints and their limitations at the time they were recorded.
 | Complete new-image prefix matrix on `mi350` | Six cases and 24 profile/rank rows pass; 49,144 attention values exact and eight within one BF16 step | No norm/QKV bound violations; maximum output error/bound ratio 0.0229955; patterned long KV is not authentic model prefill |
 | Historical two-residual capture replay on `mi350` | 32,768 BF16 words exact; 14 policy/layout tests passed | Original layer-0 captures and authenticated embedding row; no new GPU run, V7 or MLP acceptance |
 | New V7 image through 36-layer TF4 on `mi350` | 152 captures, four matching framework argmax tokens, six audits and clean Close/reap | All 152 complete tensor rows differ from framework; no numerical or performance acceptance |
+| New V7 image through 36-layer AR4 on `mi350` | Four own-token forwards, matching framework histories and outputs, 152 captures, six audits and clean Close/reap | All 152 complete tensor rows differ from framework; not the 2,048/256 workload or numerical acceptance |
 
 Both four-forward runs completed their Close protocol, reaped their owned
 processes, and passed their six surrounding device-state audits. The CPU suite
