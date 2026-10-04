@@ -1,0 +1,43 @@
+{
+  "schema": "ferric-p228-kir-indexed-baseline-cpu-package-v1",
+  "compiler_built": false,
+  "gpu_execution": false,
+  "production_authority": false,
+  "pure_tests_defined": 16,
+  "pure_tests_run": false,
+  "test_census": [
+    "BaselineTests.test_changed_failure_tuple_is_refused",
+    "BaselineTests.test_dependency_bodies_and_external_sources_stay_exact",
+    "BaselineTests.test_dependency_subset_has_no_indexed_additions",
+    "BaselineTests.test_focused_exact_prior_assertion_is_negative_observation",
+    "BaselineTests.test_full765_named_result_preserves_single_failure",
+    "BaselineTests.test_inventory_exactly_candidate_minus_twenty",
+    "BaselineTests.test_inventory_no_substitution_or_hidden_skips",
+    "BaselineTests.test_missing_duplicate_and_ignored_results_refused",
+    "BaselineTests.test_natural_success_is_measured_not_assumed",
+    "BaselineTests.test_observer_never_catches_resource_or_group_failures",
+    "BaselineTests.test_only_bounded_final101_assertion_can_be_observed",
+    "BaselineTests.test_selected_failure_cannot_be_one_of_twenty_additions",
+    "BaselineTests.test_six_phase_control_has_no_overlay_formatter_or_finalizer",
+    "BaselineTests.test_summary_filtered_count_and_exit_are_exact",
+    "BaselineTests.test_timeout_signal_boolean_or_surviving_group_refused",
+    "BaselineTests.test_unrelated_failed_test_is_refused"
+  ],
+  "files": [
+    {
+      "path": "README.md",
+      "bytes": 4651,
+      "sha256": "4f0215ed72580387ba914397c4624f8cc2f9c8a4828641ec20821b4b6ea33604"
+    },
+    {
+      "path": "run.py",
+      "bytes": 20734,
+      "sha256": "4311311fc1aec260cf189d7d20e05ede46360c266e8842eca23b5e26cf060344"
+    },
+    {
+      "path": "test_run.py",
+      "bytes": 7187,
+      "sha256": "e3ffa3ba7b067a4a552951a73d5d66ad7af30e82d48f4b3f3595108a84e2cabc"
+    }
+  ]
+}

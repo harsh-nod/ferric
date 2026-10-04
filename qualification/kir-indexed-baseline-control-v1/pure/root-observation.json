@@ -1,0 +1,27 @@
+{
+  "schema": "ferric-primary-agent-test-observation-v1",
+  "scope": "unchanged-RPO baseline controller synthetic tests only",
+  "remote_supervisor_receipt": false,
+  "host": "asrock-1w300-g2-2b.mkm.dcgpu",
+  "ssh_alias": "mi350-2",
+  "command": "timeout --signal=TERM --kill-after=10s 120s env -u PYTHONPATH -u PYTHONHOME -u PYTHONOPTIMIZE HIP_VISIBLE_DEVICES= ROCR_VISIBLE_DEVICES= CUDA_VISIBLE_DEVICES= taskset -c 8,9 nice -n 10 python3 -B /home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-kir-indexed-formal-join-baseline-cpu-v1/test_run.py -v",
+  "tool_session_id": 76736,
+  "initial_tool_chunk": "ddff82",
+  "terminal_tool_chunk": "f9eaa7",
+  "exit_code": 0,
+  "terminal_summary": "Ran 16 tests in 0.003s\n\nOK\n",
+  "tests_passed": 16,
+  "tests_failed": 0,
+  "prehash_tool_chunk": "fd541c",
+  "posthash_tool_chunk": "33dbfa",
+  "pre_and_post_hashes_equal": true,
+  "package_files": {
+    "manifest.json": "a6ecb1fe4ef7fda4d397f656590c73b188f0441c32322522d03a6c85441074d8",
+    "run.py": "4311311fc1aec260cf189d7d20e05ede46360c266e8842eca23b5e26cf060344",
+    "test_run.py": "e3ffa3ba7b067a4a552951a73d5d66ad7af30e82d48f4b3f3595108a84e2cabc",
+    "README.md": "4f0215ed72580387ba914397c4624f8cc2f9c8a4828641ec20821b4b6ea33604"
+  },
+  "actual_baseline_run": false,
+  "candidate_qualified": false,
+  "gpu_execution": false
+}

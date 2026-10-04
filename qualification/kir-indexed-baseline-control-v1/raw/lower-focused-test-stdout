@@ -1,0 +1,24 @@
+
+running 1 test
+test production_semantic_kir_v1::wave_task_entry_parameter_tests::access_roots::retained_fields::retained_nested_enum_referent_scalar_move_invalidates_saved_references ... FAILED
+
+successes:
+
+successes:
+
+failures:
+
+---- production_semantic_kir_v1::wave_task_entry_parameter_tests::access_roots::retained_fields::retained_nested_enum_referent_scalar_move_invalidates_saved_references stdout ----
+
+thread 'production_semantic_kir_v1::wave_task_entry_parameter_tests::access_roots::retained_fields::retained_nested_enum_referent_scalar_move_invalidates_saved_references' (926996) panicked at crates/fe2o3-lower-mir-kernel/src/production_semantic_kir_v1/retained_field_scalar_moves_v1_tests.rs:173:13:
+assertion `left == right` failed
+  left: (8, Some(7), 5)
+ right: (7, Some(4), 5)
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    production_semantic_kir_v1::wave_task_entry_parameter_tests::access_roots::retained_fields::retained_nested_enum_referent_scalar_move_invalidates_saved_references
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 764 filtered out; finished in 0.01s
+

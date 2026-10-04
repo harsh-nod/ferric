@@ -6,12 +6,21 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Latest: the [indexed inert-join attempt](../qualification/kir-indexed-formal-join-attempt-v1/README.md)
+Latest: an [unchanged-source control](../qualification/kir-indexed-baseline-control-v1/README.md)
+reproduced the existing nested-enum location assertion in both a focused run
+and the full original library (764 passed, 1 failed, 0 ignored). The 5,783-file
+original RPO copy had no overlay or formatting changes. All six phases
+completed naturally with clean postchecks. This establishes that the failure
+predates the indexed join; it does not qualify the failing library. The next
+candidate changes only that expectation in addition to the indexed-join source,
+retains the alias-only rejection check, and must pass the full staged suite.
+
+Previously, the [indexed inert-join attempt](../qualification/kir-indexed-formal-join-attempt-v1/README.md)
 compiled and passed all twenty new tests, but the full lower-library suite
 stopped at 784 passed / 1 failed / 0 ignored. An existing nested-enum test
 expected diagnostic location `(7, Some(4), 5)` and observed `(8, Some(7), 5)`.
-An unchanged-RPO control is needed to test the scheduler-order hypothesis;
-the failure has not been suppressed or attributed to the baseline as fact.
+The subsequent unchanged-RPO control above reproduced the same assertion;
+the failure was not suppressed.
 The subsequent finalizer and actual-handoff stages were not attempted.
 All process groups exited naturally and postchecks passed; no new image,
 GPU execution or numerical/performance qualification follows.

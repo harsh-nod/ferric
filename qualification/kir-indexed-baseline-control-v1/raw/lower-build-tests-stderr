@@ -1,0 +1,106 @@
+warning: /home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/kir-indexed-formal-join-baseline-cpu-v228-v1/source/fe2o3/crates/rustc-codegen-fe2o3/tests/fixtures/local-marker/Cargo.toml: file `/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/kir-indexed-formal-join-baseline-cpu-v228-v1/source/fe2o3/crates/rustc-codegen-fe2o3/tests/fixtures/local-marker/src/main.rs` found to be present in multiple build targets:
+  * `lib` target `fe2o3_trusted_item_local_marker`
+  * `bin` target `fe2o3-trusted-item-local-marker`
+   Compiling proc-macro2 v1.0.107
+   Compiling unicode-ident v1.0.24
+   Compiling quote v1.0.47
+   Compiling typenum v1.20.1
+   Compiling version_check v0.9.5
+   Compiling memchr v2.8.3
+   Compiling syn v3.0.4
+   Compiling hybrid-array v0.4.14
+   Compiling const_fn v0.4.12
+   Compiling cfg-if v1.0.4
+   Compiling block-buffer v0.12.1
+   Compiling crypto-common v0.2.2
+   Compiling syn v2.0.119
+   Compiling digest v0.11.3
+   Compiling awint_internals v0.19.0
+   Compiling cpufeatures v0.3.1
+   Compiling serde_core v1.0.229
+   Compiling sha2 v0.11.0
+   Compiling awint_core v0.19.0
+   Compiling zmij v1.0.23
+   Compiling recasting v0.2.3
+   Compiling equivalent v1.0.2
+   Compiling triple_arena v0.15.1
+   Compiling awint_ext v0.19.0
+   Compiling generic-array v0.14.7
+   Compiling serde v1.0.229
+   Compiling linkme-impl v0.3.37
+   Compiling serde_json v1.0.151
+   Compiling bytemuck v1.25.2
+   Compiling rustc_apfloat v0.2.3+llvm-462a31f5a5ab
+   Compiling safe_arch v1.2.0
+   Compiling awint_macro_internals v0.19.0
+   Compiling serde_derive v1.0.229
+   Compiling aho-corasick v1.1.5
+   Compiling slotmap v1.1.1
+   Compiling regex-syntax v0.8.11
+   Compiling linkme v0.3.37
+   Compiling hashbrown v0.17.1
+   Compiling smallvec v1.15.2
+   Compiling bytes v1.12.1
+   Compiling unicode-segmentation v1.13.3
+   Compiling allocator-api2 v0.2.21
+   Compiling bitflags v2.13.1
+   Compiling foldhash v0.2.0
+   Compiling scopeguard v1.2.0
+   Compiling thiserror v2.0.16
+   Compiling itoa v1.0.18
+   Compiling lock_api v0.4.14
+   Compiling convert_case v0.11.0
+   Compiling regex-automata v0.4.18
+   Compiling combine v4.6.8
+   Compiling indexmap v2.14.1
+   Compiling awint_macros v0.19.0
+   Compiling wide v1.7.0
+   Compiling thiserror-impl v2.0.16
+   Compiling rustc-hash v2.1.3
+   Compiling arrayvec v0.7.8
+   Compiling utf8-chars v3.0.7
+   Compiling pliron-derive v0.17.0 (https://github.com/harsh-nod/pliron.git?rev=161c385576d45d4e634ba179fa93a545b91124e6#161c3855)
+   Compiling awint v0.19.0
+   Compiling regex v1.13.1
+   Compiling spin v0.12.3
+   Compiling log v0.4.34
+   Compiling once_vec v0.4.0
+   Compiling semver v1.0.28
+   Compiling hi_sparse_bitset v0.9.0
+   Compiling downcast-rs v2.0.2
+   Compiling dyn-clone v1.0.20
+   Compiling rustc_version v0.4.1
+   Compiling crypto-common v0.1.7
+   Compiling pliron v0.17.0 (https://github.com/harsh-nod/pliron.git?rev=161c385576d45d4e634ba179fa93a545b91124e6#161c3855)
+   Compiling block-buffer v0.10.4
+   Compiling fe2o3-target-spec v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/kir-indexed-formal-join-baseline-cpu-v228-v1/source/fe2o3/crates/fe2o3-target-spec)
+   Compiling fe2o3-amd-target v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/kir-indexed-formal-join-baseline-cpu-v228-v1/source/fe2o3/crates/fe2o3-amd-target)
+   Compiling digest v0.10.7
+   Compiling curve25519-dalek v4.1.3
+   Compiling fe2o3-kernel-ir v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/kir-indexed-formal-join-baseline-cpu-v228-v1/source/fe2o3/crates/fe2o3-kernel-ir)
+   Compiling fe2o3-pliron-owner-core v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/kir-indexed-formal-join-baseline-cpu-v228-v1/source/fe2o3/crates/fe2o3-pliron-owner-core)
+   Compiling cpufeatures v0.2.17
+   Compiling curve25519-dalek-derive v0.1.1
+   Compiling zeroize v1.9.0
+   Compiling signature v2.2.0
+   Compiling subtle v2.6.1
+   Compiling ed25519 v2.2.3
+   Compiling sha2 v0.10.9
+   Compiling dialect-kernel v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/kir-indexed-formal-join-baseline-cpu-v228-v1/source/fe2o3/crates/dialect-kernel)
+   Compiling ed25519-dalek v2.2.0
+   Compiling fe2o3-mir-model v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/kir-indexed-formal-join-baseline-cpu-v228-v1/source/fe2o3/crates/fe2o3-mir-model)
+   Compiling fe2o3-proof-contracts v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/kir-indexed-formal-join-baseline-cpu-v228-v1/source/fe2o3/crates/fe2o3-proof-contracts)
+   Compiling fe2o3-functional-proof v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/kir-indexed-formal-join-baseline-cpu-v228-v1/source/fe2o3/crates/fe2o3-functional-proof)
+   Compiling dialect-proof v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/kir-indexed-formal-join-baseline-cpu-v228-v1/source/fe2o3/crates/dialect-proof)
+   Compiling dialect-gpu v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/kir-indexed-formal-join-baseline-cpu-v228-v1/source/fe2o3/crates/dialect-gpu)
+   Compiling dialect-mir v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/kir-indexed-formal-join-baseline-cpu-v228-v1/source/fe2o3/crates/dialect-mir)
+   Compiling fe2o3-kernel-analysis v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/kir-indexed-formal-join-baseline-cpu-v228-v1/source/fe2o3/crates/fe2o3-kernel-analysis)
+   Compiling fe2o3-kernel-descriptor v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/kir-indexed-formal-join-baseline-cpu-v228-v1/source/fe2o3/crates/fe2o3-kernel-descriptor)
+   Compiling fe2o3-pliron v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/kir-indexed-formal-join-baseline-cpu-v228-v1/source/fe2o3/crates/fe2o3-pliron)
+   Compiling fe2o3-llvm-handoff v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/kir-indexed-formal-join-baseline-cpu-v228-v1/source/fe2o3/crates/fe2o3-llvm-handoff)
+   Compiling fe2o3-kir-sim v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/kir-indexed-formal-join-baseline-cpu-v228-v1/source/fe2o3/crates/fe2o3-kir-sim)
+   Compiling fe2o3-kernel-opt v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/kir-indexed-formal-join-baseline-cpu-v228-v1/source/fe2o3/crates/fe2o3-kernel-opt)
+   Compiling fe2o3-amdgcn-model v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/kir-indexed-formal-join-baseline-cpu-v228-v1/source/fe2o3/crates/fe2o3-amdgcn-model)
+   Compiling dialect-amdgcn v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/kir-indexed-formal-join-baseline-cpu-v228-v1/source/fe2o3/crates/dialect-amdgcn)
+   Compiling fe2o3-lower-mir-kernel v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/kir-indexed-formal-join-baseline-cpu-v228-v1/source/fe2o3/crates/fe2o3-lower-mir-kernel)
+    Finished `test` profile [unoptimized] target(s) in 57.37s
