@@ -1,0 +1,14 @@
+test_actual_test_accounting_cannot_be_count_only (test_audit_projection_residual_decode_runtime.SelectorTests.test_actual_test_accounting_cannot_be_count_only) ... ok
+test_binary_digest_mode_and_nonelf_never_reach_auditor (test_audit_projection_residual_decode_runtime.SelectorTests.test_binary_digest_mode_and_nonelf_never_reach_auditor) ... ok
+test_both_roles_join_real_shaped_cpu_stream_sources_and_elf (test_audit_projection_residual_decode_runtime.SelectorTests.test_both_roles_join_real_shaped_cpu_stream_sources_and_elf) ... ok
+test_closed_args_role_namespace_and_digest_before_reads (test_audit_projection_residual_decode_runtime.SelectorTests.test_closed_args_role_namespace_and_digest_before_reads) ... ok
+test_exact_prior_and_controller_namespace_cannot_change (test_audit_projection_residual_decode_runtime.SelectorTests.test_exact_prior_and_controller_namespace_cannot_change) ... ok
+test_failed_or_nonnatural_or_authoritative_cpu_refuses (test_audit_projection_residual_decode_runtime.SelectorTests.test_failed_or_nonnatural_or_authoritative_cpu_refuses) ... ok
+test_filepin_is_strict_and_does_not_accept_boolean_extent (test_audit_projection_residual_decode_runtime.SelectorTests.test_filepin_is_strict_and_does_not_accept_boolean_extent) ... ok
+test_selected_cargo_role_profile_and_exact_stream_are_required (test_audit_projection_residual_decode_runtime.SelectorTests.test_selected_cargo_role_profile_and_exact_stream_are_required) ... ok
+test_source_snapshot_changes_or_forged_extent_refuse (test_audit_projection_residual_decode_runtime.SelectorTests.test_source_snapshot_changes_or_forged_extent_refuse) ... ok
+
+----------------------------------------------------------------------
+Ran 9 tests in 0.007s
+
+OK

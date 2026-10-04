@@ -1,0 +1,121 @@
+{
+  "controller_sha256": "a8f1d7d647c736c11050d28251fee8245413344a4c50e834fd5103a23427147c",
+  "elapsed_seconds": 1.279546912992373,
+  "errors": 0,
+  "failures": 0,
+  "full_model_acceptance": false,
+  "gpu_execution": false,
+  "manifest_sha256": "6dfd492f7dc8da8bd8eaa2f8e9da9bcbe36cd94756ba321bda538b3abb6fbb35",
+  "native_execution": false,
+  "numerical_acceptance": false,
+  "passed": true,
+  "performance_claim": false,
+  "production_authority": false,
+  "schema": "ferric-p228-projection-residual-decode-gpu-pure-v1",
+  "skipped": 0,
+  "source_postchecks_passed": true,
+  "source_sha256": "659780d488aa3de546ffd4dd92b9417e948c3232c9678cf78e2fc8d03d3e209a",
+  "sources_after": {
+    "bytes": 3263,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-residual-decode-gpu-pure-v228-v1/sources-after.json",
+    "sha256": "659780d488aa3de546ffd4dd92b9417e948c3232c9678cf78e2fc8d03d3e209a"
+  },
+  "sources_before": {
+    "bytes": 3263,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-residual-decode-gpu-pure-v228-v1/sources-before.json",
+    "sha256": "659780d488aa3de546ffd4dd92b9417e948c3232c9678cf78e2fc8d03d3e209a"
+  },
+  "synthetic_policy_tests_only": true,
+  "test_inventory_after": {
+    "test_decode_validation.py": [
+      "test_decode_validation.ValidationTests.test_candidate_identity_extent_base_profile_and_original_copy_are_joined",
+      "test_decode_validation.ValidationTests.test_chain_close_and_actual_reap_flags_cannot_be_faked",
+      "test_decode_validation.ValidationTests.test_claims_retries_and_final_private_accounting_refuse",
+      "test_decode_validation.ValidationTests.test_complete_body_roster_and_every_hashed_extent_remain_closed",
+      "test_decode_validation.ValidationTests.test_complete_tf4_binds_all_payloads_controls_and_new_profile",
+      "test_decode_validation.ValidationTests.test_duplicate_json_keys_and_boolean_counter_are_not_scalar_authority",
+      "test_decode_validation.ValidationTests.test_every_actual_input_generation_page_and_profile_is_checked",
+      "test_decode_validation.ValidationTests.test_exact_outer_request_schema_tf_only_and_closed_fields",
+      "test_decode_validation.ValidationTests.test_extra_image_is_charged_to_original_combined_input_budget",
+      "test_decode_validation.ValidationTests.test_last_layer_last_rank_terminal_state_is_still_checked",
+      "test_decode_validation.ValidationTests.test_nonfinite_payload_and_wrong_lowest_argmax_are_refused",
+      "test_decode_validation.ValidationTests.test_stderr_requires_one_worker_marker_and_all_four_terminal_lines"
+    ],
+    "test_intake.py": [
+      "test_intake.IntakeTests.test_cpu_name_summary_and_phase_mutations_refuse",
+      "test_intake.IntakeTests.test_nested_tf4_preserves_original_copy_v7_down2_and_reads_inputs",
+      "test_intake.IntakeTests.test_new_flat_cpu_accounting_and_both_roles",
+      "test_intake.IntakeTests.test_pending_actual_cpu_and_package_inputs_fail_closed",
+      "test_intake.IntakeTests.test_plan_is_separate_closed_tf4_namespace",
+      "test_intake.IntakeTests.test_prior_capture_bindings_do_not_relabel_old_tf4_as_new_capture",
+      "test_intake.IntakeTests.test_request_cannot_enable_ar_clocks_host_policy_or_old_schema",
+      "test_intake.IntakeTests.test_request_refuses_workload_image_session_and_bound_changes",
+      "test_intake.IntakeTests.test_root_review_binds_new_cpu_and_input_without_numerical_authority",
+      "test_intake.IntakeTests.test_selected_artifact_requires_exact_new_source_target_and_profile",
+      "test_intake.IntakeTests.test_transport_cannot_substitute_other_executable_identity",
+      "test_intake.IntakeTests.test_unqualified_image_or_inspection_refuses_before_read"
+    ],
+    "test_run.py": [
+      "test_run.RunTests.test_closed_fourteen_file_roster_refuses_missing_extra_and_symlink",
+      "test_run.RunTests.test_failed_or_forced_owner_never_qualifies",
+      "test_run.RunTests.test_failed_post_audit_does_not_skip_later_checks",
+      "test_run.RunTests.test_failed_pre_audit_prevents_native_and_keeps_all_post_audits",
+      "test_run.RunTests.test_failure_retention_allows_only_partial_known_files",
+      "test_run.RunTests.test_final_input_drift_withholds_complete",
+      "test_run.RunTests.test_inventory_propagates_walk_error_refuses_aliases_and_caps",
+      "test_run.RunTests.test_lineage_checks_actual_child_identity_when_observed",
+      "test_run.RunTests.test_one_attempt_six_audits_exact_cli_and_closed_retention",
+      "test_run.RunTests.test_original_leaf_resources_and_case_bounds_are_unchanged",
+      "test_run.RunTests.test_owner_parser_marker_summary_and_missing_capture_keep_evidence_without_retry"
+    ]
+  },
+  "test_inventory_before": {
+    "test_decode_validation.py": [
+      "test_decode_validation.ValidationTests.test_candidate_identity_extent_base_profile_and_original_copy_are_joined",
+      "test_decode_validation.ValidationTests.test_chain_close_and_actual_reap_flags_cannot_be_faked",
+      "test_decode_validation.ValidationTests.test_claims_retries_and_final_private_accounting_refuse",
+      "test_decode_validation.ValidationTests.test_complete_body_roster_and_every_hashed_extent_remain_closed",
+      "test_decode_validation.ValidationTests.test_complete_tf4_binds_all_payloads_controls_and_new_profile",
+      "test_decode_validation.ValidationTests.test_duplicate_json_keys_and_boolean_counter_are_not_scalar_authority",
+      "test_decode_validation.ValidationTests.test_every_actual_input_generation_page_and_profile_is_checked",
+      "test_decode_validation.ValidationTests.test_exact_outer_request_schema_tf_only_and_closed_fields",
+      "test_decode_validation.ValidationTests.test_extra_image_is_charged_to_original_combined_input_budget",
+      "test_decode_validation.ValidationTests.test_last_layer_last_rank_terminal_state_is_still_checked",
+      "test_decode_validation.ValidationTests.test_nonfinite_payload_and_wrong_lowest_argmax_are_refused",
+      "test_decode_validation.ValidationTests.test_stderr_requires_one_worker_marker_and_all_four_terminal_lines"
+    ],
+    "test_intake.py": [
+      "test_intake.IntakeTests.test_cpu_name_summary_and_phase_mutations_refuse",
+      "test_intake.IntakeTests.test_nested_tf4_preserves_original_copy_v7_down2_and_reads_inputs",
+      "test_intake.IntakeTests.test_new_flat_cpu_accounting_and_both_roles",
+      "test_intake.IntakeTests.test_pending_actual_cpu_and_package_inputs_fail_closed",
+      "test_intake.IntakeTests.test_plan_is_separate_closed_tf4_namespace",
+      "test_intake.IntakeTests.test_prior_capture_bindings_do_not_relabel_old_tf4_as_new_capture",
+      "test_intake.IntakeTests.test_request_cannot_enable_ar_clocks_host_policy_or_old_schema",
+      "test_intake.IntakeTests.test_request_refuses_workload_image_session_and_bound_changes",
+      "test_intake.IntakeTests.test_root_review_binds_new_cpu_and_input_without_numerical_authority",
+      "test_intake.IntakeTests.test_selected_artifact_requires_exact_new_source_target_and_profile",
+      "test_intake.IntakeTests.test_transport_cannot_substitute_other_executable_identity",
+      "test_intake.IntakeTests.test_unqualified_image_or_inspection_refuses_before_read"
+    ],
+    "test_run.py": [
+      "test_run.RunTests.test_closed_fourteen_file_roster_refuses_missing_extra_and_symlink",
+      "test_run.RunTests.test_failed_or_forced_owner_never_qualifies",
+      "test_run.RunTests.test_failed_post_audit_does_not_skip_later_checks",
+      "test_run.RunTests.test_failed_pre_audit_prevents_native_and_keeps_all_post_audits",
+      "test_run.RunTests.test_failure_retention_allows_only_partial_known_files",
+      "test_run.RunTests.test_final_input_drift_withholds_complete",
+      "test_run.RunTests.test_inventory_propagates_walk_error_refuses_aliases_and_caps",
+      "test_run.RunTests.test_lineage_checks_actual_child_identity_when_observed",
+      "test_run.RunTests.test_one_attempt_six_audits_exact_cli_and_closed_retention",
+      "test_run.RunTests.test_original_leaf_resources_and_case_bounds_are_unchanged",
+      "test_run.RunTests.test_owner_parser_marker_summary_and_missing_capture_keep_evidence_without_retry"
+    ]
+  },
+  "tests": 35,
+  "transcript": {
+    "bytes": 5542,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-residual-decode-gpu-pure-v228-v1/tests.log",
+    "sha256": "8db1922559a0a7d1af9a4b265b6bd59acd0b088569749bc08bd7235b4aff791f"
+  }
+}

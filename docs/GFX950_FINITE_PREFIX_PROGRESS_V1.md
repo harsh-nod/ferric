@@ -6,7 +6,13 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Latest: the [projection-residual four-step decode route](../qualification/projection-residual-decode-cpu-v1/README.md)
+Latest: the [four-step candidate supervisor](../qualification/projection-residual-decode-supervisor-v1/README.md)
+passed 35 synthetic policy tests on `mi350`; the separate executable-selector
+suite passed all nine tests. Both retained unchanged sources with no skips.
+These suites did not run a model or GPU kernel. The selected executables also
+completed separate runtime dependency audits; the new GPU attempt is pending.
+
+The [projection-residual four-step decode route](../qualification/projection-residual-decode-cpu-v1/README.md)
 passed joint CPU qualification on ASROCK through `mi350-2`: 1,022 passed,
 four unchanged ignores, all 87 commands naturally completed and reaped,
 and all 17 executables built. The 21 integrated source bodies match the
