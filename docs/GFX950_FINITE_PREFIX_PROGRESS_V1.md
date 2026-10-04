@@ -6,7 +6,15 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Latest: the [SiLU image completed four full 36-layer forwards on MI350](../qualification/silu-materialized-decode-native-v1/README.md)
+Latest: an [independent RoPE materialization diagnostic](../qualification/rope-framework-reference-v1/README.md)
+completed on ASROCK. All 38,528 conditional BF16 words match the installed
+framework when coefficients and products use its BF16 boundaries; fourteen
+reference tests passed. Keeping products in FP32 produces differences at all
+six nonzero captured-input probes. A separate FP64 table-construction model
+still differs at position 2303. These are CPU operator diagnostics, not genuine
+later-position model captures or validation of a new Rust GPU image.
+
+Previously, the [SiLU image completed four full 36-layer forwards on MI350](../qualification/silu-materialized-decode-native-v1/README.md)
 and its [independent framework comparison](../qualification/silu-materialized-decode-comparison-v1/README.md)
 completed on ASROCK. All 152 tensor slices were compared; all four output tokens
 match, but no complete tensor slice is bitwise identical. Logit relative-L2

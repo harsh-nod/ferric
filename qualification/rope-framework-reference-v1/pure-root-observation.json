@@ -1,0 +1,21 @@
+{
+  "schema": "ferric-p228-rope-reference-root-test-observation-v1",
+  "host": "mi350-2 (asrock-1w300-g2-2b)",
+  "command": "ssh.exe -o BatchMode=yes -o ConnectTimeout=20 -o HostName=asrock-1w300-g2-2b.mkm.dcgpu -o UserKnownHostsFile=//wsl.localhost/Ubuntu/home/harsh/.ssh/known_hosts -l harmenon mi350-2 'env HIP_VISIBLE_DEVICES= ROCR_VISIBLE_DEVICES= CUDA_VISIBLE_DEVICES= OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 /usr/bin/timeout --signal=INT --kill-after=15 120 /usr/bin/taskset -c 8,9 /usr/bin/nice -n 10 /usr/bin/python3 -I -B /home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-rope-framework-reference-v1/test_run.py -v'",
+  "tool_session": 13698,
+  "terminal_chunk": "ffdc2c",
+  "exit_code": 0,
+  "tests": 14,
+  "failures": 0,
+  "errors": 0,
+  "test_output_excerpt": "test_bad_shape_and_mixed_half_tables_refused (__main__.ArithmeticTests) ... ok\ntest_bf16_product_even_and_odd_ties (__main__.ArithmeticTests) ... ok\ntest_comparison_exposes_signed_zero_bits (__main__.ArithmeticTests) ... ok\ntest_exact_word_pack_roundtrip (__main__.ArithmeticTests) ... ok\ntest_file_pin_and_symlink_refusal (__main__.ArithmeticTests) ... ok\ntest_fp32_subnormal_ties (__main__.ArithmeticTests) ... ok\ntest_materialization_changes_cancelled_result (__main__.ArithmeticTests) ... ok\ntest_multiply_exact_normal_words (__main__.ArithmeticTests) ... ok\ntest_multiply_signed_zero (__main__.ArithmeticTests) ... ok\ntest_negation_before_product_preserves_negative_zero (__main__.ArithmeticTests) ... ok\ntest_nonfinite_and_overflow_refused (__main__.ArithmeticTests) ... ok\ntest_nonzero_positions_and_duplicated_halves (__main__.ArithmeticTests) ... ok\ntest_synthetic_corpus_is_finite_and_bounded (__main__.ArithmeticTests) ... ok\ntest_zero_table_identity_for_nonzero_values (__main__.ArithmeticTests) ... ok\n\n----------------------------------------------------------------------\nRan 14 tests in 0.005s\n\nOK\n",
+  "source_sha256": {
+    "run": "b6bf8cfee5b336fd2f844dabf67ce2ad903aa3fdb592e84e77833c796fbeb092",
+    "test": "98ce1ff24abd4507289ef79933bc848394e7c5402f129ccace0e6710c276816d"
+  },
+  "observation_kind": "Primary-agent observation of actual SSH tool output; not a remote supervisor receipt",
+  "gpu_execution": false,
+  "numerical_acceptance": false,
+  "production_authority": false
+}
+

@@ -1,0 +1,879 @@
+{
+  "rows": [
+    {
+      "corpus": "genuine-pos0-conditional",
+      "kind": "q",
+      "position": 0,
+      "vs_framework": {
+        "f64-model-fp32-products": {
+          "different_words": 0,
+          "exact_words": 4096,
+          "words": 4096
+        },
+        "f64-model-materialized": {
+          "different_words": 0,
+          "exact_words": 4096,
+          "words": 4096
+        },
+        "framework-table-fp32-products": {
+          "different_words": 0,
+          "exact_words": 4096,
+          "words": 4096
+        },
+        "independent-materialized": {
+          "different_words": 0,
+          "exact_words": 4096,
+          "words": 4096
+        }
+      }
+    },
+    {
+      "corpus": "genuine-pos0-conditional",
+      "kind": "k",
+      "position": 0,
+      "vs_framework": {
+        "f64-model-fp32-products": {
+          "different_words": 0,
+          "exact_words": 1024,
+          "words": 1024
+        },
+        "f64-model-materialized": {
+          "different_words": 0,
+          "exact_words": 1024,
+          "words": 1024
+        },
+        "framework-table-fp32-products": {
+          "different_words": 0,
+          "exact_words": 1024,
+          "words": 1024
+        },
+        "independent-materialized": {
+          "different_words": 0,
+          "exact_words": 1024,
+          "words": 1024
+        }
+      }
+    },
+    {
+      "corpus": "genuine-pos0-conditional",
+      "kind": "q",
+      "position": 1,
+      "vs_framework": {
+        "f64-model-fp32-products": {
+          "different_words": 437,
+          "exact_words": 3659,
+          "words": 4096
+        },
+        "f64-model-materialized": {
+          "different_words": 0,
+          "exact_words": 4096,
+          "words": 4096
+        },
+        "framework-table-fp32-products": {
+          "different_words": 315,
+          "exact_words": 3781,
+          "words": 4096
+        },
+        "independent-materialized": {
+          "different_words": 0,
+          "exact_words": 4096,
+          "words": 4096
+        }
+      }
+    },
+    {
+      "corpus": "genuine-pos0-conditional",
+      "kind": "k",
+      "position": 1,
+      "vs_framework": {
+        "f64-model-fp32-products": {
+          "different_words": 102,
+          "exact_words": 922,
+          "words": 1024
+        },
+        "f64-model-materialized": {
+          "different_words": 0,
+          "exact_words": 1024,
+          "words": 1024
+        },
+        "framework-table-fp32-products": {
+          "different_words": 71,
+          "exact_words": 953,
+          "words": 1024
+        },
+        "independent-materialized": {
+          "different_words": 0,
+          "exact_words": 1024,
+          "words": 1024
+        }
+      }
+    },
+    {
+      "corpus": "genuine-pos0-conditional",
+      "kind": "q",
+      "position": 2,
+      "vs_framework": {
+        "f64-model-fp32-products": {
+          "different_words": 508,
+          "exact_words": 3588,
+          "words": 4096
+        },
+        "f64-model-materialized": {
+          "different_words": 0,
+          "exact_words": 4096,
+          "words": 4096
+        },
+        "framework-table-fp32-products": {
+          "different_words": 385,
+          "exact_words": 3711,
+          "words": 4096
+        },
+        "independent-materialized": {
+          "different_words": 0,
+          "exact_words": 4096,
+          "words": 4096
+        }
+      }
+    },
+    {
+      "corpus": "genuine-pos0-conditional",
+      "kind": "k",
+      "position": 2,
+      "vs_framework": {
+        "f64-model-fp32-products": {
+          "different_words": 122,
+          "exact_words": 902,
+          "words": 1024
+        },
+        "f64-model-materialized": {
+          "different_words": 0,
+          "exact_words": 1024,
+          "words": 1024
+        },
+        "framework-table-fp32-products": {
+          "different_words": 98,
+          "exact_words": 926,
+          "words": 1024
+        },
+        "independent-materialized": {
+          "different_words": 0,
+          "exact_words": 1024,
+          "words": 1024
+        }
+      }
+    },
+    {
+      "corpus": "genuine-pos0-conditional",
+      "kind": "q",
+      "position": 3,
+      "vs_framework": {
+        "f64-model-fp32-products": {
+          "different_words": 538,
+          "exact_words": 3558,
+          "words": 4096
+        },
+        "f64-model-materialized": {
+          "different_words": 0,
+          "exact_words": 4096,
+          "words": 4096
+        },
+        "framework-table-fp32-products": {
+          "different_words": 384,
+          "exact_words": 3712,
+          "words": 4096
+        },
+        "independent-materialized": {
+          "different_words": 0,
+          "exact_words": 4096,
+          "words": 4096
+        }
+      }
+    },
+    {
+      "corpus": "genuine-pos0-conditional",
+      "kind": "k",
+      "position": 3,
+      "vs_framework": {
+        "f64-model-fp32-products": {
+          "different_words": 111,
+          "exact_words": 913,
+          "words": 1024
+        },
+        "f64-model-materialized": {
+          "different_words": 0,
+          "exact_words": 1024,
+          "words": 1024
+        },
+        "framework-table-fp32-products": {
+          "different_words": 95,
+          "exact_words": 929,
+          "words": 1024
+        },
+        "independent-materialized": {
+          "different_words": 0,
+          "exact_words": 1024,
+          "words": 1024
+        }
+      }
+    },
+    {
+      "corpus": "genuine-pos0-conditional",
+      "kind": "q",
+      "position": 2047,
+      "vs_framework": {
+        "f64-model-fp32-products": {
+          "different_words": 1344,
+          "exact_words": 2752,
+          "words": 4096
+        },
+        "f64-model-materialized": {
+          "different_words": 0,
+          "exact_words": 4096,
+          "words": 4096
+        },
+        "framework-table-fp32-products": {
+          "different_words": 1116,
+          "exact_words": 2980,
+          "words": 4096
+        },
+        "independent-materialized": {
+          "different_words": 0,
+          "exact_words": 4096,
+          "words": 4096
+        }
+      }
+    },
+    {
+      "corpus": "genuine-pos0-conditional",
+      "kind": "k",
+      "position": 2047,
+      "vs_framework": {
+        "f64-model-fp32-products": {
+          "different_words": 305,
+          "exact_words": 719,
+          "words": 1024
+        },
+        "f64-model-materialized": {
+          "different_words": 0,
+          "exact_words": 1024,
+          "words": 1024
+        },
+        "framework-table-fp32-products": {
+          "different_words": 249,
+          "exact_words": 775,
+          "words": 1024
+        },
+        "independent-materialized": {
+          "different_words": 0,
+          "exact_words": 1024,
+          "words": 1024
+        }
+      }
+    },
+    {
+      "corpus": "genuine-pos0-conditional",
+      "kind": "q",
+      "position": 2048,
+      "vs_framework": {
+        "f64-model-fp32-products": {
+          "different_words": 1302,
+          "exact_words": 2794,
+          "words": 4096
+        },
+        "f64-model-materialized": {
+          "different_words": 0,
+          "exact_words": 4096,
+          "words": 4096
+        },
+        "framework-table-fp32-products": {
+          "different_words": 1094,
+          "exact_words": 3002,
+          "words": 4096
+        },
+        "independent-materialized": {
+          "different_words": 0,
+          "exact_words": 4096,
+          "words": 4096
+        }
+      }
+    },
+    {
+      "corpus": "genuine-pos0-conditional",
+      "kind": "k",
+      "position": 2048,
+      "vs_framework": {
+        "f64-model-fp32-products": {
+          "different_words": 314,
+          "exact_words": 710,
+          "words": 1024
+        },
+        "f64-model-materialized": {
+          "different_words": 0,
+          "exact_words": 1024,
+          "words": 1024
+        },
+        "framework-table-fp32-products": {
+          "different_words": 247,
+          "exact_words": 777,
+          "words": 1024
+        },
+        "independent-materialized": {
+          "different_words": 0,
+          "exact_words": 1024,
+          "words": 1024
+        }
+      }
+    },
+    {
+      "corpus": "genuine-pos0-conditional",
+      "kind": "q",
+      "position": 2303,
+      "vs_framework": {
+        "f64-model-fp32-products": {
+          "different_words": 1336,
+          "exact_words": 2760,
+          "words": 4096
+        },
+        "f64-model-materialized": {
+          "different_words": 19,
+          "exact_words": 4077,
+          "words": 4096
+        },
+        "framework-table-fp32-products": {
+          "different_words": 1097,
+          "exact_words": 2999,
+          "words": 4096
+        },
+        "independent-materialized": {
+          "different_words": 0,
+          "exact_words": 4096,
+          "words": 4096
+        }
+      }
+    },
+    {
+      "corpus": "genuine-pos0-conditional",
+      "kind": "k",
+      "position": 2303,
+      "vs_framework": {
+        "f64-model-fp32-products": {
+          "different_words": 343,
+          "exact_words": 681,
+          "words": 1024
+        },
+        "f64-model-materialized": {
+          "different_words": 2,
+          "exact_words": 1022,
+          "words": 1024
+        },
+        "framework-table-fp32-products": {
+          "different_words": 280,
+          "exact_words": 744,
+          "words": 1024
+        },
+        "independent-materialized": {
+          "different_words": 0,
+          "exact_words": 1024,
+          "words": 1024
+        }
+      }
+    },
+    {
+      "corpus": "synthetic-boundaries",
+      "kind": "q",
+      "position": 0,
+      "vs_framework": {
+        "f64-model-fp32-products": {
+          "different_words": 0,
+          "exact_words": 256,
+          "words": 256
+        },
+        "f64-model-materialized": {
+          "different_words": 0,
+          "exact_words": 256,
+          "words": 256
+        },
+        "framework-table-fp32-products": {
+          "different_words": 0,
+          "exact_words": 256,
+          "words": 256
+        },
+        "independent-materialized": {
+          "different_words": 0,
+          "exact_words": 256,
+          "words": 256
+        }
+      }
+    },
+    {
+      "corpus": "synthetic-boundaries",
+      "kind": "k",
+      "position": 0,
+      "vs_framework": {
+        "f64-model-fp32-products": {
+          "different_words": 0,
+          "exact_words": 128,
+          "words": 128
+        },
+        "f64-model-materialized": {
+          "different_words": 0,
+          "exact_words": 128,
+          "words": 128
+        },
+        "framework-table-fp32-products": {
+          "different_words": 0,
+          "exact_words": 128,
+          "words": 128
+        },
+        "independent-materialized": {
+          "different_words": 0,
+          "exact_words": 128,
+          "words": 128
+        }
+      }
+    },
+    {
+      "corpus": "synthetic-boundaries",
+      "kind": "q",
+      "position": 1,
+      "vs_framework": {
+        "f64-model-fp32-products": {
+          "different_words": 29,
+          "exact_words": 227,
+          "words": 256
+        },
+        "f64-model-materialized": {
+          "different_words": 0,
+          "exact_words": 256,
+          "words": 256
+        },
+        "framework-table-fp32-products": {
+          "different_words": 0,
+          "exact_words": 256,
+          "words": 256
+        },
+        "independent-materialized": {
+          "different_words": 0,
+          "exact_words": 256,
+          "words": 256
+        }
+      }
+    },
+    {
+      "corpus": "synthetic-boundaries",
+      "kind": "k",
+      "position": 1,
+      "vs_framework": {
+        "f64-model-fp32-products": {
+          "different_words": 19,
+          "exact_words": 109,
+          "words": 128
+        },
+        "f64-model-materialized": {
+          "different_words": 0,
+          "exact_words": 128,
+          "words": 128
+        },
+        "framework-table-fp32-products": {
+          "different_words": 0,
+          "exact_words": 128,
+          "words": 128
+        },
+        "independent-materialized": {
+          "different_words": 0,
+          "exact_words": 128,
+          "words": 128
+        }
+      }
+    },
+    {
+      "corpus": "synthetic-boundaries",
+      "kind": "q",
+      "position": 2,
+      "vs_framework": {
+        "f64-model-fp32-products": {
+          "different_words": 28,
+          "exact_words": 228,
+          "words": 256
+        },
+        "f64-model-materialized": {
+          "different_words": 0,
+          "exact_words": 256,
+          "words": 256
+        },
+        "framework-table-fp32-products": {
+          "different_words": 0,
+          "exact_words": 256,
+          "words": 256
+        },
+        "independent-materialized": {
+          "different_words": 0,
+          "exact_words": 256,
+          "words": 256
+        }
+      }
+    },
+    {
+      "corpus": "synthetic-boundaries",
+      "kind": "k",
+      "position": 2,
+      "vs_framework": {
+        "f64-model-fp32-products": {
+          "different_words": 19,
+          "exact_words": 109,
+          "words": 128
+        },
+        "f64-model-materialized": {
+          "different_words": 0,
+          "exact_words": 128,
+          "words": 128
+        },
+        "framework-table-fp32-products": {
+          "different_words": 0,
+          "exact_words": 128,
+          "words": 128
+        },
+        "independent-materialized": {
+          "different_words": 0,
+          "exact_words": 128,
+          "words": 128
+        }
+      }
+    },
+    {
+      "corpus": "synthetic-boundaries",
+      "kind": "q",
+      "position": 3,
+      "vs_framework": {
+        "f64-model-fp32-products": {
+          "different_words": 30,
+          "exact_words": 226,
+          "words": 256
+        },
+        "f64-model-materialized": {
+          "different_words": 0,
+          "exact_words": 256,
+          "words": 256
+        },
+        "framework-table-fp32-products": {
+          "different_words": 0,
+          "exact_words": 256,
+          "words": 256
+        },
+        "independent-materialized": {
+          "different_words": 0,
+          "exact_words": 256,
+          "words": 256
+        }
+      }
+    },
+    {
+      "corpus": "synthetic-boundaries",
+      "kind": "k",
+      "position": 3,
+      "vs_framework": {
+        "f64-model-fp32-products": {
+          "different_words": 17,
+          "exact_words": 111,
+          "words": 128
+        },
+        "f64-model-materialized": {
+          "different_words": 0,
+          "exact_words": 128,
+          "words": 128
+        },
+        "framework-table-fp32-products": {
+          "different_words": 0,
+          "exact_words": 128,
+          "words": 128
+        },
+        "independent-materialized": {
+          "different_words": 0,
+          "exact_words": 128,
+          "words": 128
+        }
+      }
+    },
+    {
+      "corpus": "synthetic-boundaries",
+      "kind": "q",
+      "position": 2047,
+      "vs_framework": {
+        "f64-model-fp32-products": {
+          "different_words": 32,
+          "exact_words": 224,
+          "words": 256
+        },
+        "f64-model-materialized": {
+          "different_words": 0,
+          "exact_words": 256,
+          "words": 256
+        },
+        "framework-table-fp32-products": {
+          "different_words": 0,
+          "exact_words": 256,
+          "words": 256
+        },
+        "independent-materialized": {
+          "different_words": 0,
+          "exact_words": 256,
+          "words": 256
+        }
+      }
+    },
+    {
+      "corpus": "synthetic-boundaries",
+      "kind": "k",
+      "position": 2047,
+      "vs_framework": {
+        "f64-model-fp32-products": {
+          "different_words": 20,
+          "exact_words": 108,
+          "words": 128
+        },
+        "f64-model-materialized": {
+          "different_words": 0,
+          "exact_words": 128,
+          "words": 128
+        },
+        "framework-table-fp32-products": {
+          "different_words": 0,
+          "exact_words": 128,
+          "words": 128
+        },
+        "independent-materialized": {
+          "different_words": 0,
+          "exact_words": 128,
+          "words": 128
+        }
+      }
+    },
+    {
+      "corpus": "synthetic-boundaries",
+      "kind": "q",
+      "position": 2048,
+      "vs_framework": {
+        "f64-model-fp32-products": {
+          "different_words": 38,
+          "exact_words": 218,
+          "words": 256
+        },
+        "f64-model-materialized": {
+          "different_words": 0,
+          "exact_words": 256,
+          "words": 256
+        },
+        "framework-table-fp32-products": {
+          "different_words": 0,
+          "exact_words": 256,
+          "words": 256
+        },
+        "independent-materialized": {
+          "different_words": 0,
+          "exact_words": 256,
+          "words": 256
+        }
+      }
+    },
+    {
+      "corpus": "synthetic-boundaries",
+      "kind": "k",
+      "position": 2048,
+      "vs_framework": {
+        "f64-model-fp32-products": {
+          "different_words": 16,
+          "exact_words": 112,
+          "words": 128
+        },
+        "f64-model-materialized": {
+          "different_words": 0,
+          "exact_words": 128,
+          "words": 128
+        },
+        "framework-table-fp32-products": {
+          "different_words": 0,
+          "exact_words": 128,
+          "words": 128
+        },
+        "independent-materialized": {
+          "different_words": 0,
+          "exact_words": 128,
+          "words": 128
+        }
+      }
+    },
+    {
+      "corpus": "synthetic-boundaries",
+      "kind": "q",
+      "position": 2303,
+      "vs_framework": {
+        "f64-model-fp32-products": {
+          "different_words": 40,
+          "exact_words": 216,
+          "words": 256
+        },
+        "f64-model-materialized": {
+          "different_words": 2,
+          "exact_words": 254,
+          "words": 256
+        },
+        "framework-table-fp32-products": {
+          "different_words": 0,
+          "exact_words": 256,
+          "words": 256
+        },
+        "independent-materialized": {
+          "different_words": 0,
+          "exact_words": 256,
+          "words": 256
+        }
+      }
+    },
+    {
+      "corpus": "synthetic-boundaries",
+      "kind": "k",
+      "position": 2303,
+      "vs_framework": {
+        "f64-model-fp32-products": {
+          "different_words": 13,
+          "exact_words": 115,
+          "words": 128
+        },
+        "f64-model-materialized": {
+          "different_words": 1,
+          "exact_words": 127,
+          "words": 128
+        },
+        "framework-table-fp32-products": {
+          "different_words": 0,
+          "exact_words": 128,
+          "words": 128
+        },
+        "independent-materialized": {
+          "different_words": 0,
+          "exact_words": 128,
+          "words": 128
+        }
+      }
+    }
+  ],
+  "schema": "ferric-p228-rope-reference-table-v1",
+  "tables": [
+    {
+      "cos": {
+        "different_words": 0,
+        "exact_words": 128,
+        "first_differences": [],
+        "words": 128
+      },
+      "position": 0,
+      "sin": {
+        "different_words": 0,
+        "exact_words": 128,
+        "first_differences": [],
+        "words": 128
+      }
+    },
+    {
+      "cos": {
+        "different_words": 0,
+        "exact_words": 128,
+        "first_differences": [],
+        "words": 128
+      },
+      "position": 1,
+      "sin": {
+        "different_words": 0,
+        "exact_words": 128,
+        "first_differences": [],
+        "words": 128
+      }
+    },
+    {
+      "cos": {
+        "different_words": 0,
+        "exact_words": 128,
+        "first_differences": [],
+        "words": 128
+      },
+      "position": 2,
+      "sin": {
+        "different_words": 0,
+        "exact_words": 128,
+        "first_differences": [],
+        "words": 128
+      }
+    },
+    {
+      "cos": {
+        "different_words": 0,
+        "exact_words": 128,
+        "first_differences": [],
+        "words": 128
+      },
+      "position": 3,
+      "sin": {
+        "different_words": 0,
+        "exact_words": 128,
+        "first_differences": [],
+        "words": 128
+      }
+    },
+    {
+      "cos": {
+        "different_words": 0,
+        "exact_words": 128,
+        "first_differences": [],
+        "words": 128
+      },
+      "position": 2047,
+      "sin": {
+        "different_words": 0,
+        "exact_words": 128,
+        "first_differences": [],
+        "words": 128
+      }
+    },
+    {
+      "cos": {
+        "different_words": 0,
+        "exact_words": 128,
+        "first_differences": [],
+        "words": 128
+      },
+      "position": 2048,
+      "sin": {
+        "different_words": 0,
+        "exact_words": 128,
+        "first_differences": [],
+        "words": 128
+      }
+    },
+    {
+      "cos": {
+        "different_words": 0,
+        "exact_words": 128,
+        "first_differences": [],
+        "words": 128
+      },
+      "position": 2303,
+      "sin": {
+        "different_words": 2,
+        "exact_words": 126,
+        "first_differences": [
+          {
+            "actual_bits": 15875,
+            "expected_bits": 15874,
+            "index": 2
+          },
+          {
+            "actual_bits": 15875,
+            "expected_bits": 15874,
+            "index": 66
+          }
+        ],
+        "words": 128
+      }
+    }
+  ]
+}
