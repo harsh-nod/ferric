@@ -77,8 +77,25 @@ ignored by the ordinary invocation but was separately executed successfully.
 All nine owned phases exited naturally, source/dependency postchecks passed,
 and all 50 raw records plus both test binaries were rehashed locally. The
 additional source contract pins macro-rule structure; it is not an independent
-numerical reference. This revision has not yet undergone checked lowering or
-GPU execution, and reducing compiler storage remains an unverified hypothesis.
+numerical reference.
+
+The revised candidate has now undergone a fresh checked compiler probe on
+`mi350-2`, but [lowering still fails](assets/finite-prefix-v228/reciprocal-probe-branchless-failure.json)
+at the same first rejected cumulative partial-move storage charge:
+2,097,153 against 2,097,152. The branchless rewrite did **not** unblock the
+retained compiler. No HSACO was emitted and no GPU execution was attempted.
+The probe driver passed 23 pure tests; its owned outer supervisor passed 14.
+Before compilation, both joined the exact passing candidate CPU receipt,
+seven Rust source bodies and 53 device-provider sources. Metadata passed,
+Cargo then exited 101, and all source/tool/configuration/dependency/old-target
+postchecks passed. The owned process tree exited naturally and was reaped.
+
+The next compiler candidate removes a redundant clear/reinsert when a local
+is already marked wholly moved. This must preserve moved-value rejection,
+charge genuine new insertions cumulatively, and pass exact-limit, reinitialization,
+join/loop and replay tests before a new compiler probe. It is not yet tested
+and is not evidence that the complete function will fit. Compiler limits,
+numerical tolerances and production admission remain unchanged.
 
 ## Source Publication
 

@@ -1,0 +1,73 @@
+{
+  "candidate": "branchless exact reciprocal V2",
+  "candidate_cpu_exact_source_join": true,
+  "compiler_exit_code": 101,
+  "compiler_host_seconds": 88.70949294092134,
+  "compiler_limits_unchanged": true,
+  "cpu_joined_provider_sources": 53,
+  "cpu_joined_rust_sources": 7,
+  "date": "2026-10-03",
+  "diagnostic": "production semantic SSA partial-move validation for function 0 requires 2097153 storage words, limit is 2097152",
+  "failed_stage": "checked-lowering",
+  "first_rejected_charge_words": 2097153,
+  "fresh_hsaco_emitted": false,
+  "fresh_target_bytes": 257917378,
+  "full_model_acceptance": false,
+  "gpu_execution": false,
+  "host": "mi350-2",
+  "limitations": [
+    "The branchless rewrite did not unblock checked lowering with the retained compiler.",
+    "The rejected charge is cumulative, not peak memory or the total required function storage.",
+    "Old-target postchecks are stat inventories, not content hashes or proof of no transient writes.",
+    "CPU arithmetic success does not establish compiled GPU behavior.",
+    "The frozen proposal READMEs contain v328 row-name typos; executable recipe and actual row are row-reciprocal-checked-probe-v228-v3.",
+    "The first preflight wrote an unused v328 input filename. Corrected preflight V3 independently checked and wrote the actual v228 input.",
+    "Receipt identities are not a publicly downloadable self-contained reproducer."
+  ],
+  "metadata_passed": true,
+  "numerical_acceptance": false,
+  "owned_outcome": {
+    "cleanup_signalled": false,
+    "exit_code": 1,
+    "owned_groups_absent": true,
+    "owned_processes_reaped": true,
+    "reason": null
+  },
+  "passed": false,
+  "performance_claim": false,
+  "production_authority": false,
+  "receipts": {
+    "candidate_cpu": {
+      "bytes": 24791,
+      "sha256": "d16dd989342d6092445d6fc3d046184ddf160527b1681d713e9b1291f6b106a4"
+    },
+    "compiler_stderr": {
+      "bytes": 6681,
+      "sha256": "5111a2674263ab8ed394cd8d38c5b56d0eb7a12411eb843fd5872e91cd2bee05"
+    },
+    "outer_pure_tests": {
+      "bytes": 362,
+      "sha256": "897e0647b129daa9f7163aafeb87c7d4b7e8dc41fbe7bd91675ac4f9a1752f93"
+    },
+    "owner": {
+      "bytes": 13028,
+      "sha256": "7eedec05edde4b59a72b321527a73998bbc7eafe5842e6bdcd7890f8cfd82ed3"
+    },
+    "probe": {
+      "bytes": 3563,
+      "sha256": "8df70e59801555edd192dbd00da2612492822f84456c0e6f725d59c2f3865ba6"
+    },
+    "probe_pure_tests": {
+      "bytes": 362,
+      "sha256": "445eb80ba71ef65b2ee961a49e91e495a73e431d18abc1887647507f5d6bfb07"
+    },
+    "retained_archive": {
+      "bytes": 3835848,
+      "sha256": "97c5327579181a013dfe83f9e8675c40f4fac7e7c37364190cdf572f3846636f"
+    }
+  },
+  "schema": "FerricReciprocalCheckedProbeFailureV2",
+  "source_and_old_target_postchecks_passed": true,
+  "storage_limit_words": 2097152,
+  "total_required_storage_unknown": true
+}
