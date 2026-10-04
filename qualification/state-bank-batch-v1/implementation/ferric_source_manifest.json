@@ -1,0 +1,40 @@
+{
+  "baseline_head": "1fb053294b3114eccf86e41c0e01c29307b86605",
+  "files": [
+    {
+      "after": {
+        "bytes": 8571,
+        "sha256": "52a8229cb1aa98ae3e25ec5bdaf335badf7f01a1761d4d4de5ca5650ac932b90"
+      },
+      "before": {
+        "bytes": 6285,
+        "sha256": "8ab273c276a13ee2fd198418acc9517b93ceb42ed53448cc23a63f625f99e458"
+      },
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/state_roster/prefix_tiles_decode_v6/reuse.rs"
+    },
+    {
+      "after": {
+        "bytes": 11731,
+        "sha256": "aeb0230d17cd5315e9aae93aa29a3153cb6161e65b0d81a307378ce3d606ee83"
+      },
+      "before": {
+        "bytes": 11389,
+        "sha256": "b9782525159d2e2c0585a2e7c050f5bb5310155b37ba35006e2e2313dd6737ec"
+      },
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/state_roster/prefix_tiles_decode_v6/tests.rs"
+    },
+    {
+      "after": {
+        "bytes": 10845,
+        "sha256": "362d33aad4ac0e8c27f999330e8cd1176d36edda581d34137f22352cc554ab77"
+      },
+      "before": null,
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/state_roster/prefix_tiles_decode_v6/bank_batch_tests.rs"
+    }
+  ],
+  "new_tests_authored": 11,
+  "requires_paired_runtime_api": "Gfx950EngineeringPeerGroupV1::observe_state_bank_v1",
+  "schema": "ferric-p228-state-bank-batch-source-proposal-v1",
+  "status": "formatted-unexecuted",
+  "tests_executed": false
+}

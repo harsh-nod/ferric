@@ -1,0 +1,18 @@
+
+running 13 tests
+test engineering_gfx950::peer::host_observation::tests::host_observation_configuration_requires_once_fresh_full_unprofiled_policy ... ok
+test engineering_gfx950::peer::host_observation::tests::host_observation_configuration_failure_uses_existing_terminal_poison ... ok
+test engineering_gfx950::peer::host_observation::tests::host_observation_delta_checks_all_shared_counters_for_underflow ... ok
+test engineering_gfx950::peer::host_observation::tests::host_observation_delta_checks_every_legacy_counter_for_underflow ... ok
+test engineering_gfx950::peer::host_observation::tests::host_observation_delta_preserves_nested_scopes_without_additive_assumption ... ok
+test engineering_gfx950::peer::host_observation::tests::host_observation_delta_rejects_reversed_host_time ... ok
+test engineering_gfx950::peer::host_observation::tests::host_observation_delta_rejects_identity_roster_epoch_and_policy_changes ... ok
+test engineering_gfx950::peer::host_observation::tests::host_observation_getter_refuses_invalid_closed_and_poisoned_groups_without_backend ... ok
+test engineering_gfx950::peer::host_observation::tests::host_observation_does_not_extend_the_legacy_counter_wire ... ok
+test engineering_gfx950::peer::host_observation::tests::host_observation_shared_counter_exhaustion_never_partially_updates ... ok
+test engineering_gfx950::peer::host_observation::tests::host_observation_state_never_relabels_prior_counters_after_queue_rollover ... ok
+test engineering_gfx950::peer::host_observation::tests::host_observation_shared_scopes_count_once_and_keep_nanoseconds_separate ... ok
+test engineering_gfx950::peer::host_observation::tests::host_observation_timer_gate_preserves_legacy_disabled_and_profiled_behavior ... ok
+
+test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 864 filtered out; finished in 0.00s
+

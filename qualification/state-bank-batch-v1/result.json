@@ -1,0 +1,32 @@
+{
+  "bounded_commands": 21,
+  "controller_tests": 14,
+  "cpu_receipt": {
+    "bytes": 162810,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/complete.json",
+    "sha256": "14dab6e776cdc2184457b2865cf7d48b91a71008d49bea040deca68bba75838f"
+  },
+  "expected_group_checks_removed_per_forward": 572,
+  "expected_reduction_measured": false,
+  "gpu_execution": false,
+  "mapped_atomic_tests": 10,
+  "new_tests": 21,
+  "numerical_acceptance": false,
+  "parent_rebuilt": false,
+  "passed": true,
+  "performance_claim": false,
+  "production_authority": false,
+  "raw_files_rehashed": 109,
+  "runtime_tests": 144,
+  "schema": "ferric-p228-state-bank-batch-public-cpu-v1",
+  "source_files": 6931,
+  "sustained_2048_256": false,
+  "tests_ignored": 4,
+  "tests_passed": 553,
+  "worker": {
+    "bytes": 4797496,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/target/debug/ferric-tp-peer-finite-engineering-worker-v1",
+    "sha256": "6901a1319352d0401e452d616efa50d2de08c40943f50cb054d89f3f26d7fd52"
+  },
+  "worker_tests": 409
+}

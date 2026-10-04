@@ -1,0 +1,19 @@
+test_closed_overlay_accepts_exact_seven_plus_three (test_run.PolicyTests) ... ok
+test_exact_test_extension_preserves_every_historical_name (test_run.PolicyTests) ... ok
+test_ignored_names_keep_all_four_historical_ignores_distinct (test_run.PolicyTests) ... ok
+test_main_rejects_optimized_before_package_or_helper_access (test_run.PolicyTests) ... ok
+test_named_source_rosters_have_exact_new_counts (test_run.PolicyTests) ... ok
+test_overlay_rejects_path_escape_wrong_project_and_wrong_source_generation (test_run.PolicyTests) ... ok
+test_overlay_rejects_unknown_fields_and_missing_or_duplicate_destinations (test_run.PolicyTests) ... ok
+test_overlay_requires_exact_three_absent_preimages (test_run.PolicyTests) ... ok
+test_pending_source_pins_or_after_hashes_fail_closed (test_run.PolicyTests) ... ok
+test_pin_schema_refuses_bool_bytes_bad_digest_or_relative_path (test_run.PolicyTests) ... ok
+test_preimage_failure_precedes_replacement_read_or_write (test_run.PolicyTests) ... ok
+test_recipe_preserves_old_phases_and_adds_only_four_runtime_selectors (test_run.PolicyTests) ... ok
+test_recipe_retains_default_build_thread_and_deadline_semantics (test_run.PolicyTests) ... ok
+test_unoptimized_environment_only_is_admitted (test_run.PolicyTests) ... ok
+
+----------------------------------------------------------------------
+Ran 14 tests in 0.002s
+
+OK

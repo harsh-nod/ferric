@@ -1,0 +1,85 @@
+{
+  "schema": "ferric-p228-state-bank-batch-cpu-overlay-v1",
+  "runtime_preimages": {
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-state-bank-batch-runtime-v2/preimages.json",
+    "bytes": 965,
+    "sha256": "d8f74d763507b055f109d7b6f49fd86b992e9c610ba3b59931ad015801192f73"
+  },
+  "ferric_source_manifest": {
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-state-bank-batch-ferric-v2/source-pins.json",
+    "bytes": 1405,
+    "sha256": "07773e4259d5b1226c9e26650bb2bf4c17ec1227a089ca2c7684ba8952804fb0"
+  },
+  "files": [
+    {
+      "project": "fe2o3",
+      "path": "crates/fe2o3-kfd/src/lib.rs",
+      "source": "p228-state-bank-batch-runtime-v2/source/lib.rs",
+      "before": {"bytes": 20273, "sha256": "144a677d5eb0de26d3c681cbbd42b2ad6354a9f8c0a86fb9fe28bf4638a4ebdb"},
+      "after": {"bytes": 20358, "sha256": "ea0f56965b4afcdd949e467c7011928c9f3cf39eb69870849f87bfced0615f03"}
+    },
+    {
+      "project": "fe2o3",
+      "path": "crates/fe2o3-kfd/src/engineering_gfx950.rs",
+      "source": "p228-state-bank-batch-runtime-v2/source/engineering_gfx950.rs",
+      "before": {"bytes": 78056, "sha256": "f43f2e3765939d262c13c88b151d7f45a8c3b14e442ef7643faa2b2fd75bc9cb"},
+      "after": {"bytes": 78137, "sha256": "45642f3a677f4a8f777024fa50461afcbceb4c7f1e3aca96279ddd59c65082d1"}
+    },
+    {
+      "project": "fe2o3",
+      "path": "crates/fe2o3-kfd/src/engineering_gfx950_peer.rs",
+      "source": "p228-state-bank-batch-runtime-v2/source/engineering_gfx950_peer.rs",
+      "before": {"bytes": 29510, "sha256": "dcd9c3fd386faa09f2b16489275b8e9868cd1ee2c8efe8a12932caae04b9ee3f"},
+      "after": {"bytes": 29696, "sha256": "5ae01dc80c8a7a7c902492be6d8be767667f8e183ddcaf14f8dc165c6bff8aae"}
+    },
+    {
+      "project": "fe2o3",
+      "path": "crates/fe2o3-kfd/src/engineering_gfx950_peer_wave_mlp_tiles_state_v2.rs",
+      "source": "p228-state-bank-batch-runtime-v2/source/engineering_gfx950_peer_wave_mlp_tiles_state_v2.rs",
+      "before": {"bytes": 13228, "sha256": "e4d666d4091b78ff0a69f8a59e31f250fca057778ee6c8281a5c858da269b38b"},
+      "after": {"bytes": 14676, "sha256": "33fec03089e8685bd27d42799ef70c86d3610372c1601397f6cb18e2f339a9c2"}
+    },
+    {
+      "project": "fe2o3",
+      "path": "crates/fe2o3-kfd/src/engineering_gfx950_peer_wave_qkv_attention_output_tiles_state_v6.rs",
+      "source": "p228-state-bank-batch-runtime-v2/source/engineering_gfx950_peer_wave_qkv_attention_output_tiles_state_v6.rs",
+      "before": {"bytes": 13922, "sha256": "8bab65844f0beb5c2b15aad5d2a51bdd97c6b021ce6866d21edd9ce8c01d238a"},
+      "after": {"bytes": 15403, "sha256": "51fd538a15ff6b793c7ad776d206c48b49476c8087805e522fce24798426ab0f"}
+    },
+    {
+      "project": "fe2o3",
+      "path": "crates/fe2o3-kfd/src/engineering_gfx950_peer_state_bank_v1.rs",
+      "source": "p228-state-bank-batch-runtime-v2/source/engineering_gfx950_peer_state_bank_v1.rs",
+      "before": null,
+      "after": {"bytes": 4918, "sha256": "6a2d52e1a3f369dc7420075cd54b0ffb2a14065bd2f63b09263810a54d400bdb"}
+    },
+    {
+      "project": "fe2o3",
+      "path": "crates/fe2o3-kfd/src/engineering_gfx950_peer_state_bank_v1_tests.rs",
+      "source": "p228-state-bank-batch-runtime-v2/source/engineering_gfx950_peer_state_bank_v1_tests.rs",
+      "before": null,
+      "after": {"bytes": 15300, "sha256": "d8ae79a5e05ee30fdfa9fd9f04f7c31cd66646c8e1fc8198d63be8f085eeb5f7"}
+    },
+    {
+      "project": "ferric",
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/state_roster/prefix_tiles_decode_v6/reuse.rs",
+      "source": "p228-state-bank-batch-ferric-v2/draft/adapters/tp-peer-finite-engineering-worker-v1/src/state_roster/prefix_tiles_decode_v6/reuse.rs",
+      "before": {"bytes": 6285, "sha256": "8ab273c276a13ee2fd198418acc9517b93ceb42ed53448cc23a63f625f99e458"},
+      "after": {"bytes": 8571, "sha256": "52a8229cb1aa98ae3e25ec5bdaf335badf7f01a1761d4d4de5ca5650ac932b90"}
+    },
+    {
+      "project": "ferric",
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/state_roster/prefix_tiles_decode_v6/tests.rs",
+      "source": "p228-state-bank-batch-ferric-v2/draft/adapters/tp-peer-finite-engineering-worker-v1/src/state_roster/prefix_tiles_decode_v6/tests.rs",
+      "before": {"bytes": 11389, "sha256": "b9782525159d2e2c0585a2e7c050f5bb5310155b37ba35006e2e2313dd6737ec"},
+      "after": {"bytes": 11731, "sha256": "aeb0230d17cd5315e9aae93aa29a3153cb6161e65b0d81a307378ce3d606ee83"}
+    },
+    {
+      "project": "ferric",
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/state_roster/prefix_tiles_decode_v6/bank_batch_tests.rs",
+      "source": "p228-state-bank-batch-ferric-v2/draft/adapters/tp-peer-finite-engineering-worker-v1/src/state_roster/prefix_tiles_decode_v6/bank_batch_tests.rs",
+      "before": null,
+      "after": {"bytes": 10845, "sha256": "362d33aad4ac0e8c27f999330e8cd1176d36edda581d34137f22352cc554ab77"}
+    }
+  ]
+}

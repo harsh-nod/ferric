@@ -1,0 +1,26 @@
+warning: unused import: `prefix::Transaction`
+ --> /home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/sources/fe2o3/crates/fe2o3-kfd/src/engineering_gfx950_resident_layer_tp2_v1.rs:7:5
+  |
+7 | use prefix::Transaction as _;
+  |     ^^^^^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: function `gfx942_cwsr_header_bytes` is never used
+   --> /home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/sources/fe2o3/crates/fe2o3-kfd/src/queue_submit.rs:406:15
+    |
+406 | pub(crate) fn gfx942_cwsr_header_bytes(
+    |               ^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: function `initialize_gfx942_cwsr_headers` is never used
+   --> /home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/sources/fe2o3/crates/fe2o3-kfd/src/queue_submit.rs:415:15
+    |
+415 | pub(crate) fn initialize_gfx942_cwsr_headers(
+    |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: `fe2o3-kfd` (lib) generated 3 warnings
+    Finished `test` profile [optimized] target(s) in 0.05s
+     Running unittests src/lib.rs (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/target/debug/deps/ferric_tp_peer_finite_engineering_worker_v1-04e8fb3156f5605f)
+     Running tests/shared_wire.rs (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/target/debug/deps/shared_wire-0b0a05236acbd621)

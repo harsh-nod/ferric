@@ -1,0 +1,15 @@
+{
+  "schema": "ferric-p228-state-bank-batch-source-preimages-v1",
+  "base_commit": "36734d3bc28ed038019d9a16da01c8533cdd83c9",
+  "files": {
+    "crates/fe2o3-kfd/src/lib.rs": "144a677d5eb0de26d3c681cbbd42b2ad6354a9f8c0a86fb9fe28bf4638a4ebdb",
+    "crates/fe2o3-kfd/src/engineering_gfx950.rs": "f43f2e3765939d262c13c88b151d7f45a8c3b14e442ef7643faa2b2fd75bc9cb",
+    "crates/fe2o3-kfd/src/engineering_gfx950_peer.rs": "dcd9c3fd386faa09f2b16489275b8e9868cd1ee2c8efe8a12932caae04b9ee3f",
+    "crates/fe2o3-kfd/src/engineering_gfx950_peer_wave_mlp_tiles_state_v2.rs": "e4d666d4091b78ff0a69f8a59e31f250fca057778ee6c8281a5c858da269b38b",
+    "crates/fe2o3-kfd/src/engineering_gfx950_peer_wave_qkv_attention_output_tiles_state_v6.rs": "8bab65844f0beb5c2b15aad5d2a51bdd97c6b021ce6866d21edd9ce8c01d238a"
+  },
+  "new_files": [
+    "crates/fe2o3-kfd/src/engineering_gfx950_peer_state_bank_v1.rs",
+    "crates/fe2o3-kfd/src/engineering_gfx950_peer_state_bank_v1_tests.rs"
+  ]
+}

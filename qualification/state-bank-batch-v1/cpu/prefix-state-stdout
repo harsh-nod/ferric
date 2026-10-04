@@ -1,0 +1,15 @@
+
+running 10 tests
+test engineering_gfx950::peer::wave_qkv_attention_output_tiles_state_v6::tests::v6_allocator_enforces_group_local_bounds_and_checked_ids ... ok
+test engineering_gfx950::peer::wave_qkv_attention_output_tiles_state_v6::tests::v6_allocation_failures_poison_and_keep_retained_records ... ok
+test engineering_gfx950::peer::wave_qkv_attention_output_tiles_state_v6::tests::v6_idle_acquire_is_not_reinitialization_or_activation ... ok
+test engineering_gfx950::peer::wave_qkv_attention_output_tiles_state_v6::tests::v6_initialization_checks_every_word_before_ready ... ok
+test engineering_gfx950::peer::wave_qkv_attention_output_tiles_state_v6::tests::v6_late_double_construction_and_foreign_owner_are_terminal ... ok
+test engineering_gfx950::peer::wave_qkv_attention_output_tiles_state_v6::tests::v6_private_resident_read_checks_active_phase_and_owner_before_storage ... ok
+test engineering_gfx950::peer::wave_qkv_attention_output_tiles_state_v6::tests::v6_private_resident_read_keeps_token_kind_extent_and_mapping_refusals ... ok
+test engineering_gfx950::peer::wave_qkv_attention_output_tiles_state_v6::tests::v6_rearm_needs_completed_activation_and_exact_terminal_snapshot ... ok
+test engineering_gfx950::peer::wave_qkv_attention_output_tiles_state_v6::tests::v6_rearm_uses_stores_and_publishes_ready_only_after_readback_and_fence ... ok
+test engineering_gfx950::peer::wave_qkv_attention_output_tiles_state_v6::tests::v6_record_refuses_old_states_foreign_identity_and_nonowner_mappings ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 867 filtered out; finished in 0.00s
+

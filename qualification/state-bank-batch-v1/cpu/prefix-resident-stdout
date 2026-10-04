@@ -1,0 +1,15 @@
+
+running 10 tests
+test engineering_gfx950::peer::wave_qkv_attention_output_tiles_v6::tests::resident_v6_data_roots_require_exact_requested_extent_kind_and_current_record ... ok
+test engineering_gfx950::peer::wave_qkv_attention_output_tiles_v6::tests::resident_v6_dispatch_binds_exact_geometry_roots_and_completion_before_state ... ok
+test engineering_gfx950::peer::wave_qkv_attention_output_tiles_v6::tests::resident_v6_exact_metadata_cannot_be_replaced_by_same_width_v5_or_mlp_abi ... ok
+test engineering_gfx950::peer::wave_qkv_attention_output_tiles_v6::tests::resident_v6_every_failure_poison_blocks_rearm_close_and_second_dispatch ... ok
+test engineering_gfx950::peer::wave_qkv_attention_output_tiles_v6::tests::resident_v6_native_adapter_routes_to_private_guard_not_public_observer ... ok
+test engineering_gfx950::peer::wave_qkv_attention_output_tiles_v6::tests::resident_v6_pending_or_wrong_completion_census_never_yields_completed_tokens ... ok
+test engineering_gfx950::peer::wave_qkv_attention_output_tiles_v6::tests::resident_v6_refuses_digest_timeout_and_foreign_data_before_publication ... ok
+test engineering_gfx950::peer::wave_qkv_attention_output_tiles_v6::tests::resident_v6_refuses_foreign_swapped_repeated_ranks_states_and_kernel_identity ... ok
+test engineering_gfx950::peer::wave_qkv_attention_output_tiles_v6::tests::resident_v6_rejects_aliases_even_readonly_and_wrong_physical_extents ... ok
+test engineering_gfx950::peer::wave_qkv_attention_output_tiles_v6::tests::resident_v6_refuses_each_initial_and_terminal_word_corruption ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 867 filtered out; finished in 0.00s
+

@@ -1,0 +1,35 @@
+{
+  "controller_sha256": "e59d90f3e34bb69c40dc27c3502f18c1ef9e91aec23490018d34d9e89bd78d21",
+  "elapsed_seconds": 0.024843954015523195,
+  "errors": 0,
+  "failures": 0,
+  "full_model_acceptance": false,
+  "gpu_execution": false,
+  "manifest_sha256": "f882275f45f49bd3b999422f668c7ccfee3c1b47d173a98c17a19e5887551b49",
+  "native_execution": false,
+  "numerical_acceptance": false,
+  "passed": true,
+  "performance_claim": false,
+  "production_authority": false,
+  "schema": "ferric-p228-state-bank-batch-pure-v1",
+  "skipped": 0,
+  "source_postchecks_passed": true,
+  "source_sha256": "ba9c279831bab42f8dd135d2d3282e3a1d1df0a5befd5d06a4797f8bce26d65b",
+  "sources_after": {
+    "bytes": 1008,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-pure-v228-v1/sources-after.json",
+    "sha256": "ba9c279831bab42f8dd135d2d3282e3a1d1df0a5befd5d06a4797f8bce26d65b"
+  },
+  "sources_before": {
+    "bytes": 1008,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-pure-v228-v1/sources-before.json",
+    "sha256": "ba9c279831bab42f8dd135d2d3282e3a1d1df0a5befd5d06a4797f8bce26d65b"
+  },
+  "synthetic_policy_tests_only": true,
+  "tests": 14,
+  "transcript": {
+    "bytes": 1350,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-pure-v228-v1/tests.log",
+    "sha256": "89c16c1c357d815afe178a7d099afdca6cabfd6a8348c4702b9ecb665ddf940c"
+  }
+}

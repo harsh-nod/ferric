@@ -1,0 +1,29 @@
+{
+  "files": [
+    {
+      "bytes": 5106,
+      "path": "README.md",
+      "sha256": "2ac3bb351a9ca4721a47f89a6fcae8774cda3adee92b2b0291a8ca0962a3b791"
+    },
+    {
+      "bytes": 4977,
+      "path": "overlay.json",
+      "sha256": "73b74e8fe343ecdad622e8e1a4967b9bb096f21ead6992f82d8dd02b797ef8cb"
+    },
+    {
+      "bytes": 22805,
+      "path": "run.py",
+      "sha256": "d5c2237645915cd965aeb46fadf70130486abfc894fffafc9fc3513f277925da"
+    },
+    {
+      "bytes": 7717,
+      "path": "test_run.py",
+      "sha256": "632d6c5d6f0f04b981db889a14ac22cda98be2d343f40efa95f0253d1d441fcd"
+    }
+  ],
+  "pure_tests": 14,
+  "schema": "ferric-p228-state-bank-batch-cpu-package-v1",
+  "test_census": {
+    "test_run.py": 14
+  }
+}
