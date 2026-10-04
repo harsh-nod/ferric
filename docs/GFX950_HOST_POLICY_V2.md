@@ -281,6 +281,17 @@ an empty target, cached dependencies, two CPU/test threads and the same nightly
 toolchain and checked optimized profile as the earlier worker build. All 62
 raw records and the binary were rehashed after local retention.
 
+The new [deployment record](assets/finite-prefix-v228/group-fence-deployment.json)
+keeps the CPU633 parent at its original path and installs only the CPU475
+worker. Its verifier replayed all 25 build inputs, 62 raw records, 12 phases,
+named test outcomes and the single emitted artifact. The source census must
+differ from the earlier worker by exactly the three reviewed runtime files.
+All 90 retained aliases and 83 unique objects were rehashed locally. The new
+controller passed 68 pure tests, and its input builder passed 12, on ASROCK.
+These are separate cohorts, not one combined parent/worker build. Existing
+GPU observations still belong to the older worker until the new worker's own
+runtime audit and native comparison complete.
+
 The first test launch failed before compilation because Cargo does not accept
 explicit feature switches for this dependency outside the worker workspace.
 The corrected launch retains the worker's declared engineering feature and
