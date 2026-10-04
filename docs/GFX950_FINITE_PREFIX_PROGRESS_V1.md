@@ -6,7 +6,15 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Latest: [linked indexed RoPE emission produced a new gfx950 HSACO](../qualification/rope-indexed-checked-emission-v1/README.md).
+Latest: the [linked RoPE AR4 supervisor passed all 74 policy tests](../qualification/rope-indexed-ar4-supervisor-v1/README.md)
+on MI350, with no failures, errors or skips and unchanged source snapshots.
+The new admission path binds the actual emitted image to separate retained
+producer and qualified consumer generations while preserving the runtime,
+own-output recurrence and lifecycle checks. This is CPU-only synthetic
+qualification, not GPU execution or numerical acceptance. The next gate is
+the new image's actual GPU observation and independent tensor comparison.
+
+Previously, [linked indexed RoPE emission produced a new gfx950 HSACO](../qualification/rope-indexed-checked-emission-v1/README.md).
 All eight staged phases and sixteen controller-policy tests passed. The
 54,344-byte image has a 376-byte kernarg segment, Wave64, 512 bytes of fixed
 LDS and zero private-segment bytes; ELF notes also report sixteen scalar
