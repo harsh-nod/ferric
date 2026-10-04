@@ -1,0 +1,17 @@
+{
+  "README.md": {
+    "bytes": 5315,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-resident-state-runtime-comparison-v2/README.md",
+    "sha256": "5c7b4daeb38122f9d88326dac48fdf99fd9582be66cc98634fe3a2cd60f60e09"
+  },
+  "run.py": {
+    "bytes": 20089,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-resident-state-runtime-comparison-v2/run.py",
+    "sha256": "76ef8db98601677c055d52fd332c92e75b1d14674f2e2fc34217b171aa7e9032"
+  },
+  "test_run.py": {
+    "bytes": 13218,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-resident-state-runtime-comparison-v2/test_run.py",
+    "sha256": "981c6ec6bafa72721b503106cbdc79ff254876c0c5ee2fb1859a94419612763f"
+  }
+}

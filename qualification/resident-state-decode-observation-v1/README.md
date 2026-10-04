@@ -3,7 +3,9 @@
 Engineering checkpoint, 2026-10-04. The new controller passed **116 CPU policy
 tests** on MI350, with no failures, errors or skips. The build-host data export
 also completed, preserving the original parent and prior worker deployment as
-separate prerequisites. GPU execution of this candidate is still pending.
+separate prerequisites. The subsequent [GPU comparison](tf4/README.md) passes:
+all 152 tensors are bitwise unchanged and 576 fewer group checks per forward
+are measured. This remains an engineering result, not sustained throughput.
 
 ## Verified Scope
 
@@ -13,7 +15,8 @@ separate prerequisites. GPU execution of this candidate is still pending.
 | Source postchecks | All 25 package files unchanged | Exact frozen controller generation only |
 | New worker CPU provenance | 522 passed, four ignored | Separate [runtime checkpoint](../resident-state-fence-consolidation-v1/README.md) |
 | Actual data export | Replayed 37 input pins, 88 raw records and 17 command phases | No GPU launch |
-| Local transfer verification | 128 artifact references, 118 files, 35,277,302 bytes rehashed | Receiver/runtime audits remain separate |
+| Local and MI350 transfer verification | 128 artifact references, 118 files, 35,277,302 bytes rehashed | Runtime audits remain separate |
+| New-worker GPU comparison | 152 tensors bitwise equal; 2,304 fewer group checks across four forwards | One host-only diagnostic pair, not a qualified speedup |
 
 The deployment verifier reconstructs source identity from the original archives
 and sequential 13-file host-policy, three-file group-fence and eight-file
@@ -47,10 +50,10 @@ draft state; the receipts above record subsequent execution.
 
 ## Remaining Gates
 
-Receiver verification and fresh executable/library audits must pass before a
-new GPU attempt. The same-V7 TF4 comparison must check all 152 tensor rows and
+Receiver verification and fresh executable/library audits passed before the
+single GPU attempt. The same-V7 TF4 comparison checked all 152 tensor rows and
 four tokens, actual operation counts, device audits and complete lifecycle.
-The predicted 576 fewer full group checks per forward remains unmeasured.
+The predicted 576 fewer full group checks per forward are now measured.
 Full-model numerical acceptance, sustained 2,048/256 performance, production
 admission and the 700 tok/s target remain open. No main or tutorial-site branch
 is changed by this engineering checkpoint.

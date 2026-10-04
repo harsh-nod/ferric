@@ -1,0 +1,43 @@
+{
+  "controller": {
+    "bytes": 5576,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/run_resident_state_comparison_cpu_p228_v2.py",
+    "sha256": "e203168f43911114ac62941bdd3bf751e00db87aad3da0537b16fd373cebf31b"
+  },
+  "details": {
+    "comparison": {
+      "bytes": 158637,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/resident-state-comparison-cpu-v228-v2/comparison/complete.json",
+      "sha256": "cc44e4fc03e6b6da1008a1582c77146357dfa2961cb5e6a83c9e687ad8ce034a"
+    },
+    "summary": {
+      "all152_tensors_equal": true,
+      "all_counter_invariants_and_expected_removals_observed": true,
+      "all_payloads_and_tokens_equal": true,
+      "byte_equal_tensor_rows": 152,
+      "compared_payloads": 4,
+      "compared_tensor_rows": 152,
+      "observed_invariance_passed": true
+    }
+  },
+  "elapsed_seconds": 0.9904642939800397,
+  "full_model_acceptance": false,
+  "gpu_execution": false,
+  "mode": "compare",
+  "numerical_acceptance": false,
+  "passed": true,
+  "performance_claim": false,
+  "production_authority": false,
+  "schema": "ferric-p228-resident-state-comparison-cpu-v2",
+  "source_postchecks_passed": true,
+  "sources_after": {
+    "bytes": 792,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/resident-state-comparison-cpu-v228-v2/sources-after.json",
+    "sha256": "0689e8eb09f92a7e7193d1e9394d0d132fafe045477a09063897976d9b08d828"
+  },
+  "sources_before": {
+    "bytes": 792,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/resident-state-comparison-cpu-v228-v2/sources-before.json",
+    "sha256": "0689e8eb09f92a7e7193d1e9394d0d132fafe045477a09063897976d9b08d828"
+  }
+}

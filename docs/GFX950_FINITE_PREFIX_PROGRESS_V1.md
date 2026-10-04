@@ -6,17 +6,21 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Latest: the [resident-state deployment and observation controller](../qualification/resident-state-decode-observation-v1/README.md)
-passed 116 CPU policy tests on MI350. Its actual data export replays the new
-worker's source/build/test evidence and preserves the parent and previous
-worker as separate prerequisites. New-worker GPU execution remains pending.
+Latest: the [resident-state GPU comparison](../qualification/resident-state-decode-observation-v1/tf4/README.md)
+passes on MI350: all 152 tensors and four tokens are bitwise unchanged, with
+576 fewer full group checks per forward and unchanged publication/rank operation
+counts. Six audits and clean Close/reaping passed. The four host forward times
+total 26.212 seconds versus 30.030 seconds in the retained control; this is one
+diagnostic pair, not a qualified speedup or GPU/sustained-throughput measurement.
+The page includes measured tables and a plot. Its comparison reader passed
+21 tests; deployment/controller tests remain a separate 116-test checkpoint.
 
 The [paired resident-state fence candidate](../qualification/resident-state-fence-consolidation-v1/README.md)
 passed 522 selected CPU tests with four ignored on `mi350-2`; a fresh worker
 was built and all 17 bounded commands exited naturally. It removes redundant
 private-observer fences while retaining the coordinator's outer fences and
-public observers. The predicted 576 fewer group checks per forward have not
-been measured on GPU. The deployed worker and production path are unchanged.
+public observers. The predicted 576 fewer group checks per forward have now
+been measured on GPU with the new engineering worker. The production path is unchanged.
 
 The [V7 all-layer autoregressive run](../qualification/independent-decode-observation-v1/ar4/README.md)
 completed four own-token forwards on MI350 with six audits and clean Close/reap.
@@ -83,6 +87,7 @@ earlier checkpoints and their limitations at the time they were recorded.
 | Historical MLP capture replay on `mi350` | All 20 conditional stage checks and 41 CPU tests pass; maximum down error/bound ratio 0.0148193 | Original layer-0 captures; no new GPU run, V7 or all-layer acceptance |
 | Paired resident-state fence candidate on `mi350-2` | 522 CPU tests passed, four ignored; fresh worker built; 17 natural command exits | Eight exact source files and six new regressions; predicted counter reduction is not a GPU or performance result |
 | Resident-state deployment/controller on `mi350` and `mi350-2` | 116 CPU policy tests pass; actual worker export verifies source/build/test evidence | No GPU execution of the new worker yet; parent, prior worker and V7 provenance remain distinct |
+| Resident-state worker on `mi350` | 152 tensor rows bitwise equal; 2,304 fewer full group checks; six audits and clean Close/reap; 21 comparison tests pass | One unchanged-V7 TF4 pair; 26.212 vs 30.030 seconds host forward total, not a qualified speedup or sustained benchmark |
 
 Both four-forward runs completed their Close protocol, reaped their owned
 processes, and passed their six surrounding device-state audits. The CPU suite
