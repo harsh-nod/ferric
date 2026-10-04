@@ -6,7 +6,13 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Latest: the [BF16 SiLU image executed on MI350](../qualification/silu-materialized-native-capture-v1/README.md)
+Latest: the [SiLU four-step supervisor](../qualification/silu-materialized-decode-supervisor-v1/README.md)
+passed all 43 CPU policy tests on MI350, with unchanged source snapshots and no
+skips. It selects the new MLP image using the existing CPU1022 executables and
+preserves the original bootstrap images and lifecycle. These tests do not run
+the full model; the native four-step attempt and comparison remain separate gates.
+
+The [BF16 SiLU image executed on MI350](../qualification/silu-materialized-native-capture-v1/README.md)
 and its [independent layer-zero comparison](../qualification/silu-materialized-comparison-v1/README.md)
 completed on ASROCK. All 28 arrays and 22 unchanged pre-SwiGLU arrays passed
 structural checks. Final-hidden exact words improved from 2,728 to 3,807/4,096,
