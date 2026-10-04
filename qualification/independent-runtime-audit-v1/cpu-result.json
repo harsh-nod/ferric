@@ -1,0 +1,73 @@
+{
+  "controller": {
+    "bytes": 3737,
+    "sha256": "4ec15ee49f46e0541d94cf322f613f3184b45165a8ad3092ea74046ece34203b"
+  },
+  "date": "2026-10-03",
+  "full_model_acceptance": false,
+  "gpu_execution": false,
+  "host": "mi350-2 (asrock-1w300-g2-2b)",
+  "limitations": [
+    "Platform probes and child processes in these tests are mocked.",
+    "A future audit must bind the actual deployed binary, boot, topology and libraries.",
+    "The retained observation schema does not transfer historical binary provenance.",
+    "The collector never authors an engineering review or grants launch authority.",
+    "Tests require the pinned historical schema helpers at their original evidence paths.",
+    "Source README preserves authoring-time draft status; this receipt records later tests."
+  ],
+  "numerical_acceptance": false,
+  "package": {
+    "bytes": 1534,
+    "sha256": "e74ed365f55e3027179fd77e3d2e8a92b789a24e05fda947ad997f0ae5f0642b"
+  },
+  "passed": true,
+  "performance_claim": false,
+  "production_authority": false,
+  "raw_completion": {
+    "bytes": 1098,
+    "sha256": "3689282535c1ee8c692c20d382ec42b719ec26ac752baf82587d0675af6c7535"
+  },
+  "reviewed": false,
+  "runtime_audit_executed": false,
+  "schema": "FerricIndependentRuntimeAuditPolicyTestsV1",
+  "source_files_rehashed": 8,
+  "synthetic_policy_tests": true,
+  "test_dependencies": {
+    "prepare.py": {
+      "bytes": 22128,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p227-prefix-parity-observation-v2/prepare.py",
+      "sha256": "ed4b8770dc90d48f393bbdc292d3eb91ea441c8f3420f0b39f013db4f962dcf4"
+    },
+    "validation.py": {
+      "bytes": 15359,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p227-prefix-parity-observation-v2/validation.py",
+      "sha256": "cdaf6dc53208bbca8f23b2a3fa3eca9d28fe00ca4cfc74b36d225f3ebe8d28d1"
+    }
+  },
+  "test_names": [
+    "test_actual_frozen_runtime_review_accepts_observation_fields_only_after_explicit_review",
+    "test_actual_retained_direct_loader_satisfies_its_needed_identity",
+    "test_all_non_namespace_functions_and_frozen_helpers_remain_unchanged",
+    "test_closed_ldd_and_needed_roster",
+    "test_direct_loader_does_not_allow_missing_unknown_or_duplicate_dependencies",
+    "test_full_observation_does_not_mint_review_or_gpu_authority",
+    "test_independent_namespace_accepts_explicit_future_binary_pin_without_minting_evidence",
+    "test_late_topology_failure_retains_owned_records_without_complete",
+    "test_leaf_records_exact_logical_and_actual_argv_separately",
+    "test_legacy_or_malformed_namespaces_and_extents_are_refused_before_any_host_probe",
+    "test_library_aliases_pin_canonical_bytes_and_refuse_drift",
+    "test_main_uses_the_same_namespace_parser_tested_above",
+    "test_owner_failures_retained_before_audit_publication",
+    "test_pin_extent_digest_and_types_are_exact",
+    "test_second_leaf_failure_retains_failure_without_complete",
+    "test_software_reads_are_observations_not_file_identity_or_review",
+    "test_stream_stderr_or_extent_failure_never_publishes_audit",
+    "test_topology_identity_matches_existing_observer_projection"
+  ],
+  "tests_ignored": 0,
+  "tests_passed": 18,
+  "transcript": {
+    "bytes": 1794,
+    "sha256": "381b60d8396f27606f0a94f7f675ee23325e8a619500aaaff6f192188a0823b0"
+  }
+}

@@ -1,0 +1,23 @@
+test_actual_frozen_runtime_review_accepts_observation_fields_only_after_explicit_review (test_audit.AuditTests) ... ok
+test_actual_retained_direct_loader_satisfies_its_needed_identity (test_audit.AuditTests) ... ok
+test_all_non_namespace_functions_and_frozen_helpers_remain_unchanged (test_audit.AuditTests) ... ok
+test_closed_ldd_and_needed_roster (test_audit.AuditTests) ... ok
+test_direct_loader_does_not_allow_missing_unknown_or_duplicate_dependencies (test_audit.AuditTests) ... ok
+test_full_observation_does_not_mint_review_or_gpu_authority (test_audit.AuditTests) ... ok
+test_independent_namespace_accepts_explicit_future_binary_pin_without_minting_evidence (test_audit.AuditTests) ... ok
+test_late_topology_failure_retains_owned_records_without_complete (test_audit.AuditTests) ... ok
+test_leaf_records_exact_logical_and_actual_argv_separately (test_audit.AuditTests) ... ok
+test_legacy_or_malformed_namespaces_and_extents_are_refused_before_any_host_probe (test_audit.AuditTests) ... ok
+test_library_aliases_pin_canonical_bytes_and_refuse_drift (test_audit.AuditTests) ... ok
+test_main_uses_the_same_namespace_parser_tested_above (test_audit.AuditTests) ... ok
+test_owner_failures_retained_before_audit_publication (test_audit.AuditTests) ... ok
+test_pin_extent_digest_and_types_are_exact (test_audit.AuditTests) ... ok
+test_second_leaf_failure_retains_failure_without_complete (test_audit.AuditTests) ... ok
+test_software_reads_are_observations_not_file_identity_or_review (test_audit.AuditTests) ... ok
+test_stream_stderr_or_extent_failure_never_publishes_audit (test_audit.AuditTests) ... ok
+test_topology_identity_matches_existing_observer_projection (test_audit.AuditTests) ... ok
+
+----------------------------------------------------------------------
+Ran 18 tests in 0.454s
+
+OK

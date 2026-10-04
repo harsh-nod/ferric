@@ -34,6 +34,7 @@ engineering branch; it does not change the production execution path.
 | V3 checked probe with ordinary-induction compiler on `mi350-2` | All nine phases passed; actual replay and inert join passed; fresh 53,560-byte gfx950 HSACO emitted | Eight runtime obligations remain; no fresh GPU execution, numerical acceptance or throughput result |
 | Independent-profile observation adapter on `mi350-2` | 23 synthetic policy tests passed, no skips | No launcher; mathematical return values are mocked; real-capture integration pending |
 | Independent native-profile adapter on `mi350-2` | 98 tests passed, one ignored; fresh test and native executables built | All 14 new tests ran; no deployment or new GPU execution yet |
+| Independent runtime-audit collector on `mi350-2` | 18 synthetic policy tests passed, no skips | New deployment namespace; actual MI350 ELF/library audit still pending |
 
 Both four-forward runs completed their Close protocol, reaped their owned
 processes, and passed their six surrounding device-state audits. The CPU suite
@@ -233,6 +234,12 @@ bitwise equality. The old paired mode remains unchanged. Both executables built;
 all six phases exited naturally and source/dependency/fixture/tool and six
 prior-target postchecks passed. All 5,856 archive members were rehashed locally.
 This is a tested host adapter, not deployment or GPU numerical acceptance.
+
+The [runtime-audit successor](../qualification/independent-runtime-audit-v1/README.md)
+also passed all 18 synthetic policy tests. It changes only deployment/output
+namespace handling and preserves the existing ELF, library identity, process
+ownership and resource checks. It does not mint reviews or launch authority;
+an actual audit of the new deployed executable on MI350 remains required.
 
 ## Source Publication
 
