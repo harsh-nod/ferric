@@ -15,8 +15,9 @@ engineering branch; it does not change the production execution path.
 | Fresh Git-source worker build on `mi350-2` | 387 passed, 4 ignored; binary built from an empty target | Published Ferric/fe2o3 source pair; cached registry/toolchain, no parent or GPU run |
 | Fresh-source V2 host-policy parent/worker cohort on `mi350-2` | 633 passed, 4 ignored; 12 binaries built and default-library check passed | Exact 13-file overlay; CPU checks alone do not qualify GPU execution |
 | V2 host-policy baseline on `mi350` | 152 retained native tensor rows bitwise equal; six device audits and clean Close/reap | Newly built CPU633 binaries; no V2 autoregressive or sustained benchmark |
-| V2 admission-cache arm on `mi350` | 152 native rows bitwise equal; repeated admissions fall to zero; six audits and clean Close/reap | No demonstrated overall latency improvement; shared-currentness arm pending |
+| V2 admission-cache arm on `mi350` | 152 native rows bitwise equal; repeated admissions fall to zero; six audits and clean Close/reap | No reliable overall latency improvement from the A/B/A diagnostic |
 | V2 baseline repeat on `mi350` | 152 native rows bitwise equal; six audits and clean Close/reap; baseline operation counts restored | Baseline drift exceeds the initial aggregate cache delta; no confidence interval |
+| V2 shared-currentness arm on `mi350` | 152 native rows bitwise equal; six audits and clean Close/reap; forward host total 61.458 seconds | Shorter than both baselines in this diagnostic, not a qualified speedup or isolated benchmark |
 | Four teacher-forced forwards on `mi350` | 152 retained native tensor rows bitwise equal to the prior native route | All 36 layers, TP2, finite engineering images; not an independent full-model numerical bound |
 | Four autoregressive forwards on `mi350` | 152 retained native tensor rows bitwise equal to the prior native route | Own-token history; no 2,048/256 workload or sustained throughput measurement |
 | Six prefix-stage numerical cases | All 24 rank/profile rows satisfy the declared conditional norm/QKV bounds | Independent conditional arithmetic check of retained captures, not a new GPU run |
@@ -148,8 +149,19 @@ also passed parity, six audits and clean Close/reap; all 57 final outputs were
 rehashed locally. Its forward host durations sum to 77.471 seconds, so the
 cache total lies between the two baseline totals. The observed baseline drift
 exceeds the initial aggregate cache delta. These three runs establish no
-reliable end-to-end improvement or confidence interval. The separate
-shared-currentness arm and V2 autoregressive diagnostic remain pending.
+reliable end-to-end cache improvement or confidence interval.
+
+The separate [shared-currentness arm](assets/finite-prefix-v228/host-policy-shared.json)
+has now passed the same parity, six audits and shutdown checks; its 57 final
+outputs were rehashed locally. The four forward host durations total 61.458
+seconds versus 76.916 and 77.471 seconds for the baselines. New shared-group
+checks replace repeated per-rank full checks; admissions, dispatches and I/O
+counts remain unchanged. The [plot and counter table](GFX950_HOST_POLICY_V2.md#shared-currentness-observation)
+show the observed effect and limits. Another compiler job was observed during
+C preflight on the shared host. This is not an isolated or statistically
+qualified performance result, GPU timing, kernel overlap or sustained decode.
+Consolidating the remaining duplicate checks needs its own validation;
+the V2 autoregressive diagnostic also remains pending.
 
 ## Changes And Retained Failures
 
@@ -182,6 +194,7 @@ alone is not a self-contained reproducer or proof.
 | V2 baseline GPU completion | `8d46f69e481ea906733765dffee163a0a6ba33bf7816316741e867880a82ea5f` |
 | V2 admission-cache GPU completion | `0952f130801dcf3c958f5dff8b1228a401f436640ee7591465947edcc3881cac` |
 | V2 repeated-baseline GPU completion | `4f5cbd384e136d5c5a05cf0a9d87733b249ee85fec5cd421d3164df87af4110d` |
+| V2 shared-currentness GPU completion | `6aad2f46f234a98ac9f792a6108e98e6bbb6269ad81a6913aa1524f8972cd097` |
 | Corrected CPU605 owner | `dde383021440a721bd2c41bff614ea1156a3b36c6fa48cd2ad27c95337af7cb2` |
 | Historical KFD completion | `e6cdd55c6a2dda4dafdd25a4c8d5e3670312c912cdbc1f20258a6e93db48e603` |
 | Teacher-forced four-forward completion | `56f72c0c8c76e7c2c3f00ca767d5a7b53c66ba4b2c17589059565c2c2532fb8b` |
@@ -198,8 +211,9 @@ alone is not a self-contained reproducer or proof.
 
 1. Extend the freshly built parent/worker source pair to reproducible
    compiler/HSACO builds; the full pipeline is not yet reproduced.
-2. Follow the completed baseline/cache/baseline sequence with the separate
-   shared-currentness arm on `mi350`, preserving the exact numerical checks.
+2. Follow the completed baseline/cache/baseline/shared sequence with tested
+   consolidation of duplicate group-currentness checks, then its own fresh
+   worker GPU comparison on `mi350`, preserving the exact numerical checks.
 3. Close independent numerical obligations and validate the longer resident
    request, multiple requests, KV lifetime and cleanup boundaries.
 4. Qualify the full target workload: single-request Qwen3-8B, BF16,

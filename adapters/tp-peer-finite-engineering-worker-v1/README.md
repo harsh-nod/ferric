@@ -102,8 +102,12 @@ is established by these single diagnostic runs; see the
 The [baseline repeat](../../docs/GFX950_HOST_POLICY_V2.md#baseline-repeat)
 also passed parity, six audits and clean teardown. Its total forward duration
 exposes baseline drift larger than the initial aggregate cache delta; these
-three runs do not establish a reliable speedup. The shared-currentness arm
-and V2 autoregressive diagnostic remain pending. The earlier
+three runs do not establish a reliable cache speedup. The separate
+[shared-currentness arm](../../docs/GFX950_HOST_POLICY_V2.md#shared-currentness-observation)
+passed the same parity, audit and cleanup gates, with a 61.458-second forward
+total versus the baselines' 76.916 and 77.471 seconds. This unisolated diagnostic
+observation is not a qualified decode speedup; the linked plot and table retain
+the counter changes and limits. V2 autoregressive validation remains pending. The earlier
 uninstrumented GPU generation passed four teacher-forced and four
 autoregressive forwards with bitwise native-baseline parity. The V1
 host-instrumented (CPU605) generation has separately completed its teacher-forced

@@ -3,8 +3,9 @@
 This opt-in engineering diagnostic isolates two host-overhead optimizations
 for the four-forward gfx950 prefix route. It does not change production
 admission or the V1 diagnostic. The V2 baseline and admission-cache arm have
-completed on `mi350`, as has a repeated baseline. The shared-currentness arm
-remains pending; no speedup is reported here.
+completed on `mi350`, as have a repeated baseline and the shared-currentness
+arm. The shared arm had lower observed host time in this diagnostic sequence;
+these single runs do not establish a qualified decode speedup.
 
 ## Policies
 
@@ -186,9 +187,59 @@ reduction, not a reliable end-to-end speedup, confidence interval or linear
 drift correction. The repeated baseline's setup interval was 167.248 seconds,
 Close 27.115 seconds, parent 415.551 seconds and controller 433.236 seconds.
 
-The next comparison is the separate `shared-full-currentness` arm. This is
-pre-qualification host-overhead diagnosis, not completion of issue #42's M6
-performance gate.
+## Shared Currentness Observation
+
+The separate `shared-full-currentness` arm completed with the same CPU633
+binaries, images, model, prompt and numerical gates. All 152 retained native
+tensor rows were bitwise equal. All six device audits and seven owned process
+leaves passed, with natural exit, confirmed reap and no forced cleanup. All
+57 final outputs were independently rehashed locally. Its
+[record](assets/finite-prefix-v228/host-policy-shared.json) binds the actual
+policy, counters, binaries and receipt.
+
+![Four host-policy diagnostic runs; host seconds at each position](assets/finite-prefix-v228/host-policy-abac.svg)
+
+| Position | First Baseline (ms) | Repeated Baseline (ms) | Shared Currentness (ms) | Shared Minus First (ms) | Shared Minus Repeat (ms) |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| 0 | 18,266.096 | 18,464.903 | 14,703.166 | -3,562.930 | -3,761.737 |
+| 1 | 18,304.417 | 18,401.490 | 14,669.381 | -3,635.036 | -3,732.109 |
+| 2 | 20,174.308 | 20,317.262 | 16,065.775 | -4,108.534 | -4,251.487 |
+| 3 | 20,171.139 | 20,286.874 | 16,019.419 | -4,151.720 | -4,267.455 |
+
+The four forward durations sum to 61.458 seconds, compared with 76.916 and
+77.471 seconds for the two baselines. This is an observed reduction in this
+host-heavy diagnostic, not evidence of kernel acceleration, sustained decode
+throughput or superiority to another runtime. The host was not performance
+isolated: another compiler job was observed during C preflight and was left
+untouched. There is only one run per arm and two baseline observations, not
+enough to establish a confidence interval or attribute every wall-time change.
+
+The counters show the intended change separately from the timing:
+
+| Positions | Baseline Rank Full Checks R0 / R1 | Shared Rank Full Checks R0 / R1 | Fresh Shared Group Checks | Existing Shared Publication Checks |
+| --- | ---: | ---: | ---: | ---: |
+| 0, 1 (each) | 5,068 / 5,048 | 2,872 / 2,852 | 2,196 | 288 |
+| 2, 3 (each) | 5,644 / 5,624 | 3,160 / 3,140 | 2,484 | 288 |
+
+In this run, each rank's full-check decrease equals the new group-fence count.
+That equality is an observation, not an unconditional gate: periodic wait
+rechecks and completion polls can depend on timing. Individual currentness
+checks remain nonzero. Admissions and dispatches remain 148 / 145 per forward;
+initial admissions remain 9 / 6. Read/write counts, byte extents and publication
+counts are unchanged. The cache, operational shortcuts and raw timestamps
+remain off in all snapshots. Group-currentness time is its own inclusive
+scope, not an additive cost that can be subtracted into GPU time.
+
+The shared setup snapshot interval was 141.722 seconds, Close 21.901 seconds, the parent 368.802
+seconds and the controller 386.540 seconds. Keep those boundaries separate
+from forward latency. The current shared path still invokes each rank's full
+idle check immediately after the fresh group fence. The next candidate
+consolidates those duplicate currentness checks while retaining poison,
+queue-counter, completion-frontier and exception validation. That candidate
+needs its own CPU suite, rebuilt worker and GPU comparison before publication.
+
+This remains pre-qualification host-overhead diagnosis, not completion of
+issue #42's M6 performance gate. V2 autoregressive validation also remains open.
 
 ## GPU Comparison Gates
 
