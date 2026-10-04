@@ -1,0 +1,134 @@
+{
+  "schema": "ferric-p228-gfx950-clock-cpu-overlay-v1",
+  "source_manifest": {
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/device-routing-source-inputs-v228-v1.json",
+    "bytes": 844,
+    "sha256": "e0177a746b8465bed5f8bf6b8760ccfe84094ff3bff2cc63ce8dd6c6b28ae198"
+  },
+  "files": [
+    {
+      "path": "crates/fe2o3-kfd/src/currentness.rs",
+      "source": "p228-gfx950-clock-source-v1/draft/crates/fe2o3-kfd/src/currentness.rs",
+      "before": {
+        "sha256": "b13b09dff19f0dfd2b6b7df0e7c78fca732f0b4905f0516e3d70b5c2bccda478",
+        "bytes": 24459
+      },
+      "after": {
+        "bytes": 24470,
+        "sha256": "59a8ff67cd2ff9b7afc1f75043915feb9dad0dc117b2c721842274d24d0d8ae3"
+      }
+    },
+    {
+      "path": "crates/fe2o3-kfd/src/device_gfx950.rs",
+      "source": "p228-gfx950-clock-source-v1/draft/crates/fe2o3-kfd/src/device_gfx950.rs",
+      "before": {
+        "sha256": "4142b521b4193e30a7ab0bca13acb1a1bc926b0e4809295dd74dc486517b59ef",
+        "bytes": 27502
+      },
+      "after": {
+        "bytes": 27573,
+        "sha256": "ae3654b383e37a15095880d0b37741494fbe2ddcedcaf323eb114b5cbf015d5a"
+      }
+    },
+    {
+      "path": "crates/fe2o3-kfd/src/device_gfx950_clock_correlation.rs",
+      "source": "p228-gfx950-clock-source-v1/draft/crates/fe2o3-kfd/src/device_gfx950_clock_correlation.rs",
+      "before": null,
+      "after": {
+        "bytes": 2336,
+        "sha256": "0a30682e304d93197aa07cfdd7bc9a86775d7398dfd04100203efbeeb754cee2"
+      }
+    },
+    {
+      "path": "crates/fe2o3-kfd/src/device_gfx950_clock_correlation_tests.rs",
+      "source": "p228-gfx950-clock-source-v1/draft/crates/fe2o3-kfd/src/device_gfx950_clock_correlation_tests.rs",
+      "before": null,
+      "after": {
+        "bytes": 4723,
+        "sha256": "3721b9256d5a5b107e59d39139401be74ba37980d5792441ae81a4e27e18bd0d"
+      }
+    },
+    {
+      "path": "crates/fe2o3-kfd/src/engineering_gfx950.rs",
+      "source": "p228-gfx950-clock-source-v1/draft/crates/fe2o3-kfd/src/engineering_gfx950.rs",
+      "before": {
+        "sha256": "45642f3a677f4a8f777024fa50461afcbceb4c7f1e3aca96279ddd59c65082d1",
+        "bytes": 78137
+      },
+      "after": {
+        "bytes": 78182,
+        "sha256": "0830847527715828d6db0dcbff75866bb587a2ea1c0b3af83e90e36615e3dd2c"
+      }
+    },
+    {
+      "path": "crates/fe2o3-kfd/src/engineering_gfx950_peer.rs",
+      "source": "p228-gfx950-clock-source-v1/draft/crates/fe2o3-kfd/src/engineering_gfx950_peer.rs",
+      "before": {
+        "sha256": "5ae01dc80c8a7a7c902492be6d8be767667f8e183ddcaf14f8dc165c6bff8aae",
+        "bytes": 29696
+      },
+      "after": {
+        "bytes": 29845,
+        "sha256": "ae311ebf8f563dc49fea1811d1f160b46e7ba3d6297235fa78c9ffb49ee18f3c"
+      }
+    },
+    {
+      "path": "crates/fe2o3-kfd/src/engineering_gfx950_peer_clock_correlation.rs",
+      "source": "p228-gfx950-clock-source-v1/draft/crates/fe2o3-kfd/src/engineering_gfx950_peer_clock_correlation.rs",
+      "before": null,
+      "after": {
+        "bytes": 5416,
+        "sha256": "1a001d28ffbce59c6bededc38429c7d037cae187ba76920fb68c76da75cd159d"
+      }
+    },
+    {
+      "path": "crates/fe2o3-kfd/src/engineering_gfx950_peer_clock_correlation_tests.rs",
+      "source": "p228-gfx950-clock-source-v1/draft/crates/fe2o3-kfd/src/engineering_gfx950_peer_clock_correlation_tests.rs",
+      "before": null,
+      "after": {
+        "bytes": 8037,
+        "sha256": "dd8183849e9c69e2f09de2828b34704c7fbe43387517127a608f2a31bc32d166"
+      }
+    },
+    {
+      "path": "crates/fe2o3-kfd/src/lib.rs",
+      "source": "p228-gfx950-clock-source-v1/draft/crates/fe2o3-kfd/src/lib.rs",
+      "before": {
+        "sha256": "ea0f56965b4afcdd949e467c7011928c9f3cf39eb69870849f87bfced0615f03",
+        "bytes": 20358
+      },
+      "after": {
+        "bytes": 20403,
+        "sha256": "1d00191ce25b9915a8f0976701daf896e9d02cc384e56d0864fc43a7a88d7ec6"
+      }
+    },
+    {
+      "path": "crates/fe2o3-kfd/src/memory_linux.rs",
+      "source": "p228-gfx950-clock-source-v1/draft/crates/fe2o3-kfd/src/memory_linux.rs",
+      "before": {
+        "sha256": "b9c5cf9e6fa27710e5152d28ca943d81d706bafadadc2370e7d3b601473abca2",
+        "bytes": 77622
+      },
+      "after": {
+        "bytes": 77840,
+        "sha256": "faf1b9acfe9f8d5a313503ce017be089485f82cdd32da5d6898e4b82ed8ff0d8"
+      }
+    }
+  ],
+  "added_runtime_tests": [
+    "device::gfx950::clock_correlation::tests::clock_already_poisoned_refuses_before_ioctl",
+    "device::gfx950::clock_correlation::tests::clock_entry_ioctl_and_exit_failure_latch_poison",
+    "device::gfx950::clock_correlation::tests::clock_public_sampler_signatures_remain_target_specific",
+    "device::gfx950::clock_correlation::tests::clock_raw_values_preserved_under_two_full_checks",
+    "device::gfx950::clock_correlation::tests::clock_repeated_samples_are_fresh_without_counter_order_assumptions",
+    "device::gfx950::clock_correlation::tests::clock_wrong_gpu_padding_and_zero_frequency_poison",
+    "engineering_gfx950::peer::clock_correlation::tests::clocks_changed_uid_gpu_or_epoch_refuses_after_exit_fence",
+    "engineering_gfx950::peer::clock_correlation::tests::clocks_each_successful_call_takes_new_fences_and_samples",
+    "engineering_gfx950::peer::clock_correlation::tests::clocks_every_sample_and_both_fence_failures_poison_without_partial_return",
+    "engineering_gfx950::peer::clock_correlation::tests::clocks_invalid_or_duplicate_whole_roster_refuses_before_first_sample",
+    "engineering_gfx950::peer::clock_correlation::tests::clocks_invalid_world_or_group_refuses_before_backend_and_poisons",
+    "engineering_gfx950::peer::clock_correlation::tests::clocks_public_empty_group_refuses_and_closed_or_poisoned_group_stays_closed",
+    "engineering_gfx950::peer::clock_correlation::tests::clocks_two_and_eight_ranks_preserve_raw_identity_and_full_fence_order",
+    "engineering_gfx950::peer::clock_correlation::tests::clocks_wrong_counter_gpu_refuses_first_middle_last_reply"
+  ]
+}

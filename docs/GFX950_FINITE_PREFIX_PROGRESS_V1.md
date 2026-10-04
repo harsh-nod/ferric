@@ -6,7 +6,16 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Latest: the [timestamp-enabled parent and worker now run on MI350](../qualification/native-device-observation-v1/README.md).
+Latest: the [gfx950 raw clock-sampling API](../qualification/gfx950-clock-sampling-v1/README.md)
+passed 648 selected Rust tests with four existing worker ignores on `mi350-2`.
+This includes 14 new device/group clock tests, a fresh worker compatibility
+build, 33 naturally completed commands and unchanged source/input postchecks.
+A separate 14-test controller-policy run also passed. The API retains owned
+descriptors, full currentness checks, rank identity and host sampling brackets.
+It is not yet wired into Ferric's dispatch recorder; native sampling and
+calibration remain the next gate. No kernel image or arithmetic changed.
+
+The [timestamp-enabled parent and worker run on MI350](../qualification/native-device-observation-v1/README.md).
 The four-forward Qwen3-8B BF16 TP2 capture contains all 1,172 raw dispatch rows,
 with 592/580 per rank. All four payloads, 152 tensors and output tokens are
 byte-identical to the native baseline. All six audits and natural Close/reap
@@ -78,6 +87,7 @@ earlier checkpoints and their limitations at the time they were recorded.
 
 | Check | Observed result | Boundary |
 | --- | --- | --- |
+| Gfx950 clock-sampling API on `mi350-2` | 648 Rust tests passed, four existing ignores; fresh worker; separate 14 controller tests | CPU-only raw-sampler checks; no native ioctl qualification, calibration or recorder integration |
 | Timestamp-enabled parent/worker on `mi350` | 1,172 raw rows; 152 tensors and four payloads/tokens unchanged; six audits and clean Close/reap; 47 controller tests | Per-device raw-tick plots, not calibrated GPU latency, overlap or sustained throughput |
 | Device-tick parent/worker runtime audits on `mi350` | Both exact CPU-qualified ELFs inspected; four natural exits/reaps; all dependencies resolved | Seven auditor tests and 44 controller tests are separate; real admission failed before native launch |
 | Corrected finite parent/worker CPU suite on `mi350-2` | 605 passed, 4 ignored; 34 owned commands | Includes 24 tests for the opt-in host-observation extension; no GPU execution |

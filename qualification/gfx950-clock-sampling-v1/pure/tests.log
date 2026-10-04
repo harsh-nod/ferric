@@ -1,0 +1,19 @@
+test_guard_precedes_package_or_helper_load (test_run.GuardTests) ... ok
+test_optimized_python_or_environment_refused (test_run.GuardTests) ... ok
+test_pin_refuses_wrong_fields_bool_and_noncanonical_path (test_run.GuardTests) ... ok
+test_additions_are_sorted_unique_six_device_eight_peer_cases (test_run.InventoryTests) ... ok
+test_currentness_filters_do_not_match_group_currentness (test_run.InventoryTests) ... ok
+test_eight_additional_phases_cover_39_tests (test_run.InventoryTests) ... ok
+test_exact_old_inventory_plus_declared_new_names_required (test_run.InventoryTests) ... ok
+test_duplicate_extra_missing_or_old_source_generation_refused (test_run.SourceTests) ... ok
+test_exact_archive_commits_trees_and_paths_required (test_run.SourceTests) ... ok
+test_exact_six_preimages_four_new_modules_accept (test_run.SourceTests) ... ok
+test_missing_extra_archive_or_field_refused (test_run.SourceTests) ... ok
+test_missing_new_module_or_missing_preimage_refused (test_run.SourceTests) ... ok
+test_parent_worker_cargo_escape_or_other_runtime_path_refused (test_run.SourceTests) ... ok
+test_preimages_checked_before_any_replacement_read (test_run.SourceTests) ... ok
+
+----------------------------------------------------------------------
+Ran 14 tests in 0.004s
+
+OK

@@ -1,0 +1,9 @@
+
+running 4 tests
+test device::gfx950::tests::every_exact_profile_field_is_fail_closed ... ok
+test device::gfx950::tests::exact_mi350_profile_is_separate_from_mi300 ... ok
+test device::gfx950::tests::platform_observations_must_all_be_exact ... ok
+test device::gfx950::tests::profile_explicitly_grants_no_execution_or_model_authority ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 896 filtered out; finished in 0.00s
+

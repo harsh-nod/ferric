@@ -1,0 +1,52 @@
+{
+  "crates/fe2o3-kfd/src/currentness.rs": {
+    "bytes": 24470,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-gfx950-clock-sampling-v1/draft/crates/fe2o3-kfd/src/currentness.rs",
+    "sha256": "59a8ff67cd2ff9b7afc1f75043915feb9dad0dc117b2c721842274d24d0d8ae3"
+  },
+  "crates/fe2o3-kfd/src/device_gfx950.rs": {
+    "bytes": 27573,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-gfx950-clock-sampling-v1/draft/crates/fe2o3-kfd/src/device_gfx950.rs",
+    "sha256": "ae3654b383e37a15095880d0b37741494fbe2ddcedcaf323eb114b5cbf015d5a"
+  },
+  "crates/fe2o3-kfd/src/device_gfx950_clock_correlation.rs": {
+    "bytes": 2329,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-gfx950-clock-sampling-v1/draft/crates/fe2o3-kfd/src/device_gfx950_clock_correlation.rs",
+    "sha256": "6947faea96c634a2b61cec3f51ce679e1b7eed95beba22790f71e7dc758129ee"
+  },
+  "crates/fe2o3-kfd/src/device_gfx950_clock_correlation_tests.rs": {
+    "bytes": 4404,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-gfx950-clock-sampling-v1/draft/crates/fe2o3-kfd/src/device_gfx950_clock_correlation_tests.rs",
+    "sha256": "5ea8f7e33ae7a18f5167520ae3ecc783a00deafa8e6c1c835d460e8886670d62"
+  },
+  "crates/fe2o3-kfd/src/engineering_gfx950.rs": {
+    "bytes": 78182,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-gfx950-clock-sampling-v1/draft/crates/fe2o3-kfd/src/engineering_gfx950.rs",
+    "sha256": "0830847527715828d6db0dcbff75866bb587a2ea1c0b3af83e90e36615e3dd2c"
+  },
+  "crates/fe2o3-kfd/src/engineering_gfx950_peer.rs": {
+    "bytes": 29845,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-gfx950-clock-sampling-v1/draft/crates/fe2o3-kfd/src/engineering_gfx950_peer.rs",
+    "sha256": "ae311ebf8f563dc49fea1811d1f160b46e7ba3d6297235fa78c9ffb49ee18f3c"
+  },
+  "crates/fe2o3-kfd/src/engineering_gfx950_peer_clock_correlation.rs": {
+    "bytes": 5416,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-gfx950-clock-sampling-v1/draft/crates/fe2o3-kfd/src/engineering_gfx950_peer_clock_correlation.rs",
+    "sha256": "1a001d28ffbce59c6bededc38429c7d037cae187ba76920fb68c76da75cd159d"
+  },
+  "crates/fe2o3-kfd/src/engineering_gfx950_peer_clock_correlation_tests.rs": {
+    "bytes": 7413,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-gfx950-clock-sampling-v1/draft/crates/fe2o3-kfd/src/engineering_gfx950_peer_clock_correlation_tests.rs",
+    "sha256": "11f6a1f8a15f3e22180a2dc3a3db216d36bcd342a7af3717573d1ea2e12887e0"
+  },
+  "crates/fe2o3-kfd/src/lib.rs": {
+    "bytes": 20403,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-gfx950-clock-sampling-v1/draft/crates/fe2o3-kfd/src/lib.rs",
+    "sha256": "31a25380de421d6b95f9a8fd1eedd7f6ed69b1cd8981aa9812519dd67c5e5b57"
+  },
+  "crates/fe2o3-kfd/src/memory_linux.rs": {
+    "bytes": 77840,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-gfx950-clock-sampling-v1/draft/crates/fe2o3-kfd/src/memory_linux.rs",
+    "sha256": "faf1b9acfe9f8d5a313503ce017be089485f82cdd32da5d6898e4b82ed8ff0d8"
+  }
+}

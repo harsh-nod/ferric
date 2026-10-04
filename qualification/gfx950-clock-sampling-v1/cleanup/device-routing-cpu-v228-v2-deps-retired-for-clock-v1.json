@@ -1,0 +1,29 @@
+{
+  "complete": {
+    "bytes": 183804,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/device-routing-cpu-v228-v2/complete.json",
+    "sha256": "407990eeac9332f4807ff71fcc7c884a0f14a92dffd44f97fd19ea7fa0b7bbf7"
+  },
+  "dynamic_sections": {
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/device-routing-cpu-v228-v2/target/debug/ferric-tp-peer-finite-engineering-worker-v1": "\nDynamic section at offset 0x341d20 contains 29 entries:\n  Tag        Type                         Name/Value\n 0x0000000000000001 (NEEDED)             Shared library: [libgcc_s.so.1]\n 0x0000000000000001 (NEEDED)             Shared library: [libc.so.6]\n 0x0000000000000001 (NEEDED)             Shared library: [ld-linux-x86-64.so.2]\n 0x000000000000001e (FLAGS)              BIND_NOW\n 0x000000006ffffffb (FLAGS_1)            Flags: NOW PIE\n 0x0000000000000015 (DEBUG)              0x0\n 0x0000000000000007 (RELA)               0x1168\n 0x0000000000000008 (RELASZ)             102312 (bytes)\n 0x0000000000000009 (RELAENT)            24 (bytes)\n 0x000000006ffffff9 (RELACOUNT)          4185\n 0x0000000000000017 (JMPREL)             0x1a110\n 0x0000000000000002 (PLTRELSZ)           48 (bytes)\n 0x0000000000000003 (PLTGOT)             0x345db0\n 0x0000000000000014 (PLTREL)             RELA\n 0x0000000000000006 (SYMTAB)             0x340\n 0x000000000000000b (SYMENT)             24 (bytes)\n 0x0000000000000005 (STRTAB)             0xccc\n 0x000000000000000a (STRSZ)              1180 (bytes)\n 0x000000006ffffef5 (GNU_HASH)           0xcb0\n 0x0000000000000019 (INIT_ARRAY)         0x333798\n 0x000000000000001b (INIT_ARRAYSZ)       16 (bytes)\n 0x000000000000001a (FINI_ARRAY)         0x333790\n 0x000000000000001c (FINI_ARRAYSZ)       8 (bytes)\n 0x000000000000000c (INIT)               0x332714\n 0x000000000000000d (FINI)               0x332730\n 0x000000006ffffff0 (VERSYM)             0xad8\n 0x000000006ffffffe (VERNEED)            0xb7c\n 0x000000006fffffff (VERNEEDNUM)         3\n 0x0000000000000000 (NULL)               0x0\n"
+  },
+  "free_after": 42952982528,
+  "free_before": 42761523200,
+  "gpu_execution": false,
+  "preserved_binaries": [
+    {
+      "bytes": 4872432,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/device-routing-cpu-v228-v2/target/debug/ferric-tp-peer-finite-engineering-worker-v1",
+      "sha256": "eda6a2450636d5fdc8ceca0f39b84769cdbcf47a74b73bb66310eb5cc8233d03"
+    }
+  ],
+  "preserved_references": 291,
+  "retired": {
+    "allocated_bytes": 196329472,
+    "files": 115,
+    "inode": 21930306,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/device-routing-cpu-v228-v2/target/debug/deps"
+  },
+  "schema": "ferric-p228-clock-deps-retirement-v1",
+  "source_removed": false
+}

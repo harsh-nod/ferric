@@ -1,0 +1,30 @@
+{
+  "schema": "ferric-p228-gfx950-clock-cpu-package-v1",
+  "files": [
+    {
+      "path": "run.py",
+      "bytes": 21888,
+      "sha256": "6a20d062f15396c24e24e9aa9aaa72b27b5cfc5e50d8433cbf2ac002c89f7ee6"
+    },
+    {
+      "path": "overlay.json",
+      "bytes": 6010,
+      "sha256": "a11e22fa66010c471aadb9652db0224cc6b2e8b72bbe907610b2d8c6717b70cc"
+    },
+    {
+      "path": "test_run.py",
+      "bytes": 7682,
+      "sha256": "8721c451e5c7374437d7072df4b1ef51955e29c045ccbb51edde65d872ca1dfc"
+    },
+    {
+      "path": "README.md",
+      "bytes": 1096,
+      "sha256": "dcab93722fbd78b93ac9c056de4582c4708a1095a07b796bdfe202ea80095765"
+    }
+  ],
+  "pure_tests": 14,
+  "test_census": {
+    "test_run.py": 14
+  },
+  "gpu_execution": false
+}

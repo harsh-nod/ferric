@@ -1,0 +1,29 @@
+{
+  "complete": {
+    "bytes": 167210,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-raw-timestamps-cpu-v228-v1/complete.json",
+    "sha256": "2d53e512b2ab882b97333c1d1889780c8fed0ab2763b411dc167b8f1735ee5da"
+  },
+  "dynamic_sections": {
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-raw-timestamps-cpu-v228-v1/target/debug/ferric-tp-peer-finite-engineering-worker-v1": "\nDynamic section at offset 0x334f20 contains 29 entries:\n  Tag        Type                         Name/Value\n 0x0000000000000001 (NEEDED)             Shared library: [libgcc_s.so.1]\n 0x0000000000000001 (NEEDED)             Shared library: [libc.so.6]\n 0x0000000000000001 (NEEDED)             Shared library: [ld-linux-x86-64.so.2]\n 0x000000000000001e (FLAGS)              BIND_NOW\n 0x000000006ffffffb (FLAGS_1)            Flags: NOW PIE\n 0x0000000000000015 (DEBUG)              0x0\n 0x0000000000000007 (RELA)               0x1168\n 0x0000000000000008 (RELASZ)             102672 (bytes)\n 0x0000000000000009 (RELAENT)            24 (bytes)\n 0x000000006ffffff9 (RELACOUNT)          4200\n 0x0000000000000017 (JMPREL)             0x1a278\n 0x0000000000000002 (PLTRELSZ)           48 (bytes)\n 0x0000000000000003 (PLTGOT)             0x338f38\n 0x0000000000000014 (PLTREL)             RELA\n 0x0000000000000006 (SYMTAB)             0x340\n 0x000000000000000b (SYMENT)             24 (bytes)\n 0x0000000000000005 (STRTAB)             0xccc\n 0x000000000000000a (STRSZ)              1180 (bytes)\n 0x000000006ffffef5 (GNU_HASH)           0xcb0\n 0x0000000000000019 (INIT_ARRAY)         0x326808\n 0x000000000000001b (INIT_ARRAYSZ)       16 (bytes)\n 0x000000000000001a (FINI_ARRAY)         0x326800\n 0x000000000000001c (FINI_ARRAYSZ)       8 (bytes)\n 0x000000000000000c (INIT)               0x325784\n 0x000000000000000d (FINI)               0x3257a0\n 0x000000006ffffff0 (VERSYM)             0xad8\n 0x000000006ffffffe (VERNEED)            0xb7c\n 0x000000006fffffff (VERNEEDNUM)         3\n 0x0000000000000000 (NULL)               0x0\n"
+  },
+  "free_after": 43141414912,
+  "free_before": 42952957952,
+  "gpu_execution": false,
+  "preserved_binaries": [
+    {
+      "bytes": 4787936,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-raw-timestamps-cpu-v228-v1/target/debug/ferric-tp-peer-finite-engineering-worker-v1",
+      "sha256": "a5eaf7d8ca865360f3a7ae5ee5bd72e79978a173ba94fc4a2cb016649e18a0ae"
+    }
+  ],
+  "preserved_references": 257,
+  "retired": {
+    "allocated_bytes": 193245184,
+    "files": 115,
+    "inode": 21873066,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-raw-timestamps-cpu-v228-v1/target/debug/deps"
+  },
+  "schema": "ferric-p228-clock-deps-retirement-v1",
+  "source_removed": false
+}

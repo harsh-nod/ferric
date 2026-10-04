@@ -1,0 +1,15 @@
+
+running 10 tests
+test engineering_gfx950::peer::state_bank_v1::tests::bank_duplicates_refuse_before_any_load_and_quarantine ... ok
+test engineering_gfx950::peer::state_bank_v1::tests::bank_bounds_one_and144_accept_empty_and145_refuse_before_backend ... ok
+test engineering_gfx950::peer::state_bank_v1::tests::bank_first_middle_last_validation_read_and_both_fence_failures_return_no_vector ... ok
+test engineering_gfx950::peer::state_bank_v1::tests::bank_mixed_order_whole_validation_then_reads_and_two_fresh_checks ... ok
+test engineering_gfx950::peer::state_bank_v1::tests::bank_native_prefix_foreign_stale_kind_extent_and_mapping_checks_precede_storage ... ok
+test engineering_gfx950::peer::state_bank_v1::tests::bank_native_mlp_foreign_stale_kind_extent_and_mapping_checks_precede_storage ... ok
+test engineering_gfx950::peer::state_bank_v1::tests::bank_native_rejects_unconstructed_lifetimes_without_storage_access ... ok
+test engineering_gfx950::peer::state_bank_v1::tests::bank_native_routing_accepts_completed_lifetime_but_refuses_missing_owner_storage ... ok
+test engineering_gfx950::peer::state_bank_v1::tests::bank_repeated_calls_take_new_fences_and_later_failure_quarantines ... ok
+test engineering_gfx950::peer::state_bank_v1::tests::bank_public_bounds_error_poison_and_public_single_fences_remain_guarded ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 890 filtered out; finished in 0.00s
+

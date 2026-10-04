@@ -1,0 +1,35 @@
+{
+  "controller_sha256": "fdb414159e82625ce4344abfb528728d463ca6958bf9725da12ea9514219fd77",
+  "elapsed_seconds": 0.02676875307224691,
+  "errors": 0,
+  "failures": 0,
+  "full_model_acceptance": false,
+  "gpu_execution": false,
+  "manifest_sha256": "f34a13347eda4ebde113f6954878ce98a0b127f321ef4ca7b1a3234cf2fe208d",
+  "native_execution": false,
+  "numerical_acceptance": false,
+  "passed": true,
+  "performance_claim": false,
+  "production_authority": false,
+  "schema": "ferric-p228-gfx950-clock-pure-v1",
+  "skipped": 0,
+  "source_postchecks_passed": true,
+  "source_sha256": "9a72a3c957733c32694836fb3861b5e6c80c8a8f7a1b9fcb023e4467a61a8719",
+  "sources_after": {
+    "bytes": 992,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/gfx950-clock-pure-v228-v1/sources-after.json",
+    "sha256": "9a72a3c957733c32694836fb3861b5e6c80c8a8f7a1b9fcb023e4467a61a8719"
+  },
+  "sources_before": {
+    "bytes": 992,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/gfx950-clock-pure-v228-v1/sources-before.json",
+    "sha256": "9a72a3c957733c32694836fb3861b5e6c80c8a8f7a1b9fcb023e4467a61a8719"
+  },
+  "synthetic_policy_tests_only": true,
+  "tests": 14,
+  "transcript": {
+    "bytes": 1264,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/gfx950-clock-pure-v228-v1/tests.log",
+    "sha256": "978ef6bb53ba75d29928882ba50b1cb546c240551be192010dcbe23a0809a7cc"
+  }
+}

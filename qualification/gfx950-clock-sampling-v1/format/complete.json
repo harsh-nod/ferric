@@ -1,0 +1,155 @@
+{
+  "controller": {
+    "bytes": 4286,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/format_gfx950_clock_sources_p228_v2.py",
+    "sha256": "81e9c53f2903473f4e60de167f8c05ec9e56c246a9fb074b1d8799488193d433"
+  },
+  "formatted": {
+    "crates/fe2o3-kfd/src/currentness.rs": {
+      "bytes": 24470,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-gfx950-clock-source-v1/draft/crates/fe2o3-kfd/src/currentness.rs",
+      "sha256": "59a8ff67cd2ff9b7afc1f75043915feb9dad0dc117b2c721842274d24d0d8ae3"
+    },
+    "crates/fe2o3-kfd/src/device_gfx950.rs": {
+      "bytes": 27573,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-gfx950-clock-source-v1/draft/crates/fe2o3-kfd/src/device_gfx950.rs",
+      "sha256": "ae3654b383e37a15095880d0b37741494fbe2ddcedcaf323eb114b5cbf015d5a"
+    },
+    "crates/fe2o3-kfd/src/device_gfx950_clock_correlation.rs": {
+      "bytes": 2336,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-gfx950-clock-source-v1/draft/crates/fe2o3-kfd/src/device_gfx950_clock_correlation.rs",
+      "sha256": "0a30682e304d93197aa07cfdd7bc9a86775d7398dfd04100203efbeeb754cee2"
+    },
+    "crates/fe2o3-kfd/src/device_gfx950_clock_correlation_tests.rs": {
+      "bytes": 4723,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-gfx950-clock-source-v1/draft/crates/fe2o3-kfd/src/device_gfx950_clock_correlation_tests.rs",
+      "sha256": "3721b9256d5a5b107e59d39139401be74ba37980d5792441ae81a4e27e18bd0d"
+    },
+    "crates/fe2o3-kfd/src/engineering_gfx950.rs": {
+      "bytes": 78182,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-gfx950-clock-source-v1/draft/crates/fe2o3-kfd/src/engineering_gfx950.rs",
+      "sha256": "0830847527715828d6db0dcbff75866bb587a2ea1c0b3af83e90e36615e3dd2c"
+    },
+    "crates/fe2o3-kfd/src/engineering_gfx950_peer.rs": {
+      "bytes": 29845,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-gfx950-clock-source-v1/draft/crates/fe2o3-kfd/src/engineering_gfx950_peer.rs",
+      "sha256": "ae311ebf8f563dc49fea1811d1f160b46e7ba3d6297235fa78c9ffb49ee18f3c"
+    },
+    "crates/fe2o3-kfd/src/engineering_gfx950_peer_clock_correlation.rs": {
+      "bytes": 5416,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-gfx950-clock-source-v1/draft/crates/fe2o3-kfd/src/engineering_gfx950_peer_clock_correlation.rs",
+      "sha256": "1a001d28ffbce59c6bededc38429c7d037cae187ba76920fb68c76da75cd159d"
+    },
+    "crates/fe2o3-kfd/src/engineering_gfx950_peer_clock_correlation_tests.rs": {
+      "bytes": 8037,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-gfx950-clock-source-v1/draft/crates/fe2o3-kfd/src/engineering_gfx950_peer_clock_correlation_tests.rs",
+      "sha256": "dd8183849e9c69e2f09de2828b34704c7fbe43387517127a608f2a31bc32d166"
+    },
+    "crates/fe2o3-kfd/src/lib.rs": {
+      "bytes": 20403,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-gfx950-clock-source-v1/draft/crates/fe2o3-kfd/src/lib.rs",
+      "sha256": "1d00191ce25b9915a8f0976701daf896e9d02cc384e56d0864fc43a7a88d7ec6"
+    },
+    "crates/fe2o3-kfd/src/memory_linux.rs": {
+      "bytes": 77840,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-gfx950-clock-source-v1/draft/crates/fe2o3-kfd/src/memory_linux.rs",
+      "sha256": "faf1b9acfe9f8d5a313503ce017be089485f82cdd32da5d6898e4b82ed8ff0d8"
+    }
+  },
+  "gpu_execution": false,
+  "manifest": {
+    "bytes": 4051,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-gfx950-clock-sampling-v1/source-manifest.json",
+    "sha256": "15dfb9aba6638118dcfe5c86df6371a43da9e7be0378eea0c15c7ebb8b5347b6"
+  },
+  "passed": true,
+  "phases": {
+    "rustfmt": {
+      "cache_bytes": 4096,
+      "elapsed_seconds": 2.009947566082701,
+      "exit_code": 0,
+      "group_absent": true,
+      "reason": null,
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "rustfmt-check": {
+      "cache_bytes": 4096,
+      "elapsed_seconds": 2.0124819420743734,
+      "exit_code": 0,
+      "group_absent": true,
+      "reason": null,
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "raw": {
+    "rustfmt-check-command.json": {
+      "bytes": 3788,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/gfx950-clock-source-format-v228-v2/rustfmt-check-command.json",
+      "sha256": "30b2312a2edcd2909c52b73b9378d556959441e4bda7653b7214b76b5883b514"
+    },
+    "rustfmt-check-result.json": {
+      "bytes": 301,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/gfx950-clock-source-format-v228-v2/rustfmt-check-result.json",
+      "sha256": "bc68ac05b6f73958a59e1bef3d030be188d9b677c9d8681996b18d422e14de25"
+    },
+    "rustfmt-check-started.json": {
+      "bytes": 40,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/gfx950-clock-source-format-v228-v2/rustfmt-check-started.json",
+      "sha256": "11763a6c292ef417ba83c41a2c21d1c855c377ce855a13effe5c636bbda2a3b8"
+    },
+    "rustfmt-check-stderr": {
+      "bytes": 0,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/gfx950-clock-source-format-v228-v2/rustfmt-check-stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "rustfmt-check-stdout": {
+      "bytes": 0,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/gfx950-clock-source-format-v228-v2/rustfmt-check-stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "rustfmt-command.json": {
+      "bytes": 3773,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/gfx950-clock-source-format-v228-v2/rustfmt-command.json",
+      "sha256": "b39d7f1c848f2bbdb392ee0d0b9b2f706fc214b83ea6930a4f8dca3127191319"
+    },
+    "rustfmt-result.json": {
+      "bytes": 300,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/gfx950-clock-source-format-v228-v2/rustfmt-result.json",
+      "sha256": "7b59e5a48252e580c649dea67588e27ea02cc47c9ad024c6988a6ecb746d363a"
+    },
+    "rustfmt-started.json": {
+      "bytes": 40,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/gfx950-clock-source-format-v228-v2/rustfmt-started.json",
+      "sha256": "6b411db5ae73d464e0e4897995ab0a9bf228ec07b34e874d14ff010bc93791e8"
+    },
+    "rustfmt-stderr": {
+      "bytes": 0,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/gfx950-clock-source-format-v228-v2/rustfmt-stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "rustfmt-stdout": {
+      "bytes": 0,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/gfx950-clock-source-format-v228-v2/rustfmt-stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "sources-after.json": {
+      "bytes": 3331,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/gfx950-clock-source-format-v228-v2/sources-after.json",
+      "sha256": "c5910c423e4cd676395d3be0f4e6de7bc9bfe69b699d745c3231a1f8f10f9aca"
+    },
+    "sources-before.json": {
+      "bytes": 3351,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/gfx950-clock-source-format-v228-v2/sources-before.json",
+      "sha256": "772e3696e4fc597900b73b5cdd0c4d03df6334f0acfb5dbbf68c52498673e51f"
+    }
+  },
+  "schema": "ferric-gfx950-clock-format-v1",
+  "tests_executed": false,
+  "tool": {
+    "bytes": 5281712,
+    "path": "/home/harmenon/ferric-asrock-42/toolchain/rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/bin/rustfmt",
+    "sha256": "a9137d0c198ceb6c72193d517d3c9007b3ec7a90d3d10ec6889773eca48261b4"
+  }
+}

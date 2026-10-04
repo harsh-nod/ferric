@@ -1,0 +1,13 @@
+
+running 8 tests
+test engineering_gfx950::peer::clock_correlation::tests::clocks_each_successful_call_takes_new_fences_and_samples ... ok
+test engineering_gfx950::peer::clock_correlation::tests::clocks_changed_uid_gpu_or_epoch_refuses_after_exit_fence ... ok
+test engineering_gfx950::peer::clock_correlation::tests::clocks_every_sample_and_both_fence_failures_poison_without_partial_return ... ok
+test engineering_gfx950::peer::clock_correlation::tests::clocks_invalid_or_duplicate_whole_roster_refuses_before_first_sample ... ok
+test engineering_gfx950::peer::clock_correlation::tests::clocks_invalid_world_or_group_refuses_before_backend_and_poisons ... ok
+test engineering_gfx950::peer::clock_correlation::tests::clocks_public_empty_group_refuses_and_closed_or_poisoned_group_stays_closed ... ok
+test engineering_gfx950::peer::clock_correlation::tests::clocks_wrong_counter_gpu_refuses_first_middle_last_reply ... ok
+test engineering_gfx950::peer::clock_correlation::tests::clocks_two_and_eight_ranks_preserve_raw_identity_and_full_fence_order ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 892 filtered out; finished in 0.00s
+
