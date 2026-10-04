@@ -23,8 +23,9 @@ engineering branch; it does not change the production execution path.
 | Four teacher-forced forwards on `mi350` | 152 retained native tensor rows bitwise equal to the prior native route | All 36 layers, TP2, finite engineering images; not an independent full-model numerical bound |
 | Four autoregressive forwards on `mi350` | 152 retained native tensor rows bitwise equal to the prior native route | Own-token history; no 2,048/256 workload or sustained throughput measurement |
 | Six prefix-stage numerical cases | All 24 rank/profile rows satisfy the declared conditional norm/QKV bounds | Independent conditional arithmetic check of retained captures, not a new GPU run |
-| Idempotent partial-move compiler candidate on `mi350-2` | 2,675 CPU tests passed, 25 ignored; fresh compiler built | Six new regressions executed; actual prefix-tile replay remains ignored and checked lowering is still pending |
+| Idempotent partial-move compiler candidate on `mi350-2` | 2,675 CPU tests passed, 25 ignored; fresh compiler built | Six new regressions executed; actual prefix-tile replay remains ignored |
 | Matching finalizer tools on `mi350-2` | 190 default example tests passed, 15 ignored; three tools rebuilt | Same compiler source generation; actual-capture inert join remains ignored, no new HSACO |
+| Checked reciprocal probe with new compiler on `mi350-2` | Previous storage gate cleared; canonical semantic capture emitted | Ranked projection rejects 1,027 blocks against the unchanged 1,024 limit; no HSACO or GPU run |
 
 Both four-forward runs completed their Close protocol, reaped their owned
 processes, and passed their six surrounding device-state audits. The CPU suite
@@ -113,8 +114,19 @@ subsequently passed 190 default tests with 15 ignored, rebuilt three tools,
 and preserved all five qualified compiler products. Its six commands exited
 naturally; source, dependency and prior-target checks passed. The 36 raw
 records and three new tools were retained and rehashed locally. The actual
-V6 capture join remains ignored, and a new checked probe is still required.
+V6 capture join remains ignored.
 Compiler limits, numerical tolerances and production admission remain unchanged.
+
+The [fresh checked probe](../qualification/fe2o3-partial-move-idempotent-v1/checked-probe-result.json)
+with those exact compiler/finalizer products cleared the partial-move storage
+gate. It emitted a canonical V41 semantic capture, then rejected the unchanged
+ranked CFG block limit. A matching-decoder [read-only census](../qualification/fe2o3-partial-move-idempotent-v1/semantic-census.json)
+measured one kernel-root function containing 1,027 stored blocks, three above
+the per-function limit of 1,024. All source/tool/dependency/prior-target
+postchecks passed and the owned processes exited naturally and were reaped.
+This is not ranked or target KIR acceptance, replay, HSACO emission or GPU
+validation. The next source change targets avoidable reciprocal branches;
+the numerical policy and compiler caps remain unchanged.
 
 ## Source Publication
 

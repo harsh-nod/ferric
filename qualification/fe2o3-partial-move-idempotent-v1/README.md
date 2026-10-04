@@ -77,8 +77,28 @@ All six build/test commands completed naturally and were reaped. The five
 accepted compiler products remained unchanged, as did the copied source,
 dependencies, configurations and prior targets. The 36 raw records and three
 new tool products were retained and rehashed locally. These matching tools
-are ready for a new checked probe; this step did not emit an HSACO or execute
+were used by the checked probe below; this build did not emit an HSACO or execute
 the actual-capture join.
+
+## Checked Probe And Block Census
+
+The [fresh checked probe](checked-probe-result.json) cleared the previous
+partial-move storage failure and emitted a canonical V41 semantic capture.
+It then failed semantic-to-ranked projection at the unchanged 1,024-block
+per-function limit. Cargo exited 101; the owned process tree exited naturally
+and was reaped. All source, tool, configuration, dependency and prior-target
+postchecks passed. The probe and supervisor passed 35 and 15 policy tests.
+
+A [read-only census](semantic-census.json), linked against the exact admitted
+compiler's semantic decoder, found one kernel-root function with 1,027 stored
+blocks, 340 branching blocks, 1,438 locals and 4,563 statements. The guard counts
+all stored blocks, including unreachable ones: this function exceeds it by
+three blocks. Both inspector build and decode completed naturally. Twelve raw
+records and the inspector binary were retained and rehashed locally.
+
+This is progress past the storage gate, not completed checked lowering. No
+ranked/target KIR, compiler handoff, HSACO or GPU result was produced. The next
+candidate removes avoidable reciprocal control flow without raising limits.
 
 ## Source Boundary
 
@@ -102,13 +122,12 @@ and treat matching context lines as equivalent provenance.
 
 ## Remaining Gates
 
-Both reciprocal candidate probes exceeded the unchanged partial-move storage
-budget before producing an HSACO. The first rejected charge does not identify
-the responsible insertion site or the total function requirement. This patch
-may or may not make the complete function fit.
+The two probes with the older compiler exceeded its partial-move storage
+budget. This compiler clears that gate, but the complete function still fails
+the ranked CFG limit as measured above. Those historical failures are retained.
 
 CPU regression success and fresh compiler binaries are prerequisites, not
 evidence that checked lowering, replay, emission or GPU execution works.
-Those need a new pinned compiler/tool recipe and separate MI350 numerical
-validation. The existing CPU475 worker and CPU633 parent are not rebuilt by
+Those need a smaller candidate's fresh checked probe and separate MI350
+numerical validation. The existing CPU475 worker and CPU633 parent are not rebuilt by
 this qualification work. No production, full-model or 700 tokens/s claim is made.
