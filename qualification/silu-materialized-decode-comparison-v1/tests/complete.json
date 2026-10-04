@@ -1,0 +1,54 @@
+{
+  "controller": {
+    "bytes": 8175,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-silu-materialized-decode-comparison-v1/pure.py",
+    "sha256": "4b2b5d01f03dfdb05caea82e58dc126b208e46b922836fb5e25af8b67438f624"
+  },
+  "errors": 0,
+  "failures": 0,
+  "full_model_acceptance": false,
+  "gpu_execution": false,
+  "names": [
+    "projection_decode_comparison_tests.ComparisonTests.test_all152_direct_rows_and_four_token_records",
+    "projection_decode_comparison_tests.ComparisonTests.test_candidate_nested_schema_real_validator_and_seven_leaves",
+    "projection_decode_comparison_tests.ComparisonTests.test_capture_digest_structural_result_and_request_cannot_drift",
+    "projection_decode_comparison_tests.ComparisonTests.test_changed_tf_input_is_not_same_workload",
+    "projection_decode_comparison_tests.ComparisonTests.test_failed_or_authority_bearing_gpu_receipt_refuses",
+    "projection_decode_comparison_tests.ComparisonTests.test_failed_owner_wrong_selector_and_missing_audit_refuse",
+    "projection_decode_comparison_tests.ComparisonTests.test_last_hidden_norm_and_logits_keep_exact_differences",
+    "projection_decode_comparison_tests.ComparisonTests.test_layer_error_can_shrink_without_causal_claim",
+    "projection_decode_comparison_tests.ComparisonTests.test_nonfinite_tensor_refuses",
+    "projection_decode_comparison_tests.ComparisonTests.test_output_token_mismatch_is_diagnostic_not_rejection",
+    "projection_decode_comparison_tests.ComparisonTests.test_recorded_baseline_requires_all_reference_identities",
+    "projection_decode_comparison_tests.ComparisonTests.test_recorded_baseline_token_difference_stays_diagnostic",
+    "projection_decode_comparison_tests.ComparisonTests.test_signed_zero_is_nonexact_with_zero_absolute_error",
+    "projection_decode_comparison_tests.ComparisonTests.test_silu_image_or_predecessor_binding_drift_refuses",
+    "projection_decode_comparison_tests.ComparisonTests.test_silu_predecessor_failure_or_authority_refuses",
+    "projection_decode_comparison_tests.ComparisonTests.test_silu_predecessors_join_without_equating_workers",
+    "projection_decode_comparison_tests.ComparisonTests.test_truncated_payload_and_wrong_own_argmax_refuse"
+  ],
+  "numerical_acceptance": false,
+  "passed": true,
+  "performance_claim": false,
+  "production_authority": false,
+  "schema": "ferric-p228-silu-materialized-decode-comparison-pure-v1",
+  "skipped": 0,
+  "source_postchecks_passed": true,
+  "sources_after": {
+    "bytes": 3395,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/silu-materialized-decode-comparison-pure-v228-v1/sources-after.json",
+    "sha256": "82509410fc991496c1eab04d491704fdc244ca409079750e4f0e9596101eac07"
+  },
+  "sources_before": {
+    "bytes": 3395,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/silu-materialized-decode-comparison-pure-v228-v1/sources-before.json",
+    "sha256": "82509410fc991496c1eab04d491704fdc244ca409079750e4f0e9596101eac07"
+  },
+  "synthetic_only": true,
+  "tests": 17,
+  "transcript": {
+    "bytes": 2011,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/silu-materialized-decode-comparison-pure-v228-v1/tests.log",
+    "sha256": "3bf14656f47f9db00c050a7650bde69037b0ad7a38425a66b1349ce469b9d0e7"
+  }
+}

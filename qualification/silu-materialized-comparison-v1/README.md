@@ -63,7 +63,7 @@ recompute numerical metrics or reread every consumed tensor buffer. Tensor
 payloads remain outside Git, identified by exact pins. Source READMEs retain
 their author-time status; the actual receipts above establish execution status.
 
-The next hardware check is the same image across four complete 36-layer
-forwards, followed by independent framework comparison. This checkpoint does
-not cover the 2,048-token prompt / 256-token target, production admission, or
-the 700 tokens/s objective.
+The subsequent [four-step, 36-layer comparison](../silu-materialized-decode-comparison-v1/README.md)
+records the same image's mixed full-model diagnostic results. This layer-zero
+checkpoint does not cover the 2,048-token prompt / 256-token target, production
+admission, or the 700 tokens/s objective.

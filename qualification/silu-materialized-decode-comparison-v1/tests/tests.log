@@ -1,0 +1,22 @@
+test_all152_direct_rows_and_four_token_records (projection_decode_comparison_tests.ComparisonTests) ... ok
+test_candidate_nested_schema_real_validator_and_seven_leaves (projection_decode_comparison_tests.ComparisonTests) ... ok
+test_capture_digest_structural_result_and_request_cannot_drift (projection_decode_comparison_tests.ComparisonTests) ... ok
+test_changed_tf_input_is_not_same_workload (projection_decode_comparison_tests.ComparisonTests) ... ok
+test_failed_or_authority_bearing_gpu_receipt_refuses (projection_decode_comparison_tests.ComparisonTests) ... ok
+test_failed_owner_wrong_selector_and_missing_audit_refuse (projection_decode_comparison_tests.ComparisonTests) ... ok
+test_last_hidden_norm_and_logits_keep_exact_differences (projection_decode_comparison_tests.ComparisonTests) ... ok
+test_layer_error_can_shrink_without_causal_claim (projection_decode_comparison_tests.ComparisonTests) ... ok
+test_nonfinite_tensor_refuses (projection_decode_comparison_tests.ComparisonTests) ... ok
+test_output_token_mismatch_is_diagnostic_not_rejection (projection_decode_comparison_tests.ComparisonTests) ... ok
+test_recorded_baseline_requires_all_reference_identities (projection_decode_comparison_tests.ComparisonTests) ... ok
+test_recorded_baseline_token_difference_stays_diagnostic (projection_decode_comparison_tests.ComparisonTests) ... ok
+test_signed_zero_is_nonexact_with_zero_absolute_error (projection_decode_comparison_tests.ComparisonTests) ... ok
+test_silu_image_or_predecessor_binding_drift_refuses (projection_decode_comparison_tests.ComparisonTests) ... ok
+test_silu_predecessor_failure_or_authority_refuses (projection_decode_comparison_tests.ComparisonTests) ... ok
+test_silu_predecessors_join_without_equating_workers (projection_decode_comparison_tests.ComparisonTests) ... ok
+test_truncated_payload_and_wrong_own_argmax_refuse (projection_decode_comparison_tests.ComparisonTests) ... ok
+
+----------------------------------------------------------------------
+Ran 17 tests in 24.734s
+
+OK

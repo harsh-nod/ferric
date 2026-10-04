@@ -1,0 +1,2048 @@
+{
+  "all_transitive_inputs_replayed": false,
+  "assembly": {
+    "bytes": 47724,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-inputs-v228-v1/assembly.json",
+    "sha256": "579636db561e278bf07319ee1eb4753d59aef95203eda04e63f1d80379eb4743"
+  },
+  "audits": {
+    "after": [
+      {
+        "process_result": {
+          "bytes": 1608,
+          "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-gpu-v228-v1/after-0/result.json",
+          "sha256": "55dd813227a4b1ddcc7ca0c52cb74de472c5b9d910169dd1d4f1aeed0ccf3749"
+        },
+        "topology": {
+          "bytes": 4179,
+          "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-gpu-v228-v1/after-0-topology.json",
+          "sha256": "4e703f410de5528b47cfebc2405eff2dbcf730d6ed70f5f44d6f4a4fe47f0bb1"
+        }
+      },
+      {
+        "process_result": {
+          "bytes": 1608,
+          "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-gpu-v228-v1/after-1/result.json",
+          "sha256": "70b0203b7d4f47da3c68836f92a4df64279f19ccef429511780067463d8b8c68"
+        },
+        "topology": {
+          "bytes": 4180,
+          "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-gpu-v228-v1/after-1-topology.json",
+          "sha256": "248e71d9f9c82e8f5796c096c2e22bf4366b2802f3b73e52166209971c6bb53d"
+        }
+      },
+      {
+        "process_result": {
+          "bytes": 1608,
+          "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-gpu-v228-v1/after-2/result.json",
+          "sha256": "54a3cdd29c9eb6d36005eec15823715bca5ddfbe6b9c228f7eb1cf0a642886f5"
+        },
+        "topology": {
+          "bytes": 4180,
+          "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-gpu-v228-v1/after-2-topology.json",
+          "sha256": "c198ff988129fe6d45348757c1dbb34621e449c35c156fed54b5bab308fdfc35"
+        }
+      }
+    ],
+    "before": [
+      {
+        "process_result": {
+          "bytes": 1612,
+          "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-gpu-v228-v1/before-0/result.json",
+          "sha256": "aede963158d5cad1de66dc1f9497ad28d978298ffd6e618e6a58ad4966e29276"
+        },
+        "topology": {
+          "bytes": 4180,
+          "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-gpu-v228-v1/before-0-topology.json",
+          "sha256": "33fea81932ffe3c63bab9573648591f4ae010bc022375f4bfe5315e6dc64a9f0"
+        }
+      },
+      {
+        "process_result": {
+          "bytes": 1611,
+          "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-gpu-v228-v1/before-1/result.json",
+          "sha256": "6d58171efe8b2978623b3586fcb7ac359cd23b533abd171fa637ddf784a30a2a"
+        },
+        "topology": {
+          "bytes": 4180,
+          "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-gpu-v228-v1/before-1-topology.json",
+          "sha256": "bdf090cc3ed5a89f64bc82c1532122721de6e342125a5ee62b38cf0c34564b4a"
+        }
+      },
+      {
+        "process_result": {
+          "bytes": 1612,
+          "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-gpu-v228-v1/before-2/result.json",
+          "sha256": "804fc9b7ce44c93a61907b973b993386d86a04fc61bac4a6af756aaabca208dd"
+        },
+        "topology": {
+          "bytes": 4180,
+          "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-gpu-v228-v1/before-2-topology.json",
+          "sha256": "a9804af61a85eea24bc7782f6d2f60b73bb9d32588474d600ad31cf7de04cd44"
+        }
+      }
+    ]
+  },
+  "authority": "none",
+  "baseline_provenance": {
+    "bytes": 1024009,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-capture-gpu-v228-v1/complete.json",
+    "sha256": "67a235280b48cb5f6a2c51bcca534c182c843857c4c4a98e86718ed368ef12e4"
+  },
+  "binary_captures_in_git": false,
+  "calibrated_nanoseconds": false,
+  "captured_payloads": 4,
+  "captured_tensor_rows": 152,
+  "case_bytes": 4591804,
+  "case_file_count": 57,
+  "completed_forwards": 4,
+  "conditional_residual_checks_performed": false,
+  "cpu": {
+    "bytes": 584169,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-residual-decode-cpu-v228-v1/complete.json",
+    "sha256": "1f4365064da1a0884385035d1f2d280e6bba66afc2b5bb4265bf7d60b1418c83"
+  },
+  "cpu_publication": {
+    "bytes": 134056,
+    "path": "/home/harsh/ferric-p227-integration/qualification/projection-residual-decode-cpu-v1/result.json",
+    "sha256": "788d66d8c38069ebaaa59eac63d398aea37156196eb6cb896f6d1e7372e75c41"
+  },
+  "cross_device_clock_alignment": false,
+  "decode_review": {
+    "bytes": 59355,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-inputs-v228-v1/decode-review.json",
+    "sha256": "483d166b84254a614639c2776fe663276fdb66b93a9b61b2489565d44e59a462"
+  },
+  "dynamic_library_bodies_locally_rehashed": false,
+  "frozen_controller_reexecuted": false,
+  "full_forward_acceptance": false,
+  "full_model_acceptance": false,
+  "full_model_correctness": false,
+  "gpu_observation": {
+    "bytes": 1055149,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-gpu-v228-v1/complete.json",
+    "sha256": "ad977bca8c02e329ce90d15cc61961a9b82e35ce2488c3a8b07277d1c5414833"
+  },
+  "gpu_time": false,
+  "independent_framework_comparison_performed": false,
+  "independent_numerical_acceptance": false,
+  "independent_tensor_acceptance": false,
+  "inspection": {
+    "bytes": 16379,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-residual-inspection-v228-v2/complete.json",
+    "sha256": "dbeb034c2f7520966e365ef5cb97751a075f70eb83cbcdfb272b82063db25df9"
+  },
+  "layer_comparison": {
+    "bytes": 1508927,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/silu-materialized-comparison-v228-v1/complete.json",
+    "sha256": "828f8fdb4fc4194b5d7d5c65135222b472d2ec76080667fae8f0b8febba169aa"
+  },
+  "leaves": {
+    "after-0": {
+      "result": {
+        "bytes": 1608,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-gpu-v228-v1/after-0/result.json",
+        "sha256": "55dd813227a4b1ddcc7ca0c52cb74de472c5b9d910169dd1d4f1aeed0ccf3749"
+      },
+      "retained_files": {
+        "command.json": {
+          "bytes": 706,
+          "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-gpu-v228-v1/after-0/command.json",
+          "sha256": "6e438209610d352a6003f8cb6cf972a9851015711ab0b5ef1bfc58f80ed355d7"
+        },
+        "result.json": {
+          "bytes": 1608,
+          "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-gpu-v228-v1/after-0/result.json",
+          "sha256": "55dd813227a4b1ddcc7ca0c52cb74de472c5b9d910169dd1d4f1aeed0ccf3749"
+        },
+        "started.json": {
+          "bytes": 277,
+          "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-gpu-v228-v1/after-0/started.json",
+          "sha256": "8bfb3cc794717dc199f9d533be56174036dcec620d3beb646648fff2d92cc8ae"
+        },
+        "stderr": {
+          "bytes": 0,
+          "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-gpu-v228-v1/after-0/stderr",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "stdout": {
+          "bytes": 321,
+          "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-gpu-v228-v1/after-0/stdout",
+          "sha256": "fb1d52be68ef1ca207431343c2fe9d71c4b52ca5589e9a38807effa626b069e9"
+        }
+      }
+    },
+    "after-1": {
+      "result": {
+        "bytes": 1608,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-gpu-v228-v1/after-1/result.json",
+        "sha256": "70b0203b7d4f47da3c68836f92a4df64279f19ccef429511780067463d8b8c68"
+      },
+      "retained_files": {
+        "command.json": {
+          "bytes": 706,
+          "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-gpu-v228-v1/after-1/command.json",
+          "sha256": "6e438209610d352a6003f8cb6cf972a9851015711ab0b5ef1bfc58f80ed355d7"
+        },
+        "result.json": {
+          "bytes": 1608,
+          "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-gpu-v228-v1/after-1/result.json",
+          "sha256": "70b0203b7d4f47da3c68836f92a4df64279f19ccef429511780067463d8b8c68"
+        },
+        "started.json": {
+          "bytes": 277,
+          "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-gpu-v228-v1/after-1/started.json",
+          "sha256": "ff7a99111638eaab36a6018b3cb843903f18b8f754a9827dfdfc6a297f384457"
+        },
+        "stderr": {
+          "bytes": 0,
+          "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-gpu-v228-v1/after-1/stderr",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "stdout": {
+          "bytes": 321,
+          "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-gpu-v228-v1/after-1/stdout",
+          "sha256": "fb1d52be68ef1ca207431343c2fe9d71c4b52ca5589e9a38807effa626b069e9"
+        }
+      }
+    },
+    "after-2": {
+      "result": {
+        "bytes": 1608,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-gpu-v228-v1/after-2/result.json",
+        "sha256": "54a3cdd29c9eb6d36005eec15823715bca5ddfbe6b9c228f7eb1cf0a642886f5"
+      },
+      "retained_files": {
+        "command.json": {
+          "bytes": 706,
+          "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-gpu-v228-v1/after-2/command.json",
+          "sha256": "6e438209610d352a6003f8cb6cf972a9851015711ab0b5ef1bfc58f80ed355d7"
+        },
+        "result.json": {
+          "bytes": 1608,
+          "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-gpu-v228-v1/after-2/result.json",
+          "sha256": "54a3cdd29c9eb6d36005eec15823715bca5ddfbe6b9c228f7eb1cf0a642886f5"
+        },
+        "started.json": {
+          "bytes": 277,
+          "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-gpu-v228-v1/after-2/started.json",
+          "sha256": "d948e65d8ef38898d60fff4076948daacb08a56cac689685bf3883304ed1b6ae"
+        },
+        "stderr": {
+          "bytes": 0,
+          "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-gpu-v228-v1/after-2/stderr",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "stdout": {
+          "bytes": 321,
+          "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-gpu-v228-v1/after-2/stdout",
+          "sha256": "fb1d52be68ef1ca207431343c2fe9d71c4b52ca5589e9a38807effa626b069e9"
+        }
+      }
+    },
+    "before-0": {
+      "result": {
+        "bytes": 1612,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-gpu-v228-v1/before-0/result.json",
+        "sha256": "aede963158d5cad1de66dc1f9497ad28d978298ffd6e618e6a58ad4966e29276"
+      },
+      "retained_files": {
+        "command.json": {
+          "bytes": 706,
+          "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-gpu-v228-v1/before-0/command.json",
+          "sha256": "6e438209610d352a6003f8cb6cf972a9851015711ab0b5ef1bfc58f80ed355d7"
+        },
+        "result.json": {
+          "bytes": 1612,
+          "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-gpu-v228-v1/before-0/result.json",
+          "sha256": "aede963158d5cad1de66dc1f9497ad28d978298ffd6e618e6a58ad4966e29276"
+        },
+        "started.json": {
+          "bytes": 277,
+          "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-gpu-v228-v1/before-0/started.json",
+          "sha256": "30382b7bb7b7d7b14772639089c0eb87a5a1383934d041dd7fa9939aac6ba23c"
+        },
+        "stderr": {
+          "bytes": 0,
+          "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-gpu-v228-v1/before-0/stderr",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "stdout": {
+          "bytes": 321,
+          "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-gpu-v228-v1/before-0/stdout",
+          "sha256": "fb1d52be68ef1ca207431343c2fe9d71c4b52ca5589e9a38807effa626b069e9"
+        }
+      }
+    },
+    "before-1": {
+      "result": {
+        "bytes": 1611,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-gpu-v228-v1/before-1/result.json",
+        "sha256": "6d58171efe8b2978623b3586fcb7ac359cd23b533abd171fa637ddf784a30a2a"
+      },
+      "retained_files": {
+        "command.json": {
+          "bytes": 706,
+          "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-gpu-v228-v1/before-1/command.json",
+          "sha256": "6e438209610d352a6003f8cb6cf972a9851015711ab0b5ef1bfc58f80ed355d7"
+        },
+        "result.json": {
+          "bytes": 1611,
+          "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-gpu-v228-v1/before-1/result.json",
+          "sha256": "6d58171efe8b2978623b3586fcb7ac359cd23b533abd171fa637ddf784a30a2a"
+        },
+        "started.json": {
+          "bytes": 277,
+          "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-gpu-v228-v1/before-1/started.json",
+          "sha256": "3ea1f1b8390b5ed9b5de26cf67fbed0fb10b4b3b4f41127ac631751407f44302"
+        },
+        "stderr": {
+          "bytes": 0,
+          "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-gpu-v228-v1/before-1/stderr",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "stdout": {
+          "bytes": 321,
+          "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-gpu-v228-v1/before-1/stdout",
+          "sha256": "fb1d52be68ef1ca207431343c2fe9d71c4b52ca5589e9a38807effa626b069e9"
+        }
+      }
+    },
+    "before-2": {
+      "result": {
+        "bytes": 1612,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-gpu-v228-v1/before-2/result.json",
+        "sha256": "804fc9b7ce44c93a61907b973b993386d86a04fc61bac4a6af756aaabca208dd"
+      },
+      "retained_files": {
+        "command.json": {
+          "bytes": 706,
+          "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-gpu-v228-v1/before-2/command.json",
+          "sha256": "6e438209610d352a6003f8cb6cf972a9851015711ab0b5ef1bfc58f80ed355d7"
+        },
+        "result.json": {
+          "bytes": 1612,
+          "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-gpu-v228-v1/before-2/result.json",
+          "sha256": "804fc9b7ce44c93a61907b973b993386d86a04fc61bac4a6af756aaabca208dd"
+        },
+        "started.json": {
+          "bytes": 277,
+          "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-gpu-v228-v1/before-2/started.json",
+          "sha256": "839f5f8c9dabef504ab3c6ec1fca882058f6261a682b9da99dbb89546416cb85"
+        },
+        "stderr": {
+          "bytes": 0,
+          "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-gpu-v228-v1/before-2/stderr",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "stdout": {
+          "bytes": 321,
+          "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-gpu-v228-v1/before-2/stdout",
+          "sha256": "fb1d52be68ef1ca207431343c2fe9d71c4b52ca5589e9a38807effa626b069e9"
+        }
+      }
+    },
+    "parent": {
+      "result": {
+        "bytes": 1880,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-gpu-v228-v1/parent/result.json",
+        "sha256": "05c4eead14aba54bd54ca69626e199396aead308b2383b109f7052104944e00c"
+      },
+      "retained_files": {
+        "command.json": {
+          "bytes": 1041,
+          "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-gpu-v228-v1/parent/command.json",
+          "sha256": "f4b4ec98e3e1e91ef8c488250b30387cac4c8991499c041aed9a10874d23b958"
+        },
+        "result.json": {
+          "bytes": 1880,
+          "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-gpu-v228-v1/parent/result.json",
+          "sha256": "05c4eead14aba54bd54ca69626e199396aead308b2383b109f7052104944e00c"
+        },
+        "started.json": {
+          "bytes": 277,
+          "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-gpu-v228-v1/parent/started.json",
+          "sha256": "89a1b3fba2b5001295b76a206fea9580e3e190e20d9db31e7ba4acbc85c8653e"
+        },
+        "stderr": {
+          "bytes": 392,
+          "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-gpu-v228-v1/parent/stderr",
+          "sha256": "e15fd4a583a3b220fac68a3f0bce3ffcc9c0e17f1662c22a4a0c742c0a8b302a"
+        },
+        "stdout": {
+          "bytes": 40119,
+          "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-gpu-v228-v1/parent/stdout",
+          "sha256": "974e40336a0466d61dddd20f463ce6ba788e97f584cddc4ed5d466f205b8ca64"
+        }
+      }
+    }
+  },
+  "locally_rehashed": [
+    {
+      "bytes": 24877,
+      "path": "/home/harsh/ferric-p227-integration/qualification/layer0-native-capture-v1/tools/publish.py",
+      "sha256": "3181b2f41a51ee94c331b137f2807580c326f7f6dc53c429163d8465309e2cb8"
+    },
+    {
+      "bytes": 134056,
+      "path": "/home/harsh/ferric-p227-integration/qualification/projection-residual-decode-cpu-v1/result.json",
+      "sha256": "788d66d8c38069ebaaa59eac63d398aea37156196eb6cb896f6d1e7372e75c41"
+    },
+    {
+      "bytes": 4180,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-silu-materialized-capture-gpu-v228-v1/before-0-topology.json",
+      "sha256": "4f0e4ca5da5b9cbc2b63883169c7e60836293b624e64e4c3311a3faa0306c9dc"
+    },
+    {
+      "bytes": 1024009,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-silu-materialized-capture-gpu-v228-v1/complete.json",
+      "sha256": "67a235280b48cb5f6a2c51bcca534c182c843857c4c4a98e86718ed368ef12e4"
+    },
+    {
+      "bytes": 2776,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-silu-materialized-capture-inputs-v228-v1/parent-runtime-review.json",
+      "sha256": "ca43cc770867119deb4f05390ce04191e37dab24672406503befb8ab7d4d28b3"
+    },
+    {
+      "bytes": 8801,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-silu-materialized-capture-inputs-v228-v1/request.json",
+      "sha256": "9146f346188a339b61fdd5ad7cb0929727512eb79def4a829588da4bcb57cae0"
+    },
+    {
+      "bytes": 2498,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-silu-materialized-capture-inputs-v228-v1/worker-runtime-review.json",
+      "sha256": "9da3914acb464028cb6d47873d71256226b85fe48ae8c47884745988d75e14dc"
+    },
+    {
+      "bytes": 706,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-silu-materialized-decode-gpu-v228-v1/after-0/command.json",
+      "sha256": "6e438209610d352a6003f8cb6cf972a9851015711ab0b5ef1bfc58f80ed355d7"
+    },
+    {
+      "bytes": 1608,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-silu-materialized-decode-gpu-v228-v1/after-0/result.json",
+      "sha256": "55dd813227a4b1ddcc7ca0c52cb74de472c5b9d910169dd1d4f1aeed0ccf3749"
+    },
+    {
+      "bytes": 277,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-silu-materialized-decode-gpu-v228-v1/after-0/started.json",
+      "sha256": "8bfb3cc794717dc199f9d533be56174036dcec620d3beb646648fff2d92cc8ae"
+    },
+    {
+      "bytes": 0,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-silu-materialized-decode-gpu-v228-v1/after-0/stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 321,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-silu-materialized-decode-gpu-v228-v1/after-0/stdout",
+      "sha256": "fb1d52be68ef1ca207431343c2fe9d71c4b52ca5589e9a38807effa626b069e9"
+    },
+    {
+      "bytes": 4179,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-silu-materialized-decode-gpu-v228-v1/after-0-topology.json",
+      "sha256": "4e703f410de5528b47cfebc2405eff2dbcf730d6ed70f5f44d6f4a4fe47f0bb1"
+    },
+    {
+      "bytes": 706,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-silu-materialized-decode-gpu-v228-v1/after-1/command.json",
+      "sha256": "6e438209610d352a6003f8cb6cf972a9851015711ab0b5ef1bfc58f80ed355d7"
+    },
+    {
+      "bytes": 1608,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-silu-materialized-decode-gpu-v228-v1/after-1/result.json",
+      "sha256": "70b0203b7d4f47da3c68836f92a4df64279f19ccef429511780067463d8b8c68"
+    },
+    {
+      "bytes": 277,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-silu-materialized-decode-gpu-v228-v1/after-1/started.json",
+      "sha256": "ff7a99111638eaab36a6018b3cb843903f18b8f754a9827dfdfc6a297f384457"
+    },
+    {
+      "bytes": 0,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-silu-materialized-decode-gpu-v228-v1/after-1/stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 321,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-silu-materialized-decode-gpu-v228-v1/after-1/stdout",
+      "sha256": "fb1d52be68ef1ca207431343c2fe9d71c4b52ca5589e9a38807effa626b069e9"
+    },
+    {
+      "bytes": 4180,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-silu-materialized-decode-gpu-v228-v1/after-1-topology.json",
+      "sha256": "248e71d9f9c82e8f5796c096c2e22bf4366b2802f3b73e52166209971c6bb53d"
+    },
+    {
+      "bytes": 706,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-silu-materialized-decode-gpu-v228-v1/after-2/command.json",
+      "sha256": "6e438209610d352a6003f8cb6cf972a9851015711ab0b5ef1bfc58f80ed355d7"
+    },
+    {
+      "bytes": 1608,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-silu-materialized-decode-gpu-v228-v1/after-2/result.json",
+      "sha256": "54a3cdd29c9eb6d36005eec15823715bca5ddfbe6b9c228f7eb1cf0a642886f5"
+    },
+    {
+      "bytes": 277,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-silu-materialized-decode-gpu-v228-v1/after-2/started.json",
+      "sha256": "d948e65d8ef38898d60fff4076948daacb08a56cac689685bf3883304ed1b6ae"
+    },
+    {
+      "bytes": 0,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-silu-materialized-decode-gpu-v228-v1/after-2/stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 321,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-silu-materialized-decode-gpu-v228-v1/after-2/stdout",
+      "sha256": "fb1d52be68ef1ca207431343c2fe9d71c4b52ca5589e9a38807effa626b069e9"
+    },
+    {
+      "bytes": 4180,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-silu-materialized-decode-gpu-v228-v1/after-2-topology.json",
+      "sha256": "c198ff988129fe6d45348757c1dbb34621e449c35c156fed54b5bab308fdfc35"
+    },
+    {
+      "bytes": 706,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-silu-materialized-decode-gpu-v228-v1/before-0/command.json",
+      "sha256": "6e438209610d352a6003f8cb6cf972a9851015711ab0b5ef1bfc58f80ed355d7"
+    },
+    {
+      "bytes": 1612,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-silu-materialized-decode-gpu-v228-v1/before-0/result.json",
+      "sha256": "aede963158d5cad1de66dc1f9497ad28d978298ffd6e618e6a58ad4966e29276"
+    },
+    {
+      "bytes": 277,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-silu-materialized-decode-gpu-v228-v1/before-0/started.json",
+      "sha256": "30382b7bb7b7d7b14772639089c0eb87a5a1383934d041dd7fa9939aac6ba23c"
+    },
+    {
+      "bytes": 0,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-silu-materialized-decode-gpu-v228-v1/before-0/stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 321,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-silu-materialized-decode-gpu-v228-v1/before-0/stdout",
+      "sha256": "fb1d52be68ef1ca207431343c2fe9d71c4b52ca5589e9a38807effa626b069e9"
+    },
+    {
+      "bytes": 4180,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-silu-materialized-decode-gpu-v228-v1/before-0-topology.json",
+      "sha256": "33fea81932ffe3c63bab9573648591f4ae010bc022375f4bfe5315e6dc64a9f0"
+    },
+    {
+      "bytes": 706,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-silu-materialized-decode-gpu-v228-v1/before-1/command.json",
+      "sha256": "6e438209610d352a6003f8cb6cf972a9851015711ab0b5ef1bfc58f80ed355d7"
+    },
+    {
+      "bytes": 1611,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-silu-materialized-decode-gpu-v228-v1/before-1/result.json",
+      "sha256": "6d58171efe8b2978623b3586fcb7ac359cd23b533abd171fa637ddf784a30a2a"
+    },
+    {
+      "bytes": 277,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-silu-materialized-decode-gpu-v228-v1/before-1/started.json",
+      "sha256": "3ea1f1b8390b5ed9b5de26cf67fbed0fb10b4b3b4f41127ac631751407f44302"
+    },
+    {
+      "bytes": 0,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-silu-materialized-decode-gpu-v228-v1/before-1/stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 321,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-silu-materialized-decode-gpu-v228-v1/before-1/stdout",
+      "sha256": "fb1d52be68ef1ca207431343c2fe9d71c4b52ca5589e9a38807effa626b069e9"
+    },
+    {
+      "bytes": 4180,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-silu-materialized-decode-gpu-v228-v1/before-1-topology.json",
+      "sha256": "bdf090cc3ed5a89f64bc82c1532122721de6e342125a5ee62b38cf0c34564b4a"
+    },
+    {
+      "bytes": 706,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-silu-materialized-decode-gpu-v228-v1/before-2/command.json",
+      "sha256": "6e438209610d352a6003f8cb6cf972a9851015711ab0b5ef1bfc58f80ed355d7"
+    },
+    {
+      "bytes": 1612,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-silu-materialized-decode-gpu-v228-v1/before-2/result.json",
+      "sha256": "804fc9b7ce44c93a61907b973b993386d86a04fc61bac4a6af756aaabca208dd"
+    },
+    {
+      "bytes": 277,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-silu-materialized-decode-gpu-v228-v1/before-2/started.json",
+      "sha256": "839f5f8c9dabef504ab3c6ec1fca882058f6261a682b9da99dbb89546416cb85"
+    },
+    {
+      "bytes": 0,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-silu-materialized-decode-gpu-v228-v1/before-2/stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 321,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-silu-materialized-decode-gpu-v228-v1/before-2/stdout",
+      "sha256": "fb1d52be68ef1ca207431343c2fe9d71c4b52ca5589e9a38807effa626b069e9"
+    },
+    {
+      "bytes": 4180,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-silu-materialized-decode-gpu-v228-v1/before-2-topology.json",
+      "sha256": "a9804af61a85eea24bc7782f6d2f60b73bb9d32588474d600ad31cf7de04cd44"
+    },
+    {
+      "bytes": 1055149,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-silu-materialized-decode-gpu-v228-v1/complete.json",
+      "sha256": "ad977bca8c02e329ce90d15cc61961a9b82e35ce2488c3a8b07277d1c5414833"
+    },
+    {
+      "bytes": 0,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-silu-materialized-decode-gpu-v228-v1/native/child-stderr.bin",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 40119,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-silu-materialized-decode-gpu-v228-v1/native/complete.json",
+      "sha256": "974e40336a0466d61dddd20f463ce6ba788e97f584cddc4ed5d466f205b8ca64"
+    },
+    {
+      "bytes": 241960,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-silu-materialized-decode-gpu-v228-v1/native/control-0.bin",
+      "sha256": "53d94f797665b04c3a77dc71a83250953e1ea214700c40b2fd4381d3b10c7186"
+    },
+    {
+      "bytes": 241960,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-silu-materialized-decode-gpu-v228-v1/native/control-1.bin",
+      "sha256": "d9c98d26823b352dafdf3d4a291572650a1bf24fa6997e4f069802c0631693da"
+    },
+    {
+      "bytes": 241960,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-silu-materialized-decode-gpu-v228-v1/native/control-2.bin",
+      "sha256": "60e1e8654464a072747dcd285766fec3de0f99ff12e0052d133eeee162576704"
+    },
+    {
+      "bytes": 241960,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-silu-materialized-decode-gpu-v228-v1/native/control-3.bin",
+      "sha256": "fbe85487f49a81a223bdc9b37e9230ac6f1621894f89bc30c980e1e22d538fdf"
+    },
+    {
+      "bytes": 606976,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-silu-materialized-decode-gpu-v228-v1/native/observation-0.bin",
+      "sha256": "1324a6056ea6c0308e912c63ed1b6a6d27e103c915c6dde11ff600d97cf9b1b0"
+    },
+    {
+      "bytes": 606976,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-silu-materialized-decode-gpu-v228-v1/native/observation-1.bin",
+      "sha256": "b5e81454b1f162b16d5334b2e21eaf77dfa45d03a1cb3682f3628a887cdb65c7"
+    },
+    {
+      "bytes": 606976,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-silu-materialized-decode-gpu-v228-v1/native/observation-2.bin",
+      "sha256": "33b6de57098491c131964ff6fd3fccc1a5b5d4fccd3285f787218f4e36f2bd96"
+    },
+    {
+      "bytes": 606976,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-silu-materialized-decode-gpu-v228-v1/native/observation-3.bin",
+      "sha256": "652e9c42a4441679356f94623a4329efad19c0565f4901a39b50a6511c6e0427"
+    },
+    {
+      "bytes": 1871,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-silu-materialized-decode-gpu-v228-v1/native/request-0.json",
+      "sha256": "70d39b2251163ba34b12bcb9446fed275877eee08fb3a374db6abce6e4a1163a"
+    },
+    {
+      "bytes": 2408,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-silu-materialized-decode-gpu-v228-v1/native/request-1.json",
+      "sha256": "642b298617333e8ad716f58373e16bc5408d8cd410aaa79f843060e6951c3b09"
+    },
+    {
+      "bytes": 2412,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-silu-materialized-decode-gpu-v228-v1/native/request-2.json",
+      "sha256": "7171596be7bec1e73c98b7bbcdb5f9896135281a5b2b4247d25a64a7c2bc6f3b"
+    },
+    {
+      "bytes": 2411,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-silu-materialized-decode-gpu-v228-v1/native/request-3.json",
+      "sha256": "92b74c8f289c5160f1b1b6bc0902baf84c185d8c5b9fc852cab0e0826487d5dc"
+    },
+    {
+      "bytes": 5419,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-silu-materialized-decode-gpu-v228-v1/observation.json",
+      "sha256": "02a363fc987e63c9655cf352338b51a779c1980ac2679005acda68c8c3c57cd9"
+    },
+    {
+      "bytes": 1041,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-silu-materialized-decode-gpu-v228-v1/parent/command.json",
+      "sha256": "f4b4ec98e3e1e91ef8c488250b30387cac4c8991499c041aed9a10874d23b958"
+    },
+    {
+      "bytes": 1880,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-silu-materialized-decode-gpu-v228-v1/parent/result.json",
+      "sha256": "05c4eead14aba54bd54ca69626e199396aead308b2383b109f7052104944e00c"
+    },
+    {
+      "bytes": 277,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-silu-materialized-decode-gpu-v228-v1/parent/started.json",
+      "sha256": "89a1b3fba2b5001295b76a206fea9580e3e190e20d9db31e7ba4acbc85c8653e"
+    },
+    {
+      "bytes": 392,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-silu-materialized-decode-gpu-v228-v1/parent/stderr",
+      "sha256": "e15fd4a583a3b220fac68a3f0bce3ffcc9c0e17f1662c22a4a0c742c0a8b302a"
+    },
+    {
+      "bytes": 40119,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-silu-materialized-decode-gpu-v228-v1/parent/stdout",
+      "sha256": "974e40336a0466d61dddd20f463ce6ba788e97f584cddc4ed5d466f205b8ca64"
+    },
+    {
+      "bytes": 47724,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-silu-materialized-decode-inputs-v228-v1/assembly.json",
+      "sha256": "579636db561e278bf07319ee1eb4753d59aef95203eda04e63f1d80379eb4743"
+    },
+    {
+      "bytes": 59355,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-silu-materialized-decode-inputs-v228-v1/decode-review.json",
+      "sha256": "483d166b84254a614639c2776fe663276fdb66b93a9b61b2489565d44e59a462"
+    },
+    {
+      "bytes": 2612,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-silu-materialized-decode-inputs-v228-v1/parent-runtime-review.json",
+      "sha256": "9b8bb079a2c69e9d1359ceb308fee23af45761db56e22a5ead44520daeac960f"
+    },
+    {
+      "bytes": 5560,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-silu-materialized-decode-inputs-v228-v1/plan.json",
+      "sha256": "30f7a284aeb1ea0674e9f0b4828cb718189ff2038f741823a69cbfbe97eb9baa"
+    },
+    {
+      "bytes": 8801,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-silu-materialized-decode-inputs-v228-v1/request.json",
+      "sha256": "480e93a442e3ad423cab68683e4955500c4b56cdd3e68296c2ee8c09b595e6ef"
+    },
+    {
+      "bytes": 2338,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-silu-materialized-decode-inputs-v228-v1/worker-runtime-review.json",
+      "sha256": "6e923cae6d119ccd76bb39ee854e090b98f424144d3875a718e1a74aaa94cc02"
+    },
+    {
+      "bytes": 584169,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/projection-residual-decode-cpu-v228-v1/complete.json",
+      "sha256": "1f4365064da1a0884385035d1f2d280e6bba66afc2b5bb4265bf7d60b1418c83"
+    },
+    {
+      "bytes": 13856088,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/projection-residual-decode-cpu-v228-v1/target/parent/debug/ferric-qwen3-finite-projection-residual-decode-engineering",
+      "sha256": "549c7b4379c12f7cf0bcafc1461627cc88357e0ad91be38789dfd1f5864d876b"
+    },
+    {
+      "bytes": 5131568,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/projection-residual-decode-cpu-v228-v1/target/worker/debug/ferric-tp-peer-finite-engineering-worker-v1",
+      "sha256": "57959a8c771c08ab9b7184d88cc3f2760802f8965f88d918a3d684bf264aa5e1"
+    },
+    {
+      "bytes": 16379,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/projection-residual-inspection-v228-v2/complete.json",
+      "sha256": "dbeb034c2f7520966e365ef5cb97751a075f70eb83cbcdfb272b82063db25df9"
+    },
+    {
+      "bytes": 8652,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/projection-residual-lowering-v228-v1/complete.json",
+      "sha256": "4f46acb4eaaadefc2c1426146424bda91a7e455ab3b57b23c935401e9c4d79bb"
+    },
+    {
+      "bytes": 10864,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/projection-residual-lowering-v228-v1/fe2o3-engineering-v1/3c3aec3598514f7f6c2b053ff0c6a8d489951ecb6cb8d95b1cae5ca31035b899/observation.hsaco",
+      "sha256": "25338beac39121cf81adfdc5c82c6f39bcfc82c0f7effaa2166bf8a2a9598a25"
+    },
+    {
+      "bytes": 21084,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/p228-projection-residual-decode-input-assembly-v1/prepare.py",
+      "sha256": "d31308f7d05e485c21520561e0653ef9cf2403aface96243f9198ac8a2e97952"
+    },
+    {
+      "bytes": 18465,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/p228-projection-residual-decode-native-publication-v1/publish.py",
+      "sha256": "cb4974eb7fda4281df656106aba83f7ff1c44a2b66dfe3f56e7b9a6ad6a961ca"
+    },
+    {
+      "bytes": 3417,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/p228-silu-materialized-decode-gpu-v1/INTAKE.md",
+      "sha256": "937fd5e12c706fa6fa86fc451cb7bc10fcb0c90cde0e5dfd21660e1cc7fb537f"
+    },
+    {
+      "bytes": 4418,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/p228-silu-materialized-decode-gpu-v1/README.md",
+      "sha256": "edd91decfe41d3649f9293f1d485a777a9ecf853e6ff269cc14558dfbca7308b"
+    },
+    {
+      "bytes": 20332,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/p228-silu-materialized-decode-gpu-v1/decode_validation.py",
+      "sha256": "b4e4cee33a9c82dd58189ca359e5a64d7e1dd1780e974e215c85c40e0df479e0"
+    },
+    {
+      "bytes": 42113,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/p228-silu-materialized-decode-gpu-v1/intake.py",
+      "sha256": "f8863134f15452c299874ac13c9c2dc54c4c1d26a30e02fdebcd3359cb0e1447"
+    },
+    {
+      "bytes": 16186,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/p228-silu-materialized-decode-gpu-v1/layer_validation.py",
+      "sha256": "757c077979b7ee02d4c0e7d222e75292cd9d417927f84ae9a8134344f8e217b9"
+    },
+    {
+      "bytes": 2392,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/p228-silu-materialized-decode-gpu-v1/manifest.json",
+      "sha256": "47afc73e3333ff0705002a16b1a296780d22c119676bba142f07c2eb9fe80c31"
+    },
+    {
+      "bytes": 14978,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/p228-silu-materialized-decode-gpu-v1/run.py",
+      "sha256": "100acf80caba09a7080d72b9680059c0d63c143978a7b6f4f19c8f61e3405e9b"
+    },
+    {
+      "bytes": 12424,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/p228-silu-materialized-decode-gpu-v1/run_row_facts_v2.py",
+      "sha256": "244c12f62c8a439aa01b44380fc464008b94006bc919201c8d510c64177fc820"
+    },
+    {
+      "bytes": 8057,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/p228-silu-materialized-decode-gpu-v1/run_silu_materialized_decode_gpu_pure_p228_v1.py",
+      "sha256": "6966297a4fd31fac3e998d6cb584749638382ca902904be66c643dd2b1981091"
+    },
+    {
+      "bytes": 14980,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/p228-silu-materialized-decode-gpu-v1/smoke_validation.py",
+      "sha256": "9bf460451e722452da9c49168c730615d32e9b73b200c579f003e9e45238ea26"
+    },
+    {
+      "bytes": 12074,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/p228-silu-materialized-decode-gpu-v1/stage_core.py",
+      "sha256": "7e3d64e80e66bacbbba05ac3236189249949bb95ea3f717150822cf45740eec2"
+    },
+    {
+      "bytes": 16463,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/p228-silu-materialized-decode-gpu-v1/test_decode_validation.py",
+      "sha256": "37a24160ea948a8d19e9f5abac34d5407c239be7311c3e72efbe9074a026ff82"
+    },
+    {
+      "bytes": 13266,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/p228-silu-materialized-decode-gpu-v1/test_intake.py",
+      "sha256": "59700c2d255ab492f0c2dd0c3d90022f893ac307668d6ec0c207cbfa12d88e2e"
+    },
+    {
+      "bytes": 13450,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/p228-silu-materialized-decode-gpu-v1/test_run.py",
+      "sha256": "852c6696ecfad0c96b767ceb354c2afeb5e1f2ed245a9f8c948205c6c0dd672b"
+    },
+    {
+      "bytes": 7907,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/p228-silu-materialized-decode-gpu-v1/test_silu_admission.py",
+      "sha256": "224e3d83ab56d62c0fc69b6e0d07e2baaa5423596d6013604a8dd64c499f72be"
+    },
+    {
+      "bytes": 17144,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/p228-silu-materialized-decode-inputs-v1/prepare.py",
+      "sha256": "56c94333ccf3e2fc8057b16bf9e4066fdae1cf5637b2f74505aa344462ed7ec3"
+    },
+    {
+      "bytes": 18131,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/p228-silu-materialized-decode-native-publication-v1/publish.py",
+      "sha256": "d0806ab1eb91054a1086d5d7aeeccfbe237a0014b61072db8f15dcb8d445a760"
+    },
+    {
+      "bytes": 25125,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/row-silu-materialized-checked-probe-v228-v1/complete.json",
+      "sha256": "fd7d4c792dc7ddaa831b3372549fe3896a18e8c94b96598b553df94156d949b4"
+    },
+    {
+      "bytes": 33320,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/row-silu-materialized-checked-probe-v228-v1/emitted/artifact.hsaco",
+      "sha256": "b0d1766fdb0fda17ab09496d1120ba3cee29100692b48fcc5b05cf0db0a8d589"
+    },
+    {
+      "bytes": 8057,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/run_silu_materialized_decode_gpu_pure_p228_v1.py",
+      "sha256": "6966297a4fd31fac3e998d6cb584749638382ca902904be66c643dd2b1981091"
+    },
+    {
+      "bytes": 21726,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/silu-materialized-checked-probe-owner-v228-v1/complete.json",
+      "sha256": "3ee5600755d5b77846d16429d58e2395df0616c86fbe705ea24af07fd9f9e464"
+    },
+    {
+      "bytes": 1508927,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/silu-materialized-comparison-v228-v1/complete.json",
+      "sha256": "828f8fdb4fc4194b5d7d5c65135222b472d2ec76080667fae8f0b8febba169aa"
+    },
+    {
+      "bytes": 84947,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/silu-materialized-cpu-v228-v1/complete.json",
+      "sha256": "e139729d8fa95715ef8017679ee21f1175ba302b681785789e3dc84137508a30"
+    },
+    {
+      "bytes": 1392,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/silu-materialized-decode-configuration-v228-v1.json",
+      "sha256": "3a1a11cb853d05b918e8d5346ac192355a2381e4c4bf54ca6b316e0e3d853ad6"
+    },
+    {
+      "bytes": 10509,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/silu-materialized-decode-gpu-pure-v228-v1/complete.json",
+      "sha256": "cd95c4739bfab5f2bc3d01c53218302577d218c2ae9e25ef9fc7ed5d30cb93cf"
+    },
+    {
+      "bytes": 3859,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/silu-materialized-decode-gpu-pure-v228-v1/sources-after.json",
+      "sha256": "fd46ce0fdfdaec104216622bf7ed5d7025093bd818693839e26419ed83400345"
+    },
+    {
+      "bytes": 3859,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/silu-materialized-decode-gpu-pure-v228-v1/sources-before.json",
+      "sha256": "fd46ce0fdfdaec104216622bf7ed5d7025093bd818693839e26419ed83400345"
+    },
+    {
+      "bytes": 7084,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/silu-materialized-decode-gpu-pure-v228-v1/tests.log",
+      "sha256": "04c20d606c5c0809c746d4d06b807c1f91294dc93097c2ba435c4bac13600a38"
+    },
+    {
+      "bytes": 5677,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/silu-materialized-decode-root-notes-v228-v1.json",
+      "sha256": "76da86ee4c9d008b1b7c9dad5a2c10abb35751d13d1d1b5aa2a83cbe023f5846"
+    }
+  ],
+  "lowering": {
+    "bytes": 8652,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-residual-lowering-v228-v1/complete.json",
+    "sha256": "4f46acb4eaaadefc2c1426146424bda91a7e455ab3b57b23c935401e9c4d79bb"
+  },
+  "mlp_cpu": {
+    "bytes": 84947,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/silu-materialized-cpu-v228-v1/complete.json",
+    "sha256": "e139729d8fa95715ef8017679ee21f1175ba302b681785789e3dc84137508a30"
+  },
+  "mlp_image": {
+    "bytes": 33320,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-silu-materialized-checked-probe-v228-v1/emitted/artifact.hsaco",
+    "sha256": "b0d1766fdb0fda17ab09496d1120ba3cee29100692b48fcc5b05cf0db0a8d589"
+  },
+  "mlp_lowering_complete": {
+    "bytes": 25125,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-silu-materialized-checked-probe-v228-v1/complete.json",
+    "sha256": "fd7d4c792dc7ddaa831b3372549fe3896a18e8c94b96598b553df94156d949b4"
+  },
+  "mlp_lowering_owner": {
+    "bytes": 21726,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/silu-materialized-checked-probe-owner-v228-v1/complete.json",
+    "sha256": "3ee5600755d5b77846d16429d58e2395df0616c86fbe705ea24af07fd9f9e464"
+  },
+  "mode": "teacher_forced",
+  "native_attempts": 1,
+  "native_baseline_comparison_performed": false,
+  "numerical_acceptance": false,
+  "numerical_comparison_performed": false,
+  "old_native_equality_required": false,
+  "overlap_claim": false,
+  "owned_children": {
+    "outer_groups_absent": true,
+    "parent": {
+      "pgid": 706975,
+      "pid": 706975,
+      "ppid": 705476,
+      "sid": 706975,
+      "starttime": 53894862,
+      "state": "R",
+      "uid": 9661
+    },
+    "parent_asserted_close_and_reap": true,
+    "synthesized_child_identity": false,
+    "workers": [
+      {
+        "identity": {
+          "pgid": 714038,
+          "pid": 714038,
+          "ppid": 706975,
+          "sid": 706975,
+          "starttime": 53904057,
+          "state": "S",
+          "uid": 9661
+        },
+        "outer_pidfd_observed": true,
+        "pid": 714038
+      }
+    ]
+  },
+  "paired_comparison_performed": false,
+  "parent_runtime_review": {
+    "bytes": 2612,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-inputs-v228-v1/parent-runtime-review.json",
+    "sha256": "9b8bb079a2c69e9d1359ceb308fee23af45761db56e22a5ead44520daeac960f"
+  },
+  "performance_claim": false,
+  "plan": {
+    "bytes": 5560,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-inputs-v228-v1/plan.json",
+    "sha256": "30f7a284aeb1ea0674e9f0b4828cb718189ff2038f741823a69cbfbe97eb9baa"
+  },
+  "production_authority": false,
+  "projection_image": {
+    "bytes": 10864,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-residual-lowering-v228-v1/fe2o3-engineering-v1/3c3aec3598514f7f6c2b053ff0c6a8d489951ecb6cb8d95b1cae5ca31035b899/observation.hsaco",
+    "sha256": "25338beac39121cf81adfdc5c82c6f39bcfc82c0f7effaa2166bf8a2a9598a25"
+  },
+  "published_files": {
+    "assembly-source/assembler.py": {
+      "bytes": 17144,
+      "sha256": "56c94333ccf3e2fc8057b16bf9e4066fdae1cf5637b2f74505aa344462ed7ec3",
+      "source_pin": {
+        "bytes": 17144,
+        "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/p228-silu-materialized-decode-inputs-v1/prepare.py",
+        "sha256": "56c94333ccf3e2fc8057b16bf9e4066fdae1cf5637b2f74505aa344462ed7ec3"
+      }
+    },
+    "assembly-source/configuration.json": {
+      "bytes": 1392,
+      "sha256": "3a1a11cb853d05b918e8d5346ac192355a2381e4c4bf54ca6b316e0e3d853ad6",
+      "source_pin": {
+        "bytes": 1392,
+        "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/silu-materialized-decode-configuration-v228-v1.json",
+        "sha256": "3a1a11cb853d05b918e8d5346ac192355a2381e4c4bf54ca6b316e0e3d853ad6"
+      }
+    },
+    "assembly-source/replay_dependency.py": {
+      "bytes": 21084,
+      "sha256": "d31308f7d05e485c21520561e0653ef9cf2403aface96243f9198ac8a2e97952",
+      "source_pin": {
+        "bytes": 21084,
+        "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/p228-projection-residual-decode-input-assembly-v1/prepare.py",
+        "sha256": "d31308f7d05e485c21520561e0653ef9cf2403aface96243f9198ac8a2e97952"
+      }
+    },
+    "assembly-source/root_notes.json": {
+      "bytes": 5677,
+      "sha256": "76da86ee4c9d008b1b7c9dad5a2c10abb35751d13d1d1b5aa2a83cbe023f5846",
+      "source_pin": {
+        "bytes": 5677,
+        "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/silu-materialized-decode-root-notes-v228-v1.json",
+        "sha256": "76da86ee4c9d008b1b7c9dad5a2c10abb35751d13d1d1b5aa2a83cbe023f5846"
+      }
+    },
+    "audits/after-0-topology.json": {
+      "bytes": 4179,
+      "sha256": "4e703f410de5528b47cfebc2405eff2dbcf730d6ed70f5f44d6f4a4fe47f0bb1",
+      "source_pin": {
+        "bytes": 4179,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-gpu-v228-v1/after-0-topology.json",
+        "sha256": "4e703f410de5528b47cfebc2405eff2dbcf730d6ed70f5f44d6f4a4fe47f0bb1"
+      }
+    },
+    "audits/after-1-topology.json": {
+      "bytes": 4180,
+      "sha256": "248e71d9f9c82e8f5796c096c2e22bf4366b2802f3b73e52166209971c6bb53d",
+      "source_pin": {
+        "bytes": 4180,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-gpu-v228-v1/after-1-topology.json",
+        "sha256": "248e71d9f9c82e8f5796c096c2e22bf4366b2802f3b73e52166209971c6bb53d"
+      }
+    },
+    "audits/after-2-topology.json": {
+      "bytes": 4180,
+      "sha256": "c198ff988129fe6d45348757c1dbb34621e449c35c156fed54b5bab308fdfc35",
+      "source_pin": {
+        "bytes": 4180,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-gpu-v228-v1/after-2-topology.json",
+        "sha256": "c198ff988129fe6d45348757c1dbb34621e449c35c156fed54b5bab308fdfc35"
+      }
+    },
+    "audits/before-0-topology.json": {
+      "bytes": 4180,
+      "sha256": "33fea81932ffe3c63bab9573648591f4ae010bc022375f4bfe5315e6dc64a9f0",
+      "source_pin": {
+        "bytes": 4180,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-gpu-v228-v1/before-0-topology.json",
+        "sha256": "33fea81932ffe3c63bab9573648591f4ae010bc022375f4bfe5315e6dc64a9f0"
+      }
+    },
+    "audits/before-1-topology.json": {
+      "bytes": 4180,
+      "sha256": "bdf090cc3ed5a89f64bc82c1532122721de6e342125a5ee62b38cf0c34564b4a",
+      "source_pin": {
+        "bytes": 4180,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-gpu-v228-v1/before-1-topology.json",
+        "sha256": "bdf090cc3ed5a89f64bc82c1532122721de6e342125a5ee62b38cf0c34564b4a"
+      }
+    },
+    "audits/before-2-topology.json": {
+      "bytes": 4180,
+      "sha256": "a9804af61a85eea24bc7782f6d2f60b73bb9d32588474d600ad31cf7de04cd44",
+      "source_pin": {
+        "bytes": 4180,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-gpu-v228-v1/before-2-topology.json",
+        "sha256": "a9804af61a85eea24bc7782f6d2f60b73bb9d32588474d600ad31cf7de04cd44"
+      }
+    },
+    "complete.json": {
+      "bytes": 1055149,
+      "sha256": "ad977bca8c02e329ce90d15cc61961a9b82e35ce2488c3a8b07277d1c5414833",
+      "source_pin": {
+        "bytes": 1055149,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-gpu-v228-v1/complete.json",
+        "sha256": "ad977bca8c02e329ce90d15cc61961a9b82e35ce2488c3a8b07277d1c5414833"
+      }
+    },
+    "inputs/assembly.json": {
+      "bytes": 47724,
+      "sha256": "579636db561e278bf07319ee1eb4753d59aef95203eda04e63f1d80379eb4743",
+      "source_pin": {
+        "bytes": 47724,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-inputs-v228-v1/assembly.json",
+        "sha256": "579636db561e278bf07319ee1eb4753d59aef95203eda04e63f1d80379eb4743"
+      }
+    },
+    "inputs/decode-review.json": {
+      "bytes": 59355,
+      "sha256": "483d166b84254a614639c2776fe663276fdb66b93a9b61b2489565d44e59a462",
+      "source_pin": {
+        "bytes": 59355,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-inputs-v228-v1/decode-review.json",
+        "sha256": "483d166b84254a614639c2776fe663276fdb66b93a9b61b2489565d44e59a462"
+      }
+    },
+    "inputs/parent-runtime-review.json": {
+      "bytes": 2612,
+      "sha256": "9b8bb079a2c69e9d1359ceb308fee23af45761db56e22a5ead44520daeac960f",
+      "source_pin": {
+        "bytes": 2612,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-inputs-v228-v1/parent-runtime-review.json",
+        "sha256": "9b8bb079a2c69e9d1359ceb308fee23af45761db56e22a5ead44520daeac960f"
+      }
+    },
+    "inputs/plan.json": {
+      "bytes": 5560,
+      "sha256": "30f7a284aeb1ea0674e9f0b4828cb718189ff2038f741823a69cbfbe97eb9baa",
+      "source_pin": {
+        "bytes": 5560,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-inputs-v228-v1/plan.json",
+        "sha256": "30f7a284aeb1ea0674e9f0b4828cb718189ff2038f741823a69cbfbe97eb9baa"
+      }
+    },
+    "inputs/request.json": {
+      "bytes": 8801,
+      "sha256": "480e93a442e3ad423cab68683e4955500c4b56cdd3e68296c2ee8c09b595e6ef",
+      "source_pin": {
+        "bytes": 8801,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-inputs-v228-v1/request.json",
+        "sha256": "480e93a442e3ad423cab68683e4955500c4b56cdd3e68296c2ee8c09b595e6ef"
+      }
+    },
+    "inputs/worker-runtime-review.json": {
+      "bytes": 2338,
+      "sha256": "6e923cae6d119ccd76bb39ee854e090b98f424144d3875a718e1a74aaa94cc02",
+      "source_pin": {
+        "bytes": 2338,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-inputs-v228-v1/worker-runtime-review.json",
+        "sha256": "6e923cae6d119ccd76bb39ee854e090b98f424144d3875a718e1a74aaa94cc02"
+      }
+    },
+    "leaves/after-0/command.json": {
+      "bytes": 706,
+      "sha256": "6e438209610d352a6003f8cb6cf972a9851015711ab0b5ef1bfc58f80ed355d7",
+      "source_pin": {
+        "bytes": 706,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-gpu-v228-v1/after-0/command.json",
+        "sha256": "6e438209610d352a6003f8cb6cf972a9851015711ab0b5ef1bfc58f80ed355d7"
+      }
+    },
+    "leaves/after-0/result.json": {
+      "bytes": 1608,
+      "sha256": "55dd813227a4b1ddcc7ca0c52cb74de472c5b9d910169dd1d4f1aeed0ccf3749",
+      "source_pin": {
+        "bytes": 1608,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-gpu-v228-v1/after-0/result.json",
+        "sha256": "55dd813227a4b1ddcc7ca0c52cb74de472c5b9d910169dd1d4f1aeed0ccf3749"
+      }
+    },
+    "leaves/after-0/started.json": {
+      "bytes": 277,
+      "sha256": "8bfb3cc794717dc199f9d533be56174036dcec620d3beb646648fff2d92cc8ae",
+      "source_pin": {
+        "bytes": 277,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-gpu-v228-v1/after-0/started.json",
+        "sha256": "8bfb3cc794717dc199f9d533be56174036dcec620d3beb646648fff2d92cc8ae"
+      }
+    },
+    "leaves/after-0/stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "source_pin": {
+        "bytes": 0,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-gpu-v228-v1/after-0/stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    "leaves/after-0/stdout": {
+      "bytes": 321,
+      "sha256": "fb1d52be68ef1ca207431343c2fe9d71c4b52ca5589e9a38807effa626b069e9",
+      "source_pin": {
+        "bytes": 321,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-gpu-v228-v1/after-0/stdout",
+        "sha256": "fb1d52be68ef1ca207431343c2fe9d71c4b52ca5589e9a38807effa626b069e9"
+      }
+    },
+    "leaves/after-1/command.json": {
+      "bytes": 706,
+      "sha256": "6e438209610d352a6003f8cb6cf972a9851015711ab0b5ef1bfc58f80ed355d7",
+      "source_pin": {
+        "bytes": 706,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-gpu-v228-v1/after-1/command.json",
+        "sha256": "6e438209610d352a6003f8cb6cf972a9851015711ab0b5ef1bfc58f80ed355d7"
+      }
+    },
+    "leaves/after-1/result.json": {
+      "bytes": 1608,
+      "sha256": "70b0203b7d4f47da3c68836f92a4df64279f19ccef429511780067463d8b8c68",
+      "source_pin": {
+        "bytes": 1608,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-gpu-v228-v1/after-1/result.json",
+        "sha256": "70b0203b7d4f47da3c68836f92a4df64279f19ccef429511780067463d8b8c68"
+      }
+    },
+    "leaves/after-1/started.json": {
+      "bytes": 277,
+      "sha256": "ff7a99111638eaab36a6018b3cb843903f18b8f754a9827dfdfc6a297f384457",
+      "source_pin": {
+        "bytes": 277,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-gpu-v228-v1/after-1/started.json",
+        "sha256": "ff7a99111638eaab36a6018b3cb843903f18b8f754a9827dfdfc6a297f384457"
+      }
+    },
+    "leaves/after-1/stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "source_pin": {
+        "bytes": 0,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-gpu-v228-v1/after-1/stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    "leaves/after-1/stdout": {
+      "bytes": 321,
+      "sha256": "fb1d52be68ef1ca207431343c2fe9d71c4b52ca5589e9a38807effa626b069e9",
+      "source_pin": {
+        "bytes": 321,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-gpu-v228-v1/after-1/stdout",
+        "sha256": "fb1d52be68ef1ca207431343c2fe9d71c4b52ca5589e9a38807effa626b069e9"
+      }
+    },
+    "leaves/after-2/command.json": {
+      "bytes": 706,
+      "sha256": "6e438209610d352a6003f8cb6cf972a9851015711ab0b5ef1bfc58f80ed355d7",
+      "source_pin": {
+        "bytes": 706,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-gpu-v228-v1/after-2/command.json",
+        "sha256": "6e438209610d352a6003f8cb6cf972a9851015711ab0b5ef1bfc58f80ed355d7"
+      }
+    },
+    "leaves/after-2/result.json": {
+      "bytes": 1608,
+      "sha256": "54a3cdd29c9eb6d36005eec15823715bca5ddfbe6b9c228f7eb1cf0a642886f5",
+      "source_pin": {
+        "bytes": 1608,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-gpu-v228-v1/after-2/result.json",
+        "sha256": "54a3cdd29c9eb6d36005eec15823715bca5ddfbe6b9c228f7eb1cf0a642886f5"
+      }
+    },
+    "leaves/after-2/started.json": {
+      "bytes": 277,
+      "sha256": "d948e65d8ef38898d60fff4076948daacb08a56cac689685bf3883304ed1b6ae",
+      "source_pin": {
+        "bytes": 277,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-gpu-v228-v1/after-2/started.json",
+        "sha256": "d948e65d8ef38898d60fff4076948daacb08a56cac689685bf3883304ed1b6ae"
+      }
+    },
+    "leaves/after-2/stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "source_pin": {
+        "bytes": 0,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-gpu-v228-v1/after-2/stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    "leaves/after-2/stdout": {
+      "bytes": 321,
+      "sha256": "fb1d52be68ef1ca207431343c2fe9d71c4b52ca5589e9a38807effa626b069e9",
+      "source_pin": {
+        "bytes": 321,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-gpu-v228-v1/after-2/stdout",
+        "sha256": "fb1d52be68ef1ca207431343c2fe9d71c4b52ca5589e9a38807effa626b069e9"
+      }
+    },
+    "leaves/before-0/command.json": {
+      "bytes": 706,
+      "sha256": "6e438209610d352a6003f8cb6cf972a9851015711ab0b5ef1bfc58f80ed355d7",
+      "source_pin": {
+        "bytes": 706,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-gpu-v228-v1/before-0/command.json",
+        "sha256": "6e438209610d352a6003f8cb6cf972a9851015711ab0b5ef1bfc58f80ed355d7"
+      }
+    },
+    "leaves/before-0/result.json": {
+      "bytes": 1612,
+      "sha256": "aede963158d5cad1de66dc1f9497ad28d978298ffd6e618e6a58ad4966e29276",
+      "source_pin": {
+        "bytes": 1612,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-gpu-v228-v1/before-0/result.json",
+        "sha256": "aede963158d5cad1de66dc1f9497ad28d978298ffd6e618e6a58ad4966e29276"
+      }
+    },
+    "leaves/before-0/started.json": {
+      "bytes": 277,
+      "sha256": "30382b7bb7b7d7b14772639089c0eb87a5a1383934d041dd7fa9939aac6ba23c",
+      "source_pin": {
+        "bytes": 277,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-gpu-v228-v1/before-0/started.json",
+        "sha256": "30382b7bb7b7d7b14772639089c0eb87a5a1383934d041dd7fa9939aac6ba23c"
+      }
+    },
+    "leaves/before-0/stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "source_pin": {
+        "bytes": 0,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-gpu-v228-v1/before-0/stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    "leaves/before-0/stdout": {
+      "bytes": 321,
+      "sha256": "fb1d52be68ef1ca207431343c2fe9d71c4b52ca5589e9a38807effa626b069e9",
+      "source_pin": {
+        "bytes": 321,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-gpu-v228-v1/before-0/stdout",
+        "sha256": "fb1d52be68ef1ca207431343c2fe9d71c4b52ca5589e9a38807effa626b069e9"
+      }
+    },
+    "leaves/before-1/command.json": {
+      "bytes": 706,
+      "sha256": "6e438209610d352a6003f8cb6cf972a9851015711ab0b5ef1bfc58f80ed355d7",
+      "source_pin": {
+        "bytes": 706,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-gpu-v228-v1/before-1/command.json",
+        "sha256": "6e438209610d352a6003f8cb6cf972a9851015711ab0b5ef1bfc58f80ed355d7"
+      }
+    },
+    "leaves/before-1/result.json": {
+      "bytes": 1611,
+      "sha256": "6d58171efe8b2978623b3586fcb7ac359cd23b533abd171fa637ddf784a30a2a",
+      "source_pin": {
+        "bytes": 1611,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-gpu-v228-v1/before-1/result.json",
+        "sha256": "6d58171efe8b2978623b3586fcb7ac359cd23b533abd171fa637ddf784a30a2a"
+      }
+    },
+    "leaves/before-1/started.json": {
+      "bytes": 277,
+      "sha256": "3ea1f1b8390b5ed9b5de26cf67fbed0fb10b4b3b4f41127ac631751407f44302",
+      "source_pin": {
+        "bytes": 277,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-gpu-v228-v1/before-1/started.json",
+        "sha256": "3ea1f1b8390b5ed9b5de26cf67fbed0fb10b4b3b4f41127ac631751407f44302"
+      }
+    },
+    "leaves/before-1/stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "source_pin": {
+        "bytes": 0,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-gpu-v228-v1/before-1/stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    "leaves/before-1/stdout": {
+      "bytes": 321,
+      "sha256": "fb1d52be68ef1ca207431343c2fe9d71c4b52ca5589e9a38807effa626b069e9",
+      "source_pin": {
+        "bytes": 321,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-gpu-v228-v1/before-1/stdout",
+        "sha256": "fb1d52be68ef1ca207431343c2fe9d71c4b52ca5589e9a38807effa626b069e9"
+      }
+    },
+    "leaves/before-2/command.json": {
+      "bytes": 706,
+      "sha256": "6e438209610d352a6003f8cb6cf972a9851015711ab0b5ef1bfc58f80ed355d7",
+      "source_pin": {
+        "bytes": 706,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-gpu-v228-v1/before-2/command.json",
+        "sha256": "6e438209610d352a6003f8cb6cf972a9851015711ab0b5ef1bfc58f80ed355d7"
+      }
+    },
+    "leaves/before-2/result.json": {
+      "bytes": 1612,
+      "sha256": "804fc9b7ce44c93a61907b973b993386d86a04fc61bac4a6af756aaabca208dd",
+      "source_pin": {
+        "bytes": 1612,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-gpu-v228-v1/before-2/result.json",
+        "sha256": "804fc9b7ce44c93a61907b973b993386d86a04fc61bac4a6af756aaabca208dd"
+      }
+    },
+    "leaves/before-2/started.json": {
+      "bytes": 277,
+      "sha256": "839f5f8c9dabef504ab3c6ec1fca882058f6261a682b9da99dbb89546416cb85",
+      "source_pin": {
+        "bytes": 277,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-gpu-v228-v1/before-2/started.json",
+        "sha256": "839f5f8c9dabef504ab3c6ec1fca882058f6261a682b9da99dbb89546416cb85"
+      }
+    },
+    "leaves/before-2/stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "source_pin": {
+        "bytes": 0,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-gpu-v228-v1/before-2/stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    "leaves/before-2/stdout": {
+      "bytes": 321,
+      "sha256": "fb1d52be68ef1ca207431343c2fe9d71c4b52ca5589e9a38807effa626b069e9",
+      "source_pin": {
+        "bytes": 321,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-gpu-v228-v1/before-2/stdout",
+        "sha256": "fb1d52be68ef1ca207431343c2fe9d71c4b52ca5589e9a38807effa626b069e9"
+      }
+    },
+    "leaves/parent/command.json": {
+      "bytes": 1041,
+      "sha256": "f4b4ec98e3e1e91ef8c488250b30387cac4c8991499c041aed9a10874d23b958",
+      "source_pin": {
+        "bytes": 1041,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-gpu-v228-v1/parent/command.json",
+        "sha256": "f4b4ec98e3e1e91ef8c488250b30387cac4c8991499c041aed9a10874d23b958"
+      }
+    },
+    "leaves/parent/result.json": {
+      "bytes": 1880,
+      "sha256": "05c4eead14aba54bd54ca69626e199396aead308b2383b109f7052104944e00c",
+      "source_pin": {
+        "bytes": 1880,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-gpu-v228-v1/parent/result.json",
+        "sha256": "05c4eead14aba54bd54ca69626e199396aead308b2383b109f7052104944e00c"
+      }
+    },
+    "leaves/parent/started.json": {
+      "bytes": 277,
+      "sha256": "89a1b3fba2b5001295b76a206fea9580e3e190e20d9db31e7ba4acbc85c8653e",
+      "source_pin": {
+        "bytes": 277,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-gpu-v228-v1/parent/started.json",
+        "sha256": "89a1b3fba2b5001295b76a206fea9580e3e190e20d9db31e7ba4acbc85c8653e"
+      }
+    },
+    "leaves/parent/stderr": {
+      "bytes": 392,
+      "sha256": "e15fd4a583a3b220fac68a3f0bce3ffcc9c0e17f1662c22a4a0c742c0a8b302a",
+      "source_pin": {
+        "bytes": 392,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-gpu-v228-v1/parent/stderr",
+        "sha256": "e15fd4a583a3b220fac68a3f0bce3ffcc9c0e17f1662c22a4a0c742c0a8b302a"
+      }
+    },
+    "leaves/parent/stdout": {
+      "bytes": 40119,
+      "sha256": "974e40336a0466d61dddd20f463ce6ba788e97f584cddc4ed5d466f205b8ca64",
+      "source_pin": {
+        "bytes": 40119,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-gpu-v228-v1/parent/stdout",
+        "sha256": "974e40336a0466d61dddd20f463ce6ba788e97f584cddc4ed5d466f205b8ca64"
+      }
+    },
+    "native/complete.json": {
+      "bytes": 40119,
+      "sha256": "974e40336a0466d61dddd20f463ce6ba788e97f584cddc4ed5d466f205b8ca64",
+      "source_pin": {
+        "bytes": 40119,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-gpu-v228-v1/native/complete.json",
+        "sha256": "974e40336a0466d61dddd20f463ce6ba788e97f584cddc4ed5d466f205b8ca64"
+      }
+    },
+    "native/request-0.json": {
+      "bytes": 1871,
+      "sha256": "70d39b2251163ba34b12bcb9446fed275877eee08fb3a374db6abce6e4a1163a",
+      "source_pin": {
+        "bytes": 1871,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-gpu-v228-v1/native/request-0.json",
+        "sha256": "70d39b2251163ba34b12bcb9446fed275877eee08fb3a374db6abce6e4a1163a"
+      }
+    },
+    "native/request-1.json": {
+      "bytes": 2408,
+      "sha256": "642b298617333e8ad716f58373e16bc5408d8cd410aaa79f843060e6951c3b09",
+      "source_pin": {
+        "bytes": 2408,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-gpu-v228-v1/native/request-1.json",
+        "sha256": "642b298617333e8ad716f58373e16bc5408d8cd410aaa79f843060e6951c3b09"
+      }
+    },
+    "native/request-2.json": {
+      "bytes": 2412,
+      "sha256": "7171596be7bec1e73c98b7bbcdb5f9896135281a5b2b4247d25a64a7c2bc6f3b",
+      "source_pin": {
+        "bytes": 2412,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-gpu-v228-v1/native/request-2.json",
+        "sha256": "7171596be7bec1e73c98b7bbcdb5f9896135281a5b2b4247d25a64a7c2bc6f3b"
+      }
+    },
+    "native/request-3.json": {
+      "bytes": 2411,
+      "sha256": "92b74c8f289c5160f1b1b6bc0902baf84c185d8c5b9fc852cab0e0826487d5dc",
+      "source_pin": {
+        "bytes": 2411,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-gpu-v228-v1/native/request-3.json",
+        "sha256": "92b74c8f289c5160f1b1b6bc0902baf84c185d8c5b9fc852cab0e0826487d5dc"
+      }
+    },
+    "observation.json": {
+      "bytes": 5419,
+      "sha256": "02a363fc987e63c9655cf352338b51a779c1980ac2679005acda68c8c3c57cd9",
+      "source_pin": {
+        "bytes": 5419,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-gpu-v228-v1/observation.json",
+        "sha256": "02a363fc987e63c9655cf352338b51a779c1980ac2679005acda68c8c3c57cd9"
+      }
+    },
+    "publish.py": {
+      "bytes": 18131,
+      "sha256": "d0806ab1eb91054a1086d5d7aeeccfbe237a0014b61072db8f15dcb8d445a760",
+      "source_pin": {
+        "bytes": 18131,
+        "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/p228-silu-materialized-decode-native-publication-v1/publish.py",
+        "sha256": "d0806ab1eb91054a1086d5d7aeeccfbe237a0014b61072db8f15dcb8d445a760"
+      }
+    },
+    "pure/complete.json": {
+      "bytes": 10509,
+      "sha256": "cd95c4739bfab5f2bc3d01c53218302577d218c2ae9e25ef9fc7ed5d30cb93cf",
+      "source_pin": {
+        "bytes": 10509,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/silu-materialized-decode-gpu-pure-v228-v1/complete.json",
+        "sha256": "cd95c4739bfab5f2bc3d01c53218302577d218c2ae9e25ef9fc7ed5d30cb93cf"
+      }
+    },
+    "pure/sources-after.json": {
+      "bytes": 3859,
+      "sha256": "fd46ce0fdfdaec104216622bf7ed5d7025093bd818693839e26419ed83400345",
+      "source_pin": {
+        "bytes": 3859,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/silu-materialized-decode-gpu-pure-v228-v1/sources-after.json",
+        "sha256": "fd46ce0fdfdaec104216622bf7ed5d7025093bd818693839e26419ed83400345"
+      }
+    },
+    "pure/sources-before.json": {
+      "bytes": 3859,
+      "sha256": "fd46ce0fdfdaec104216622bf7ed5d7025093bd818693839e26419ed83400345",
+      "source_pin": {
+        "bytes": 3859,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/silu-materialized-decode-gpu-pure-v228-v1/sources-before.json",
+        "sha256": "fd46ce0fdfdaec104216622bf7ed5d7025093bd818693839e26419ed83400345"
+      }
+    },
+    "pure/tests.log": {
+      "bytes": 7084,
+      "sha256": "04c20d606c5c0809c746d4d06b807c1f91294dc93097c2ba435c4bac13600a38",
+      "source_pin": {
+        "bytes": 7084,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/silu-materialized-decode-gpu-pure-v228-v1/tests.log",
+        "sha256": "04c20d606c5c0809c746d4d06b807c1f91294dc93097c2ba435c4bac13600a38"
+      }
+    },
+    "source/INTAKE.md": {
+      "bytes": 3417,
+      "sha256": "937fd5e12c706fa6fa86fc451cb7bc10fcb0c90cde0e5dfd21660e1cc7fb537f",
+      "source_pin": {
+        "bytes": 3417,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-silu-materialized-decode-gpu-v1/INTAKE.md",
+        "sha256": "937fd5e12c706fa6fa86fc451cb7bc10fcb0c90cde0e5dfd21660e1cc7fb537f"
+      }
+    },
+    "source/README.md": {
+      "bytes": 4418,
+      "sha256": "edd91decfe41d3649f9293f1d485a777a9ecf853e6ff269cc14558dfbca7308b",
+      "source_pin": {
+        "bytes": 4418,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-silu-materialized-decode-gpu-v1/README.md",
+        "sha256": "edd91decfe41d3649f9293f1d485a777a9ecf853e6ff269cc14558dfbca7308b"
+      }
+    },
+    "source/decode_validation.py": {
+      "bytes": 20332,
+      "sha256": "b4e4cee33a9c82dd58189ca359e5a64d7e1dd1780e974e215c85c40e0df479e0",
+      "source_pin": {
+        "bytes": 20332,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-silu-materialized-decode-gpu-v1/decode_validation.py",
+        "sha256": "b4e4cee33a9c82dd58189ca359e5a64d7e1dd1780e974e215c85c40e0df479e0"
+      }
+    },
+    "source/intake.py": {
+      "bytes": 42113,
+      "sha256": "f8863134f15452c299874ac13c9c2dc54c4c1d26a30e02fdebcd3359cb0e1447",
+      "source_pin": {
+        "bytes": 42113,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-silu-materialized-decode-gpu-v1/intake.py",
+        "sha256": "f8863134f15452c299874ac13c9c2dc54c4c1d26a30e02fdebcd3359cb0e1447"
+      }
+    },
+    "source/layer_validation.py": {
+      "bytes": 16186,
+      "sha256": "757c077979b7ee02d4c0e7d222e75292cd9d417927f84ae9a8134344f8e217b9",
+      "source_pin": {
+        "bytes": 16186,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-silu-materialized-decode-gpu-v1/layer_validation.py",
+        "sha256": "757c077979b7ee02d4c0e7d222e75292cd9d417927f84ae9a8134344f8e217b9"
+      }
+    },
+    "source/manifest.json": {
+      "bytes": 2392,
+      "sha256": "47afc73e3333ff0705002a16b1a296780d22c119676bba142f07c2eb9fe80c31",
+      "source_pin": {
+        "bytes": 2392,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-silu-materialized-decode-gpu-v1/manifest.json",
+        "sha256": "47afc73e3333ff0705002a16b1a296780d22c119676bba142f07c2eb9fe80c31"
+      }
+    },
+    "source/run.py": {
+      "bytes": 14978,
+      "sha256": "100acf80caba09a7080d72b9680059c0d63c143978a7b6f4f19c8f61e3405e9b",
+      "source_pin": {
+        "bytes": 14978,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-silu-materialized-decode-gpu-v1/run.py",
+        "sha256": "100acf80caba09a7080d72b9680059c0d63c143978a7b6f4f19c8f61e3405e9b"
+      }
+    },
+    "source/run_row_facts_v2.py": {
+      "bytes": 12424,
+      "sha256": "244c12f62c8a439aa01b44380fc464008b94006bc919201c8d510c64177fc820",
+      "source_pin": {
+        "bytes": 12424,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-silu-materialized-decode-gpu-v1/run_row_facts_v2.py",
+        "sha256": "244c12f62c8a439aa01b44380fc464008b94006bc919201c8d510c64177fc820"
+      }
+    },
+    "source/run_silu_materialized_decode_gpu_pure_p228_v1.py": {
+      "bytes": 8057,
+      "sha256": "6966297a4fd31fac3e998d6cb584749638382ca902904be66c643dd2b1981091",
+      "source_pin": {
+        "bytes": 8057,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-silu-materialized-decode-gpu-v1/run_silu_materialized_decode_gpu_pure_p228_v1.py",
+        "sha256": "6966297a4fd31fac3e998d6cb584749638382ca902904be66c643dd2b1981091"
+      }
+    },
+    "source/smoke_validation.py": {
+      "bytes": 14980,
+      "sha256": "9bf460451e722452da9c49168c730615d32e9b73b200c579f003e9e45238ea26",
+      "source_pin": {
+        "bytes": 14980,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-silu-materialized-decode-gpu-v1/smoke_validation.py",
+        "sha256": "9bf460451e722452da9c49168c730615d32e9b73b200c579f003e9e45238ea26"
+      }
+    },
+    "source/stage_core.py": {
+      "bytes": 12074,
+      "sha256": "7e3d64e80e66bacbbba05ac3236189249949bb95ea3f717150822cf45740eec2",
+      "source_pin": {
+        "bytes": 12074,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-silu-materialized-decode-gpu-v1/stage_core.py",
+        "sha256": "7e3d64e80e66bacbbba05ac3236189249949bb95ea3f717150822cf45740eec2"
+      }
+    },
+    "source/test_decode_validation.py": {
+      "bytes": 16463,
+      "sha256": "37a24160ea948a8d19e9f5abac34d5407c239be7311c3e72efbe9074a026ff82",
+      "source_pin": {
+        "bytes": 16463,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-silu-materialized-decode-gpu-v1/test_decode_validation.py",
+        "sha256": "37a24160ea948a8d19e9f5abac34d5407c239be7311c3e72efbe9074a026ff82"
+      }
+    },
+    "source/test_intake.py": {
+      "bytes": 13266,
+      "sha256": "59700c2d255ab492f0c2dd0c3d90022f893ac307668d6ec0c207cbfa12d88e2e",
+      "source_pin": {
+        "bytes": 13266,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-silu-materialized-decode-gpu-v1/test_intake.py",
+        "sha256": "59700c2d255ab492f0c2dd0c3d90022f893ac307668d6ec0c207cbfa12d88e2e"
+      }
+    },
+    "source/test_run.py": {
+      "bytes": 13450,
+      "sha256": "852c6696ecfad0c96b767ceb354c2afeb5e1f2ed245a9f8c948205c6c0dd672b",
+      "source_pin": {
+        "bytes": 13450,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-silu-materialized-decode-gpu-v1/test_run.py",
+        "sha256": "852c6696ecfad0c96b767ceb354c2afeb5e1f2ed245a9f8c948205c6c0dd672b"
+      }
+    },
+    "source/test_silu_admission.py": {
+      "bytes": 7907,
+      "sha256": "224e3d83ab56d62c0fc69b6e0d07e2baaa5423596d6013604a8dd64c499f72be",
+      "source_pin": {
+        "bytes": 7907,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-silu-materialized-decode-gpu-v1/test_silu_admission.py",
+        "sha256": "224e3d83ab56d62c0fc69b6e0d07e2baaa5423596d6013604a8dd64c499f72be"
+      }
+    },
+    "tools/data-reader.py": {
+      "bytes": 24877,
+      "sha256": "3181b2f41a51ee94c331b137f2807580c326f7f6dc53c429163d8465309e2cb8",
+      "source_pin": {
+        "bytes": 24877,
+        "path": "/home/harsh/ferric-p227-integration/qualification/layer0-native-capture-v1/tools/publish.py",
+        "sha256": "3181b2f41a51ee94c331b137f2807580c326f7f6dc53c429163d8465309e2cb8"
+      }
+    },
+    "tools/prior-publish.py": {
+      "bytes": 18465,
+      "sha256": "cb4974eb7fda4281df656106aba83f7ff1c44a2b66dfe3f56e7b9a6ad6a961ca",
+      "source_pin": {
+        "bytes": 18465,
+        "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/p228-projection-residual-decode-native-publication-v1/publish.py",
+        "sha256": "cb4974eb7fda4281df656106aba83f7ff1c44a2b66dfe3f56e7b9a6ad6a961ca"
+      }
+    },
+    "tools/run_silu_materialized_decode_gpu_pure_p228_v1.py": {
+      "bytes": 8057,
+      "sha256": "6966297a4fd31fac3e998d6cb584749638382ca902904be66c643dd2b1981091",
+      "source_pin": {
+        "bytes": 8057,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/run_silu_materialized_decode_gpu_pure_p228_v1.py",
+        "sha256": "6966297a4fd31fac3e998d6cb584749638382ca902904be66c643dd2b1981091"
+      }
+    }
+  },
+  "pure": {
+    "bytes": 10509,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/silu-materialized-decode-gpu-pure-v228-v1/complete.json",
+    "sha256": "cd95c4739bfab5f2bc3d01c53218302577d218c2ae9e25ef9fc7ed5d30cb93cf"
+  },
+  "pure_tests": 43,
+  "recorded_gpu_execution": true,
+  "recorded_idle_audits_replayed": true,
+  "request": {
+    "bytes": 8801,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-inputs-v228-v1/request.json",
+    "sha256": "480e93a442e3ad423cab68683e4955500c4b56cdd3e68296c2ee8c09b595e6ef"
+  },
+  "retained_native": {
+    "child-stderr.bin": {
+      "bytes": 0,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-gpu-v228-v1/native/child-stderr.bin",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "complete.json": {
+      "bytes": 40119,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-gpu-v228-v1/native/complete.json",
+      "sha256": "974e40336a0466d61dddd20f463ce6ba788e97f584cddc4ed5d466f205b8ca64"
+    },
+    "control-0.bin": {
+      "bytes": 241960,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-gpu-v228-v1/native/control-0.bin",
+      "sha256": "53d94f797665b04c3a77dc71a83250953e1ea214700c40b2fd4381d3b10c7186"
+    },
+    "control-1.bin": {
+      "bytes": 241960,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-gpu-v228-v1/native/control-1.bin",
+      "sha256": "d9c98d26823b352dafdf3d4a291572650a1bf24fa6997e4f069802c0631693da"
+    },
+    "control-2.bin": {
+      "bytes": 241960,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-gpu-v228-v1/native/control-2.bin",
+      "sha256": "60e1e8654464a072747dcd285766fec3de0f99ff12e0052d133eeee162576704"
+    },
+    "control-3.bin": {
+      "bytes": 241960,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-gpu-v228-v1/native/control-3.bin",
+      "sha256": "fbe85487f49a81a223bdc9b37e9230ac6f1621894f89bc30c980e1e22d538fdf"
+    },
+    "observation-0.bin": {
+      "bytes": 606976,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-gpu-v228-v1/native/observation-0.bin",
+      "sha256": "1324a6056ea6c0308e912c63ed1b6a6d27e103c915c6dde11ff600d97cf9b1b0"
+    },
+    "observation-1.bin": {
+      "bytes": 606976,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-gpu-v228-v1/native/observation-1.bin",
+      "sha256": "b5e81454b1f162b16d5334b2e21eaf77dfa45d03a1cb3682f3628a887cdb65c7"
+    },
+    "observation-2.bin": {
+      "bytes": 606976,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-gpu-v228-v1/native/observation-2.bin",
+      "sha256": "33b6de57098491c131964ff6fd3fccc1a5b5d4fccd3285f787218f4e36f2bd96"
+    },
+    "observation-3.bin": {
+      "bytes": 606976,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-gpu-v228-v1/native/observation-3.bin",
+      "sha256": "652e9c42a4441679356f94623a4329efad19c0565f4901a39b50a6511c6e0427"
+    },
+    "request-0.json": {
+      "bytes": 1871,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-gpu-v228-v1/native/request-0.json",
+      "sha256": "70d39b2251163ba34b12bcb9446fed275877eee08fb3a374db6abce6e4a1163a"
+    },
+    "request-1.json": {
+      "bytes": 2408,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-gpu-v228-v1/native/request-1.json",
+      "sha256": "642b298617333e8ad716f58373e16bc5408d8cd410aaa79f843060e6951c3b09"
+    },
+    "request-2.json": {
+      "bytes": 2412,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-gpu-v228-v1/native/request-2.json",
+      "sha256": "7171596be7bec1e73c98b7bbcdb5f9896135281a5b2b4247d25a64a7c2bc6f3b"
+    },
+    "request-3.json": {
+      "bytes": 2411,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-gpu-v228-v1/native/request-3.json",
+      "sha256": "92b74c8f289c5160f1b1b6bc0902baf84c185d8c5b9fc852cab0e0826487d5dc"
+    }
+  },
+  "retries": 0,
+  "runtime_audits_reexecuted": false,
+  "schema": "ferric-p228-silu-materialized-decode-native-publication-v1",
+  "selected_executable_bodies_locally_rehashed": true,
+  "selected_runtime": {
+    "image": {
+      "bytes": 53560,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-deployment-v228-v1/image/prefix-tiles.hsaco",
+      "sha256": "4885204c8d510122588549107f42d2bc6f180f48fbc4eddd3bb1260e8d6629c5"
+    },
+    "parent": {
+      "bytes": 13856088,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-residual-decode-cpu-v228-v1/target/parent/debug/ferric-qwen3-finite-projection-residual-decode-engineering",
+      "sha256": "549c7b4379c12f7cf0bcafc1461627cc88357e0ad91be38789dfd1f5864d876b"
+    },
+    "worker": {
+      "bytes": 5131568,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-residual-decode-cpu-v228-v1/target/worker/debug/ferric-tp-peer-finite-engineering-worker-v1",
+      "sha256": "57959a8c771c08ab9b7184d88cc3f2760802f8965f88d918a3d684bf264aa5e1"
+    }
+  },
+  "sources": {
+    "INTAKE.md": {
+      "bytes": 3417,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-silu-materialized-decode-gpu-v1/INTAKE.md",
+      "sha256": "937fd5e12c706fa6fa86fc451cb7bc10fcb0c90cde0e5dfd21660e1cc7fb537f"
+    },
+    "README.md": {
+      "bytes": 4418,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-silu-materialized-decode-gpu-v1/README.md",
+      "sha256": "edd91decfe41d3649f9293f1d485a777a9ecf853e6ff269cc14558dfbca7308b"
+    },
+    "decode_validation.py": {
+      "bytes": 20332,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-silu-materialized-decode-gpu-v1/decode_validation.py",
+      "sha256": "b4e4cee33a9c82dd58189ca359e5a64d7e1dd1780e974e215c85c40e0df479e0"
+    },
+    "intake.py": {
+      "bytes": 42113,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-silu-materialized-decode-gpu-v1/intake.py",
+      "sha256": "f8863134f15452c299874ac13c9c2dc54c4c1d26a30e02fdebcd3359cb0e1447"
+    },
+    "layer_validation.py": {
+      "bytes": 16186,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-silu-materialized-decode-gpu-v1/layer_validation.py",
+      "sha256": "757c077979b7ee02d4c0e7d222e75292cd9d417927f84ae9a8134344f8e217b9"
+    },
+    "run.py": {
+      "bytes": 14978,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-silu-materialized-decode-gpu-v1/run.py",
+      "sha256": "100acf80caba09a7080d72b9680059c0d63c143978a7b6f4f19c8f61e3405e9b"
+    },
+    "run_row_facts_v2.py": {
+      "bytes": 12424,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-silu-materialized-decode-gpu-v1/run_row_facts_v2.py",
+      "sha256": "244c12f62c8a439aa01b44380fc464008b94006bc919201c8d510c64177fc820"
+    },
+    "run_silu_materialized_decode_gpu_pure_p228_v1.py": {
+      "bytes": 8057,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-silu-materialized-decode-gpu-v1/run_silu_materialized_decode_gpu_pure_p228_v1.py",
+      "sha256": "6966297a4fd31fac3e998d6cb584749638382ca902904be66c643dd2b1981091"
+    },
+    "smoke_validation.py": {
+      "bytes": 14980,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-silu-materialized-decode-gpu-v1/smoke_validation.py",
+      "sha256": "9bf460451e722452da9c49168c730615d32e9b73b200c579f003e9e45238ea26"
+    },
+    "stage_core.py": {
+      "bytes": 12074,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-silu-materialized-decode-gpu-v1/stage_core.py",
+      "sha256": "7e3d64e80e66bacbbba05ac3236189249949bb95ea3f717150822cf45740eec2"
+    },
+    "test_decode_validation.py": {
+      "bytes": 16463,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-silu-materialized-decode-gpu-v1/test_decode_validation.py",
+      "sha256": "37a24160ea948a8d19e9f5abac34d5407c239be7311c3e72efbe9074a026ff82"
+    },
+    "test_intake.py": {
+      "bytes": 13266,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-silu-materialized-decode-gpu-v1/test_intake.py",
+      "sha256": "59700c2d255ab492f0c2dd0c3d90022f893ac307668d6ec0c207cbfa12d88e2e"
+    },
+    "test_run.py": {
+      "bytes": 13450,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-silu-materialized-decode-gpu-v1/test_run.py",
+      "sha256": "852c6696ecfad0c96b767ceb354c2afeb5e1f2ed245a9f8c948205c6c0dd672b"
+    },
+    "test_silu_admission.py": {
+      "bytes": 7907,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-silu-materialized-decode-gpu-v1/test_silu_admission.py",
+      "sha256": "224e3d83ab56d62c0fc69b6e0d07e2baaa5423596d6013604a8dd64c499f72be"
+    }
+  },
+  "structural": {
+    "bank_reuse_order_independently_observed": false,
+    "captured_payloads": 4,
+    "captured_tensor_rows": 152,
+    "child_pid": 714038,
+    "closed_child_pids": [
+      714038
+    ],
+    "expected_banks": [
+      0,
+      1,
+      0,
+      1
+    ],
+    "external_supervisor_lifecycle_verified": false,
+    "full_long_workload": false,
+    "input_tokens": [
+      9112,
+      2190,
+      3772,
+      220
+    ],
+    "logical_generations": [
+      1,
+      2,
+      3,
+      4
+    ],
+    "mode": "teacher_forced",
+    "numerical_acceptance": false,
+    "old_native_equality_required": false,
+    "output_tokens": [
+      67,
+      198,
+      25,
+      16
+    ],
+    "paired_comparison_performed": false,
+    "parent_close_and_exit_flags_checked": true,
+    "performance_claim": false,
+    "positions": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "prefix_terminal_state_count": 288,
+    "production_authority": false,
+    "profile_sha256": "fac636e614f21f0c906e756899958f0c21c563c5a375ee948737e829ae579592",
+    "projection_residual_image": {
+      "bytes": 10864,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-residual-lowering-v228-v1/fe2o3-engineering-v1/3c3aec3598514f7f6c2b053ff0c6a8d489951ecb6cb8d95b1cae5ca31035b899/observation.hsaco",
+      "sha256": "25338beac39121cf81adfdc5c82c6f39bcfc82c0f7effaa2166bf8a2a9598a25"
+    },
+    "registration_sha256": "c0aefaddaea83fe69362cc952da39dbec1c06c8a4db9fa8e16447414a1b2e7ce",
+    "retained_files": [
+      {
+        "bytes": 1871,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-gpu-v228-v1/native/request-0.json",
+        "sha256": "70d39b2251163ba34b12bcb9446fed275877eee08fb3a374db6abce6e4a1163a"
+      },
+      {
+        "bytes": 241960,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-gpu-v228-v1/native/control-0.bin",
+        "sha256": "53d94f797665b04c3a77dc71a83250953e1ea214700c40b2fd4381d3b10c7186"
+      },
+      {
+        "bytes": 606976,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-gpu-v228-v1/native/observation-0.bin",
+        "sha256": "1324a6056ea6c0308e912c63ed1b6a6d27e103c915c6dde11ff600d97cf9b1b0"
+      },
+      {
+        "bytes": 2408,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-gpu-v228-v1/native/request-1.json",
+        "sha256": "642b298617333e8ad716f58373e16bc5408d8cd410aaa79f843060e6951c3b09"
+      },
+      {
+        "bytes": 241960,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-gpu-v228-v1/native/control-1.bin",
+        "sha256": "d9c98d26823b352dafdf3d4a291572650a1bf24fa6997e4f069802c0631693da"
+      },
+      {
+        "bytes": 606976,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-gpu-v228-v1/native/observation-1.bin",
+        "sha256": "b5e81454b1f162b16d5334b2e21eaf77dfa45d03a1cb3682f3628a887cdb65c7"
+      },
+      {
+        "bytes": 2412,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-gpu-v228-v1/native/request-2.json",
+        "sha256": "7171596be7bec1e73c98b7bbcdb5f9896135281a5b2b4247d25a64a7c2bc6f3b"
+      },
+      {
+        "bytes": 241960,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-gpu-v228-v1/native/control-2.bin",
+        "sha256": "60e1e8654464a072747dcd285766fec3de0f99ff12e0052d133eeee162576704"
+      },
+      {
+        "bytes": 606976,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-gpu-v228-v1/native/observation-2.bin",
+        "sha256": "33b6de57098491c131964ff6fd3fccc1a5b5d4fccd3285f787218f4e36f2bd96"
+      },
+      {
+        "bytes": 2411,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-gpu-v228-v1/native/request-3.json",
+        "sha256": "92b74c8f289c5160f1b1b6bc0902baf84c185d8c5b9fc852cab0e0826487d5dc"
+      },
+      {
+        "bytes": 241960,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-gpu-v228-v1/native/control-3.bin",
+        "sha256": "fbe85487f49a81a223bdc9b37e9230ac6f1621894f89bc30c980e1e22d538fdf"
+      },
+      {
+        "bytes": 606976,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-gpu-v228-v1/native/observation-3.bin",
+        "sha256": "652e9c42a4441679356f94623a4329efad19c0565f4901a39b50a6511c6e0427"
+      },
+      {
+        "bytes": 0,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-gpu-v228-v1/native/child-stderr.bin",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    ],
+    "rotary_nonzero_positions_independently_recomputed": false,
+    "schema": "ferric-p228-checked-projection-residual-decode-structure-v1",
+    "source_image_payloads_rehashed": false,
+    "summary_sha256": "974e40336a0466d61dddd20f463ce6ba788e97f584cddc4ed5d466f205b8ca64",
+    "terminal_state_count": 576,
+    "tiles_terminal_state_count": 288,
+    "transcript_sha256": "209c102d04daf9e23d1030139ce66edaebdcb441678a6b870f2e2afcc2b81e5f"
+  },
+  "structural_validator_replayed": true,
+  "supervisor_manifest": {
+    "bytes": 2392,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-silu-materialized-decode-gpu-v1/manifest.json",
+    "sha256": "47afc73e3333ff0705002a16b1a296780d22c119676bba142f07c2eb9fe80c31"
+  },
+  "sustained_2048_256": false,
+  "top_level_observer_reaping_independently_verified": false,
+  "worker_runtime_review": {
+    "bytes": 2338,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-inputs-v228-v1/worker-runtime-review.json",
+    "sha256": "6e923cae6d119ccd76bb39ee854e090b98f424144d3875a718e1a74aaa94cc02"
+  }
+}

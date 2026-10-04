@@ -1,0 +1,61 @@
+{
+  "cleanup_signalled": false,
+  "command": {
+    "bytes": 1041,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-gpu-v228-v1/parent/command.json",
+    "sha256": "f4b4ec98e3e1e91ef8c488250b30387cac4c8991499c041aed9a10874d23b958"
+  },
+  "elapsed_seconds": 384.68143370898906,
+  "exit_code": 0,
+  "gpu_execution_requested": true,
+  "lineage": [
+    {
+      "event": "owned",
+      "identity": {
+        "pgid": 706975,
+        "pid": 706975,
+        "ppid": 705476,
+        "sid": 706975,
+        "starttime": 53894862,
+        "state": "R",
+        "uid": 9661
+      },
+      "reason": "spawned-parent"
+    },
+    {
+      "event": "owned",
+      "identity": {
+        "pgid": 714038,
+        "pid": 714038,
+        "ppid": 706975,
+        "sid": 706975,
+        "starttime": 53904057,
+        "state": "S",
+        "uid": 9661
+      },
+      "reason": "ancestry"
+    }
+  ],
+  "owned_groups": [
+    706975,
+    714038
+  ],
+  "owned_groups_absent": true,
+  "owned_processes_reaped": true,
+  "reason": null,
+  "started": {
+    "bytes": 277,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-gpu-v228-v1/parent/started.json",
+    "sha256": "89a1b3fba2b5001295b76a206fea9580e3e190e20d9db31e7ba4acbc85c8653e"
+  },
+  "stderr": {
+    "bytes": 392,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-gpu-v228-v1/parent/stderr",
+    "sha256": "e15fd4a583a3b220fac68a3f0bce3ffcc9c0e17f1662c22a4a0c742c0a8b302a"
+  },
+  "stdout": {
+    "bytes": 40119,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-gpu-v228-v1/parent/stdout",
+    "sha256": "974e40336a0466d61dddd20f463ce6ba788e97f584cddc4ed5d466f205b8ca64"
+  }
+}

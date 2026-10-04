@@ -6,11 +6,21 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Latest: the [SiLU four-step supervisor](../qualification/silu-materialized-decode-supervisor-v1/README.md)
+Latest: the [SiLU image completed four full 36-layer forwards on MI350](../qualification/silu-materialized-decode-native-v1/README.md)
+and its [independent framework comparison](../qualification/silu-materialized-decode-comparison-v1/README.md)
+completed on ASROCK. All 152 tensor slices were compared; all four output tokens
+match, but no complete tensor slice is bitwise identical. Logit relative-L2
+errors are 0.0030448043, 0.0056276866, 0.0061773318 and 0.0079468052.
+This improves three positions versus the corrected-residual baseline but worsens
+position 2. The full tables retain that regression without fitting an acceptance
+threshold. Seventeen comparator tests passed. Full-model acceptance, the long
+workload and sustained performance remain open.
+
+The [SiLU four-step supervisor](../qualification/silu-materialized-decode-supervisor-v1/README.md)
 passed all 43 CPU policy tests on MI350, with unchanged source snapshots and no
 skips. It selects the new MLP image using the existing CPU1022 executables and
 preserves the original bootstrap images and lifecycle. These tests do not run
-the full model; the native four-step attempt and comparison remain separate gates.
+the full model; the separate native attempt and comparison completed as above.
 
 The [BF16 SiLU image executed on MI350](../qualification/silu-materialized-native-capture-v1/README.md)
 and its [independent layer-zero comparison](../qualification/silu-materialized-comparison-v1/README.md)

@@ -1,0 +1,954 @@
+{
+  "all_transitive_inputs_rehashed": false,
+  "assembler": {
+    "bytes": 17144,
+    "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/p228-silu-materialized-decode-inputs-v1/prepare.py",
+    "sha256": "56c94333ccf3e2fc8057b16bf9e4066fdae1cf5637b2f74505aa344462ed7ec3"
+  },
+  "automatic_approval": false,
+  "comparison_math_reexecuted": false,
+  "configuration": {
+    "bytes": 1392,
+    "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/silu-materialized-decode-configuration-v228-v1.json",
+    "sha256": "3a1a11cb853d05b918e8d5346ac192355a2381e4c4bf54ca6b316e0e3d853ad6"
+  },
+  "explicit_root_decisions_copied": true,
+  "gpu_execution": false,
+  "inputs": [
+    {
+      "original": {
+        "bytes": 2392,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-silu-materialized-decode-gpu-v1/manifest.json",
+        "sha256": "47afc73e3333ff0705002a16b1a296780d22c119676bba142f07c2eb9fe80c31"
+      },
+      "retained": {
+        "bytes": 2392,
+        "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/p228-silu-materialized-decode-gpu-v1/manifest.json",
+        "sha256": "47afc73e3333ff0705002a16b1a296780d22c119676bba142f07c2eb9fe80c31"
+      }
+    },
+    {
+      "original": {
+        "bytes": 3417,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-silu-materialized-decode-gpu-v1/INTAKE.md",
+        "sha256": "937fd5e12c706fa6fa86fc451cb7bc10fcb0c90cde0e5dfd21660e1cc7fb537f"
+      },
+      "retained": {
+        "bytes": 3417,
+        "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/p228-silu-materialized-decode-gpu-v1/INTAKE.md",
+        "sha256": "937fd5e12c706fa6fa86fc451cb7bc10fcb0c90cde0e5dfd21660e1cc7fb537f"
+      }
+    },
+    {
+      "original": {
+        "bytes": 4418,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-silu-materialized-decode-gpu-v1/README.md",
+        "sha256": "edd91decfe41d3649f9293f1d485a777a9ecf853e6ff269cc14558dfbca7308b"
+      },
+      "retained": {
+        "bytes": 4418,
+        "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/p228-silu-materialized-decode-gpu-v1/README.md",
+        "sha256": "edd91decfe41d3649f9293f1d485a777a9ecf853e6ff269cc14558dfbca7308b"
+      }
+    },
+    {
+      "original": {
+        "bytes": 20332,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-silu-materialized-decode-gpu-v1/decode_validation.py",
+        "sha256": "b4e4cee33a9c82dd58189ca359e5a64d7e1dd1780e974e215c85c40e0df479e0"
+      },
+      "retained": {
+        "bytes": 20332,
+        "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/p228-silu-materialized-decode-gpu-v1/decode_validation.py",
+        "sha256": "b4e4cee33a9c82dd58189ca359e5a64d7e1dd1780e974e215c85c40e0df479e0"
+      }
+    },
+    {
+      "original": {
+        "bytes": 42113,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-silu-materialized-decode-gpu-v1/intake.py",
+        "sha256": "f8863134f15452c299874ac13c9c2dc54c4c1d26a30e02fdebcd3359cb0e1447"
+      },
+      "retained": {
+        "bytes": 42113,
+        "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/p228-silu-materialized-decode-gpu-v1/intake.py",
+        "sha256": "f8863134f15452c299874ac13c9c2dc54c4c1d26a30e02fdebcd3359cb0e1447"
+      }
+    },
+    {
+      "original": {
+        "bytes": 16186,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-silu-materialized-decode-gpu-v1/layer_validation.py",
+        "sha256": "757c077979b7ee02d4c0e7d222e75292cd9d417927f84ae9a8134344f8e217b9"
+      },
+      "retained": {
+        "bytes": 16186,
+        "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/p228-silu-materialized-decode-gpu-v1/layer_validation.py",
+        "sha256": "757c077979b7ee02d4c0e7d222e75292cd9d417927f84ae9a8134344f8e217b9"
+      }
+    },
+    {
+      "original": {
+        "bytes": 14978,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-silu-materialized-decode-gpu-v1/run.py",
+        "sha256": "100acf80caba09a7080d72b9680059c0d63c143978a7b6f4f19c8f61e3405e9b"
+      },
+      "retained": {
+        "bytes": 14978,
+        "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/p228-silu-materialized-decode-gpu-v1/run.py",
+        "sha256": "100acf80caba09a7080d72b9680059c0d63c143978a7b6f4f19c8f61e3405e9b"
+      }
+    },
+    {
+      "original": {
+        "bytes": 12424,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-silu-materialized-decode-gpu-v1/run_row_facts_v2.py",
+        "sha256": "244c12f62c8a439aa01b44380fc464008b94006bc919201c8d510c64177fc820"
+      },
+      "retained": {
+        "bytes": 12424,
+        "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/p228-silu-materialized-decode-gpu-v1/run_row_facts_v2.py",
+        "sha256": "244c12f62c8a439aa01b44380fc464008b94006bc919201c8d510c64177fc820"
+      }
+    },
+    {
+      "original": {
+        "bytes": 8057,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-silu-materialized-decode-gpu-v1/run_silu_materialized_decode_gpu_pure_p228_v1.py",
+        "sha256": "6966297a4fd31fac3e998d6cb584749638382ca902904be66c643dd2b1981091"
+      },
+      "retained": {
+        "bytes": 8057,
+        "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/p228-silu-materialized-decode-gpu-v1/run_silu_materialized_decode_gpu_pure_p228_v1.py",
+        "sha256": "6966297a4fd31fac3e998d6cb584749638382ca902904be66c643dd2b1981091"
+      }
+    },
+    {
+      "original": {
+        "bytes": 14980,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-silu-materialized-decode-gpu-v1/smoke_validation.py",
+        "sha256": "9bf460451e722452da9c49168c730615d32e9b73b200c579f003e9e45238ea26"
+      },
+      "retained": {
+        "bytes": 14980,
+        "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/p228-silu-materialized-decode-gpu-v1/smoke_validation.py",
+        "sha256": "9bf460451e722452da9c49168c730615d32e9b73b200c579f003e9e45238ea26"
+      }
+    },
+    {
+      "original": {
+        "bytes": 12074,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-silu-materialized-decode-gpu-v1/stage_core.py",
+        "sha256": "7e3d64e80e66bacbbba05ac3236189249949bb95ea3f717150822cf45740eec2"
+      },
+      "retained": {
+        "bytes": 12074,
+        "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/p228-silu-materialized-decode-gpu-v1/stage_core.py",
+        "sha256": "7e3d64e80e66bacbbba05ac3236189249949bb95ea3f717150822cf45740eec2"
+      }
+    },
+    {
+      "original": {
+        "bytes": 16463,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-silu-materialized-decode-gpu-v1/test_decode_validation.py",
+        "sha256": "37a24160ea948a8d19e9f5abac34d5407c239be7311c3e72efbe9074a026ff82"
+      },
+      "retained": {
+        "bytes": 16463,
+        "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/p228-silu-materialized-decode-gpu-v1/test_decode_validation.py",
+        "sha256": "37a24160ea948a8d19e9f5abac34d5407c239be7311c3e72efbe9074a026ff82"
+      }
+    },
+    {
+      "original": {
+        "bytes": 13266,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-silu-materialized-decode-gpu-v1/test_intake.py",
+        "sha256": "59700c2d255ab492f0c2dd0c3d90022f893ac307668d6ec0c207cbfa12d88e2e"
+      },
+      "retained": {
+        "bytes": 13266,
+        "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/p228-silu-materialized-decode-gpu-v1/test_intake.py",
+        "sha256": "59700c2d255ab492f0c2dd0c3d90022f893ac307668d6ec0c207cbfa12d88e2e"
+      }
+    },
+    {
+      "original": {
+        "bytes": 13450,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-silu-materialized-decode-gpu-v1/test_run.py",
+        "sha256": "852c6696ecfad0c96b767ceb354c2afeb5e1f2ed245a9f8c948205c6c0dd672b"
+      },
+      "retained": {
+        "bytes": 13450,
+        "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/p228-silu-materialized-decode-gpu-v1/test_run.py",
+        "sha256": "852c6696ecfad0c96b767ceb354c2afeb5e1f2ed245a9f8c948205c6c0dd672b"
+      }
+    },
+    {
+      "original": {
+        "bytes": 7907,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-silu-materialized-decode-gpu-v1/test_silu_admission.py",
+        "sha256": "224e3d83ab56d62c0fc69b6e0d07e2baaa5423596d6013604a8dd64c499f72be"
+      },
+      "retained": {
+        "bytes": 7907,
+        "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/p228-silu-materialized-decode-gpu-v1/test_silu_admission.py",
+        "sha256": "224e3d83ab56d62c0fc69b6e0d07e2baaa5423596d6013604a8dd64c499f72be"
+      }
+    },
+    {
+      "original": {
+        "bytes": 10509,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/silu-materialized-decode-gpu-pure-v228-v1/complete.json",
+        "sha256": "cd95c4739bfab5f2bc3d01c53218302577d218c2ae9e25ef9fc7ed5d30cb93cf"
+      },
+      "retained": {
+        "bytes": 10509,
+        "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/silu-materialized-decode-gpu-pure-v228-v1/complete.json",
+        "sha256": "cd95c4739bfab5f2bc3d01c53218302577d218c2ae9e25ef9fc7ed5d30cb93cf"
+      }
+    },
+    {
+      "original": {
+        "bytes": 3859,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/silu-materialized-decode-gpu-pure-v228-v1/sources-before.json",
+        "sha256": "fd46ce0fdfdaec104216622bf7ed5d7025093bd818693839e26419ed83400345"
+      },
+      "retained": {
+        "bytes": 3859,
+        "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/silu-materialized-decode-gpu-pure-v228-v1/sources-before.json",
+        "sha256": "fd46ce0fdfdaec104216622bf7ed5d7025093bd818693839e26419ed83400345"
+      }
+    },
+    {
+      "original": {
+        "bytes": 3859,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/silu-materialized-decode-gpu-pure-v228-v1/sources-after.json",
+        "sha256": "fd46ce0fdfdaec104216622bf7ed5d7025093bd818693839e26419ed83400345"
+      },
+      "retained": {
+        "bytes": 3859,
+        "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/silu-materialized-decode-gpu-pure-v228-v1/sources-after.json",
+        "sha256": "fd46ce0fdfdaec104216622bf7ed5d7025093bd818693839e26419ed83400345"
+      }
+    },
+    {
+      "original": {
+        "bytes": 7084,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/silu-materialized-decode-gpu-pure-v228-v1/tests.log",
+        "sha256": "04c20d606c5c0809c746d4d06b807c1f91294dc93097c2ba435c4bac13600a38"
+      },
+      "retained": {
+        "bytes": 7084,
+        "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/silu-materialized-decode-gpu-pure-v228-v1/tests.log",
+        "sha256": "04c20d606c5c0809c746d4d06b807c1f91294dc93097c2ba435c4bac13600a38"
+      }
+    },
+    {
+      "original": {
+        "bytes": 584169,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-residual-decode-cpu-v228-v1/complete.json",
+        "sha256": "1f4365064da1a0884385035d1f2d280e6bba66afc2b5bb4265bf7d60b1418c83"
+      },
+      "retained": {
+        "bytes": 584169,
+        "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/projection-residual-decode-cpu-v228-v1/complete.json",
+        "sha256": "1f4365064da1a0884385035d1f2d280e6bba66afc2b5bb4265bf7d60b1418c83"
+      }
+    },
+    {
+      "original": {
+        "bytes": 1268152,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-residual-decode-cpu-v228-v1/sources-before.json",
+        "sha256": "7c1d37d0f3280bed53d70c1c92346ed4d06453c55f6468ee93f79c10ae835982"
+      },
+      "retained": {
+        "bytes": 1268152,
+        "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/projection-residual-decode-cpu-v228-v1/sources-before.json",
+        "sha256": "7c1d37d0f3280bed53d70c1c92346ed4d06453c55f6468ee93f79c10ae835982"
+      }
+    },
+    {
+      "original": {
+        "bytes": 1268152,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-residual-decode-cpu-v228-v1/sources-after.json",
+        "sha256": "7c1d37d0f3280bed53d70c1c92346ed4d06453c55f6468ee93f79c10ae835982"
+      },
+      "retained": {
+        "bytes": 1268152,
+        "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/projection-residual-decode-cpu-v228-v1/sources-after.json",
+        "sha256": "7c1d37d0f3280bed53d70c1c92346ed4d06453c55f6468ee93f79c10ae835982"
+      }
+    },
+    {
+      "original": {
+        "bytes": 13856088,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-residual-decode-cpu-v228-v1/target/parent/debug/ferric-qwen3-finite-projection-residual-decode-engineering",
+        "sha256": "549c7b4379c12f7cf0bcafc1461627cc88357e0ad91be38789dfd1f5864d876b"
+      },
+      "retained": {
+        "bytes": 13856088,
+        "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/projection-residual-decode-cpu-v228-v1/target/parent/debug/ferric-qwen3-finite-projection-residual-decode-engineering",
+        "sha256": "549c7b4379c12f7cf0bcafc1461627cc88357e0ad91be38789dfd1f5864d876b"
+      }
+    },
+    {
+      "original": {
+        "bytes": 5131568,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-residual-decode-cpu-v228-v1/target/worker/debug/ferric-tp-peer-finite-engineering-worker-v1",
+        "sha256": "57959a8c771c08ab9b7184d88cc3f2760802f8965f88d918a3d684bf264aa5e1"
+      },
+      "retained": {
+        "bytes": 5131568,
+        "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/projection-residual-decode-cpu-v228-v1/target/worker/debug/ferric-tp-peer-finite-engineering-worker-v1",
+        "sha256": "57959a8c771c08ab9b7184d88cc3f2760802f8965f88d918a3d684bf264aa5e1"
+      }
+    },
+    {
+      "original": {
+        "bytes": 1024009,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-capture-gpu-v228-v1/complete.json",
+        "sha256": "67a235280b48cb5f6a2c51bcca534c182c843857c4c4a98e86718ed368ef12e4"
+      },
+      "retained": {
+        "bytes": 1024009,
+        "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-silu-materialized-capture-gpu-v228-v1/complete.json",
+        "sha256": "67a235280b48cb5f6a2c51bcca534c182c843857c4c4a98e86718ed368ef12e4"
+      }
+    },
+    {
+      "original": {
+        "bytes": 5602,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-capture-inputs-v228-v1/plan.json",
+        "sha256": "381a1a4347b55a02b9d4160eeac38cbb1e5768e757e7b3cdee6371215a04c774"
+      },
+      "retained": {
+        "bytes": 5602,
+        "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-silu-materialized-capture-inputs-v228-v1/plan.json",
+        "sha256": "381a1a4347b55a02b9d4160eeac38cbb1e5768e757e7b3cdee6371215a04c774"
+      }
+    },
+    {
+      "original": {
+        "bytes": 58975,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-capture-inputs-v228-v1/capture-review.json",
+        "sha256": "572b957627d5a6f98a306fb32c0818fc3c6ea2f2033971be286489cc5518eee9"
+      },
+      "retained": {
+        "bytes": 58975,
+        "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-silu-materialized-capture-inputs-v228-v1/capture-review.json",
+        "sha256": "572b957627d5a6f98a306fb32c0818fc3c6ea2f2033971be286489cc5518eee9"
+      }
+    },
+    {
+      "original": {
+        "bytes": 1508927,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/silu-materialized-comparison-v228-v1/complete.json",
+        "sha256": "828f8fdb4fc4194b5d7d5c65135222b472d2ec76080667fae8f0b8febba169aa"
+      },
+      "retained": {
+        "bytes": 1508927,
+        "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/silu-materialized-comparison-v228-v1/complete.json",
+        "sha256": "828f8fdb4fc4194b5d7d5c65135222b472d2ec76080667fae8f0b8febba169aa"
+      }
+    },
+    {
+      "original": {
+        "bytes": 963187,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-down2-clock-tf4-shared-full-currentness-gpu-v228-v1/complete.json",
+        "sha256": "00e1af86b1a61894797dc1eeb3202a113d62bd3d11c8069ba6299d63f8875073"
+      },
+      "retained": {
+        "bytes": 963187,
+        "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-down2-clock-tf4-shared-full-currentness-gpu-v228-v1/complete.json",
+        "sha256": "00e1af86b1a61894797dc1eeb3202a113d62bd3d11c8069ba6299d63f8875073"
+      }
+    },
+    {
+      "original": {
+        "bytes": 8136,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-down2-clock-tf4-inputs-v228-v1/plan.json",
+        "sha256": "d6f02391e0ff52654fec6637a6fc4e95e37f6a3ae8a03d4f3ee13d56a128b62d"
+      },
+      "retained": {
+        "bytes": 8136,
+        "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-down2-clock-tf4-inputs-v228-v1/plan.json",
+        "sha256": "d6f02391e0ff52654fec6637a6fc4e95e37f6a3ae8a03d4f3ee13d56a128b62d"
+      }
+    },
+    {
+      "original": {
+        "bytes": 8114,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-down2-clock-tf4-inputs-v228-v1/request.json",
+        "sha256": "a413a006b377e2a4fe9bfc4decd9aebe7e3a933a5ddd154e1953132af1d401ec"
+      },
+      "retained": {
+        "bytes": 8114,
+        "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-down2-clock-tf4-inputs-v228-v1/request.json",
+        "sha256": "a413a006b377e2a4fe9bfc4decd9aebe7e3a933a5ddd154e1953132af1d401ec"
+      }
+    },
+    {
+      "original": {
+        "bytes": 8652,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-residual-lowering-v228-v1/complete.json",
+        "sha256": "4f46acb4eaaadefc2c1426146424bda91a7e455ab3b57b23c935401e9c4d79bb"
+      },
+      "retained": {
+        "bytes": 8652,
+        "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/projection-residual-lowering-v228-v1/complete.json",
+        "sha256": "4f46acb4eaaadefc2c1426146424bda91a7e455ab3b57b23c935401e9c4d79bb"
+      }
+    },
+    {
+      "original": {
+        "bytes": 16379,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-residual-inspection-v228-v2/complete.json",
+        "sha256": "dbeb034c2f7520966e365ef5cb97751a075f70eb83cbcdfb272b82063db25df9"
+      },
+      "retained": {
+        "bytes": 16379,
+        "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/projection-residual-inspection-v228-v2/complete.json",
+        "sha256": "dbeb034c2f7520966e365ef5cb97751a075f70eb83cbcdfb272b82063db25df9"
+      }
+    },
+    {
+      "original": {
+        "bytes": 2877,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-residual-lowering-v228-v1/fe2o3-engineering-v1/3c3aec3598514f7f6c2b053ff0c6a8d489951ecb6cb8d95b1cae5ca31035b899/observation.json",
+        "sha256": "490e575b11642ad749b626e0d55a44bf328bf86fad2fd0600981b500619d8cc6"
+      },
+      "retained": {
+        "bytes": 2877,
+        "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/projection-residual-lowering-v228-v1/fe2o3-engineering-v1/3c3aec3598514f7f6c2b053ff0c6a8d489951ecb6cb8d95b1cae5ca31035b899/observation.json",
+        "sha256": "490e575b11642ad749b626e0d55a44bf328bf86fad2fd0600981b500619d8cc6"
+      }
+    },
+    {
+      "original": {
+        "bytes": 10864,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-residual-lowering-v228-v1/fe2o3-engineering-v1/3c3aec3598514f7f6c2b053ff0c6a8d489951ecb6cb8d95b1cae5ca31035b899/observation.hsaco",
+        "sha256": "25338beac39121cf81adfdc5c82c6f39bcfc82c0f7effaa2166bf8a2a9598a25"
+      },
+      "retained": {
+        "bytes": 10864,
+        "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/projection-residual-lowering-v228-v1/fe2o3-engineering-v1/3c3aec3598514f7f6c2b053ff0c6a8d489951ecb6cb8d95b1cae5ca31035b899/observation.hsaco",
+        "sha256": "25338beac39121cf81adfdc5c82c6f39bcfc82c0f7effaa2166bf8a2a9598a25"
+      }
+    },
+    {
+      "original": {
+        "bytes": 84947,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/silu-materialized-cpu-v228-v1/complete.json",
+        "sha256": "e139729d8fa95715ef8017679ee21f1175ba302b681785789e3dc84137508a30"
+      },
+      "retained": {
+        "bytes": 84947,
+        "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/silu-materialized-cpu-v228-v1/complete.json",
+        "sha256": "e139729d8fa95715ef8017679ee21f1175ba302b681785789e3dc84137508a30"
+      }
+    },
+    {
+      "original": {
+        "bytes": 25125,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-silu-materialized-checked-probe-v228-v1/complete.json",
+        "sha256": "fd7d4c792dc7ddaa831b3372549fe3896a18e8c94b96598b553df94156d949b4"
+      },
+      "retained": {
+        "bytes": 25125,
+        "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/row-silu-materialized-checked-probe-v228-v1/complete.json",
+        "sha256": "fd7d4c792dc7ddaa831b3372549fe3896a18e8c94b96598b553df94156d949b4"
+      }
+    },
+    {
+      "original": {
+        "bytes": 21726,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/silu-materialized-checked-probe-owner-v228-v1/complete.json",
+        "sha256": "3ee5600755d5b77846d16429d58e2395df0616c86fbe705ea24af07fd9f9e464"
+      },
+      "retained": {
+        "bytes": 21726,
+        "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/silu-materialized-checked-probe-owner-v228-v1/complete.json",
+        "sha256": "3ee5600755d5b77846d16429d58e2395df0616c86fbe705ea24af07fd9f9e464"
+      }
+    },
+    {
+      "original": {
+        "bytes": 33320,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-silu-materialized-checked-probe-v228-v1/emitted/artifact.hsaco",
+        "sha256": "b0d1766fdb0fda17ab09496d1120ba3cee29100692b48fcc5b05cf0db0a8d589"
+      },
+      "retained": {
+        "bytes": 33320,
+        "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/row-silu-materialized-checked-probe-v228-v1/emitted/artifact.hsaco",
+        "sha256": "b0d1766fdb0fda17ab09496d1120ba3cee29100692b48fcc5b05cf0db0a8d589"
+      }
+    },
+    {
+      "original": {
+        "bytes": 8801,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-capture-inputs-v228-v1/request.json",
+        "sha256": "9146f346188a339b61fdd5ad7cb0929727512eb79def4a829588da4bcb57cae0"
+      },
+      "retained": {
+        "bytes": 8801,
+        "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-silu-materialized-capture-inputs-v228-v1/request.json",
+        "sha256": "9146f346188a339b61fdd5ad7cb0929727512eb79def4a829588da4bcb57cae0"
+      }
+    },
+    {
+      "original": {
+        "bytes": 16764,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-residual-decode-runtime-parent-v228-v1/complete.json",
+        "sha256": "ad87a79cc58e9d41de4fed8a3d2c741bc140b0b0119212dec4119cc35ea24485"
+      },
+      "retained": {
+        "bytes": 16764,
+        "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/projection-residual-decode-runtime-parent-v228-v1/complete.json",
+        "sha256": "ad87a79cc58e9d41de4fed8a3d2c741bc140b0b0119212dec4119cc35ea24485"
+      }
+    },
+    {
+      "original": {
+        "bytes": 839,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-residual-decode-runtime-parent-v228-v1/readelf/audit.json",
+        "sha256": "1bf6dd4d0f183627b3529003d6383fe9e15fd8064d0004abee9aca232736203a"
+      },
+      "retained": {
+        "bytes": 839,
+        "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/projection-residual-decode-runtime-parent-v228-v1/readelf/audit.json",
+        "sha256": "1bf6dd4d0f183627b3529003d6383fe9e15fd8064d0004abee9aca232736203a"
+      }
+    },
+    {
+      "original": {
+        "bytes": 1176,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-residual-decode-runtime-parent-v228-v1/readelf/owner.json",
+        "sha256": "fa1530517e302af5693a36ad0011eafa136c06b111a21571eec682f158d75aef"
+      },
+      "retained": {
+        "bytes": 1176,
+        "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/projection-residual-decode-runtime-parent-v228-v1/readelf/owner.json",
+        "sha256": "fa1530517e302af5693a36ad0011eafa136c06b111a21571eec682f158d75aef"
+      }
+    },
+    {
+      "original": {
+        "bytes": 1079,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-residual-decode-runtime-parent-v228-v1/readelf/command.json",
+        "sha256": "45c899be4c218bb23924d52f147817c69d595351218dab301a3e73e7b35801fa"
+      },
+      "retained": {
+        "bytes": 1079,
+        "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/projection-residual-decode-runtime-parent-v228-v1/readelf/command.json",
+        "sha256": "45c899be4c218bb23924d52f147817c69d595351218dab301a3e73e7b35801fa"
+      }
+    },
+    {
+      "original": {
+        "bytes": 189,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-residual-decode-runtime-parent-v228-v1/readelf/started.json",
+        "sha256": "785bafac94ff4df87fb6cb38e17d6836e78e937353c78b59d81d24483845c5af"
+      },
+      "retained": {
+        "bytes": 189,
+        "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/projection-residual-decode-runtime-parent-v228-v1/readelf/started.json",
+        "sha256": "785bafac94ff4df87fb6cb38e17d6836e78e937353c78b59d81d24483845c5af"
+      }
+    },
+    {
+      "original": {
+        "bytes": 0,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-residual-decode-runtime-parent-v228-v1/readelf/stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "retained": {
+        "bytes": 0,
+        "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/projection-residual-decode-runtime-parent-v228-v1/readelf/stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    {
+      "original": {
+        "bytes": 1689,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-residual-decode-runtime-parent-v228-v1/readelf/stdout",
+        "sha256": "06785a850c0312bc5bd836887df058688137a9f0237ec36896efddf470243678"
+      },
+      "retained": {
+        "bytes": 1689,
+        "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/projection-residual-decode-runtime-parent-v228-v1/readelf/stdout",
+        "sha256": "06785a850c0312bc5bd836887df058688137a9f0237ec36896efddf470243678"
+      }
+    },
+    {
+      "original": {
+        "bytes": 816,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-residual-decode-runtime-parent-v228-v1/ldd/audit.json",
+        "sha256": "00475eda2ef9ff7bbbcdbbd7e88b9253978932ed71d7959689c2c556d5c2a709"
+      },
+      "retained": {
+        "bytes": 816,
+        "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/projection-residual-decode-runtime-parent-v228-v1/ldd/audit.json",
+        "sha256": "00475eda2ef9ff7bbbcdbbd7e88b9253978932ed71d7959689c2c556d5c2a709"
+      }
+    },
+    {
+      "original": {
+        "bytes": 1169,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-residual-decode-runtime-parent-v228-v1/ldd/owner.json",
+        "sha256": "53086eb027a8d30bf96324fa8282aab77fb56fe5b437c3aee105b173bbd52f4a"
+      },
+      "retained": {
+        "bytes": 1169,
+        "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/projection-residual-decode-runtime-parent-v228-v1/ldd/owner.json",
+        "sha256": "53086eb027a8d30bf96324fa8282aab77fb56fe5b437c3aee105b173bbd52f4a"
+      }
+    },
+    {
+      "original": {
+        "bytes": 1051,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-residual-decode-runtime-parent-v228-v1/ldd/command.json",
+        "sha256": "50918a8de54e1313ac534fede35cd3ef0cf66e9b51d8828e09edc5e1956ed7dc"
+      },
+      "retained": {
+        "bytes": 1051,
+        "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/projection-residual-decode-runtime-parent-v228-v1/ldd/command.json",
+        "sha256": "50918a8de54e1313ac534fede35cd3ef0cf66e9b51d8828e09edc5e1956ed7dc"
+      }
+    },
+    {
+      "original": {
+        "bytes": 189,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-residual-decode-runtime-parent-v228-v1/ldd/started.json",
+        "sha256": "35caf17570f894730c1967a59671b0e46d93a6dfff1cc42f5981c8374167606d"
+      },
+      "retained": {
+        "bytes": 189,
+        "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/projection-residual-decode-runtime-parent-v228-v1/ldd/started.json",
+        "sha256": "35caf17570f894730c1967a59671b0e46d93a6dfff1cc42f5981c8374167606d"
+      }
+    },
+    {
+      "original": {
+        "bytes": 0,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-residual-decode-runtime-parent-v228-v1/ldd/stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "retained": {
+        "bytes": 0,
+        "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/projection-residual-decode-runtime-parent-v228-v1/ldd/stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    {
+      "original": {
+        "bytes": 297,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-residual-decode-runtime-parent-v228-v1/ldd/stdout",
+        "sha256": "f269be36f5d22c4d33761e6ac5ba1ea212ac4ef9f7af2741e7c1ac6dda61613b"
+      },
+      "retained": {
+        "bytes": 297,
+        "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/projection-residual-decode-runtime-parent-v228-v1/ldd/stdout",
+        "sha256": "f269be36f5d22c4d33761e6ac5ba1ea212ac4ef9f7af2741e7c1ac6dda61613b"
+      }
+    },
+    {
+      "original": {
+        "bytes": 4179,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-residual-decode-runtime-parent-v228-v1/topology-before.json",
+        "sha256": "4e93a951ddd7b8abf2f259ff1e33dabf29fb50beafb5ee28c7b5e52373a8044d"
+      },
+      "retained": {
+        "bytes": 4179,
+        "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/projection-residual-decode-runtime-parent-v228-v1/topology-before.json",
+        "sha256": "4e93a951ddd7b8abf2f259ff1e33dabf29fb50beafb5ee28c7b5e52373a8044d"
+      }
+    },
+    {
+      "original": {
+        "bytes": 4179,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-residual-decode-runtime-parent-v228-v1/topology-after.json",
+        "sha256": "57d029858dbf409db4a658b3916b76635299b601748eee350e16a0120e35bde8"
+      },
+      "retained": {
+        "bytes": 4179,
+        "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/projection-residual-decode-runtime-parent-v228-v1/topology-after.json",
+        "sha256": "57d029858dbf409db4a658b3916b76635299b601748eee350e16a0120e35bde8"
+      }
+    },
+    {
+      "original": {
+        "bytes": 4255,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-residual-decode-runtime-parent-v228-v1/software.json",
+        "sha256": "1a6fc74382084131afa9094f6135a86cfa06dc586ddd71e90d19bc9e7a9a39be"
+      },
+      "retained": {
+        "bytes": 4255,
+        "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/projection-residual-decode-runtime-parent-v228-v1/software.json",
+        "sha256": "1a6fc74382084131afa9094f6135a86cfa06dc586ddd71e90d19bc9e7a9a39be"
+      }
+    },
+    {
+      "original": {
+        "bytes": 16248,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-residual-decode-runtime-worker-v228-v1/complete.json",
+        "sha256": "921ca1d29477512275cd29ea755d0e5575ea4c44246f95eb6a776dfd88f06237"
+      },
+      "retained": {
+        "bytes": 16248,
+        "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/projection-residual-decode-runtime-worker-v228-v1/complete.json",
+        "sha256": "921ca1d29477512275cd29ea755d0e5575ea4c44246f95eb6a776dfd88f06237"
+      }
+    },
+    {
+      "original": {
+        "bytes": 824,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-residual-decode-runtime-worker-v228-v1/readelf/audit.json",
+        "sha256": "145cbf8b4c3745f734d0e5d5fc4eecf20075d18c7f35a13817e8c62110074eee"
+      },
+      "retained": {
+        "bytes": 824,
+        "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/projection-residual-decode-runtime-worker-v228-v1/readelf/audit.json",
+        "sha256": "145cbf8b4c3745f734d0e5d5fc4eecf20075d18c7f35a13817e8c62110074eee"
+      }
+    },
+    {
+      "original": {
+        "bytes": 1177,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-residual-decode-runtime-worker-v228-v1/readelf/owner.json",
+        "sha256": "3d1be49572e781ca8f9b947e5a8934d87a8d6e3effe189a5535b2a7b8bbb06c2"
+      },
+      "retained": {
+        "bytes": 1177,
+        "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/projection-residual-decode-runtime-worker-v228-v1/readelf/owner.json",
+        "sha256": "3d1be49572e781ca8f9b947e5a8934d87a8d6e3effe189a5535b2a7b8bbb06c2"
+      }
+    },
+    {
+      "original": {
+        "bytes": 1049,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-residual-decode-runtime-worker-v228-v1/readelf/command.json",
+        "sha256": "42ef22ef3fe0321e364a1113af0629b3d1e4562ab080ec6ec897135cafe6a424"
+      },
+      "retained": {
+        "bytes": 1049,
+        "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/projection-residual-decode-runtime-worker-v228-v1/readelf/command.json",
+        "sha256": "42ef22ef3fe0321e364a1113af0629b3d1e4562ab080ec6ec897135cafe6a424"
+      }
+    },
+    {
+      "original": {
+        "bytes": 189,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-residual-decode-runtime-worker-v228-v1/readelf/started.json",
+        "sha256": "d5a877cf82c13283f0b33126969d67f82c2ac75fbba091c59dadda8e7a2190b5"
+      },
+      "retained": {
+        "bytes": 189,
+        "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/projection-residual-decode-runtime-worker-v228-v1/readelf/started.json",
+        "sha256": "d5a877cf82c13283f0b33126969d67f82c2ac75fbba091c59dadda8e7a2190b5"
+      }
+    },
+    {
+      "original": {
+        "bytes": 0,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-residual-decode-runtime-worker-v228-v1/readelf/stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "retained": {
+        "bytes": 0,
+        "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/projection-residual-decode-runtime-worker-v228-v1/readelf/stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    {
+      "original": {
+        "bytes": 1614,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-residual-decode-runtime-worker-v228-v1/readelf/stdout",
+        "sha256": "a5ff5cfede2d57df7560950abf1e5f5e1a35e6de0d0cdede072639bfafa5d9e9"
+      },
+      "retained": {
+        "bytes": 1614,
+        "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/projection-residual-decode-runtime-worker-v228-v1/readelf/stdout",
+        "sha256": "a5ff5cfede2d57df7560950abf1e5f5e1a35e6de0d0cdede072639bfafa5d9e9"
+      }
+    },
+    {
+      "original": {
+        "bytes": 801,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-residual-decode-runtime-worker-v228-v1/ldd/audit.json",
+        "sha256": "60dd028fc6d0d8af760879ac372852b731b27695b87865bf0ecd60f974c61778"
+      },
+      "retained": {
+        "bytes": 801,
+        "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/projection-residual-decode-runtime-worker-v228-v1/ldd/audit.json",
+        "sha256": "60dd028fc6d0d8af760879ac372852b731b27695b87865bf0ecd60f974c61778"
+      }
+    },
+    {
+      "original": {
+        "bytes": 1168,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-residual-decode-runtime-worker-v228-v1/ldd/owner.json",
+        "sha256": "6bc2fada40f95b84e051d3d95e82d36793d26fa22f61213838d2ac1a597a92d9"
+      },
+      "retained": {
+        "bytes": 1168,
+        "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/projection-residual-decode-runtime-worker-v228-v1/ldd/owner.json",
+        "sha256": "6bc2fada40f95b84e051d3d95e82d36793d26fa22f61213838d2ac1a597a92d9"
+      }
+    },
+    {
+      "original": {
+        "bytes": 1021,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-residual-decode-runtime-worker-v228-v1/ldd/command.json",
+        "sha256": "97e06d3c34672a15fcc1725e2c394b0fb376875ee284cd10fdd3c03921eeefd2"
+      },
+      "retained": {
+        "bytes": 1021,
+        "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/projection-residual-decode-runtime-worker-v228-v1/ldd/command.json",
+        "sha256": "97e06d3c34672a15fcc1725e2c394b0fb376875ee284cd10fdd3c03921eeefd2"
+      }
+    },
+    {
+      "original": {
+        "bytes": 189,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-residual-decode-runtime-worker-v228-v1/ldd/started.json",
+        "sha256": "dee4efbfa1361477f963383cb444b849de79766f5e59d89b61413f70bb202e27"
+      },
+      "retained": {
+        "bytes": 189,
+        "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/projection-residual-decode-runtime-worker-v228-v1/ldd/started.json",
+        "sha256": "dee4efbfa1361477f963383cb444b849de79766f5e59d89b61413f70bb202e27"
+      }
+    },
+    {
+      "original": {
+        "bytes": 0,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-residual-decode-runtime-worker-v228-v1/ldd/stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "retained": {
+        "bytes": 0,
+        "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/projection-residual-decode-runtime-worker-v228-v1/ldd/stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    {
+      "original": {
+        "bytes": 230,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-residual-decode-runtime-worker-v228-v1/ldd/stdout",
+        "sha256": "0cc099091434e493a442e025e41ec4041e3f9e6947ffbd6e9f66c9f870c35b07"
+      },
+      "retained": {
+        "bytes": 230,
+        "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/projection-residual-decode-runtime-worker-v228-v1/ldd/stdout",
+        "sha256": "0cc099091434e493a442e025e41ec4041e3f9e6947ffbd6e9f66c9f870c35b07"
+      }
+    },
+    {
+      "original": {
+        "bytes": 4180,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-residual-decode-runtime-worker-v228-v1/topology-before.json",
+        "sha256": "b99a3d9eadbf37166e15722188b4b81c3848dcf89e78bc9980e6d449a048a0c4"
+      },
+      "retained": {
+        "bytes": 4180,
+        "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/projection-residual-decode-runtime-worker-v228-v1/topology-before.json",
+        "sha256": "b99a3d9eadbf37166e15722188b4b81c3848dcf89e78bc9980e6d449a048a0c4"
+      }
+    },
+    {
+      "original": {
+        "bytes": 4179,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-residual-decode-runtime-worker-v228-v1/topology-after.json",
+        "sha256": "11e2dba93ea64d922140c9125ffbc63d95bc943616ba53a333127fd4dd8879ad"
+      },
+      "retained": {
+        "bytes": 4179,
+        "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/projection-residual-decode-runtime-worker-v228-v1/topology-after.json",
+        "sha256": "11e2dba93ea64d922140c9125ffbc63d95bc943616ba53a333127fd4dd8879ad"
+      }
+    },
+    {
+      "original": {
+        "bytes": 4255,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-residual-decode-runtime-worker-v228-v1/software.json",
+        "sha256": "1a6fc74382084131afa9094f6135a86cfa06dc586ddd71e90d19bc9e7a9a39be"
+      },
+      "retained": {
+        "bytes": 4255,
+        "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/projection-residual-decode-runtime-worker-v228-v1/software.json",
+        "sha256": "1a6fc74382084131afa9094f6135a86cfa06dc586ddd71e90d19bc9e7a9a39be"
+      }
+    }
+  ],
+  "local_only_inputs": [
+    {
+      "bytes": 21084,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/p228-projection-residual-decode-input-assembly-v1/prepare.py",
+      "sha256": "d31308f7d05e485c21520561e0653ef9cf2403aface96243f9198ac8a2e97952"
+    },
+    {
+      "bytes": 1392,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/silu-materialized-decode-configuration-v228-v1.json",
+      "sha256": "3a1a11cb853d05b918e8d5346ac192355a2381e4c4bf54ca6b316e0e3d853ad6"
+    },
+    {
+      "bytes": 5677,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/silu-materialized-decode-root-notes-v228-v1.json",
+      "sha256": "76da86ee4c9d008b1b7c9dad5a2c10abb35751d13d1d1b5aa2a83cbe023f5846"
+    },
+    {
+      "bytes": 17144,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/p228-silu-materialized-decode-inputs-v1/prepare.py",
+      "sha256": "56c94333ccf3e2fc8057b16bf9e4066fdae1cf5637b2f74505aa344462ed7ec3"
+    }
+  ],
+  "numerical_acceptance": false,
+  "outputs": {
+    "decode-review.json": {
+      "bytes": 59355,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-inputs-v228-v1/decode-review.json",
+      "sha256": "483d166b84254a614639c2776fe663276fdb66b93a9b61b2489565d44e59a462"
+    },
+    "parent-runtime-review.json": {
+      "bytes": 2612,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-inputs-v228-v1/parent-runtime-review.json",
+      "sha256": "9b8bb079a2c69e9d1359ceb308fee23af45761db56e22a5ead44520daeac960f"
+    },
+    "plan.json": {
+      "bytes": 5560,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-inputs-v228-v1/plan.json",
+      "sha256": "30f7a284aeb1ea0674e9f0b4828cb718189ff2038f741823a69cbfbe97eb9baa"
+    },
+    "request.json": {
+      "bytes": 8801,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-inputs-v228-v1/request.json",
+      "sha256": "480e93a442e3ad423cab68683e4955500c4b56cdd3e68296c2ee8c09b595e6ef"
+    },
+    "worker-runtime-review.json": {
+      "bytes": 2338,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-inputs-v228-v1/worker-runtime-review.json",
+      "sha256": "6e923cae6d119ccd76bb39ee854e090b98f424144d3875a718e1a74aaa94cc02"
+    }
+  },
+  "performance_claim": false,
+  "plan": {
+    "bytes": 5560,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-decode-inputs-v228-v1/plan.json",
+    "sha256": "30f7a284aeb1ea0674e9f0b4828cb718189ff2038f741823a69cbfbe97eb9baa"
+  },
+  "prior_gpu_outputs_replayed_here": false,
+  "production_authority": false,
+  "replay_dependency": {
+    "bytes": 21084,
+    "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/p228-projection-residual-decode-input-assembly-v1/prepare.py",
+    "sha256": "d31308f7d05e485c21520561e0653ef9cf2403aface96243f9198ac8a2e97952"
+  },
+  "root_notes": {
+    "bytes": 5677,
+    "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/silu-materialized-decode-root-notes-v228-v1.json",
+    "sha256": "76da86ee4c9d008b1b7c9dad5a2c10abb35751d13d1d1b5aa2a83cbe023f5846"
+  },
+  "runtime_library_bodies_rehashed_locally": false,
+  "schema": "ferric-p228-silu-materialized-decode-root-assembly-v1",
+  "unchanged_prior_input_bodies_rehashed": false
+}

@@ -46,6 +46,8 @@ before/after source snapshots are alongside it. Execution used CPU affinity
 publisher. [result.json](result.json) binds the copied files. Publication does
 not rerun tests, validate external runtime libraries or launch native execution.
 
-The native four-step attempt and its independent numerical comparison remain
-separate gates. These tests establish neither full-model correctness nor
-performance for the 2,048-token prompt / 256-token workload or 700 tokens/s target.
+The separate [native four-step attempt](../silu-materialized-decode-native-v1/README.md)
+and [independent comparison](../silu-materialized-decode-comparison-v1/README.md)
+subsequently completed. These policy tests establish neither full-model
+correctness nor performance for the 2,048-token prompt / 256-token workload or
+700 tokens/s target.

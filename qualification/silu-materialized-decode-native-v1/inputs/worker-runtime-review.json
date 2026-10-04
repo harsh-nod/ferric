@@ -1,0 +1,51 @@
+{
+  "authority": "none",
+  "binary": {
+    "bytes": 5131568,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-residual-decode-cpu-v228-v1/target/worker/debug/ferric-tp-peer-finite-engineering-worker-v1",
+    "sha256": "57959a8c771c08ab9b7184d88cc3f2760802f8965f88d918a3d684bf264aa5e1"
+  },
+  "boot_id": "2dbbbc5a-d8b7-46ac-bd1f-236e5847e24a",
+  "gpu_execution": false,
+  "host": "smci350-rck-g03-b19-03",
+  "ldd": {
+    "bytes": 801,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-residual-decode-runtime-worker-v228-v1/ldd/audit.json",
+    "sha256": "60dd028fc6d0d8af760879ac372852b731b27695b87865bf0ecd60f974c61778"
+  },
+  "libraries": [
+    {
+      "path": "/lib/x86_64-linux-gnu/libgcc_s.so.1",
+      "resolved": {
+        "bytes": 183024,
+        "path": "/usr/lib/x86_64-linux-gnu/libgcc_s.so.1",
+        "sha256": "d93224d2b0dab4247598be683adca02f5cf00586f99c187579cd7e92058fb7cb"
+      }
+    },
+    {
+      "path": "/lib/x86_64-linux-gnu/libc.so.6",
+      "resolved": {
+        "bytes": 2125328,
+        "path": "/usr/lib/x86_64-linux-gnu/libc.so.6",
+        "sha256": "d8db8739a1633c972cec6a4fe0566bdcec6fd088f98723492ab0361f66238f75"
+      }
+    },
+    {
+      "path": "/lib64/ld-linux-x86-64.so.2",
+      "resolved": {
+        "bytes": 236616,
+        "path": "/usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2",
+        "sha256": "1cd555ac46b7887edeaf3c42aac5408c8135e52f6b37870da2cf82d5fe14e829"
+      }
+    }
+  ],
+  "notes": "The worker is the same CPU1022-qualified 57959a8c executable used by the completed corrected-residual four-forward run. The retained 921ca1d2 audit binds its actual loader and three-library closure. The already-qualified request selects a different checked MLP image without changing the worker or protocol. Current library and source rechecks, private child ownership and natural Close/reap remain required.",
+  "production_authority": false,
+  "readelf": {
+    "bytes": 824,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-residual-decode-runtime-worker-v228-v1/readelf/audit.json",
+    "sha256": "145cbf8b4c3745f734d0e5d5fc4eecf20075d18c7f35a13817e8c62110074eee"
+  },
+  "reviewed": true,
+  "schema": "ferric-p227-prefix-parity-runtime-review-v1"
+}

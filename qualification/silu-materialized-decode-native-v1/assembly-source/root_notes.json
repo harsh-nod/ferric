@@ -1,0 +1,53 @@
+{
+  "schema": "ferric-p228-silu-materialized-decode-root-notes-v1",
+  "configuration": {
+    "schema": "ferric-p228-silu-materialized-decode-assembly-inputs-v1",
+    "input_label": "prefix-silu-materialized-decode-inputs-v228-v1",
+    "output_label": "prefix-silu-materialized-decode-gpu-v228-v1",
+    "session": "a328212b7123d7b6e413f4f9fb2fc62b93c2f1fbff17df8b2b645b3686b44814",
+    "parent_audit": {
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-residual-decode-runtime-parent-v228-v1/complete.json",
+      "bytes": 16764,
+      "sha256": "ad87a79cc58e9d41de4fed8a3d2c741bc140b0b0119212dec4119cc35ea24485"
+    },
+    "worker_audit": {
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-residual-decode-runtime-worker-v228-v1/complete.json",
+      "bytes": 16248,
+      "sha256": "921ca1d29477512275cd29ea755d0e5575ea4c44246f95eb6a776dfd88f06237"
+    },
+    "supervisor_tests": {
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/silu-materialized-decode-gpu-pure-v228-v1/complete.json",
+      "bytes": 10509,
+      "sha256": "cd95c4739bfab5f2bc3d01c53218302577d218c2ae9e25ef9fc7ed5d30cb93cf"
+    },
+    "supervisor_manifest": {
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-silu-materialized-decode-gpu-v1/manifest.json",
+      "bytes": 2392,
+      "sha256": "47afc73e3333ff0705002a16b1a296780d22c119676bba142f07c2eb9fe80c31"
+    }
+  },
+  "parent": {
+    "reviewed": true,
+    "authority": "none",
+    "notes": "The parent is the identical CPU1022-qualified 549c7b43 executable used for the corrected-residual four-forward route. The retained ad87a79c audit binds its actual dynamic-loader and four-library closure on MI350; no executable or library substitution is requested. Current path, identity, library and host checks remain mandatory in the supervisor. This is an engineering attempt, not runtime premise discharge."
+  },
+  "worker": {
+    "reviewed": true,
+    "authority": "none",
+    "notes": "The worker is the same CPU1022-qualified 57959a8c executable used by the completed corrected-residual four-forward run. The retained 921ca1d2 audit binds its actual loader and three-library closure. The already-qualified request selects a different checked MLP image without changing the worker or protocol. Current library and source rechecks, private child ownership and natural Close/reap remain required."
+  },
+  "decode": {
+    "reviewed": true,
+    "authority": "none",
+    "gpu_attempts": 1,
+    "notes": "Root reviewed the actual source, checked SiLU LLVM/ISA, one-layer MI350 capture and independent 24-row comparison. This single teacher-forced four-forward attempt selects the same checked SiLU image across all 36 layers using unchanged CPU1022 executables. It retains every output for later independent comparison, with no old-output equality or fitted tolerance. Source and image custody, exact-empty device audits and owned cleanup remain mandatory.",
+    "review_topics": {
+      "source_lineage": "CPU1022 supplies the existing parent/worker; CPU38 supplies the new MLP fixture and ordinary checked gfx950 lowering. Their distinct receipts remain separate. The emitted b0d1766f image is the same one that completed actual layer capture67a235 and comparison828f8f. The frozen 14-file supervisor47afc73e passed all43 policy tests in actual MI350 receiptcd95c473. No compiler or HIP bypass is introduced.",
+      "formal": "The added SiLU BF16 materialization is covered by the actual CPU38 regression suite and ordinary checked lowering/replay. Neither those results nor the layer diagnostic discharge all runtime obligations or establish full-model accuracy. The current run remains an explicitly unauthenticated engineering route with production and numerical acceptance flags false.",
+      "isa": "Manual LLVM dataflow review found gate/up from argument6/7, sign-dependent sigmoid, FP32 SiLU then BF16 round-to-nearest-even/widen before up multiplication, followed by output BF16 rounding and sticky finite failure. ISA inspection confirms the narrow/widen survives optimization. Descriptor resources remain106SGPR/106VGPR/512LDS and no reported spills, same344-byte kernarg, Wave64/workgroup64. This does not claim universal exponential equivalence.",
+      "coherence": "Only decode.tiles_image changes to the checked SiLU image. Original bootstrap images including residual/copy, V7 prefix, corrected projection-residual image25338, BF16 inputs, four teacher-forced tokens, and all36-layer scheduling/coherence protocols remain unchanged. Layer capture preserves all22 upstream arrays; all16384 conditional residual words remain exact. Full-model buffers are structurally checked, not required to equal old results.",
+      "lifecycle": "The supervisor preserves the original one-attempt/no-retry lifecycle,4000-second native bound,4300-second case window, six idle audits, CPU8/9 nice10 child limits and original disk/evidence caps. The selected parent owns one worker; actual marker, Close, natural exits, group absence and owned reap are checked. Cleanup may target only that owned process tree; no other workload is stopped.",
+      "selected_device": "The attempt is limited to the previously reviewed MI350 host smci350-rck-g03-b19-03,UID9661,boot2dbbbc5a-d8b7-46ac-bd1f-236e5847e24a and device IDs16366993098680759275/10838076764495710945. The supervisor must recheck topology and exact-empty process rosters before and after execution. This is not an ASROCK GPU launch,2,048/256 benchmark, calibrated overlap trace or700tokens/s claim."
+    }
+  }
+}
