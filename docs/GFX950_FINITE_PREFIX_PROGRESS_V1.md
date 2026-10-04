@@ -6,7 +6,14 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Latest: the [independent genuine AR4 framework comparison completed](../qualification/projection-ar4-framework-v1/README.md)
+Latest: the [RoPE/RPO four-step supervisor passed all 65 policy tests](../qualification/rope-materialized-rpo-ar4-supervisor-v1/README.md)
+on MI350, with unchanged source snapshots and no errors or skips. These are
+CPU-only synthetic admission and lifecycle tests, not a new GPU result. The
+RoPE/RPO compiler run subsequently produced a checked handoff and passed its
+actual compiler replay, but failed at the actual-inert-join test. No new image
+is admitted; the exact finalizer failure is being investigated.
+
+Previously, the [independent genuine AR4 framework comparison completed](../qualification/projection-ar4-framework-v1/README.md)
 on ASROCK. Two fresh-KV framework runs produce the same four-token sequence
 as native: 67, 25, 576, 2701. All 152 tensor slices are comparable, but none
 matches bitwise. Logit relative-L2 errors are 0.0030448043, 0.0140315337,

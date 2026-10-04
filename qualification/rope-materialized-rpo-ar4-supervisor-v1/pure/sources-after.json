@@ -1,0 +1,82 @@
+{
+  "INTAKE.md": {
+    "bytes": 3512,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-rope-materialized-rpo-ar4-gpu-v1/INTAKE.md",
+    "sha256": "ad0ccd7c5bbdad8f07ba41a0c0e2b0e0f7afbc6f06b176d2248cec585f19c083"
+  },
+  "README.md": {
+    "bytes": 4595,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-rope-materialized-rpo-ar4-gpu-v1/README.md",
+    "sha256": "814c57bfb84f57fe2f772205701d4908e25799b6d3b3ab62ffea5c39af50f252"
+  },
+  "decode_validation.py": {
+    "bytes": 20422,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-rope-materialized-rpo-ar4-gpu-v1/decode_validation.py",
+    "sha256": "0eb96d4ac5e10e7f6ac10b018692c56f969286949681be336cb6040d56f01422"
+  },
+  "intake.py": {
+    "bytes": 58995,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-rope-materialized-rpo-ar4-gpu-v1/intake.py",
+    "sha256": "d49813a03918c28e3d72db33ba53a9ecb0420a56f03926f244162ab85067a642"
+  },
+  "layer_validation.py": {
+    "bytes": 16186,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-rope-materialized-rpo-ar4-gpu-v1/layer_validation.py",
+    "sha256": "757c077979b7ee02d4c0e7d222e75292cd9d417927f84ae9a8134344f8e217b9"
+  },
+  "prefix_contracts.py": {
+    "bytes": 13306,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-rope-materialized-rpo-ar4-gpu-v1/prefix_contracts.py",
+    "sha256": "694be9d199cd92b2d11ff4fe8401ad3728497bd8846b5d6924311330f3d9de1a"
+  },
+  "run.py": {
+    "bytes": 15328,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-rope-materialized-rpo-ar4-gpu-v1/run.py",
+    "sha256": "e16aa676b54df27f9322eaae40c2abae8974a44888a21e165bb3150027ede341"
+  },
+  "run_rope_materialized_rpo_ar4_gpu_pure_p228_v1.py": {
+    "bytes": 8241,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-rope-materialized-rpo-ar4-gpu-v1/run_rope_materialized_rpo_ar4_gpu_pure_p228_v1.py",
+    "sha256": "770863f54cb0ea42967ce42df9c69a049ca8acbd3976b66e1082daa63260a955"
+  },
+  "run_row_facts_v2.py": {
+    "bytes": 12424,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-rope-materialized-rpo-ar4-gpu-v1/run_row_facts_v2.py",
+    "sha256": "244c12f62c8a439aa01b44380fc464008b94006bc919201c8d510c64177fc820"
+  },
+  "smoke_validation.py": {
+    "bytes": 14980,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-rope-materialized-rpo-ar4-gpu-v1/smoke_validation.py",
+    "sha256": "9bf460451e722452da9c49168c730615d32e9b73b200c579f003e9e45238ea26"
+  },
+  "stage_core.py": {
+    "bytes": 12074,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-rope-materialized-rpo-ar4-gpu-v1/stage_core.py",
+    "sha256": "7e3d64e80e66bacbbba05ac3236189249949bb95ea3f717150822cf45740eec2"
+  },
+  "test_decode_validation.py": {
+    "bytes": 18459,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-rope-materialized-rpo-ar4-gpu-v1/test_decode_validation.py",
+    "sha256": "f36d5a8cc321cb3df26049a5941ffd52e0ebe401213cce9e03cc7fd987c3c253"
+  },
+  "test_intake.py": {
+    "bytes": 16435,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-rope-materialized-rpo-ar4-gpu-v1/test_intake.py",
+    "sha256": "10c7c81b55abc1721f607550b0948d98b35a2081719923d2533177ca7ce01944"
+  },
+  "test_rope_admission.py": {
+    "bytes": 23758,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-rope-materialized-rpo-ar4-gpu-v1/test_rope_admission.py",
+    "sha256": "c79425f2faa073564cc0bcc622fef8fa0ae9c578baa6989367359063fbd74b27"
+  },
+  "test_run.py": {
+    "bytes": 13748,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-rope-materialized-rpo-ar4-gpu-v1/test_run.py",
+    "sha256": "369d267f3b626d8eef29e8f278cdfec96120fce5ac37457db3a509a9e14ce348"
+  },
+  "test_silu_admission.py": {
+    "bytes": 7907,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-rope-materialized-rpo-ar4-gpu-v1/test_silu_admission.py",
+    "sha256": "224e3d83ab56d62c0fc69b6e0d07e2baaa5423596d6013604a8dd64c499f72be"
+  }
+}
