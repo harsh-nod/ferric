@@ -6,11 +6,18 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Latest: the [historical two-residual replay](../qualification/historical-residual-capture-replay-v1/README.md)
+Latest: the [V7 all-layer teacher-forced run](../qualification/independent-decode-observation-v1/tf4/README.md)
+completed four forwards through all 36 layers on MI350 with clean Close/reap
+and all six audits. All four tokens match the independent framework reference,
+but all 152 complete tensor rows differ; logit relative-L2 errors range from
+0.00438509 to 0.01326323. Numerical acceptance remains open. These four payloads
+are byte-identical to the prior native route, not a regression unique to V7.
+
+The [historical two-residual replay](../qualification/historical-residual-capture-replay-v1/README.md)
 matches all 32,768 captured BF16 words exactly across both residual stages,
 both ranks and both profiles. This checks historical layer-0 residual boundaries,
-not V7 or upstream MLP arithmetic. The new all-layer observation controller also
-passed 84 CPU policy tests on MI350; its actual V7 GPU run is still pending.
+not V7 or upstream MLP arithmetic. The all-layer observation controller passed
+84 CPU policy tests and the separate framework diagnostic reader passed 12.
 
 The [six-case new-image matrix](../qualification/independent-prefix-case-matrix-v1/README.md)
 passes GPU execution and separate conditional numerical checks on MI350.
@@ -50,6 +57,7 @@ earlier checkpoints and their limitations at the time they were recorded.
 | First new independent prefix case on `mi350` | Both profiles and both ranks pass GPU execution and separate conditional numerical checks at genuine position 0 | 8,192 attention BF16 values exact; maximum output error/bound ratio 0.015053; not full-model or throughput acceptance |
 | Complete new-image prefix matrix on `mi350` | Six cases and 24 profile/rank rows pass; 49,144 attention values exact and eight within one BF16 step | No norm/QKV bound violations; maximum output error/bound ratio 0.0229955; patterned long KV is not authentic model prefill |
 | Historical two-residual capture replay on `mi350` | 32,768 BF16 words exact; 14 policy/layout tests passed | Original layer-0 captures and authenticated embedding row; no new GPU run, V7 or MLP acceptance |
+| New V7 image through 36-layer TF4 on `mi350` | 152 captures, four matching framework argmax tokens, six audits and clean Close/reap | All 152 complete tensor rows differ from framework; no numerical or performance acceptance |
 
 Both four-forward runs completed their Close protocol, reaped their owned
 processes, and passed their six surrounding device-state audits. The CPU suite
@@ -296,6 +304,16 @@ feeding the post-attention residual into the post-MLP residual check. The
 tests cover exact output words, cancellation, rounding, overflow, corrupt
 captures and incorrect stage chaining. These are synthetic component tests,
 not new full-layer GPU evidence or validation of the intervening MLP.
+The subsequent [historical capture replay](../qualification/historical-residual-capture-replay-v1/README.md)
+now checks the actual retained residual boundaries with all 32,768 BF16 words
+exact. That result still does not validate upstream MLP partial arithmetic.
+
+The V7 image has also completed a new finite all-layer teacher-forced run.
+Its four host-inclusive forward durations were 7.2200, 7.2450, 7.8164 and
+7.7490 seconds. These are engineering diagnostics, not GPU latency or sustained
+throughput, and do not establish a speedup. The separate independent framework
+comparison reports all 152 tensor differences without inventing an acceptance
+threshold. Four matching tokens do not qualify full-model correctness.
 
 ## Source Publication
 
@@ -469,11 +487,10 @@ alone is not a self-contained reproducer or proof.
 
 ## Next Gates
 
-1. Exercise the six-case-tested V7 image in the existing 36-layer
-   four-forward teacher-forced and
-   own-output autoregressive paths. Checked source lowering, actual replay,
-   inert join, HSACO emission and MI350 deployment now pass for this image;
-   they do not establish full-model correctness.
+1. Extend the completed V7 36-layer teacher-forced observation to the
+   own-output autoregressive path with history-aware independent diagnostics.
+   The new TF4 image runs and cleans up correctly, but its framework tensor
+   differences still require independent numerical qualification.
 2. Validate TP residuals, MLP, final normalization, logits and token selection
    independently, including cumulative layer error and authentic KV history.
    Preserve the old bitwise-comparison mode as a separate historical check;
@@ -481,6 +498,9 @@ alone is not a self-contained reproducer or proof.
 3. Extend the tiled runtime through a separately bounded long-request
    profile, retaining two-bank retirement, exact completion and terminal
    failure behavior. The current tiled path executes only four forwards.
+   The existing backend draft needs a distinct long parent/child wire and
+   bounded capture selection: retaining every full control and payload would
+   exceed 1.95 GB, outside the current 64 MiB finite-case cap.
    Test page transitions, multiple requests, KV lifetime and cleanup before
    treating it as sustained decode. Production runtime and arithmetic
    obligations remain separate from these engineering observations.

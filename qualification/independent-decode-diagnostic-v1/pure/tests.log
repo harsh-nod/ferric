@@ -1,0 +1,17 @@
+test_all_seven_owned_leaves_and_six_audits_are_rehashed (test_run.DiagnosticTests.test_all_seven_owned_leaves_and_six_audits_are_rehashed) ... ok
+test_bad_digest_and_existing_output_refuse_before_source_loading (test_run.DiagnosticTests.test_bad_digest_and_existing_output_refuse_before_source_loading) ... ok
+test_every_result_authority_flag_remains_false_by_construction (test_run.DiagnosticTests.test_every_result_authority_flag_remains_false_by_construction) ... ok
+test_frozen_compare_rows_never_recovers_after_history_divergence (test_run.DiagnosticTests.test_frozen_compare_rows_never_recovers_after_history_divergence) ... ok
+test_full152_summary_is_not_a_numerical_acceptance (test_run.DiagnosticTests.test_full152_summary_is_not_a_numerical_acceptance) ... ok
+test_history_divergence_keeps_later_positions_incomparable (test_run.DiagnosticTests.test_history_divergence_keeps_later_positions_incomparable) ... ok
+test_missing_leaf_file_or_post_audit_refuses (test_run.DiagnosticTests.test_missing_leaf_file_or_post_audit_refuses) ... ok
+test_reference_pin_failure_is_fatal_not_a_tensor_difference (test_run.DiagnosticTests.test_reference_pin_failure_is_fatal_not_a_tensor_difference) ... ok
+test_reference_routing_uses_exact_mode_and_all_four_observations (test_run.DiagnosticTests.test_reference_routing_uses_exact_mode_and_all_four_observations) ... ok
+test_source_snapshot_includes_own_three_files_and_loaded_sources_not_tensors (test_run.DiagnosticTests.test_source_snapshot_includes_own_three_files_and_loaded_sources_not_tensors) ... ok
+test_summary_refuses_recovered_history_or_invented_tensor_rows (test_run.DiagnosticTests.test_summary_refuses_recovered_history_or_invented_tensor_rows) ... ok
+test_unclean_owner_wrong_record_join_and_wrong_audit_envelope_refuse (test_run.DiagnosticTests.test_unclean_owner_wrong_record_join_and_wrong_audit_envelope_refuse) ... ok
+
+----------------------------------------------------------------------
+Ran 12 tests in 0.007s
+
+OK

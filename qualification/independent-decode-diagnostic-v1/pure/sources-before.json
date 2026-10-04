@@ -1,0 +1,17 @@
+{
+  "README.md": {
+    "bytes": 3729,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-independent-decode-diagnostic-v1/README.md",
+    "sha256": "584601f0ef4e0c0a02ac618f3258d9fbc1568927ad65c619e7e7feb422ef0fbf"
+  },
+  "run.py": {
+    "bytes": 13589,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-independent-decode-diagnostic-v1/run.py",
+    "sha256": "259f6f233be23da36eac213bfb5e0c905afa43461461fbb0305efcc45c08d930"
+  },
+  "test_run.py": {
+    "bytes": 10838,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-independent-decode-diagnostic-v1/test_run.py",
+    "sha256": "2e3df90d54d4055682122c2405e234065ebd6e58973f1a1ebe4b5673e162889f"
+  }
+}

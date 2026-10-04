@@ -1,0 +1,3069 @@
+{
+  "acceptance_threshold": null,
+  "arithmetic_prerequisites_verified": false,
+  "authority": "none",
+  "current_platform_idle_audits_verified": false,
+  "current_source_binary_image_authority_verified": false,
+  "full_model_acceptance": false,
+  "full_model_correctness": false,
+  "gpu_execution_requested": false,
+  "independent_framework": [
+    {
+      "candidate_input": 9112,
+      "candidate_output": 67,
+      "output_equal": true,
+      "position": 0,
+      "reference_input": 9112,
+      "reference_output": 67,
+      "same_input_history": true,
+      "tensors": [
+        {
+          "byte_equal": false,
+          "candidate_sha256": "faa56202578a3d3497bbe779137736439957e473775bd6f677dbce466a9d6979",
+          "elements": 4096,
+          "exact_words": 1834,
+          "first_mismatching_element": 8,
+          "max_abs_error": 0.0625,
+          "max_bf16_steps": 29762,
+          "name": "layer0-hidden",
+          "reference_sha256": "06cc2700e0c8e89e351b16eab9bece2c77a69683a3bc0ef33497864a0db867ac",
+          "relative_l2": 0.0035785689750431173,
+          "rmse": 0.0013783590688901364,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "c4dc7d5bfa7359f7b611da81301be354dbbffa44b8e8185a394270cfc32ebe65",
+          "elements": 4096,
+          "exact_words": 1369,
+          "first_mismatching_element": 4,
+          "max_abs_error": 0.015625,
+          "max_bf16_steps": 30116,
+          "name": "layer1-hidden",
+          "reference_sha256": "8e29ee9ca1ea491ac335c776061a1bda602f5814a0e08503646b4b1bb876ba86",
+          "relative_l2": 0.00201937125238405,
+          "rmse": 0.0016213561707937676,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "4e53f3ed51743e8ae95e9b717b2fa6ca4cdeffba4f8e6d0f934b2a3e01b2a5df",
+          "elements": 4096,
+          "exact_words": 1261,
+          "first_mismatching_element": 0,
+          "max_abs_error": 0.015625,
+          "max_bf16_steps": 29882,
+          "name": "layer2-hidden",
+          "reference_sha256": "d563669aab91a7ef22c2edecf725b237e8eafbb72056180c841842317c362750",
+          "relative_l2": 0.0019350727380410822,
+          "rmse": 0.0018760775009512218,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "a79b8ee38d0c0b05a1b2ca0a89014cda307ec2f42b2d2825a24d5af1ec40b59d",
+          "elements": 4096,
+          "exact_words": 1133,
+          "first_mismatching_element": 0,
+          "max_abs_error": 0.03125,
+          "max_bf16_steps": 29846,
+          "name": "layer3-hidden",
+          "reference_sha256": "9377629c7845a56ffdded8419b096cdbae8a54dfe7f8113997a7fca167662316",
+          "relative_l2": 0.002217671797145132,
+          "rmse": 0.0022289008762868016,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "f214e94853ff8974d0fac507841a6bed1ee724635fae6f51f5b4f84e98e81f19",
+          "elements": 4096,
+          "exact_words": 1069,
+          "first_mismatching_element": 3,
+          "max_abs_error": 0.0625,
+          "max_bf16_steps": 29991,
+          "name": "layer4-hidden",
+          "reference_sha256": "6ba2c42f53cbb46c27af2bc45064c9b036e4a99328caa97c22db6c7a0300a817",
+          "relative_l2": 0.0026810836098931407,
+          "rmse": 0.002873630751419954,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "072e02cb05697f35b797bba750d46ef544639b6d7d86dac69a15baf1ed1c73c3",
+          "elements": 4096,
+          "exact_words": 1016,
+          "first_mismatching_element": 0,
+          "max_abs_error": 0.25,
+          "max_bf16_steps": 30041,
+          "name": "layer5-hidden",
+          "reference_sha256": "65c02ffbefae25409cc5d17c2872ea3f59992bbaf47f8fc330b7b7f2dee4fa7d",
+          "relative_l2": 0.008211677099136627,
+          "rmse": 0.005160169259062508,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "8207f672f2a2ca2e1b44339a4361cc04d910a9d462be0aefccbe060a7d234c8c",
+          "elements": 4096,
+          "exact_words": 1345,
+          "first_mismatching_element": 0,
+          "max_abs_error": 1.0,
+          "max_bf16_steps": 30828,
+          "name": "layer6-hidden",
+          "reference_sha256": "126e5534c34b20d61e56694238686c2ba2a50f44408d90954e13a5db9f8aeaef",
+          "relative_l2": 0.00015561601408654977,
+          "rmse": 0.031138812995767328,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "f1473bc2c626f60d624ffa61a29b064c096d925243c3cb77d5d9f5e9acef2939",
+          "elements": 4096,
+          "exact_words": 1328,
+          "first_mismatching_element": 0,
+          "max_abs_error": 1.0,
+          "max_bf16_steps": 30906,
+          "name": "layer7-hidden",
+          "reference_sha256": "a7b6126fff0c3f66623a3fdd3fe08a7b1334a4b2975007e770403d7ced15a988",
+          "relative_l2": 0.0001566741433359226,
+          "rmse": 0.031350500980176506,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "14414c78079cdecd8cfb7491ef14fa8aa9268e3f89d2d1779016c0c59f360140",
+          "elements": 4096,
+          "exact_words": 1326,
+          "first_mismatching_element": 0,
+          "max_abs_error": 1.0,
+          "max_bf16_steps": 30868,
+          "name": "layer8-hidden",
+          "reference_sha256": "027e8137d95558acc69ee663fbaa3422642e38d44c17d603578d7ffcb7dc58b3",
+          "relative_l2": 0.00015763491863335613,
+          "rmse": 0.031542774264366816,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "026aca4e7a4a216d3b876c80cc080ee228b3576e4b8772614ef07dcbddd4b4e1",
+          "elements": 4096,
+          "exact_words": 1323,
+          "first_mismatching_element": 0,
+          "max_abs_error": 1.0,
+          "max_bf16_steps": 30822,
+          "name": "layer9-hidden",
+          "reference_sha256": "ec1126c3c30266a401848e99560953f094b3433eeeae04683dbde1b7fec122c1",
+          "relative_l2": 0.00015897684703791495,
+          "rmse": 0.031811293433907595,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "366919f64618ed66da93a33e5669947ccbf0725ee5ea5415aac62da23ebb92aa",
+          "elements": 4096,
+          "exact_words": 1319,
+          "first_mismatching_element": 0,
+          "max_abs_error": 1.0,
+          "max_bf16_steps": 31071,
+          "name": "layer10-hidden",
+          "reference_sha256": "a6713cf3370380ae3d0f88e4684abf23e2e7ccf73a55d08e38f7484cbc316afd",
+          "relative_l2": 0.00015996758049673345,
+          "rmse": 0.03200957668291415,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "9bd298c1f59984a5cb57c02c96189575d96f848e02c75c64f3d77fad2301ec2e",
+          "elements": 4096,
+          "exact_words": 1309,
+          "first_mismatching_element": 0,
+          "max_abs_error": 1.0,
+          "max_bf16_steps": 31004,
+          "name": "layer11-hidden",
+          "reference_sha256": "7f8a673d62c5888b03fb8759a5f43ba3637ab23de5076cd6ced2c0e68bd9d7b2",
+          "relative_l2": 0.00016099259977075362,
+          "rmse": 0.03221474276286986,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "fbaaa742d3c1d9e8e344c38da216ade943acdaf8fa8356f972422e005990a5ac",
+          "elements": 4096,
+          "exact_words": 1311,
+          "first_mismatching_element": 0,
+          "max_abs_error": 1.0,
+          "max_bf16_steps": 30926,
+          "name": "layer12-hidden",
+          "reference_sha256": "c8ea7b2fb2dd2ec06fc1473699b6d3f08cf4e5d5f375236a503ea52d7ff3db96",
+          "relative_l2": 0.0001623277138156822,
+          "rmse": 0.032481887464861005,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "bcd774dba5283f7bfdc74e8713a05dd391d9c9439c7d047f2be6e8cbd494416f",
+          "elements": 4096,
+          "exact_words": 1327,
+          "first_mismatching_element": 0,
+          "max_abs_error": 1.0,
+          "max_bf16_steps": 30662,
+          "name": "layer13-hidden",
+          "reference_sha256": "8352745e7bb132f2efcaf490740240859304ade76278c4128213eec399f3a0be",
+          "relative_l2": 0.00016378578867896502,
+          "rmse": 0.03277364383033692,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "842ccc55486c0b21b998f54781ed9b4645b29cedd4706053770f408892a09555",
+          "elements": 4096,
+          "exact_words": 1308,
+          "first_mismatching_element": 0,
+          "max_abs_error": 1.0,
+          "max_bf16_steps": 30920,
+          "name": "layer14-hidden",
+          "reference_sha256": "6a0a89693e1e400ba2e7b4d0e15040eac76de20082a64b6d9ae32cc7b816e724",
+          "relative_l2": 0.0001656267666298959,
+          "rmse": 0.033142144422338066,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "1250f3bbd998faf2554abcd8f1c001ab086e715db52d2156a0cfa88d8b1a30d6",
+          "elements": 4096,
+          "exact_words": 1306,
+          "first_mismatching_element": 2,
+          "max_abs_error": 1.0,
+          "max_bf16_steps": 30700,
+          "name": "layer15-hidden",
+          "reference_sha256": "3ec5e2d8b355a43a9bc6a466dfa960acf93b2538269a482adb10966583287422",
+          "relative_l2": 0.0001667460037300882,
+          "rmse": 0.03336625605839587,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "18adf1e46c65b686fe73869755ff1343c6d78acc6a18d29caabb8083e5aae925",
+          "elements": 4096,
+          "exact_words": 1311,
+          "first_mismatching_element": 3,
+          "max_abs_error": 1.0,
+          "max_bf16_steps": 30859,
+          "name": "layer16-hidden",
+          "reference_sha256": "5670fe0f0166d174ba817915141b4ab98d496c52bae9e3b9f877aa765eeb825a",
+          "relative_l2": 0.00016477093898300123,
+          "rmse": 0.03410225757057934,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "9fa2fbe31b86bba11cdf8455eba9aaf55c1f30d071d627b66898776f634ef82f",
+          "elements": 4096,
+          "exact_words": 1296,
+          "first_mismatching_element": 3,
+          "max_abs_error": 1.0,
+          "max_bf16_steps": 30599,
+          "name": "layer17-hidden",
+          "reference_sha256": "1d4e70fd9b066a1e4f8a5947c02329137f72910f5baac4b911e1560a5956b7b3",
+          "relative_l2": 0.00016537158619063,
+          "rmse": 0.0342267414405284,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "bb920433c5623775ee7de8bd844556a3efc8775a18607c87ebd455ab5a25d1b7",
+          "elements": 4096,
+          "exact_words": 1282,
+          "first_mismatching_element": 3,
+          "max_abs_error": 1.0,
+          "max_bf16_steps": 30865,
+          "name": "layer18-hidden",
+          "reference_sha256": "93e3eca69d52f1ce0d1d93f3aaed7f620b8a3675c01c5d11788065800abbd749",
+          "relative_l2": 0.00016648255174685098,
+          "rmse": 0.03445672067893733,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "0ba4b8712e6ee176d3628f5eddd26a1e7b3ea8a3ef81fccb2cacb0755c74ecae",
+          "elements": 4096,
+          "exact_words": 1288,
+          "first_mismatching_element": 3,
+          "max_abs_error": 1.0,
+          "max_bf16_steps": 30826,
+          "name": "layer19-hidden",
+          "reference_sha256": "d1991cccd1095b0dc1070e54b1d5202e0d5662761f25fbd81bac1dc2b51be313",
+          "relative_l2": 0.00016779097804163804,
+          "rmse": 0.03472764096862976,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "faeb5793a7d8b8577e6a735ee098e853a8b4929e5c86b6fded37db0dab10560a",
+          "elements": 4096,
+          "exact_words": 1258,
+          "first_mismatching_element": 3,
+          "max_abs_error": 1.0,
+          "max_bf16_steps": 30952,
+          "name": "layer20-hidden",
+          "reference_sha256": "84c5c18f887f720062c57feadf1bc9730ea6dfcf6b2b747fa2c04c5b60baa3c2",
+          "relative_l2": 0.00016853524600270647,
+          "rmse": 0.03488190213182846,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "dfd5dc12abdecd0ca7288a508bf27352bbf9f94ed539572d14d9c2b2f9e7b432",
+          "elements": 4096,
+          "exact_words": 1238,
+          "first_mismatching_element": 2,
+          "max_abs_error": 1.0,
+          "max_bf16_steps": 31101,
+          "name": "layer21-hidden",
+          "reference_sha256": "1b874620fe974fe19a29293859de052a81d445e131cd51e15d87ef647d0d91da",
+          "relative_l2": 0.000169599702184852,
+          "rmse": 0.035102380143723785,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "a63f2037073d3c11bfa0ab2ccccff527c1b22b3f12d858aed8096ce4f4d4a091",
+          "elements": 4096,
+          "exact_words": 1220,
+          "first_mismatching_element": 3,
+          "max_abs_error": 1.0,
+          "max_bf16_steps": 30863,
+          "name": "layer22-hidden",
+          "reference_sha256": "5b82f59e73244f1b1ce901e9f07a7327fbad3b4aae11c8aebe17a3a315e19136",
+          "relative_l2": 0.00017122673898235552,
+          "rmse": 0.03543923906668653,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "ce8d1a3611e25c8b983835d748186dcedc9ba17371faaf83fd64bba81ef6a2d2",
+          "elements": 4096,
+          "exact_words": 1208,
+          "first_mismatching_element": 3,
+          "max_abs_error": 1.0,
+          "max_bf16_steps": 30916,
+          "name": "layer23-hidden",
+          "reference_sha256": "a0e887957ca0cf1c71a691292c6c147a871d58e62ae353fe303f06945b4a54c1",
+          "relative_l2": 0.00017296328448925736,
+          "rmse": 0.035798791353576526,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "bfb2a96979ae99fe3de63a5712c5f9831ce9a4e7c10da8ee5edf4a5baed15e4b",
+          "elements": 4096,
+          "exact_words": 1209,
+          "first_mismatching_element": 2,
+          "max_abs_error": 1.0,
+          "max_bf16_steps": 30897,
+          "name": "layer24-hidden",
+          "reference_sha256": "2b1c2e8a5db5a1760254e6d9fe9f253c2e3b376961c07caa906642cc0fe61d91",
+          "relative_l2": 0.0001740536439671108,
+          "rmse": 0.03602433941385349,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "5d06117a63c292c168f8cea7389f70a1ba311a6186c6a566d7f1c9d5a2f40c5e",
+          "elements": 4096,
+          "exact_words": 1184,
+          "first_mismatching_element": 2,
+          "max_abs_error": 1.0,
+          "max_bf16_steps": 30985,
+          "name": "layer25-hidden",
+          "reference_sha256": "e3676b83ee2c949cc06c9ec2805e33d9e0c4fd784779f968a9062612f235a35e",
+          "relative_l2": 0.0001636146798479301,
+          "rmse": 0.03386379283631004,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "98978f4f75e2a369bfe76596cdd967730986232198ecd3bb9818b8977be245d5",
+          "elements": 4096,
+          "exact_words": 1192,
+          "first_mismatching_element": 2,
+          "max_abs_error": 1.0,
+          "max_bf16_steps": 31013,
+          "name": "layer26-hidden",
+          "reference_sha256": "b45e1fff88905f366d61057b3c7f50b7918ea5f72afec86063904e507ed6b7c5",
+          "relative_l2": 0.00016481396319175618,
+          "rmse": 0.034111962307685935,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "d7b71186acc337f280a314f198b19c1c897b1d9fb3548f4f8ca83a767308da69",
+          "elements": 4096,
+          "exact_words": 1155,
+          "first_mismatching_element": 3,
+          "max_abs_error": 1.0,
+          "max_bf16_steps": 30723,
+          "name": "layer27-hidden",
+          "reference_sha256": "eb8a703c70bf5aa218b16893c8242f306b50ec89039ea8c80a48d6d378b4a859",
+          "relative_l2": 0.00016605323107336153,
+          "rmse": 0.03436837757878241,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "64e6923832a2708b7bbda522e4d1b9bcf1e7fc9cebee850c570a4eb802e1a84b",
+          "elements": 4096,
+          "exact_words": 1153,
+          "first_mismatching_element": 0,
+          "max_abs_error": 1.0,
+          "max_bf16_steps": 30944,
+          "name": "layer28-hidden",
+          "reference_sha256": "dd28ca6500a5650b6faf65ac969111c329cf2557d12bc3134971a8990ae98f7a",
+          "relative_l2": 0.00016828251440652382,
+          "rmse": 0.03482986915435071,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "5f34098bc805b05134cf998b17a6fb7a366cde00498e890b7f3a05d634a037a6",
+          "elements": 4096,
+          "exact_words": 1129,
+          "first_mismatching_element": 0,
+          "max_abs_error": 1.0,
+          "max_bf16_steps": 30880,
+          "name": "layer29-hidden",
+          "reference_sha256": "34b0bac35eb46a9837acf1cb0724cd6fa994e03a3d862e27a24c154e113c3b5d",
+          "relative_l2": 0.0001699164919674441,
+          "rmse": 0.03516798739889501,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "cfd0d6d97666f624c741d0b600d9937b938fe758fb70c9cda0c1540d629bc985",
+          "elements": 4096,
+          "exact_words": 1094,
+          "first_mismatching_element": 3,
+          "max_abs_error": 1.0,
+          "max_bf16_steps": 30872,
+          "name": "layer30-hidden",
+          "reference_sha256": "60da12a982801ce2035f3c28cca4575808d9893fdc95e850ea062466aa99a9ed",
+          "relative_l2": 0.0001726796247645064,
+          "rmse": 0.03573989555759948,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "1d40a3aea65d73d40957c758a086cad3ea31ec211398b01199f900b6e33a51a9",
+          "elements": 4096,
+          "exact_words": 1056,
+          "first_mismatching_element": 3,
+          "max_abs_error": 1.0,
+          "max_bf16_steps": 31147,
+          "name": "layer31-hidden",
+          "reference_sha256": "3f84540ec7dd32093f9509059c669ea5a4c56154d77ccb461c8997d87fed716b",
+          "relative_l2": 0.00017405503915897595,
+          "rmse": 0.036024673965573704,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "897bba7ebe5f933321a3b84898d85e60afbcccdfc99acab0ca555b45576d3624",
+          "elements": 4096,
+          "exact_words": 1034,
+          "first_mismatching_element": 3,
+          "max_abs_error": 1.0,
+          "max_bf16_steps": 31150,
+          "name": "layer32-hidden",
+          "reference_sha256": "0fcbbd7888a7b3139ea3d437eaa8d03a674964dc1f3b164dcea2f995ab387af3",
+          "relative_l2": 0.00017721052015299754,
+          "rmse": 0.03667788878882617,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "429cab66e4148c67f6fe6d8746941c21eb57990efb44e5c1f429bc8b17e79685",
+          "elements": 4096,
+          "exact_words": 998,
+          "first_mismatching_element": 2,
+          "max_abs_error": 1.0,
+          "max_bf16_steps": 31100,
+          "name": "layer33-hidden",
+          "reference_sha256": "20067560a00ef80eea7706458ed371545ecb8e3cd61effe3dab40179ce7481dd",
+          "relative_l2": 0.00018268183713019619,
+          "rmse": 0.03763261047912754,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "da34b12b8f336533f3ee389b7b68175c05a5e8deda442bdf34962ea2a7e21942",
+          "elements": 4096,
+          "exact_words": 819,
+          "first_mismatching_element": 0,
+          "max_abs_error": 1.0,
+          "max_bf16_steps": 31458,
+          "name": "layer34-hidden",
+          "reference_sha256": "23cf20e7d4dde301e11454b9af81804c9f8f53167adbde3a50cc893fd1a9e053",
+          "relative_l2": 0.000343537548590818,
+          "rmse": 0.05368366865421479,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "810672b3b7ede8bce81d83de1fc0312b88e47e593f2017aa8d7cdb08122e9727",
+          "elements": 4096,
+          "exact_words": 976,
+          "first_mismatching_element": 1,
+          "max_abs_error": 4.0,
+          "max_bf16_steps": 31810,
+          "name": "layer35-hidden",
+          "reference_sha256": "f1ad81a36b3b249168e9196eaccb52b2db953e08e443aad8659d95996d713d78",
+          "relative_l2": 0.002658892091700248,
+          "rmse": 0.2613628612100456,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "778013bc019c4c4655a1c56f471c2a981b6aa9c499592f5ef21205c600a77137",
+          "elements": 4096,
+          "exact_words": 1081,
+          "first_mismatching_element": 1,
+          "max_abs_error": 0.25,
+          "max_bf16_steps": 30344,
+          "name": "final-norm",
+          "reference_sha256": "abe1dd8d7f3eade36d75903a60837091ab4cf970a2ea8471baf8adfacd602d87",
+          "relative_l2": 0.004094390432544188,
+          "rmse": 0.007249060039665046,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "6d094948d18fe8a104cf4c6bfaba0404bc2340d289d2311d3be49d90e178367f",
+          "elements": 151936,
+          "exact_words": 54975,
+          "first_mismatching_element": 2,
+          "max_abs_error": 0.07421875,
+          "max_bf16_steps": 31062,
+          "name": "logits",
+          "reference_sha256": "7347cc47b84f3c9a32dbda5d6e3406bfb603950a767c5e1dd4581d3083b7e9fa",
+          "relative_l2": 0.004719594888140337,
+          "rmse": 0.016703633153555067,
+          "zero_reference_norm": false
+        }
+      ]
+    },
+    {
+      "candidate_input": 2190,
+      "candidate_output": 198,
+      "output_equal": true,
+      "position": 1,
+      "reference_input": 2190,
+      "reference_output": 198,
+      "same_input_history": true,
+      "tensors": [
+        {
+          "byte_equal": false,
+          "candidate_sha256": "05ad66b06ad5b8aa71495731dd8a4cd43d3a5f733c9ce1132a27f68f44edda8a",
+          "elements": 4096,
+          "exact_words": 1531,
+          "first_mismatching_element": 2,
+          "max_abs_error": 0.015625,
+          "max_bf16_steps": 29844,
+          "name": "layer0-hidden",
+          "reference_sha256": "2ff289142c2c9e4493ca0d24338d3d44cf8ef2a698ff538550868421535a2952",
+          "relative_l2": 0.0035846312362159136,
+          "rmse": 0.000766591153216833,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "9d6ba10dbeb2ae41b61586f6b2b61b6db21471982ad1620d51e763a4266896da",
+          "elements": 4096,
+          "exact_words": 1141,
+          "first_mismatching_element": 1,
+          "max_abs_error": 0.015625,
+          "max_bf16_steps": 29934,
+          "name": "layer1-hidden",
+          "reference_sha256": "40689e7d3f2361c4eef945ae4908f3b69b3f2cf19b7a71a17c73008d3b3d0500",
+          "relative_l2": 0.0046994138671929255,
+          "rmse": 0.0012407379927444097,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "1fb1137082fed2162ed64c351d24618ea898a44f91f4336b2af49f5cda4b3178",
+          "elements": 4096,
+          "exact_words": 876,
+          "first_mismatching_element": 0,
+          "max_abs_error": 0.03125,
+          "max_bf16_steps": 30031,
+          "name": "layer2-hidden",
+          "reference_sha256": "575f4eb3524c4a00fefaa88961a9a8b1d67ba2c56ac0539816bf5438bb8cc403",
+          "relative_l2": 0.006556898734610957,
+          "rmse": 0.002145938184040847,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "e1af6595c1816dcf05971f69c5ff618069b9afa94800503005437124796c3fc4",
+          "elements": 4096,
+          "exact_words": 1658,
+          "first_mismatching_element": 0,
+          "max_abs_error": 0.015625,
+          "max_bf16_steps": 30253,
+          "name": "layer3-hidden",
+          "reference_sha256": "e526bfcf81871a6180c85e7eb9cbc0cfd91ed8edc89c37fe18beeb42a0e4de41",
+          "relative_l2": 0.004071030365245557,
+          "rmse": 0.0031418687226871145,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "81344508b05c83771452465a0e8626ba5921e7f45aa609f962f44da0030fb6ea",
+          "elements": 4096,
+          "exact_words": 1335,
+          "first_mismatching_element": 0,
+          "max_abs_error": 0.03125,
+          "max_bf16_steps": 30401,
+          "name": "layer4-hidden",
+          "reference_sha256": "607f7c7e110140fa077f091c0eb785bccfdc87c7b53fb16aeb1c038dc83e1307",
+          "relative_l2": 0.0050334949898488985,
+          "rmse": 0.004395899497992801,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "7332367d969ff9c5b972a99198b9726569210bf96c9325104f8c3c6de9d5f5ea",
+          "elements": 4096,
+          "exact_words": 1169,
+          "first_mismatching_element": 2,
+          "max_abs_error": 0.046875,
+          "max_bf16_steps": 30376,
+          "name": "layer5-hidden",
+          "reference_sha256": "c8155bec80c39f92c94b75978e74d00dc3b8045b27f2e8291dbf2167866730ae",
+          "relative_l2": 0.005652612049870113,
+          "rmse": 0.005602094357735207,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "a3df44d954c8f6430795b602c1cd52f4e63ba50686c9cfc0c3c7612dbac65471",
+          "elements": 4096,
+          "exact_words": 922,
+          "first_mismatching_element": 1,
+          "max_abs_error": 0.0625,
+          "max_bf16_steps": 30669,
+          "name": "layer6-hidden",
+          "reference_sha256": "e95e88ee754828dc6e534c63a8ad399e4ac5c1c5bad46df765d37e6a7b80ec10",
+          "relative_l2": 0.006767649633087706,
+          "rmse": 0.006895930206412195,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "19252400c48d80eec37d6071558945af4ae62ba327890ab62d055dd6797c4012",
+          "elements": 4096,
+          "exact_words": 799,
+          "first_mismatching_element": 0,
+          "max_abs_error": 0.125,
+          "max_bf16_steps": 30684,
+          "name": "layer7-hidden",
+          "reference_sha256": "e8ec3d7e3c2f24699d92f480251617228b84f80cc4d0a9883d18d54e77a072d2",
+          "relative_l2": 0.00806154545140456,
+          "rmse": 0.008861866983798457,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "09f9753cfa87b18833c0cc56d38af78b0d14f96c3eed4958b7baa4506ae5aa62",
+          "elements": 4096,
+          "exact_words": 770,
+          "first_mismatching_element": 0,
+          "max_abs_error": 0.1875,
+          "max_bf16_steps": 30630,
+          "name": "layer8-hidden",
+          "reference_sha256": "b4cc2cd939f3fa2af76484669509a0f1657bfa24bbd4c9dabc5135557b3e3ac1",
+          "relative_l2": 0.00903307546096428,
+          "rmse": 0.01121076074692169,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "056f4bc8105887951cc097a401bac69a21426c63f6a6f00179987813ad3d874f",
+          "elements": 4096,
+          "exact_words": 674,
+          "first_mismatching_element": 0,
+          "max_abs_error": 0.125,
+          "max_bf16_steps": 30640,
+          "name": "layer9-hidden",
+          "reference_sha256": "8cbb7793a6eeeaaa9587ce6fc540cd63d7dfe433014493ec540d11790d9963d5",
+          "relative_l2": 0.009351461431214186,
+          "rmse": 0.012067737461286119,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "30741efc329f5ed7822c24e5cafd9f8f5872c3eb0dd74fa35b03f2bef418655a",
+          "elements": 4096,
+          "exact_words": 645,
+          "first_mismatching_element": 0,
+          "max_abs_error": 0.125,
+          "max_bf16_steps": 30750,
+          "name": "layer10-hidden",
+          "reference_sha256": "5c54a8798bdde728f7827eadecaf9fa762ad9fead48edcbda54e7417778bef7c",
+          "relative_l2": 0.00945456764222452,
+          "rmse": 0.012419544800589098,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "a4709a414cdb7e231ffb044869ee61964a11956991c113bf0f3cdb19bc77a8a8",
+          "elements": 4096,
+          "exact_words": 669,
+          "first_mismatching_element": 1,
+          "max_abs_error": 0.125,
+          "max_bf16_steps": 30863,
+          "name": "layer11-hidden",
+          "reference_sha256": "0e1e9c149052eb19de492d31ae524a6f2741a06d5c1ba8421f6b88043f80846a",
+          "relative_l2": 0.009147747651441154,
+          "rmse": 0.01288487431599845,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "b4ff08cc324870ca2e548b7e8e914d88c2bac53bce69c224a3b2b793db7b6f49",
+          "elements": 4096,
+          "exact_words": 620,
+          "first_mismatching_element": 0,
+          "max_abs_error": 0.09375,
+          "max_bf16_steps": 30835,
+          "name": "layer12-hidden",
+          "reference_sha256": "5643e89b2d8ed67d2f39c01d4d9b3288fdbca1469aeafa19dc614852b5ba0e0f",
+          "relative_l2": 0.009010127632809315,
+          "rmse": 0.01342365143774423,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "bfd8ebd41089cfbcec5f3d464f796f8e49d3be300fb78158ecdf3e69398ac248",
+          "elements": 4096,
+          "exact_words": 578,
+          "first_mismatching_element": 1,
+          "max_abs_error": 0.15625,
+          "max_bf16_steps": 30871,
+          "name": "layer13-hidden",
+          "reference_sha256": "0d0fd764ada8158174b3ac2488ac2df56de9cbf6b59ea2e884c379072b1b5896",
+          "relative_l2": 0.009388005632689336,
+          "rmse": 0.014963028682206534,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "f08974ae5eac196f47cd33b8c41d45033c8352681f768289c227933e15759c7d",
+          "elements": 4096,
+          "exact_words": 519,
+          "first_mismatching_element": 0,
+          "max_abs_error": 0.25,
+          "max_bf16_steps": 30856,
+          "name": "layer14-hidden",
+          "reference_sha256": "e8585048f36efdef6f72786489c8e32393428aee5b17ca58db034fea6e209731",
+          "relative_l2": 0.010207956823274649,
+          "rmse": 0.016703155041057408,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "1e44fbd0f6c11147e47fc1c6c1ea07f4bd404977b603b471f0389c0156fd2a97",
+          "elements": 4096,
+          "exact_words": 559,
+          "first_mismatching_element": 0,
+          "max_abs_error": 0.25,
+          "max_bf16_steps": 30934,
+          "name": "layer15-hidden",
+          "reference_sha256": "7aba5239c643f848d1132f1961c71d12b2e93c9e0005e3dd5bb76a67ff7846ec",
+          "relative_l2": 0.0099526314685905,
+          "rmse": 0.017040458537429384,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "5187cb3762f8d0d86b2e8abaf09abeb25d0ffbd54dc4944f98158957ff83a483",
+          "elements": 4096,
+          "exact_words": 540,
+          "first_mismatching_element": 0,
+          "max_abs_error": 0.5,
+          "max_bf16_steps": 30753,
+          "name": "layer16-hidden",
+          "reference_sha256": "533c5c757f54cfa62ad95c8497b4536eac30b75ebf4d982866473741e58411db",
+          "relative_l2": 0.010572641779890528,
+          "rmse": 0.018455297624976864,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "cd3340abfe4893b0bbf78dd74f2d1c213a8ab6ab6aa7918d81d9de19e6553b93",
+          "elements": 4096,
+          "exact_words": 538,
+          "first_mismatching_element": 0,
+          "max_abs_error": 0.5,
+          "max_bf16_steps": 30843,
+          "name": "layer17-hidden",
+          "reference_sha256": "9f77d9b3f9fde11cbd523114c532756c61d2d91928de69d1667190bb14907557",
+          "relative_l2": 0.010872520695845943,
+          "rmse": 0.019802243369754814,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "bb1b6999f3ddc9bbc4819d56e4d24244e0be1a11989cbe56aabee9763399e3b0",
+          "elements": 4096,
+          "exact_words": 514,
+          "first_mismatching_element": 0,
+          "max_abs_error": 0.75,
+          "max_bf16_steps": 30740,
+          "name": "layer18-hidden",
+          "reference_sha256": "ff47f58629182c2e8596bce088504d0d12e1b8a7dd11e105b8b23236fa118052",
+          "relative_l2": 0.011357871736562787,
+          "rmse": 0.022182175981157418,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "63a03b6639ccc20034f10f21fce133bb6520ce0502a1a8d3a898a1e7df781333",
+          "elements": 4096,
+          "exact_words": 496,
+          "first_mismatching_element": 0,
+          "max_abs_error": 0.75,
+          "max_bf16_steps": 31000,
+          "name": "layer19-hidden",
+          "reference_sha256": "1de7602b0d69f8897d07e13658a8e793dc6e11e67d0542b657fd24bee3093606",
+          "relative_l2": 0.011023672838123156,
+          "rmse": 0.023613305275797542,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "c2f5baa1be0b4b8c1a0d1248cf1c202ebc571baf8b20f07981fd4eef482e1775",
+          "elements": 4096,
+          "exact_words": 476,
+          "first_mismatching_element": 0,
+          "max_abs_error": 0.75,
+          "max_bf16_steps": 31183,
+          "name": "layer20-hidden",
+          "reference_sha256": "4b41f260e7fed4797e236026805ab1c274169773cb3f3256b423830215fbb2fe",
+          "relative_l2": 0.011315275832482558,
+          "rmse": 0.0255969281627262,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "42f31283ff18c74be35e8f9ae9ea72fc2cde0825f239d0bb961baff6ec4ceba9",
+          "elements": 4096,
+          "exact_words": 497,
+          "first_mismatching_element": 0,
+          "max_abs_error": 0.75,
+          "max_bf16_steps": 31029,
+          "name": "layer21-hidden",
+          "reference_sha256": "094e3950797c340a2063104e304bd164546823c31a092d9754e13e1fe944b87b",
+          "relative_l2": 0.011311923489300086,
+          "rmse": 0.027702214899511753,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "d11fade7ef919bb44bd3ca61f83e15a54bc0b172b80d15c5b457b092dda6abcb",
+          "elements": 4096,
+          "exact_words": 592,
+          "first_mismatching_element": 0,
+          "max_abs_error": 0.75,
+          "max_bf16_steps": 31099,
+          "name": "layer22-hidden",
+          "reference_sha256": "72c11823275b8734d1062480a7a5d4b8fa8e21cf5ce7c9958226a35411fbd11c",
+          "relative_l2": 0.010019796605753214,
+          "rmse": 0.031681241158304216,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "11cc1051f6ec4377cf8a904466c0417a6bccd28075b2756f774abef44a5cc08a",
+          "elements": 4096,
+          "exact_words": 566,
+          "first_mismatching_element": 0,
+          "max_abs_error": 1.0,
+          "max_bf16_steps": 31105,
+          "name": "layer23-hidden",
+          "reference_sha256": "4b1a18693fc42375649ed24c20e306e1f5b081139994b3cb435e6d7b1f9178f9",
+          "relative_l2": 0.010678115074024492,
+          "rmse": 0.03720901390249231,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "900c21532ae60d282db5dc4fdf921ab21ff156d3936d530cccc31811592eb959",
+          "elements": 4096,
+          "exact_words": 547,
+          "first_mismatching_element": 0,
+          "max_abs_error": 0.5,
+          "max_bf16_steps": 31155,
+          "name": "layer24-hidden",
+          "reference_sha256": "9d75f868c6187d14a5b10d8880b7039282fd3fde1ee165ecff169e5020b78a50",
+          "relative_l2": 0.010010308292728844,
+          "rmse": 0.03943925487751541,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "6b4d768ebb814edaefc96e4f9a0469da5dcd92a37d03ca8264d2f8c33673c240",
+          "elements": 4096,
+          "exact_words": 515,
+          "first_mismatching_element": 0,
+          "max_abs_error": 0.5,
+          "max_bf16_steps": 31311,
+          "name": "layer25-hidden",
+          "reference_sha256": "01952fcd5f3e6cd5375810614476e47fe2a32189beceac49eab44f1239c55f86",
+          "relative_l2": 0.010048847258407248,
+          "rmse": 0.04454151596075623,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "811ab34357cc2e66010f53182f76fd9a6ec0ac1371af9b1dbaff417ef5a41575",
+          "elements": 4096,
+          "exact_words": 506,
+          "first_mismatching_element": 0,
+          "max_abs_error": 1.0,
+          "max_bf16_steps": 31420,
+          "name": "layer26-hidden",
+          "reference_sha256": "8cebd7819cf706fc4eca3df6a139bbfdbaed1bca4851dd406405079d45fdf0d4",
+          "relative_l2": 0.010126792982701369,
+          "rmse": 0.05096992383922176,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "7428018df11f39e74ce800fd3d44602468213f3a2dbe3bec91ee42c07d3b25f5",
+          "elements": 4096,
+          "exact_words": 518,
+          "first_mismatching_element": 0,
+          "max_abs_error": 1.0,
+          "max_bf16_steps": 31392,
+          "name": "layer27-hidden",
+          "reference_sha256": "09eb6e289389dddc403d6864fe533e641bf056b3dc45bd87aeeab2aa792499ee",
+          "relative_l2": 0.010343879713168061,
+          "rmse": 0.05899477528447275,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "2d8bb86acabfcb03bc9925f9cbe72e9fa459d5799383a62acf55aaaee8ede205",
+          "elements": 4096,
+          "exact_words": 478,
+          "first_mismatching_element": 0,
+          "max_abs_error": 1.0,
+          "max_bf16_steps": 31320,
+          "name": "layer28-hidden",
+          "reference_sha256": "2e45e4543a4ee7280f2384c2339e9fddbfc99df3b26cc6284652f162eeb4049d",
+          "relative_l2": 0.01001348465051849,
+          "rmse": 0.06535760053582487,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "85f73aca49ae6e55dfdf854aa0c859b0a6cb7a3690a5f6dff7cf52b5874f2066",
+          "elements": 4096,
+          "exact_words": 513,
+          "first_mismatching_element": 0,
+          "max_abs_error": 1.0,
+          "max_bf16_steps": 31521,
+          "name": "layer29-hidden",
+          "reference_sha256": "521dff9739e019de44b3b928213d89924cc88d557b920dff48f3d7e10540dae4",
+          "relative_l2": 0.00995374432139119,
+          "rmse": 0.0727240982138951,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "cee0bea5c4b1fd986c103bc0a16a6514b746ac7d86ec7dae1961cf07407fc9eb",
+          "elements": 4096,
+          "exact_words": 461,
+          "first_mismatching_element": 0,
+          "max_abs_error": 2.0,
+          "max_bf16_steps": 31648,
+          "name": "layer30-hidden",
+          "reference_sha256": "3c67334a2c40304b8d6e8a5182fce60d6bcb810e68cc2b7f7bac0f218025d169",
+          "relative_l2": 0.011005469804126054,
+          "rmse": 0.09016693761931403,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "881b1c64d238c494832d8477136b59dc72d99b3947ad52bc4b1d7ca524338c39",
+          "elements": 4096,
+          "exact_words": 423,
+          "first_mismatching_element": 0,
+          "max_abs_error": 2.0,
+          "max_bf16_steps": 31660,
+          "name": "layer31-hidden",
+          "reference_sha256": "5b0cbeae728ac1fa4f08fa5381ddbd3540adaadd631ef671384452e8cc5b9227",
+          "relative_l2": 0.01092469930154947,
+          "rmse": 0.10112566127872732,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "e5b8cbb5119c09583e1cf96a8b109237e480cab0006492b836239db210cdf80c",
+          "elements": 4096,
+          "exact_words": 427,
+          "first_mismatching_element": 0,
+          "max_abs_error": 2.0,
+          "max_bf16_steps": 31644,
+          "name": "layer32-hidden",
+          "reference_sha256": "924d7ff23a78358d7e95e190a5d52aac972840c61416407194c5bd3a719f5a6b",
+          "relative_l2": 0.010481971500052709,
+          "rmse": 0.11189840978050249,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "3745f30e0f14d072e9be50329f5962e11c38c3f9415b894c286909011574b7b3",
+          "elements": 4096,
+          "exact_words": 444,
+          "first_mismatching_element": 0,
+          "max_abs_error": 2.0,
+          "max_bf16_steps": 31847,
+          "name": "layer33-hidden",
+          "reference_sha256": "8d8501938eb1e17dabd51280010e1e2d188013173468ca1c292a4adae907dc87",
+          "relative_l2": 0.010244918962685423,
+          "rmse": 0.12491871721439116,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "c79164958d98930f5cab061f641a8a4a469eb99a7f8dfe6819c935722923305d",
+          "elements": 4096,
+          "exact_words": 411,
+          "first_mismatching_element": 0,
+          "max_abs_error": 4.0,
+          "max_bf16_steps": 31804,
+          "name": "layer34-hidden",
+          "reference_sha256": "a2d0d8a046dc72d60bc962f6f11dcdae10ecf28400f1a0c8d4ac632be90bc8ad",
+          "relative_l2": 0.00810277095311689,
+          "rmse": 0.14853930936958457,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "e91943abd37e2ee608b432d8d374e75d4169bb68cf73df381f2f05ab1733d43e",
+          "elements": 4096,
+          "exact_words": 350,
+          "first_mismatching_element": 0,
+          "max_abs_error": 4.0,
+          "max_bf16_steps": 31925,
+          "name": "layer35-hidden",
+          "reference_sha256": "2c03b256c884289e12278977dc3969177812906487fed46db2936209d0ad3dd2",
+          "relative_l2": 0.011038883443998533,
+          "rmse": 0.226622995360397,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "a0607dcfb39c8897b372397ff151f772d87f1293143d8787c24ae7c6144bc873",
+          "elements": 4096,
+          "exact_words": 444,
+          "first_mismatching_element": 0,
+          "max_abs_error": 1.0,
+          "max_bf16_steps": 31048,
+          "name": "final-norm",
+          "reference_sha256": "6ce0ec13f2bc6d8c416df6b4ca5628b64bff33b3ab910c1b977efd1e96e2bbf6",
+          "relative_l2": 0.011436027612844265,
+          "rmse": 0.033924550357383766,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "45aaaa024b65bbaaa699e7a3949b50bc5685fc61d03ea72670dc1e9f6fe33d01",
+          "elements": 151936,
+          "exact_words": 3406,
+          "first_mismatching_element": 0,
+          "max_abs_error": 0.25,
+          "max_bf16_steps": 31406,
+          "name": "logits",
+          "reference_sha256": "5281a2daf3958f55701ca258a5c0d809ecc9fc07b4f2ea64eec3fd12cb28e3a3",
+          "relative_l2": 0.013263227107920937,
+          "rmse": 0.08763889190055392,
+          "zero_reference_norm": false
+        }
+      ]
+    },
+    {
+      "candidate_input": 3772,
+      "candidate_output": 25,
+      "output_equal": true,
+      "position": 2,
+      "reference_input": 3772,
+      "reference_output": 25,
+      "same_input_history": true,
+      "tensors": [
+        {
+          "byte_equal": false,
+          "candidate_sha256": "b3c80c3914f2944eadc988444a494c4caa98d9c8fab82d3f923fc15eafe1fe7a",
+          "elements": 4096,
+          "exact_words": 1404,
+          "first_mismatching_element": 1,
+          "max_abs_error": 0.0078125,
+          "max_bf16_steps": 29615,
+          "name": "layer0-hidden",
+          "reference_sha256": "9914e7e8835c1c1572a7d63d35d7f7b616782d56dabf7fc29ac33f09cb3a9ee6",
+          "relative_l2": 0.003096432837623617,
+          "rmse": 0.0007445388862352668,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "bd81572fbdff754ae07dacd8d7ce5bd2e9d3c31ca4419062f2134f5ae4e7e837",
+          "elements": 4096,
+          "exact_words": 1087,
+          "first_mismatching_element": 1,
+          "max_abs_error": 0.015625,
+          "max_bf16_steps": 30008,
+          "name": "layer1-hidden",
+          "reference_sha256": "91d671453d4bbdc24a130195b85b7291585a478d52b98141b6c1a1f4c2c2fb8a",
+          "relative_l2": 0.004147205367962706,
+          "rmse": 0.0011843979026939016,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "98e77d9861d4514d32b88e61c2cde39caa8e6ba1464760813c74031bbe13694a",
+          "elements": 4096,
+          "exact_words": 957,
+          "first_mismatching_element": 3,
+          "max_abs_error": 0.0625,
+          "max_bf16_steps": 29860,
+          "name": "layer2-hidden",
+          "reference_sha256": "c64cf26bb7ac19f88bcffa89d1e8153d414d5e5d89c38475754ff30e0ac9db64",
+          "relative_l2": 0.005839103303971582,
+          "rmse": 0.0019077564752015687,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "d94bef0761908e6cd349d3dc117ec4ae31d4db3bc2dca246e614f5feb3dad362",
+          "elements": 4096,
+          "exact_words": 933,
+          "first_mismatching_element": 0,
+          "max_abs_error": 0.0625,
+          "max_bf16_steps": 30187,
+          "name": "layer3-hidden",
+          "reference_sha256": "c4fd555cbdd291c9e8057b55c2c67b387ce14b5f64fcf41e1f554f16f7c8f881",
+          "relative_l2": 0.005915014524474645,
+          "rmse": 0.0023796708625028187,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "f76146ab6d5b53962f2b1e9cc791a1ef16ef2c18174fc504aa3c04001366cb7a",
+          "elements": 4096,
+          "exact_words": 1024,
+          "first_mismatching_element": 0,
+          "max_abs_error": 0.046875,
+          "max_bf16_steps": 30244,
+          "name": "layer4-hidden",
+          "reference_sha256": "65f94954d92c99eb0c1ec46f94cc405ba039ba592411451dd68972ef80657c50",
+          "relative_l2": 0.00519572914172183,
+          "rmse": 0.003156003397705603,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "bf14e0b44bd278c9032bc8c4926676c9f593f7a9b8eb2900de54e58b6a8e5340",
+          "elements": 4096,
+          "exact_words": 919,
+          "first_mismatching_element": 0,
+          "max_abs_error": 0.046875,
+          "max_bf16_steps": 30290,
+          "name": "layer5-hidden",
+          "reference_sha256": "2a3147d42aaabd002565edf09c44e62c0453fbb1efd096713c0626ac864cc152",
+          "relative_l2": 0.005776748468147332,
+          "rmse": 0.004218381453111471,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "82bb0bfac1d3b25c60745fb0aa2a73dbe5413125d51808a18a04c01b5aaade2e",
+          "elements": 4096,
+          "exact_words": 780,
+          "first_mismatching_element": 0,
+          "max_abs_error": 0.0625,
+          "max_bf16_steps": 30457,
+          "name": "layer6-hidden",
+          "reference_sha256": "8152cfb78720fc72e51be9a1274a10d22a2cf69c05ec03382980b58119a23e60",
+          "relative_l2": 0.007948992573271566,
+          "rmse": 0.00628784433885468,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "7840613aa6aae5b1247fe217922b86ca755ba212a2a5254f70c8fc58e77b8997",
+          "elements": 4096,
+          "exact_words": 646,
+          "first_mismatching_element": 0,
+          "max_abs_error": 0.0625,
+          "max_bf16_steps": 30694,
+          "name": "layer7-hidden",
+          "reference_sha256": "6fd0ba09617fe2326347edfa6fab925ac267ca31686b648d34e06a3692d0167f",
+          "relative_l2": 0.0106330371619708,
+          "rmse": 0.009067199074488169,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "e948ba30bc2c95b5da466ab7b24c749811dc09da5d62d423ecbae79cdee3dfee",
+          "elements": 4096,
+          "exact_words": 548,
+          "first_mismatching_element": 0,
+          "max_abs_error": 0.0625,
+          "max_bf16_steps": 30874,
+          "name": "layer8-hidden",
+          "reference_sha256": "e421726beb5dbf1064eb1a82a4082b41b00ff16cfdc0e8cf9713db9d7b4ea665",
+          "relative_l2": 0.012002321703535244,
+          "rmse": 0.011220010042247068,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "c72e7da68155ff9831c66d67147b6e97f61d903217d01ca5de7fe6f7d886516c",
+          "elements": 4096,
+          "exact_words": 474,
+          "first_mismatching_element": 0,
+          "max_abs_error": 0.0625,
+          "max_bf16_steps": 30976,
+          "name": "layer9-hidden",
+          "reference_sha256": "ccc304c6e3d9806ca30d20f6a5c0fc11c35c3f35186defc8bc467e6910732aef",
+          "relative_l2": 0.013281286016194343,
+          "rmse": 0.01237038983459589,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "c775ba833a4ed2f2a4d5698d08dcee505e8493c1614722ae7121d8f0eff9a583",
+          "elements": 4096,
+          "exact_words": 428,
+          "first_mismatching_element": 0,
+          "max_abs_error": 0.1875,
+          "max_bf16_steps": 30885,
+          "name": "layer10-hidden",
+          "reference_sha256": "d4f436f4a45dceb7908c909d4d918b6b7d2f7031c1fa5dc600c3e63328e3f877",
+          "relative_l2": 0.0140323620974577,
+          "rmse": 0.013729974861628583,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "6462052326aaff2cdd967f8e2455b9473c7ef59596b4629dfb68aaeb0c750418",
+          "elements": 4096,
+          "exact_words": 414,
+          "first_mismatching_element": 0,
+          "max_abs_error": 0.125,
+          "max_bf16_steps": 31042,
+          "name": "layer11-hidden",
+          "reference_sha256": "143e200c2b0ff9268cb85eaf05193fd76e75e84a6215b205399ce0ff5403d6ad",
+          "relative_l2": 0.014080769613430752,
+          "rmse": 0.014868511423416277,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "26c89b72958599af7839192da7927f1819396c7dc008ab593dfc77e8095e42ce",
+          "elements": 4096,
+          "exact_words": 379,
+          "first_mismatching_element": 0,
+          "max_abs_error": 0.125,
+          "max_bf16_steps": 31016,
+          "name": "layer12-hidden",
+          "reference_sha256": "364b19783ed72bf06107d97a78d8fcc7316e779d73c6cb2795dbaad22008856a",
+          "relative_l2": 0.013297072991579712,
+          "rmse": 0.015782062376630834,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "6054a0fb29fc7ede6f70d73fd402470081c9d7b4923eccc9d872a230fdfc781c",
+          "elements": 4096,
+          "exact_words": 387,
+          "first_mismatching_element": 0,
+          "max_abs_error": 0.25,
+          "max_bf16_steps": 30968,
+          "name": "layer13-hidden",
+          "reference_sha256": "33280e802906d4290fddac24d7f5fe1da4570587af2c6c92f3d11ee48c7e1a0c",
+          "relative_l2": 0.013965132504836542,
+          "rmse": 0.0172962245966283,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "e061f6d84994845cbd95a19151ada1c4b2d7df28feb6266b777ceedd5e446deb",
+          "elements": 4096,
+          "exact_words": 342,
+          "first_mismatching_element": 0,
+          "max_abs_error": 0.125,
+          "max_bf16_steps": 30963,
+          "name": "layer14-hidden",
+          "reference_sha256": "71b7df2567fd0b1aa545c65dccbdd5511fed2afc432f7bbb74da9e51314e03ce",
+          "relative_l2": 0.01389447275305311,
+          "rmse": 0.01818333279502783,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "fe403f171628aea4810ee625c04ba02be5297b978d7f74c3bf521ca402e49fd3",
+          "elements": 4096,
+          "exact_words": 336,
+          "first_mismatching_element": 0,
+          "max_abs_error": 0.125,
+          "max_bf16_steps": 31044,
+          "name": "layer15-hidden",
+          "reference_sha256": "3f90dc276507fd53475fc2f2c0f4076e0a728ff81376579862363e8a1bde21a2",
+          "relative_l2": 0.013874790888286947,
+          "rmse": 0.019263333536746037,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "aa65effdb5f0b9d48bff79624baff204f32190f1e7734b131b13fd1e8381029e",
+          "elements": 4096,
+          "exact_words": 330,
+          "first_mismatching_element": 1,
+          "max_abs_error": 0.25,
+          "max_bf16_steps": 31089,
+          "name": "layer16-hidden",
+          "reference_sha256": "5d7518946a50db8462c38b0a32e36aa2d350c0dd07c52a0ebfdae0861ff555a8",
+          "relative_l2": 0.013365443064732762,
+          "rmse": 0.01954087923338612,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "5e27dac1ca8bf7fa4fe4ef205c2783b05d6b443e9a6cfc21852ed810dd7bf60a",
+          "elements": 4096,
+          "exact_words": 350,
+          "first_mismatching_element": 0,
+          "max_abs_error": 0.25,
+          "max_bf16_steps": 31085,
+          "name": "layer17-hidden",
+          "reference_sha256": "5ef7688854dfa0eeadadd2414eb4cc6d58187ce8fb25ff0bad6deb4eca022eeb",
+          "relative_l2": 0.013133834021603308,
+          "rmse": 0.020513298978302997,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "336475e2f5d6d29d3d153fcc4e239fab8d9c077ed2035636408193120e0c412e",
+          "elements": 4096,
+          "exact_words": 389,
+          "first_mismatching_element": 1,
+          "max_abs_error": 0.5,
+          "max_bf16_steps": 31054,
+          "name": "layer18-hidden",
+          "reference_sha256": "eb28a46aea773904e473ce8f4baee2d6b8055e5c64f6d8d220e1cd77687dc3fd",
+          "relative_l2": 0.013222866173683593,
+          "rmse": 0.022636992899748392,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "7e1e9f58050da7e9ee6e7a75dedb47cc89b86d821d4576cee4c98c12f1232e32",
+          "elements": 4096,
+          "exact_words": 371,
+          "first_mismatching_element": 0,
+          "max_abs_error": 0.5,
+          "max_bf16_steps": 31163,
+          "name": "layer19-hidden",
+          "reference_sha256": "2e17c90ccd52e756b711e1bc235da3184dace599ee5423ce89065cf5f00a11c4",
+          "relative_l2": 0.012155177122652516,
+          "rmse": 0.024897731088665748,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "d80e8478bbd0fc3711d73a670fb652999c091f7fe12d075a9224bbbdbbc69052",
+          "elements": 4096,
+          "exact_words": 377,
+          "first_mismatching_element": 0,
+          "max_abs_error": 0.75,
+          "max_bf16_steps": 30995,
+          "name": "layer20-hidden",
+          "reference_sha256": "6537d6dedbedd09d78a147ae0ad20e123beb65eed8e7c9ef11139e876f922a0b",
+          "relative_l2": 0.01284096912262905,
+          "rmse": 0.028246588282134864,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "13b31cc07bfe9fb539018b5fdf671b6f0691cd6a7c931ff2d4a72224bf4e7407",
+          "elements": 4096,
+          "exact_words": 395,
+          "first_mismatching_element": 0,
+          "max_abs_error": 1.0,
+          "max_bf16_steps": 31098,
+          "name": "layer21-hidden",
+          "reference_sha256": "c3565ed99d11032e4481a3447b8fcecb40cddef90281d5f3aa15a67698236c20",
+          "relative_l2": 0.01301430296244134,
+          "rmse": 0.03265819005199103,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "5faf71854921a025119e1a3b9996a48fb1ab605f321b25a86faf105582214953",
+          "elements": 4096,
+          "exact_words": 409,
+          "first_mismatching_element": 0,
+          "max_abs_error": 1.0,
+          "max_bf16_steps": 31235,
+          "name": "layer22-hidden",
+          "reference_sha256": "47e08a6db5d75af3fa52a896f4fe1528b17f174e11493f8691f97b06d5a037ad",
+          "relative_l2": 0.011994174840912752,
+          "rmse": 0.03474177643225535,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "0a6e89fd7bd8b2eefb46920ff3f9b61d3dab2806ff3325f5c2981331cc25cfce",
+          "elements": 4096,
+          "exact_words": 488,
+          "first_mismatching_element": 0,
+          "max_abs_error": 1.5,
+          "max_bf16_steps": 31158,
+          "name": "layer23-hidden",
+          "reference_sha256": "e91e61b382299ef0df93059a99cba8d3eb2e7fd26a4d85d0add7e454e8842a23",
+          "relative_l2": 0.011951640378408533,
+          "rmse": 0.042798828978365934,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "87b49e0ad40de7d0c3c5f32a270703db4a2a13cf590d0fc7ae8c1d28d5e2d99c",
+          "elements": 4096,
+          "exact_words": 472,
+          "first_mismatching_element": 0,
+          "max_abs_error": 1.5,
+          "max_bf16_steps": 31252,
+          "name": "layer24-hidden",
+          "reference_sha256": "72a1564aa0e2f88bf2383f11f7286764086f62c914c8bd2a34c97b5942833e1f",
+          "relative_l2": 0.010913869679392736,
+          "rmse": 0.04697306227318252,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "9cac6deccba2862e4c054708a7b9c096be84a3e5a7c51df019bd26a6525eb798",
+          "elements": 4096,
+          "exact_words": 475,
+          "first_mismatching_element": 0,
+          "max_abs_error": 1.0,
+          "max_bf16_steps": 31462,
+          "name": "layer25-hidden",
+          "reference_sha256": "50651c613398d8e28b8b2705e78699e54cc3c3ce69ce940ebdb5263139b642fd",
+          "relative_l2": 0.009894493956392088,
+          "rmse": 0.04863351935990757,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "dd14509aae18c7a4d90da0daebcc41126a76517377727634e8e24a5549eb852f",
+          "elements": 4096,
+          "exact_words": 483,
+          "first_mismatching_element": 0,
+          "max_abs_error": 2.0,
+          "max_bf16_steps": 31227,
+          "name": "layer26-hidden",
+          "reference_sha256": "74bf9e5246e193b79a1c58be60d635185f516ef0ef044391920e513c365b2477",
+          "relative_l2": 0.010367567510961276,
+          "rmse": 0.059913413583780516,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "21a076721be9108ff8cbf5eb42666ae418a692886f35f0deccfd6f927727f6b3",
+          "elements": 4096,
+          "exact_words": 498,
+          "first_mismatching_element": 0,
+          "max_abs_error": 2.0,
+          "max_bf16_steps": 31396,
+          "name": "layer27-hidden",
+          "reference_sha256": "fcf6e7784b20fdb65f2f2928132c660b7a0f651bf196be2a5ed2643bbf7b03c5",
+          "relative_l2": 0.009978838454418187,
+          "rmse": 0.06520377151106936,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "a2eec6dacda394d81c14a2f089d6de7b3b262305e956b312095d7621fa646604",
+          "elements": 4096,
+          "exact_words": 479,
+          "first_mismatching_element": 0,
+          "max_abs_error": 2.0,
+          "max_bf16_steps": 31337,
+          "name": "layer28-hidden",
+          "reference_sha256": "88abc055a2ac7efdfeb4385832849c7c2c558a51acac8654fa892472ffe2ec7a",
+          "relative_l2": 0.009514295116808427,
+          "rmse": 0.07363424817398065,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "fb158c032e5e0ac5e3de4bc5df9a0e4321269e30bb73ab11d6b9af7099d7402d",
+          "elements": 4096,
+          "exact_words": 464,
+          "first_mismatching_element": 1,
+          "max_abs_error": 2.0,
+          "max_bf16_steps": 31612,
+          "name": "layer29-hidden",
+          "reference_sha256": "fbfa117e5d6b40ad67a83aa642865f9880272b8cf9742c89d07464c5de18979d",
+          "relative_l2": 0.009271942468531342,
+          "rmse": 0.08073392913831366,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "ea296070f1b4229395f1d07a1a92b6e8312794d9c3d0cece10cd86a7ca0b6d4d",
+          "elements": 4096,
+          "exact_words": 485,
+          "first_mismatching_element": 0,
+          "max_abs_error": 2.0,
+          "max_bf16_steps": 31491,
+          "name": "layer30-hidden",
+          "reference_sha256": "1cc630f5f1598957de9a7e8f6066c425e03386c5d471c8057f4ae9d3244f3bf0",
+          "relative_l2": 0.009008206598042003,
+          "rmse": 0.09146580057763981,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "0064cd42cdd022086cf32180c5efd6d0e0b56734e1d46ea269c75d91e056c0b0",
+          "elements": 4096,
+          "exact_words": 420,
+          "first_mismatching_element": 0,
+          "max_abs_error": 2.0,
+          "max_bf16_steps": 31465,
+          "name": "layer31-hidden",
+          "reference_sha256": "685afe170c5c059dcd543f4a8ec0636ce0bd4a01807656475358638167025a7c",
+          "relative_l2": 0.008548108966208865,
+          "rmse": 0.09971204742766714,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "562ecee54aeb28d42f4fe46a6d4f8f9f61d704e4c7215ebf18eeb20c058af5fa",
+          "elements": 4096,
+          "exact_words": 454,
+          "first_mismatching_element": 0,
+          "max_abs_error": 2.0,
+          "max_bf16_steps": 31600,
+          "name": "layer32-hidden",
+          "reference_sha256": "d7b7959a4de72e4559adbfbad6ed9aa208926bc290ae44a0f712dac580f31b04",
+          "relative_l2": 0.008293260993799184,
+          "rmse": 0.10942697886675529,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "9c7cbea046a2684ed24c4b86b00fce767e5e6be046adaf56394c16a7c4c5b2a0",
+          "elements": 4096,
+          "exact_words": 444,
+          "first_mismatching_element": 0,
+          "max_abs_error": 0.875,
+          "max_bf16_steps": 31630,
+          "name": "layer33-hidden",
+          "reference_sha256": "7ee9f01edad28c270210e326ad36e0288ac213bdae16ba7a1114313c7a8205bb",
+          "relative_l2": 0.007433530771434591,
+          "rmse": 0.1157653810574928,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "2a779b0832ebd706abc0fc90f023abcbcd61fed5a7bf7843ec331d434c5fbe62",
+          "elements": 4096,
+          "exact_words": 428,
+          "first_mismatching_element": 0,
+          "max_abs_error": 1.1171875,
+          "max_bf16_steps": 31909,
+          "name": "layer34-hidden",
+          "reference_sha256": "98424e35f28a1c4b6adb3080068e136cba503ab18781ef840c80065db4cc7a9f",
+          "relative_l2": 0.005853433410593687,
+          "rmse": 0.1358417013352121,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "c286bae7273cb2f000d38bfc1023fffa533750cdbaef1e160e9fc4332b46d3ae",
+          "elements": 4096,
+          "exact_words": 498,
+          "first_mismatching_element": 1,
+          "max_abs_error": 4.0,
+          "max_bf16_steps": 31966,
+          "name": "layer35-hidden",
+          "reference_sha256": "2466000c31dcf2760d63bf9a743f9847ecc27f1de59e19f730d41d658ea84fa0",
+          "relative_l2": 0.006701586727473757,
+          "rmse": 0.19428544286388522,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "fd9c1e97387c52c7a06af9f0fdb0499a87a6290d5c73544dadb85d6bee56520d",
+          "elements": 4096,
+          "exact_words": 520,
+          "first_mismatching_element": 0,
+          "max_abs_error": 0.5,
+          "max_bf16_steps": 30944,
+          "name": "final-norm",
+          "reference_sha256": "64054b9d122cf5b59a0b106d5571a2f7811bfb22acf67ba4f08bb75bf687d654",
+          "relative_l2": 0.005090697918674471,
+          "rmse": 0.01798052938025841,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "6db58b928767dd87e00b5e0c954cbc636b5d2cdfec94ce2d593b4d9591e87e7d",
+          "elements": 151936,
+          "exact_words": 71642,
+          "first_mismatching_element": 0,
+          "max_abs_error": 0.125,
+          "max_bf16_steps": 30938,
+          "name": "logits",
+          "reference_sha256": "004d2f62260bf260fe207a8c57abe17ae8f094f4226588100d002ef59f08eabf",
+          "relative_l2": 0.0043850887653870355,
+          "rmse": 0.03532785952711008,
+          "zero_reference_norm": false
+        }
+      ]
+    },
+    {
+      "candidate_input": 220,
+      "candidate_output": 16,
+      "output_equal": true,
+      "position": 3,
+      "reference_input": 220,
+      "reference_output": 16,
+      "same_input_history": true,
+      "tensors": [
+        {
+          "byte_equal": false,
+          "candidate_sha256": "405085a62daccf4a3583d0d8f2eb94af86f356b93b8f757ffb42818f6587b378",
+          "elements": 4096,
+          "exact_words": 1667,
+          "first_mismatching_element": 4,
+          "max_abs_error": 0.0078125,
+          "max_bf16_steps": 28796,
+          "name": "layer0-hidden",
+          "reference_sha256": "f5217712cd2d2cf2da26db560604017b54e3c705ea8848d0e59295bbe35f3fe0",
+          "relative_l2": 0.0010720693979294484,
+          "rmse": 0.00030544722521687643,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "3ff181fd62c65596d0fd26ba01a9b3c068089144b95ebf174c471594103a3d3a",
+          "elements": 4096,
+          "exact_words": 1408,
+          "first_mismatching_element": 1,
+          "max_abs_error": 0.0625,
+          "max_bf16_steps": 29465,
+          "name": "layer1-hidden",
+          "reference_sha256": "3f5f6de04d74230dcd415bd79563073a1a4ffdd6a5e87a7f75e66dddded70f13",
+          "relative_l2": 0.0011820577820428333,
+          "rmse": 0.0011982151454041619,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "5a89d1b7f18fd9f367e4bf8f32731bc8515a239d9944390dfb5f4c0e293c425d",
+          "elements": 4096,
+          "exact_words": 1180,
+          "first_mismatching_element": 1,
+          "max_abs_error": 0.0625,
+          "max_bf16_steps": 29794,
+          "name": "layer2-hidden",
+          "reference_sha256": "0a3cff781170e85407f10eed8793d4ad994ee96ac7e66c2abe5847d86027128d",
+          "relative_l2": 0.001069335846739647,
+          "rmse": 0.0014940653859224513,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "16dfea331af47b6e241436addb8f1f0ef6958a84e70f19172184d6d5cfaeee32",
+          "elements": 4096,
+          "exact_words": 1064,
+          "first_mismatching_element": 0,
+          "max_abs_error": 0.0625,
+          "max_bf16_steps": 29675,
+          "name": "layer3-hidden",
+          "reference_sha256": "cee3c9a0f6b3276e2f97ff55dfb5c82ac158515e4be8f8c606c76b69dea7de04",
+          "relative_l2": 0.0010588207289138412,
+          "rmse": 0.0015407216452817667,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "37e2d899279b141bee834c387390d9616765ee21c0a1253281d306bfe3223364",
+          "elements": 4096,
+          "exact_words": 919,
+          "first_mismatching_element": 0,
+          "max_abs_error": 0.0625,
+          "max_bf16_steps": 29544,
+          "name": "layer4-hidden",
+          "reference_sha256": "cfdf95f120218656ea55ae3ea574f7d4efb2270987568bb6bb55bf181c531458",
+          "relative_l2": 0.0011326061075119438,
+          "rmse": 0.0016748907330731253,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "457cb2105c797a0438bdf9a9146b81492948d06c2d140bf4a45ccf6053ae4d47",
+          "elements": 4096,
+          "exact_words": 821,
+          "first_mismatching_element": 1,
+          "max_abs_error": 0.0625,
+          "max_bf16_steps": 29965,
+          "name": "layer5-hidden",
+          "reference_sha256": "b392749f1c3bc9fc75d2bf627e651b7d245d87882fcdbe7371528b0bf2a1787c",
+          "relative_l2": 0.0018431270812420651,
+          "rmse": 0.0022182171496324715,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "ae003cc1780d50acc51b56a5652cc10e67daec623349db287f58e4cb3ba2c581",
+          "elements": 4096,
+          "exact_words": 574,
+          "first_mismatching_element": 0,
+          "max_abs_error": 0.375,
+          "max_bf16_steps": 30521,
+          "name": "layer6-hidden",
+          "reference_sha256": "8b5a0b6d79f16cef7ca4da363a1e56aeaf29bc0d2fe93f14ea541e9fce068dfd",
+          "relative_l2": 0.012071660276940519,
+          "rmse": 0.006951775947857497,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "fec44cf22634c3c22df040994c88df465f3bbf34867fd17978d4dbfe4991192f",
+          "elements": 4096,
+          "exact_words": 310,
+          "first_mismatching_element": 0,
+          "max_abs_error": 0.375,
+          "max_bf16_steps": 30771,
+          "name": "layer7-hidden",
+          "reference_sha256": "af1a94973baef87f1f92fcbec9c7ae000bfeb363da5c6f8b2ddd3e4fa13e5439",
+          "relative_l2": 0.01496635216544804,
+          "rmse": 0.009365165355439726,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "dbb218e9a6189ad2e29136a059cbf6c786856325e8df0430cd57fec12d15a1b6",
+          "elements": 4096,
+          "exact_words": 287,
+          "first_mismatching_element": 0,
+          "max_abs_error": 0.375,
+          "max_bf16_steps": 30933,
+          "name": "layer8-hidden",
+          "reference_sha256": "60b1b5664ea07d6238c3cb318a601eaee71f4bbbe3b1a191ab2789ba48593e15",
+          "relative_l2": 0.016801887460583358,
+          "rmse": 0.012358968040606082,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "781499628972041027a3881b4c72742492ee4c2b47a4fdb8a0964e3992ed5749",
+          "elements": 4096,
+          "exact_words": 316,
+          "first_mismatching_element": 0,
+          "max_abs_error": 0.25,
+          "max_bf16_steps": 30893,
+          "name": "layer9-hidden",
+          "reference_sha256": "085808d120e336af6470c17c0d4a7d4eb97cdd3d45a64b23c4e1ce8b68861aee",
+          "relative_l2": 0.016577402787220544,
+          "rmse": 0.013758101689564178,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "6cadfa7c75b8bdb0ba8c86a70ebc0d9bae2703a72befb032934a3976b45eac8d",
+          "elements": 4096,
+          "exact_words": 257,
+          "first_mismatching_element": 0,
+          "max_abs_error": 0.25,
+          "max_bf16_steps": 31048,
+          "name": "layer10-hidden",
+          "reference_sha256": "0aa7b03b4723d04ef8b302a1e6e844cd780b73b9af0fa46e3a6874cb87001e84",
+          "relative_l2": 0.016920990028563097,
+          "rmse": 0.016168835028763096,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "ca26f698174615bac55d78279544f9d433931d2fd7176227036ce3fdde277d7b",
+          "elements": 4096,
+          "exact_words": 314,
+          "first_mismatching_element": 0,
+          "max_abs_error": 0.25,
+          "max_bf16_steps": 30909,
+          "name": "layer11-hidden",
+          "reference_sha256": "0b7a600217aa308c696bcf2836d6aae184e62c21ca66a16be122129b1cf97b29",
+          "relative_l2": 0.014914616457624347,
+          "rmse": 0.015605091863924348,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "9f2f3112e6ebb91ccad0564dec7d45dbc887f7c71f730efab0c9556881e20a95",
+          "elements": 4096,
+          "exact_words": 434,
+          "first_mismatching_element": 0,
+          "max_abs_error": 0.25,
+          "max_bf16_steps": 30996,
+          "name": "layer12-hidden",
+          "reference_sha256": "7f61caefd13e62ada551cfe63ae755d43ea7da3bcdf52a9c830024fa9d654890",
+          "relative_l2": 0.013272293748310755,
+          "rmse": 0.02216953778916894,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "96d47c4428cd2ec81fbddb9dbfa83dd1e39a6d40ba1e8ac1342fc6f2a1181dc4",
+          "elements": 4096,
+          "exact_words": 448,
+          "first_mismatching_element": 0,
+          "max_abs_error": 0.25,
+          "max_bf16_steps": 30969,
+          "name": "layer13-hidden",
+          "reference_sha256": "b8a6a61f7ba24dd4dd87d2aed8a58fa8778830eddcf0b78775f2913b93c1288b",
+          "relative_l2": 0.013363582565077517,
+          "rmse": 0.018753425843872202,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "88dad02b599a767f35dbf20ae19db60568a770e4b7b21327ba3d275cf0ab41b3",
+          "elements": 4096,
+          "exact_words": 327,
+          "first_mismatching_element": 0,
+          "max_abs_error": 0.4375,
+          "max_bf16_steps": 30867,
+          "name": "layer14-hidden",
+          "reference_sha256": "4c022c7289e6f56beceda8d6b1b717f06a351d502dcefcce59d9c8386f6686ae",
+          "relative_l2": 0.01363967944206441,
+          "rmse": 0.034814981330891975,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "cb19b29f79ff2f988aa6f9e26e4ce70583e660881707081941fcb503dda72d8f",
+          "elements": 4096,
+          "exact_words": 456,
+          "first_mismatching_element": 0,
+          "max_abs_error": 0.625,
+          "max_bf16_steps": 30969,
+          "name": "layer15-hidden",
+          "reference_sha256": "6d873e4842eaafa3f17f4b47038b91f4103a683dccf90b0d3b3b34532d500d89",
+          "relative_l2": 0.01339443591105725,
+          "rmse": 0.030366155251550793,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "9dfeff05b4f77e00f72ae7a51d61fd5163fcff5032a6f6a5dd596ead35f95221",
+          "elements": 4096,
+          "exact_words": 415,
+          "first_mismatching_element": 0,
+          "max_abs_error": 0.6875,
+          "max_bf16_steps": 31426,
+          "name": "layer16-hidden",
+          "reference_sha256": "549f8e0c3f180d421dc5acb586605aea9f2825a5ec4cf79c57f9f7cc861c305d",
+          "relative_l2": 0.014774224731686814,
+          "rmse": 0.029538539355310752,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "3dcc12fc2b8580ea27af629c296b9f36dd329d9dc2b93616ee7155a75c67628f",
+          "elements": 4096,
+          "exact_words": 411,
+          "first_mismatching_element": 0,
+          "max_abs_error": 0.59375,
+          "max_bf16_steps": 31023,
+          "name": "layer17-hidden",
+          "reference_sha256": "ec632906ec58c84620578d075d73a4170b2cdfbb8a8f81292c82dceeeb6d805b",
+          "relative_l2": 0.013736199434238825,
+          "rmse": 0.02878075653687264,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "a0d710990607c2de10668dc271b2bccf8ef2f150b9f7286db90b71c504646f2e",
+          "elements": 4096,
+          "exact_words": 254,
+          "first_mismatching_element": 0,
+          "max_abs_error": 0.25,
+          "max_bf16_steps": 31096,
+          "name": "layer18-hidden",
+          "reference_sha256": "95c4867223512d65a3e185f531d97674d06bfa29ba8ce4f13a4d64929c67842b",
+          "relative_l2": 0.017173915244742873,
+          "rmse": 0.0243980721651313,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "9778d9b9ba55e9ee5e9818ff671c2cc947c24c9c884ee46f4945126edfc2b488",
+          "elements": 4096,
+          "exact_words": 265,
+          "first_mismatching_element": 0,
+          "max_abs_error": 0.25,
+          "max_bf16_steps": 31188,
+          "name": "layer19-hidden",
+          "reference_sha256": "2c0725463b1fb658e9bcba51e541f44945db04172744bfa3354335d3c33f4256",
+          "relative_l2": 0.014875809016217285,
+          "rmse": 0.025367514691410974,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "8423122e8e4fac3b4ef1f5d08df3e0d7c28e67b6810d8acd16f29b090ce9508a",
+          "elements": 4096,
+          "exact_words": 274,
+          "first_mismatching_element": 0,
+          "max_abs_error": 0.25,
+          "max_bf16_steps": 31295,
+          "name": "layer20-hidden",
+          "reference_sha256": "68437c42720c1e219178f28674e02300a2f5064e9972f7cb2f87826692e2499d",
+          "relative_l2": 0.015347509402650637,
+          "rmse": 0.02777946870862057,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "01ca48107a3e21657725a195132837993cd56794acc21b7321edaa9de47606cf",
+          "elements": 4096,
+          "exact_words": 295,
+          "first_mismatching_element": 0,
+          "max_abs_error": 0.25,
+          "max_bf16_steps": 31116,
+          "name": "layer21-hidden",
+          "reference_sha256": "b93b9e318fc89c8956eb4bbaf7bc80d0c79f0bcc948240b279db7e2f828b5e73",
+          "relative_l2": 0.015453689091112435,
+          "rmse": 0.03027566708119892,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "0390a9ea814793edc656c5411ab77ea2ac2e7822bbc0879f12ee7d09ed88b613",
+          "elements": 4096,
+          "exact_words": 327,
+          "first_mismatching_element": 0,
+          "max_abs_error": 0.5,
+          "max_bf16_steps": 31539,
+          "name": "layer22-hidden",
+          "reference_sha256": "4f7ebb5892e81422f1c35417dc1bd411fc54f8c82531f53dadf84a06b3baa902",
+          "relative_l2": 0.01545049001890881,
+          "rmse": 0.033987714977308014,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "4dd95b48ab99adb98920ef85240722495a4b29e9f2a7d4b0daa0d339370b61e8",
+          "elements": 4096,
+          "exact_words": 307,
+          "first_mismatching_element": 0,
+          "max_abs_error": 0.5,
+          "max_bf16_steps": 31311,
+          "name": "layer23-hidden",
+          "reference_sha256": "9f6b083cbcda98a0d6551cb6118894ac22d80675d05bd95d8aa133b463a13769",
+          "relative_l2": 0.014168856356054648,
+          "rmse": 0.03909900683886128,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "197225a36de571af668d7dab50da6ab197afe407424a66bf8451dbbba7d4b46e",
+          "elements": 4096,
+          "exact_words": 352,
+          "first_mismatching_element": 0,
+          "max_abs_error": 0.5,
+          "max_bf16_steps": 31780,
+          "name": "layer24-hidden",
+          "reference_sha256": "77c0b8d56f11d0da1a7c556ad13bf02ca567b85b39e101bef21a4733037b1a14",
+          "relative_l2": 0.013814331010744958,
+          "rmse": 0.046925932705197695,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "6a8dd43205be8413832e9cd7b517b59b41d428e335b19341f7d8cbea484d11d3",
+          "elements": 4096,
+          "exact_words": 319,
+          "first_mismatching_element": 0,
+          "max_abs_error": 0.5,
+          "max_bf16_steps": 31421,
+          "name": "layer25-hidden",
+          "reference_sha256": "741c11e0234405a2c054b9b3bf4accc471c562a0a5992c1b26a5597dde4d14e6",
+          "relative_l2": 0.013676117748644556,
+          "rmse": 0.0533452386453902,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "6332ddb7c1dd6fa3d6990c244df6d71c2b5b611ba143acfa01c24894c362be8b",
+          "elements": 4096,
+          "exact_words": 322,
+          "first_mismatching_element": 0,
+          "max_abs_error": 1.0,
+          "max_bf16_steps": 31503,
+          "name": "layer26-hidden",
+          "reference_sha256": "39ecf2d3f2d4124db09d38efe4d77291cd4673d8e4fbbed3f263d065f0e6f44e",
+          "relative_l2": 0.013592092868075233,
+          "rmse": 0.06034450566142247,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "2ce1ee6670da10ae36e41dd70a8dbb4c159bffe5f226b1425b6b2ced28ea0648",
+          "elements": 4096,
+          "exact_words": 351,
+          "first_mismatching_element": 0,
+          "max_abs_error": 1.0,
+          "max_bf16_steps": 31423,
+          "name": "layer27-hidden",
+          "reference_sha256": "d715c155a4e210c998846c520c42a55cf55256158ad560e9d6e305cdeee71282",
+          "relative_l2": 0.01328764511972566,
+          "rmse": 0.0663528709323346,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "4f1cd198972d6794bf665a85e5d0482efc2bde4fda6aacff8a4c57f22d80b71e",
+          "elements": 4096,
+          "exact_words": 324,
+          "first_mismatching_element": 0,
+          "max_abs_error": 1.0,
+          "max_bf16_steps": 31622,
+          "name": "layer28-hidden",
+          "reference_sha256": "d1303a3c7987990f7521a61102dfe592c0b893144cc5b170591a8cdf84a6d3ad",
+          "relative_l2": 0.013077871755362454,
+          "rmse": 0.07585194174654004,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "b1f5545fc1d355ab9ced9bd4608781c4e9c56b77e6333315d14d43bf0ae0a08b",
+          "elements": 4096,
+          "exact_words": 313,
+          "first_mismatching_element": 0,
+          "max_abs_error": 2.0,
+          "max_bf16_steps": 31507,
+          "name": "layer29-hidden",
+          "reference_sha256": "9d3ef7a1e20b2a75edbefc57336003ec9433ac8424dd65aeed50085a3a4f6e88",
+          "relative_l2": 0.013477924450966237,
+          "rmse": 0.08640057256828382,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "61741086781f2907500b2d8189f6c251ea92fa81a2e883b8ea466cdab5803fd0",
+          "elements": 4096,
+          "exact_words": 295,
+          "first_mismatching_element": 0,
+          "max_abs_error": 2.0,
+          "max_bf16_steps": 31650,
+          "name": "layer30-hidden",
+          "reference_sha256": "86d78162b8c2f423570ee87a06cb4ace3512f228d12b577a7642a87383b3d986",
+          "relative_l2": 0.01271226197966344,
+          "rmse": 0.09255803457894911,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "062f8d2d79b09da559f80d7c57509efd89731e4c02fd0b20f642dd989cb490d5",
+          "elements": 4096,
+          "exact_words": 321,
+          "first_mismatching_element": 0,
+          "max_abs_error": 2.0,
+          "max_bf16_steps": 31683,
+          "name": "layer31-hidden",
+          "reference_sha256": "153371c1cc49c54ff565f43439624b4a9b28a2915fd72cb93c43324679293b39",
+          "relative_l2": 0.012090912022459295,
+          "rmse": 0.10086783730790241,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "fb13247e65247b73047e20f71c3b667dd8814b36ff1863736b69e43cee21ce03",
+          "elements": 4096,
+          "exact_words": 356,
+          "first_mismatching_element": 0,
+          "max_abs_error": 2.0,
+          "max_bf16_steps": 31738,
+          "name": "layer32-hidden",
+          "reference_sha256": "67bddee0250a9d3d1a92609a536573dcb781b8b86f20ba5fa9c171f19dbefae9",
+          "relative_l2": 0.011880608493108756,
+          "rmse": 0.11388908629447948,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "77c82ceeb94983231ebdc6ab4fcadb827123594d1b8eb5884bacc4579e8352fd",
+          "elements": 4096,
+          "exact_words": 358,
+          "first_mismatching_element": 0,
+          "max_abs_error": 2.0,
+          "max_bf16_steps": 31831,
+          "name": "layer33-hidden",
+          "reference_sha256": "69e5a565590b23cb700b233f2563bb048566d1ff35430ceb9c054b33797596b2",
+          "relative_l2": 0.010553991440015157,
+          "rmse": 0.1269942085816876,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "6918ee23429b9ebec2cbf12f0bac6a1330f750d7da06e2cb75180e72efb644bf",
+          "elements": 4096,
+          "exact_words": 425,
+          "first_mismatching_element": 0,
+          "max_abs_error": 4.0,
+          "max_bf16_steps": 32012,
+          "name": "layer34-hidden",
+          "reference_sha256": "57764653bc94ea8608b4ea68fcd2cbe240e1d48486235eea1566b38b30adce06",
+          "relative_l2": 0.007632607317716779,
+          "rmse": 0.15783424154316547,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "7c8dc13899316db168b77ea9a6b08e6f1c215b3d684f9e59e05c8fdd056ca1d5",
+          "elements": 4096,
+          "exact_words": 571,
+          "first_mismatching_element": 0,
+          "max_abs_error": 8.0,
+          "max_bf16_steps": 31994,
+          "name": "layer35-hidden",
+          "reference_sha256": "9bdb47497f0c5c8e976eefe5a7684ea365fd734313bca1956783d559656992cd",
+          "relative_l2": 0.008975079751885601,
+          "rmse": 0.26329463944471687,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "974a615823c74f692f477abd9b206b15d848ee5510ca3e51d0b5d8c9907f663d",
+          "elements": 4096,
+          "exact_words": 603,
+          "first_mismatching_element": 0,
+          "max_abs_error": 0.5,
+          "max_bf16_steps": 31016,
+          "name": "final-norm",
+          "reference_sha256": "ec67b5cbd76d31964cfb7ce7482ac3ea9755b48270cfa00661d434e56fa30c40",
+          "relative_l2": 0.006060865840058976,
+          "rmse": 0.018506004499381844,
+          "zero_reference_norm": false
+        },
+        {
+          "byte_equal": false,
+          "candidate_sha256": "e39d972d06d3142717aad36bd16b81c31bbbd36852726854524638088d70107d",
+          "elements": 151936,
+          "exact_words": 61166,
+          "first_mismatching_element": 0,
+          "max_abs_error": 0.125,
+          "max_bf16_steps": 31206,
+          "name": "logits",
+          "reference_sha256": "02da160e711df8f74b4be70e15e8982cff7aae5e6a71f7a3d4b492e227b0f13a",
+          "relative_l2": 0.004914187231692347,
+          "rmse": 0.031338582907499773,
+          "zero_reference_norm": false
+        }
+      ]
+    }
+  ],
+  "independent_numerical_acceptance": false,
+  "independent_reference_compared": true,
+  "independent_tensor_acceptance": false,
+  "input_pins": {
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/framework-rearm-v224-v1/complete.json": {
+      "bytes": 8288,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/framework-rearm-v224-v1/complete.json",
+      "sha256": "cac5d79969c2e17a19630a581b5e21c594ea65b452806630ee87bf7855396036"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/framework-rearm-v224-v1/execute/command.json": {
+      "bytes": 1647,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/framework-rearm-v224-v1/execute/command.json",
+      "sha256": "f07523c89e6d29af10161560fb05f4683ee7e9ac333c8a62d9cb9e13405ec9c9"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/framework-rearm-v224-v1/execute/result.json": {
+      "bytes": 1174,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/framework-rearm-v224-v1/execute/result.json",
+      "sha256": "33e4d46bc5791a2e2b6e281a11fbcd6f232dde0da389d6c4dc8510d4c222924a"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/framework-rearm-v224-v1/execute/started.json": {
+      "bytes": 157,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/framework-rearm-v224-v1/execute/started.json",
+      "sha256": "57215ee9d7b770a530b31ceed7fd9876b31b938cd9f2ed8d638d790249e9e829"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/framework-rearm-v224-v1/execute/stderr": {
+      "bytes": 159,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/framework-rearm-v224-v1/execute/stderr",
+      "sha256": "c2e4e551f806c44af451959a761ddf0789deebe299766c1bb518bed0d73bf4b6"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/framework-rearm-v224-v1/execute/stdout": {
+      "bytes": 230,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/framework-rearm-v224-v1/execute/stdout",
+      "sha256": "cd22899edae23119875a542948c274903d1e2ef4c5397ffd51bd264aabfad11e"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/framework-rearm-v224-v1/reference/pass1-pos0.bf16": {
+      "bytes": 606976,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/framework-rearm-v224-v1/reference/pass1-pos0.bf16",
+      "sha256": "505dcfe93989f2ebd8f85e2d1fdf74e6d00da29e94df2b26d21cdf5d9a73f31c"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/framework-rearm-v224-v1/reference/pass1-pos1.bf16": {
+      "bytes": 606976,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/framework-rearm-v224-v1/reference/pass1-pos1.bf16",
+      "sha256": "918bc04894a7786e92de2d942867eb97dd5398acaf2dc91000cfdb8647933159"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/framework-rearm-v224-v1/reference/pass1-pos2.bf16": {
+      "bytes": 606976,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/framework-rearm-v224-v1/reference/pass1-pos2.bf16",
+      "sha256": "3bba779ff89b08ab8c781df4dcf355cd8299cdc5710d487330860d53a3e30864"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/framework-rearm-v224-v1/reference/pass1-pos3.bf16": {
+      "bytes": 606976,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/framework-rearm-v224-v1/reference/pass1-pos3.bf16",
+      "sha256": "416fd793f81e13cc4139d928722aaeaf424ea5d6753922d4bbe061d1444d7bbd"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/framework-rearm-v224-v1/reference/pass2-pos0.bf16": {
+      "bytes": 606976,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/framework-rearm-v224-v1/reference/pass2-pos0.bf16",
+      "sha256": "505dcfe93989f2ebd8f85e2d1fdf74e6d00da29e94df2b26d21cdf5d9a73f31c"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/framework-rearm-v224-v1/reference/pass2-pos1.bf16": {
+      "bytes": 606976,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/framework-rearm-v224-v1/reference/pass2-pos1.bf16",
+      "sha256": "918bc04894a7786e92de2d942867eb97dd5398acaf2dc91000cfdb8647933159"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/framework-rearm-v224-v1/reference/pass2-pos2.bf16": {
+      "bytes": 606976,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/framework-rearm-v224-v1/reference/pass2-pos2.bf16",
+      "sha256": "3bba779ff89b08ab8c781df4dcf355cd8299cdc5710d487330860d53a3e30864"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/framework-rearm-v224-v1/reference/pass2-pos3.bf16": {
+      "bytes": 606976,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/framework-rearm-v224-v1/reference/pass2-pos3.bf16",
+      "sha256": "416fd793f81e13cc4139d928722aaeaf424ea5d6753922d4bbe061d1444d7bbd"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/framework-rearm-v224-v1/reference/reference.json": {
+      "bytes": 128641,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/framework-rearm-v224-v1/reference/reference.json",
+      "sha256": "2edddf40cc6195fdd622e479e8e46f2a659f1b569106f5f4e51afdb83bdc2416"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p227-prefix-decode-gpu-qualification-v2/README.txt": {
+      "bytes": 7728,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p227-prefix-decode-gpu-qualification-v2/README.txt",
+      "sha256": "a4df38144a740a713cae7021012c095a621b581fd05281d96e40bddd9db0d367"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p227-prefix-decode-gpu-qualification-v2/compare.py": {
+      "bytes": 20580,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p227-prefix-decode-gpu-qualification-v2/compare.py",
+      "sha256": "8154580de7f5ad40fd4897ce264fc3d92c9a109808ea7ea5dab6d0486f01e622"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p227-prefix-decode-gpu-qualification-v2/decode_validation.py": {
+      "bytes": 16868,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p227-prefix-decode-gpu-qualification-v2/decode_validation.py",
+      "sha256": "db9531757aed606a84c986cb4db736bde398d5fb67ffac74561116d9daaaceae"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p227-prefix-decode-gpu-qualification-v2/helpers/baseline_ar4.py": {
+      "bytes": 14428,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p227-prefix-decode-gpu-qualification-v2/helpers/baseline_ar4.py",
+      "sha256": "b7ec1d8066a671acced6628fd82a1af6ecfad4afdb97e0481bbbcd2a57d5a6cf"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p227-prefix-decode-gpu-qualification-v2/helpers/baseline_tf4.py": {
+      "bytes": 14214,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p227-prefix-decode-gpu-qualification-v2/helpers/baseline_tf4.py",
+      "sha256": "031d2b897d4cd341610fb577ad88c421866edce841468103a166dae87b7ff67a"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p227-prefix-decode-gpu-qualification-v2/helpers/diagnostics.py": {
+      "bytes": 6314,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p227-prefix-decode-gpu-qualification-v2/helpers/diagnostics.py",
+      "sha256": "645f11391b2255b7b93a8e7f0372114ad9700a0037e718bb48677d2234b926e7"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p227-prefix-decode-gpu-qualification-v2/helpers/smoke_validation.py": {
+      "bytes": 14980,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p227-prefix-decode-gpu-qualification-v2/helpers/smoke_validation.py",
+      "sha256": "9bf460451e722452da9c49168c730615d32e9b73b200c579f003e9e45238ea26"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p227-prefix-decode-gpu-qualification-v2/helpers/stage_core.py": {
+      "bytes": 12074,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p227-prefix-decode-gpu-qualification-v2/helpers/stage_core.py",
+      "sha256": "7e3d64e80e66bacbbba05ac3236189249949bb95ea3f717150822cf45740eec2"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p227-prefix-decode-gpu-qualification-v2/manifest.json": {
+      "bytes": 2807,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p227-prefix-decode-gpu-qualification-v2/manifest.json",
+      "sha256": "ee82ba07eea0e87d20e4fe46eb880c446531d521e04c591a7a8811be051a3f1c"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p227-prefix-decode-gpu-qualification-v2/test_compare.py": {
+      "bytes": 25157,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p227-prefix-decode-gpu-qualification-v2/test_compare.py",
+      "sha256": "26375e5a5db4298afbe688d4e1a53b4772f05fae3059e3589723eb838d276d4a"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-group-fence-gpu-v3/README.txt": {
+      "bytes": 2103,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-group-fence-gpu-v3/README.txt",
+      "sha256": "3bc1ebbdd9558e41117ee483c744afe383c9b1fafc029fbf036f46c829735618"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-group-fence-gpu-v3/audit_runtime.py": {
+      "bytes": 2464,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-group-fence-gpu-v3/audit_runtime.py",
+      "sha256": "c3c3e6f088a4d97485f88adb95507cd374a1638f0dd4f8694937028765d5d7ef"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-group-fence-gpu-v3/export_group_fence.py": {
+      "bytes": 3338,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-group-fence-gpu-v3/export_group_fence.py",
+      "sha256": "378a098343004a0d6f39e8393b941f37a2f991f675134198d8e6733b2e9f4783"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-group-fence-gpu-v3/export_policy_deployment.py": {
+      "bytes": 4216,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-group-fence-gpu-v3/export_policy_deployment.py",
+      "sha256": "2933f732e5d7eee7262039445ab77c51f9619d12b96ab8a5ec7c247026b3275f"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-group-fence-gpu-v3/frozen_owned.py": {
+      "bytes": 30433,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-group-fence-gpu-v3/frozen_owned.py",
+      "sha256": "ab41af455396322303bb8ebd4132e680affc3bdc5830608fad36736c92024583"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-group-fence-gpu-v3/group_fence_portable.py": {
+      "bytes": 14671,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-group-fence-gpu-v3/group_fence_portable.py",
+      "sha256": "18c2c243d308faf7cf57b375ca3d08570547f51840db67275543a1dca78ab66d"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-group-fence-gpu-v3/host_comparison.py": {
+      "bytes": 5561,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-group-fence-gpu-v3/host_comparison.py",
+      "sha256": "73443888b48ace65ffe51aab500a42a64058839f978bfeb23ad03040b6ab24f7"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-group-fence-gpu-v3/host_validation.py": {
+      "bytes": 10099,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-group-fence-gpu-v3/host_validation.py",
+      "sha256": "2f32426a80aca05125112ee3f023c075caea2f9360cbbde1fcb6c3b54cc4f73f"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-group-fence-gpu-v3/intake.py": {
+      "bytes": 17850,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-group-fence-gpu-v3/intake.py",
+      "sha256": "951e9451edc973a7e2b8ca7ec740cf677c058325671c460973f7079ee93fefec"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-group-fence-gpu-v3/layer_validation.py": {
+      "bytes": 16186,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-group-fence-gpu-v3/layer_validation.py",
+      "sha256": "757c077979b7ee02d4c0e7d222e75292cd9d417927f84ae9a8134344f8e217b9"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-group-fence-gpu-v3/manifest.json": {
+      "bytes": 5729,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-group-fence-gpu-v3/manifest.json",
+      "sha256": "2ed179c671075b19cda4ca1e5c411d20591be3a0c95c03095039e4f10b070384"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-group-fence-gpu-v3/policy_portable.py": {
+      "bytes": 24807,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-group-fence-gpu-v3/policy_portable.py",
+      "sha256": "aec0caa8a338e843de01f31a4057a5f5c333ec98a0e843c71a18399b1e3ba566"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-group-fence-gpu-v3/run.py": {
+      "bytes": 13423,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-group-fence-gpu-v3/run.py",
+      "sha256": "c67e67d75a95deeec606e768703d73e304c9ac53ba4f1d5cb4a90af038960342"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-group-fence-gpu-v3/run_row_facts_v2.py": {
+      "bytes": 12424,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-group-fence-gpu-v3/run_row_facts_v2.py",
+      "sha256": "244c12f62c8a439aa01b44380fc464008b94006bc919201c8d510c64177fc820"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-group-fence-gpu-v3/test_audit_runtime.py": {
+      "bytes": 4462,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-group-fence-gpu-v3/test_audit_runtime.py",
+      "sha256": "361d1d3b6b8b725956847c38560f78debbfac92473773f8e5927be417cb7673f"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-group-fence-gpu-v3/test_group_fence_portable.py": {
+      "bytes": 4643,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-group-fence-gpu-v3/test_group_fence_portable.py",
+      "sha256": "f0971b191c96ca3d8343c6f69418c5a8d5856252436c6901f7a489a32381a304"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-group-fence-gpu-v3/test_host_comparison.py": {
+      "bytes": 5619,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-group-fence-gpu-v3/test_host_comparison.py",
+      "sha256": "18bb70cc6ffc48f82aafc18b51c869128175cf0736e94b44755393f724983c91"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-group-fence-gpu-v3/test_host_validation.py": {
+      "bytes": 15083,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-group-fence-gpu-v3/test_host_validation.py",
+      "sha256": "dd4514fbaf5a048984f7cbf68ac53e17e4b1704f07be9ae6fa9720887c44f88f"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-group-fence-gpu-v3/test_intake.py": {
+      "bytes": 20947,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-group-fence-gpu-v3/test_intake.py",
+      "sha256": "51a92207a0c1a3f2d7dd6dcaf536b7209a3f1f57cde1c6d31feb4ce97b5eb1e2"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-group-fence-gpu-v3/test_policy_portable.py": {
+      "bytes": 10460,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-group-fence-gpu-v3/test_policy_portable.py",
+      "sha256": "8142ad7d2e4165c32acbdf958ed7c4a06bfcff399a130a63dcc476dec1927e71"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-group-fence-gpu-v3/test_run.py": {
+      "bytes": 11946,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-group-fence-gpu-v3/test_run.py",
+      "sha256": "e7594ff22b92fd8c3b64da2c005922930ac7d4a9d90cc28bcc2e22e05408bb34"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-independent-decode-diagnostic-v1/README.md": {
+      "bytes": 3729,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-independent-decode-diagnostic-v1/README.md",
+      "sha256": "584601f0ef4e0c0a02ac618f3258d9fbc1568927ad65c619e7e7feb422ef0fbf"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-independent-decode-diagnostic-v1/run.py": {
+      "bytes": 13589,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-independent-decode-diagnostic-v1/run.py",
+      "sha256": "259f6f233be23da36eac213bfb5e0c905afa43461461fbb0305efcc45c08d930"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-independent-decode-diagnostic-v1/test_run.py": {
+      "bytes": 10838,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-independent-decode-diagnostic-v1/test_run.py",
+      "sha256": "2e3df90d54d4055682122c2405e234065ebd6e58973f1a1ebe4b5673e162889f"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-independent-decode-observation-v1/INTAKE.md": {
+      "bytes": 6966,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-independent-decode-observation-v1/INTAKE.md",
+      "sha256": "bf1bb195085daec28fd27a8f37c40ab649a65bed2a8ca3e7dc333dc04ef9f1a9"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-independent-decode-observation-v1/README.md": {
+      "bytes": 1703,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-independent-decode-observation-v1/README.md",
+      "sha256": "4ac1ed0a40b40c02edcfec26f195f64518444560b448b2cb1fb35ec23a54fc17"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-independent-decode-observation-v1/RUN.md": {
+      "bytes": 3806,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-independent-decode-observation-v1/RUN.md",
+      "sha256": "80c192640c76933d66586ca92570435a073322bf2ffde77323148d40a7744c77"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-independent-decode-observation-v1/export_group_fence.py": {
+      "bytes": 3338,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-independent-decode-observation-v1/export_group_fence.py",
+      "sha256": "378a098343004a0d6f39e8393b941f37a2f991f675134198d8e6733b2e9f4783"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-independent-decode-observation-v1/frozen_owned.py": {
+      "bytes": 30433,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-independent-decode-observation-v1/frozen_owned.py",
+      "sha256": "ab41af455396322303bb8ebd4132e680affc3bdc5830608fad36736c92024583"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-independent-decode-observation-v1/group_fence_portable.py": {
+      "bytes": 14671,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-independent-decode-observation-v1/group_fence_portable.py",
+      "sha256": "18c2c243d308faf7cf57b375ca3d08570547f51840db67275543a1dca78ab66d"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-independent-decode-observation-v1/host_comparison.py": {
+      "bytes": 5561,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-independent-decode-observation-v1/host_comparison.py",
+      "sha256": "73443888b48ace65ffe51aab500a42a64058839f978bfeb23ad03040b6ab24f7"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-independent-decode-observation-v1/host_validation.py": {
+      "bytes": 10099,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-independent-decode-observation-v1/host_validation.py",
+      "sha256": "2f32426a80aca05125112ee3f023c075caea2f9360cbbde1fcb6c3b54cc4f73f"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-independent-decode-observation-v1/intake.py": {
+      "bytes": 23680,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-independent-decode-observation-v1/intake.py",
+      "sha256": "8ee691a48f27c5ec89b61764b6e8a7fb70b1f16bae76932495d3f555a80c9073"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-independent-decode-observation-v1/layer_validation.py": {
+      "bytes": 16186,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-independent-decode-observation-v1/layer_validation.py",
+      "sha256": "757c077979b7ee02d4c0e7d222e75292cd9d417927f84ae9a8134344f8e217b9"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-independent-decode-observation-v1/manifest.json": {
+      "bytes": 3548,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-independent-decode-observation-v1/manifest.json",
+      "sha256": "10125c91f9c83c55379c5769b2d1bfa099835744b10f292c9ebd5f152ae7e9c3"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-independent-decode-observation-v1/observation.py": {
+      "bytes": 2250,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-independent-decode-observation-v1/observation.py",
+      "sha256": "700d3f62ad974bec86b4b6c4771bd1ab1b8307b44db9b25a55f139a484d4f691"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-independent-decode-observation-v1/policy_portable.py": {
+      "bytes": 24807,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-independent-decode-observation-v1/policy_portable.py",
+      "sha256": "aec0caa8a338e843de01f31a4057a5f5c333ec98a0e843c71a18399b1e3ba566"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-independent-decode-observation-v1/run.py": {
+      "bytes": 15842,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-independent-decode-observation-v1/run.py",
+      "sha256": "9d5443cef020bd2710121581170f0cee71a98b491d876ebc97937ae267878de2"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-independent-decode-observation-v1/run_row_facts_v2.py": {
+      "bytes": 12424,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-independent-decode-observation-v1/run_row_facts_v2.py",
+      "sha256": "244c12f62c8a439aa01b44380fc464008b94006bc919201c8d510c64177fc820"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-independent-decode-observation-v1/test_group_fence_portable.py": {
+      "bytes": 4643,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-independent-decode-observation-v1/test_group_fence_portable.py",
+      "sha256": "f0971b191c96ca3d8343c6f69418c5a8d5856252436c6901f7a489a32381a304"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-independent-decode-observation-v1/test_host_comparison.py": {
+      "bytes": 5619,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-independent-decode-observation-v1/test_host_comparison.py",
+      "sha256": "18bb70cc6ffc48f82aafc18b51c869128175cf0736e94b44755393f724983c91"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-independent-decode-observation-v1/test_host_validation.py": {
+      "bytes": 15083,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-independent-decode-observation-v1/test_host_validation.py",
+      "sha256": "dd4514fbaf5a048984f7cbf68ac53e17e4b1704f07be9ae6fa9720887c44f88f"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-independent-decode-observation-v1/test_intake.py": {
+      "bytes": 15250,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-independent-decode-observation-v1/test_intake.py",
+      "sha256": "e9d296d201bd82eeef4c68a68b1141b12bdd0e1056696a7b9e3e480ecfa95ca2"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-independent-decode-observation-v1/test_observation.py": {
+      "bytes": 6529,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-independent-decode-observation-v1/test_observation.py",
+      "sha256": "95658ca79f59bc6fc6abc4b9090b6aa0c8d2d28cbea5710c06aa13c83cf7ac01"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-independent-decode-observation-v1/test_policy_portable.py": {
+      "bytes": 10460,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-independent-decode-observation-v1/test_policy_portable.py",
+      "sha256": "8142ad7d2e4165c32acbdf958ed7c4a06bfcff399a130a63dcc476dec1927e71"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-independent-decode-observation-v1/test_run.py": {
+      "bytes": 19158,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-independent-decode-observation-v1/test_run.py",
+      "sha256": "e3a8d371d56db42350f69d1a5aad56f3b4d62f66fa49b5dca437100f158d3227"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-decode-host-policy-deployment-v228-v1/bin/ferric-qwen3-finite-prefix-decode-host-policy-engineering": {
+      "bytes": 13618248,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-decode-host-policy-deployment-v228-v1/bin/ferric-qwen3-finite-prefix-decode-host-policy-engineering",
+      "sha256": "830f90b17bde546fb0d236a127f4bff055b31b4f0b46e2381e22ec072cb9d4d0"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-inputs-v228-v2/plan.json": {
+      "bytes": 7015,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-inputs-v228-v2/plan.json",
+      "sha256": "5a142944ecf38eef9a80bf859ca8ac8b6b5ae202e6afc709e0046369f1c9bbc7"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-inputs-v228-v2/request.json": {
+      "bytes": 8119,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-inputs-v228-v2/request.json",
+      "sha256": "a33072c28a2a740287832a4f92fba92dd0822f17ed9a039d264bcb1791027d71"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-shared-full-currentness-gpu-v228-v1/after-0-topology.json": {
+      "bytes": 4180,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-shared-full-currentness-gpu-v228-v1/after-0-topology.json",
+      "sha256": "7e1b9e1d9c9c5f45e90d94cf551c3804758b7ae64aca984bc99d993249307e18"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-shared-full-currentness-gpu-v228-v1/after-0/command.json": {
+      "bytes": 706,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-shared-full-currentness-gpu-v228-v1/after-0/command.json",
+      "sha256": "6e438209610d352a6003f8cb6cf972a9851015711ab0b5ef1bfc58f80ed355d7"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-shared-full-currentness-gpu-v228-v1/after-0/result.json": {
+      "bytes": 1701,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-shared-full-currentness-gpu-v228-v1/after-0/result.json",
+      "sha256": "a0c8bda38746f6348d56638d1ce275bc5a0187664aa53f093ba15e1ac6f9361f"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-shared-full-currentness-gpu-v228-v1/after-0/started.json": {
+      "bytes": 282,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-shared-full-currentness-gpu-v228-v1/after-0/started.json",
+      "sha256": "400f57d8ac2645f302927d7e34a5cea35e22493a545bc5f26f3ef2b27949e6e5"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-shared-full-currentness-gpu-v228-v1/after-0/stderr": {
+      "bytes": 0,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-shared-full-currentness-gpu-v228-v1/after-0/stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-shared-full-currentness-gpu-v228-v1/after-0/stdout": {
+      "bytes": 321,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-shared-full-currentness-gpu-v228-v1/after-0/stdout",
+      "sha256": "fb1d52be68ef1ca207431343c2fe9d71c4b52ca5589e9a38807effa626b069e9"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-shared-full-currentness-gpu-v228-v1/after-1-topology.json": {
+      "bytes": 4180,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-shared-full-currentness-gpu-v228-v1/after-1-topology.json",
+      "sha256": "20bc0fdea7582f2dd09e80e4082bdf41a6ee155b343a5b6fee9aaaed9ef03e0a"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-shared-full-currentness-gpu-v228-v1/after-1/command.json": {
+      "bytes": 706,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-shared-full-currentness-gpu-v228-v1/after-1/command.json",
+      "sha256": "6e438209610d352a6003f8cb6cf972a9851015711ab0b5ef1bfc58f80ed355d7"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-shared-full-currentness-gpu-v228-v1/after-1/result.json": {
+      "bytes": 1700,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-shared-full-currentness-gpu-v228-v1/after-1/result.json",
+      "sha256": "4dd8575b4250c9bc6686c57ea1c51d5a6dbc609405a6c8fae263949003ef8742"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-shared-full-currentness-gpu-v228-v1/after-1/started.json": {
+      "bytes": 282,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-shared-full-currentness-gpu-v228-v1/after-1/started.json",
+      "sha256": "caee67281ef9ff45058c73f2894256e579cde93f40eaedb7475092b1cce6c277"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-shared-full-currentness-gpu-v228-v1/after-1/stderr": {
+      "bytes": 0,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-shared-full-currentness-gpu-v228-v1/after-1/stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-shared-full-currentness-gpu-v228-v1/after-1/stdout": {
+      "bytes": 321,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-shared-full-currentness-gpu-v228-v1/after-1/stdout",
+      "sha256": "fb1d52be68ef1ca207431343c2fe9d71c4b52ca5589e9a38807effa626b069e9"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-shared-full-currentness-gpu-v228-v1/after-2-topology.json": {
+      "bytes": 4178,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-shared-full-currentness-gpu-v228-v1/after-2-topology.json",
+      "sha256": "3ca19ecd190c314d53d514f640aac446bee7c8c16ff51b580946da84c62e13d6"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-shared-full-currentness-gpu-v228-v1/after-2/command.json": {
+      "bytes": 706,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-shared-full-currentness-gpu-v228-v1/after-2/command.json",
+      "sha256": "6e438209610d352a6003f8cb6cf972a9851015711ab0b5ef1bfc58f80ed355d7"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-shared-full-currentness-gpu-v228-v1/after-2/result.json": {
+      "bytes": 1701,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-shared-full-currentness-gpu-v228-v1/after-2/result.json",
+      "sha256": "410ffdb5624de62b0ede29e10fedba802adbd3c9b83092a0ae4b25470cac2b69"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-shared-full-currentness-gpu-v228-v1/after-2/started.json": {
+      "bytes": 282,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-shared-full-currentness-gpu-v228-v1/after-2/started.json",
+      "sha256": "3f83900ccc24cbe7524155619042c790e62f02d3d6742fec00d2336fabe8b565"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-shared-full-currentness-gpu-v228-v1/after-2/stderr": {
+      "bytes": 0,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-shared-full-currentness-gpu-v228-v1/after-2/stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-shared-full-currentness-gpu-v228-v1/after-2/stdout": {
+      "bytes": 321,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-shared-full-currentness-gpu-v228-v1/after-2/stdout",
+      "sha256": "fb1d52be68ef1ca207431343c2fe9d71c4b52ca5589e9a38807effa626b069e9"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-shared-full-currentness-gpu-v228-v1/before-0-topology.json": {
+      "bytes": 4180,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-shared-full-currentness-gpu-v228-v1/before-0-topology.json",
+      "sha256": "21e928bb665b43b0bc40fae15438393ac09abd4da28898f72b084867e6592a64"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-shared-full-currentness-gpu-v228-v1/before-0/command.json": {
+      "bytes": 706,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-shared-full-currentness-gpu-v228-v1/before-0/command.json",
+      "sha256": "6e438209610d352a6003f8cb6cf972a9851015711ab0b5ef1bfc58f80ed355d7"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-shared-full-currentness-gpu-v228-v1/before-0/result.json": {
+      "bytes": 1705,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-shared-full-currentness-gpu-v228-v1/before-0/result.json",
+      "sha256": "5057f0538dc9b2773be02bf2a2aeb4700c484df74838fb31e5735f9640ff99e0"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-shared-full-currentness-gpu-v228-v1/before-0/started.json": {
+      "bytes": 282,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-shared-full-currentness-gpu-v228-v1/before-0/started.json",
+      "sha256": "be0d7ad729df04a70d2a29f0b34369cfcc2bdeadbd88f4fc6a92706bad3e72ca"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-shared-full-currentness-gpu-v228-v1/before-0/stderr": {
+      "bytes": 0,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-shared-full-currentness-gpu-v228-v1/before-0/stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-shared-full-currentness-gpu-v228-v1/before-0/stdout": {
+      "bytes": 321,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-shared-full-currentness-gpu-v228-v1/before-0/stdout",
+      "sha256": "fb1d52be68ef1ca207431343c2fe9d71c4b52ca5589e9a38807effa626b069e9"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-shared-full-currentness-gpu-v228-v1/before-1-topology.json": {
+      "bytes": 4179,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-shared-full-currentness-gpu-v228-v1/before-1-topology.json",
+      "sha256": "730e3c19c2fcc9deed3ab8c2135cd13a4c4ad9c491fa3ffc76714735447b2344"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-shared-full-currentness-gpu-v228-v1/before-1/command.json": {
+      "bytes": 706,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-shared-full-currentness-gpu-v228-v1/before-1/command.json",
+      "sha256": "6e438209610d352a6003f8cb6cf972a9851015711ab0b5ef1bfc58f80ed355d7"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-shared-full-currentness-gpu-v228-v1/before-1/result.json": {
+      "bytes": 1705,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-shared-full-currentness-gpu-v228-v1/before-1/result.json",
+      "sha256": "e292bd9fd8c7f5a11d931e7e398e0fc68ce6095eb27ed0893627623d17dbfae7"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-shared-full-currentness-gpu-v228-v1/before-1/started.json": {
+      "bytes": 282,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-shared-full-currentness-gpu-v228-v1/before-1/started.json",
+      "sha256": "66c9b51276f07aef55f87f0b5c476e654eea8ab2b6351c6f5cde1a3e0c4bf45e"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-shared-full-currentness-gpu-v228-v1/before-1/stderr": {
+      "bytes": 0,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-shared-full-currentness-gpu-v228-v1/before-1/stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-shared-full-currentness-gpu-v228-v1/before-1/stdout": {
+      "bytes": 321,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-shared-full-currentness-gpu-v228-v1/before-1/stdout",
+      "sha256": "fb1d52be68ef1ca207431343c2fe9d71c4b52ca5589e9a38807effa626b069e9"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-shared-full-currentness-gpu-v228-v1/before-2-topology.json": {
+      "bytes": 4180,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-shared-full-currentness-gpu-v228-v1/before-2-topology.json",
+      "sha256": "1972f32fac1d312bb53883395b8cde8fba13c9bbd2ddf8173bddad2af3266515"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-shared-full-currentness-gpu-v228-v1/before-2/command.json": {
+      "bytes": 706,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-shared-full-currentness-gpu-v228-v1/before-2/command.json",
+      "sha256": "6e438209610d352a6003f8cb6cf972a9851015711ab0b5ef1bfc58f80ed355d7"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-shared-full-currentness-gpu-v228-v1/before-2/result.json": {
+      "bytes": 1705,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-shared-full-currentness-gpu-v228-v1/before-2/result.json",
+      "sha256": "f57d76df886aa10deed3facea923c22a855316add40a1001dd8b0c834ddd7664"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-shared-full-currentness-gpu-v228-v1/before-2/started.json": {
+      "bytes": 282,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-shared-full-currentness-gpu-v228-v1/before-2/started.json",
+      "sha256": "abb4cf36b90d9851a401cdc9c67122bb6f69422c840111f91687e5a08e098be3"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-shared-full-currentness-gpu-v228-v1/before-2/stderr": {
+      "bytes": 0,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-shared-full-currentness-gpu-v228-v1/before-2/stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-shared-full-currentness-gpu-v228-v1/before-2/stdout": {
+      "bytes": 321,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-shared-full-currentness-gpu-v228-v1/before-2/stdout",
+      "sha256": "fb1d52be68ef1ca207431343c2fe9d71c4b52ca5589e9a38807effa626b069e9"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-shared-full-currentness-gpu-v228-v1/complete.json": {
+      "bytes": 996114,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-shared-full-currentness-gpu-v228-v1/complete.json",
+      "sha256": "db417b2f7d0728577a711aa212564d0f3df783ec33a133fadaf35356ea9c159b"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-shared-full-currentness-gpu-v228-v1/native-host-policy-v2.json": {
+      "bytes": 33574,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-shared-full-currentness-gpu-v228-v1/native-host-policy-v2.json",
+      "sha256": "d3f9a3719d630dc42e3dca15712c779cae1e840bafa24e231ea27a3a14b2b915"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-shared-full-currentness-gpu-v228-v1/native/child-stderr.bin": {
+      "bytes": 0,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-shared-full-currentness-gpu-v228-v1/native/child-stderr.bin",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-shared-full-currentness-gpu-v228-v1/native/complete.json": {
+      "bytes": 39562,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-shared-full-currentness-gpu-v228-v1/native/complete.json",
+      "sha256": "66e9a5c98d2b5895fb7d39c54ffec0bf79bef20f7fad9e268e94f4f83e938374"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-shared-full-currentness-gpu-v228-v1/native/control-0.bin": {
+      "bytes": 241960,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-shared-full-currentness-gpu-v228-v1/native/control-0.bin",
+      "sha256": "2c9bfe4fb78ce7c423684eef75d77c0b40ce3bddf02781df42ea989ca32092fc"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-shared-full-currentness-gpu-v228-v1/native/control-1.bin": {
+      "bytes": 241960,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-shared-full-currentness-gpu-v228-v1/native/control-1.bin",
+      "sha256": "7586d7e478a3ef57bc98e9d1f26759033eebf6c60dfce6005272a5467e54a4e3"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-shared-full-currentness-gpu-v228-v1/native/control-2.bin": {
+      "bytes": 241960,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-shared-full-currentness-gpu-v228-v1/native/control-2.bin",
+      "sha256": "928549c1dd5d6d17db88d7959ab82f32d0f5fd2117548d2c9e600a619f85287f"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-shared-full-currentness-gpu-v228-v1/native/control-3.bin": {
+      "bytes": 241960,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-shared-full-currentness-gpu-v228-v1/native/control-3.bin",
+      "sha256": "0b0a10c798a419b5bceea8eaf7255752ddf84765537ed5ee678229165d3d4985"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-shared-full-currentness-gpu-v228-v1/native/observation-0.bin": {
+      "bytes": 606976,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-shared-full-currentness-gpu-v228-v1/native/observation-0.bin",
+      "sha256": "27f35fd0e06ee8d0eaabf67a01999ab3d9d1bc3d5fa2241a48f56cb46345aaf2"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-shared-full-currentness-gpu-v228-v1/native/observation-1.bin": {
+      "bytes": 606976,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-shared-full-currentness-gpu-v228-v1/native/observation-1.bin",
+      "sha256": "4dac2b3f2709f04444f24b5be2aec9b50d4278639165b8ac969cc5b315447fb8"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-shared-full-currentness-gpu-v228-v1/native/observation-2.bin": {
+      "bytes": 606976,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-shared-full-currentness-gpu-v228-v1/native/observation-2.bin",
+      "sha256": "49c5420bf8ea9277ddbf06ea0512716a0c5f49c34f2130f33c8aa065f3fbaa78"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-shared-full-currentness-gpu-v228-v1/native/observation-3.bin": {
+      "bytes": 606976,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-shared-full-currentness-gpu-v228-v1/native/observation-3.bin",
+      "sha256": "8b9c991deecbaf847c05f033e1b2f730e11eccae3891cee3331919ad7693101b"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-shared-full-currentness-gpu-v228-v1/native/request-0.json": {
+      "bytes": 1849,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-shared-full-currentness-gpu-v228-v1/native/request-0.json",
+      "sha256": "70124e7130c824895bcfddeb1e38950ab9c3bc238e1b34ff3a5395033eb3b4cd"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-shared-full-currentness-gpu-v228-v1/native/request-1.json": {
+      "bytes": 2386,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-shared-full-currentness-gpu-v228-v1/native/request-1.json",
+      "sha256": "12e61bd4d5822e3201ca7783f17414f4ca2d51ddf7422e77673750417e691ce7"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-shared-full-currentness-gpu-v228-v1/native/request-2.json": {
+      "bytes": 2390,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-shared-full-currentness-gpu-v228-v1/native/request-2.json",
+      "sha256": "23333d19a59fdf4ed4594b34fdbbb074427f6197a30c57f3a2765d3492e21fea"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-shared-full-currentness-gpu-v228-v1/native/request-3.json": {
+      "bytes": 2389,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-shared-full-currentness-gpu-v228-v1/native/request-3.json",
+      "sha256": "7292024d5ea6575f9930cb7b9f9cdd78d99dc5e6d57ef748af78ba449a78a194"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-shared-full-currentness-gpu-v228-v1/observation.json": {
+      "bytes": 33047,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-shared-full-currentness-gpu-v228-v1/observation.json",
+      "sha256": "6e8c9b855fba8f991d3848d9b70baf3f2e07cb2777ed986b6732d4333add0200"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-shared-full-currentness-gpu-v228-v1/parent/command.json": {
+      "bytes": 1013,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-shared-full-currentness-gpu-v228-v1/parent/command.json",
+      "sha256": "cebcaa5fe908ebd7dbee45410ec2a0da58e955a5a6167baa10f77db831a2201b"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-shared-full-currentness-gpu-v228-v1/parent/result.json": {
+      "bytes": 1978,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-shared-full-currentness-gpu-v228-v1/parent/result.json",
+      "sha256": "a151963db6d61a249344b64f661dd27ad9a831d96b0d7295ece0295a38340a9f"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-shared-full-currentness-gpu-v228-v1/parent/started.json": {
+      "bytes": 282,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-shared-full-currentness-gpu-v228-v1/parent/started.json",
+      "sha256": "cd2e7fecaae32e9185c579baedf3d7ebd8326fb44c3728dfa82d9aec518ca150"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-shared-full-currentness-gpu-v228-v1/parent/stderr": {
+      "bytes": 374,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-shared-full-currentness-gpu-v228-v1/parent/stderr",
+      "sha256": "44b72558f86cf8c89014137f339f268c3c8c8dbb76c15cf175706a3822852e4b"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-shared-full-currentness-gpu-v228-v1/parent/stdout": {
+      "bytes": 40624,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-shared-full-currentness-gpu-v228-v1/parent/stdout",
+      "sha256": "41e4c42acfc38da11e7f0a8801a197a0c36111fefec07b4e03740d70720327c0"
+    }
+  },
+  "mode": "teacher_forced",
+  "numerical_acceptance": false,
+  "observation": {
+    "bytes": 996114,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-shared-full-currentness-gpu-v228-v1/complete.json",
+    "sha256": "db417b2f7d0728577a711aa212564d0f3df783ec33a133fadaf35356ea9c159b"
+  },
+  "observer_package": {
+    "bytes": 3548,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-independent-decode-observation-v1/manifest.json",
+    "sha256": "10125c91f9c83c55379c5769b2d1bfa099835744b10f292c9ebd5f152ae7e9c3"
+  },
+  "owned_record_checks": {
+    "child": {
+      "pgid": 1688220,
+      "pid": 1688220,
+      "ppid": 1676635,
+      "sid": 1676635,
+      "starttime": 49863681,
+      "state": "S",
+      "uid": 9661
+    },
+    "child_pid": 1688220,
+    "outer_pidfd_observed": true,
+    "parent": {
+      "pgid": 1676635,
+      "pid": 1676635,
+      "ppid": 1673224,
+      "sid": 1676635,
+      "starttime": 49854477,
+      "state": "R",
+      "uid": 9661
+    },
+    "parent_asserted_close_and_reap": true
+  },
+  "passed": true,
+  "performance_claim": false,
+  "plan": {
+    "bytes": 7015,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-inputs-v228-v2/plan.json",
+    "sha256": "5a142944ecf38eef9a80bf859ca8ac8b6b5ae202e6afc709e0046369f1c9bbc7"
+  },
+  "policy": "shared-full-currentness",
+  "production_authority": false,
+  "recorded_six_audit_leaf_bytes_rehashed": true,
+  "reference": {
+    "bytes": 8288,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/framework-rearm-v224-v1/complete.json",
+    "sha256": "cac5d79969c2e17a19630a581b5e21c594ea65b452806630ee87bf7855396036"
+  },
+  "request": {
+    "bytes": 8119,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-inputs-v228-v2/request.json",
+    "sha256": "a33072c28a2a740287832a4f92fba92dd0822f17ed9a039d264bcb1791027d71"
+  },
+  "retained_native_and_close_replayed": true,
+  "runtime_premises_discharged": false,
+  "schema": "ferric-p228-independent-decode-diagnostic-v1",
+  "selected_runtime": {
+    "image": {
+      "bytes": 53560,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-deployment-v228-v1/image/prefix-tiles.hsaco",
+      "sha256": "4885204c8d510122588549107f42d2bc6f180f48fbc4eddd3bb1260e8d6629c5"
+    },
+    "parent": {
+      "bytes": 13618248,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-decode-host-policy-deployment-v228-v1/bin/ferric-qwen3-finite-prefix-decode-host-policy-engineering",
+      "sha256": "830f90b17bde546fb0d236a127f4bff055b31b4f0b46e2381e22ec072cb9d4d0"
+    },
+    "worker": {
+      "bytes": 4777488,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/group-fence-deployment-v228-v1/bin/ferric-tp-peer-finite-engineering-worker-v1",
+      "sha256": "3a16059a96c2050b654e4998b395b9672a19a593f08bf0c5df893d181a1f5294"
+    }
+  },
+  "source_postchecks_passed": true,
+  "sources_after": {
+    "bytes": 20464,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-framework-diagnostic-v228-v1/sources-after.json",
+    "sha256": "812a3ae3ec9fb5e52a048024113a633c9ffec7bb324cabec5aa2577e7aa2847f"
+  },
+  "sources_before": {
+    "bytes": 20464,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-framework-diagnostic-v228-v1/sources-before.json",
+    "sha256": "812a3ae3ec9fb5e52a048024113a633c9ffec7bb324cabec5aa2577e7aa2847f"
+  },
+  "status": "RETAINED_TENSOR_DIAGNOSTICS_ONLY",
+  "structural": {
+    "bank_reuse_order_independently_observed": false,
+    "child_pid": 1688220,
+    "expected_banks": [
+      0,
+      1,
+      0,
+      1
+    ],
+    "external_supervisor_lifecycle_verified": false,
+    "full_long_workload": false,
+    "input_tokens": [
+      9112,
+      2190,
+      3772,
+      220
+    ],
+    "logical_generations": [
+      1,
+      2,
+      3,
+      4
+    ],
+    "mode": "teacher_forced",
+    "numerical_acceptance": false,
+    "output_tokens": [
+      67,
+      198,
+      25,
+      16
+    ],
+    "parent_close_and_exit_flags_checked": true,
+    "performance_claim": false,
+    "positions": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "prefix_terminal_state_count": 288,
+    "production_authority": false,
+    "profile_sha256": "2cbe3d370b4316f17d5c32cf2bb4b9e8ad4890619fcedab26531c1c79b9fa807",
+    "registration_sha256": "5532b0302a5a0e180d2201239ea9c7ca94fb7ca3710741c7a81793c4eb9155ff",
+    "retained_files": [
+      {
+        "bytes": 1849,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-shared-full-currentness-gpu-v228-v1/native/request-0.json",
+        "sha256": "70124e7130c824895bcfddeb1e38950ab9c3bc238e1b34ff3a5395033eb3b4cd"
+      },
+      {
+        "bytes": 241960,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-shared-full-currentness-gpu-v228-v1/native/control-0.bin",
+        "sha256": "2c9bfe4fb78ce7c423684eef75d77c0b40ce3bddf02781df42ea989ca32092fc"
+      },
+      {
+        "bytes": 606976,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-shared-full-currentness-gpu-v228-v1/native/observation-0.bin",
+        "sha256": "27f35fd0e06ee8d0eaabf67a01999ab3d9d1bc3d5fa2241a48f56cb46345aaf2"
+      },
+      {
+        "bytes": 2386,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-shared-full-currentness-gpu-v228-v1/native/request-1.json",
+        "sha256": "12e61bd4d5822e3201ca7783f17414f4ca2d51ddf7422e77673750417e691ce7"
+      },
+      {
+        "bytes": 241960,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-shared-full-currentness-gpu-v228-v1/native/control-1.bin",
+        "sha256": "7586d7e478a3ef57bc98e9d1f26759033eebf6c60dfce6005272a5467e54a4e3"
+      },
+      {
+        "bytes": 606976,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-shared-full-currentness-gpu-v228-v1/native/observation-1.bin",
+        "sha256": "4dac2b3f2709f04444f24b5be2aec9b50d4278639165b8ac969cc5b315447fb8"
+      },
+      {
+        "bytes": 2390,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-shared-full-currentness-gpu-v228-v1/native/request-2.json",
+        "sha256": "23333d19a59fdf4ed4594b34fdbbb074427f6197a30c57f3a2765d3492e21fea"
+      },
+      {
+        "bytes": 241960,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-shared-full-currentness-gpu-v228-v1/native/control-2.bin",
+        "sha256": "928549c1dd5d6d17db88d7959ab82f32d0f5fd2117548d2c9e600a619f85287f"
+      },
+      {
+        "bytes": 606976,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-shared-full-currentness-gpu-v228-v1/native/observation-2.bin",
+        "sha256": "49c5420bf8ea9277ddbf06ea0512716a0c5f49c34f2130f33c8aa065f3fbaa78"
+      },
+      {
+        "bytes": 2389,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-shared-full-currentness-gpu-v228-v1/native/request-3.json",
+        "sha256": "7292024d5ea6575f9930cb7b9f9cdd78d99dc5e6d57ef748af78ba449a78a194"
+      },
+      {
+        "bytes": 241960,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-shared-full-currentness-gpu-v228-v1/native/control-3.bin",
+        "sha256": "0b0a10c798a419b5bceea8eaf7255752ddf84765537ed5ee678229165d3d4985"
+      },
+      {
+        "bytes": 606976,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-shared-full-currentness-gpu-v228-v1/native/observation-3.bin",
+        "sha256": "8b9c991deecbaf847c05f033e1b2f730e11eccae3891cee3331919ad7693101b"
+      },
+      {
+        "bytes": 0,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-decode-tf4-shared-full-currentness-gpu-v228-v1/native/child-stderr.bin",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    ],
+    "rotary_nonzero_positions_independently_recomputed": false,
+    "schema": "ferric-p227-checked-prefix-decode-structure-v1",
+    "source_image_payloads_rehashed": false,
+    "summary_sha256": "66e9a5c98d2b5895fb7d39c54ffec0bf79bef20f7fad9e268e94f4f83e938374",
+    "terminal_state_count": 576,
+    "tiles_terminal_state_count": 288,
+    "transcript_sha256": "26d4cb375b680164cb5a0928a505b7a6b01bbf18b18a1f1ef65a1e40738320cf"
+  },
+  "summary": {
+    "byte_equal_tensor_rows": 0,
+    "captured_tensor_rows": 152,
+    "comparable_positions": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "compared_tensor_rows": 152,
+    "differing_tensor_rows": 152,
+    "incomparable_positions": []
+  },
+  "sustained_2048_256": false,
+  "top_level_observer_reaping_verified": false
+}

@@ -3,8 +3,9 @@
 The new controller passed all **84 CPU policy tests on MI350** on 2026-10-04,
 with no errors, failures or skips. [Actual receipt](pure/complete.json),
 [transcript](pure/tests.log), [tested source manifest](source/manifest.json).
-All 21 source members have identical before/after hashes. This checkpoint does
-not yet publish a new all-layer GPU result or numerical acceptance.
+All 21 source members have identical before/after hashes. The subsequent
+[V7 all-layer TF4 run](tf4/README.md) passed structural execution and cleanup;
+separate framework diagnostics are published without numerical acceptance.
 
 The controller combines the unchanged CPU633 parent and CPU475 worker with the
 separately compiled V7 prefix image. It authenticates both deployments, the six
