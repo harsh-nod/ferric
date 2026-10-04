@@ -6,22 +6,32 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Latest: the [BF16 SiLU candidate completed checked gfx950 emission](../qualification/silu-materialized-lowering-v1/README.md)
+Latest: the [BF16 SiLU image executed on MI350](../qualification/silu-materialized-native-capture-v1/README.md)
+and its [independent layer-zero comparison](../qualification/silu-materialized-comparison-v1/README.md)
+completed on ASROCK. All 28 arrays and 22 unchanged pre-SwiGLU arrays passed
+structural checks. Final-hidden exact words improved from 2,728 to 3,807/4,096,
+relative-L2 error fell from 0.0017142513 to 0.00059154807, and maximum absolute
+error halved to 0.00390625. All 16,384 conditional residual words match; same-gate
+materialized-product controls now match all 11,869 eligible words. Twelve
+comparator tests passed. QKV and later framework differences remain; no numerical
+acceptance threshold, full-model acceptance or throughput claim is introduced.
+
+The [BF16 SiLU candidate completed checked gfx950 emission](../qualification/silu-materialized-lowering-v1/README.md)
 on ASROCK, including all nine stages, actual replay and natural/reaped owner
 completion. The 33,320-byte image retains the same ABI, 106 SGPRs, 106 VGPRs,
 512 bytes LDS and zero reported spills/private scratch. Actual LLVM contains
 the new BF16 narrow/widen before the up product. Separate policy suites passed
-27 lowering and 36 capture tests. GPU execution and numerical acceptance for
-this image remain open; this is not a throughput result or production admission.
+27 lowering and 36 capture tests. Layer-zero GPU execution and diagnostic
+comparison completed as recorded above; numerical acceptance remains open.
 
 The [explicit BF16 SiLU candidate](../qualification/silu-materialized-cpu-v1/README.md)
 passed all 38 Rust tests and twelve controller-policy tests on ASROCK. The
 candidate adds BF16 rounding between SiLU and its up product; existing
 exponential arithmetic and Down2 scheduling are unchanged. The full tested
 fixture is published separately because its dependencies differ from the live
-default device crate. Checked lowering completed as recorded above; GPU execution
-and numerical comparison remain separate gates. No production route or acceptance
-threshold changed.
+default device crate. Checked lowering, layer-zero GPU execution and diagnostic
+comparison completed as recorded above. Full-model validation remains a separate
+gate. No production route or acceptance threshold changed.
 
 The [independent four-step framework comparison](../qualification/projection-residual-decode-comparison-v1/README.md)
 completed on ASROCK across all 152 tensor slices. All four output tokens match;

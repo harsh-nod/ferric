@@ -1,0 +1,46 @@
+{
+  "schema": "ferric-p228-silu-materialized-capture-assembly-inputs-v1",
+  "input_label": "prefix-silu-materialized-capture-inputs-v228-v1",
+  "output_label": "prefix-silu-materialized-capture-gpu-v228-v1",
+  "session": "7e9c9ba38735cf28917d80e8b7cb9547eb25e922780ad5dac25593e7e1639e9f",
+  "parent_audit": {
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-residual-capture-runtime-parent-v228-v1/complete.json",
+    "bytes": 21166,
+    "sha256": "ea722df1b1f7c0a1e0a64fef87f6fb120f70e77e1c8e9abc0d025e2c797ad6a6"
+  },
+  "worker_audit": {
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-residual-capture-runtime-worker-v228-v1/complete.json",
+    "bytes": 20629,
+    "sha256": "089ab20dbabf2e96023ffbab7dc8563739b8951bdd658e1e99b2f6c0cd261ba5"
+  },
+  "supervisor_tests": {
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/silu-materialized-capture-gpu-pure-v228-v1/complete.json",
+    "bytes": 8523,
+    "sha256": "2e0b66258165f49c720df093c17ca12cb1d638e75c694027ae75ea1265b8005e"
+  },
+  "supervisor_manifest": {
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-silu-materialized-capture-gpu-v1/manifest.json",
+    "bytes": 1869,
+    "sha256": "71cae69a25ac82c53bdf2976ab53b9d9af615c5af4b8337c2e386beb44a8a18b"
+  },
+  "mlp_cpu": {
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/silu-materialized-cpu-v228-v1/complete.json",
+    "bytes": 84947,
+    "sha256": "e139729d8fa95715ef8017679ee21f1175ba302b681785789e3dc84137508a30"
+  },
+  "mlp_lowering_complete": {
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-silu-materialized-checked-probe-v228-v1/complete.json",
+    "bytes": 25125,
+    "sha256": "fd7d4c792dc7ddaa831b3372549fe3896a18e8c94b96598b553df94156d949b4"
+  },
+  "mlp_lowering_owner": {
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/silu-materialized-checked-probe-owner-v228-v1/complete.json",
+    "bytes": 21726,
+    "sha256": "3ee5600755d5b77846d16429d58e2395df0616c86fbe705ea24af07fd9f9e464"
+  },
+  "mlp_image": {
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-silu-materialized-checked-probe-v228-v1/emitted/artifact.hsaco",
+    "bytes": 33320,
+    "sha256": "b0d1766fdb0fda17ab09496d1120ba3cee29100692b48fcc5b05cf0db0a8d589"
+  }
+}

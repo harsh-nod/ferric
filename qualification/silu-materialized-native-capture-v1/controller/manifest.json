@@ -1,0 +1,66 @@
+{
+  "schema": "ferric-p228-silu-materialized-capture-gpu-package-v1",
+  "pure_tests": 36,
+  "test_census": {
+    "test_capture_validation.py": 13,
+    "test_intake.py": 12,
+    "test_run.py": 11
+  },
+  "files": [
+    {
+      "path": "capture_validation.py",
+      "bytes": 8367,
+      "sha256": "f09032665e1df66d3d8e29619586b584e86c6e80be71d7bd53aa438b489c530a"
+    },
+    {
+      "path": "INTAKE.md",
+      "bytes": 3485,
+      "sha256": "485cac95734ecd0541462163311991edf1e03de0e65d6fea78ddd6f8296f5f77"
+    },
+    {
+      "path": "intake.py",
+      "bytes": 21858,
+      "sha256": "41d3e8395311db78c17446ce30128641ef5bca87f9f4fe7c9d468d2dfc4ca6d4"
+    },
+    {
+      "path": "layer_validation.py",
+      "bytes": 16186,
+      "sha256": "757c077979b7ee02d4c0e7d222e75292cd9d417927f84ae9a8134344f8e217b9"
+    },
+    {
+      "path": "mlp_contracts.py",
+      "bytes": 4773,
+      "sha256": "d82facce758c363f13cf97a30cdc04d02ed4673278f53b4a11d9c83fb309f539"
+    },
+    {
+      "path": "README.md",
+      "bytes": 3354,
+      "sha256": "9596304e550929d8d5b77b9ccd057671e8f2d75a2997a9065025af064380d2ab"
+    },
+    {
+      "path": "run_row_facts_v2.py",
+      "bytes": 12424,
+      "sha256": "244c12f62c8a439aa01b44380fc464008b94006bc919201c8d510c64177fc820"
+    },
+    {
+      "path": "run.py",
+      "bytes": 15159,
+      "sha256": "b312ecd93da696b24bd371cafae6ba0c4a46480b357878867a88703180cf7897"
+    },
+    {
+      "path": "test_capture_validation.py",
+      "bytes": 15194,
+      "sha256": "2a68373b465874dc5ab8eb4c50a8a2bf3a6c5299da20aa02b63f42e9729ed283"
+    },
+    {
+      "path": "test_intake.py",
+      "bytes": 10084,
+      "sha256": "f470c276edb3a78ad0a8adf211222309b4bbaceb76f4bc9d2f4539b9f6c31b12"
+    },
+    {
+      "path": "test_run.py",
+      "bytes": 13410,
+      "sha256": "d1e1997b84b09704ce3dbc2d2c9f3daef05b74ea5e00f3084a02c63cad7e5931"
+    }
+  ]
+}

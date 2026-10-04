@@ -1,0 +1,63 @@
+{
+  "schema": "ferric-p228-silu-materialized-capture-root-notes-v1",
+  "configuration": {
+    "schema": "ferric-p228-silu-materialized-capture-assembly-inputs-v1",
+    "input_label": "prefix-silu-materialized-capture-inputs-v228-v1",
+    "output_label": "prefix-silu-materialized-capture-gpu-v228-v1",
+    "session": "7e9c9ba38735cf28917d80e8b7cb9547eb25e922780ad5dac25593e7e1639e9f",
+    "parent_audit": {
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-residual-capture-runtime-parent-v228-v1/complete.json",
+      "bytes": 21166,
+      "sha256": "ea722df1b1f7c0a1e0a64fef87f6fb120f70e77e1c8e9abc0d025e2c797ad6a6"
+    },
+    "worker_audit": {
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-residual-capture-runtime-worker-v228-v1/complete.json",
+      "bytes": 20629,
+      "sha256": "089ab20dbabf2e96023ffbab7dc8563739b8951bdd658e1e99b2f6c0cd261ba5"
+    },
+    "supervisor_tests": {
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/silu-materialized-capture-gpu-pure-v228-v1/complete.json",
+      "bytes": 8523,
+      "sha256": "2e0b66258165f49c720df093c17ca12cb1d638e75c694027ae75ea1265b8005e"
+    },
+    "supervisor_manifest": {
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-silu-materialized-capture-gpu-v1/manifest.json",
+      "bytes": 1869,
+      "sha256": "71cae69a25ac82c53bdf2976ab53b9d9af615c5af4b8337c2e386beb44a8a18b"
+    },
+    "mlp_cpu": {
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/silu-materialized-cpu-v228-v1/complete.json",
+      "bytes": 84947,
+      "sha256": "e139729d8fa95715ef8017679ee21f1175ba302b681785789e3dc84137508a30"
+    },
+    "mlp_lowering_complete": {
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-silu-materialized-checked-probe-v228-v1/complete.json",
+      "bytes": 25125,
+      "sha256": "fd7d4c792dc7ddaa831b3372549fe3896a18e8c94b96598b553df94156d949b4"
+    },
+    "mlp_lowering_owner": {
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/silu-materialized-checked-probe-owner-v228-v1/complete.json",
+      "bytes": 21726,
+      "sha256": "3ee5600755d5b77846d16429d58e2395df0616c86fbe705ea24af07fd9f9e464"
+    },
+    "mlp_image": {
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-silu-materialized-checked-probe-v228-v1/emitted/artifact.hsaco",
+      "bytes": 33320,
+      "sha256": "b0d1766fdb0fda17ab09496d1120ba3cee29100692b48fcc5b05cf0db0a8d589"
+    }
+  },
+  "capture": {
+    "reviewed": true,
+    "authority": "none",
+    "gpu_attempts": 1,
+    "notes": "Root reviewed the actual CPU38, all nine checked compiler stages, retained LLVM/ISA and unchanged runtime route. This selects one engineering layer capture only, not a production launch capability. Preserve 22 upstream arrays, capture changed activation/Down/final hidden, and compare them separately with the genuine framework. No acceptance threshold, full-model correctness or performance claim is supplied.",
+    "review_topics": {
+      "source_lineage": "Actual CPU38 completion e139729d binds the three formatted additions and five lowering Rust bodies. Actual owner3ee56007 and lowerfd7d4c79 completed naturally with source postchecks; emitted image b0d1766f is 33320 bytes. Same compiler generation, provider and Down2 helpers are preserved. The original default device route is not modified.",
+      "formal": "The actual checked lowering, formal archive replay and inert-lineage join passed through the ordinary fe2o3 source path. Eight runtime requirements remain undischarged. These checks do not mint launch authority, prove OCML equality, establish full-model correctness or authorize a production inference request.",
+      "isa": "Root inspected actual LLVM lines2500-2780: gate/up originate from arg6/arg7, the sign phi selects one for nonnegative gate and exponential otherwise, and materialized-SiLU finite rejection reaches sticky false state. SSA1875 feeds RNE1876, widening1879 then up product1880. Final ISA0x2BE0-0x2C10 retains the RNE bias plus retained LSB, right shift, NaN select and left shift before multiplication by up, followed by separate final RNE. Resources remain106SGPR/106VGPR with no reported spills/private and512LDS. This is manual engineering inspection, not a universal arithmetic or ISA proof.",
+      "coherence": "Only register arithmetic at the SiLU boundary and its finite-value check change. Existing wave64 workgroup64, maximum64 workgroups,512-byte LDS layout, fixed-round task scheduling, data publication, projection residual and Down2 include bodies are preserved. No new cross-workgroup barrier, scratch sharing, atomic scope or cross-device transport is introduced.",
+      "lifecycle": "Reuse the exact CPU988 parent and worker and their byte-identical reviewed runtime records. Keep the existing explicit engineering layer-capture CLI and request schema, one native attempt, six exact-empty idle-device audits, seven owned leaves, fixed deadlines and Close/reap checks. A failed admission or uncertain completion does not permit a retry or buffer reclamation.",
+      "selected_device": "Select only the existing MI350 host smci350-rck-g03-b19-03, boot2dbbbc5a-d8b7-46ac-bd1f-236e5847e24a, devices16366993098680759275 and10838076764495710945. The frozen runtime guard must freshly validate the exact platform, executable/library pins and idle rosters before and after the attempt. The ASROCK compiler result is not a live MI350 platform audit."
+    }
+  }
+}

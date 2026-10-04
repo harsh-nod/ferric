@@ -1,0 +1,51 @@
+{
+  "authority": "none",
+  "binary": {
+    "bytes": 5082304,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-residual-runtime-cpu-v228-v1/target/worker/debug/ferric-tp-peer-finite-engineering-worker-v1",
+    "sha256": "ca9236967f8ae38666c46499040d55c1df86353dbb8dc4905ce41579ae9d4a8b"
+  },
+  "boot_id": "2dbbbc5a-d8b7-46ac-bd1f-236e5847e24a",
+  "gpu_execution": false,
+  "host": "smci350-rck-g03-b19-03",
+  "ldd": {
+    "bytes": 804,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-residual-capture-runtime-worker-v228-v1/ldd/audit.json",
+    "sha256": "003d96cbae5f857d4be0e66ad0f1f239f353d04bb6ba92178c144c2cd4a95018"
+  },
+  "libraries": [
+    {
+      "path": "/lib/x86_64-linux-gnu/libgcc_s.so.1",
+      "resolved": {
+        "bytes": 183024,
+        "path": "/usr/lib/x86_64-linux-gnu/libgcc_s.so.1",
+        "sha256": "d93224d2b0dab4247598be683adca02f5cf00586f99c187579cd7e92058fb7cb"
+      }
+    },
+    {
+      "path": "/lib/x86_64-linux-gnu/libc.so.6",
+      "resolved": {
+        "bytes": 2125328,
+        "path": "/usr/lib/x86_64-linux-gnu/libc.so.6",
+        "sha256": "d8db8739a1633c972cec6a4fe0566bdcec6fd088f98723492ab0361f66238f75"
+      }
+    },
+    {
+      "path": "/lib64/ld-linux-x86-64.so.2",
+      "resolved": {
+        "bytes": 236616,
+        "path": "/usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2",
+        "sha256": "1cd555ac46b7887edeaf3c42aac5408c8135e52f6b37870da2cf82d5fe14e829"
+      }
+    }
+  ],
+  "notes": "Root reviewed the retained readelf/ldd streams and their naturally completed and reaped owned commands for this exact joint-qualified binary. The system dependencies resolve with no RPATH, RUNPATH, unresolved libraries or stderr. The new candidate parent and worker remain distinct from the earlier layer capture generation. This compatibility review does not execute the selected ELF, discharge runtime premises or grant numerical or production acceptance. Fresh topology, process and library checks are still required immediately around the single native attempt.",
+  "production_authority": false,
+  "readelf": {
+    "bytes": 827,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-residual-capture-runtime-worker-v228-v1/readelf/audit.json",
+    "sha256": "05302ff51f8c99875679555aef82df775d50503f52ec8ea53b6a1efcc50d33a9"
+  },
+  "reviewed": true,
+  "schema": "ferric-p227-prefix-parity-runtime-review-v1"
+}

@@ -1,0 +1,41 @@
+test_all_pre_residual_stages_must_equal_but_downstream_may_change (test_capture_validation.CaptureTests) ... ok
+test_candidate_image_and_old_profile_fallback_refuse (test_capture_validation.CaptureTests) ... ok
+test_complete_synthetic_capture_uses_real_wire_source_and_array_checks (test_capture_validation.CaptureTests) ... ok
+test_every_typed_terminal_state_refuses_corruption (test_capture_validation.CaptureTests) ... ok
+test_exact_one_child_marker_only (test_capture_validation.CaptureTests) ... ok
+test_genuine_token_pages_rotary_image_and_child_scope_are_joined (test_capture_validation.CaptureTests) ... ok
+test_logical_kv_row_can_move_only_with_authentic_page_table (test_capture_validation.CaptureTests) ... ok
+test_missing_extra_or_reordered_body_manifest_refuses (test_capture_validation.CaptureTests) ... ok
+test_nonfinite_capture_and_untouched_kv_corruption_refuse_with_honest_hashes (test_capture_validation.CaptureTests) ... ok
+test_old_paired_or_numerical_authority_cannot_be_admitted (test_capture_validation.CaptureTests) ... ok
+test_run_close_order_terminal_states_and_reap_are_required (test_capture_validation.CaptureTests) ... ok
+test_stage_extent_offset_type_and_hash_cannot_be_asserted (test_capture_validation.CaptureTests) ... ok
+test_worker_stderr_and_duplicate_json_refuse (test_capture_validation.CaptureTests) ... ok
+test_closed_plan_new_namespace_and_actual_pin_fields (test_intake.IntakeTests) ... ok
+test_cpu_missing_names_duplicates_and_killed_phase_refuse (test_intake.IntakeTests) ... ok
+test_existing_mlp_descriptor_contract_does_not_widen_abi (test_intake.IntakeTests) ... ok
+test_lowering_exact_generation_and_image_join (test_intake.IntakeTests) ... ok
+test_lowering_must_keep_all_stages_and_undischarged_obligations (test_intake.IntakeTests) ... ok
+test_lowering_owner_kill_reap_and_wrong_completion_refuse (test_intake.IntakeTests) ... ok
+test_new_cpu_named_census_and_natural_closure (test_intake.IntakeTests) ... ok
+test_old_image_fallback_alias_and_reused_session_refuse (test_intake.IntakeTests) ... ok
+test_old_initial_images_inputs_deadlines_and_residual_are_preserved (test_intake.IntakeTests) ... ok
+test_only_selected_mlp_image_changes_on_unchanged_native_route (test_intake.IntakeTests) ... ok
+test_pending_actuals_refuse_instead_of_projecting_success (test_intake.IntakeTests) ... ok
+test_root_review_cannot_auto_approve_or_grant_authority (test_intake.IntakeTests) ... ok
+test_closed_twelve_file_roster_refuses_missing_extra_and_symlink (test_run.RunTests) ... ok
+test_failed_or_forced_owner_never_qualifies (test_run.RunTests) ... ok
+test_failed_post_audit_does_not_skip_later_checks (test_run.RunTests) ... ok
+test_failed_pre_audit_prevents_native_and_keeps_all_post_audits (test_run.RunTests) ... ok
+test_failure_retention_allows_only_partial_known_files (test_run.RunTests) ... ok
+test_final_input_drift_withholds_complete (test_run.RunTests) ... ok
+test_inventory_propagates_walk_error_refuses_aliases_and_caps (test_run.RunTests) ... ok
+test_lineage_checks_actual_child_identity_when_observed (test_run.RunTests) ... ok
+test_one_attempt_six_audits_exact_cli_and_closed_retention (test_run.RunTests) ... ok
+test_original_leaf_resources_and_case_bounds_are_unchanged (test_run.RunTests) ... ok
+test_owner_parser_marker_summary_and_missing_capture_keep_evidence_without_retry (test_run.RunTests) ... ok
+
+----------------------------------------------------------------------
+Ran 36 tests in 43.528s
+
+OK

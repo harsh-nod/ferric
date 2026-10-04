@@ -1,0 +1,17 @@
+test_changed_activation_mismatches_remain_visible_and_conditional (test_silu.SiLUComparison) ... ok
+test_changed_down_and_final_hidden_use_actual_candidate_residual (test_silu.SiLUComparison) ... ok
+test_complete_synthetic_path_retains_all_diagnostics_without_acceptance (test_silu.SiLUComparison) ... ok
+test_every_pre_swiglu_stage_is_equal_not_only_prefix (test_silu.SiLUComparison) ... ok
+test_fp32_partial_changes_distinguish_signed_zero_and_subnormals (test_silu.SiLUComparison) ... ok
+test_incorrect_residual_output_is_reported_not_reclassified_as_success (test_silu.SiLUComparison) ... ok
+test_logical_kv_row_can_move_between_authenticated_physical_pages (test_silu.SiLUComparison) ... ok
+test_nonfinite_capture_partial_is_rejected_before_metrics (test_silu.SiLUComparison) ... ok
+test_old_image_wrong_residual_worker_or_reused_session_are_refused (test_silu.SiLUComparison) ... ok
+test_only_selected_mlp_image_and_scoped_identifiers_may_change (test_silu.SiLUComparison) ... ok
+test_partial_extent_and_nonfinite_inputs_are_refused (test_silu.SiLUComparison) ... ok
+test_reused_arithmetic_and_residual_oracle_are_exact_pinned_sources (test_silu.SiLUComparison) ... ok
+
+----------------------------------------------------------------------
+Ran 12 tests in 8.706s
+
+OK

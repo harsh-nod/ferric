@@ -1,0 +1,29 @@
+{
+  "schema": "ferric-p228-silu-materialized-comparison-package-v1",
+  "pure_tests": 12,
+  "test_census": {
+    "test_silu.py": 12
+  },
+  "files": [
+    {
+      "path": "README.md",
+      "bytes": 5394,
+      "sha256": "44b509f933a27bb71f74f66828be76453badf64cc45be6b3b5cc404f2e1a244b"
+    },
+    {
+      "path": "run.py",
+      "bytes": 24048,
+      "sha256": "fa179f6c9b1f7de3330c1e31cbbe0e22e9aa8e4456f0535abe19ac4a3b47c482"
+    },
+    {
+      "path": "silu.py",
+      "bytes": 9195,
+      "sha256": "ca7461e5d76bc3b6edb5aa703e121893fd6854341f074512850c49617b543bbe"
+    },
+    {
+      "path": "test_silu.py",
+      "bytes": 9824,
+      "sha256": "9aa6e04753783a71cee2b86242be5dc341245fc42f5217a4b3d4ed69d98bec9c"
+    }
+  ]
+}

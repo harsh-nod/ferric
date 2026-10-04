@@ -1,0 +1,59 @@
+{
+  "authority": "none",
+  "binary": {
+    "bytes": 13542344,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-residual-runtime-cpu-v228-v1/target/parent/debug/ferric-qwen3-finite-projection-residual-layer-capture-engineering",
+    "sha256": "37f20372c91e2ac6229b747d287e902809a165d6def5da7677eeeeabf565cc4d"
+  },
+  "boot_id": "2dbbbc5a-d8b7-46ac-bd1f-236e5847e24a",
+  "gpu_execution": false,
+  "host": "smci350-rck-g03-b19-03",
+  "ldd": {
+    "bytes": 826,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-residual-capture-runtime-parent-v228-v1/ldd/audit.json",
+    "sha256": "52c8a233696fba93c5840e02f6cc7f4c776061076bc0b1681034580bd442d55d"
+  },
+  "libraries": [
+    {
+      "path": "/lib/x86_64-linux-gnu/libgcc_s.so.1",
+      "resolved": {
+        "bytes": 183024,
+        "path": "/usr/lib/x86_64-linux-gnu/libgcc_s.so.1",
+        "sha256": "d93224d2b0dab4247598be683adca02f5cf00586f99c187579cd7e92058fb7cb"
+      }
+    },
+    {
+      "path": "/lib/x86_64-linux-gnu/libm.so.6",
+      "resolved": {
+        "bytes": 952616,
+        "path": "/usr/lib/x86_64-linux-gnu/libm.so.6",
+        "sha256": "1b87a1a50b496cfead2b0ad134c2ff536705c82608db240c7e8aa48d6c0e4217"
+      }
+    },
+    {
+      "path": "/lib/x86_64-linux-gnu/libc.so.6",
+      "resolved": {
+        "bytes": 2125328,
+        "path": "/usr/lib/x86_64-linux-gnu/libc.so.6",
+        "sha256": "d8db8739a1633c972cec6a4fe0566bdcec6fd088f98723492ab0361f66238f75"
+      }
+    },
+    {
+      "path": "/lib64/ld-linux-x86-64.so.2",
+      "resolved": {
+        "bytes": 236616,
+        "path": "/usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2",
+        "sha256": "1cd555ac46b7887edeaf3c42aac5408c8135e52f6b37870da2cf82d5fe14e829"
+      }
+    }
+  ],
+  "notes": "Root reviewed the retained readelf/ldd streams and their naturally completed and reaped owned commands for this exact joint-qualified binary. The system dependencies resolve with no RPATH, RUNPATH, unresolved libraries or stderr. The new candidate parent and worker remain distinct from the earlier layer capture generation. This compatibility review does not execute the selected ELF, discharge runtime premises or grant numerical or production acceptance. Fresh topology, process and library checks are still required immediately around the single native attempt.",
+  "production_authority": false,
+  "readelf": {
+    "bytes": 849,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-residual-capture-runtime-parent-v228-v1/readelf/audit.json",
+    "sha256": "ca15eb2d4afb612cac422ea5b67f82cabbfad03a824342ff7b07f13c54f54bad"
+  },
+  "reviewed": true,
+  "schema": "ferric-p227-prefix-parity-runtime-review-v1"
+}

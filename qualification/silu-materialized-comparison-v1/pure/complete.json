@@ -1,0 +1,55 @@
+{
+  "controller": {
+    "bytes": 24048,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-silu-materialized-comparison-v1/run.py",
+    "sha256": "fa179f6c9b1f7de3330c1e31cbbe0e22e9aa8e4456f0535abe19ac4a3b47c482"
+  },
+  "errors": 0,
+  "failures": 0,
+  "full_model_correctness": false,
+  "gpu_execution": false,
+  "manifest": {
+    "bytes": 729,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-silu-materialized-comparison-v1/manifest.json",
+    "sha256": "2678c7e43318eb56388154bea3f5a4e5f6aaac3b307b7bd9865e5642a97adba2"
+  },
+  "names": [
+    "test_silu.SiLUComparison.test_changed_activation_mismatches_remain_visible_and_conditional",
+    "test_silu.SiLUComparison.test_changed_down_and_final_hidden_use_actual_candidate_residual",
+    "test_silu.SiLUComparison.test_complete_synthetic_path_retains_all_diagnostics_without_acceptance",
+    "test_silu.SiLUComparison.test_every_pre_swiglu_stage_is_equal_not_only_prefix",
+    "test_silu.SiLUComparison.test_fp32_partial_changes_distinguish_signed_zero_and_subnormals",
+    "test_silu.SiLUComparison.test_incorrect_residual_output_is_reported_not_reclassified_as_success",
+    "test_silu.SiLUComparison.test_logical_kv_row_can_move_between_authenticated_physical_pages",
+    "test_silu.SiLUComparison.test_nonfinite_capture_partial_is_rejected_before_metrics",
+    "test_silu.SiLUComparison.test_old_image_wrong_residual_worker_or_reused_session_are_refused",
+    "test_silu.SiLUComparison.test_only_selected_mlp_image_and_scoped_identifiers_may_change",
+    "test_silu.SiLUComparison.test_partial_extent_and_nonfinite_inputs_are_refused",
+    "test_silu.SiLUComparison.test_reused_arithmetic_and_residual_oracle_are_exact_pinned_sources"
+  ],
+  "native_process_launched": false,
+  "numerical_acceptance": false,
+  "passed": true,
+  "performance_claim": false,
+  "production_authority": false,
+  "schema": "ferric-p228-silu-materialized-comparison-pure-v1",
+  "skipped": 0,
+  "source_postchecks_passed": true,
+  "sources_after": {
+    "bytes": 4460,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/silu-materialized-comparison-pure-v228-v1/sources-after.json",
+    "sha256": "eeab104e3d471e1c336680d3355a3a97b3415c6d56ab1ff4402f5afc3aa4c1d6"
+  },
+  "sources_before": {
+    "bytes": 4460,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/silu-materialized-comparison-pure-v228-v1/sources-before.json",
+    "sha256": "eeab104e3d471e1c336680d3355a3a97b3415c6d56ab1ff4402f5afc3aa4c1d6"
+  },
+  "synthetic_tests_only": true,
+  "tests": 12,
+  "transcript": {
+    "bytes": 1274,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/silu-materialized-comparison-pure-v228-v1/tests.log",
+    "sha256": "6813f984b606ee648aefb9b5cdd3e151ec98bc753b1916dd6cf590e879217e3a"
+  }
+}
