@@ -4,12 +4,14 @@ use crate::forward_sequence::ForwardInput;
 use crate::native_catalog::forward::prefix_tiles_layer_v6::{Owner, Profile};
 use crate::resident_layer::mlp_tiles_v2::Image as MlpImage;
 use crate::resident_layer::prefix_tiles_v6::artifacts::Image as PrefixImage;
+use crate::resident_layer::prefix_tiles_v6::projection_residual::Image as ProjectionImage;
 
 pub(crate) struct PreparedPrefixLayerSetup {
     setup: PreparedSetup,
     prefix: Option<PrefixImage>,
     mlp: MlpImage,
     profile: Profile,
+    projection: Option<ProjectionImage>,
 }
 fn require_tail(tail: bool, images: bool) -> Result<()> {
     if !tail || !images {
@@ -42,7 +44,21 @@ impl PreparedPrefixLayerSetup {
             prefix,
             mlp,
             profile,
+            projection: None,
         })
+    }
+    pub(crate) fn new_projection(
+        setup: PreparedSetup,
+        prefix: PrefixImage,
+        mlp: MlpImage,
+        projection: ProjectionImage,
+        input: &ForwardInput,
+        timeout_ms: u32,
+    ) -> Result<Self> {
+        let mut prepared = Self::new(setup, Some(prefix), mlp, input, timeout_ms)?;
+        prepared.profile = prepared.profile.with_projection(projection.sha256())?;
+        prepared.projection = Some(projection);
+        Ok(prepared)
     }
     pub(crate) fn device_ids(&self) -> [u64; 2] {
         self.setup.devices
@@ -58,12 +74,14 @@ impl PreparedPrefixLayerSetup {
                 .setup
                 .into_processor_profiles(group, Some(self.mlp), self.prefix)?,
             profile: self.profile,
+            projection: self.projection,
         })
     }
 }
 pub(crate) struct PrefixLayerSetup {
     inner: NativeSetup,
     profile: Profile,
+    projection: Option<ProjectionImage>,
 }
 impl PrefixLayerSetup {
     pub(crate) fn serve(&mut self, r: &mut impl Read, w: &mut impl Write) -> Result<()> {
@@ -77,7 +95,11 @@ impl PrefixLayerSetup {
     /// reviewed the exact selected-device, coherence and lifetime premises.
     #[allow(unsafe_code)]
     pub(crate) unsafe fn into_layer(self) -> Result<Owner> {
-        unsafe { Owner::from_sealed(self.inner.into_forward_owner()?, self.profile) }
+        let owner = self.inner.into_forward_owner()?;
+        match self.projection {
+            Some(image) => unsafe { Owner::from_sealed_projection(owner, self.profile, image) },
+            None => unsafe { Owner::from_sealed(owner, self.profile) },
+        }
     }
 }
 

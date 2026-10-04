@@ -1,5 +1,6 @@
 //! Fresh Prefix22/284 owners with the same MLP548 and one authentic layer-zero input.
 use super::{FilePin, ImagePins, Images, Result, hash, process, require, setup};
+use crate::finite_projection_residual_layer_wire_v1 as projection_wire;
 use crate::tp_execution::batched::EngineeringTp2FiniteSourceRecorderV1;
 use crate::tp_execution::{
     EngineeringTp2Finite2304MetadataV1, EngineeringTp2GraphGeometryV1, EngineeringTp2GraphInputV1,
@@ -19,8 +20,12 @@ use std::{
 };
 mod capture;
 mod evidence;
+mod projection_capture;
 mod provenance;
 pub use capture::{CaptureConfig, CaptureObservation, run_capture};
+pub use projection_capture::{
+    ProjectionCaptureConfig, ProjectionCaptureObservation, run_projection_capture,
+};
 
 fn hex(bytes: &[u8]) -> String {
     use std::fmt::Write;
@@ -185,6 +190,7 @@ struct Retained {
     source: provenance::Source,
     record: RunRecord,
     capture: Vec<u8>,
+    projection_bootstrap: Option<projection_wire::Bootstrap>,
 }
 
 fn metadata(
@@ -287,6 +293,53 @@ fn run_one(
     previous: Option<&Retained>,
     evidence: &mut evidence::Evidence,
 ) -> Result<Retained> {
+    run_one_with_projection(
+        config, model, images, mlp, prefix, None, token, deadline, previous, evidence,
+    )
+}
+
+fn worker_command(config: &Config, prefix: bool, projection: bool) -> Result<Command> {
+    require(!projection || prefix, "projection route requires Prefix284")?;
+    let mut command = Command::new(&config.worker.path);
+    command
+        .args([
+            if projection {
+                "--engineering-native-projection-residual-layer-v1"
+            } else {
+                "--engineering-native-prefix-layer-v1"
+            },
+            "--allow-unauthenticated-machine-code",
+            "--devices",
+        ])
+        .arg(format!("{},{}", config.device_ids[0], config.device_ids[1]))
+        .arg("--timeout-ms")
+        .arg(config.dispatch_timeout_ms.to_string());
+    if !projection {
+        command.arg("--profile").arg(if prefix {
+            "prefix284-mlp548"
+        } else {
+            "baseline22-mlp548"
+        });
+    }
+    command
+        .env_clear()
+        .env("PATH", "/usr/bin:/bin")
+        .env("LANG", "C");
+    Ok(command)
+}
+
+fn run_one_with_projection(
+    config: &Config,
+    model: &EngineeringQwenModelV1,
+    images: &Images,
+    mlp: &[u8],
+    prefix: Option<&[u8]>,
+    projection: Option<&[u8]>,
+    token: u32,
+    deadline: Instant,
+    previous: Option<&Retained>,
+    evidence: &mut evidence::Evidence,
+) -> Result<Retained> {
     let profile = if prefix.is_some() {
         wire::Profile::Prefix284Mlp548
     } else {
@@ -304,25 +357,7 @@ fn run_one(
     let limits =
         EngineeringTpPagedLimitsV1::new(2304, 32, 144, 1024).map_err(|e| format!("{e:?}"))?;
     let mut pool = EngineeringTpPagedPoolV1::new(scope, limits).map_err(|e| format!("{e:?}"))?;
-    let mut command = Command::new(&config.worker.path);
-    command
-        .args([
-            "--engineering-native-prefix-layer-v1",
-            "--allow-unauthenticated-machine-code",
-            "--devices",
-        ])
-        .arg(format!("{},{}", config.device_ids[0], config.device_ids[1]))
-        .arg("--timeout-ms")
-        .arg(config.dispatch_timeout_ms.to_string())
-        .arg("--profile")
-        .arg(if prefix.is_some() {
-            "prefix284-mlp548"
-        } else {
-            "baseline22-mlp548"
-        })
-        .env_clear()
-        .env("PATH", "/usr/bin:/bin")
-        .env("LANG", "C");
+    let command = worker_command(config, prefix.is_some(), projection.is_some())?;
     let mut child = process::OwnedChild::spawn_command(command, deadline)?;
     let pid = child.id();
     eprintln!("finite prefix layer {label} child pid={pid} pgid={pid}; setup not acknowledged");
@@ -403,7 +438,16 @@ fn run_one(
             mlp_image: wire::part(mlp),
             prefix_image: prefix.map(wire::part),
         };
-        let profile_sha256 = b.sha256().map_err(|e| e.to_string())?;
+        let projection_bootstrap = projection.map(|image| projection_wire::Bootstrap {
+            schema: projection_wire::SCHEMA.into(),
+            layer: b.clone(),
+            projection_residual_image: wire::part(image),
+        });
+        let profile_sha256 = match &projection_bootstrap {
+            Some(candidate) => candidate.sha256(),
+            None => b.sha256(),
+        }
+        .map_err(|e| e.to_string())?;
         evidence.append(&format!("{label}-registration.json"), &reg, 4 << 20)?;
         evidence.append(
             &format!("{label}-program.json"),
@@ -411,16 +455,30 @@ fn run_one(
             4 << 20,
         )?;
         evidence.append(&format!("{label}-uploads.json"), &uploads_raw, 4 << 20)?;
-        evidence.json(&format!("{label}-bootstrap.json"), &b, wire::HEADER_LIMIT)?;
+        if let Some(candidate) = &projection_bootstrap {
+            evidence.json(
+                &format!("{label}-bootstrap.json"),
+                candidate,
+                wire::HEADER_LIMIT,
+            )?;
+        } else {
+            evidence.json(&format!("{label}-bootstrap.json"), &b, wire::HEADER_LIMIT)?;
+        }
         child.check_deadline()?;
-        wire::write_bootstrap(
-            child.input.as_mut().ok_or("closed layer stdin")?,
-            &mut sent,
-            &b,
-            mlp,
-            prefix,
-        )
-        .map_err(|e| e.to_string())?;
+        let input = child.input.as_mut().ok_or("closed layer stdin")?;
+        if let Some(candidate) = &projection_bootstrap {
+            projection_wire::write_bootstrap(
+                input,
+                &mut sent,
+                candidate,
+                mlp,
+                prefix.ok_or("projection prefix image missing")?,
+                projection.ok_or("projection residual image missing")?,
+            )
+            .map_err(|e| e.to_string())?;
+        } else {
+            wire::write_bootstrap(input, &mut sent, &b, mlp, prefix).map_err(|e| e.to_string())?;
+        }
         let mut stream = setup::Stream::begin(
             &mut child,
             config.device_ids,
@@ -501,16 +559,18 @@ fn run_one(
             setup_commands,
             close.ok_or("layer Close missing")?,
             capture,
+            projection_bootstrap,
         ))
     });
-    let (source, bootstrap, profile_sha256, setup_commands, close, capture) = match outcome {
-        Ok(v) => v,
-        Err(e) => {
-            pool.quarantine_batch(&batch)
-                .map_err(|q| format!("layer quarantine {q:?}; {e}"))?;
-            return Err(e);
-        }
-    };
+    let (source, bootstrap, profile_sha256, setup_commands, close, capture, projection_bootstrap) =
+        match outcome {
+            Ok(v) => v,
+            Err(e) => {
+                pool.quarantine_batch(&batch)
+                    .map_err(|q| format!("layer quarantine {q:?}; {e}"))?;
+                return Err(e);
+            }
+        };
     // finish consumes the child only after its checked Close, and refuses any
     // residual group, nonzero exit, trailing stdout or failed deadline/cleanup.
     let stderr = child.finish()?;
@@ -528,6 +588,7 @@ fn run_one(
     Ok(Retained {
         source,
         capture,
+        projection_bootstrap,
         record: RunRecord {
             child_pid: pid,
             bootstrap,

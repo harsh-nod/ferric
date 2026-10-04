@@ -49,7 +49,7 @@ pub struct CaptureObservation {
     pub full_forward: bool,
 }
 
-fn pinned_part(pin: &FilePin) -> setup_wire::Part {
+pub(super) fn pinned_part(pin: &FilePin) -> setup_wire::Part {
     // Config and ImagePins bounds are checked before this private conversion.
     setup_wire::Part {
         bytes: pin.bytes as u32,
@@ -58,6 +58,16 @@ fn pinned_part(pin: &FilePin) -> setup_wire::Part {
 }
 
 fn closed_stages(config: &Config, record: &RunRecord, capture: &[u8]) -> Result<Vec<CaptureStage>> {
+    let expected_profile = record.bootstrap.sha256().map_err(|e| e.to_string())?;
+    closed_stages_for_profile(config, record, capture, expected_profile)
+}
+
+pub(super) fn closed_stages_for_profile(
+    config: &Config,
+    record: &RunRecord,
+    capture: &[u8],
+    expected_profile: [u8; 32],
+) -> Result<Vec<CaptureStage>> {
     let b = &record.bootstrap;
     b.validate().map_err(|e| e.to_string())?;
     let scope = &b.begin.scope;
@@ -80,7 +90,7 @@ fn closed_stages(config: &Config, record: &RunRecord, capture: &[u8]) -> Result<
             && b.begin.mlp_image == pinned_part(&config.images.mlp)
             && b.begin.residual_image == pinned_part(&config.images.residual)
             && b.begin.tail_image == Some(pinned_part(&config.images.tail))
-            && record.profile_sha256 == b.sha256().map_err(|e| e.to_string())?,
+            && record.profile_sha256 == expected_profile,
         "layer capture actual request/child/images/input",
     )?;
     response(

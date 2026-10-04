@@ -10,6 +10,7 @@ pub(crate) struct Profile {
     scope: Scope,
     registration: [u8; 32],
     prefix: Option<[u8; 32]>,
+    projection: Option<[u8; 32]>,
     mlp: [u8; 32],
     input: [u8; 32],
     timeout_ms: u32,
@@ -98,6 +99,7 @@ impl Profile {
             scope: scope.clone(),
             registration,
             prefix,
+            projection: None,
             mlp,
             input,
             timeout_ms,
@@ -106,6 +108,16 @@ impl Profile {
     }
     pub(crate) fn sha256(&self) -> [u8; 32] {
         self.sha256
+    }
+    pub(crate) fn with_projection(mut self, image: [u8; 32]) -> Result<Self> {
+        if self.prefix.is_none() || self.projection.is_some() {
+            return Err("projection residual requires a fresh prefix284 profile".into());
+        }
+        self.sha256 =
+            crate::finite_projection_residual_layer_wire_v1::profile_sha256(self.sha256, image)
+                .map_err(|e| e.to_string())?;
+        self.projection = Some(image);
+        Ok(self)
     }
     fn validate_input(&self, supplied: [u8; 32], input: &ForwardInput) -> Result<()> {
         if supplied != self.sha256 || input_digest(input, self.registration)? != self.input {
@@ -216,12 +228,35 @@ pub(crate) struct Owner {
     profile: Profile,
     gate: Gate,
     pending: Option<ClosedRun>,
+    projection: Option<layer::projection_residual::Loaded>,
 }
 impl Owner {
     /// # Safety
     /// Source/model, actual image provenance and runtime premises must be reviewed
     /// independently. The original setup and this profile are not proof issuers.
-    pub(crate) unsafe fn from_sealed(mut owner: NativeOwner, profile: Profile) -> Result<Self> {
+    pub(crate) unsafe fn from_sealed(owner: NativeOwner, profile: Profile) -> Result<Self> {
+        unsafe { Self::from_sealed_selected(owner, profile, None) }
+    }
+    /// # Safety
+    /// In addition to the original premises, the caller reviewed the supplied
+    /// projection materialization image for both residual stages.
+    pub(crate) unsafe fn from_sealed_projection(
+        owner: NativeOwner,
+        profile: Profile,
+        image: layer::projection_residual::Image,
+    ) -> Result<Self> {
+        unsafe { Self::from_sealed_selected(owner, profile, Some(image)) }
+    }
+    unsafe fn from_sealed_selected(
+        mut owner: NativeOwner,
+        profile: Profile,
+        image: Option<layer::projection_residual::Image>,
+    ) -> Result<Self> {
+        if image.as_ref().map(|v| v.sha256()) != profile.projection
+            || (image.is_some() && profile.prefix.is_none())
+        {
+            return Err("one-layer projection image/profile mismatch".into());
+        }
         let expected = if profile.prefix.is_some() {
             super::super::ExecutionProfile::PrefixTilesLayerV6
         } else {
@@ -254,7 +289,7 @@ impl Owner {
         {
             return Err("one-layer sealed catalog/profile/image mismatch".into());
         }
-        let states = if profile.prefix.is_some() {
+        let mut states = if profile.prefix.is_some() {
             if owner.tiles_states.is_some() {
                 return Err("one-layer candidate has old state roster".into());
             }
@@ -275,12 +310,26 @@ impl Owner {
                     .ok_or("baseline22/548 roster missing")?,
             )
         };
+        let projection = match image {
+            Some(image) => {
+                match layer::projection_residual::load(&mut owner.catalog.backend, image) {
+                    Ok(loaded) => Some(loaded),
+                    Err(error) => {
+                        owner.catalog.phase = Phase::Terminal;
+                        states.poison();
+                        return Err(error);
+                    }
+                }
+            }
+            None => None,
+        };
         Ok(Self {
             owner,
             states,
             profile,
             gate: Gate::default(),
             pending: None,
+            projection,
         })
     }
     /// Successful run retains all captures internally. Only close returns them.
@@ -298,6 +347,7 @@ impl Owner {
             },
             states: &mut self.states,
             allocation: self.profile.allocation(),
+            projection: self.projection.as_ref(),
         };
         self.pending = Some(
             self.gate
@@ -334,6 +384,7 @@ struct Native<'a> {
     base: Active<'a>,
     states: &'a mut States,
     allocation: AllocationProfile,
+    projection: Option<&'a layer::projection_residual::Loaded>,
 }
 impl Backend for Native<'_> {
     fn metadata(&mut self, input: &ForwardInput) -> Result<()> {
@@ -370,7 +421,7 @@ impl Backend for Native<'_> {
         // SAFETY: sealed constructor and pre-open profile bind the exact original
         // model roles and image pair; this owner admits only one layer0 call.
         unsafe {
-            layer::execute(
+            layer::execute_selected(
                 &mut owner.catalog.backend,
                 states,
                 owner
@@ -378,6 +429,7 @@ impl Backend for Native<'_> {
                     .as_ref()
                     .ok_or("one-layer resident artifacts")?,
                 owner.prefix_artifacts.as_ref(),
+                self.projection,
                 owner
                     .tiles_artifacts
                     .as_ref()

@@ -66,7 +66,7 @@ pub fn parse_args(args: &[OsString]) -> io::Result<NativeOptions> {
         profile,
     })
 }
-fn input(b: &Bootstrap) -> io::Result<ForwardInput> {
+pub(crate) fn input(b: &Bootstrap) -> io::Result<ForwardInput> {
     b.input.validate()?;
     Ok(ForwardInput {
         registration: b.begin.registration.sha256,
@@ -172,7 +172,14 @@ impl Backend for Native {
     }
 }
 fn encode_closed(b: &Bootstrap, closed: ClosedRun) -> io::Result<(wire::Control, Vec<u8>)> {
-    if closed.profile_sha256 != b.sha256()?
+    encode_closed_selected(b, b.sha256()?, closed)
+}
+fn encode_closed_selected(
+    b: &Bootstrap,
+    sha: [u8; 32],
+    closed: ClosedRun,
+) -> io::Result<(wire::Control, Vec<u8>)> {
+    if closed.profile_sha256 != sha
         || closed.generation != 1
         || closed.position != 0
         || closed.input_token != b.input.token
@@ -221,6 +228,37 @@ fn serve(
     incoming: &mut Budget,
 ) -> io::Result<()> {
     let sha = b.sha256()?;
+    serve_selected(backend, r, w, b, sha, incoming)
+}
+pub(crate) fn serve_projection_owner(
+    owner: Owner,
+    r: &mut impl Read,
+    w: &mut impl Write,
+    b: &crate::finite_projection_residual_layer_wire_v1::Bootstrap,
+    incoming: &mut Budget,
+) -> io::Result<()> {
+    b.validate()?;
+    let sha = b.sha256()?;
+    serve_selected(
+        &mut Native {
+            owner: Some(owner),
+            profile: sha,
+        },
+        r,
+        w,
+        &b.layer,
+        sha,
+        incoming,
+    )
+}
+fn serve_selected(
+    backend: &mut impl Backend,
+    r: &mut impl Read,
+    w: &mut impl Write,
+    b: &Bootstrap,
+    sha: [u8; 32],
+    incoming: &mut Budget,
+) -> io::Result<()> {
     let mut outgoing = Budget::new();
     for id in 1..=2 {
         let request = wire::read_request(r, incoming)?;
@@ -234,7 +272,7 @@ fn serve(
             }
             Command::Close => {
                 let closed = backend.close()?;
-                let (c, bytes) = encode_closed(b, closed)?;
+                let (c, bytes) = encode_closed_selected(b, sha, closed)?;
                 (Some(c), bytes)
             }
         };

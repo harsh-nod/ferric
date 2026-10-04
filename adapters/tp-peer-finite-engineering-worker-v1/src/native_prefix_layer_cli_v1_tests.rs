@@ -1,4 +1,144 @@
 use super::*;
+struct ProjectionFake {
+    inner: Fake,
+    sha: [u8; 32],
+    wrong_close: bool,
+}
+impl Backend for ProjectionFake {
+    fn run(&mut self, input: &ForwardInput) -> io::Result<()> {
+        self.inner.run(input)
+    }
+    fn close(&mut self) -> io::Result<ClosedRun> {
+        let mut got = self.inner.close()?;
+        if !self.wrong_close {
+            got.profile_sha256 = self.sha;
+        }
+        Ok(got)
+    }
+}
+fn selected_requests(sha: [u8; 32]) -> Vec<u8> {
+    let mut out = Vec::new();
+    let mut budget = Budget::new();
+    for (id, command) in [(1, Command::Run), (2, Command::Close)] {
+        wire::write_request(
+            &mut out,
+            &mut budget,
+            &wire::Request {
+                protocol: 1,
+                id,
+                profile_sha256: sha,
+                command,
+            },
+        )
+        .unwrap();
+    }
+    out
+}
+#[test]
+fn projection_wire_digest_matches_real_profile_and_keeps_old_images() {
+    let b = bootstrap(Profile::Prefix284Mlp548);
+    let old_residual = b.begin.residual_image;
+    let wrapped = crate::finite_projection_residual_layer_wire_v1::Bootstrap {
+        schema: crate::finite_projection_residual_layer_wire_v1::SCHEMA.into(),
+        layer: b.clone(),
+        projection_residual_image: wire::part(&[2]),
+    };
+    let actual = ActualProfile::new(
+        &b.begin.scope,
+        b.begin.registration.sha256,
+        b.prefix_image.map(|v| v.sha256),
+        b.mlp_image.sha256,
+        &input(&b).unwrap(),
+        b.timeout_ms,
+        b.device_ids,
+    )
+    .unwrap()
+    .with_projection(wrapped.projection_residual_image.sha256)
+    .unwrap();
+    assert_eq!(actual.sha256(), wrapped.sha256().unwrap());
+    assert_eq!(wrapped.layer.begin.residual_image, old_residual);
+}
+#[test]
+fn projection_shared_lifecycle_releases_only_new_profile_after_close() {
+    let b = bootstrap(Profile::Prefix284Mlp548);
+    let sha = crate::finite_projection_residual_layer_wire_v1::profile_sha256(
+        b.sha256().unwrap(),
+        [42; 32],
+    )
+    .unwrap();
+    let mut f = ProjectionFake {
+        inner: Fake::new(&b),
+        sha,
+        wrong_close: false,
+    };
+    let mut out = Vec::new();
+    serve_selected(
+        &mut f,
+        &mut selected_requests(sha).as_slice(),
+        &mut out,
+        &b,
+        sha,
+        &mut Budget::new(),
+    )
+    .unwrap();
+    assert_eq!((f.inner.runs, f.inner.closes), (1, 1));
+    let mut raw = out.as_slice();
+    let mut budget = Budget::new();
+    let (run, body) = wire::read_response(&mut raw, &mut budget).unwrap();
+    assert_eq!(run.profile_sha256, sha);
+    assert!(body.is_empty());
+    assert!(!run.native_closed);
+    let (closed, body) = wire::read_response(&mut raw, &mut budget).unwrap();
+    assert_eq!(closed.profile_sha256, sha);
+    assert!(closed.native_closed);
+    assert_eq!(body.len(), wire::CAPTURE_BYTES);
+    assert!(raw.is_empty());
+    assert!(!closed.numerical_acceptance);
+}
+#[test]
+fn projection_shared_lifecycle_refuses_old_hash_or_wrong_closed_identity() {
+    let b = bootstrap(Profile::Prefix284Mlp548);
+    let sha = crate::finite_projection_residual_layer_wire_v1::profile_sha256(
+        b.sha256().unwrap(),
+        [42; 32],
+    )
+    .unwrap();
+    let mut f = ProjectionFake {
+        inner: Fake::new(&b),
+        sha,
+        wrong_close: false,
+    };
+    let mut out = Vec::new();
+    assert!(
+        serve_selected(
+            &mut f,
+            &mut requests(&b).as_slice(),
+            &mut out,
+            &b,
+            sha,
+            &mut Budget::new()
+        )
+        .is_err()
+    );
+    assert_eq!((f.inner.runs, f.inner.closes), (0, 0));
+    assert!(out.is_empty());
+    f.wrong_close = true;
+    assert!(
+        serve_selected(
+            &mut f,
+            &mut selected_requests(sha).as_slice(),
+            &mut out,
+            &b,
+            sha,
+            &mut Budget::new()
+        )
+        .is_err()
+    );
+    assert_eq!((f.inner.runs, f.inner.closes), (1, 1));
+    let mut raw = out.as_slice();
+    wire::read_response(&mut raw, &mut Budget::new()).unwrap();
+    assert!(raw.is_empty());
+}
 use crate::finite_prefix_layer_wire_v1::tests::{bootstrap, control};
 use crate::native_catalog::forward::prefix_tiles_layer_v6::Profile as ActualProfile;
 use crate::resident_layer::prefix_tiles_v6::{Capture, Completion, Run};

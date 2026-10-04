@@ -6,19 +6,27 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Latest: the [projection-residual comparison helper](../qualification/projection-residual-comparison-v1/README.md)
+Latest: the [additive projection-residual parent/worker route](../qualification/projection-residual-runtime-v1/README.md)
+passed joint CPU qualification on `mi350-2`: 988 passed, four unchanged worker
+ignores, all 84 commands naturally completed and reaped. Both executables built;
+the default-feature check and all postchecks passed. All 22 integrated source
+files match the actual tested bodies. The separate route selects the new image
+for both residual stages while preserving existing routes. Native candidate
+execution and independent model numerical acceptance remain pending.
+
+The [projection-residual comparison helper](../qualification/projection-residual-comparison-v1/README.md)
 passed all twenty synthetic tests on `mi350-2`, including exact checks for both
 residual stages, logical KV indexing, and retained framework differences. This
 is comparator qualification, not a candidate GPU result. Joint parent/worker
-qualification and genuine candidate capture remain in progress.
+qualification passed as recorded above; genuine candidate capture remains pending.
 
 The [projection-residual candidate's checked gfx950 lowering](../qualification/projection-residual-lowering-v1/README.md)
 passed on `mi350-2`, including exact-output replay and all postchecks. The
 10,864-byte image also passed descriptor, ELF and ISA inspection: Wave64,
 22 explicit arguments, six VGPRs, 36 SGPRs, and no reported spills. Manual
 data-flow review finds the projection rounding before residual addition.
-This remains an unselected candidate; runtime integration, GPU execution and
-independent model numerical acceptance are still open.
+The candidate now has the separately qualified opt-in runtime route above;
+GPU execution and independent model numerical acceptance are still open.
 
 The separate [BF16 projection-residual candidate](../qualification/projection-residual-cpu-v1/README.md)
 passed 17 new Rust tests and all 14 unchanged V18 regression tests on

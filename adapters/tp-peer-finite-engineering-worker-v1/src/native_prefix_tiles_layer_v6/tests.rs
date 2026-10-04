@@ -1,4 +1,67 @@
 use super::*;
+#[test]
+fn projection_model_profile_is_distinct_and_fixed_to_prefix284() {
+    let old = profile(true).sha256();
+    let new = profile(true).with_projection([42; 32]).unwrap();
+    assert_ne!(new.sha256(), old);
+    assert_eq!(
+        new.sha256(),
+        crate::finite_projection_residual_layer_wire_v1::profile_sha256(old, [42; 32]).unwrap()
+    );
+    assert!(profile(false).with_projection([42; 32]).is_err());
+    assert!(profile(true).with_projection([0; 32]).is_err());
+    assert!(new.with_projection([43; 32]).is_err());
+}
+#[test]
+fn projection_model_rejects_old_hash_before_metadata_and_poison_is_terminal() {
+    let p = profile(true).with_projection([42; 32]).unwrap();
+    let mut gate = Gate::default();
+    let mut f = Fake {
+        tiles: true,
+        ..Default::default()
+    };
+    assert!(
+        gate.run(&p, profile(true).sha256(), &input(), &mut f)
+            .is_err()
+    );
+    assert!(f.events.is_empty());
+    assert!(f.poison);
+    assert!(!gate.complete);
+    assert!(gate.run(&p, p.sha256(), &input(), &mut f).is_err());
+    assert!(f.events.is_empty());
+}
+#[test]
+fn projection_model_preserves_every_failure_boundary_and_consuming_close() {
+    let p = profile(true).with_projection([42; 32]).unwrap();
+    for fail in 0..5 {
+        let mut gate = Gate::default();
+        let mut f = Fake {
+            tiles: true,
+            fail: Some(fail),
+            ..Default::default()
+        };
+        assert!(gate.run(&p, p.sha256(), &input(), &mut f).is_err());
+        assert!(f.poison);
+        assert!(!gate.complete);
+        assert_eq!(f.events.len(), fail + 1);
+        assert!(close_pending::<()>(gate.complete, None, || panic!("premature close")).is_err());
+    }
+    let mut gate = Gate::default();
+    let mut f = Fake {
+        tiles: true,
+        ..Default::default()
+    };
+    let got = gate.run(&p, p.sha256(), &input(), &mut f).unwrap();
+    assert_eq!(got.profile_sha256, p.sha256());
+    assert!(gate.complete);
+    assert!(!f.poison);
+    assert_eq!(
+        close_pending(gate.complete, Some(got), || Ok(()))
+            .unwrap()
+            .input_token,
+        9112
+    );
+}
 fn input() -> ForwardInput {
     ForwardInput {
         registration: [7; 32],

@@ -12,6 +12,7 @@ use fe2o3_kfd::{
 };
 
 pub(crate) mod artifacts;
+pub(crate) mod projection_residual;
 pub(crate) enum States<'a> {
     Baseline(&'a mut old::Roster),
     Tiles(&'a mut prefix::Roster),
@@ -104,9 +105,23 @@ struct Native<'a> {
     states: States<'a>,
     original: &'a LoadedResidentArtifacts,
     prefix: Option<&'a artifacts::Loaded>,
+    projection: Option<&'a projection_residual::Loaded>,
     mlp: &'a LoadedKernels,
     roots: &'a LayerBindings,
     timeout_ms: u32,
+}
+fn select_residual<'a, T>(
+    projection: Option<&'a [T; 2]>,
+    rank: usize,
+    original: impl FnOnce(usize) -> Result<&'a T>,
+) -> Result<&'a T> {
+    if rank >= 2 {
+        return Err("projection residual rank".into());
+    }
+    match projection {
+        Some(pair) => Ok(&pair[rank]),
+        None => original(rank),
+    }
 }
 impl Native<'_> {
     fn read<const N: usize>(
@@ -136,11 +151,16 @@ impl Backend for Native<'_> {
         self.roots.validate()?;
         if !(1..=10000).contains(&self.timeout_ms)
             || matches!(&self.states, States::Tiles(_)) != self.prefix.is_some()
+            || (self.projection.is_some() && self.prefix.is_none())
         {
             return Err("prefix layer image/state profile".into());
         }
         for rank in 0..2 {
-            if self.original.kernel(rank, ResidentKind::Residual)?.rank() != rank
+            if select_residual(self.projection.map(|p| &p.kernels), rank, |r| {
+                self.original.kernel(r, ResidentKind::Residual)
+            })?
+            .rank()
+                != rank
                 || self.mlp.kernels[rank].rank() != rank
             {
                 return Err("prefix layer artifact owner".into());
@@ -264,7 +284,9 @@ impl Backend for Native<'_> {
                 pointers.push(original.pointer(128, 0, 8192, Access::Read));
                 pointers.push(output.pointer(144, 0, 8192, Access::Write));
                 commands.push(Dispatch {
-                    kernel: self.original.kernel(rank, ResidentKind::Residual)?,
+                    kernel: select_residual(self.projection.map(|p| &p.kernels), rank, |r| {
+                        self.original.kernel(r, ResidentKind::Residual)
+                    })?,
                     bytes: consumer_bytes(),
                     workgroup: [64, 1, 1],
                     grid: [4096, 1, 1],
@@ -272,7 +294,8 @@ impl Backend for Native<'_> {
                     timeout_ms: self.timeout_ms,
                 });
             }
-            // SAFETY: unchanged TP2 residual; both partial producers completed before either rank reads.
+            // SAFETY: the selected image has the same reviewed TP2 ABI; both
+            // partial producers completed before either rank reads.
             unsafe { self.group.dispatch_round_unchecked(commands)? }
                 .try_into()
                 .map_err(|_| "residual pair count".into())
@@ -356,11 +379,31 @@ pub(crate) unsafe fn execute(
     roots: &LayerBindings,
     timeout_ms: u32,
 ) -> Result<Run> {
+    unsafe {
+        execute_selected(
+            group, states, original, prefix, None, mlp, roots, timeout_ms,
+        )
+    }
+}
+/// # Safety
+/// The selected projection image additionally requires independent source and
+/// numerical review. No selection changes the original image or copy kernel.
+pub(crate) unsafe fn execute_selected(
+    group: &mut Group,
+    states: States<'_>,
+    original: &LoadedResidentArtifacts,
+    prefix: Option<&artifacts::Loaded>,
+    projection: Option<&projection_residual::Loaded>,
+    mlp: &LoadedKernels,
+    roots: &LayerBindings,
+    timeout_ms: u32,
+) -> Result<Run> {
     coordinate(&mut Native {
         group,
         states,
         original,
         prefix,
+        projection,
         mlp,
         roots,
         timeout_ms,

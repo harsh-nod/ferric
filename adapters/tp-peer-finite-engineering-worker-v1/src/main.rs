@@ -10,6 +10,7 @@ use ferric_tp_peer_finite_engineering_worker_v1::native_prefix_decode_device_v1 
 use ferric_tp_peer_finite_engineering_worker_v1::native_prefix_decode_host_v1 as prefix_host;
 use ferric_tp_peer_finite_engineering_worker_v1::native_prefix_decode_host_v2 as prefix_host_policy;
 use ferric_tp_peer_finite_engineering_worker_v1::native_prefix_layer_cli_v1 as layer;
+use ferric_tp_peer_finite_engineering_worker_v1::native_projection_residual_layer_cli_v1 as projection_layer;
 use ferric_tp_peer_finite_engineering_worker_v1::native_queued_mlp_comparison_cli_v1 as comparison;
 use ferric_tp_peer_finite_engineering_worker_v1::native_queued_projection_comparison_cli_v1 as projection;
 use ferric_tp_peer_finite_engineering_worker_v1::native_rearm_smoke_cli_v1 as smoke;
@@ -19,6 +20,14 @@ use std::io::{self, IsTerminal};
 #[allow(unsafe_code)]
 fn run() -> io::Result<i32> {
     let args: Vec<_> = std::env::args_os().skip(1).collect();
+    let projection_layer_options = if args
+        .first()
+        .is_some_and(|arg| arg == "--engineering-native-projection-residual-layer-v1")
+    {
+        Some(projection_layer::parse_args(&args)?)
+    } else {
+        None
+    };
     let clock_options = if args
         .first()
         .is_some_and(|arg| arg == "--engineering-native-prefix-decode-device-clock-v2")
@@ -116,6 +125,7 @@ fn run() -> io::Result<i32> {
         None
     };
     let invocation = if long_options.is_none()
+        && projection_layer_options.is_none()
         && device_options.is_none()
         && clock_options.is_none()
         && host_policy_options.is_none()
@@ -138,6 +148,11 @@ fn run() -> io::Result<i32> {
         ));
     }
     let mut input = io::stdin().lock();
+    if let Some(options) = projection_layer_options {
+        // SAFETY: separate reviewed candidate with the same disposable-child lifetime.
+        unsafe { projection_layer::run_native(options, &mut input, &mut io::stdout().lock()) }?;
+        return Ok(0);
+    }
     if let Some(options) = clock_options {
         // SAFETY: distinct trusted-parent raw-clock diagnostic and owned child.
         unsafe { prefix_clocks::run_native(options, &mut input, &mut io::stdout().lock()) }?;

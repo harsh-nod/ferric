@@ -223,7 +223,7 @@ fn header<T: Serialize>(value: &T) -> io::Result<Vec<u8>> {
     serde_json::to_writer(&mut out, value).map_err(io::Error::other)?;
     Ok(out.0)
 }
-fn write_header(
+pub(crate) fn write_header(
     w: &mut impl Write,
     budget: &mut Budget,
     value: &impl Serialize,
@@ -239,7 +239,7 @@ fn write_header(
     w.write_all(&(raw.len() as u32).to_le_bytes())?;
     w.write_all(&raw)
 }
-fn read_header<T: serde::de::DeserializeOwned>(
+pub(crate) fn read_header<T: serde::de::DeserializeOwned>(
     r: &mut impl Read,
     budget: &mut Budget,
 ) -> io::Result<T> {
@@ -252,7 +252,7 @@ fn read_header<T: serde::de::DeserializeOwned>(
     r.read_exact(&mut raw)?;
     serde_json::from_slice(&raw).map_err(io::Error::other)
 }
-fn read_part(r: &mut impl Read, budget: &mut Budget, p: Part) -> io::Result<Vec<u8>> {
+pub(crate) fn read_part(r: &mut impl Read, budget: &mut Budget, p: Part) -> io::Result<Vec<u8>> {
     budget.add(p.bytes as usize)?;
     let mut raw = vec![0; p.bytes as usize];
     r.read_exact(&mut raw)?;
