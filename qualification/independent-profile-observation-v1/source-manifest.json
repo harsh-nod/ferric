@@ -1,0 +1,37 @@
+{
+  "actual_capture_replay": false,
+  "files": [
+    {
+      "bytes": 9391,
+      "path": "README.md",
+      "sha256": "15556e9402311e6807521b0f797264dd7b4d1aefab58415530f0e0e5a5678c68"
+    },
+    {
+      "bytes": 6964,
+      "path": "child_evidence.py",
+      "sha256": "2cbb74ada0950d1767c8b526008e9d9c7efb48d84649e1aea8f3d6661309edd3"
+    },
+    {
+      "bytes": 18971,
+      "path": "observe.py",
+      "sha256": "3ed69ac9af12d0442b0d7c6acef8f6081c923dd410de934df6fbf64784441ec6"
+    },
+    {
+      "bytes": 21933,
+      "path": "test_observe.py",
+      "sha256": "198f63e7c296982a0a99642256f6698036aa2cc39135a1f5b5ec1beb901fd6d5"
+    },
+    {
+      "bytes": 15359,
+      "path": "validation.py",
+      "sha256": "cdaf6dc53208bbca8f23b2a3fa3eca9d28fe00ca4cfc74b36d225f3ebe8d28d1"
+    }
+  ],
+  "gpu_execution": false,
+  "native_execution": false,
+  "production_authority": false,
+  "real_numerical_reference_execution": false,
+  "schema": "ferric-p228-independent-profile-observation-package-v1",
+  "synthetic_tests_defined": 23,
+  "tests_executed": false
+}

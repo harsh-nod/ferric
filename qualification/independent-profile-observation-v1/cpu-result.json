@@ -1,0 +1,66 @@
+{
+  "actual_capture_replay": false,
+  "controller": {
+    "bytes": 3082,
+    "sha256": "887d501f8eb5d97910da330fe52dca6b56d33fae3874a6c4463e3bf6a58aa3ab"
+  },
+  "date": "2026-10-03",
+  "full_model_acceptance": false,
+  "gpu_execution": false,
+  "host": "mi350-2 (asrock-1w300-g2-2b)",
+  "limitations": [
+    "Reference-return values in these adapter tests are mocks, not numerical evidence.",
+    "The unchanged independent comparator has separate CPU and historical-capture qualification.",
+    "compare_retained still needs end-to-end execution with real custody helpers and new captures.",
+    "This package has no launcher and does not qualify a native binary, HSACO or GPU deployment.",
+    "Source README is the retained authoring-time draft; this result records subsequent root execution."
+  ],
+  "native_execution": false,
+  "numerical_acceptance": false,
+  "package": {
+    "bytes": 1061,
+    "sha256": "4c49bffced2b40b52547000f0d1b1efeabd569fc59abc1a6a1cd94b7d462952e"
+  },
+  "passed": true,
+  "performance_claim": false,
+  "production_authority": false,
+  "raw_completion": {
+    "bytes": 574,
+    "sha256": "0730c9f9cc846c97c82ed9b6341e6b85acee4577e2d0a10318f93c9efad96921"
+  },
+  "real_numerical_reference_execution": false,
+  "schema": "FerricIndependentProfileObservationPolicyTestsV1",
+  "source_files_rehashed": 5,
+  "synthetic_policy_tests": true,
+  "test_names": [
+    "test_baseline_reference_rejection_does_not_accept_or_skip_candidate",
+    "test_candidate_reference_rejection_preserves_only_conditional_baseline_result",
+    "test_changed_reader_input_is_fatal_not_a_numerical_failure_to_skip",
+    "test_every_computed_stage_and_current_kv_slot_must_be_finite",
+    "test_finite_profile_differences_do_not_require_parity",
+    "test_first_custody_pin_failure_prevents_underlying_reader_and_candidate",
+    "test_first_underlying_reader_failure_is_fatal_before_it_registers_a_pin",
+    "test_frozen_legacy_validation_and_child_custody_bytes",
+    "test_future_kv_poison_is_hashed_not_claimed_as_revalidated_history",
+    "test_guarded_reader_records_attempt_and_rejects_bad_bytes_or_conflicting_pin",
+    "test_inert_inspection_is_closed_and_new",
+    "test_inspected_immutable_input_and_initial_hash_drift_refused",
+    "test_no_deployment_audit_gpu_or_numerical_authority",
+    "test_numerical_plans_bind_each_profile_capture_and_input_hashes",
+    "test_old_parity_failure_and_success_reports_are_refused",
+    "test_owned_leaf_replay_keeps_command_deadline_reap_and_no_retry_gates",
+    "test_parent_image_and_scoped_review_drift_refused",
+    "test_plan_requires_new_label_exact_case_and_owned_result_locations",
+    "test_profile_order_close_state_and_timing_refused",
+    "test_reference_result_capture_rank_stage_and_authority_joins",
+    "test_success_routes_both_profiles_to_separate_reference_calls_and_rechecks",
+    "test_whole_capture_extent_pin_path_and_extra_body_refused",
+    "test_wrong_weight_extent_rank_or_path_join_refused"
+  ],
+  "tests_ignored": 0,
+  "tests_passed": 23,
+  "transcript": {
+    "bytes": 2307,
+    "sha256": "9563b6428db8291e84fabc55727a92223a947a7237372795b147fe556c05624d"
+  }
+}

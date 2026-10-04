@@ -1,0 +1,28 @@
+test_baseline_reference_rejection_does_not_accept_or_skip_candidate (test_observe.PolicyTests) ... ok
+test_candidate_reference_rejection_preserves_only_conditional_baseline_result (test_observe.PolicyTests) ... ok
+test_changed_reader_input_is_fatal_not_a_numerical_failure_to_skip (test_observe.PolicyTests) ... ok
+test_every_computed_stage_and_current_kv_slot_must_be_finite (test_observe.PolicyTests) ... ok
+test_finite_profile_differences_do_not_require_parity (test_observe.PolicyTests) ... ok
+test_first_custody_pin_failure_prevents_underlying_reader_and_candidate (test_observe.PolicyTests) ... ok
+test_first_underlying_reader_failure_is_fatal_before_it_registers_a_pin (test_observe.PolicyTests) ... ok
+test_frozen_legacy_validation_and_child_custody_bytes (test_observe.PolicyTests) ... ok
+test_future_kv_poison_is_hashed_not_claimed_as_revalidated_history (test_observe.PolicyTests) ... ok
+test_guarded_reader_records_attempt_and_rejects_bad_bytes_or_conflicting_pin (test_observe.PolicyTests) ... ok
+test_inert_inspection_is_closed_and_new (test_observe.PolicyTests) ... ok
+test_inspected_immutable_input_and_initial_hash_drift_refused (test_observe.PolicyTests) ... ok
+test_no_deployment_audit_gpu_or_numerical_authority (test_observe.PolicyTests) ... ok
+test_numerical_plans_bind_each_profile_capture_and_input_hashes (test_observe.PolicyTests) ... ok
+test_old_parity_failure_and_success_reports_are_refused (test_observe.PolicyTests) ... ok
+test_owned_leaf_replay_keeps_command_deadline_reap_and_no_retry_gates (test_observe.PolicyTests) ... ok
+test_parent_image_and_scoped_review_drift_refused (test_observe.PolicyTests) ... ok
+test_plan_requires_new_label_exact_case_and_owned_result_locations (test_observe.PolicyTests) ... ok
+test_profile_order_close_state_and_timing_refused (test_observe.PolicyTests) ... ok
+test_reference_result_capture_rank_stage_and_authority_joins (test_observe.PolicyTests) ... ok
+test_success_routes_both_profiles_to_separate_reference_calls_and_rechecks (test_observe.PolicyTests) ... ok
+test_whole_capture_extent_pin_path_and_extra_body_refused (test_observe.PolicyTests) ... ok
+test_wrong_weight_extent_rank_or_path_join_refused (test_observe.PolicyTests) ... ok
+
+----------------------------------------------------------------------
+Ran 23 tests in 1.240s
+
+OK

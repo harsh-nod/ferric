@@ -32,6 +32,7 @@ engineering branch; it does not change the production execution path.
 | Ordinary induction temporary compiler candidate on `mi350-2` | 2,683 CPU tests passed, 25 ignored; fresh backend and extractor built | Eight new regressions executed; actual prefix replay remains pending |
 | Ordinary induction matching finalizer tools on `mi350-2` | 190 default tests passed, 15 ignored; three tools rebuilt | Exact new compiler generation; actual-capture inert join remains a separate gate |
 | V3 checked lowering with ordinary-induction compiler on `mi350-2` | Natural zero exit in 1,771.339 seconds; KIR V11, gfx950 LLVM and inert handoff emitted | Interim leaf snapshot; actual replay and whole-probe postchecks pending, no new HSACO or GPU result |
+| Independent-profile observation adapter on `mi350-2` | 23 synthetic policy tests passed, no skips | No launcher; mathematical return values are mocked; real-capture integration pending |
 
 Both four-forward runs completed their Close protocol, reaped their owned
 processes, and passed their six surrounding device-state audits. The CPU suite
@@ -202,6 +203,16 @@ gfx950 LLVM and a 4,022,416-byte inert handoff. This clears the previous latch
 refusal. This publication is an interim checkpoint: capture replay is running,
 whole-probe source/dependency/prior-target postchecks remain pending, and no
 HSACO, GPU validation or performance result follows from the leaf alone.
+
+A separate [observation adapter](../qualification/independent-profile-observation-v1/README.md)
+now validates the new independent-profile reports while preserving the existing
+child-custody validator and numerical references. All 23 synthetic policy tests
+passed on `mi350-2`, including first-read authentication failures that occur
+before the original Reader registers a pin. Those failures abort, whereas
+ordinary numerical rejections remain specific to each profile. Its tested
+source is published, but it has no launcher and has not yet replayed real new
+captures through the full adapter. Mock reference returns in these tests are
+not numerical evidence or a new GPU result.
 
 ## Source Publication
 
