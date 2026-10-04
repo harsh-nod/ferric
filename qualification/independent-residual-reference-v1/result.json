@@ -1,0 +1,38 @@
+{
+  "elapsed_seconds": 0.4531431710347533,
+  "errors": 0,
+  "failures": 0,
+  "full_layer_acceptance": false,
+  "full_model_acceptance": false,
+  "gpu_execution": false,
+  "host": "smci350-rck-g03-b19-03",
+  "passed": true,
+  "production_authority": false,
+  "python": "3.12.3",
+  "real_gpu_capture_validation": false,
+  "schema": "FerricIndependentResidualCaptureTestsV1",
+  "skipped": 0,
+  "source_files": {
+    "README.md": {
+      "bytes": 6861,
+      "sha256": "7ece2a87b1c2b3f9fdb60b28985c6d4c07e3dc3d64cf989d9ab79fe3c89732ea"
+    },
+    "helpers/residual_oracle.py": {
+      "bytes": 4347,
+      "sha256": "551f89f968cad8f63073ca975346c593a31dad624115a93059b28a328e312ef3"
+    },
+    "residual_reference.py": {
+      "bytes": 4338,
+      "sha256": "72f22c7134d609034a033e5ac70fb8c67032a95b9ad96eeafb399092b3655ad8"
+    },
+    "test_residual_reference.py": {
+      "bytes": 9284,
+      "sha256": "4ff70d01d01aef66711b4b129a7f394dc7eb10cece9c3df1a812be1a42b03d0b"
+    }
+  },
+  "source_postchecks_passed": true,
+  "synthetic_capture_tests_only": true,
+  "tests": 18,
+  "date": "2026-10-04",
+  "ssh_exit_code": 0
+}

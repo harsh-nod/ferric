@@ -282,6 +282,14 @@ observed useful work from all 64 candidate workgroups on each rank. No bound
 was widened, and no full-model or performance acceptance follows from this
 prefix-only result. The matrix page reports each case separately.
 
+The next [residual-capture comparator](../qualification/independent-residual-reference-v1/README.md)
+has passed 18 focused CPU tests on MI350. It reuses the unchanged integer
+FP32/BF16 rounding oracle and checks both residual boundaries, explicitly
+feeding the post-attention residual into the post-MLP residual check. The
+tests cover exact output words, cancellation, rounding, overflow, corrupt
+captures and incorrect stage chaining. These are synthetic component tests,
+not new full-layer GPU evidence or validation of the intervening MLP.
+
 ## Source Publication
 
 The [source index](assets/finite-prefix-v227/source-index.json) binds the 289

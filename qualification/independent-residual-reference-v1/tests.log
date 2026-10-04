@@ -1,0 +1,24 @@
+test_both_stage_labels_match_exact_outputs (test_residual_reference.ResidualCaptureTests.test_both_stage_labels_match_exact_outputs) ... ok
+test_cancellation_preserves_late_residual (test_residual_reference.ResidualCaptureTests.test_cancellation_preserves_late_residual) ... ok
+test_changed_helper_refuses_before_execution (test_residual_reference.ResidualCaptureTests.test_changed_helper_refuses_before_execution) ... ok
+test_closed_stage_and_equal_replicated_residuals (test_residual_reference.ResidualCaptureTests.test_closed_stage_and_equal_replicated_residuals) ... ok
+test_early_narrowing_and_tie_errors_refuse (test_residual_reference.ResidualCaptureTests.test_early_narrowing_and_tie_errors_refuse) ... ok
+test_exact_extents_types_and_rank_pairs (test_residual_reference.ResidualCaptureTests.test_exact_extents_types_and_rank_pairs) ... ok
+test_first_failure_prevents_second_comparison (test_residual_reference.ResidualCaptureTests.test_first_failure_prevents_second_comparison) ... ok
+test_hashes_bind_actual_bytes_and_all_nonclaims_stay_false (test_residual_reference.ResidualCaptureTests.test_hashes_bind_actual_bytes_and_all_nonclaims_stay_false) ... ok
+test_helper_is_byte_identical_to_retained_pin (test_residual_reference.ResidualCaptureTests.test_helper_is_byte_identical_to_retained_pin) ... ok
+test_intermediate_final_and_bf16_overflows_refuse (test_residual_reference.ResidualCaptureTests.test_intermediate_final_and_bf16_overflows_refuse) ... ok
+test_last_element_corruption_refuses_whole_result (test_residual_reference.ResidualCaptureTests.test_last_element_corruption_refuses_whole_result) ... ok
+test_nonfinite_inputs_and_outputs_refuse (test_residual_reference.ResidualCaptureTests.test_nonfinite_inputs_and_outputs_refuse) ... ok
+test_nonuniform_4096_elements (test_residual_reference.ResidualCaptureTests.test_nonuniform_4096_elements) ... ok
+test_rank_swap_invariance_does_not_hide_changed_conditioning (test_residual_reference.ResidualCaptureTests.test_rank_swap_invariance_does_not_hide_changed_conditioning) ... ok
+test_second_skip_is_first_residual_not_original_hidden (test_residual_reference.ResidualCaptureTests.test_second_skip_is_first_residual_not_original_hidden) ... ok
+test_signed_zero_remains_exact (test_residual_reference.ResidualCaptureTests.test_signed_zero_remains_exact) ... ok
+test_symlink_and_relative_helper_paths_refuse (test_residual_reference.ResidualCaptureTests.test_symlink_and_relative_helper_paths_refuse) ... ok
+test_wrong_partial_residual_and_one_rank_output_refuse (test_residual_reference.ResidualCaptureTests.test_wrong_partial_residual_and_one_rank_output_refuse) ... ok
+
+----------------------------------------------------------------------
+Ran 18 tests in 0.453s
+
+OK
+RESULT_JSON={"elapsed_seconds": 0.4531431710347533, "errors": 0, "failures": 0, "full_layer_acceptance": false, "full_model_acceptance": false, "gpu_execution": false, "host": "smci350-rck-g03-b19-03", "passed": true, "production_authority": false, "python": "3.12.3", "real_gpu_capture_validation": false, "schema": "FerricIndependentResidualCaptureTestsV1", "skipped": 0, "source_files": {"README.md": {"bytes": 6861, "sha256": "7ece2a87b1c2b3f9fdb60b28985c6d4c07e3dc3d64cf989d9ab79fe3c89732ea"}, "helpers/residual_oracle.py": {"bytes": 4347, "sha256": "551f89f968cad8f63073ca975346c593a31dad624115a93059b28a328e312ef3"}, "residual_reference.py": {"bytes": 4338, "sha256": "72f22c7134d609034a033e5ac70fb8c67032a95b9ad96eeafb399092b3655ad8"}, "test_residual_reference.py": {"bytes": 9284, "sha256": "4ff70d01d01aef66711b4b129a7f394dc7eb10cece9c3df1a812be1a42b03d0b"}}, "source_postchecks_passed": true, "synthetic_capture_tests_only": true, "tests": 18}
