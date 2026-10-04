@@ -60,6 +60,26 @@ keeps this distinct from successful CPU arithmetic checks and from the existing
 GPU images. A smaller candidate control-flow graph needs its own arithmetic and
 checked compiler validation before any GPU claim.
 
+The revised candidate now uses masked subtraction and boolean nearest-even
+rounding within the same 24-step restoring algorithm. Bounded integer
+operations use wrapping methods to avoid unnecessary checked-MIR branches;
+only creation of the all-ones subtraction mask intentionally wraps. The
+positive-normal domain, power-of-two path, two prefix wrappers, shared V3
+arithmetic, kernel body and independent numerical references remain unchanged
+relative to the first candidate.
+No compiler storage cap or numerical tolerance was increased.
+
+Its fresh [CPU validation](assets/finite-prefix-v228/reciprocal-cpu-branchless.json)
+passed 11 ordinary arithmetic tests, six source contracts, the explicitly
+selected exhaustive test over 8,388,608 significands in one binade, and all
+1,007 independent Fraction nearest-neighbor vectors. The exhaustive test is
+ignored by the ordinary invocation but was separately executed successfully.
+All nine owned phases exited naturally, source/dependency postchecks passed,
+and all 50 raw records plus both test binaries were rehashed locally. The
+additional source contract pins macro-rule structure; it is not an independent
+numerical reference. This revision has not yet undergone checked lowering or
+GPU execution, and reducing compiler storage remains an unverified hypothesis.
+
 ## Source Publication
 
 The [source index](assets/finite-prefix-v227/source-index.json) binds the 289
@@ -215,7 +235,9 @@ alone is not a self-contained reproducer or proof.
 | V2 repeated-baseline GPU completion | `4f5cbd384e136d5c5a05cf0a9d87733b249ee85fec5cd421d3164df87af4110d` |
 | V2 shared-currentness GPU completion | `6aad2f46f234a98ac9f792a6108e98e6bbb6269ad81a6913aa1524f8972cd097` |
 | Consolidated group-fence CPU475 completion | `0231c40bf9a5ff285e041f29b2c958e26972e73f6a4485072e153a0bd178171b` |
+| Consolidated group-fence GPU completion | `ebecff7a6e459cbb6fa8b4c750bc9c524adb417405e2827608175ba0a2c66a5f` |
 | Exact-reciprocal checked probe failure | `3d3fd530e171a6e2977d995c78d5665d9e5a728e173eb21b445891148ba61e0d` |
+| Branchless reciprocal CPU completion | `d16dd989342d6092445d6fc3d046184ddf160527b1681d713e9b1291f6b106a4` |
 | Corrected CPU605 owner | `dde383021440a721bd2c41bff614ea1156a3b36c6fa48cd2ad27c95337af7cb2` |
 | Historical KFD completion | `e6cdd55c6a2dda4dafdd25a4c8d5e3670312c912cdbc1f20258a6e93db48e603` |
 | Teacher-forced four-forward completion | `56f72c0c8c76e7c2c3f00ca767d5a7b53c66ba4b2c17589059565c2c2532fb8b` |
