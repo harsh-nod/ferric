@@ -6,10 +6,19 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Latest: the [projection-residual capture supervisor](../qualification/projection-residual-capture-supervisor-v1/README.md)
+Latest: the [projection-residual native capture and comparison](../qualification/projection-residual-native-capture-v1/README.md)
+completed on `mi350`, with the independent comparison on `mi350-2`. All 28 arrays,
+fourteen unchanged upstream arrays, full KV checks and six audits passed. Both
+residual stages matched the independent conditional oracle on both ranks:
+16,384/16,384 BF16 words. Against the genuine framework, final-hidden exact words
+improved from 1,834 to 2,728/4,096 and maximum absolute error fell from 0.0625 to
+0.0078125. Remaining stage differences are retained; full-model numerical
+acceptance and performance remain open.
+
+The [projection-residual capture supervisor](../qualification/projection-residual-capture-supervisor-v1/README.md)
 passed all 34 synthetic policy tests on `mi350`, with unchanged sources and no
-skips. No model binary or GPU kernel ran in this suite. Fresh runtime checks,
-the genuine candidate capture and its independent numerical comparison are next.
+skips. No model binary or GPU kernel ran in that suite. Fresh runtime checks and
+the genuine candidate capture/comparison subsequently completed as recorded above.
 
 The [additive projection-residual parent/worker route](../qualification/projection-residual-runtime-v1/README.md)
 passed joint CPU qualification on `mi350-2`: 988 passed, four unchanged worker
@@ -17,29 +26,31 @@ ignores, all 84 commands naturally completed and reaped. Both executables built;
 the default-feature check and all postchecks passed. All 22 integrated source
 files match the actual tested bodies. The separate route selects the new image
 for both residual stages while preserving existing routes. Native candidate
-execution and independent model numerical acceptance remain pending.
+execution completed as recorded above; independent model numerical acceptance
+remains pending.
 
 The [projection-residual comparison helper](../qualification/projection-residual-comparison-v1/README.md)
 passed all twenty synthetic tests on `mi350-2`, including exact checks for both
 residual stages, logical KV indexing, and retained framework differences. This
-is comparator qualification, not a candidate GPU result. Joint parent/worker
-qualification passed as recorded above; genuine candidate capture remains pending.
+is comparator qualification, not a candidate GPU result. Its subsequent genuine
+candidate comparison is recorded above, without full-model acceptance.
 
 The [projection-residual candidate's checked gfx950 lowering](../qualification/projection-residual-lowering-v1/README.md)
 passed on `mi350-2`, including exact-output replay and all postchecks. The
 10,864-byte image also passed descriptor, ELF and ISA inspection: Wave64,
 22 explicit arguments, six VGPRs, 36 SGPRs, and no reported spills. Manual
 data-flow review finds the projection rounding before residual addition.
-The candidate now has the separately qualified opt-in runtime route above;
-GPU execution and independent model numerical acceptance are still open.
+The candidate now has the separately qualified opt-in runtime route above.
+GPU execution completed as recorded above; independent model numerical
+acceptance remains open.
 
 The separate [BF16 projection-residual candidate](../qualification/projection-residual-cpu-v1/README.md)
 passed 17 new Rust tests and all 14 unchanged V18 regression tests on
 `mi350-2`, with no ignores. All 18 bounded commands and source/tool/input
 postchecks passed. The new kernel materializes the combined projection in
 BF16 before residual addition; it does not alter the current runtime route.
-Its checked lowering is recorded above; GPU execution and model numerical
-acceptance remain open.
+Checked lowering and the subsequent layer-zero hardware result are recorded
+above. Model numerical acceptance remains open.
 
 The [projection-rounding replay](../qualification/output-residual-boundary-v1/README.md)
 completed on `mi350-2`. The current formula reproduces all 4,096 captured native
