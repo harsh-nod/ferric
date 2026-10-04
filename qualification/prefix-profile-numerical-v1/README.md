@@ -25,6 +25,13 @@ and after the tests. Replay rechecked 55 input identities. A first replay
 stopped on missing cross-host requests; their original hash-verified bytes
 were copied to isolated replicas before a fresh successful run.
 
+The same 20 tests also passed on `mi350` (`smci350-rck-g03-b19-03`), using
+Python 3.12 and NumPy 2.2.6 in 7.624 seconds. The
+[MI350 CPU result](mi350-cpu-result.json), [log](mi350-cpu-tests.log), and
+[bounded test driver](mi350-cpu-test-driver.py) record that separate execution.
+All 30 source identities were rechecked before and after. This confirms the
+reference environment on the intended GPU host; it does not execute a GPU.
+
 The synthetic history test crosses from logical token 15, physical slot 127,
 to token 16, slot 192. It uses nonzero historical KV and an analytically known
 attention result. A finite prior-value corruption, with an updated capture
@@ -52,8 +59,9 @@ in this source package.
 ## Qualification Boundary
 
 Each operator is checked conditionally on its captured preceding stage. The
-historical captures are from older images, not the exact-reciprocal candidate,
-whose checked lowering remains incomplete. Replay is not a new GPU run.
+historical captures are from older images, not the exact-reciprocal candidate.
+That candidate has since completed its checked lowering and image emission;
+its new GPU captures have not yet been compared here. Replay is not a new GPU run.
 
 Full model correctness, historical KV origin, untouched KV, GPU provenance,
 owned process lifecycle and artifact arithmetic/ISA prerequisites require

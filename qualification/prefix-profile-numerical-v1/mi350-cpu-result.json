@@ -1,0 +1,37 @@
+{
+  "controller": {
+    "bytes": 3412,
+    "sha256": "3228912e442c4457e2611012756be7c18f2c21dfbf4e28e02d3196317cd96d9a"
+  },
+  "cpu_affinity": [
+    8,
+    9
+  ],
+  "elapsed_host_seconds": 7.624445085995831,
+  "errors": 0,
+  "failures": 0,
+  "fixed_reference_bounds": true,
+  "full_model_acceptance": false,
+  "gpu_execution": false,
+  "host": "smci350-rck-g03-b19-03",
+  "nice": 10,
+  "numerical_acceptance": false,
+  "numpy": "2.2.6",
+  "passed": true,
+  "performance_claim": false,
+  "production_authority": false,
+  "python": "3.12.3",
+  "schema": "ferric-prefix-profile-cpu-tests-v1",
+  "skipped": 0,
+  "source_manifest": {
+    "bytes": 5767,
+    "sha256": "d99d27e9912b486ad90b212d08fb297d894033da9845330bea36f199ed4f0122"
+  },
+  "source_postchecks_passed": true,
+  "synthetic_fixtures_only": true,
+  "tests": 20,
+  "transcript": {
+    "bytes": 3231,
+    "sha256": "d7b69166ce167d32dedfe66a5f09f4b2e9212545dbaa1823584dd60f6e03fbc4"
+  }
+}

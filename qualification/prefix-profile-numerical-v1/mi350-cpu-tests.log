@@ -1,0 +1,25 @@
+test_authentic_rank_input_and_o_shard_substitution_refuse (test_compare_profile.ProfileTests.test_authentic_rank_input_and_o_shard_substitution_refuse) ... ok
+test_capture_alias_extent_and_changed_bytes_refuse (test_compare_profile.ProfileTests.test_capture_alias_extent_and_changed_bytes_refuse) ... ok
+test_causal_prior_value_corruption_fails_the_real_attention_reference (test_compare_profile.ProfileTests.test_causal_prior_value_corruption_fails_the_real_attention_reference) ... ok
+test_closed_plan_profile_case_and_rank_fields (test_compare_profile.ProfileTests.test_closed_plan_profile_case_and_rank_fields) ... ok
+test_conflicting_pin_for_an_already_read_path_refuses (test_compare_profile.ProfileTests.test_conflicting_pin_for_an_already_read_path_refuses) ... ok
+test_each_reference_receives_actual_preceding_stage_bytes (test_compare_profile.ProfileTests.test_each_reference_receives_actual_preceding_stage_bytes) ... ok
+test_learned_qk_half_identity_is_checked_before_math (test_compare_profile.ProfileTests.test_learned_qk_half_identity_is_checked_before_math) ... ok
+test_loaded_references_and_policies_remain_original (test_compare_profile.ProfileTests.test_loaded_references_and_policies_remain_original) ... ok
+test_nonfinite_computed_stages_and_causal_kv_refuse (test_compare_profile.ProfileTests.test_nonfinite_computed_stages_and_causal_kv_refuse) ... ok
+test_operator_failures_propagate_without_parity_rescue (test_compare_profile.ProfileTests.test_operator_failures_propagate_without_parity_rescue) ... ok
+test_optimized_python_refuses_before_reading_inputs (test_compare_profile.ProfileTests.test_optimized_python_refuses_before_reading_inputs) ... ok
+test_original_source_request_rank_and_position_are_bound (test_compare_profile.ProfileTests.test_original_source_request_rank_and_position_are_bound) ... ok
+test_output_partial_mismatch_is_not_hidden_by_the_reference (test_compare_profile.ProfileTests.test_output_partial_mismatch_is_not_hidden_by_the_reference) ... ok
+test_profiles_do_not_require_a_paired_bitwise_comparison (test_compare_profile.ProfileTests.test_profiles_do_not_require_a_paired_bitwise_comparison) ... ok
+test_reader_cannot_skip_the_comparators_byte_hash_checks (test_compare_profile.ProfileTests.test_reader_cannot_skip_the_comparators_byte_hash_checks) ... ok
+test_real_references_accept_nonzero_history_across_a_page_boundary (test_compare_profile.ProfileTests.test_real_references_accept_nonzero_history_across_a_page_boundary) ... ok
+test_real_references_accept_synthetic_zero_profile_without_authority (test_compare_profile.ProfileTests.test_real_references_accept_synthetic_zero_profile_without_authority) ... ok
+test_reference_digest_mismatch_refuses_before_execution (test_compare_profile.ProfileTests.test_reference_digest_mismatch_refuses_before_execution) ... ok
+test_seven_input_hashes_have_closed_shape_and_spelling (test_compare_profile.ProfileTests.test_seven_input_hashes_have_closed_shape_and_spelling) ... ok
+test_source_position_rejects_bool_and_float_json_numbers (test_compare_profile.ProfileTests.test_source_position_rejects_bool_and_float_json_numbers) ... ok
+
+----------------------------------------------------------------------
+Ran 20 tests in 7.624s
+
+OK
