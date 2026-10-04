@@ -1,0 +1,42 @@
+{
+  "p228-independent-layer-reference-v1/helpers/residual_oracle.py": {
+    "bytes": 4347,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-independent-layer-reference-v1/helpers/residual_oracle.py",
+    "sha256": "551f89f968cad8f63073ca975346c593a31dad624115a93059b28a328e312ef3"
+  },
+  "p228-layer0-current-diagnostic-v1/compare.py": {
+    "bytes": 16337,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-layer0-current-diagnostic-v1/compare.py",
+    "sha256": "1598e22a3460a9ed2c350fb5d2b5fec6b8c37648b53bb2f1fc714c1fb3506d3f"
+  },
+  "p228-layer0-current-diagnostic-v1/current.py": {
+    "bytes": 15641,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-layer0-current-diagnostic-v1/current.py",
+    "sha256": "eb103b681c54b0c880bc6e692363208dae837eb322845bab7e593bdea6330d7b"
+  },
+  "p228-layer0-current-diagnostic-v1/diagnostics.py": {
+    "bytes": 5084,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-layer0-current-diagnostic-v1/diagnostics.py",
+    "sha256": "38cee89882d13dce81a992a64d4931c52a6f5b0b2dc77f5cddf1fc7cfe37ccaf"
+  },
+  "p228-layer0-current-diagnostic-v1/test_current.py": {
+    "bytes": 19382,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-layer0-current-diagnostic-v1/test_current.py",
+    "sha256": "55260e410cb601e9af38cb6e7c35c6c153c7a0f7d11269a40d581cad1c56b3b4"
+  },
+  "p228-output-residual-boundary-v1/boundary.py": {
+    "bytes": 6681,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-output-residual-boundary-v1/boundary.py",
+    "sha256": "a5fac7b587739999623167d81c163fc18ebe9a2baf986da1b192b597e7fb0b9d"
+  },
+  "p228-projection-residual-comparison-v1/comparison.py": {
+    "bytes": 13423,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-projection-residual-comparison-v1/comparison.py",
+    "sha256": "f8074e6eaedbe51d26307b596401487c589c834688cd6c395ee8b3fac60ef149"
+  },
+  "p228-projection-residual-comparison-v1/test_comparison.py": {
+    "bytes": 14131,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-projection-residual-comparison-v1/test_comparison.py",
+    "sha256": "261ed6237c0be76ccd6bcdcf4ad9071e7d2fe78a9578d3990684791b1c95bcde"
+  }
+}

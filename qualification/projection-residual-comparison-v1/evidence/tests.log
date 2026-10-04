@@ -1,0 +1,25 @@
+test_actual_outer_request_bootstrap_and_close_bytes_are_joined (test_comparison.ProjectionResidualComparison) ... ok
+test_all_stage_offsets_digests_and_nonfinite_values_are_checked (test_comparison.ProjectionResidualComparison) ... ok
+test_any_prefix_or_output_partial_change_is_refused (test_comparison.ProjectionResidualComparison) ... ok
+test_bootstrap_extra_image_own_scope_and_run_close_are_checked (test_comparison.ProjectionResidualComparison) ... ok
+test_complete_path_has_four_oracle_and_twenty_four_framework_rows (test_comparison.ProjectionResidualComparison) ... ok
+test_different_physical_pages_compare_logical_slot_not_whole_cache (test_comparison.ProjectionResidualComparison) ... ok
+test_distinct_image_and_outer_schemas_are_required (test_comparison.ProjectionResidualComparison) ... ok
+test_down_uses_candidate_first_residual_not_framework_or_baseline (test_comparison.ProjectionResidualComparison) ... ok
+test_exact_eleven_files_and_full_capture_pin_are_required (test_comparison.ProjectionResidualComparison) ... ok
+test_full_kv_outside_current_slot_and_rank_residual_disagreement_fail (test_comparison.ProjectionResidualComparison) ... ok
+test_leading_zero_cancellation_and_tiny_rounding_match_exact_oracle (test_comparison.ProjectionResidualComparison) ... ok
+test_materialization_tie_occurs_before_residual (test_comparison.ProjectionResidualComparison) ... ok
+test_new_worker_and_changed_hidden_are_allowed_without_old_hidden_override (test_comparison.ProjectionResidualComparison) ... ok
+test_original_source_images_prompt_and_selected_worker_cannot_drift (test_comparison.ProjectionResidualComparison) ... ok
+test_projection_overflow_refuses_before_possible_residual_cancellation (test_comparison.ProjectionResidualComparison) ... ok
+test_rank_partials_are_not_individually_narrowed (test_comparison.ProjectionResidualComparison) ... ok
+test_reference_mapping_uses_product_and_excludes_fp32_partials (test_comparison.ProjectionResidualComparison) ... ok
+test_repeat_framework_and_one_attempt_nonclaims_still_fail_closed (test_comparison.ProjectionResidualComparison) ... ok
+test_unchanged_helpers_and_test_fixture_are_pinned (test_comparison.ProjectionResidualComparison) ... ok
+test_wrong_residual_is_retained_as_mismatch_not_hidden_by_tolerance (test_comparison.ProjectionResidualComparison) ... ok
+
+----------------------------------------------------------------------
+Ran 20 tests in 17.302s
+
+OK

@@ -6,7 +6,13 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Latest: the [projection-residual candidate's checked gfx950 lowering](../qualification/projection-residual-lowering-v1/README.md)
+Latest: the [projection-residual comparison helper](../qualification/projection-residual-comparison-v1/README.md)
+passed all twenty synthetic tests on `mi350-2`, including exact checks for both
+residual stages, logical KV indexing, and retained framework differences. This
+is comparator qualification, not a candidate GPU result. Joint parent/worker
+qualification and genuine candidate capture remain in progress.
+
+The [projection-residual candidate's checked gfx950 lowering](../qualification/projection-residual-lowering-v1/README.md)
 passed on `mi350-2`, including exact-output replay and all postchecks. The
 10,864-byte image also passed descriptor, ELF and ISA inspection: Wave64,
 22 explicit arguments, six VGPRs, 36 SGPRs, and no reported spills. Manual
