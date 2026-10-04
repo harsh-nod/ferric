@@ -1,0 +1,293 @@
+{
+  "archive": {
+    "bytes": 2984247,
+    "sha256": "5356ab829653239c0993c6fbdfc207da33943d044e23d59027bf9771f87ee835"
+  },
+  "archive_members": 105,
+  "candidate_manifest": {
+    "bytes": 4201,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-exact-reciprocal-v3/manifest.json",
+    "sha256": "b19ec00b208fba095b304acc474203b3ed699eed4f5e46de3bbf38bf2189bdab"
+  },
+  "compiler_acceptance": false,
+  "controller_pure_tests": {
+    "controller": {
+      "bytes": 1973,
+      "sha256": "d5cb923d16773b6dd339e4cb38a087ee05326c026b06873d67fb6961757e51bf"
+    },
+    "gpu_execution": false,
+    "manifest": {
+      "bytes": 968,
+      "sha256": "a9f7fabc1ad30699729254a7ad4c6296ff1af9a531798f58b5b31368bcf858aa"
+    },
+    "numerical_acceptance": false,
+    "passed": true,
+    "tests": 11,
+    "transcript": {
+      "bytes": 1149,
+      "sha256": "896872aeeba204b6aedbb7ed117c6c3201681b54bdf57ac432938313ac153322"
+    }
+  },
+  "cpu_arithmetic_only": true,
+  "date": "2026-10-03",
+  "full_model_acceptance": false,
+  "gpu_execution": false,
+  "host": "mi350-2",
+  "limitations": [
+    "CPU tests execute the actual macro, not compiled gfx950 instructions.",
+    "The arithmetic exhaustive test covers one binade; powers/neighbors and stratified samples cover other admitted exponents.",
+    "Tests use the retained CPU fixture and local device provider, not the unchanged device crate Git dependency.",
+    "No production or historical HSACO is replaced by this unapplied source patch."
+  ],
+  "numerical_acceptance": false,
+  "passed": true,
+  "performance_claim": false,
+  "phases": {
+    "arithmetic": {
+      "cache_bytes": 177906141,
+      "elapsed_seconds": 2.0148300759028643,
+      "exit_code": 0,
+      "group_absent": true,
+      "reason": null,
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdout_sha256": "375ff326680676b5032e19bfe922eae93a8ba25f10b942ad755e45ffd64dfe33"
+    },
+    "arithmetic-ignored-list": {
+      "cache_bytes": 177906141,
+      "elapsed_seconds": 2.0147885030601174,
+      "exit_code": 0,
+      "group_absent": true,
+      "reason": null,
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdout_sha256": "0bf0d4f131122ac3246c9667420e2b50a634a7a4472deacbbeb9405102f6b5c2"
+    },
+    "arithmetic-list": {
+      "cache_bytes": 177906141,
+      "elapsed_seconds": 2.0157387601211667,
+      "exit_code": 0,
+      "group_absent": true,
+      "reason": null,
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdout_sha256": "24dd98047cbaa8f3db2635087268bfb1c829c2801f6e3621bb3c8cf3ba4a2b96"
+    },
+    "build-tests": {
+      "cache_bytes": 177906141,
+      "elapsed_seconds": 28.25408748514019,
+      "exit_code": 0,
+      "group_absent": true,
+      "reason": null,
+      "stderr_sha256": "5fb553f72919e6aaa2525bad2168dcf8ca5835c63b97e863f0f21b8119edf864",
+      "stdout_sha256": "47aef5fe88918a7d7bba76a062bc85b2ee236506ec3b2c5df4810fa0bec35487"
+    },
+    "exhaustive": {
+      "cache_bytes": 177906141,
+      "elapsed_seconds": 2.014846893027425,
+      "exit_code": 0,
+      "group_absent": true,
+      "reason": null,
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdout_sha256": "6446c7199a7dadf147c4ca32f6ab50217df9a75d1088096e346e8ec92447d1ea"
+    },
+    "fraction-check": {
+      "cache_bytes": 177906141,
+      "elapsed_seconds": 2.014771331101656,
+      "exit_code": 0,
+      "group_absent": true,
+      "reason": null,
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdout_sha256": "c507199ab787094fc83cc919a6f1be48152985fa9edf00a09f8530801f3cbfaf"
+    },
+    "metadata": {
+      "cache_bytes": 5394,
+      "elapsed_seconds": 2.0139490379951894,
+      "exit_code": 0,
+      "group_absent": true,
+      "reason": null,
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdout_sha256": "d24b43199dab982e9bf53d3ee097eaa337222727e75a80753286440a432f6093"
+    },
+    "source-contract": {
+      "cache_bytes": 177906141,
+      "elapsed_seconds": 2.0148293250240386,
+      "exit_code": 0,
+      "group_absent": true,
+      "reason": null,
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdout_sha256": "be29136691195d30a3c998c3f5e4c56568d6f9698ecb0910b53deff7c6e13e90"
+    },
+    "source-contract-list": {
+      "cache_bytes": 177906141,
+      "elapsed_seconds": 2.0163067909888923,
+      "exit_code": 0,
+      "group_absent": true,
+      "reason": null,
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdout_sha256": "6b88a1c2f53771d132289b120d72422a79baddd159faea14815ac5a8b4e4b1e5"
+    }
+  },
+  "raw_records_rehashed_locally": 50,
+  "receipt": {
+    "bytes": 24867,
+    "sha256": "6b02d358eca33d31d6839e9c28de38276b4f968cfaec93b7ddb97963a77956d3"
+  },
+  "schema": "FerricExactPrefixReciprocalCpuV3",
+  "source_unchanged": true,
+  "test_binaries": {
+    "prefix_reciprocal_v1": {
+      "binary": {
+        "bytes": 3113816,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/reciprocal-cpu-v228-v3/target/debug/deps/prefix_reciprocal_v1-b082bbea6eed55f1",
+        "sha256": "f62b25b0abb792378afc2f9114ae5ce937272baada86a185902523ca3394b462"
+      },
+      "cargo": {
+        "executable": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/reciprocal-cpu-v228-v3/target/debug/deps/prefix_reciprocal_v1-b082bbea6eed55f1",
+        "features": [],
+        "filenames": [
+          "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/reciprocal-cpu-v228-v3/target/debug/deps/prefix_reciprocal_v1-b082bbea6eed55f1"
+        ],
+        "fresh": false,
+        "manifest_path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/reciprocal-cpu-v228-v3/fixture/Cargo.toml",
+        "package_id": "path+file:///home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/reciprocal-cpu-v228-v3/fixture#ferric-row-numerical-cpu-fixture-v225@0.1.0",
+        "profile": {
+          "debug_assertions": true,
+          "debuginfo": 0,
+          "opt_level": "2",
+          "overflow_checks": true,
+          "test": true
+        },
+        "reason": "compiler-artifact",
+        "target": {
+          "crate_types": [
+            "bin"
+          ],
+          "doc": false,
+          "doctest": false,
+          "edition": "2024",
+          "kind": [
+            "test"
+          ],
+          "name": "prefix_reciprocal_v1",
+          "src_path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/reciprocal-cpu-v228-v3/fixture/tests/prefix_reciprocal_v1.rs",
+          "test": true
+        }
+      }
+    },
+    "prefix_tiles_source_contract_v6": {
+      "binary": {
+        "bytes": 3593952,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/reciprocal-cpu-v228-v3/target/debug/deps/prefix_tiles_source_contract_v6-30c95f7cc45d8891",
+        "sha256": "f306bbb87c3bf8800bf0f09d4e311f9dcaf6e6eb959a2aef3be1db70f8b8d5f7"
+      },
+      "cargo": {
+        "executable": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/reciprocal-cpu-v228-v3/target/debug/deps/prefix_tiles_source_contract_v6-30c95f7cc45d8891",
+        "features": [],
+        "filenames": [
+          "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/reciprocal-cpu-v228-v3/target/debug/deps/prefix_tiles_source_contract_v6-30c95f7cc45d8891"
+        ],
+        "fresh": false,
+        "manifest_path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/reciprocal-cpu-v228-v3/fixture/Cargo.toml",
+        "package_id": "path+file:///home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/reciprocal-cpu-v228-v3/fixture#ferric-row-numerical-cpu-fixture-v225@0.1.0",
+        "profile": {
+          "debug_assertions": true,
+          "debuginfo": 0,
+          "opt_level": "2",
+          "overflow_checks": true,
+          "test": true
+        },
+        "reason": "compiler-artifact",
+        "target": {
+          "crate_types": [
+            "bin"
+          ],
+          "doc": false,
+          "doctest": false,
+          "edition": "2024",
+          "kind": [
+            "test"
+          ],
+          "name": "prefix_tiles_source_contract_v6",
+          "src_path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/reciprocal-cpu-v228-v3/fixture/tests/prefix_tiles_source_contract_v6.rs",
+          "test": true
+        }
+      }
+    }
+  },
+  "tests": {
+    "arithmetic": {
+      "ignored": 1,
+      "names": [
+        "all_power_of_two_denominators_and_adjacent_words",
+        "exhaustive_all_significands_in_one_binade",
+        "fixed_mantissas_and_4096_stratified_samples_at_every_admitted_exponent",
+        "head_sum_and_inverse_match_the_legacy_cpu_rne_path_for_each_head",
+        "independent_fraction_nearest_neighbor_vectors_match_the_actual_macro",
+        "invalid_and_out_of_domain_words_fail_closed",
+        "invalid_input_weight_rotary_and_value_still_reject",
+        "macro_evaluates_its_denominator_once",
+        "post_preserves_both_bf16_narrowings_rotary_and_value_append_for_every_lane",
+        "prefix_head_macro_changes_are_limited_to_the_reciprocal_operation",
+        "rejected_denominator_cannot_publish_a_post_output",
+        "rejected_words_at_every_exponent_return_the_exact_nan_sentinel",
+        "six_permitted_seed_counterexamples_now_round_above_the_power_of_two"
+      ],
+      "passed": 12,
+      "summaries": [
+        [
+          12,
+          0,
+          1
+        ]
+      ]
+    },
+    "exhaustive": {
+      "ignored": 0,
+      "names": [
+        "exhaustive_all_significands_in_one_binade"
+      ],
+      "passed": 1,
+      "summaries": [
+        [
+          1,
+          0,
+          0
+        ]
+      ]
+    },
+    "fraction": {
+      "check_only": true,
+      "python": {
+        "bytes": 5941864,
+        "path": "/usr/bin/python3.10",
+        "sha256": "a2f33a6e006989270f4340528eb61f8f97366e00a5d1b602ac8672ea44fc56ae"
+      },
+      "vectors": 1007
+    },
+    "source-contract": {
+      "ignored": 0,
+      "names": [
+        "all_five_claim_variants_and_consuming_provider_entry_remain_explicit",
+        "arithmetic_includes_are_closed_and_sliced_handlers_remain_unchanged",
+        "norm_and_post_only_opt_into_the_prefix_reciprocal_and_preserve_epsilon",
+        "reciprocal_rule_preserves_domain_and_twenty_four_branchless_steps",
+        "source_entry_is_distinct_typed_storage_and_exact_64_group_geometry",
+        "stage_counts_and_all_fifteen_root_extents_are_generation_specific"
+      ],
+      "passed": 6,
+      "summaries": [
+        [
+          6,
+          0,
+          0
+        ]
+      ]
+    }
+  },
+  "toolchain": {
+    "pins": {
+      "cargo": "828980723df339d62434390e9fb8ef8831036583343ae2316b7ab5646b5c1953",
+      "rustc": "d3a664c970a9fd8361b64194861bebc1ae37b9054e5ee3400dc1c9e691797eea",
+      "rustdoc": "3b0c7aef20e0dfdfe2dd19ddb0b40d3b744f76318a44031813f501e1912934df"
+    },
+    "root": "/home/harmenon/ferric-asrock-42/toolchain/rustup/toolchains/1.97.1-x86_64-unknown-linux-gnu"
+  }
+}

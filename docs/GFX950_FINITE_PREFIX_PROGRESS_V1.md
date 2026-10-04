@@ -128,6 +128,15 @@ This is not ranked or target KIR acceptance, replay, HSACO emission or GPU
 validation. The next source change targets avoidable reciprocal branches;
 the numerical policy and compiler caps remain unchanged.
 
+The [reduced-CFG V3 candidate](../qualification/exact-prefix-reciprocal-v3/README.md)
+now removes the reciprocal domain and power-of-two branches while preserving
+the 24-step recurrence and rejection sentinel. Its actual `mi350-2` CPU run
+passed 12 ordinary tests, six source contracts, the explicit exhaustive
+8,388,608-significand test and all 1,007 Fraction vectors. The unapplied source
+patch and exact source pins are published with the result. All nine commands
+exited naturally and source/dependency checks passed. This does not yet
+establish a smaller compiled CFG or a new GPU image.
+
 ## Source Publication
 
 The [source index](assets/finite-prefix-v227/source-index.json) binds the 289

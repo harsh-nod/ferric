@@ -1,0 +1,64 @@
+{
+  "base_ferric_commit": "9eca257697069f10c87ee9f624016391f6a2e479",
+  "changes": [
+    {
+      "after": {
+        "bytes": 7072,
+        "sha256": "d5c2ee3ca4f619080a8b544bc4e47b8ae4a55642ba2eb84448c8d32e91056c37"
+      },
+      "before": {
+        "bytes": 6998,
+        "sha256": "3a18e3cb7bab842249bbbef1fd3d5470ead1e7ab5760ae2c5a3b8fae08499bcd"
+      },
+      "path": "device/qwen3-tp-wave-rmsnorm-kernels-v15/src/finite_qkv_attention_output_tiles_v6.rs"
+    },
+    {
+      "after": {
+        "bytes": 6056,
+        "sha256": "d2da6d5c02474556ab606a923c065d7146a2527a36400999431df0111fd2cca6"
+      },
+      "before": null,
+      "path": "device/qwen3-tp-wave-rmsnorm-kernels-v15/src/prefix_reciprocal_numerics_v1.rs"
+    },
+    {
+      "after": {
+        "bytes": 18185,
+        "sha256": "79c7ed45639e642d56ba14cc2f0edf40097cd986dc40ea5e300859d6ce94d0ee"
+      },
+      "before": null,
+      "path": "device/qwen3-tp-wave-rmsnorm-kernels-v15/tests/fixtures/prefix_reciprocal_fraction_v1.tsv"
+    },
+    {
+      "after": {
+        "bytes": 2799,
+        "sha256": "7118df0d618ed17014305b6708aa38c21592d138c84e738da33edfcbd56eb948"
+      },
+      "before": null,
+      "path": "device/qwen3-tp-wave-rmsnorm-kernels-v15/tests/prefix_reciprocal_fraction_v1.py"
+    },
+    {
+      "after": {
+        "bytes": 10716,
+        "sha256": "ec040d00660c8431effaa55bf5df70d2a1c1a5fd6611a8a2c2350a504d3fab45"
+      },
+      "before": null,
+      "path": "device/qwen3-tp-wave-rmsnorm-kernels-v15/tests/prefix_reciprocal_v1.rs"
+    },
+    {
+      "after": {
+        "bytes": 12752,
+        "sha256": "a33152b0228c2874a29ca8ee8965323af9b14704816b34a8fb1aff603f7c302d"
+      },
+      "before": {
+        "bytes": 9062,
+        "sha256": "2ba37e09ceed6e181d0aa1597b81dd3742b0d973424f673c17a67867a3639114"
+      },
+      "path": "device/qwen3-tp-wave-rmsnorm-kernels-v15/tests/prefix_tiles_source_contract_v6.rs"
+    }
+  ],
+  "patch": {
+    "bytes": 47674,
+    "sha256": "2f454bd99edf1f0e52751afd4b88e9344dedc270f2076e818fd5b064d0fcf590"
+  },
+  "patch_roundtrip_passed": true
+}
