@@ -1,0 +1,457 @@
+{
+  "compiler_cpu": {
+    "bytes": 375781,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rpo-compiler-cpu-v228-v2/complete.json",
+    "sha256": "56fc51fc326980e00156d550d0a7052f44bb481ded7b9948c06217653fb246c1"
+  },
+  "compiler_owner": {
+    "bytes": 57128,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rpo-compiler-cpu-owner-v228-v2/complete.json",
+    "sha256": "afca99d8799f910ce607873c320b8f244be66f9ffdb3df4dce4545eb1552ea66"
+  },
+  "completion": {
+    "bytes": 44858,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rpo-finalizer-tools-v228-v2/complete.json",
+    "sha256": "39eab92ede34991b08c168e827c7111c13533627cbf2efd3d248c6742a92660b"
+  },
+  "error": null,
+  "gpu_execution": false,
+  "owned": {
+    "cleanup_signalled": false,
+    "deadline_seconds": 10800,
+    "elapsed_seconds": 48.00194892985746,
+    "exit_code": 0,
+    "lineage": [
+      {
+        "event": "owned",
+        "identity": {
+          "pgid": 768918,
+          "pid": 768918,
+          "ppid": 768878,
+          "sid": 768918,
+          "starttime": 211131149,
+          "state": "R",
+          "uid": 9661
+        },
+        "reason": "spawned-parent"
+      },
+      {
+        "event": "owned",
+        "identity": {
+          "pgid": 769490,
+          "pid": 769490,
+          "ppid": 768918,
+          "sid": 769490,
+          "starttime": 211131563,
+          "state": "R",
+          "uid": 9661
+        },
+        "reason": "ancestry"
+      },
+      {
+        "event": "owned",
+        "identity": {
+          "pgid": 769506,
+          "pid": 769506,
+          "ppid": 768918,
+          "sid": 769506,
+          "starttime": 211131992,
+          "state": "S",
+          "uid": 9661
+        },
+        "reason": "ancestry"
+      },
+      {
+        "event": "owned",
+        "identity": {
+          "pgid": 769506,
+          "pid": 769518,
+          "ppid": 769506,
+          "sid": 769506,
+          "starttime": 211132008,
+          "state": "S",
+          "uid": 9661
+        },
+        "reason": "ancestry"
+      },
+      {
+        "event": "owned",
+        "identity": {
+          "pgid": 769506,
+          "pid": 769520,
+          "ppid": 769506,
+          "sid": 769506,
+          "starttime": 211132008,
+          "state": "S",
+          "uid": 9661
+        },
+        "reason": "ancestry"
+      },
+      {
+        "event": "owned",
+        "identity": {
+          "pgid": 769506,
+          "pid": 769536,
+          "ppid": 769506,
+          "sid": 769506,
+          "starttime": 211132026,
+          "state": "S",
+          "uid": 9661
+        },
+        "reason": "ancestry"
+      },
+      {
+        "event": "owned",
+        "identity": {
+          "pgid": 769506,
+          "pid": 769542,
+          "ppid": 769506,
+          "sid": 769506,
+          "starttime": 211132030,
+          "state": "S",
+          "uid": 9661
+        },
+        "reason": "ancestry"
+      },
+      {
+        "event": "owned",
+        "identity": {
+          "pgid": 769506,
+          "pid": 769558,
+          "ppid": 769506,
+          "sid": 769506,
+          "starttime": 211132061,
+          "state": "S",
+          "uid": 9661
+        },
+        "reason": "ancestry"
+      },
+      {
+        "event": "owned",
+        "identity": {
+          "pgid": 769506,
+          "pid": 769586,
+          "ppid": 769506,
+          "sid": 769506,
+          "starttime": 211132667,
+          "state": "S",
+          "uid": 9661
+        },
+        "reason": "ancestry"
+      },
+      {
+        "event": "owned",
+        "identity": {
+          "pgid": 769506,
+          "pid": 769598,
+          "ppid": 769506,
+          "sid": 769506,
+          "starttime": 211132702,
+          "state": "S",
+          "uid": 9661
+        },
+        "reason": "ancestry"
+      },
+      {
+        "event": "owned",
+        "identity": {
+          "pgid": 769506,
+          "pid": 769639,
+          "ppid": 769506,
+          "sid": 769506,
+          "starttime": 211132917,
+          "state": "S",
+          "uid": 9661
+        },
+        "reason": "ancestry"
+      },
+      {
+        "event": "owned",
+        "identity": {
+          "pgid": 769506,
+          "pid": 769647,
+          "ppid": 769506,
+          "sid": 769506,
+          "starttime": 211132939,
+          "state": "S",
+          "uid": 9661
+        },
+        "reason": "ancestry"
+      },
+      {
+        "event": "owned",
+        "identity": {
+          "pgid": 769506,
+          "pid": 769676,
+          "ppid": 769506,
+          "sid": 769506,
+          "starttime": 211133456,
+          "state": "S",
+          "uid": 9661
+        },
+        "reason": "ancestry"
+      },
+      {
+        "event": "owned",
+        "identity": {
+          "pgid": 769506,
+          "pid": 769713,
+          "ppid": 769506,
+          "sid": 769506,
+          "starttime": 211133780,
+          "state": "S",
+          "uid": 9661
+        },
+        "reason": "ancestry"
+      },
+      {
+        "event": "owned",
+        "identity": {
+          "pgid": 769506,
+          "pid": 769762,
+          "ppid": 769506,
+          "sid": 769506,
+          "starttime": 211134105,
+          "state": "S",
+          "uid": 9661
+        },
+        "reason": "ancestry"
+      },
+      {
+        "event": "owned",
+        "identity": {
+          "pgid": 769506,
+          "pid": 769763,
+          "ppid": 769506,
+          "sid": 769506,
+          "starttime": 211134105,
+          "state": "S",
+          "uid": 9661
+        },
+        "reason": "ancestry"
+      },
+      {
+        "event": "owned",
+        "identity": {
+          "pgid": 769506,
+          "pid": 769773,
+          "ppid": 769762,
+          "sid": 769506,
+          "starttime": 211134122,
+          "state": "S",
+          "uid": 9661
+        },
+        "reason": "ancestry"
+      },
+      {
+        "event": "owned",
+        "identity": {
+          "pgid": 769506,
+          "pid": 769774,
+          "ppid": 769773,
+          "sid": 769506,
+          "starttime": 211134123,
+          "state": "S",
+          "uid": 9661
+        },
+        "reason": "ancestry"
+      },
+      {
+        "event": "owned",
+        "identity": {
+          "pgid": 769506,
+          "pid": 769775,
+          "ppid": 769774,
+          "sid": 769506,
+          "starttime": 211134123,
+          "state": "R",
+          "uid": 9661
+        },
+        "reason": "ancestry"
+      },
+      {
+        "event": "owned",
+        "identity": {
+          "pgid": 769506,
+          "pid": 769796,
+          "ppid": 769763,
+          "sid": 769506,
+          "starttime": 211134192,
+          "state": "S",
+          "uid": 9661
+        },
+        "reason": "ancestry"
+      },
+      {
+        "event": "owned",
+        "identity": {
+          "pgid": 769506,
+          "pid": 769797,
+          "ppid": 769796,
+          "sid": 769506,
+          "starttime": 211134193,
+          "state": "S",
+          "uid": 9661
+        },
+        "reason": "ancestry"
+      },
+      {
+        "event": "owned",
+        "identity": {
+          "pgid": 769506,
+          "pid": 769798,
+          "ppid": 769797,
+          "sid": 769506,
+          "starttime": 211134193,
+          "state": "S",
+          "uid": 9661
+        },
+        "reason": "ancestry"
+      },
+      {
+        "event": "owned",
+        "identity": {
+          "pgid": 769815,
+          "pid": 769815,
+          "ppid": 768918,
+          "sid": 769815,
+          "starttime": 211134436,
+          "state": "S",
+          "uid": 9661
+        },
+        "reason": "ancestry"
+      },
+      {
+        "event": "owned",
+        "identity": {
+          "pgid": 769815,
+          "pid": 769830,
+          "ppid": 769815,
+          "sid": 769815,
+          "starttime": 211134453,
+          "state": "S",
+          "uid": 9661
+        },
+        "reason": "ancestry"
+      },
+      {
+        "event": "owned",
+        "identity": {
+          "pgid": 769815,
+          "pid": 770436,
+          "ppid": 769830,
+          "sid": 769815,
+          "starttime": 211134611,
+          "state": "S",
+          "uid": 9661
+        },
+        "reason": "ancestry"
+      },
+      {
+        "event": "owned",
+        "identity": {
+          "pgid": 769815,
+          "pid": 770437,
+          "ppid": 770436,
+          "sid": 769815,
+          "starttime": 211134612,
+          "state": "S",
+          "uid": 9661
+        },
+        "reason": "ancestry"
+      },
+      {
+        "event": "owned",
+        "identity": {
+          "pgid": 769815,
+          "pid": 770438,
+          "ppid": 770437,
+          "sid": 769815,
+          "starttime": 211134612,
+          "state": "S",
+          "uid": 9661
+        },
+        "reason": "ancestry"
+      },
+      {
+        "event": "owned",
+        "identity": {
+          "pgid": 770451,
+          "pid": 770451,
+          "ppid": 768918,
+          "sid": 770451,
+          "starttime": 211134846,
+          "state": "Z",
+          "uid": 9661
+        },
+        "reason": "ancestry"
+      },
+      {
+        "event": "owned",
+        "identity": {
+          "pgid": 770454,
+          "pid": 770454,
+          "ppid": 768918,
+          "sid": 770454,
+          "starttime": 211135050,
+          "state": "Z",
+          "uid": 9661
+        },
+        "reason": "ancestry"
+      },
+      {
+        "event": "owned",
+        "identity": {
+          "pgid": 770457,
+          "pid": 770457,
+          "ppid": 768918,
+          "sid": 770457,
+          "starttime": 211135253,
+          "state": "R",
+          "uid": 9661
+        },
+        "reason": "ancestry"
+      }
+    ],
+    "owned_groups": [
+      768918,
+      769490,
+      769506,
+      769815,
+      770451,
+      770454,
+      770457
+    ],
+    "owned_groups_absent": true,
+    "owned_processes_reaped": true,
+    "reason": null
+  },
+  "passed": true,
+  "patches": {
+    "rpo": {
+      "bytes": 5887,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-partial-move-rpo-v2/source-manifest.json",
+      "sha256": "939b76eb28df8d7e2b53ae0b4f5034257185f12f077d20e581d9880b006a252c"
+    }
+  },
+  "postcheck_errors": [],
+  "production_authority": false,
+  "qualified_generation": {
+    "completion": {
+      "bytes": 369402,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/ordinary-induction-compiler-cpu-v228-v1/complete.json",
+      "sha256": "c45aa83b01bf76fdfd9962b06884611658dab607b001ba67fecc66db9fd5ba97"
+    },
+    "owner": {
+      "bytes": 57318,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/ordinary-induction-compiler-cpu-owner-v228-v1/complete.json",
+      "sha256": "85de66610631612ed2473f9d5fbb80ce89ea7ffc6064c1784834a6751d623609"
+    },
+    "sources": {
+      "bytes": 3779269,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/ordinary-induction-compiler-cpu-v228-v1/sources-before.json",
+      "sha256": "5aad4c8ba6520c323310424ce343de2ae5088e7f8c1c0b1fd67853b5fd3bd9f9"
+    }
+  },
+  "schema": "fe2o3-p228-rpo-finalizer-tools-owned-result-v1"
+}

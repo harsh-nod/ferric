@@ -1,0 +1,13 @@
+{"phase": "metadata", "status": "RUNNING", "pid": 769490}
+{"phase": "metadata", "exit_code": 0, "reason": null, "elapsed_seconds": 2.022339338902384, "group_absent": true, "cache_bytes": 2102056388, "stdout_sha256": "57f2b5df717ce6a803199dcd361d04d2a37e162d64f0a49148b9e20c573d1bbf", "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"}
+{"phase": "finalizer-build", "status": "RUNNING", "pid": 769506}
+{"phase": "finalizer-build", "exit_code": 0, "reason": null, "elapsed_seconds": 24.352355379145592, "group_absent": true, "cache_bytes": 2366267322, "stdout_sha256": "84fbfbcaf79747b2990a7e76b764e5b8efe26293b7379658731d101f466c3521", "stderr_sha256": "0a7950804a250a04f6b9d10c2112e76815af1129362757554399a61a8116d6ca"}
+{"phase": "finalizer-build-tests", "status": "RUNNING", "pid": 769815}
+{"phase": "finalizer-build-tests", "exit_code": 0, "reason": null, "elapsed_seconds": 4.064712567720562, "group_absent": true, "cache_bytes": 2401823810, "stdout_sha256": "5697389ac95501fef9676e9dd24c17611f9f6780d78e5882856d1353ddfb2e53", "stderr_sha256": "3e32d2657a2e2652f6380aeb6276bbd093800fae1ee3edf8a00243bafa4351cc"}
+{"phase": "finalizer-list", "status": "RUNNING", "pid": 770451}
+{"phase": "finalizer-list", "exit_code": 0, "reason": null, "elapsed_seconds": 2.0233739027753472, "group_absent": true, "cache_bytes": 2401823810, "stdout_sha256": "a375cc5051e4c7171699ef063de9e35a26e69e832785e65b2795f6595d50f8f1", "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"}
+{"phase": "finalizer-ignored-list", "status": "RUNNING", "pid": 770454}
+{"phase": "finalizer-ignored-list", "exit_code": 0, "reason": null, "elapsed_seconds": 2.022789982147515, "group_absent": true, "cache_bytes": 2401823810, "stdout_sha256": "44c83411aa31ee93fb38448ae898f601df26e89527e11b9dea0e25ba50fcc705", "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"}
+{"phase": "finalizer-tests", "status": "RUNNING", "pid": 770457}
+{"phase": "finalizer-tests", "exit_code": 0, "reason": null, "elapsed_seconds": 2.0220742719247937, "group_absent": true, "cache_bytes": 2401823810, "stdout_sha256": "1e866c11c5d9f19f5595bbc313f5b76af47536bf8104d03bfed59b59274336d4", "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"}
+{"passed": true, "error": null, "postcheck_errors": [], "output": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rpo-finalizer-tools-v228-v2"}

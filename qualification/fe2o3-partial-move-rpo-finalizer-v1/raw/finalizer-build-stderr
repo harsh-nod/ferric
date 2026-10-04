@@ -1,0 +1,15 @@
+warning: /home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rpo-compiler-cpu-v228-v2/source/fe2o3/crates/rustc-codegen-fe2o3/tests/fixtures/local-marker/Cargo.toml: file `/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rpo-compiler-cpu-v228-v2/source/fe2o3/crates/rustc-codegen-fe2o3/tests/fixtures/local-marker/src/main.rs` found to be present in multiple build targets:
+  * `lib` target `fe2o3_trusted_item_local_marker`
+  * `bin` target `fe2o3-trusted-item-local-marker`
+   Compiling ed25519-dalek v2.2.0
+   Compiling fe2o3-process-identity v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rpo-compiler-cpu-v228-v2/source/fe2o3/crates/fe2o3-process-identity)
+   Compiling fe2o3-functional-proof v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rpo-compiler-cpu-v228-v2/source/fe2o3/crates/fe2o3-functional-proof)
+   Compiling fe2o3-source-isa-observation v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rpo-compiler-cpu-v228-v2/source/fe2o3/crates/fe2o3-source-isa-observation)
+   Compiling fe2o3-pliron v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rpo-compiler-cpu-v228-v2/source/fe2o3/crates/fe2o3-pliron)
+   Compiling fe2o3-kernel-opt v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rpo-compiler-cpu-v228-v2/source/fe2o3/crates/fe2o3-kernel-opt)
+   Compiling fe2o3-amdgcn-model v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rpo-compiler-cpu-v228-v2/source/fe2o3/crates/fe2o3-amdgcn-model)
+   Compiling dialect-amdgcn v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rpo-compiler-cpu-v228-v2/source/fe2o3/crates/dialect-amdgcn)
+   Compiling fe2o3-lower-mir-kernel v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rpo-compiler-cpu-v228-v2/source/fe2o3/crates/fe2o3-lower-mir-kernel)
+   Compiling fe2o3-verifier v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rpo-compiler-cpu-v228-v2/source/fe2o3/crates/fe2o3-verifier)
+   Compiling fe2o3-hsaco-finalize v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rpo-compiler-cpu-v228-v2/source/fe2o3/crates/fe2o3-hsaco-finalize)
+    Finished `dev` profile [unoptimized] target(s) in 22.43s

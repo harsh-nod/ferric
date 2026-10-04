@@ -1,0 +1,43 @@
+{
+  "schema": "fe2o3-p228-rpo-finalizer-tools-package-v2",
+  "compiler_built": false,
+  "gpu_execution": false,
+  "production_authority": false,
+  "pure_tests_defined": 16,
+  "pure_tests_run": false,
+  "test_census": [
+    "ToolTests.test_all_old_targets_exclude_active_target",
+    "ToolTests.test_candidate_has_twelve_cpu_phases_and_six_finalizer_phases",
+    "ToolTests.test_cpu_gate_cannot_confer_gpu_or_production_claim",
+    "ToolTests.test_cpu_raw_replay_routes_both_suites_and_rejects_drift",
+    "ToolTests.test_finalizer_census_and_separate_actual_capture_gate",
+    "ToolTests.test_rejects_failed_or_incomplete_cpu",
+    "ToolTests.test_rejects_missing_or_duplicate_finalizer",
+    "ToolTests.test_rejects_nonterminal_phase",
+    "ToolTests.test_rejects_overlay_or_qualified_generation_drift",
+    "ToolTests.test_rejects_same_count_substituted_phase",
+    "ToolTests.test_rejects_wrong_owner_or_schema",
+    "ToolTests.test_rejects_wrong_target_or_local_dependency_escape",
+    "ToolTests.test_required_tests_must_be_declared_counted_and_nonignored",
+    "ToolTests.test_same_count_finalizer_name_substitution_is_rejected",
+    "ToolTests.test_same_source_target_metadata",
+    "ToolTests.test_successful_cpu_and_owner_join"
+  ],
+  "files": [
+    {
+      "path": "README.md",
+      "bytes": 4200,
+      "sha256": "1292ff8b87499f978be5c8d65ae1bd90e16252d3feebb180d5c346df895f27dc"
+    },
+    {
+      "path": "run.py",
+      "bytes": 24148,
+      "sha256": "cd5fb1f8254e3eb3a2c8df4881432f3c73fe1bb18183cee73e7a0f3c8ad30b25"
+    },
+    {
+      "path": "test_run.py",
+      "bytes": 10827,
+      "sha256": "6450a6f81ffdb7f8af3ab4882c1cb5c086e6d02a1512c07f58d16363526a4553"
+    }
+  ]
+}

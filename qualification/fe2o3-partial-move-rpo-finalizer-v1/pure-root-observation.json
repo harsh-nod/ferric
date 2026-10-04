@@ -1,0 +1,26 @@
+{
+  "schema": "ferric-p228-rpo-finalizer-v2-root-test-observation-v1",
+  "observation_kind": "Primary-agent observation of actual SSH tool output; not a remote supervisor receipt",
+  "host": "asrock-1w300-g2-2b",
+  "tool_session": 60540,
+  "terminal_chunk": "bbddb6",
+  "exit_code": 0,
+  "tests": 16,
+  "errors": 0,
+  "failures": 0,
+  "skipped": 0,
+  "command": "env HIP_VISIBLE_DEVICES= ROCR_VISIBLE_DEVICES= CUDA_VISIBLE_DEVICES= timeout --signal=INT --kill-after=5 120 taskset -c 8,9 nice -n 10 /usr/bin/python3 -E -B /home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-partial-move-rpo-finalizer-tools-v2/test_run.py -v",
+  "manifest_sha256": "d014c66154afefa324bb0f5a49bacfb034229e840efb012acd02c950d5ce0178",
+  "raw_tool_result": {
+    "chunk_id": "bbddb6",
+    "wall_time_seconds": 0.000020017,
+    "exit_code": 0,
+    "original_token_count": 324,
+    "output": "test_all_old_targets_exclude_active_target (__main__.ToolTests) ... ok\ntest_candidate_has_twelve_cpu_phases_and_six_finalizer_phases (__main__.ToolTests) ... ok\ntest_cpu_gate_cannot_confer_gpu_or_production_claim (__main__.ToolTests) ... ok\ntest_cpu_raw_replay_routes_both_suites_and_rejects_drift (__main__.ToolTests) ... ok\ntest_finalizer_census_and_separate_actual_capture_gate (__main__.ToolTests) ... ok\ntest_rejects_failed_or_incomplete_cpu (__main__.ToolTests) ... ok\ntest_rejects_missing_or_duplicate_finalizer (__main__.ToolTests) ... ok\ntest_rejects_nonterminal_phase (__main__.ToolTests) ... ok\ntest_rejects_overlay_or_qualified_generation_drift (__main__.ToolTests) ... ok\ntest_rejects_same_count_substituted_phase (__main__.ToolTests) ... ok\ntest_rejects_wrong_owner_or_schema (__main__.ToolTests) ... ok\ntest_rejects_wrong_target_or_local_dependency_escape (__main__.ToolTests) ... ok\ntest_required_tests_must_be_declared_counted_and_nonignored (__main__.ToolTests) ... ok\ntest_same_count_finalizer_name_substitution_is_rejected (__main__.ToolTests) ... ok\ntest_same_source_target_metadata (__main__.ToolTests) ... ok\ntest_successful_cpu_and_owner_join (__main__.ToolTests) ... ok\n\n----------------------------------------------------------------------\nRan 16 tests in 0.035s\n\nOK\n"
+  },
+  "gpu_execution": false,
+  "rust_build_executed": false,
+  "numerical_acceptance": false,
+  "production_authority": false,
+  "performance_claim": false
+}

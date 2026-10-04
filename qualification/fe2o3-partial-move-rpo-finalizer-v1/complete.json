@@ -1,0 +1,595 @@
+{
+  "actual_capture_join": false,
+  "artifacts": {
+    "finalizer": {
+      "bytes": 33044392,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rpo-compiler-cpu-v228-v2/target/debug/examples/finite_join_engineering_hsaco_v1",
+      "sha256": "34ee748a587f65d037b737276520e394dde9dc4f2195f9ca408b9def17f4dbfb"
+    },
+    "finalizer-tests": {
+      "bytes": 35542664,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rpo-compiler-cpu-v228-v2/target/debug/examples/finite_join_engineering_hsaco_v1-d165b82509d45fc9",
+      "sha256": "95d5b87f3950df3139b32d062d5c73804c09c2336e9893e2d04991521123498a"
+    },
+    "metadata": {
+      "bytes": 23544824,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rpo-compiler-cpu-v228-v2/target/debug/examples/finite_join_request_metadata_v1",
+      "sha256": "f41fa56007924a2146c631cdeb2c45e26045a5c005b59e37f7d452ee765a1ad6"
+    }
+  },
+  "checked_lowering": false,
+  "compiler_artifacts": {
+    "compiler-tests": {
+      "bytes": 128981504,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rpo-compiler-cpu-v228-v2/target/debug/deps/rustc_codegen_fe2o3-5db184f14eef1d1c",
+      "sha256": "0182517faa040cf5eb01b9f522c6a59beec5b671ea821cd4ad203d0ba182ff56"
+    },
+    "fe2o3-rustc-extract": {
+      "bytes": 205648,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rpo-compiler-cpu-v228-v2/target/debug/fe2o3-rustc-extract",
+      "sha256": "cece2097c34ed019e380a512132e8f4d932f127e8dd87793bcd9f0cf620cf3ca"
+    },
+    "librustc_codegen_fe2o3.rlib": {
+      "bytes": 67677768,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rpo-compiler-cpu-v228-v2/target/debug/librustc_codegen_fe2o3.rlib",
+      "sha256": "9221c3c7fe2cfb19721490326fd3864d5a292c7e41205a5bc4b72f68a60689b0"
+    },
+    "librustc_codegen_fe2o3.so": {
+      "bytes": 205476608,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rpo-compiler-cpu-v228-v2/target/debug/librustc_codegen_fe2o3.so",
+      "sha256": "7fb818eb09760b80ce4cc3954846b511b4186f6c99bf201083a7d40cf56f4ed8"
+    },
+    "pliron-tests": {
+      "bytes": 68496344,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rpo-compiler-cpu-v228-v2/target/debug/deps/fe2o3_pliron-bfbb58262805e3df",
+      "sha256": "6df77412eb4b1443f069b1c5ddf4bf71b0e788f0e2382ed856222b74de70e2e1"
+    }
+  },
+  "compiler_cpu": {
+    "bytes": 375781,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rpo-compiler-cpu-v228-v2/complete.json",
+    "sha256": "56fc51fc326980e00156d550d0a7052f44bb481ded7b9948c06217653fb246c1"
+  },
+  "compiler_owner": {
+    "bytes": 57128,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rpo-compiler-cpu-owner-v228-v2/complete.json",
+    "sha256": "afca99d8799f910ce607873c320b8f244be66f9ffdb3df4dce4545eb1552ea66"
+  },
+  "compiler_required_test_names": {
+    "compiler": [],
+    "pliron": [
+      "production::semantic_ssa::partial_moves::rpo_tests::call_destination_only_reinitializes_normal_edge_not_unwind",
+      "production::semantic_ssa::partial_moves::rpo_tests::diamond_maybe_moved_rejection_matches_fifo_exactly",
+      "production::semantic_ssa::partial_moves::rpo_tests::exact_storage_and_work_boundaries_still_reject_one_below",
+      "production::semantic_ssa::partial_moves::rpo_tests::initialization_enqueue_and_skipped_slots_are_metered",
+      "production::semantic_ssa::partial_moves::rpo_tests::loop_and_irreducible_fixed_points_match_fifo",
+      "production::semantic_ssa::partial_moves::rpo_tests::malformed_priority_maps_and_unreachable_pushes_refuse",
+      "production::semantic_ssa::partial_moves::rpo_tests::parallel_edges_and_unreachable_malformed_blocks_match_fifo",
+      "production::semantic_ssa::partial_moves::rpo_tests::pointer_carrier_write_keeps_move_rejection_across_join",
+      "production::semantic_ssa::partial_moves::rpo_tests::priority_storage_is_added_without_discounting_previous_reservations",
+      "production::semantic_ssa::partial_moves::rpo_tests::production_plan_reconstruction_is_deterministic_with_new_accounting",
+      "production::semantic_ssa::partial_moves::rpo_tests::rpo_backedge_requeues_an_earlier_rank",
+      "production::semantic_ssa::partial_moves::rpo_tests::rpo_priority_is_deterministic_and_deduplicates_pending_blocks",
+      "production::semantic_ssa::partial_moves::rpo_tests::scheduler_work_overflow_remains_fail_closed",
+      "production::semantic_ssa::partial_moves::rpo_tests::skewed_diamond_reduces_repeated_tombstone_charges",
+      "production::semantic_ssa::partial_moves::rpo_tests::union_missing_context_and_unsupported_moves_match_fifo",
+      "production::semantic_ssa::partial_moves::rpo_tests::whole_tombstone_widening_and_storage_live_do_not_refund",
+      "production::semantic_ssa::partial_moves::rpo_tests::zero_projected_moves_keep_the_empty_certificate_and_old_auxiliary_cost"
+    ]
+  },
+  "error": null,
+  "fresh_hsaco_emitted": false,
+  "full_model_acceptance": false,
+  "gpu_execution": false,
+  "numerical_acceptance": false,
+  "package": {
+    "bytes": 1693,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-partial-move-rpo-finalizer-tools-v2/manifest.json",
+    "sha256": "d014c66154afefa324bb0f5a49bacfb034229e840efb012acd02c950d5ce0178"
+  },
+  "passed": true,
+  "patches": {
+    "rpo": {
+      "bytes": 5887,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-partial-move-rpo-v2/source-manifest.json",
+      "sha256": "939b76eb28df8d7e2b53ae0b4f5034257185f12f077d20e581d9880b006a252c"
+    }
+  },
+  "performance_claim": false,
+  "phases": {
+    "finalizer-build": {
+      "cache_bytes": 2366267322,
+      "elapsed_seconds": 24.352355379145592,
+      "exit_code": 0,
+      "group_absent": true,
+      "reason": null,
+      "stderr_sha256": "0a7950804a250a04f6b9d10c2112e76815af1129362757554399a61a8116d6ca",
+      "stdout_sha256": "84fbfbcaf79747b2990a7e76b764e5b8efe26293b7379658731d101f466c3521"
+    },
+    "finalizer-build-tests": {
+      "cache_bytes": 2401823810,
+      "elapsed_seconds": 4.064712567720562,
+      "exit_code": 0,
+      "group_absent": true,
+      "reason": null,
+      "stderr_sha256": "3e32d2657a2e2652f6380aeb6276bbd093800fae1ee3edf8a00243bafa4351cc",
+      "stdout_sha256": "5697389ac95501fef9676e9dd24c17611f9f6780d78e5882856d1353ddfb2e53"
+    },
+    "finalizer-ignored-list": {
+      "cache_bytes": 2401823810,
+      "elapsed_seconds": 2.022789982147515,
+      "exit_code": 0,
+      "group_absent": true,
+      "reason": null,
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdout_sha256": "44c83411aa31ee93fb38448ae898f601df26e89527e11b9dea0e25ba50fcc705"
+    },
+    "finalizer-list": {
+      "cache_bytes": 2401823810,
+      "elapsed_seconds": 2.0233739027753472,
+      "exit_code": 0,
+      "group_absent": true,
+      "reason": null,
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdout_sha256": "a375cc5051e4c7171699ef063de9e35a26e69e832785e65b2795f6595d50f8f1"
+    },
+    "finalizer-tests": {
+      "cache_bytes": 2401823810,
+      "elapsed_seconds": 2.0220742719247937,
+      "exit_code": 0,
+      "group_absent": true,
+      "reason": null,
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdout_sha256": "1e866c11c5d9f19f5595bbc313f5b76af47536bf8104d03bfed59b59274336d4"
+    },
+    "metadata": {
+      "cache_bytes": 2102056388,
+      "elapsed_seconds": 2.022339338902384,
+      "exit_code": 0,
+      "group_absent": true,
+      "reason": null,
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdout_sha256": "57f2b5df717ce6a803199dcd361d04d2a37e162d64f0a49148b9e20c573d1bbf"
+    }
+  },
+  "postcheck_errors": [],
+  "prior_finalizer": {
+    "bytes": 45313,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/ordinary-induction-finalizer-tools-v228-v1/complete.json",
+    "sha256": "874a6d2026029619a02283ee9650d682690941c14904d9fa59c101b58b89d6bc"
+  },
+  "production_authority": false,
+  "qualified_generation": {
+    "completion": {
+      "bytes": 369402,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/ordinary-induction-compiler-cpu-v228-v1/complete.json",
+      "sha256": "c45aa83b01bf76fdfd9962b06884611658dab607b001ba67fecc66db9fd5ba97"
+    },
+    "owner": {
+      "bytes": 57318,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/ordinary-induction-compiler-cpu-owner-v228-v1/complete.json",
+      "sha256": "85de66610631612ed2473f9d5fbb80ce89ea7ffc6064c1784834a6751d623609"
+    },
+    "sources": {
+      "bytes": 3779269,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/ordinary-induction-compiler-cpu-v228-v1/sources-before.json",
+      "sha256": "5aad4c8ba6520c323310424ce343de2ae5088e7f8c1c0b1fd67853b5fd3bd9f9"
+    }
+  },
+  "raw": {
+    "before.json": {
+      "bytes": 3840255,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rpo-finalizer-tools-v228-v2/before.json",
+      "sha256": "1d5b89327011c2f0e1e6cca282691f39321c1b33bb75899e9cf57b585454a5e3"
+    },
+    "configurations-after.json": {
+      "bytes": 2627,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rpo-finalizer-tools-v228-v2/configurations-after.json",
+      "sha256": "7756a737f51ada97582a62f12b77271f700bd2ceb165e3ba2105a5797f03e71f"
+    },
+    "dependencies-after.json": {
+      "bytes": 11568051,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rpo-finalizer-tools-v228-v2/dependencies-after.json",
+      "sha256": "616e82ac4298305d5248000ff2b7c3edc4e585c8f2c8505c5a7f027e503657be"
+    },
+    "files-after.json": {
+      "bytes": 65011,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rpo-finalizer-tools-v228-v2/files-after.json",
+      "sha256": "6bc1e5ef5ae18b5de623b85fdc24abb2a6e1b49d3f916d52131910ed9f5c0f50"
+    },
+    "finalizer-build-command.json": {
+      "bytes": 2485,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rpo-finalizer-tools-v228-v2/finalizer-build-command.json",
+      "sha256": "e462e51c457253de1fdb972d78c0dc16c92c7b3586481d2761d8f529f3447ad9"
+    },
+    "finalizer-build-result.json": {
+      "bytes": 307,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rpo-finalizer-tools-v228-v2/finalizer-build-result.json",
+      "sha256": "d8fa524066362335aa68f1596801fd34484fc4d4702faca5da056d3aa384db96"
+    },
+    "finalizer-build-started.json": {
+      "bytes": 38,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rpo-finalizer-tools-v228-v2/finalizer-build-started.json",
+      "sha256": "78fc850b3764eea2636cc892384e7616300d188b752ec87599852d4e177482ec"
+    },
+    "finalizer-build-stderr": {
+      "bytes": 2424,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rpo-finalizer-tools-v228-v2/finalizer-build-stderr",
+      "sha256": "0a7950804a250a04f6b9d10c2112e76815af1129362757554399a61a8116d6ca"
+    },
+    "finalizer-build-stdout": {
+      "bytes": 202564,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rpo-finalizer-tools-v228-v2/finalizer-build-stdout",
+      "sha256": "84fbfbcaf79747b2990a7e76b764e5b8efe26293b7379658731d101f466c3521"
+    },
+    "finalizer-build-tests-command.json": {
+      "bytes": 2444,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rpo-finalizer-tools-v228-v2/finalizer-build-tests-command.json",
+      "sha256": "52aa6440cf518fea460088f22f5c7d237fc79523b2bb9dd5b333b0dc42973fb5"
+    },
+    "finalizer-build-tests-result.json": {
+      "bytes": 306,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rpo-finalizer-tools-v228-v2/finalizer-build-tests-result.json",
+      "sha256": "5205662a39b05a5cb44b066b2bfe2cda78311792592162a85223a41bb2acacff"
+    },
+    "finalizer-build-tests-started.json": {
+      "bytes": 38,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rpo-finalizer-tools-v228-v2/finalizer-build-tests-started.json",
+      "sha256": "0bd12c0c2d0f1b1efa8fc4479bfc4b69340034ae2b96f5e03d899ae213b76af1"
+    },
+    "finalizer-build-tests-stderr": {
+      "bytes": 767,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rpo-finalizer-tools-v228-v2/finalizer-build-tests-stderr",
+      "sha256": "3e32d2657a2e2652f6380aeb6276bbd093800fae1ee3edf8a00243bafa4351cc"
+    },
+    "finalizer-build-tests-stdout": {
+      "bytes": 201398,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rpo-finalizer-tools-v228-v2/finalizer-build-tests-stdout",
+      "sha256": "5697389ac95501fef9676e9dd24c17611f9f6780d78e5882856d1353ddfb2e53"
+    },
+    "finalizer-ignored-list-command.json": {
+      "bytes": 2199,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rpo-finalizer-tools-v228-v2/finalizer-ignored-list-command.json",
+      "sha256": "f56414d569afb4e8f901f39075b5a9c99a0ad00253217691ed3e257da9115543"
+    },
+    "finalizer-ignored-list-result.json": {
+      "bytes": 306,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rpo-finalizer-tools-v228-v2/finalizer-ignored-list-result.json",
+      "sha256": "006105bdcce3c28cee8e8df0633e4f5c5c0efced68f392d3b570c93ecb665292"
+    },
+    "finalizer-ignored-list-started.json": {
+      "bytes": 38,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rpo-finalizer-tools-v228-v2/finalizer-ignored-list-started.json",
+      "sha256": "e996538a5b915b7a5194bb734d70b242fb5467385ed0d51c0830c25647bc810d"
+    },
+    "finalizer-ignored-list-stderr": {
+      "bytes": 0,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rpo-finalizer-tools-v228-v2/finalizer-ignored-list-stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "finalizer-ignored-list-stdout": {
+      "bytes": 1644,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rpo-finalizer-tools-v228-v2/finalizer-ignored-list-stdout",
+      "sha256": "44c83411aa31ee93fb38448ae898f601df26e89527e11b9dea0e25ba50fcc705"
+    },
+    "finalizer-list-command.json": {
+      "bytes": 2182,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rpo-finalizer-tools-v228-v2/finalizer-list-command.json",
+      "sha256": "588c6ad3a7c54bcd451d4bcc1b0deaafa6cccad2a6db856aee980295685d6be8"
+    },
+    "finalizer-list-result.json": {
+      "bytes": 307,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rpo-finalizer-tools-v228-v2/finalizer-list-result.json",
+      "sha256": "c32df7f49f875fa63727526886690c23d1eb31f2e5f505b6a7bd168135c1b3b5"
+    },
+    "finalizer-list-started.json": {
+      "bytes": 38,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rpo-finalizer-tools-v228-v2/finalizer-list-started.json",
+      "sha256": "f3fe5983a03bbc54506a79e8db814c5b552c8e355c4a469df0de8ba41124de4c"
+    },
+    "finalizer-list-stderr": {
+      "bytes": 0,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rpo-finalizer-tools-v228-v2/finalizer-list-stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "finalizer-list-stdout": {
+      "bytes": 22365,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rpo-finalizer-tools-v228-v2/finalizer-list-stdout",
+      "sha256": "a375cc5051e4c7171699ef063de9e35a26e69e832785e65b2795f6595d50f8f1"
+    },
+    "finalizer-tests-command.json": {
+      "bytes": 2164,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rpo-finalizer-tools-v228-v2/finalizer-tests-command.json",
+      "sha256": "82846dce65ac9d99e8029e66528681d703abe8bc65473c13fadbefaefc0715fa"
+    },
+    "finalizer-tests-result.json": {
+      "bytes": 307,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rpo-finalizer-tools-v228-v2/finalizer-tests-result.json",
+      "sha256": "b673ac93cbc8e3056281984e2f88a1938b86f3f2fead3f279cd3a03e23db960a"
+    },
+    "finalizer-tests-started.json": {
+      "bytes": 38,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rpo-finalizer-tools-v228-v2/finalizer-tests-started.json",
+      "sha256": "cf4b5c1dcb6b06047c6e3751f8304821553dad910887424268391a4261a889bc"
+    },
+    "finalizer-tests-stderr": {
+      "bytes": 0,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rpo-finalizer-tools-v228-v2/finalizer-tests-stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "finalizer-tests-stdout": {
+      "bytes": 24948,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rpo-finalizer-tools-v228-v2/finalizer-tests-stdout",
+      "sha256": "1e866c11c5d9f19f5595bbc313f5b76af47536bf8104d03bfed59b59274336d4"
+    },
+    "inputs-after.json": {
+      "bytes": 1422103,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rpo-finalizer-tools-v228-v2/inputs-after.json",
+      "sha256": "3f440ca6488a27d4b48350e785d5fc55c57eb3ed998c7853b79def8b0a9285c7"
+    },
+    "metadata-command.json": {
+      "bytes": 2317,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rpo-finalizer-tools-v228-v2/metadata-command.json",
+      "sha256": "88103d7899c4a2ddefc10ff9fbce3e8404d354e06af7003dcf067e65b83eb0fc"
+    },
+    "metadata-result.json": {
+      "bytes": 306,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rpo-finalizer-tools-v228-v2/metadata-result.json",
+      "sha256": "31df095fd77ab6dfa9e18c2a4dc808ec141b0fbb77ec7f3c4be7432e20820ffb"
+    },
+    "metadata-started.json": {
+      "bytes": 38,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rpo-finalizer-tools-v228-v2/metadata-started.json",
+      "sha256": "9878b864d17c0f86080f8a7e1cce763abe1697eb3b67e898df6f135519d4c6a6"
+    },
+    "metadata-stderr": {
+      "bytes": 0,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rpo-finalizer-tools-v228-v2/metadata-stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "metadata-stdout": {
+      "bytes": 2186075,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rpo-finalizer-tools-v228-v2/metadata-stdout",
+      "sha256": "57f2b5df717ce6a803199dcd361d04d2a37e162d64f0a49148b9e20c573d1bbf"
+    },
+    "sources-after.json": {
+      "bytes": 3607137,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rpo-finalizer-tools-v228-v2/sources-after.json",
+      "sha256": "77fbdd63c370665ea80bf70e8dd8f4a45533bcde8e5ba6ffd670ab497ebc6665"
+    }
+  },
+  "schema": "fe2o3-p228-rpo-finalizer-tools-result-v1",
+  "source_snapshot": {
+    "bytes": 3607137,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rpo-compiler-cpu-v228-v2/sources-before.json",
+    "sha256": "77fbdd63c370665ea80bf70e8dd8f4a45533bcde8e5ba6ffd670ab497ebc6665"
+  },
+  "tests": {
+    "ignored": 15,
+    "ignored_names": [
+      "linux::multiwave_join_v1::tests::multiwave_emission_actual_retained_v1_passes_full_inert_join",
+      "linux::wave_mlp_tasks_v1::tests::mlp_actual_handoff_measures_shared_work_without_changing_default_policy",
+      "linux::wave_mlp_tasks_v1::tests::wave_emission_actual_retained_v1_passes_full_inert_join",
+      "linux::wave_mlp_tiles_v2::tests::mlp_tile_actual_handoff_measures_shared_work_without_changing_default_policy",
+      "linux::wave_mlp_tiles_v2::tests::wave_emission_actual_retained_v1_passes_full_inert_join",
+      "linux::wave_qkv_attention_output_tasks_v5::tests::attention_actual_handoff_measures_shared_work_without_changing_default_policy",
+      "linux::wave_qkv_attention_output_tasks_v5::tests::wave_emission_actual_retained_v5_passes_full_inert_join",
+      "linux::wave_qkv_attention_output_tiles_v6::tests::attention_actual_handoff_measures_shared_work_without_changing_default_policy",
+      "linux::wave_qkv_attention_output_tiles_v6::tests::wave_emission_actual_retained_v6_passes_full_inert_join",
+      "linux::wave_qkv_attention_tasks_v4::tests::attention_actual_handoff_measures_shared_work_without_changing_default_policy",
+      "linux::wave_qkv_attention_tasks_v4::tests::wave_emission_actual_retained_v4_passes_full_inert_join",
+      "linux::wave_qkv_post_tasks_v3::tests::post_actual_handoff_measures_shared_work_without_changing_default_policy",
+      "linux::wave_qkv_post_tasks_v3::tests::wave_emission_actual_retained_v3_passes_full_inert_join",
+      "linux::wave_qkv_tasks_v2::tests::wave_emission_actual_retained_v3_passes_full_inert_join",
+      "linux::wave_tasks_v1::tests::wave_emission_actual_retained_v3_passes_full_inert_join"
+    ],
+    "names": [
+      "linux::multiwave_join_v1::tests::multiwave_bridge_all_three_component_contracts_are_exact",
+      "linux::multiwave_join_v1::tests::multiwave_bridge_checks_target_cov_abi_geometry_and_lds",
+      "linux::multiwave_join_v1::tests::multiwave_bridge_mode_is_explicit_and_old_default_unchanged",
+      "linux::multiwave_join_v1::tests::multiwave_bridge_rejects_same_abi_finite_join_terminal_profile",
+      "linux::multiwave_join_v1::tests::multiwave_bridge_requires_no_device_ffi_and_metered_scans",
+      "linux::multiwave_join_v1::tests::multiwave_emission_actual_retained_v1_passes_full_inert_join",
+      "linux::multiwave_join_v1::tests::multiwave_emission_invalid_handoff_stops_before_worker_or_output",
+      "linux::tests::finite_emission_cli_rejects_malformed_digest_and_worker_measurement",
+      "linux::tests::finite_emission_cli_requires_exact_arity_and_fixed_input_bound",
+      "linux::tests::finite_emission_invalid_v3_fails_before_worker_open_or_output_creation",
+      "linux::tests::finite_emission_outputs_are_create_only_and_bounded",
+      "linux::tests::finite_emission_read_requires_exact_content_length_and_regular_nonsymlink",
+      "linux::tests::finite_emission_worker_limits_fit_existing_protocol_without_gpu",
+      "linux::wave_mlp_tasks_v1::tests::mlp_actual_handoff_measures_shared_work_without_changing_default_policy",
+      "linux::wave_mlp_tasks_v1::tests::mlp_bridge_rejects_every_same_slot_key_and_qkv_component",
+      "linux::wave_mlp_tasks_v1::tests::mlp_connected_bridge_exact_policy_denies_excess_without_resetting_history",
+      "linux::wave_mlp_tasks_v1::tests::mlp_emission_rejects_other_producer_profiles_without_authenticating_the_label",
+      "linux::wave_mlp_tasks_v1::tests::mlp_exp_contract_charges_one_ledger_and_rejects_one_short",
+      "linux::wave_mlp_tasks_v1::tests::mlp_exp_contract_is_source_bound_and_rejects_no_ffi_or_other_target",
+      "linux::wave_mlp_tasks_v1::tests::mlp_exp_contract_requires_body_call_and_exact_llvm_symbol",
+      "linux::wave_mlp_tasks_v1::tests::output_connected_bridge_has_a_fixed_bounded_policy",
+      "linux::wave_mlp_tasks_v1::tests::wave_emission_actual_retained_v1_passes_full_inert_join",
+      "linux::wave_mlp_tasks_v1::tests::wave_emission_byte_comparison_charges_before_scan_and_preserves_floor",
+      "linux::wave_mlp_tasks_v1::tests::wave_emission_correspondence_span_is_exact_and_checked",
+      "linux::wave_mlp_tasks_v1::tests::wave_emission_descriptor_checks_target_abi_geometry_and_lds",
+      "linux::wave_mlp_tasks_v1::tests::wave_emission_invalid_handoff_stops_before_worker_or_output",
+      "linux::wave_mlp_tasks_v1::tests::wave_emission_mode_is_explicit_and_preserves_legacy_arity",
+      "linux::wave_mlp_tasks_v1::tests::wave_emission_requires_all_ordered_physical_component_contracts",
+      "linux::wave_mlp_tasks_v1::tests::wave_emission_roster_accepts_largest_registered_scalar_signatures",
+      "linux::wave_mlp_tasks_v1::tests::wave_emission_roster_budget_thresholds_restore_scratch_and_refuse_partial_results",
+      "linux::wave_mlp_tasks_v1::tests::wave_emission_roster_preserves_all_declarations_and_selected_ordinals",
+      "linux::wave_mlp_tasks_v1::tests::wave_emission_roster_preserves_singleton_entry",
+      "linux::wave_mlp_tasks_v1::tests::wave_emission_roster_rejects_canonical_declaration_spoofs",
+      "linux::wave_mlp_tasks_v1::tests::wave_emission_roster_rejects_duplicate_ids_and_extra_definitions",
+      "linux::wave_mlp_tasks_v1::tests::wave_emission_roster_rejects_entry_role_body_and_reserved_identity_spoofs",
+      "linux::wave_mlp_tasks_v1::tests::wave_emission_roster_rejects_ordinary_externs_and_prefix_spoofs",
+      "linux::wave_mlp_tasks_v1::tests::wave_emission_roster_rejects_oversized_or_recursive_declaration_fields",
+      "linux::wave_mlp_tasks_v1::tests::wave_emission_roster_rejects_wrong_or_absent_selected_entry",
+      "linux::wave_mlp_tasks_v1::tests::whole_key_qkv_post_mlp_and_output_tables_are_not_interchangeable",
+      "linux::wave_mlp_tiles_v2::tests::mlp_tile_actual_handoff_measures_shared_work_without_changing_default_policy",
+      "linux::wave_mlp_tiles_v2::tests::mlp_tile_bridge_rejects_every_same_slot_key_and_qkv_component",
+      "linux::wave_mlp_tiles_v2::tests::mlp_tile_bridge_rejects_same_carrier_old_mlp_even_with_tiled_geometry",
+      "linux::wave_mlp_tiles_v2::tests::mlp_tile_connected_bridge_exact_policy_denies_excess_without_resetting_history",
+      "linux::wave_mlp_tiles_v2::tests::mlp_tile_emission_rejects_other_producer_profiles_without_authenticating_the_label",
+      "linux::wave_mlp_tiles_v2::tests::mlp_tile_exp_contract_charges_one_ledger_and_rejects_one_short",
+      "linux::wave_mlp_tiles_v2::tests::mlp_tile_exp_contract_is_source_bound_and_rejects_no_ffi_or_other_target",
+      "linux::wave_mlp_tiles_v2::tests::mlp_tile_exp_contract_requires_body_call_and_exact_llvm_symbol",
+      "linux::wave_mlp_tiles_v2::tests::output_connected_bridge_has_a_fixed_bounded_policy",
+      "linux::wave_mlp_tiles_v2::tests::wave_emission_actual_retained_v1_passes_full_inert_join",
+      "linux::wave_mlp_tiles_v2::tests::wave_emission_byte_comparison_charges_before_scan_and_preserves_floor",
+      "linux::wave_mlp_tiles_v2::tests::wave_emission_correspondence_span_is_exact_and_checked",
+      "linux::wave_mlp_tiles_v2::tests::wave_emission_descriptor_checks_target_abi_geometry_and_lds",
+      "linux::wave_mlp_tiles_v2::tests::wave_emission_invalid_handoff_stops_before_worker_or_output",
+      "linux::wave_mlp_tiles_v2::tests::wave_emission_mode_is_explicit_and_preserves_legacy_arity",
+      "linux::wave_mlp_tiles_v2::tests::wave_emission_requires_all_ordered_physical_component_contracts",
+      "linux::wave_mlp_tiles_v2::tests::wave_emission_roster_accepts_largest_registered_scalar_signatures",
+      "linux::wave_mlp_tiles_v2::tests::wave_emission_roster_budget_thresholds_restore_scratch_and_refuse_partial_results",
+      "linux::wave_mlp_tiles_v2::tests::wave_emission_roster_preserves_all_declarations_and_selected_ordinals",
+      "linux::wave_mlp_tiles_v2::tests::wave_emission_roster_preserves_singleton_entry",
+      "linux::wave_mlp_tiles_v2::tests::wave_emission_roster_rejects_canonical_declaration_spoofs",
+      "linux::wave_mlp_tiles_v2::tests::wave_emission_roster_rejects_duplicate_ids_and_extra_definitions",
+      "linux::wave_mlp_tiles_v2::tests::wave_emission_roster_rejects_entry_role_body_and_reserved_identity_spoofs",
+      "linux::wave_mlp_tiles_v2::tests::wave_emission_roster_rejects_ordinary_externs_and_prefix_spoofs",
+      "linux::wave_mlp_tiles_v2::tests::wave_emission_roster_rejects_oversized_or_recursive_declaration_fields",
+      "linux::wave_mlp_tiles_v2::tests::wave_emission_roster_rejects_wrong_or_absent_selected_entry",
+      "linux::wave_mlp_tiles_v2::tests::whole_key_qkv_post_mlp_and_output_tables_are_not_interchangeable",
+      "linux::wave_qkv_attention_output_tasks_v5::tests::attention_actual_handoff_measures_shared_work_without_changing_default_policy",
+      "linux::wave_qkv_attention_output_tasks_v5::tests::attention_bridge_rejects_every_same_slot_key_and_qkv_component",
+      "linux::wave_qkv_attention_output_tasks_v5::tests::attention_connected_bridge_exact_policy_denies_excess_without_resetting_history",
+      "linux::wave_qkv_attention_output_tasks_v5::tests::attention_emission_rejects_other_producer_profiles_without_authenticating_the_label",
+      "linux::wave_qkv_attention_output_tasks_v5::tests::attention_exp_contract_charges_one_ledger_and_rejects_one_short",
+      "linux::wave_qkv_attention_output_tasks_v5::tests::attention_exp_contract_is_source_bound_and_rejects_no_ffi_or_other_target",
+      "linux::wave_qkv_attention_output_tasks_v5::tests::attention_exp_contract_requires_body_call_and_exact_llvm_symbol",
+      "linux::wave_qkv_attention_output_tasks_v5::tests::output_connected_bridge_has_a_fixed_bounded_policy",
+      "linux::wave_qkv_attention_output_tasks_v5::tests::wave_emission_actual_retained_v5_passes_full_inert_join",
+      "linux::wave_qkv_attention_output_tasks_v5::tests::wave_emission_byte_comparison_charges_before_scan_and_preserves_floor",
+      "linux::wave_qkv_attention_output_tasks_v5::tests::wave_emission_correspondence_span_is_exact_and_checked",
+      "linux::wave_qkv_attention_output_tasks_v5::tests::wave_emission_descriptor_checks_target_abi_geometry_and_lds",
+      "linux::wave_qkv_attention_output_tasks_v5::tests::wave_emission_invalid_handoff_stops_before_worker_or_output",
+      "linux::wave_qkv_attention_output_tasks_v5::tests::wave_emission_mode_is_explicit_and_preserves_legacy_arity",
+      "linux::wave_qkv_attention_output_tasks_v5::tests::wave_emission_requires_all_ordered_physical_component_contracts",
+      "linux::wave_qkv_attention_output_tasks_v5::tests::wave_emission_roster_accepts_largest_registered_scalar_signatures",
+      "linux::wave_qkv_attention_output_tasks_v5::tests::wave_emission_roster_budget_thresholds_restore_scratch_and_refuse_partial_results",
+      "linux::wave_qkv_attention_output_tasks_v5::tests::wave_emission_roster_preserves_all_declarations_and_selected_ordinals",
+      "linux::wave_qkv_attention_output_tasks_v5::tests::wave_emission_roster_preserves_singleton_entry",
+      "linux::wave_qkv_attention_output_tasks_v5::tests::wave_emission_roster_rejects_canonical_declaration_spoofs",
+      "linux::wave_qkv_attention_output_tasks_v5::tests::wave_emission_roster_rejects_duplicate_ids_and_extra_definitions",
+      "linux::wave_qkv_attention_output_tasks_v5::tests::wave_emission_roster_rejects_entry_role_body_and_reserved_identity_spoofs",
+      "linux::wave_qkv_attention_output_tasks_v5::tests::wave_emission_roster_rejects_ordinary_externs_and_prefix_spoofs",
+      "linux::wave_qkv_attention_output_tasks_v5::tests::wave_emission_roster_rejects_oversized_or_recursive_declaration_fields",
+      "linux::wave_qkv_attention_output_tasks_v5::tests::wave_emission_roster_rejects_wrong_or_absent_selected_entry",
+      "linux::wave_qkv_attention_output_tasks_v5::tests::whole_key_qkv_post_attention_and_output_tables_are_not_interchangeable",
+      "linux::wave_qkv_attention_output_tiles_v6::tests::attention_actual_handoff_measures_shared_work_without_changing_default_policy",
+      "linux::wave_qkv_attention_output_tiles_v6::tests::attention_bridge_rejects_every_same_slot_key_and_qkv_component",
+      "linux::wave_qkv_attention_output_tiles_v6::tests::attention_connected_bridge_exact_policy_denies_excess_without_resetting_history",
+      "linux::wave_qkv_attention_output_tiles_v6::tests::attention_emission_rejects_other_producer_profiles_without_authenticating_the_label",
+      "linux::wave_qkv_attention_output_tiles_v6::tests::attention_exp_contract_charges_one_ledger_and_rejects_one_short",
+      "linux::wave_qkv_attention_output_tiles_v6::tests::attention_exp_contract_is_source_bound_and_rejects_no_ffi_or_other_target",
+      "linux::wave_qkv_attention_output_tiles_v6::tests::attention_exp_contract_requires_body_call_and_exact_llvm_symbol",
+      "linux::wave_qkv_attention_output_tiles_v6::tests::output_connected_bridge_has_a_fixed_bounded_policy",
+      "linux::wave_qkv_attention_output_tiles_v6::tests::prefix_tile_actual_lds_census_preserves_exact_and_one_short_work_budget",
+      "linux::wave_qkv_attention_output_tiles_v6::tests::prefix_tile_actual_lds_census_requires_exact512_u32_and_no_dynamic_storage",
+      "linux::wave_qkv_attention_output_tiles_v6::tests::wave_emission_actual_retained_v6_passes_full_inert_join",
+      "linux::wave_qkv_attention_output_tiles_v6::tests::wave_emission_byte_comparison_charges_before_scan_and_preserves_floor",
+      "linux::wave_qkv_attention_output_tiles_v6::tests::wave_emission_correspondence_span_is_exact_and_checked",
+      "linux::wave_qkv_attention_output_tiles_v6::tests::wave_emission_descriptor_checks_target_abi_geometry_and_lds",
+      "linux::wave_qkv_attention_output_tiles_v6::tests::wave_emission_invalid_handoff_stops_before_worker_or_output",
+      "linux::wave_qkv_attention_output_tiles_v6::tests::wave_emission_mode_is_explicit_and_preserves_legacy_arity",
+      "linux::wave_qkv_attention_output_tiles_v6::tests::wave_emission_requires_all_ordered_physical_component_contracts",
+      "linux::wave_qkv_attention_output_tiles_v6::tests::wave_emission_roster_accepts_largest_registered_scalar_signatures",
+      "linux::wave_qkv_attention_output_tiles_v6::tests::wave_emission_roster_budget_thresholds_restore_scratch_and_refuse_partial_results",
+      "linux::wave_qkv_attention_output_tiles_v6::tests::wave_emission_roster_preserves_all_declarations_and_selected_ordinals",
+      "linux::wave_qkv_attention_output_tiles_v6::tests::wave_emission_roster_preserves_singleton_entry",
+      "linux::wave_qkv_attention_output_tiles_v6::tests::wave_emission_roster_rejects_canonical_declaration_spoofs",
+      "linux::wave_qkv_attention_output_tiles_v6::tests::wave_emission_roster_rejects_duplicate_ids_and_extra_definitions",
+      "linux::wave_qkv_attention_output_tiles_v6::tests::wave_emission_roster_rejects_entry_role_body_and_reserved_identity_spoofs",
+      "linux::wave_qkv_attention_output_tiles_v6::tests::wave_emission_roster_rejects_ordinary_externs_and_prefix_spoofs",
+      "linux::wave_qkv_attention_output_tiles_v6::tests::wave_emission_roster_rejects_oversized_or_recursive_declaration_fields",
+      "linux::wave_qkv_attention_output_tiles_v6::tests::wave_emission_roster_rejects_wrong_or_absent_selected_entry",
+      "linux::wave_qkv_attention_output_tiles_v6::tests::whole_key_qkv_post_attention_and_output_tables_are_not_interchangeable",
+      "linux::wave_qkv_attention_tasks_v4::tests::attention_actual_handoff_measures_shared_work_without_changing_default_policy",
+      "linux::wave_qkv_attention_tasks_v4::tests::attention_bridge_rejects_every_same_slot_key_and_qkv_component",
+      "linux::wave_qkv_attention_tasks_v4::tests::attention_connected_bridge_exact_policy_denies_excess_without_resetting_history",
+      "linux::wave_qkv_attention_tasks_v4::tests::attention_connected_bridge_has_a_calibrated_fixed_bounded_policy",
+      "linux::wave_qkv_attention_tasks_v4::tests::attention_emission_rejects_other_producer_profiles_without_authenticating_the_label",
+      "linux::wave_qkv_attention_tasks_v4::tests::attention_exp_contract_charges_one_ledger_and_rejects_one_short",
+      "linux::wave_qkv_attention_tasks_v4::tests::attention_exp_contract_is_source_bound_and_rejects_no_ffi_or_other_target",
+      "linux::wave_qkv_attention_tasks_v4::tests::attention_exp_contract_requires_body_call_and_exact_llvm_symbol",
+      "linux::wave_qkv_attention_tasks_v4::tests::wave_emission_actual_retained_v4_passes_full_inert_join",
+      "linux::wave_qkv_attention_tasks_v4::tests::wave_emission_byte_comparison_charges_before_scan_and_preserves_floor",
+      "linux::wave_qkv_attention_tasks_v4::tests::wave_emission_correspondence_span_is_exact_and_checked",
+      "linux::wave_qkv_attention_tasks_v4::tests::wave_emission_descriptor_checks_target_abi_geometry_and_lds",
+      "linux::wave_qkv_attention_tasks_v4::tests::wave_emission_invalid_handoff_stops_before_worker_or_output",
+      "linux::wave_qkv_attention_tasks_v4::tests::wave_emission_mode_is_explicit_and_preserves_legacy_arity",
+      "linux::wave_qkv_attention_tasks_v4::tests::wave_emission_requires_all_ordered_physical_component_contracts",
+      "linux::wave_qkv_attention_tasks_v4::tests::wave_emission_roster_accepts_largest_registered_scalar_signatures",
+      "linux::wave_qkv_attention_tasks_v4::tests::wave_emission_roster_budget_thresholds_restore_scratch_and_refuse_partial_results",
+      "linux::wave_qkv_attention_tasks_v4::tests::wave_emission_roster_preserves_all_declarations_and_selected_ordinals",
+      "linux::wave_qkv_attention_tasks_v4::tests::wave_emission_roster_preserves_singleton_entry",
+      "linux::wave_qkv_attention_tasks_v4::tests::wave_emission_roster_rejects_canonical_declaration_spoofs",
+      "linux::wave_qkv_attention_tasks_v4::tests::wave_emission_roster_rejects_duplicate_ids_and_extra_definitions",
+      "linux::wave_qkv_attention_tasks_v4::tests::wave_emission_roster_rejects_entry_role_body_and_reserved_identity_spoofs",
+      "linux::wave_qkv_attention_tasks_v4::tests::wave_emission_roster_rejects_ordinary_externs_and_prefix_spoofs",
+      "linux::wave_qkv_attention_tasks_v4::tests::wave_emission_roster_rejects_oversized_or_recursive_declaration_fields",
+      "linux::wave_qkv_attention_tasks_v4::tests::wave_emission_roster_rejects_wrong_or_absent_selected_entry",
+      "linux::wave_qkv_attention_tasks_v4::tests::whole_key_qkv_post_and_attention_tables_are_not_interchangeable",
+      "linux::wave_qkv_post_tasks_v3::tests::post_actual_handoff_measures_shared_work_without_changing_default_policy",
+      "linux::wave_qkv_post_tasks_v3::tests::post_bridge_rejects_every_same_slot_key_and_qkv_component",
+      "linux::wave_qkv_post_tasks_v3::tests::post_connected_bridge_exact_policy_denies_excess_without_resetting_history",
+      "linux::wave_qkv_post_tasks_v3::tests::post_connected_bridge_has_a_fixed_measured_policy",
+      "linux::wave_qkv_post_tasks_v3::tests::post_emission_rejects_other_producer_profiles_without_authenticating_the_label",
+      "linux::wave_qkv_post_tasks_v3::tests::wave_emission_actual_retained_v3_passes_full_inert_join",
+      "linux::wave_qkv_post_tasks_v3::tests::wave_emission_byte_comparison_charges_before_scan_and_preserves_floor",
+      "linux::wave_qkv_post_tasks_v3::tests::wave_emission_correspondence_span_is_exact_and_checked",
+      "linux::wave_qkv_post_tasks_v3::tests::wave_emission_descriptor_checks_target_abi_geometry_and_lds",
+      "linux::wave_qkv_post_tasks_v3::tests::wave_emission_invalid_handoff_stops_before_worker_or_output",
+      "linux::wave_qkv_post_tasks_v3::tests::wave_emission_mode_is_explicit_and_preserves_legacy_arity",
+      "linux::wave_qkv_post_tasks_v3::tests::wave_emission_requires_all_ordered_physical_component_contracts",
+      "linux::wave_qkv_post_tasks_v3::tests::wave_emission_roster_accepts_largest_registered_scalar_signatures",
+      "linux::wave_qkv_post_tasks_v3::tests::wave_emission_roster_budget_thresholds_restore_scratch_and_refuse_partial_results",
+      "linux::wave_qkv_post_tasks_v3::tests::wave_emission_roster_preserves_all_declarations_and_selected_ordinals",
+      "linux::wave_qkv_post_tasks_v3::tests::wave_emission_roster_preserves_singleton_entry",
+      "linux::wave_qkv_post_tasks_v3::tests::wave_emission_roster_rejects_canonical_declaration_spoofs",
+      "linux::wave_qkv_post_tasks_v3::tests::wave_emission_roster_rejects_duplicate_ids_and_extra_definitions",
+      "linux::wave_qkv_post_tasks_v3::tests::wave_emission_roster_rejects_entry_role_body_and_reserved_identity_spoofs",
+      "linux::wave_qkv_post_tasks_v3::tests::wave_emission_roster_rejects_ordinary_externs_and_prefix_spoofs",
+      "linux::wave_qkv_post_tasks_v3::tests::wave_emission_roster_rejects_oversized_or_recursive_declaration_fields",
+      "linux::wave_qkv_post_tasks_v3::tests::wave_emission_roster_rejects_wrong_or_absent_selected_entry",
+      "linux::wave_qkv_post_tasks_v3::tests::whole_valid_key_qkv_and_post_tables_are_not_interchangeable",
+      "linux::wave_qkv_tasks_v2::tests::qkv_bridge_rejects_every_same_slot_key_component",
+      "linux::wave_qkv_tasks_v2::tests::wave_emission_actual_retained_v3_passes_full_inert_join",
+      "linux::wave_qkv_tasks_v2::tests::wave_emission_byte_comparison_charges_before_scan_and_preserves_floor",
+      "linux::wave_qkv_tasks_v2::tests::wave_emission_correspondence_span_is_exact_and_checked",
+      "linux::wave_qkv_tasks_v2::tests::wave_emission_descriptor_checks_target_abi_geometry_and_lds",
+      "linux::wave_qkv_tasks_v2::tests::wave_emission_invalid_handoff_stops_before_worker_or_output",
+      "linux::wave_qkv_tasks_v2::tests::wave_emission_mode_is_explicit_and_preserves_legacy_arity",
+      "linux::wave_qkv_tasks_v2::tests::wave_emission_requires_all_ordered_physical_component_contracts",
+      "linux::wave_qkv_tasks_v2::tests::wave_emission_roster_accepts_largest_registered_scalar_signatures",
+      "linux::wave_qkv_tasks_v2::tests::wave_emission_roster_budget_thresholds_restore_scratch_and_refuse_partial_results",
+      "linux::wave_qkv_tasks_v2::tests::wave_emission_roster_preserves_all_declarations_and_selected_ordinals",
+      "linux::wave_qkv_tasks_v2::tests::wave_emission_roster_preserves_singleton_entry",
+      "linux::wave_qkv_tasks_v2::tests::wave_emission_roster_rejects_canonical_declaration_spoofs",
+      "linux::wave_qkv_tasks_v2::tests::wave_emission_roster_rejects_duplicate_ids_and_extra_definitions",
+      "linux::wave_qkv_tasks_v2::tests::wave_emission_roster_rejects_entry_role_body_and_reserved_identity_spoofs",
+      "linux::wave_qkv_tasks_v2::tests::wave_emission_roster_rejects_ordinary_externs_and_prefix_spoofs",
+      "linux::wave_qkv_tasks_v2::tests::wave_emission_roster_rejects_oversized_or_recursive_declaration_fields",
+      "linux::wave_qkv_tasks_v2::tests::wave_emission_roster_rejects_wrong_or_absent_selected_entry",
+      "linux::wave_qkv_tasks_v2::tests::whole_valid_key_and_qkv_tables_are_not_interchangeable",
+      "linux::wave_tasks_v1::tests::wave_emission_actual_retained_v3_passes_full_inert_join",
+      "linux::wave_tasks_v1::tests::wave_emission_byte_comparison_charges_before_scan_and_preserves_floor",
+      "linux::wave_tasks_v1::tests::wave_emission_correspondence_span_is_exact_and_checked",
+      "linux::wave_tasks_v1::tests::wave_emission_descriptor_checks_target_abi_geometry_and_lds",
+      "linux::wave_tasks_v1::tests::wave_emission_invalid_handoff_stops_before_worker_or_output",
+      "linux::wave_tasks_v1::tests::wave_emission_mode_is_explicit_and_preserves_legacy_arity",
+      "linux::wave_tasks_v1::tests::wave_emission_requires_all_ordered_physical_component_contracts",
+      "linux::wave_tasks_v1::tests::wave_emission_roster_accepts_largest_registered_scalar_signatures",
+      "linux::wave_tasks_v1::tests::wave_emission_roster_budget_thresholds_restore_scratch_and_refuse_partial_results",
+      "linux::wave_tasks_v1::tests::wave_emission_roster_preserves_all_declarations_and_selected_ordinals",
+      "linux::wave_tasks_v1::tests::wave_emission_roster_preserves_singleton_entry",
+      "linux::wave_tasks_v1::tests::wave_emission_roster_rejects_canonical_declaration_spoofs",
+      "linux::wave_tasks_v1::tests::wave_emission_roster_rejects_duplicate_ids_and_extra_definitions",
+      "linux::wave_tasks_v1::tests::wave_emission_roster_rejects_entry_role_body_and_reserved_identity_spoofs",
+      "linux::wave_tasks_v1::tests::wave_emission_roster_rejects_ordinary_externs_and_prefix_spoofs",
+      "linux::wave_tasks_v1::tests::wave_emission_roster_rejects_oversized_or_recursive_declaration_fields",
+      "linux::wave_tasks_v1::tests::wave_emission_roster_rejects_wrong_or_absent_selected_entry"
+    ],
+    "passed": 190
+  }
+}

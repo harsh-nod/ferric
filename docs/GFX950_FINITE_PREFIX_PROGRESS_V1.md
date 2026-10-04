@@ -6,13 +6,21 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Latest: the [reverse-postorder partial-move compiler passed CPU qualification](../qualification/fe2o3-partial-move-rpo-v1/README.md)
+Latest: the [RPO finalizer passed CPU qualification](../qualification/fe2o3-partial-move-rpo-finalizer-v1/README.md)
+on ASROCK: 190 tests passed, with 15 historical actual-capture tests still
+ignored. All six phases and postchecks passed. Three new finalizer products
+join five preserved compiler products by their recorded identities. The
+actual-capture tests still require explicit runs on a fresh checked handoff;
+no new HSACO, GPU accuracy or performance result follows from this suite.
+
+Previously, the [reverse-postorder partial-move compiler passed CPU qualification](../qualification/fe2o3-partial-move-rpo-v1/README.md)
 on ASROCK: 2,700 Rust tests passed, including seventeen new scheduler and
 differential tests, with 25 unchanged historical ignores. All twelve phases
 and source/input postchecks passed. The four tested Rust overlays and raw
 evidence are published without changing compiler limits or Ferric's production
-route. Fresh finalizer qualification, actual RoPE lowering and GPU numerical
-comparison remain separate gates; no new HSACO or speedup is claimed here.
+route. Finalizer qualification subsequently completed as recorded above;
+actual RoPE lowering and GPU numerical comparison remain separate gates.
+No new HSACO or speedup is claimed here.
 
 Previously, the [AR4 runtime completed four full-model forwards on MI350](../qualification/projection-ar4-native-v1/README.md).
 The input chain was 9112, 67, 25, 576; outputs were 67, 25, 576, 2701.
