@@ -1,0 +1,408 @@
+use super::*;
+use super::super::adapter::semantic_edge_role_v1;
+use super::super::tests::{test_function, test_types};
+use fe2o3_mir_model::semantic_mir_v1::{
+    SemanticAssignmentV1, SemanticBasicBlockV1, SemanticBlockIdentityV1,
+    SemanticCallDestinationV1, SemanticCallableIdV1, SemanticDirectCallV1,
+    SemanticProjectionV1, SemanticRvalueV1, SemanticSourceProvenanceV1,
+    SemanticStatementV1, SemanticTerminatorV1, SemanticUnwindActionV1,
+};
+
+#[path = "partial_move_fifo_oracle_v1.rs"]
+mod fifo;
+
+fn source() -> SemanticSourceProvenanceV1 {
+    SemanticSourceProvenanceV1::unavailable()
+}
+
+fn place(local: u32, field: Option<u32>) -> SemanticPlaceV1 {
+    SemanticPlaceV1::new(
+        SemanticLocalIdV1::from_index(local),
+        field.map(|index| vec![SemanticProjectionV1::new(
+            SemanticProjectionKindV1::Field(index), SemanticTypeIdV1::from_index(1),
+        ).unwrap()]).unwrap_or_default(),
+        SemanticTypeIdV1::from_index(if local == 1 && field.is_none() { 0 } else { 1 }),
+    ).unwrap()
+}
+
+fn assign_to(destination: SemanticPlaceV1, value: SemanticOperandV1) -> SemanticStatementV1 {
+    let ty = destination.ty();
+    SemanticStatementV1::new(source(), SemanticStatementKindV1::Assign(
+        SemanticAssignmentV1::new(destination, SemanticRvalueV1::new(ty, SemanticRvalueKindV1::Use(value))),
+    ))
+}
+
+fn assign(local: u32, value: SemanticOperandV1) -> SemanticStatementV1 {
+    assign_to(place(local, None), value)
+}
+
+fn move_field(field: u32) -> SemanticStatementV1 {
+    assign(2 + field, SemanticOperandV1::Move(place(1, Some(field))))
+}
+
+fn storage(local: u32, live: bool) -> SemanticStatementV1 {
+    let local = SemanticLocalIdV1::from_index(local);
+    SemanticStatementV1::new(source(), if live {
+        SemanticStatementKindV1::StorageLive(local)
+    } else {
+        SemanticStatementKindV1::StorageDead(local)
+    })
+}
+
+fn edge(role: SemanticEdgeRoleV1, target: u32) -> SemanticControlFlowEdgeV1 {
+    SemanticControlFlowEdgeV1::new(role, SemanticBlockIdV1::from_index(target))
+}
+
+fn goto(target: u32) -> SemanticTerminatorKindV1 {
+    SemanticTerminatorKindV1::Goto(edge(SemanticEdgeRoleV1::Goto, target))
+}
+
+fn fork(left: u32, right: u32) -> SemanticTerminatorKindV1 {
+    SemanticTerminatorKindV1::FalseEdge {
+        real_target: edge(SemanticEdgeRoleV1::FalseEdgeReal, left),
+        imaginary_target: edge(SemanticEdgeRoleV1::FalseEdgeImaginary, right),
+    }
+}
+
+fn block(tag: u8, statements: Vec<SemanticStatementV1>, terminator: SemanticTerminatorKindV1) -> SemanticBasicBlockV1 {
+    SemanticBasicBlockV1::new(
+        SemanticBlockIdentityV1::from_sha256([tag; 32]), source(), statements,
+        SemanticTerminatorV1::new(source(), terminator),
+    ).unwrap()
+}
+
+fn cfg_input(function: &SemanticFunctionDeclV1) -> SsaConstructionInputV1 {
+    // These unit tests isolate the move validator, not scalar SSA admission.
+    // The real planner still computes reachability and RPO for the exact CFG.
+    let blocks = function.blocks().iter().map(|block| {
+        let mut edges = Vec::new();
+        block.terminator().kind().try_for_each_edge(|edge| {
+            edges.push(SsaEdgeInputV1::new(
+                SsaEdgeRoleV1::new(semantic_edge_role_v1(edge.role())), SsaBlockIdV1::new(edge.target().index()), vec![],
+            ));
+            Ok::<(), ()>(())
+        }).unwrap();
+        SsaBlockInputV1::new(vec![], edges)
+    }).collect();
+    SsaConstructionInputV1::new(
+        SsaBlockIdV1::new(function.entry().index()), function.locals().len() as u32,
+        vec![false; function.locals().len()], vec![], blocks,
+    )
+}
+
+fn setup(function: &SemanticFunctionDeclV1) -> (SsaConstructionPlanV1, SemanticSsaAuxiliaryResourcesV1) {
+    let input = cfg_input(function);
+    let plan = plan_ssa_with_limits_v1(&input, SsaPlannerLimitsV1::default()).unwrap();
+    let resources = semantic_ssa_auxiliary_resources_v1(function, &input).unwrap();
+    (plan, resources)
+}
+
+fn compare(function: &SemanticFunctionDeclV1, types: Option<&[SemanticTypeDeclV1]>) -> (
+    Result<ProductionSemanticPartialMoveCertificateV1, ProductionSemanticSsaErrorV1>,
+    Result<ProductionSemanticPartialMoveCertificateV1, ProductionSemanticSsaErrorV1>,
+) {
+    let (plan, resources) = setup(function);
+    let id = SemanticFunctionIdV1::from_index(0);
+    let old = fifo::validate_partial_moves_fifo_v1(id, function, types, &plan, resources, ProductionSemanticSsaLimitsV1::default());
+    let new = validate_partial_moves_v1(id, function, types, &plan, resources, ProductionSemanticSsaLimitsV1::default());
+    match (&old, &new) {
+        (Ok(old), Ok(new)) => assert_eq!(old.projected_moves, new.projected_moves),
+        (Err(old), Err(new)) => assert_eq!(old, new),
+        _ => panic!("different validation results: old={old:?}, new={new:?}"),
+    }
+    (old, new)
+}
+
+fn work_budget(limit: usize) -> SemanticPartialMoveBudgetV1 {
+    let defaults = SsaPlannerLimitsV1::default();
+    SemanticPartialMoveBudgetV1 {
+        function: SemanticFunctionIdV1::from_index(0), base_storage_words: 0,
+        base_work_units: 0, state_entries: 0, work_units: 0,
+        limits: SsaPlannerLimitsV1::try_new(
+            defaults.max_variables(), defaults.max_blocks(), defaults.max_edges(),
+            defaults.max_events(), defaults.max_edge_definitions(), defaults.max_output_items(),
+            defaults.max_storage_words(), limit,
+        ).unwrap(),
+    }
+}
+
+fn production_limits(storage: usize, work: usize) -> ProductionSemanticSsaLimitsV1 {
+    let defaults = SsaPlannerLimitsV1::default();
+    ProductionSemanticSsaLimitsV1::new(SsaPlannerLimitsV1::try_new(
+        defaults.max_variables(), defaults.max_blocks(), defaults.max_edges(), defaults.max_events(),
+        defaults.max_edge_definitions(), defaults.max_output_items(), storage, work,
+    ).unwrap())
+}
+
+fn skewed_diamond(tail: u32) -> SemanticFunctionDeclV1 {
+    let mut blocks = vec![
+        block(0, vec![move_field(0)], fork(1, 2)),
+        block(1, vec![], goto(5)),
+        block(2, vec![], goto(3)),
+        block(3, vec![], goto(4)),
+        block(4, vec![move_field(1)], goto(5)),
+    ];
+    for index in 5..5 + tail {
+        let statements = vec![storage(2, true), storage(2, false), storage(3, true), storage(3, false)];
+        blocks.push(block(index as u8, statements, if index + 1 == 5 + tail {
+            SemanticTerminatorKindV1::Unreachable
+        } else { goto(index + 1) }));
+    }
+    test_function(blocks)
+}
+
+#[test]
+fn rpo_priority_is_deterministic_and_deduplicates_pending_blocks() {
+    let order = [SsaBlockIdV1::new(0), SsaBlockIdV1::new(3), SsaBlockIdV1::new(1), SsaBlockIdV1::new(2)];
+    let mut budget = work_budget(100);
+    let mut queue = SemanticPartialMoveWorklistV1::new(&order, 4, &mut budget).unwrap();
+    for block in [2, 1, 3, 1, 0, 3] { queue.push(block, &mut budget).unwrap(); }
+    for block in [0, 3, 1, 2] { assert_eq!(queue.pop(&mut budget).unwrap(), Some(block)); }
+    assert_eq!(queue.pop(&mut budget).unwrap(), None);
+    assert_eq!(budget.work_units, 4 + 4 + 6 + 4);
+    assert_eq!(budget.state_entries, 0);
+}
+
+#[test]
+fn rpo_backedge_requeues_an_earlier_rank() {
+    let order = [SsaBlockIdV1::new(0), SsaBlockIdV1::new(1), SsaBlockIdV1::new(2)];
+    let mut budget = work_budget(100);
+    let mut queue = SemanticPartialMoveWorklistV1::new(&order, 3, &mut budget).unwrap();
+    queue.push(2, &mut budget).unwrap();
+    assert_eq!(queue.pop(&mut budget).unwrap(), Some(2));
+    queue.push(0, &mut budget).unwrap();
+    queue.push(2, &mut budget).unwrap();
+    assert_eq!(queue.pop(&mut budget).unwrap(), Some(0));
+    assert_eq!(queue.pop(&mut budget).unwrap(), Some(2));
+    assert_eq!(queue.pop(&mut budget).unwrap(), None);
+}
+
+#[test]
+fn malformed_priority_maps_and_unreachable_pushes_refuse() {
+    for order in [vec![SsaBlockIdV1::new(0), SsaBlockIdV1::new(0)], vec![SsaBlockIdV1::new(3)]] {
+        assert!(matches!(SemanticPartialMoveWorklistV1::new(&order, 3, &mut work_budget(100)),
+            Err(ProductionSemanticSsaErrorV1::ReplayMismatch)));
+    }
+    let order = [SsaBlockIdV1::new(1)];
+    let mut budget = work_budget(100);
+    let mut queue = SemanticPartialMoveWorklistV1::new(&order, 3, &mut budget).unwrap();
+    for missing in [0, 3] {
+        assert_eq!(queue.push(missing, &mut budget), Err(ProductionSemanticSsaErrorV1::ReplayMismatch));
+    }
+}
+
+#[test]
+fn initialization_enqueue_and_skipped_slots_are_metered() {
+    let order = [SsaBlockIdV1::new(0), SsaBlockIdV1::new(1), SsaBlockIdV1::new(2)];
+    // Initialize6, push2, pop0 one slot, then skip1/pop2 two slots =11.
+    for limit in [10, 11] {
+        let mut budget = work_budget(limit);
+        let mut queue = SemanticPartialMoveWorklistV1::new(&order, 3, &mut budget).unwrap();
+        queue.push(0, &mut budget).unwrap();
+        queue.push(2, &mut budget).unwrap();
+        assert_eq!(queue.pop(&mut budget).unwrap(), Some(0));
+        let result = queue.pop(&mut budget);
+        if limit == 11 { assert_eq!(result.unwrap(), Some(2)); }
+        else { assert!(matches!(result, Err(ProductionSemanticSsaErrorV1::PartialMoveResourceLimit {
+            resource: SsaPlannerResourceV1::WorkUnits, required: 11, limit: 10, ..
+        }))); }
+        assert_eq!(budget.work_units, 11);
+    }
+    assert!(matches!(SemanticPartialMoveWorklistV1::new(&order, 3, &mut work_budget(5)),
+        Err(ProductionSemanticSsaErrorV1::PartialMoveResourceLimit { resource: SsaPlannerResourceV1::WorkUnits, .. })));
+    let mut budget = work_budget(6);
+    let mut queue = SemanticPartialMoveWorklistV1::new(&order, 3, &mut budget).unwrap();
+    assert!(matches!(queue.push(0, &mut budget), Err(ProductionSemanticSsaErrorV1::PartialMoveResourceLimit {
+        resource: SsaPlannerResourceV1::WorkUnits, required: 7, limit: 6, ..
+    })));
+}
+
+#[test]
+fn scheduler_work_overflow_remains_fail_closed() {
+    let order = [SsaBlockIdV1::new(0)];
+    let mut budget = work_budget(100);
+    budget.work_units = usize::MAX;
+    assert!(matches!(SemanticPartialMoveWorklistV1::new(&order, 1, &mut budget), Err(ProductionSemanticSsaErrorV1::ResourceOverflow)));
+}
+
+#[test]
+fn priority_storage_is_added_without_discounting_previous_reservations() {
+    let function = skewed_diamond(1);
+    let input = cfg_input(&function);
+    let blocks = input.blocks().len();
+    let statements: usize = function.blocks().iter().map(|block| block.statements().len()).sum();
+    let edges: usize = input.blocks().iter().map(|block| block.edges().len()).sum();
+    let (moves, depth) = projected_local_move_metrics_v1(&function).unwrap();
+    let old_storage = function.locals().len() * 8 + blocks * 12 + statements * 8 + edges * 6
+        + (blocks + 2) * moves * (depth + 8);
+    let observed = semantic_ssa_auxiliary_resources_v1(&function, &input).unwrap();
+    assert_eq!(observed.storage_words, old_storage + blocks + 6);
+}
+
+#[test]
+fn zero_projected_moves_keep_the_empty_certificate_and_old_auxiliary_cost() {
+    let function = test_function(vec![block(0, vec![], SemanticTerminatorKindV1::Return)]);
+    let (plan, auxiliary) = setup(&function);
+    assert_eq!(auxiliary.storage_words, function.locals().len() * 8 + 12);
+    let observed = validate_partial_moves_v1(SemanticFunctionIdV1::from_index(0), &function,
+        Some(&test_types(false)), &plan, auxiliary, ProductionSemanticSsaLimitsV1::default()).unwrap();
+    assert_eq!(observed, ProductionSemanticPartialMoveCertificateV1::default());
+}
+
+#[test]
+fn skewed_diamond_reduces_repeated_tombstone_charges() {
+    let function = skewed_diamond(24);
+    let (old, new) = compare(&function, Some(&test_types(false)));
+    let old = old.unwrap();
+    let new = new.unwrap();
+    assert!(new.state_entries + function.blocks().len() + 6 < old.state_entries,
+        "FIFO={old:?}, RPO={new:?}");
+    let (plan, auxiliary) = setup(&function);
+    let storage = plan.resources().storage_words() + auxiliary.storage_words + new.state_entries;
+    let limits = production_limits(storage, SsaPlannerLimitsV1::default().max_work_units());
+    validate_partial_moves_v1(SemanticFunctionIdV1::from_index(0), &function, Some(&test_types(false)), &plan, auxiliary, limits).unwrap();
+    let old_auxiliary = SemanticSsaAuxiliaryResourcesV1 { storage_words: auxiliary.storage_words - function.blocks().len() - 6, ..auxiliary };
+    assert!(matches!(fifo::validate_partial_moves_fifo_v1(SemanticFunctionIdV1::from_index(0), &function,
+        Some(&test_types(false)), &plan, old_auxiliary, limits),
+        Err(ProductionSemanticSsaErrorV1::PartialMoveResourceLimit { resource: SsaPlannerResourceV1::StorageWords, .. })));
+}
+
+#[test]
+fn exact_storage_and_work_boundaries_still_reject_one_below() {
+    let function = skewed_diamond(3);
+    let (plan, auxiliary) = setup(&function);
+    let (_, new) = compare(&function, Some(&test_types(false)));
+    let new = new.unwrap();
+    let storage = plan.resources().storage_words() + auxiliary.storage_words + new.state_entries;
+    let work = plan.resources().work_units() + auxiliary.work_units + new.work_units;
+    let id = SemanticFunctionIdV1::from_index(0);
+    let run = |storage, work| validate_partial_moves_v1(id, &function, Some(&test_types(false)),
+        &plan, auxiliary, production_limits(storage, work));
+    assert_eq!(run(storage, work).unwrap(), new);
+    for (storage_limit, work_limit, expected) in [
+        (storage - 1, work, SsaPlannerResourceV1::StorageWords),
+        (storage, work - 1, SsaPlannerResourceV1::WorkUnits),
+    ] {
+        assert!(matches!(run(storage_limit, work_limit), Err(ProductionSemanticSsaErrorV1::PartialMoveResourceLimit {
+            resource, required, limit, ..
+        }) if resource == expected && required == limit + 1));
+    }
+    enforce_function_resource_limit_v1(id, auxiliary, production_limits(auxiliary.storage_words, auxiliary.work_units)).unwrap();
+    assert!(matches!(enforce_function_resource_limit_v1(id, auxiliary,
+        production_limits(auxiliary.storage_words - 1, auxiliary.work_units)),
+        Err(ProductionSemanticSsaErrorV1::PartialMoveResourceLimit { resource: SsaPlannerResourceV1::StorageWords, .. })));
+}
+
+#[test]
+fn diamond_maybe_moved_rejection_matches_fifo_exactly() {
+    let function = test_function(vec![
+        block(0, vec![], fork(1, 2)), block(1, vec![], goto(4)),
+        block(2, vec![], goto(3)), block(3, vec![move_field(0)], goto(4)),
+        block(4, vec![assign(3, SemanticOperandV1::Copy(place(1, Some(0))))], SemanticTerminatorKindV1::Return),
+    ]);
+    assert!(matches!(compare(&function, Some(&test_types(false))).1,
+        Err(ProductionSemanticSsaErrorV1::PartialMove { block: 4, statement: Some(0),
+            violation: SemanticPartialMoveViolationV1::MaybeMovedValueUsed, .. })));
+}
+
+#[test]
+fn loop_and_irreducible_fixed_points_match_fifo() {
+    for irreducible in [false, true] {
+        let function = test_function(vec![
+            block(0, vec![move_field(0)], if irreducible { fork(1, 2) } else { goto(1) }),
+            block(1, vec![storage(2, true), storage(2, false)], goto(2)),
+            block(2, vec![], fork(1, 3)), block(3, vec![], SemanticTerminatorKindV1::Return),
+        ]);
+        compare(&function, Some(&test_types(false))).1.unwrap();
+    }
+    let invalid = test_function(vec![
+        block(0, vec![], goto(1)),
+        block(1, vec![assign(2, SemanticOperandV1::Copy(place(1, Some(0)))), move_field(0)], goto(1)),
+    ]);
+    assert!(matches!(compare(&invalid, Some(&test_types(false))).1,
+        Err(ProductionSemanticSsaErrorV1::PartialMove { block: 1, statement: Some(0), .. })));
+}
+
+#[test]
+fn parallel_edges_and_unreachable_malformed_blocks_match_fifo() {
+    let function = test_function(vec![
+        block(0, vec![move_field(0)], fork(2, 2)),
+        block(1, vec![move_field(0), move_field(0)], SemanticTerminatorKindV1::Return),
+        block(2, vec![], SemanticTerminatorKindV1::Return),
+    ]);
+    compare(&function, Some(&test_types(false))).1.unwrap();
+}
+
+#[test]
+fn whole_tombstone_widening_and_storage_live_do_not_refund() {
+    for reset in [false, true] {
+        let mut finish = vec![];
+        if reset { finish.push(storage(1, true)); }
+        finish.push(assign(3, SemanticOperandV1::Copy(place(1, Some(0)))));
+        let function = test_function(vec![
+            block(0, vec![], fork(1, 2)), block(1, vec![move_field(0)], goto(3)),
+            block(2, vec![storage(1, false)], goto(3)), block(3, finish, SemanticTerminatorKindV1::Return),
+        ]);
+        let result = compare(&function, Some(&test_types(false))).1;
+        assert_eq!(result.is_ok(), reset);
+        if let Ok(certificate) = result { assert!(certificate.state_entries > 0); }
+    }
+}
+
+#[test]
+fn union_missing_context_and_unsupported_moves_match_fifo() {
+    let function = test_function(vec![block(0, vec![move_field(0)], SemanticTerminatorKindV1::Return)]);
+    for types in [None, Some(test_types(true))] {
+        assert!(matches!(compare(&function, types.as_deref()).1, Err(ProductionSemanticSsaErrorV1::PartialMove { .. })));
+    }
+    let unsupported = SemanticPlaceV1::new(SemanticLocalIdV1::from_index(1),
+        vec![SemanticProjectionV1::new(SemanticProjectionKindV1::OpaqueCast, SemanticTypeIdV1::from_index(0)).unwrap()],
+        SemanticTypeIdV1::from_index(0)).unwrap();
+    let function = test_function(vec![block(0, vec![assign(2, SemanticOperandV1::Move(unsupported))], SemanticTerminatorKindV1::Return)]);
+    assert!(matches!(compare(&function, Some(&test_types(false))).1,
+        Err(ProductionSemanticSsaErrorV1::PartialMove { violation: SemanticPartialMoveViolationV1::UnsupportedProjection, .. })));
+}
+
+#[test]
+fn pointer_carrier_write_keeps_move_rejection_across_join() {
+    let destination = SemanticPlaceV1::new(SemanticLocalIdV1::from_index(1), vec![
+        SemanticProjectionV1::new(SemanticProjectionKindV1::Field(0), SemanticTypeIdV1::from_index(1)).unwrap(),
+        SemanticProjectionV1::new(SemanticProjectionKindV1::Dereference, SemanticTypeIdV1::from_index(1)).unwrap(),
+    ], SemanticTypeIdV1::from_index(1)).unwrap();
+    let function = test_function(vec![
+        block(0, vec![], fork(1, 2)), block(1, vec![move_field(0)], goto(3)), block(2, vec![], goto(3)),
+        block(3, vec![assign_to(destination, SemanticOperandV1::Copy(place(3, None)))], SemanticTerminatorKindV1::Return),
+    ]);
+    assert!(matches!(compare(&function, Some(&test_types(false))).1,
+        Err(ProductionSemanticSsaErrorV1::PartialMove { block: 3, local: 1,
+            violation: SemanticPartialMoveViolationV1::MaybeMovedValueUsed, .. })));
+}
+
+#[test]
+fn call_destination_only_reinitializes_normal_edge_not_unwind() {
+    for read_unwind in [false, true] {
+        let normal = edge(SemanticEdgeRoleV1::CallReturn, 2);
+        let unwind = edge(SemanticEdgeRoleV1::CallUnwind, 3);
+        let call = SemanticTerminatorKindV1::Call(SemanticDirectCallV1::new_callable(
+            SemanticCallableIdV1::from_index(0), vec![SemanticOperandV1::Move(place(2, None))],
+            Some(SemanticCallDestinationV1::new(place(2, None), normal)), SemanticUnwindActionV1::Cleanup(unwind),
+        ).unwrap());
+        let function = test_function(vec![
+            block(0, vec![move_field(0)], goto(1)), block(1, vec![], call),
+            block(2, vec![assign(3, SemanticOperandV1::Copy(place(2, None)))], SemanticTerminatorKindV1::Return),
+            block(3, if read_unwind { vec![assign(3, SemanticOperandV1::Copy(place(2, None)))] } else { vec![] }, SemanticTerminatorKindV1::UnwindResume),
+        ]);
+        assert_eq!(compare(&function, Some(&test_types(false))).1.is_ok(), !read_unwind);
+    }
+}
+
+#[test]
+fn production_plan_reconstruction_is_deterministic_with_new_accounting() {
+    let function = skewed_diamond(2);
+    let types = test_types(false);
+    let id = SemanticFunctionIdV1::from_index(0);
+    let first = plan_semantic_function_ssa_with_module_v1(id, &function, &types, &[], ProductionSemanticSsaLimitsV1::default()).unwrap();
+    let second = plan_semantic_function_ssa_with_module_v1(id, &function, &types, &[], ProductionSemanticSsaLimitsV1::default()).unwrap();
+    assert_eq!(first, second);
+    assert!(first.partial_move_certificate().work_units() > 0);
+}

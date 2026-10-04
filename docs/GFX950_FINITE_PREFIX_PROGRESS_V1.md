@@ -6,7 +6,15 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Latest: the [AR4 runtime completed four full-model forwards on MI350](../qualification/projection-ar4-native-v1/README.md).
+Latest: the [reverse-postorder partial-move compiler passed CPU qualification](../qualification/fe2o3-partial-move-rpo-v1/README.md)
+on ASROCK: 2,700 Rust tests passed, including seventeen new scheduler and
+differential tests, with 25 unchanged historical ignores. All twelve phases
+and source/input postchecks passed. The four tested Rust overlays and raw
+evidence are published without changing compiler limits or Ferric's production
+route. Fresh finalizer qualification, actual RoPE lowering and GPU numerical
+comparison remain separate gates; no new HSACO or speedup is claimed here.
+
+Previously, the [AR4 runtime completed four full-model forwards on MI350](../qualification/projection-ar4-native-v1/README.md).
 The input chain was 9112, 67, 25, 576; outputs were 67, 25, 576, 2701.
 Each next input equals the preceding checked argmax. All 152 tensor slices,
 576 terminal state records, seven natural/reaped process leaves and six idle

@@ -1,0 +1,104 @@
+{
+  "compiler_limits_changed": false,
+  "files": [
+    {
+      "after": {
+        "bytes": 36053,
+        "sha256": "8084ef912795c087c94c6ab01837e7bf7d09f4a84012fc31197a087de3b538b3"
+      },
+      "before": {
+        "bytes": 35706,
+        "sha256": "ffc3046cf078e1b1c82460a528a23ed86fbe97b6355be46f638f3457e20d7797"
+      },
+      "formatted_source": {
+        "bytes": 36053,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rpo-compiler-cpu-v228-v2/source/fe2o3/crates/fe2o3-pliron/src/production/semantic_ssa.rs",
+        "sha256": "8084ef912795c087c94c6ab01837e7bf7d09f4a84012fc31197a087de3b538b3"
+      },
+      "path": "crates/fe2o3-pliron/src/production/semantic_ssa.rs",
+      "proposed": {
+        "bytes": 36053,
+        "sha256": "8084ef912795c087c94c6ab01837e7bf7d09f4a84012fc31197a087de3b538b3"
+      }
+    },
+    {
+      "after": {
+        "bytes": 42046,
+        "sha256": "bd2f38282a094f9201e01b385dae06b100a01e34c3c9f3d72dfb79d8a49798b5"
+      },
+      "before": {
+        "bytes": 39783,
+        "sha256": "2a04c9bdf64531a6d5d43f8bb7e6316c5843d2c5d56f1123f31e0b7ef30d4036"
+      },
+      "formatted_source": {
+        "bytes": 42046,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rpo-compiler-cpu-v228-v2/source/fe2o3/crates/fe2o3-pliron/src/production/semantic_ssa/partial_moves.rs",
+        "sha256": "bd2f38282a094f9201e01b385dae06b100a01e34c3c9f3d72dfb79d8a49798b5"
+      },
+      "path": "crates/fe2o3-pliron/src/production/semantic_ssa/partial_moves.rs",
+      "proposed": {
+        "bytes": 41947,
+        "sha256": "b42487c8b14b7914ca3d694601cfe12de578052a4ab4050d7dd7172e25e2295a"
+      }
+    },
+    {
+      "after": {
+        "bytes": 23690,
+        "sha256": "24cbae0d26239e02f57d7c2d507f6c43b69f55a56032a6504131df2e31c205c4"
+      },
+      "before": null,
+      "formatted_source": {
+        "bytes": 23690,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rpo-compiler-cpu-v228-v2/source/fe2o3/crates/fe2o3-pliron/src/production/semantic_ssa/partial_move_rpo_v1_tests.rs",
+        "sha256": "24cbae0d26239e02f57d7c2d507f6c43b69f55a56032a6504131df2e31c205c4"
+      },
+      "path": "crates/fe2o3-pliron/src/production/semantic_ssa/partial_move_rpo_v1_tests.rs",
+      "proposed": {
+        "bytes": 20161,
+        "sha256": "006c205bd301597db454e1233c7fed97f594175ea00dd2deec5a4604b4007d43"
+      }
+    },
+    {
+      "after": {
+        "bytes": 4538,
+        "sha256": "6f0a1eea8b07748ef57174a3016e5a8b787efcdf1d78ace0b69d5469e57118f5"
+      },
+      "before": null,
+      "formatted_source": {
+        "bytes": 4538,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rpo-compiler-cpu-v228-v2/source/fe2o3/crates/fe2o3-pliron/src/production/semantic_ssa/partial_move_fifo_oracle_v1.rs",
+        "sha256": "6f0a1eea8b07748ef57174a3016e5a8b787efcdf1d78ace0b69d5469e57118f5"
+      },
+      "path": "crates/fe2o3-pliron/src/production/semantic_ssa/partial_move_fifo_oracle_v1.rs",
+      "proposed": {
+        "bytes": 4538,
+        "sha256": "6f0a1eea8b07748ef57174a3016e5a8b787efcdf1d78ace0b69d5469e57118f5"
+      }
+    }
+  ],
+  "patch": {
+    "bytes": 34226,
+    "sha256": "19e09abacb59d289df36dfb5d0fd5a9910d78a1a9ac00534c0c23ddc91d2407f"
+  },
+  "qualified_generation": {
+    "completion": {
+      "bytes": 369402,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/ordinary-induction-compiler-cpu-v228-v1/complete.json",
+      "sha256": "c45aa83b01bf76fdfd9962b06884611658dab607b001ba67fecc66db9fd5ba97"
+    },
+    "owner": {
+      "bytes": 57318,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/ordinary-induction-compiler-cpu-owner-v228-v1/complete.json",
+      "sha256": "85de66610631612ed2473f9d5fbb80ce89ea7ffc6064c1784834a6751d623609"
+    },
+    "sources": {
+      "bytes": 3779269,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/ordinary-induction-compiler-cpu-v228-v1/sources-before.json",
+      "sha256": "5aad4c8ba6520c323310424ce343de2ae5088e7f8c1c0b1fd67853b5fd3bd9f9"
+    }
+  },
+  "runtime_adoption": false,
+  "schema": "FerricPartialMoveRpoSourcePinsV1",
+  "source_members_after": 5783,
+  "source_members_before": 5781
+}

@@ -1,0 +1,114 @@
+{
+  "schema": "ferric-p228-partial-move-rpo-source-proposal-v2",
+  "status": "untested-candidate",
+  "qualified_generation": {
+    "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/ordinary-induction-compiler-cpu-v228-v1/complete.json",
+    "bytes": 369402,
+    "sha256": "c45aa83b01bf76fdfd9962b06884611658dab607b001ba67fecc66db9fd5ba97"
+  },
+  "qualified_source_snapshot": {
+    "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/ordinary-induction-compiler-cpu-v228-v1/sources-before.json",
+    "bytes": 3779269,
+    "sha256": "5aad4c8ba6520c323310424ce343de2ae5088e7f8c1c0b1fd67853b5fd3bd9f9"
+  },
+  "source_root": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/ordinary-induction-compiler-cpu-v228-v1/source/fe2o3",
+  "tests_authored": 17,
+  "test_names": [
+    "production::semantic_ssa::partial_moves::rpo_tests::rpo_priority_is_deterministic_and_deduplicates_pending_blocks",
+    "production::semantic_ssa::partial_moves::rpo_tests::rpo_backedge_requeues_an_earlier_rank",
+    "production::semantic_ssa::partial_moves::rpo_tests::malformed_priority_maps_and_unreachable_pushes_refuse",
+    "production::semantic_ssa::partial_moves::rpo_tests::initialization_enqueue_and_skipped_slots_are_metered",
+    "production::semantic_ssa::partial_moves::rpo_tests::scheduler_work_overflow_remains_fail_closed",
+    "production::semantic_ssa::partial_moves::rpo_tests::priority_storage_is_added_without_discounting_previous_reservations",
+    "production::semantic_ssa::partial_moves::rpo_tests::zero_projected_moves_keep_the_empty_certificate_and_old_auxiliary_cost",
+    "production::semantic_ssa::partial_moves::rpo_tests::skewed_diamond_reduces_repeated_tombstone_charges",
+    "production::semantic_ssa::partial_moves::rpo_tests::exact_storage_and_work_boundaries_still_reject_one_below",
+    "production::semantic_ssa::partial_moves::rpo_tests::diamond_maybe_moved_rejection_matches_fifo_exactly",
+    "production::semantic_ssa::partial_moves::rpo_tests::loop_and_irreducible_fixed_points_match_fifo",
+    "production::semantic_ssa::partial_moves::rpo_tests::parallel_edges_and_unreachable_malformed_blocks_match_fifo",
+    "production::semantic_ssa::partial_moves::rpo_tests::whole_tombstone_widening_and_storage_live_do_not_refund",
+    "production::semantic_ssa::partial_moves::rpo_tests::union_missing_context_and_unsupported_moves_match_fifo",
+    "production::semantic_ssa::partial_moves::rpo_tests::pointer_carrier_write_keeps_move_rejection_across_join",
+    "production::semantic_ssa::partial_moves::rpo_tests::call_destination_only_reinitializes_normal_edge_not_unwind",
+    "production::semantic_ssa::partial_moves::rpo_tests::production_plan_reconstruction_is_deterministic_with_new_accounting"
+  ],
+  "tests_executed": false,
+  "formatted": false,
+  "compiler_build_executed": false,
+  "checked_probe_executed": false,
+  "gpu_execution": false,
+  "production_authority": false,
+  "limits_changed": false,
+  "scheduler_storage": "blocks + 6 additional logical words for functions with projected local moves; no removed-FIFO credit",
+  "files": [
+    {
+      "path": "crates/fe2o3-pliron/src/production/semantic_ssa.rs",
+      "source": "draft/crates/fe2o3-pliron/src/production/semantic_ssa.rs",
+      "before": {
+        "bytes": 35706,
+        "sha256": "ffc3046cf078e1b1c82460a528a23ed86fbe97b6355be46f638f3457e20d7797"
+      },
+      "after": {
+        "bytes": 36053,
+        "sha256": "8084ef912795c087c94c6ab01837e7bf7d09f4a84012fc31197a087de3b538b3"
+      }
+    },
+    {
+      "path": "crates/fe2o3-pliron/src/production/semantic_ssa/partial_moves.rs",
+      "source": "draft/crates/fe2o3-pliron/src/production/semantic_ssa/partial_moves.rs",
+      "before": {
+        "bytes": 39783,
+        "sha256": "2a04c9bdf64531a6d5d43f8bb7e6316c5843d2c5d56f1123f31e0b7ef30d4036"
+      },
+      "after": {
+        "bytes": 41947,
+        "sha256": "b42487c8b14b7914ca3d694601cfe12de578052a4ab4050d7dd7172e25e2295a"
+      }
+    },
+    {
+      "path": "crates/fe2o3-pliron/src/production/semantic_ssa/partial_move_rpo_v1_tests.rs",
+      "source": "draft/crates/fe2o3-pliron/src/production/semantic_ssa/partial_move_rpo_v1_tests.rs",
+      "before": null,
+      "after": {
+        "bytes": 20161,
+        "sha256": "006c205bd301597db454e1233c7fed97f594175ea00dd2deec5a4604b4007d43"
+      }
+    },
+    {
+      "path": "crates/fe2o3-pliron/src/production/semantic_ssa/partial_move_fifo_oracle_v1.rs",
+      "source": "draft/crates/fe2o3-pliron/src/production/semantic_ssa/partial_move_fifo_oracle_v1.rs",
+      "before": null,
+      "after": {
+        "bytes": 4538,
+        "sha256": "6f0a1eea8b07748ef57174a3016e5a8b787efcdf1d78ace0b69d5469e57118f5"
+      }
+    }
+  ],
+  "retained_files": [
+    {
+      "path": "preimage/crates/fe2o3-pliron/src/production/semantic_ssa.rs",
+      "bytes": 35706,
+      "sha256": "ffc3046cf078e1b1c82460a528a23ed86fbe97b6355be46f638f3457e20d7797"
+    },
+    {
+      "path": "preimage/crates/fe2o3-pliron/src/production/semantic_ssa/partial_moves.rs",
+      "bytes": 39783,
+      "sha256": "2a04c9bdf64531a6d5d43f8bb7e6316c5843d2c5d56f1123f31e0b7ef30d4036"
+    },
+    {
+      "path": "README.md",
+      "bytes": 7598,
+      "sha256": "b0ecddecf459c3720dea4a546d902986f5bcfe60ac8824da8a29ba92cd20704b"
+    },
+    {
+      "path": "changes.patch",
+      "bytes": 30312,
+      "sha256": "dcb171b9c678cf84c341f97b8a472d62bc3b82376233eb18a66fdbeca9972e38"
+    }
+  ],
+  "predecessor_manifest": {
+    "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/p228-partial-move-rpo-v1/source-manifest.json",
+    "sha256": "63cf68c9286308a1121063c3e0a8d36f1a1602603ba10c1f17099deb5e3767c6"
+  },
+  "correction": "Test fixture only: wrap the adapter's u16 edge tag with SsaEdgeRoleV1::new; production and accounting byte-identical to V1."
+}

@@ -1,0 +1,26 @@
+{
+  "schema": "ferric-p228-rpo-cpu-v2-root-test-observation-v1",
+  "observation_kind": "Primary-agent observation of actual SSH tool output; not a remote supervisor receipt",
+  "host": "asrock-1w300-g2-2b",
+  "tool_session": 83120,
+  "terminal_chunk": "4564d6",
+  "command": "env HIP_VISIBLE_DEVICES= ROCR_VISIBLE_DEVICES= CUDA_VISIBLE_DEVICES= timeout --signal=INT --kill-after=5 120 taskset -c 8,9 nice -n 10 /usr/bin/python3 -E -B /home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-partial-move-rpo-cpu-v2/test_run.py -v",
+  "exit_code": 0,
+  "tests": 16,
+  "failures": 0,
+  "errors": 0,
+  "skipped": 0,
+  "manifest_sha256": "9fe67c55e38e4713c692abb4e145cd58bcea81ecf162879de57568b81d729603",
+  "raw_tool_result": {
+    "chunk_id": "4564d6",
+    "wall_time_seconds": 0.000026685,
+    "exit_code": 0,
+    "original_token_count": 793,
+    "output": "\r\n $$$$$$\\  $$$$$$\\  $$$$$$\\       $$$$$$\\  $$\\   $$\\ $$$$$$$$\\ $$\\   $$\\\r\n$$  __$$\\ \\_$$  _|$$  __$$\\     $$  __$$\\ $$ |  $$ |\\__$$  __|$$ |  $$ |\r\n$$ /  $$ |  $$ |  $$ /  \\__|$$\\ $$ /  $$ |$$ |  $$ |   $$ |   $$ |  $$ |\r\n$$$$$$$$ |  $$ |  $$ |$$$$\\ \\__|$$$$$$$$ |$$ |  $$ |   $$ |   $$$$$$$$ |\r\n$$  __$$ |  $$ |  $$ |\\_$$ |    $$  __$$ |$$ |  $$ |   $$ |   $$  __$$ |\r\n$$ |  $$ |  $$ |  $$ |  $$ |$$\\ $$ |  $$ |$$ |  $$ |   $$ |   $$ |  $$ |\r\n$$ |  $$ |$$$$$$\\ \\$$$$$$  |\\__|$$ |  $$ |\\$$$$$$  |   $$ |   $$ |  $$ |\r\n\\__|  \\__|\\______| \\______/     \\__|  \\__| \\______/    \\__|   \\__|  \\__|\r\n\r\n is protected by Conductor SUT Authentication - 20260511.01-gee7e625.\r\n\r\nReminder: An SSH key is required to access this system. \r\nTo manage your Conductor SSH keys please visit https://conductor.amd.com/user/dashboard/key-management\r\n\r\nYou will be denied access to this system if:\r\n  • You did not provide a valid SSH key\r\n  • You do not have an active reservation in Conductor\r\n  • You are not in the required security groups (ex: mi300_doc.4erminus)\r\n\r\n____________   _______________________________________^__\r\n ___   ___ |||  ___   ___   ___    ___ ___  |   __  ,----\\\r\n|   | |   |||| |   | |   | |   |  |   |   | |  |  | |_____\\\r\n|___| |___|||| |___| |___| |___|  | O | O | |  |  |        \\\r\n           |||                    |___|___| |  |__|         )\r\n___________|||______________________________|______________/\r\n           |||                                        /--------\r\n-----------'''---------------------------------------'\r\n\r\nFor other help resources please visit https://conductor.amd.com/docs\r\n\r\nChecking authorization now...\r\ntest_cargo_artifact_must_have_matching_manifest_profile_and_fresh_path (__main__.BuildTests) ... ok\ntest_cargo_library_artifacts_and_duplicate_selection (__main__.BuildTests) ... ok\ntest_inventory_requires_nonempty_unique_actual_names (__main__.BuildTests) ... ok\ntest_metadata_accepts_exact_relocated_local_packages (__main__.BuildTests) ... ok\ntest_metadata_rejects_missing_or_duplicate_changed_package (__main__.BuildTests) ... ok\ntest_metadata_rejects_old_target_or_escaped_local_package (__main__.BuildTests) ... ok\ntest_results_bind_every_test_name_and_ignored_name (__main__.BuildTests) ... ok\ntest_results_reject_substituted_failed_or_duplicate_summary (__main__.BuildTests) ... ok\ntest_should_panic_success_retains_exact_inventory_name (__main__.BuildTests) ... ok\ntest_formatter_cannot_change_any_unselected_source_or_file_roster (__main__.RpoTests) ... ok\ntest_full_suites_preserve_all_old_names_ignores_and_add_only_rpo (__main__.RpoTests) ... ok\ntest_metadata_relocation_changes_only_qualified_namespace (__main__.RpoTests) ... ok\ntest_overlay_is_four_exact_bodies_and_seventeen_unique_tests (__main__.RpoTests) ... ok\ntest_prior_and_candidate_phase_rosters_are_distinct_ten_and_twelve (__main__.RpoTests) ... ok\ntest_relative_sources_rejects_foreign_paths_extent_mismatch_or_aliases (__main__.RpoTests) ... ok\ntest_source_transition_checks_both_existing_preimages_and_new_absence (__main__.RpoTests) ... ok\n\n----------------------------------------------------------------------\nRan 16 tests in 0.002s\n\nOK\n"
+  },
+  "gpu_execution": false,
+  "rust_compiler_build_executed": false,
+  "numerical_acceptance": false,
+  "production_authority": false,
+  "performance_claim": false
+}

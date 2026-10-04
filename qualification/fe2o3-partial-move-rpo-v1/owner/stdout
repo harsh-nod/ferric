@@ -1,0 +1,25 @@
+{"phase": "rustfmt", "status": "RUNNING", "pid": 710126}
+{"phase": "rustfmt", "exit_code": 0, "reason": null, "elapsed_seconds": 2.01439451565966, "group_absent": true, "cache_bytes": 8192, "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855", "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"}
+{"phase": "rustfmt-check", "status": "RUNNING", "pid": 710250}
+{"phase": "rustfmt-check", "exit_code": 0, "reason": null, "elapsed_seconds": 2.014554896391928, "group_absent": true, "cache_bytes": 8192, "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855", "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"}
+{"phase": "metadata", "status": "RUNNING", "pid": 710324}
+{"phase": "metadata", "exit_code": 0, "reason": null, "elapsed_seconds": 2.023930734023452, "group_absent": true, "cache_bytes": 8192, "stdout_sha256": "57f2b5df717ce6a803199dcd361d04d2a37e162d64f0a49148b9e20c573d1bbf", "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"}
+{"phase": "pliron-build-tests", "status": "RUNNING", "pid": 710513}
+{"phase": "pliron-build-tests", "exit_code": 0, "reason": null, "elapsed_seconds": 54.62003850378096, "group_absent": true, "cache_bytes": 534530420, "stdout_sha256": "f45a552fbef9862bf236d469d9ef7d2875f81b7475da45d21c0ab09651930f31", "stderr_sha256": "17b8e6cdc1c3c5a0a5c5d91213271688d9b4c1afd4e3798298cb2abb300da96d"}
+{"phase": "pliron-list", "status": "RUNNING", "pid": 715341}
+{"phase": "pliron-list", "exit_code": 0, "reason": null, "elapsed_seconds": 2.019476363901049, "group_absent": true, "cache_bytes": 534530420, "stdout_sha256": "b68a3991e883cca211aefc1de9db10195346f18101aee70c87907203d82b8cc9", "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"}
+{"phase": "pliron-ignored-list", "status": "RUNNING", "pid": 715419}
+{"phase": "pliron-ignored-list", "exit_code": 0, "reason": null, "elapsed_seconds": 2.0188214159570634, "group_absent": true, "cache_bytes": 534530420, "stdout_sha256": "df501c45dc20a3db0cbabf850e42c9ea212ee4bc96460c7d67d9dad53cd0b486", "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"}
+{"phase": "pliron-tests", "status": "RUNNING", "pid": 715490}
+{"phase": "pliron-tests", "exit_code": 0, "reason": null, "elapsed_seconds": 52.735175071749836, "group_absent": true, "cache_bytes": 534530420, "stdout_sha256": "1fe2821507f7faf4467d7501792e058dc8931d64c116336a4499446305ef2d0d", "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"}
+{"phase": "compiler-build-tests", "status": "RUNNING", "pid": 718332}
+{"phase": "compiler-build-tests", "exit_code": 0, "reason": null, "elapsed_seconds": 89.38654838409275, "group_absent": true, "cache_bytes": 1497792595, "stdout_sha256": "9679f9c76af3ead3c2b393369a49914757038e87a8ac8f8dc81ff2d2cdeba192", "stderr_sha256": "b4aacbbf151d3b41d87902c3f7cba61ae83d94ca2561876c9a5ce657a1048730"}
+{"phase": "compiler-list", "status": "RUNNING", "pid": 722298}
+{"phase": "compiler-list", "exit_code": 0, "reason": null, "elapsed_seconds": 2.0374641371890903, "group_absent": true, "cache_bytes": 1497792595, "stdout_sha256": "28f94d10ffb6d9cf4afa996f5c6ce20ede8c4956707b1386a824f05829dc62ba", "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"}
+{"phase": "compiler-ignored-list", "status": "RUNNING", "pid": 722301}
+{"phase": "compiler-ignored-list", "exit_code": 0, "reason": null, "elapsed_seconds": 2.0217616758309305, "group_absent": true, "cache_bytes": 1497792595, "stdout_sha256": "8a66b548f139c344b29f54b88909b2170972c0bd37aee5e581ea7d9a964e547c", "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"}
+{"phase": "compiler-tests", "status": "RUNNING", "pid": 722304}
+{"phase": "compiler-tests", "exit_code": 0, "reason": null, "elapsed_seconds": 28.475143857765943, "group_absent": true, "cache_bytes": 1497792595, "stdout_sha256": "f4ddd7548b92dfcdf64f5647f9482ca5eadd1cda74f638f64e87a4dd5d1ef876", "stderr_sha256": "8975c581848bf5cd43adcabfd7674fb19ebac020b6f53344f7e1e3b9cbac6a31"}
+{"phase": "compiler-build", "status": "RUNNING", "pid": 724288}
+{"phase": "compiler-build", "exit_code": 0, "reason": null, "elapsed_seconds": 46.718280497938395, "group_absent": true, "cache_bytes": 2102056388, "stdout_sha256": "2adb7f86c2c329d89a395f4955bd0c721a1a5bde8815cc9d42e3c57f06e65290", "stderr_sha256": "451d8873972950b87584c120691965441e91b90a232bf23f9448f6c611fe78e0"}
+{"passed": true, "error": null, "postcheck_errors": [], "output": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rpo-compiler-cpu-v228-v2"}
