@@ -12,6 +12,7 @@ engineering branch; it does not change the production execution path.
 | --- | --- | --- |
 | Corrected finite parent/worker CPU suite on `mi350-2` | 605 passed, 4 ignored; 34 owned commands | Includes 24 tests for the opt-in host-observation extension; no GPU execution |
 | Historical KFD host-observation suite on `mi350-2` | 1,776 selected tests passed | Overlapping selections, including 15 new tests; separate source generation |
+| Fresh Git-source worker build on `mi350-2` | 387 passed, 4 ignored; binary built from an empty target | Published Ferric/fe2o3 source pair; cached registry/toolchain, no parent or GPU run |
 | Four teacher-forced forwards on `mi350` | 152 retained native tensor rows bitwise equal to the prior native route | All 36 layers, TP2, finite engineering images; not an independent full-model numerical bound |
 | Four autoregressive forwards on `mi350` | 152 retained native tensor rows bitwise equal to the prior native route | Own-token history; no 2,048/256 workload or sustained throughput measurement |
 | Six prefix-stage numerical cases | All 24 rank/profile rows satisfy the declared conditional norm/QKV bounds | Independent conditional arithmetic check of retained captures, not a new GPU run |
@@ -54,12 +55,24 @@ fixtures, and required device source/test dependencies. Only the four shared
 wire files were added under the legacy v4 worker. Its Cargo manifest, lockfile,
 main program and unrelated experiment additions were left unchanged.
 
-The finite worker still requires a separately retained sibling fe2o3 source
-generation. The parent uses its own locked fe2o3 Git dependency; they are not
-interchangeable. See the [worker notes](../adapters/tp-peer-finite-engineering-worker-v1/README.md).
-This checkpoint is not a clean-clone reproduction claim, a workspace-wide test
-pass, or a newly qualified legacy-worker build. Full workspace formatting,
-Clippy and regression gates remain required before merging to production.
+The matching sibling runtime is now published at
+[fe2o3 `6964f6129`](https://github.com/harsh-nod/fe2o3/commit/6964f6129c4c42d343117f61cdbcfe6166392535)
+in both fe2o3 repositories. The bounded runtime export retained 765 files,
+checked all 479 mapped runtime inputs, and imported exactly 84 changed paths
+against its pinned base. The parent uses its own locked fe2o3 Git dependency;
+the two dependency generations are not interchangeable.
+
+A fresh Git-archive build paired Ferric `9eca2576` with that fe2o3 commit on
+`mi350-2`. With an empty target directory, all 387 selected worker tests passed
+and four were ignored; the worker binary also built. Cargo metadata verified
+the exact ten local packages and 29 registry packages, and all 6,921 extracted
+source files remained unchanged. The registry cache and toolchain were reused.
+The [fresh-build record](assets/finite-prefix-v228/clean-worker-build.json)
+and [worker instructions](../adapters/tp-peer-finite-engineering-worker-v1/README.md)
+record the exact pair. This does not reproduce the parent, compiler/HSACO
+pipeline, or GPU run from clean source, and is not a workspace-wide test pass
+or a newly qualified legacy-worker build. Full workspace formatting, Clippy
+and regression gates remain required before merging to production.
 
 ## Measured Host Overhead
 
@@ -143,8 +156,8 @@ alone is not a self-contained reproducer or proof.
 
 ## Next Gates
 
-1. Publish and qualify the matching sibling fe2o3 dependency so the Ferric
-   engineering snapshot can be reproduced from clean checkouts.
+1. Extend the published, freshly built worker source pair to reproducible
+   parent and compiler/HSACO builds; the full pipeline is not yet reproduced.
 2. Run separately versioned, one-factor host-overhead variants on `mi350`,
    preserving the measured baseline and its exact numerical checks.
 3. Close independent numerical obligations and validate the longer resident

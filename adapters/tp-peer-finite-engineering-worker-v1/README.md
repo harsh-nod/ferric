@@ -24,11 +24,33 @@ Other finite experiments remain distinct typed routes, not silent fallbacks.
 ## Build Prerequisites
 
 The finite worker uses `../../../fe2o3/crates/fe2o3-kfd`, a sibling checkout
-relative to this repository. It requires the separately retained fe2o3
-engineering generation that supplies the finite gfx950 and host-observation
-APIs. An arbitrary fe2o3 checkout, or the parent adapter's pinned fe2o3 Git
-revision, is not an equivalent dependency. Publishing this Ferric source
-snapshot does not yet provide a self-contained clean-clone reproducer.
+relative to this repository. Its matching engineering runtime is published at
+[fe2o3 `6964f6129`](https://github.com/harsh-nod/fe2o3/commit/6964f6129c4c42d343117f61cdbcfe6166392535),
+also available in the [mirror](https://github.com/powderluv/fe2o3/commit/6964f6129c4c42d343117f61cdbcfe6166392535).
+An arbitrary fe2o3 checkout, or the parent adapter's pinned fe2o3 Git revision,
+is not an equivalent dependency. The parent dependency graph remains unchanged.
+
+The original Ferric snapshot `9eca257697069f10c87ee9f624016391f6a2e479` and
+this fe2o3 commit were freshly extracted from Git archives on `mi350-2` into
+sibling `ferric/` and `fe2o3/` directories, with an empty Cargo target.
+All 387 selected worker tests passed, four were ignored, and the worker binary
+built. All 6,921 extracted files remained unchanged. Cargo metadata selected
+exactly nine local runtime crates from the fresh fe2o3 tree, the fresh Ferric
+worker, and 29 registry packages; no original development source path was used
+as a local package. The existing registry cache and toolchain were reused.
+See the [fresh-build record](../../docs/assets/finite-prefix-v228/clean-worker-build.json).
+This is a worker source-build result, not a parent build, cold toolchain setup,
+Rust-to-HSACO reproduction, or GPU qualification of the newly built binary.
+
+To select the same source pair in a new working directory:
+
+```sh
+git clone --branch codex/p228-finite-runtime-integration-v1 https://github.com/harsh-nod/fe2o3.git fe2o3
+git -C fe2o3 checkout --detach 6964f6129c4c42d343117f61cdbcfe6166392535
+git clone --branch codex/p227-finite-prefix-integration-v1 https://github.com/harsh-nod/ferric.git ferric
+git -C ferric checkout --detach 9eca257697069f10c87ee9f624016391f6a2e479
+cd ferric
+```
 
 The tested worker toolchain is `nightly-2026-04-03`; the parent suite used
 Rust `1.97.1` and `RUSTC_BOOTSTRAP=fe2o3_device,fe2o3_macros`. Both used two
@@ -51,7 +73,11 @@ CARGO_INCREMENTAL=0 CARGO_PROFILE_TEST_DEBUG=0 CARGO_PROFILE_TEST_OPT_LEVEL=2 \
 
 These two commands are only part of the recorded 34-command suite. They do
 not reproduce its complete source, compiler, resource and process-ownership
-checks. CPU tests do not launch the GPU experiment.
+checks. The fresh build ran the worker selection above, not the parent selection.
+It then built the worker with `cargo build --offline --locked --jobs 2` using
+the same manifest and `CARGO_PROFILE_DEV_OPT_LEVEL=2`, with debug information
+disabled. The test suite retained debug assertions and overflow checks.
+CPU tests do not launch the GPU experiment.
 
 ## Evidence Limits
 
