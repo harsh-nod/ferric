@@ -1,0 +1,53 @@
+{
+  "schema": "ferric-layer0-mlp-numerical-policy-v218",
+  "authority": "none",
+  "adaptive_tolerance": false,
+  "gpu_execution": false,
+  "required_artifact_semantics": [
+    "IEEE binary32 RNE with gradual underflow",
+    "separate binary32 products and additions in GEMV dot and norm sum-of-squares accumulation; no reassociation of those source operations",
+    "Wave64 XOR sum offsets 1,2,4,8,16,32",
+    "BF16 RNE narrowing with finite intermediate and output rejection",
+    "reviewed norm sqrt_f32 route within one binary32 ULP of correctly rounded sqrt; this is an artifact prerequisite, not a theorem established by CPU tests",
+    "reviewed OCML Exp provider for stable SiLU"
+  ],
+  "norm": {
+    "width": 4096,
+    "epsilon_f32_bits": 897988541,
+    "sum_gamma_f32": 71,
+    "sum_gamma_f64": 4096,
+    "sum_half_subnormal_allowances": 8255,
+    "sqrt_max_f32_ulp": 1,
+    "max_first_narrow_candidates": 32,
+    "policy": "Outward FP64 sum-square envelope; monotone rounded F32 mean, epsilon, sqrt and reciprocal intervals; first BF16 RNE cell intersection, then separate F32 weight product and second BF16 RNE. Exact signed zero for zero input. Candidate cap refuses uncertainty; it never widens tolerance."
+  },
+  "gate_up": {
+    "k": 4096,
+    "gamma_f32": 71,
+    "gamma_f64": 4096,
+    "half_subnormal_allowances": 8255,
+    "policy": "Independent FP64 dot conditional on actual accepted normalized BF16; observed BF16 rounding cell must intersect the outward F32 accumulation envelope."
+  },
+  "swiglu": {
+    "max_ordered_bf16_steps": 1,
+    "policy": "Independent FP64 stable SiLU on actual accepted gate/up BF16; finite BF16 result, at most one ordered-BF16 step, exact signed zero when gate or up is zero. This is preregistered numerical qualification, not an all-input OCML error theorem."
+  },
+  "down": {
+    "k": 6144,
+    "gamma_f32": 103,
+    "gamma_f64": 6144,
+    "half_subnormal_allowances": 12351,
+    "policy": "Independent FP64 dot conditional on actual accepted activation BF16; actual finite FP32 error bounded by gamma103 plus gamma6144_f64 times outward sum of absolute products and underflow allowance."
+  },
+  "residual": {
+    "oracle_sha256": "551f89f968cad8f63073ca975346c593a31dad624115a93059b28a328e312ef3",
+    "policy": "Exact integer-bit binary32 RNE sequence +0, rank0 down partial, rank1 down partial, actual replicated first residual; one final BF16 RNE. Both ranks must match exactly."
+  },
+  "claims": {
+    "conditional_stage_correctness": true,
+    "independent_end_to_end_model_reference": false,
+    "full_model_correctness": false,
+    "performance_measured": false,
+    "unconditioned_mlp_fp64_diagnostic": "Retains BF16 boundaries and uses only actual first residual, not GPU intermediate arrays; no aggregate acceptance threshold."
+  }
+}

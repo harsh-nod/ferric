@@ -1,0 +1,41 @@
+{
+  "controller": {
+    "bytes": 6197,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/run_historical_mlp_p228_v1.py",
+    "sha256": "1227c82a89b5500c7c8eb9384f862bcd0e9b2e8ceed76bd849a1faf91afe5eb2"
+  },
+  "details": {
+    "adapter_tests": 22,
+    "errors": 0,
+    "failures": 0,
+    "original_arithmetic_tests": 19,
+    "skipped": 0,
+    "tests": 41,
+    "transcript": {
+      "bytes": 5710,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/historical-mlp-pure-v228-v1/tests.log",
+      "sha256": "46f575428ebf25a5cc6f538440000963b01ae86019af1e48fafbaf63d6c4c4df"
+    }
+  },
+  "elapsed_seconds": 0.2035564859979786,
+  "full_layer_acceptance": false,
+  "full_model_acceptance": false,
+  "gpu_execution": false,
+  "mode": "tests",
+  "new_v7_image_checked": false,
+  "passed": true,
+  "performance_claim": false,
+  "production_authority": false,
+  "schema": "ferric-p228-historical-mlp-cpu-v1",
+  "source_postchecks_passed": true,
+  "sources_after": {
+    "bytes": 2668,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/historical-mlp-pure-v228-v1/sources-after.json",
+    "sha256": "e9e13d7b7528b61149465239def2fe2c78a936d222b1633a7ddebc8077b974e8"
+  },
+  "sources_before": {
+    "bytes": 2668,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/historical-mlp-pure-v228-v1/sources-before.json",
+    "sha256": "e9e13d7b7528b61149465239def2fe2c78a936d222b1633a7ddebc8077b974e8"
+  }
+}

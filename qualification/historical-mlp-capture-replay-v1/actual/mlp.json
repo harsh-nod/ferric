@@ -1,0 +1,1441 @@
+{
+  "adaptive_tolerance": false,
+  "arithmetic_prerequisites_verified": false,
+  "authority": "none",
+  "capture_slices": {
+    "baseline": [
+      {
+        "bytes": 8192,
+        "element_bytes": 2,
+        "offset": 4757504,
+        "rank": 0,
+        "sha256": "00e5a0bf5610bc110507bc5b2dbc9a257823a1568ab5e24ace9f3a48bd01baaa",
+        "stage": "first-residual"
+      },
+      {
+        "bytes": 8192,
+        "element_bytes": 2,
+        "offset": 4765696,
+        "rank": 0,
+        "sha256": "92bc4fa88713ad003b58f1d7d8a495793a897e6b7113e58048081f3e9f473bdc",
+        "stage": "mlp-norm"
+      },
+      {
+        "bytes": 12288,
+        "element_bytes": 2,
+        "offset": 4773888,
+        "rank": 0,
+        "sha256": "8bf6f60226303029180ca2af0188dc11f32b2aff9143ac32f647134af2baf679",
+        "stage": "gate"
+      },
+      {
+        "bytes": 12288,
+        "element_bytes": 2,
+        "offset": 4786176,
+        "rank": 0,
+        "sha256": "53f065d20d1ddfbd62a8fbf82a7546e2883ea505e81674b00ab1cdb5f99f6320",
+        "stage": "up"
+      },
+      {
+        "bytes": 12288,
+        "element_bytes": 2,
+        "offset": 4798464,
+        "rank": 0,
+        "sha256": "04136e0ab56b28d185980c81986ca05bd2e1db144792b69eee24dd4397fb1d78",
+        "stage": "activation"
+      },
+      {
+        "bytes": 16384,
+        "element_bytes": 4,
+        "offset": 4810752,
+        "rank": 0,
+        "sha256": "542a6d2b32c9a0f8cebb92d5a2bda029f87143442ad79719b57c85ac6889eaf7",
+        "stage": "down-partial"
+      },
+      {
+        "bytes": 8192,
+        "element_bytes": 2,
+        "offset": 9592832,
+        "rank": 1,
+        "sha256": "00e5a0bf5610bc110507bc5b2dbc9a257823a1568ab5e24ace9f3a48bd01baaa",
+        "stage": "first-residual"
+      },
+      {
+        "bytes": 8192,
+        "element_bytes": 2,
+        "offset": 9601024,
+        "rank": 1,
+        "sha256": "92bc4fa88713ad003b58f1d7d8a495793a897e6b7113e58048081f3e9f473bdc",
+        "stage": "mlp-norm"
+      },
+      {
+        "bytes": 12288,
+        "element_bytes": 2,
+        "offset": 9609216,
+        "rank": 1,
+        "sha256": "d6eaa79a3e8f849b1f3b3b15ae1e79813a7903481875865f31f20400a904f41d",
+        "stage": "gate"
+      },
+      {
+        "bytes": 12288,
+        "element_bytes": 2,
+        "offset": 9621504,
+        "rank": 1,
+        "sha256": "71fde0ac6b1da8a223686df3a65140e34bea4a32a01142449b3388cbcbce7ea5",
+        "stage": "up"
+      },
+      {
+        "bytes": 12288,
+        "element_bytes": 2,
+        "offset": 9633792,
+        "rank": 1,
+        "sha256": "441db53c493428b8bcf42238e2c35d7b7fe10216c02a5eedadd1b7570a654ece",
+        "stage": "activation"
+      },
+      {
+        "bytes": 16384,
+        "element_bytes": 4,
+        "offset": 9646080,
+        "rank": 1,
+        "sha256": "6f53900915bca7076d02e96a03578315f7ed2aa04db999f6094612ce1eb4d4bf",
+        "stage": "down-partial"
+      }
+    ],
+    "candidate": [
+      {
+        "bytes": 8192,
+        "element_bytes": 2,
+        "offset": 4757504,
+        "rank": 0,
+        "sha256": "00e5a0bf5610bc110507bc5b2dbc9a257823a1568ab5e24ace9f3a48bd01baaa",
+        "stage": "first-residual"
+      },
+      {
+        "bytes": 8192,
+        "element_bytes": 2,
+        "offset": 4765696,
+        "rank": 0,
+        "sha256": "92bc4fa88713ad003b58f1d7d8a495793a897e6b7113e58048081f3e9f473bdc",
+        "stage": "mlp-norm"
+      },
+      {
+        "bytes": 12288,
+        "element_bytes": 2,
+        "offset": 4773888,
+        "rank": 0,
+        "sha256": "8bf6f60226303029180ca2af0188dc11f32b2aff9143ac32f647134af2baf679",
+        "stage": "gate"
+      },
+      {
+        "bytes": 12288,
+        "element_bytes": 2,
+        "offset": 4786176,
+        "rank": 0,
+        "sha256": "53f065d20d1ddfbd62a8fbf82a7546e2883ea505e81674b00ab1cdb5f99f6320",
+        "stage": "up"
+      },
+      {
+        "bytes": 12288,
+        "element_bytes": 2,
+        "offset": 4798464,
+        "rank": 0,
+        "sha256": "04136e0ab56b28d185980c81986ca05bd2e1db144792b69eee24dd4397fb1d78",
+        "stage": "activation"
+      },
+      {
+        "bytes": 16384,
+        "element_bytes": 4,
+        "offset": 4810752,
+        "rank": 0,
+        "sha256": "542a6d2b32c9a0f8cebb92d5a2bda029f87143442ad79719b57c85ac6889eaf7",
+        "stage": "down-partial"
+      },
+      {
+        "bytes": 8192,
+        "element_bytes": 2,
+        "offset": 9592832,
+        "rank": 1,
+        "sha256": "00e5a0bf5610bc110507bc5b2dbc9a257823a1568ab5e24ace9f3a48bd01baaa",
+        "stage": "first-residual"
+      },
+      {
+        "bytes": 8192,
+        "element_bytes": 2,
+        "offset": 9601024,
+        "rank": 1,
+        "sha256": "92bc4fa88713ad003b58f1d7d8a495793a897e6b7113e58048081f3e9f473bdc",
+        "stage": "mlp-norm"
+      },
+      {
+        "bytes": 12288,
+        "element_bytes": 2,
+        "offset": 9609216,
+        "rank": 1,
+        "sha256": "d6eaa79a3e8f849b1f3b3b15ae1e79813a7903481875865f31f20400a904f41d",
+        "stage": "gate"
+      },
+      {
+        "bytes": 12288,
+        "element_bytes": 2,
+        "offset": 9621504,
+        "rank": 1,
+        "sha256": "71fde0ac6b1da8a223686df3a65140e34bea4a32a01142449b3388cbcbce7ea5",
+        "stage": "up"
+      },
+      {
+        "bytes": 12288,
+        "element_bytes": 2,
+        "offset": 9633792,
+        "rank": 1,
+        "sha256": "441db53c493428b8bcf42238e2c35d7b7fe10216c02a5eedadd1b7570a654ece",
+        "stage": "activation"
+      },
+      {
+        "bytes": 16384,
+        "element_bytes": 4,
+        "offset": 9646080,
+        "rank": 1,
+        "sha256": "6f53900915bca7076d02e96a03578315f7ed2aa04db999f6094612ce1eb4d4bf",
+        "stage": "down-partial"
+      }
+    ]
+  },
+  "conditional_on_actual_stage_inputs": true,
+  "conditional_stage_checks_passed": true,
+  "fixed_policy_sha256": "9497e55e70a42630d50b74ea33b0856a385d051fb60bc7f23124ee5cbd46e44b",
+  "fixture": {
+    "bytes": 4230,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/resident-layer-tp2-v218/reference-fixtures-v1/fixture/manifest.json",
+    "sha256": "bda8f0697ba29928e3f4f0e130fdb1a69d3f9eb094988ffe900287dda145bcbc"
+  },
+  "full_layer_acceptance": false,
+  "full_model_acceptance": false,
+  "gpu_execution_requested": false,
+  "historical_layer_validator_checks_revalidated": true,
+  "historical_mlp_image": {
+    "bytes": 32328,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/p225-tiles-tf4-runtime-v1/tiles.hsaco",
+    "sha256": "ead57f9bb74d47de14ab5b8b84f4728df3ce6e62fac4d8cdf2d4cf0be3e0b1e6"
+  },
+  "historical_record": {
+    "bytes": 465821,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-layer-replay-v227-v1/complete.json",
+    "sha256": "d9958b9a6d37fc707993aa4dd4ae05ca062820df4692bf9ab37d8df7821f8d8a"
+  },
+  "historical_v227_image": true,
+  "independent_stage_reference": true,
+  "input_pins": [
+    {
+      "bytes": 14960,
+      "original_path": null,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-residual-capture-replay-v1/run.py",
+      "sha256": "88f6e66fccb2ea1ef0d6079858a4b6af1d0b609fa50ec3ea02cb21329300021a"
+    },
+    {
+      "bytes": 16186,
+      "original_path": null,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p227-prefix-layer-replay-v1/layer_validation.py",
+      "sha256": "757c077979b7ee02d4c0e7d222e75292cd9d417927f84ae9a8134344f8e217b9"
+    },
+    {
+      "bytes": 465821,
+      "original_path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-layer-replay-v227-v1/complete.json",
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-layer-replay-v227-v1/complete.json",
+      "sha256": "d9958b9a6d37fc707993aa4dd4ae05ca062820df4692bf9ab37d8df7821f8d8a"
+    },
+    {
+      "bytes": 6959,
+      "original_path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-layer-inputs-v227-v2/request.json",
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-layer-inputs-v227-v2/request.json",
+      "sha256": "08de56a2e553bfe63f3e2e8c6564d733b8f4436266b11ad43a07d4c2213a074c"
+    },
+    {
+      "bytes": 3240,
+      "original_path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-layer-gpu-v227-v1/native/baseline-bootstrap.json",
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-layer-gpu-v227-v1/native/baseline-bootstrap.json",
+      "sha256": "b2fdd66c1988398d9e9b92a4fae4c987ff932f63730d7b19a267aa32026826d2"
+    },
+    {
+      "bytes": 9670656,
+      "original_path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-layer-gpu-v227-v1/native/baseline-capture.bin",
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-layer-gpu-v227-v1/native/baseline-capture.bin",
+      "sha256": "c46324f59a03f3db83e891475261cf527d19b7c1b5a981ce21b7b763e182f52f"
+    },
+    {
+      "bytes": 871211,
+      "original_path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-layer-gpu-v227-v1/native/baseline-program.json",
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-layer-gpu-v227-v1/native/baseline-program.json",
+      "sha256": "eb8607aae21d2774b188c3477e0b03a0b924dcd75638b18624707e543b743392"
+    },
+    {
+      "bytes": 122071,
+      "original_path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-layer-gpu-v227-v1/native/baseline-registration.json",
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-layer-gpu-v227-v1/native/baseline-registration.json",
+      "sha256": "1d9a5b8bd87ce4f676f2c30a43a5f8b554e0801fa19922f432af71e212d83e6b"
+    },
+    {
+      "bytes": 167,
+      "original_path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-layer-gpu-v227-v1/native/baseline-request-1.json",
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-layer-gpu-v227-v1/native/baseline-request-1.json",
+      "sha256": "0bccdce1528685514e4f60a35c046a5fef5715c570b5498a31fcf9d77b7ded44"
+    },
+    {
+      "bytes": 169,
+      "original_path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-layer-gpu-v227-v1/native/baseline-request-2.json",
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-layer-gpu-v227-v1/native/baseline-request-2.json",
+      "sha256": "561c871c13879e2a321fcecbcef54dd33a9a7d6ef621fce56604f341238660a6"
+    },
+    {
+      "bytes": 359,
+      "original_path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-layer-gpu-v227-v1/native/baseline-response-1.json",
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-layer-gpu-v227-v1/native/baseline-response-1.json",
+      "sha256": "0485c9c894d2b2b3324609a7c76c963083df9bebc67a029feb2d82de203f7328"
+    },
+    {
+      "bytes": 4252,
+      "original_path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-layer-gpu-v227-v1/native/baseline-response-2.json",
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-layer-gpu-v227-v1/native/baseline-response-2.json",
+      "sha256": "d35b639c8ed0d172055985e65a357bd9b80db54974932def16ea3a9f61601d8e"
+    },
+    {
+      "bytes": 0,
+      "original_path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-layer-gpu-v227-v1/native/baseline-stderr.bin",
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-layer-gpu-v227-v1/native/baseline-stderr.bin",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 178103,
+      "original_path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-layer-gpu-v227-v1/native/baseline-uploads.json",
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-layer-gpu-v227-v1/native/baseline-uploads.json",
+      "sha256": "d5e66dbf7e3abfec463424addb6735f9a3a5b2d50653d56689ee79d01404da47"
+    },
+    {
+      "bytes": 3374,
+      "original_path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-layer-gpu-v227-v1/native/candidate-bootstrap.json",
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-layer-gpu-v227-v1/native/candidate-bootstrap.json",
+      "sha256": "4c91a56ec01af0651017ea954fb33de655dd35031b6d7eaa2b7e7d6bd5bb3b9f"
+    },
+    {
+      "bytes": 9670656,
+      "original_path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-layer-gpu-v227-v1/native/candidate-capture.bin",
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-layer-gpu-v227-v1/native/candidate-capture.bin",
+      "sha256": "c46324f59a03f3db83e891475261cf527d19b7c1b5a981ce21b7b763e182f52f"
+    },
+    {
+      "bytes": 871211,
+      "original_path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-layer-gpu-v227-v1/native/candidate-program.json",
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-layer-gpu-v227-v1/native/candidate-program.json",
+      "sha256": "eb8607aae21d2774b188c3477e0b03a0b924dcd75638b18624707e543b743392"
+    },
+    {
+      "bytes": 122071,
+      "original_path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-layer-gpu-v227-v1/native/candidate-registration.json",
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-layer-gpu-v227-v1/native/candidate-registration.json",
+      "sha256": "a34b06806ce8be5c775034b8308ac79a8eabad62be1923f6b8ed90462243a785"
+    },
+    {
+      "bytes": 176,
+      "original_path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-layer-gpu-v227-v1/native/candidate-request-1.json",
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-layer-gpu-v227-v1/native/candidate-request-1.json",
+      "sha256": "7e3f0525b64e29a6b6ce05318c65b7729a0687eb7e5ac7af913e3b815b515011"
+    },
+    {
+      "bytes": 178,
+      "original_path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-layer-gpu-v227-v1/native/candidate-request-2.json",
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-layer-gpu-v227-v1/native/candidate-request-2.json",
+      "sha256": "056be77cf3e053dc6499cc97849e2e1ca14376cc15473617e73b3dddb3a39a2e"
+    },
+    {
+      "bytes": 367,
+      "original_path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-layer-gpu-v227-v1/native/candidate-response-1.json",
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-layer-gpu-v227-v1/native/candidate-response-1.json",
+      "sha256": "94c6342416de167e67b998ac056c81f4cfef449f405bf78f7f517ae972eace53"
+    },
+    {
+      "bytes": 5885,
+      "original_path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-layer-gpu-v227-v1/native/candidate-response-2.json",
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-layer-gpu-v227-v1/native/candidate-response-2.json",
+      "sha256": "a7157bbff7773770fe9215a0549905526cea2e1fd8a2501b7b6ee93cd0a86753"
+    },
+    {
+      "bytes": 0,
+      "original_path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-layer-gpu-v227-v1/native/candidate-stderr.bin",
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-layer-gpu-v227-v1/native/candidate-stderr.bin",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 178103,
+      "original_path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-layer-gpu-v227-v1/native/candidate-uploads.json",
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-layer-gpu-v227-v1/native/candidate-uploads.json",
+      "sha256": "d5e66dbf7e3abfec463424addb6735f9a3a5b2d50653d56689ee79d01404da47"
+    },
+    {
+      "bytes": 9855,
+      "original_path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-layer-gpu-v227-v1/native/parity.json",
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-layer-gpu-v227-v1/native/parity.json",
+      "sha256": "ec35a1c13c0bd2503ae0395e39e3b4086d16e82f68fe0eabe167a7cce42d88d8"
+    },
+    {
+      "bytes": 3333,
+      "original_path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-layer-gpu-v227-v1/native/request.json",
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-layer-gpu-v227-v1/native/request.json",
+      "sha256": "7e1edcff982a7e72d5a9adbd3e2620dc94d2922361262c7d1c25b846ba728b47"
+    },
+    {
+      "bytes": 34549,
+      "original_path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-layer-gpu-v227-v1/native/summary.json",
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-layer-gpu-v227-v1/native/summary.json",
+      "sha256": "e3742d086a6ccc1ccd3c226deb6d34a848ee8db0cd6f7d884a2c86314c1b4988"
+    },
+    {
+      "bytes": 32328,
+      "original_path": "/home/harmenon/ferric-asrock-42/evidence/p225-tiles-tf4-runtime-v1/tiles.hsaco",
+      "path": "/home/harmenon/ferric-asrock-42/evidence/p225-tiles-tf4-runtime-v1/tiles.hsaco",
+      "sha256": "ead57f9bb74d47de14ab5b8b84f4728df3ce6e62fac4d8cdf2d4cf0be3e0b1e6"
+    },
+    {
+      "bytes": 23782,
+      "original_path": null,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/resident-layer-tp2-v218/reference/reference.py",
+      "sha256": "2e41d6e5715cc561bf818fdee794e4ced74a77f93acd4961d8b15f427f196c6e"
+    },
+    {
+      "bytes": 10473,
+      "original_path": null,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/resident-layer-tp2-v218/reference/extract.py",
+      "sha256": "76872f3558d6f90c21b9eee3ec0ba4ebdd79168b620338faa6bdbdd8b78bdf4a"
+    },
+    {
+      "bytes": 2799,
+      "original_path": null,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/resident-layer-tp2-v218/reference/policy.json",
+      "sha256": "9497e55e70a42630d50b74ea33b0856a385d051fb60bc7f23124ee5cbd46e44b"
+    },
+    {
+      "bytes": 4230,
+      "original_path": "/home/harmenon/ferric-asrock-42/evidence/resident-layer-tp2-v218/reference-fixtures-v1/fixture/manifest.json",
+      "path": "/home/harmenon/ferric-asrock-42/evidence/resident-layer-tp2-v218/reference-fixtures-v1/fixture/manifest.json",
+      "sha256": "bda8f0697ba29928e3f4f0e130fdb1a69d3f9eb094988ffe900287dda145bcbc"
+    },
+    {
+      "bytes": 2799,
+      "original_path": "/home/harmenon/ferric-asrock-42/evidence/resident-layer-tp2-v218/reference-fixtures-v1/fixture/policy.json",
+      "path": "/home/harmenon/ferric-asrock-42/evidence/resident-layer-tp2-v218/reference-fixtures-v1/fixture/policy.json",
+      "sha256": "9497e55e70a42630d50b74ea33b0856a385d051fb60bc7f23124ee5cbd46e44b"
+    },
+    {
+      "bytes": 8192,
+      "original_path": "/home/harmenon/ferric-asrock-42/evidence/resident-layer-tp2-v218/reference-fixtures-v1/fixture/post-norm.bf16",
+      "path": "/home/harmenon/ferric-asrock-42/evidence/resident-layer-tp2-v218/reference-fixtures-v1/fixture/post-norm.bf16",
+      "sha256": "3df17c58e1832b24111c91cb19088b06f816de21702ce58acb514c91568cde5d"
+    },
+    {
+      "bytes": 50331648,
+      "original_path": "/home/harmenon/ferric-asrock-42/evidence/resident-layer-tp2-v218/reference-fixtures-v1/fixture/gate-rank0.bf16",
+      "path": "/home/harmenon/ferric-asrock-42/evidence/resident-layer-tp2-v218/reference-fixtures-v1/fixture/gate-rank0.bf16",
+      "sha256": "06dd4473fa07666bf91b82d41f4d3c8f84f9b6e2dc4c5aa59031927146327449"
+    },
+    {
+      "bytes": 50331648,
+      "original_path": "/home/harmenon/ferric-asrock-42/evidence/resident-layer-tp2-v218/reference-fixtures-v1/fixture/up-rank0.bf16",
+      "path": "/home/harmenon/ferric-asrock-42/evidence/resident-layer-tp2-v218/reference-fixtures-v1/fixture/up-rank0.bf16",
+      "sha256": "c739100f760d21b482663ce43445a68dc8856b54715fb49ff5901e6efa4d0ca6"
+    },
+    {
+      "bytes": 50331648,
+      "original_path": "/home/harmenon/ferric-asrock-42/evidence/resident-layer-tp2-v218/reference-fixtures-v1/fixture/down-rank0.bf16",
+      "path": "/home/harmenon/ferric-asrock-42/evidence/resident-layer-tp2-v218/reference-fixtures-v1/fixture/down-rank0.bf16",
+      "sha256": "a3271db8c733981786d42ccc445072caa768d14e262a4275501ca9efa63ecd43"
+    },
+    {
+      "bytes": 50331648,
+      "original_path": "/home/harmenon/ferric-asrock-42/evidence/resident-layer-tp2-v218/reference-fixtures-v1/fixture/gate-rank1.bf16",
+      "path": "/home/harmenon/ferric-asrock-42/evidence/resident-layer-tp2-v218/reference-fixtures-v1/fixture/gate-rank1.bf16",
+      "sha256": "c0df0fdea02f7000b6c7837d4da8ce8f67adca381e4eadd9867697d83f023aeb"
+    },
+    {
+      "bytes": 50331648,
+      "original_path": "/home/harmenon/ferric-asrock-42/evidence/resident-layer-tp2-v218/reference-fixtures-v1/fixture/up-rank1.bf16",
+      "path": "/home/harmenon/ferric-asrock-42/evidence/resident-layer-tp2-v218/reference-fixtures-v1/fixture/up-rank1.bf16",
+      "sha256": "19df0230caf64a962df4c7dc27d277fbfae09c6e4f55a62246159723285a274a"
+    },
+    {
+      "bytes": 50331648,
+      "original_path": "/home/harmenon/ferric-asrock-42/evidence/resident-layer-tp2-v218/reference-fixtures-v1/fixture/down-rank1.bf16",
+      "path": "/home/harmenon/ferric-asrock-42/evidence/resident-layer-tp2-v218/reference-fixtures-v1/fixture/down-rank1.bf16",
+      "sha256": "e0064427c369013147cfcecd2921e12fa350963dcf04044f81ab750b80f54e34"
+    }
+  ],
+  "layer": 0,
+  "model": {
+    "bundle_id": [
+      109,
+      251,
+      160,
+      172,
+      209,
+      192,
+      12,
+      225,
+      60,
+      236,
+      123,
+      94,
+      235,
+      177,
+      128,
+      105,
+      27,
+      219,
+      136,
+      85,
+      167,
+      238,
+      232,
+      152,
+      118,
+      223,
+      42,
+      10,
+      18,
+      162,
+      128,
+      43
+    ],
+    "model_id": [
+      241,
+      143,
+      196,
+      97,
+      87,
+      109,
+      26,
+      48,
+      83,
+      161,
+      154,
+      186,
+      89,
+      70,
+      239,
+      123,
+      59,
+      69,
+      170,
+      247,
+      203,
+      180,
+      93,
+      119,
+      245,
+      194,
+      118,
+      241,
+      133,
+      103,
+      34,
+      74
+    ],
+    "original_source_directory": "/home/harmenon/ferric-mi350-model-b968-c189-r1.kUjwIKs0/model"
+  },
+  "new_v7_image_checked": false,
+  "original_captures": {
+    "baseline": {
+      "bytes": 9670656,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-layer-gpu-v227-v1/native/baseline-capture.bin",
+      "sha256": "c46324f59a03f3db83e891475261cf527d19b7c1b5a981ce21b7b763e182f52f"
+    },
+    "candidate": {
+      "bytes": 9670656,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-layer-gpu-v227-v1/native/candidate-capture.bin",
+      "sha256": "c46324f59a03f3db83e891475261cf527d19b7c1b5a981ce21b7b763e182f52f"
+    }
+  },
+  "original_extraction_provenance": {
+    "extractor": {
+      "bytes": 10473,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/resident-layer-tp2-v218/reference/extract.py",
+      "sha256": "76872f3558d6f90c21b9eee3ec0ba4ebdd79168b620338faa6bdbdd8b78bdf4a"
+    },
+    "index": {
+      "bytes": 32878,
+      "path": "/home/harmenon/ferric-asrock-42/models/qwen3-source-v1/target/model.safetensors.index.json",
+      "sha256": "f9fdbcb91c23971c13ec5d5f2573d2349e8f61f2f049371ec699281748fdb1bc"
+    },
+    "numerical_policy": {
+      "bytes": 2799,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/resident-layer-tp2-v218/reference-fixtures-v1/fixture/policy.json",
+      "sha256": "9497e55e70a42630d50b74ea33b0856a385d051fb60bc7f23124ee5cbd46e44b"
+    },
+    "source": {
+      "bytes": 3996250744,
+      "header_bytes": 9328,
+      "header_sha256": "979bbeed365485ddaa67a1ed41d0289e15e2f3ba0b3388cb93e42d31f346d1df",
+      "identity": [
+        66306,
+        17489361,
+        3996250744,
+        1789674367199912186,
+        1789674378075834522
+      ],
+      "path": "/home/harmenon/ferric-asrock-42/models/qwen3-source-v1/target/model-00001-of-00005.safetensors",
+      "sha256": "31d6a825ae35f11fb85b195b4c42c146c051e446433125a215336abdf95cbf5f"
+    },
+    "source_inventory": {
+      "bytes": 1682,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/resident-layer-tp2-v218/model-source-v2/complete.json",
+      "sha256": "406c15d830b856d89dd2984551b3fefdc32a5d7941386163664c230c618d5c02"
+    }
+  },
+  "original_model_shard_rehashed": false,
+  "original_status": "FAILED_UNCHANGED",
+  "passed": true,
+  "performance_claim": false,
+  "position": 0,
+  "production_authority": false,
+  "profiles": [
+    {
+      "profile": "baseline",
+      "ranks": [
+        {
+          "actual_weight_uploads": {
+            "down": {
+              "bytes": 50331648,
+              "key": {
+                "id": 188,
+                "kind": "source",
+                "rank": 0
+              },
+              "sha256": [
+                163,
+                39,
+                29,
+                184,
+                199,
+                51,
+                152,
+                23,
+                134,
+                212,
+                44,
+                204,
+                68,
+                80,
+                114,
+                202,
+                167,
+                104,
+                209,
+                78,
+                38,
+                42,
+                66,
+                117,
+                80,
+                28,
+                169,
+                239,
+                166,
+                62,
+                205,
+                67
+              ]
+            },
+            "gate": {
+              "bytes": 50331648,
+              "key": {
+                "id": 190,
+                "kind": "source",
+                "rank": 0
+              },
+              "sha256": [
+                6,
+                221,
+                68,
+                115,
+                250,
+                7,
+                102,
+                107,
+                249,
+                27,
+                130,
+                212,
+                31,
+                77,
+                60,
+                143,
+                132,
+                249,
+                182,
+                226,
+                220,
+                76,
+                90,
+                165,
+                144,
+                49,
+                146,
+                113,
+                70,
+                50,
+                116,
+                73
+              ]
+            },
+            "post_norm": {
+              "bytes": 8192,
+              "key": {
+                "id": 194,
+                "kind": "source",
+                "rank": 0
+              },
+              "sha256": [
+                61,
+                241,
+                124,
+                88,
+                225,
+                131,
+                43,
+                36,
+                17,
+                28,
+                145,
+                203,
+                25,
+                8,
+                139,
+                6,
+                248,
+                22,
+                222,
+                33,
+                112,
+                44,
+                229,
+                138,
+                203,
+                81,
+                76,
+                145,
+                86,
+                140,
+                222,
+                93
+              ]
+            },
+            "up": {
+              "bytes": 50331648,
+              "key": {
+                "id": 192,
+                "kind": "source",
+                "rank": 0
+              },
+              "sha256": [
+                199,
+                57,
+                16,
+                15,
+                118,
+                13,
+                33,
+                180,
+                130,
+                102,
+                60,
+                228,
+                52,
+                69,
+                166,
+                141,
+                200,
+                133,
+                107,
+                84,
+                113,
+                95,
+                180,
+                159,
+                245,
+                144,
+                30,
+                110,
+                250,
+                77,
+                12,
+                166
+              ]
+            }
+          },
+          "rank": 0,
+          "stages": {
+            "down": {
+              "elements": 4096,
+              "max_absolute_error": 1.2393641668495547e-07,
+              "max_bound_ratio": 0.00769993109726535,
+              "mismatches": 0
+            },
+            "gate": {
+              "elements": 6144,
+              "max_bound": 5.9228177702368746e-05,
+              "mismatches": 0
+            },
+            "norm": {
+              "elements": 4096,
+              "inverse_interval": [
+                14.14823055267334,
+                14.148293495178223
+              ],
+              "maximum_first_narrow_candidates": 1,
+              "mismatches": 0
+            },
+            "swiglu": {
+              "elements": 6144,
+              "exact": 6144,
+              "max_ordered_bf16_steps": 0,
+              "mismatches": 0,
+              "tolerated": 0
+            },
+            "up": {
+              "elements": 6144,
+              "max_bound": 3.698017836725836e-05,
+              "mismatches": 0
+            }
+          }
+        },
+        {
+          "actual_weight_uploads": {
+            "down": {
+              "bytes": 50331648,
+              "key": {
+                "id": 189,
+                "kind": "source",
+                "rank": 1
+              },
+              "sha256": [
+                224,
+                6,
+                68,
+                39,
+                195,
+                105,
+                1,
+                49,
+                71,
+                207,
+                206,
+                205,
+                41,
+                33,
+                225,
+                47,
+                163,
+                80,
+                150,
+                61,
+                207,
+                4,
+                4,
+                79,
+                129,
+                171,
+                117,
+                11,
+                128,
+                245,
+                78,
+                52
+              ]
+            },
+            "gate": {
+              "bytes": 50331648,
+              "key": {
+                "id": 191,
+                "kind": "source",
+                "rank": 1
+              },
+              "sha256": [
+                192,
+                223,
+                15,
+                222,
+                160,
+                47,
+                112,
+                0,
+                182,
+                199,
+                131,
+                125,
+                77,
+                168,
+                206,
+                143,
+                103,
+                173,
+                202,
+                56,
+                30,
+                78,
+                173,
+                217,
+                134,
+                118,
+                151,
+                216,
+                63,
+                2,
+                58,
+                235
+              ]
+            },
+            "post_norm": {
+              "bytes": 8192,
+              "key": {
+                "id": 195,
+                "kind": "source",
+                "rank": 1
+              },
+              "sha256": [
+                61,
+                241,
+                124,
+                88,
+                225,
+                131,
+                43,
+                36,
+                17,
+                28,
+                145,
+                203,
+                25,
+                8,
+                139,
+                6,
+                248,
+                22,
+                222,
+                33,
+                112,
+                44,
+                229,
+                138,
+                203,
+                81,
+                76,
+                145,
+                86,
+                140,
+                222,
+                93
+              ]
+            },
+            "up": {
+              "bytes": 50331648,
+              "key": {
+                "id": 193,
+                "kind": "source",
+                "rank": 1
+              },
+              "sha256": [
+                25,
+                223,
+                2,
+                48,
+                202,
+                246,
+                74,
+                150,
+                45,
+                244,
+                199,
+                220,
+                39,
+                210,
+                119,
+                251,
+                250,
+                224,
+                156,
+                110,
+                79,
+                85,
+                166,
+                34,
+                70,
+                21,
+                151,
+                35,
+                40,
+                90,
+                39,
+                74
+              ]
+            }
+          },
+          "rank": 1,
+          "stages": {
+            "down": {
+              "elements": 4096,
+              "max_absolute_error": 3.2758859447312716e-07,
+              "max_bound_ratio": 0.014819290267108912,
+              "mismatches": 0
+            },
+            "gate": {
+              "elements": 6144,
+              "max_bound": 8.260413119411755e-05,
+              "mismatches": 0
+            },
+            "norm": {
+              "elements": 4096,
+              "inverse_interval": [
+                14.14823055267334,
+                14.148293495178223
+              ],
+              "maximum_first_narrow_candidates": 1,
+              "mismatches": 0
+            },
+            "swiglu": {
+              "elements": 6144,
+              "exact": 6143,
+              "max_ordered_bf16_steps": 1,
+              "mismatches": 0,
+              "tolerated": 1
+            },
+            "up": {
+              "elements": 6144,
+              "max_bound": 3.974577897217652e-05,
+              "mismatches": 0
+            }
+          }
+        }
+      ]
+    },
+    {
+      "profile": "candidate",
+      "ranks": [
+        {
+          "actual_weight_uploads": {
+            "down": {
+              "bytes": 50331648,
+              "key": {
+                "id": 188,
+                "kind": "source",
+                "rank": 0
+              },
+              "sha256": [
+                163,
+                39,
+                29,
+                184,
+                199,
+                51,
+                152,
+                23,
+                134,
+                212,
+                44,
+                204,
+                68,
+                80,
+                114,
+                202,
+                167,
+                104,
+                209,
+                78,
+                38,
+                42,
+                66,
+                117,
+                80,
+                28,
+                169,
+                239,
+                166,
+                62,
+                205,
+                67
+              ]
+            },
+            "gate": {
+              "bytes": 50331648,
+              "key": {
+                "id": 190,
+                "kind": "source",
+                "rank": 0
+              },
+              "sha256": [
+                6,
+                221,
+                68,
+                115,
+                250,
+                7,
+                102,
+                107,
+                249,
+                27,
+                130,
+                212,
+                31,
+                77,
+                60,
+                143,
+                132,
+                249,
+                182,
+                226,
+                220,
+                76,
+                90,
+                165,
+                144,
+                49,
+                146,
+                113,
+                70,
+                50,
+                116,
+                73
+              ]
+            },
+            "post_norm": {
+              "bytes": 8192,
+              "key": {
+                "id": 194,
+                "kind": "source",
+                "rank": 0
+              },
+              "sha256": [
+                61,
+                241,
+                124,
+                88,
+                225,
+                131,
+                43,
+                36,
+                17,
+                28,
+                145,
+                203,
+                25,
+                8,
+                139,
+                6,
+                248,
+                22,
+                222,
+                33,
+                112,
+                44,
+                229,
+                138,
+                203,
+                81,
+                76,
+                145,
+                86,
+                140,
+                222,
+                93
+              ]
+            },
+            "up": {
+              "bytes": 50331648,
+              "key": {
+                "id": 192,
+                "kind": "source",
+                "rank": 0
+              },
+              "sha256": [
+                199,
+                57,
+                16,
+                15,
+                118,
+                13,
+                33,
+                180,
+                130,
+                102,
+                60,
+                228,
+                52,
+                69,
+                166,
+                141,
+                200,
+                133,
+                107,
+                84,
+                113,
+                95,
+                180,
+                159,
+                245,
+                144,
+                30,
+                110,
+                250,
+                77,
+                12,
+                166
+              ]
+            }
+          },
+          "rank": 0,
+          "stages": {
+            "down": {
+              "elements": 4096,
+              "max_absolute_error": 1.2393641668495547e-07,
+              "max_bound_ratio": 0.00769993109726535,
+              "mismatches": 0
+            },
+            "gate": {
+              "elements": 6144,
+              "max_bound": 5.9228177702368746e-05,
+              "mismatches": 0
+            },
+            "norm": {
+              "elements": 4096,
+              "inverse_interval": [
+                14.14823055267334,
+                14.148293495178223
+              ],
+              "maximum_first_narrow_candidates": 1,
+              "mismatches": 0
+            },
+            "swiglu": {
+              "elements": 6144,
+              "exact": 6144,
+              "max_ordered_bf16_steps": 0,
+              "mismatches": 0,
+              "tolerated": 0
+            },
+            "up": {
+              "elements": 6144,
+              "max_bound": 3.698017836725836e-05,
+              "mismatches": 0
+            }
+          }
+        },
+        {
+          "actual_weight_uploads": {
+            "down": {
+              "bytes": 50331648,
+              "key": {
+                "id": 189,
+                "kind": "source",
+                "rank": 1
+              },
+              "sha256": [
+                224,
+                6,
+                68,
+                39,
+                195,
+                105,
+                1,
+                49,
+                71,
+                207,
+                206,
+                205,
+                41,
+                33,
+                225,
+                47,
+                163,
+                80,
+                150,
+                61,
+                207,
+                4,
+                4,
+                79,
+                129,
+                171,
+                117,
+                11,
+                128,
+                245,
+                78,
+                52
+              ]
+            },
+            "gate": {
+              "bytes": 50331648,
+              "key": {
+                "id": 191,
+                "kind": "source",
+                "rank": 1
+              },
+              "sha256": [
+                192,
+                223,
+                15,
+                222,
+                160,
+                47,
+                112,
+                0,
+                182,
+                199,
+                131,
+                125,
+                77,
+                168,
+                206,
+                143,
+                103,
+                173,
+                202,
+                56,
+                30,
+                78,
+                173,
+                217,
+                134,
+                118,
+                151,
+                216,
+                63,
+                2,
+                58,
+                235
+              ]
+            },
+            "post_norm": {
+              "bytes": 8192,
+              "key": {
+                "id": 195,
+                "kind": "source",
+                "rank": 1
+              },
+              "sha256": [
+                61,
+                241,
+                124,
+                88,
+                225,
+                131,
+                43,
+                36,
+                17,
+                28,
+                145,
+                203,
+                25,
+                8,
+                139,
+                6,
+                248,
+                22,
+                222,
+                33,
+                112,
+                44,
+                229,
+                138,
+                203,
+                81,
+                76,
+                145,
+                86,
+                140,
+                222,
+                93
+              ]
+            },
+            "up": {
+              "bytes": 50331648,
+              "key": {
+                "id": 193,
+                "kind": "source",
+                "rank": 1
+              },
+              "sha256": [
+                25,
+                223,
+                2,
+                48,
+                202,
+                246,
+                74,
+                150,
+                45,
+                244,
+                199,
+                220,
+                39,
+                210,
+                119,
+                251,
+                250,
+                224,
+                156,
+                110,
+                79,
+                85,
+                166,
+                34,
+                70,
+                21,
+                151,
+                35,
+                40,
+                90,
+                39,
+                74
+              ]
+            }
+          },
+          "rank": 1,
+          "stages": {
+            "down": {
+              "elements": 4096,
+              "max_absolute_error": 3.2758859447312716e-07,
+              "max_bound_ratio": 0.014819290267108912,
+              "mismatches": 0
+            },
+            "gate": {
+              "elements": 6144,
+              "max_bound": 8.260413119411755e-05,
+              "mismatches": 0
+            },
+            "norm": {
+              "elements": 4096,
+              "inverse_interval": [
+                14.14823055267334,
+                14.148293495178223
+              ],
+              "maximum_first_narrow_candidates": 1,
+              "mismatches": 0
+            },
+            "swiglu": {
+              "elements": 6144,
+              "exact": 6143,
+              "max_ordered_bf16_steps": 1,
+              "mismatches": 0,
+              "tolerated": 1
+            },
+            "up": {
+              "elements": 6144,
+              "max_bound": 3.974577897217652e-05,
+              "mismatches": 0
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "residual_arithmetic_rechecked": false,
+  "runtime_premises_discharged": false,
+  "schema": "ferric-p228-historical-mlp-capture-replay-v1",
+  "source_postchecks_passed": true,
+  "token": 9112
+}

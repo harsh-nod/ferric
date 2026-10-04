@@ -1,0 +1,42 @@
+{
+  "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-historical-mlp-capture-replay-v1/README.md": {
+    "bytes": 7722,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-historical-mlp-capture-replay-v1/README.md",
+    "sha256": "397429d9375120ad349bd41925f839d8c1976d70ea465adf75d88784fe267682"
+  },
+  "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-historical-mlp-capture-replay-v1/run.py": {
+    "bytes": 15057,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-historical-mlp-capture-replay-v1/run.py",
+    "sha256": "a537be4b19098180907ff41023ed2fd7ca19f12213a5fd4c33e9ef38f59aeb89"
+  },
+  "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-historical-mlp-capture-replay-v1/test_run.py": {
+    "bytes": 22451,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-historical-mlp-capture-replay-v1/test_run.py",
+    "sha256": "81ed1719d232046eac5a8bea25af33627f79ad1de6c4303cf9cfe31f05aebc37"
+  },
+  "/home/harmenon/ferric-asrock-42/evidence/resident-layer-tp2-v218/reference/extract.py": {
+    "bytes": 10473,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/resident-layer-tp2-v218/reference/extract.py",
+    "sha256": "76872f3558d6f90c21b9eee3ec0ba4ebdd79168b620338faa6bdbdd8b78bdf4a"
+  },
+  "/home/harmenon/ferric-asrock-42/evidence/resident-layer-tp2-v218/reference/policy.json": {
+    "bytes": 2799,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/resident-layer-tp2-v218/reference/policy.json",
+    "sha256": "9497e55e70a42630d50b74ea33b0856a385d051fb60bc7f23124ee5cbd46e44b"
+  },
+  "/home/harmenon/ferric-asrock-42/evidence/resident-layer-tp2-v218/reference/reference.py": {
+    "bytes": 23782,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/resident-layer-tp2-v218/reference/reference.py",
+    "sha256": "2e41d6e5715cc561bf818fdee794e4ced74a77f93acd4961d8b15f427f196c6e"
+  },
+  "/home/harmenon/ferric-asrock-42/evidence/resident-layer-tp2-v218/reference/test_reference.py": {
+    "bytes": 12387,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/resident-layer-tp2-v218/reference/test_reference.py",
+    "sha256": "4de379796dc83561809aaf070a1e8f129a72e7a664d8a3b113d0d278280b524d"
+  },
+  "/home/harmenon/ferric-asrock-42/evidence/wave-output-lowering-v216/tp2-residual-reference/reference.py": {
+    "bytes": 4347,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/wave-output-lowering-v216/tp2-residual-reference/reference.py",
+    "sha256": "551f89f968cad8f63073ca975346c593a31dad624115a93059b28a328e312ef3"
+  }
+}

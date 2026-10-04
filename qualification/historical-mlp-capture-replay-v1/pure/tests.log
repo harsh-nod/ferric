@@ -1,0 +1,46 @@
+test_actual_upload_roles_and_both_rank_joins (test_run.AdapterTests.test_actual_upload_roles_and_both_rank_joins) ... ok
+test_all_five_checks_use_actual_immediate_predecessors (test_run.AdapterTests.test_all_five_checks_use_actual_immediate_predecessors) ... ok
+test_bootstrap_hash_and_symlink_refusals (test_run.AdapterTests.test_bootstrap_hash_and_symlink_refusals) ... ok
+test_capture_layout_uses_supplied_authenticated_spans (test_run.AdapterTests.test_capture_layout_uses_supplied_authenticated_spans) ... ok
+test_duplicate_missing_and_wrong_kind_upload_refused (test_run.AdapterTests.test_duplicate_missing_and_wrong_kind_upload_refused) ... ok
+test_duplicate_missing_registered_role_and_alias_refused (test_run.AdapterTests.test_duplicate_missing_registered_role_and_alias_refused) ... ok
+test_each_input_mutation_reaches_the_frozen_checker (test_run.AdapterTests.test_each_input_mutation_reaches_the_frozen_checker) ... ok
+test_each_stage_failure_stops_instead_of_falling_back (test_run.AdapterTests.test_each_stage_failure_stops_instead_of_falling_back) ... ok
+test_fixture_loader_reuses_frozen_reader_and_records_all_payloads (test_run.AdapterTests.test_fixture_loader_reuses_frozen_reader_and_records_all_payloads) ... ok
+test_fixture_policy_difference_and_frozen_loader_failure_propagate (test_run.AdapterTests.test_fixture_policy_difference_and_frozen_loader_failure_propagate) ... ok
+test_four_rank_profile_rows_and_twenty_checks (test_run.AdapterTests.test_four_rank_profile_rows_and_twenty_checks) ... ok
+test_missing_profile_rank_and_late_bad_upload_refused (test_run.AdapterTests.test_missing_profile_rank_and_late_bad_upload_refused) ... ok
+test_nonfinite_boolean_truncated_and_extra_words_refused (test_run.AdapterTests.test_nonfinite_boolean_truncated_and_extra_words_refused) ... ok
+test_python_optimization_environment_and_flag_refused (test_run.AdapterTests.test_python_optimization_environment_and_flag_refused) ... ok
+test_reference_import_rejects_other_numpy_and_restores_absence (test_run.AdapterTests.test_reference_import_rejects_other_numpy_and_restores_absence) ... ok
+test_reference_import_restores_existing_extract_on_failure (test_run.AdapterTests.test_reference_import_restores_existing_extract_on_failure) ... ok
+test_registration_element_width_extent_and_boolean_refused (test_run.AdapterTests.test_registration_element_width_extent_and_boolean_refused) ... ok
+test_replay_nonclaims_and_final_recheck_are_not_skipped (test_run.AdapterTests.test_replay_nonclaims_and_final_recheck_are_not_skipped) ... ok
+test_selected_mlp548_not_legacy_image (test_run.AdapterTests.test_selected_mlp548_not_legacy_image) ... ok
+test_swapped_gate_up_or_rank_weights_refused (test_run.AdapterTests.test_swapped_gate_up_or_rank_weights_refused) ... ok
+test_wrong_layer_rank_and_boolean_rank_refused (test_run.AdapterTests.test_wrong_layer_rank_and_boolean_rank_refused) ... ok
+test_wrong_weight_bytes_digest_and_boolean_source_refused (test_run.AdapterTests.test_wrong_weight_bytes_digest_and_boolean_source_refused) ... ok
+test_duplicate_and_nonfinite_json (test_reference.ExtractionTests.test_duplicate_and_nonfinite_json) ... ok
+test_header_shape_dtype_extent_overlap_mutations (test_reference.ExtractionTests.test_header_shape_dtype_extent_overlap_mutations) ... ok
+test_nonfinite_and_partial_read_refusal (test_reference.ExtractionTests.test_nonfinite_and_partial_read_refusal) ... ok
+test_pin_mutation_and_symlink (test_reference.ExtractionTests.test_pin_mutation_and_symlink) ... ok
+test_rank_shape_axis_rejected (test_reference.ExtractionTests.test_rank_shape_axis_rejected) ... ok
+test_row_and_column_shards_have_distinct_rank_order (test_reference.ExtractionTests.test_row_and_column_shards_have_distinct_rank_order) ... ok
+test_direct_bf16_rounding_avoids_double_rounding (test_reference.NumericalTests.test_direct_bf16_rounding_avoids_double_rounding) ... ok
+test_dual_rounding_is_not_fused_weighting (test_reference.NumericalTests.test_dual_rounding_is_not_fused_weighting) ... ok
+test_frozen_integer_residual_order_zero_overflow_and_inputs_unchanged (test_reference.NumericalTests.test_frozen_integer_residual_order_zero_overflow_and_inputs_unchanged) ... ok
+test_gemv_ones_and_absolute_cancellation_bound (test_reference.NumericalTests.test_gemv_ones_and_absolute_cancellation_bound) ... ok
+test_norm_independent_interval_accepts_staged_model_and_rejects_mutation (test_reference.NumericalTests.test_norm_independent_interval_accepts_staged_model_and_rejects_mutation) ... ok
+test_norm_uncertainty_refuses_instead_of_widening (test_reference.NumericalTests.test_norm_uncertainty_refuses_instead_of_widening) ... ok
+test_oracle_requires_frozen_exact_source (test_reference.NumericalTests.test_oracle_requires_frozen_exact_source) ... ok
+test_policy_literals_match_bound_and_do_not_allow_adaptation (test_reference.NumericalTests.test_policy_literals_match_bound_and_do_not_allow_adaptation) ... ok
+test_raw_observation_status_rejected_before_loading_files (test_reference.NumericalTests.test_raw_observation_status_rejected_before_loading_files) ... ok
+test_rounding_cells_ties_extremes_and_signed_zero (test_reference.NumericalTests.test_rounding_cells_ties_extremes_and_signed_zero) ... ok
+test_stable_silu_extremes_zero_sign_and_fixed_tolerance (test_reference.NumericalTests.test_stable_silu_extremes_zero_sign_and_fixed_tolerance) ... ok
+test_underflow_allowance_and_down_partial (test_reference.NumericalTests.test_underflow_allowance_and_down_partial) ... ok
+test_word_types_nonfinite_and_length (test_reference.NumericalTests.test_word_types_nonfinite_and_length) ... ok
+
+----------------------------------------------------------------------
+Ran 41 tests in 0.158s
+
+OK

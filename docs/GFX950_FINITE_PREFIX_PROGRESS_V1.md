@@ -22,7 +22,10 @@ are byte-identical to the prior native route, not a regression unique to V7.
 The [historical two-residual replay](../qualification/historical-residual-capture-replay-v1/README.md)
 matches all 32,768 captured BF16 words exactly across both residual stages,
 both ranks and both profiles. This checks historical layer-0 residual boundaries,
-not V7 or upstream MLP arithmetic. The all-layer observation controller passed
+not V7. The separate [historical MLP replay](../qualification/historical-mlp-capture-replay-v1/README.md)
+now passes all 20 conditional stage checks and 41 CPU tests, with no bound
+violations. It checks captured immediate inputs and authentic weights, not
+all-layer or full-model acceptance. The all-layer observation controller passed
 84 CPU policy tests and the separate framework diagnostic reader passed 12.
 
 The [six-case new-image matrix](../qualification/independent-prefix-case-matrix-v1/README.md)
@@ -65,6 +68,7 @@ earlier checkpoints and their limitations at the time they were recorded.
 | Historical two-residual capture replay on `mi350` | 32,768 BF16 words exact; 14 policy/layout tests passed | Original layer-0 captures and authenticated embedding row; no new GPU run, V7 or MLP acceptance |
 | New V7 image through 36-layer TF4 on `mi350` | 152 captures, four matching framework argmax tokens, six audits and clean Close/reap | All 152 complete tensor rows differ from framework; no numerical or performance acceptance |
 | New V7 image through 36-layer AR4 on `mi350` | Four own-token forwards, matching framework histories and outputs, 152 captures, six audits and clean Close/reap | All 152 complete tensor rows differ from framework; not the 2,048/256 workload or numerical acceptance |
+| Historical MLP capture replay on `mi350` | All 20 conditional stage checks and 41 CPU tests pass; maximum down error/bound ratio 0.0148193 | Original layer-0 captures; no new GPU run, V7 or all-layer acceptance |
 
 Both four-forward runs completed their Close protocol, reaped their owned
 processes, and passed their six surrounding device-state audits. The CPU suite
