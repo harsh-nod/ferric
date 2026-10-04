@@ -1,0 +1,60 @@
+{
+  "schema": "ferric-p228-rope-indexed-ar4-comparison-inputs-v1",
+  "native_complete": {
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-rope-indexed-ar4-gpu-v228-v1/complete.json",
+    "bytes": 1128265,
+    "sha256": "30119e94b7ef116a8845b2b8819122f039dd1a7688b28b9e7494de3f7d408749"
+  },
+  "transport": {
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-ar4-framework-launch-v228-v1/complete.json": {
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rope-indexed-ar4-reference-inputs-v228-v1/complete.json",
+      "bytes": 17692,
+      "sha256": "94403d351120c0eb756f5660e333682ca0f47c4c6c1ac0f3cf6e9c10db896771"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-ar4-framework-reference-v228-v1/reference.json": {
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rope-indexed-ar4-reference-inputs-v228-v1/reference.json",
+      "bytes": 201239,
+      "sha256": "00952244362ad51d241d179f741ae5ae61ff8acfcb3fd160b9dc64ce3b5f699e"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-ar4-framework-reference-v228-v1/genuine-ar-pass1-pos0.bf16": {
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rope-indexed-ar4-reference-inputs-v228-v1/genuine-ar-pass1-pos0.bf16",
+      "bytes": 606976,
+      "sha256": "505dcfe93989f2ebd8f85e2d1fdf74e6d00da29e94df2b26d21cdf5d9a73f31c"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-ar4-framework-reference-v228-v1/genuine-ar-pass1-pos1.bf16": {
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rope-indexed-ar4-reference-inputs-v228-v1/genuine-ar-pass1-pos1.bf16",
+      "bytes": 606976,
+      "sha256": "0431f39c3b5082f3e8607f9b2b1078873e23574d4f350ab3348e997f60aec0c1"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-ar4-framework-reference-v228-v1/genuine-ar-pass1-pos2.bf16": {
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rope-indexed-ar4-reference-inputs-v228-v1/genuine-ar-pass1-pos2.bf16",
+      "bytes": 606976,
+      "sha256": "3b8a6617dcbd17070d5a1993ae3887d6ea70106f4a69f212e2f0125b0a9d4615"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-ar4-framework-reference-v228-v1/genuine-ar-pass1-pos3.bf16": {
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rope-indexed-ar4-reference-inputs-v228-v1/genuine-ar-pass1-pos3.bf16",
+      "bytes": 606976,
+      "sha256": "592eda622d762ff3b57806e47dba40717042387fc65846baed8628a170dfef5f"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-ar4-framework-reference-v228-v1/genuine-ar-pass2-pos0.bf16": {
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rope-indexed-ar4-reference-inputs-v228-v1/genuine-ar-pass2-pos0.bf16",
+      "bytes": 606976,
+      "sha256": "505dcfe93989f2ebd8f85e2d1fdf74e6d00da29e94df2b26d21cdf5d9a73f31c"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-ar4-framework-reference-v228-v1/genuine-ar-pass2-pos1.bf16": {
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rope-indexed-ar4-reference-inputs-v228-v1/genuine-ar-pass2-pos1.bf16",
+      "bytes": 606976,
+      "sha256": "0431f39c3b5082f3e8607f9b2b1078873e23574d4f350ab3348e997f60aec0c1"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-ar4-framework-reference-v228-v1/genuine-ar-pass2-pos2.bf16": {
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rope-indexed-ar4-reference-inputs-v228-v1/genuine-ar-pass2-pos2.bf16",
+      "bytes": 606976,
+      "sha256": "3b8a6617dcbd17070d5a1993ae3887d6ea70106f4a69f212e2f0125b0a9d4615"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-ar4-framework-reference-v228-v1/genuine-ar-pass2-pos3.bf16": {
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rope-indexed-ar4-reference-inputs-v228-v1/genuine-ar-pass2-pos3.bf16",
+      "bytes": 606976,
+      "sha256": "592eda622d762ff3b57806e47dba40717042387fc65846baed8628a170dfef5f"
+    }
+  }
+}

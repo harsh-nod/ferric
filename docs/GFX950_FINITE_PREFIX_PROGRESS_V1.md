@@ -6,22 +6,33 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Latest: the [new linked RoPE image completed native AR4 on MI350](../qualification/rope-indexed-ar4-native-v1/README.md).
+Latest: the [new linked RoPE AR4 numerical comparison completed on MI350](../qualification/rope-indexed-ar4-comparison-v1/README.md).
+All 152 tensor slices share comparable input histories, but none matches the
+independent framework reference bitwise. New logit relative-L2 errors are
+0.0030448043, 0.0094134774, 0.0117436782 and 0.0050785906: unchanged at
+position 0, improved at position 1, and worse at positions 2 and 3. Across
+all slices, 90 improve, 24 regress and 38 are unchanged on that metric.
+All eighteen comparator tests passed with unchanged source hashes. The
+full before/after table is published, including the regressions. This is
+not numerical acceptance; localizing the remaining differences is the next
+gate before the sustained 2,048/256 workload or throughput claims.
+
+Previously, the [new linked RoPE image completed native AR4 on MI350](../qualification/rope-indexed-ar4-native-v1/README.md).
 The own-output chain was 9112 -> 67 -> 25 -> 576 -> 2701. All 152 tensor
 slices, 576 terminal states, seven naturally exited/reaped leaves and six
 surrounding audits passed structural checks in one attempt without retry.
 Only the prefix image, session and output path changed. The 391.571-second
 controller duration includes setup and audits and is not GPU throughput.
-Independent tensor comparison is still a separate gate; no numerical or
-sustained 2,048/256 acceptance is claimed.
+Independent tensor comparison subsequently completed as above; no numerical
+or sustained 2,048/256 acceptance is claimed.
 
 Previously, the [linked RoPE AR4 supervisor passed all 74 policy tests](../qualification/rope-indexed-ar4-supervisor-v1/README.md)
 on MI350, with no failures, errors or skips and unchanged source snapshots.
 The new admission path binds the actual emitted image to separate retained
 producer and qualified consumer generations while preserving the runtime,
 own-output recurrence and lifecycle checks. This is CPU-only synthetic
-qualification, not GPU execution or numerical acceptance. The next gate is
-the new image's actual GPU observation and independent tensor comparison.
+qualification, not GPU execution or numerical acceptance. The subsequent
+GPU observation and independent tensor comparison are recorded above.
 
 Previously, [linked indexed RoPE emission produced a new gfx950 HSACO](../qualification/rope-indexed-checked-emission-v1/README.md).
 All eight staged phases and sixteen controller-policy tests passed. The
@@ -31,7 +42,7 @@ register spills. The continuation authenticates the retained successful
 compiler leaves and uses the separately qualified indexed consumer, without
 relabeling the original failed aggregate. All owned processes were reaped
 and postchecks passed. This is checked emission, not GPU numerical acceptance
-or a performance result. The new image's GPU evaluation is the next gate.
+or a performance result. The subsequent GPU evaluation is recorded above.
 
 Previously, the [indexed inert join V2 passed all thirteen staged CPU phases](../qualification/kir-indexed-formal-join-v2/README.md).
 The full lower library passed 785 tests without ignores; its twenty indexed
@@ -40,8 +51,8 @@ with fifteen historical ignores, followed by an explicit passing actual
 retained-handoff join. Twenty controller-policy tests passed separately.
 The original work/storage limits remain unchanged, all owned processes were
 reaped, and postchecks passed. This clears the measured inert-join refusal;
-checked HSACO emission subsequently passed as above; GPU numerical evaluation
-of that image remains pending.
+checked HSACO emission and GPU numerical evaluation subsequently completed
+as above, without numerical acceptance.
 
 Previously, an [unchanged-source control](../qualification/kir-indexed-baseline-control-v1/README.md)
 reproduced the existing nested-enum location assertion in both a focused run

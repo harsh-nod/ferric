@@ -1,0 +1,4774 @@
+{
+  "acceptance_threshold": null,
+  "candidate_tensor_rows": 152,
+  "comparable_delta_rows": 152,
+  "numerical_acceptance": false,
+  "positions": [
+    {
+      "baseline_input_token": 9112,
+      "baseline_output_token": 67,
+      "baseline_same_history": true,
+      "before_after_comparable": true,
+      "candidate_input_token": 9112,
+      "candidate_output_token": 67,
+      "candidate_same_history": true,
+      "framework_input_token": 9112,
+      "framework_output_token": 67,
+      "needs_conditional_reference": false,
+      "position": 0
+    },
+    {
+      "baseline_input_token": 67,
+      "baseline_output_token": 25,
+      "baseline_same_history": true,
+      "before_after_comparable": true,
+      "candidate_input_token": 67,
+      "candidate_output_token": 25,
+      "candidate_same_history": true,
+      "framework_input_token": 67,
+      "framework_output_token": 25,
+      "needs_conditional_reference": false,
+      "position": 1
+    },
+    {
+      "baseline_input_token": 25,
+      "baseline_output_token": 576,
+      "baseline_same_history": true,
+      "before_after_comparable": true,
+      "candidate_input_token": 25,
+      "candidate_output_token": 576,
+      "candidate_same_history": true,
+      "framework_input_token": 25,
+      "framework_output_token": 576,
+      "needs_conditional_reference": false,
+      "position": 2
+    },
+    {
+      "baseline_input_token": 576,
+      "baseline_output_token": 2701,
+      "baseline_same_history": true,
+      "before_after_comparable": true,
+      "candidate_input_token": 576,
+      "candidate_output_token": 2701,
+      "candidate_same_history": true,
+      "framework_input_token": 576,
+      "framework_output_token": 2701,
+      "needs_conditional_reference": false,
+      "position": 3
+    }
+  ],
+  "tensors": [
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 3807,
+        "max_abs_error": 0.00390625,
+        "max_bf16_steps": 128,
+        "relative_l2": 0.0005915480736124293,
+        "rmse": 0.00022784684538275748,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 3807,
+        "max_abs_error": 0.00390625,
+        "max_bf16_steps": 128,
+        "relative_l2": 0.0005915480736124293,
+        "rmse": 0.00022784684538275748,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": 0,
+        "max_abs_error": 0.0,
+        "max_bf16_steps": 0,
+        "relative_l2": 0.0,
+        "rmse": 0.0
+      },
+      "needs_conditional_reference": false,
+      "position": 0,
+      "same_history_before_after": true,
+      "tensor": "layer0-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 2788,
+        "max_abs_error": 0.015625,
+        "max_bf16_steps": 128,
+        "relative_l2": 0.0009955793197378383,
+        "rmse": 0.0007993521110424397,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 2788,
+        "max_abs_error": 0.015625,
+        "max_bf16_steps": 128,
+        "relative_l2": 0.0009955793197378383,
+        "rmse": 0.0007993521110424397,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": 0,
+        "max_abs_error": 0.0,
+        "max_bf16_steps": 0,
+        "relative_l2": 0.0,
+        "rmse": 0.0
+      },
+      "needs_conditional_reference": false,
+      "position": 0,
+      "same_history_before_after": true,
+      "tensor": "layer1-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 2343,
+        "max_abs_error": 0.015625,
+        "max_bf16_steps": 14848,
+        "relative_l2": 0.00115147017698888,
+        "rmse": 0.0011163649043250056,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 2343,
+        "max_abs_error": 0.015625,
+        "max_bf16_steps": 14848,
+        "relative_l2": 0.00115147017698888,
+        "rmse": 0.0011163649043250056,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": 0,
+        "max_abs_error": 0.0,
+        "max_bf16_steps": 0,
+        "relative_l2": 0.0,
+        "rmse": 0.0
+      },
+      "needs_conditional_reference": false,
+      "position": 0,
+      "same_history_before_after": true,
+      "tensor": "layer2-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 1960,
+        "max_abs_error": 0.0234375,
+        "max_bf16_steps": 29440,
+        "relative_l2": 0.0014359582040985297,
+        "rmse": 0.001443229112417204,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 1960,
+        "max_abs_error": 0.0234375,
+        "max_bf16_steps": 29440,
+        "relative_l2": 0.0014359582040985297,
+        "rmse": 0.001443229112417204,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": 0,
+        "max_abs_error": 0.0,
+        "max_bf16_steps": 0,
+        "relative_l2": 0.0,
+        "rmse": 0.0
+      },
+      "needs_conditional_reference": false,
+      "position": 0,
+      "same_history_before_after": true,
+      "tensor": "layer3-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 1687,
+        "max_abs_error": 0.03125,
+        "max_bf16_steps": 14976,
+        "relative_l2": 0.0018796535327674758,
+        "rmse": 0.0020146444422115784,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 1687,
+        "max_abs_error": 0.03125,
+        "max_bf16_steps": 14976,
+        "relative_l2": 0.0018796535327674758,
+        "rmse": 0.0020146444422115784,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": 0,
+        "max_abs_error": 0.0,
+        "max_bf16_steps": 0,
+        "relative_l2": 0.0,
+        "rmse": 0.0
+      },
+      "needs_conditional_reference": false,
+      "position": 0,
+      "same_history_before_after": true,
+      "tensor": "layer4-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 1452,
+        "max_abs_error": 0.03125,
+        "max_bf16_steps": 29888,
+        "relative_l2": 0.0038537692387885267,
+        "rmse": 0.0024216857674065257,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 1452,
+        "max_abs_error": 0.03125,
+        "max_bf16_steps": 29888,
+        "relative_l2": 0.0038537692387885267,
+        "rmse": 0.0024216857674065257,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": 0,
+        "max_abs_error": 0.0,
+        "max_bf16_steps": 0,
+        "relative_l2": 0.0,
+        "rmse": 0.0
+      },
+      "needs_conditional_reference": false,
+      "position": 0,
+      "same_history_before_after": true,
+      "tensor": "layer5-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 2273,
+        "max_abs_error": 0.25,
+        "max_bf16_steps": 30720,
+        "relative_l2": 6.51291079150235e-05,
+        "rmse": 0.013032354824479177,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 2273,
+        "max_abs_error": 0.25,
+        "max_bf16_steps": 30720,
+        "relative_l2": 6.51291079150235e-05,
+        "rmse": 0.013032354824479177,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": 0,
+        "max_abs_error": 0.0,
+        "max_bf16_steps": 0,
+        "relative_l2": 0.0,
+        "rmse": 0.0
+      },
+      "needs_conditional_reference": false,
+      "position": 0,
+      "same_history_before_after": true,
+      "tensor": "layer6-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 2292,
+        "max_abs_error": 0.25,
+        "max_bf16_steps": 30368,
+        "relative_l2": 6.599807718553589e-05,
+        "rmse": 0.013206217308357264,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 2292,
+        "max_abs_error": 0.25,
+        "max_bf16_steps": 30368,
+        "relative_l2": 6.599807718553589e-05,
+        "rmse": 0.013206217308357264,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": 0,
+        "max_abs_error": 0.0,
+        "max_bf16_steps": 0,
+        "relative_l2": 0.0,
+        "rmse": 0.0
+      },
+      "needs_conditional_reference": false,
+      "position": 0,
+      "same_history_before_after": true,
+      "tensor": "layer7-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 2338,
+        "max_abs_error": 0.25,
+        "max_bf16_steps": 15392,
+        "relative_l2": 6.762224648774917e-05,
+        "rmse": 0.013531223124323005,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 2338,
+        "max_abs_error": 0.25,
+        "max_bf16_steps": 15392,
+        "relative_l2": 6.762224648774917e-05,
+        "rmse": 0.013531223124323005,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": 0,
+        "max_abs_error": 0.0,
+        "max_bf16_steps": 0,
+        "relative_l2": 0.0,
+        "rmse": 0.0
+      },
+      "needs_conditional_reference": false,
+      "position": 0,
+      "same_history_before_after": true,
+      "tensor": "layer8-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 2384,
+        "max_abs_error": 0.25,
+        "max_bf16_steps": 30368,
+        "relative_l2": 6.924241912172684e-05,
+        "rmse": 0.013855419539359332,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 2384,
+        "max_abs_error": 0.25,
+        "max_bf16_steps": 30368,
+        "relative_l2": 6.924241912172684e-05,
+        "rmse": 0.013855419539359332,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": 0,
+        "max_abs_error": 0.0,
+        "max_bf16_steps": 0,
+        "relative_l2": 0.0,
+        "rmse": 0.0
+      },
+      "needs_conditional_reference": false,
+      "position": 0,
+      "same_history_before_after": true,
+      "tensor": "layer9-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 2407,
+        "max_abs_error": 0.25,
+        "max_bf16_steps": 30448,
+        "relative_l2": 7.04793310927621e-05,
+        "rmse": 0.014102942272233287,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 2407,
+        "max_abs_error": 0.25,
+        "max_bf16_steps": 30448,
+        "relative_l2": 7.04793310927621e-05,
+        "rmse": 0.014102942272233287,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": 0,
+        "max_abs_error": 0.0,
+        "max_bf16_steps": 0,
+        "relative_l2": 0.0,
+        "rmse": 0.0
+      },
+      "needs_conditional_reference": false,
+      "position": 0,
+      "same_history_before_after": true,
+      "tensor": "layer10-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 2446,
+        "max_abs_error": 0.25,
+        "max_bf16_steps": 30400,
+        "relative_l2": 7.180371009261381e-05,
+        "rmse": 0.014367977493046531,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 2446,
+        "max_abs_error": 0.25,
+        "max_bf16_steps": 30400,
+        "relative_l2": 7.180371009261381e-05,
+        "rmse": 0.014367977493046531,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": 0,
+        "max_abs_error": 0.0,
+        "max_bf16_steps": 0,
+        "relative_l2": 0.0,
+        "rmse": 0.0
+      },
+      "needs_conditional_reference": false,
+      "position": 0,
+      "same_history_before_after": true,
+      "tensor": "layer11-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 2478,
+        "max_abs_error": 0.25,
+        "max_bf16_steps": 30656,
+        "relative_l2": 7.288155508097106e-05,
+        "rmse": 0.014583649425951981,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 2478,
+        "max_abs_error": 0.25,
+        "max_bf16_steps": 30656,
+        "relative_l2": 7.288155508097106e-05,
+        "rmse": 0.014583649425951981,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": 0,
+        "max_abs_error": 0.0,
+        "max_bf16_steps": 0,
+        "relative_l2": 0.0,
+        "rmse": 0.0
+      },
+      "needs_conditional_reference": false,
+      "position": 0,
+      "same_history_before_after": true,
+      "tensor": "layer12-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 2516,
+        "max_abs_error": 0.25,
+        "max_bf16_steps": 30432,
+        "relative_l2": 7.334806546797151e-05,
+        "rmse": 0.014676996048804715,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 2516,
+        "max_abs_error": 0.25,
+        "max_bf16_steps": 30432,
+        "relative_l2": 7.334806546797151e-05,
+        "rmse": 0.014676996048804715,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": 0,
+        "max_abs_error": 0.0,
+        "max_bf16_steps": 0,
+        "relative_l2": 0.0,
+        "rmse": 0.0
+      },
+      "needs_conditional_reference": false,
+      "position": 0,
+      "same_history_before_after": true,
+      "tensor": "layer13-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 2557,
+        "max_abs_error": 0.25,
+        "max_bf16_steps": 30448,
+        "relative_l2": 7.47020761666515e-05,
+        "rmse": 0.014947988464304049,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 2557,
+        "max_abs_error": 0.25,
+        "max_bf16_steps": 30448,
+        "relative_l2": 7.47020761666515e-05,
+        "rmse": 0.014947988464304049,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": 0,
+        "max_abs_error": 0.0,
+        "max_bf16_steps": 0,
+        "relative_l2": 0.0,
+        "rmse": 0.0
+      },
+      "needs_conditional_reference": false,
+      "position": 0,
+      "same_history_before_after": true,
+      "tensor": "layer14-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 2560,
+        "max_abs_error": 0.25,
+        "max_bf16_steps": 30424,
+        "relative_l2": 7.473375904053104e-05,
+        "rmse": 0.014954395815021653,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 2560,
+        "max_abs_error": 0.25,
+        "max_bf16_steps": 30424,
+        "relative_l2": 7.473375904053104e-05,
+        "rmse": 0.014954395815021653,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": 0,
+        "max_abs_error": 0.0,
+        "max_bf16_steps": 0,
+        "relative_l2": 0.0,
+        "rmse": 0.0
+      },
+      "needs_conditional_reference": false,
+      "position": 0,
+      "same_history_before_after": true,
+      "tensor": "layer15-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 2623,
+        "max_abs_error": 0.25,
+        "max_bf16_steps": 30400,
+        "relative_l2": 7.41767160619635e-05,
+        "rmse": 0.015352182202140494,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 2623,
+        "max_abs_error": 0.25,
+        "max_bf16_steps": 30400,
+        "relative_l2": 7.41767160619635e-05,
+        "rmse": 0.015352182202140494,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": 0,
+        "max_abs_error": 0.0,
+        "max_bf16_steps": 0,
+        "relative_l2": 0.0,
+        "rmse": 0.0
+      },
+      "needs_conditional_reference": false,
+      "position": 0,
+      "same_history_before_after": true,
+      "tensor": "layer16-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 2614,
+        "max_abs_error": 0.25,
+        "max_bf16_steps": 30144,
+        "relative_l2": 7.47553191174901e-05,
+        "rmse": 0.015472010867629301,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 2614,
+        "max_abs_error": 0.25,
+        "max_bf16_steps": 30144,
+        "relative_l2": 7.47553191174901e-05,
+        "rmse": 0.015472010867629301,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": 0,
+        "max_abs_error": 0.0,
+        "max_bf16_steps": 0,
+        "relative_l2": 0.0,
+        "rmse": 0.0
+      },
+      "needs_conditional_reference": false,
+      "position": 0,
+      "same_history_before_after": true,
+      "tensor": "layer17-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 2605,
+        "max_abs_error": 0.25,
+        "max_bf16_steps": 30368,
+        "relative_l2": 7.552699515270772e-05,
+        "rmse": 0.01563174367758049,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 2605,
+        "max_abs_error": 0.25,
+        "max_bf16_steps": 30368,
+        "relative_l2": 7.552699515270772e-05,
+        "rmse": 0.01563174367758049,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": 0,
+        "max_abs_error": 0.0,
+        "max_bf16_steps": 0,
+        "relative_l2": 0.0,
+        "rmse": 0.0
+      },
+      "needs_conditional_reference": false,
+      "position": 0,
+      "same_history_before_after": true,
+      "tensor": "layer18-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 2597,
+        "max_abs_error": 0.25,
+        "max_bf16_steps": 30664,
+        "relative_l2": 7.558942506313956e-05,
+        "rmse": 0.015644717286089356,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 2597,
+        "max_abs_error": 0.25,
+        "max_bf16_steps": 30664,
+        "relative_l2": 7.558942506313956e-05,
+        "rmse": 0.015644717286089356,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": 0,
+        "max_abs_error": 0.0,
+        "max_bf16_steps": 0,
+        "relative_l2": 0.0,
+        "rmse": 0.0
+      },
+      "needs_conditional_reference": false,
+      "position": 0,
+      "same_history_before_after": true,
+      "tensor": "layer19-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 2589,
+        "max_abs_error": 0.25,
+        "max_bf16_steps": 30661,
+        "relative_l2": 7.636299361893534e-05,
+        "rmse": 0.015804922312015184,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 2589,
+        "max_abs_error": 0.25,
+        "max_bf16_steps": 30661,
+        "relative_l2": 7.636299361893534e-05,
+        "rmse": 0.015804922312015184,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": 0,
+        "max_abs_error": 0.0,
+        "max_bf16_steps": 0,
+        "relative_l2": 0.0,
+        "rmse": 0.0
+      },
+      "needs_conditional_reference": false,
+      "position": 0,
+      "same_history_before_after": true,
+      "tensor": "layer20-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 2592,
+        "max_abs_error": 0.25,
+        "max_bf16_steps": 30640,
+        "relative_l2": 7.956673801178786e-05,
+        "rmse": 0.016468082481900213,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 2592,
+        "max_abs_error": 0.25,
+        "max_bf16_steps": 30640,
+        "relative_l2": 7.956673801178786e-05,
+        "rmse": 0.016468082481900213,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": 0,
+        "max_abs_error": 0.0,
+        "max_bf16_steps": 0,
+        "relative_l2": 0.0,
+        "rmse": 0.0
+      },
+      "needs_conditional_reference": false,
+      "position": 0,
+      "same_history_before_after": true,
+      "tensor": "layer21-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 2575,
+        "max_abs_error": 0.25,
+        "max_bf16_steps": 30452,
+        "relative_l2": 8.080744031729062e-05,
+        "rmse": 0.016724923997218494,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 2575,
+        "max_abs_error": 0.25,
+        "max_bf16_steps": 30452,
+        "relative_l2": 8.080744031729062e-05,
+        "rmse": 0.016724923997218494,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": 0,
+        "max_abs_error": 0.0,
+        "max_bf16_steps": 0,
+        "relative_l2": 0.0,
+        "rmse": 0.0
+      },
+      "needs_conditional_reference": false,
+      "position": 0,
+      "same_history_before_after": true,
+      "tensor": "layer22-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 2588,
+        "max_abs_error": 0.25,
+        "max_bf16_steps": 30560,
+        "relative_l2": 8.21081593069988e-05,
+        "rmse": 0.016994201238356082,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 2588,
+        "max_abs_error": 0.25,
+        "max_bf16_steps": 30560,
+        "relative_l2": 8.21081593069988e-05,
+        "rmse": 0.016994201238356082,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": 0,
+        "max_abs_error": 0.0,
+        "max_bf16_steps": 0,
+        "relative_l2": 0.0,
+        "rmse": 0.0
+      },
+      "needs_conditional_reference": false,
+      "position": 0,
+      "same_history_before_after": true,
+      "tensor": "layer23-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 2563,
+        "max_abs_error": 0.25,
+        "max_bf16_steps": 30760,
+        "relative_l2": 8.247006062645556e-05,
+        "rmse": 0.017069044851769362,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 2563,
+        "max_abs_error": 0.25,
+        "max_bf16_steps": 30760,
+        "relative_l2": 8.247006062645556e-05,
+        "rmse": 0.017069044851769362,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": 0,
+        "max_abs_error": 0.0,
+        "max_bf16_steps": 0,
+        "relative_l2": 0.0,
+        "rmse": 0.0
+      },
+      "needs_conditional_reference": false,
+      "position": 0,
+      "same_history_before_after": true,
+      "tensor": "layer24-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 2520,
+        "max_abs_error": 0.25,
+        "max_bf16_steps": 30560,
+        "relative_l2": 8.328337561200222e-05,
+        "rmse": 0.017237395697346523,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 2520,
+        "max_abs_error": 0.25,
+        "max_bf16_steps": 30560,
+        "relative_l2": 8.328337561200222e-05,
+        "rmse": 0.017237395697346523,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": 0,
+        "max_abs_error": 0.0,
+        "max_bf16_steps": 0,
+        "relative_l2": 0.0,
+        "rmse": 0.0
+      },
+      "needs_conditional_reference": false,
+      "position": 0,
+      "same_history_before_after": true,
+      "tensor": "layer25-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 2473,
+        "max_abs_error": 0.25,
+        "max_bf16_steps": 30940,
+        "relative_l2": 8.455268064366968e-05,
+        "rmse": 0.017500081906136302,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 2473,
+        "max_abs_error": 0.25,
+        "max_bf16_steps": 30940,
+        "relative_l2": 8.455268064366968e-05,
+        "rmse": 0.017500081906136302,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": 0,
+        "max_abs_error": 0.0,
+        "max_bf16_steps": 0,
+        "relative_l2": 0.0,
+        "rmse": 0.0
+      },
+      "needs_conditional_reference": false,
+      "position": 0,
+      "same_history_before_after": true,
+      "tensor": "layer26-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 2411,
+        "max_abs_error": 0.25,
+        "max_bf16_steps": 416,
+        "relative_l2": 8.697712484455096e-05,
+        "rmse": 0.018001833797824635,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 2411,
+        "max_abs_error": 0.25,
+        "max_bf16_steps": 416,
+        "relative_l2": 8.697712484455096e-05,
+        "rmse": 0.018001833797824635,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": 0,
+        "max_abs_error": 0.0,
+        "max_bf16_steps": 0,
+        "relative_l2": 0.0,
+        "rmse": 0.0
+      },
+      "needs_conditional_reference": false,
+      "position": 0,
+      "same_history_before_after": true,
+      "tensor": "layer27-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 2394,
+        "max_abs_error": 0.25,
+        "max_bf16_steps": 30800,
+        "relative_l2": 8.865490078793351e-05,
+        "rmse": 0.018349135114990662,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 2394,
+        "max_abs_error": 0.25,
+        "max_bf16_steps": 30800,
+        "relative_l2": 8.865490078793351e-05,
+        "rmse": 0.018349135114990662,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": 0,
+        "max_abs_error": 0.0,
+        "max_bf16_steps": 0,
+        "relative_l2": 0.0,
+        "rmse": 0.0
+      },
+      "needs_conditional_reference": false,
+      "position": 0,
+      "same_history_before_after": true,
+      "tensor": "layer28-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 2306,
+        "max_abs_error": 0.25,
+        "max_bf16_steps": 30696,
+        "relative_l2": 9.150741139252793e-05,
+        "rmse": 0.018939488765896344,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 2306,
+        "max_abs_error": 0.25,
+        "max_bf16_steps": 30696,
+        "relative_l2": 9.150741139252793e-05,
+        "rmse": 0.018939488765896344,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": 0,
+        "max_abs_error": 0.0,
+        "max_bf16_steps": 0,
+        "relative_l2": 0.0,
+        "rmse": 0.0
+      },
+      "needs_conditional_reference": false,
+      "position": 0,
+      "same_history_before_after": true,
+      "tensor": "layer29-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 2280,
+        "max_abs_error": 0.25,
+        "max_bf16_steps": 30688,
+        "relative_l2": 9.328945076136226e-05,
+        "rmse": 0.019308330275699257,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 2280,
+        "max_abs_error": 0.25,
+        "max_bf16_steps": 30688,
+        "relative_l2": 9.328945076136226e-05,
+        "rmse": 0.019308330275699257,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": 0,
+        "max_abs_error": 0.0,
+        "max_bf16_steps": 0,
+        "relative_l2": 0.0,
+        "rmse": 0.0
+      },
+      "needs_conditional_reference": false,
+      "position": 0,
+      "same_history_before_after": true,
+      "tensor": "layer30-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 2206,
+        "max_abs_error": 0.25,
+        "max_bf16_steps": 30470,
+        "relative_l2": 9.72278737054083e-05,
+        "rmse": 0.020123533725468025,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 2206,
+        "max_abs_error": 0.25,
+        "max_bf16_steps": 30470,
+        "relative_l2": 9.72278737054083e-05,
+        "rmse": 0.020123533725468025,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": 0,
+        "max_abs_error": 0.0,
+        "max_bf16_steps": 0,
+        "relative_l2": 0.0,
+        "rmse": 0.0
+      },
+      "needs_conditional_reference": false,
+      "position": 0,
+      "same_history_before_after": true,
+      "tensor": "layer31-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 2120,
+        "max_abs_error": 0.25,
+        "max_bf16_steps": 30704,
+        "relative_l2": 0.00010060616930941128,
+        "rmse": 0.02082281506884898,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 2120,
+        "max_abs_error": 0.25,
+        "max_bf16_steps": 30704,
+        "relative_l2": 0.00010060616930941128,
+        "rmse": 0.02082281506884898,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": 0,
+        "max_abs_error": 0.0,
+        "max_bf16_steps": 0,
+        "relative_l2": 0.0,
+        "rmse": 0.0
+      },
+      "needs_conditional_reference": false,
+      "position": 0,
+      "same_history_before_after": true,
+      "tensor": "layer32-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 2078,
+        "max_abs_error": 0.25,
+        "max_bf16_steps": 30784,
+        "relative_l2": 0.00010622757193157035,
+        "rmse": 0.021882968221932267,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 2078,
+        "max_abs_error": 0.25,
+        "max_bf16_steps": 30784,
+        "relative_l2": 0.00010622757193157035,
+        "rmse": 0.021882968221932267,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": 0,
+        "max_abs_error": 0.0,
+        "max_bf16_steps": 0,
+        "relative_l2": 0.0,
+        "rmse": 0.0
+      },
+      "needs_conditional_reference": false,
+      "position": 0,
+      "same_history_before_after": true,
+      "tensor": "layer33-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 1904,
+        "max_abs_error": 0.25,
+        "max_bf16_steps": 31360,
+        "relative_l2": 0.00020262613090796125,
+        "rmse": 0.031663828646879034,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 1904,
+        "max_abs_error": 0.25,
+        "max_bf16_steps": 31360,
+        "relative_l2": 0.00020262613090796125,
+        "rmse": 0.031663828646879034,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": 0,
+        "max_abs_error": 0.0,
+        "max_bf16_steps": 0,
+        "relative_l2": 0.0,
+        "rmse": 0.0
+      },
+      "needs_conditional_reference": false,
+      "position": 0,
+      "same_history_before_after": true,
+      "tensor": "layer34-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 1537,
+        "max_abs_error": 8.0,
+        "max_bf16_steps": 31484,
+        "relative_l2": 0.00217194778095126,
+        "rmse": 0.2134973766706087,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 1537,
+        "max_abs_error": 8.0,
+        "max_bf16_steps": 31484,
+        "relative_l2": 0.00217194778095126,
+        "rmse": 0.2134973766706087,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": 0,
+        "max_abs_error": 0.0,
+        "max_bf16_steps": 0,
+        "relative_l2": 0.0,
+        "rmse": 0.0
+      },
+      "needs_conditional_reference": false,
+      "position": 0,
+      "same_history_before_after": true,
+      "tensor": "layer35-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 1624,
+        "max_abs_error": 0.09375,
+        "max_bf16_steps": 30023,
+        "relative_l2": 0.002502360587078139,
+        "rmse": 0.0044303938365128385,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 1624,
+        "max_abs_error": 0.09375,
+        "max_bf16_steps": 30023,
+        "relative_l2": 0.002502360587078139,
+        "rmse": 0.0044303938365128385,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": 0,
+        "max_abs_error": 0.0,
+        "max_bf16_steps": 0,
+        "relative_l2": 0.0,
+        "rmse": 0.0
+      },
+      "needs_conditional_reference": false,
+      "position": 0,
+      "same_history_before_after": true,
+      "tensor": "final-norm"
+    },
+    {
+      "baseline": {
+        "elements": 151936,
+        "exact_words": 90814,
+        "max_abs_error": 0.0625,
+        "max_bf16_steps": 30670,
+        "relative_l2": 0.00304480431964523,
+        "rmse": 0.010776199141056752,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 151936,
+        "exact_words": 90814,
+        "max_abs_error": 0.0625,
+        "max_bf16_steps": 30670,
+        "relative_l2": 0.00304480431964523,
+        "rmse": 0.010776199141056752,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": 0,
+        "max_abs_error": 0.0,
+        "max_bf16_steps": 0,
+        "relative_l2": 0.0,
+        "rmse": 0.0
+      },
+      "needs_conditional_reference": false,
+      "position": 0,
+      "same_history_before_after": true,
+      "tensor": "logits"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 2100,
+        "max_abs_error": 0.0078125,
+        "max_bf16_steps": 29696,
+        "relative_l2": 0.0025225522372923667,
+        "rmse": 0.0004651899785057227,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 3710,
+        "max_abs_error": 0.001953125,
+        "max_bf16_steps": 14848,
+        "relative_l2": 0.0007547236487024299,
+        "rmse": 0.00013918041923068102,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": 1610,
+        "max_abs_error": -0.005859375,
+        "max_bf16_steps": -14848,
+        "relative_l2": -0.0017678285885899367,
+        "rmse": -0.0003260095592750417
+      },
+      "needs_conditional_reference": false,
+      "position": 1,
+      "same_history_before_after": true,
+      "tensor": "layer0-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 1530,
+        "max_abs_error": 0.0078125,
+        "max_bf16_steps": 29544,
+        "relative_l2": 0.004061816636558338,
+        "rmse": 0.001028632004232673,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 1842,
+        "max_abs_error": 0.0078125,
+        "max_bf16_steps": 29716,
+        "relative_l2": 0.0034350102329244307,
+        "rmse": 0.0008698968408989257,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": 312,
+        "max_abs_error": 0.0,
+        "max_bf16_steps": 172,
+        "relative_l2": -0.0006268064036339077,
+        "rmse": -0.00015873516333374737
+      },
+      "needs_conditional_reference": false,
+      "position": 1,
+      "same_history_before_after": true,
+      "tensor": "layer1-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 1221,
+        "max_abs_error": 0.015625,
+        "max_bf16_steps": 30080,
+        "relative_l2": 0.005509887543948684,
+        "rmse": 0.0016900403186324636,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 1351,
+        "max_abs_error": 0.03125,
+        "max_bf16_steps": 29824,
+        "relative_l2": 0.0053752310846749375,
+        "rmse": 0.0016487373258723193,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": 130,
+        "max_abs_error": 0.015625,
+        "max_bf16_steps": -256,
+        "relative_l2": -0.00013465645927374613,
+        "rmse": -4.130299276014428e-05
+      },
+      "needs_conditional_reference": false,
+      "position": 1,
+      "same_history_before_after": true,
+      "tensor": "layer2-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 990,
+        "max_abs_error": 0.015625,
+        "max_bf16_steps": 30208,
+        "relative_l2": 0.007027232660052769,
+        "rmse": 0.0031952849076302124,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 1215,
+        "max_abs_error": 0.03125,
+        "max_bf16_steps": 30240,
+        "relative_l2": 0.0059175707153316034,
+        "rmse": 0.0026907212712652105,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": 225,
+        "max_abs_error": 0.015625,
+        "max_bf16_steps": 32,
+        "relative_l2": -0.0011096619447211655,
+        "rmse": -0.0005045636363650019
+      },
+      "needs_conditional_reference": false,
+      "position": 1,
+      "same_history_before_after": true,
+      "tensor": "layer3-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 864,
+        "max_abs_error": 0.0625,
+        "max_bf16_steps": 30560,
+        "relative_l2": 0.008727402197862487,
+        "rmse": 0.005621710216408392,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 1025,
+        "max_abs_error": 0.03125,
+        "max_bf16_steps": 30464,
+        "relative_l2": 0.006987773923658654,
+        "rmse": 0.004501137814664397,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": 161,
+        "max_abs_error": -0.03125,
+        "max_bf16_steps": -96,
+        "relative_l2": -0.0017396282742038333,
+        "rmse": -0.001120572401743995
+      },
+      "needs_conditional_reference": false,
+      "position": 1,
+      "same_history_before_after": true,
+      "tensor": "layer4-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 859,
+        "max_abs_error": 0.125,
+        "max_bf16_steps": 30784,
+        "relative_l2": 0.008495038772293694,
+        "rmse": 0.007759336056036768,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 947,
+        "max_abs_error": 0.0625,
+        "max_bf16_steps": 30592,
+        "relative_l2": 0.007325534537820693,
+        "rmse": 0.006691115343044794,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": 88,
+        "max_abs_error": -0.0625,
+        "max_bf16_steps": -192,
+        "relative_l2": -0.001169504234473001,
+        "rmse": -0.0010682207129919736
+      },
+      "needs_conditional_reference": false,
+      "position": 1,
+      "same_history_before_after": true,
+      "tensor": "layer5-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 708,
+        "max_abs_error": 0.125,
+        "max_bf16_steps": 30888,
+        "relative_l2": 0.009630210366120051,
+        "rmse": 0.009640446929178039,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 854,
+        "max_abs_error": 0.0625,
+        "max_bf16_steps": 30560,
+        "relative_l2": 0.008590676476311515,
+        "rmse": 0.008599808052685995,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": 146,
+        "max_abs_error": -0.0625,
+        "max_bf16_steps": -328,
+        "relative_l2": -0.0010395338898085364,
+        "rmse": -0.0010406388764920439
+      },
+      "needs_conditional_reference": false,
+      "position": 1,
+      "same_history_before_after": true,
+      "tensor": "layer6-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 699,
+        "max_abs_error": 0.09375,
+        "max_bf16_steps": 30824,
+        "relative_l2": 0.010265658295387156,
+        "rmse": 0.01078663473662156,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 779,
+        "max_abs_error": 0.125,
+        "max_bf16_steps": 30688,
+        "relative_l2": 0.009616821623803153,
+        "rmse": 0.010104869965311493,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": 80,
+        "max_abs_error": 0.03125,
+        "max_bf16_steps": -136,
+        "relative_l2": -0.0006488366715840035,
+        "rmse": -0.0006817647713100675
+      },
+      "needs_conditional_reference": false,
+      "position": 1,
+      "same_history_before_after": true,
+      "tensor": "layer7-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 698,
+        "max_abs_error": 0.0625,
+        "max_bf16_steps": 30736,
+        "relative_l2": 0.010613307358536814,
+        "rmse": 0.012672680890094332,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 755,
+        "max_abs_error": 0.09375,
+        "max_bf16_steps": 30784,
+        "relative_l2": 0.010187579069725585,
+        "rmse": 0.012164345592930717,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": 57,
+        "max_abs_error": 0.03125,
+        "max_bf16_steps": 48,
+        "relative_l2": -0.0004257282888112286,
+        "rmse": -0.0005083352971636153
+      },
+      "needs_conditional_reference": false,
+      "position": 1,
+      "same_history_before_after": true,
+      "tensor": "layer8-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 583,
+        "max_abs_error": 0.09375,
+        "max_bf16_steps": 30848,
+        "relative_l2": 0.011351344801474634,
+        "rmse": 0.013900658726738548,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 662,
+        "max_abs_error": 0.0625,
+        "max_bf16_steps": 31232,
+        "relative_l2": 0.010682878164982895,
+        "rmse": 0.013082066150564196,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": 79,
+        "max_abs_error": -0.03125,
+        "max_bf16_steps": 384,
+        "relative_l2": -0.000668466636491739,
+        "rmse": -0.0008185925761743512
+      },
+      "needs_conditional_reference": false,
+      "position": 1,
+      "same_history_before_after": true,
+      "tensor": "layer9-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 530,
+        "max_abs_error": 0.125,
+        "max_bf16_steps": 31015,
+        "relative_l2": 0.011664549403759652,
+        "rmse": 0.01424151351762241,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 581,
+        "max_abs_error": 0.125,
+        "max_bf16_steps": 31048,
+        "relative_l2": 0.01110675773902919,
+        "rmse": 0.013560492994813737,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": 51,
+        "max_abs_error": 0.0,
+        "max_bf16_steps": 33,
+        "relative_l2": -0.0005577916647304618,
+        "rmse": -0.0006810205228086723
+      },
+      "needs_conditional_reference": false,
+      "position": 1,
+      "same_history_before_after": true,
+      "tensor": "layer10-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 525,
+        "max_abs_error": 0.125,
+        "max_bf16_steps": 31136,
+        "relative_l2": 0.01205449371685906,
+        "rmse": 0.015291554976141824,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 640,
+        "max_abs_error": 0.125,
+        "max_bf16_steps": 30784,
+        "relative_l2": 0.010866673953233997,
+        "rmse": 0.013784763264780495,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": 115,
+        "max_abs_error": 0.0,
+        "max_bf16_steps": -352,
+        "relative_l2": -0.0011878197636250622,
+        "rmse": -0.0015067917113613296
+      },
+      "needs_conditional_reference": false,
+      "position": 1,
+      "same_history_before_after": true,
+      "tensor": "layer11-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 488,
+        "max_abs_error": 0.125,
+        "max_bf16_steps": 31072,
+        "relative_l2": 0.012194639097352055,
+        "rmse": 0.016660663258618483,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 581,
+        "max_abs_error": 0.25,
+        "max_bf16_steps": 30850,
+        "relative_l2": 0.010921965983568826,
+        "rmse": 0.014921901002698669,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": 93,
+        "max_abs_error": 0.125,
+        "max_bf16_steps": -222,
+        "relative_l2": -0.0012726731137832296,
+        "rmse": -0.0017387622559198145
+      },
+      "needs_conditional_reference": false,
+      "position": 1,
+      "same_history_before_after": true,
+      "tensor": "layer12-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 455,
+        "max_abs_error": 0.125,
+        "max_bf16_steps": 31040,
+        "relative_l2": 0.012095412542117549,
+        "rmse": 0.017112386286940034,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 582,
+        "max_abs_error": 0.375,
+        "max_bf16_steps": 30832,
+        "relative_l2": 0.011164153592199194,
+        "rmse": 0.015794856783197857,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": 127,
+        "max_abs_error": 0.25,
+        "max_bf16_steps": -208,
+        "relative_l2": -0.0009312589499183548,
+        "rmse": -0.0013175295037421778
+      },
+      "needs_conditional_reference": false,
+      "position": 1,
+      "same_history_before_after": true,
+      "tensor": "layer13-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 468,
+        "max_abs_error": 0.125,
+        "max_bf16_steps": 31080,
+        "relative_l2": 0.01198228668610096,
+        "rmse": 0.0178592204140492,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 544,
+        "max_abs_error": 0.375,
+        "max_bf16_steps": 30736,
+        "relative_l2": 0.011154666706822074,
+        "rmse": 0.016625678936014167,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": 76,
+        "max_abs_error": 0.25,
+        "max_bf16_steps": -344,
+        "relative_l2": -0.0008276199792788871,
+        "rmse": -0.0012335414780350329
+      },
+      "needs_conditional_reference": false,
+      "position": 1,
+      "same_history_before_after": true,
+      "tensor": "layer14-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 482,
+        "max_abs_error": 0.125,
+        "max_bf16_steps": 31219,
+        "relative_l2": 0.011650039182083618,
+        "rmse": 0.018318855864070047,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 525,
+        "max_abs_error": 0.25,
+        "max_bf16_steps": 30936,
+        "relative_l2": 0.010429081521465605,
+        "rmse": 0.016398987007715415,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": 43,
+        "max_abs_error": 0.125,
+        "max_bf16_steps": -283,
+        "relative_l2": -0.0012209576606180134,
+        "rmse": -0.0019198688563546312
+      },
+      "needs_conditional_reference": false,
+      "position": 1,
+      "same_history_before_after": true,
+      "tensor": "layer15-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 442,
+        "max_abs_error": 0.125,
+        "max_bf16_steps": 31276,
+        "relative_l2": 0.011066630052024193,
+        "rmse": 0.018292802662240277,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 548,
+        "max_abs_error": 0.5,
+        "max_bf16_steps": 30893,
+        "relative_l2": 0.010776305366143378,
+        "rmse": 0.01781290479253393,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": 106,
+        "max_abs_error": 0.375,
+        "max_bf16_steps": -383,
+        "relative_l2": -0.0002903246858808155,
+        "rmse": -0.00047989786970634857
+      },
+      "needs_conditional_reference": false,
+      "position": 1,
+      "same_history_before_after": true,
+      "tensor": "layer16-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 471,
+        "max_abs_error": 0.125,
+        "max_bf16_steps": 30990,
+        "relative_l2": 0.01095001061360874,
+        "rmse": 0.018901815327816082,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 514,
+        "max_abs_error": 0.5,
+        "max_bf16_steps": 31212,
+        "relative_l2": 0.01065294167459432,
+        "rmse": 0.018389017448159028,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": 43,
+        "max_abs_error": 0.375,
+        "max_bf16_steps": 222,
+        "relative_l2": -0.00029706893901441933,
+        "rmse": -0.0005127978796570544
+      },
+      "needs_conditional_reference": false,
+      "position": 1,
+      "same_history_before_after": true,
+      "tensor": "layer17-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 463,
+        "max_abs_error": 0.25,
+        "max_bf16_steps": 30880,
+        "relative_l2": 0.01110463509445627,
+        "rmse": 0.02092957120621477,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 516,
+        "max_abs_error": 0.5,
+        "max_bf16_steps": 31208,
+        "relative_l2": 0.010529420756821471,
+        "rmse": 0.019845430274436346,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": 53,
+        "max_abs_error": 0.25,
+        "max_bf16_steps": 328,
+        "relative_l2": -0.0005752143376347996,
+        "rmse": -0.0010841409317784226
+      },
+      "needs_conditional_reference": false,
+      "position": 1,
+      "same_history_before_after": true,
+      "tensor": "layer18-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 505,
+        "max_abs_error": 0.25,
+        "max_bf16_steps": 30912,
+        "relative_l2": 0.01085450443284856,
+        "rmse": 0.022969906034045404,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 514,
+        "max_abs_error": 0.5,
+        "max_bf16_steps": 30964,
+        "relative_l2": 0.01018641998286041,
+        "rmse": 0.02155613010959194,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": 9,
+        "max_abs_error": 0.25,
+        "max_bf16_steps": 52,
+        "relative_l2": -0.0006680844499881503,
+        "rmse": -0.0014137759244534642
+      },
+      "needs_conditional_reference": false,
+      "position": 1,
+      "same_history_before_after": true,
+      "tensor": "layer19-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 461,
+        "max_abs_error": 0.1875,
+        "max_bf16_steps": 31150,
+        "relative_l2": 0.010785075521558668,
+        "rmse": 0.024406022372162883,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 524,
+        "max_abs_error": 0.5,
+        "max_bf16_steps": 31024,
+        "relative_l2": 0.010278030945363434,
+        "rmse": 0.02325860887046157,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": 63,
+        "max_abs_error": 0.3125,
+        "max_bf16_steps": -126,
+        "relative_l2": -0.0005070445761952338,
+        "rmse": -0.0011474135017013123
+      },
+      "needs_conditional_reference": false,
+      "position": 1,
+      "same_history_before_after": true,
+      "tensor": "layer20-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 438,
+        "max_abs_error": 0.25,
+        "max_bf16_steps": 31008,
+        "relative_l2": 0.011018542539179785,
+        "rmse": 0.027058243610511016,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 528,
+        "max_abs_error": 0.75,
+        "max_bf16_steps": 31152,
+        "relative_l2": 0.011008708575308787,
+        "rmse": 0.02703409433767096,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": 90,
+        "max_abs_error": 0.5,
+        "max_bf16_steps": 144,
+        "relative_l2": -9.833963870997664e-06,
+        "rmse": -2.414927284005719e-05
+      },
+      "needs_conditional_reference": false,
+      "position": 1,
+      "same_history_before_after": true,
+      "tensor": "layer21-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 521,
+        "max_abs_error": 0.5,
+        "max_bf16_steps": 31200,
+        "relative_l2": 0.011866068706463232,
+        "rmse": 0.034455061598153716,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 514,
+        "max_abs_error": 1.0,
+        "max_bf16_steps": 31200,
+        "relative_l2": 0.012273301993566736,
+        "rmse": 0.03563752972125899,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": -7,
+        "max_abs_error": 0.5,
+        "max_bf16_steps": 0,
+        "relative_l2": 0.00040723328710350407,
+        "rmse": 0.001182468123105275
+      },
+      "needs_conditional_reference": false,
+      "position": 1,
+      "same_history_before_after": true,
+      "tensor": "layer22-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 490,
+        "max_abs_error": 0.25,
+        "max_bf16_steps": 31399,
+        "relative_l2": 0.012147077661957164,
+        "rmse": 0.04229791515817378,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 529,
+        "max_abs_error": 1.0,
+        "max_bf16_steps": 31328,
+        "relative_l2": 0.012264254966540605,
+        "rmse": 0.04270594380717603,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": 39,
+        "max_abs_error": 0.75,
+        "max_bf16_steps": -71,
+        "relative_l2": 0.00011717730458344136,
+        "rmse": 0.0004080286490022525
+      },
+      "needs_conditional_reference": false,
+      "position": 1,
+      "same_history_before_after": true,
+      "tensor": "layer23-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 468,
+        "max_abs_error": 1.0,
+        "max_bf16_steps": 31360,
+        "relative_l2": 0.012669190206219583,
+        "rmse": 0.055173557107962595,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 475,
+        "max_abs_error": 1.5,
+        "max_bf16_steps": 31308,
+        "relative_l2": 0.01286334480115525,
+        "rmse": 0.056019088626322586,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": 7,
+        "max_abs_error": 0.5,
+        "max_bf16_steps": -52,
+        "relative_l2": 0.0001941545949356669,
+        "rmse": 0.0008455315183599904
+      },
+      "needs_conditional_reference": false,
+      "position": 1,
+      "same_history_before_after": true,
+      "tensor": "layer24-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 446,
+        "max_abs_error": 0.5,
+        "max_bf16_steps": 31328,
+        "relative_l2": 0.012180594727893072,
+        "rmse": 0.06120805513243013,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 427,
+        "max_abs_error": 1.5,
+        "max_bf16_steps": 31440,
+        "relative_l2": 0.01271344619958722,
+        "rmse": 0.06388565856522191,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": -19,
+        "max_abs_error": 1.0,
+        "max_bf16_steps": 112,
+        "relative_l2": 0.0005328514716941481,
+        "rmse": 0.002677603432791782
+      },
+      "needs_conditional_reference": false,
+      "position": 1,
+      "same_history_before_after": true,
+      "tensor": "layer25-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 447,
+        "max_abs_error": 1.0,
+        "max_bf16_steps": 31536,
+        "relative_l2": 0.012098799538977691,
+        "rmse": 0.07087707570859254,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 427,
+        "max_abs_error": 2.0,
+        "max_bf16_steps": 31520,
+        "relative_l2": 0.013029951282169445,
+        "rmse": 0.0763319402499689,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": -20,
+        "max_abs_error": 1.0,
+        "max_bf16_steps": -16,
+        "relative_l2": 0.0009311517431917545,
+        "rmse": 0.00545486454137635
+      },
+      "needs_conditional_reference": false,
+      "position": 1,
+      "same_history_before_after": true,
+      "tensor": "layer26-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 427,
+        "max_abs_error": 1.0,
+        "max_bf16_steps": 31632,
+        "relative_l2": 0.012019327265589881,
+        "rmse": 0.07868985510664075,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 386,
+        "max_abs_error": 2.0,
+        "max_bf16_steps": 31708,
+        "relative_l2": 0.013200339521282056,
+        "rmse": 0.08642187547899918,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": -41,
+        "max_abs_error": 1.0,
+        "max_bf16_steps": 76,
+        "relative_l2": 0.0011810122556921744,
+        "rmse": 0.007732020372358428
+      },
+      "needs_conditional_reference": false,
+      "position": 1,
+      "same_history_before_after": true,
+      "tensor": "layer27-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 406,
+        "max_abs_error": 0.5,
+        "max_bf16_steps": 31648,
+        "relative_l2": 0.011987968827773388,
+        "rmse": 0.08958066089005576,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 387,
+        "max_abs_error": 2.0,
+        "max_bf16_steps": 31616,
+        "relative_l2": 0.012802884195483945,
+        "rmse": 0.09567015430280545,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": -19,
+        "max_abs_error": 1.5,
+        "max_bf16_steps": -32,
+        "relative_l2": 0.0008149153677105576,
+        "rmse": 0.006089493412749697
+      },
+      "needs_conditional_reference": false,
+      "position": 1,
+      "same_history_before_after": true,
+      "tensor": "layer28-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 400,
+        "max_abs_error": 0.5,
+        "max_bf16_steps": 31609,
+        "relative_l2": 0.01163652716673538,
+        "rmse": 0.09961750347091024,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 392,
+        "max_abs_error": 2.0,
+        "max_bf16_steps": 31684,
+        "relative_l2": 0.012365379903354243,
+        "rmse": 0.10585703602040385,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": -8,
+        "max_abs_error": 1.5,
+        "max_bf16_steps": 75,
+        "relative_l2": 0.0007288527366188634,
+        "rmse": 0.006239532549493609
+      },
+      "needs_conditional_reference": false,
+      "position": 1,
+      "same_history_before_after": true,
+      "tensor": "layer29-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 406,
+        "max_abs_error": 0.5,
+        "max_bf16_steps": 31728,
+        "relative_l2": 0.01151524552436601,
+        "rmse": 0.11353310347641735,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 363,
+        "max_abs_error": 2.0,
+        "max_bf16_steps": 31708,
+        "relative_l2": 0.012232708973814744,
+        "rmse": 0.12060684340445031,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": -43,
+        "max_abs_error": 1.5,
+        "max_bf16_steps": -20,
+        "relative_l2": 0.000717463449448735,
+        "rmse": 0.0070737399280329655
+      },
+      "needs_conditional_reference": false,
+      "position": 1,
+      "same_history_before_after": true,
+      "tensor": "layer30-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 376,
+        "max_abs_error": 0.75,
+        "max_bf16_steps": 31760,
+        "relative_l2": 0.01093711824536435,
+        "rmse": 0.12537858278874478,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 369,
+        "max_abs_error": 4.0,
+        "max_bf16_steps": 31792,
+        "relative_l2": 0.01251921548942643,
+        "rmse": 0.14351508875351818,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": -7,
+        "max_abs_error": 3.25,
+        "max_bf16_steps": 32,
+        "relative_l2": 0.0015820972440620806,
+        "rmse": 0.018136505964773397
+      },
+      "needs_conditional_reference": false,
+      "position": 1,
+      "same_history_before_after": true,
+      "tensor": "layer31-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 416,
+        "max_abs_error": 0.75,
+        "max_bf16_steps": 31848,
+        "relative_l2": 0.01044916965960863,
+        "rmse": 0.13709235866683517,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 372,
+        "max_abs_error": 4.0,
+        "max_bf16_steps": 31872,
+        "relative_l2": 0.011918026669987944,
+        "rmse": 0.15636365759842497,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": -44,
+        "max_abs_error": 3.25,
+        "max_bf16_steps": 24,
+        "relative_l2": 0.0014688570103793142,
+        "rmse": 0.019271298931589798
+      },
+      "needs_conditional_reference": false,
+      "position": 1,
+      "same_history_before_after": true,
+      "tensor": "layer32-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 379,
+        "max_abs_error": 0.75,
+        "max_bf16_steps": 31824,
+        "relative_l2": 0.010657201812031548,
+        "rmse": 0.157817078206561,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 361,
+        "max_abs_error": 4.0,
+        "max_bf16_steps": 31912,
+        "relative_l2": 0.012038532473266824,
+        "rmse": 0.1782725010124966,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": -18,
+        "max_abs_error": 3.25,
+        "max_bf16_steps": 88,
+        "relative_l2": 0.0013813306612352767,
+        "rmse": 0.020455422805935597
+      },
+      "needs_conditional_reference": false,
+      "position": 1,
+      "same_history_before_after": true,
+      "tensor": "layer33-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 389,
+        "max_abs_error": 4.0,
+        "max_bf16_steps": 31984,
+        "relative_l2": 0.009684545153590874,
+        "rmse": 0.19868148442678482,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 356,
+        "max_abs_error": 8.0,
+        "max_bf16_steps": 31968,
+        "relative_l2": 0.011978850806605167,
+        "rmse": 0.24574988522830593,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": -33,
+        "max_abs_error": 4.0,
+        "max_bf16_steps": -16,
+        "relative_l2": 0.0022943056530142936,
+        "rmse": 0.04706840080152111
+      },
+      "needs_conditional_reference": false,
+      "position": 1,
+      "same_history_before_after": true,
+      "tensor": "layer34-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 399,
+        "max_abs_error": 8.0,
+        "max_bf16_steps": 31876,
+        "relative_l2": 0.011365651516029824,
+        "rmse": 0.2943656915840132,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 418,
+        "max_abs_error": 12.0,
+        "max_bf16_steps": 32000,
+        "relative_l2": 0.01294436486347916,
+        "rmse": 0.3352537168485049,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": 19,
+        "max_abs_error": 4.0,
+        "max_bf16_steps": 124,
+        "relative_l2": 0.0015787133474493356,
+        "rmse": 0.0408880252644917
+      },
+      "needs_conditional_reference": false,
+      "position": 1,
+      "same_history_before_after": true,
+      "tensor": "layer35-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 339,
+        "max_abs_error": 1.0,
+        "max_bf16_steps": 30922,
+        "relative_l2": 0.011736804640023728,
+        "rmse": 0.02994702892115027,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 302,
+        "max_abs_error": 0.25,
+        "max_bf16_steps": 31090,
+        "relative_l2": 0.008465262320110651,
+        "rmse": 0.02159952928422985,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": -37,
+        "max_abs_error": -0.75,
+        "max_bf16_steps": 168,
+        "relative_l2": -0.0032715423199130775,
+        "rmse": -0.00834749963692042
+      },
+      "needs_conditional_reference": false,
+      "position": 1,
+      "same_history_before_after": true,
+      "tensor": "final-norm"
+    },
+    {
+      "baseline": {
+        "elements": 151936,
+        "exact_words": 9715,
+        "max_abs_error": 0.25,
+        "max_bf16_steps": 31677,
+        "relative_l2": 0.014031533679027734,
+        "rmse": 0.073618822766183,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 151936,
+        "exact_words": 31458,
+        "max_abs_error": 0.20703125,
+        "max_bf16_steps": 31582,
+        "relative_l2": 0.009413477449744433,
+        "rmse": 0.04938940701984727,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": 21743,
+        "max_abs_error": -0.04296875,
+        "max_bf16_steps": -95,
+        "relative_l2": -0.004618056229283301,
+        "rmse": -0.024229415746335733
+      },
+      "needs_conditional_reference": false,
+      "position": 1,
+      "same_history_before_after": true,
+      "tensor": "logits"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 1779,
+        "max_abs_error": 0.00390625,
+        "max_bf16_steps": 29176,
+        "relative_l2": 0.0018847025920993282,
+        "rmse": 0.0003676555091399497,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 3871,
+        "max_abs_error": 0.0009765625,
+        "max_bf16_steps": 64,
+        "relative_l2": 0.0003543782428678962,
+        "rmse": 6.912980003099109e-05,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": 2092,
+        "max_abs_error": -0.0029296875,
+        "max_bf16_steps": -29112,
+        "relative_l2": -0.001530324349231432,
+        "rmse": -0.0002985257091089586
+      },
+      "needs_conditional_reference": false,
+      "position": 2,
+      "same_history_before_after": true,
+      "tensor": "layer0-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 1399,
+        "max_abs_error": 0.0078125,
+        "max_bf16_steps": 29568,
+        "relative_l2": 0.0022977446747035686,
+        "rmse": 0.0006754311991772272,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 2329,
+        "max_abs_error": 0.0078125,
+        "max_bf16_steps": 29440,
+        "relative_l2": 0.0013619079376780152,
+        "rmse": 0.0004003382628374578,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": 930,
+        "max_abs_error": 0.0,
+        "max_bf16_steps": -128,
+        "relative_l2": -0.0009358367370255534,
+        "rmse": -0.00027509293633976945
+      },
+      "needs_conditional_reference": false,
+      "position": 2,
+      "same_history_before_after": true,
+      "tensor": "layer1-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 1144,
+        "max_abs_error": 0.03125,
+        "max_bf16_steps": 29824,
+        "relative_l2": 0.0027530515502114943,
+        "rmse": 0.001165834336958567,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 1534,
+        "max_abs_error": 0.015625,
+        "max_bf16_steps": 29632,
+        "relative_l2": 0.0018627650685129654,
+        "rmse": 0.0007888248508795851,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": 390,
+        "max_abs_error": -0.015625,
+        "max_bf16_steps": -192,
+        "relative_l2": -0.0008902864816985288,
+        "rmse": -0.00037700948607898195
+      },
+      "needs_conditional_reference": false,
+      "position": 2,
+      "same_history_before_after": true,
+      "tensor": "layer2-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 920,
+        "max_abs_error": 0.03125,
+        "max_bf16_steps": 29952,
+        "relative_l2": 0.003399516966022442,
+        "rmse": 0.0016461492266336335,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 1271,
+        "max_abs_error": 0.015625,
+        "max_bf16_steps": 29760,
+        "relative_l2": 0.002352868986289606,
+        "rmse": 0.0011393305286787991,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": 351,
+        "max_abs_error": -0.015625,
+        "max_bf16_steps": -192,
+        "relative_l2": -0.001046647979732836,
+        "rmse": -0.0005068186979548344
+      },
+      "needs_conditional_reference": false,
+      "position": 2,
+      "same_history_before_after": true,
+      "tensor": "layer3-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 965,
+        "max_abs_error": 0.03125,
+        "max_bf16_steps": 30112,
+        "relative_l2": 0.0031085244997705397,
+        "rmse": 0.001934545878071658,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 1054,
+        "max_abs_error": 0.03125,
+        "max_bf16_steps": 29952,
+        "relative_l2": 0.0027951017594885132,
+        "rmse": 0.0017394917067594243,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": 89,
+        "max_abs_error": 0.0,
+        "max_bf16_steps": -160,
+        "relative_l2": -0.0003134227402820265,
+        "rmse": -0.00019505417131223377
+      },
+      "needs_conditional_reference": false,
+      "position": 2,
+      "same_history_before_after": true,
+      "tensor": "layer4-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 966,
+        "max_abs_error": 0.03125,
+        "max_bf16_steps": 30272,
+        "relative_l2": 0.00313955588527048,
+        "rmse": 0.0024069650590621797,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 1005,
+        "max_abs_error": 0.0625,
+        "max_bf16_steps": 30208,
+        "relative_l2": 0.0032628173405018306,
+        "rmse": 0.0025014644171602305,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": 39,
+        "max_abs_error": 0.03125,
+        "max_bf16_steps": -64,
+        "relative_l2": 0.00012326145523135082,
+        "rmse": 9.449935809805084e-05
+      },
+      "needs_conditional_reference": false,
+      "position": 2,
+      "same_history_before_after": true,
+      "tensor": "layer5-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 899,
+        "max_abs_error": 0.046875,
+        "max_bf16_steps": 30464,
+        "relative_l2": 0.006591796114419963,
+        "rmse": 0.004589097606837483,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 982,
+        "max_abs_error": 0.0625,
+        "max_bf16_steps": 30348,
+        "relative_l2": 0.006178694419276036,
+        "rmse": 0.004301503153420091,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": 83,
+        "max_abs_error": 0.015625,
+        "max_bf16_steps": -116,
+        "relative_l2": -0.0004131016951439267,
+        "rmse": -0.00028759445341739256
+      },
+      "needs_conditional_reference": false,
+      "position": 2,
+      "same_history_before_after": true,
+      "tensor": "layer6-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 677,
+        "max_abs_error": 0.25,
+        "max_bf16_steps": 30768,
+        "relative_l2": 0.0112542722319349,
+        "rmse": 0.008549221108921578,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 707,
+        "max_abs_error": 0.125,
+        "max_bf16_steps": 30608,
+        "relative_l2": 0.009958163207603423,
+        "rmse": 0.007564641884079657,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": 30,
+        "max_abs_error": -0.125,
+        "max_bf16_steps": -160,
+        "relative_l2": -0.0012961090243314762,
+        "rmse": -0.0009845792248419204
+      },
+      "needs_conditional_reference": false,
+      "position": 2,
+      "same_history_before_after": true,
+      "tensor": "layer7-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 685,
+        "max_abs_error": 0.25,
+        "max_bf16_steps": 30976,
+        "relative_l2": 0.012167853596636469,
+        "rmse": 0.010595738149966992,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 693,
+        "max_abs_error": 0.0625,
+        "max_bf16_steps": 30912,
+        "relative_l2": 0.011015193887913144,
+        "rmse": 0.009592004800230957,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": 8,
+        "max_abs_error": -0.1875,
+        "max_bf16_steps": -64,
+        "relative_l2": -0.0011526597087233251,
+        "rmse": -0.001003733349736035
+      },
+      "needs_conditional_reference": false,
+      "position": 2,
+      "same_history_before_after": true,
+      "tensor": "layer8-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 628,
+        "max_abs_error": 0.25,
+        "max_bf16_steps": 30816,
+        "relative_l2": 0.013573005775604286,
+        "rmse": 0.011722723628976821,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 577,
+        "max_abs_error": 0.0625,
+        "max_bf16_steps": 30935,
+        "relative_l2": 0.012989259098640068,
+        "rmse": 0.011218553729065283,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": -51,
+        "max_abs_error": -0.1875,
+        "max_bf16_steps": 119,
+        "relative_l2": -0.0005837466769642186,
+        "rmse": -0.0005041698999115381
+      },
+      "needs_conditional_reference": false,
+      "position": 2,
+      "same_history_before_after": true,
+      "tensor": "layer9-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 561,
+        "max_abs_error": 0.125,
+        "max_bf16_steps": 30768,
+        "relative_l2": 0.012671442807786041,
+        "rmse": 0.011293443911053745,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 570,
+        "max_abs_error": 0.125,
+        "max_bf16_steps": 30920,
+        "relative_l2": 0.013329877029354113,
+        "rmse": 0.011880274476696064,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": 9,
+        "max_abs_error": 0.0,
+        "max_bf16_steps": 152,
+        "relative_l2": 0.0006584342215680723,
+        "rmse": 0.0005868305656423194
+      },
+      "needs_conditional_reference": false,
+      "position": 2,
+      "same_history_before_after": true,
+      "tensor": "layer10-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 507,
+        "max_abs_error": 0.125,
+        "max_bf16_steps": 31040,
+        "relative_l2": 0.013137148613174133,
+        "rmse": 0.013141773019652213,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 436,
+        "max_abs_error": 0.078125,
+        "max_bf16_steps": 30848,
+        "relative_l2": 0.013585297731942326,
+        "rmse": 0.013590079891350589,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": -71,
+        "max_abs_error": -0.046875,
+        "max_bf16_steps": -192,
+        "relative_l2": 0.0004481491187681933,
+        "rmse": 0.0004483068716983757
+      },
+      "needs_conditional_reference": false,
+      "position": 2,
+      "same_history_before_after": true,
+      "tensor": "layer11-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 417,
+        "max_abs_error": 0.125,
+        "max_bf16_steps": 30880,
+        "relative_l2": 0.01336172164535499,
+        "rmse": 0.014730464234398206,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 449,
+        "max_abs_error": 0.25,
+        "max_bf16_steps": 30872,
+        "relative_l2": 0.014148080774294889,
+        "rmse": 0.015597376098878523,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": 32,
+        "max_abs_error": 0.125,
+        "max_bf16_steps": -8,
+        "relative_l2": 0.000786359128939899,
+        "rmse": 0.0008669118644803169
+      },
+      "needs_conditional_reference": false,
+      "position": 2,
+      "same_history_before_after": true,
+      "tensor": "layer12-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 399,
+        "max_abs_error": 0.09375,
+        "max_bf16_steps": 31040,
+        "relative_l2": 0.014383423182084715,
+        "rmse": 0.016610531261211002,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 441,
+        "max_abs_error": 0.125,
+        "max_bf16_steps": 30912,
+        "relative_l2": 0.014223372351711835,
+        "rmse": 0.01642569839579112,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": 42,
+        "max_abs_error": 0.03125,
+        "max_bf16_steps": -128,
+        "relative_l2": -0.00016005083037287995,
+        "rmse": -0.00018483286541988095
+      },
+      "needs_conditional_reference": false,
+      "position": 2,
+      "same_history_before_after": true,
+      "tensor": "layer13-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 387,
+        "max_abs_error": 0.125,
+        "max_bf16_steps": 31072,
+        "relative_l2": 0.014998917109567234,
+        "rmse": 0.019424663812885924,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 417,
+        "max_abs_error": 0.125,
+        "max_bf16_steps": 31072,
+        "relative_l2": 0.013333071706868314,
+        "rmse": 0.017267275604438005,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": 30,
+        "max_abs_error": 0.0,
+        "max_bf16_steps": 0,
+        "relative_l2": -0.0016658454026989202,
+        "rmse": -0.0021573882084479183
+      },
+      "needs_conditional_reference": false,
+      "position": 2,
+      "same_history_before_after": true,
+      "tensor": "layer14-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 302,
+        "max_abs_error": 0.125,
+        "max_bf16_steps": 31168,
+        "relative_l2": 0.016760149274056082,
+        "rmse": 0.02277545219663239,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 431,
+        "max_abs_error": 0.125,
+        "max_bf16_steps": 30992,
+        "relative_l2": 0.012766713476985362,
+        "rmse": 0.017348751956122323,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": 129,
+        "max_abs_error": 0.0,
+        "max_bf16_steps": -176,
+        "relative_l2": -0.00399343579707072,
+        "rmse": -0.005426700240510066
+      },
+      "needs_conditional_reference": false,
+      "position": 2,
+      "same_history_before_after": true,
+      "tensor": "layer15-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 308,
+        "max_abs_error": 0.125,
+        "max_bf16_steps": 31220,
+        "relative_l2": 0.016004211409205334,
+        "rmse": 0.023415638629073702,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 416,
+        "max_abs_error": 0.25,
+        "max_bf16_steps": 31048,
+        "relative_l2": 0.012130014937574051,
+        "rmse": 0.01774733156674811,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": 108,
+        "max_abs_error": 0.125,
+        "max_bf16_steps": -172,
+        "relative_l2": -0.0038741964716312825,
+        "rmse": -0.0056683070623255935
+      },
+      "needs_conditional_reference": false,
+      "position": 2,
+      "same_history_before_after": true,
+      "tensor": "layer16-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 300,
+        "max_abs_error": 0.15625,
+        "max_bf16_steps": 31331,
+        "relative_l2": 0.01634359319064433,
+        "rmse": 0.025720265796194044,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 421,
+        "max_abs_error": 0.25,
+        "max_bf16_steps": 31021,
+        "relative_l2": 0.011404044205130689,
+        "rmse": 0.017946790811913502,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": 121,
+        "max_abs_error": 0.09375,
+        "max_bf16_steps": -310,
+        "relative_l2": -0.004939548985513641,
+        "rmse": -0.0077734749842805415
+      },
+      "needs_conditional_reference": false,
+      "position": 2,
+      "same_history_before_after": true,
+      "tensor": "layer17-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 312,
+        "max_abs_error": 0.25,
+        "max_bf16_steps": 31391,
+        "relative_l2": 0.01593263849714866,
+        "rmse": 0.028150606837057602,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 486,
+        "max_abs_error": 0.25,
+        "max_bf16_steps": 31154,
+        "relative_l2": 0.010364155795178619,
+        "rmse": 0.018311924609367047,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": 174,
+        "max_abs_error": 0.0,
+        "max_bf16_steps": -237,
+        "relative_l2": -0.0055684827019700425,
+        "rmse": -0.009838682227690555
+      },
+      "needs_conditional_reference": false,
+      "position": 2,
+      "same_history_before_after": true,
+      "tensor": "layer18-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 288,
+        "max_abs_error": 0.25,
+        "max_bf16_steps": 31214,
+        "relative_l2": 0.01647996299368166,
+        "rmse": 0.03225541821045146,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 491,
+        "max_abs_error": 0.5,
+        "max_bf16_steps": 30976,
+        "relative_l2": 0.011507092763441508,
+        "rmse": 0.02252226474134492,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": 203,
+        "max_abs_error": 0.25,
+        "max_bf16_steps": -238,
+        "relative_l2": -0.004972870230240151,
+        "rmse": -0.009733153469106543
+      },
+      "needs_conditional_reference": false,
+      "position": 2,
+      "same_history_before_after": true,
+      "tensor": "layer19-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 328,
+        "max_abs_error": 0.25,
+        "max_bf16_steps": 31266,
+        "relative_l2": 0.016945553647116987,
+        "rmse": 0.03558690743111571,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 490,
+        "max_abs_error": 0.5,
+        "max_bf16_steps": 31088,
+        "relative_l2": 0.011459393405833011,
+        "rmse": 0.024065567926693177,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": 162,
+        "max_abs_error": 0.25,
+        "max_bf16_steps": -178,
+        "relative_l2": -0.005486160241283976,
+        "rmse": -0.01152133950442253
+      },
+      "needs_conditional_reference": false,
+      "position": 2,
+      "same_history_before_after": true,
+      "tensor": "layer20-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 324,
+        "max_abs_error": 0.3125,
+        "max_bf16_steps": 31290,
+        "relative_l2": 0.01721195461160111,
+        "rmse": 0.03990453420559328,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 493,
+        "max_abs_error": 0.5,
+        "max_bf16_steps": 31072,
+        "relative_l2": 0.011613912850661233,
+        "rmse": 0.02692592404918497,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": 169,
+        "max_abs_error": 0.1875,
+        "max_bf16_steps": -218,
+        "relative_l2": -0.005598041760939879,
+        "rmse": -0.012978610156408308
+      },
+      "needs_conditional_reference": false,
+      "position": 2,
+      "same_history_before_after": true,
+      "tensor": "layer21-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 388,
+        "max_abs_error": 1.0,
+        "max_bf16_steps": 31432,
+        "relative_l2": 0.01703174418153759,
+        "rmse": 0.0465683561871126,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 569,
+        "max_abs_error": 0.25,
+        "max_bf16_steps": 31168,
+        "relative_l2": 0.010874394184050668,
+        "rmse": 0.02973287153002672,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": 181,
+        "max_abs_error": -0.75,
+        "max_bf16_steps": -264,
+        "relative_l2": -0.006157349997486921,
+        "rmse": -0.01683548465708588
+      },
+      "needs_conditional_reference": false,
+      "position": 2,
+      "same_history_before_after": true,
+      "tensor": "layer22-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 351,
+        "max_abs_error": 1.0,
+        "max_bf16_steps": 31384,
+        "relative_l2": 0.01613767302572113,
+        "rmse": 0.05468092000972784,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 542,
+        "max_abs_error": 0.5,
+        "max_bf16_steps": 31312,
+        "relative_l2": 0.010252991866751436,
+        "rmse": 0.03474125589436848,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": 191,
+        "max_abs_error": -0.5,
+        "max_bf16_steps": -72,
+        "relative_l2": -0.0058846811589696926,
+        "rmse": -0.019939664115359357
+      },
+      "needs_conditional_reference": false,
+      "position": 2,
+      "same_history_before_after": true,
+      "tensor": "layer23-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 313,
+        "max_abs_error": 1.0,
+        "max_bf16_steps": 31320,
+        "relative_l2": 0.015075413930264434,
+        "rmse": 0.06548834942626562,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 563,
+        "max_abs_error": 0.5,
+        "max_bf16_steps": 31504,
+        "relative_l2": 0.009470196299831679,
+        "rmse": 0.041139004692511694,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": 250,
+        "max_abs_error": -0.5,
+        "max_bf16_steps": 184,
+        "relative_l2": -0.0056052176304327555,
+        "rmse": -0.024349344733753928
+      },
+      "needs_conditional_reference": false,
+      "position": 2,
+      "same_history_before_after": true,
+      "tensor": "layer24-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 311,
+        "max_abs_error": 1.0,
+        "max_bf16_steps": 31660,
+        "relative_l2": 0.014248356384274187,
+        "rmse": 0.0737093647972971,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 551,
+        "max_abs_error": 0.5,
+        "max_bf16_steps": 31336,
+        "relative_l2": 0.008837581446896626,
+        "rmse": 0.04571843216345203,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": 240,
+        "max_abs_error": -0.5,
+        "max_bf16_steps": -324,
+        "relative_l2": -0.005410774937377561,
+        "rmse": -0.02799093263384507
+      },
+      "needs_conditional_reference": false,
+      "position": 2,
+      "same_history_before_after": true,
+      "tensor": "layer25-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 344,
+        "max_abs_error": 2.0,
+        "max_bf16_steps": 31578,
+        "relative_l2": 0.01398637726183796,
+        "rmse": 0.0836952105986455,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 528,
+        "max_abs_error": 1.0,
+        "max_bf16_steps": 31464,
+        "relative_l2": 0.008663598669032243,
+        "rmse": 0.05184342604036924,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": 184,
+        "max_abs_error": -1.0,
+        "max_bf16_steps": -114,
+        "relative_l2": -0.005322778592805718,
+        "rmse": -0.03185178455827626
+      },
+      "needs_conditional_reference": false,
+      "position": 2,
+      "same_history_before_after": true,
+      "tensor": "layer26-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 356,
+        "max_abs_error": 1.0,
+        "max_bf16_steps": 31560,
+        "relative_l2": 0.013071318464101492,
+        "rmse": 0.09027441418816746,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 534,
+        "max_abs_error": 1.0,
+        "max_bf16_steps": 31468,
+        "relative_l2": 0.008254151092604285,
+        "rmse": 0.05700562315514621,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": 178,
+        "max_abs_error": 0.0,
+        "max_bf16_steps": -92,
+        "relative_l2": -0.004817167371497207,
+        "rmse": -0.03326879103302126
+      },
+      "needs_conditional_reference": false,
+      "position": 2,
+      "same_history_before_after": true,
+      "tensor": "layer27-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 323,
+        "max_abs_error": 0.6875,
+        "max_bf16_steps": 31704,
+        "relative_l2": 0.012575633244713108,
+        "rmse": 0.1010578473827755,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 528,
+        "max_abs_error": 0.5,
+        "max_bf16_steps": 31591,
+        "relative_l2": 0.007799609547042041,
+        "rmse": 0.06267769868221813,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": 205,
+        "max_abs_error": -0.1875,
+        "max_bf16_steps": -113,
+        "relative_l2": -0.0047760236976710675,
+        "rmse": -0.038380148700557365
+      },
+      "needs_conditional_reference": false,
+      "position": 2,
+      "same_history_before_after": true,
+      "tensor": "layer28-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 319,
+        "max_abs_error": 0.8125,
+        "max_bf16_steps": 31900,
+        "relative_l2": 0.011775277981393847,
+        "rmse": 0.1101073931464826,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 497,
+        "max_abs_error": 0.5,
+        "max_bf16_steps": 31406,
+        "relative_l2": 0.007275947027085245,
+        "rmse": 0.06803538405548754,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": 178,
+        "max_abs_error": -0.3125,
+        "max_bf16_steps": -494,
+        "relative_l2": -0.004499330954308602,
+        "rmse": -0.042072009090995066
+      },
+      "needs_conditional_reference": false,
+      "position": 2,
+      "same_history_before_after": true,
+      "tensor": "layer29-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 328,
+        "max_abs_error": 4.0,
+        "max_bf16_steps": 31856,
+        "relative_l2": 0.012406280925681119,
+        "rmse": 0.1376027959489306,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 512,
+        "max_abs_error": 4.0,
+        "max_bf16_steps": 31280,
+        "relative_l2": 0.008753758667896808,
+        "rmse": 0.09709127779553778,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": 184,
+        "max_abs_error": 0.0,
+        "max_bf16_steps": -576,
+        "relative_l2": -0.0036525222577843113,
+        "rmse": -0.04051151815339282
+      },
+      "needs_conditional_reference": false,
+      "position": 2,
+      "same_history_before_after": true,
+      "tensor": "layer30-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 291,
+        "max_abs_error": 4.0,
+        "max_bf16_steps": 31860,
+        "relative_l2": 0.01148026353926065,
+        "rmse": 0.14757521946394653,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 504,
+        "max_abs_error": 4.0,
+        "max_bf16_steps": 31496,
+        "relative_l2": 0.007972963311402702,
+        "rmse": 0.10248996518541799,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": 213,
+        "max_abs_error": 0.0,
+        "max_bf16_steps": -364,
+        "relative_l2": -0.0035073002278579474,
+        "rmse": -0.04508525427852854
+      },
+      "needs_conditional_reference": false,
+      "position": 2,
+      "same_history_before_after": true,
+      "tensor": "layer31-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 334,
+        "max_abs_error": 4.0,
+        "max_bf16_steps": 31740,
+        "relative_l2": 0.010857316690157787,
+        "rmse": 0.1601274178828644,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 550,
+        "max_abs_error": 4.0,
+        "max_bf16_steps": 31560,
+        "relative_l2": 0.0073995793852567075,
+        "rmse": 0.10913152615825651,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": 216,
+        "max_abs_error": 0.0,
+        "max_bf16_steps": -180,
+        "relative_l2": -0.00345773730490108,
+        "rmse": -0.050995891724607875
+      },
+      "needs_conditional_reference": false,
+      "position": 2,
+      "same_history_before_after": true,
+      "tensor": "layer32-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 349,
+        "max_abs_error": 4.0,
+        "max_bf16_steps": 31856,
+        "relative_l2": 0.01028997286280957,
+        "rmse": 0.17224681511919426,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 555,
+        "max_abs_error": 4.0,
+        "max_bf16_steps": 31484,
+        "relative_l2": 0.0070600581772917075,
+        "rmse": 0.11818034428350128,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": 206,
+        "max_abs_error": 0.0,
+        "max_bf16_steps": -372,
+        "relative_l2": -0.0032299146855178625,
+        "rmse": -0.05406647083569298
+      },
+      "needs_conditional_reference": false,
+      "position": 2,
+      "same_history_before_after": true,
+      "tensor": "layer33-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 359,
+        "max_abs_error": 8.0,
+        "max_bf16_steps": 31840,
+        "relative_l2": 0.008976671759048992,
+        "rmse": 0.22389491365001532,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 575,
+        "max_abs_error": 8.0,
+        "max_bf16_steps": 31862,
+        "relative_l2": 0.006901707697042402,
+        "rmse": 0.1721414451084555,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": 216,
+        "max_abs_error": 0.0,
+        "max_bf16_steps": 22,
+        "relative_l2": -0.0020749640620065903,
+        "rmse": -0.05175346854155982
+      },
+      "needs_conditional_reference": false,
+      "position": 2,
+      "same_history_before_after": true,
+      "tensor": "layer34-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 412,
+        "max_abs_error": 8.0,
+        "max_bf16_steps": 31976,
+        "relative_l2": 0.00796830107414072,
+        "rmse": 0.33925377813116964,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 669,
+        "max_abs_error": 8.0,
+        "max_bf16_steps": 31712,
+        "relative_l2": 0.006264066689046959,
+        "rmse": 0.2666952805813695,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": 257,
+        "max_abs_error": 0.0,
+        "max_bf16_steps": -264,
+        "relative_l2": -0.0017042343850937614,
+        "rmse": -0.07255849754980015
+      },
+      "needs_conditional_reference": false,
+      "position": 2,
+      "same_history_before_after": true,
+      "tensor": "layer35-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 400,
+        "max_abs_error": 0.5,
+        "max_bf16_steps": 30861,
+        "relative_l2": 0.006226343643977854,
+        "rmse": 0.018740201561001344,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 422,
+        "max_abs_error": 1.0,
+        "max_bf16_steps": 30579,
+        "relative_l2": 0.009728361066830737,
+        "rmse": 0.029280659352449726,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": 22,
+        "max_abs_error": 0.5,
+        "max_bf16_steps": -282,
+        "relative_l2": 0.0035020174228528825,
+        "rmse": 0.010540457791448382
+      },
+      "needs_conditional_reference": false,
+      "position": 2,
+      "same_history_before_after": true,
+      "tensor": "final-norm"
+    },
+    {
+      "baseline": {
+        "elements": 151936,
+        "exact_words": 74009,
+        "max_abs_error": 0.125,
+        "max_bf16_steps": 107,
+        "relative_l2": 0.004356411135451766,
+        "rmse": 0.03056000604715441,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 151936,
+        "exact_words": 546,
+        "max_abs_error": 0.1875,
+        "max_bf16_steps": 31022,
+        "relative_l2": 0.011743678194658484,
+        "rmse": 0.082381314684474,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": -73463,
+        "max_abs_error": 0.0625,
+        "max_bf16_steps": 30915,
+        "relative_l2": 0.007387267059206718,
+        "rmse": 0.051821308637319596
+      },
+      "needs_conditional_reference": false,
+      "position": 2,
+      "same_history_before_after": true,
+      "tensor": "logits"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 2148,
+        "max_abs_error": 0.0078125,
+        "max_bf16_steps": 29024,
+        "relative_l2": 0.001713478265778449,
+        "rmse": 0.00033304282882341195,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 3669,
+        "max_abs_error": 0.001953125,
+        "max_bf16_steps": 64,
+        "relative_l2": 0.0004681982156028068,
+        "rmse": 9.100206363200764e-05,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": 1521,
+        "max_abs_error": -0.005859375,
+        "max_bf16_steps": -28960,
+        "relative_l2": -0.0012452800501756422,
+        "rmse": -0.0002420407651914043
+      },
+      "needs_conditional_reference": false,
+      "position": 3,
+      "same_history_before_after": true,
+      "tensor": "layer0-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 1385,
+        "max_abs_error": 0.01171875,
+        "max_bf16_steps": 29695,
+        "relative_l2": 0.0024528161743262193,
+        "rmse": 0.0006171914500225947,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 2262,
+        "max_abs_error": 0.00390625,
+        "max_bf16_steps": 28832,
+        "relative_l2": 0.001380282283360899,
+        "rmse": 0.00034731441875868467,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": 877,
+        "max_abs_error": -0.0078125,
+        "max_bf16_steps": -863,
+        "relative_l2": -0.0010725338909653203,
+        "rmse": -0.00026987703126391004
+      },
+      "needs_conditional_reference": false,
+      "position": 3,
+      "same_history_before_after": true,
+      "tensor": "layer1-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 1214,
+        "max_abs_error": 0.0078125,
+        "max_bf16_steps": 29792,
+        "relative_l2": 0.0031181093043015523,
+        "rmse": 0.0009294840269892395,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 1562,
+        "max_abs_error": 0.0078125,
+        "max_bf16_steps": 29440,
+        "relative_l2": 0.002394456986327538,
+        "rmse": 0.0007137689236980642,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": 348,
+        "max_abs_error": 0.0,
+        "max_bf16_steps": -352,
+        "relative_l2": -0.0007236523179740143,
+        "rmse": -0.0002157151032911753
+      },
+      "needs_conditional_reference": false,
+      "position": 3,
+      "same_history_before_after": true,
+      "tensor": "layer2-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 929,
+        "max_abs_error": 0.0078125,
+        "max_bf16_steps": 30080,
+        "relative_l2": 0.003774765599787272,
+        "rmse": 0.0013391923624190161,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 1249,
+        "max_abs_error": 0.0078125,
+        "max_bf16_steps": 29824,
+        "relative_l2": 0.0029391858235120424,
+        "rmse": 0.0010427495701453343,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": 320,
+        "max_abs_error": 0.0,
+        "max_bf16_steps": -256,
+        "relative_l2": -0.0008355797762752298,
+        "rmse": -0.00029644279227368183
+      },
+      "needs_conditional_reference": false,
+      "position": 3,
+      "same_history_before_after": true,
+      "tensor": "layer3-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 913,
+        "max_abs_error": 0.03125,
+        "max_bf16_steps": 30064,
+        "relative_l2": 0.003501202566293422,
+        "rmse": 0.0017778669827871385,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 1060,
+        "max_abs_error": 0.03125,
+        "max_bf16_steps": 29932,
+        "relative_l2": 0.002932580599922942,
+        "rmse": 0.0014891278422901036,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": 147,
+        "max_abs_error": 0.0,
+        "max_bf16_steps": -132,
+        "relative_l2": -0.0005686219663704802,
+        "rmse": -0.0002887391404970349
+      },
+      "needs_conditional_reference": false,
+      "position": 3,
+      "same_history_before_after": true,
+      "tensor": "layer4-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 893,
+        "max_abs_error": 0.03125,
+        "max_bf16_steps": 30136,
+        "relative_l2": 0.0032749804270073056,
+        "rmse": 0.002179516999624452,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 1065,
+        "max_abs_error": 0.0625,
+        "max_bf16_steps": 29984,
+        "relative_l2": 0.003117149829459197,
+        "rmse": 0.00207447989235498,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": 172,
+        "max_abs_error": 0.03125,
+        "max_bf16_steps": -152,
+        "relative_l2": -0.0001578305975481085,
+        "rmse": -0.00010503710726947205
+      },
+      "needs_conditional_reference": false,
+      "position": 3,
+      "same_history_before_after": true,
+      "tensor": "layer5-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 745,
+        "max_abs_error": 0.03125,
+        "max_bf16_steps": 30240,
+        "relative_l2": 0.00530269439915792,
+        "rmse": 0.0033158058809886534,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 865,
+        "max_abs_error": 0.0625,
+        "max_bf16_steps": 30288,
+        "relative_l2": 0.004895436784899209,
+        "rmse": 0.0030611453083086797,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": 120,
+        "max_abs_error": 0.03125,
+        "max_bf16_steps": 48,
+        "relative_l2": -0.000407257614258711,
+        "rmse": -0.0002546605726799736
+      },
+      "needs_conditional_reference": false,
+      "position": 3,
+      "same_history_before_after": true,
+      "tensor": "layer6-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 682,
+        "max_abs_error": 0.0390625,
+        "max_bf16_steps": 30368,
+        "relative_l2": 0.00653863703047261,
+        "rmse": 0.004327537441941571,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 803,
+        "max_abs_error": 0.0625,
+        "max_bf16_steps": 30400,
+        "relative_l2": 0.005982157662453983,
+        "rmse": 0.003959236634059822,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": 121,
+        "max_abs_error": 0.0234375,
+        "max_bf16_steps": 32,
+        "relative_l2": -0.0005564793680186263,
+        "rmse": -0.00036830080788174957
+      },
+      "needs_conditional_reference": false,
+      "position": 3,
+      "same_history_before_after": true,
+      "tensor": "layer7-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 707,
+        "max_abs_error": 0.046875,
+        "max_bf16_steps": 30600,
+        "relative_l2": 0.007410441349771903,
+        "rmse": 0.005663814518695909,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 664,
+        "max_abs_error": 0.0625,
+        "max_bf16_steps": 30400,
+        "relative_l2": 0.007115214850034413,
+        "rmse": 0.005438172339425651,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": -43,
+        "max_abs_error": 0.015625,
+        "max_bf16_steps": -200,
+        "relative_l2": -0.00029522649973748923,
+        "rmse": -0.00022564217927025822
+      },
+      "needs_conditional_reference": false,
+      "position": 3,
+      "same_history_before_after": true,
+      "tensor": "layer8-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 665,
+        "max_abs_error": 0.0625,
+        "max_bf16_steps": 30592,
+        "relative_l2": 0.008055942466483688,
+        "rmse": 0.006433193131938494,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 695,
+        "max_abs_error": 0.0625,
+        "max_bf16_steps": 30624,
+        "relative_l2": 0.008155723242772587,
+        "rmse": 0.006512874560572308,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": 30,
+        "max_abs_error": 0.0,
+        "max_bf16_steps": 32,
+        "relative_l2": 9.978077628889845e-05,
+        "rmse": 7.968142863381406e-05
+      },
+      "needs_conditional_reference": false,
+      "position": 3,
+      "same_history_before_after": true,
+      "tensor": "layer9-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 551,
+        "max_abs_error": 0.0625,
+        "max_bf16_steps": 30720,
+        "relative_l2": 0.009058018176919083,
+        "rmse": 0.008202603134534803,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 523,
+        "max_abs_error": 0.0625,
+        "max_bf16_steps": 30784,
+        "relative_l2": 0.009648106542963967,
+        "rmse": 0.008736965131434507,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": -28,
+        "max_abs_error": 0.0,
+        "max_bf16_steps": 64,
+        "relative_l2": 0.0005900883660448844,
+        "rmse": 0.000534361996899704
+      },
+      "needs_conditional_reference": false,
+      "position": 3,
+      "same_history_before_after": true,
+      "tensor": "layer10-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 440,
+        "max_abs_error": 0.0625,
+        "max_bf16_steps": 30888,
+        "relative_l2": 0.010798390954620901,
+        "rmse": 0.010561948134720315,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 455,
+        "max_abs_error": 0.09375,
+        "max_bf16_steps": 30720,
+        "relative_l2": 0.010417081126874424,
+        "rmse": 0.010188987511156856,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": 15,
+        "max_abs_error": 0.03125,
+        "max_bf16_steps": -168,
+        "relative_l2": -0.0003813098277464771,
+        "rmse": -0.0003729606235634581
+      },
+      "needs_conditional_reference": false,
+      "position": 3,
+      "same_history_before_after": true,
+      "tensor": "layer11-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 187,
+        "max_abs_error": 0.25,
+        "max_bf16_steps": 31232,
+        "relative_l2": 0.02551828759373441,
+        "rmse": 0.03853734334965461,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 221,
+        "max_abs_error": 0.25,
+        "max_bf16_steps": 31200,
+        "relative_l2": 0.02354049284767896,
+        "rmse": 0.03555050675554882,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": 34,
+        "max_abs_error": 0.0,
+        "max_bf16_steps": -32,
+        "relative_l2": -0.001977794746055448,
+        "rmse": -0.002986836594105792
+      },
+      "needs_conditional_reference": false,
+      "position": 3,
+      "same_history_before_after": true,
+      "tensor": "layer12-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 347,
+        "max_abs_error": 0.375,
+        "max_bf16_steps": 31152,
+        "relative_l2": 0.01716667106906017,
+        "rmse": 0.022447922288479125,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 417,
+        "max_abs_error": 0.375,
+        "max_bf16_steps": 31088,
+        "relative_l2": 0.014916881216829653,
+        "rmse": 0.01950599443507589,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": 70,
+        "max_abs_error": 0.0,
+        "max_bf16_steps": -64,
+        "relative_l2": -0.0022497898522305156,
+        "rmse": -0.002941927853403234
+      },
+      "needs_conditional_reference": false,
+      "position": 3,
+      "same_history_before_after": true,
+      "tensor": "layer13-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 599,
+        "max_abs_error": 0.625,
+        "max_bf16_steps": 31104,
+        "relative_l2": 0.011830375377329555,
+        "rmse": 0.028806721288789604,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 501,
+        "max_abs_error": 0.5,
+        "max_bf16_steps": 30848,
+        "relative_l2": 0.01149776026284447,
+        "rmse": 0.02799681031015982,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": -98,
+        "max_abs_error": -0.125,
+        "max_bf16_steps": -256,
+        "relative_l2": -0.000332615114485086,
+        "rmse": -0.0008099109786297853
+      },
+      "needs_conditional_reference": false,
+      "position": 3,
+      "same_history_before_after": true,
+      "tensor": "layer14-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 470,
+        "max_abs_error": 0.625,
+        "max_bf16_steps": 30976,
+        "relative_l2": 0.014567284399339648,
+        "rmse": 0.030815846860929533,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 513,
+        "max_abs_error": 0.625,
+        "max_bf16_steps": 30944,
+        "relative_l2": 0.01235525331007209,
+        "rmse": 0.026136483883601083,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": 43,
+        "max_abs_error": 0.0,
+        "max_bf16_steps": -32,
+        "relative_l2": -0.0022120310892675583,
+        "rmse": -0.00467936297732845
+      },
+      "needs_conditional_reference": false,
+      "position": 3,
+      "same_history_before_after": true,
+      "tensor": "layer15-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 427,
+        "max_abs_error": 0.625,
+        "max_bf16_steps": 30992,
+        "relative_l2": 0.016126253605857243,
+        "rmse": 0.02987852945811295,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 452,
+        "max_abs_error": 0.5625,
+        "max_bf16_steps": 31136,
+        "relative_l2": 0.01362123197208187,
+        "rmse": 0.025237255389920037,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": 25,
+        "max_abs_error": -0.0625,
+        "max_bf16_steps": 144,
+        "relative_l2": -0.002505021633775372,
+        "rmse": -0.004641274068192914
+      },
+      "needs_conditional_reference": false,
+      "position": 3,
+      "same_history_before_after": true,
+      "tensor": "layer16-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 395,
+        "max_abs_error": 0.75,
+        "max_bf16_steps": 31080,
+        "relative_l2": 0.01627216810722339,
+        "rmse": 0.031581691863379224,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 472,
+        "max_abs_error": 0.6875,
+        "max_bf16_steps": 30892,
+        "relative_l2": 0.013548008342466746,
+        "rmse": 0.026294530760430153,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": 77,
+        "max_abs_error": -0.0625,
+        "max_bf16_steps": -188,
+        "relative_l2": -0.0027241597647566437,
+        "rmse": -0.0052871611029490714
+      },
+      "needs_conditional_reference": false,
+      "position": 3,
+      "same_history_before_after": true,
+      "tensor": "layer17-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 337,
+        "max_abs_error": 0.75,
+        "max_bf16_steps": 31360,
+        "relative_l2": 0.024983363315917783,
+        "rmse": 0.034319163388237636,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 349,
+        "max_abs_error": 0.75,
+        "max_bf16_steps": 31456,
+        "relative_l2": 0.02446007643683693,
+        "rmse": 0.03360033431486565,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": 12,
+        "max_abs_error": 0.0,
+        "max_bf16_steps": 96,
+        "relative_l2": -0.0005232868790808545,
+        "rmse": -0.0007188290733719863
+      },
+      "needs_conditional_reference": false,
+      "position": 3,
+      "same_history_before_after": true,
+      "tensor": "layer18-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 225,
+        "max_abs_error": 0.5,
+        "max_bf16_steps": 31510,
+        "relative_l2": 0.019399073295471574,
+        "rmse": 0.032575096864507797,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 261,
+        "max_abs_error": 0.5,
+        "max_bf16_steps": 31415,
+        "relative_l2": 0.019065069808811792,
+        "rmse": 0.0320142352313098,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": 36,
+        "max_abs_error": 0.0,
+        "max_bf16_steps": -95,
+        "relative_l2": -0.0003340034866597813,
+        "rmse": -0.0005608616331979968
+      },
+      "needs_conditional_reference": false,
+      "position": 3,
+      "same_history_before_after": true,
+      "tensor": "layer19-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 233,
+        "max_abs_error": 0.5,
+        "max_bf16_steps": 31252,
+        "relative_l2": 0.017800774348865896,
+        "rmse": 0.03250962022083142,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 289,
+        "max_abs_error": 0.5,
+        "max_bf16_steps": 31126,
+        "relative_l2": 0.01726196244532164,
+        "rmse": 0.03152558604280123,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": 56,
+        "max_abs_error": 0.0,
+        "max_bf16_steps": -126,
+        "relative_l2": -0.0005388119035442569,
+        "rmse": -0.0009840341780301895
+      },
+      "needs_conditional_reference": false,
+      "position": 3,
+      "same_history_before_after": true,
+      "tensor": "layer20-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 286,
+        "max_abs_error": 0.5,
+        "max_bf16_steps": 31344,
+        "relative_l2": 0.016608296112252095,
+        "rmse": 0.032901517345361474,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 303,
+        "max_abs_error": 0.5,
+        "max_bf16_steps": 31224,
+        "relative_l2": 0.015783819237284034,
+        "rmse": 0.031268204691295806,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": 17,
+        "max_abs_error": 0.0,
+        "max_bf16_steps": -120,
+        "relative_l2": -0.0008244768749680609,
+        "rmse": -0.0016333126540656676
+      },
+      "needs_conditional_reference": false,
+      "position": 3,
+      "same_history_before_after": true,
+      "tensor": "layer21-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 352,
+        "max_abs_error": 0.5,
+        "max_bf16_steps": 31296,
+        "relative_l2": 0.014027437593752747,
+        "rmse": 0.03509118783952724,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 368,
+        "max_abs_error": 0.5,
+        "max_bf16_steps": 31336,
+        "relative_l2": 0.012187691249029258,
+        "rmse": 0.030488858716457214,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": 16,
+        "max_abs_error": 0.0,
+        "max_bf16_steps": 40,
+        "relative_l2": -0.001839746344723489,
+        "rmse": -0.004602329123070029
+      },
+      "needs_conditional_reference": false,
+      "position": 3,
+      "same_history_before_after": true,
+      "tensor": "layer22-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 357,
+        "max_abs_error": 0.25,
+        "max_bf16_steps": 31340,
+        "relative_l2": 0.011898792064091265,
+        "rmse": 0.03982405210516156,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 425,
+        "max_abs_error": 0.25,
+        "max_bf16_steps": 31236,
+        "relative_l2": 0.009298069388124988,
+        "rmse": 0.031119696671359283,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": 68,
+        "max_abs_error": 0.0,
+        "max_bf16_steps": -104,
+        "relative_l2": -0.0026007226759662775,
+        "rmse": -0.008704355433802276
+      },
+      "needs_conditional_reference": false,
+      "position": 3,
+      "same_history_before_after": true,
+      "tensor": "layer23-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 340,
+        "max_abs_error": 0.5,
+        "max_bf16_steps": 31446,
+        "relative_l2": 0.010865548068045426,
+        "rmse": 0.04615149686951134,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 476,
+        "max_abs_error": 0.5,
+        "max_bf16_steps": 31472,
+        "relative_l2": 0.008058224378135753,
+        "rmse": 0.034227368452317025,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": 136,
+        "max_abs_error": 0.0,
+        "max_bf16_steps": 26,
+        "relative_l2": -0.0028073236899096733,
+        "rmse": -0.011924128417194313
+      },
+      "needs_conditional_reference": false,
+      "position": 3,
+      "same_history_before_after": true,
+      "tensor": "layer24-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 367,
+        "max_abs_error": 0.75,
+        "max_bf16_steps": 31400,
+        "relative_l2": 0.01035109949926173,
+        "rmse": 0.05241456787977616,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 483,
+        "max_abs_error": 0.75,
+        "max_bf16_steps": 31296,
+        "relative_l2": 0.0075498576772983885,
+        "rmse": 0.038229999406114254,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": 116,
+        "max_abs_error": 0.0,
+        "max_bf16_steps": -104,
+        "relative_l2": -0.0028012418219633415,
+        "rmse": -0.014184568473661903
+      },
+      "needs_conditional_reference": false,
+      "position": 3,
+      "same_history_before_after": true,
+      "tensor": "layer25-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 356,
+        "max_abs_error": 0.75,
+        "max_bf16_steps": 31360,
+        "relative_l2": 0.009631371476837455,
+        "rmse": 0.05780904016179295,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 482,
+        "max_abs_error": 0.75,
+        "max_bf16_steps": 31328,
+        "relative_l2": 0.006874689505578369,
+        "rmse": 0.04126299174355308,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": 126,
+        "max_abs_error": 0.0,
+        "max_bf16_steps": -32,
+        "relative_l2": -0.0027566819712590857,
+        "rmse": -0.016546048418239874
+      },
+      "needs_conditional_reference": false,
+      "position": 3,
+      "same_history_before_after": true,
+      "tensor": "layer26-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 395,
+        "max_abs_error": 0.5,
+        "max_bf16_steps": 31504,
+        "relative_l2": 0.009143940431835442,
+        "rmse": 0.06467287208492271,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 543,
+        "max_abs_error": 0.5,
+        "max_bf16_steps": 31456,
+        "relative_l2": 0.006262402146208139,
+        "rmse": 0.04429245093679686,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": 148,
+        "max_abs_error": 0.0,
+        "max_bf16_steps": -48,
+        "relative_l2": -0.0028815382856273034,
+        "rmse": -0.020380421148125855
+      },
+      "needs_conditional_reference": false,
+      "position": 3,
+      "same_history_before_after": true,
+      "tensor": "layer27-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 377,
+        "max_abs_error": 2.0,
+        "max_bf16_steps": 31574,
+        "relative_l2": 0.010286439460534683,
+        "rmse": 0.08914774795919159,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 546,
+        "max_abs_error": 0.5,
+        "max_bf16_steps": 31490,
+        "relative_l2": 0.0058245323765316786,
+        "rmse": 0.05047849124814733,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": 169,
+        "max_abs_error": -1.5,
+        "max_bf16_steps": -84,
+        "relative_l2": -0.004461907084003004,
+        "rmse": -0.03866925671104426
+      },
+      "needs_conditional_reference": false,
+      "position": 3,
+      "same_history_before_after": true,
+      "tensor": "layer28-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 350,
+        "max_abs_error": 2.0,
+        "max_bf16_steps": 31774,
+        "relative_l2": 0.009581855599177968,
+        "rmse": 0.09845013643872928,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 533,
+        "max_abs_error": 0.5,
+        "max_bf16_steps": 31591,
+        "relative_l2": 0.005345630364887211,
+        "rmse": 0.054924438521001075,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": 183,
+        "max_abs_error": -1.5,
+        "max_bf16_steps": -183,
+        "relative_l2": -0.004236225234290757,
+        "rmse": -0.04352569791772821
+      },
+      "needs_conditional_reference": false,
+      "position": 3,
+      "same_history_before_after": true,
+      "tensor": "layer29-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 325,
+        "max_abs_error": 2.0,
+        "max_bf16_steps": 31820,
+        "relative_l2": 0.008706448415578612,
+        "rmse": 0.10791568349528298,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 546,
+        "max_abs_error": 0.5,
+        "max_bf16_steps": 31488,
+        "relative_l2": 0.004921093859029887,
+        "rmse": 0.06099653750792443,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": 221,
+        "max_abs_error": -1.5,
+        "max_bf16_steps": -332,
+        "relative_l2": -0.003785354556548725,
+        "rmse": -0.04691914598735855
+      },
+      "needs_conditional_reference": false,
+      "position": 3,
+      "same_history_before_after": true,
+      "tensor": "layer30-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 365,
+        "max_abs_error": 4.0,
+        "max_bf16_steps": 31815,
+        "relative_l2": 0.00913581944959565,
+        "rmse": 0.1296070405118658,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 570,
+        "max_abs_error": 0.5,
+        "max_bf16_steps": 31472,
+        "relative_l2": 0.0045797037586674735,
+        "rmse": 0.0649708385609821,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": 205,
+        "max_abs_error": -3.5,
+        "max_bf16_steps": -343,
+        "relative_l2": -0.004556115690928177,
+        "rmse": -0.06463620195088371
+      },
+      "needs_conditional_reference": false,
+      "position": 3,
+      "same_history_before_after": true,
+      "tensor": "layer31-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 364,
+        "max_abs_error": 4.0,
+        "max_bf16_steps": 31800,
+        "relative_l2": 0.008685540028933006,
+        "rmse": 0.13733823178987886,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 543,
+        "max_abs_error": 1.0,
+        "max_bf16_steps": 31456,
+        "relative_l2": 0.004602727856380238,
+        "rmse": 0.07277964330364577,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": 179,
+        "max_abs_error": -3.0,
+        "max_bf16_steps": -344,
+        "relative_l2": -0.004082812172552768,
+        "rmse": -0.0645585884862331
+      },
+      "needs_conditional_reference": false,
+      "position": 3,
+      "same_history_before_after": true,
+      "tensor": "layer32-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 362,
+        "max_abs_error": 4.0,
+        "max_bf16_steps": 31894,
+        "relative_l2": 0.008975134855687867,
+        "rmse": 0.15528517352791832,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 553,
+        "max_abs_error": 1.0,
+        "max_bf16_steps": 31710,
+        "relative_l2": 0.004784291320920533,
+        "rmse": 0.08277641728206872,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": 191,
+        "max_abs_error": -3.0,
+        "max_bf16_steps": -184,
+        "relative_l2": -0.004190843534767334,
+        "rmse": -0.0725087562458496
+      },
+      "needs_conditional_reference": false,
+      "position": 3,
+      "same_history_before_after": true,
+      "tensor": "layer33-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 395,
+        "max_abs_error": 3.0,
+        "max_bf16_steps": 31856,
+        "relative_l2": 0.00661086509603079,
+        "rmse": 0.15512274775299656,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 586,
+        "max_abs_error": 1.0,
+        "max_bf16_steps": 31600,
+        "relative_l2": 0.004140828640075448,
+        "rmse": 0.09716379131809406,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": 191,
+        "max_abs_error": -2.0,
+        "max_bf16_steps": -256,
+        "relative_l2": -0.0024700364559553413,
+        "rmse": -0.057958956434902495
+      },
+      "needs_conditional_reference": false,
+      "position": 3,
+      "same_history_before_after": true,
+      "tensor": "layer34-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 498,
+        "max_abs_error": 3.0,
+        "max_bf16_steps": 31936,
+        "relative_l2": 0.005458349648422767,
+        "rmse": 0.1872895339816594,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 685,
+        "max_abs_error": 4.0,
+        "max_bf16_steps": 31872,
+        "relative_l2": 0.004427988247098476,
+        "rmse": 0.1519352750725626,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": 187,
+        "max_abs_error": 1.0,
+        "max_bf16_steps": -64,
+        "relative_l2": -0.0010303614013242911,
+        "rmse": -0.0353542589090968
+      },
+      "needs_conditional_reference": false,
+      "position": 3,
+      "same_history_before_after": true,
+      "tensor": "layer35-hidden"
+    },
+    {
+      "baseline": {
+        "elements": 4096,
+        "exact_words": 504,
+        "max_abs_error": 0.5,
+        "max_bf16_steps": 30942,
+        "relative_l2": 0.005633098634830158,
+        "rmse": 0.01676955833446041,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 4096,
+        "exact_words": 657,
+        "max_abs_error": 0.5,
+        "max_bf16_steps": 30872,
+        "relative_l2": 0.005677140733831372,
+        "rmse": 0.01690067028478315,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": 153,
+        "max_abs_error": 0.0,
+        "max_bf16_steps": -70,
+        "relative_l2": 4.404209900121456e-05,
+        "rmse": 0.00013111195032274037
+      },
+      "needs_conditional_reference": false,
+      "position": 3,
+      "same_history_before_after": true,
+      "tensor": "final-norm"
+    },
+    {
+      "baseline": {
+        "elements": 151936,
+        "exact_words": 69994,
+        "max_abs_error": 0.1875,
+        "max_bf16_steps": 31144,
+        "relative_l2": 0.00451319412000659,
+        "rmse": 0.03060425841270918,
+        "zero_reference_norm": false
+      },
+      "candidate": {
+        "elements": 151936,
+        "exact_words": 53565,
+        "max_abs_error": 0.125,
+        "max_bf16_steps": 335,
+        "relative_l2": 0.005078590641805333,
+        "rmse": 0.03443824844253543,
+        "zero_reference_norm": false
+      },
+      "candidate_minus_baseline": {
+        "exact_words": -16429,
+        "max_abs_error": -0.0625,
+        "max_bf16_steps": -30809,
+        "relative_l2": 0.0005653965217987432,
+        "rmse": 0.003833990029826248
+      },
+      "needs_conditional_reference": false,
+      "position": 3,
+      "same_history_before_after": true,
+      "tensor": "logits"
+    }
+  ]
+}

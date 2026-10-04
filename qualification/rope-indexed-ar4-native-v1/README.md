@@ -42,8 +42,10 @@ audits. This is not device time or sustained throughput. Binary tensor
 captures are retained privately outside Git; published hashes identify them.
 No weight or executable bodies are added by this checkpoint.
 
-Next is an independent comparison of the four captured forwards and tensor
-slices against the genuine repeated framework reference. Numerical
+The subsequent [independent comparison](../rope-indexed-ar4-comparison-v1/README.md)
+of these captures against the genuine repeated framework reference completed
+with mixed errors: position 1's logit relative L2 improves, but positions 2
+and 3 regress. None of the 152 complete tensor slices matches bitwise. Numerical
 acceptance, the single-request BF16 2,048-token prompt / 256-token decode
 workload, and the 700 tokens/s target remain open. All issue #42 M0-M7
 acceptance milestones remain open.

@@ -1,0 +1,58 @@
+{
+  "schema": "ferric-p228-rope-indexed-ar4-comparison-package-v1",
+  "files": [
+    {
+      "path": "README.md",
+      "bytes": 6986,
+      "sha256": "212b429aa5494b5c1fde018d5456f8c9150a3ad07c93a38f9f67e48c9fd68ebf"
+    },
+    {
+      "path": "comparison.py",
+      "bytes": 11899,
+      "sha256": "dcbbd25e34ee6ee2bd43b8f8b8e479d9335713113d01ef09ee1e76bd78b42bfb"
+    },
+    {
+      "path": "diagnostics.py",
+      "bytes": 6314,
+      "sha256": "645f11391b2255b7b93a8e7f0372114ad9700a0037e718bb48677d2234b926e7"
+    },
+    {
+      "path": "run.py",
+      "bytes": 10289,
+      "sha256": "db03f748bec84a5c61bfaa603230ae3015a091eb095b603ce56df95e9f395793"
+    },
+    {
+      "path": "test_comparison.py",
+      "bytes": 9917,
+      "sha256": "bc5245b060e5ef361a992a4ddecb71a1a3f154d0a06a264a0eca82ccf74fa539"
+    }
+  ],
+  "authored_tests": {
+    "count": 18,
+    "executed_by_author": false,
+    "names": [
+      "test_all_same_histories_have_152_before_after_rows",
+      "test_diverged_history_never_recovers_when_current_token_matches",
+      "test_different_last_output_does_not_invalidate_same_current_input_history",
+      "test_wrong_seed_refuses",
+      "test_teacher_forced_inputs_cannot_fake_ar_history",
+      "test_boolean_record_token_refuses",
+      "test_nonfinite_bf16_refuses",
+      "test_lowest_index_argmax_is_checked_against_payload",
+      "test_signed_zero_is_numerically_equal_but_not_bitwise_equal",
+      "test_nonzero_error_against_zero_norm_is_not_invented_relative_l2",
+      "test_request_allows_only_actual_prefix_and_fresh_run_identity",
+      "test_request_wrong_image_or_residual_refuses",
+      "test_request_workload_or_tf_mode_change_refuses",
+      "test_duplicate_and_nonfinite_json_refuse",
+      "test_transport_preserves_original_pin_and_exact_uint64",
+      "test_transport_extent_substitution_and_postread_drift_refuse",
+      "test_private_data_helper_alias_restoration_on_success_and_error",
+      "test_reference_repeat_body_drift_is_not_accepted"
+    ]
+  },
+  "gpu_execution": false,
+  "model_execution": false,
+  "numerical_acceptance": false,
+  "performance_claim": false
+}
