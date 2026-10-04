@@ -1,0 +1,53 @@
+{
+  "compiler_limits_changed": false,
+  "files": [
+    {
+      "after": {
+        "bytes": 1650118,
+        "sha256": "bd67b31add2ed0a6c8d1719f57e59821a13a3848c0f07f8135ad4dc144261b1f"
+      },
+      "before": {
+        "bytes": 1645635,
+        "sha256": "f27e2febd51af0e3266bf3a848cb0e8f842137847cdb4f4ead1821b5449dce1a"
+      },
+      "path": "crates/rustc-codegen-fe2o3/src/production_ranked_projection_v1.rs"
+    },
+    {
+      "after": {
+        "bytes": 20490,
+        "sha256": "0d595fa1de24e8ba74a657e77e1fb5da7cd8aef391ebe37b7e0050a91d64c65a"
+      },
+      "before": null,
+      "path": "crates/rustc-codegen-fe2o3/src/production_ranked_projection_v1/ordinary_induction_alias_v1_tests.rs"
+    }
+  ],
+  "full_source_roster_joined": 5780,
+  "original_idempotent_overlay": {
+    "bytes": 892,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-partial-move-idempotent-v1/manifest.json",
+    "sha256": "788aed8827fd55fde9f260e227cfb91bc8f9503df98569617112c9c7b3fcc707"
+  },
+  "patch": {
+    "bytes": 27105,
+    "sha256": "e47949eb44a5f7bc7c029662c2861e5c7e291d65a6898981f7ca29fe2f41cf81"
+  },
+  "proposal": {
+    "bytes": 2513,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-ordinary-induction-alias-v1/manifest.json",
+    "sha256": "a2c6cab1e3a24601015aa45f368e6a4d58bfaa34bbe2150c7f696b8cf1e43135"
+  },
+  "qualified_generation": {
+    "completion": {
+      "bytes": 364397,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/idempotent-compiler-cpu-v228-v2/complete.json",
+      "sha256": "52245c1a713a87c1d60a464bf56998cca612f421386efe715533cfafedc3f9ac"
+    },
+    "sources": {
+      "bytes": 3686065,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/idempotent-compiler-cpu-v228-v2/sources-before.json",
+      "sha256": "d0e15df4e88f2b70844998eefe096984f0203bb3e31bae26c5021ca0fbae5ba4"
+    }
+  },
+  "runtime_adoption": false,
+  "schema": "FerricOrdinaryInductionSourcePinsV1"
+}

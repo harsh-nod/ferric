@@ -29,6 +29,7 @@ engineering branch; it does not change the production execution path.
 | Reduced-CFG reciprocal V3 on `mi350-2` | Exact census measures 1,013 blocks, 14 fewer; CFG-size gate cleared | Checked lowering now rejects an unsupported induction-latch form; no HSACO or GPU run |
 | Canonical-counter reciprocal V4 on `mi350-2` | CPU arithmetic passes; fresh checked probe fails cumulative partial-move storage limit | No semantic capture or HSACO; prior V3 compiler successes do not transfer |
 | Independent per-profile comparator on `mi350-2` | 20 CPU tests and eight historical rank rows passed | No paired bitwise prerequisite; unchanged bounds; not a new GPU run or new-image acceptance |
+| Ordinary induction temporary compiler candidate on `mi350-2` | 2,683 CPU tests passed, 25 ignored; fresh backend and extractor built | Eight new regressions executed; actual prefix replay and matching finalizers still pending |
 
 Both four-forward runs completed their Close protocol, reaped their owned
 processes, and passed their six surrounding device-state audits. The CPU suite
@@ -172,6 +173,17 @@ largest O error/bound ratio is below 0.011039. These are conditional checks of
 older captures, not new GPU execution or validation of the reciprocal candidate.
 The future native-child adapter still must authenticate ownership, captures,
 untouched KV and actual-image arithmetic/ISA prerequisites.
+
+The [next compiler candidate](../qualification/fe2o3-ordinary-induction-alias-v1/README.md)
+recognizes only the adjacent ordinary-Add temporary seen in the V3 capture.
+It retains exact type/definition custody, no-address-escape, positive-step,
+unsigned no-overflow and replay checks, without granting assertion-elision
+authority or changing caps. A fresh `mi350-2` run passed 1,487 Pliron and 1,196
+compiler tests, with 25 unchanged ignored selections. All eight new regressions
+ran; the extractor/backend built and all postchecks passed. The complete
+5,780-file prior source generation was joined before applying the two-file
+change. The patch, source pins and actual result are published; this CPU result
+does not yet establish full checked lowering or a new GPU image.
 
 ## Source Publication
 

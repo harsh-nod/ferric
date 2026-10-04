@@ -1,0 +1,276 @@
+{
+  "artifacts": {
+    "compiler-tests": {
+      "bytes": 128970008,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/ordinary-induction-compiler-cpu-v228-v1/target/debug/deps/rustc_codegen_fe2o3-5db184f14eef1d1c",
+      "sha256": "643c7baffcb79da567e20425b8c1df1bbd7f076b22318ed6293c089c23a69920"
+    },
+    "fe2o3-rustc-extract": {
+      "bytes": 205648,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/ordinary-induction-compiler-cpu-v228-v1/target/debug/fe2o3-rustc-extract",
+      "sha256": "cece2097c34ed019e380a512132e8f4d932f127e8dd87793bcd9f0cf620cf3ca"
+    },
+    "librustc_codegen_fe2o3.rlib": {
+      "bytes": 67681872,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/ordinary-induction-compiler-cpu-v228-v1/target/debug/librustc_codegen_fe2o3.rlib",
+      "sha256": "8b0dcaf7bbf8b9e10900ef3a53dd6d7014d7fd6a6639dd9a12883f6347d25f21"
+    },
+    "librustc_codegen_fe2o3.so": {
+      "bytes": 205465840,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/ordinary-induction-compiler-cpu-v228-v1/target/debug/librustc_codegen_fe2o3.so",
+      "sha256": "3a0736577779cf072bb44dacfbda28f0298a39d50a649856ac280a02ac477ade"
+    },
+    "pliron-tests": {
+      "bytes": 68335600,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/ordinary-induction-compiler-cpu-v228-v1/target/debug/deps/fe2o3_pliron-bfbb58262805e3df",
+      "sha256": "d655c5ea569647700feeaf7d80fcb00a68cbf8137e4f635ddd13c20d1950392d"
+    }
+  },
+  "checked_lowering": false,
+  "compiler_limits_unchanged": true,
+  "date": "2026-10-03",
+  "fresh_compiler_built": true,
+  "fresh_hsaco_emitted": false,
+  "full_model_acceptance": false,
+  "gpu_execution": false,
+  "host": "mi350-2 (asrock-1w300-g2-2b)",
+  "limitations": [
+    "Synthetic induction tests are not full actual-capture projection/replay.",
+    "Actual prefix replay remains ignored in the default compiler suite.",
+    "No new finalizer, HSACO, GPU execution or production admission is qualified.",
+    "Old-target postchecks are stat inventories, not proof of no transient writes.",
+    "Receipt identities alone are not a self-contained public compiler reproducer."
+  ],
+  "local_rehash": {
+    "archive_members": 5873,
+    "artifacts": 5,
+    "copied_sources": 5781,
+    "raw_records": 60
+  },
+  "numerical_acceptance": false,
+  "owned_outcome": {
+    "cleanup_signalled": false,
+    "exit_code": 0,
+    "owned_groups_absent": true,
+    "owned_processes_reaped": true,
+    "reason": null
+  },
+  "owner_completion": {
+    "bytes": 57318,
+    "sha256": "85de66610631612ed2473f9d5fbb80ce89ea7ffc6064c1784834a6751d623609"
+  },
+  "passed": true,
+  "patch_roundtrip": {
+    "bytes": 1685,
+    "sha256": "d0d53ad5564558b005579a84cb88e93e832993f71f0072c219f1a901048f8b48"
+  },
+  "performance_claim": false,
+  "phases": {
+    "compiler-build": {
+      "cache_bytes": 2101878889,
+      "elapsed_seconds": 46.6617964389734,
+      "exit_code": 0,
+      "group_absent": true,
+      "reason": null,
+      "stderr_sha256": "91b9a3000c751c3a57f79f4d757bf298b5dbff2fdf3de1a616eae11e826e6f1e",
+      "stdout_sha256": "2247174e98013a3c66a41bad10a7c7702e2aefc60ef66797e1b9d7dff0bb0807"
+    },
+    "compiler-build-tests": {
+      "cache_bytes": 1497638431,
+      "elapsed_seconds": 89.3249523579143,
+      "exit_code": 0,
+      "group_absent": true,
+      "reason": null,
+      "stderr_sha256": "ec4d27aad8bfde0ee7390cd9407d6ed29ebff4e5c1efce1d3bc015cf22be64e2",
+      "stdout_sha256": "0f8bb9ef3c936dafe6788b86ffcebcc1898d2ac117a4bec5d539f76d15ccbd56"
+    },
+    "compiler-ignored-list": {
+      "cache_bytes": 1497638431,
+      "elapsed_seconds": 2.0219850761350244,
+      "exit_code": 0,
+      "group_absent": true,
+      "reason": null,
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdout_sha256": "8a66b548f139c344b29f54b88909b2170972c0bd37aee5e581ea7d9a964e547c"
+    },
+    "compiler-list": {
+      "cache_bytes": 1497638431,
+      "elapsed_seconds": 2.032965298043564,
+      "exit_code": 0,
+      "group_absent": true,
+      "reason": null,
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdout_sha256": "28f94d10ffb6d9cf4afa996f5c6ce20ede8c4956707b1386a824f05829dc62ba"
+    },
+    "compiler-tests": {
+      "cache_bytes": 1497638431,
+      "elapsed_seconds": 28.447314352961257,
+      "exit_code": 0,
+      "group_absent": true,
+      "reason": null,
+      "stderr_sha256": "51ca4d5804582d0b66e207f845656969e6cf93513c3e77f04eb13e0b47f2259f",
+      "stdout_sha256": "5c61048b45833562c39640d34f1d0a6be450b9f0ba79e804d4ae142f83a95c30"
+    },
+    "metadata": {
+      "cache_bytes": 8192,
+      "elapsed_seconds": 2.011183629045263,
+      "exit_code": 0,
+      "group_absent": true,
+      "reason": null,
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdout_sha256": "933251b2e05675c2b93f56b94ad105aa856a8be937dc05cd695958d80e406573"
+    },
+    "pliron-build-tests": {
+      "cache_bytes": 534387798,
+      "elapsed_seconds": 54.6979416559916,
+      "exit_code": 0,
+      "group_absent": true,
+      "reason": null,
+      "stderr_sha256": "cad90e76433eb65e2aed9acf94efc45e6e094d516d4e822d47a00af99b53623c",
+      "stdout_sha256": "83c4946a5f210b4ee273a65adc526112e25dbc3c78956a4d9facc4caa99f85d3"
+    },
+    "pliron-ignored-list": {
+      "cache_bytes": 534387798,
+      "elapsed_seconds": 0.006098120007663965,
+      "exit_code": 0,
+      "group_absent": true,
+      "reason": null,
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdout_sha256": "df501c45dc20a3db0cbabf850e42c9ea212ee4bc96460c7d67d9dad53cd0b486"
+    },
+    "pliron-list": {
+      "cache_bytes": 534387798,
+      "elapsed_seconds": 2.0162785269785672,
+      "exit_code": 0,
+      "group_absent": true,
+      "reason": null,
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdout_sha256": "acd87759091e56f7a70c38a44db0bd524bc80ee9d1bdadcc28019d7cc8e0e5a6"
+    },
+    "pliron-tests": {
+      "cache_bytes": 534387798,
+      "elapsed_seconds": 50.69106145994738,
+      "exit_code": 0,
+      "group_absent": true,
+      "reason": null,
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdout_sha256": "2da5625633c4632e0dd2c0c21e8d5190d61b7c38c6c3a67f83a39a34d8bf39d2"
+    }
+  },
+  "production_authority": false,
+  "qualified_generation": {
+    "completion": {
+      "bytes": 364397,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/idempotent-compiler-cpu-v228-v2/complete.json",
+      "sha256": "52245c1a713a87c1d60a464bf56998cca612f421386efe715533cfafedc3f9ac"
+    },
+    "sources": {
+      "bytes": 3686065,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/idempotent-compiler-cpu-v228-v2/sources-before.json",
+      "sha256": "d0e15df4e88f2b70844998eefe096984f0203bb3e31bae26c5021ca0fbae5ba4"
+    }
+  },
+  "raw_completion": {
+    "bytes": 369402,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/ordinary-induction-compiler-cpu-v228-v1/complete.json",
+    "sha256": "c45aa83b01bf76fdfd9962b06884611658dab607b001ba67fecc66db9fd5ba97"
+  },
+  "retained_archive": {
+    "bytes": 128155521,
+    "sha256": "5ec28cafc6ef37f7eea14b979c23130d4fbe7a37a3ba75e7a3031f282c606215"
+  },
+  "runner_package": {
+    "bytes": 663,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-ordinary-induction-compiler-cpu-v1/manifest.json",
+    "sha256": "39943b83a05710a6f646a46c5aa208e58fa0322a22272f9546443507773a7d9f"
+  },
+  "runner_pure_tests": {
+    "passed": 17,
+    "receipt": {
+      "bytes": 461,
+      "sha256": "33040388cc419c934e0fb272d11f392fa83a5fb4dcce8ec2b80ec2e769c907b7"
+    }
+  },
+  "schema": "FerricOrdinaryInductionCpuQualificationV1",
+  "source_proposals": {
+    "idempotent": {
+      "bytes": 892,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-partial-move-idempotent-v1/manifest.json",
+      "sha256": "788aed8827fd55fde9f260e227cfb91bc8f9503df98569617112c9c7b3fcc707"
+    },
+    "ordinary": {
+      "bytes": 2513,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-ordinary-induction-alias-v1/manifest.json",
+      "sha256": "a2c6cab1e3a24601015aa45f368e6a4d58bfaa34bbe2150c7f696b8cf1e43135"
+    }
+  },
+  "source_snapshots": {
+    "sources-after.json": {
+      "bytes": 3779269,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/ordinary-induction-compiler-cpu-v228-v1/sources-after.json",
+      "sha256": "5aad4c8ba6520c323310424ce343de2ae5088e7f8c1c0b1fd67853b5fd3bd9f9"
+    },
+    "sources-before.json": {
+      "bytes": 3779269,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/ordinary-induction-compiler-cpu-v228-v1/sources-before.json",
+      "sha256": "5aad4c8ba6520c323310424ce343de2ae5088e7f8c1c0b1fd67853b5fd3bd9f9"
+    }
+  },
+  "tests": {
+    "compiler": {
+      "ignored": 24,
+      "ignored_names": [
+        "compiler_descriptor::wave_task_storage_view_v1::tests::actual_post_v35_root_correspondence_rejects_fact_erasure",
+        "production_pipeline::conditional_formal_tests::actual_attention_output_v37_reaches_formal_archive_and_outer_lineage_replay",
+        "production_pipeline::conditional_formal_tests::actual_attention_v36_reaches_formal_archive_and_outer_lineage_replay",
+        "production_pipeline::conditional_formal_tests::actual_mlp_v38_reaches_formal_archive_and_outer_lineage_replay",
+        "production_pipeline::conditional_formal_tests::actual_mlp_v39_reaches_formal_archive_and_outer_lineage_replay",
+        "production_pipeline::conditional_formal_tests::actual_multiwave_v40_reaches_formal_archive_and_outer_lineage_replay",
+        "production_pipeline::conditional_formal_tests::actual_post_v35_reaches_formal_archive_and_outer_lineage_replay",
+        "production_pipeline::conditional_formal_tests::actual_prefix_tile_v41_reaches_formal_archive_and_outer_lineage_replay",
+        "rust_type_layout_v3::tests::fake_external_multiwave_join_storage_authentication_v1",
+        "rust_type_layout_v3::tests::fake_external_prefix_tile_storage_authentication_v6",
+        "rust_type_layout_v3::tests::fake_external_wave_attention_output_storage_authentication_v5",
+        "rust_type_layout_v3::tests::fake_external_wave_attention_storage_authentication_v4",
+        "rust_type_layout_v3::tests::fake_external_wave_mlp_storage_authentication_v1",
+        "rust_type_layout_v3::tests::fake_external_wave_mlp_tile_storage_authentication_v2",
+        "rust_type_layout_v3::tests::fake_external_wave_post_storage_authentication_v3",
+        "rust_type_layout_v3::tests::fake_external_wave_storage_authentication_v2",
+        "rust_type_layout_v3::tests::genuine_external_multiwave_join_storage_authentication_v1",
+        "rust_type_layout_v3::tests::genuine_external_prefix_tile_storage_authentication_v6",
+        "rust_type_layout_v3::tests::genuine_external_wave_attention_output_storage_authentication_v5",
+        "rust_type_layout_v3::tests::genuine_external_wave_attention_storage_authentication_v4",
+        "rust_type_layout_v3::tests::genuine_external_wave_mlp_storage_authentication_v1",
+        "rust_type_layout_v3::tests::genuine_external_wave_mlp_tile_storage_authentication_v2",
+        "rust_type_layout_v3::tests::genuine_external_wave_post_storage_authentication_v3",
+        "rust_type_layout_v3::tests::genuine_external_wave_storage_authentication_v2"
+      ],
+      "new_tests_passed": [
+        "production_ranked_projection_v1::tests::ordinary_induction_alias_v1_tests::ordinary_temporary_copy_and_move_replay_and_build_the_ranked_loop",
+        "production_ranked_projection_v1::tests::ordinary_induction_alias_v1_tests::ordinary_temporary_does_not_admit_other_operators_or_checked_and_unchecked_copies",
+        "production_ranked_projection_v1::tests::ordinary_induction_alias_v1_tests::ordinary_temporary_refuses_chains_redefinitions_and_escaped_values",
+        "production_ranked_projection_v1::tests::ordinary_induction_alias_v1_tests::ordinary_temporary_refuses_cross_block_nonadjacent_and_after_use_producers",
+        "production_ranked_projection_v1::tests::ordinary_induction_alias_v1_tests::ordinary_temporary_refuses_local_and_producer_type_substitution",
+        "production_ranked_projection_v1::tests::ordinary_induction_alias_v1_tests::ordinary_temporary_replay_binds_producer_site_local_and_update_kind",
+        "production_ranked_projection_v1::tests::ordinary_induction_alias_v1_tests::ordinary_temporary_still_requires_a_positive_step_and_exact_unsigned_no_overflow",
+        "production_ranked_projection_v1::tests::ordinary_induction_alias_v1_tests::ordinary_temporary_uses_the_existing_alias_work_budget"
+      ],
+      "passed": 1196
+    },
+    "pliron": {
+      "ignored": 1,
+      "ignored_names": [
+        "production::ranked::p214_native_resource_replay_tests::p214_untrusted_native_wave_resource_replay"
+      ],
+      "new_tests_passed": [
+        "production::semantic_ssa::partial_moves::idempotent_mark_tests::fixed_point_whole_local_join_is_unchanged_and_does_not_recharge",
+        "production::semantic_ssa::partial_moves::idempotent_mark_tests::new_local_at_exhausted_storage_still_fails",
+        "production::semantic_ssa::partial_moves::idempotent_mark_tests::no_op_marks_preserve_whole_and_descendant_read_rejection",
+        "production::semantic_ssa::partial_moves::idempotent_mark_tests::repeated_whole_and_descendant_marks_are_noops_at_exact_storage_limit",
+        "production::semantic_ssa::partial_moves::idempotent_mark_tests::replacing_fields_with_whole_local_charges_once_without_refunds",
+        "production::semantic_ssa::partial_moves::idempotent_mark_tests::storage_live_does_not_refund_prior_insertions"
+      ],
+      "passed": 1487
+    }
+  }
+}
