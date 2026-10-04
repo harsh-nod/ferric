@@ -1,0 +1,23 @@
+{
+  "schema": "ferric-primary-agent-execution-observation-v1",
+  "description": "Actual primary-agent SSH command/tool output for the CPU-only exact QKV audit; not a remote process-supervisor receipt.",
+  "command": "ssh.exe -o BatchMode=yes -o ConnectTimeout=20 -o HostName=smci350-rck-g03-b19-03.rck.dcgpu -o UserKnownHostsFile=//wsl.localhost/Ubuntu/home/harsh/.ssh/known_hosts mi350 \"timeout --signal=TERM --kill-after=5s 360s env -u PYTHONPATH -u PYTHONHOME -u PYTHONOPTIMIZE HIP_VISIBLE_DEVICES= ROCR_VISIBLE_DEVICES= CUDA_VISIBLE_DEVICES= taskset -c 8,9 nice -n 10 /usr/bin/python3 -B /home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-layer0-exact-dot-v1/audit.py layer0-exact-dot-v228-v1 67b3982c7e1f3f8f64429ee4ee98b45ef266c15da1752b1c2f209a327e20ec40\"",
+  "initial_tool_result": {
+    "chunk_id": "10412f",
+    "wall_time_seconds": 1.000880731,
+    "session_id": 20138,
+    "original_token_count": 413,
+    "output": "\r\n $$$$$$\\  $$$$$$\\  $$$$$$\\       $$$$$$\\  $$\\   $$\\ $$$$$$$$\\ $$\\   $$\\\r\n$$  __$$\\ \\_$$  _|$$  __$$\\     $$  __$$\\ $$ |  $$ |\\__$$  __|$$ |  $$ |\r\n$$ /  $$ |  $$ |  $$ /  \\__|$$\\ $$ /  $$ |$$ |  $$ |   $$ |   $$ |  $$ |\r\n$$$$$$$$ |  $$ |  $$ |$$$$\\ \\__|$$$$$$$$ |$$ |  $$ |   $$ |   $$$$$$$$ |\r\n$$  __$$ |  $$ |  $$ |\\_$$ |    $$  __$$ |$$ |  $$ |   $$ |   $$  __$$ |\r\n$$ |  $$ |  $$ |  $$ |  $$ |$$\\ $$ |  $$ |$$ |  $$ |   $$ |   $$ |  $$ |\r\n$$ |  $$ |$$$$$$\\ \\$$$$$$  |\\__|$$ |  $$ |\\$$$$$$  |   $$ |   $$ |  $$ |\r\n\\__|  \\__|\\______| \\______/     \\__|  \\__| \\______/    \\__|   \\__|  \\__|\r\n\r\n is protected by Conductor SUT Authentication - 20260511.01-gee7e625.\r\n\r\nReminder: An SSH key is required to access this system. \r\nTo manage your Conductor SSH keys please visit https://conductor.amd.com/user/dashboard/key-management\r\n\r\nYou will be denied access to this system if:\r\n  • You did not provide a valid SSH key\r\n  • You do not have an active reservation in Conductor\r\n  • You are not in the required security groups (ex: mi300_doc.4erminus)\r\n\r\n____________   _______________________________________^__\r\n ___   ___ |||  ___   ___   ___    ___ ___  |   __  ,----\\\r\n|   | |   |||| |   | |   | |   |  |   |   | |  |  | |_____\\\r\n|___| |___|||| |___| |___| |___|  | O | O | |  |  |        \\\r\n           |||                    |___|___| |  |__|         )\r\n___________|||______________________________|______________/\r\n           |||                                        /--------\r\n-----------'''---------------------------------------'\r\n\r\nFor other help resources please visit https://conductor.amd.com/docs\r\n\r\nChecking authorization now...\r\n"
+  },
+  "terminal_tool_result": {
+    "chunk_id": "a9a121",
+    "wall_time_seconds": 0.285045082,
+    "exit_code": 0,
+    "original_token_count": 90,
+    "output": "{\"complete\": {\"path\": \"/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/layer0-exact-dot-v228-v1/complete.json\", \"bytes\": 4733676, \"sha256\": \"b78eb10f6d884fffb48f9621081f46680e140e0bcaa7a279bd66f71278b2dba1\"}, \"rows\": 6144, \"counts\": {\"native_matches_ideal\": 6144, \"framework_matches_ideal\": 6143, \"native_matches_framework\": 6143}}\n"
+  },
+  "gpu_execution": false,
+  "numerical_acceptance": false,
+  "performance_claim": false,
+  "remote_supervisor_receipt": false
+}

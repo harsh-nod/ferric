@@ -6,7 +6,17 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Latest: the [new linked RoPE AR4 numerical comparison completed on MI350](../qualification/rope-indexed-ar4-comparison-v1/README.md).
+Latest: an [exact integer QKV audit completed on MI350](../qualification/layer0-exact-dot-v1/README.md).
+All 6,144 retained layer-zero native QKV words match the once-rounded exact
+BF16 dot products; the genuine framework matches 6,143. The previously
+flagged Q row 168 is closer to the exact value in Ferric, so disagreement
+with the framework alone is not evidence of a native arithmetic bug.
+The original shard and six uploaded matrix slices were authenticated, and
+all 24 arithmetic/mapping tests passed. This is a position-zero operator
+diagnostic, not new-image internal capture, an FP32 reduction-order contract,
+full-model numerical acceptance or a throughput result.
+
+Previously, the [new linked RoPE AR4 numerical comparison completed on MI350](../qualification/rope-indexed-ar4-comparison-v1/README.md).
 All 152 tensor slices share comparable input histories, but none matches the
 independent framework reference bitwise. New logit relative-L2 errors are
 0.0030448043, 0.0094134774, 0.0117436782 and 0.0050785906: unchanged at
@@ -941,11 +951,12 @@ alone is not a self-contained reproducer or proof.
 
 ## Next Gates
 
-1. Resolve the remaining arithmetic differences in the completed four-step
-   own-output autoregressive comparison. The independent reference matches
-   its token history but not whole tensor slices. Qualify the checked BF16
-   RoPE candidate and diagnose remaining layer differences without fitting
-   acceptance thresholds to these observations.
+1. Diagnose the remaining differences in the completed four-step own-output
+   autoregressive comparison. The checked BF16 RoPE image now runs on GPU;
+   its comparison is mixed, not accepted. Exact layer-zero QKV evaluation
+   shows that a framework disagreement need not be a native arithmetic bug.
+   Distinguish reduction-order rounding from semantic errors at the remaining
+   boundaries without fitting acceptance thresholds to the observations.
 2. Validate TP residuals, MLP, final normalization, logits and token selection
    independently, including cumulative layer error and authentic KV history.
    Preserve the old bitwise-comparison mode as a separate historical check;
