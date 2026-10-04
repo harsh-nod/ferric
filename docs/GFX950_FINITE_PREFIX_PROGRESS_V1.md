@@ -35,6 +35,7 @@ engineering branch; it does not change the production execution path.
 | Independent-profile observation adapter on `mi350-2` | 23 synthetic policy tests passed, no skips | No launcher; mathematical return values are mocked; real-capture integration pending |
 | Independent native-profile adapter on `mi350-2` | 98 tests passed, one ignored; fresh test and native executables built | All 14 new tests ran; no deployment or new GPU execution yet |
 | Independent runtime-audit collector on `mi350-2` | 18 synthetic policy tests passed, no skips | New deployment namespace; actual MI350 ELF/library audit still pending |
+| First new independent prefix case on `mi350` | Both profiles and both ranks pass GPU execution and separate conditional numerical checks at genuine position 0 | 8,192 attention BF16 values exact; maximum output error/bound ratio 0.015053; not full-model or throughput acceptance |
 
 Both four-forward runs completed their Close protocol, reaped their owned
 processes, and passed their six surrounding device-state audits. The CPU suite
@@ -249,6 +250,19 @@ regressions for the string-valued byte-count bug found during the first export.
 The unchanged numerical reference suite also passed all 20 tests on MI350.
 These are deployment and CPU-reference checks, not new GPU captures or an
 end-to-end model throughput result.
+
+The [first new GPU case](../qualification/independent-prefix-first-case-v1/README.md)
+has now completed on MI350 after the actual executable/library audit. Both
+profiles closed naturally, all eight owned leaves completed, and six device
+audits passed. Separate CPU reference checks accepted all four profile/rank
+rows: no normalization or QKV bound violations, exact current KV append,
+8,192 exact attention BF16 values, and output partials within the unchanged
+bound. The maximum output error uses about 1.51% of that bound. All 64 candidate
+workgroups on each rank performed useful work in this observation; that is
+not a scheduling guarantee or a performance measurement. This publication
+covers only genuine position 0 and preserves the conditional arithmetic and
+runtime limitations. It does not establish complete model decoding or the
+700 tokens/s target.
 
 ## Source Publication
 

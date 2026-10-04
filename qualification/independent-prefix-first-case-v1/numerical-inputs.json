@@ -1,0 +1,30 @@
+{
+  "arithmetic_review": {
+    "bytes": 6306,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-numerical-inputs-v228-v1/arithmetic-review.json",
+    "sha256": "5526a7cf140cc33f0dce032d78bff2f31e72627624ec48f31056264baa8d258e"
+  },
+  "observation": {
+    "bytes": 259746,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-profile-gpu-v228-v1/genuine-pos0/complete.json",
+    "sha256": "41d4674c3f6665e24a38d08074a6d91be5118d012f51bce87298d8b69eccd76f"
+  },
+  "output_weights": [
+    {
+      "bytes": 16777216,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/wave-output-projection-v215/output-reference-v2/fixture/output-weight-rank0.bf16",
+      "sha256": "695a205027c01cc6bd7238b76d8ca2e503f508f4be7d6ad7f6dfe427a0c2fb8e"
+    },
+    {
+      "bytes": 16777216,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/wave-output-projection-v215/output-reference-v2/fixture/output-weight-rank1.bf16",
+      "sha256": "79bca2f8b04191dd004a3248160b1e97848d5b1613b72bfed63ef8a944ec4b4c"
+    }
+  ],
+  "prepared": {
+    "bytes": 37422,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-independent-prepared-v228-v1/complete.json",
+    "sha256": "83013e40a7ef2e54c8c6dee59873cf04586dc854555898539f2534697c858946"
+  },
+  "schema": "ferric-p228-independent-profile-numerical-cli-inputs-v1"
+}
