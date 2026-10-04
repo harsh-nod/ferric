@@ -2,8 +2,9 @@
 
 This opt-in engineering diagnostic isolates two host-overhead optimizations
 for the four-forward gfx950 prefix route. It does not change production
-admission or the V1 diagnostic. The V2 baseline has completed on `mi350`;
-the two optimization arms have not run, and no speedup is reported here.
+admission or the V1 diagnostic. The V2 baseline and admission-cache arm have
+completed on `mi350`. The repeated baseline and shared-currentness arm remain
+pending; no speedup is reported here.
 
 ## Policies
 
@@ -123,6 +124,45 @@ inclusive, nested host scopes, not additive costs or GPU time. Both optional
 optimizations were disabled. This single baseline is not an ablation, a speedup claim,
 independent full-model acceptance or the sustained 2,048/256 workload.
 The V2 autoregressive diagnostic remains unrun.
+
+## Admission Cache Observation
+
+The next single-run diagnostic enabled only `immutable-admission-cache`,
+using the same CPU633 binaries, device images, model, prompt and numerical
+checks. All 152 native tensor rows again matched bit-for-bit. All six device
+audits passed, and all owned processes exited and were reaped without forced
+cleanup. All 57 final outputs were independently rehashed locally. The
+[cache record](assets/finite-prefix-v228/host-policy-cache.json) retains its
+own receipt, policy snapshots and host counters.
+
+The intended counter change occurred: per-forward repeated kernel admissions
+fell from 148 / 145 on ranks 0 / 1 to zero on both ranks, with zero time recorded
+in that repeated-admission scope. Setup still performed the required 9 / 6
+initial image admissions. Dispatch counts remained 148 / 145 per forward;
+full-currentness counts, shared publication counts, and I/O counts and byte
+extents were unchanged. Operational-currentness shortcuts, shared group
+currentness and raw timestamps remained off in all seven snapshots.
+
+| Position | Baseline Forward Wall (ms) | Cache Forward Wall (ms) | Cache Minus Baseline (ms) |
+| --- | ---: | ---: | ---: |
+| 0 | 18,266.096 | 18,368.441 | +102.345 |
+| 1 | 18,304.417 | 18,268.495 | -35.921 |
+| 2 | 20,174.308 | 20,133.830 | -40.479 |
+| 3 | 20,171.139 | 20,162.169 | -8.971 |
+
+This removes the intended repeated work, but these two diagnostic runs do
+not establish an overall latency improvement. The four forward durations sum
+to 76.916 seconds for baseline and 76.933 seconds for cache. Their positions
+are different steps, not independent repetitions of one workload; no
+confidence interval or speedup claim is justified. The largest measured host
+scopes remain full-currentness checks. The cache setup interval was 167.157
+seconds, Close 26.697 seconds, parent 414.917 seconds and controller 432.616
+seconds. Do not attribute the cross-run setup difference to caching when
+initial admission and setup operation counts did not change.
+
+The next comparison is a fresh baseline repeat, then the separate
+`shared-full-currentness` arm. This is pre-qualification host-overhead
+diagnosis, not completion of issue #42's M6 performance gate.
 
 ## GPU Comparison Gates
 

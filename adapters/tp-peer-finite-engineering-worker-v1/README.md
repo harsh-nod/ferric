@@ -95,7 +95,12 @@ is CPU-only. Those new binaries have separately completed the V2 teacher-forced
 baseline: all 152 retained native tensor rows matched, six device audits passed,
 and Close/reap completed without forced cleanup. See the
 [GPU record](../../docs/assets/finite-prefix-v228/host-policy-baseline.json).
-The V2 optimization arms and autoregressive diagnostic remain pending. The earlier
+The separate V2 admission-cache arm also passed those parity, audit and teardown
+checks. Repeated admissions fell to zero, but no overall latency improvement
+is established by these single diagnostic runs; see the
+[comparison](../../docs/GFX950_HOST_POLICY_V2.md#admission-cache-observation).
+The baseline repeat, shared-currentness arm and V2 autoregressive diagnostic
+remain pending. The earlier
 uninstrumented GPU generation passed four teacher-forced and four
 autoregressive forwards with bitwise native-baseline parity. The V1
 host-instrumented (CPU605) generation has separately completed its teacher-forced
