@@ -31,6 +31,7 @@ engineering branch; it does not change the production execution path.
 | Independent per-profile comparator on `mi350-2` | 20 CPU tests and eight historical rank rows passed | No paired bitwise prerequisite; unchanged bounds; not a new GPU run or new-image acceptance |
 | Ordinary induction temporary compiler candidate on `mi350-2` | 2,683 CPU tests passed, 25 ignored; fresh backend and extractor built | Eight new regressions executed; actual prefix replay remains pending |
 | Ordinary induction matching finalizer tools on `mi350-2` | 190 default tests passed, 15 ignored; three tools rebuilt | Exact new compiler generation; actual-capture inert join remains a separate gate |
+| V3 checked lowering with ordinary-induction compiler on `mi350-2` | Natural zero exit in 1,771.339 seconds; KIR V11, gfx950 LLVM and inert handoff emitted | Interim leaf snapshot; actual replay and whole-probe postchecks pending, no new HSACO or GPU result |
 
 Both four-forward runs completed their Close protocol, reaped their owned
 processes, and passed their six surrounding device-state audits. The CPU suite
@@ -192,8 +193,15 @@ controller policy tests passed; 15 finalizer tests remain ignored, including
 the actual-capture inert join. All six commands exited naturally, all five
 compiler products stayed unchanged, and source/dependency/tool/configuration
 and four old-target postchecks passed. The complete archive and selected
-products were retained and rehashed locally. Fresh checked lowering of the V3
-reciprocal source is the next gate, not an established result of these tests.
+products were retained and rehashed locally.
+
+Fresh V3 checked lowering has now [passed as a separate leaf](../qualification/fe2o3-ordinary-induction-alias-v1/checked-lowering-checkpoint.json)
+in 1,771.339 seconds, naturally exiting zero before the unchanged 1,800-second
+deadline. The actual outputs include semantic MIR, neutral/target KIR V11,
+gfx950 LLVM and a 4,022,416-byte inert handoff. This clears the previous latch
+refusal. This publication is an interim checkpoint: capture replay is running,
+whole-probe source/dependency/prior-target postchecks remain pending, and no
+HSACO, GPU validation or performance result follows from the leaf alone.
 
 ## Source Publication
 

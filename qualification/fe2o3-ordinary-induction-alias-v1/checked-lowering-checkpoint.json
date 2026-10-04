@@ -1,0 +1,127 @@
+{
+  "candidate": "exact reciprocal V3 with qualified ordinary-induction temporary compiler",
+  "candidate_cpu": {
+    "bytes": 24867,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/reciprocal-cpu-v228-v3/complete.json",
+    "sha256": "6b02d358eca33d31d6839e9c28de38276b4f968cfaec93b7ddb97963a77956d3"
+  },
+  "capture_and_handoff_pins": {
+    "prefix-tiles-neutral-kir.bin": {
+      "bytes": 82089,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-reciprocal-checked-probe-v228-v7/prefix-tiles-neutral-kir.bin",
+      "sha256": "61995993b1ca39de409f09b6b632db97fe42677b4c28b2e2e5672bdf6407f513"
+    },
+    "prefix-tiles-semantic.bin": {
+      "bytes": 1283032,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-reciprocal-checked-probe-v228-v7/prefix-tiles-semantic.bin",
+      "sha256": "335d72d39460c835101d409bc684e1f34cc1e733b0ba30d8b524ea046daf5e2a"
+    },
+    "prefix-tiles-target-kir.bin": {
+      "bytes": 74906,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-reciprocal-checked-probe-v228-v7/prefix-tiles-target-kir.bin",
+      "sha256": "7ae4ae11ede64868eef82deb277285ca0f4911b2891485c9d402510aa5ae4624"
+    },
+    "prefix-tiles.handoff-v3": {
+      "bytes": 4022416,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-reciprocal-checked-probe-v228-v7/prefix-tiles.handoff-v3",
+      "sha256": "6117bbcade7a0a66c83694e26ed0313c1848834e0ceeaa67824d1ac35cceb6b7"
+    }
+  },
+  "checked_lowering_leaf_passed": true,
+  "compiler_generation": {
+    "cpu": {
+      "bytes": 369402,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/ordinary-induction-compiler-cpu-v228-v1/complete.json",
+      "sha256": "c45aa83b01bf76fdfd9962b06884611658dab607b001ba67fecc66db9fd5ba97"
+    },
+    "cpu_owner": {
+      "bytes": 57318,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/ordinary-induction-compiler-cpu-owner-v228-v1/complete.json",
+      "sha256": "85de66610631612ed2473f9d5fbb80ce89ea7ffc6064c1784834a6751d623609"
+    },
+    "tools": {
+      "bytes": 45313,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/ordinary-induction-finalizer-tools-v228-v1/complete.json",
+      "sha256": "874a6d2026029619a02283ee9650d682690941c14904d9fa59c101b58b89d6bc"
+    },
+    "tools_owner": {
+      "bytes": 10396,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/ordinary-induction-finalizer-tools-owner-v228-v1/complete.json",
+      "sha256": "ece336d1234940c312b693f6d6c91a3a8eece275a94f00b06b4e97645971ca97"
+    }
+  },
+  "compiler_limits_unchanged": true,
+  "date": "2026-10-03",
+  "full_model_acceptance": false,
+  "full_probe_postchecks_verified": false,
+  "full_probe_terminal": false,
+  "gpu_execution": false,
+  "host": "mi350-2 (asrock-1w300-g2-2b)",
+  "hsaco_qualified": false,
+  "interim_snapshot": {
+    "bytes": 3021,
+    "sha256": "d4782013dfd41f6941e17c0d61fbdc96c746fb852be9a47ade5cc139ca18ff42"
+  },
+  "leaf": {
+    "cache_bytes": 257919222,
+    "elapsed_seconds": 1771.3388957781717,
+    "exit_code": 0,
+    "group_absent": true,
+    "reason": null,
+    "stderr_sha256": "563cb0d94336959e637dcd3a6f20619ec3f22584eef5a89af8f0cce9709b11d1",
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "leaf_files": {
+    "checked-lowering-command.json": {
+      "bytes": 5869,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-reciprocal-checked-probe-v228-v7/checked-lowering-command.json",
+      "sha256": "7a7afbf4cae316fdab3c7e7c4469342fb1ee29faf4bb444bae215dc267383987"
+    },
+    "checked-lowering-result.json": {
+      "bytes": 306,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-reciprocal-checked-probe-v228-v7/checked-lowering-result.json",
+      "sha256": "95efbba82c31e72d5ab3a334fa03894e812564a9f75e3e31febcb985ff77b0b8"
+    },
+    "checked-lowering-started.json": {
+      "bytes": 40,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-reciprocal-checked-probe-v228-v7/checked-lowering-started.json",
+      "sha256": "1234c2187e1a45eef1e2bcc93ed18e5ea27d2003511b65febf3b52afc298edbb"
+    },
+    "checked-lowering-stderr": {
+      "bytes": 5224,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-reciprocal-checked-probe-v228-v7/checked-lowering-stderr",
+      "sha256": "563cb0d94336959e637dcd3a6f20619ec3f22584eef5a89af8f0cce9709b11d1"
+    },
+    "checked-lowering-stdout": {
+      "bytes": 0,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-reciprocal-checked-probe-v228-v7/checked-lowering-stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "leaf_started": {
+    "pgid": 3122838,
+    "pid": 3122838
+  },
+  "limitations": [
+    "This is a completed leaf snapshot, not a successful terminal receipt for the nine-phase probe.",
+    "Neutral and target KIR plus inert compiler handoff are real outputs; they are not an emitted HSACO.",
+    "Full source, dependency and previous-target postchecks remain pending at this snapshot.",
+    "The inert frontend recipe does not grant artifact or launch authority.",
+    "Capture replay, inert join, emission, ISA review and GPU numerical validation remain separate gates."
+  ],
+  "numerical_acceptance": false,
+  "performance_claim": false,
+  "phase_deadline_seconds": 1800,
+  "production_authority": false,
+  "recipe": {
+    "bytes": 41972,
+    "sha256": "f500b1c3d3218b53e9ba1df92d6f048a41f05873c9539f16bc69b20f85575a52"
+  },
+  "replay_qualified": false,
+  "retained_archive": {
+    "bytes": 986746,
+    "sha256": "4369b71116c9d4cc9386f4c22b4f064d25ac99bc4576e9a84dac4252717ca389"
+  },
+  "schema": "FerricReciprocalCheckedLoweringInterimCheckpointV1",
+  "status": "lowering leaf passed; full probe pending at snapshot"
+}

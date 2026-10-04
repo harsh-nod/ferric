@@ -70,10 +70,18 @@ snapshot were rehashed locally. These are CPU results, not GPU performance.
 
 ## Remaining Gates
 
-The new tests exercise induction projection, reconciliation and synthetic
-ranked CFG construction. They do not establish full lowering of the real
-prefix capture; that default-suite replay remains ignored. The matching tools
-are now built, but fresh checked lowering/replay, the actual-capture inert join,
-emission, actual-image reviews and MI350 numerical validation remain required.
+The real V3 source has now [passed the checked-lowering leaf](checked-lowering-checkpoint.json)
+on `mi350-2`, naturally exiting zero in 1,771.339 seconds, within its unchanged
+1,800-second deadline. It produced semantic MIR, neutral and target KIR V11,
+gfx950 LLVM and a 4,022,416-byte inert compiler handoff. This clears the earlier
+induction-latch refusal for this source/compiler pair.
+
+That record is an **interim snapshot**, not the terminal nine-phase probe
+receipt. At publication, actual capture replay is running; whole-probe source,
+dependency and prior-target postchecks have not completed. The nine retained
+leaf/artifact files and snapshot were rehashed locally. Default-suite ignored
+test counts are unchanged; the separately selected actual replay is not yet a
+passing result. Replay, the actual-capture inert join, emission, actual-image
+reviews and MI350 numerical validation remain required.
 No new HSACO, production runtime change,
 full-model certificate or 700 tokens/s result is claimed.
