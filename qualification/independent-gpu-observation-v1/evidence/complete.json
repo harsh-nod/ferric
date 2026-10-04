@@ -1,0 +1,9 @@
+{
+  "controller_sha256": "ea64c61c58cd0e86f7a23f36a17b2ec32673aefbad971c3c8f65960a00a3948a",
+  "gpu_execution": false,
+  "manifest_sha256": "9b06b7b929b5fddf36d73ce262abe01daf65e4eb1c2c810d2f61d1e1e3acf1a3",
+  "numerical_acceptance": false,
+  "passed": true,
+  "source_sha256": "0aaa7bd88585a1a39d39701ce9879ddaab62b44eb3e89be63f09532f39ac5071",
+  "tests": 81
+}

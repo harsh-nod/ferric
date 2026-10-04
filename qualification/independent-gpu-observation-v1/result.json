@@ -1,0 +1,266 @@
+{
+  "actual_capture_replay": false,
+  "authority": "none",
+  "date": "2026-10-03",
+  "elapsed_test_seconds": 5.328,
+  "frozen_package": {
+    "bytes": 2964,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-independent-gpu-observation-v1/manifest.json",
+    "sha256": "9b06b7b929b5fddf36d73ce262abe01daf65e4eb1c2c810d2f61d1e1e3acf1a3"
+  },
+  "full_model_acceptance": false,
+  "gpu_execution": false,
+  "independent_numerical_acceptance": false,
+  "limitations": [
+    "These 81 in-process CPU tests qualify controller policies and synthetic fixtures, not native execution.",
+    "The frozen test runner checked all eighteen package members both before and after the suite.",
+    "Test time is not a GPU latency, kernel comparison, or model throughput measurement.",
+    "Actual image/binary deployment, current runtime/source/ISA reviews and six GPU cases remain separate gates.",
+    "Independent numerical comparison must run in a separate bounded CPU leaf after all GPU post-audits and reaping.",
+    "No full-prefix, full-model, production, or 700 tokens/s acceptance follows from this publication."
+  ],
+  "native_execution": false,
+  "passed": true,
+  "performance_claim": false,
+  "production_authority": false,
+  "published_files": {
+    "README.md": {
+      "bytes": 3721,
+      "sha256": "520f21a9fea44a88758632b81156a44c09c954e7bc8c2981f2981ac1e2543ad5"
+    },
+    "evidence/complete.json": {
+      "bytes": 362,
+      "sha256": "732e0542d87eddcd52d3552f34a1ec82870afd3995ec839378d119a601b45323"
+    },
+    "evidence/run_independent_observer_pure_p228_v1.py": {
+      "bytes": 3241,
+      "sha256": "ea64c61c58cd0e86f7a23f36a17b2ec32673aefbad971c3c8f65960a00a3948a"
+    },
+    "evidence/sources-before.json": {
+      "bytes": 4906,
+      "sha256": "0aaa7bd88585a1a39d39701ce9879ddaab62b44eb3e89be63f09532f39ac5071"
+    },
+    "evidence/tests.log": {
+      "bytes": 12590,
+      "sha256": "367196f92ea7d7b3fa36151f71da0bac69eea9ceb2dfa2e06876796803788102"
+    },
+    "publisher.py": {
+      "bytes": 11625,
+      "sha256": "13c68f0f128f95dbb4f3542fa8d334bb6d6be150f932e73c4355bd9c47680f2b"
+    },
+    "source/README.md": {
+      "bytes": 8902,
+      "sha256": "ec8391be0a246cfae3d77c191321fca47969bf8928f290e0ebba34ced9421588"
+    },
+    "source/baseline-inputs.json": {
+      "bytes": 83650,
+      "sha256": "fee39b8bf6343d27044ef2564366b842c1c5f23a251627b89794e1df42fb425f"
+    },
+    "source/child_evidence.py": {
+      "bytes": 6964,
+      "sha256": "2cbb74ada0950d1767c8b526008e9d9c7efb48d84649e1aea8f3d6661309edd3"
+    },
+    "source/fixtures/actual-ldd.stdout": {
+      "bytes": 230,
+      "sha256": "8614b3c271fa6997a2d0096563f3d82c040021118e4ac64a9466870cbee23940"
+    },
+    "source/fixtures/actual-readelf.stdout": {
+      "bytes": 1615,
+      "sha256": "c4c154492d1bc30d10731adb430915f5a251e3369e379b0c525fa25d52deb48b"
+    },
+    "source/frozen_owned.py": {
+      "bytes": 30433,
+      "sha256": "ab41af455396322303bb8ebd4132e680affc3bdc5830608fad36736c92024583"
+    },
+    "source/manifest.json": {
+      "bytes": 2964,
+      "sha256": "9b06b7b929b5fddf36d73ce262abe01daf65e4eb1c2c810d2f61d1e1e3acf1a3"
+    },
+    "source/observe.py": {
+      "bytes": 18971,
+      "sha256": "3ed69ac9af12d0442b0d7c6acef8f6081c923dd410de934df6fbf64784441ec6"
+    },
+    "source/preimage/prepare.py": {
+      "bytes": 23737,
+      "sha256": "b6a043f470d28c3a68bdc76b432c646f7a0e10079d20e5281441c08a006a2582"
+    },
+    "source/preimage/run_case.py": {
+      "bytes": 19961,
+      "sha256": "6a83616bde6dbd50eae376fd74de513c51c7a26b12cc91b4155c5cf83def8847"
+    },
+    "source/prepare.py": {
+      "bytes": 25978,
+      "sha256": "e00889a9f02087bddf74ead256517a0acda8ca25089a16ce1c7d0eba19cf538b"
+    },
+    "source/run_case.py": {
+      "bytes": 22702,
+      "sha256": "12a2695834b21c68ab21e73ae443b4497b2861df130c647917bf507f42e9ad1f"
+    },
+    "source/run_row_facts_v2.py": {
+      "bytes": 12424,
+      "sha256": "244c12f62c8a439aa01b44380fc464008b94006bc919201c8d510c64177fc820"
+    },
+    "source/test_children.py": {
+      "bytes": 10706,
+      "sha256": "bf04a894774b228580f720c027f56210dfe9c3c168831f832c91ff604bdabdaa"
+    },
+    "source/test_observe.py": {
+      "bytes": 21933,
+      "sha256": "198f63e7c296982a0a99642256f6698036aa2cc39135a1f5b5ec1beb901fd6d5"
+    },
+    "source/test_prepare.py": {
+      "bytes": 28574,
+      "sha256": "2e8e5469ef0d889e95b1ada0b8f76e4b5fee214e05555b674d88dcbb466461d0"
+    },
+    "source/test_run.py": {
+      "bytes": 18235,
+      "sha256": "7d872f071d5d9294ecc12cced0c59f4f5c596a10d2e2595f2d633d0bd468265a"
+    },
+    "source/test_validation.py": {
+      "bytes": 11325,
+      "sha256": "2fd717b1d13e23a71a2139e17888d631a12dca6a5db822aa666c8155c9928b59"
+    },
+    "source/validation.py": {
+      "bytes": 15359,
+      "sha256": "cdaf6dc53208bbca8f23b2a3fa3eca9d28fe00ca4cfc74b36d225f3ebe8d28d1"
+    }
+  },
+  "pure_controller": {
+    "bytes": 3241,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/run_independent_observer_pure_p228_v1.py",
+    "sha256": "ea64c61c58cd0e86f7a23f36a17b2ec32673aefbad971c3c8f65960a00a3948a"
+  },
+  "pure_receipt": {
+    "bytes": 362,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/independent-observer-pure-v228-v1/complete.json",
+    "sha256": "732e0542d87eddcd52d3552f34a1ec82870afd3995ec839378d119a601b45323"
+  },
+  "pure_source_snapshot": {
+    "bytes": 4906,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/independent-observer-pure-v228-v1/sources-before.json",
+    "sha256": "0aaa7bd88585a1a39d39701ce9879ddaab62b44eb3e89be63f09532f39ac5071"
+  },
+  "pure_transcript": {
+    "bytes": 12590,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/independent-observer-pure-v228-v1/tests.log",
+    "sha256": "367196f92ea7d7b3fa36151f71da0bac69eea9ceb2dfa2e06876796803788102"
+  },
+  "schema": "FerricIndependentGpuObserverPolicyQualificationV1",
+  "source_files": 18,
+  "synthetic_policy_tests": true,
+  "test_counts": {
+    "test_children.py": 10,
+    "test_observe.py": 23,
+    "test_prepare.py": 18,
+    "test_run.py": 15,
+    "test_validation.py": 15
+  },
+  "test_host": "smci350-rck-g03-b19-03",
+  "tested_source_pins": {
+    "README.md": {
+      "bytes": 8902,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-independent-gpu-observation-v1/README.md",
+      "sha256": "ec8391be0a246cfae3d77c191321fca47969bf8928f290e0ebba34ced9421588"
+    },
+    "baseline-inputs.json": {
+      "bytes": 83650,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-independent-gpu-observation-v1/baseline-inputs.json",
+      "sha256": "fee39b8bf6343d27044ef2564366b842c1c5f23a251627b89794e1df42fb425f"
+    },
+    "child_evidence.py": {
+      "bytes": 6964,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-independent-gpu-observation-v1/child_evidence.py",
+      "sha256": "2cbb74ada0950d1767c8b526008e9d9c7efb48d84649e1aea8f3d6661309edd3"
+    },
+    "fixtures/actual-ldd.stdout": {
+      "bytes": 230,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-independent-gpu-observation-v1/fixtures/actual-ldd.stdout",
+      "sha256": "8614b3c271fa6997a2d0096563f3d82c040021118e4ac64a9466870cbee23940"
+    },
+    "fixtures/actual-readelf.stdout": {
+      "bytes": 1615,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-independent-gpu-observation-v1/fixtures/actual-readelf.stdout",
+      "sha256": "c4c154492d1bc30d10731adb430915f5a251e3369e379b0c525fa25d52deb48b"
+    },
+    "frozen_owned.py": {
+      "bytes": 30433,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-independent-gpu-observation-v1/frozen_owned.py",
+      "sha256": "ab41af455396322303bb8ebd4132e680affc3bdc5830608fad36736c92024583"
+    },
+    "observe.py": {
+      "bytes": 18971,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-independent-gpu-observation-v1/observe.py",
+      "sha256": "3ed69ac9af12d0442b0d7c6acef8f6081c923dd410de934df6fbf64784441ec6"
+    },
+    "preimage/prepare.py": {
+      "bytes": 23737,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-independent-gpu-observation-v1/preimage/prepare.py",
+      "sha256": "b6a043f470d28c3a68bdc76b432c646f7a0e10079d20e5281441c08a006a2582"
+    },
+    "preimage/run_case.py": {
+      "bytes": 19961,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-independent-gpu-observation-v1/preimage/run_case.py",
+      "sha256": "6a83616bde6dbd50eae376fd74de513c51c7a26b12cc91b4155c5cf83def8847"
+    },
+    "prepare.py": {
+      "bytes": 25978,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-independent-gpu-observation-v1/prepare.py",
+      "sha256": "e00889a9f02087bddf74ead256517a0acda8ca25089a16ce1c7d0eba19cf538b"
+    },
+    "run_case.py": {
+      "bytes": 22702,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-independent-gpu-observation-v1/run_case.py",
+      "sha256": "12a2695834b21c68ab21e73ae443b4497b2861df130c647917bf507f42e9ad1f"
+    },
+    "run_row_facts_v2.py": {
+      "bytes": 12424,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-independent-gpu-observation-v1/run_row_facts_v2.py",
+      "sha256": "244c12f62c8a439aa01b44380fc464008b94006bc919201c8d510c64177fc820"
+    },
+    "test_children.py": {
+      "bytes": 10706,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-independent-gpu-observation-v1/test_children.py",
+      "sha256": "bf04a894774b228580f720c027f56210dfe9c3c168831f832c91ff604bdabdaa"
+    },
+    "test_observe.py": {
+      "bytes": 21933,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-independent-gpu-observation-v1/test_observe.py",
+      "sha256": "198f63e7c296982a0a99642256f6698036aa2cc39135a1f5b5ec1beb901fd6d5"
+    },
+    "test_prepare.py": {
+      "bytes": 28574,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-independent-gpu-observation-v1/test_prepare.py",
+      "sha256": "2e8e5469ef0d889e95b1ada0b8f76e4b5fee214e05555b674d88dcbb466461d0"
+    },
+    "test_run.py": {
+      "bytes": 18235,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-independent-gpu-observation-v1/test_run.py",
+      "sha256": "7d872f071d5d9294ecc12cced0c59f4f5c596a10d2e2595f2d633d0bd468265a"
+    },
+    "test_validation.py": {
+      "bytes": 11325,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-independent-gpu-observation-v1/test_validation.py",
+      "sha256": "2fd717b1d13e23a71a2139e17888d631a12dca6a5db822aa666c8155c9928b59"
+    },
+    "validation.py": {
+      "bytes": 15359,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-independent-gpu-observation-v1/validation.py",
+      "sha256": "cdaf6dc53208bbca8f23b2a3fa3eca9d28fe00ca4cfc74b36d225f3ebe8d28d1"
+    }
+  },
+  "tested_source_snapshot_matches": true,
+  "tests_failed": 0,
+  "tests_ignored": 0,
+  "tests_passed": 81,
+  "unchanged_helper_sha256": {
+    "baseline-inputs.json": "fee39b8bf6343d27044ef2564366b842c1c5f23a251627b89794e1df42fb425f",
+    "child_evidence.py": "2cbb74ada0950d1767c8b526008e9d9c7efb48d84649e1aea8f3d6661309edd3",
+    "frozen_owned.py": "ab41af455396322303bb8ebd4132e680affc3bdc5830608fad36736c92024583",
+    "observe.py": "3ed69ac9af12d0442b0d7c6acef8f6081c923dd410de934df6fbf64784441ec6",
+    "preimage/prepare.py": "b6a043f470d28c3a68bdc76b432c646f7a0e10079d20e5281441c08a006a2582",
+    "preimage/run_case.py": "6a83616bde6dbd50eae376fd74de513c51c7a26b12cc91b4155c5cf83def8847",
+    "run_row_facts_v2.py": "244c12f62c8a439aa01b44380fc464008b94006bc919201c8d510c64177fc820",
+    "test_observe.py": "198f63e7c296982a0a99642256f6698036aa2cc39135a1f5b5ec1beb901fd6d5",
+    "validation.py": "cdaf6dc53208bbca8f23b2a3fa3eca9d28fe00ca4cfc74b36d225f3ebe8d28d1"
+  }
+}

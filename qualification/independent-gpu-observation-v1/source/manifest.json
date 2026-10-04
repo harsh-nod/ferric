@@ -1,0 +1,100 @@
+{
+  "files": [
+    {
+      "bytes": 8902,
+      "path": "README.md",
+      "sha256": "ec8391be0a246cfae3d77c191321fca47969bf8928f290e0ebba34ced9421588"
+    },
+    {
+      "bytes": 83650,
+      "path": "baseline-inputs.json",
+      "sha256": "fee39b8bf6343d27044ef2564366b842c1c5f23a251627b89794e1df42fb425f"
+    },
+    {
+      "bytes": 6964,
+      "path": "child_evidence.py",
+      "sha256": "2cbb74ada0950d1767c8b526008e9d9c7efb48d84649e1aea8f3d6661309edd3"
+    },
+    {
+      "bytes": 230,
+      "path": "fixtures/actual-ldd.stdout",
+      "sha256": "8614b3c271fa6997a2d0096563f3d82c040021118e4ac64a9466870cbee23940"
+    },
+    {
+      "bytes": 1615,
+      "path": "fixtures/actual-readelf.stdout",
+      "sha256": "c4c154492d1bc30d10731adb430915f5a251e3369e379b0c525fa25d52deb48b"
+    },
+    {
+      "bytes": 30433,
+      "path": "frozen_owned.py",
+      "sha256": "ab41af455396322303bb8ebd4132e680affc3bdc5830608fad36736c92024583"
+    },
+    {
+      "bytes": 18971,
+      "path": "observe.py",
+      "sha256": "3ed69ac9af12d0442b0d7c6acef8f6081c923dd410de934df6fbf64784441ec6"
+    },
+    {
+      "bytes": 23737,
+      "path": "preimage/prepare.py",
+      "sha256": "b6a043f470d28c3a68bdc76b432c646f7a0e10079d20e5281441c08a006a2582"
+    },
+    {
+      "bytes": 19961,
+      "path": "preimage/run_case.py",
+      "sha256": "6a83616bde6dbd50eae376fd74de513c51c7a26b12cc91b4155c5cf83def8847"
+    },
+    {
+      "bytes": 25978,
+      "path": "prepare.py",
+      "sha256": "e00889a9f02087bddf74ead256517a0acda8ca25089a16ce1c7d0eba19cf538b"
+    },
+    {
+      "bytes": 22702,
+      "path": "run_case.py",
+      "sha256": "12a2695834b21c68ab21e73ae443b4497b2861df130c647917bf507f42e9ad1f"
+    },
+    {
+      "bytes": 12424,
+      "path": "run_row_facts_v2.py",
+      "sha256": "244c12f62c8a439aa01b44380fc464008b94006bc919201c8d510c64177fc820"
+    },
+    {
+      "bytes": 10706,
+      "path": "test_children.py",
+      "sha256": "bf04a894774b228580f720c027f56210dfe9c3c168831f832c91ff604bdabdaa"
+    },
+    {
+      "bytes": 21933,
+      "path": "test_observe.py",
+      "sha256": "198f63e7c296982a0a99642256f6698036aa2cc39135a1f5b5ec1beb901fd6d5"
+    },
+    {
+      "bytes": 28574,
+      "path": "test_prepare.py",
+      "sha256": "2e8e5469ef0d889e95b1ada0b8f76e4b5fee214e05555b674d88dcbb466461d0"
+    },
+    {
+      "bytes": 18235,
+      "path": "test_run.py",
+      "sha256": "7d872f071d5d9294ecc12cced0c59f4f5c596a10d2e2595f2d633d0bd468265a"
+    },
+    {
+      "bytes": 11325,
+      "path": "test_validation.py",
+      "sha256": "2fd717b1d13e23a71a2139e17888d631a12dca6a5db822aa666c8155c9928b59"
+    },
+    {
+      "bytes": 15359,
+      "path": "validation.py",
+      "sha256": "cdaf6dc53208bbca8f23b2a3fa3eca9d28fe00ca4cfc74b36d225f3ebe8d28d1"
+    }
+  ],
+  "gpu_execution": false,
+  "numerical_acceptance": false,
+  "production_authority": false,
+  "pure_tests": 81,
+  "schema": "ferric-p228-independent-gpu-observation-contracts-v1",
+  "tests_executed": false
+}
