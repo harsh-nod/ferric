@@ -1,0 +1,17 @@
+{
+  "gpu_execution_authorized": true,
+  "inputs_projection_sha256": "f1efbe1a5242ce1a182eb60fb8e9918ba0e516e465c96708ac0f488993f9449a",
+  "numerical_acceptance": false,
+  "performance_claim": false,
+  "production_authority": false,
+  "resources": {
+    "cache_cap_bytes": 1073741824,
+    "host_rss_cap_bytes": 68719476736,
+    "minimum_free_gpu_bytes": 51539607552,
+    "minimum_free_host_bytes": 51539607552,
+    "output_cap_bytes": 33554432,
+    "timeout_seconds": 900
+  },
+  "reviewed": true,
+  "schema": "ferric-p228-projection-ar4-framework-launch-review-v1"
+}

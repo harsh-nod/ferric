@@ -1,0 +1,28 @@
+{
+  "command": {
+    "bytes": 1683,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-ar4-framework-launch-v228-v1/execute/command.json",
+    "sha256": "d441b2beb59012cc3d54c67e63d3d884f5c2e463eb54b318d854436d83d6873a"
+  },
+  "elapsed_seconds": 54.50927137490362,
+  "exit_code": 0,
+  "failure": null,
+  "group_absent": true,
+  "peak_group_rss_bytes": 5740126208,
+  "performance_measured": false,
+  "started": {
+    "bytes": 154,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-ar4-framework-launch-v228-v1/execute/started.json",
+    "sha256": "0f9a1886cd9d65ceaa7d00cf0f84dd53b285d1389878ebaf83588d74ca6a3940"
+  },
+  "stderr": {
+    "bytes": 160,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-ar4-framework-launch-v228-v1/execute/stderr",
+    "sha256": "331cdd837332314716ee06ceeb1f2ed23ae4ce1760f83bce0b5be1f2586501a7"
+  },
+  "stdout": {
+    "bytes": 239,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-ar4-framework-launch-v228-v1/execute/stdout",
+    "sha256": "e127dc59e7c022681d31ee4810ff07d2054042d41244dfd87b70ecf459c6cea2"
+  }
+}

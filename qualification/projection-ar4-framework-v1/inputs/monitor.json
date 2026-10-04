@@ -1,0 +1,23 @@
+{
+  "schema": "ferric-p223-platform-monitor-v1",
+  "host": "asrock-1w300-g2-2b",
+  "boot_id": "87aff38a-9905-4667-a0a2-8f5f3d24cac4",
+  "process": {
+    "cmdline_hex": "2f7573722f6c6f63616c2f62696e2f6770756167656e7400",
+    "comm": "gpuagent",
+    "pgid": 284253,
+    "pid": 284253,
+    "ppid": 1,
+    "session": 284253,
+    "start_ticks": 1107252,
+    "uid": 0
+  },
+  "executable": {
+    "bytes": 28771712,
+    "path": "/usr/local/bin/gpuagent",
+    "sha256": "5bc2a7d45f2fd992fcf3f53e12b5437a9b3fc7878c653a37ac647c380fb0e913"
+  },
+  "filesystem_uid": 1001,
+  "filesystem_gid": 1001,
+  "read_only_attestation_reviewed": true
+}

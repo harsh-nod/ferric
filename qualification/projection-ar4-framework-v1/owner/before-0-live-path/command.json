@@ -1,0 +1,20 @@
+{
+  "argv": [
+    "/usr/bin/sudo",
+    "-n",
+    "--",
+    "/usr/bin/timeout",
+    "--foreground",
+    "--kill-after=1",
+    "5",
+    "/usr/bin/readlink",
+    "--",
+    "/proc/284253/exe"
+  ],
+  "gpu_execution": false,
+  "inner_kill_after_seconds": 1,
+  "inner_timeout_seconds": 5,
+  "platform_monitor_signalled": false,
+  "read_only": true,
+  "seconds": 10
+}

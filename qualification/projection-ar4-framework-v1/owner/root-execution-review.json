@@ -1,0 +1,17 @@
+{
+  "schema": "ferric-p228-projection-ar4-framework-execution-review-v1",
+  "reviewed": true,
+  "plan_projection_sha256": "0ddcb934c0cc12621f5ee9b1a58cba7bc569b4dfee2712bea004e6b7c28fcd81",
+  "resources": {
+    "cache_cap_bytes": 1073741824,
+    "host_rss_cap_bytes": 68719476736,
+    "minimum_free_gpu_bytes": 51539607552,
+    "minimum_free_host_bytes": 51539607552,
+    "output_cap_bytes": 33554432,
+    "timeout_seconds": 900
+  },
+  "gpu_execution_authorized": true,
+  "numerical_acceptance": false,
+  "performance_claim": false,
+  "production_authority": false
+}

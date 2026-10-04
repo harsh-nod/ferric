@@ -1,0 +1,25 @@
+test_bool_and_out_of_range_tokens_refused (test_run.PolicyTests) ... ok
+test_conditional_comparison_covers_all_native_inputs (test_run.PolicyTests) ... ok
+test_conditional_does_not_require_own_output_recurrence (test_run.PolicyTests) ... ok
+test_conditional_pass_cannot_claim_genuine (test_run.PolicyTests) ... ok
+test_conditional_wrong_actual_input_rejected (test_run.PolicyTests) ... ok
+test_duplicate_json_and_nonfinite_refused (test_run.PolicyTests) ... ok
+test_genuine_comparison_skips_all_post_divergence_tensors (test_run.PolicyTests) ... ok
+test_genuine_uses_own_previous_output (test_run.PolicyTests) ... ok
+test_last_output_difference_keeps_all_input_histories_comparable (test_run.PolicyTests) ... ok
+test_missing_tensor_and_nonfresh_cache_refused (test_run.PolicyTests) ... ok
+test_native_failed_outer_refused_before_any_validator_load (test_run.PolicyTests) ... ok
+test_native_validator_generation_and_unused_roles_refused (test_run.PolicyTests) ... ok
+test_plan_closed_namespace_and_sources (test_run.PolicyTests) ... ok
+test_position_generation_and_census_refused (test_run.PolicyTests) ... ok
+test_prefix_comparability_never_recovers (test_run.PolicyTests) ... ok
+test_repeat_hashes_and_own_cache_checked (test_run.PolicyTests) ... ok
+test_repeated_and_zero_outputs_are_valid (test_run.PolicyTests) ... ok
+test_review_binds_native_complete_and_false_authority (test_run.PolicyTests) ... ok
+test_tf_history_not_autoregressive (test_run.PolicyTests) ... ok
+test_wrong_seed_rejected (test_run.PolicyTests) ... ok
+
+----------------------------------------------------------------------
+Ran 20 tests in 0.011s
+
+OK

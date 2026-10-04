@@ -1,0 +1,34 @@
+{
+  "exclusive_reservation": false,
+  "live_path_result": {
+    "bytes": 1244,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-ar4-framework-launch-v228-v1/immediate-live-path/result.json",
+    "sha256": "210be8989025b672ef2a67b2f3295cd2418a951ddc1801b5cef3f824a44c5828"
+  },
+  "live_sha_result": {
+    "bytes": 1241,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-ar4-framework-launch-v228-v1/immediate-live-sha/result.json",
+    "sha256": "d6f60c520a77663518dffcd4bf9e2be4358d8b86e81912a6ff254b797380e4cb"
+  },
+  "process": {
+    "cmdline_hex": "2f7573722f6c6f63616c2f62696e2f6770756167656e7400",
+    "comm": "gpuagent",
+    "pgid": 284253,
+    "pid": 284253,
+    "ppid": 1,
+    "session": 284253,
+    "start_ticks": 1107252,
+    "uid": 0
+  },
+  "sample": {
+    "gpu_busy_percent": 0,
+    "mem_info_vram_total": 270566162432,
+    "mem_info_vram_used": 297750528,
+    "monotonic_ns": 2111486209209278
+  },
+  "smi_result": {
+    "bytes": 1277,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-ar4-framework-launch-v228-v1/immediate-process/result.json",
+    "sha256": "5a34aacb6459f6adc4d77e4aca91978987d49e963038d61399481da371012152"
+  }
+}

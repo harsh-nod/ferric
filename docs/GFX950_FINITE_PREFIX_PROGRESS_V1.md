@@ -6,7 +6,16 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Latest: the [RPO finalizer passed CPU qualification](../qualification/fe2o3-partial-move-rpo-finalizer-v1/README.md)
+Latest: the [independent genuine AR4 framework comparison completed](../qualification/projection-ar4-framework-v1/README.md)
+on ASROCK. Two fresh-KV framework runs produce the same four-token sequence
+as native: 67, 25, 576, 2701. All 152 tensor slices are comparable, but none
+matches bitwise. Logit relative-L2 errors are 0.0030448043, 0.0140315337,
+0.0043564111 and 0.0045131941; the table retains the larger position-1 error
+and layer-level differences. All 25 child/utility leaves completed naturally
+and all seven surrounding audits passed. This is a four-step diagnostic,
+not numerical acceptance or the sustained 2,048/256 performance target.
+
+Previously, the [RPO finalizer passed CPU qualification](../qualification/fe2o3-partial-move-rpo-finalizer-v1/README.md)
 on ASROCK: 190 tests passed, with 15 historical actual-capture tests still
 ignored. All six phases and postchecks passed. Three new finalizer products
 join five preserved compiler products by their recorded identities. The
@@ -28,8 +37,9 @@ Each next input equals the preceding checked argmax. All 152 tensor slices,
 576 terminal state records, seven natural/reaped process leaves and six idle
 audits passed structural checks in one attempt without retry. Fresh runtime
 audits bind both CPU1037 executables. This is a native execution result, not
-independent numerical acceptance. Genuine framework comparison, sustained
-2,048/256 qualification and the 700-token/s target remain open.
+independent numerical acceptance. Genuine framework comparison subsequently
+completed as recorded above; numerical acceptance, sustained 2,048/256
+qualification and the 700-token/s target remain open.
 
 Previously, the [AR4 supervisor and independent-reference policy suites passed](../qualification/projection-ar4-supervisor-v1/README.md):
 52 CPU-only policy tests on MI350 and 38 on ASROCK, with unchanged source
@@ -38,8 +48,8 @@ output observation, distinct from the bounded MI350 wrapper receipt. The tests
 cover own-output recurrence, nonrecovering history comparability, separately
 labeled conditional replay and the existing owned lifecycle. No model or GPU
 kernel was executed by these suites. The separate native observation completed
-as recorded above; independent framework comparison, numerical acceptance,
-the long workload and 700 tokens/s remain open.
+as recorded above, followed by independent framework comparison. Numerical
+acceptance, the long workload and 700 tokens/s remain open.
 
 Previously, the [projection-residual autoregressive route passed fresh CPU qualification](../qualification/projection-ar4-cpu-v1/README.md)
 on ASROCK through `mi350-2`: 1,037 Rust tests passed, with four unchanged worker
@@ -49,8 +59,8 @@ next input must equal the previous checked output; wrong trajectories, mode
 mismatches and premature Close remain rejection cases. All seventeen selected
 executables were rebuilt and all source/input postchecks passed. This is CPU
 qualification, not a GPU observation. The matching GPU AR4 run completed as
-recorded above; independent history-aware framework comparison and the 2,048/256
-workload, numerical acceptance and 700 tokens/s target remain open.
+recorded above, followed by independent history-aware framework comparison.
+The 2,048/256 workload, numerical acceptance and 700 tokens/s target remain open.
 
 The [branch-reduced RoPE candidate passed fresh CPU qualification](../qualification/rope-materialized-cpu-v2/README.md)
 on ASROCK: all 33 Rust tests and eleven build/test phases passed with clean
@@ -835,10 +845,11 @@ alone is not a self-contained reproducer or proof.
 
 ## Next Gates
 
-1. Extend the completed V7 36-layer teacher-forced observation to the
-   own-output autoregressive path with history-aware independent diagnostics.
-   The new TF4 image runs and cleans up correctly, but its framework tensor
-   differences still require independent numerical qualification.
+1. Resolve the remaining arithmetic differences in the completed four-step
+   own-output autoregressive comparison. The independent reference matches
+   its token history but not whole tensor slices. Qualify the checked BF16
+   RoPE candidate and diagnose remaining layer differences without fitting
+   acceptance thresholds to these observations.
 2. Validate TP residuals, MLP, final normalization, logits and token selection
    independently, including cumulative layer error and authentic KV history.
    Preserve the old bitwise-comparison mode as a separate historical check;

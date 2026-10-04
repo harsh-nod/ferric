@@ -1,0 +1,9 @@
+{
+  "schema": "ferric-p228-projection-ar4-framework-launch-approval-v1",
+  "projection_sha256": "0ddcb934c0cc12621f5ee9b1a58cba7bc569b4dfee2712bea004e6b7c28fcd81",
+  "execution_review": {
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-ar4-framework-launch-v228-v1/root-execution-review.json",
+    "bytes": 567,
+    "sha256": "7624c1143b7b975659e52058b756e347f37ef4c1eb73ce184cd367bc8631ee7e"
+  }
+}
