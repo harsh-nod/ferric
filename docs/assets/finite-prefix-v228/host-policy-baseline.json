@@ -1,0 +1,983 @@
+{
+  "all_issue_42_milestones_open": true,
+  "controller_elapsed_seconds": 439.5135563990334,
+  "date": "2026-10-03",
+  "device_audits": {
+    "after": 3,
+    "before": 3
+  },
+  "full152_tensor_rows_bitwise_equal": true,
+  "full_model_correctness": false,
+  "gpu_execution": true,
+  "gpu_time": false,
+  "host": "mi350",
+  "host_observation": {
+    "close_host_ns": 26475443052,
+    "counter_names": [
+      "commands",
+      "command_ns",
+      "full_currentness_checks",
+      "full_currentness_ns",
+      "operational_currentness_checks",
+      "operational_currentness_ns",
+      "kernel_admissions",
+      "kernel_admission_ns",
+      "dispatches",
+      "dispatch_prepare_ns",
+      "dispatch_publish_ns",
+      "dispatch_wait_ns",
+      "completion_polls",
+      "reads",
+      "read_bytes",
+      "read_ns",
+      "writes",
+      "write_bytes",
+      "write_ns"
+    ],
+    "forward_host_ns": [
+      18266095913,
+      18304416797,
+      20174308456,
+      20171139274
+    ],
+    "inclusive_nested_host_scopes": true,
+    "intervals": [
+      {
+        "host_elapsed_ns": 174817355207,
+        "ranks": [
+          [
+            0,
+            0,
+            38942,
+            69077526047,
+            0,
+            0,
+            9,
+            2418132,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            3134,
+            11761389830,
+            10893746144
+          ],
+          [
+            0,
+            0,
+            37094,
+            67025871241,
+            0,
+            0,
+            6,
+            474080,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            2222,
+            8022540552,
+            8730738564
+          ]
+        ],
+        "shared": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "host_elapsed_ns": 18266645823,
+        "ranks": [
+          [
+            0,
+            0,
+            5068,
+            8529099489,
+            0,
+            0,
+            148,
+            14201746,
+            148,
+            264576366,
+            250840176,
+            1558775595,
+            5895,
+            39,
+            606980,
+            151400934,
+            3,
+            1096,
+            10002566
+          ],
+          [
+            0,
+            0,
+            5048,
+            8492171287,
+            0,
+            0,
+            145,
+            10532893,
+            145,
+            257691529,
+            245117022,
+            1399839449,
+            6817,
+            36,
+            294912,
+            130236110,
+            2,
+            1092,
+            6654344
+          ]
+        ],
+        "shared": [
+          0,
+          0,
+          288,
+          496553830
+        ]
+      },
+      {
+        "host_elapsed_ns": 18310905461,
+        "ranks": [
+          [
+            0,
+            0,
+            5068,
+            8544323184,
+            0,
+            0,
+            148,
+            14190034,
+            148,
+            264240149,
+            251986936,
+            1558818786,
+            5859,
+            39,
+            606980,
+            152562446,
+            3,
+            1096,
+            10034666
+          ],
+          [
+            0,
+            0,
+            5048,
+            8511073618,
+            0,
+            0,
+            145,
+            10484749,
+            145,
+            258079836,
+            245751091,
+            1404889380,
+            6846,
+            36,
+            294912,
+            130069733,
+            2,
+            1092,
+            6707464
+          ]
+        ],
+        "shared": [
+          0,
+          0,
+          288,
+          498599580
+        ]
+      },
+      {
+        "host_elapsed_ns": 20181096200,
+        "ranks": [
+          [
+            0,
+            0,
+            5644,
+            9481453018,
+            0,
+            0,
+            148,
+            14096047,
+            148,
+            262639835,
+            249718381,
+            1558153010,
+            5922,
+            39,
+            606980,
+            151428373,
+            3,
+            1096,
+            10315916
+          ],
+          [
+            0,
+            0,
+            5624,
+            9443422594,
+            0,
+            0,
+            145,
+            10483519,
+            145,
+            256815179,
+            244015627,
+            1403790668,
+            6879,
+            36,
+            294912,
+            130287855,
+            2,
+            1092,
+            6933794
+          ]
+        ],
+        "shared": [
+          0,
+          0,
+          288,
+          495018108
+        ]
+      },
+      {
+        "host_elapsed_ns": 20177696468,
+        "ranks": [
+          [
+            0,
+            0,
+            5644,
+            9476558845,
+            0,
+            0,
+            148,
+            14115325,
+            148,
+            263938003,
+            250487272,
+            1555546331,
+            5850,
+            39,
+            606980,
+            151488485,
+            3,
+            1096,
+            10017177
+          ],
+          [
+            0,
+            0,
+            5624,
+            9445683556,
+            0,
+            0,
+            145,
+            10573667,
+            145,
+            257452849,
+            244729292,
+            1407462689,
+            6873,
+            36,
+            294912,
+            130553628,
+            2,
+            1092,
+            6675095
+          ]
+        ],
+        "shared": [
+          0,
+          0,
+          288,
+          496107742
+        ]
+      },
+      {
+        "host_elapsed_ns": 6353894,
+        "ranks": [
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        ],
+        "shared": [
+          0,
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "native_closed": true,
+    "shared_counter_names": [
+      "group_full_checks",
+      "group_full_ns",
+      "publication_full_checks",
+      "publication_full_ns"
+    ],
+    "snapshots": [
+      {
+        "group_incarnation": 1,
+        "phase": "fresh_enabled",
+        "ranks": [
+          {
+            "cache_kernel_admission": false,
+            "counters": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "queue_epoch": 0,
+            "rank": 0,
+            "raw_timestamp_queue": false,
+            "unique_id": 16366993098680759275
+          },
+          {
+            "cache_kernel_admission": false,
+            "counters": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "queue_epoch": 0,
+            "rank": 1,
+            "raw_timestamp_queue": false,
+            "unique_id": 10838076764495710945
+          }
+        ],
+        "shared": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "shared_full_currentness": false
+      },
+      {
+        "group_incarnation": 1,
+        "phase": "setup_sealed",
+        "ranks": [
+          {
+            "cache_kernel_admission": false,
+            "counters": [
+              0,
+              0,
+              38942,
+              69077526047,
+              0,
+              0,
+              9,
+              2418132,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              3134,
+              11761389830,
+              10893746144
+            ],
+            "queue_epoch": 0,
+            "rank": 0,
+            "raw_timestamp_queue": false,
+            "unique_id": 16366993098680759275
+          },
+          {
+            "cache_kernel_admission": false,
+            "counters": [
+              0,
+              0,
+              37094,
+              67025871241,
+              0,
+              0,
+              6,
+              474080,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              2222,
+              8022540552,
+              8730738564
+            ],
+            "queue_epoch": 0,
+            "rank": 1,
+            "raw_timestamp_queue": false,
+            "unique_id": 10838076764495710945
+          }
+        ],
+        "shared": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "shared_full_currentness": false
+      },
+      {
+        "group_incarnation": 1,
+        "phase": "forward_0",
+        "ranks": [
+          {
+            "cache_kernel_admission": false,
+            "counters": [
+              0,
+              0,
+              44010,
+              77606625536,
+              0,
+              0,
+              157,
+              16619878,
+              148,
+              264576366,
+              250840176,
+              1558775595,
+              5895,
+              39,
+              606980,
+              151400934,
+              3137,
+              11761390926,
+              10903748710
+            ],
+            "queue_epoch": 0,
+            "rank": 0,
+            "raw_timestamp_queue": false,
+            "unique_id": 16366993098680759275
+          },
+          {
+            "cache_kernel_admission": false,
+            "counters": [
+              0,
+              0,
+              42142,
+              75518042528,
+              0,
+              0,
+              151,
+              11006973,
+              145,
+              257691529,
+              245117022,
+              1399839449,
+              6817,
+              36,
+              294912,
+              130236110,
+              2224,
+              8022541644,
+              8737392908
+            ],
+            "queue_epoch": 0,
+            "rank": 1,
+            "raw_timestamp_queue": false,
+            "unique_id": 10838076764495710945
+          }
+        ],
+        "shared": [
+          0,
+          0,
+          288,
+          496553830
+        ],
+        "shared_full_currentness": false
+      },
+      {
+        "group_incarnation": 1,
+        "phase": "forward_1",
+        "ranks": [
+          {
+            "cache_kernel_admission": false,
+            "counters": [
+              0,
+              0,
+              49078,
+              86150948720,
+              0,
+              0,
+              305,
+              30809912,
+              296,
+              528816515,
+              502827112,
+              3117594381,
+              11754,
+              78,
+              1213960,
+              303963380,
+              3140,
+              11761392022,
+              10913783376
+            ],
+            "queue_epoch": 0,
+            "rank": 0,
+            "raw_timestamp_queue": false,
+            "unique_id": 16366993098680759275
+          },
+          {
+            "cache_kernel_admission": false,
+            "counters": [
+              0,
+              0,
+              47190,
+              84029116146,
+              0,
+              0,
+              296,
+              21491722,
+              290,
+              515771365,
+              490868113,
+              2804728829,
+              13663,
+              72,
+              589824,
+              260305843,
+              2226,
+              8022542736,
+              8744100372
+            ],
+            "queue_epoch": 0,
+            "rank": 1,
+            "raw_timestamp_queue": false,
+            "unique_id": 10838076764495710945
+          }
+        ],
+        "shared": [
+          0,
+          0,
+          576,
+          995153410
+        ],
+        "shared_full_currentness": false
+      },
+      {
+        "group_incarnation": 1,
+        "phase": "forward_2",
+        "ranks": [
+          {
+            "cache_kernel_admission": false,
+            "counters": [
+              0,
+              0,
+              54722,
+              95632401738,
+              0,
+              0,
+              453,
+              44905959,
+              444,
+              791456350,
+              752545493,
+              4675747391,
+              17676,
+              117,
+              1820940,
+              455391753,
+              3143,
+              11761393118,
+              10924099292
+            ],
+            "queue_epoch": 0,
+            "rank": 0,
+            "raw_timestamp_queue": false,
+            "unique_id": 16366993098680759275
+          },
+          {
+            "cache_kernel_admission": false,
+            "counters": [
+              0,
+              0,
+              52814,
+              93472538740,
+              0,
+              0,
+              441,
+              31975241,
+              435,
+              772586544,
+              734883740,
+              4208519497,
+              20542,
+              108,
+              884736,
+              390593698,
+              2228,
+              8022543828,
+              8751034166
+            ],
+            "queue_epoch": 0,
+            "rank": 1,
+            "raw_timestamp_queue": false,
+            "unique_id": 10838076764495710945
+          }
+        ],
+        "shared": [
+          0,
+          0,
+          864,
+          1490171518
+        ],
+        "shared_full_currentness": false
+      },
+      {
+        "group_incarnation": 1,
+        "phase": "forward_3",
+        "ranks": [
+          {
+            "cache_kernel_admission": false,
+            "counters": [
+              0,
+              0,
+              60366,
+              105108960583,
+              0,
+              0,
+              601,
+              59021284,
+              592,
+              1055394353,
+              1003032765,
+              6231293722,
+              23526,
+              156,
+              2427920,
+              606880238,
+              3146,
+              11761394214,
+              10934116469
+            ],
+            "queue_epoch": 0,
+            "rank": 0,
+            "raw_timestamp_queue": false,
+            "unique_id": 16366993098680759275
+          },
+          {
+            "cache_kernel_admission": false,
+            "counters": [
+              0,
+              0,
+              58438,
+              102918222296,
+              0,
+              0,
+              586,
+              42548908,
+              580,
+              1030039393,
+              979613032,
+              5615982186,
+              27415,
+              144,
+              1179648,
+              521147326,
+              2230,
+              8022544920,
+              8757709261
+            ],
+            "queue_epoch": 0,
+            "rank": 1,
+            "raw_timestamp_queue": false,
+            "unique_id": 10838076764495710945
+          }
+        ],
+        "shared": [
+          0,
+          0,
+          1152,
+          1986279260
+        ],
+        "shared_full_currentness": false
+      },
+      {
+        "group_incarnation": 1,
+        "phase": "before_close",
+        "ranks": [
+          {
+            "cache_kernel_admission": false,
+            "counters": [
+              0,
+              0,
+              60366,
+              105108960583,
+              0,
+              0,
+              601,
+              59021284,
+              592,
+              1055394353,
+              1003032765,
+              6231293722,
+              23526,
+              156,
+              2427920,
+              606880238,
+              3146,
+              11761394214,
+              10934116469
+            ],
+            "queue_epoch": 0,
+            "rank": 0,
+            "raw_timestamp_queue": false,
+            "unique_id": 16366993098680759275
+          },
+          {
+            "cache_kernel_admission": false,
+            "counters": [
+              0,
+              0,
+              58438,
+              102918222296,
+              0,
+              0,
+              586,
+              42548908,
+              580,
+              1030039393,
+              979613032,
+              5615982186,
+              27415,
+              144,
+              1179648,
+              521147326,
+              2230,
+              8022544920,
+              8757709261
+            ],
+            "queue_epoch": 0,
+            "rank": 1,
+            "raw_timestamp_queue": false,
+            "unique_id": 10838076764495710945
+          }
+        ],
+        "shared": [
+          0,
+          0,
+          1152,
+          1986279260
+        ],
+        "shared_full_currentness": false
+      }
+    ]
+  },
+  "identities": {
+    "controller": {
+      "bytes": 13205,
+      "sha256": "4efe3cce58f2810c7ebc38ecab70f9032f86bbf8036cdde6b93b47f56ede622e"
+    },
+    "cpu_complete": {
+      "bytes": 290447,
+      "sha256": "1fc4d17534161e6e7f96e6d0eba0a2455227ba2166623823f6a74f845b93deae"
+    },
+    "cpu_review": {
+      "bytes": 2034,
+      "sha256": "5a91970b15e4d1a3988b13a676e6d5589fc8ebfdaebb0d28ae3997c55ff30583"
+    },
+    "deployment": {
+      "bytes": 202889,
+      "sha256": "4870de9c93693d073f77a1acdf88d77f23a6c6af8440ba88402af2f7320c01db"
+    },
+    "host_sidecar": {
+      "bytes": 33511,
+      "sha256": "e1f24b754294126e2c9522be998e6409a702b232acda37eef3171f31b6a0848a"
+    },
+    "parent": {
+      "bytes": 13618248,
+      "sha256": "830f90b17bde546fb0d236a127f4bff055b31b4f0b46e2381e22ec072cb9d4d0"
+    },
+    "plan": {
+      "bytes": 5219,
+      "sha256": "9054d74d125692fe4293c648aa2b1b783aadedc55ba3d9480a6ce780a7dad5b4"
+    },
+    "request": {
+      "bytes": 8109,
+      "sha256": "9122ba2e55a4038c0a5f9ddedac8e433fca8e4ec300219bfda866a4a4bd722ad"
+    },
+    "supervisor_manifest": {
+      "bytes": 5099,
+      "sha256": "5cf1541c6681f70289e15cee285cbf749dbd25a94ce9ca52751aa6c77fbec469"
+    },
+    "worker": {
+      "bytes": 4780352,
+      "sha256": "b0de0feedcdf85e4ad71aa418c0df3da72830a2b1050f1aba8dca3257cbd490f"
+    }
+  },
+  "independent_numerical_acceptance": false,
+  "limitations": [
+    "One four-forward teacher-forced engineering run, not an ablation or sustained benchmark.",
+    "Native-baseline parity is not independent full-model numerical acceptance.",
+    "Host intervals are inclusive and nested, not GPU time, overlap, or additive costs.",
+    "The pure comparison does not attest live device audits; the owning controller retains those separate leaf results.",
+    "Retained receipt digests do not make this summary a self-contained reproducer."
+  ],
+  "mode": "teacher_forced",
+  "native_attempts": 1,
+  "output_files_verified_after_transfer": 57,
+  "owned_leaves": {
+    "after-0": {
+      "cleanup_signalled": false,
+      "elapsed_seconds": 0.5828758010175079,
+      "exit_code": 0,
+      "owned_groups_absent": true,
+      "owned_processes_reaped": true,
+      "reason": null
+    },
+    "after-1": {
+      "cleanup_signalled": false,
+      "elapsed_seconds": 0.5901360649731942,
+      "exit_code": 0,
+      "owned_groups_absent": true,
+      "owned_processes_reaped": true,
+      "reason": null
+    },
+    "after-2": {
+      "cleanup_signalled": false,
+      "elapsed_seconds": 0.5809084399952553,
+      "exit_code": 0,
+      "owned_groups_absent": true,
+      "owned_processes_reaped": true,
+      "reason": null
+    },
+    "before-0": {
+      "cleanup_signalled": false,
+      "elapsed_seconds": 0.599744372011628,
+      "exit_code": 0,
+      "owned_groups_absent": true,
+      "owned_processes_reaped": true,
+      "reason": null
+    },
+    "before-1": {
+      "cleanup_signalled": false,
+      "elapsed_seconds": 0.5841211420483887,
+      "exit_code": 0,
+      "owned_groups_absent": true,
+      "owned_processes_reaped": true,
+      "reason": null
+    },
+    "before-2": {
+      "cleanup_signalled": false,
+      "elapsed_seconds": 0.5817566309706308,
+      "exit_code": 0,
+      "owned_groups_absent": true,
+      "owned_processes_reaped": true,
+      "reason": null
+    },
+    "parent": {
+      "cleanup_signalled": false,
+      "elapsed_seconds": 421.8276055159513,
+      "exit_code": 0,
+      "owned_groups_absent": true,
+      "owned_processes_reaped": true,
+      "reason": null
+    }
+  },
+  "passed": true,
+  "performance_claim": false,
+  "policy": "baseline",
+  "production_authority": false,
+  "receipt": {
+    "bytes": 1147743,
+    "sha256": "8d46f69e481ea906733765dffee163a0a6ba33bf7816316741e867880a82ea5f"
+  },
+  "retained_archive": {
+    "bytes": 2147024,
+    "sha256": "48292ba5620bc7e4173520399e35fdef1927a368a610e16ba9862b50fc0a99c1"
+  },
+  "retries": 0,
+  "schema": "FerricFinitePrefixHostPolicyGpuSummaryV1",
+  "sustained_2048_256": false
+}

@@ -2,7 +2,8 @@
 
 This opt-in engineering diagnostic isolates two host-overhead optimizations
 for the four-forward gfx950 prefix route. It does not change production
-admission or the V1 diagnostic. No V2 GPU run or speedup is reported here.
+admission or the V1 diagnostic. The V2 baseline has completed on `mi350`;
+the two optimization arms have not run, and no speedup is reported here.
 
 ## Policies
 
@@ -95,7 +96,33 @@ packages and 209 parent packages against their separate dependency graphs.
 This is a selected CPU cohort, not a workspace-wide regression, formatting,
 Clippy, compiler/HSACO reproduction or GPU qualification. Direct tests of
 real-group recorder initialization and post-Close sidecar-write failures
-remain gaps. The previous V1 GPU result does not qualify these new binaries.
+remain gaps. The previous V1 GPU result does not qualify these new binaries;
+their separate V2 baseline result follows.
+
+## GPU Baseline
+
+The freshly built CPU633 parent and worker completed one four-forward,
+teacher-forced baseline diagnostic on `mi350`. All 152 retained tensor rows
+matched the prior native route bit-for-bit. Three pre-run and three post-run
+device-state audits passed; all owned processes exited and were reaped without
+forced cleanup. All 57 final output files were independently rehashed after
+local retention. The [baseline record](assets/finite-prefix-v228/host-policy-baseline.json)
+binds these results to the actual binaries, deployment, controller and sidecar.
+
+| Position | Forward Wall (ms) | Full Currentness R0 (ms) | Full Currentness R1 (ms) | Admission R0 (ms) | Admission R1 (ms) |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| 0 | 18,266.096 | 8,529.099 | 8,492.171 | 14.202 | 10.533 |
+| 1 | 18,304.417 | 8,544.323 | 8,511.074 | 14.190 | 10.485 |
+| 2 | 20,174.308 | 9,481.453 | 9,443.423 | 14.096 | 10.484 |
+| 3 | 20,171.139 | 9,476.559 | 9,445.684 | 14.115 | 10.574 |
+
+Setup's snapshot interval was 174.817 seconds; Close took 26.475 seconds.
+The parent diagnostic took 421.828 seconds, while the surrounding controller
+took 439.514 seconds. These are different timing boundaries. The table records
+inclusive, nested host scopes, not additive costs or GPU time. Both optional
+optimizations were disabled. This single baseline is not an ablation, a speedup claim,
+independent full-model acceptance or the sustained 2,048/256 workload.
+The V2 autoregressive diagnostic remains unrun.
 
 ## GPU Comparison Gates
 

@@ -91,7 +91,11 @@ The original CPU cohort passed 605 tests with four ignored. The newer V2
 host-policy cohort passed 633 with four ignored from fresh source archives
 and its exact overlay. All 12 binaries built and the parent default-library
 check passed. Its separate [record](../../docs/assets/finite-prefix-v228/host-policy-cpu.json)
-does not qualify those new binaries for GPU use. The earlier
+is CPU-only. Those new binaries have separately completed the V2 teacher-forced
+baseline: all 152 retained native tensor rows matched, six device audits passed,
+and Close/reap completed without forced cleanup. See the
+[GPU record](../../docs/assets/finite-prefix-v228/host-policy-baseline.json).
+The V2 optimization arms and autoregressive diagnostic remain pending. The earlier
 uninstrumented GPU generation passed four teacher-forced and four
 autoregressive forwards with bitwise native-baseline parity. The V1
 host-instrumented (CPU605) generation has separately completed its teacher-forced
