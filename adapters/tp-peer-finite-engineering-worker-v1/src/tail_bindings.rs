@@ -1,10 +1,13 @@
 //! Fixed one-token ordinary tail. Root owns forward/layer/state sequencing.
 
+use crate::native_prefix_device_recorder_v1::Recorder;
+use crate::prefix_decode_device_observation_v1::Stage;
 use crate::tail_artifacts::{LoadedTailArtifacts, TailKind};
 use crate::tail_head::{HEAD_BYTES, HeadTranspose};
 use fe2o3_kfd::{
-    Gfx950EngineeringPeerBufferV1 as Buffer, Gfx950EngineeringPeerGroupV1 as Group,
-    Gfx950EngineeringPeerPointerV1 as Pointer, engineering_wire::BufferAccessV1 as Access,
+    Gfx950EngineeringPeerBufferV1 as Buffer, Gfx950EngineeringPeerDispatchV1 as Dispatch,
+    Gfx950EngineeringPeerGroupV1 as Group, Gfx950EngineeringPeerPointerV1 as Pointer,
+    Gfx950EngineeringRawTimestampObservationV1 as Raw, engineering_wire::BufferAccessV1 as Access,
 };
 
 type Result<T> = std::result::Result<T, String>;
@@ -208,6 +211,16 @@ struct Native<'a> {
     artifacts: &'a LoadedTailArtifacts,
     bindings: &'a TailBindings,
     timeout_ms: u32,
+    recording: Option<(&'a mut Recorder, u64, u32)>,
+}
+fn device_stage(kind: TailKind) -> Stage {
+    match kind {
+        TailKind::Embedding => Stage::Embedding,
+        TailKind::Copy => Stage::Copy,
+        TailKind::FinalNorm => Stage::FinalNorm,
+        TailKind::Head => Stage::Head,
+        TailKind::Argmax => Stage::Argmax,
+    }
 }
 impl Operations for Native<'_> {
     fn write_token(&mut self, token: u32) -> Result<()> {
@@ -220,6 +233,35 @@ impl Operations for Native<'_> {
     fn dispatch(&mut self, kind: TailKind) -> Result<u64> {
         let plan = plan(kind);
         let pointers = self.bindings.pointers(&plan);
+        if let Some((recorder, generation, position)) = self.recording.as_mut() {
+            let kernel = self.artifacts.kernel(kind);
+            // SAFETY: identical singleton arguments/roots/deadline; each round
+            // finishes before the next dependent singleton can be published.
+            let [raw]: [Raw; 1] = unsafe {
+                self.group
+                    .dispatch_round_with_raw_timestamps_unchecked(vec![Dispatch {
+                        kernel,
+                        bytes: plan.bytes,
+                        workgroup: [64, 1, 1],
+                        grid: kind.grid(),
+                        pointers,
+                        timeout_ms: self.timeout_ms,
+                    }])
+            }?
+            .try_into()
+            .map_err(|_| "tail raw singleton census")?;
+            recorder
+                .record(
+                    *generation,
+                    *position,
+                    device_stage(kind),
+                    None,
+                    kernel,
+                    &raw,
+                )
+                .map_err(|error| error.to_string())?;
+            return Ok(raw.host_elapsed_ns());
+        }
         // SAFETY: only the exact pinned entry and fixed bounds/roots are used.
         // Outer unsafe entry requires the owner to enforce phase, currentness
         // and no intervening writes; Group retains and checks every token.
@@ -309,6 +351,7 @@ pub(super) unsafe fn begin_embedding(
             artifacts,
             bindings,
             timeout_ms,
+            recording: None,
         },
         token,
     )
@@ -331,6 +374,60 @@ pub(super) unsafe fn finish_tail(
         artifacts,
         bindings,
         timeout_ms,
+        recording: None,
+    })
+}
+
+fn check_recording_position(generation: u64, position: u32) -> Result<()> {
+    if position >= 4 || generation != u64::from(position) + 1 {
+        return Err("tail raw recording generation".into());
+    }
+    Ok(())
+}
+/// # Safety
+/// Same owner/phase contract as begin_embedding; the group is freshly raw-enabled.
+pub(super) unsafe fn begin_embedding_recorded(
+    group: &mut Group,
+    artifacts: &LoadedTailArtifacts,
+    bindings: &TailBindings,
+    token: u32,
+    timeout_ms: u32,
+    recorder: &mut Recorder,
+    generation: u64,
+    position: u32,
+) -> Result<[u64; 2]> {
+    check_recording_position(generation, position)?;
+    check_call(bindings, artifacts, timeout_ms)?;
+    begin(
+        &mut Native {
+            group,
+            artifacts,
+            bindings,
+            timeout_ms,
+            recording: Some((recorder, generation, position)),
+        },
+        token,
+    )
+}
+/// # Safety
+/// Same completed-layer contract as finish_tail; no partial or retried capture.
+pub(super) unsafe fn finish_tail_recorded(
+    group: &mut Group,
+    artifacts: &LoadedTailArtifacts,
+    bindings: &TailBindings,
+    timeout_ms: u32,
+    recorder: &mut Recorder,
+    generation: u64,
+    position: u32,
+) -> Result<TailResult> {
+    check_recording_position(generation, position)?;
+    check_call(bindings, artifacts, timeout_ms)?;
+    finish(&mut Native {
+        group,
+        artifacts,
+        bindings,
+        timeout_ms,
+        recording: Some((recorder, generation, position)),
     })
 }
 

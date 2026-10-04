@@ -152,6 +152,16 @@ pub(crate) unsafe fn run_policy_observed(
 ) -> io::Result<()> {
     unsafe { run_with_observer(options, r, w, Some(Diagnostic::V2(path, worker, policy))) }
 }
+#[allow(unsafe_code)]
+pub(crate) unsafe fn run_device_observed(
+    options: NativeOptions,
+    r: &mut impl Read,
+    w: &mut impl Write,
+    path: std::path::PathBuf,
+    worker: [u8; 32],
+) -> io::Result<()> {
+    unsafe { run_with_observer(options, r, w, Some(Diagnostic::Device(path, worker))) }
+}
 enum Diagnostic {
     V1(std::path::PathBuf, [u8; 32]),
     V2(
@@ -159,6 +169,7 @@ enum Diagnostic {
         [u8; 32],
         crate::prefix_decode_host_observation_v2::Policy,
     ),
+    Device(std::path::PathBuf, [u8; 32]),
 }
 enum Observer {
     V1(crate::native_prefix_decode_host_v1::Recorder),
@@ -210,8 +221,12 @@ unsafe fn run_with_observer(
     let mut incoming = FrameBudget::new();
     let (b, prepared) = prepare(&options, r, &mut incoming)?;
     // SAFETY: complete CPU scope/image/profile checks precede the unique opener.
-    let mut group =
-        unsafe { Group::open_unchecked(&prepared.device_ids()) }.map_err(io::Error::other)?;
+    let mut group = if matches!(&diagnostic, Some(Diagnostic::Device(..))) {
+        unsafe { Group::open_raw_timestamps_unchecked(&prepared.device_ids()) }
+    } else {
+        unsafe { Group::open_unchecked(&prepared.device_ids()) }
+    }
+    .map_err(io::Error::other)?;
     let mut observer = match &diagnostic {
         Some(Diagnostic::V1(_, worker)) => Some(Observer::V1(
             crate::native_prefix_decode_host_v1::Recorder::enable(&mut group, &b, *worker)?,
@@ -221,12 +236,18 @@ unsafe fn run_with_observer(
                 &mut group, &b, *worker, *policy,
             )?,
         )),
-        None => None,
+        Some(Diagnostic::Device(..)) | None => None,
+    };
+    let mut device = match &diagnostic {
+        Some(Diagnostic::Device(_, worker)) => Some(
+            crate::native_prefix_device_recorder_v1::Recorder::enable(&mut group, &b, *worker)?,
+        ),
+        _ => None,
     };
     let mut setup = prepared.into_processor(group).map_err(io::Error::other)?;
     setup.serve(r, w).map_err(io::Error::other)?;
     if setup.is_closed() {
-        if observer.is_some() {
+        if observer.is_some() || device.is_some() {
             return Err(io::Error::other(
                 "host diagnostic setup closed before four forwards",
             ));
@@ -237,27 +258,45 @@ unsafe fn run_with_observer(
     if let Some(observer) = observer.as_mut() {
         observer.record(owner.host_observation().map_err(io::Error::other)?)?;
     }
+    if let Some(device) = device.as_mut() {
+        owner.bind_device_images(device).map_err(io::Error::other)?;
+    }
     let mut backend = Native {
         owner: Some(owner),
         profile: b.sha256()?,
         observer,
+        device,
+        closed_device: None,
     };
-    serve(&mut backend, r, w, &b, &mut incoming)?;
-    if let Some(diagnostic) = diagnostic {
-        let path = match diagnostic {
-            Diagnostic::V1(path, _) | Diagnostic::V2(path, _, _) => path,
-        };
-        backend
-            .observer
-            .take()
-            .ok_or_else(|| io::Error::other("host observer missing"))?
-            .finish(&path)?;
-    }
-    Ok(())
+    serve_and_finish(
+        &mut backend,
+        r,
+        w,
+        &b,
+        &mut incoming,
+        |backend| match diagnostic {
+            Some(Diagnostic::Device(path, _)) => crate::native_prefix_decode_device_v1::publish(
+                backend
+                    .closed_device
+                    .take()
+                    .ok_or_else(|| io::Error::other("closed device report missing"))?,
+                &path,
+            ),
+            Some(Diagnostic::V1(path, _) | Diagnostic::V2(path, _, _)) => backend
+                .observer
+                .take()
+                .ok_or_else(|| io::Error::other("host observer missing"))?
+                .finish(&path),
+            None => Ok(()),
+        },
+    )
 }
 trait Backend {
     fn run(&mut self, input: &ForwardInput) -> io::Result<Run>;
     fn close(&mut self) -> io::Result<()>;
+    fn control(&mut self, _control: &Control) -> io::Result<()> {
+        Ok(())
+    }
     fn completed(&mut self, _completion: &Completion) -> io::Result<()> {
         Ok(())
     }
@@ -266,6 +305,8 @@ struct Native {
     owner: Option<Owner>,
     profile: [u8; 32],
     observer: Option<Observer>,
+    device: Option<crate::native_prefix_device_recorder_v1::Recorder>,
+    closed_device: Option<crate::native_prefix_device_recorder_v1::ClosedReport>,
 }
 impl Backend for Native {
     fn run(&mut self, input: &ForwardInput) -> io::Result<Run> {
@@ -274,7 +315,11 @@ impl Backend for Native {
             .owner
             .as_mut()
             .ok_or_else(|| io::Error::other("tiles owner consumed"))?;
-        let run = owner.run(self.profile, input).map_err(io::Error::other)?;
+        let run = match self.device.as_mut() {
+            Some(device) => owner.run_recorded(self.profile, input, device),
+            None => owner.run(self.profile, input),
+        }
+        .map_err(io::Error::other)?;
         if let Some(observer) = self.observer.as_mut() {
             let elapsed = started
                 .ok_or_else(|| io::Error::other("host run timer missing"))?
@@ -288,6 +333,10 @@ impl Backend for Native {
             .owner
             .take()
             .ok_or_else(|| io::Error::other("tiles owner consumed"))?;
+        if let Some(device) = self.device.take() {
+            self.closed_device = Some(device.close(owner)?);
+            return Ok(());
+        }
         if let Some(observer) = self.observer.as_mut() {
             observer.record(owner.host_observation().map_err(io::Error::other)?)?;
         }
@@ -305,6 +354,15 @@ impl Backend for Native {
     fn completed(&mut self, completion: &Completion) -> io::Result<()> {
         if let Some(observer) = self.observer.as_mut() {
             observer.completed(completion)?;
+        }
+        if let Some(device) = self.device.as_mut() {
+            device.completed(completion)?;
+        }
+        Ok(())
+    }
+    fn control(&mut self, control: &Control) -> io::Result<()> {
+        if let Some(device) = self.device.as_mut() {
+            device.control(control)?;
         }
         Ok(())
     }
@@ -389,6 +447,17 @@ fn observation(
         bytes,
     ))
 }
+fn serve_and_finish<B: Backend>(
+    backend: &mut B,
+    r: &mut impl Read,
+    w: &mut impl Write,
+    b: &Bootstrap,
+    incoming: &mut FrameBudget,
+    finish: impl FnOnce(&mut B) -> io::Result<()>,
+) -> io::Result<()> {
+    serve(backend, r, w, b, incoming)?;
+    finish(backend)
+}
 fn serve(
     backend: &mut impl Backend,
     r: &mut impl Read,
@@ -437,6 +506,7 @@ fn serve(
                 let run = backend.run(&input)?;
                 let output = run.completion.output_token;
                 let (reply, control, bytes) = observation(run, &request, &mut chain)?;
+                backend.control(&control)?;
                 wire::write_response(w, &mut outgoing, &reply, Some(&control), &bytes)?;
                 if let Event::Completed(completion) = &reply.event {
                     backend.completed(completion)?;
@@ -470,3 +540,7 @@ mod tests;
 #[cfg(test)]
 #[path = "native_prefix_decode_host_cli_tests.rs"]
 mod host_tests;
+
+#[cfg(test)]
+#[path = "native_prefix_decode_device_cli_tests.rs"]
+mod device_tests;

@@ -1246,6 +1246,22 @@ impl NativeOwner {
         token: u32,
         timeout_ms: u32,
     ) -> Result<[u64; 2]> {
+        unsafe { self.tail_embedding_with_recording(token, timeout_ms, None) }
+    }
+    /// # Safety
+    /// Same exclusive forward-phase contract as tail_embedding. A recorder
+    /// requires the caller's whole forward to use the fresh raw queue mode.
+    #[allow(unsafe_code)]
+    pub(super) unsafe fn tail_embedding_with_recording(
+        &mut self,
+        token: u32,
+        timeout_ms: u32,
+        recording: Option<(
+            &mut crate::native_prefix_device_recorder_v1::Recorder,
+            u64,
+            u32,
+        )>,
+    ) -> Result<[u64; 2]> {
         let result = (|| {
             if self.catalog.phase != Phase::LayersSealed {
                 return Err("tail embedding before source seal".into());
@@ -1257,13 +1273,26 @@ impl NativeOwner {
             let bindings = self.tail_bindings.as_ref().ok_or("tail bindings missing")?;
             // SAFETY: caller supplies the additional forward-phase contract.
             unsafe {
-                crate::tail_bindings::begin_embedding(
-                    &mut self.catalog.backend,
-                    artifacts,
-                    bindings,
-                    token,
-                    timeout_ms,
-                )
+                if let Some((recorder, generation, position)) = recording {
+                    crate::tail_bindings::begin_embedding_recorded(
+                        &mut self.catalog.backend,
+                        artifacts,
+                        bindings,
+                        token,
+                        timeout_ms,
+                        recorder,
+                        generation,
+                        position,
+                    )
+                } else {
+                    crate::tail_bindings::begin_embedding(
+                        &mut self.catalog.backend,
+                        artifacts,
+                        bindings,
+                        token,
+                        timeout_ms,
+                    )
+                }
             }
         })();
         self.catalog.finish(result)
@@ -1273,6 +1302,20 @@ impl NativeOwner {
     /// idle-fence/commit/publication. The result is still internal retained data.
     #[allow(unsafe_code)]
     pub(super) unsafe fn tail_finish(&mut self, timeout_ms: u32) -> Result<(u32, [u64; 3])> {
+        unsafe { self.tail_finish_with_recording(timeout_ms, None) }
+    }
+    /// # Safety
+    /// Same completed paired-layer and unpublished-output contract as tail_finish.
+    #[allow(unsafe_code)]
+    pub(super) unsafe fn tail_finish_with_recording(
+        &mut self,
+        timeout_ms: u32,
+        recording: Option<(
+            &mut crate::native_prefix_device_recorder_v1::Recorder,
+            u64,
+            u32,
+        )>,
+    ) -> Result<(u32, [u64; 3])> {
         let result = (|| {
             if self.catalog.phase != Phase::LayersSealed {
                 return Err("tail execution before source seal".into());
@@ -1284,12 +1327,24 @@ impl NativeOwner {
             let bindings = self.tail_bindings.as_ref().ok_or("tail bindings missing")?;
             // SAFETY: caller supplies the additional forward-phase contract.
             let result = unsafe {
-                crate::tail_bindings::finish_tail(
-                    &mut self.catalog.backend,
-                    artifacts,
-                    bindings,
-                    timeout_ms,
-                )
+                if let Some((recorder, generation, position)) = recording {
+                    crate::tail_bindings::finish_tail_recorded(
+                        &mut self.catalog.backend,
+                        artifacts,
+                        bindings,
+                        timeout_ms,
+                        recorder,
+                        generation,
+                        position,
+                    )
+                } else {
+                    crate::tail_bindings::finish_tail(
+                        &mut self.catalog.backend,
+                        artifacts,
+                        bindings,
+                        timeout_ms,
+                    )
+                }
             }?;
             Ok((result.token, result.timing_ns))
         })();

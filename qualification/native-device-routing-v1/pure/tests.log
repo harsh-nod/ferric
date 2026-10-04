@@ -1,0 +1,18 @@
+test_main_guard_precedes_any_package_or_helper_load (test_run.GuardTests) ... ok
+test_optimized_python_or_environment_refused (test_run.GuardTests) ... ok
+test_pin_refuses_wrong_fields_bool_and_noncanonical_path (test_run.GuardTests) ... ok
+test_frozen_additions_require_sorted_unique_named_schema_and_recorder (test_run.InventoryTests) ... ok
+test_missing_old_unlisted_new_or_duplicate_baseline_addition_refuses (test_run.InventoryTests) ... ok
+test_worker_count_comes_from_frozen_additions_not_a_new_constant (test_run.InventoryTests) ... ok
+test_actual_pushed_commits_and_trees_are_required (test_run.SourceTests) ... ok
+test_duplicate_unknown_or_wrong_source_generation_refuses (test_run.SourceTests) ... ok
+test_missing_extra_archive_or_manifest_field_refused (test_run.SourceTests) ... ok
+test_pending_manifest_empty_sources_and_empty_tests_refuse (test_run.SourceTests) ... ok
+test_preimages_are_joined_before_any_replacement_read (test_run.SourceTests) ... ok
+test_runtime_parent_cargo_and_escaping_source_overlays_refuse (test_run.SourceTests) ... ok
+test_worker_only_overlay_accepts_new_and_existing_rust (test_run.SourceTests) ... ok
+
+----------------------------------------------------------------------
+Ran 13 tests in 0.002s
+
+OK

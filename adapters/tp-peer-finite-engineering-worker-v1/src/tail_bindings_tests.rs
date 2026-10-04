@@ -1,5 +1,33 @@
 use super::*;
 
+#[test]
+fn tail_device_recording_labels_match_all_five_selected_entries() {
+    assert_eq!(
+        TailKind::ALL.map(device_stage),
+        [
+            Stage::Embedding,
+            Stage::Copy,
+            Stage::FinalNorm,
+            Stage::Head,
+            Stage::Argmax
+        ]
+    );
+    assert_eq!(TailKind::ALL.map(TailKind::rank), [0, 1, 0, 0, 0]);
+}
+
+#[test]
+fn tail_device_recording_position_refuses_invalid_generation_before_dispatch() {
+    for position in 0..4 {
+        check_recording_position(u64::from(position) + 1, position).unwrap();
+        for generation in [0, u64::from(position), u64::from(position) + 2, u64::MAX] {
+            assert!(check_recording_position(generation, position).is_err());
+        }
+    }
+    for position in [4, u32::MAX] {
+        assert!(check_recording_position(u64::from(position) + 1, position).is_err());
+    }
+}
+
 fn u64_at(bytes: &[u8], offset: usize) -> u64 {
     u64::from_le_bytes(bytes[offset..offset + 8].try_into().unwrap())
 }

@@ -1,0 +1,238 @@
+{
+  "schema": "ferric-p228-device-routing-cpu-overlay-v1",
+  "source_manifest": {
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/device-routing-source-inputs-v228-v1.json",
+    "bytes": 844,
+    "sha256": "e0177a746b8465bed5f8bf6b8760ccfe84094ff3bff2cc63ce8dd6c6b28ae198"
+  },
+  "files": [
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/lib.rs",
+      "source": "p228-device-routing-source-v3/draft/adapters/tp-peer-finite-engineering-worker-v1/src/lib.rs",
+      "before": {
+        "bytes": 1658,
+        "sha256": "d6bb904a9e8452cb286598378a913581059b4973a4bfb663e2fa644055e5fe7a"
+      },
+      "after": {
+        "bytes": 1781,
+        "sha256": "4db76274be0542fc43aa964f52c7341b4f647a97eda26e15aa607e2d42580287"
+      }
+    },
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/main.rs",
+      "source": "p228-device-routing-source-v3/draft/adapters/tp-peer-finite-engineering-worker-v1/src/main.rs",
+      "before": {
+        "bytes": 7992,
+        "sha256": "2c26d2f65826ea057cb73bfaad8c5987ddfab02c0e7a36918df76463ddf295d5"
+      },
+      "after": {
+        "bytes": 8596,
+        "sha256": "a15b0eba1b0c6aba8d8d7f6dff1e3140b57d8c7aeb259cb4162f834017610d84"
+      }
+    },
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_catalog.rs",
+      "source": "p228-device-routing-source-v3/draft/adapters/tp-peer-finite-engineering-worker-v1/src/native_catalog.rs",
+      "before": {
+        "bytes": 47960,
+        "sha256": "67ba5a41268467beaad82f4630474e75d40f479dafd3fcc5f3441480a82a5922"
+      },
+      "after": {
+        "bytes": 50024,
+        "sha256": "324f2c08ebf5d2edf0335f6ffd7e88539546595977830d0bb4c1eceb722bed36"
+      }
+    },
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_forward.rs",
+      "source": "p228-device-routing-source-v3/draft/adapters/tp-peer-finite-engineering-worker-v1/src/native_forward.rs",
+      "before": {
+        "bytes": 15971,
+        "sha256": "916002c4f77deaa7a240620373c10833cb0ecfa3584125e3ca033c4d611c1c2b"
+      },
+      "after": {
+        "bytes": 16108,
+        "sha256": "5e949aadcf65c9b62f5be2d150175b06f5b93ff7d720782c36a5aac0e1ffdcb2"
+      }
+    },
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_decode_cli_v1.rs",
+      "source": "p228-device-routing-source-v3/draft/adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_decode_cli_v1.rs",
+      "before": {
+        "bytes": 16388,
+        "sha256": "e75eed58f7437f59b1f551f30a9cf5ab6f41ecd5bfd6c1aa572ae9fb39171115"
+      },
+      "after": {
+        "bytes": 18920,
+        "sha256": "eca120f970274a356cf7cff7529d772f0c9bd1f088d2e5a99204e906299b7714"
+      }
+    },
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_decode_device_cli_tests.rs",
+      "source": "p228-device-routing-source-v3/draft/adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_decode_device_cli_tests.rs",
+      "before": null,
+      "after": {
+        "bytes": 7269,
+        "sha256": "7dfeec3116e623fbeffd5ead94f8085bf6e836795840a1a9b38f2c2c71db2a78"
+      }
+    },
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_decode_device_v1.rs",
+      "source": "p228-device-routing-source-v3/draft/adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_decode_device_v1.rs",
+      "before": null,
+      "after": {
+        "bytes": 2390,
+        "sha256": "dfb2f096963c5fbe4c44e6edaefb154c71ee50a18d3f5b72c72bd092ff9b091e"
+      }
+    },
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_decode_device_v1_tests.rs",
+      "source": "p228-device-routing-source-v3/draft/adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_decode_device_v1_tests.rs",
+      "before": null,
+      "after": {
+        "bytes": 2758,
+        "sha256": "6be3baec874683feec5f2d1e96cd654537088e94fca51a7a16bb3e10e24492da"
+      }
+    },
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_device_recorder_v1.rs",
+      "source": "p228-device-routing-source-v3/draft/adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_device_recorder_v1.rs",
+      "before": null,
+      "after": {
+        "bytes": 11281,
+        "sha256": "37e345634f5fdc53e01adecdc1f2a213747b3006830b16c0f954f035eba6041b"
+      }
+    },
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_device_recorder_v1_tests.rs",
+      "source": "p228-device-routing-source-v3/draft/adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_device_recorder_v1_tests.rs",
+      "before": null,
+      "after": {
+        "bytes": 7384,
+        "sha256": "d1ad18b4f70a85e97cc373135a5462c11e3491a916490b657ee18a8a553cf82f"
+      }
+    },
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_tiles_decode_v6.rs",
+      "source": "p228-device-routing-source-v3/draft/adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_tiles_decode_v6.rs",
+      "before": {
+        "bytes": 10017,
+        "sha256": "66dab0e25a2bf6ca8769067508709997262bd27380eb3f7e7c1e7ee8484172d5"
+      },
+      "after": {
+        "bytes": 14445,
+        "sha256": "6f0af62dd95ae1fc6b1d37963ad6a304a8b1460dcbce5e4c65ca4865cb3f1a31"
+      }
+    },
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_tiles_decode_v6/sequence.rs",
+      "source": "p228-device-routing-source-v3/draft/adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_tiles_decode_v6/sequence.rs",
+      "before": {
+        "bytes": 4204,
+        "sha256": "652b4da0b720e550e017fd9df454e7a2dae7b5d283e221375fe25ad5a19ef8bf"
+      },
+      "after": {
+        "bytes": 4421,
+        "sha256": "2d9bef2518ccb86409f95f1fbf1475ed9d43af8fd265c65186e583e3adcba96f"
+      }
+    },
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_tiles_decode_v6/tests.rs",
+      "source": "p228-device-routing-source-v3/draft/adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_tiles_decode_v6/tests.rs",
+      "before": {
+        "bytes": 10457,
+        "sha256": "88e03e564e6ff19f717758b26026151ce7b39898af9375fc74d4ac709f30d1a4"
+      },
+      "after": {
+        "bytes": 11445,
+        "sha256": "ba39f9828fecd6d2e5962baeb75c6750670bb5986a26ff573cb6bdf497f341e4"
+      }
+    },
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/prefix_decode_device_observation_v1.rs",
+      "source": "p228-device-routing-source-v3/draft/adapters/tp-peer-finite-engineering-worker-v1/src/prefix_decode_device_observation_v1.rs",
+      "before": null,
+      "after": {
+        "bytes": 12103,
+        "sha256": "816709f0ffd78d88df9e06f2d920954df314c6bf786ea1227de0e4439c4330a3"
+      }
+    },
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/prefix_decode_device_observation_v1_tests.rs",
+      "source": "p228-device-routing-source-v3/draft/adapters/tp-peer-finite-engineering-worker-v1/src/prefix_decode_device_observation_v1_tests.rs",
+      "before": null,
+      "after": {
+        "bytes": 12495,
+        "sha256": "2fc5e49c857c07faa84528d879425ecc9852f8970b41e6af84b4976f6a9ab071"
+      }
+    },
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/resident_layer/prefix_tiles_decode_v6.rs",
+      "source": "p228-device-routing-source-v3/draft/adapters/tp-peer-finite-engineering-worker-v1/src/resident_layer/prefix_tiles_decode_v6.rs",
+      "before": {
+        "bytes": 7681,
+        "sha256": "2858667ec134f5eee42a2cfd71a83ecf90fd220f3dd4c818eef1100fd6e37484"
+      },
+      "after": {
+        "bytes": 12018,
+        "sha256": "cf3bc00d6774f7bc49b8742c55058fa56626b82e58113264487243112f2b6716"
+      }
+    },
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/tail_bindings.rs",
+      "source": "p228-device-routing-source-v3/draft/adapters/tp-peer-finite-engineering-worker-v1/src/tail_bindings.rs",
+      "before": {
+        "bytes": 10210,
+        "sha256": "ffc5e7b6f1fb936aba20311a930a0fa345f228a3b74ff7317de992dd6e1c1dab"
+      },
+      "after": {
+        "bytes": 13503,
+        "sha256": "7d28a3444db92354002f1bd7024ec129f4f44fe1458b78a001e9cbfaa188447c"
+      }
+    },
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/tail_bindings_tests.rs",
+      "source": "p228-device-routing-source-v3/draft/adapters/tp-peer-finite-engineering-worker-v1/src/tail_bindings_tests.rs",
+      "before": {
+        "bytes": 6234,
+        "sha256": "4012ee1428a94f3d9eda9590e45ab6a7a591f247ac522251f90f1ff03bb47903"
+      },
+      "after": {
+        "bytes": 7109,
+        "sha256": "9416534fc0581732d0f57fab58c54d3f6499fdc1ba8e6bf6efc8d4658d41e611"
+      }
+    }
+  ],
+  "added_worker_tests": [
+    "native_catalog::forward::prefix_tiles_decode_v6::tests::prefix_decode_device_image_binding_requires_pristine_sequence",
+    "native_catalog::forward::prefix_tiles_decode_v6::tests::prefix_decode_device_image_failure_poison_prevents_any_later_backend_call",
+    "native_prefix_decode_cli_v1::device_tests::device_cli_gate_each_response_write_failure_withholds_sidecar",
+    "native_prefix_decode_cli_v1::device_tests::device_cli_gate_joins_four_controls_before_publication_after_close",
+    "native_prefix_decode_cli_v1::device_tests::device_cli_gate_recording_completion_and_close_failures_never_publish",
+    "native_prefix_decode_device_v1::tests::device_cli_exact_selector_and_legacy_separation",
+    "native_prefix_decode_device_v1::tests::device_cli_incomplete_bootstrap_creates_no_sidecar_before_open",
+    "native_prefix_decode_device_v1::tests::device_cli_rejects_malformed_device_deadline_mode_and_path",
+    "native_prefix_device_recorder_v1::tests::device_recorder_close_error_cannot_return_a_report",
+    "native_prefix_device_recorder_v1::tests::device_recorder_control_is_required_once_and_bad_join_is_terminal",
+    "native_prefix_device_recorder_v1::tests::device_recorder_early_duplicate_wrong_completion_is_terminal",
+    "native_prefix_device_recorder_v1::tests::device_recorder_extra_packet_after_four_forwards_is_terminal",
+    "native_prefix_device_recorder_v1::tests::device_recorder_first_middle_last_bad_row_poison_and_forbid_retry",
+    "native_prefix_device_recorder_v1::tests::device_recorder_forward_transition_requires_the_prior_completion",
+    "native_prefix_device_recorder_v1::tests::device_recorder_missing_binding_is_terminal_before_any_row",
+    "native_prefix_device_recorder_v1::tests::device_recorder_missing_rows_or_wrong_native_counts_do_not_close",
+    "native_prefix_device_recorder_v1::tests::device_recorder_synthetic_full_census_requires_successful_consuming_close",
+    "prefix_decode_device_observation_v1::tests::device_raw_control_join_checks_all_intervals_digest_and_states",
+    "prefix_decode_device_observation_v1::tests::device_raw_decoder_refuses_unknown_duplicate_legacy_and_oversize_input",
+    "prefix_decode_device_observation_v1::tests::device_raw_inventory_has_exact_stages_layers_and_rank_counts",
+    "prefix_decode_device_observation_v1::tests::device_raw_rejects_all_policy_and_authority_mutations",
+    "prefix_decode_device_observation_v1::tests::device_raw_rejects_completion_history_capture_and_chain_drift",
+    "prefix_decode_device_observation_v1::tests::device_raw_rejects_each_row_identity_and_label_substitution",
+    "prefix_decode_device_observation_v1::tests::device_raw_rejects_missing_duplicate_extra_or_reordered_rows",
+    "prefix_decode_device_observation_v1::tests::device_raw_rejects_process_profile_image_group_or_final_count_drift",
+    "prefix_decode_device_observation_v1::tests::device_raw_rejects_queue_rollover_and_unrecorded_setup_packet",
+    "prefix_decode_device_observation_v1::tests::device_raw_rejects_zero_reversed_ticks_but_accepts_equal_nonzero",
+    "prefix_decode_device_observation_v1::tests::device_raw_schema_roundtrips_tf_and_ar_with_exact_bounded_census",
+    "prefix_decode_device_observation_v1::tests::device_raw_writer_refuses_overflow_before_retaining_more_bytes",
+    "tail_bindings::tests::tail_device_recording_labels_match_all_five_selected_entries",
+    "tail_bindings::tests::tail_device_recording_position_refuses_invalid_generation_before_dispatch"
+  ]
+}

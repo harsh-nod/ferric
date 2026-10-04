@@ -178,6 +178,26 @@ fn checked_argmax(bytes: &[u8], token: u32) -> Result<()> {
 }
 
 impl Active<'_> {
+    fn retain_tail_result(&mut self, result: (u32, [u64; 3])) -> Result<(u32, [u64; 3])> {
+        let source = self
+            .owner
+            .catalog
+            .source
+            .scratch
+            .iter()
+            .find(|row| row.buffer.rank == 0 && row.kind == wire::ScratchKind::Normalized)
+            .ok_or("finite normalization root missing")?;
+        let normalized = self.buffer(source_key(source.buffer))?;
+        let logits = self.auxiliary(wire::AuxiliaryKind::Logits)?;
+        self.final_normalized = self.owner.catalog.backend.read(normalized, 0, 8192)?;
+        self.logits = self.owner.catalog.backend.read(logits, 0, 151_936 * 2)?;
+        if self.final_normalized.len() != 8192 {
+            return Err("final normalization extent".into());
+        }
+        finite_bf16(&self.final_normalized)?;
+        checked_argmax(&self.logits, result.0)?;
+        Ok(result)
+    }
     fn retain_layer_hidden(&mut self, layer: usize, hidden: [Buffer; 2]) -> Result<()> {
         let hidden0 = self.owner.catalog.backend.read(hidden[0], 0, 8192)?;
         let hidden1 = self.owner.catalog.backend.read(hidden[1], 0, 8192)?;
@@ -309,24 +329,7 @@ impl forward_sequence::Backend for Active<'_> {
         // SAFETY: the roster has completed all36 layers and both final residual
         // queues; the separate completed transpose and exact tail are retained.
         let result = unsafe { self.owner.tail_finish(self.timeout_ms) }?;
-        let source = self
-            .owner
-            .catalog
-            .source
-            .scratch
-            .iter()
-            .find(|row| row.buffer.rank == 0 && row.kind == wire::ScratchKind::Normalized)
-            .ok_or("finite normalization root missing")?;
-        let normalized = self.buffer(source_key(source.buffer))?;
-        let logits = self.auxiliary(wire::AuxiliaryKind::Logits)?;
-        self.final_normalized = self.owner.catalog.backend.read(normalized, 0, 8192)?;
-        self.logits = self.owner.catalog.backend.read(logits, 0, 151_936 * 2)?;
-        if self.final_normalized.len() != 8192 {
-            return Err("final normalization extent".into());
-        }
-        finite_bf16(&self.final_normalized)?;
-        checked_argmax(&self.logits, result.0)?;
-        Ok(result)
+        self.retain_tail_result(result)
     }
 
     fn idle_fence(&mut self) -> Result<()> {

@@ -33,6 +33,12 @@ impl Sequence {
     pub(super) fn exhausted(&self) -> bool {
         !self.terminal && self.completed == 4
     }
+    pub(super) fn pristine(&self) -> bool {
+        !self.terminal && self.completed == 0 && self.last.is_none() && self.pages.is_none()
+    }
+    pub(super) fn poison(&mut self) {
+        self.terminal = true;
+    }
     pub(super) fn run(
         &mut self,
         b: &mut impl Backend,

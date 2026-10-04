@@ -27,17 +27,46 @@ immutable-admission caching, and shared full-currentness fences. See the
 request schema, retained mutable checks, and measurement limits. V1 keeps its
 all-optimizations-off behavior.
 
+## Raw Device Diagnostic
+
+The worker-only `--engineering-native-prefix-decode-device-v1` selector uses
+fresh timestamp-enabled queues and requires `--device-sidecar` with a new
+absolute output path. It retains the same Four wire, model roots, kernel
+images, launch geometry and native state checks. It records prefix, MLP,
+both residual pairs and all five dependent embedding/copy/tail operations:
+293 records per forward, 1,172 for the four-forward diagnostic.
+
+Each record comes from a native completion-signal observation and the selected
+loaded kernel. Packet order, queue/device identity and input image hashes are
+checked; all host intervals must match the ordinary control payload. The report
+becomes available only after consuming native Close and successfully writing
+the Closed response. The output is bounded to 2 MiB. Existing ordinary and host
+diagnostic selectors do not enable timestamp queues.
+
+This is a diagnostic implementation, not a GPU qualification result. A matching
+parent selector, owned-process GPU run and full output-invariance comparison
+are still required. Raw ticks are not nanoseconds; cross-device alignment and
+overlap graphs require separate clock calibration. Single-command raw rounds
+also add a publication fence, so their host timings are not a like-for-like
+optimization of the ordinary single-command path.
+
+The [CPU qualification](../../qualification/native-device-routing-v1/README.md)
+retains the fresh `mi350-2` build: 609 Rust tests passed, four existing tests
+were ignored, and 13 controller tests passed. Its source and artifact records
+cover this worker route, not the pending parent integration or a GPU run.
+
 ## Build Prerequisites
 
 The finite worker uses `../../../fe2o3/crates/fe2o3-kfd`, a sibling checkout
 relative to this repository. Its matching engineering runtime is published at
-[fe2o3 `6964f6129`](https://github.com/harsh-nod/fe2o3/commit/6964f6129c4c42d343117f61cdbcfe6166392535),
-also available in the [mirror](https://github.com/powderluv/fe2o3/commit/6964f6129c4c42d343117f61cdbcfe6166392535).
+[fe2o3 `9a321f3f9`](https://github.com/harsh-nod/fe2o3/commit/9a321f3f98e597a75e8ebeafdda169ec10e12e9e),
+also available in the [mirror](https://github.com/powderluv/fe2o3/commit/9a321f3f98e597a75e8ebeafdda169ec10e12e9e).
 An arbitrary fe2o3 checkout, or the parent adapter's pinned fe2o3 Git revision,
 is not an equivalent dependency. The parent dependency graph remains unchanged.
 
 The original Ferric snapshot `9eca257697069f10c87ee9f624016391f6a2e479` and
-this fe2o3 commit were freshly extracted from Git archives on `mi350-2` into
+the earlier fe2o3 `6964f6129c4c42d343117f61cdbcfe6166392535` were freshly
+extracted from Git archives on `mi350-2` into
 sibling `ferric/` and `fe2o3/` directories, with an empty Cargo target.
 All 387 selected worker tests passed, four were ignored, and the worker binary
 built. All 6,921 extracted files remained unchanged. Cargo metadata selected
@@ -48,15 +77,18 @@ See the [fresh-build record](../../docs/assets/finite-prefix-v228/clean-worker-b
 This is a worker source-build result, not a parent build, cold toolchain setup,
 Rust-to-HSACO reproduction, or GPU qualification of the newly built binary.
 
-To select the same source pair in a new working directory:
+To select the current integration branch and its required runtime:
 
 ```sh
 git clone --branch codex/p228-finite-runtime-integration-v1 https://github.com/harsh-nod/fe2o3.git fe2o3
-git -C fe2o3 checkout --detach 6964f6129c4c42d343117f61cdbcfe6166392535
+git -C fe2o3 checkout --detach 9a321f3f98e597a75e8ebeafdda169ec10e12e9e
 git clone --branch codex/p227-finite-prefix-integration-v1 https://github.com/harsh-nod/ferric.git ferric
-git -C ferric checkout --detach 9eca257697069f10c87ee9f624016391f6a2e479
 cd ferric
 ```
+
+The branch tip is mutable. Each qualification record identifies the exact
+source archives and overlay used for its test results; the historical build
+above does not qualify later changes.
 
 The tested worker toolchain is `nightly-2026-04-03`; the parent suite used
 Rust `1.97.1` and `RUSTC_BOOTSTRAP=fe2o3_device,fe2o3_macros`. Both used two

@@ -1,4 +1,36 @@
 use super::*;
+
+#[test]
+fn prefix_decode_device_image_binding_requires_pristine_sequence() {
+    let mut sequence = sequence::Sequence::new(&profile(Mode::TeacherForced([11, 12, 13, 14])));
+    assert!(sequence.pristine());
+    let mut backend = Mock::default();
+    sequence
+        .run(
+            &mut backend,
+            profile(Mode::TeacherForced([11, 12, 13, 14])).sha256(),
+            &input(0, 11),
+        )
+        .unwrap();
+    assert!(!sequence.pristine());
+}
+
+#[test]
+fn prefix_decode_device_image_failure_poison_prevents_any_later_backend_call() {
+    let p = profile(Mode::TeacherForced([11, 12, 13, 14]));
+    let mut sequence = sequence::Sequence::new(&p);
+    sequence.poison();
+    assert!(!sequence.pristine());
+    assert!(!sequence.exhausted());
+    let mut backend = Mock::default();
+    assert!(
+        sequence
+            .run(&mut backend, p.sha256(), &input(0, 11))
+            .is_err()
+    );
+    assert!(backend.events.is_empty());
+    assert!(backend.poisoned);
+}
 fn scope() -> Scope {
     Scope {
         bundle_id: [1; 32],

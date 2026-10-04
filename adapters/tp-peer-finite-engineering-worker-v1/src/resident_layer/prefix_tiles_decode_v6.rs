@@ -5,10 +5,14 @@ use super::{
     Access, Dispatch, Group, LayerBindings, LoadedResidentArtifacts, ResidentKind, Result,
     consumer_bytes,
 };
+use crate::native_prefix_device_recorder_v1::Recorder;
+use crate::prefix_decode_device_observation_v1::Stage;
 use crate::state_roster::prefix_tiles_decode_v6::Roster;
 use fe2o3_kfd::{
+    Gfx950EngineeringPeerKernelV1 as Kernel,
     Gfx950EngineeringPeerWaveMlpTilesDispatchV2 as MlpDispatch,
     Gfx950EngineeringPeerWaveQkvAttentionOutputTilesDispatchV6 as PrefixDispatch,
+    Gfx950EngineeringRawTimestampObservationV1 as Raw,
 };
 
 pub(crate) struct Completion {
@@ -50,11 +54,40 @@ struct Native<'a> {
     roots: &'a LayerBindings,
     layer: usize,
     timeout_ms: u32,
+    recording: Option<(&'a mut Recorder, u64, u32)>,
+}
+fn record_pair(
+    recording: &mut Option<(&mut Recorder, u64, u32)>,
+    stage: Stage,
+    layer: usize,
+    kernels: [&Kernel; 2],
+    raw: [Raw; 2],
+) -> Result<()> {
+    let (recorder, generation, position) =
+        recording.as_mut().ok_or("missing layer device recorder")?;
+    for rank in 0..2 {
+        recorder
+            .record(
+                *generation,
+                *position,
+                stage,
+                Some(layer as u32),
+                kernels[rank],
+                &raw[rank],
+            )
+            .map_err(|error| error.to_string())?;
+    }
+    Ok(())
 }
 impl Backend for Native<'_> {
     fn validate(&mut self) -> Result<()> {
         if self.layer >= 36 || !(1..=10_000).contains(&self.timeout_ms) {
             return Err("prefix decode layer/deadline".into());
+        }
+        if let Some((_, generation, position)) = self.recording.as_ref() {
+            if *position >= 4 || *generation != u64::from(*position) + 1 {
+                return Err("prefix decode raw recording generation".into());
+            }
         }
         self.roots.validate()?;
         for rank in 0..2 {
@@ -68,28 +101,35 @@ impl Backend for Native<'_> {
         Ok(())
     }
     fn prefix(&mut self) -> Result<([[u32; 284]; 2], [u64; 2])> {
+        let mut raw = None;
         let completion = (|| {
             let [left, right] = self.states.take_prefix(self.layer)?;
             // SAFETY: sealed original role order, image identity and private
             // same-owner typed284 pair; no command/reference escapes this call.
+            let commands = [
+                PrefixDispatch {
+                    kernel: &self.prefix.kernels[0],
+                    object_sha256: self.prefix.sha256,
+                    roots: self.roots.prefix[0],
+                    state: left,
+                    timeout_ms: self.timeout_ms,
+                },
+                PrefixDispatch {
+                    kernel: &self.prefix.kernels[1],
+                    object_sha256: self.prefix.sha256,
+                    roots: self.roots.prefix[1],
+                    state: right,
+                    timeout_ms: self.timeout_ms,
+                },
+            ];
             unsafe {
-                self.group
-                    .dispatch_wave_qkv_attention_output_tiles_round_v6([
-                        PrefixDispatch {
-                            kernel: &self.prefix.kernels[0],
-                            object_sha256: self.prefix.sha256,
-                            roots: self.roots.prefix[0],
-                            state: left,
-                            timeout_ms: self.timeout_ms,
-                        },
-                        PrefixDispatch {
-                            kernel: &self.prefix.kernels[1],
-                            object_sha256: self.prefix.sha256,
-                            roots: self.roots.prefix[1],
-                            state: right,
-                            timeout_ms: self.timeout_ms,
-                        },
-                    ])
+                if self.recording.is_some() {
+                    self.group.dispatch_wave_qkv_attention_output_tiles_round_with_raw_timestamps_unchecked_v1(commands)
+                        .map(|(completion, observations)| { raw = Some(observations); completion })
+                } else {
+                    self.group
+                        .dispatch_wave_qkv_attention_output_tiles_round_v6(commands)
+                }
             }
         })();
         let words = self.states.finish_prefix(
@@ -100,10 +140,21 @@ impl Backend for Native<'_> {
                 .map(|v| v.final_states)
                 .map_err(Clone::clone),
         )?;
-        Ok((words, completion?.dispatch_elapsed_ns))
+        let completion = completion?;
+        if let Some(raw) = raw {
+            record_pair(
+                &mut self.recording,
+                Stage::Prefix,
+                self.layer,
+                [&self.prefix.kernels[0], &self.prefix.kernels[1]],
+                raw,
+            )?;
+        }
+        Ok((words, completion.dispatch_elapsed_ns))
     }
     fn residual(&mut self, first: bool) -> Result<[u64; 2]> {
         self.states.begin_residual(self.layer, first)?;
+        let mut raw = None;
         let result: Result<[u64; 2]> = (|| {
             let mut commands = Vec::with_capacity(2);
             for rank in 0..2 {
@@ -135,35 +186,79 @@ impl Backend for Native<'_> {
             }
             // SAFETY: both partial producers completed before either residual
             // consumer; both consumers finish before shared scratch is reused.
-            unsafe { self.group.dispatch_round_unchecked(commands)? }
+            let elapsed = if self.recording.is_some() {
+                let observations: [Raw; 2] = unsafe {
+                    self.group
+                        .dispatch_round_with_raw_timestamps_unchecked(commands)?
+                }
+                .try_into()
+                .map_err(|_| "prefix decode raw residual pair")?;
+                let elapsed = observations
+                    .iter()
+                    .map(Raw::host_elapsed_ns)
+                    .collect::<Vec<_>>();
+                raw = Some(observations);
+                elapsed
+            } else {
+                unsafe { self.group.dispatch_round_unchecked(commands)? }
+            };
+            elapsed
                 .try_into()
                 .map_err(|_| "prefix decode residual pair".into())
         })();
         self.states
             .finish_residual(self.layer, first, result.clone().map(|_| ()))?;
-        result
+        let result = result?;
+        if let Some(raw) = raw {
+            record_pair(
+                &mut self.recording,
+                if first {
+                    Stage::PostAttentionResidual
+                } else {
+                    Stage::PostMlpResidual
+                },
+                self.layer,
+                [
+                    self.original.kernel(0, ResidentKind::Residual)?,
+                    self.original.kernel(1, ResidentKind::Residual)?,
+                ],
+                raw,
+            )?;
+        }
+        Ok(result)
     }
     fn mlp(&mut self) -> Result<([[u32; 548]; 2], [u64; 2])> {
+        let mut raw = None;
         let completion = (|| {
             let [left, right] = self.states.take_mlp(self.layer)?;
             // SAFETY: unchanged typed548 dispatch and exact original model roots.
+            let commands = [
+                MlpDispatch {
+                    kernel: &self.mlp.kernels[0],
+                    object_sha256: self.mlp.sha256,
+                    roots: self.roots.mlp[0],
+                    state: left,
+                    timeout_ms: self.timeout_ms,
+                },
+                MlpDispatch {
+                    kernel: &self.mlp.kernels[1],
+                    object_sha256: self.mlp.sha256,
+                    roots: self.roots.mlp[1],
+                    state: right,
+                    timeout_ms: self.timeout_ms,
+                },
+            ];
             unsafe {
-                self.group.dispatch_wave_mlp_tiles_round_v2([
-                    MlpDispatch {
-                        kernel: &self.mlp.kernels[0],
-                        object_sha256: self.mlp.sha256,
-                        roots: self.roots.mlp[0],
-                        state: left,
-                        timeout_ms: self.timeout_ms,
-                    },
-                    MlpDispatch {
-                        kernel: &self.mlp.kernels[1],
-                        object_sha256: self.mlp.sha256,
-                        roots: self.roots.mlp[1],
-                        state: right,
-                        timeout_ms: self.timeout_ms,
-                    },
-                ])
+                if self.recording.is_some() {
+                    self.group
+                        .dispatch_wave_mlp_tiles_round_with_raw_timestamps_unchecked_v1(commands)
+                        .map(|(completion, observations)| {
+                            raw = Some(observations);
+                            completion
+                        })
+                } else {
+                    self.group.dispatch_wave_mlp_tiles_round_v2(commands)
+                }
             }
         })();
         let words = self.states.finish_mlp(
@@ -174,7 +269,17 @@ impl Backend for Native<'_> {
                 .map(|v| v.final_states)
                 .map_err(Clone::clone),
         )?;
-        Ok((words, completion?.dispatch_elapsed_ns))
+        let completion = completion?;
+        if let Some(raw) = raw {
+            record_pair(
+                &mut self.recording,
+                Stage::Mlp,
+                self.layer,
+                [&self.mlp.kernels[0], &self.mlp.kernels[1]],
+                raw,
+            )?;
+        }
+        Ok((words, completion.dispatch_elapsed_ns))
     }
     fn poison(&mut self) {
         self.states.poison();
@@ -202,6 +307,36 @@ pub(crate) unsafe fn execute(
         roots,
         layer,
         timeout_ms,
+        recording: None,
+    })
+}
+
+/// # Safety
+/// Same exact owner/image/ABI obligations as execute, on a fresh raw-enabled
+/// group. Every packet in this forward must use raw dispatch; no fallback.
+pub(crate) unsafe fn execute_recorded(
+    group: &mut Group,
+    states: &mut Roster,
+    original: &LoadedResidentArtifacts,
+    prefix: &LoadedPrefix,
+    mlp: &LoadedKernels,
+    roots: &LayerBindings,
+    layer: usize,
+    timeout_ms: u32,
+    recorder: &mut Recorder,
+    generation: u64,
+    position: u32,
+) -> Result<Completion> {
+    coordinate(&mut Native {
+        group,
+        states,
+        original,
+        prefix,
+        mlp,
+        roots,
+        layer,
+        timeout_ms,
+        recording: Some((recorder, generation, position)),
     })
 }
 

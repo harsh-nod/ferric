@@ -1,0 +1,29 @@
+{
+  "schema": "ferric-p228-device-routing-cpu-package-v1",
+  "pure_tests": 13,
+  "test_census": {
+    "test_run.py": 13
+  },
+  "files": [
+    {
+      "path": "run.py",
+      "bytes": 19701,
+      "sha256": "d261345ab4a6e51e5b22dd3e8b789fc8e191e382a0343a3ee8330d4c37ec5c02"
+    },
+    {
+      "path": "test_run.py",
+      "bytes": 7301,
+      "sha256": "aae63421cc8ddc1947b871e690eb2db8f28fd92745254f72e0c6fcdddaa0669e"
+    },
+    {
+      "path": "README.md",
+      "bytes": 5055,
+      "sha256": "d07d8dc527d88de1cf9fbd71ce3a19138cd0b57e7e81ef08ac792422e9610bb1"
+    },
+    {
+      "path": "overlay.json",
+      "bytes": 12331,
+      "sha256": "09ee566dc30345e77dd65e41ae91c7d6a61d74ff42aa9858b21abf396e808938"
+    }
+  ]
+}

@@ -1,0 +1,35 @@
+{
+  "controller_sha256": "950c91d092b60cb36c522ac31a53d6f1f9626ec27180b0565a0786052770260b",
+  "elapsed_seconds": 0.02385803498327732,
+  "errors": 0,
+  "failures": 0,
+  "full_model_acceptance": false,
+  "gpu_execution": false,
+  "manifest_sha256": "dbe0c89910178f1c83039a320a629351428c360df21ea269e2541b4f62b29c3b",
+  "native_execution": false,
+  "numerical_acceptance": false,
+  "passed": true,
+  "performance_claim": false,
+  "production_authority": false,
+  "schema": "ferric-p228-device-routing-pure-v1",
+  "skipped": 0,
+  "source_postchecks_passed": true,
+  "source_sha256": "1774e66c693c833c5dcdea45d025bcb8c7ff356e0c7eb36649cf8b8ba92a4d9d",
+  "sources_after": {
+    "bytes": 1001,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/device-routing-pure-v228-v2/sources-after.json",
+    "sha256": "1774e66c693c833c5dcdea45d025bcb8c7ff356e0c7eb36649cf8b8ba92a4d9d"
+  },
+  "sources_before": {
+    "bytes": 1001,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/device-routing-pure-v228-v2/sources-before.json",
+    "sha256": "1774e66c693c833c5dcdea45d025bcb8c7ff356e0c7eb36649cf8b8ba92a4d9d"
+  },
+  "synthetic_policy_tests_only": true,
+  "tests": 13,
+  "transcript": {
+    "bytes": 1244,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/device-routing-pure-v228-v2/tests.log",
+    "sha256": "120a24e6db29c64fce1072e8a025bf96f3ddd43cd56557c8b309496610057ae1"
+  }
+}

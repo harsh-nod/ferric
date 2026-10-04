@@ -2,8 +2,11 @@
 use super::{Active, AllocationProfile, ForwardInput, NativeOwner, Phase, Result};
 use crate::finite_setup_wire_v1::Scope;
 use crate::forward_sequence::Backend as OriginalBackend;
+use crate::native_prefix_device_recorder_v1::Recorder;
+use crate::resident_artifacts::ResidentKind;
 use crate::resident_layer::prefix_tiles_decode_v6 as layer;
 use crate::state_roster::prefix_tiles_decode_v6::{COUNTS, Roster};
+use crate::tail_artifacts::TailKind;
 use sha2::{Digest, Sha256};
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -112,6 +115,52 @@ fn close_ready(exhausted: bool, between: bool, completed: u64) -> Result<()> {
     Ok(())
 }
 impl Owner {
+    pub(crate) fn bind_device_images(&mut self, recorder: &mut Recorder) -> Result<()> {
+        let result = (|| {
+            if self.owner.catalog.phase != Phase::LayersSealed
+                || !self.sequence.pristine()
+                || !self.states.between()
+                || self.states.completed() != 0
+            {
+                return Err("prefix device images require pristine sealed owner".into());
+            }
+            let prefix = self
+                .owner
+                .prefix_artifacts
+                .as_ref()
+                .ok_or("prefix device image missing")?;
+            let mlp = self
+                .owner
+                .tiles_artifacts
+                .as_ref()
+                .ok_or("MLP device image missing")?;
+            let original = self
+                .owner
+                .artifacts
+                .as_ref()
+                .ok_or("residual device image missing")?;
+            let tail = self
+                .owner
+                .tail_artifacts
+                .as_ref()
+                .ok_or("tail device image missing")?;
+            recorder
+                .bind_images([
+                    &prefix.kernels[0],
+                    &mlp.kernels[0],
+                    original.kernel(0, ResidentKind::Residual)?,
+                    tail.kernel(TailKind::Embedding),
+                    tail.kernel(TailKind::Copy),
+                ])
+                .map_err(|error| error.to_string())
+        })();
+        if result.is_err() {
+            self.owner.catalog.phase = Phase::Terminal;
+            self.states.poison();
+            self.sequence.poison();
+        }
+        result
+    }
     pub(crate) fn host_observation(
         &mut self,
     ) -> Result<fe2o3_kfd::Gfx950EngineeringPeerHostObservationV1> {
@@ -167,6 +216,22 @@ impl Owner {
         })
     }
     pub(crate) fn run(&mut self, profile: [u8; 32], input: &ForwardInput) -> Result<Run> {
+        self.run_with_recorder(profile, input, None)
+    }
+    pub(crate) fn run_recorded(
+        &mut self,
+        profile: [u8; 32],
+        input: &ForwardInput,
+        recorder: &mut Recorder,
+    ) -> Result<Run> {
+        self.run_with_recorder(profile, input, Some(recorder))
+    }
+    fn run_with_recorder(
+        &mut self,
+        profile: [u8; 32],
+        input: &ForwardInput,
+        recorder: Option<&mut Recorder>,
+    ) -> Result<Run> {
         let mut active = Native {
             base: Active {
                 owner: &mut self.owner,
@@ -180,6 +245,8 @@ impl Owner {
             },
             states: &mut self.states,
             generation: input.generation,
+            position: input.cache_metadata[0],
+            recorder,
         };
         let completion = self.sequence.run(&mut active, profile, input)?;
         Ok(Run {
@@ -218,6 +285,8 @@ struct Native<'a> {
     base: Active<'a>,
     states: &'a mut Roster,
     generation: u64,
+    position: u32,
+    recorder: Option<&'a mut Recorder>,
 }
 impl sequence::Backend for Native<'_> {
     fn metadata(&mut self, input: &ForwardInput) -> Result<()> {
@@ -225,7 +294,19 @@ impl sequence::Backend for Native<'_> {
             .upload_metadata_for(input, AllocationProfile::PrefixTilesDecodeV6)
     }
     fn embedding(&mut self, token: u32) -> Result<[u64; 2]> {
-        self.base.embedding(token)
+        if let Some(recorder) = self.recorder.as_deref_mut() {
+            // SAFETY: the unchanged Sequence admitted this token/position;
+            // catalog sealing, error poisoning and singleton dependencies remain.
+            unsafe {
+                self.base.owner.tail_embedding_with_recording(
+                    token,
+                    self.base.timeout_ms,
+                    Some((recorder, self.generation, self.position)),
+                )
+            }
+        } else {
+            self.base.embedding(token)
+        }
     }
     fn begin(&mut self, input: &ForwardInput) -> Result<()> {
         let owner = &mut self.base.owner;
@@ -247,31 +328,68 @@ impl sequence::Backend for Native<'_> {
         // SAFETY: the constructor sealed this distinct profile/images/typed roster;
         // sequence and roster enforce all36 layers before tail and commitment.
         let result = unsafe {
-            layer::execute(
-                &mut owner.catalog.backend,
-                self.states,
-                owner
-                    .artifacts
-                    .as_ref()
-                    .ok_or("prefix decode residual image")?,
-                owner
-                    .prefix_artifacts
-                    .as_ref()
-                    .ok_or("prefix decode284 image")?,
-                owner
-                    .tiles_artifacts
-                    .as_ref()
-                    .ok_or("prefix decode548 image")?,
-                roots,
-                index,
-                self.base.timeout_ms,
-            )
+            if let Some(recorder) = self.recorder.as_deref_mut() {
+                layer::execute_recorded(
+                    &mut owner.catalog.backend,
+                    self.states,
+                    owner
+                        .artifacts
+                        .as_ref()
+                        .ok_or("prefix decode residual image")?,
+                    owner
+                        .prefix_artifacts
+                        .as_ref()
+                        .ok_or("prefix decode284 image")?,
+                    owner
+                        .tiles_artifacts
+                        .as_ref()
+                        .ok_or("prefix decode548 image")?,
+                    roots,
+                    index,
+                    self.base.timeout_ms,
+                    recorder,
+                    self.generation,
+                    self.position,
+                )
+            } else {
+                layer::execute(
+                    &mut owner.catalog.backend,
+                    self.states,
+                    owner
+                        .artifacts
+                        .as_ref()
+                        .ok_or("prefix decode residual image")?,
+                    owner
+                        .prefix_artifacts
+                        .as_ref()
+                        .ok_or("prefix decode284 image")?,
+                    owner
+                        .tiles_artifacts
+                        .as_ref()
+                        .ok_or("prefix decode548 image")?,
+                    roots,
+                    index,
+                    self.base.timeout_ms,
+                )
+            }
         }?;
         self.base.retain_layer_hidden(index, hidden)?;
         Ok(result)
     }
     fn tail(&mut self) -> Result<(u32, [u64; 3])> {
-        self.base.tail()
+        if let Some(recorder) = self.recorder.as_deref_mut() {
+            // SAFETY: unchanged Sequence completed all36 paired layers and
+            // consumers. Reuse the ordinary finite/readback/argmax checks below.
+            let result = unsafe {
+                self.base.owner.tail_finish_with_recording(
+                    self.base.timeout_ms,
+                    Some((recorder, self.generation, self.position)),
+                )
+            }?;
+            self.base.retain_tail_result(result)
+        } else {
+            self.base.tail()
+        }
     }
     fn fence(&mut self) -> Result<()> {
         self.base
