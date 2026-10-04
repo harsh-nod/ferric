@@ -1,0 +1,47 @@
+{
+  "cleanup_signalled": false,
+  "command": {
+    "bytes": 706,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-rope-indexed-ar4-gpu-v228-v1/after-2/command.json",
+    "sha256": "6e438209610d352a6003f8cb6cf972a9851015711ab0b5ef1bfc58f80ed355d7"
+  },
+  "elapsed_seconds": 0.568851012038067,
+  "exit_code": 0,
+  "gpu_execution_requested": false,
+  "lineage": [
+    {
+      "event": "owned",
+      "identity": {
+        "pgid": 1877496,
+        "pid": 1877496,
+        "ppid": 1839557,
+        "sid": 1877496,
+        "starttime": 55562934,
+        "state": "R",
+        "uid": 9661
+      },
+      "reason": "spawned-parent"
+    }
+  ],
+  "owned_groups": [
+    1877496
+  ],
+  "owned_groups_absent": true,
+  "owned_processes_reaped": true,
+  "reason": null,
+  "started": {
+    "bytes": 282,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-rope-indexed-ar4-gpu-v228-v1/after-2/started.json",
+    "sha256": "f16fbf369f6664c35bf81a3dbd036710100b130487c8472d14aa9b26644e2bef"
+  },
+  "stderr": {
+    "bytes": 0,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-rope-indexed-ar4-gpu-v228-v1/after-2/stderr",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "stdout": {
+    "bytes": 321,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-rope-indexed-ar4-gpu-v228-v1/after-2/stdout",
+    "sha256": "fb1d52be68ef1ca207431343c2fe9d71c4b52ca5589e9a38807effa626b069e9"
+  }
+}

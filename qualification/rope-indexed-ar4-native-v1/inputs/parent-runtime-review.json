@@ -1,0 +1,59 @@
+{
+  "schema": "ferric-p227-prefix-parity-runtime-review-v1",
+  "reviewed": true,
+  "authority": "none",
+  "binary": {
+    "bytes": 13827528,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-ar4-cpu-v228-v1/target/parent/debug/ferric-qwen3-finite-projection-residual-decode-engineering",
+    "sha256": "22d2cb744117af5232e29001f49ff265c25d94f9326ee48a1eb3ddc5aeab6319"
+  },
+  "host": "smci350-rck-g03-b19-03",
+  "boot_id": "2dbbbc5a-d8b7-46ac-bd1f-236e5847e24a",
+  "readelf": {
+    "bytes": 817,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-ar4-decode-runtime-parent-v228-v1/readelf/audit.json",
+    "sha256": "23d3ccd684197aa2588b497a0f75f14967eb0cd1537dd0c524d39a185ecaec92"
+  },
+  "ldd": {
+    "bytes": 794,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-ar4-decode-runtime-parent-v228-v1/ldd/audit.json",
+    "sha256": "081e108afdc1d45d2e35bfbf399fa5f564ba9259d13c2638e0e2387be15a6a16"
+  },
+  "libraries": [
+    {
+      "path": "/lib/x86_64-linux-gnu/libgcc_s.so.1",
+      "resolved": {
+        "bytes": 183024,
+        "path": "/usr/lib/x86_64-linux-gnu/libgcc_s.so.1",
+        "sha256": "d93224d2b0dab4247598be683adca02f5cf00586f99c187579cd7e92058fb7cb"
+      }
+    },
+    {
+      "path": "/lib/x86_64-linux-gnu/libm.so.6",
+      "resolved": {
+        "bytes": 952616,
+        "path": "/usr/lib/x86_64-linux-gnu/libm.so.6",
+        "sha256": "1b87a1a50b496cfead2b0ad134c2ff536705c82608db240c7e8aa48d6c0e4217"
+      }
+    },
+    {
+      "path": "/lib/x86_64-linux-gnu/libc.so.6",
+      "resolved": {
+        "bytes": 2125328,
+        "path": "/usr/lib/x86_64-linux-gnu/libc.so.6",
+        "sha256": "d8db8739a1633c972cec6a4fe0566bdcec6fd088f98723492ab0361f66238f75"
+      }
+    },
+    {
+      "path": "/lib64/ld-linux-x86-64.so.2",
+      "resolved": {
+        "bytes": 236616,
+        "path": "/usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2",
+        "sha256": "1cd555ac46b7887edeaf3c42aac5408c8135e52f6b37870da2cf82d5fe14e829"
+      }
+    }
+  ],
+  "notes": "Root reviewed the actual CPU1037-qualified parent ELF, fresh MI350 readelf and ldd output, natural exit-zero audit outcomes, and resolved shared-library hashes. The four-library closure contains no missing dependency or RPATH/RUNPATH override. This review selects only the newly rebuilt AR4 executable at its original recorded path, not the old CPU1022 ELF or its runtime review. Current topology, library identity and owned-lifecycle checks remain required; this is an engineering attempt, not discharge of runtime premises.",
+  "production_authority": false,
+  "gpu_execution": false
+}

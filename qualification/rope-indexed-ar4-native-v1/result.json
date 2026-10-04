@@ -1,0 +1,2040 @@
+{
+  "all_transitive_inputs_replayed": false,
+  "authority": "none",
+  "baseline_provenance": {
+    "bytes": 1024009,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-silu-materialized-capture-gpu-v228-v1/complete.json",
+    "sha256": "67a235280b48cb5f6a2c51bcca534c182c843857c4c4a98e86718ed368ef12e4"
+  },
+  "binary_captures_in_git": false,
+  "calibrated_nanoseconds": false,
+  "captured_payloads": 4,
+  "captured_tensor_rows": 152,
+  "case_bytes": 4664385,
+  "case_file_count": 57,
+  "completed_forwards": 4,
+  "conditional_residual_checks_performed": false,
+  "cpu": {
+    "bytes": 583779,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-ar4-cpu-v228-v1/complete.json",
+    "sha256": "7a3c170ca6ffe6000517588280fcdb99cb58c0cbb22cc3f4be910232f7d51c54"
+  },
+  "cpu_publication": {
+    "bytes": 35798,
+    "path": "/home/harsh/ferric-p227-integration/qualification/projection-ar4-cpu-v1/result.json",
+    "sha256": "18cc0400b55750eb76951cdbb4f4f7dbeecd18588ea9e1c28934bebe843e2d5b"
+  },
+  "cross_device_clock_alignment": false,
+  "decode_review": {
+    "bytes": 80124,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-rope-indexed-ar4-inputs-v228-v1/decode-review.json",
+    "sha256": "59dc8160b44a516b5171b5de6d3147179151a4b28a9f81c888d068758268bbd5"
+  },
+  "dynamic_library_bodies_locally_rehashed": false,
+  "emission_reexecuted": false,
+  "executable_or_weight_bodies_in_git": false,
+  "frozen_controller_reexecuted": false,
+  "full_forward_acceptance": false,
+  "full_model_acceptance": false,
+  "full_model_correctness": false,
+  "generated_files": {
+    "trajectory.md": {
+      "bytes": 230,
+      "sha256": "b5a914871adb917dd3eefcc33787750a9203a2efeaac5407064e69619662bfdf"
+    }
+  },
+  "gpu_observation": {
+    "bytes": 1128265,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-rope-indexed-ar4-gpu-v228-v1/complete.json",
+    "sha256": "30119e94b7ef116a8845b2b8819122f039dd1a7688b28b9e7494de3f7d408749"
+  },
+  "gpu_time": false,
+  "host_elapsed_seconds": {
+    "owned_parent": 383.21280983893666,
+    "scope": "recorded host wall-clock elapsed seconds, including control and setup; not device time",
+    "supervisor": 391.57128408004064
+  },
+  "image_provenance": {
+    "inspection_complete": {
+      "bytes": 16379,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-residual-inspection-v228-v2/complete.json",
+      "sha256": "dbeb034c2f7520966e365ef5cb97751a075f70eb83cbcdfb272b82063db25df9"
+    },
+    "lowering_complete": {
+      "bytes": 8652,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-residual-lowering-v228-v1/complete.json",
+      "sha256": "4f46acb4eaaadefc2c1426146424bda91a7e455ab3b57b23c935401e9c4d79bb"
+    },
+    "mlp_cpu": {
+      "bytes": 84947,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/silu-materialized-cpu-v228-v1/complete.json",
+      "sha256": "e139729d8fa95715ef8017679ee21f1175ba302b681785789e3dc84137508a30"
+    },
+    "mlp_image": {
+      "bytes": 33320,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-silu-materialized-checked-probe-v228-v1/emitted/artifact.hsaco",
+      "sha256": "b0d1766fdb0fda17ab09496d1120ba3cee29100692b48fcc5b05cf0db0a8d589"
+    },
+    "mlp_lowering_complete": {
+      "bytes": 25125,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-silu-materialized-checked-probe-v228-v1/complete.json",
+      "sha256": "fd7d4c792dc7ddaa831b3372549fe3896a18e8c94b96598b553df94156d949b4"
+    },
+    "mlp_lowering_owner": {
+      "bytes": 21726,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/silu-materialized-checked-probe-owner-v228-v1/complete.json",
+      "sha256": "3ee5600755d5b77846d16429d58e2395df0616c86fbe705ea24af07fd9f9e464"
+    },
+    "prefix_cpu": {
+      "bytes": 68573,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rope-materialized-cpu-v228-v3/complete.json",
+      "sha256": "8dcb4f2b326ab909c52039273515f44eb4f88cd91a967c8816f866d5514c864a"
+    },
+    "prefix_emission_complete": {
+      "bytes": 197494,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rope-indexed-checked-emission-v228-v1/complete.json",
+      "sha256": "d45dd1a2ed5b88e767b14bbb8c7d2728211bb49aeaa14b1f8b4cc5a5b4f80c49"
+    },
+    "prefix_emission_owner": {
+      "bytes": 31010,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rope-indexed-checked-emission-owner-v228-v1/complete.json",
+      "sha256": "d9e4794a60a7d48daa953701ae764e51e99b70270310537c9f93d21afb8aa991"
+    },
+    "prefix_image": {
+      "bytes": 54344,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rope-indexed-checked-emission-v228-v1/emitted/artifact.hsaco",
+      "sha256": "29fd58e7b09fee003ed31660e6201c20a7eb5da4b873d0b4d954993f7018f2f8"
+    },
+    "projection_image": {
+      "bytes": 10864,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-residual-lowering-v228-v1/fe2o3-engineering-v1/3c3aec3598514f7f6c2b053ff0c6a8d489951ecb6cb8d95b1cae5ca31035b899/observation.hsaco",
+      "sha256": "25338beac39121cf81adfdc5c82c6f39bcfc82c0f7effaa2166bf8a2a9598a25"
+    }
+  },
+  "independent_framework_comparison_performed": false,
+  "independent_numerical_acceptance": false,
+  "independent_tensor_acceptance": false,
+  "linked_compiler_source_and_tool_bodies_replayed": false,
+  "linked_emission_publication": {
+    "bytes": 263318,
+    "path": "/home/harsh/ferric-p227-integration/qualification/rope-indexed-checked-emission-v1/result.json",
+    "sha256": "551622fde0afd6765fb8ce7abeb346f0717471658f37d53d7b16a6b133f8c0f7"
+  },
+  "locally_rehashed": [
+    {
+      "bytes": 24877,
+      "path": "/home/harsh/ferric-p227-integration/qualification/layer0-native-capture-v1/tools/publish.py",
+      "sha256": "3181b2f41a51ee94c331b137f2807580c326f7f6dc53c429163d8465309e2cb8"
+    },
+    {
+      "bytes": 583779,
+      "path": "/home/harsh/ferric-p227-integration/qualification/projection-ar4-cpu-v1/complete.json",
+      "sha256": "7a3c170ca6ffe6000517588280fcdb99cb58c0cbb22cc3f4be910232f7d51c54"
+    },
+    {
+      "bytes": 35798,
+      "path": "/home/harsh/ferric-p227-integration/qualification/projection-ar4-cpu-v1/result.json",
+      "sha256": "18cc0400b55750eb76951cdbb4f4f7dbeecd18588ea9e1c28934bebe843e2d5b"
+    },
+    {
+      "bytes": 2704,
+      "path": "/home/harsh/ferric-p227-integration/qualification/projection-ar4-native-v1/inputs/parent-runtime-review.json",
+      "sha256": "4852cfb308cfbdb61057fd2d14753da86c9394b33bd3e13ca5008dd231f7e9af"
+    },
+    {
+      "bytes": 2434,
+      "path": "/home/harsh/ferric-p227-integration/qualification/projection-ar4-native-v1/inputs/worker-runtime-review.json",
+      "sha256": "63617ca7d8f9856e0fb0c05d7e0a1969d9e645f14fd1172adab3359c2f21b371"
+    },
+    {
+      "bytes": 105036,
+      "path": "/home/harsh/ferric-p227-integration/qualification/projection-ar4-native-v1/result.json",
+      "sha256": "010c82b5b47023a2f0a75a01eb857f11d35962282a6410e2ca8b9e126eb0bdc8"
+    },
+    {
+      "bytes": 17304,
+      "path": "/home/harsh/ferric-p227-integration/qualification/rope-indexed-ar4-supervisor-v1/pure/complete.json",
+      "sha256": "b7d70da8b86ec12f48c2f791516f35ecc0bde7da13efb670a53279bb175e3025"
+    },
+    {
+      "bytes": 20459,
+      "path": "/home/harsh/ferric-p227-integration/qualification/rope-indexed-ar4-supervisor-v1/result.json",
+      "sha256": "f596362f38f73f280b5d8cb03ec3deac00cd02a26cde9168cd426c6439a89d46"
+    },
+    {
+      "bytes": 6120,
+      "path": "/home/harsh/ferric-p227-integration/qualification/rope-indexed-ar4-supervisor-v1/source/INTAKE.md",
+      "sha256": "1b19c1d73ad32cb769ae6df5bd6b3eaf03fec5eccac7704cf5e5e36f61b68c98"
+    },
+    {
+      "bytes": 4220,
+      "path": "/home/harsh/ferric-p227-integration/qualification/rope-indexed-ar4-supervisor-v1/source/README.md",
+      "sha256": "2fa357edb430fe4b60f5a3e252b76e9a9e2c9ed02d4750437ce44896a8f4bb23"
+    },
+    {
+      "bytes": 20422,
+      "path": "/home/harsh/ferric-p227-integration/qualification/rope-indexed-ar4-supervisor-v1/source/decode_validation.py",
+      "sha256": "0eb96d4ac5e10e7f6ac10b018692c56f969286949681be336cb6040d56f01422"
+    },
+    {
+      "bytes": 73834,
+      "path": "/home/harsh/ferric-p227-integration/qualification/rope-indexed-ar4-supervisor-v1/source/intake.py",
+      "sha256": "78dbad741f9a51282e4d121e6f8842def0096f86c741f009697730c98d00a2f5"
+    },
+    {
+      "bytes": 16186,
+      "path": "/home/harsh/ferric-p227-integration/qualification/rope-indexed-ar4-supervisor-v1/source/layer_validation.py",
+      "sha256": "757c077979b7ee02d4c0e7d222e75292cd9d417927f84ae9a8134344f8e217b9"
+    },
+    {
+      "bytes": 2918,
+      "path": "/home/harsh/ferric-p227-integration/qualification/rope-indexed-ar4-supervisor-v1/source/manifest.json",
+      "sha256": "aa1e8cd787581c6b218e2eaaf358a8b468dc3fe75ff5eb85f183bb6ada8ceddd"
+    },
+    {
+      "bytes": 13306,
+      "path": "/home/harsh/ferric-p227-integration/qualification/rope-indexed-ar4-supervisor-v1/source/prefix_contracts.py",
+      "sha256": "694be9d199cd92b2d11ff4fe8401ad3728497bd8846b5d6924311330f3d9de1a"
+    },
+    {
+      "bytes": 15318,
+      "path": "/home/harsh/ferric-p227-integration/qualification/rope-indexed-ar4-supervisor-v1/source/run.py",
+      "sha256": "6e1a70ad537aa20b38907fcc4d189be605865d088fcbc034ea7ec76ed5aa575d"
+    },
+    {
+      "bytes": 8253,
+      "path": "/home/harsh/ferric-p227-integration/qualification/rope-indexed-ar4-supervisor-v1/source/run_rope_indexed_ar4_gpu_pure_p228_v1.py",
+      "sha256": "94aba8983616cdd4f8118984cee458f42de6106f2a12cf3ad2736774038c1bae"
+    },
+    {
+      "bytes": 12424,
+      "path": "/home/harsh/ferric-p227-integration/qualification/rope-indexed-ar4-supervisor-v1/source/run_row_facts_v2.py",
+      "sha256": "244c12f62c8a439aa01b44380fc464008b94006bc919201c8d510c64177fc820"
+    },
+    {
+      "bytes": 14980,
+      "path": "/home/harsh/ferric-p227-integration/qualification/rope-indexed-ar4-supervisor-v1/source/smoke_validation.py",
+      "sha256": "9bf460451e722452da9c49168c730615d32e9b73b200c579f003e9e45238ea26"
+    },
+    {
+      "bytes": 12074,
+      "path": "/home/harsh/ferric-p227-integration/qualification/rope-indexed-ar4-supervisor-v1/source/stage_core.py",
+      "sha256": "7e3d64e80e66bacbbba05ac3236189249949bb95ea3f717150822cf45740eec2"
+    },
+    {
+      "bytes": 18459,
+      "path": "/home/harsh/ferric-p227-integration/qualification/rope-indexed-ar4-supervisor-v1/source/test_decode_validation.py",
+      "sha256": "f36d5a8cc321cb3df26049a5941ffd52e0ebe401213cce9e03cc7fd987c3c253"
+    },
+    {
+      "bytes": 16426,
+      "path": "/home/harsh/ferric-p227-integration/qualification/rope-indexed-ar4-supervisor-v1/source/test_intake.py",
+      "sha256": "13b0d95c3a918ba481bdb70863c22b3242d04624f1efc9d44e5be8cd3d8fe85d"
+    },
+    {
+      "bytes": 12334,
+      "path": "/home/harsh/ferric-p227-integration/qualification/rope-indexed-ar4-supervisor-v1/source/test_linked_admission.py",
+      "sha256": "c6ab306043e6a333d807f8aced9994381be5a823790f367968e494a12866d98f"
+    },
+    {
+      "bytes": 14278,
+      "path": "/home/harsh/ferric-p227-integration/qualification/rope-indexed-ar4-supervisor-v1/source/test_rope_admission.py",
+      "sha256": "0abb9c4a03eec3f637d7a86e77bf16d6872bc86f00e80e135f0be4f75cf1c363"
+    },
+    {
+      "bytes": 13739,
+      "path": "/home/harsh/ferric-p227-integration/qualification/rope-indexed-ar4-supervisor-v1/source/test_run.py",
+      "sha256": "300b004b12212a42b9477d598d48a3578d08a7162d73644e1ccb455c32ef7f40"
+    },
+    {
+      "bytes": 7907,
+      "path": "/home/harsh/ferric-p227-integration/qualification/rope-indexed-ar4-supervisor-v1/source/test_silu_admission.py",
+      "sha256": "224e3d83ab56d62c0fc69b6e0d07e2baaa5423596d6013604a8dd64c499f72be"
+    },
+    {
+      "bytes": 197494,
+      "path": "/home/harsh/ferric-p227-integration/qualification/rope-indexed-checked-emission-v1/complete.json",
+      "sha256": "d45dd1a2ed5b88e767b14bbb8c7d2728211bb49aeaa14b1f8b4cc5a5b4f80c49"
+    },
+    {
+      "bytes": 263318,
+      "path": "/home/harsh/ferric-p227-integration/qualification/rope-indexed-checked-emission-v1/result.json",
+      "sha256": "551622fde0afd6765fb8ce7abeb346f0717471658f37d53d7b16a6b133f8c0f7"
+    },
+    {
+      "bytes": 2704,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-projection-ar4-decode-inputs-v228-v1/parent-runtime-review.json",
+      "sha256": "4852cfb308cfbdb61057fd2d14753da86c9394b33bd3e13ca5008dd231f7e9af"
+    },
+    {
+      "bytes": 2434,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-projection-ar4-decode-inputs-v228-v1/worker-runtime-review.json",
+      "sha256": "63617ca7d8f9856e0fb0c05d7e0a1969d9e645f14fd1172adab3359c2f21b371"
+    },
+    {
+      "bytes": 706,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-rope-indexed-ar4-gpu-v228-v1/after-0/command.json",
+      "sha256": "6e438209610d352a6003f8cb6cf972a9851015711ab0b5ef1bfc58f80ed355d7"
+    },
+    {
+      "bytes": 1580,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-rope-indexed-ar4-gpu-v228-v1/after-0/result.json",
+      "sha256": "d038c1eeae98a8c722e928042e10dcdf86fe52720823a4aacfdb334987e0bf2b"
+    },
+    {
+      "bytes": 282,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-rope-indexed-ar4-gpu-v228-v1/after-0/started.json",
+      "sha256": "fb060ab210c560a048474df6b74cd81b830fca35761452b176e2a80c64c5ca62"
+    },
+    {
+      "bytes": 0,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-rope-indexed-ar4-gpu-v228-v1/after-0/stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 321,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-rope-indexed-ar4-gpu-v228-v1/after-0/stdout",
+      "sha256": "fb1d52be68ef1ca207431343c2fe9d71c4b52ca5589e9a38807effa626b069e9"
+    },
+    {
+      "bytes": 4180,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-rope-indexed-ar4-gpu-v228-v1/after-0-topology.json",
+      "sha256": "faeb1bb32c639742906c854142e0b023eb22bb5a8c444b1427bc164566b2d717"
+    },
+    {
+      "bytes": 706,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-rope-indexed-ar4-gpu-v228-v1/after-1/command.json",
+      "sha256": "6e438209610d352a6003f8cb6cf972a9851015711ab0b5ef1bfc58f80ed355d7"
+    },
+    {
+      "bytes": 1581,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-rope-indexed-ar4-gpu-v228-v1/after-1/result.json",
+      "sha256": "09b2e5a6596b05f38ff664d1539d079e41ba6ce3b20c0fcc2c661d89537df8d1"
+    },
+    {
+      "bytes": 282,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-rope-indexed-ar4-gpu-v228-v1/after-1/started.json",
+      "sha256": "f55571c65219c4f8b368d297678f8cfc896fea88b401cab78a92b0138a028f03"
+    },
+    {
+      "bytes": 0,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-rope-indexed-ar4-gpu-v228-v1/after-1/stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 321,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-rope-indexed-ar4-gpu-v228-v1/after-1/stdout",
+      "sha256": "fb1d52be68ef1ca207431343c2fe9d71c4b52ca5589e9a38807effa626b069e9"
+    },
+    {
+      "bytes": 4180,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-rope-indexed-ar4-gpu-v228-v1/after-1-topology.json",
+      "sha256": "2a3493fa18a888bd72e2316ffa21ec28ec39be0bbfc42266c303892b37437fee"
+    },
+    {
+      "bytes": 706,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-rope-indexed-ar4-gpu-v228-v1/after-2/command.json",
+      "sha256": "6e438209610d352a6003f8cb6cf972a9851015711ab0b5ef1bfc58f80ed355d7"
+    },
+    {
+      "bytes": 1580,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-rope-indexed-ar4-gpu-v228-v1/after-2/result.json",
+      "sha256": "85eeac3b3cf096cb8fbd4efb1d456a9ae323aa67ed734ca1fce96ea6105ceec3"
+    },
+    {
+      "bytes": 282,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-rope-indexed-ar4-gpu-v228-v1/after-2/started.json",
+      "sha256": "f16fbf369f6664c35bf81a3dbd036710100b130487c8472d14aa9b26644e2bef"
+    },
+    {
+      "bytes": 0,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-rope-indexed-ar4-gpu-v228-v1/after-2/stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 321,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-rope-indexed-ar4-gpu-v228-v1/after-2/stdout",
+      "sha256": "fb1d52be68ef1ca207431343c2fe9d71c4b52ca5589e9a38807effa626b069e9"
+    },
+    {
+      "bytes": 4180,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-rope-indexed-ar4-gpu-v228-v1/after-2-topology.json",
+      "sha256": "1994f71a7e45d5aea7588f931abc2ee1f1a05171302c12504f437630969ea6bd"
+    },
+    {
+      "bytes": 706,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-rope-indexed-ar4-gpu-v228-v1/before-0/command.json",
+      "sha256": "6e438209610d352a6003f8cb6cf972a9851015711ab0b5ef1bfc58f80ed355d7"
+    },
+    {
+      "bytes": 1585,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-rope-indexed-ar4-gpu-v228-v1/before-0/result.json",
+      "sha256": "7d7760e092d29bd76da1fb6b1beda80d26eab75fd92389baee29b677de9ed083"
+    },
+    {
+      "bytes": 282,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-rope-indexed-ar4-gpu-v228-v1/before-0/started.json",
+      "sha256": "6effe77dda6e544fa93076e13adfc277860b225f7d4711fe0211c195dc4dfe5a"
+    },
+    {
+      "bytes": 0,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-rope-indexed-ar4-gpu-v228-v1/before-0/stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 321,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-rope-indexed-ar4-gpu-v228-v1/before-0/stdout",
+      "sha256": "fb1d52be68ef1ca207431343c2fe9d71c4b52ca5589e9a38807effa626b069e9"
+    },
+    {
+      "bytes": 4180,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-rope-indexed-ar4-gpu-v228-v1/before-0-topology.json",
+      "sha256": "1669a3cfbc386f8d3290e325928c6c3cfaca0b8858eba016343a85cfef27d211"
+    },
+    {
+      "bytes": 706,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-rope-indexed-ar4-gpu-v228-v1/before-1/command.json",
+      "sha256": "6e438209610d352a6003f8cb6cf972a9851015711ab0b5ef1bfc58f80ed355d7"
+    },
+    {
+      "bytes": 1585,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-rope-indexed-ar4-gpu-v228-v1/before-1/result.json",
+      "sha256": "78db9d4f7b45abfa4dd8413265eb8205159a54923f373e789c552c3e3a7fd783"
+    },
+    {
+      "bytes": 282,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-rope-indexed-ar4-gpu-v228-v1/before-1/started.json",
+      "sha256": "8b14f52674446d92d71294f69329648fa48e700e6754ad9734ad4db4481ad50c"
+    },
+    {
+      "bytes": 0,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-rope-indexed-ar4-gpu-v228-v1/before-1/stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 321,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-rope-indexed-ar4-gpu-v228-v1/before-1/stdout",
+      "sha256": "fb1d52be68ef1ca207431343c2fe9d71c4b52ca5589e9a38807effa626b069e9"
+    },
+    {
+      "bytes": 4180,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-rope-indexed-ar4-gpu-v228-v1/before-1-topology.json",
+      "sha256": "47148f1437fa3888f54060c10af17ee748390517e2fcf15579983e762573259b"
+    },
+    {
+      "bytes": 706,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-rope-indexed-ar4-gpu-v228-v1/before-2/command.json",
+      "sha256": "6e438209610d352a6003f8cb6cf972a9851015711ab0b5ef1bfc58f80ed355d7"
+    },
+    {
+      "bytes": 1585,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-rope-indexed-ar4-gpu-v228-v1/before-2/result.json",
+      "sha256": "14dd6dd03956927b3e78d93232b662b50fa7f670a69f1c53c39d883cc9a44125"
+    },
+    {
+      "bytes": 282,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-rope-indexed-ar4-gpu-v228-v1/before-2/started.json",
+      "sha256": "f6343bdff0a24d151b8af7b46b682b89d48fbc4f08568dc7270cc9852ac10bd9"
+    },
+    {
+      "bytes": 0,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-rope-indexed-ar4-gpu-v228-v1/before-2/stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 321,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-rope-indexed-ar4-gpu-v228-v1/before-2/stdout",
+      "sha256": "fb1d52be68ef1ca207431343c2fe9d71c4b52ca5589e9a38807effa626b069e9"
+    },
+    {
+      "bytes": 4180,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-rope-indexed-ar4-gpu-v228-v1/before-2-topology.json",
+      "sha256": "064ac3b622a1ba1e7a6c5706aede62d23f30c0bc45327a25dea6e41a04eaf787"
+    },
+    {
+      "bytes": 1128265,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-rope-indexed-ar4-gpu-v228-v1/complete.json",
+      "sha256": "30119e94b7ef116a8845b2b8819122f039dd1a7688b28b9e7494de3f7d408749"
+    },
+    {
+      "bytes": 0,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-rope-indexed-ar4-gpu-v228-v1/native/child-stderr.bin",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 39960,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-rope-indexed-ar4-gpu-v228-v1/native/complete.json",
+      "sha256": "8cbed2aa579ef80f6fb7033d0755e79f618d4f5829a757901eda430e1395da65"
+    },
+    {
+      "bytes": 241960,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-rope-indexed-ar4-gpu-v228-v1/native/control-0.bin",
+      "sha256": "519e920ce2a6e14ce1c94e5ed188de5962f8d691b4eb23df3c8b33c56c2fa956"
+    },
+    {
+      "bytes": 241960,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-rope-indexed-ar4-gpu-v228-v1/native/control-1.bin",
+      "sha256": "36725ea67bd6a276954beb67a748795f3a37914c167a6a200ae82bdde2deef90"
+    },
+    {
+      "bytes": 241960,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-rope-indexed-ar4-gpu-v228-v1/native/control-2.bin",
+      "sha256": "330c9e0b5ac89c165c4482a841bf2783dc65a1ca7a02a282e79c6ec3340b2198"
+    },
+    {
+      "bytes": 241960,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-rope-indexed-ar4-gpu-v228-v1/native/control-3.bin",
+      "sha256": "817ebc858d30e61435d1c1ec227e52c951d75dae63b7da092a465d63e7e33ae6"
+    },
+    {
+      "bytes": 606976,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-rope-indexed-ar4-gpu-v228-v1/native/observation-0.bin",
+      "sha256": "1324a6056ea6c0308e912c63ed1b6a6d27e103c915c6dde11ff600d97cf9b1b0"
+    },
+    {
+      "bytes": 606976,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-rope-indexed-ar4-gpu-v228-v1/native/observation-1.bin",
+      "sha256": "61f56a5b97e4f35922bf7733a74b36b8dec9544a15d66980757bf9ef5aefc6e4"
+    },
+    {
+      "bytes": 606976,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-rope-indexed-ar4-gpu-v228-v1/native/observation-2.bin",
+      "sha256": "87d3799724693386909e97fd3ea31fab065de021824dea276218614f2a0fc85a"
+    },
+    {
+      "bytes": 606976,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-rope-indexed-ar4-gpu-v228-v1/native/observation-3.bin",
+      "sha256": "7c40126b76a7eeb7a64ef67950636359ba951cafcdce2ddc42636388de3c5588"
+    },
+    {
+      "bytes": 1864,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-rope-indexed-ar4-gpu-v228-v1/native/request-0.json",
+      "sha256": "8903acef13bad856102d004cec81dbfa38d2b894d6d4885d5136202ad0b624be"
+    },
+    {
+      "bytes": 2399,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-rope-indexed-ar4-gpu-v228-v1/native/request-1.json",
+      "sha256": "e17e9e0b954dcdb7af89c4293585bebd63300c9c9c0aeb1a013bfefb6debd370"
+    },
+    {
+      "bytes": 2403,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-rope-indexed-ar4-gpu-v228-v1/native/request-2.json",
+      "sha256": "48654cb6c57f0ae560925b471b12249f560ae572e3a3a7275733f970777fd8c6"
+    },
+    {
+      "bytes": 2404,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-rope-indexed-ar4-gpu-v228-v1/native/request-3.json",
+      "sha256": "7b353d7e62fd8bf7790d8fbd081b50c3fff07d98512355b80618b35e27c67541"
+    },
+    {
+      "bytes": 5400,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-rope-indexed-ar4-gpu-v228-v1/observation.json",
+      "sha256": "0d1ae2972aea483a3fd3e02e531ab94a71b436d7b95fa2e1aa0c5223aa6dc883"
+    },
+    {
+      "bytes": 1021,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-rope-indexed-ar4-gpu-v228-v1/parent/command.json",
+      "sha256": "1dcf9ca7635c55325002604031d2c23bbdff816baa70fe9eea46cdbca5b6d68d"
+    },
+    {
+      "bytes": 1858,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-rope-indexed-ar4-gpu-v228-v1/parent/result.json",
+      "sha256": "46fbcd83455db69e4fd576878a6e42e36f822b6326627ac0a3f2aae16a012bd0"
+    },
+    {
+      "bytes": 282,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-rope-indexed-ar4-gpu-v228-v1/parent/started.json",
+      "sha256": "41dfc58aa0ab926aef11b47b0d3049712ab27f441f4b19f009ac2597dc9c4d6f"
+    },
+    {
+      "bytes": 395,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-rope-indexed-ar4-gpu-v228-v1/parent/stderr",
+      "sha256": "37e289d581b8c513bfc0e4e96676abf74f6d62c71c2e705c3f50b5a65e0652d5"
+    },
+    {
+      "bytes": 39960,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-rope-indexed-ar4-gpu-v228-v1/parent/stdout",
+      "sha256": "8cbed2aa579ef80f6fb7033d0755e79f618d4f5829a757901eda430e1395da65"
+    },
+    {
+      "bytes": 80124,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-rope-indexed-ar4-inputs-v228-v1/decode-review.json",
+      "sha256": "59dc8160b44a516b5171b5de6d3147179151a4b28a9f81c888d068758268bbd5"
+    },
+    {
+      "bytes": 6553,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-rope-indexed-ar4-inputs-v228-v1/plan.json",
+      "sha256": "4e9b2e9ce3f1d43c8e242d75508f42def544b675a54ba09e80d25ae67ccd285c"
+    },
+    {
+      "bytes": 8780,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-rope-indexed-ar4-inputs-v228-v1/request.json",
+      "sha256": "504360572346a4ea8a859324f1dd40303b0c73c69ba67b93efe719912ece1fb4"
+    },
+    {
+      "bytes": 4180,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-silu-materialized-capture-gpu-v228-v1/before-0-topology.json",
+      "sha256": "4f0e4ca5da5b9cbc2b63883169c7e60836293b624e64e4c3311a3faa0306c9dc"
+    },
+    {
+      "bytes": 1024009,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-silu-materialized-capture-gpu-v228-v1/complete.json",
+      "sha256": "67a235280b48cb5f6a2c51bcca534c182c843857c4c4a98e86718ed368ef12e4"
+    },
+    {
+      "bytes": 8801,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-silu-materialized-capture-inputs-v228-v1/request.json",
+      "sha256": "9146f346188a339b61fdd5ad7cb0929727512eb79def4a829588da4bcb57cae0"
+    },
+    {
+      "bytes": 18465,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/p228-projection-residual-decode-native-publication-v1/publish.py",
+      "sha256": "cb4974eb7fda4281df656106aba83f7ff1c44a2b66dfe3f56e7b9a6ad6a961ca"
+    },
+    {
+      "bytes": 6120,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/p228-rope-indexed-ar4-gpu-v1/INTAKE.md",
+      "sha256": "1b19c1d73ad32cb769ae6df5bd6b3eaf03fec5eccac7704cf5e5e36f61b68c98"
+    },
+    {
+      "bytes": 4220,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/p228-rope-indexed-ar4-gpu-v1/README.md",
+      "sha256": "2fa357edb430fe4b60f5a3e252b76e9a9e2c9ed02d4750437ce44896a8f4bb23"
+    },
+    {
+      "bytes": 20422,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/p228-rope-indexed-ar4-gpu-v1/decode_validation.py",
+      "sha256": "0eb96d4ac5e10e7f6ac10b018692c56f969286949681be336cb6040d56f01422"
+    },
+    {
+      "bytes": 73834,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/p228-rope-indexed-ar4-gpu-v1/intake.py",
+      "sha256": "78dbad741f9a51282e4d121e6f8842def0096f86c741f009697730c98d00a2f5"
+    },
+    {
+      "bytes": 16186,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/p228-rope-indexed-ar4-gpu-v1/layer_validation.py",
+      "sha256": "757c077979b7ee02d4c0e7d222e75292cd9d417927f84ae9a8134344f8e217b9"
+    },
+    {
+      "bytes": 2918,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/p228-rope-indexed-ar4-gpu-v1/manifest.json",
+      "sha256": "aa1e8cd787581c6b218e2eaaf358a8b468dc3fe75ff5eb85f183bb6ada8ceddd"
+    },
+    {
+      "bytes": 13306,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/p228-rope-indexed-ar4-gpu-v1/prefix_contracts.py",
+      "sha256": "694be9d199cd92b2d11ff4fe8401ad3728497bd8846b5d6924311330f3d9de1a"
+    },
+    {
+      "bytes": 15318,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/p228-rope-indexed-ar4-gpu-v1/run.py",
+      "sha256": "6e1a70ad537aa20b38907fcc4d189be605865d088fcbc034ea7ec76ed5aa575d"
+    },
+    {
+      "bytes": 8253,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/p228-rope-indexed-ar4-gpu-v1/run_rope_indexed_ar4_gpu_pure_p228_v1.py",
+      "sha256": "94aba8983616cdd4f8118984cee458f42de6106f2a12cf3ad2736774038c1bae"
+    },
+    {
+      "bytes": 12424,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/p228-rope-indexed-ar4-gpu-v1/run_row_facts_v2.py",
+      "sha256": "244c12f62c8a439aa01b44380fc464008b94006bc919201c8d510c64177fc820"
+    },
+    {
+      "bytes": 14980,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/p228-rope-indexed-ar4-gpu-v1/smoke_validation.py",
+      "sha256": "9bf460451e722452da9c49168c730615d32e9b73b200c579f003e9e45238ea26"
+    },
+    {
+      "bytes": 12074,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/p228-rope-indexed-ar4-gpu-v1/stage_core.py",
+      "sha256": "7e3d64e80e66bacbbba05ac3236189249949bb95ea3f717150822cf45740eec2"
+    },
+    {
+      "bytes": 18459,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/p228-rope-indexed-ar4-gpu-v1/test_decode_validation.py",
+      "sha256": "f36d5a8cc321cb3df26049a5941ffd52e0ebe401213cce9e03cc7fd987c3c253"
+    },
+    {
+      "bytes": 16426,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/p228-rope-indexed-ar4-gpu-v1/test_intake.py",
+      "sha256": "13b0d95c3a918ba481bdb70863c22b3242d04624f1efc9d44e5be8cd3d8fe85d"
+    },
+    {
+      "bytes": 12334,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/p228-rope-indexed-ar4-gpu-v1/test_linked_admission.py",
+      "sha256": "c6ab306043e6a333d807f8aced9994381be5a823790f367968e494a12866d98f"
+    },
+    {
+      "bytes": 14278,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/p228-rope-indexed-ar4-gpu-v1/test_rope_admission.py",
+      "sha256": "0abb9c4a03eec3f637d7a86e77bf16d6872bc86f00e80e135f0be4f75cf1c363"
+    },
+    {
+      "bytes": 13739,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/p228-rope-indexed-ar4-gpu-v1/test_run.py",
+      "sha256": "300b004b12212a42b9477d598d48a3578d08a7162d73644e1ccb455c32ef7f40"
+    },
+    {
+      "bytes": 7907,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/p228-rope-indexed-ar4-gpu-v1/test_silu_admission.py",
+      "sha256": "224e3d83ab56d62c0fc69b6e0d07e2baaa5423596d6013604a8dd64c499f72be"
+    },
+    {
+      "bytes": 8190,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/p228-rope-indexed-ar4-native-publication-v1/export.py",
+      "sha256": "785eb104ead075b039d780f13e45e100ae7a42a0442620e582f0699ea84583b0"
+    },
+    {
+      "bytes": 22104,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/p228-rope-indexed-ar4-native-publication-v1/publish.py",
+      "sha256": "569968bda3cf0555a73485a983105d42e0e612bd262697258baa6d5114834619"
+    },
+    {
+      "bytes": 17304,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/rope-indexed-ar4-gpu-pure-v228-v1/complete.json",
+      "sha256": "b7d70da8b86ec12f48c2f791516f35ecc0bde7da13efb670a53279bb175e3025"
+    },
+    {
+      "bytes": 4560,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/rope-indexed-ar4-gpu-pure-v228-v1/sources-after.json",
+      "sha256": "7cf15d80b1533dd83cd0217ca84315d6e4664753876fddae9961b71815552c6a"
+    },
+    {
+      "bytes": 4560,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/rope-indexed-ar4-gpu-pure-v228-v1/sources-before.json",
+      "sha256": "7cf15d80b1533dd83cd0217ca84315d6e4664753876fddae9961b71815552c6a"
+    },
+    {
+      "bytes": 12266,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/rope-indexed-ar4-gpu-pure-v228-v1/tests.log",
+      "sha256": "06cc9f7e98558c9983423adc07f54d36bf95cb2087792081e4f578ae26d5f42c"
+    },
+    {
+      "bytes": 68573,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/rope-materialized-cpu-v228-v3/complete.json",
+      "sha256": "8dcb4f2b326ab909c52039273515f44eb4f88cd91a967c8816f866d5514c864a"
+    },
+    {
+      "bytes": 1508927,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/silu-materialized-comparison-v228-v1/complete.json",
+      "sha256": "828f8fdb4fc4194b5d7d5c65135222b472d2ec76080667fae8f0b8febba169aa"
+    }
+  ],
+  "mode": "autoregressive",
+  "native_attempts": 1,
+  "native_baseline_comparison_performed": false,
+  "numerical_acceptance": false,
+  "numerical_comparison_performed": false,
+  "old_native_equality_required": false,
+  "overlap_claim": false,
+  "own_output_trajectory_checked": true,
+  "owned_children": {
+    "outer_groups_absent": true,
+    "parent": {
+      "pgid": 1841054,
+      "pid": 1841054,
+      "ppid": 1839557,
+      "sid": 1841054,
+      "starttime": 55524385,
+      "state": "R",
+      "uid": 9661
+    },
+    "parent_asserted_close_and_reap": true,
+    "synthesized_child_identity": false,
+    "workers": [
+      {
+        "identity": {
+          "pgid": 1850763,
+          "pid": 1850763,
+          "ppid": 1841054,
+          "sid": 1841054,
+          "starttime": 55533581,
+          "state": "S",
+          "uid": 9661
+        },
+        "outer_pidfd_observed": true,
+        "pid": 1850763
+      }
+    ]
+  },
+  "paired_comparison_performed": false,
+  "performance_claim": false,
+  "plan": {
+    "bytes": 6553,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-rope-indexed-ar4-inputs-v228-v1/plan.json",
+    "sha256": "4e9b2e9ce3f1d43c8e242d75508f42def544b675a54ba09e80d25ae67ccd285c"
+  },
+  "policy_publication": {
+    "bytes": 20459,
+    "path": "/home/harsh/ferric-p227-integration/qualification/rope-indexed-ar4-supervisor-v1/result.json",
+    "sha256": "f596362f38f73f280b5d8cb03ec3deac00cd02a26cde9168cd426c6439a89d46"
+  },
+  "prefix_provenance": {
+    "compiler_binary_bodies_replayed": false,
+    "consumer": {
+      "bytes": 300367,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/kir-indexed-formal-join-cpu-v228-v2/complete.json",
+      "sha256": "4548c7ee32206f6fc94bf54b5c50e13c500d2f4381e58092094893d9d80d4bfa"
+    },
+    "consumer_binary_bodies_replayed": false,
+    "consumer_owner": {
+      "bytes": 35109,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/kir-indexed-formal-join-cpu-owner-v228-v2/complete.json",
+      "sha256": "21205fbed2b56d5a27b4c1fbb2f4f3d5f0e810b822a518e3f875e3083553954e"
+    },
+    "consumer_proposal": {
+      "bytes": 7418,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-kir-indexed-formal-join-v2/source-manifest.json",
+      "sha256": "d9d235a2f0bb2ae185c41f38d8406124c8233d3259e53751ccf47a17755b5dc2"
+    },
+    "consumer_source": {
+      "bytes": 3735781,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/kir-indexed-formal-join-cpu-v228-v2/sources-before.json",
+      "sha256": "f16b193aa6a505ab2b28d98334e86b60ac5bcb6cfbd09d885cecd33d5cc27854"
+    },
+    "consumer_tools": {
+      "finalizer": {
+        "bytes": 33094696,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/kir-indexed-formal-join-cpu-v228-v2/target/debug/examples/finite_join_engineering_hsaco_v1",
+        "sha256": "149f2ff3832411c52c354a4dccd8ff0c3ad6f1da382541fa43f6fea7f8ea22f3"
+      },
+      "metadata": {
+        "bytes": 23547560,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/kir-indexed-formal-join-cpu-v228-v2/target/debug/examples/finite_join_request_metadata_v1",
+        "sha256": "6f7fe352361c3dfd7580c6a7d26a8f966d3ece60f7a2505f1d52f0bd0319fef7"
+      }
+    },
+    "cpu": {
+      "bytes": 68573,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rope-materialized-cpu-v228-v3/complete.json",
+      "sha256": "8dcb4f2b326ab909c52039273515f44eb4f88cd91a967c8816f866d5514c864a"
+    },
+    "descriptor": {
+      "authority": "none",
+      "canonical_code_object_digest": "574b35058bd83aec4389f3928ead14c03953ccf83b32a8f0aaec3fda621f65d1",
+      "code_object_version": "6",
+      "descriptor_sha256": "93ec41a33fa3fd3ca4fa89e3c730383a90e9ca6fb02a5ec29569ae48c02a46fe",
+      "descriptor_symbol_hex": "6665727269635f7177656e335f636c61696d65645f726d736e6f726d5f716b765f617474656e74696f6e5f6f75747075745f74696c65735f626631365f6633325f76362e6b64",
+      "entry_symbol_hex": "6665727269635f7177656e335f636c61696d65645f726d736e6f726d5f716b765f617474656e74696f6e5f6f75747075745f74696c65735f626631365f6633325f7636",
+      "explicit_argument_bytes": "120",
+      "kernarg_alignment": "8",
+      "kernarg_segment_bytes": "376",
+      "max_grid_workgroups": "64,1,1",
+      "object_bytes": "54344",
+      "object_sha256": "29fd58e7b09fee003ed31660e6201c20a7eb5da4b873d0b4d954993f7018f2f8",
+      "target": "gfx950:xnack-",
+      "workgroup": "64,1,1"
+    },
+    "emission": {
+      "bytes": 197494,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rope-indexed-checked-emission-v228-v1/complete.json",
+      "sha256": "d45dd1a2ed5b88e767b14bbb8c7d2728211bb49aeaa14b1f8b4cc5a5b4f80c49"
+    },
+    "fresh_checked_lowering": false,
+    "fresh_checked_replay": false,
+    "full_compiler_cohort_requalified": false,
+    "native_table_generation_unchanged": true,
+    "numerical_acceptance": false,
+    "original_image": {
+      "bytes": 54344,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rope-indexed-checked-emission-v228-v1/emitted/artifact.hsaco",
+      "sha256": "29fd58e7b09fee003ed31660e6201c20a7eb5da4b873d0b4d954993f7018f2f8"
+    },
+    "owner": {
+      "bytes": 31010,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rope-indexed-checked-emission-owner-v228-v1/complete.json",
+      "sha256": "d9e4794a60a7d48daa953701ae764e51e99b70270310537c9f93d21afb8aa991"
+    },
+    "producer": {
+      "bytes": 21555,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-rope-materialized-rpo-checked-probe-v228-v1/failed.json",
+      "sha256": "1fbbbd9a8889e1b33b724b3f8911c4ecc1074fffe8fc29377f6840686375ba1f"
+    },
+    "producer_generation": {
+      "backend_dynamic_library": {
+        "bytes": 205476608,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rpo-compiler-cpu-v228-v2/target/debug/deps/librustc_codegen_fe2o3.so",
+        "sha256": "7fb818eb09760b80ce4cc3954846b511b4186f6c99bf201083a7d40cf56f4ed8"
+      },
+      "compiler_package": {
+        "bytes": 1917,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-partial-move-rpo-cpu-v2/manifest.json",
+        "sha256": "9fe67c55e38e4713c692abb4e145cd58bcea81ecf162879de57568b81d729603"
+      },
+      "compiler_products": {
+        "compiler-tests": {
+          "bytes": 128981504,
+          "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rpo-compiler-cpu-v228-v2/target/debug/deps/rustc_codegen_fe2o3-5db184f14eef1d1c",
+          "sha256": "0182517faa040cf5eb01b9f522c6a59beec5b671ea821cd4ad203d0ba182ff56"
+        },
+        "fe2o3-rustc-extract": {
+          "bytes": 205648,
+          "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rpo-compiler-cpu-v228-v2/target/debug/fe2o3-rustc-extract",
+          "sha256": "cece2097c34ed019e380a512132e8f4d932f127e8dd87793bcd9f0cf620cf3ca"
+        },
+        "librustc_codegen_fe2o3.rlib": {
+          "bytes": 67677768,
+          "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rpo-compiler-cpu-v228-v2/target/debug/librustc_codegen_fe2o3.rlib",
+          "sha256": "9221c3c7fe2cfb19721490326fd3864d5a292c7e41205a5bc4b72f68a60689b0"
+        },
+        "librustc_codegen_fe2o3.so": {
+          "bytes": 205476608,
+          "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rpo-compiler-cpu-v228-v2/target/debug/librustc_codegen_fe2o3.so",
+          "sha256": "7fb818eb09760b80ce4cc3954846b511b4186f6c99bf201083a7d40cf56f4ed8"
+        },
+        "pliron-tests": {
+          "bytes": 68496344,
+          "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rpo-compiler-cpu-v228-v2/target/debug/deps/fe2o3_pliron-bfbb58262805e3df",
+          "sha256": "6df77412eb4b1443f069b1c5ddf4bf71b0e788f0e2382ed856222b74de70e2e1"
+        }
+      },
+      "finalizer_package": {
+        "bytes": 1693,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-partial-move-rpo-finalizer-tools-v2/manifest.json",
+        "sha256": "d014c66154afefa324bb0f5a49bacfb034229e840efb012acd02c950d5ce0178"
+      },
+      "patches": {
+        "rpo": {
+          "bytes": 5887,
+          "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-partial-move-rpo-v2/source-manifest.json",
+          "sha256": "939b76eb28df8d7e2b53ae0b4f5034257185f12f077d20e581d9880b006a252c"
+        }
+      },
+      "predecessor": {
+        "backend_dynamic_library": {
+          "bytes": 205465840,
+          "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/ordinary-induction-compiler-cpu-v228-v1/target/debug/deps/librustc_codegen_fe2o3.so",
+          "sha256": "3a0736577779cf072bb44dacfbda28f0298a39d50a649856ac280a02ac477ade"
+        },
+        "compiler_products": {
+          "compiler-tests": {
+            "bytes": 128970008,
+            "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/ordinary-induction-compiler-cpu-v228-v1/target/debug/deps/rustc_codegen_fe2o3-5db184f14eef1d1c",
+            "sha256": "643c7baffcb79da567e20425b8c1df1bbd7f076b22318ed6293c089c23a69920"
+          },
+          "fe2o3-rustc-extract": {
+            "bytes": 205648,
+            "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/ordinary-induction-compiler-cpu-v228-v1/target/debug/fe2o3-rustc-extract",
+            "sha256": "cece2097c34ed019e380a512132e8f4d932f127e8dd87793bcd9f0cf620cf3ca"
+          },
+          "librustc_codegen_fe2o3.rlib": {
+            "bytes": 67681872,
+            "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/ordinary-induction-compiler-cpu-v228-v1/target/debug/librustc_codegen_fe2o3.rlib",
+            "sha256": "8b0dcaf7bbf8b9e10900ef3a53dd6d7014d7fd6a6639dd9a12883f6347d25f21"
+          },
+          "librustc_codegen_fe2o3.so": {
+            "bytes": 205465840,
+            "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/ordinary-induction-compiler-cpu-v228-v1/target/debug/librustc_codegen_fe2o3.so",
+            "sha256": "3a0736577779cf072bb44dacfbda28f0298a39d50a649856ac280a02ac477ade"
+          },
+          "pliron-tests": {
+            "bytes": 68335600,
+            "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/ordinary-induction-compiler-cpu-v228-v1/target/debug/deps/fe2o3_pliron-bfbb58262805e3df",
+            "sha256": "d655c5ea569647700feeaf7d80fcb00a68cbf8137e4f635ddd13c20d1950392d"
+          }
+        },
+        "patches": {
+          "idempotent": {
+            "bytes": 892,
+            "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-partial-move-idempotent-v1/manifest.json",
+            "sha256": "788aed8827fd55fde9f260e227cfb91bc8f9503df98569617112c9c7b3fcc707"
+          },
+          "ordinary": {
+            "bytes": 2513,
+            "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-ordinary-induction-alias-v1/manifest.json",
+            "sha256": "a2c6cab1e3a24601015aa45f368e6a4d58bfaa34bbe2150c7f696b8cf1e43135"
+          }
+        },
+        "prerequisites": {
+          "cpu": {
+            "bytes": 369402,
+            "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/ordinary-induction-compiler-cpu-v228-v1/complete.json",
+            "sha256": "c45aa83b01bf76fdfd9962b06884611658dab607b001ba67fecc66db9fd5ba97"
+          },
+          "cpu_owner": {
+            "bytes": 57318,
+            "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/ordinary-induction-compiler-cpu-owner-v228-v1/complete.json",
+            "sha256": "85de66610631612ed2473f9d5fbb80ce89ea7ffc6064c1784834a6751d623609"
+          },
+          "tools": {
+            "bytes": 45313,
+            "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/ordinary-induction-finalizer-tools-v228-v1/complete.json",
+            "sha256": "874a6d2026029619a02283ee9650d682690941c14904d9fa59c101b58b89d6bc"
+          },
+          "tools_owner": {
+            "bytes": 10396,
+            "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/ordinary-induction-finalizer-tools-owner-v228-v1/complete.json",
+            "sha256": "ece336d1234940c312b693f6d6c91a3a8eece275a94f00b06b4e97645971ca97"
+          }
+        },
+        "qualified_generation": {
+          "completion": {
+            "bytes": 364397,
+            "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/idempotent-compiler-cpu-v228-v2/complete.json",
+            "sha256": "52245c1a713a87c1d60a464bf56998cca612f421386efe715533cfafedc3f9ac"
+          },
+          "sources": {
+            "bytes": 3686065,
+            "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/idempotent-compiler-cpu-v228-v2/sources-before.json",
+            "sha256": "d0e15df4e88f2b70844998eefe096984f0203bb3e31bae26c5021ca0fbae5ba4"
+          }
+        },
+        "roles": {
+          "compiler-tests": {
+            "bytes": 128970008,
+            "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/ordinary-induction-compiler-cpu-v228-v1/target/debug/deps/rustc_codegen_fe2o3-5db184f14eef1d1c",
+            "sha256": "643c7baffcb79da567e20425b8c1df1bbd7f076b22318ed6293c089c23a69920"
+          },
+          "fe2o3-rustc-extract": {
+            "bytes": 205648,
+            "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/ordinary-induction-compiler-cpu-v228-v1/target/debug/fe2o3-rustc-extract",
+            "sha256": "cece2097c34ed019e380a512132e8f4d932f127e8dd87793bcd9f0cf620cf3ca"
+          },
+          "finalizer": {
+            "bytes": 33044032,
+            "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/ordinary-induction-compiler-cpu-v228-v1/target/debug/examples/finite_join_engineering_hsaco_v1",
+            "sha256": "1ae67526442f52806b8bd4aa4df6f3a857603088118bc0dde0e5e376cb7c1e3c"
+          },
+          "finalizer-tests": {
+            "bytes": 35542224,
+            "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/ordinary-induction-compiler-cpu-v228-v1/target/debug/examples/finite_join_engineering_hsaco_v1-d165b82509d45fc9",
+            "sha256": "bc13a8702fa27e9c48ede642ad302e1f3ec1e6475faa6d6c73bb8ffcdc238673"
+          },
+          "librustc_codegen_fe2o3.so": {
+            "bytes": 205465840,
+            "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/ordinary-induction-compiler-cpu-v228-v1/target/debug/librustc_codegen_fe2o3.so",
+            "sha256": "3a0736577779cf072bb44dacfbda28f0298a39d50a649856ac280a02ac477ade"
+          },
+          "metadata": {
+            "bytes": 23544336,
+            "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/ordinary-induction-compiler-cpu-v228-v1/target/debug/examples/finite_join_request_metadata_v1",
+            "sha256": "3c024e79a263a286dc6ab46c5cd3c69e1173c46ba61d1eb415ecde903f74cdb8"
+          }
+        },
+        "source": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/ordinary-induction-compiler-cpu-v228-v1/source/fe2o3",
+        "target": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/ordinary-induction-compiler-cpu-v228-v1/target"
+      },
+      "prerequisites": {
+        "cpu": {
+          "bytes": 375781,
+          "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rpo-compiler-cpu-v228-v2/complete.json",
+          "sha256": "56fc51fc326980e00156d550d0a7052f44bb481ded7b9948c06217653fb246c1"
+        },
+        "cpu_owner": {
+          "bytes": 57128,
+          "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rpo-compiler-cpu-owner-v228-v2/complete.json",
+          "sha256": "afca99d8799f910ce607873c320b8f244be66f9ffdb3df4dce4545eb1552ea66"
+        },
+        "tools": {
+          "bytes": 44858,
+          "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rpo-finalizer-tools-v228-v2/complete.json",
+          "sha256": "39eab92ede34991b08c168e827c7111c13533627cbf2efd3d248c6742a92660b"
+        },
+        "tools_owner": {
+          "bytes": 11103,
+          "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rpo-finalizer-tools-owner-v228-v2/complete.json",
+          "sha256": "e919fb520672be2a909fd0ec8301bc9923210680f818e411b7db459ffc3059dd"
+        }
+      },
+      "qualified_generation": {
+        "completion": {
+          "bytes": 369402,
+          "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/ordinary-induction-compiler-cpu-v228-v1/complete.json",
+          "sha256": "c45aa83b01bf76fdfd9962b06884611658dab607b001ba67fecc66db9fd5ba97"
+        },
+        "owner": {
+          "bytes": 57318,
+          "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/ordinary-induction-compiler-cpu-owner-v228-v1/complete.json",
+          "sha256": "85de66610631612ed2473f9d5fbb80ce89ea7ffc6064c1784834a6751d623609"
+        },
+        "sources": {
+          "bytes": 3779269,
+          "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/ordinary-induction-compiler-cpu-v228-v1/sources-before.json",
+          "sha256": "5aad4c8ba6520c323310424ce343de2ae5088e7f8c1c0b1fd67853b5fd3bd9f9"
+        }
+      },
+      "roles": {
+        "compiler-tests": {
+          "bytes": 128981504,
+          "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rpo-compiler-cpu-v228-v2/target/debug/deps/rustc_codegen_fe2o3-5db184f14eef1d1c",
+          "sha256": "0182517faa040cf5eb01b9f522c6a59beec5b671ea821cd4ad203d0ba182ff56"
+        },
+        "fe2o3-rustc-extract": {
+          "bytes": 205648,
+          "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rpo-compiler-cpu-v228-v2/target/debug/fe2o3-rustc-extract",
+          "sha256": "cece2097c34ed019e380a512132e8f4d932f127e8dd87793bcd9f0cf620cf3ca"
+        },
+        "finalizer": {
+          "bytes": 33044392,
+          "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rpo-compiler-cpu-v228-v2/target/debug/examples/finite_join_engineering_hsaco_v1",
+          "sha256": "34ee748a587f65d037b737276520e394dde9dc4f2195f9ca408b9def17f4dbfb"
+        },
+        "finalizer-tests": {
+          "bytes": 35542664,
+          "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rpo-compiler-cpu-v228-v2/target/debug/examples/finite_join_engineering_hsaco_v1-d165b82509d45fc9",
+          "sha256": "95d5b87f3950df3139b32d062d5c73804c09c2336e9893e2d04991521123498a"
+        },
+        "librustc_codegen_fe2o3.so": {
+          "bytes": 205476608,
+          "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rpo-compiler-cpu-v228-v2/target/debug/librustc_codegen_fe2o3.so",
+          "sha256": "7fb818eb09760b80ce4cc3954846b511b4186f6c99bf201083a7d40cf56f4ed8"
+        },
+        "metadata": {
+          "bytes": 23544824,
+          "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rpo-compiler-cpu-v228-v2/target/debug/examples/finite_join_request_metadata_v1",
+          "sha256": "f41fa56007924a2146c631cdeb2c45e26045a5c005b59e37f7d452ee765a1ad6"
+        }
+      },
+      "source": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rpo-compiler-cpu-v228-v2/source/fe2o3",
+      "target": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rpo-compiler-cpu-v228-v2/target"
+    },
+    "producer_owner": {
+      "bytes": 28117,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rope-materialized-rpo-checked-probe-owner-v228-v1/failed.json",
+      "sha256": "8fb2f02cde719c08fd41535d59d39980d8c6328f27cf952770c481f5b48edbbf"
+    },
+    "producer_recipe": {
+      "bytes": 41086,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-rope-materialized-rpo-checked-probe-v228-v1/recipe.json",
+      "sha256": "899032a1c9610f995d7487a90a2effc39e189f54a6b17ef633ddafb1723941c5"
+    },
+    "retained_handoff": {
+      "bytes": 4078537,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-rope-materialized-rpo-checked-probe-v228-v1/prefix-tiles.handoff-v3",
+      "sha256": "ad4b31ee88efa54702dc8dff13e1e3c331c296734f7cdcfa52e8249ed9fa37fc"
+    },
+    "runtime_requirements_discharged": false,
+    "source_manifest": {
+      "bytes": 5220,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-rope-materialized-source-v2/source-manifest.json",
+      "sha256": "7f1f447852f01bad9b6dedb9b40a7969961d45861592465548e6401615318d23"
+    },
+    "table_generation_equality": false
+  },
+  "prior_layer_comparison": {
+    "bytes": 1508927,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/silu-materialized-comparison-v228-v1/complete.json",
+    "sha256": "828f8fdb4fc4194b5d7d5c65135222b472d2ec76080667fae8f0b8febba169aa"
+  },
+  "production_authority": false,
+  "published_files": {
+    "audits/after-0-topology.json": {
+      "bytes": 4180,
+      "sha256": "faeb1bb32c639742906c854142e0b023eb22bb5a8c444b1427bc164566b2d717",
+      "source_pin": {
+        "bytes": 4180,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-rope-indexed-ar4-gpu-v228-v1/after-0-topology.json",
+        "sha256": "faeb1bb32c639742906c854142e0b023eb22bb5a8c444b1427bc164566b2d717"
+      }
+    },
+    "audits/after-1-topology.json": {
+      "bytes": 4180,
+      "sha256": "2a3493fa18a888bd72e2316ffa21ec28ec39be0bbfc42266c303892b37437fee",
+      "source_pin": {
+        "bytes": 4180,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-rope-indexed-ar4-gpu-v228-v1/after-1-topology.json",
+        "sha256": "2a3493fa18a888bd72e2316ffa21ec28ec39be0bbfc42266c303892b37437fee"
+      }
+    },
+    "audits/after-2-topology.json": {
+      "bytes": 4180,
+      "sha256": "1994f71a7e45d5aea7588f931abc2ee1f1a05171302c12504f437630969ea6bd",
+      "source_pin": {
+        "bytes": 4180,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-rope-indexed-ar4-gpu-v228-v1/after-2-topology.json",
+        "sha256": "1994f71a7e45d5aea7588f931abc2ee1f1a05171302c12504f437630969ea6bd"
+      }
+    },
+    "audits/before-0-topology.json": {
+      "bytes": 4180,
+      "sha256": "1669a3cfbc386f8d3290e325928c6c3cfaca0b8858eba016343a85cfef27d211",
+      "source_pin": {
+        "bytes": 4180,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-rope-indexed-ar4-gpu-v228-v1/before-0-topology.json",
+        "sha256": "1669a3cfbc386f8d3290e325928c6c3cfaca0b8858eba016343a85cfef27d211"
+      }
+    },
+    "audits/before-1-topology.json": {
+      "bytes": 4180,
+      "sha256": "47148f1437fa3888f54060c10af17ee748390517e2fcf15579983e762573259b",
+      "source_pin": {
+        "bytes": 4180,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-rope-indexed-ar4-gpu-v228-v1/before-1-topology.json",
+        "sha256": "47148f1437fa3888f54060c10af17ee748390517e2fcf15579983e762573259b"
+      }
+    },
+    "audits/before-2-topology.json": {
+      "bytes": 4180,
+      "sha256": "064ac3b622a1ba1e7a6c5706aede62d23f30c0bc45327a25dea6e41a04eaf787",
+      "source_pin": {
+        "bytes": 4180,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-rope-indexed-ar4-gpu-v228-v1/before-2-topology.json",
+        "sha256": "064ac3b622a1ba1e7a6c5706aede62d23f30c0bc45327a25dea6e41a04eaf787"
+      }
+    },
+    "complete.json": {
+      "bytes": 1128265,
+      "sha256": "30119e94b7ef116a8845b2b8819122f039dd1a7688b28b9e7494de3f7d408749",
+      "source_pin": {
+        "bytes": 1128265,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-rope-indexed-ar4-gpu-v228-v1/complete.json",
+        "sha256": "30119e94b7ef116a8845b2b8819122f039dd1a7688b28b9e7494de3f7d408749"
+      }
+    },
+    "export.py": {
+      "bytes": 8190,
+      "sha256": "785eb104ead075b039d780f13e45e100ae7a42a0442620e582f0699ea84583b0",
+      "source_pin": {
+        "bytes": 8190,
+        "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/p228-rope-indexed-ar4-native-publication-v1/export.py",
+        "sha256": "785eb104ead075b039d780f13e45e100ae7a42a0442620e582f0699ea84583b0"
+      }
+    },
+    "inputs/decode-review.json": {
+      "bytes": 80124,
+      "sha256": "59dc8160b44a516b5171b5de6d3147179151a4b28a9f81c888d068758268bbd5",
+      "source_pin": {
+        "bytes": 80124,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-rope-indexed-ar4-inputs-v228-v1/decode-review.json",
+        "sha256": "59dc8160b44a516b5171b5de6d3147179151a4b28a9f81c888d068758268bbd5"
+      }
+    },
+    "inputs/parent-runtime-review.json": {
+      "bytes": 2704,
+      "sha256": "4852cfb308cfbdb61057fd2d14753da86c9394b33bd3e13ca5008dd231f7e9af",
+      "source_pin": {
+        "bytes": 2704,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-decode-inputs-v228-v1/parent-runtime-review.json",
+        "sha256": "4852cfb308cfbdb61057fd2d14753da86c9394b33bd3e13ca5008dd231f7e9af"
+      }
+    },
+    "inputs/plan.json": {
+      "bytes": 6553,
+      "sha256": "4e9b2e9ce3f1d43c8e242d75508f42def544b675a54ba09e80d25ae67ccd285c",
+      "source_pin": {
+        "bytes": 6553,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-rope-indexed-ar4-inputs-v228-v1/plan.json",
+        "sha256": "4e9b2e9ce3f1d43c8e242d75508f42def544b675a54ba09e80d25ae67ccd285c"
+      }
+    },
+    "inputs/request.json": {
+      "bytes": 8780,
+      "sha256": "504360572346a4ea8a859324f1dd40303b0c73c69ba67b93efe719912ece1fb4",
+      "source_pin": {
+        "bytes": 8780,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-rope-indexed-ar4-inputs-v228-v1/request.json",
+        "sha256": "504360572346a4ea8a859324f1dd40303b0c73c69ba67b93efe719912ece1fb4"
+      }
+    },
+    "inputs/worker-runtime-review.json": {
+      "bytes": 2434,
+      "sha256": "63617ca7d8f9856e0fb0c05d7e0a1969d9e645f14fd1172adab3359c2f21b371",
+      "source_pin": {
+        "bytes": 2434,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-decode-inputs-v228-v1/worker-runtime-review.json",
+        "sha256": "63617ca7d8f9856e0fb0c05d7e0a1969d9e645f14fd1172adab3359c2f21b371"
+      }
+    },
+    "leaves/after-0/command.json": {
+      "bytes": 706,
+      "sha256": "6e438209610d352a6003f8cb6cf972a9851015711ab0b5ef1bfc58f80ed355d7",
+      "source_pin": {
+        "bytes": 706,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-rope-indexed-ar4-gpu-v228-v1/after-0/command.json",
+        "sha256": "6e438209610d352a6003f8cb6cf972a9851015711ab0b5ef1bfc58f80ed355d7"
+      }
+    },
+    "leaves/after-0/result.json": {
+      "bytes": 1580,
+      "sha256": "d038c1eeae98a8c722e928042e10dcdf86fe52720823a4aacfdb334987e0bf2b",
+      "source_pin": {
+        "bytes": 1580,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-rope-indexed-ar4-gpu-v228-v1/after-0/result.json",
+        "sha256": "d038c1eeae98a8c722e928042e10dcdf86fe52720823a4aacfdb334987e0bf2b"
+      }
+    },
+    "leaves/after-0/started.json": {
+      "bytes": 282,
+      "sha256": "fb060ab210c560a048474df6b74cd81b830fca35761452b176e2a80c64c5ca62",
+      "source_pin": {
+        "bytes": 282,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-rope-indexed-ar4-gpu-v228-v1/after-0/started.json",
+        "sha256": "fb060ab210c560a048474df6b74cd81b830fca35761452b176e2a80c64c5ca62"
+      }
+    },
+    "leaves/after-0/stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "source_pin": {
+        "bytes": 0,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-rope-indexed-ar4-gpu-v228-v1/after-0/stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    "leaves/after-0/stdout": {
+      "bytes": 321,
+      "sha256": "fb1d52be68ef1ca207431343c2fe9d71c4b52ca5589e9a38807effa626b069e9",
+      "source_pin": {
+        "bytes": 321,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-rope-indexed-ar4-gpu-v228-v1/after-0/stdout",
+        "sha256": "fb1d52be68ef1ca207431343c2fe9d71c4b52ca5589e9a38807effa626b069e9"
+      }
+    },
+    "leaves/after-1/command.json": {
+      "bytes": 706,
+      "sha256": "6e438209610d352a6003f8cb6cf972a9851015711ab0b5ef1bfc58f80ed355d7",
+      "source_pin": {
+        "bytes": 706,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-rope-indexed-ar4-gpu-v228-v1/after-1/command.json",
+        "sha256": "6e438209610d352a6003f8cb6cf972a9851015711ab0b5ef1bfc58f80ed355d7"
+      }
+    },
+    "leaves/after-1/result.json": {
+      "bytes": 1581,
+      "sha256": "09b2e5a6596b05f38ff664d1539d079e41ba6ce3b20c0fcc2c661d89537df8d1",
+      "source_pin": {
+        "bytes": 1581,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-rope-indexed-ar4-gpu-v228-v1/after-1/result.json",
+        "sha256": "09b2e5a6596b05f38ff664d1539d079e41ba6ce3b20c0fcc2c661d89537df8d1"
+      }
+    },
+    "leaves/after-1/started.json": {
+      "bytes": 282,
+      "sha256": "f55571c65219c4f8b368d297678f8cfc896fea88b401cab78a92b0138a028f03",
+      "source_pin": {
+        "bytes": 282,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-rope-indexed-ar4-gpu-v228-v1/after-1/started.json",
+        "sha256": "f55571c65219c4f8b368d297678f8cfc896fea88b401cab78a92b0138a028f03"
+      }
+    },
+    "leaves/after-1/stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "source_pin": {
+        "bytes": 0,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-rope-indexed-ar4-gpu-v228-v1/after-1/stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    "leaves/after-1/stdout": {
+      "bytes": 321,
+      "sha256": "fb1d52be68ef1ca207431343c2fe9d71c4b52ca5589e9a38807effa626b069e9",
+      "source_pin": {
+        "bytes": 321,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-rope-indexed-ar4-gpu-v228-v1/after-1/stdout",
+        "sha256": "fb1d52be68ef1ca207431343c2fe9d71c4b52ca5589e9a38807effa626b069e9"
+      }
+    },
+    "leaves/after-2/command.json": {
+      "bytes": 706,
+      "sha256": "6e438209610d352a6003f8cb6cf972a9851015711ab0b5ef1bfc58f80ed355d7",
+      "source_pin": {
+        "bytes": 706,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-rope-indexed-ar4-gpu-v228-v1/after-2/command.json",
+        "sha256": "6e438209610d352a6003f8cb6cf972a9851015711ab0b5ef1bfc58f80ed355d7"
+      }
+    },
+    "leaves/after-2/result.json": {
+      "bytes": 1580,
+      "sha256": "85eeac3b3cf096cb8fbd4efb1d456a9ae323aa67ed734ca1fce96ea6105ceec3",
+      "source_pin": {
+        "bytes": 1580,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-rope-indexed-ar4-gpu-v228-v1/after-2/result.json",
+        "sha256": "85eeac3b3cf096cb8fbd4efb1d456a9ae323aa67ed734ca1fce96ea6105ceec3"
+      }
+    },
+    "leaves/after-2/started.json": {
+      "bytes": 282,
+      "sha256": "f16fbf369f6664c35bf81a3dbd036710100b130487c8472d14aa9b26644e2bef",
+      "source_pin": {
+        "bytes": 282,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-rope-indexed-ar4-gpu-v228-v1/after-2/started.json",
+        "sha256": "f16fbf369f6664c35bf81a3dbd036710100b130487c8472d14aa9b26644e2bef"
+      }
+    },
+    "leaves/after-2/stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "source_pin": {
+        "bytes": 0,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-rope-indexed-ar4-gpu-v228-v1/after-2/stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    "leaves/after-2/stdout": {
+      "bytes": 321,
+      "sha256": "fb1d52be68ef1ca207431343c2fe9d71c4b52ca5589e9a38807effa626b069e9",
+      "source_pin": {
+        "bytes": 321,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-rope-indexed-ar4-gpu-v228-v1/after-2/stdout",
+        "sha256": "fb1d52be68ef1ca207431343c2fe9d71c4b52ca5589e9a38807effa626b069e9"
+      }
+    },
+    "leaves/before-0/command.json": {
+      "bytes": 706,
+      "sha256": "6e438209610d352a6003f8cb6cf972a9851015711ab0b5ef1bfc58f80ed355d7",
+      "source_pin": {
+        "bytes": 706,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-rope-indexed-ar4-gpu-v228-v1/before-0/command.json",
+        "sha256": "6e438209610d352a6003f8cb6cf972a9851015711ab0b5ef1bfc58f80ed355d7"
+      }
+    },
+    "leaves/before-0/result.json": {
+      "bytes": 1585,
+      "sha256": "7d7760e092d29bd76da1fb6b1beda80d26eab75fd92389baee29b677de9ed083",
+      "source_pin": {
+        "bytes": 1585,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-rope-indexed-ar4-gpu-v228-v1/before-0/result.json",
+        "sha256": "7d7760e092d29bd76da1fb6b1beda80d26eab75fd92389baee29b677de9ed083"
+      }
+    },
+    "leaves/before-0/started.json": {
+      "bytes": 282,
+      "sha256": "6effe77dda6e544fa93076e13adfc277860b225f7d4711fe0211c195dc4dfe5a",
+      "source_pin": {
+        "bytes": 282,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-rope-indexed-ar4-gpu-v228-v1/before-0/started.json",
+        "sha256": "6effe77dda6e544fa93076e13adfc277860b225f7d4711fe0211c195dc4dfe5a"
+      }
+    },
+    "leaves/before-0/stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "source_pin": {
+        "bytes": 0,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-rope-indexed-ar4-gpu-v228-v1/before-0/stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    "leaves/before-0/stdout": {
+      "bytes": 321,
+      "sha256": "fb1d52be68ef1ca207431343c2fe9d71c4b52ca5589e9a38807effa626b069e9",
+      "source_pin": {
+        "bytes": 321,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-rope-indexed-ar4-gpu-v228-v1/before-0/stdout",
+        "sha256": "fb1d52be68ef1ca207431343c2fe9d71c4b52ca5589e9a38807effa626b069e9"
+      }
+    },
+    "leaves/before-1/command.json": {
+      "bytes": 706,
+      "sha256": "6e438209610d352a6003f8cb6cf972a9851015711ab0b5ef1bfc58f80ed355d7",
+      "source_pin": {
+        "bytes": 706,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-rope-indexed-ar4-gpu-v228-v1/before-1/command.json",
+        "sha256": "6e438209610d352a6003f8cb6cf972a9851015711ab0b5ef1bfc58f80ed355d7"
+      }
+    },
+    "leaves/before-1/result.json": {
+      "bytes": 1585,
+      "sha256": "78db9d4f7b45abfa4dd8413265eb8205159a54923f373e789c552c3e3a7fd783",
+      "source_pin": {
+        "bytes": 1585,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-rope-indexed-ar4-gpu-v228-v1/before-1/result.json",
+        "sha256": "78db9d4f7b45abfa4dd8413265eb8205159a54923f373e789c552c3e3a7fd783"
+      }
+    },
+    "leaves/before-1/started.json": {
+      "bytes": 282,
+      "sha256": "8b14f52674446d92d71294f69329648fa48e700e6754ad9734ad4db4481ad50c",
+      "source_pin": {
+        "bytes": 282,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-rope-indexed-ar4-gpu-v228-v1/before-1/started.json",
+        "sha256": "8b14f52674446d92d71294f69329648fa48e700e6754ad9734ad4db4481ad50c"
+      }
+    },
+    "leaves/before-1/stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "source_pin": {
+        "bytes": 0,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-rope-indexed-ar4-gpu-v228-v1/before-1/stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    "leaves/before-1/stdout": {
+      "bytes": 321,
+      "sha256": "fb1d52be68ef1ca207431343c2fe9d71c4b52ca5589e9a38807effa626b069e9",
+      "source_pin": {
+        "bytes": 321,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-rope-indexed-ar4-gpu-v228-v1/before-1/stdout",
+        "sha256": "fb1d52be68ef1ca207431343c2fe9d71c4b52ca5589e9a38807effa626b069e9"
+      }
+    },
+    "leaves/before-2/command.json": {
+      "bytes": 706,
+      "sha256": "6e438209610d352a6003f8cb6cf972a9851015711ab0b5ef1bfc58f80ed355d7",
+      "source_pin": {
+        "bytes": 706,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-rope-indexed-ar4-gpu-v228-v1/before-2/command.json",
+        "sha256": "6e438209610d352a6003f8cb6cf972a9851015711ab0b5ef1bfc58f80ed355d7"
+      }
+    },
+    "leaves/before-2/result.json": {
+      "bytes": 1585,
+      "sha256": "14dd6dd03956927b3e78d93232b662b50fa7f670a69f1c53c39d883cc9a44125",
+      "source_pin": {
+        "bytes": 1585,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-rope-indexed-ar4-gpu-v228-v1/before-2/result.json",
+        "sha256": "14dd6dd03956927b3e78d93232b662b50fa7f670a69f1c53c39d883cc9a44125"
+      }
+    },
+    "leaves/before-2/started.json": {
+      "bytes": 282,
+      "sha256": "f6343bdff0a24d151b8af7b46b682b89d48fbc4f08568dc7270cc9852ac10bd9",
+      "source_pin": {
+        "bytes": 282,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-rope-indexed-ar4-gpu-v228-v1/before-2/started.json",
+        "sha256": "f6343bdff0a24d151b8af7b46b682b89d48fbc4f08568dc7270cc9852ac10bd9"
+      }
+    },
+    "leaves/before-2/stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "source_pin": {
+        "bytes": 0,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-rope-indexed-ar4-gpu-v228-v1/before-2/stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    "leaves/before-2/stdout": {
+      "bytes": 321,
+      "sha256": "fb1d52be68ef1ca207431343c2fe9d71c4b52ca5589e9a38807effa626b069e9",
+      "source_pin": {
+        "bytes": 321,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-rope-indexed-ar4-gpu-v228-v1/before-2/stdout",
+        "sha256": "fb1d52be68ef1ca207431343c2fe9d71c4b52ca5589e9a38807effa626b069e9"
+      }
+    },
+    "leaves/parent/command.json": {
+      "bytes": 1021,
+      "sha256": "1dcf9ca7635c55325002604031d2c23bbdff816baa70fe9eea46cdbca5b6d68d",
+      "source_pin": {
+        "bytes": 1021,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-rope-indexed-ar4-gpu-v228-v1/parent/command.json",
+        "sha256": "1dcf9ca7635c55325002604031d2c23bbdff816baa70fe9eea46cdbca5b6d68d"
+      }
+    },
+    "leaves/parent/result.json": {
+      "bytes": 1858,
+      "sha256": "46fbcd83455db69e4fd576878a6e42e36f822b6326627ac0a3f2aae16a012bd0",
+      "source_pin": {
+        "bytes": 1858,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-rope-indexed-ar4-gpu-v228-v1/parent/result.json",
+        "sha256": "46fbcd83455db69e4fd576878a6e42e36f822b6326627ac0a3f2aae16a012bd0"
+      }
+    },
+    "leaves/parent/started.json": {
+      "bytes": 282,
+      "sha256": "41dfc58aa0ab926aef11b47b0d3049712ab27f441f4b19f009ac2597dc9c4d6f",
+      "source_pin": {
+        "bytes": 282,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-rope-indexed-ar4-gpu-v228-v1/parent/started.json",
+        "sha256": "41dfc58aa0ab926aef11b47b0d3049712ab27f441f4b19f009ac2597dc9c4d6f"
+      }
+    },
+    "leaves/parent/stderr": {
+      "bytes": 395,
+      "sha256": "37e289d581b8c513bfc0e4e96676abf74f6d62c71c2e705c3f50b5a65e0652d5",
+      "source_pin": {
+        "bytes": 395,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-rope-indexed-ar4-gpu-v228-v1/parent/stderr",
+        "sha256": "37e289d581b8c513bfc0e4e96676abf74f6d62c71c2e705c3f50b5a65e0652d5"
+      }
+    },
+    "leaves/parent/stdout": {
+      "bytes": 39960,
+      "sha256": "8cbed2aa579ef80f6fb7033d0755e79f618d4f5829a757901eda430e1395da65",
+      "source_pin": {
+        "bytes": 39960,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-rope-indexed-ar4-gpu-v228-v1/parent/stdout",
+        "sha256": "8cbed2aa579ef80f6fb7033d0755e79f618d4f5829a757901eda430e1395da65"
+      }
+    },
+    "native/complete.json": {
+      "bytes": 39960,
+      "sha256": "8cbed2aa579ef80f6fb7033d0755e79f618d4f5829a757901eda430e1395da65",
+      "source_pin": {
+        "bytes": 39960,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-rope-indexed-ar4-gpu-v228-v1/native/complete.json",
+        "sha256": "8cbed2aa579ef80f6fb7033d0755e79f618d4f5829a757901eda430e1395da65"
+      }
+    },
+    "native/request-0.json": {
+      "bytes": 1864,
+      "sha256": "8903acef13bad856102d004cec81dbfa38d2b894d6d4885d5136202ad0b624be",
+      "source_pin": {
+        "bytes": 1864,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-rope-indexed-ar4-gpu-v228-v1/native/request-0.json",
+        "sha256": "8903acef13bad856102d004cec81dbfa38d2b894d6d4885d5136202ad0b624be"
+      }
+    },
+    "native/request-1.json": {
+      "bytes": 2399,
+      "sha256": "e17e9e0b954dcdb7af89c4293585bebd63300c9c9c0aeb1a013bfefb6debd370",
+      "source_pin": {
+        "bytes": 2399,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-rope-indexed-ar4-gpu-v228-v1/native/request-1.json",
+        "sha256": "e17e9e0b954dcdb7af89c4293585bebd63300c9c9c0aeb1a013bfefb6debd370"
+      }
+    },
+    "native/request-2.json": {
+      "bytes": 2403,
+      "sha256": "48654cb6c57f0ae560925b471b12249f560ae572e3a3a7275733f970777fd8c6",
+      "source_pin": {
+        "bytes": 2403,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-rope-indexed-ar4-gpu-v228-v1/native/request-2.json",
+        "sha256": "48654cb6c57f0ae560925b471b12249f560ae572e3a3a7275733f970777fd8c6"
+      }
+    },
+    "native/request-3.json": {
+      "bytes": 2404,
+      "sha256": "7b353d7e62fd8bf7790d8fbd081b50c3fff07d98512355b80618b35e27c67541",
+      "source_pin": {
+        "bytes": 2404,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-rope-indexed-ar4-gpu-v228-v1/native/request-3.json",
+        "sha256": "7b353d7e62fd8bf7790d8fbd081b50c3fff07d98512355b80618b35e27c67541"
+      }
+    },
+    "observation.json": {
+      "bytes": 5400,
+      "sha256": "0d1ae2972aea483a3fd3e02e531ab94a71b436d7b95fa2e1aa0c5223aa6dc883",
+      "source_pin": {
+        "bytes": 5400,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-rope-indexed-ar4-gpu-v228-v1/observation.json",
+        "sha256": "0d1ae2972aea483a3fd3e02e531ab94a71b436d7b95fa2e1aa0c5223aa6dc883"
+      }
+    },
+    "publish.py": {
+      "bytes": 22104,
+      "sha256": "569968bda3cf0555a73485a983105d42e0e612bd262697258baa6d5114834619",
+      "source_pin": {
+        "bytes": 22104,
+        "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/p228-rope-indexed-ar4-native-publication-v1/publish.py",
+        "sha256": "569968bda3cf0555a73485a983105d42e0e612bd262697258baa6d5114834619"
+      }
+    }
+  },
+  "pure": {
+    "bytes": 17304,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rope-indexed-ar4-gpu-pure-v228-v1/complete.json",
+    "sha256": "b7d70da8b86ec12f48c2f791516f35ecc0bde7da13efb670a53279bb175e3025"
+  },
+  "pure_tests": 74,
+  "recorded_gpu_execution": true,
+  "recorded_idle_audits_replayed": true,
+  "request": {
+    "bytes": 8780,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-rope-indexed-ar4-inputs-v228-v1/request.json",
+    "sha256": "504360572346a4ea8a859324f1dd40303b0c73c69ba67b93efe719912ece1fb4"
+  },
+  "retained_native": {
+    "child-stderr.bin": {
+      "bytes": 0,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-rope-indexed-ar4-gpu-v228-v1/native/child-stderr.bin",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "complete.json": {
+      "bytes": 39960,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-rope-indexed-ar4-gpu-v228-v1/native/complete.json",
+      "sha256": "8cbed2aa579ef80f6fb7033d0755e79f618d4f5829a757901eda430e1395da65"
+    },
+    "control-0.bin": {
+      "bytes": 241960,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-rope-indexed-ar4-gpu-v228-v1/native/control-0.bin",
+      "sha256": "519e920ce2a6e14ce1c94e5ed188de5962f8d691b4eb23df3c8b33c56c2fa956"
+    },
+    "control-1.bin": {
+      "bytes": 241960,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-rope-indexed-ar4-gpu-v228-v1/native/control-1.bin",
+      "sha256": "36725ea67bd6a276954beb67a748795f3a37914c167a6a200ae82bdde2deef90"
+    },
+    "control-2.bin": {
+      "bytes": 241960,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-rope-indexed-ar4-gpu-v228-v1/native/control-2.bin",
+      "sha256": "330c9e0b5ac89c165c4482a841bf2783dc65a1ca7a02a282e79c6ec3340b2198"
+    },
+    "control-3.bin": {
+      "bytes": 241960,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-rope-indexed-ar4-gpu-v228-v1/native/control-3.bin",
+      "sha256": "817ebc858d30e61435d1c1ec227e52c951d75dae63b7da092a465d63e7e33ae6"
+    },
+    "observation-0.bin": {
+      "bytes": 606976,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-rope-indexed-ar4-gpu-v228-v1/native/observation-0.bin",
+      "sha256": "1324a6056ea6c0308e912c63ed1b6a6d27e103c915c6dde11ff600d97cf9b1b0"
+    },
+    "observation-1.bin": {
+      "bytes": 606976,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-rope-indexed-ar4-gpu-v228-v1/native/observation-1.bin",
+      "sha256": "61f56a5b97e4f35922bf7733a74b36b8dec9544a15d66980757bf9ef5aefc6e4"
+    },
+    "observation-2.bin": {
+      "bytes": 606976,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-rope-indexed-ar4-gpu-v228-v1/native/observation-2.bin",
+      "sha256": "87d3799724693386909e97fd3ea31fab065de021824dea276218614f2a0fc85a"
+    },
+    "observation-3.bin": {
+      "bytes": 606976,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-rope-indexed-ar4-gpu-v228-v1/native/observation-3.bin",
+      "sha256": "7c40126b76a7eeb7a64ef67950636359ba951cafcdce2ddc42636388de3c5588"
+    },
+    "request-0.json": {
+      "bytes": 1864,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-rope-indexed-ar4-gpu-v228-v1/native/request-0.json",
+      "sha256": "8903acef13bad856102d004cec81dbfa38d2b894d6d4885d5136202ad0b624be"
+    },
+    "request-1.json": {
+      "bytes": 2399,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-rope-indexed-ar4-gpu-v228-v1/native/request-1.json",
+      "sha256": "e17e9e0b954dcdb7af89c4293585bebd63300c9c9c0aeb1a013bfefb6debd370"
+    },
+    "request-2.json": {
+      "bytes": 2403,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-rope-indexed-ar4-gpu-v228-v1/native/request-2.json",
+      "sha256": "48654cb6c57f0ae560925b471b12249f560ae572e3a3a7275733f970777fd8c6"
+    },
+    "request-3.json": {
+      "bytes": 2404,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-rope-indexed-ar4-gpu-v228-v1/native/request-3.json",
+      "sha256": "7b353d7e62fd8bf7790d8fbd081b50c3fff07d98512355b80618b35e27c67541"
+    }
+  },
+  "retries": 0,
+  "reused_runtime_publication": {
+    "bytes": 105036,
+    "path": "/home/harsh/ferric-p227-integration/qualification/projection-ar4-native-v1/result.json",
+    "sha256": "010c82b5b47023a2f0a75a01eb857f11d35962282a6410e2ca8b9e126eb0bdc8"
+  },
+  "runtime_audits": {
+    "parent": {
+      "bytes": 16544,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-ar4-decode-runtime-parent-v228-v1/complete.json",
+      "sha256": "dcd49b291d045a20a505b7853e27035b1ca7d4dc8712da417530540637e45b92"
+    },
+    "worker": {
+      "bytes": 16026,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-ar4-decode-runtime-worker-v228-v1/complete.json",
+      "sha256": "1a216653d6e7798286f52b504584b41f35fd933f47967b50e096f3b7c6b97255"
+    }
+  },
+  "runtime_audits_reexecuted": false,
+  "runtime_tool_records_replayed": false,
+  "schema": "ferric-p228-rope-indexed-ar4-native-publication-v1",
+  "seed_token": 9112,
+  "selected_executable_bodies_locally_rehashed": false,
+  "selected_runtime": {
+    "image": {
+      "bytes": 54344,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rope-indexed-checked-emission-v228-v1/emitted/artifact.hsaco",
+      "sha256": "29fd58e7b09fee003ed31660e6201c20a7eb5da4b873d0b4d954993f7018f2f8"
+    },
+    "parent": {
+      "bytes": 13827528,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-ar4-cpu-v228-v1/target/parent/debug/ferric-qwen3-finite-projection-residual-decode-engineering",
+      "sha256": "22d2cb744117af5232e29001f49ff265c25d94f9326ee48a1eb3ddc5aeab6319"
+    },
+    "worker": {
+      "bytes": 5133800,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-ar4-cpu-v228-v1/target/worker/debug/ferric-tp-peer-finite-engineering-worker-v1",
+      "sha256": "a3079acbd8ff05fbc18503fb7f7a840a4732bc0ab60717b86c03c186198bee7d"
+    }
+  },
+  "source_image_bodies_locally_rehashed": false,
+  "structural": {
+    "bank_reuse_order_independently_observed": false,
+    "captured_payloads": 4,
+    "captured_tensor_rows": 152,
+    "child_pid": 1850763,
+    "closed_child_pids": [
+      1850763
+    ],
+    "expected_banks": [
+      0,
+      1,
+      0,
+      1
+    ],
+    "external_supervisor_lifecycle_verified": false,
+    "full_long_workload": false,
+    "input_tokens": [
+      9112,
+      67,
+      25,
+      576
+    ],
+    "logical_generations": [
+      1,
+      2,
+      3,
+      4
+    ],
+    "mode": "autoregressive",
+    "numerical_acceptance": false,
+    "old_native_equality_required": false,
+    "output_tokens": [
+      67,
+      25,
+      576,
+      2701
+    ],
+    "own_output_trajectory_checked": true,
+    "paired_comparison_performed": false,
+    "parent_close_and_exit_flags_checked": true,
+    "performance_claim": false,
+    "positions": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "prefix_terminal_state_count": 288,
+    "production_authority": false,
+    "profile_sha256": "9d4574741fa159930dd8d7c92710873a6d37c4d1791afa4ff1a8b4ddc4543ab7",
+    "projection_residual_image": {
+      "bytes": 10864,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-residual-lowering-v228-v1/fe2o3-engineering-v1/3c3aec3598514f7f6c2b053ff0c6a8d489951ecb6cb8d95b1cae5ca31035b899/observation.hsaco",
+      "sha256": "25338beac39121cf81adfdc5c82c6f39bcfc82c0f7effaa2166bf8a2a9598a25"
+    },
+    "registration_sha256": "5bcf5d5485b2619112b8e1a1e52652fcd10c311bfba79ccdf712e40f9a8b4ef5",
+    "retained_files": [
+      {
+        "bytes": 1864,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-rope-indexed-ar4-gpu-v228-v1/native/request-0.json",
+        "sha256": "8903acef13bad856102d004cec81dbfa38d2b894d6d4885d5136202ad0b624be"
+      },
+      {
+        "bytes": 241960,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-rope-indexed-ar4-gpu-v228-v1/native/control-0.bin",
+        "sha256": "519e920ce2a6e14ce1c94e5ed188de5962f8d691b4eb23df3c8b33c56c2fa956"
+      },
+      {
+        "bytes": 606976,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-rope-indexed-ar4-gpu-v228-v1/native/observation-0.bin",
+        "sha256": "1324a6056ea6c0308e912c63ed1b6a6d27e103c915c6dde11ff600d97cf9b1b0"
+      },
+      {
+        "bytes": 2399,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-rope-indexed-ar4-gpu-v228-v1/native/request-1.json",
+        "sha256": "e17e9e0b954dcdb7af89c4293585bebd63300c9c9c0aeb1a013bfefb6debd370"
+      },
+      {
+        "bytes": 241960,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-rope-indexed-ar4-gpu-v228-v1/native/control-1.bin",
+        "sha256": "36725ea67bd6a276954beb67a748795f3a37914c167a6a200ae82bdde2deef90"
+      },
+      {
+        "bytes": 606976,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-rope-indexed-ar4-gpu-v228-v1/native/observation-1.bin",
+        "sha256": "61f56a5b97e4f35922bf7733a74b36b8dec9544a15d66980757bf9ef5aefc6e4"
+      },
+      {
+        "bytes": 2403,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-rope-indexed-ar4-gpu-v228-v1/native/request-2.json",
+        "sha256": "48654cb6c57f0ae560925b471b12249f560ae572e3a3a7275733f970777fd8c6"
+      },
+      {
+        "bytes": 241960,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-rope-indexed-ar4-gpu-v228-v1/native/control-2.bin",
+        "sha256": "330c9e0b5ac89c165c4482a841bf2783dc65a1ca7a02a282e79c6ec3340b2198"
+      },
+      {
+        "bytes": 606976,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-rope-indexed-ar4-gpu-v228-v1/native/observation-2.bin",
+        "sha256": "87d3799724693386909e97fd3ea31fab065de021824dea276218614f2a0fc85a"
+      },
+      {
+        "bytes": 2404,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-rope-indexed-ar4-gpu-v228-v1/native/request-3.json",
+        "sha256": "7b353d7e62fd8bf7790d8fbd081b50c3fff07d98512355b80618b35e27c67541"
+      },
+      {
+        "bytes": 241960,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-rope-indexed-ar4-gpu-v228-v1/native/control-3.bin",
+        "sha256": "817ebc858d30e61435d1c1ec227e52c951d75dae63b7da092a465d63e7e33ae6"
+      },
+      {
+        "bytes": 606976,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-rope-indexed-ar4-gpu-v228-v1/native/observation-3.bin",
+        "sha256": "7c40126b76a7eeb7a64ef67950636359ba951cafcdce2ddc42636388de3c5588"
+      },
+      {
+        "bytes": 0,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-rope-indexed-ar4-gpu-v228-v1/native/child-stderr.bin",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    ],
+    "rotary_nonzero_positions_independently_recomputed": false,
+    "schema": "ferric-p228-checked-projection-ar4-decode-structure-v1",
+    "source_image_payloads_rehashed": false,
+    "summary_sha256": "8cbed2aa579ef80f6fb7033d0755e79f618d4f5829a757901eda430e1395da65",
+    "teacher_forced_token_parity_required": false,
+    "terminal_state_count": 576,
+    "tiles_terminal_state_count": 288,
+    "transcript_sha256": "3cbad3912c78aeb689d31c090b01af1d99f5bbdc000937aea69a409a7a91d1b1"
+  },
+  "structural_validator_replayed": true,
+  "supervisor_manifest": {
+    "bytes": 2918,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-rope-indexed-ar4-gpu-v1/manifest.json",
+    "sha256": "aa1e8cd787581c6b218e2eaaf358a8b468dc3fe75ff5eb85f183bb6ada8ceddd"
+  },
+  "supervisor_sources": {
+    "INTAKE.md": {
+      "bytes": 6120,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-rope-indexed-ar4-gpu-v1/INTAKE.md",
+      "sha256": "1b19c1d73ad32cb769ae6df5bd6b3eaf03fec5eccac7704cf5e5e36f61b68c98"
+    },
+    "README.md": {
+      "bytes": 4220,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-rope-indexed-ar4-gpu-v1/README.md",
+      "sha256": "2fa357edb430fe4b60f5a3e252b76e9a9e2c9ed02d4750437ce44896a8f4bb23"
+    },
+    "decode_validation.py": {
+      "bytes": 20422,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-rope-indexed-ar4-gpu-v1/decode_validation.py",
+      "sha256": "0eb96d4ac5e10e7f6ac10b018692c56f969286949681be336cb6040d56f01422"
+    },
+    "intake.py": {
+      "bytes": 73834,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-rope-indexed-ar4-gpu-v1/intake.py",
+      "sha256": "78dbad741f9a51282e4d121e6f8842def0096f86c741f009697730c98d00a2f5"
+    },
+    "layer_validation.py": {
+      "bytes": 16186,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-rope-indexed-ar4-gpu-v1/layer_validation.py",
+      "sha256": "757c077979b7ee02d4c0e7d222e75292cd9d417927f84ae9a8134344f8e217b9"
+    },
+    "prefix_contracts.py": {
+      "bytes": 13306,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-rope-indexed-ar4-gpu-v1/prefix_contracts.py",
+      "sha256": "694be9d199cd92b2d11ff4fe8401ad3728497bd8846b5d6924311330f3d9de1a"
+    },
+    "run.py": {
+      "bytes": 15318,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-rope-indexed-ar4-gpu-v1/run.py",
+      "sha256": "6e1a70ad537aa20b38907fcc4d189be605865d088fcbc034ea7ec76ed5aa575d"
+    },
+    "run_rope_indexed_ar4_gpu_pure_p228_v1.py": {
+      "bytes": 8253,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-rope-indexed-ar4-gpu-v1/run_rope_indexed_ar4_gpu_pure_p228_v1.py",
+      "sha256": "94aba8983616cdd4f8118984cee458f42de6106f2a12cf3ad2736774038c1bae"
+    },
+    "run_row_facts_v2.py": {
+      "bytes": 12424,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-rope-indexed-ar4-gpu-v1/run_row_facts_v2.py",
+      "sha256": "244c12f62c8a439aa01b44380fc464008b94006bc919201c8d510c64177fc820"
+    },
+    "smoke_validation.py": {
+      "bytes": 14980,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-rope-indexed-ar4-gpu-v1/smoke_validation.py",
+      "sha256": "9bf460451e722452da9c49168c730615d32e9b73b200c579f003e9e45238ea26"
+    },
+    "stage_core.py": {
+      "bytes": 12074,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-rope-indexed-ar4-gpu-v1/stage_core.py",
+      "sha256": "7e3d64e80e66bacbbba05ac3236189249949bb95ea3f717150822cf45740eec2"
+    },
+    "test_decode_validation.py": {
+      "bytes": 18459,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-rope-indexed-ar4-gpu-v1/test_decode_validation.py",
+      "sha256": "f36d5a8cc321cb3df26049a5941ffd52e0ebe401213cce9e03cc7fd987c3c253"
+    },
+    "test_intake.py": {
+      "bytes": 16426,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-rope-indexed-ar4-gpu-v1/test_intake.py",
+      "sha256": "13b0d95c3a918ba481bdb70863c22b3242d04624f1efc9d44e5be8cd3d8fe85d"
+    },
+    "test_linked_admission.py": {
+      "bytes": 12334,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-rope-indexed-ar4-gpu-v1/test_linked_admission.py",
+      "sha256": "c6ab306043e6a333d807f8aced9994381be5a823790f367968e494a12866d98f"
+    },
+    "test_rope_admission.py": {
+      "bytes": 14278,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-rope-indexed-ar4-gpu-v1/test_rope_admission.py",
+      "sha256": "0abb9c4a03eec3f637d7a86e77bf16d6872bc86f00e80e135f0be4f75cf1c363"
+    },
+    "test_run.py": {
+      "bytes": 13739,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-rope-indexed-ar4-gpu-v1/test_run.py",
+      "sha256": "300b004b12212a42b9477d598d48a3578d08a7162d73644e1ccb455c32ef7f40"
+    },
+    "test_silu_admission.py": {
+      "bytes": 7907,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-rope-indexed-ar4-gpu-v1/test_silu_admission.py",
+      "sha256": "224e3d83ab56d62c0fc69b6e0d07e2baaa5423596d6013604a8dd64c499f72be"
+    }
+  },
+  "sustained_2048_256": false,
+  "teacher_forced_token_parity_required": false,
+  "terminal_state_count": 576,
+  "top_level_observer_reaping_independently_verified": false,
+  "trajectory": [
+    {
+      "control": {
+        "bytes": 241960,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-rope-indexed-ar4-gpu-v228-v1/native/control-0.bin",
+        "sha256": "519e920ce2a6e14ce1c94e5ed188de5962f8d691b4eb23df3c8b33c56c2fa956"
+      },
+      "generation": 1,
+      "input_token": 9112,
+      "observation": {
+        "bytes": 606976,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-rope-indexed-ar4-gpu-v228-v1/native/observation-0.bin",
+        "sha256": "1324a6056ea6c0308e912c63ed1b6a6d27e103c915c6dde11ff600d97cf9b1b0"
+      },
+      "output_token": 67,
+      "position": 0
+    },
+    {
+      "control": {
+        "bytes": 241960,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-rope-indexed-ar4-gpu-v228-v1/native/control-1.bin",
+        "sha256": "36725ea67bd6a276954beb67a748795f3a37914c167a6a200ae82bdde2deef90"
+      },
+      "generation": 2,
+      "input_token": 67,
+      "observation": {
+        "bytes": 606976,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-rope-indexed-ar4-gpu-v228-v1/native/observation-1.bin",
+        "sha256": "61f56a5b97e4f35922bf7733a74b36b8dec9544a15d66980757bf9ef5aefc6e4"
+      },
+      "output_token": 25,
+      "position": 1
+    },
+    {
+      "control": {
+        "bytes": 241960,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-rope-indexed-ar4-gpu-v228-v1/native/control-2.bin",
+        "sha256": "330c9e0b5ac89c165c4482a841bf2783dc65a1ca7a02a282e79c6ec3340b2198"
+      },
+      "generation": 3,
+      "input_token": 25,
+      "observation": {
+        "bytes": 606976,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-rope-indexed-ar4-gpu-v228-v1/native/observation-2.bin",
+        "sha256": "87d3799724693386909e97fd3ea31fab065de021824dea276218614f2a0fc85a"
+      },
+      "output_token": 576,
+      "position": 2
+    },
+    {
+      "control": {
+        "bytes": 241960,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-rope-indexed-ar4-gpu-v228-v1/native/control-3.bin",
+        "sha256": "817ebc858d30e61435d1c1ec227e52c951d75dae63b7da092a465d63e7e33ae6"
+      },
+      "generation": 4,
+      "input_token": 576,
+      "observation": {
+        "bytes": 606976,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-rope-indexed-ar4-gpu-v228-v1/native/observation-3.bin",
+        "sha256": "7c40126b76a7eeb7a64ef67950636359ba951cafcdce2ddc42636388de3c5588"
+      },
+      "output_token": 2701,
+      "position": 3
+    }
+  ]
+}

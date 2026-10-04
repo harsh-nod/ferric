@@ -6,7 +6,16 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Latest: the [linked RoPE AR4 supervisor passed all 74 policy tests](../qualification/rope-indexed-ar4-supervisor-v1/README.md)
+Latest: the [new linked RoPE image completed native AR4 on MI350](../qualification/rope-indexed-ar4-native-v1/README.md).
+The own-output chain was 9112 -> 67 -> 25 -> 576 -> 2701. All 152 tensor
+slices, 576 terminal states, seven naturally exited/reaped leaves and six
+surrounding audits passed structural checks in one attempt without retry.
+Only the prefix image, session and output path changed. The 391.571-second
+controller duration includes setup and audits and is not GPU throughput.
+Independent tensor comparison is still a separate gate; no numerical or
+sustained 2,048/256 acceptance is claimed.
+
+Previously, the [linked RoPE AR4 supervisor passed all 74 policy tests](../qualification/rope-indexed-ar4-supervisor-v1/README.md)
 on MI350, with no failures, errors or skips and unchanged source snapshots.
 The new admission path binds the actual emitted image to separate retained
 producer and qualified consumer generations while preserving the runtime,

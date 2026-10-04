@@ -1,0 +1,51 @@
+{
+  "schema": "ferric-p227-prefix-parity-runtime-review-v1",
+  "reviewed": true,
+  "authority": "none",
+  "binary": {
+    "bytes": 5133800,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-ar4-cpu-v228-v1/target/worker/debug/ferric-tp-peer-finite-engineering-worker-v1",
+    "sha256": "a3079acbd8ff05fbc18503fb7f7a840a4732bc0ab60717b86c03c186198bee7d"
+  },
+  "host": "smci350-rck-g03-b19-03",
+  "boot_id": "2dbbbc5a-d8b7-46ac-bd1f-236e5847e24a",
+  "readelf": {
+    "bytes": 802,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-ar4-decode-runtime-worker-v228-v1/readelf/audit.json",
+    "sha256": "52e490e9ac9ed437669cef4f1d3ef4ad9fd751bca734bfa3876cd37beedc8801"
+  },
+  "ldd": {
+    "bytes": 779,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-ar4-decode-runtime-worker-v228-v1/ldd/audit.json",
+    "sha256": "6ac33cb8b31fff1f52b942414bf9ac0e9d73871248c5d9d0d340acecac8e8832"
+  },
+  "libraries": [
+    {
+      "path": "/lib/x86_64-linux-gnu/libgcc_s.so.1",
+      "resolved": {
+        "bytes": 183024,
+        "path": "/usr/lib/x86_64-linux-gnu/libgcc_s.so.1",
+        "sha256": "d93224d2b0dab4247598be683adca02f5cf00586f99c187579cd7e92058fb7cb"
+      }
+    },
+    {
+      "path": "/lib/x86_64-linux-gnu/libc.so.6",
+      "resolved": {
+        "bytes": 2125328,
+        "path": "/usr/lib/x86_64-linux-gnu/libc.so.6",
+        "sha256": "d8db8739a1633c972cec6a4fe0566bdcec6fd088f98723492ab0361f66238f75"
+      }
+    },
+    {
+      "path": "/lib64/ld-linux-x86-64.so.2",
+      "resolved": {
+        "bytes": 236616,
+        "path": "/usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2",
+        "sha256": "1cd555ac46b7887edeaf3c42aac5408c8135e52f6b37870da2cf82d5fe14e829"
+      }
+    }
+  ],
+  "notes": "Root reviewed the actual CPU1037-qualified worker ELF, fresh MI350 readelf and ldd output, natural exit-zero audit outcomes, and resolved shared-library hashes. The three-library closure contains no missing dependency or RPATH/RUNPATH override. This review selects only the newly rebuilt AR4 executable at its original recorded path, not the old CPU1022 ELF or its runtime review. Current topology, library identity and owned-lifecycle checks remain required; this is an engineering attempt, not discharge of runtime premises.",
+  "production_authority": false,
+  "gpu_execution": false
+}

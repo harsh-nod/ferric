@@ -1,0 +1,18 @@
+[
+    {
+        "gpu": 0,
+        "process_list": [
+            {
+                "process_info": "No running processes detected"
+            }
+        ]
+    },
+    {
+        "gpu": 1,
+        "process_list": [
+            {
+                "process_info": "No running processes detected"
+            }
+        ]
+    }
+]
