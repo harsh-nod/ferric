@@ -1,0 +1,537 @@
+{
+  "actual_replay": {
+    "bytes": 177419,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/output-residual-boundary-v228-v1/complete.json",
+    "sha256": "39c12232b3504eccbca898383b70244093fe930b9c37656cbec1515cd30eaf11"
+  },
+  "all_transitive_admission_inputs_replayed": false,
+  "arithmetic_prerequisites_verified": false,
+  "arithmetic_reexecuted_by_publisher": false,
+  "authority": "none",
+  "causal_explanation_proven": false,
+  "comparisons": [
+    {
+      "actual_sha256": "00e5a0bf5610bc110507bc5b2dbc9a257823a1568ab5e24ace9f3a48bd01baaa",
+      "byte_equal": true,
+      "differing_words": 0,
+      "elements": 4096,
+      "exact_words": 4096,
+      "expected_sha256": "00e5a0bf5610bc110507bc5b2dbc9a257823a1568ab5e24ace9f3a48bd01baaa",
+      "first_differences": [],
+      "first_differences_limit": 16,
+      "name": "native-formula-vs-native-rank0"
+    },
+    {
+      "actual_sha256": "00e5a0bf5610bc110507bc5b2dbc9a257823a1568ab5e24ace9f3a48bd01baaa",
+      "byte_equal": true,
+      "differing_words": 0,
+      "elements": 4096,
+      "exact_words": 4096,
+      "expected_sha256": "00e5a0bf5610bc110507bc5b2dbc9a257823a1568ab5e24ace9f3a48bd01baaa",
+      "first_differences": [],
+      "first_differences_limit": 16,
+      "name": "native-formula-vs-native-rank1"
+    },
+    {
+      "actual_sha256": "00e5a0bf5610bc110507bc5b2dbc9a257823a1568ab5e24ace9f3a48bd01baaa",
+      "byte_equal": false,
+      "differing_words": 1210,
+      "elements": 4096,
+      "exact_words": 2886,
+      "expected_sha256": "8741323079c3235eb02ffce0afc8d0716088c6c5417ac7923d68c5cea08822e8",
+      "first_differences": [
+        {
+          "actual_bits": 15926,
+          "expected_bits": 15925,
+          "index": 8
+        },
+        {
+          "actual_bits": 15409,
+          "expected_bits": 15408,
+          "index": 9
+        },
+        {
+          "actual_bits": 48393,
+          "expected_bits": 48394,
+          "index": 14
+        },
+        {
+          "actual_bits": 15183,
+          "expected_bits": 15184,
+          "index": 19
+        },
+        {
+          "actual_bits": 47579,
+          "expected_bits": 47552,
+          "index": 20
+        },
+        {
+          "actual_bits": 48284,
+          "expected_bits": 48283,
+          "index": 21
+        },
+        {
+          "actual_bits": 48639,
+          "expected_bits": 48638,
+          "index": 23
+        },
+        {
+          "actual_bits": 16205,
+          "expected_bits": 16204,
+          "index": 26
+        },
+        {
+          "actual_bits": 15601,
+          "expected_bits": 15600,
+          "index": 30
+        },
+        {
+          "actual_bits": 15705,
+          "expected_bits": 15706,
+          "index": 34
+        },
+        {
+          "actual_bits": 14944,
+          "expected_bits": 14952,
+          "index": 35
+        },
+        {
+          "actual_bits": 47630,
+          "expected_bits": 47616,
+          "index": 38
+        },
+        {
+          "actual_bits": 15529,
+          "expected_bits": 15528,
+          "index": 47
+        },
+        {
+          "actual_bits": 15478,
+          "expected_bits": 15480,
+          "index": 59
+        },
+        {
+          "actual_bits": 48411,
+          "expected_bits": 48412,
+          "index": 60
+        },
+        {
+          "actual_bits": 48141,
+          "expected_bits": 48140,
+          "index": 65
+        }
+      ],
+      "first_differences_limit": 16,
+      "name": "native-formula-vs-framework-residual"
+    },
+    {
+      "actual_sha256": "00e5a0bf5610bc110507bc5b2dbc9a257823a1568ab5e24ace9f3a48bd01baaa",
+      "byte_equal": false,
+      "differing_words": 1208,
+      "elements": 4096,
+      "exact_words": 2888,
+      "expected_sha256": "2502e44efc99e7ff44bd5e00f92f7c18e46e46ad143ca618a72a4addb88bfdd2",
+      "first_differences": [
+        {
+          "actual_bits": 15926,
+          "expected_bits": 15925,
+          "index": 8
+        },
+        {
+          "actual_bits": 15409,
+          "expected_bits": 15408,
+          "index": 9
+        },
+        {
+          "actual_bits": 48393,
+          "expected_bits": 48394,
+          "index": 14
+        },
+        {
+          "actual_bits": 15183,
+          "expected_bits": 15184,
+          "index": 19
+        },
+        {
+          "actual_bits": 47579,
+          "expected_bits": 47552,
+          "index": 20
+        },
+        {
+          "actual_bits": 48284,
+          "expected_bits": 48283,
+          "index": 21
+        },
+        {
+          "actual_bits": 48639,
+          "expected_bits": 48638,
+          "index": 23
+        },
+        {
+          "actual_bits": 16205,
+          "expected_bits": 16204,
+          "index": 26
+        },
+        {
+          "actual_bits": 15601,
+          "expected_bits": 15600,
+          "index": 30
+        },
+        {
+          "actual_bits": 15705,
+          "expected_bits": 15706,
+          "index": 34
+        },
+        {
+          "actual_bits": 14944,
+          "expected_bits": 14952,
+          "index": 35
+        },
+        {
+          "actual_bits": 47630,
+          "expected_bits": 47616,
+          "index": 38
+        },
+        {
+          "actual_bits": 15529,
+          "expected_bits": 15528,
+          "index": 47
+        },
+        {
+          "actual_bits": 15478,
+          "expected_bits": 15480,
+          "index": 59
+        },
+        {
+          "actual_bits": 48411,
+          "expected_bits": 48412,
+          "index": 60
+        },
+        {
+          "actual_bits": 48141,
+          "expected_bits": 48140,
+          "index": 65
+        }
+      ],
+      "first_differences_limit": 16,
+      "name": "materialized-formula-vs-native-rank0"
+    },
+    {
+      "actual_sha256": "00e5a0bf5610bc110507bc5b2dbc9a257823a1568ab5e24ace9f3a48bd01baaa",
+      "byte_equal": false,
+      "differing_words": 1208,
+      "elements": 4096,
+      "exact_words": 2888,
+      "expected_sha256": "2502e44efc99e7ff44bd5e00f92f7c18e46e46ad143ca618a72a4addb88bfdd2",
+      "first_differences": [
+        {
+          "actual_bits": 15926,
+          "expected_bits": 15925,
+          "index": 8
+        },
+        {
+          "actual_bits": 15409,
+          "expected_bits": 15408,
+          "index": 9
+        },
+        {
+          "actual_bits": 48393,
+          "expected_bits": 48394,
+          "index": 14
+        },
+        {
+          "actual_bits": 15183,
+          "expected_bits": 15184,
+          "index": 19
+        },
+        {
+          "actual_bits": 47579,
+          "expected_bits": 47552,
+          "index": 20
+        },
+        {
+          "actual_bits": 48284,
+          "expected_bits": 48283,
+          "index": 21
+        },
+        {
+          "actual_bits": 48639,
+          "expected_bits": 48638,
+          "index": 23
+        },
+        {
+          "actual_bits": 16205,
+          "expected_bits": 16204,
+          "index": 26
+        },
+        {
+          "actual_bits": 15601,
+          "expected_bits": 15600,
+          "index": 30
+        },
+        {
+          "actual_bits": 15705,
+          "expected_bits": 15706,
+          "index": 34
+        },
+        {
+          "actual_bits": 14944,
+          "expected_bits": 14952,
+          "index": 35
+        },
+        {
+          "actual_bits": 47630,
+          "expected_bits": 47616,
+          "index": 38
+        },
+        {
+          "actual_bits": 15529,
+          "expected_bits": 15528,
+          "index": 47
+        },
+        {
+          "actual_bits": 15478,
+          "expected_bits": 15480,
+          "index": 59
+        },
+        {
+          "actual_bits": 48411,
+          "expected_bits": 48412,
+          "index": 60
+        },
+        {
+          "actual_bits": 48141,
+          "expected_bits": 48140,
+          "index": 65
+        }
+      ],
+      "first_differences_limit": 16,
+      "name": "materialized-formula-vs-native-rank1"
+    },
+    {
+      "actual_sha256": "2502e44efc99e7ff44bd5e00f92f7c18e46e46ad143ca618a72a4addb88bfdd2",
+      "byte_equal": false,
+      "differing_words": 2,
+      "elements": 4096,
+      "exact_words": 4094,
+      "expected_sha256": "8741323079c3235eb02ffce0afc8d0716088c6c5417ac7923d68c5cea08822e8",
+      "first_differences": [
+        {
+          "actual_bits": 48429,
+          "expected_bits": 48430,
+          "index": 1024
+        },
+        {
+          "actual_bits": 48006,
+          "expected_bits": 48007,
+          "index": 3444
+        }
+      ],
+      "first_differences_limit": 16,
+      "name": "materialized-formula-vs-framework-residual"
+    },
+    {
+      "actual_sha256": "8741323079c3235eb02ffce0afc8d0716088c6c5417ac7923d68c5cea08822e8",
+      "byte_equal": true,
+      "differing_words": 0,
+      "elements": 4096,
+      "exact_words": 4096,
+      "expected_sha256": "8741323079c3235eb02ffce0afc8d0716088c6c5417ac7923d68c5cea08822e8",
+      "first_differences": [],
+      "first_differences_limit": 16,
+      "name": "framework-add-vs-framework-residual"
+    },
+    {
+      "actual_sha256": "befe0d8680b288310dd6f95bf1a5ea55af3bdf5d3ffe649c75da15c60da1a82c",
+      "byte_equal": false,
+      "differing_words": 3,
+      "elements": 4096,
+      "exact_words": 4093,
+      "expected_sha256": "6eb55741adea8ffe954ff1fd91d3e8b44fdabce18e49d64270a1ce4ec50d1dc4",
+      "first_differences": [
+        {
+          "actual_bits": 48285,
+          "expected_bits": 48286,
+          "index": 1024
+        },
+        {
+          "actual_bits": 46226,
+          "expected_bits": 46225,
+          "index": 1356
+        },
+        {
+          "actual_bits": 15240,
+          "expected_bits": 15239,
+          "index": 3444
+        }
+      ],
+      "first_differences_limit": 16,
+      "name": "rounded-rank-sum-vs-framework-projection"
+    }
+  ],
+  "completed": true,
+  "conditional_replay_performed": true,
+  "framework_execution": false,
+  "full_layer_numerics_accepted": false,
+  "full_model_acceptance": false,
+  "genuine_framework_chain_rerun": false,
+  "gpu_execution": false,
+  "input_provenance_verified": false,
+  "native_embedding_equality_verified": false,
+  "new_native_execution": false,
+  "numerical_acceptance": false,
+  "original_source_readmes_omitted": true,
+  "original_transport_pairs_rehashed": 271,
+  "performance_claim": false,
+  "prior_comparison": {
+    "bytes": 180610,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/layer0-current-comparison-v228-v1/complete.json",
+    "sha256": "758c2479a3f5a5f78e6ff088adb70a31ca5fb19c86e5a25cf718c3e1e46f4dab"
+  },
+  "prior_comparison_reexecuted": false,
+  "prior_ownership_checks_reexecuted": false,
+  "prior_publication": {
+    "bytes": 10348,
+    "path": "../layer0-native-capture-v1/comparison/result.json",
+    "sha256": "276497eb91193efb46903fb86b4d30fd4470523b8aa99baf097ebd3cdaeacd93"
+  },
+  "production_authority": false,
+  "projection_gemm_equivalence_proven": false,
+  "pure_tests": 12,
+  "raw_tensor_bodies_published": false,
+  "retained": {
+    "complete.json": {
+      "bytes": 177419,
+      "sha256": "39c12232b3504eccbca898383b70244093fe930b9c37656cbec1515cd30eaf11",
+      "source": {
+        "bytes": 177419,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/output-residual-boundary-v228-v1/complete.json",
+        "sha256": "39c12232b3504eccbca898383b70244093fe930b9c37656cbec1515cd30eaf11"
+      }
+    },
+    "inputs/assembly.json": {
+      "bytes": 2692,
+      "sha256": "cf85a1eeb909b6f9b9330f19b016fbbddd57eee61ac88748949abb7f4bef455a",
+      "source": {
+        "bytes": 2692,
+        "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/output-residual-boundary-inputs-v228-v1/assembly.json",
+        "sha256": "cf85a1eeb909b6f9b9330f19b016fbbddd57eee61ac88748949abb7f4bef455a"
+      }
+    },
+    "inputs/plan.json": {
+      "bytes": 649,
+      "sha256": "e7034e6461a8a20c6325b3c79897d4af315fc9df054216359a6d2db5b48175ee",
+      "source": {
+        "bytes": 649,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/output-residual-boundary-inputs-v228-v1/plan.json",
+        "sha256": "e7034e6461a8a20c6325b3c79897d4af315fc9df054216359a6d2db5b48175ee"
+      }
+    },
+    "pure/complete.json": {
+      "bytes": 1500,
+      "sha256": "20a16b03d188e2fb4e68d1d44a901ba6e0a73863b5a2402f152c7521f2e02516",
+      "source": {
+        "bytes": 1500,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/output-residual-boundary-pure-v228-v1/complete.json",
+        "sha256": "20a16b03d188e2fb4e68d1d44a901ba6e0a73863b5a2402f152c7521f2e02516"
+      }
+    },
+    "pure/sources-after.json": {
+      "bytes": 812,
+      "sha256": "2fc539da6571a1d63621f39da845841abf015533548f64d47c68f13096d22fcd",
+      "source": {
+        "bytes": 812,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/output-residual-boundary-pure-v228-v1/sources-after.json",
+        "sha256": "2fc539da6571a1d63621f39da845841abf015533548f64d47c68f13096d22fcd"
+      }
+    },
+    "pure/sources-before.json": {
+      "bytes": 812,
+      "sha256": "2fc539da6571a1d63621f39da845841abf015533548f64d47c68f13096d22fcd",
+      "source": {
+        "bytes": 812,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/output-residual-boundary-pure-v228-v1/sources-before.json",
+        "sha256": "2fc539da6571a1d63621f39da845841abf015533548f64d47c68f13096d22fcd"
+      }
+    },
+    "pure/tests.log": {
+      "bytes": 1265,
+      "sha256": "660a4c7e49206006dfc50ad5dd9cac3c6914539c5e062d3dc5352bdb094e48e5",
+      "source": {
+        "bytes": 1265,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/output-residual-boundary-pure-v228-v1/tests.log",
+        "sha256": "660a4c7e49206006dfc50ad5dd9cac3c6914539c5e062d3dc5352bdb094e48e5"
+      }
+    },
+    "runner/prepare.py": {
+      "bytes": 5381,
+      "sha256": "21fb3e76bb1d969ec8017c00063a12062fcb78e89453ac525d22a185f876c988",
+      "source": {
+        "bytes": 5381,
+        "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/p228-output-residual-boundary-run-v1/prepare.py",
+        "sha256": "21fb3e76bb1d969ec8017c00063a12062fcb78e89453ac525d22a185f876c988"
+      }
+    },
+    "runner/run.py": {
+      "bytes": 14025,
+      "sha256": "9cfc3124f1acdff6146792bafecfd944c747ec36f335f4b8d25fc37d24183a87",
+      "source": {
+        "bytes": 14025,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-output-residual-boundary-run-v1/run.py",
+        "sha256": "9cfc3124f1acdff6146792bafecfd944c747ec36f335f4b8d25fc37d24183a87"
+      }
+    },
+    "source/boundary.py": {
+      "bytes": 6681,
+      "sha256": "a5fac7b587739999623167d81c163fc18ebe9a2baf986da1b192b597e7fb0b9d",
+      "source": {
+        "bytes": 6681,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-output-residual-boundary-v1/boundary.py",
+        "sha256": "a5fac7b587739999623167d81c163fc18ebe9a2baf986da1b192b597e7fb0b9d"
+      }
+    },
+    "source/residual_oracle.py": {
+      "bytes": 4347,
+      "sha256": "551f89f968cad8f63073ca975346c593a31dad624115a93059b28a328e312ef3",
+      "source": {
+        "bytes": 4347,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-independent-layer-reference-v1/helpers/residual_oracle.py",
+        "sha256": "551f89f968cad8f63073ca975346c593a31dad624115a93059b28a328e312ef3"
+      }
+    },
+    "source/test_boundary.py": {
+      "bytes": 7586,
+      "sha256": "2088ec73ed3763647bebc3cf295364b2a029d2c59ca3937d95df1430932d39fb",
+      "source": {
+        "bytes": 7586,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-output-residual-boundary-v1/test_boundary.py",
+        "sha256": "2088ec73ed3763647bebc3cf295364b2a029d2c59ca3937d95df1430932d39fb"
+      }
+    },
+    "tools/publish.py": {
+      "bytes": 16287,
+      "sha256": "4f456d036d7c9051bc837b8fec5264ab859ea9264cfffebf5fbc911fffa6a69c",
+      "source": {
+        "bytes": 16287,
+        "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/p228-output-residual-boundary-publication-v1/publish.py",
+        "sha256": "4f456d036d7c9051bc837b8fec5264ab859ea9264cfffebf5fbc911fffa6a69c"
+      }
+    },
+    "tools/run_output_residual_boundary_pure_p228_v1.py": {
+      "bytes": 4513,
+      "sha256": "a00ba58cca7f4ac43d0be56f573be6c21587d57dde48a5c8d0b228a96e7bc791",
+      "source": {
+        "bytes": 4513,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/run_output_residual_boundary_pure_p228_v1.py",
+        "sha256": "a00ba58cca7f4ac43d0be56f573be6c21587d57dde48a5c8d0b228a96e7bc791"
+      }
+    }
+  },
+  "root_authored_readme": {
+    "bytes": 4017,
+    "sha256": "8091c9ba152b38cf00fbeb638c14b4d9bb7719ca0a1ec7597baed85bed4939ae"
+  },
+  "runtime_premises_discharged": false,
+  "schema": "ferric-p228-output-residual-boundary-publication-v1",
+  "upstream_partial_numerics_checked": false
+}

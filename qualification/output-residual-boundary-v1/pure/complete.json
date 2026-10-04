@@ -1,0 +1,37 @@
+{
+  "compiler_execution": false,
+  "controller": {
+    "bytes": 4513,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/run_output_residual_boundary_pure_p228_v1.py",
+    "sha256": "a00ba58cca7f4ac43d0be56f573be6c21587d57dde48a5c8d0b228a96e7bc791"
+  },
+  "errors": 0,
+  "failures": 0,
+  "framework_execution": false,
+  "gpu_execution": false,
+  "numerical_acceptance": false,
+  "passed": true,
+  "performance_claim": false,
+  "production_authority": false,
+  "runtime_audit_executed": false,
+  "schema": "ferric-p228-output-residual-boundary-pure-v1",
+  "skipped": 0,
+  "source_postchecks_passed": true,
+  "sources_after": {
+    "bytes": 812,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/output-residual-boundary-pure-v228-v1/sources-after.json",
+    "sha256": "2fc539da6571a1d63621f39da845841abf015533548f64d47c68f13096d22fcd"
+  },
+  "sources_before": {
+    "bytes": 812,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/output-residual-boundary-pure-v228-v1/sources-before.json",
+    "sha256": "2fc539da6571a1d63621f39da845841abf015533548f64d47c68f13096d22fcd"
+  },
+  "synthetic_policy_tests_only": true,
+  "tests": 12,
+  "transcript": {
+    "bytes": 1265,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/output-residual-boundary-pure-v228-v1/tests.log",
+    "sha256": "660a4c7e49206006dfc50ad5dd9cac3c6914539c5e062d3dc5352bdb094e48e5"
+  }
+}

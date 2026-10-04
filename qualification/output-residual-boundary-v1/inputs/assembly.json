@@ -1,0 +1,57 @@
+{
+  "gpu_execution": false,
+  "local_input_pins": [
+    {
+      "bytes": 180610,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/layer0-current-comparison-v228-v1/complete.json",
+      "sha256": "758c2479a3f5a5f78e6ff088adb70a31ca5fb19c86e5a25cf718c3e1e46f4dab"
+    },
+    {
+      "bytes": 1500,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/output-residual-boundary-pure-v228-v1/complete.json",
+      "sha256": "20a16b03d188e2fb4e68d1d44a901ba6e0a73863b5a2402f152c7521f2e02516"
+    },
+    {
+      "bytes": 812,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/output-residual-boundary-pure-v228-v1/sources-before.json",
+      "sha256": "2fc539da6571a1d63621f39da845841abf015533548f64d47c68f13096d22fcd"
+    },
+    {
+      "bytes": 812,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/output-residual-boundary-pure-v228-v1/sources-after.json",
+      "sha256": "2fc539da6571a1d63621f39da845841abf015533548f64d47c68f13096d22fcd"
+    },
+    {
+      "bytes": 1265,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/output-residual-boundary-pure-v228-v1/tests.log",
+      "sha256": "660a4c7e49206006dfc50ad5dd9cac3c6914539c5e062d3dc5352bdb094e48e5"
+    },
+    {
+      "bytes": 4513,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/run_output_residual_boundary_pure_p228_v1.py",
+      "sha256": "a00ba58cca7f4ac43d0be56f573be6c21587d57dde48a5c8d0b228a96e7bc791"
+    },
+    {
+      "bytes": 6681,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/p228-output-residual-boundary-v1/boundary.py",
+      "sha256": "a5fac7b587739999623167d81c163fc18ebe9a2baf986da1b192b597e7fb0b9d"
+    },
+    {
+      "bytes": 4347,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/p228-independent-layer-reference-v1/helpers/residual_oracle.py",
+      "sha256": "551f89f968cad8f63073ca975346c593a31dad624115a93059b28a328e312ef3"
+    },
+    {
+      "bytes": 7586,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/p228-output-residual-boundary-v1/test_boundary.py",
+      "sha256": "2088ec73ed3763647bebc3cf295364b2a029d2c59ca3937d95df1430932d39fb"
+    }
+  ],
+  "native_execution": false,
+  "new_model_transfer_required": false,
+  "numerical_acceptance": false,
+  "prior_transport_map_reused_without_new_aliases": true,
+  "production_authority": false,
+  "retained_input_map_entries": 260,
+  "schema": "ferric-p228-output-residual-boundary-assembly-v1"
+}

@@ -6,7 +6,15 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Latest: the [current layer-zero native capture](../qualification/layer0-native-capture-v1/README.md)
+Latest: the [projection-rounding replay](../qualification/output-residual-boundary-v1/README.md)
+completed on `mi350-2`. The current formula reproduces all 4,096 captured native
+residual values on both ranks. Materializing the projection in BF16 before
+residual addition improves framework agreement from 2,886 to 4,094 values;
+the projection sum itself still differs at three values. All twelve diagnostic
+tests passed. This is conditional captured-data arithmetic, not a new GPU
+kernel result or full-model numerical acceptance.
+
+The [current layer-zero native capture](../qualification/layer0-native-capture-v1/README.md)
 passed on `mi350`: 28 typed arrays were retained, both final hidden states
 match the current native baseline byte for byte, and untouched KV regions
 passed checks. One attempt, six selected-device audits and seven natural/reaped

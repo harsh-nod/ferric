@@ -1,0 +1,14 @@
+{
+  "boundary_tests": {
+    "bytes": 1500,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/output-residual-boundary-pure-v228-v1/complete.json",
+    "sha256": "20a16b03d188e2fb4e68d1d44a901ba6e0a73863b5a2402f152c7521f2e02516"
+  },
+  "comparison": {
+    "bytes": 180610,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/layer0-current-comparison-v228-v1/complete.json",
+    "sha256": "758c2479a3f5a5f78e6ff088adb70a31ca5fb19c86e5a25cf718c3e1e46f4dab"
+  },
+  "output_label": "output-residual-boundary-v228-v1",
+  "schema": "ferric-p228-output-residual-boundary-inputs-v1"
+}
