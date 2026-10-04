@@ -1,0 +1,21 @@
+{
+  "schema": "ferric-p224-rearm-four-framework-reference-policy-v1",
+  "model": "Qwen/Qwen3-8B",
+  "revision": "b968826d9c46dd6066d109eabc6255188de91218",
+  "scope": "Two independent fresh-cache repeat passes, each with exactly four one-token teacher-forced forwards at positions0,1,2,3 through all36 original-weight layers, final norm and full language-model head. These are the first four raw prompt IDs [9112,2190,3772,220], not a 2048-token prefill or long decode qualification.",
+  "arithmetic": "Retained PyTorch2.12.1+rocm7.2 and Transformers4.51.0 Qwen3 implementation. BF16 original weights/hidden/head, FP32 RoPE buffers preserved by device-only move, deterministic algorithms, math-only SDPA, no reduced-precision BF16 matrix reduction or SDPA reduction. This is not a Ferric wave/MFMA/OCML bit replica.",
+  "input_modes": {
+    "teacher_forced": "Exactly the four pinned raw prompt IDs, independently consumed in order by each repeat pass. Argmaxes are reported but never fed as input. Each pass retains its own independently computed KV; no candidate token, cache, hidden or other intermediate is accepted. Autoregressive mode is refused."
+  },
+  "capture": "Each of eight forwards emits 606976 bytes:36 layer-output BF16[4096] vectors in layer order, final-norm BF16[4096], then BF16[151936] logits. Total tensor payload4847808 bytes. Layer35 output is checked against final norm input. All captured tensors and both KV histories must be finite. All36 key/value caches are hashed at each position with shape[1,8,position+1,128].",
+  "reference_qualification": "Both fresh-cache repeat passes must agree exactly in actual input/output tokens and every captured byte. Each output token must equal the first-index argmax of its own finite BF16 logit vector.",
+  "candidate_diagnostics": "Require all four exact teacher-forced input tokens, generation/position order, finite tensor extents and own-logit argmax. Compare independently evolved own-KV trajectories with the same fixed input history, reporting per-tensor exact-word count,max-absolute error,RMSE,relativeL2 and maximum ordered-BF16 distance. These values have no numerical acceptance threshold. Zero reference norm with nonzero error reports relativeL2:null. No aggregate tolerance or automatic candidate acceptance.",
+  "candidate_intermediate_inputs": false,
+  "adaptive_tolerance": false,
+  "numerical_acceptance": false,
+  "acceptance_threshold": null,
+  "full_model_correctness": false,
+  "source_reduction_bit_equivalence": false,
+  "performance_measured": false,
+  "production_authority": false
+}

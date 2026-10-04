@@ -1,0 +1,23 @@
+test_all_three_post_audits_attempted_even_after_each_failure (test_launch.LaunchPolicy) ... ok
+test_approval_wait_timeout_never_creates_review (test_launch.LaunchPolicy) ... ok
+test_capture_directory_or_cache_symlinks_are_refused (test_launch.LaunchPolicy) ... ok
+test_complete_two_pass_stage_report_has_no_candidate_acceptance (test_launch.LaunchPolicy) ... ok
+test_exact_package_and_closed_inputs (test_launch.LaunchPolicy) ... ok
+test_first_pin_read_refuses_wrong_bytes_without_importing_module (test_launch.LaunchPolicy) ... ok
+test_late_approval_file_does_not_bypass_wait_deadline (test_launch.LaunchPolicy) ... ok
+test_launch_review_binds_projection_resources_and_false_claims (test_launch.LaunchPolicy) ... ok
+test_monitor_uses_fresh_reviewed_process_not_historical_pid (test_launch.LaunchPolicy) ... ok
+test_monitor_wrong_executable_identity_or_process_shape_refused (test_launch.LaunchPolicy) ... ok
+test_no_monitor_does_not_create_a_monitor_exception (test_launch.LaunchPolicy) ... ok
+test_original_namespace_and_wrong_host_refused (test_launch.LaunchPolicy) ... ok
+test_package_cannot_mix_source_directories (test_launch.LaunchPolicy) ... ok
+test_post_audits_and_single_attempt_are_required_for_success (test_launch.LaunchPolicy) ... ok
+test_reference_plan_binds_actual_direct_supervisor_and_no_candidate_inputs (test_launch.LaunchPolicy) ... ok
+test_reference_support_is_local_and_complete (test_launch.LaunchPolicy) ... ok
+test_separate_capture_cache_and_output_keep_original_aggregate_categories (test_launch.LaunchPolicy) ... ok
+test_stage_missing_extent_path_and_repeat_mismatch_are_refused (test_launch.LaunchPolicy) ... ok
+
+----------------------------------------------------------------------
+Ran 18 tests in 0.008s
+
+OK

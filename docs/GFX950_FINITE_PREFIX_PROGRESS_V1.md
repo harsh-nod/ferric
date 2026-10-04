@@ -6,7 +6,16 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Latest: the [paired-row MLP GPU comparison](../qualification/paired-row-mlp-native-v1/README.md)
+Latest: the [independent layer-zero capture](../qualification/layer0-framework-capture-v1/README.md)
+passed on `mi350-2`: 33 genuine BF16 framework intermediates repeated exactly
+across two fresh-KV passes. The new layer-zero output matches the original
+framework reference byte for byte. Separate capture, launcher and comparison
+suites passed 16, 18 and 14 tests. The actual CPU comparison still finds a
+Ferric/reference difference: 1,834/4,096 equal words, maximum absolute error
+0.0625 and relative L2 0.0035785690. Current native internal-stage capture is
+the next numerical gate; no new tolerance or numerical acceptance is claimed.
+
+The [paired-row MLP GPU comparison](../qualification/paired-row-mlp-native-v1/README.md)
 passed on `mi350`: four complete output buffers and all 152 tensor comparisons
 were byte-identical to the unchanged clock-enabled baseline. All 288 MLP
 dispatches bind the new checked image. One attempt, six audits and seven
@@ -124,6 +133,7 @@ earlier checkpoints and their limitations at the time they were recorded.
 
 | Check | Observed result | Boundary |
 | --- | --- | --- |
+| Independent layer-zero framework capture on `mi350-2` | 33 BF16 stages x two passes repeated exactly; output matches original reference; separate 16, 18 and 14-test suites passed | Current Ferric layer-zero output still differs; first internal divergence and full-model acceptance remain open |
 | Gfx950 clock-sampling API on `mi350-2` | 648 Rust tests passed, four existing ignores; fresh worker; separate 14 controller tests | CPU-only raw-sampler checks; no native ioctl qualification, calibration or recorder integration |
 | Timestamp-enabled parent/worker on `mi350` | 1,172 raw rows; 152 tensors and four payloads/tokens unchanged; six audits and clean Close/reap; 47 controller tests | Per-device raw-tick plots, not calibrated GPU latency, overlap or sustained throughput |
 | Device-tick parent/worker runtime audits on `mi350` | Both exact CPU-qualified ELFs inspected; four natural exits/reaps; all dependencies resolved | Seven auditor tests and 44 controller tests are separate; real admission failed before native launch |

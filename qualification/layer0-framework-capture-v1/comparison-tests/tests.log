@@ -1,0 +1,19 @@
+test_bounds_page_and_strict_json_fail_closed (test_compare.Comparison) ... ok
+test_changed_stage_pin_and_nonfinite_values_are_refused (test_compare.Comparison) ... ok
+test_checkpoint_identity_ignores_only_host_stat_fields (test_compare.Comparison) ... ok
+test_current_image_change_or_wrong_capture_pin_is_rejected (test_compare.Comparison) ... ok
+test_current_native_uses_actual_v7_down2_payload_and_request (test_compare.Comparison) ... ok
+test_full_framework_shape_roster_and_repeat (test_compare.Comparison) ... ok
+test_historical_activation_maps_product_not_silu_and_excludes_partials (test_compare.Comparison) ... ok
+test_historical_rank_qkv_and_current_page_mapping (test_compare.Comparison) ... ok
+test_original_framework_slice_comes_from_actual_complete_payload (test_compare.Comparison) ... ok
+test_primary_mismatches_are_diagnostics_not_acceptance (test_compare.Comparison) ... ok
+test_producer_join_and_real_repeat_mismatch_are_refused (test_compare.Comparison) ... ok
+test_unchanged_diagnostics_source_is_exact (test_compare.Comparison) ... ok
+test_wrong_observed_dtype_or_shape_is_refused (test_compare.Comparison) ... ok
+test_wrong_token_and_conditional_inputs_are_refused (test_compare.Comparison) ... ok
+
+----------------------------------------------------------------------
+Ran 14 tests in 0.725s
+
+OK

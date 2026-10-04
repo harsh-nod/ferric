@@ -1,0 +1,1150 @@
+{
+  "actual_repeated_bytes_equal": true,
+  "finite_bf16_checked": true,
+  "numerical_acceptance": false,
+  "passes": 2,
+  "producer_consumer_joins_checked": true,
+  "raw_tensor_bodies_published": false,
+  "schema": "ferric-p228-layer0-framework-tensor-ledger-v1",
+  "stages_per_pass": 33,
+  "tensors": [
+    {
+      "dtype": "bfloat16",
+      "elements": 4096,
+      "pass_ordinal": 1,
+      "published_raw": false,
+      "shape": [
+        1,
+        1,
+        4096
+      ],
+      "source_pin": {
+        "bytes": 8192,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/layer0-framework-capture-v228-v1/pass1-embedding.bf16",
+        "sha256": "68b2cf48a968e475175c36edb4b0fb94836fcb2afcdedcb4403b208cf98f6b1c"
+      },
+      "stage": "embedding"
+    },
+    {
+      "dtype": "bfloat16",
+      "elements": 4096,
+      "pass_ordinal": 1,
+      "published_raw": false,
+      "shape": [
+        1,
+        1,
+        4096
+      ],
+      "source_pin": {
+        "bytes": 8192,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/layer0-framework-capture-v228-v1/pass1-input-norm-input.bf16",
+        "sha256": "68b2cf48a968e475175c36edb4b0fb94836fcb2afcdedcb4403b208cf98f6b1c"
+      },
+      "stage": "input-norm-input"
+    },
+    {
+      "dtype": "bfloat16",
+      "elements": 4096,
+      "pass_ordinal": 1,
+      "published_raw": false,
+      "shape": [
+        1,
+        1,
+        4096
+      ],
+      "source_pin": {
+        "bytes": 8192,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/layer0-framework-capture-v228-v1/pass1-input-norm.bf16",
+        "sha256": "49b3afa6ca46528ec64673ca0e1a660e013fffc08717589ad78221c999fc379f"
+      },
+      "stage": "input-norm"
+    },
+    {
+      "dtype": "bfloat16",
+      "elements": 4096,
+      "pass_ordinal": 1,
+      "published_raw": false,
+      "shape": [
+        1,
+        1,
+        4096
+      ],
+      "source_pin": {
+        "bytes": 8192,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/layer0-framework-capture-v228-v1/pass1-q-input.bf16",
+        "sha256": "49b3afa6ca46528ec64673ca0e1a660e013fffc08717589ad78221c999fc379f"
+      },
+      "stage": "q-input"
+    },
+    {
+      "dtype": "bfloat16",
+      "elements": 4096,
+      "pass_ordinal": 1,
+      "published_raw": false,
+      "shape": [
+        1,
+        1,
+        4096
+      ],
+      "source_pin": {
+        "bytes": 8192,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/layer0-framework-capture-v228-v1/pass1-k-input.bf16",
+        "sha256": "49b3afa6ca46528ec64673ca0e1a660e013fffc08717589ad78221c999fc379f"
+      },
+      "stage": "k-input"
+    },
+    {
+      "dtype": "bfloat16",
+      "elements": 4096,
+      "pass_ordinal": 1,
+      "published_raw": false,
+      "shape": [
+        1,
+        1,
+        4096
+      ],
+      "source_pin": {
+        "bytes": 8192,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/layer0-framework-capture-v228-v1/pass1-v-input.bf16",
+        "sha256": "49b3afa6ca46528ec64673ca0e1a660e013fffc08717589ad78221c999fc379f"
+      },
+      "stage": "v-input"
+    },
+    {
+      "dtype": "bfloat16",
+      "elements": 4096,
+      "pass_ordinal": 1,
+      "published_raw": false,
+      "shape": [
+        1,
+        1,
+        4096
+      ],
+      "source_pin": {
+        "bytes": 8192,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/layer0-framework-capture-v228-v1/pass1-q-projection.bf16",
+        "sha256": "000465636fa272ac0ac63c4d9981c34de976dba5fbcb0cbfbb7a27ab6033f870"
+      },
+      "stage": "q-projection"
+    },
+    {
+      "dtype": "bfloat16",
+      "elements": 1024,
+      "pass_ordinal": 1,
+      "published_raw": false,
+      "shape": [
+        1,
+        1,
+        1024
+      ],
+      "source_pin": {
+        "bytes": 2048,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/layer0-framework-capture-v228-v1/pass1-k-projection.bf16",
+        "sha256": "065ef5eaefa4f1a79471becaeae83ae561ead4bb6e19c6dccb717df764526cec"
+      },
+      "stage": "k-projection"
+    },
+    {
+      "dtype": "bfloat16",
+      "elements": 1024,
+      "pass_ordinal": 1,
+      "published_raw": false,
+      "shape": [
+        1,
+        1,
+        1024
+      ],
+      "source_pin": {
+        "bytes": 2048,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/layer0-framework-capture-v228-v1/pass1-v-projection.bf16",
+        "sha256": "9c2da95af86bfd6967db7d9c93c396060d6c44e8a07be1ae9946f5b2f2884443"
+      },
+      "stage": "v-projection"
+    },
+    {
+      "dtype": "bfloat16",
+      "elements": 4096,
+      "pass_ordinal": 1,
+      "published_raw": false,
+      "shape": [
+        1,
+        1,
+        32,
+        128
+      ],
+      "source_pin": {
+        "bytes": 8192,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/layer0-framework-capture-v228-v1/pass1-q-norm-input.bf16",
+        "sha256": "000465636fa272ac0ac63c4d9981c34de976dba5fbcb0cbfbb7a27ab6033f870"
+      },
+      "stage": "q-norm-input"
+    },
+    {
+      "dtype": "bfloat16",
+      "elements": 4096,
+      "pass_ordinal": 1,
+      "published_raw": false,
+      "shape": [
+        1,
+        1,
+        32,
+        128
+      ],
+      "source_pin": {
+        "bytes": 8192,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/layer0-framework-capture-v228-v1/pass1-q-norm.bf16",
+        "sha256": "d852b37e1a3912612875e14f52d996c0b7a3670f98d63eafb252561b94c5051d"
+      },
+      "stage": "q-norm"
+    },
+    {
+      "dtype": "bfloat16",
+      "elements": 1024,
+      "pass_ordinal": 1,
+      "published_raw": false,
+      "shape": [
+        1,
+        1,
+        8,
+        128
+      ],
+      "source_pin": {
+        "bytes": 2048,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/layer0-framework-capture-v228-v1/pass1-k-norm-input.bf16",
+        "sha256": "065ef5eaefa4f1a79471becaeae83ae561ead4bb6e19c6dccb717df764526cec"
+      },
+      "stage": "k-norm-input"
+    },
+    {
+      "dtype": "bfloat16",
+      "elements": 1024,
+      "pass_ordinal": 1,
+      "published_raw": false,
+      "shape": [
+        1,
+        1,
+        8,
+        128
+      ],
+      "source_pin": {
+        "bytes": 2048,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/layer0-framework-capture-v228-v1/pass1-k-norm.bf16",
+        "sha256": "8644f9501f18fc0b6c8868c6f1935663ebd96feff016a6a5b22445376d63f1d4"
+      },
+      "stage": "k-norm"
+    },
+    {
+      "dtype": "bfloat16",
+      "elements": 128,
+      "pass_ordinal": 1,
+      "published_raw": false,
+      "shape": [
+        1,
+        1,
+        128
+      ],
+      "source_pin": {
+        "bytes": 256,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/layer0-framework-capture-v228-v1/pass1-rotary-cos.bf16",
+        "sha256": "1ede9ebfa1ad011b89a3e3df648a958674d64afa0726d98858a68b8a4da14ee0"
+      },
+      "stage": "rotary-cos"
+    },
+    {
+      "dtype": "bfloat16",
+      "elements": 128,
+      "pass_ordinal": 1,
+      "published_raw": false,
+      "shape": [
+        1,
+        1,
+        128
+      ],
+      "source_pin": {
+        "bytes": 256,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/layer0-framework-capture-v228-v1/pass1-rotary-sin.bf16",
+        "sha256": "5341e6b2646979a70e57653007a1f310169421ec9bdd9f1a5648f75ade005af1"
+      },
+      "stage": "rotary-sin"
+    },
+    {
+      "dtype": "bfloat16",
+      "elements": 4096,
+      "pass_ordinal": 1,
+      "published_raw": false,
+      "shape": [
+        1,
+        32,
+        1,
+        128
+      ],
+      "source_pin": {
+        "bytes": 8192,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/layer0-framework-capture-v228-v1/pass1-rotary-q.bf16",
+        "sha256": "d852b37e1a3912612875e14f52d996c0b7a3670f98d63eafb252561b94c5051d"
+      },
+      "stage": "rotary-q"
+    },
+    {
+      "dtype": "bfloat16",
+      "elements": 1024,
+      "pass_ordinal": 1,
+      "published_raw": false,
+      "shape": [
+        1,
+        8,
+        1,
+        128
+      ],
+      "source_pin": {
+        "bytes": 2048,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/layer0-framework-capture-v228-v1/pass1-rotary-k.bf16",
+        "sha256": "8644f9501f18fc0b6c8868c6f1935663ebd96feff016a6a5b22445376d63f1d4"
+      },
+      "stage": "rotary-k"
+    },
+    {
+      "dtype": "bfloat16",
+      "elements": 4096,
+      "pass_ordinal": 1,
+      "published_raw": false,
+      "shape": [
+        1,
+        1,
+        4096
+      ],
+      "source_pin": {
+        "bytes": 8192,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/layer0-framework-capture-v228-v1/pass1-attention-output.bf16",
+        "sha256": "a2462ddd99cab2adcfdfb0812e83ffbc87ebfd07c99e4ca08793c4d4fbf70cfe"
+      },
+      "stage": "attention-output"
+    },
+    {
+      "dtype": "bfloat16",
+      "elements": 4096,
+      "pass_ordinal": 1,
+      "published_raw": false,
+      "shape": [
+        1,
+        1,
+        4096
+      ],
+      "source_pin": {
+        "bytes": 8192,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/layer0-framework-capture-v228-v1/pass1-o-projection.bf16",
+        "sha256": "6eb55741adea8ffe954ff1fd91d3e8b44fdabce18e49d64270a1ce4ec50d1dc4"
+      },
+      "stage": "o-projection"
+    },
+    {
+      "dtype": "bfloat16",
+      "elements": 4096,
+      "pass_ordinal": 1,
+      "published_raw": false,
+      "shape": [
+        1,
+        1,
+        4096
+      ],
+      "source_pin": {
+        "bytes": 8192,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/layer0-framework-capture-v228-v1/pass1-first-residual.bf16",
+        "sha256": "8741323079c3235eb02ffce0afc8d0716088c6c5417ac7923d68c5cea08822e8"
+      },
+      "stage": "first-residual"
+    },
+    {
+      "dtype": "bfloat16",
+      "elements": 4096,
+      "pass_ordinal": 1,
+      "published_raw": false,
+      "shape": [
+        1,
+        1,
+        4096
+      ],
+      "source_pin": {
+        "bytes": 8192,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/layer0-framework-capture-v228-v1/pass1-post-norm.bf16",
+        "sha256": "086a1aa7b7e1ab15671526dc4372dd88cbb33f88fdfdadc719154c7d4d784b21"
+      },
+      "stage": "post-norm"
+    },
+    {
+      "dtype": "bfloat16",
+      "elements": 4096,
+      "pass_ordinal": 1,
+      "published_raw": false,
+      "shape": [
+        1,
+        1,
+        4096
+      ],
+      "source_pin": {
+        "bytes": 8192,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/layer0-framework-capture-v228-v1/pass1-gate-input.bf16",
+        "sha256": "086a1aa7b7e1ab15671526dc4372dd88cbb33f88fdfdadc719154c7d4d784b21"
+      },
+      "stage": "gate-input"
+    },
+    {
+      "dtype": "bfloat16",
+      "elements": 4096,
+      "pass_ordinal": 1,
+      "published_raw": false,
+      "shape": [
+        1,
+        1,
+        4096
+      ],
+      "source_pin": {
+        "bytes": 8192,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/layer0-framework-capture-v228-v1/pass1-up-input.bf16",
+        "sha256": "086a1aa7b7e1ab15671526dc4372dd88cbb33f88fdfdadc719154c7d4d784b21"
+      },
+      "stage": "up-input"
+    },
+    {
+      "dtype": "bfloat16",
+      "elements": 12288,
+      "pass_ordinal": 1,
+      "published_raw": false,
+      "shape": [
+        1,
+        1,
+        12288
+      ],
+      "source_pin": {
+        "bytes": 24576,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/layer0-framework-capture-v228-v1/pass1-gate.bf16",
+        "sha256": "a92654d72089de8e8a589934fcb970a705a95202bb7122ac8408b90877b2be0d"
+      },
+      "stage": "gate"
+    },
+    {
+      "dtype": "bfloat16",
+      "elements": 12288,
+      "pass_ordinal": 1,
+      "published_raw": false,
+      "shape": [
+        1,
+        1,
+        12288
+      ],
+      "source_pin": {
+        "bytes": 24576,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/layer0-framework-capture-v228-v1/pass1-up.bf16",
+        "sha256": "6d9eb5e855f2e3d9380954204a46fc5e567f09fa9f34a9401bb1585ca96e3dfd"
+      },
+      "stage": "up"
+    },
+    {
+      "dtype": "bfloat16",
+      "elements": 12288,
+      "pass_ordinal": 1,
+      "published_raw": false,
+      "shape": [
+        1,
+        1,
+        12288
+      ],
+      "source_pin": {
+        "bytes": 24576,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/layer0-framework-capture-v228-v1/pass1-silu-input.bf16",
+        "sha256": "a92654d72089de8e8a589934fcb970a705a95202bb7122ac8408b90877b2be0d"
+      },
+      "stage": "silu-input"
+    },
+    {
+      "dtype": "bfloat16",
+      "elements": 12288,
+      "pass_ordinal": 1,
+      "published_raw": false,
+      "shape": [
+        1,
+        1,
+        12288
+      ],
+      "source_pin": {
+        "bytes": 24576,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/layer0-framework-capture-v228-v1/pass1-silu.bf16",
+        "sha256": "93c85ddadb168fbeaa9fabc752a3335933656c88066b45ce9a5a60f32358401a"
+      },
+      "stage": "silu"
+    },
+    {
+      "dtype": "bfloat16",
+      "elements": 12288,
+      "pass_ordinal": 1,
+      "published_raw": false,
+      "shape": [
+        1,
+        1,
+        12288
+      ],
+      "source_pin": {
+        "bytes": 24576,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/layer0-framework-capture-v228-v1/pass1-product.bf16",
+        "sha256": "f26e8d72ce28731ad599ea624948ed497a70f52e484b1ec8bc564d4cedbe0438"
+      },
+      "stage": "product"
+    },
+    {
+      "dtype": "bfloat16",
+      "elements": 4096,
+      "pass_ordinal": 1,
+      "published_raw": false,
+      "shape": [
+        1,
+        1,
+        4096
+      ],
+      "source_pin": {
+        "bytes": 8192,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/layer0-framework-capture-v228-v1/pass1-down-projection.bf16",
+        "sha256": "a02ed8d749722e1901119ba5849e6425f27d8a86a4d0da5494b6f9896df7f786"
+      },
+      "stage": "down-projection"
+    },
+    {
+      "dtype": "bfloat16",
+      "elements": 4096,
+      "pass_ordinal": 1,
+      "published_raw": false,
+      "shape": [
+        1,
+        1,
+        4096
+      ],
+      "source_pin": {
+        "bytes": 8192,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/layer0-framework-capture-v228-v1/pass1-mlp-output.bf16",
+        "sha256": "a02ed8d749722e1901119ba5849e6425f27d8a86a4d0da5494b6f9896df7f786"
+      },
+      "stage": "mlp-output"
+    },
+    {
+      "dtype": "bfloat16",
+      "elements": 4096,
+      "pass_ordinal": 1,
+      "published_raw": false,
+      "shape": [
+        1,
+        1,
+        4096
+      ],
+      "source_pin": {
+        "bytes": 8192,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/layer0-framework-capture-v228-v1/pass1-layer0-hidden.bf16",
+        "sha256": "06cc2700e0c8e89e351b16eab9bece2c77a69683a3bc0ef33497864a0db867ac"
+      },
+      "stage": "layer0-hidden"
+    },
+    {
+      "dtype": "bfloat16",
+      "elements": 1024,
+      "pass_ordinal": 1,
+      "published_raw": false,
+      "shape": [
+        1,
+        8,
+        1,
+        128
+      ],
+      "source_pin": {
+        "bytes": 2048,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/layer0-framework-capture-v228-v1/pass1-cache-key.bf16",
+        "sha256": "8644f9501f18fc0b6c8868c6f1935663ebd96feff016a6a5b22445376d63f1d4"
+      },
+      "stage": "cache-key"
+    },
+    {
+      "dtype": "bfloat16",
+      "elements": 1024,
+      "pass_ordinal": 1,
+      "published_raw": false,
+      "shape": [
+        1,
+        8,
+        1,
+        128
+      ],
+      "source_pin": {
+        "bytes": 2048,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/layer0-framework-capture-v228-v1/pass1-cache-value.bf16",
+        "sha256": "9c2da95af86bfd6967db7d9c93c396060d6c44e8a07be1ae9946f5b2f2884443"
+      },
+      "stage": "cache-value"
+    },
+    {
+      "dtype": "bfloat16",
+      "elements": 4096,
+      "pass_ordinal": 2,
+      "published_raw": false,
+      "shape": [
+        1,
+        1,
+        4096
+      ],
+      "source_pin": {
+        "bytes": 8192,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/layer0-framework-capture-v228-v1/pass2-embedding.bf16",
+        "sha256": "68b2cf48a968e475175c36edb4b0fb94836fcb2afcdedcb4403b208cf98f6b1c"
+      },
+      "stage": "embedding"
+    },
+    {
+      "dtype": "bfloat16",
+      "elements": 4096,
+      "pass_ordinal": 2,
+      "published_raw": false,
+      "shape": [
+        1,
+        1,
+        4096
+      ],
+      "source_pin": {
+        "bytes": 8192,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/layer0-framework-capture-v228-v1/pass2-input-norm-input.bf16",
+        "sha256": "68b2cf48a968e475175c36edb4b0fb94836fcb2afcdedcb4403b208cf98f6b1c"
+      },
+      "stage": "input-norm-input"
+    },
+    {
+      "dtype": "bfloat16",
+      "elements": 4096,
+      "pass_ordinal": 2,
+      "published_raw": false,
+      "shape": [
+        1,
+        1,
+        4096
+      ],
+      "source_pin": {
+        "bytes": 8192,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/layer0-framework-capture-v228-v1/pass2-input-norm.bf16",
+        "sha256": "49b3afa6ca46528ec64673ca0e1a660e013fffc08717589ad78221c999fc379f"
+      },
+      "stage": "input-norm"
+    },
+    {
+      "dtype": "bfloat16",
+      "elements": 4096,
+      "pass_ordinal": 2,
+      "published_raw": false,
+      "shape": [
+        1,
+        1,
+        4096
+      ],
+      "source_pin": {
+        "bytes": 8192,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/layer0-framework-capture-v228-v1/pass2-q-input.bf16",
+        "sha256": "49b3afa6ca46528ec64673ca0e1a660e013fffc08717589ad78221c999fc379f"
+      },
+      "stage": "q-input"
+    },
+    {
+      "dtype": "bfloat16",
+      "elements": 4096,
+      "pass_ordinal": 2,
+      "published_raw": false,
+      "shape": [
+        1,
+        1,
+        4096
+      ],
+      "source_pin": {
+        "bytes": 8192,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/layer0-framework-capture-v228-v1/pass2-k-input.bf16",
+        "sha256": "49b3afa6ca46528ec64673ca0e1a660e013fffc08717589ad78221c999fc379f"
+      },
+      "stage": "k-input"
+    },
+    {
+      "dtype": "bfloat16",
+      "elements": 4096,
+      "pass_ordinal": 2,
+      "published_raw": false,
+      "shape": [
+        1,
+        1,
+        4096
+      ],
+      "source_pin": {
+        "bytes": 8192,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/layer0-framework-capture-v228-v1/pass2-v-input.bf16",
+        "sha256": "49b3afa6ca46528ec64673ca0e1a660e013fffc08717589ad78221c999fc379f"
+      },
+      "stage": "v-input"
+    },
+    {
+      "dtype": "bfloat16",
+      "elements": 4096,
+      "pass_ordinal": 2,
+      "published_raw": false,
+      "shape": [
+        1,
+        1,
+        4096
+      ],
+      "source_pin": {
+        "bytes": 8192,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/layer0-framework-capture-v228-v1/pass2-q-projection.bf16",
+        "sha256": "000465636fa272ac0ac63c4d9981c34de976dba5fbcb0cbfbb7a27ab6033f870"
+      },
+      "stage": "q-projection"
+    },
+    {
+      "dtype": "bfloat16",
+      "elements": 1024,
+      "pass_ordinal": 2,
+      "published_raw": false,
+      "shape": [
+        1,
+        1,
+        1024
+      ],
+      "source_pin": {
+        "bytes": 2048,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/layer0-framework-capture-v228-v1/pass2-k-projection.bf16",
+        "sha256": "065ef5eaefa4f1a79471becaeae83ae561ead4bb6e19c6dccb717df764526cec"
+      },
+      "stage": "k-projection"
+    },
+    {
+      "dtype": "bfloat16",
+      "elements": 1024,
+      "pass_ordinal": 2,
+      "published_raw": false,
+      "shape": [
+        1,
+        1,
+        1024
+      ],
+      "source_pin": {
+        "bytes": 2048,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/layer0-framework-capture-v228-v1/pass2-v-projection.bf16",
+        "sha256": "9c2da95af86bfd6967db7d9c93c396060d6c44e8a07be1ae9946f5b2f2884443"
+      },
+      "stage": "v-projection"
+    },
+    {
+      "dtype": "bfloat16",
+      "elements": 4096,
+      "pass_ordinal": 2,
+      "published_raw": false,
+      "shape": [
+        1,
+        1,
+        32,
+        128
+      ],
+      "source_pin": {
+        "bytes": 8192,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/layer0-framework-capture-v228-v1/pass2-q-norm-input.bf16",
+        "sha256": "000465636fa272ac0ac63c4d9981c34de976dba5fbcb0cbfbb7a27ab6033f870"
+      },
+      "stage": "q-norm-input"
+    },
+    {
+      "dtype": "bfloat16",
+      "elements": 4096,
+      "pass_ordinal": 2,
+      "published_raw": false,
+      "shape": [
+        1,
+        1,
+        32,
+        128
+      ],
+      "source_pin": {
+        "bytes": 8192,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/layer0-framework-capture-v228-v1/pass2-q-norm.bf16",
+        "sha256": "d852b37e1a3912612875e14f52d996c0b7a3670f98d63eafb252561b94c5051d"
+      },
+      "stage": "q-norm"
+    },
+    {
+      "dtype": "bfloat16",
+      "elements": 1024,
+      "pass_ordinal": 2,
+      "published_raw": false,
+      "shape": [
+        1,
+        1,
+        8,
+        128
+      ],
+      "source_pin": {
+        "bytes": 2048,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/layer0-framework-capture-v228-v1/pass2-k-norm-input.bf16",
+        "sha256": "065ef5eaefa4f1a79471becaeae83ae561ead4bb6e19c6dccb717df764526cec"
+      },
+      "stage": "k-norm-input"
+    },
+    {
+      "dtype": "bfloat16",
+      "elements": 1024,
+      "pass_ordinal": 2,
+      "published_raw": false,
+      "shape": [
+        1,
+        1,
+        8,
+        128
+      ],
+      "source_pin": {
+        "bytes": 2048,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/layer0-framework-capture-v228-v1/pass2-k-norm.bf16",
+        "sha256": "8644f9501f18fc0b6c8868c6f1935663ebd96feff016a6a5b22445376d63f1d4"
+      },
+      "stage": "k-norm"
+    },
+    {
+      "dtype": "bfloat16",
+      "elements": 128,
+      "pass_ordinal": 2,
+      "published_raw": false,
+      "shape": [
+        1,
+        1,
+        128
+      ],
+      "source_pin": {
+        "bytes": 256,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/layer0-framework-capture-v228-v1/pass2-rotary-cos.bf16",
+        "sha256": "1ede9ebfa1ad011b89a3e3df648a958674d64afa0726d98858a68b8a4da14ee0"
+      },
+      "stage": "rotary-cos"
+    },
+    {
+      "dtype": "bfloat16",
+      "elements": 128,
+      "pass_ordinal": 2,
+      "published_raw": false,
+      "shape": [
+        1,
+        1,
+        128
+      ],
+      "source_pin": {
+        "bytes": 256,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/layer0-framework-capture-v228-v1/pass2-rotary-sin.bf16",
+        "sha256": "5341e6b2646979a70e57653007a1f310169421ec9bdd9f1a5648f75ade005af1"
+      },
+      "stage": "rotary-sin"
+    },
+    {
+      "dtype": "bfloat16",
+      "elements": 4096,
+      "pass_ordinal": 2,
+      "published_raw": false,
+      "shape": [
+        1,
+        32,
+        1,
+        128
+      ],
+      "source_pin": {
+        "bytes": 8192,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/layer0-framework-capture-v228-v1/pass2-rotary-q.bf16",
+        "sha256": "d852b37e1a3912612875e14f52d996c0b7a3670f98d63eafb252561b94c5051d"
+      },
+      "stage": "rotary-q"
+    },
+    {
+      "dtype": "bfloat16",
+      "elements": 1024,
+      "pass_ordinal": 2,
+      "published_raw": false,
+      "shape": [
+        1,
+        8,
+        1,
+        128
+      ],
+      "source_pin": {
+        "bytes": 2048,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/layer0-framework-capture-v228-v1/pass2-rotary-k.bf16",
+        "sha256": "8644f9501f18fc0b6c8868c6f1935663ebd96feff016a6a5b22445376d63f1d4"
+      },
+      "stage": "rotary-k"
+    },
+    {
+      "dtype": "bfloat16",
+      "elements": 4096,
+      "pass_ordinal": 2,
+      "published_raw": false,
+      "shape": [
+        1,
+        1,
+        4096
+      ],
+      "source_pin": {
+        "bytes": 8192,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/layer0-framework-capture-v228-v1/pass2-attention-output.bf16",
+        "sha256": "a2462ddd99cab2adcfdfb0812e83ffbc87ebfd07c99e4ca08793c4d4fbf70cfe"
+      },
+      "stage": "attention-output"
+    },
+    {
+      "dtype": "bfloat16",
+      "elements": 4096,
+      "pass_ordinal": 2,
+      "published_raw": false,
+      "shape": [
+        1,
+        1,
+        4096
+      ],
+      "source_pin": {
+        "bytes": 8192,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/layer0-framework-capture-v228-v1/pass2-o-projection.bf16",
+        "sha256": "6eb55741adea8ffe954ff1fd91d3e8b44fdabce18e49d64270a1ce4ec50d1dc4"
+      },
+      "stage": "o-projection"
+    },
+    {
+      "dtype": "bfloat16",
+      "elements": 4096,
+      "pass_ordinal": 2,
+      "published_raw": false,
+      "shape": [
+        1,
+        1,
+        4096
+      ],
+      "source_pin": {
+        "bytes": 8192,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/layer0-framework-capture-v228-v1/pass2-first-residual.bf16",
+        "sha256": "8741323079c3235eb02ffce0afc8d0716088c6c5417ac7923d68c5cea08822e8"
+      },
+      "stage": "first-residual"
+    },
+    {
+      "dtype": "bfloat16",
+      "elements": 4096,
+      "pass_ordinal": 2,
+      "published_raw": false,
+      "shape": [
+        1,
+        1,
+        4096
+      ],
+      "source_pin": {
+        "bytes": 8192,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/layer0-framework-capture-v228-v1/pass2-post-norm.bf16",
+        "sha256": "086a1aa7b7e1ab15671526dc4372dd88cbb33f88fdfdadc719154c7d4d784b21"
+      },
+      "stage": "post-norm"
+    },
+    {
+      "dtype": "bfloat16",
+      "elements": 4096,
+      "pass_ordinal": 2,
+      "published_raw": false,
+      "shape": [
+        1,
+        1,
+        4096
+      ],
+      "source_pin": {
+        "bytes": 8192,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/layer0-framework-capture-v228-v1/pass2-gate-input.bf16",
+        "sha256": "086a1aa7b7e1ab15671526dc4372dd88cbb33f88fdfdadc719154c7d4d784b21"
+      },
+      "stage": "gate-input"
+    },
+    {
+      "dtype": "bfloat16",
+      "elements": 4096,
+      "pass_ordinal": 2,
+      "published_raw": false,
+      "shape": [
+        1,
+        1,
+        4096
+      ],
+      "source_pin": {
+        "bytes": 8192,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/layer0-framework-capture-v228-v1/pass2-up-input.bf16",
+        "sha256": "086a1aa7b7e1ab15671526dc4372dd88cbb33f88fdfdadc719154c7d4d784b21"
+      },
+      "stage": "up-input"
+    },
+    {
+      "dtype": "bfloat16",
+      "elements": 12288,
+      "pass_ordinal": 2,
+      "published_raw": false,
+      "shape": [
+        1,
+        1,
+        12288
+      ],
+      "source_pin": {
+        "bytes": 24576,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/layer0-framework-capture-v228-v1/pass2-gate.bf16",
+        "sha256": "a92654d72089de8e8a589934fcb970a705a95202bb7122ac8408b90877b2be0d"
+      },
+      "stage": "gate"
+    },
+    {
+      "dtype": "bfloat16",
+      "elements": 12288,
+      "pass_ordinal": 2,
+      "published_raw": false,
+      "shape": [
+        1,
+        1,
+        12288
+      ],
+      "source_pin": {
+        "bytes": 24576,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/layer0-framework-capture-v228-v1/pass2-up.bf16",
+        "sha256": "6d9eb5e855f2e3d9380954204a46fc5e567f09fa9f34a9401bb1585ca96e3dfd"
+      },
+      "stage": "up"
+    },
+    {
+      "dtype": "bfloat16",
+      "elements": 12288,
+      "pass_ordinal": 2,
+      "published_raw": false,
+      "shape": [
+        1,
+        1,
+        12288
+      ],
+      "source_pin": {
+        "bytes": 24576,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/layer0-framework-capture-v228-v1/pass2-silu-input.bf16",
+        "sha256": "a92654d72089de8e8a589934fcb970a705a95202bb7122ac8408b90877b2be0d"
+      },
+      "stage": "silu-input"
+    },
+    {
+      "dtype": "bfloat16",
+      "elements": 12288,
+      "pass_ordinal": 2,
+      "published_raw": false,
+      "shape": [
+        1,
+        1,
+        12288
+      ],
+      "source_pin": {
+        "bytes": 24576,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/layer0-framework-capture-v228-v1/pass2-silu.bf16",
+        "sha256": "93c85ddadb168fbeaa9fabc752a3335933656c88066b45ce9a5a60f32358401a"
+      },
+      "stage": "silu"
+    },
+    {
+      "dtype": "bfloat16",
+      "elements": 12288,
+      "pass_ordinal": 2,
+      "published_raw": false,
+      "shape": [
+        1,
+        1,
+        12288
+      ],
+      "source_pin": {
+        "bytes": 24576,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/layer0-framework-capture-v228-v1/pass2-product.bf16",
+        "sha256": "f26e8d72ce28731ad599ea624948ed497a70f52e484b1ec8bc564d4cedbe0438"
+      },
+      "stage": "product"
+    },
+    {
+      "dtype": "bfloat16",
+      "elements": 4096,
+      "pass_ordinal": 2,
+      "published_raw": false,
+      "shape": [
+        1,
+        1,
+        4096
+      ],
+      "source_pin": {
+        "bytes": 8192,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/layer0-framework-capture-v228-v1/pass2-down-projection.bf16",
+        "sha256": "a02ed8d749722e1901119ba5849e6425f27d8a86a4d0da5494b6f9896df7f786"
+      },
+      "stage": "down-projection"
+    },
+    {
+      "dtype": "bfloat16",
+      "elements": 4096,
+      "pass_ordinal": 2,
+      "published_raw": false,
+      "shape": [
+        1,
+        1,
+        4096
+      ],
+      "source_pin": {
+        "bytes": 8192,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/layer0-framework-capture-v228-v1/pass2-mlp-output.bf16",
+        "sha256": "a02ed8d749722e1901119ba5849e6425f27d8a86a4d0da5494b6f9896df7f786"
+      },
+      "stage": "mlp-output"
+    },
+    {
+      "dtype": "bfloat16",
+      "elements": 4096,
+      "pass_ordinal": 2,
+      "published_raw": false,
+      "shape": [
+        1,
+        1,
+        4096
+      ],
+      "source_pin": {
+        "bytes": 8192,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/layer0-framework-capture-v228-v1/pass2-layer0-hidden.bf16",
+        "sha256": "06cc2700e0c8e89e351b16eab9bece2c77a69683a3bc0ef33497864a0db867ac"
+      },
+      "stage": "layer0-hidden"
+    },
+    {
+      "dtype": "bfloat16",
+      "elements": 1024,
+      "pass_ordinal": 2,
+      "published_raw": false,
+      "shape": [
+        1,
+        8,
+        1,
+        128
+      ],
+      "source_pin": {
+        "bytes": 2048,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/layer0-framework-capture-v228-v1/pass2-cache-key.bf16",
+        "sha256": "8644f9501f18fc0b6c8868c6f1935663ebd96feff016a6a5b22445376d63f1d4"
+      },
+      "stage": "cache-key"
+    },
+    {
+      "dtype": "bfloat16",
+      "elements": 1024,
+      "pass_ordinal": 2,
+      "published_raw": false,
+      "shape": [
+        1,
+        8,
+        1,
+        128
+      ],
+      "source_pin": {
+        "bytes": 2048,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/layer0-framework-capture-v228-v1/pass2-cache-value.bf16",
+        "sha256": "9c2da95af86bfd6967db7d9c93c396060d6c44e8a07be1ae9946f5b2f2884443"
+      },
+      "stage": "cache-value"
+    }
+  ]
+}

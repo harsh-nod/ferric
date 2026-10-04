@@ -86,3 +86,9 @@ Next gates are independent layer-zero arithmetic diagnosis, clock-domain
 validation and repeated equal-workload timing, followed by longer-context
 numerical validation and sustained single-request Qwen3-8B BF16 target-only
 2,048/256 decoding. All issue #42 milestones remain open.
+
+Follow-up: the [independent layer-zero capture](../layer0-framework-capture-v1/README.md)
+now retains 33 repeated framework intermediates and confirms the original
+reference output exactly. Its table quantifies the remaining difference in
+this candidate's layer-zero output; it does not yet locate the first differing
+native operation or establish numerical acceptance.

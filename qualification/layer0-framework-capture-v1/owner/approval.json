@@ -1,0 +1,9 @@
+{
+  "execution_review": {
+    "bytes": 559,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/layer0-framework-launch-v228-v1/root-capture-review.json",
+    "sha256": "59ca9c801facc7b048a01a9c1a1c9479ede6f4787b118eb6d3f848cc83a5867f"
+  },
+  "projection_sha256": "18af261bce99ee634789eb8b75f7b967b5e6c53d24a7afb53bb2bcedbd31ef2f",
+  "schema": "ferric-p228-layer0-framework-launch-approval-v1"
+}

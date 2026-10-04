@@ -1,0 +1,21 @@
+test_all_producer_consumer_joins_are_checked (test_run.CapturePolicy) ... ok
+test_closed_plan_and_original_model_source_are_required (test_run.CapturePolicy) ... ok
+test_duplicate_and_nonfinite_json_are_rejected (test_run.CapturePolicy) ... ok
+test_exact_stage_roster_and_bf16_extents (test_run.CapturePolicy) ... ok
+test_new_namespace_cannot_overwrite_old_reference (test_run.CapturePolicy) ... ok
+test_repeat_equality_needs_all_actual_stage_hashes (test_run.CapturePolicy) ... ok
+test_repeat_refuses_wrong_history_dtype_shape_and_missing_stage (test_run.CapturePolicy) ... ok
+test_review_never_grants_numerical_or_performance_authority (test_run.CapturePolicy) ... ok
+test_rotary_observer_returns_original_objects_and_selects_only_layer0 (test_run.CapturePolicy) ... ok
+test_rotary_original_failure_restores_identity_in_finally (test_run.CapturePolicy) ... ok
+test_rotary_refuses_duplicate_selected_pair_and_nested_attention (test_run.CapturePolicy) ... ok
+test_rotary_replacement_is_restored_but_refused (test_run.CapturePolicy) ... ok
+test_separate_review_binds_entire_plan_projection (test_run.CapturePolicy) ... ok
+test_stage_observer_propagates_dtype_or_finite_reader_refusal (test_run.CapturePolicy) ... ok
+test_stage_observer_uses_real_tensor_reader_once (test_run.CapturePolicy) ... ok
+test_unknown_plan_fields_and_missing_source_roles_fail (test_run.CapturePolicy) ... ok
+
+----------------------------------------------------------------------
+Ran 16 tests in 0.004s
+
+OK

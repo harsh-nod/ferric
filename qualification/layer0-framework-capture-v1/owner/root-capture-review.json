@@ -1,0 +1,17 @@
+{
+  "gpu_execution_authorized": true,
+  "numerical_acceptance": false,
+  "performance_claim": false,
+  "plan_projection_sha256": "18af261bce99ee634789eb8b75f7b967b5e6c53d24a7afb53bb2bcedbd31ef2f",
+  "production_authority": false,
+  "resources": {
+    "cache_cap_bytes": 1073741824,
+    "host_rss_cap_bytes": 68719476736,
+    "minimum_free_gpu_bytes": 51539607552,
+    "minimum_free_host_bytes": 51539607552,
+    "output_cap_bytes": 33554432,
+    "timeout_seconds": 900
+  },
+  "reviewed": true,
+  "schema": "ferric-p228-layer0-framework-execution-review-v1"
+}

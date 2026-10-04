@@ -1,0 +1,12 @@
+{
+  "run.py": {
+    "bytes": 22450,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-layer0-framework-capture-v1/run.py",
+    "sha256": "646ffc536f50610a4c3e790a4cb8fa945e5e1501bc2466c59ba8f6d5e92b8d32"
+  },
+  "test_run.py": {
+    "bytes": 9111,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-layer0-framework-capture-v1/test_run.py",
+    "sha256": "d4f85754e435f8559cf19078ea0aa320cbe8223d324ef906b072ad61ef0e4ad6"
+  }
+}

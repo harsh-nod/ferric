@@ -1,0 +1,41 @@
+{
+  "affinity": [
+    8,
+    9
+  ],
+  "argv": [
+    "/usr/bin/amd-smi",
+    "process",
+    "--json"
+  ],
+  "cache_cap_bytes": 1073741824,
+  "environment": {
+    "CUDA_VISIBLE_DEVICES": "0",
+    "HF_DATASETS_OFFLINE": "1",
+    "HF_HUB_OFFLINE": "1",
+    "HIP_VISIBLE_DEVICES": "0",
+    "HOME": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/layer0-framework-launch-v228-v1/home",
+    "LANG": "C.UTF-8",
+    "MKL_NUM_THREADS": "2",
+    "OMP_NUM_THREADS": "2",
+    "OPENBLAS_NUM_THREADS": "2",
+    "PATH": "/usr/bin:/bin",
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "TMPDIR": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/layer0-framework-launch-v228-v1/tmp",
+    "TOKENIZERS_PARALLELISM": "false",
+    "TRANSFORMERS_OFFLINE": "1"
+  },
+  "file_cap_bytes": 33554432,
+  "gpu_execution_authority": "root-reviewed invocation only",
+  "group_rss_cap_bytes": 68719476736,
+  "initial_free_bytes": 42949672960,
+  "nice": 10,
+  "ongoing_free_bytes": 40802189312,
+  "other_files_cap_bytes": 268435456,
+  "output_cap_bytes": 33554432,
+  "owned_tree_cap_bytes": 2415919104,
+  "provider_file_cap_bytes": 1073741824,
+  "rlimit_fsize_bytes": 1073741824,
+  "seconds": 30,
+  "tmp_cap_bytes": 1073741824
+}

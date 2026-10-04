@@ -1,0 +1,28 @@
+{
+  "command": {
+    "bytes": 1639,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/layer0-framework-launch-v228-v1/inspect/command.json",
+    "sha256": "530fbbe4a5ea490e64df595553209904f77ce7f6fdbd72ed7d55fdd4bc270abe"
+  },
+  "elapsed_seconds": 0.37596432212740183,
+  "exit_code": 0,
+  "failure": null,
+  "group_absent": true,
+  "peak_group_rss_bytes": 0,
+  "performance_measured": false,
+  "started": {
+    "bytes": 157,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/layer0-framework-launch-v228-v1/inspect/started.json",
+    "sha256": "9411c7ef8a846fa6f808825deed1f5dd5f381f5640152debc7ba6cf1704aa03d"
+  },
+  "stderr": {
+    "bytes": 0,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/layer0-framework-launch-v228-v1/inspect/stderr",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "stdout": {
+    "bytes": 5242,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/layer0-framework-launch-v228-v1/inspect/stdout",
+    "sha256": "3a163ae6ed546ee68a0e0a452d3d099f94081f139526475328202b1812f78b42"
+  }
+}
