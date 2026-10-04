@@ -1,7 +1,7 @@
 # Ordinary Induction Temporary
 
-This is a CPU-tested compiler candidate, not a production admission or a new
-GPU image. The [patch](compiler.patch) extends the exact previously qualified
+This is a CPU-tested compiler candidate with a checked engineering HSACO,
+not a production admission or GPU numerical result. The [patch](compiler.patch) extends the exact previously qualified
 [idempotent compiler generation](../fe2o3-partial-move-idempotent-v1/README.md).
 [Source pins](source-pins.json) identify its required preimage and both changed
 files. Apply/reverse validation reproduced the exact intended bodies.
@@ -68,7 +68,7 @@ tool/configuration and four old-target postchecks passed. The 56 archive
 members, three new tools, five unchanged compiler products and full source
 snapshot were rehashed locally. These are CPU results, not GPU performance.
 
-## Remaining Gates
+## Checked Image
 
 The real V3 source has now [passed the checked-lowering leaf](checked-lowering-checkpoint.json)
 on `mi350-2`, naturally exiting zero in 1,771.339 seconds, within its unchanged
@@ -76,12 +76,26 @@ on `mi350-2`, naturally exiting zero in 1,771.339 seconds, within its unchanged
 gfx950 LLVM and a 4,022,416-byte inert compiler handoff. This clears the earlier
 induction-latch refusal for this source/compiler pair.
 
-That record is an **interim snapshot**, not the terminal nine-phase probe
-receipt. At publication, actual capture replay is running; whole-probe source,
-dependency and prior-target postchecks have not completed. The nine retained
-leaf/artifact files and snapshot were rehashed locally. Default-suite ignored
-test counts are unchanged; the separately selected actual replay is not yet a
-passing result. Replay, the actual-capture inert join, emission, actual-image
-reviews and MI350 numerical validation remain required.
-No new HSACO, production runtime change,
-full-model certificate or 700 tokens/s result is claimed.
+That record remains an **interim snapshot**. The subsequent
+[terminal nine-phase probe](checked-probe-result.json) passed, including the
+separately selected actual-capture replay and inert-join tests. Replay completed
+in 1,401.55 seconds; default-suite ignored counts are unchanged. All nine phases
+exited naturally, source/dependency/tool and five prior-target postchecks passed,
+and the owned processes were reaped without forced cleanup. All 92 retained
+archive members were rehashed locally.
+
+The compiler and finalizer produced a 53,560-byte gfx950 HSACO, SHA-256
+`4885204c8d510122588549107f42d2bc6f180f48fbc4eddd3bb1260e8d6629c5`.
+Its descriptor specifies a 64-thread workgroup and at most 64 workgroups.
+Metadata reports 512 bytes of LDS, 106 SGPRs with 16 spills, 132 VGPRs and no
+VGPR spills. These are compiler resource reports, not measured occupancy or
+performance. LLVM, formal archive, descriptor metadata and ISA are retained.
+
+## Remaining Gates
+
+The emission receipt still reports eight undischarged runtime requirements,
+unsupported generic proofs and no production authority. Fresh actual-image
+arithmetic/ISA reviews, deployment and MI350 numerical validation remain
+required. No new GPU execution, full-model certificate or 700 tokens/s result
+is claimed. Prior-target checks compare stat inventories, not proof of no
+transient writes.

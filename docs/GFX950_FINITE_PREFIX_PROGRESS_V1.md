@@ -31,8 +31,9 @@ engineering branch; it does not change the production execution path.
 | Independent per-profile comparator on `mi350-2` | 20 CPU tests and eight historical rank rows passed | No paired bitwise prerequisite; unchanged bounds; not a new GPU run or new-image acceptance |
 | Ordinary induction temporary compiler candidate on `mi350-2` | 2,683 CPU tests passed, 25 ignored; fresh backend and extractor built | Eight new regressions executed; actual prefix replay remains pending |
 | Ordinary induction matching finalizer tools on `mi350-2` | 190 default tests passed, 15 ignored; three tools rebuilt | Exact new compiler generation; actual-capture inert join remains a separate gate |
-| V3 checked lowering with ordinary-induction compiler on `mi350-2` | Natural zero exit in 1,771.339 seconds; KIR V11, gfx950 LLVM and inert handoff emitted | Interim leaf snapshot; actual replay and whole-probe postchecks pending, no new HSACO or GPU result |
+| V3 checked probe with ordinary-induction compiler on `mi350-2` | All nine phases passed; actual replay and inert join passed; fresh 53,560-byte gfx950 HSACO emitted | Eight runtime obligations remain; no fresh GPU execution, numerical acceptance or throughput result |
 | Independent-profile observation adapter on `mi350-2` | 23 synthetic policy tests passed, no skips | No launcher; mathematical return values are mocked; real-capture integration pending |
+| Independent native-profile adapter on `mi350-2` | 98 tests passed, one ignored; fresh test and native executables built | All 14 new tests ran; no deployment or new GPU execution yet |
 
 Both four-forward runs completed their Close protocol, reaped their owned
 processes, and passed their six surrounding device-state audits. The CPU suite
@@ -200,9 +201,18 @@ Fresh V3 checked lowering has now [passed as a separate leaf](../qualification/f
 in 1,771.339 seconds, naturally exiting zero before the unchanged 1,800-second
 deadline. The actual outputs include semantic MIR, neutral/target KIR V11,
 gfx950 LLVM and a 4,022,416-byte inert handoff. This clears the previous latch
-refusal. This publication is an interim checkpoint: capture replay is running,
-whole-probe source/dependency/prior-target postchecks remain pending, and no
-HSACO, GPU validation or performance result follows from the leaf alone.
+refusal. That record remains an interim checkpoint; the subsequent
+[terminal nine-phase probe](../qualification/fe2o3-ordinary-induction-alias-v1/checked-probe-result.json)
+passed actual-capture replay in 1,401.55 seconds and the separately selected
+inert-join test. All nine phases exited naturally; source/dependency/tool and
+five prior-target postchecks passed, and the owned tree was reaped. All 92
+archive members were rehashed locally. A fresh 53,560-byte gfx950 HSACO was
+emitted, with SHA-256
+`4885204c8d510122588549107f42d2bc6f180f48fbc4eddd3bb1260e8d6629c5`.
+This is an engineering image: eight runtime requirements remain undischarged,
+generic proofs remain unsupported and production authority is absent. New
+actual-image reviews, deployment and MI350 numerical checks are still required;
+there is no new GPU or performance result.
 
 A separate [observation adapter](../qualification/independent-profile-observation-v1/README.md)
 now validates the new independent-profile reports while preserving the existing
@@ -213,6 +223,16 @@ ordinary numerical rejections remain specific to each profile. Its tested
 source is published, but it has no launcher and has not yet replayed real new
 captures through the full adapter. Mock reference returns in these tests are
 not numerical evidence or a new GPU result.
+
+The matching [native adapter](../qualification/independent-native-profiles-v1/README.md)
+has now passed a fresh 98-test CPU suite, with one existing test ignored. All 14
+new tests ran alongside the preserved historical inventory. Its new explicit
+modes retain the existing owned child, request, review, finite-output, untouched
+KV and Close checks, while capturing each profile without requiring paired
+bitwise equality. The old paired mode remains unchanged. Both executables built;
+all six phases exited naturally and source/dependency/fixture/tool and six
+prior-target postchecks passed. All 5,856 archive members were rehashed locally.
+This is a tested host adapter, not deployment or GPU numerical acceptance.
 
 ## Source Publication
 
