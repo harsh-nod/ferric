@@ -1,0 +1,27 @@
+{
+  "controller": {
+    "bytes": 3148,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/run_independent_deployment_pure_p228_v2.py",
+    "sha256": "42294bc6d26dc40c6e07d52d50246345c89c7cb4051043007ca16f06fadd4558"
+  },
+  "gpu_execution": false,
+  "numerical_acceptance": false,
+  "package_manifest": {
+    "bytes": 2497,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-independent-deployment-v2/manifest.json",
+    "sha256": "63ff8c1820c12f9863773d77d5a5652a4e02c21340b32128455be292ab95a0fa"
+  },
+  "passed": true,
+  "schema": "ferric-p228-independent-deployment-pure-v1",
+  "test_source": {
+    "bytes": 17726,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-independent-deployment-v2/test_portable.py",
+    "sha256": "31a850206f4f14679f0af343a18da0a15880b89b89ea4eee8ab69e22ffb4e8f7"
+  },
+  "tests": 30,
+  "transcript": {
+    "bytes": 4469,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/independent-deployment-pure-v228-v2/tests.log",
+    "sha256": "f8f5b071e6fc1cefc2e1237f582c0a2ea6f0fdf1b688ee5de5abd6033400aa94"
+  }
+}

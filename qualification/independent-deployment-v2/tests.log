@@ -1,0 +1,35 @@
+test_all_nine_authentic_recipe_commands_match_retained_actual_records (test_portable.DeploymentPolicyTests.test_all_nine_authentic_recipe_commands_match_retained_actual_records) ... ok
+test_archive_bounds_each_member (test_portable.DeploymentPolicyTests.test_archive_bounds_each_member) ... ok
+test_archive_bounds_expanded_bytes (test_portable.DeploymentPolicyTests.test_archive_bounds_expanded_bytes) ... ok
+test_archive_bounds_retained_text (test_portable.DeploymentPolicyTests.test_archive_bounds_retained_text) ... ok
+test_archive_rejects_absolute_and_traversal_names (test_portable.DeploymentPolicyTests.test_archive_rejects_absolute_and_traversal_names) ... ok
+test_archive_rejects_duplicate_names (test_portable.DeploymentPolicyTests.test_archive_rejects_duplicate_names) ... ok
+test_archive_rejects_links (test_portable.DeploymentPolicyTests.test_archive_rejects_links) ... ok
+test_archive_rejects_wrong_compressed_pin (test_portable.DeploymentPolicyTests.test_archive_rejects_wrong_compressed_pin) ... ok
+test_archive_requires_exact_member_census (test_portable.DeploymentPolicyTests.test_archive_requires_exact_member_census) ... ok
+test_archive_streams_original_identities_without_opening_them (test_portable.DeploymentPolicyTests.test_archive_streams_original_identities_without_opening_them) ... ok
+test_archived_sources_are_hashed_but_not_retained_as_documents (test_portable.DeploymentPolicyTests.test_archived_sources_are_hashed_but_not_retained_as_documents) ... ok
+test_authentic_byte_counts_are_argv_strings_without_changing_numeric_limits (test_portable.DeploymentPolicyTests.test_authentic_byte_counts_are_argv_strings_without_changing_numeric_limits) ... ok
+test_deployment_requires_new_namespace (test_portable.DeploymentPolicyTests.test_deployment_requires_new_namespace) ... ok
+test_export_copy_is_exclusive_and_hash_checked (test_portable.DeploymentPolicyTests.test_export_copy_is_exclusive_and_hash_checked) ... ok
+test_export_extracts_only_the_selected_verified_member (test_portable.DeploymentPolicyTests.test_export_extracts_only_the_selected_verified_member) ... ok
+test_file_pin_rejects_boolean_size_and_extra_fields (test_portable.DeploymentPolicyTests.test_file_pin_rejects_boolean_size_and_extra_fields) ... ok
+test_file_pin_rejects_noncanonical_path_and_digest (test_portable.DeploymentPolicyTests.test_file_pin_rejects_noncanonical_path_and_digest) ... ok
+test_header_closes_fields_and_qualification_roster (test_portable.DeploymentPolicyTests.test_header_closes_fields_and_qualification_roster) ... ok
+test_header_forbids_every_authority_claim (test_portable.DeploymentPolicyTests.test_header_forbids_every_authority_claim) ... ok
+test_native_inventory_requires_all_ninety_nine_names_and_fourteen_passes (test_portable.DeploymentPolicyTests.test_native_inventory_requires_all_ninety_nine_names_and_fourteen_passes) ... ok
+test_overlay_requires_preimages_and_absence_preserves_unmodified_files (test_portable.DeploymentPolicyTests.test_overlay_requires_preimages_and_absence_preserves_unmodified_files) ... ok
+test_phase_joins_natural_result_and_actual_streams (test_portable.DeploymentPolicyTests.test_phase_joins_natural_result_and_actual_streams) ... ok
+test_phase_rejects_changed_exact_command (test_portable.DeploymentPolicyTests.test_phase_rejects_changed_exact_command) ... ok
+test_phase_rejects_failure_or_unreaped_group (test_portable.DeploymentPolicyTests.test_phase_rejects_failure_or_unreaped_group) ... ok
+test_phase_rejects_wrong_stream_join (test_portable.DeploymentPolicyTests.test_phase_rejects_wrong_stream_join) ... ok
+test_relative_source_map_rejects_escaped_or_relabelled_source (test_portable.DeploymentPolicyTests.test_relative_source_map_rejects_escaped_or_relabelled_source) ... ok
+test_relocation_binds_both_original_and_transported_identity (test_portable.DeploymentPolicyTests.test_relocation_binds_both_original_and_transported_identity) ... ok
+test_relocation_rejects_wrong_image_and_target_path (test_portable.DeploymentPolicyTests.test_relocation_rejects_wrong_image_and_target_path) ... ok
+test_substitution_refuses_missing_artifact_and_nonstring_argv (test_portable.DeploymentPolicyTests.test_substitution_refuses_missing_artifact_and_nonstring_argv) ... ok
+test_terminal_refuses_cleanup_or_uncertain_reap (test_portable.DeploymentPolicyTests.test_terminal_refuses_cleanup_or_uncertain_reap) ... ok
+
+----------------------------------------------------------------------
+Ran 30 tests in 0.008s
+
+OK

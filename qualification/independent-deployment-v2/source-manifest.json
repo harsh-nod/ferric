@@ -1,0 +1,80 @@
+{
+  "files": [
+    {
+      "bytes": 7770,
+      "path": "README.md",
+      "sha256": "df9b78c8e5ea705936d40cc07ffc5195a3828f9b66e24c52872534e79d03f118"
+    },
+    {
+      "bytes": 6618,
+      "path": "export.py",
+      "sha256": "1b5e0383e012b55260a55b79fd4a359efd45595745f75b58eb43e5e1333d4e6b"
+    },
+    {
+      "bytes": 2788,
+      "path": "fixtures/actual-inert-join-command.json",
+      "sha256": "79f99463fe117cd9705a4911ac5546a1fdf46838d939c3af9c053bb1f7732200"
+    },
+    {
+      "bytes": 2677,
+      "path": "fixtures/actual-replay-command.json",
+      "sha256": "5fb4966d95f00126eef093b6466549ff019a748069277ccb8da07cd6dbc8cb6d"
+    },
+    {
+      "bytes": 5869,
+      "path": "fixtures/checked-lowering-command.json",
+      "sha256": "7a7afbf4cae316fdab3c7e7c4469342fb1ee29faf4bb444bae215dc267383987"
+    },
+    {
+      "bytes": 2394,
+      "path": "fixtures/descriptor-metadata-command.json",
+      "sha256": "64e89affd84e28f392b95be766b4a82e50700d6ed9f9e892668692bf631b7393"
+    },
+    {
+      "bytes": 2225,
+      "path": "fixtures/disassembly-command.json",
+      "sha256": "3bbfee0a717d630de1cd5dbe895b8ec619e6ef5a8ed49f39b427b0fa805a2666"
+    },
+    {
+      "bytes": 2215,
+      "path": "fixtures/elf-notes-command.json",
+      "sha256": "4ca7748979883c05a66e83023e1ce070f4f4e5f3cffd7b5375d17dd4d7f6643b"
+    },
+    {
+      "bytes": 2950,
+      "path": "fixtures/emit-command.json",
+      "sha256": "969cd8acf6939c97fe9ee45252407285d26903821e083fd28ff84025d967faab"
+    },
+    {
+      "bytes": 2408,
+      "path": "fixtures/extract-retained-command.json",
+      "sha256": "83754b57e71a187a6c7d84ab9bb88491397a413e88009cf0b4d6d41a03923d20"
+    },
+    {
+      "bytes": 2356,
+      "path": "fixtures/fixture-metadata-command.json",
+      "sha256": "d40be588c6ca55400fcee6e6bbea7c2efc49e8e7385606c65bc25f11b03996bb"
+    },
+    {
+      "bytes": 41972,
+      "path": "fixtures/recipe.json",
+      "sha256": "f500b1c3d3218b53e9ba1df92d6f048a41f05873c9539f16bc69b20f85575a52"
+    },
+    {
+      "bytes": 28959,
+      "path": "portable.py",
+      "sha256": "0901e10dbcf40e940a98f917cc6bf7b74c4c5c5f8b76eb1af492e672a11fab00"
+    },
+    {
+      "bytes": 17726,
+      "path": "test_portable.py",
+      "sha256": "31a850206f4f14679f0af343a18da0a15880b89b89ea4eee8ab69e22ffb4e8f7"
+    }
+  ],
+  "gpu_execution": false,
+  "numerical_acceptance": false,
+  "production_authority": false,
+  "pure_tests": 30,
+  "schema": "ferric-p228-independent-deployment-package-v1",
+  "tests_executed": false
+}

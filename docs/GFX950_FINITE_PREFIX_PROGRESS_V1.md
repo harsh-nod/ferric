@@ -241,6 +241,15 @@ namespace handling and preserves the existing ELF, library identity, process
 ownership and resource checks. It does not mint reviews or launch authority;
 an actual audit of the new deployed executable on MI350 remains required.
 
+The [new deployment](../qualification/independent-deployment-v2/README.md)
+has now been exported and verified on MI350. Its receiver checks both complete
+evidence archives, all 5,783 native source files and the exact emitted image and
+native executable. All 30 policy tests passed, including actual-command
+regressions for the string-valued byte-count bug found during the first export.
+The unchanged numerical reference suite also passed all 20 tests on MI350.
+These are deployment and CPU-reference checks, not new GPU captures or an
+end-to-end model throughput result.
+
 ## Source Publication
 
 The [source index](assets/finite-prefix-v227/source-index.json) binds the 289
