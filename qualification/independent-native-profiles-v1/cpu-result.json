@@ -1,0 +1,182 @@
+{
+  "archive_members": 5856,
+  "artifacts": {
+    "example": {
+      "bytes": 11759152,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/independent-native-profile-cpu-v228-v1/target/debug/examples/gfx950-qwen-prefix-tiles-comparison-v6",
+      "sha256": "017e0d3a5c79b1c64a4dccdb0251e53c8e7f8c17ab47e92bbe1309b40760c607"
+    },
+    "example-tests": {
+      "bytes": 12160744,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/independent-native-profile-cpu-v228-v1/target/debug/examples/gfx950_qwen_prefix_tiles_comparison_v6-21d28873c3d6502c",
+      "sha256": "e4bd5f734b69a5375e521d6cddced36944f0aaf2fe8165a27eca4f4ba88e25b9"
+    }
+  },
+  "checked_lowering": false,
+  "compiler_generation": {
+    "completion": {
+      "bytes": 369402,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/ordinary-induction-compiler-cpu-v228-v1/complete.json",
+      "sha256": "c45aa83b01bf76fdfd9962b06884611658dab607b001ba67fecc66db9fd5ba97"
+    },
+    "owner": {
+      "bytes": 57318,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/ordinary-induction-compiler-cpu-owner-v228-v1/complete.json",
+      "sha256": "85de66610631612ed2473f9d5fbb80ce89ea7ffc6064c1784834a6751d623609"
+    },
+    "sources": {
+      "bytes": 3779269,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/ordinary-induction-compiler-cpu-v228-v1/sources-before.json",
+      "sha256": "5aad4c8ba6520c323310424ce343de2ae5088e7f8c1c0b1fd67853b5fd3bd9f9"
+    }
+  },
+  "date": "2026-10-03",
+  "device_opened": false,
+  "fresh_hsaco_emitted": false,
+  "full_model_acceptance": false,
+  "gpu_execution": false,
+  "historical_example": {
+    "bytes": 101135,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-prefix-host-isolation-native-v227-v1/complete.json",
+    "sha256": "39a1f251c286416af9255c8185fde442bf4c06b56325d58afe3af3c057894401"
+  },
+  "host": "mi350-2 (asrock-1w300-g2-2b)",
+  "limitations": [
+    "Native executable built but not invoked against a GPU.",
+    "The new mode accepts separately closed finite captures, not numerical correctness.",
+    "Old paired bitwise mode and child ownership checks remain unchanged.",
+    "GPU deployment, actual-image arithmetic and independent numerical integration remain pending.",
+    "Old-target postchecks are stat inventories, not proof of no transient writes."
+  ],
+  "new_tests": [
+    "execution::independent_profiles::tests::independent_profiles_accept_finite_differences_without_paired_rows",
+    "execution::independent_profiles::tests::independent_profiles_baseline_failure_or_bad_close_prevents_candidate",
+    "execution::independent_profiles::tests::independent_profiles_candidate_failure_or_bad_close_has_no_retry",
+    "execution::independent_profiles::tests::independent_profiles_cli_is_explicit_and_leaves_old_modes_unchanged",
+    "execution::independent_profiles::tests::independent_profiles_cli_rejects_missing_extra_and_near_match_arguments",
+    "execution::independent_profiles::tests::independent_profiles_failure_does_not_infer_device_absence_from_failed_open",
+    "execution::independent_profiles::tests::independent_profiles_failure_preserves_closed_baseline_and_uncertain_candidate",
+    "execution::independent_profiles::tests::independent_profiles_inspection_and_observation_keep_all_nonclaims",
+    "execution::independent_profiles::tests::independent_profiles_observation_refuses_missing_captures_or_bad_order_and_close",
+    "execution::independent_profiles::tests::independent_profiles_postcheck_failure_retains_both_closed_profiles_without_success",
+    "execution::independent_profiles::tests::independent_profiles_reject_changes_before_or_after_current_kv_slot",
+    "execution::independent_profiles::tests::independent_profiles_reject_inexact_output_extent_and_prepared_inputs",
+    "execution::independent_profiles::tests::independent_profiles_reject_invalid_terminal_states_on_either_rank",
+    "execution::independent_profiles::tests::independent_profiles_reject_nan_and_infinity_in_each_computed_stage"
+  ],
+  "numerical_acceptance": false,
+  "overlay": {
+    "bytes": 3017,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-independent-native-profile-v1/manifest.json",
+    "sha256": "57168534855f15aeb5873028f59f9cab09347157dd7b7c6167ae81d10f4ce211"
+  },
+  "owner": {
+    "cleanup_signalled": false,
+    "deadline_seconds": 10800,
+    "elapsed_seconds": 368.47188192792237,
+    "exit_code": 0,
+    "owned_groups_absent": true,
+    "owned_processes_reaped": true,
+    "reason": null
+  },
+  "owner_completion": {
+    "bytes": 46773,
+    "sha256": "5d5594e1dc74f2e678ee2d2117cbd3c509382281dcfb1394b213b3ce25c24e89"
+  },
+  "package": {
+    "bytes": 661,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-independent-native-profile-cpu-v1/manifest.json",
+    "sha256": "2eb43e7929edff008399c99538e74310199220b9aecbe7e3b01bb4d559a9849c"
+  },
+  "passed": true,
+  "performance_claim": false,
+  "phases": {
+    "example-build": {
+      "cache_bytes": 865799152,
+      "elapsed_seconds": 8.129400450969115,
+      "exit_code": 0,
+      "group_absent": true,
+      "reason": null,
+      "stderr_sha256": "a7ee3faba93d8813c1f5004b78459a03799ec6f8f973aac81535f069dc60582c",
+      "stdout_sha256": "b935d0a8df9f4635f2b9b9e248b850e5840db5dee8a06a3849f057928fe9c508"
+    },
+    "example-build-tests": {
+      "cache_bytes": 853823164,
+      "elapsed_seconds": 318.9857321130112,
+      "exit_code": 0,
+      "group_absent": true,
+      "reason": null,
+      "stderr_sha256": "2dccb60822224aeb01ef698d84999f879f1e862c3b81289315419501964a221c",
+      "stdout_sha256": "0bd3ba5dbfbb0da10371ee0742205d0c3e1a22eaea84ef14543905ec462cc6e8"
+    },
+    "example-ignored-list": {
+      "cache_bytes": 853823164,
+      "elapsed_seconds": 2.0220675200689584,
+      "exit_code": 0,
+      "group_absent": true,
+      "reason": null,
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdout_sha256": "c51f5e4ac3956ef23708f02643c6a848478437a9ae4a9c3123df172de9be4b96"
+    },
+    "example-list": {
+      "cache_bytes": 853823164,
+      "elapsed_seconds": 2.0222618910484016,
+      "exit_code": 0,
+      "group_absent": true,
+      "reason": null,
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdout_sha256": "540b524e24a3b9955c7cbda12be8d495e99d6802c20f8fa39ac35f3d0a5201c7"
+    },
+    "example-tests": {
+      "cache_bytes": 853823164,
+      "elapsed_seconds": 22.232518347213045,
+      "exit_code": 0,
+      "group_absent": true,
+      "reason": null,
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdout_sha256": "f24b842044dc5af29d6b350d188ccbcd47b9db0e0c2171af0375aef30ab85cdc"
+    },
+    "metadata": {
+      "cache_bytes": 8192,
+      "elapsed_seconds": 2.0242449801880866,
+      "exit_code": 0,
+      "group_absent": true,
+      "reason": null,
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdout_sha256": "ab87d8e9b24360d441208edb2d45c554bd340a70b6b1db1680f262eef3cee145"
+    }
+  },
+  "preserved_old_targets": 6,
+  "production_authority": false,
+  "raw_completion": {
+    "bytes": 30587,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/independent-native-profile-cpu-v228-v1/complete.json",
+    "sha256": "40fc164c535628fb3b1a4f7ee929e9717f57e57b18e7f45dcec2b87d3a8dcde1"
+  },
+  "retained_archive": {
+    "bytes": 33725202,
+    "sha256": "e097001bf737d7b85e752ee4e3580bc702a2df9521abbb366d1ab355045d16a2"
+  },
+  "roundtrip": {
+    "bytes": 1916,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/independent-native-profile-patch-roundtrip-v228-v1/complete.json",
+    "sha256": "2a87f21c6dcd161253f1867667c8efa8e4007350d80b73493af09f393cbd9958"
+  },
+  "runner_pure_tests": {
+    "passed": 15,
+    "receipt": {
+      "bytes": 461,
+      "sha256": "c228ce073caca7533174d2e9aa15ce806131a037ebe25e6879bfb219fd7db25f"
+    }
+  },
+  "schema": "FerricIndependentNativeProfilesCpuQualificationV1",
+  "source_and_fixture_postchecks_passed": true,
+  "sources_rehashed": 5783,
+  "tests": {
+    "ignored": 1,
+    "ignored_names": [
+      "fixture::attention::file_probe::attention_v4_all_pinned_fixture_files_and_mutations"
+    ],
+    "passed": 98
+  }
+}

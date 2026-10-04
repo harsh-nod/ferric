@@ -1,0 +1,89 @@
+{
+  "authored_tests": 14,
+  "compiler_built": false,
+  "files": [
+    {
+      "bytes": 1249,
+      "path": "PINS.md",
+      "sha256": "dee1169dce87946d68364871705f5c9eb850a735a18b0d07af65cf91b9319f2c"
+    },
+    {
+      "bytes": 6576,
+      "path": "README.md",
+      "sha256": "3206022fbf20c7a319ef6885c55bc97415592c80a06e018cfc895d43d5d90f81"
+    },
+    {
+      "bytes": 25365,
+      "path": "independent-native-profiles.patch",
+      "sha256": "51b34a46fb841e0dd660e0d1ad9ea4cafe82999b15da3b97f2f3b68ab1a21daf"
+    },
+    {
+      "bytes": 37619,
+      "path": "preimage/execution.rs",
+      "sha256": "49cab83589d7ee6f4ad7547b15576a8a07332ada22fe8fc0d688b53de81af54e"
+    },
+    {
+      "bytes": 15658,
+      "path": "preimage/process.rs",
+      "sha256": "1aeb692b9fc672efd052e2314cc9f36675032ee45c0ad95652a59a51587807de"
+    },
+    {
+      "bytes": 17253,
+      "path": "preimage/process_tests.rs",
+      "sha256": "58bb2a49264b6f980e3bf4bbabbefbc90255e108de3c1fca15a80d3e7c230459"
+    },
+    {
+      "bytes": 26396,
+      "path": "preimage/tests.rs",
+      "sha256": "d4125aa0cc655eb1e3dd8c6ec26dee9d6c946ea635ecf566c915f0262add44a9"
+    },
+    {
+      "bytes": 37826,
+      "path": "source/execution.rs",
+      "sha256": "5820b40e9fc678b974db0f135c6ae30b362236fe57b4b8d6902836374d8dce0c"
+    },
+    {
+      "bytes": 7522,
+      "path": "source/independent_profiles.rs",
+      "sha256": "b72f01bc93717d68658b089889bb2b4154ed7317dc4ef4fcfcc6358a5b440c9d"
+    },
+    {
+      "bytes": 16296,
+      "path": "source/independent_profiles_tests.rs",
+      "sha256": "3838cab5c81e67f02bf62e567f6bbcdb2b7fcbecbc764c791d3187fdd612b2dd"
+    }
+  ],
+  "gpu_execution": false,
+  "numerical_acceptance": false,
+  "performance_claim": false,
+  "production_authority": false,
+  "required_absent_paths": [
+    "crates/fe2o3-host/examples/qwen_prefix_tiles_comparison_v6/independent_profiles.rs",
+    "crates/fe2o3-host/examples/qwen_prefix_tiles_comparison_v6/independent_profiles_tests.rs"
+  ],
+  "required_preimages": [
+    {
+      "bytes": 37619,
+      "path": "crates/fe2o3-host/examples/qwen_prefix_tiles_comparison_v6/execution.rs",
+      "sha256": "49cab83589d7ee6f4ad7547b15576a8a07332ada22fe8fc0d688b53de81af54e"
+    },
+    {
+      "bytes": 15658,
+      "path": "crates/fe2o3-host/examples/qwen_prefix_tiles_comparison_v6/process.rs",
+      "sha256": "1aeb692b9fc672efd052e2314cc9f36675032ee45c0ad95652a59a51587807de"
+    },
+    {
+      "bytes": 17253,
+      "path": "crates/fe2o3-host/examples/qwen_prefix_tiles_comparison_v6/process_tests.rs",
+      "sha256": "58bb2a49264b6f980e3bf4bbabbefbc90255e108de3c1fca15a80d3e7c230459"
+    },
+    {
+      "bytes": 26396,
+      "path": "crates/fe2o3-host/examples/qwen_prefix_tiles_comparison_v6/tests.rs",
+      "sha256": "d4125aa0cc655eb1e3dd8c6ec26dee9d6c946ea635ecf566c915f0262add44a9"
+    }
+  ],
+  "schema": "fe2o3-p228-independent-native-profile-proposal-v1",
+  "source_directory": "crates/fe2o3-host/examples/qwen_prefix_tiles_comparison_v6",
+  "tests_executed": false
+}

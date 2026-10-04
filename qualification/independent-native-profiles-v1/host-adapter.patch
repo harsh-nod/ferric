@@ -1,0 +1,603 @@
+--- a/crates/fe2o3-host/examples/qwen_prefix_tiles_comparison_v6/execution.rs
++++ b/crates/fe2o3-host/examples/qwen_prefix_tiles_comparison_v6/execution.rs
+@@ -956,6 +956,9 @@
+     if let Some(child) = process::child_mode(args)? {
+         return process::run_child(child);
+     }
++    if let Some((execute, path, sha)) = independent_profiles::mode(args)? {
++        return independent_profiles::run(execute, path, sha);
++    }
+     let (execute, path, sha) = mode(args)?;
+     let loaded = load(path, sha)?;
+     let prepared = prepare(&loaded)?;
+@@ -1033,6 +1036,9 @@
+ #[path = "process.rs"]
+ mod process;
+ 
++#[path = "independent_profiles.rs"]
++mod independent_profiles;
++
+ #[cfg(test)]
+ #[path = "tests.rs"]
+ mod tests;
+--- /dev/null
++++ b/crates/fe2o3-host/examples/qwen_prefix_tiles_comparison_v6/independent_profiles.rs
+@@ -0,0 +1,175 @@
++use super::*;
++
++const INSPECT_FLAG: &str = "--inspect-independent-profiles-v1";
++const EXECUTE_FLAG: &str = "--execute-reviewed-engineering-prefix-independent-profiles-v1";
++const INSPECTION_SCHEMA: &str = "fe2o3-qwen-prefix-tiles-independent-profiles-inspection-v1";
++const OBSERVATION_SCHEMA: &str = "fe2o3-qwen-prefix-tiles-independent-profiles-observation-v1";
++const FAILURE_SCHEMA: &str = "fe2o3-qwen-prefix-tiles-independent-profiles-failure-v1";
++
++pub(super) fn mode(args: &[String]) -> Result<Option<(bool, &str, &str)>> {
++    let execute = match args.first().map(String::as_str) {
++        Some(INSPECT_FLAG) => false,
++        Some(EXECUTE_FLAG) => true,
++        _ => return Ok(None),
++    };
++    let [_, path, sha] = args else {
++        return Err("independent profiles require exactly REQUEST SHA256".into());
++    };
++    Ok(Some((execute, path, sha)))
++}
++
++fn coordinate_profiles(
++    backend: &mut impl ComparisonBackend,
++    prepared: &Prepared,
++) -> Result<[ClosedRun; 2]> {
++    validate_prepared(prepared)?;
++    // The closed child capture census requires baseline first. Each profile
++    // must independently pass its state, finite-output and untouched-KV checks.
++    let baseline = backend.execute(Profile::BaselineV5)?;
++    validate_run(&baseline, Profile::BaselineV5, prepared)?;
++    let tiles = backend.execute(Profile::TilesV6)?;
++    validate_run(&tiles, Profile::TilesV6, prepared)?;
++    Ok([baseline, tiles])
++}
++
++fn report_shell() -> serde_json::Value {
++    serde_json::json!({
++        "schema":INSPECTION_SCHEMA,"authority":"none","success":false,
++        "opened_device":false,"native_execution_attempted":false,
++        "completed_and_closed":false,"immutable_input_readbacks_match":false,
++        "paired_comparison_performed":false,"bitwise_match":false,
++        "independent_numerical_acceptance":false,"full_model_correctness":false,
++        "performance_claim":false,"production_authority":false,"runtime_premises_discharged":false,
++        "scheduler_progress_guaranteed":false,"all_workgroups_participated":false,
++        "profiles":[],"captures":[]
++    })
++}
++
++fn inspection_report(loaded: &Loaded, prepared: &Prepared, sha: &str) -> serde_json::Value {
++    let mut report = report_shell();
++    let scope = serde_json::json!({
++        "request_sha256":sha,"baseline_request":loaded.request.baseline_request,
++        "baseline_image_sha256":loaded.baseline.prefix[0].object_sha256,"tiles":loaded.request.tiles,
++        "devices":loaded.baseline.device_ids,"history_kind":loaded.baseline.history_kind,
++        "position":loaded.baseline.position,"reviews":loaded.request.reviews,
++        "input_sha256":prepared.inputs.each_ref().map(|rank| rank.each_ref().map(|b| fixture::sha256(b))),
++        "initial_output_sha256":prepared.initial.each_ref().map(|rank| rank.each_ref().map(|b| fixture::sha256(b))),
++        "data_root_bytes":EXTENTS,"v5_grid":[128,1,1],"v6_grid":[4096,1,1],"workgroup":[64,1,1],
++        "stage_order":STAGES,"capture_bytes_per_rank":CAPTURE_BYTES,
++        "capture_format":"little-endian concatenation of six BF16 buffers then one FP32 buffer; whole KV caches included"
++    });
++    for (key, value) in scope.as_object().expect("literal object") {
++        report[key] = value.clone();
++    }
++    report
++}
++
++fn observation_report(
++    mut report: serde_json::Value,
++    runs: &[ClosedRun; 2],
++    captures: &[[FilePin; 2]],
++) -> Result<String> {
++    if runs[0].profile != Profile::BaselineV5
++        || runs[1].profile != Profile::TilesV6
++        || runs.iter().any(|run| !run.closed)
++        || captures.len() != 2
++    {
++        return Err("two ordered independently closed profiles and capture pairs required".into());
++    }
++    report["schema"] = OBSERVATION_SCHEMA.into();
++    report["success"] = true.into();
++    report["opened_device"] = true.into();
++    report["native_execution_attempted"] = true.into();
++    report["completed_and_closed"] = true.into();
++    report["immutable_input_readbacks_match"] = true.into();
++    report["profiles"] = serde_json::json!(runs.each_ref().map(|r| serde_json::json!({
++        "profile":r.profile,"states":r.states,"host_dispatch_elapsed_ns":r.host_elapsed_ns,"closed":r.closed
++    })));
++    report["captures"] = serde_json::to_value(captures).map_err(|e| e.to_string())?;
++    report["timing_boundary"] = "host currentness/kernarg/publish through GPU completion and idle; not device-only or a benchmark".into();
++    encoded_report(&report)
++}
++
++fn failure_report(
++    mut report: serde_json::Value,
++    progress: &[ProfileProgress],
++    captures: &[[FilePin; 2]],
++    error: &str,
++) -> Result<String> {
++    report["schema"] = FAILURE_SCHEMA.into();
++    report["success"] = false.into();
++    report["completed_and_closed"] = false.into();
++    report["immutable_input_readbacks_match"] = false.into();
++    report["native_execution_attempted"] = progress.iter().any(|p| p.group_open_attempted).into();
++    report["opened_device"] = if progress.iter().any(|p| p.group_open_returned) {
++        true.into()
++    } else if progress.iter().any(|p| p.group_open_attempted) {
++        serde_json::Value::Null
++    } else {
++        false.into()
++    };
++    report["profiles"] = serde_json::to_value(progress).map_err(|e| e.to_string())?;
++    report["captures"] = serde_json::to_value(captures).map_err(|e| e.to_string())?;
++    report["error"] = error.chars().take(2048).collect::<String>().into();
++    report["failure_containment"] = "no close retry or in-process fallback; child exits, external owner must reap and audit idle".into();
++    encoded_report(&report)
++}
++
++pub(super) fn run(execute: bool, path: &str, sha: &str) -> Result<()> {
++    // Use the existing exact request, six scoped reviews, descriptor, immutable
++    // fixture and freshness gates. This route grants no new runtime authority.
++    let loaded = load(path, sha)?;
++    let prepared = prepare(&loaded)?;
++    let report = inspection_report(&loaded, &prepared, sha);
++    if !execute {
++        println!("{}", encoded_report(&report)?);
++        return Ok(());
++    }
++    let directory = capture_path(&loaded.request.capture_directory)?;
++    std::fs::DirBuilder::new()
++        .mode(0o700)
++        .create(&directory)
++        .map_err(|e| e.to_string())?;
++    let mut native = Native {
++        prepared: &prepared,
++        directory: &directory,
++        request: process::request_pin(path, sha)?,
++        executable: process::Executable::current(None)?,
++        child_pids: Vec::new(),
++        captures: Vec::new(),
++        progress: Vec::new(),
++        comparison: None,
++    };
++    let outcome = (|| {
++        // Native::execute still authenticates/reaps a disposable child through
++        // process::execute; no raw-child route or old parity failure is used.
++        let runs = coordinate_profiles(&mut native, &prepared)?;
++        if native.comparison.is_some() {
++            return Err("independent profiles must not retain comparison rows".into());
++        }
++        for pins in &native.captures {
++            for pin in pins {
++                pinned(pin, CAPTURE_BYTES)?;
++            }
++        }
++        native.executable.check()?;
++        observation_report(report.clone(), &runs, &native.captures)
++    })();
++    match outcome {
++        Ok(text) => {
++            println!("{text}");
++            Ok(())
++        }
++        Err(error) => {
++            println!(
++                "{}",
++                failure_report(report, &native.progress, &native.captures, &error)?
++            );
++            Err(error)
++        }
++    }
++}
++
++#[cfg(test)]
++#[path = "independent_profiles_tests.rs"]
++mod tests;
+--- /dev/null
++++ b/crates/fe2o3-host/examples/qwen_prefix_tiles_comparison_v6/independent_profiles_tests.rs
+@@ -0,0 +1,400 @@
++use super::*;
++
++fn prepared() -> Prepared {
++    Prepared {
++        inputs: core::array::from_fn(|_| core::array::from_fn(|role| vec![0; EXTENTS[role]])),
++        initial: core::array::from_fn(|_| {
++            core::array::from_fn(|stage| {
++                if stage == 6 {
++                    0x7fc0_2150_u32.to_le_bytes().repeat(EXTENTS[7 + stage] / 4)
++                } else {
++                    0x7fc1_u16.to_le_bytes().repeat(EXTENTS[7 + stage] / 2)
++                }
++            })
++        }),
++        slots: [17, 17],
++    }
++}
++
++fn closed(profile: Profile, prepared: &Prepared) -> ClosedRun {
++    let mut words = match profile {
++        Profile::BaselineV5 => vec![64; 22],
++        Profile::TilesV6 => vec![64; 284],
++    };
++    match profile {
++        Profile::BaselineV5 => {
++            words[..6].copy_from_slice(&[1, 0, 65535, 65535, 0x5555_5555, 0]);
++        }
++        Profile::TilesV6 => {
++            words[..4].copy_from_slice(&[1, 0, 0, 31]);
++            words[4..9].copy_from_slice(&[1, 48, 1, 16, 64]);
++            words[9..14].copy_from_slice(&[1, 48, 1, 16, 64]);
++            words[14..19].copy_from_slice(&[u32::MAX, u32::MAX, u32::MAX, u32::MAX, 3]);
++            words[19..24].copy_from_slice(&[u32::MAX, u32::MAX, u32::MAX, u32::MAX, 3]);
++            words[24..154].fill(1);
++        }
++    }
++    ClosedRun {
++        profile,
++        states: [words.clone(), words],
++        host_elapsed_ns: [1, 2],
++        outputs: core::array::from_fn(|rank| {
++            core::array::from_fn(|stage| {
++                if matches!(stage, 3 | 4) {
++                    let mut bytes = prepared.initial[rank][stage].clone();
++                    let start = prepared.slots[rank] * 1024;
++                    bytes[start..start + 1024].fill(0);
++                    bytes
++                } else {
++                    vec![0; EXTENTS[7 + stage]]
++                }
++            })
++        }),
++        closed: true,
++    }
++}
++
++#[derive(Clone, Copy)]
++enum Mutation {
++    None,
++    ExecutionError,
++    Unclosed,
++    WrongProfile,
++    State(usize),
++    Nonfinite(usize, usize, bool),
++    UntouchedKv(usize, usize, bool),
++    ShortOutput,
++    DifferentFiniteOutputs,
++}
++
++struct Fake<'a> {
++    prepared: &'a Prepared,
++    calls: Vec<Profile>,
++    target: Profile,
++    mutation: Mutation,
++    comparison_rows: usize,
++}
++
++impl ComparisonBackend for Fake<'_> {
++    fn execute(&mut self, profile: Profile) -> Result<ClosedRun> {
++        self.calls.push(profile);
++        if profile == self.target && matches!(self.mutation, Mutation::ExecutionError) {
++            return Err("native phase failure".into());
++        }
++        let mut run = closed(profile, self.prepared);
++        if profile == self.target {
++            match self.mutation {
++                Mutation::None | Mutation::ExecutionError => {}
++                Mutation::Unclosed => run.closed = false,
++                Mutation::WrongProfile => {
++                    run.profile = match profile {
++                        Profile::BaselineV5 => Profile::TilesV6,
++                        Profile::TilesV6 => Profile::BaselineV5,
++                    };
++                }
++                Mutation::State(rank) => run.states[rank][0] = 0,
++                Mutation::Nonfinite(rank, stage, nan) => {
++                    let offset = if matches!(stage, 3 | 4) {
++                        self.prepared.slots[rank] * 1024
++                    } else {
++                        0
++                    };
++                    if stage == 6 {
++                        let bits: u32 = if nan { 0x7fc0_2150 } else { 0x7f80_0000 };
++                        run.outputs[rank][stage][offset..offset + 4]
++                            .copy_from_slice(&bits.to_le_bytes());
++                    } else {
++                        let bits: u16 = if nan { 0x7fc1 } else { 0x7f80 };
++                        run.outputs[rank][stage][offset..offset + 2]
++                            .copy_from_slice(&bits.to_le_bytes());
++                    }
++                }
++                Mutation::UntouchedKv(rank, stage, after) => {
++                    let start = self.prepared.slots[rank] * 1024;
++                    let offset = if after { start + 1024 } else { start - 2 };
++                    run.outputs[rank][stage][offset] ^= 1;
++                }
++                Mutation::ShortOutput => {
++                    run.outputs[1][6].pop();
++                }
++                Mutation::DifferentFiniteOutputs => {
++                    for rank in 0..2 {
++                        for stage in 0..7 {
++                            let offset = if matches!(stage, 3 | 4) {
++                                self.prepared.slots[rank] * 1024
++                            } else {
++                                0
++                            };
++                            if stage == 6 {
++                                run.outputs[rank][stage][offset..offset + 4]
++                                    .copy_from_slice(&1_f32.to_bits().to_le_bytes());
++                            } else {
++                                run.outputs[rank][stage][offset..offset + 2]
++                                    .copy_from_slice(&0x3f80_u16.to_le_bytes());
++                            }
++                        }
++                    }
++                }
++            }
++        }
++        Ok(run)
++    }
++
++    fn retain_comparison(&mut self, rows: &[StageMatch]) {
++        self.comparison_rows += rows.len();
++    }
++}
++
++fn fake(prepared: &Prepared, target: Profile, mutation: Mutation) -> Fake<'_> {
++    Fake { prepared, calls: vec![], target, mutation, comparison_rows: 0 }
++}
++
++fn assert_failed(prepared: &Prepared, target: Profile, mutation: Mutation) {
++    let mut backend = fake(prepared, target, mutation);
++    assert!(coordinate_profiles(&mut backend, prepared).is_err());
++    let expected: &[Profile] = match target {
++        Profile::BaselineV5 => &[Profile::BaselineV5],
++        Profile::TilesV6 => &[Profile::BaselineV5, Profile::TilesV6],
++    };
++    assert_eq!(backend.calls, expected);
++    assert_eq!(backend.comparison_rows, 0);
++}
++
++fn capture_pins() -> [[FilePin; 2]; 2] {
++    ["baseline-v5", "tiles-v6"].map(|profile| {
++        core::array::from_fn(|rank| FilePin {
++            path: format!("/unused/{profile}-rank{rank}.bin"),
++            bytes: CAPTURE_BYTES,
++            sha256: "11".repeat(32),
++        })
++    })
++}
++
++fn assert_nonclaims(report: &serde_json::Value) {
++    assert_eq!(report["authority"], "none");
++    for key in [
++        "paired_comparison_performed", "bitwise_match", "independent_numerical_acceptance",
++        "full_model_correctness", "performance_claim", "production_authority",
++        "runtime_premises_discharged", "scheduler_progress_guaranteed",
++        "all_workgroups_participated",
++    ] {
++        assert_eq!(report[key], false, "{key}");
++    }
++    for key in ["stages", "comparison", "comparison_rows"] {
++        assert!(report.get(key).is_none(), "no paired rows: {key}");
++    }
++}
++
++#[test]
++fn independent_profiles_cli_is_explicit_and_leaves_old_modes_unchanged() {
++    for (flag, execute) in [(INSPECT_FLAG, false), (EXECUTE_FLAG, true)] {
++        let args = [flag.into(), "request".into(), "sha".into()];
++        assert_eq!(mode(&args).unwrap(), Some((execute, "request", "sha")));
++        assert!(super::super::mode(&args).is_err());
++        assert!(process::child_mode(&args).unwrap().is_none());
++    }
++    for (flag, execute) in [
++        ("--inspect", false),
++        ("--execute-reviewed-engineering-prefix-comparison", true),
++    ] {
++        let args = [flag.into(), "request".into(), "sha".into()];
++        assert!(mode(&args).unwrap().is_none());
++        assert_eq!(super::super::mode(&args).unwrap(), (execute, "request", "sha"));
++    }
++}
++
++#[test]
++fn independent_profiles_cli_rejects_missing_extra_and_near_match_arguments() {
++    for flag in [INSPECT_FLAG, EXECUTE_FLAG] {
++        for args in [vec![flag.into()], vec![flag.into(), "request".into()],
++            vec![flag.into(), "request".into(), "sha".into(), "extra".into()]] {
++            assert!(mode(&args).is_err());
++        }
++    }
++    for flag in ["--execute", "--inspect-independent-profiles", "--execute-reviewed-engineering-prefix-independent-profiles-v2"] {
++        let args = [flag.into(), "request".into(), "sha".into()];
++        assert!(mode(&args).unwrap().is_none());
++        assert!(super::super::mode(&args).is_err());
++        assert!(process::child_mode(&args).unwrap().is_none());
++    }
++}
++
++#[test]
++fn independent_profiles_accept_finite_differences_without_paired_rows() {
++    let prepared = prepared();
++    let mut backend = fake(&prepared, Profile::TilesV6, Mutation::DifferentFiniteOutputs);
++    let runs = coordinate_profiles(&mut backend, &prepared).unwrap();
++    assert_eq!(backend.calls, [Profile::BaselineV5, Profile::TilesV6]);
++    assert_eq!(backend.comparison_rows, 0);
++    assert!(compare_outputs(&runs[0].outputs, &runs[1].outputs).unwrap()
++        .iter().all(|row| row.mismatches == 1));
++    // The same fixture must still fail the original bitwise-comparison route.
++    let mut paired = fake(&prepared, Profile::TilesV6, Mutation::DifferentFiniteOutputs);
++    assert!(coordinate(&mut paired, &prepared).unwrap_err().contains("bitwise"));
++    assert_eq!(paired.comparison_rows, 14);
++}
++
++#[test]
++fn independent_profiles_baseline_failure_or_bad_close_prevents_candidate() {
++    let prepared = prepared();
++    for mutation in [Mutation::ExecutionError, Mutation::Unclosed, Mutation::WrongProfile] {
++        assert_failed(&prepared, Profile::BaselineV5, mutation);
++    }
++}
++
++#[test]
++fn independent_profiles_candidate_failure_or_bad_close_has_no_retry() {
++    let prepared = prepared();
++    for mutation in [Mutation::ExecutionError, Mutation::Unclosed, Mutation::WrongProfile] {
++        assert_failed(&prepared, Profile::TilesV6, mutation);
++    }
++}
++
++#[test]
++fn independent_profiles_reject_invalid_terminal_states_on_either_rank() {
++    let prepared = prepared();
++    for profile in [Profile::BaselineV5, Profile::TilesV6] {
++        for rank in 0..2 {
++            assert_failed(&prepared, profile, Mutation::State(rank));
++        }
++    }
++}
++
++#[test]
++fn independent_profiles_reject_nan_and_infinity_in_each_computed_stage() {
++    let prepared = prepared();
++    for profile in [Profile::BaselineV5, Profile::TilesV6] {
++        for stage in 0..7 {
++            for nan in [false, true] {
++                assert_failed(&prepared, profile, Mutation::Nonfinite(stage % 2, stage, nan));
++            }
++        }
++    }
++}
++
++#[test]
++fn independent_profiles_reject_changes_before_or_after_current_kv_slot() {
++    let prepared = prepared();
++    for profile in [Profile::BaselineV5, Profile::TilesV6] {
++        for rank in 0..2 {
++            for stage in [3, 4] {
++                for after in [false, true] {
++                    assert_failed(&prepared, profile, Mutation::UntouchedKv(rank, stage, after));
++                }
++            }
++        }
++    }
++}
++
++#[test]
++fn independent_profiles_reject_inexact_output_extent_and_prepared_inputs() {
++    let mut prepared = prepared();
++    for profile in [Profile::BaselineV5, Profile::TilesV6] {
++        assert_failed(&prepared, profile, Mutation::ShortOutput);
++    }
++    prepared.inputs[1][0][0] = 1;
++    let mut backend = fake(&prepared, Profile::BaselineV5, Mutation::None);
++    assert!(coordinate_profiles(&mut backend, &prepared).is_err());
++    assert!(backend.calls.is_empty());
++    prepared.inputs[1][0][0] = 0;
++    prepared.inputs[0][1].pop();
++    let mut backend = fake(&prepared, Profile::BaselineV5, Mutation::None);
++    assert!(coordinate_profiles(&mut backend, &prepared).is_err());
++    assert!(backend.calls.is_empty());
++}
++
++#[test]
++fn independent_profiles_inspection_and_observation_keep_all_nonclaims() {
++    let shell = report_shell();
++    assert_eq!(shell["schema"], INSPECTION_SCHEMA);
++    assert_eq!(shell["success"], false);
++    assert_eq!(shell["opened_device"], false);
++    assert_nonclaims(&shell);
++    let prepared = prepared();
++    let mut backend = fake(&prepared, Profile::TilesV6, Mutation::DifferentFiniteOutputs);
++    let runs = coordinate_profiles(&mut backend, &prepared).unwrap();
++    let pins = capture_pins();
++    let text = observation_report(shell, &runs, &pins).unwrap();
++    let report: serde_json::Value = serde_json::from_str(&text).unwrap();
++    assert!(text.len() <= JSON_CAP);
++    assert_eq!(report["schema"], OBSERVATION_SCHEMA);
++    assert_eq!(report["success"], true);
++    assert_eq!(report["completed_and_closed"], true);
++    assert_eq!(report["immutable_input_readbacks_match"], true);
++    assert_eq!(report["profiles"][0]["profile"], "baseline_v5");
++    assert_eq!(report["profiles"][1]["profile"], "tiles_v6");
++    for (index, run) in runs.iter().enumerate() {
++        assert_eq!(report["profiles"][index]["states"], serde_json::to_value(&run.states).unwrap());
++        assert_eq!(report["profiles"][index]["host_dispatch_elapsed_ns"], serde_json::json!([1, 2]));
++        assert_eq!(report["profiles"][index]["closed"], true);
++    }
++    assert_eq!(report["captures"], serde_json::to_value(&pins).unwrap());
++    assert!(report["timing_boundary"].as_str().unwrap().contains("not device-only or a benchmark"));
++    assert_nonclaims(&report);
++}
++
++#[test]
++fn independent_profiles_observation_refuses_missing_captures_or_bad_order_and_close() {
++    let prepared = prepared();
++    let mut runs = [closed(Profile::BaselineV5, &prepared), closed(Profile::TilesV6, &prepared)];
++    let pins = capture_pins();
++    assert!(observation_report(report_shell(), &runs, &pins[..1]).is_err());
++    runs.swap(0, 1);
++    assert!(observation_report(report_shell(), &runs, &pins).is_err());
++    runs.swap(0, 1);
++    runs[1].closed = false;
++    assert!(observation_report(report_shell(), &runs, &pins).is_err());
++}
++
++#[test]
++fn independent_profiles_failure_preserves_closed_baseline_and_uncertain_candidate() {
++    let mut baseline = ProfileProgress::new(Profile::BaselineV5);
++    baseline.open(|| Ok(())).unwrap();
++    baseline.close(|| Ok(())).unwrap();
++    let mut tiles = ProfileProgress::new(Profile::TilesV6);
++    tiles.open(|| Ok(())).unwrap();
++    assert!(tiles.close(|| Err("uncertain close".into())).is_err());
++    let progress = [baseline, tiles];
++    let pins = capture_pins();
++    let text = failure_report(report_shell(), &progress, &pins[..1], "candidate failed").unwrap();
++    let report: serde_json::Value = serde_json::from_str(&text).unwrap();
++    assert_eq!(report["schema"], FAILURE_SCHEMA);
++    assert_eq!(report["success"], false);
++    assert_eq!(report["completed_and_closed"], false);
++    assert_eq!(report["immutable_input_readbacks_match"], false);
++    assert_eq!(report["profiles"], serde_json::to_value(&progress).unwrap());
++    assert_eq!(report["captures"], serde_json::to_value(&pins[..1]).unwrap());
++    assert_eq!(report["opened_device"], true);
++    assert_nonclaims(&report);
++}
++
++#[test]
++fn independent_profiles_failure_does_not_infer_device_absence_from_failed_open() {
++    let mut progress = ProfileProgress::new(Profile::BaselineV5);
++    assert!(progress.open::<()>(|| Err("partial open".into())).is_err());
++    let text = failure_report(report_shell(), &[progress], &[], &"x".repeat(4096)).unwrap();
++    let report: serde_json::Value = serde_json::from_str(&text).unwrap();
++    assert_eq!(report["native_execution_attempted"], true);
++    assert!(report["opened_device"].is_null());
++    assert_eq!(report["profiles"][0]["closed"], false);
++    assert_eq!(report["error"].as_str().unwrap().len(), 2048);
++    assert_nonclaims(&report);
++}
++
++#[test]
++fn independent_profiles_postcheck_failure_retains_both_closed_profiles_without_success() {
++    let mut progress = [ProfileProgress::new(Profile::BaselineV5), ProfileProgress::new(Profile::TilesV6)];
++    for profile in &mut progress {
++        profile.open(|| Ok(())).unwrap();
++        profile.close(|| Ok(())).unwrap();
++    }
++    let pins = capture_pins();
++    let text = failure_report(report_shell(), &progress, &pins, "capture or executable recheck failed").unwrap();
++    let report: serde_json::Value = serde_json::from_str(&text).unwrap();
++    assert_eq!(report["profiles"][0]["closed"], true);
++    assert_eq!(report["profiles"][1]["closed"], true);
++    assert_eq!(report["captures"], serde_json::to_value(&pins).unwrap());
++    assert_eq!(report["success"], false);
++    assert_eq!(report["completed_and_closed"], false);
++    assert_nonclaims(&report);
++}
