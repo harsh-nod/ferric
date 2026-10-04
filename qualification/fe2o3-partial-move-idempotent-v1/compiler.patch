@@ -1,0 +1,186 @@
+diff --git a/crates/fe2o3-pliron/src/production/semantic_ssa/partial_moves.rs b/crates/fe2o3-pliron/src/production/semantic_ssa/partial_moves.rs
+--- a/crates/fe2o3-pliron/src/production/semantic_ssa/partial_moves.rs
++++ b/crates/fe2o3-pliron/src/production/semantic_ssa/partial_moves.rs
+@@ -1039,10 +1039,12 @@
+     budget: &mut SemanticPartialMoveBudgetV1,
+ ) -> Result<(), ProductionSemanticSsaErrorV1> {
+     let paths = state.entry(local).or_default();
++    // A whole-local tombstone already subsumes every incoming move path.
++    if paths.contains(&Vec::new()) {
++        return Ok(());
++    }
+     if path.is_empty() {
+         paths.clear();
+-    } else if paths.contains(&Vec::new()) {
+-        return Ok(());
+     }
+     if paths.insert(path) {
+         budget.charge_state_entry()?;
+@@ -1092,3 +1094,7 @@
+ #[cfg(test)]
+ #[path = "partial_move_indirect_destination_v1_tests.rs"]
+ mod indirect_destination_tests;
++
++#[cfg(test)]
++#[path = "partial_move_idempotent_v1_tests.rs"]
++mod idempotent_mark_tests;
+diff --git a/crates/fe2o3-pliron/src/production/semantic_ssa/partial_move_idempotent_v1_tests.rs b/crates/fe2o3-pliron/src/production/semantic_ssa/partial_move_idempotent_v1_tests.rs
+new file mode 100644
+--- /dev/null
++++ b/crates/fe2o3-pliron/src/production/semantic_ssa/partial_move_idempotent_v1_tests.rs
+@@ -0,0 +1,155 @@
++use super::super::tests::test_function;
++use super::*;
++use fe2o3_mir_model::semantic_mir_v1::{
++    SemanticBasicBlockV1, SemanticBlockIdentityV1, SemanticLocalIdV1,
++    SemanticSourceProvenanceV1, SemanticTerminatorV1,
++};
++
++fn budget(remaining: usize) -> SemanticPartialMoveBudgetV1 {
++    let limits = SsaPlannerLimitsV1::default();
++    SemanticPartialMoveBudgetV1 {
++        function: SemanticFunctionIdV1::from_index(0),
++        base_storage_words: limits.max_storage_words() - remaining,
++        base_work_units: 0,
++        state_entries: 0,
++        work_units: 0,
++        limits,
++    }
++}
++
++fn location() -> SemanticPartialMoveLocationV1 {
++    SemanticPartialMoveLocationV1 {
++        function: SemanticFunctionIdV1::from_index(0),
++        block: 0,
++        statement: Some(0),
++    }
++}
++
++fn field(index: u32) -> SemanticMovePathV1 {
++    vec![SemanticMovePathElementV1::Field(index)]
++}
++
++fn assert_storage_limit(error: ProductionSemanticSsaErrorV1) {
++    let limit = SsaPlannerLimitsV1::default().max_storage_words();
++    assert!(matches!(
++        error,
++        ProductionSemanticSsaErrorV1::PartialMoveResourceLimit {
++            resource: SsaPlannerResourceV1::StorageWords,
++            required,
++            limit: observed_limit,
++            ..
++        } if required == limit + 1 && observed_limit == limit
++    ));
++}
++
++#[test]
++fn repeated_whole_and_descendant_marks_are_noops_at_exact_storage_limit() {
++    let mut state = SemanticPartialMoveStateV1::new();
++    let mut budget = budget(1);
++    mark_partial_move_v1(1, vec![], &mut state, &mut budget).unwrap();
++    let before = state.clone();
++    for _ in 0..128 {
++        for path in [vec![], field(0), field(1)] {
++            mark_partial_move_v1(1, path, &mut state, &mut budget).unwrap();
++        }
++    }
++    assert_eq!(state, before);
++    assert_eq!(budget.state_entries, 1);
++}
++
++#[test]
++fn new_local_at_exhausted_storage_still_fails() {
++    let mut state = SemanticPartialMoveStateV1::new();
++    let mut budget = budget(1);
++    mark_partial_move_v1(1, vec![], &mut state, &mut budget).unwrap();
++    assert_storage_limit(mark_partial_move_v1(2, vec![], &mut state, &mut budget).unwrap_err());
++    assert_eq!(budget.state_entries, 2);
++}
++
++#[test]
++fn storage_live_does_not_refund_prior_insertions() {
++    let source = SemanticSourceProvenanceV1::unavailable();
++    let function = test_function(vec![
++        SemanticBasicBlockV1::new(
++            SemanticBlockIdentityV1::from_sha256([123; 32]),
++            source,
++            vec![],
++            SemanticTerminatorV1::new(source, SemanticTerminatorKindV1::Return),
++        )
++        .unwrap(),
++    ]);
++    let mut state = SemanticPartialMoveStateV1::new();
++    let mut budget = budget(2);
++    let live = SemanticStatementKindV1::StorageLive(SemanticLocalIdV1::from_index(1));
++    let dead = SemanticStatementKindV1::StorageDead(SemanticLocalIdV1::from_index(1));
++    for expected in 1..=2 {
++        validate_partial_move_statement_v1(
++            &function, None, &dead, location(), &mut state, &mut budget,
++        )
++        .unwrap();
++        assert_eq!(budget.state_entries, expected);
++        validate_partial_move_statement_v1(
++            &function, None, &dead, location(), &mut state, &mut budget,
++        )
++        .unwrap();
++        assert_eq!(budget.state_entries, expected);
++        validate_partial_move_statement_v1(
++            &function, None, &live, location(), &mut state, &mut budget,
++        )
++        .unwrap();
++        assert!(state.is_empty());
++        assert_eq!(budget.state_entries, expected);
++    }
++    assert_storage_limit(
++        validate_partial_move_statement_v1(
++            &function, None, &dead, location(), &mut state, &mut budget,
++        )
++        .unwrap_err(),
++    );
++}
++
++#[test]
++fn replacing_fields_with_whole_local_charges_once_without_refunds() {
++    let mut state = SemanticPartialMoveStateV1::new();
++    let mut budget = budget(3);
++    mark_partial_move_v1(1, field(0), &mut state, &mut budget).unwrap();
++    mark_partial_move_v1(1, field(1), &mut state, &mut budget).unwrap();
++    mark_partial_move_v1(1, vec![], &mut state, &mut budget).unwrap();
++    assert_eq!(state[&1], BTreeSet::from([vec![]]));
++    assert_eq!(budget.state_entries, 3);
++    mark_partial_move_v1(1, vec![], &mut state, &mut budget).unwrap();
++    assert_eq!(budget.state_entries, 3);
++    assert_storage_limit(mark_partial_move_v1(2, field(0), &mut state, &mut budget).unwrap_err());
++}
++
++#[test]
++fn no_op_marks_preserve_whole_and_descendant_read_rejection() {
++    let mut state = SemanticPartialMoveStateV1::new();
++    let mut budget = budget(1);
++    mark_partial_move_v1(1, vec![], &mut state, &mut budget).unwrap();
++    mark_partial_move_v1(1, vec![], &mut state, &mut budget).unwrap();
++    for path in [vec![], field(0), field(1)] {
++        assert!(matches!(
++            validate_partial_move_path_read_v1(1, &path, location(), &state, &mut budget),
++            Err(ProductionSemanticSsaErrorV1::PartialMove {
++                violation: SemanticPartialMoveViolationV1::MaybeMovedValueUsed,
++                ..
++            })
++        ));
++    }
++    validate_partial_move_path_read_v1(2, &[], location(), &state, &mut budget).unwrap();
++}
++
++#[test]
++fn fixed_point_whole_local_join_is_unchanged_and_does_not_recharge() {
++    let mut state = SemanticPartialMoveStateV1::new();
++    let mut budget = budget(2);
++    mark_partial_move_v1(1, field(0), &mut state, &mut budget).unwrap();
++    let incoming = BTreeMap::from([(1, BTreeSet::from([vec![]]))]);
++    assert!(merge_partial_move_state_v1(&mut state, &incoming, &mut budget).unwrap());
++    assert_eq!(state, incoming);
++    assert_eq!(budget.state_entries, 2);
++    mark_partial_move_v1(1, vec![], &mut state, &mut budget).unwrap();
++    assert!(!merge_partial_move_state_v1(&mut state, &incoming, &mut budget).unwrap());
++    assert_eq!(budget.state_entries, 2);
++}

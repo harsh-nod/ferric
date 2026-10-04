@@ -23,6 +23,7 @@ engineering branch; it does not change the production execution path.
 | Four teacher-forced forwards on `mi350` | 152 retained native tensor rows bitwise equal to the prior native route | All 36 layers, TP2, finite engineering images; not an independent full-model numerical bound |
 | Four autoregressive forwards on `mi350` | 152 retained native tensor rows bitwise equal to the prior native route | Own-token history; no 2,048/256 workload or sustained throughput measurement |
 | Six prefix-stage numerical cases | All 24 rank/profile rows satisfy the declared conditional norm/QKV bounds | Independent conditional arithmetic check of retained captures, not a new GPU run |
+| Idempotent partial-move compiler candidate on `mi350-2` | 2,675 CPU tests passed, 25 ignored; fresh compiler built | Six new regressions executed; actual prefix-tile replay remains ignored and checked lowering is still pending |
 
 Both four-forward runs completed their Close protocol, reaped their owned
 processes, and passed their six surrounding device-state audits. The CPU suite
@@ -90,12 +91,25 @@ seven Rust source bodies and 53 device-provider sources. Metadata passed,
 Cargo then exited 101, and all source/tool/configuration/dependency/old-target
 postchecks passed. The owned process tree exited naturally and was reaped.
 
-The next compiler candidate removes a redundant clear/reinsert when a local
-is already marked wholly moved. This must preserve moved-value rejection,
-charge genuine new insertions cumulatively, and pass exact-limit, reinitialization,
-join/loop and replay tests before a new compiler probe. It is not yet tested
-and is not evidence that the complete function will fit. Compiler limits,
-numerical tolerances and production admission remain unchanged.
+The [next compiler candidate](../qualification/fe2o3-partial-move-idempotent-v1/README.md)
+removes a redundant clear/reinsert when a local is already marked wholly moved.
+Its [fresh CPU validation](../qualification/fe2o3-partial-move-idempotent-v1/cpu-result.json)
+passed 1,487 Pliron tests and 1,188 compiler tests, with 25 ignored. All six new
+exact-limit, cumulative-charge, moved-read and unchanged-join regressions ran;
+the full default suites also exercised existing CFG, loop and replay coverage.
+Actual prefix-tile replay is among the ignored tests and remains unqualified.
+The fresh backend and extractor built, all ten commands exited naturally, and
+source/dependency/tool/old-target checks passed. The compiler patch, regression
+tests and precise source boundary are published separately from runtime code.
+
+The first CPU controller attempt rejected libtest's passing `should panic`
+annotation. Its failure was retained; the parser fix passed nine policy tests,
+then both suites and the compiler build were rerun under fresh paths. The
+completed run's 59 raw records, full copied compiler source and five selected
+artifacts were retained and rehashed locally. This is not evidence that the
+complete reciprocal function fits: coherent finalizer tools and a new checked
+probe are still required. Compiler limits, numerical tolerances and production
+admission remain unchanged.
 
 ## Source Publication
 
@@ -270,10 +284,12 @@ alone is not a self-contained reproducer or proof.
 ## Next Gates
 
 1. Extend the freshly built parent/worker source pair to reproducible
-   compiler/HSACO builds; the full pipeline is not yet reproduced.
-2. Follow the completed baseline/cache/baseline/shared sequence and CPU-tested
-   consolidation with the new worker's own GPU comparison on `mi350`, preserving
-   the exact numerical checks and retained-device review.
+   compiler/HSACO builds. Rebuild the finalizer tools against the tested
+   idempotent compiler generation, then retry checked reciprocal lowering;
+   the full pipeline is not yet reproduced.
+2. Follow the consolidated worker's completed teacher-forced GPU comparison
+   with its autoregressive check and repeated shared-currentness timing on
+   `mi350`, preserving the exact numerical checks and retained-device review.
 3. Close independent numerical obligations and validate the longer resident
    request, multiple requests, KV lifetime and cleanup boundaries.
 4. Qualify the full target workload: single-request Qwen3-8B, BF16,

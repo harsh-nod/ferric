@@ -1,0 +1,250 @@
+{
+  "artifacts": {
+    "compiler-tests": {
+      "bytes": 128877928,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/idempotent-compiler-cpu-v228-v2/target/debug/deps/rustc_codegen_fe2o3-5db184f14eef1d1c",
+      "sha256": "4c1ace474ae0a28bc1f6abeaef5239e767a8eb2bd277e7bb906b606cdaa36833"
+    },
+    "fe2o3-rustc-extract": {
+      "bytes": 205648,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/idempotent-compiler-cpu-v228-v2/target/debug/fe2o3-rustc-extract",
+      "sha256": "cece2097c34ed019e380a512132e8f4d932f127e8dd87793bcd9f0cf620cf3ca"
+    },
+    "librustc_codegen_fe2o3.rlib": {
+      "bytes": 67644170,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/idempotent-compiler-cpu-v228-v2/target/debug/librustc_codegen_fe2o3.rlib",
+      "sha256": "0adfe45ce9771479c89cf2e7901f8c779b720277c07573d22ce94f7164258fe8"
+    },
+    "librustc_codegen_fe2o3.so": {
+      "bytes": 205454400,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/idempotent-compiler-cpu-v228-v2/target/debug/librustc_codegen_fe2o3.so",
+      "sha256": "7aff786b4f8ce7105106d9e49d26f5b930524106438ba8452c3ad78bfb4bc294"
+    },
+    "pliron-tests": {
+      "bytes": 68335536,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/idempotent-compiler-cpu-v228-v2/target/debug/deps/fe2o3_pliron-bfbb58262805e3df",
+      "sha256": "daf78e73d17b8abd0421494578c91bcea5be5a9f11bd2a7772efaf76da9f7ae1"
+    }
+  },
+  "checked_lowering": false,
+  "date": "2026-10-03",
+  "fresh_compiler_built": true,
+  "fresh_hsaco_emitted": false,
+  "full_model_acceptance": false,
+  "gpu_execution": false,
+  "host": "mi350-2 (asrock-1w300-g2-2b)",
+  "local_rehash": {
+    "artifacts": 5,
+    "copied_source_files": 5780,
+    "raw_records": 59
+  },
+  "new_regression_tests_passed": [
+    "production::semantic_ssa::partial_moves::idempotent_mark_tests::fixed_point_whole_local_join_is_unchanged_and_does_not_recharge",
+    "production::semantic_ssa::partial_moves::idempotent_mark_tests::new_local_at_exhausted_storage_still_fails",
+    "production::semantic_ssa::partial_moves::idempotent_mark_tests::no_op_marks_preserve_whole_and_descendant_read_rejection",
+    "production::semantic_ssa::partial_moves::idempotent_mark_tests::repeated_whole_and_descendant_marks_are_noops_at_exact_storage_limit",
+    "production::semantic_ssa::partial_moves::idempotent_mark_tests::replacing_fields_with_whole_local_charges_once_without_refunds",
+    "production::semantic_ssa::partial_moves::idempotent_mark_tests::storage_live_does_not_refund_prior_insertions"
+  ],
+  "numerical_acceptance": false,
+  "owner": {
+    "cleanup_signalled": false,
+    "deadline_seconds": 10800,
+    "elapsed_seconds": 293.4167483721394,
+    "exit_code": 0,
+    "owned_groups_absent": true,
+    "owned_processes_reaped": true,
+    "reason": null
+  },
+  "owner_completion": {
+    "bytes": 53278,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/idempotent-compiler-cpu-owner-v228-v2/complete.json",
+    "sha256": "1365634ddf51a0b041939646d00b0ec609d8683f12570d1dde573681e99f8741"
+  },
+  "passed": true,
+  "patch_roundtrip": {
+    "bytes": 1905,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/idempotent-patch-roundtrip-v228-v1/complete.json",
+    "sha256": "3b9bfbcdb29dccf93657dfc31ef72c0b4b5076df3517d89bfcba58d65f750d96"
+  },
+  "performance_claim": false,
+  "phases": {
+    "compiler-build": {
+      "cache_bytes": 2101662128,
+      "elapsed_seconds": 46.66403398709372,
+      "exit_code": 0,
+      "group_absent": true,
+      "reason": null,
+      "stderr_sha256": "523742445052ed6bcb418da910433eaaadb5a1d977816167db0a86bd6cfc02f4",
+      "stdout_sha256": "7a10b14a8cece02542ce411dc965f0544f5688085606853852a3e9ad4a85e2e6"
+    },
+    "compiler-build-tests": {
+      "cache_bytes": 1497500660,
+      "elapsed_seconds": 89.31964589818381,
+      "exit_code": 0,
+      "group_absent": true,
+      "reason": null,
+      "stderr_sha256": "73f95638230c8b14719f841f7fdda0072e1af048d2691fa70620ab6f069d8bcf",
+      "stdout_sha256": "51f222c3c6f672fa5f6b4a1348ff731eccdff1c6a5e2b2eacfea67d74a5f63e5"
+    },
+    "compiler-ignored-list": {
+      "cache_bytes": 1497500660,
+      "elapsed_seconds": 2.021386977052316,
+      "exit_code": 0,
+      "group_absent": true,
+      "reason": null,
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdout_sha256": "8a66b548f139c344b29f54b88909b2170972c0bd37aee5e581ea7d9a964e547c"
+    },
+    "compiler-list": {
+      "cache_bytes": 1497500660,
+      "elapsed_seconds": 2.035462462110445,
+      "exit_code": 0,
+      "group_absent": true,
+      "reason": null,
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdout_sha256": "0049dbf7704950a44e7dc3b2dd0d1e21f6ab85f29b31a7c5f1fc55ba57942e7e"
+    },
+    "compiler-tests": {
+      "cache_bytes": 1497500660,
+      "elapsed_seconds": 28.42999346414581,
+      "exit_code": 0,
+      "group_absent": true,
+      "reason": null,
+      "stderr_sha256": "768edd56d98b4007e59fc3675f5edab5934e875e9235706b9c937bc83e01a051",
+      "stdout_sha256": "97cf21311d24a82568545693e4c245006de253f01ea6f63b42cb485c8fd82022"
+    },
+    "metadata": {
+      "cache_bytes": 8192,
+      "elapsed_seconds": 2.016005363082513,
+      "exit_code": 0,
+      "group_absent": true,
+      "reason": null,
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdout_sha256": "6ca26539893d3d99c8b063c6554434237953f925cfef71bbc2f96299d763f281"
+    },
+    "pliron-build-tests": {
+      "cache_bytes": 534377750,
+      "elapsed_seconds": 54.679398105014116,
+      "exit_code": 0,
+      "group_absent": true,
+      "reason": null,
+      "stderr_sha256": "1f241856995d213e27be71b9d168f63ab3b825c0c1b536b7e6e0fecc7ab879dd",
+      "stdout_sha256": "ccdab6dfcb2c9c50620ff334ced76b2cd7e7d86210c85b348fc46a74fdac1c13"
+    },
+    "pliron-ignored-list": {
+      "cache_bytes": 534377750,
+      "elapsed_seconds": 2.0193015569821,
+      "exit_code": 0,
+      "group_absent": true,
+      "reason": null,
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdout_sha256": "df501c45dc20a3db0cbabf850e42c9ea212ee4bc96460c7d67d9dad53cd0b486"
+    },
+    "pliron-list": {
+      "cache_bytes": 534377750,
+      "elapsed_seconds": 2.0189982841257006,
+      "exit_code": 0,
+      "group_absent": true,
+      "reason": null,
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdout_sha256": "acd87759091e56f7a70c38a44db0bd524bc80ee9d1bdadcc28019d7cc8e0e5a6"
+    },
+    "pliron-tests": {
+      "cache_bytes": 534377750,
+      "elapsed_seconds": 52.69485696195625,
+      "exit_code": 0,
+      "group_absent": true,
+      "reason": null,
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdout_sha256": "47798926974f55fd366051ce75d65912a9ff2e3c38bc9e1986f8aeb81fa77d9f"
+    }
+  },
+  "prior_attempt": {
+    "correction": "parser regression added; fresh v2 output and target; failure preserved",
+    "reason": "libtest should-panic annotation was not recognized",
+    "result": "controller_failed_after_pliron_pass",
+    "row": "idempotent-compiler-cpu-v228-v1"
+  },
+  "production_authority": false,
+  "raw_completion": {
+    "bytes": 364397,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/idempotent-compiler-cpu-v228-v2/complete.json",
+    "sha256": "52245c1a713a87c1d60a464bf56998cca612f421386efe715533cfafedc3f9ac"
+  },
+  "retained_archive": {
+    "bytes": 127278516,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/idempotent-compiler-cpu-evidence-v228-v2.tar.gz",
+    "sha256": "46c13d2b66c409222024a5876062d2d363b33d3f3bd46fe8e9388a787b3c83ba"
+  },
+  "runner_package": {
+    "bytes": 654,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-idempotent-compiler-cpu-v2/manifest.json",
+    "sha256": "ab36757cf83beccf66deab3c60cf06c962c78e2a36fb567377f3efcd2b014d9d"
+  },
+  "runner_pure_tests": {
+    "passed": 9,
+    "receipt": {
+      "bytes": 361,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/idempotent-compiler-pure-v228-v2/complete.json",
+      "sha256": "13a4af2fb37ae216a495b2a4a8e1082e10d70013026d33eba231ce9ea68b6cf1"
+    }
+  },
+  "schema": "FerricIdempotentPartialMoveCpuQualificationV1",
+  "source_proposal": {
+    "bytes": 892,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-partial-move-idempotent-v1/manifest.json",
+    "sha256": "788aed8827fd55fde9f260e227cfb91bc8f9503df98569617112c9c7b3fcc707"
+  },
+  "source_snapshots": {
+    "sources-after.json": {
+      "bytes": 3686065,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/idempotent-compiler-cpu-v228-v2/sources-after.json",
+      "sha256": "d0e15df4e88f2b70844998eefe096984f0203bb3e31bae26c5021ca0fbae5ba4"
+    },
+    "sources-before.json": {
+      "bytes": 3686065,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/idempotent-compiler-cpu-v228-v2/sources-before.json",
+      "sha256": "d0e15df4e88f2b70844998eefe096984f0203bb3e31bae26c5021ca0fbae5ba4"
+    }
+  },
+  "tests": {
+    "compiler": {
+      "ignored": 24,
+      "ignored_names": [
+        "compiler_descriptor::wave_task_storage_view_v1::tests::actual_post_v35_root_correspondence_rejects_fact_erasure",
+        "production_pipeline::conditional_formal_tests::actual_attention_output_v37_reaches_formal_archive_and_outer_lineage_replay",
+        "production_pipeline::conditional_formal_tests::actual_attention_v36_reaches_formal_archive_and_outer_lineage_replay",
+        "production_pipeline::conditional_formal_tests::actual_mlp_v38_reaches_formal_archive_and_outer_lineage_replay",
+        "production_pipeline::conditional_formal_tests::actual_mlp_v39_reaches_formal_archive_and_outer_lineage_replay",
+        "production_pipeline::conditional_formal_tests::actual_multiwave_v40_reaches_formal_archive_and_outer_lineage_replay",
+        "production_pipeline::conditional_formal_tests::actual_post_v35_reaches_formal_archive_and_outer_lineage_replay",
+        "production_pipeline::conditional_formal_tests::actual_prefix_tile_v41_reaches_formal_archive_and_outer_lineage_replay",
+        "rust_type_layout_v3::tests::fake_external_multiwave_join_storage_authentication_v1",
+        "rust_type_layout_v3::tests::fake_external_prefix_tile_storage_authentication_v6",
+        "rust_type_layout_v3::tests::fake_external_wave_attention_output_storage_authentication_v5",
+        "rust_type_layout_v3::tests::fake_external_wave_attention_storage_authentication_v4",
+        "rust_type_layout_v3::tests::fake_external_wave_mlp_storage_authentication_v1",
+        "rust_type_layout_v3::tests::fake_external_wave_mlp_tile_storage_authentication_v2",
+        "rust_type_layout_v3::tests::fake_external_wave_post_storage_authentication_v3",
+        "rust_type_layout_v3::tests::fake_external_wave_storage_authentication_v2",
+        "rust_type_layout_v3::tests::genuine_external_multiwave_join_storage_authentication_v1",
+        "rust_type_layout_v3::tests::genuine_external_prefix_tile_storage_authentication_v6",
+        "rust_type_layout_v3::tests::genuine_external_wave_attention_output_storage_authentication_v5",
+        "rust_type_layout_v3::tests::genuine_external_wave_attention_storage_authentication_v4",
+        "rust_type_layout_v3::tests::genuine_external_wave_mlp_storage_authentication_v1",
+        "rust_type_layout_v3::tests::genuine_external_wave_mlp_tile_storage_authentication_v2",
+        "rust_type_layout_v3::tests::genuine_external_wave_post_storage_authentication_v3",
+        "rust_type_layout_v3::tests::genuine_external_wave_storage_authentication_v2"
+      ],
+      "passed": 1188
+    },
+    "pliron": {
+      "ignored": 1,
+      "ignored_names": [
+        "production::ranked::p214_native_resource_replay_tests::p214_untrusted_native_wave_resource_replay"
+      ],
+      "passed": 1487
+    }
+  }
+}

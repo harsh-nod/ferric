@@ -1,0 +1,27 @@
+{
+  "schema": "Fe2o3IdempotentPartialMoveSourceV1",
+  "files": [
+    {
+      "path": "crates/fe2o3-pliron/src/production/semantic_ssa/partial_moves.rs",
+      "before": {
+        "bytes": 39621,
+        "sha256": "2de297a25d2556452f6cebe6bb13ecf0f9e4ef2c8fe6980b878c6337d0347c13"
+      },
+      "after": {
+        "bytes": 39783,
+        "sha256": "2a04c9bdf64531a6d5d43f8bb7e6316c5843d2c5d56f1123f31e0b7ef30d4036"
+      }
+    },
+    {
+      "path": "crates/fe2o3-pliron/src/production/semantic_ssa/partial_move_idempotent_v1_tests.rs",
+      "before": null,
+      "after": {
+        "bytes": 5824,
+        "sha256": "2b36e3f167dff51287019c1e8b24eb395ed2c78874ebb5ebfecdfbdd3eb2a5e0"
+      }
+    }
+  ],
+  "proposal_manifest_sha256": "788aed8827fd55fde9f260e227cfb91bc8f9503df98569617112c9c7b3fcc707",
+  "patch_sha256": "ebcad1e184c052f8bb6a5d46e2037cd7b0448c02cab825f24567f225fc340c17",
+  "production_authority": false
+}
