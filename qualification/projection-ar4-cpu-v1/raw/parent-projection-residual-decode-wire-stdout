@@ -1,0 +1,12 @@
+
+running 7 tests
+test finite_projection_residual_decode_wire_v1::tests::projection_decode_wire_additional_image_cannot_exceed_original_stream_budget ... ok
+test finite_projection_residual_decode_wire_v1::tests::projection_ar4_wire_authenticates_mode_seed_and_own_output_recurrence ... ok
+test finite_projection_residual_decode_wire_v1::tests::projection_decode_wire_checks_all_actual_image_bytes_before_write ... ok
+test finite_projection_residual_decode_wire_v1::tests::projection_decode_wire_profile_binds_base_and_candidate_without_layer_alias ... ok
+test finite_projection_residual_decode_wire_v1::tests::projection_decode_wire_roundtrip_keeps_old_begin_and_distinct_profile ... ok
+test finite_projection_residual_decode_wire_v1::tests::projection_decode_wire_refuses_invalid_mode_shape_missing_image_and_unknown_fields ... ok
+test finite_projection_residual_decode_wire_v1::tests::projection_tf4_wire_profile_formula_and_serialized_fields_are_unchanged ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 804 filtered out; finished in 0.00s
+

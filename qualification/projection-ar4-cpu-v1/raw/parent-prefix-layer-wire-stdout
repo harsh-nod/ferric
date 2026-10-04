@@ -1,0 +1,13 @@
+
+running 8 tests
+test finite_prefix_layer_wire_v1::tests::bootstrap_and_actual_input_closed_bounds ... ok
+test finite_prefix_layer_wire_v1::tests::begin_is_joined_before_any_payload_allocation ... ok
+test finite_prefix_layer_wire_v1::tests::distinct_bootstraps_roundtrip_and_body_pins ... ok
+test finite_prefix_layer_wire_v1::tests::every_terminal_word_is_validated_and_types_do_not_alias ... ok
+test finite_prefix_layer_wire_v1::tests::frame_and_header_caps_fail_closed ... ok
+test finite_prefix_layer_wire_v1::tests::only_closed_success_releases_capture ... ok
+test finite_prefix_layer_wire_v1::tests::request_sequence_is_exact_and_rejects_extra_fields ... ok
+test finite_prefix_layer_wire_v1::tests::exact_capture_geometry_and_finite_widths ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 803 filtered out; finished in 0.08s
+

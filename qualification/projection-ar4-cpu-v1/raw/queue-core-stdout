@@ -1,0 +1,22 @@
+
+running 17 tests
+test queue::tests::backend_return_rejects_live_or_unreleased_queue_resources ... ok
+test queue::tests::ambiguous_unknown_id_globally_poisons_create_and_known_id_collision_is_retained ... ok
+test queue::tests::complete_lifecycle_projects_exact_history_and_releases_only_explicitly ... ok
+test queue::tests::create_errno_semantics_and_malformed_outputs_fail_closed ... ok
+test queue::tests::cumulative_history_capacity_rejects_before_currentness_or_ioctl ... ok
+test queue::tests::manifest_digest_is_exact ... ok
+test queue::tests::every_noncreate_operation_classifies_failure_and_mutation_conservatively ... ok
+test queue::tests::native_create_boundary_callback_runs_once_and_only_after_preflight ... ok
+test queue::tests::process_and_currentness_loss_never_issue_or_retry_lifecycle_calls ... ok
+test queue::tests::queue_id_zero_and_positive_max_profile_id_are_both_admitted ... ok
+test queue::tests::two_queue_keys_remain_independently_active_and_destroyable ... ok
+test queue::tests::update_from_disabled_preserves_exact_resume_phase_on_no_effect ... ok
+test shared_memory::gfx950_observed::queue::tests::actual_coordinator_brackets_every_native_boundary_including_final_release ... ok
+test shared_memory::gfx950_observed::queue::tests::actual_coordinator_stops_and_quarantines_at_every_step_and_both_fences ... ok
+test shared_memory::gfx950_observed::queue::tests::create_arguments_use_exact_950_per_xcc_geometry_and_private_zero_counters ... ok
+test shared_memory::gfx950_observed::queue::tests::create_output_checks_all_non_output_fields_and_exact_doorbell_target ... ok
+test shared_memory::gfx950_observed::queue::tests::resource_argument_ranges_reject_alias_alignment_null_and_overflow ... ok
+
+test result: ok. 17 passed; 0 failed; 0 ignored; 0 measured; 883 filtered out; finished in 0.00s
+

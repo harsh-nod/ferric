@@ -6,7 +6,18 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Latest: the [branch-reduced RoPE candidate passed fresh CPU qualification](../qualification/rope-materialized-cpu-v2/README.md)
+Latest: the [projection-residual autoregressive route passed fresh CPU qualification](../qualification/projection-ar4-cpu-v1/README.md)
+on ASROCK through `mi350-2`: 1,037 Rust tests passed, with four unchanged worker
+ignores, across all 87 build/test phases. Nine source files add explicit AR4
+support while preserving the teacher-forced format and image bindings. Each
+next input must equal the previous checked output; wrong trajectories, mode
+mismatches and premature Close remain rejection cases. All seventeen selected
+executables were rebuilt and all source/input postchecks passed. This is CPU
+qualification, not a new GPU observation. The matching GPU AR4 run and its
+independent history-aware framework comparison remain pending; the 2,048/256
+workload, numerical acceptance and 700 tokens/s target remain open.
+
+The [branch-reduced RoPE candidate passed fresh CPU qualification](../qualification/rope-materialized-cpu-v2/README.md)
 on ASROCK: all 33 Rust tests and eleven build/test phases passed with clean
 postchecks. Only seventeen pure finite-check conjunctions changed; arithmetic,
 all eighteen predicates and compiler limits are unchanged. Its subsequent

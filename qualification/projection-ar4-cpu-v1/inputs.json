@@ -1,0 +1,21 @@
+{
+  "schema": "ferric-projection-ar4-cpu-inputs-v1",
+  "archives": {
+    "ferric": {
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-ar4-baseline-ferric-v228-v1.tar.gz",
+      "bytes": 8994180,
+      "sha256": "5aff75042bba04444ffc081cdcfe3c7bc00f5e0b1c0c69da6ccb801c9ebbab86"
+    },
+    "fe2o3": {
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/clock-recorder-fe2o3-27b53d2b-v228-v1.tar.gz",
+      "bytes": 13304758,
+      "sha256": "0b46296ffaa6d4990caa03a700f45284b405a234c5be5b8516d0e88282ac59b7"
+    }
+  },
+  "proposal": {
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-projection-ar4-runtime-v1/source-manifest.json",
+    "bytes": 15499,
+    "sha256": "58ae10d372b552190a6c811e1a0e53591171a6d8682cafd3bca55279d2eb3d7f"
+  },
+  "documentation_changes": {}
+}

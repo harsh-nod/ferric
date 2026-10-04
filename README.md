@@ -66,6 +66,11 @@ Qwen3-0.6B and Qwen3-8B decode observations on MI350X. See the
 These diagnostics do not complete the production milestone, demonstrate GPU
 overlap, or establish a 700 tokens/s result.
 
+The [current finite-runtime engineering checkpoint](docs/GFX950_FINITE_PREFIX_PROGRESS_V1.md)
+includes CPU-qualified autoregressive projection-residual decoding: 1,037 tests
+passed on ASROCK, with four unchanged ignores. Its matching GPU AR4 validation
+remains pending; it does not change the production status above.
+
 ## First Product Milestone
 
 The first product milestone is Qwen3-8B target inference with Qwen3-0.6B as a

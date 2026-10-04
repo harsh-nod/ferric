@@ -1,0 +1,855 @@
+*** Begin Patch
+*** Update File: /home/harsh/ferric-p227-integration/adapters/m1-engineering-execution-v1/src/tp_finite_client/prefix_decode/projection.rs
+@@
+-//! Plain TF4 with a separately pinned projection boundary, never legacy parity.
++//! Plain TF4/AR4 with a separately pinned projection boundary, never legacy parity.
+ use super::*;
+ 
+ const REQUEST_SCHEMA: &str = "FerricFiniteProjectionResidualDecodeRequestV1";
+@@
+         let image = &self.projection_residual_image;
+         require(
+             self.schema == REQUEST_SCHEMA
+-                && self.decode.mode == wire::InputMode::TeacherForced
+                 && image.path.is_absolute()
+                 && image.bytes > 0
+                 && image.bytes <= wire::MAX_IMAGE_BYTES as u64
+                 && image.sha256 != [0; 32]
+                 && image.sha256 != self.decode.images.residual.sha256
+                 && serde_json::to_vec(self).map_err(|e| e.to_string())?.len() <= 16384,
+-            "projection decode distinct image and closed TF4 request",
++            "projection decode distinct image and closed four-forward request",
+         )
+     }
+ }
+@@
+                 && actual.registration_sha256 == bootstrap.decode.registration
+                 && actual.source_program_sha256 == bootstrap.decode.begin.source_program.sha256
+                 && actual.upload_manifest_sha256 == bootstrap.decode.begin.uploads.sha256
+-                && actual.input_tokens == INPUT_TOKENS
+                 && actual.gpu_execution,
+             "projection decode actual request/bootstrap/profile/source joins",
+         )?;
++        let seed = match config.decode.mode {
++            wire::InputMode::TeacherForced => INPUT_TOKENS.as_slice(),
++            wire::InputMode::Autoregressive => &INPUT_TOKENS[..1],
++        };
++        require(
++            bootstrap.decode.input_tokens.as_slice() == seed
++                && actual.input_tokens.len() == 4
++                && actual.observed_output_tokens.len() == 4
++                && actual
++                    .observed_output_tokens
++                    .iter()
++                    .all(|token| *token < VOCABULARY),
++            "projection decode authentic seed and four recorded outputs",
++        )?;
++        let mut previous = None;
++        for (position, (&input, &output)) in actual
++            .input_tokens
++            .iter()
++            .zip(&actual.observed_output_tokens)
++            .enumerate()
++        {
++            require(
++                input
++                    == bootstrap
++                        .input(position as u32, previous)
++                        .map_err(|e| e.to_string())?,
++                "projection decode recorded TF/own-output trajectory",
++            )?;
++            previous = Some(output);
++        }
+         // This internal value is never published under the old schema. Its
+         // unchanged validators check the actual new-profile Control and Close.
+         evidence::validate_closed(&actual)?;
+*** Update File: /home/harsh/ferric-p227-integration/adapters/m1-engineering-execution-v1/src/tp_finite_client/prefix_decode/projection_tests.rs
+@@
+     Observation,
+     projection_wire::Bootstrap,
+ ) {
++    completed_for(path, selected, wire::InputMode::TeacherForced)
++}
++
++fn completed_for(
++    path: &std::path::Path,
++    selected: bool,
++    mode: wire::InputMode,
++) -> (
++    ProjectionDecodeConfig,
++    Observation,
++    projection_wire::Bootstrap,
++) {
+     let mut config = config();
+     config.decode.evidence_directory = path.into();
+-    let b = wire::tests::bootstrap(wire::InputMode::TeacherForced);
++    config.decode.mode = mode;
++    let b = wire::tests::bootstrap(mode);
+     let wrapped = bootstrap(b.clone(), &config.projection_residual_image).unwrap();
+     let profile = if selected {
+         wrapped.sha256().unwrap()
+@@
+     let mut evidence = evidence::Evidence::create(path).unwrap();
+     let mut chain = wire::Chain::new(b.registration, profile);
+     let mut checked = wire::Chain::new(b.registration, profile);
++    let mut previous = None;
++    let mut inputs = Vec::new();
+     for position in 0..4 {
+-        let mut request = wire::tests::request(&b, position, None);
++        inputs.push(b.input(position, previous).unwrap());
++        let mut request = wire::tests::request(&b, position, previous);
+         request.profile_sha256 = profile;
+         let (response, control, payload) =
+             wire::tests::completed(&request, &mut chain, position + 7);
+@@
+         evidence
+             .append(&request, &response, &control, &payload)
+             .unwrap();
++        previous = Some(position + 7);
+     }
+     let mut close = wire::tests::close(&b, chain.digest()).1;
+     close.profile_sha256 = profile;
+@@
+         profile_sha256: profile,
+         setup_commands: 1,
+         completed_forwards: 4,
+-        input_tokens: INPUT_TOKENS.to_vec(),
++        input_tokens: inputs,
+         observed_output_tokens: vec![7, 8, 9, 10],
+         page_permutation: (0..144).collect(),
+         transcript_sha256: chain.digest(),
+@@
+ }
+ 
+ #[test]
+-fn projection_decode_parent_config_is_separate_tf_only_and_closed() {
++fn projection_decode_parent_config_is_separate_and_closed() {
+     let c = config();
+     let bytes = serde_json::to_vec(&c).unwrap();
+     ProjectionDecodeConfig::parse(&bytes).unwrap();
+@@
+     }
+     let mut ar = c;
+     ar.decode.mode = wire::InputMode::Autoregressive;
+-    assert!(ar.validate().is_err());
++    assert!(ar.validate().is_ok());
+     assert!(ar.decode.validate().is_ok());
++}
++
++#[test]
++fn projection_ar4_parent_publishes_actual_own_output_trajectory_without_parity() {
++    let temp = Temp::new();
++    let path = temp.0.join("ar");
++    let (config, actual, bootstrap) = completed_for(&path, true, wire::InputMode::Autoregressive);
++    assert_eq!(actual.input_tokens, [9112, 7, 8, 9]);
++    assert_eq!(bootstrap.decode.input_tokens, [9112]);
++    let mut observation = ProjectionDecodeObservation::closed(config, actual, bootstrap).unwrap();
++    observation.publish().unwrap();
++    let value: serde_json::Value =
++        serde_json::from_slice(&std::fs::read(path.join("complete.json")).unwrap()).unwrap();
++    assert_eq!(
++        value["schema"],
++        "FerricFiniteProjectionResidualDecodeObservationV1"
++    );
++    assert_eq!(
++        observation.request.decode.mode,
++        wire::InputMode::Autoregressive
++    );
++    assert_eq!(observation.observed_output_tokens, [7, 8, 9, 10]);
++    assert_eq!(observation.files.frames.len(), 4);
++    assert!(
++        observation.native_closed
++            && observation.child_exit_zero
++            && observation.process_group_absent
++    );
++    assert!(!observation.paired_comparison_performed && !observation.numerical_acceptance);
++    assert_eq!(std::fs::read_dir(path).unwrap().count(), 14);
++}
++
++#[test]
++fn projection_ar4_parent_refuses_wrong_seed_previous_output_or_mode_before_summary() {
++    for change in 0..8 {
++        let temp = Temp::new();
++        let path = temp.0.join("ar");
++        let (mut config, mut actual, mut bootstrap) =
++            completed_for(&path, true, wire::InputMode::Autoregressive);
++        match change {
++            0..=3 => actual.input_tokens[change] ^= 1,
++            4 => actual.observed_output_tokens[1] ^= 1,
++            5 => actual.observed_output_tokens[3] = VOCABULARY,
++            6 => config.decode.mode = wire::InputMode::TeacherForced,
++            _ => bootstrap.projection_residual_image.sha256[0] ^= 1,
++        }
++        assert!(ProjectionDecodeObservation::closed(config, actual, bootstrap).is_err());
++        assert!(!path.join("complete.json").exists());
++    }
++}
++
++#[test]
++fn projection_ar4_parent_retains_payload_control_close_and_reap_refusals() {
++    let b = wire::tests::bootstrap(wire::InputMode::Autoregressive);
++    let profile = bootstrap(b.clone(), &config().projection_residual_image)
++        .unwrap()
++        .sha256()
++        .unwrap();
++    let mut request = wire::tests::request(&b, 3, Some(9));
++    request.profile_sha256 = profile;
++    let (response, control, payload) =
++        wire::tests::completed(&request, &mut wire::Chain::new(b.registration, profile), 10);
++    for change in 0..3 {
++        let (mut reply, mut control, mut payload) =
++            (response.clone(), control.clone(), payload.clone());
++        match change {
++            0 => reply.profile_sha256 = b.sha256().unwrap(),
++            1 => control.layers[35].tiles_states[1][547] = 0,
++            _ => {
++                payload.pop();
++            }
++        }
++        assert!(
++            validate_completion(
++                &request,
++                &reply,
++                &control,
++                &payload,
++                &mut wire::Chain::new(b.registration, profile)
++            )
++            .is_err()
++        );
++    }
++    for change in 0..3 {
++        let temp = Temp::new();
++        let path = temp.0.join("ar");
++        let (config, mut actual, bootstrap) =
++            completed_for(&path, true, wire::InputMode::Autoregressive);
++        match change {
++            0 => actual.child_exit_zero = false,
++            1 => actual.process_group_absent = false,
++            _ => actual.close.native_closed = false,
++        }
++        assert!(ProjectionDecodeObservation::closed(config, actual, bootstrap).is_err());
++        assert!(!path.join("complete.json").exists());
++    }
+ }
+ 
+ #[test]
+*** Update File: /home/harsh/ferric-p227-integration/adapters/tp-peer-finite-engineering-worker-v1/src/finite_projection_residual_decode_wire_v1.rs
+@@
+-//! Additive TF4 arithmetic binding; all ordinary frame bodies remain unchanged.
++//! Additive four-forward arithmetic binding; ordinary frame bodies are unchanged.
+ use crate::finite_long_wire_v1::{read_header, write_header};
+ use crate::finite_prefix_decode_wire_v1 as base;
+ use crate::finite_setup_wire_v1::{self as setup, Part};
+@@
+         self.decode.validate(devices, timeout, pid, mode)?;
+         let p = self.projection_residual_image;
+         if self.schema != SCHEMA
+-            || mode != InputMode::TeacherForced
+             || p.bytes == 0
+             || p.bytes as usize > MAX_IMAGE_BYTES
+             || p.sha256 == [0; 32]
+         {
+             return Err(io::Error::other(
+-                "separate teacher-forced projection bootstrap",
++                "separate authenticated projection bootstrap",
+             ));
+         }
+         self.total_input_bytes().map(|_| ())
+*** Update File: /home/harsh/ferric-p227-integration/adapters/tp-peer-finite-engineering-worker-v1/src/finite_projection_residual_decode_wire_v1_tests.rs
+@@
+         schema: SCHEMA.into(),
+         decode: base::tests::bootstrap(InputMode::TeacherForced),
+         projection_residual_image: part(&[10]),
++    }
++}
++pub(crate) fn ar_bootstrap() -> Bootstrap {
++    Bootstrap {
++        decode: base::tests::bootstrap(InputMode::Autoregressive),
++        ..bootstrap()
+     }
+ }
+ fn stream(b: &Bootstrap) -> Vec<u8> {
+@@
+     assert!(read_bootstrap(&mut &old[..], &mut FrameBudget::new()).is_err());
+ }
+ #[test]
+-fn projection_decode_wire_refuses_non_tf_missing_image_and_unknown_fields() {
++fn projection_decode_wire_refuses_invalid_mode_shape_missing_image_and_unknown_fields() {
+     for change in 0..5 {
+         let mut b = bootstrap();
+         match change {
+             0 => b.schema = "FerricProjectionResidualLayerBootstrapV1".into(),
+             1 => {
+                 b.decode.mode = InputMode::Autoregressive;
+-                b.decode.input_tokens.truncate(1);
+             }
+             2 => b.projection_residual_image.bytes = 0,
+             3 => b.projection_residual_image.sha256 = [0; 32],
+@@
+         .unwrap()
+         .insert("clock".into(), true.into());
+     assert!(serde_json::from_value::<Bootstrap>(value).is_err());
++}
++
++#[test]
++fn projection_ar4_wire_authenticates_mode_seed_and_own_output_recurrence() {
++    let b = ar_bootstrap();
++    let serialized = stream(&b);
++    let mut bytes = &serialized[..];
++    let (seen, _, _, _) = read_bootstrap(&mut bytes, &mut FrameBudget::new())
++        .unwrap()
++        .unwrap();
++    assert_eq!(seen, b);
++    assert!(bytes.is_empty());
++    assert_ne!(b.sha256().unwrap(), bootstrap().sha256().unwrap());
++    assert_eq!(b.input(0, None).unwrap(), 9112);
++    assert!(b.input(1, None).is_err());
++    assert_eq!(b.input(1, Some(17)).unwrap(), 17);
++    assert_eq!(b.input(3, Some(19)).unwrap(), 19);
++    assert!(b.input(4, Some(20)).is_err());
++    assert!(
++        b.validate(
++            b.decode.device_ids,
++            b.decode.timeout_ms,
++            b.decode.scope.child_identity,
++            InputMode::TeacherForced
++        )
++        .is_err()
++    );
++    let mut bad = b.clone();
++    bad.decode.input_tokens.push(7);
++    assert!(bad.sha256().is_err());
++    let mut changed = b.clone();
++    changed.projection_residual_image.sha256[0] ^= 1;
++    assert_ne!(b.sha256().unwrap(), changed.sha256().unwrap());
++    let mut output = Vec::new();
++    assert!(write_bootstrap(&mut output, &mut FrameBudget::new(), &b, &[8], &[9], &[11]).is_err());
++    assert!(output.is_empty());
++}
++
++#[test]
++fn projection_tf4_wire_profile_formula_and_serialized_fields_are_unchanged() {
++    let b = bootstrap();
++    let mut h = Sha256::new();
++    h.update(b"ferric-projection-residual-four-decode-v1\0");
++    h.update(b"ordered-fp32-tp2-bf16-projection-then-bf16-residual-v1");
++    h.update(b.decode.sha256().unwrap());
++    h.update(b.projection_residual_image.sha256);
++    let expected: [u8; 32] = h.finalize().into();
++    assert_eq!(b.sha256().unwrap(), expected);
++    let expected = format!(
++        "{{\"schema\":\"FerricProjectionResidualDecodeBootstrapV1\",\"decode\":{},\"projection_residual_image\":{}}}",
++        serde_json::to_string(&b.decode).unwrap(),
++        serde_json::to_string(&b.projection_residual_image).unwrap()
++    );
++    assert_eq!(
++        serde_json::to_vec(&b).unwrap().as_slice(),
++        expected.as_bytes()
++    );
++    assert_eq!(b.decode.mode, InputMode::TeacherForced);
++    assert_eq!(b.decode.input_tokens, [9112, 2190, 3772, 220]);
+ }
+ #[test]
+ fn projection_decode_wire_checks_all_actual_image_bytes_before_write() {
+*** Update File: /home/harsh/ferric-p227-integration/adapters/tp-peer-finite-engineering-worker-v1/src/native_projection_residual_decode_cli_v1.rs
+@@
+-//! Explicit plain TF4 projection residual route; no old/default/clock fallback.
++//! Explicit plain TF4/AR4 projection route; no old/default/clock fallback.
+ use crate::finite_projection_residual_decode_wire_v1::{
+     self as wire, Bootstrap, FrameBudget, InputMode,
+ };
+@@
+ pub struct NativeOptions {
+     devices: [u64; 2],
+     timeout_ms: u32,
++    mode: InputMode,
+ }
+ pub fn parse_args(args: &[OsString]) -> io::Result<NativeOptions> {
+     let a = args
+@@
+         || a[2] != "--devices"
+         || a[4] != "--timeout-ms"
+         || a[6] != "--mode"
+-        || a[7] != "teacher-forced"
+     {
+-        return Err(io::Error::other(
+-            "exact plain teacher-forced projection decode invocation",
+-        ));
++        return Err(io::Error::other("exact plain projection decode invocation"));
+     }
++    let mode = match a[7] {
++        "teacher-forced" => InputMode::TeacherForced,
++        "autoregressive" => InputMode::Autoregressive,
++        _ => return Err(io::Error::other("explicit projection decode mode")),
++    };
+     fn decimal(s: &str) -> io::Result<u64> {
+         if s.is_empty() || !s.bytes().all(|b| b.is_ascii_digit()) {
+             return Err(io::Error::other("decimal projection option"));
+@@
+     Ok(NativeOptions {
+         devices,
+         timeout_ms,
++        mode,
++    })
++}
++fn admitted_mode(options: &NativeOptions, b: &Bootstrap) -> io::Result<Mode> {
++    b.validate(
++        options.devices,
++        options.timeout_ms,
++        std::process::id(),
++        options.mode,
++    )?;
++    Ok(match options.mode {
++        InputMode::TeacherForced => Mode::TeacherForced(
++            b.decode
++                .input_tokens
++                .as_slice()
++                .try_into()
++                .map_err(io::Error::other)?,
++        ),
++        InputMode::Autoregressive => Mode::Autoregressive {
++            first: b.decode.input_tokens[0],
++        },
+     })
+ }
+ fn prepare(
+@@
+ ) -> io::Result<(Bootstrap, PreparedPrefixDecodeSetup)> {
+     let (b, mlp, prefix, projection) = wire::read_bootstrap(r, incoming)?
+         .ok_or_else(|| io::Error::other("projection bootstrap absent"))?;
+-    b.validate(
+-        options.devices,
+-        options.timeout_ms,
+-        std::process::id(),
+-        InputMode::TeacherForced,
+-    )?;
++    let mode = admitted_mode(options, &b)?;
+     let (request, payload) = wire::read_begin(r, incoming, &b)?;
+     let setup = PreparedSetup::prepare(request, payload, options.devices, &b.decode.scope)
+         .map_err(io::Error::other)?;
+@@
+         PrefixImage::new(prefix, &b.decode.prefix_image).map_err(io::Error::other)?,
+         MlpImage::new(mlp, &b.decode.tiles_image).map_err(io::Error::other)?,
+         Image::new(projection, &b.projection_residual_image).map_err(io::Error::other)?,
+-        Mode::TeacherForced(
+-            b.decode
+-                .input_tokens
+-                .as_slice()
+-                .try_into()
+-                .map_err(io::Error::other)?,
+-        ),
++        mode,
+         options.timeout_ms,
+     )
+     .map_err(io::Error::other)?;
+*** Update File: /home/harsh/ferric-p227-integration/adapters/tp-peer-finite-engineering-worker-v1/src/native_projection_residual_decode_cli_v1_tests.rs
+@@
+     .collect()
+ }
+ #[test]
+-fn projection_decode_cli_accepts_only_explicit_plain_tf_invocation() {
++fn projection_decode_cli_accepts_only_explicit_plain_mode_invocation() {
+     let good = args();
+     parse_args(&good).unwrap();
+     for length in 0..good.len() {
+@@
+         (3, "11,12,13"),
+         (5, "10001"),
+         (5, "0"),
+-        (7, "autoregressive"),
++        (7, "auto"),
+     ] {
+         let mut bad = good.clone();
+         bad[index] = replacement.into();
+@@
+     let mut extra = good;
+     extra.push("--device-sidecar".into());
+     assert!(parse_args(&extra).is_err());
++}
++
++#[test]
++fn projection_ar4_cli_selects_mode_without_changing_tf_argv_or_fallback() {
++    let tf = args();
++    let tf_options = parse_args(&tf).unwrap();
++    assert_eq!(tf_options.mode, InputMode::TeacherForced);
++    let mut ar = tf.clone();
++    ar[7] = "autoregressive".into();
++    assert_eq!(ar[..7], tf[..7]);
++    let ar_options = parse_args(&ar).unwrap();
++    assert_eq!(ar_options.mode, InputMode::Autoregressive);
++    assert_eq!(
++        admitted_mode(&tf_options, &wire::tests::bootstrap()).unwrap(),
++        Mode::TeacherForced([9112, 2190, 3772, 220])
++    );
++    assert_eq!(
++        admitted_mode(&ar_options, &wire::tests::ar_bootstrap()).unwrap(),
++        Mode::Autoregressive { first: 9112 }
++    );
++    assert!(admitted_mode(&tf_options, &wire::tests::ar_bootstrap()).is_err());
++    assert!(admitted_mode(&ar_options, &wire::tests::bootstrap()).is_err());
++    for mode in ["", "AR", "teacher_forced", "teacher-forced "] {
++        ar[7] = mode.into();
++        assert!(parse_args(&ar).is_err());
++    }
++}
++
++#[test]
++fn projection_ar4_cli_mode_mismatch_is_refused_before_begin_is_read() {
++    struct NoBegin;
++    impl Read for NoBegin {
++        fn read(&mut self, _: &mut [u8]) -> io::Result<usize> {
++            panic!("mode mismatch must precede Begin or native setup")
++        }
++    }
++    for (b, mode) in [
++        (wire::tests::bootstrap(), "autoregressive"),
++        (wire::tests::ar_bootstrap(), "teacher-forced"),
++    ] {
++        let mut argv = args();
++        argv[7] = mode.into();
++        let options = parse_args(&argv).unwrap();
++        let mut bytes = Vec::new();
++        wire::write_bootstrap(&mut bytes, &mut FrameBudget::new(), &b, &[8], &[9], &[10]).unwrap();
++        let mut reader = io::Cursor::new(bytes).chain(NoBegin);
++        assert!(prepare(&options, &mut reader, &mut FrameBudget::new()).is_err());
++    }
+ }
+ #[test]
+ fn projection_decode_prepare_rejects_wrong_identity_and_missing_begin_before_open() {
+*** Update File: /home/harsh/ferric-p227-integration/adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_tiles_decode_v6.rs
+@@
+         })
+     }
+     pub(crate) fn with_projection(mut self, image: [u8; 32]) -> Result<Self> {
+-        if self.projection.is_some() || !matches!(self.mode, Mode::TeacherForced(_)) {
+-            return Err("projection decode requires a fresh teacher-forced profile".into());
++        if self.projection.is_some() {
++            return Err("projection decode requires a fresh authenticated profile".into());
+         }
+         self.sha256 =
+             crate::finite_projection_residual_decode_wire_v1::profile_sha256(self.sha256, image)
+*** Update File: /home/harsh/ferric-p227-integration/adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_tiles_decode_v6/projection_tests.rs
+@@
+     }
+     fn tail(&mut self) -> Result<(u32, [u64; 3])> {
+         self.call()?;
+-        Ok((7, [1; 3]))
++        Ok((6 + (self.layers / 36) as u32, [1; 3]))
+     }
+     fn fence(&mut self) -> Result<()> {
+         self.call()
+@@
+     }
+ }
+ #[test]
+-fn projection_decode_profile_matches_wire_and_rejects_reselection_ar_and_zero() {
++fn projection_decode_profile_matches_wire_and_rejects_reselection_and_zero() {
+     let b = wire::tests::bootstrap();
+     let p = profile()
+         .with_projection(b.projection_residual_image.sha256)
+@@
+     assert_ne!(p.sha256(), profile().sha256());
+     assert!(p.with_projection([2; 32]).is_err());
+     assert!(profile().with_projection([0; 32]).is_err());
+-    let mut ar = profile();
+-    ar.mode = Mode::Autoregressive { first: 9112 };
+-    assert!(ar.with_projection([1; 32]).is_err());
++}
++
++fn ar_profile() -> Profile {
++    let b = wire::tests::ar_bootstrap();
++    Profile::new(
++        &b.decode.scope,
++        b.decode.registration,
++        b.decode.prefix_image.sha256,
++        b.decode.tiles_image.sha256,
++        Mode::Autoregressive {
++            first: b.decode.input_tokens[0],
++        },
++        b.decode.timeout_ms,
++        b.decode.device_ids,
++    )
++    .unwrap()
++    .with_projection(b.projection_residual_image.sha256)
++    .unwrap()
++}
++
++fn ar_input(position: u32) -> ForwardInput {
++    let mut value = input(position);
++    value.token = if position == 0 { 9112 } else { position + 6 };
++    value
++}
++
++#[test]
++fn projection_ar4_sequence_commits_four_distinct_outputs_and_only_then_closes() {
++    let p = ar_profile();
++    assert_eq!(p.sha256(), wire::tests::ar_bootstrap().sha256().unwrap());
++    assert_ne!(
++        p.sha256(),
++        profile()
++            .with_projection(wire::tests::bootstrap().projection_residual_image.sha256)
++            .unwrap()
++            .sha256()
++    );
++    let mut sequence = sequence::Sequence::new(&p);
++    let mut backend = Fake::default();
++    for position in 0..4 {
++        assert!(close_ready(sequence.exhausted(), true, u64::from(position)).is_err());
++        let c = sequence
++            .run(&mut backend, p.sha256(), &ar_input(position))
++            .unwrap();
++        assert_eq!(c.input_token, ar_input(position).token);
++        assert_eq!(c.output_token, position + 7);
++        assert_eq!(c.layers.len(), 36);
++    }
++    assert_eq!(backend.layers, 144);
++    close_ready(sequence.exhausted(), true, 4).unwrap();
++    let calls = backend.calls;
++    assert!(
++        sequence
++            .run(&mut backend, p.sha256(), &ar_input(3))
++            .is_err()
++    );
++    assert_eq!(backend.calls, calls);
++    assert!(backend.poisoned);
++}
++
++#[test]
++fn projection_ar4_sequence_wrong_prior_token_poison_precedes_every_backend_call() {
++    for wrong_at in 0..4 {
++        let p = ar_profile();
++        let mut sequence = sequence::Sequence::new(&p);
++        let mut backend = Fake::default();
++        for position in 0..wrong_at {
++            sequence
++                .run(&mut backend, p.sha256(), &ar_input(position))
++                .unwrap();
++        }
++        let calls = backend.calls;
++        let mut wrong = ar_input(wrong_at);
++        wrong.token ^= 1;
++        assert!(sequence.run(&mut backend, p.sha256(), &wrong).is_err());
++        assert_eq!(backend.calls, calls);
++        assert!(backend.poisoned && !sequence.exhausted());
++        assert!(
++            sequence
++                .run(&mut backend, p.sha256(), &ar_input(wrong_at))
++                .is_err()
++        );
++        assert_eq!(backend.calls, calls);
++        assert!(close_ready(sequence.exhausted(), true, 4).is_err());
++    }
++}
++
++#[test]
++fn projection_ar4_sequence_image_profile_mismatch_and_backend_failure_stay_terminal() {
++    let p = ar_profile();
++    for failure in [None, Some(0), Some(39), Some(41)] {
++        let mut sequence = sequence::Sequence::new(&p);
++        let mut backend = Fake {
++            fail: failure,
++            ..Fake::default()
++        };
++        let profile = if failure.is_none() {
++            [42; 32]
++        } else {
++            p.sha256()
++        };
++        assert!(sequence.run(&mut backend, profile, &ar_input(0)).is_err());
++        assert_eq!(backend.calls, failure.map_or(0, |n| n + 1));
++        let calls = backend.calls;
++        backend.fail = None;
++        assert!(
++            sequence
++                .run(&mut backend, p.sha256(), &ar_input(0))
++                .is_err()
++        );
++        assert_eq!(backend.calls, calls);
++        assert!(backend.poisoned && !sequence.exhausted());
++    }
+ }
+ #[test]
+ fn projection_decode_load_error_terminalizes_phase_and_poisons_states() {
+*** Update File: /home/harsh/ferric-p227-integration/adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_decode_projection_tests.rs
+@@
+         }
+         let c = wire::tests::control();
+         let mut logits = vec![0; 303872];
+-        logits[14..16].copy_from_slice(&0x3f80u16.to_le_bytes());
++        let output = 6 + self.calls as u32;
++        let offset = output as usize * 2;
++        logits[offset..offset + 2].copy_from_slice(&0x3f80u16.to_le_bytes());
+         Ok(Run {
+             completion: NativeCompletion {
+                 profile_sha256: self.profile,
+                 generation: input.generation,
+                 position: input.cache_metadata[0],
+                 input_token: input.token,
+-                output_token: 7,
++                output_token: output,
+                 embedding_ns: c.embedding_ns,
+                 tail_ns: c.tail_ns,
+                 layers: c
+@@
+     let mut bytes = Vec::new();
+     let mut budget = FrameBudget::new();
+     for position in 0..4 {
+-        let mut request = wire::tests::request(&b.decode, position, None);
++        let previous = (position > 0).then_some(position + 6);
++        let mut request = wire::tests::request(&b.decode, position, previous);
+         request.profile_sha256 = profile;
+         wire::write_request(&mut bytes, &mut budget, &request).unwrap();
+     }
+@@
+     close.profile_sha256 = profile;
+     wire::write_request(&mut bytes, &mut budget, &close).unwrap();
+     bytes
++}
++
++#[test]
++fn projection_ar4_protocol_four_own_outputs_have_exact_payloads_and_close_chain() {
++    let b = selected::tests::ar_bootstrap();
++    let profile = b.sha256().unwrap();
++    let mut f = backend(&b);
++    let mut output = Vec::new();
++    serve_projection(
++        &mut f,
++        &mut &stream(&b, profile)[..],
++        &mut output,
++        &b,
++        &mut FrameBudget::new(),
++    )
++    .unwrap();
++    assert_eq!((f.calls, f.closes, f.poisoned), (4, 1, false));
++    let mut bytes = &output[..];
++    let mut budget = FrameBudget::new();
++    let mut chain = Chain::new(b.decode.registration, profile);
++    let mut previous = None;
++    for position in 0..4 {
++        let (reply, control, payload) = wire::read_response(&mut bytes, &mut budget)
++            .unwrap()
++            .unwrap();
++        assert_eq!(reply.profile_sha256, profile);
++        let Event::Completed(completed) = reply.event else {
++            panic!("expected forward")
++        };
++        assert_eq!(completed.input_token, b.input(position, previous).unwrap());
++        assert_eq!(completed.output_token, position + 7);
++        assert_eq!(completed.chain, chain.advance(&completed));
++        assert_eq!(payload.len(), 606976);
++        control.unwrap().validate().unwrap();
++        previous = Some(completed.output_token);
++    }
++    let (reply, control, payload) = wire::read_response(&mut bytes, &mut budget)
++        .unwrap()
++        .unwrap();
++    assert_eq!(reply.id, 5);
++    assert!(reply.native_closed && control.is_none() && payload.is_empty());
++    assert!(
++        matches!(reply.event, Event::Closed { completed_forwards: 4, transcript_sha256 } if transcript_sha256 == chain.digest())
++    );
++    assert!(bytes.is_empty());
++}
++
++fn ar_requests(b: &selected::Bootstrap) -> Vec<wire::Request> {
++    let profile = b.sha256().unwrap();
++    (0..4)
++        .map(|position| {
++            let mut request =
++                wire::tests::request(&b.decode, position, (position > 0).then_some(position + 6));
++            request.profile_sha256 = profile;
++            request
++        })
++        .collect()
++}
++fn request_bytes(requests: &[wire::Request]) -> Vec<u8> {
++    let mut bytes = Vec::new();
++    let mut budget = FrameBudget::new();
++    for request in requests {
++        wire::write_request(&mut bytes, &mut budget, request).unwrap();
++    }
++    bytes
++}
++
++#[test]
++fn projection_ar4_protocol_wrong_previous_token_or_profile_never_runs_that_forward() {
++    let b = selected::tests::ar_bootstrap();
++    for position in 0..4 {
++        for wrong_profile in [false, true] {
++            let mut requests = ar_requests(&b);
++            if wrong_profile {
++                requests[position].profile_sha256 = b.decode.sha256().unwrap();
++            } else if let Command::Forward { token, .. } = &mut requests[position].command {
++                *token ^= 1;
++            }
++            let mut f = backend(&b);
++            let mut output = Vec::new();
++            assert!(
++                serve_projection(
++                    &mut f,
++                    &mut &request_bytes(&requests)[..],
++                    &mut output,
++                    &b,
++                    &mut FrameBudget::new()
++                )
++                .is_err()
++            );
++            assert_eq!((f.calls, f.closes), (position as u64, 0));
++            assert!(f.poisoned);
++        }
++    }
++}
++
++#[test]
++fn projection_ar4_protocol_eof_and_early_close_poison_without_successful_close() {
++    let b = selected::tests::ar_bootstrap();
++    let requests = ar_requests(&b);
++    for completed in 0..=4 {
++        for early_close in [false, true] {
++            if early_close && completed == 4 {
++                continue;
++            }
++            let mut subset = requests[..completed].to_vec();
++            if early_close {
++                let mut close = wire::tests::close(&b.decode, [0; 32]).0;
++                close.profile_sha256 = b.sha256().unwrap();
++                subset.push(close);
++            }
++            let mut f = backend(&b);
++            let mut output = Vec::new();
++            assert!(
++                serve_projection(
++                    &mut f,
++                    &mut &request_bytes(&subset)[..],
++                    &mut output,
++                    &b,
++                    &mut FrameBudget::new()
++                )
++                .is_err()
++            );
++            assert_eq!((f.calls, f.closes), (completed as u64, 0));
++            assert!(f.poisoned);
++            let mut bytes = &output[..];
++            let mut budget = FrameBudget::new();
++            while let Some((reply, _, _)) = wire::read_response(&mut bytes, &mut budget).unwrap() {
++                assert!(!reply.native_closed);
++            }
++        }
++    }
++    let mut f = backend(&b);
++    f.fail = Some(5);
++    assert!(
++        serve_projection(
++            &mut f,
++            &mut &stream(&b, b.sha256().unwrap())[..],
++            &mut Vec::new(),
++            &b,
++            &mut FrameBudget::new()
++        )
++        .is_err()
++    );
++    assert_eq!((f.calls, f.closes, f.poisoned), (4, 1, true));
+ }
+ #[test]
+ fn projection_decode_protocol_keeps_four_payloads_controls_and_selected_close_chain() {
+*** End Patch
