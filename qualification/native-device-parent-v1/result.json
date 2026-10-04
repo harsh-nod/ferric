@@ -1,0 +1,185 @@
+{
+  "all12_parent_binary_bodies_locally_rehashed": false,
+  "all233_cpu_input_bodies_locally_rehashed": false,
+  "compiled_overlay": [
+    {
+      "after": {
+        "bytes": 11874,
+        "sha256": "423d4d480106d5ad868e36c5fdd4b58901e55556b55a9cc43b44e842890fb78d"
+      },
+      "before": {
+        "bytes": 11685,
+        "sha256": "0c6c05aeb4ee034fee946eabf9d56e0ab48218397a184fb379931367ec690ee1"
+      },
+      "live": {
+        "bytes": 11874,
+        "path": "/home/harsh/ferric-p227-integration/adapters/m1-engineering-execution-v1/Cargo.toml",
+        "sha256": "423d4d480106d5ad868e36c5fdd4b58901e55556b55a9cc43b44e842890fb78d"
+      },
+      "path": "adapters/m1-engineering-execution-v1/Cargo.toml"
+    },
+    {
+      "after": {
+        "bytes": 3126,
+        "sha256": "b38801d73ab25d3c22bdf77c3c9c2211972ff28e21969d7eb88cda79cb73b74f"
+      },
+      "before": null,
+      "live": {
+        "bytes": 3126,
+        "path": "/home/harsh/ferric-p227-integration/adapters/m1-engineering-execution-v1/src/bin/ferric-qwen3-finite-prefix-decode-device-engineering.rs",
+        "sha256": "b38801d73ab25d3c22bdf77c3c9c2211972ff28e21969d7eb88cda79cb73b74f"
+      },
+      "path": "adapters/m1-engineering-execution-v1/src/bin/ferric-qwen3-finite-prefix-decode-device-engineering.rs"
+    },
+    {
+      "after": {
+        "bytes": 88045,
+        "sha256": "4970f773ef31f0f56edde64bd46fb17e9d71b07e7d587228ce70b8acc1bff857"
+      },
+      "before": {
+        "bytes": 87861,
+        "sha256": "8c5f5f2cefc68c4a15ea9051a49efe6c9d9b09ae63744b29f84654c90c4ac624"
+      },
+      "live": {
+        "bytes": 88045,
+        "path": "/home/harsh/ferric-p227-integration/adapters/m1-engineering-execution-v1/src/lib.rs",
+        "sha256": "4970f773ef31f0f56edde64bd46fb17e9d71b07e7d587228ce70b8acc1bff857"
+      },
+      "path": "adapters/m1-engineering-execution-v1/src/lib.rs"
+    },
+    {
+      "after": {
+        "bytes": 29746,
+        "sha256": "f6cf5ff0fbc1069d86e7a6b02257f40e076f6a947369a92e8a41c1ec285cf7ba"
+      },
+      "before": {
+        "bytes": 29383,
+        "sha256": "3ac2dff58427d2cf0d26f537c04cb4f2ae6635ffec9f10f216d712cce95e9718"
+      },
+      "live": {
+        "bytes": 29746,
+        "path": "/home/harsh/ferric-p227-integration/adapters/m1-engineering-execution-v1/src/tp_finite_client/prefix_decode.rs",
+        "sha256": "f6cf5ff0fbc1069d86e7a6b02257f40e076f6a947369a92e8a41c1ec285cf7ba"
+      },
+      "path": "adapters/m1-engineering-execution-v1/src/tp_finite_client/prefix_decode.rs"
+    },
+    {
+      "after": {
+        "bytes": 7857,
+        "sha256": "2a340954f5bf550096526470d373152cefa1a0d441f2e01c7f07068fe94797e6"
+      },
+      "before": null,
+      "live": {
+        "bytes": 7857,
+        "path": "/home/harsh/ferric-p227-integration/adapters/m1-engineering-execution-v1/src/tp_finite_client/prefix_decode/device_v1.rs",
+        "sha256": "2a340954f5bf550096526470d373152cefa1a0d441f2e01c7f07068fe94797e6"
+      },
+      "path": "adapters/m1-engineering-execution-v1/src/tp_finite_client/prefix_decode/device_v1.rs"
+    },
+    {
+      "after": {
+        "bytes": 12590,
+        "sha256": "657678c9c07da27ac05852a5f1039efcdcaf81eb038e690d5e402f0556494930"
+      },
+      "before": null,
+      "live": {
+        "bytes": 12590,
+        "path": "/home/harsh/ferric-p227-integration/adapters/m1-engineering-execution-v1/src/tp_finite_client/prefix_decode/device_v1_tests.rs",
+        "sha256": "657678c9c07da27ac05852a5f1039efcdcaf81eb038e690d5e402f0556494930"
+      },
+      "path": "adapters/m1-engineering-execution-v1/src/tp_finite_client/prefix_decode/device_v1_tests.rs"
+    },
+    {
+      "after": {
+        "bytes": 8289,
+        "sha256": "ce5a49ac520e4cdf9aca0852e50b86dd2c4c285525df6b40e02652b120505a1b"
+      },
+      "before": {
+        "bytes": 8278,
+        "sha256": "eda0d722ab4fcb8045b33213fc1be73bab6434ea58c37a690701a42fa6604979"
+      },
+      "live": {
+        "bytes": 8289,
+        "path": "/home/harsh/ferric-p227-integration/adapters/m1-engineering-execution-v1/src/tp_finite_client/prefix_decode/host_policy_v2.rs",
+        "sha256": "ce5a49ac520e4cdf9aca0852e50b86dd2c4c285525df6b40e02652b120505a1b"
+      },
+      "path": "adapters/m1-engineering-execution-v1/src/tp_finite_client/prefix_decode/host_policy_v2.rs"
+    }
+  ],
+  "cpu": {
+    "bytes": 298774,
+    "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/device-parent-cpu-v228-v2/complete.json",
+    "sha256": "3b51d61268bee492dd6ded7623742153513c46cd3d246ebc60a6bc9a2555077b"
+  },
+  "cpu_tests_ignored": 0,
+  "cpu_tests_passed": 257,
+  "external_dependency_manifest_bodies_locally_rehashed": false,
+  "fixture_repair": "Test-only u64::MAX += 1 overflow changed to ^= 1; production behavior and named test roster unchanged.",
+  "full_model_acceptance": false,
+  "gpu_execution": false,
+  "local_retained_bytes_audited": true,
+  "numerical_acceptance": false,
+  "original_cpu_controller_rerun": false,
+  "original_parent": {
+    "bytes": 13691232,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/device-parent-cpu-v228-v2/target/debug/ferric-qwen3-finite-prefix-decode-device-engineering",
+    "sha256": "cfb38b6c06bf39bd0928e3066204753cd6b5998e9331c5aa77295aa246323a7d"
+  },
+  "parent": {
+    "bytes": 13691232,
+    "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/device-parent-elf-v228-v2",
+    "sha256": "cfb38b6c06bf39bd0928e3066204753cd6b5998e9331c5aa77295aa246323a7d"
+  },
+  "parent_rebuilt": true,
+  "passed": true,
+  "performance_claim": false,
+  "phase_count": 41,
+  "prior_cpu": {
+    "bytes": 290447,
+    "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/host-policy-cpu-v228-v1/complete.json",
+    "sha256": "1fc4d17534161e6e7f96e6d0eba0a2455227ba2166623823f6a74f845b93deae"
+  },
+  "prior_failed_attempt": {
+    "bytes": 157637,
+    "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/device-parent-cpu-v228-v1/failed.json",
+    "sha256": "d5fae24609182d0b8cb3818b3fd67c9647fb7efe8d32f0046440dbb540b52e57"
+  },
+  "prior_failed_raw_records_rehashed": 18,
+  "production_authority": false,
+  "publisher": {
+    "bytes": 24010,
+    "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/p228-device-parent-publication-v2/run.py",
+    "sha256": "de823fd217432eb1df061ac34a07a5efb606112d3c89452d5b6e77498eb7aff5"
+  },
+  "pure": {
+    "bytes": 1474,
+    "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/device-parent-pure-v228-v2/complete.json",
+    "sha256": "6dd8e8a07cc94063a703015ad5216a590291b3acc589e7001c78a2565560899e"
+  },
+  "pure_controller": {
+    "bytes": 5884,
+    "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/p228-device-parent-pure-wrapper-v2/run.py",
+    "sha256": "5bef84b48de03a445fdcf139654389e7e885d387eebd7622069f19a8673cfe9e"
+  },
+  "pure_tests_passed": 16,
+  "raw_cpu_records": 208,
+  "replay_dependency": {
+    "bytes": 23765,
+    "path": "/home/harsh/ferric-p227-integration/qualification/native-device-routing-v1/publish.py",
+    "sha256": "af21f9226556d79e9a8b3ae9a96b759808ccaca573f348eaa575eb0c8049d9b9"
+  },
+  "replay_dependency_repository_path": "qualification/native-device-routing-v1/publish.py",
+  "schema": "ferric-p228-device-parent-publication-v2",
+  "source_archive_maps_replayed": true,
+  "source_commits": {
+    "fe2o3": "9a321f3f98e597a75e8ebeafdda169ec10e12e9e",
+    "ferric": "dc04a484a2424baa453f73fc832b2fa890875b44"
+  },
+  "source_files": 7926,
+  "source_trees": {
+    "fe2o3": "7d7701d5a453f2d6b5f5c336c8e83e5a836b5b84",
+    "ferric": "46dbd95e493a3bcc47654be139fd2e2a7443cf21"
+  },
+  "timestamp_calibration": false,
+  "worker_rebuilt": false
+}

@@ -19,6 +19,7 @@ use std::path::PathBuf;
 use std::process::Command;
 use std::time::{Duration, Instant};
 
+pub mod device_v1;
 mod evidence;
 pub mod host_observation;
 pub mod host_policy_v2;
@@ -399,29 +400,38 @@ fn run_inner(
     )
 }
 enum HostDiagnostic {
+    Device(PathBuf),
     V1(PathBuf),
     V2(PathBuf, crate::prefix_decode_host_observation_v2::Policy),
 }
 impl HostDiagnostic {
     fn path(&self) -> &std::path::Path {
         match self {
-            Self::V1(path) | Self::V2(path, _) => path,
+            Self::V1(path) | Self::V2(path, _) | Self::Device(path) => path,
         }
     }
     fn launch_flag(&self) -> &'static str {
         match self {
+            Self::Device(_) => "--engineering-native-prefix-decode-device-v1",
             Self::V1(_) => "--engineering-native-prefix-decode-host-v1",
             Self::V2(_, _) => "--engineering-native-prefix-decode-host-v2",
         }
     }
     fn append_args(&self, command: &mut Command) {
-        command.arg("--host-sidecar").arg(self.path());
+        command
+            .arg(if matches!(self, Self::Device(_)) {
+                "--device-sidecar"
+            } else {
+                "--host-sidecar"
+            })
+            .arg(self.path());
         if let Self::V2(_, policy) = self {
             command.arg("--host-policy").arg(policy.name());
         }
     }
     fn validate(&self, observation: &Observation) -> Result<FilePin> {
         match self {
+            Self::Device(path) => device_v1::validate(path, observation),
             Self::V1(path) => host_observation::validate(path, observation),
             Self::V2(path, policy) => host_policy_v2::validate(path, observation, *policy),
         }

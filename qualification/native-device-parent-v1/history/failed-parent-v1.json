@@ -1,0 +1,2668 @@
+{
+  "added_parent_tests": {
+    "bin": [
+      "tests::prefix_device_bin_requires_its_distinct_optin_and_exact_arguments"
+    ],
+    "lib": [
+      "prefix_decode_device_observation_v1::tests::device_raw_control_join_checks_all_intervals_digest_and_states",
+      "prefix_decode_device_observation_v1::tests::device_raw_decoder_refuses_unknown_duplicate_legacy_and_oversize_input",
+      "prefix_decode_device_observation_v1::tests::device_raw_inventory_has_exact_stages_layers_and_rank_counts",
+      "prefix_decode_device_observation_v1::tests::device_raw_rejects_all_policy_and_authority_mutations",
+      "prefix_decode_device_observation_v1::tests::device_raw_rejects_completion_history_capture_and_chain_drift",
+      "prefix_decode_device_observation_v1::tests::device_raw_rejects_each_row_identity_and_label_substitution",
+      "prefix_decode_device_observation_v1::tests::device_raw_rejects_missing_duplicate_extra_or_reordered_rows",
+      "prefix_decode_device_observation_v1::tests::device_raw_rejects_process_profile_image_group_or_final_count_drift",
+      "prefix_decode_device_observation_v1::tests::device_raw_rejects_queue_rollover_and_unrecorded_setup_packet",
+      "prefix_decode_device_observation_v1::tests::device_raw_rejects_zero_reversed_ticks_but_accepts_equal_nonzero",
+      "prefix_decode_device_observation_v1::tests::device_raw_schema_roundtrips_tf_and_ar_with_exact_bounded_census",
+      "prefix_decode_device_observation_v1::tests::device_raw_writer_refuses_overflow_before_retaining_more_bytes",
+      "tp_finite_client::prefix_decode::device_v1::tests::prefix_device_parent_binds_all_six_original_and_selected_image_parts_without_truncation",
+      "tp_finite_client::prefix_decode::device_v1::tests::prefix_device_parent_checks_actual_control_for_every_forward_and_stage",
+      "tp_finite_client::prefix_decode::device_v1::tests::prefix_device_parent_refuses_modified_capture_control_or_frame_completion",
+      "tp_finite_client::prefix_decode::device_v1::tests::prefix_device_parent_refuses_tail_copy_substitution_and_false_claims",
+      "tp_finite_client::prefix_decode::device_v1::tests::prefix_device_parent_refuses_unclosed_unreaped_wrong_worker_pid_profile_or_scope",
+      "tp_finite_client::prefix_decode::device_v1::tests::prefix_device_parent_request_is_closed_and_distinct_from_host_and_plain",
+      "tp_finite_client::prefix_decode::device_v1::tests::prefix_device_parent_requires_absent_bounded_regular_sidecar_and_optin",
+      "tp_finite_client::prefix_decode::device_v1::tests::prefix_device_parent_retained_tf_ar_controls_and1172_rows_validate_before_summary",
+      "tp_finite_client::prefix_decode::device_v1::tests::prefix_device_parent_worker_selector_keeps_old_argv_and_only_device_sidecar"
+    ]
+  },
+  "binaries": {},
+  "compiler_hsaco_reproduced": false,
+  "empty_initial_target": true,
+  "error": "AssertionError: parent-client",
+  "external_cargo_cache_reused": true,
+  "extraction": {
+    "fe2o3": {
+      "bytes": 74538413,
+      "files": 5249
+    },
+    "ferric": {
+      "bytes": 88892336,
+      "files": 2674
+    }
+  },
+  "gpu_execution": false,
+  "inputs": [
+    {
+      "bytes": 723,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-device-parent-cpu-v1/manifest.json",
+      "sha256": "2cf709ca3453b4fdb30fffd3c255edd3df1b4a979cedf504a761de0530f979e2"
+    },
+    {
+      "bytes": 6525,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-device-parent-cpu-v1/README.md",
+      "sha256": "4393cb322f112796665d302b0ccbb8f5e4c579f1d219452e4c7d589fb9172d9e"
+    },
+    {
+      "bytes": 6307,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-device-parent-cpu-v1/overlay.json",
+      "sha256": "d608614c80b8d59b608a3c20f66c88b384b0f68077630eb2bcfa59e021729c01"
+    },
+    {
+      "bytes": 24128,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-device-parent-cpu-v1/run.py",
+      "sha256": "19627bfa496fd0b6fc88cf7800a40422d7cfe3f72dc4426786ed66f1dfebcf40"
+    },
+    {
+      "bytes": 11226,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-device-parent-cpu-v1/test_run.py",
+      "sha256": "d4b4afef205d979e530a8717310a4fcdd89428683a4bbcb0c324fc3a2d2eda4c"
+    },
+    {
+      "bytes": 16278,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-host-policy-cpu-v1/run.py",
+      "sha256": "35abf1ed7a8fab8c4b540dfb3c0d48a3fa08480809fab4827f35dd5b7fa37494"
+    },
+    {
+      "bytes": 6968,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/run_clean_worker_p228_v1.py",
+      "sha256": "2f3ef5c80e4483ac1c1a1ebb2bbacf18af7e7b263d13d965fa991525d85e6d2a"
+    },
+    {
+      "bytes": 6101,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/wave-output-lowering-v216/bounded.py",
+      "sha256": "e634e1b3be3b122b2231ad134c770f25d7d71d10ec767d61a16d03e726bdf4f1"
+    },
+    {
+      "bytes": 8045,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/metadata_p220_v2.py",
+      "sha256": "5b5efdaf64053b49c3acb78a82a1ffeaa948a4095b689d2f24e0dff8778ee816"
+    },
+    {
+      "bytes": 290447,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/complete.json",
+      "sha256": "1fc4d17534161e6e7f96e6d0eba0a2455227ba2166623823f6a74f845b93deae"
+    },
+    {
+      "bytes": 2366,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/ferric-qwen3-finite-long-engineering-list-command.json",
+      "sha256": "ce34dcacc0f2c227a432cc14b3323b0c73188074d4f246c06d8eb222ab362435"
+    },
+    {
+      "bytes": 307,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/ferric-qwen3-finite-long-engineering-list-result.json",
+      "sha256": "b5d3be17f42ec6b33e67d0f8f2660150280324b74c4e7ce11f3178b1f5d2f6d1"
+    },
+    {
+      "bytes": 40,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/ferric-qwen3-finite-long-engineering-list-started.json",
+      "sha256": "d2cebbdce22647f0ced6b0af3d97b3f953f65bc88d04d98531448d07a6833467"
+    },
+    {
+      "bytes": 1013,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/ferric-qwen3-finite-long-engineering-list-stderr",
+      "sha256": "e9e69558012a94a37519b6757029a0d67e379addf908f9ea64013a8da65ac4fb"
+    },
+    {
+      "bytes": 76,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/ferric-qwen3-finite-long-engineering-list-stdout",
+      "sha256": "fb6bea608fad2e98cd7e8646605846f71e2b685d065a94b7acfa25523f621d29"
+    },
+    {
+      "bytes": 2347,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/ferric-qwen3-finite-long-engineering-tests-command.json",
+      "sha256": "d0428784a2de44066abec688eda8dbca716e6519321c62a80a3a87b217677774"
+    },
+    {
+      "bytes": 307,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/ferric-qwen3-finite-long-engineering-tests-result.json",
+      "sha256": "2a30ebc10f7682da2fa027f7d017679f5ea1c6222e839a184572b6b1119406d0"
+    },
+    {
+      "bytes": 40,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/ferric-qwen3-finite-long-engineering-tests-started.json",
+      "sha256": "f9a98a5b8f4a8fad79974f2309b242ec396853140efd1d283783842bf462861a"
+    },
+    {
+      "bytes": 806,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/ferric-qwen3-finite-long-engineering-tests-stderr",
+      "sha256": "f62a172346ea77f963f63774af8a899732cce3077f8f0ccc020d7e027cdafb5f"
+    },
+    {
+      "bytes": 194,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/ferric-qwen3-finite-long-engineering-tests-stdout",
+      "sha256": "077c873c577668d233282771bc539b61564a9586e42cc2c0ed73e16b000426a6"
+    },
+    {
+      "bytes": 2382,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/ferric-qwen3-finite-mlp-tiles-comparison-engineering-list-command.json",
+      "sha256": "ba5992dbe40957fd9212b8f9a737762b340c3362c89f9266ef365aa93b045907"
+    },
+    {
+      "bytes": 306,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/ferric-qwen3-finite-mlp-tiles-comparison-engineering-list-result.json",
+      "sha256": "a45963f32312c716dfd9dd8312d1bf2f71cb835cee125d479f7ad36bab77bc8a"
+    },
+    {
+      "bytes": 40,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/ferric-qwen3-finite-mlp-tiles-comparison-engineering-list-started.json",
+      "sha256": "4d311aaaca4c20a3b2adb4bb9e3f3324f00f23749cd793899567e0eb1eb1ffb3"
+    },
+    {
+      "bytes": 1045,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/ferric-qwen3-finite-mlp-tiles-comparison-engineering-list-stderr",
+      "sha256": "1b339f45c37529b3448d5a01cfeaddaeed0af8c1d76118f4132e61dcae81adf0"
+    },
+    {
+      "bytes": 74,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/ferric-qwen3-finite-mlp-tiles-comparison-engineering-list-stdout",
+      "sha256": "b5ca1a964b28b6ac7796bfbd108e9fb12d4af33737934fc34ed3877a8a42b57a"
+    },
+    {
+      "bytes": 2363,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/ferric-qwen3-finite-mlp-tiles-comparison-engineering-tests-command.json",
+      "sha256": "a476d120fa52867fd68bbb36ae966a65f36dd565856399e336d86d924383465c"
+    },
+    {
+      "bytes": 307,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/ferric-qwen3-finite-mlp-tiles-comparison-engineering-tests-result.json",
+      "sha256": "b6771449521518be5ed7d4f21d56f459ed2227755525ea2b503b90a0403941e5"
+    },
+    {
+      "bytes": 40,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/ferric-qwen3-finite-mlp-tiles-comparison-engineering-tests-started.json",
+      "sha256": "5c34564ae7d4e29df95833d7ca58dbf85cee3b51d75fd8a2addde31335974834"
+    },
+    {
+      "bytes": 838,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/ferric-qwen3-finite-mlp-tiles-comparison-engineering-tests-stderr",
+      "sha256": "e58b9c66c4000ec8778026f92d6473e4e9479be04df31c419cec3ce6bde51fb2"
+    },
+    {
+      "bytes": 192,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/ferric-qwen3-finite-mlp-tiles-comparison-engineering-tests-stdout",
+      "sha256": "e33dc02a8968beb2ec4487eaf6853c20fc499090c9ac2c598fc839ba392727a5"
+    },
+    {
+      "bytes": 2375,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/ferric-qwen3-finite-prefix-decode-engineering-list-command.json",
+      "sha256": "39f1150341351eadfb1d825b6fe8a3ea15cd68ef3f48283061946ec5a7c9bc37"
+    },
+    {
+      "bytes": 307,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/ferric-qwen3-finite-prefix-decode-engineering-list-result.json",
+      "sha256": "1d8759b821af0926acc5861f2de0bd3f791e586cddc2fc31245002488bcfccec"
+    },
+    {
+      "bytes": 40,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/ferric-qwen3-finite-prefix-decode-engineering-list-started.json",
+      "sha256": "0fe0ba90dbd2ec76256f1f4a216824bca9585449229aa131fbe6558b378ae8bc"
+    },
+    {
+      "bytes": 1031,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/ferric-qwen3-finite-prefix-decode-engineering-list-stderr",
+      "sha256": "8b095bbf323fd41f57bf4261b795e80eff3f5ecc021e8f4bb8539e91bce1a669"
+    },
+    {
+      "bytes": 58,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/ferric-qwen3-finite-prefix-decode-engineering-list-stdout",
+      "sha256": "279a0b38edd22c4854c600abad066990220c8efba99fa4e1a7411ff2ce871630"
+    },
+    {
+      "bytes": 2356,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/ferric-qwen3-finite-prefix-decode-engineering-tests-command.json",
+      "sha256": "2f35835cfb140ce3912401b9aa9946284621e40250afe88cd4e662fb15a8fb17"
+    },
+    {
+      "bytes": 307,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/ferric-qwen3-finite-prefix-decode-engineering-tests-result.json",
+      "sha256": "b33865dfd89f133693026d39083dbd097f09dfe0e8cc1b1295a273d33e136718"
+    },
+    {
+      "bytes": 40,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/ferric-qwen3-finite-prefix-decode-engineering-tests-started.json",
+      "sha256": "72d2bcecfb345debaefc47b8b4a3c01508f0db31e9698e3caedbbd377852e929"
+    },
+    {
+      "bytes": 824,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/ferric-qwen3-finite-prefix-decode-engineering-tests-stderr",
+      "sha256": "cf876156fc67ebd1ecfb0e7f31c9a1c1a0a9865063ca24fca08d230129b9f1b3"
+    },
+    {
+      "bytes": 176,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/ferric-qwen3-finite-prefix-decode-engineering-tests-stdout",
+      "sha256": "9900e9976bb1fae70026cdd129438348dcdc18f91591159569db4bc4773c9325"
+    },
+    {
+      "bytes": 2380,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/ferric-qwen3-finite-prefix-decode-host-engineering-list-command.json",
+      "sha256": "b0341e0eb226f43de6c0f7d7da21083f831e7e5e5f3cd47d9346032f06391c15"
+    },
+    {
+      "bytes": 307,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/ferric-qwen3-finite-prefix-decode-host-engineering-list-result.json",
+      "sha256": "9ef6cc9404ee2c365bb4c1d0e90cb9bb67be865dcb9585b853671b6462cb08dc"
+    },
+    {
+      "bytes": 40,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/ferric-qwen3-finite-prefix-decode-host-engineering-list-started.json",
+      "sha256": "c61263d56021d78a6cc8d79c7693bd8f4e956fc1d36132a67f13a50346bf9158"
+    },
+    {
+      "bytes": 1041,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/ferric-qwen3-finite-prefix-decode-host-engineering-list-stderr",
+      "sha256": "62f63430d73d0f5306018354dc61407849fd32460efdcd41bf954a1d82584dba"
+    },
+    {
+      "bytes": 75,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/ferric-qwen3-finite-prefix-decode-host-engineering-list-stdout",
+      "sha256": "2e305141195f971b9ea1a87f56544dc6daa79218d1872cd30526324e16500602"
+    },
+    {
+      "bytes": 2361,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/ferric-qwen3-finite-prefix-decode-host-engineering-tests-command.json",
+      "sha256": "fb49db17d2387c7d27cb2d2c52be6ffd6e3e2dcbddeeeaf74987abb77cea91fe"
+    },
+    {
+      "bytes": 306,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/ferric-qwen3-finite-prefix-decode-host-engineering-tests-result.json",
+      "sha256": "37d96358bbd52cb31874cf197fb20efb07b368e5d7c3757cb54f0dffc1e60594"
+    },
+    {
+      "bytes": 40,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/ferric-qwen3-finite-prefix-decode-host-engineering-tests-started.json",
+      "sha256": "49efaf54ac08c296358b34f1fa62f59116e655c79616666d74854bce2fc3d90f"
+    },
+    {
+      "bytes": 834,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/ferric-qwen3-finite-prefix-decode-host-engineering-tests-stderr",
+      "sha256": "9f24227f118cf1277eede9b3e4c3c738c384f55b3205ded6fc54af99cee9819a"
+    },
+    {
+      "bytes": 193,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/ferric-qwen3-finite-prefix-decode-host-engineering-tests-stdout",
+      "sha256": "53926a919d3bc35b5b904b12e32aa6189a55bde1e48ac0bf531c28f1aa3faf89"
+    },
+    {
+      "bytes": 2387,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/ferric-qwen3-finite-prefix-decode-host-policy-engineering-list-command.json",
+      "sha256": "13ef37f3bfaae90ebd433b0742c17181e60faa2cb4f8e9f9492c31fd8f47fcdc"
+    },
+    {
+      "bytes": 307,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/ferric-qwen3-finite-prefix-decode-host-policy-engineering-list-result.json",
+      "sha256": "07d9a7163ff41d2c1bb7ab87bc61a153e97ded30e7442ae4fbd383b3aeb99602"
+    },
+    {
+      "bytes": 40,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/ferric-qwen3-finite-prefix-decode-host-policy-engineering-list-started.json",
+      "sha256": "205951ec9a7be871c664eef3fb7587cd43c01a7f33a5407368711c5721d91637"
+    },
+    {
+      "bytes": 1055,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/ferric-qwen3-finite-prefix-decode-host-policy-engineering-list-stderr",
+      "sha256": "66376c20dda2c3cb1acb0d835930d06bd7da87652b8e8c19b82334d577bd7e93"
+    },
+    {
+      "bytes": 79,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/ferric-qwen3-finite-prefix-decode-host-policy-engineering-list-stdout",
+      "sha256": "6c34941656654299f1a4b79437474008279a7b7cedc6214ff8e6daaf674ccdb7"
+    },
+    {
+      "bytes": 2368,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/ferric-qwen3-finite-prefix-decode-host-policy-engineering-tests-command.json",
+      "sha256": "a66387d43392217b5c725e9e6f953008e5cabc413e194f9888275c8b73712b1f"
+    },
+    {
+      "bytes": 307,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/ferric-qwen3-finite-prefix-decode-host-policy-engineering-tests-result.json",
+      "sha256": "b4a59f27aaee5bdb79789731cae364cb61903450320b8c61d5320d53a23fec2d"
+    },
+    {
+      "bytes": 40,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/ferric-qwen3-finite-prefix-decode-host-policy-engineering-tests-started.json",
+      "sha256": "590420c2e79ba432289ba88b83008cbe8e39fee5a56c0011949b234669863aa6"
+    },
+    {
+      "bytes": 848,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/ferric-qwen3-finite-prefix-decode-host-policy-engineering-tests-stderr",
+      "sha256": "49cd1f5581d819c8ec9ce18c9bcd4ffd453c916a6b5e2cb1043f9dca700582fa"
+    },
+    {
+      "bytes": 197,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/ferric-qwen3-finite-prefix-decode-host-policy-engineering-tests-stdout",
+      "sha256": "cf8ebfd61fa202231439c8d9e1bcb6244a69fcd5e6cbf0e84fb81270a44c3a8b"
+    },
+    {
+      "bytes": 2374,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/ferric-qwen3-finite-prefix-layer-engineering-list-command.json",
+      "sha256": "8d36c19ef9380d599ad9301c19a084d00cd9c6710daea01fce44d7f11a88a1a3"
+    },
+    {
+      "bytes": 307,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/ferric-qwen3-finite-prefix-layer-engineering-list-result.json",
+      "sha256": "d0abeafd02548d2962448ef3aa4ec61ca7d8d2dff34905d599a8801860ca3ed4"
+    },
+    {
+      "bytes": 40,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/ferric-qwen3-finite-prefix-layer-engineering-list-started.json",
+      "sha256": "ba1db14ba5d1cf3e2334cd07a3dcd8dd5b34006dba5322e31dfce378b1e269ae"
+    },
+    {
+      "bytes": 1029,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/ferric-qwen3-finite-prefix-layer-engineering-list-stderr",
+      "sha256": "60f393e15b16062e51bea5bf4baf3be5ad96a2999d39c2afed7a153eeaf8c884"
+    },
+    {
+      "bytes": 44,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/ferric-qwen3-finite-prefix-layer-engineering-list-stdout",
+      "sha256": "6dbb15f121f676510af6f34376aa53df43f5f28b868dbc29af4087450ed50a98"
+    },
+    {
+      "bytes": 2355,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/ferric-qwen3-finite-prefix-layer-engineering-tests-command.json",
+      "sha256": "733f0f71605e85c9f50e8b6bc017f9a36611d96ddf682a82ea1f6e94fa1b67c5"
+    },
+    {
+      "bytes": 307,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/ferric-qwen3-finite-prefix-layer-engineering-tests-result.json",
+      "sha256": "f6b4dc7888c1a272e78c1446257a00c38b9889ea239b3845d935f1ebccc112a1"
+    },
+    {
+      "bytes": 40,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/ferric-qwen3-finite-prefix-layer-engineering-tests-started.json",
+      "sha256": "ec18c22dc6419e64e680a76dee5a397a9f2aab5dd278144d8c65ee29fc1f8568"
+    },
+    {
+      "bytes": 822,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/ferric-qwen3-finite-prefix-layer-engineering-tests-stderr",
+      "sha256": "19b7f07b277af858eb19021d184232867733fa50f1fc38dc1907542320594043"
+    },
+    {
+      "bytes": 162,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/ferric-qwen3-finite-prefix-layer-engineering-tests-stdout",
+      "sha256": "89785b89e67db5d7efea5109a4d78ca3e5b6b25e8ded40014be61eade9cd76e3"
+    },
+    {
+      "bytes": 2383,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/ferric-qwen3-finite-queued-mlp-comparison-engineering-list-command.json",
+      "sha256": "e7bd00af1ff5b16a2542e93c34007c5ce021b9cb3bf8ec5f705ca8271b819be2"
+    },
+    {
+      "bytes": 307,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/ferric-qwen3-finite-queued-mlp-comparison-engineering-list-result.json",
+      "sha256": "9e741bab1a6c5f21fd3914f9ba45a605b5be3e38c73b67278b6f8cc2b1f83a0a"
+    },
+    {
+      "bytes": 40,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/ferric-qwen3-finite-queued-mlp-comparison-engineering-list-started.json",
+      "sha256": "e0d9d0a4cea49d66dc9517f6f23c71282f6ba10e9d9fc2f8233ee8d5f33089f4"
+    },
+    {
+      "bytes": 1047,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/ferric-qwen3-finite-queued-mlp-comparison-engineering-list-stderr",
+      "sha256": "ec11dec5d5e7ed387ab070db59e0bf61cf14f4e089ddf81692f86555907ac834"
+    },
+    {
+      "bytes": 74,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/ferric-qwen3-finite-queued-mlp-comparison-engineering-list-stdout",
+      "sha256": "b5ca1a964b28b6ac7796bfbd108e9fb12d4af33737934fc34ed3877a8a42b57a"
+    },
+    {
+      "bytes": 2364,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/ferric-qwen3-finite-queued-mlp-comparison-engineering-tests-command.json",
+      "sha256": "7ae70373316e8f3a54e97bbbf772466a7d78882c07c1a0d49a5ff5565a0d5086"
+    },
+    {
+      "bytes": 307,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/ferric-qwen3-finite-queued-mlp-comparison-engineering-tests-result.json",
+      "sha256": "fc1eb982ce5f7a1cec57f380a65fbe9c4ef2d1ae8dd4018d599d91bb3dc42bc3"
+    },
+    {
+      "bytes": 40,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/ferric-qwen3-finite-queued-mlp-comparison-engineering-tests-started.json",
+      "sha256": "05ea8d60ee19f94188c28c2aac8508702c304466d50d91eddabbff3ac1e8fc39"
+    },
+    {
+      "bytes": 840,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/ferric-qwen3-finite-queued-mlp-comparison-engineering-tests-stderr",
+      "sha256": "c878572d95e5d596ce4e0b5173087efc2989985fe148d656f3ff22f407848588"
+    },
+    {
+      "bytes": 192,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/ferric-qwen3-finite-queued-mlp-comparison-engineering-tests-stdout",
+      "sha256": "e33dc02a8968beb2ec4487eaf6853c20fc499090c9ac2c598fc839ba392727a5"
+    },
+    {
+      "bytes": 2390,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/ferric-qwen3-finite-queued-projection-comparison-engineering-list-command.json",
+      "sha256": "3975347770fae7f9215ec4fe93bae31001689f5473279335d408de3e637f17b0"
+    },
+    {
+      "bytes": 306,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/ferric-qwen3-finite-queued-projection-comparison-engineering-list-result.json",
+      "sha256": "d2950874c69cdc9fbbee583184c4404fb6c0cf9f108aa61be34f041e19298dd9"
+    },
+    {
+      "bytes": 40,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/ferric-qwen3-finite-queued-projection-comparison-engineering-list-started.json",
+      "sha256": "16e0c99afd1341089b7b7c49406da837fbcfd708da03afaa90c55402d52ecef9"
+    },
+    {
+      "bytes": 1061,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/ferric-qwen3-finite-queued-projection-comparison-engineering-list-stderr",
+      "sha256": "e1fcdeb3355d863710251c2d8840a3980e2c2c505537d49bea6d3076be6aa732"
+    },
+    {
+      "bytes": 74,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/ferric-qwen3-finite-queued-projection-comparison-engineering-list-stdout",
+      "sha256": "b5ca1a964b28b6ac7796bfbd108e9fb12d4af33737934fc34ed3877a8a42b57a"
+    },
+    {
+      "bytes": 2371,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/ferric-qwen3-finite-queued-projection-comparison-engineering-tests-command.json",
+      "sha256": "fb93801df690ae84a0ed73c4b64ff73bb29e0f8c993826330700f88ffe68062c"
+    },
+    {
+      "bytes": 306,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/ferric-qwen3-finite-queued-projection-comparison-engineering-tests-result.json",
+      "sha256": "0de5a04514b04bb0e6547981a401cdd77a694b5176428ee382ec6b38b232b492"
+    },
+    {
+      "bytes": 40,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/ferric-qwen3-finite-queued-projection-comparison-engineering-tests-started.json",
+      "sha256": "94db54e445a01b55672b3b9e44b8db53e451c8297919926fda39edc6ef6ae9ce"
+    },
+    {
+      "bytes": 854,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/ferric-qwen3-finite-queued-projection-comparison-engineering-tests-stderr",
+      "sha256": "95319472ba94d87da9773c755274c98f0863bc8e620a39c20d20d4557ddd0c29"
+    },
+    {
+      "bytes": 192,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/ferric-qwen3-finite-queued-projection-comparison-engineering-tests-stdout",
+      "sha256": "e33dc02a8968beb2ec4487eaf6853c20fc499090c9ac2c598fc839ba392727a5"
+    },
+    {
+      "bytes": 2373,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/ferric-qwen3-finite-rearm-smoke-engineering-list-command.json",
+      "sha256": "9e2425a3d55d38cbfb95fa88c05f635618bcee4f8fe46209a184b550f26516dc"
+    },
+    {
+      "bytes": 307,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/ferric-qwen3-finite-rearm-smoke-engineering-list-result.json",
+      "sha256": "046b9498ef5e7fedfa31a8cf47d0579bd7e2a7cb1caf19a4d9c6e8d7688cb688"
+    },
+    {
+      "bytes": 40,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/ferric-qwen3-finite-rearm-smoke-engineering-list-started.json",
+      "sha256": "09c37dfe31b7412a9e651f0739aea71c5392130c823ec49e3f550a3ac9cb7e80"
+    },
+    {
+      "bytes": 1027,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/ferric-qwen3-finite-rearm-smoke-engineering-list-stderr",
+      "sha256": "d995a7ae2b4a0a8487d24919daec8419f32904e4b3d7e766078f258ff7dc460d"
+    },
+    {
+      "bytes": 76,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/ferric-qwen3-finite-rearm-smoke-engineering-list-stdout",
+      "sha256": "fb6bea608fad2e98cd7e8646605846f71e2b685d065a94b7acfa25523f621d29"
+    },
+    {
+      "bytes": 2354,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/ferric-qwen3-finite-rearm-smoke-engineering-tests-command.json",
+      "sha256": "76cb793666d573f3e3c87c281ae6045297eda8a827fe24f9801403d01362a3d9"
+    },
+    {
+      "bytes": 307,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/ferric-qwen3-finite-rearm-smoke-engineering-tests-result.json",
+      "sha256": "597fc843adefd1e2e080f4eae82bd09ee0c2db77441d1698387a7a1b085037ef"
+    },
+    {
+      "bytes": 40,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/ferric-qwen3-finite-rearm-smoke-engineering-tests-started.json",
+      "sha256": "53f14a7e7ccab02cc7fc240acfedb61cecae7b3477e085886e3917a069841384"
+    },
+    {
+      "bytes": 820,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/ferric-qwen3-finite-rearm-smoke-engineering-tests-stderr",
+      "sha256": "261c635369c24443080901802ce5ca9ef172a297ed9c0cb995cb0eaf34461b4e"
+    },
+    {
+      "bytes": 194,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/ferric-qwen3-finite-rearm-smoke-engineering-tests-stdout",
+      "sha256": "077c873c577668d233282771bc539b61564a9586e42cc2c0ed73e16b000426a6"
+    },
+    {
+      "bytes": 2374,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/ferric-qwen3-finite-tiles-decode-engineering-list-command.json",
+      "sha256": "ddd0c039d8520ada59d55d0fb3943ade1f4236cf1df1e31989b3e556ce64ba9a"
+    },
+    {
+      "bytes": 306,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/ferric-qwen3-finite-tiles-decode-engineering-list-result.json",
+      "sha256": "cc8a90b1805a397b346e1d174b0f35865d15c8d56615fb61c5931a774636c2da"
+    },
+    {
+      "bytes": 40,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/ferric-qwen3-finite-tiles-decode-engineering-list-started.json",
+      "sha256": "bce257dfc987bd14415647634f3fa94ec9088a606ecac35e72bc577604b5e758"
+    },
+    {
+      "bytes": 1029,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/ferric-qwen3-finite-tiles-decode-engineering-list-stderr",
+      "sha256": "e6cbe558c5b13ad38b0f927a15f390ccc41b8812e03b8d9979ca1e15049da5ce"
+    },
+    {
+      "bytes": 54,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/ferric-qwen3-finite-tiles-decode-engineering-list-stdout",
+      "sha256": "960ca977ab5c9f0acd83f7a3f7e2a4ab16cbdf91f0883752b4928ae05a12cfbe"
+    },
+    {
+      "bytes": 2355,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/ferric-qwen3-finite-tiles-decode-engineering-tests-command.json",
+      "sha256": "3cddfa4a6c0457eb83262be884dd7ccd3ed3f98f0a9449efb2d88e5a77274eb2"
+    },
+    {
+      "bytes": 307,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/ferric-qwen3-finite-tiles-decode-engineering-tests-result.json",
+      "sha256": "742e13001a80f9e03a1244a2cef2810042db113aaef1fb8f3ace19a9e392763a"
+    },
+    {
+      "bytes": 40,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/ferric-qwen3-finite-tiles-decode-engineering-tests-started.json",
+      "sha256": "1ec5f610c9e8320c8e5583976a996edf065e945b84242ec94dc95dc7956fe05b"
+    },
+    {
+      "bytes": 822,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/ferric-qwen3-finite-tiles-decode-engineering-tests-stderr",
+      "sha256": "9530cf601198a007fd457b12e916140feefa5e6c2c2a436fec05ae857312469d"
+    },
+    {
+      "bytes": 172,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/ferric-qwen3-finite-tiles-decode-engineering-tests-stdout",
+      "sha256": "c51805bda9355923cc4371f9cf4a0adf9f6ecf0e887d27c34c8e2457eb556a1a"
+    },
+    {
+      "bytes": 2373,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/ferric-qwen3-finite-two-forward-engineering-list-command.json",
+      "sha256": "71c5fd89d3bd6e2df97d501465768cd45609561400c0036230f8e25c3cbfe0a5"
+    },
+    {
+      "bytes": 307,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/ferric-qwen3-finite-two-forward-engineering-list-result.json",
+      "sha256": "ada0a7be5154d7c688eeb8789268f57d9391ceffd445e0af76adadb45cbf54d5"
+    },
+    {
+      "bytes": 40,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/ferric-qwen3-finite-two-forward-engineering-list-started.json",
+      "sha256": "a1a0b502eb0245c8d95292b440044daa05d50fdbf291b9c4dfb725ea767ed391"
+    },
+    {
+      "bytes": 1028,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/ferric-qwen3-finite-two-forward-engineering-list-stderr",
+      "sha256": "c71f3ae402c4a89d4570b6e04168bd8bdb26302b3a792be5b7dfae9bf3078f69"
+    },
+    {
+      "bytes": 73,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/ferric-qwen3-finite-two-forward-engineering-list-stdout",
+      "sha256": "c943d92bec16b6d3e7978ac1d475caa617802f9b50713ea9e5f76f6baaf862c0"
+    },
+    {
+      "bytes": 2354,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/ferric-qwen3-finite-two-forward-engineering-tests-command.json",
+      "sha256": "75e28494f6c9ee6ebd61dd5afa9a9463f668551e6fe65ee6b7cacaefa75f7903"
+    },
+    {
+      "bytes": 306,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/ferric-qwen3-finite-two-forward-engineering-tests-result.json",
+      "sha256": "9557d785823e717ab545204ddd708459f238e30325880e08ad13100357e76446"
+    },
+    {
+      "bytes": 40,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/ferric-qwen3-finite-two-forward-engineering-tests-started.json",
+      "sha256": "9b062cb0e21325390a9c1488560ffa30e7d454ede59aed6edc987a36da529c64"
+    },
+    {
+      "bytes": 820,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/ferric-qwen3-finite-two-forward-engineering-tests-stderr",
+      "sha256": "928021a75f20f9497eb5c35f07157c9241ec350eceb6cc075888825d495804e6"
+    },
+    {
+      "bytes": 191,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/ferric-qwen3-finite-two-forward-engineering-tests-stdout",
+      "sha256": "6c9439098fc26222c642ebde9f3b528a1bc205c80088061e8c8d9526cda853f8"
+    },
+    {
+      "bytes": 3073,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/parent-builds-command.json",
+      "sha256": "33c0372c4281a74a8dd2c3c278cd46f0e9a07b5400b567ae5f36eb02134a6ab5"
+    },
+    {
+      "bytes": 306,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/parent-builds-result.json",
+      "sha256": "168e5ab6350ad0c47fa9e0ff034e76ea4177903d2790c01f926b24425193a52e"
+    },
+    {
+      "bytes": 40,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/parent-builds-started.json",
+      "sha256": "65e5ba45ccda3b840867ed4177b774467bb582bed55cd69767206ea4131a6027"
+    },
+    {
+      "bytes": 266,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/parent-builds-stderr",
+      "sha256": "3809ed9603a0c285f388edfacc5e3b088891c256fd556e9f42c572d814e6e6de"
+    },
+    {
+      "bytes": 330193,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/parent-builds-stdout",
+      "sha256": "471e19e45478cbef407620f7477aaad7d0df0edf4ed8ab7d0ac716cf1e0469e6"
+    },
+    {
+      "bytes": 2329,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/parent-client-command.json",
+      "sha256": "43c66d45a0608b5b69e4a932a7b90dd40970665f3af901aebf0cddef633bd76d"
+    },
+    {
+      "bytes": 307,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/parent-client-result.json",
+      "sha256": "3e99332221718bc3821489b01c0b39241d67f24e3485ed2996083fbceb08e7d3"
+    },
+    {
+      "bytes": 40,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/parent-client-started.json",
+      "sha256": "f92dea583633ba15057cf5696833da9190ca9152fc61c84124cd108e85cec191"
+    },
+    {
+      "bytes": 134277,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/parent-client-stderr",
+      "sha256": "5212b6d779e3eff92cf6e7b1a585de808f88ea1188e4253dbce3ddf56c2d363c"
+    },
+    {
+      "bytes": 16954,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/parent-client-stdout",
+      "sha256": "5b4b540284579ee17293b276b3a127dce1ee843bedbf380b1d723d75138af866"
+    },
+    {
+      "bytes": 2340,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/parent-decode-wire-command.json",
+      "sha256": "d8461c2c378f58b837c77b94fe11f5eeebc637db23e4d3d7919893ebbe212dbc"
+    },
+    {
+      "bytes": 306,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/parent-decode-wire-result.json",
+      "sha256": "b89317088d761a53cfe775081a76b8f8f5422929634ec96df2c98deb92c9c49b"
+    },
+    {
+      "bytes": 40,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/parent-decode-wire-started.json",
+      "sha256": "812a7f74bc2fd6b746d65e305a41b1b029764ac09b5b016d82407e472daa9e33"
+    },
+    {
+      "bytes": 767,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/parent-decode-wire-stderr",
+      "sha256": "8c83ae33ec688007747d52793da3f9057f06218bc67c12750fe2578461335295"
+    },
+    {
+      "bytes": 1214,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/parent-decode-wire-stdout",
+      "sha256": "012ea2dcf01b137c1baafd52f1a01555fed4aae718211c2334286a599da76e89"
+    },
+    {
+      "bytes": 2253,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/parent-default-check-command.json",
+      "sha256": "eaf80fb4820dd52787ea08faade863bf4249031351975ecf6c6b4809ab205e17"
+    },
+    {
+      "bytes": 306,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/parent-default-check-result.json",
+      "sha256": "a18323741247732512f7cc926c66fee9470f017ba588c99b4213b95d5cdced1e"
+    },
+    {
+      "bytes": 40,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/parent-default-check-started.json",
+      "sha256": "54dac1315831f4a0fc4dde22f74a3bda2a31555aa886387ce6075c5098a2d46a"
+    },
+    {
+      "bytes": 12517,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/parent-default-check-stderr",
+      "sha256": "be89f8f138c71808501aaa69a6ff8ceb57c64351a134e1b85890266d32c4ae04"
+    },
+    {
+      "bytes": 252911,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/parent-default-check-stdout",
+      "sha256": "963d2fc3b6bdf24b990691c99e016fd0168333e2c70ce3079ee317eabaf6d427"
+    },
+    {
+      "bytes": 2346,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/parent-host-data-v1-command.json",
+      "sha256": "4d6df521e10805f3a8854b6fda875ec96f430146642c1d6937a782be58974a80"
+    },
+    {
+      "bytes": 306,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/parent-host-data-v1-result.json",
+      "sha256": "f37fa6b33ca425fcba33c0219bedc3f8f17896b249599f02ad81bf09109ae8c6"
+    },
+    {
+      "bytes": 40,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/parent-host-data-v1-started.json",
+      "sha256": "6dd87a48b917c7f09017b05acc20e313c3169dc16dd1ad1c36c320e2321e2f31"
+    },
+    {
+      "bytes": 767,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/parent-host-data-v1-stderr",
+      "sha256": "8c83ae33ec688007747d52793da3f9057f06218bc67c12750fe2578461335295"
+    },
+    {
+      "bytes": 949,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/parent-host-data-v1-stdout",
+      "sha256": "56ea29aa4121086797521428e2f729e73e6daf4d3abcda4dd33d69f617d5e76a"
+    },
+    {
+      "bytes": 2346,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/parent-host-data-v2-command.json",
+      "sha256": "00d704bf1cb8fdd265787e0fbf781d4b107e170afd14b75fde2b8ad3ac753fbe"
+    },
+    {
+      "bytes": 307,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/parent-host-data-v2-result.json",
+      "sha256": "0b086c00de5bf9e95221661a664645ae18489837ae7987392d327c5fe313cd38"
+    },
+    {
+      "bytes": 40,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/parent-host-data-v2-started.json",
+      "sha256": "3c1a33d430641273483021c8f945980765a26a12caa3f352963d264918a79198"
+    },
+    {
+      "bytes": 767,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/parent-host-data-v2-stderr",
+      "sha256": "8c83ae33ec688007747d52793da3f9057f06218bc67c12750fe2578461335295"
+    },
+    {
+      "bytes": 1189,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/parent-host-data-v2-stdout",
+      "sha256": "ddc44c22d18c12b37e8b40a2501d838c9cff52006b20eeac1f55fd6ff1f2fc6d"
+    },
+    {
+      "bytes": 2322,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/parent-lib-list-command.json",
+      "sha256": "bcfcffeaf0138c8b0f7920b3bc1a87bb0c62998cc57f9675785a172bb7ed2897"
+    },
+    {
+      "bytes": 306,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/parent-lib-list-result.json",
+      "sha256": "5f179e05e8289f77997884dd6c7b3fdff3fc02b381d74138c16cc46026bf3aed"
+    },
+    {
+      "bytes": 40,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/parent-lib-list-started.json",
+      "sha256": "ca65346c426c77291ae945968d282f27492265e262c5ac3d36c0bec60502e0e3"
+    },
+    {
+      "bytes": 18316,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/parent-lib-list-stderr",
+      "sha256": "b2f888b35c154ffa86b907d355cae545dae9c25c9e2e40eb3fb60838d1d0d7c5"
+    },
+    {
+      "bytes": 78287,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/parent-lib-list-stdout",
+      "sha256": "8f094f7f5a4f166359c05b53084cf8ca61edd220a6c117adcf5359b0c5b6ab22"
+    },
+    {
+      "bytes": 2332,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/parent-long-wire-command.json",
+      "sha256": "9f51defc1b1e7cea4c5045b32978d16199e9cdbaf40db788d952b8a7561e0175"
+    },
+    {
+      "bytes": 307,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/parent-long-wire-result.json",
+      "sha256": "28f04557d448437e6b7f4a407126afdac9699741aaee92f8b2e444cacc559740"
+    },
+    {
+      "bytes": 40,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/parent-long-wire-started.json",
+      "sha256": "3bc4e6ba4e6e0cfcd7723b052f9d5977560228753e133682a8e0082c17793464"
+    },
+    {
+      "bytes": 767,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/parent-long-wire-stderr",
+      "sha256": "8c83ae33ec688007747d52793da3f9057f06218bc67c12750fe2578461335295"
+    },
+    {
+      "bytes": 980,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/parent-long-wire-stdout",
+      "sha256": "68149c5ff73c9883fc353afc22c5ca61e702688ada28c0b7a94b89ae84ea94ea"
+    },
+    {
+      "bytes": 2269,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/parent-metadata-command.json",
+      "sha256": "5fb851985be1b8160e95e5a6ce6dedbc35afbe4ff859b9096412d1584abfd6c1"
+    },
+    {
+      "bytes": 306,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/parent-metadata-result.json",
+      "sha256": "76d1ff980e50e6c223077359bc2b1d1fde706109abdb3c2a5eb8e0dc08addfe2"
+    },
+    {
+      "bytes": 40,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/parent-metadata-started.json",
+      "sha256": "c16c08e9f082e2ff967d1866740ad3ce63c7b4e077fd4f8ae699c5c073395e15"
+    },
+    {
+      "bytes": 0,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/parent-metadata-stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 1006872,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/parent-metadata-stdout",
+      "sha256": "18dcb77210401b85b9e95dbabf613e32b733b67e8c3699b88557fc8535d1fb2d"
+    },
+    {
+      "bytes": 2335,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/parent-old-wire-command.json",
+      "sha256": "20fa249be93c6a78ca1746725b3fbb193ae79ae044d8537ab5654ed303801556"
+    },
+    {
+      "bytes": 306,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/parent-old-wire-result.json",
+      "sha256": "b6ba8621ada1ce0616f7933c598357bad3e6a7f6892b2a3a9f5285129054ffdb"
+    },
+    {
+      "bytes": 40,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/parent-old-wire-started.json",
+      "sha256": "3ac932f7511dd3f8031fdb0a8e5ef7e0e977a3c72a7141b7460a74c89c63e14a"
+    },
+    {
+      "bytes": 767,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/parent-old-wire-stderr",
+      "sha256": "8c83ae33ec688007747d52793da3f9057f06218bc67c12750fe2578461335295"
+    },
+    {
+      "bytes": 625,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/parent-old-wire-stdout",
+      "sha256": "8699b4c1f67e1ceb104e40b01c5b5565de91030d7fd050585c677a24b3245c4a"
+    },
+    {
+      "bytes": 2341,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/parent-prefix-decode-wire-command.json",
+      "sha256": "6df18d5d80086e272a78fbc9a9b6f024673b9ff13a3f54616477a8ed91c4c0c2"
+    },
+    {
+      "bytes": 307,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/parent-prefix-decode-wire-result.json",
+      "sha256": "2b1a5c1ff3646f49e4cba33a38fb13266b3833e112bfe9f49c2cd139f818c3ae"
+    },
+    {
+      "bytes": 40,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/parent-prefix-decode-wire-started.json",
+      "sha256": "afe48bd1f6e92a7e8200a2ed0b85614e4a8d6d2871edb3e25f45023fdf02c0d9"
+    },
+    {
+      "bytes": 767,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/parent-prefix-decode-wire-stderr",
+      "sha256": "8c83ae33ec688007747d52793da3f9057f06218bc67c12750fe2578461335295"
+    },
+    {
+      "bytes": 1112,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/parent-prefix-decode-wire-stdout",
+      "sha256": "fde6f9d7e8418a6946738a6535ebf1e08654c3be0983902d0c0bfdbb5bb7c476"
+    },
+    {
+      "bytes": 2340,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/parent-prefix-layer-wire-command.json",
+      "sha256": "c294ab0ceb9d7434b3d5ece8906a3fcea00a3e6abf214203fdf4a89673c1394a"
+    },
+    {
+      "bytes": 306,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/parent-prefix-layer-wire-result.json",
+      "sha256": "7e0df5e93f6a4e3ab6a551772737a16dde912715daf79f1da34155d5c0ae8dcd"
+    },
+    {
+      "bytes": 40,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/parent-prefix-layer-wire-started.json",
+      "sha256": "8a0198876efa01fbae3fd847b734669cef9f25540dfb9867af587446e7026928"
+    },
+    {
+      "bytes": 767,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/parent-prefix-layer-wire-stderr",
+      "sha256": "8c83ae33ec688007747d52793da3f9057f06218bc67c12750fe2578461335295"
+    },
+    {
+      "bytes": 849,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/parent-prefix-layer-wire-stdout",
+      "sha256": "bc6f95aab052ed1935bd741579e401f5e00843847447775af2741c40dce036cb"
+    },
+    {
+      "bytes": 2356,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/parent-projection-wire-command.json",
+      "sha256": "91a9df901e44359263123578533a9f978dd17106a321e1c2eb22375e544968d1"
+    },
+    {
+      "bytes": 306,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/parent-projection-wire-result.json",
+      "sha256": "55f1eebf4b40c1399d86b6e503756fd7023bb7ac78ff80bc68d07b729432be4e"
+    },
+    {
+      "bytes": 40,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/parent-projection-wire-started.json",
+      "sha256": "a7a7f716f565512cd69f932573f082edd9a4d26476368a4e7cfae1b059d3674d"
+    },
+    {
+      "bytes": 767,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/parent-projection-wire-stderr",
+      "sha256": "8c83ae33ec688007747d52793da3f9057f06218bc67c12750fe2578461335295"
+    },
+    {
+      "bytes": 1036,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/parent-projection-wire-stdout",
+      "sha256": "45c2846c3c9305a04a6b282cd43f86f86d7e5bb7d66b8f77d5610e885f404a0b"
+    },
+    {
+      "bytes": 2349,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/parent-queued-mlp-wire-command.json",
+      "sha256": "042cd13d4e72df03292df1b3ba2e0bf43fe1bb925fe3fda337ea8a4f9176353d"
+    },
+    {
+      "bytes": 307,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/parent-queued-mlp-wire-result.json",
+      "sha256": "926881093555aca18299c1ec5004abf1d4093c4b103c3f9c0d9d47dbf837f68a"
+    },
+    {
+      "bytes": 40,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/parent-queued-mlp-wire-started.json",
+      "sha256": "894fe07151b43d037edb685a5380ec36cf947ad247168b26a115f3273bd6d462"
+    },
+    {
+      "bytes": 767,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/parent-queued-mlp-wire-stderr",
+      "sha256": "8c83ae33ec688007747d52793da3f9057f06218bc67c12750fe2578461335295"
+    },
+    {
+      "bytes": 863,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/parent-queued-mlp-wire-stdout",
+      "sha256": "30728b01ccf0aaeededa1addba33b9af113aaf4cb9bb807fb51b23817d9b5510"
+    },
+    {
+      "bytes": 2339,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/parent-smoke-wire-command.json",
+      "sha256": "bbe08bb7b1b617fa6854eeecac78a3c8b98135c70b43da7feddf3179a66a0d19"
+    },
+    {
+      "bytes": 306,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/parent-smoke-wire-result.json",
+      "sha256": "1e76580abcedeab3b0453bd64cd35d5576757e3ff8f8a0eeba23b53e36cf654d"
+    },
+    {
+      "bytes": 40,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/parent-smoke-wire-started.json",
+      "sha256": "afd508bee835fc86a19eb05884e6486f541cd9981407a5b5053fb16def280e08"
+    },
+    {
+      "bytes": 767,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/parent-smoke-wire-stderr",
+      "sha256": "8c83ae33ec688007747d52793da3f9057f06218bc67c12750fe2578461335295"
+    },
+    {
+      "bytes": 967,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/parent-smoke-wire-stdout",
+      "sha256": "8feb99f34b2962e7dbfba76e1156bef32aee9559ad0718443a4e3121df33ad72"
+    },
+    {
+      "bytes": 2348,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/parent-tiles-wire-command.json",
+      "sha256": "8577bfdb137c746a03c6e1d68261ab564768860ffe30ae7f55ccb659f27332e3"
+    },
+    {
+      "bytes": 307,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/parent-tiles-wire-result.json",
+      "sha256": "ebf8e8a55f2884b052125b45eb860524ff9d0bfa78cb90d505953c3a7d08696b"
+    },
+    {
+      "bytes": 40,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/parent-tiles-wire-started.json",
+      "sha256": "39bb1b9955d8b86a112d76d2782f67704ee0c3888d1121c74078561e81be4e6e"
+    },
+    {
+      "bytes": 767,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/parent-tiles-wire-stderr",
+      "sha256": "8c83ae33ec688007747d52793da3f9057f06218bc67c12750fe2578461335295"
+    },
+    {
+      "bytes": 1202,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/parent-tiles-wire-stdout",
+      "sha256": "a2b2e62bae79b2c3f002f6962d8e7156198650efcd17cec3ca6faef3490ce38a"
+    },
+    {
+      "bytes": 1254899,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/sources-after.json",
+      "sha256": "76e4a45a01ab12359507f79888dcefb644088d8dfea6fe0dbf1ba5b45967479b"
+    },
+    {
+      "bytes": 1253422,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/sources-base.json",
+      "sha256": "14c988d67474bfbabc0fe302515dcd9234a8bf321ce87f5f52dd60d4690cefc1"
+    },
+    {
+      "bytes": 1254899,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/sources-before.json",
+      "sha256": "76e4a45a01ab12359507f79888dcefb644088d8dfea6fe0dbf1ba5b45967479b"
+    },
+    {
+      "bytes": 2545,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/worker-build-command.json",
+      "sha256": "a0d179f8cc9772c40db6af4297ee82502699612929d9c8f9923086de2a695922"
+    },
+    {
+      "bytes": 306,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/worker-build-result.json",
+      "sha256": "b57303bbce15bf22a64fb26d51f3b33f9544544ce2896321ec833ab70905b4d9"
+    },
+    {
+      "bytes": 40,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/worker-build-started.json",
+      "sha256": "a827bfad521f7f79d353e3b222133459c9908e71f09ccf4e8b65f31f7a0e850d"
+    },
+    {
+      "bytes": 59,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/worker-build-stderr",
+      "sha256": "b5904af9b8294b36636707bdaeadbd93e621806ce69a219e852995cc1d87e757"
+    },
+    {
+      "bytes": 53727,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/worker-build-stdout",
+      "sha256": "6950e5334ebdbbce36a8c95f499fa237b0b2a3b76c1349e4990697d65335d97d"
+    },
+    {
+      "bytes": 2521,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/worker-list-command.json",
+      "sha256": "6e8b853d060e8ecb015a4f59b3de9d6789f3ffa98a12815d14824d07b3914eb5"
+    },
+    {
+      "bytes": 304,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/worker-list-result.json",
+      "sha256": "9b4351a5f13112137ecdef5ae3ea22986dfc9b7422f953eecf3b6d945a4ce84c"
+    },
+    {
+      "bytes": 40,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/worker-list-started.json",
+      "sha256": "032cf05b64213071103cfd86775e598921d2ad2698a60602d3cf9f4dfc4af669"
+    },
+    {
+      "bytes": 4166,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/worker-list-stderr",
+      "sha256": "df2baa8fcaa44410fb16fdf1e2bccabc4e9b1bedd33dbbb343aafb503bed8344"
+    },
+    {
+      "bytes": 42336,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/worker-list-stdout",
+      "sha256": "f5a0863ffb303b810f92ca3e8477748366cefec21d0f547b4429164c253bdb8a"
+    },
+    {
+      "bytes": 2435,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/worker-metadata-command.json",
+      "sha256": "79d83dd0da94420ec82e4fade8e1aaaea98ddea40dc5c7bc6a79d4c2f558972b"
+    },
+    {
+      "bytes": 300,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/worker-metadata-result.json",
+      "sha256": "e3356c4db22942205f91e715dd56cba0b001274e2a8cd5f1f411d70829072ba3"
+    },
+    {
+      "bytes": 40,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/worker-metadata-started.json",
+      "sha256": "703dc367bf633f04ed161fa891c6f27ae38ae3c7e3facaf123ce9910195bcab9"
+    },
+    {
+      "bytes": 0,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/worker-metadata-stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 174184,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/worker-metadata-stdout",
+      "sha256": "f287d110b5b42b81a2a6b0a6e409cc92e2c8b8e25e4dd30d9aee7937d8568315"
+    },
+    {
+      "bytes": 2502,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/worker-tests-command.json",
+      "sha256": "a0b7fb7615dbce26690853379605451e32ef0072ad251afa0c3414ab3932cc60"
+    },
+    {
+      "bytes": 306,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/worker-tests-result.json",
+      "sha256": "d054a5b3e45bb93e0e4a603e871d47198d22a9c78d3ebb15a4570a0ab2b54eb4"
+    },
+    {
+      "bytes": 40,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/worker-tests-started.json",
+      "sha256": "6855bc11c85642178f7f1d0f43a1f2b51504b1c206a808504baa671dfd699589"
+    },
+    {
+      "bytes": 1621,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/worker-tests-stderr",
+      "sha256": "bed9bd5fb06a4df7c1284259b76a02a3f2db4475358930f27f9d2e326412b9e0"
+    },
+    {
+      "bytes": 45263,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/worker-tests-stdout",
+      "sha256": "2fcaa309b0968872db9d09833cb6cfbba362509e8176eaa13eb2261618c90062"
+    },
+    {
+      "bytes": 843,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/device-parent-source-inputs-v228-v1.json",
+      "sha256": "1bf4e1e1271995e032a0394020ca18cea5603cb1f12169221cc9a8310402e394"
+    },
+    {
+      "bytes": 11874,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-device-parent-source-v1/draft/adapters/m1-engineering-execution-v1/Cargo.toml",
+      "sha256": "423d4d480106d5ad868e36c5fdd4b58901e55556b55a9cc43b44e842890fb78d"
+    },
+    {
+      "bytes": 3126,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-device-parent-source-v1/draft/adapters/m1-engineering-execution-v1/src/bin/ferric-qwen3-finite-prefix-decode-device-engineering.rs",
+      "sha256": "b38801d73ab25d3c22bdf77c3c9c2211972ff28e21969d7eb88cda79cb73b74f"
+    },
+    {
+      "bytes": 88045,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-device-parent-source-v1/draft/adapters/m1-engineering-execution-v1/src/lib.rs",
+      "sha256": "4970f773ef31f0f56edde64bd46fb17e9d71b07e7d587228ce70b8acc1bff857"
+    },
+    {
+      "bytes": 29746,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-device-parent-source-v1/draft/adapters/m1-engineering-execution-v1/src/tp_finite_client/prefix_decode.rs",
+      "sha256": "f6cf5ff0fbc1069d86e7a6b02257f40e076f6a947369a92e8a41c1ec285cf7ba"
+    },
+    {
+      "bytes": 7857,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-device-parent-source-v1/draft/adapters/m1-engineering-execution-v1/src/tp_finite_client/prefix_decode/device_v1.rs",
+      "sha256": "2a340954f5bf550096526470d373152cefa1a0d441f2e01c7f07068fe94797e6"
+    },
+    {
+      "bytes": 12590,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-device-parent-source-v1/draft/adapters/m1-engineering-execution-v1/src/tp_finite_client/prefix_decode/device_v1_tests.rs",
+      "sha256": "276f30a5d00ab64053668f8317a83f7e5d7058e65e55c77c6e81818ae638ad59"
+    },
+    {
+      "bytes": 8289,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-device-parent-source-v1/draft/adapters/m1-engineering-execution-v1/src/tp_finite_client/prefix_decode/host_policy_v2.rs",
+      "sha256": "ce5a49ac520e4cdf9aca0852e50b86dd2c4c285525df6b40e02652b120505a1b"
+    },
+    {
+      "bytes": 17034848,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/device-parent-ferric-dc04a484-v228-v1.tar.gz",
+      "sha256": "12612bcd934e3429c7ca497f7f3a3b97d37f4a7f9f800c8319433ac82e821e16"
+    },
+    {
+      "bytes": 13301899,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/device-routing-fe2o3-9a321f3f-v228-v1.tar.gz",
+      "sha256": "45ae31dcf5a908e8977fedcded194a1fb60ebc64d9266bcd4c7e53c24214ceb8"
+    }
+  ],
+  "metadata": {
+    "external": [
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/aho-corasick-1.1.5/Cargo.toml",
+        "manifest_sha256": "7ff243aed78547f286729c3c60d97577fbc685546120263548d7c4f2a3884bc1",
+        "name": "aho-corasick",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "1.1.5"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/allocator-api2-0.2.21/Cargo.toml",
+        "manifest_sha256": "ddaa434cc54a30a33bbe0096e72479d71ba5deffa2ad9bee39419d4e50b75275",
+        "name": "allocator-api2",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "0.2.21"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/arrayvec-0.7.8/Cargo.toml",
+        "manifest_sha256": "20e9a4f27b17531ac0c3ab9f403e52c9d567eea254703df3b3b18ca36d5f7927",
+        "name": "arrayvec",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "0.7.8"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/awint-0.19.0/Cargo.toml",
+        "manifest_sha256": "3f1922dab48ca75a13335b20dc81013fd4215f1ba83a65f024398ac0d3f61668",
+        "name": "awint",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "0.19.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/awint_core-0.19.0/Cargo.toml",
+        "manifest_sha256": "1adfe02cc3ae1d4704f7c8b03b84fc579a8ea78cd2a0d3cd47d85377cd4b1b48",
+        "name": "awint_core",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "0.19.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/awint_dag-0.19.0/Cargo.toml",
+        "manifest_sha256": "cce37e9205612cadfa1eca9fdc67d3ad9b9c0eb52f9a117e58a5a9e3efb3334f",
+        "name": "awint_dag",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "0.19.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/awint_ext-0.19.0/Cargo.toml",
+        "manifest_sha256": "a531698e12da18892697ea06012207430f7411c1230ca60d9ee57832e151abad",
+        "name": "awint_ext",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "0.19.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/awint_internals-0.19.0/Cargo.toml",
+        "manifest_sha256": "416a0e817004d6be3b219f7e0df2e9004f25260d95a7e80f742a5e01b3473c93",
+        "name": "awint_internals",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "0.19.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/awint_macro_internals-0.19.0/Cargo.toml",
+        "manifest_sha256": "336c0e31e20a5b9fbbbac116b78af3e1b2dd0e4577a1532b21e1b9d4b68e291b",
+        "name": "awint_macro_internals",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "0.19.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/awint_macros-0.19.0/Cargo.toml",
+        "manifest_sha256": "5f8878e1eeaa466398272480ff156520848c58748d1d5f3f295d71bb35e8757d",
+        "name": "awint_macros",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "0.19.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/base64ct-1.8.3/Cargo.toml",
+        "manifest_sha256": "950ec911574afbf038e970968c9bcd03df0fe56d78eabee157012e54d487cb29",
+        "name": "base64ct",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "1.8.3"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/bitflags-2.13.1/Cargo.toml",
+        "manifest_sha256": "b13b9b7edbbb039205f57f107acdba1840b7c8452c6fdf4e04bc58124f7b5e0c",
+        "name": "bitflags",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "2.13.1"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/block-buffer-0.10.4/Cargo.toml",
+        "manifest_sha256": "c76e4bd298cd6223882238449e31939d75613e82757ca87e249df843decf5f9a",
+        "name": "block-buffer",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "0.10.4"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/block-buffer-0.12.1/Cargo.toml",
+        "manifest_sha256": "f21191120ab1d04327657b7125f25b0e3f2bce34af5e921d3c66d24de11d5e60",
+        "name": "block-buffer",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "0.12.1"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/bytemuck-1.25.2/Cargo.toml",
+        "manifest_sha256": "7b99bce6fd19ac16efd0fa94051b95f6cee7945f9d76842e072e4176a152794c",
+        "name": "bytemuck",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "1.25.2"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/bytes-1.12.1/Cargo.toml",
+        "manifest_sha256": "dc260d0d04b58aea819f8d6762c2feb51e66f8edd77e4e64cc1eac6f447a8143",
+        "name": "bytes",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "1.12.1"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/cc-1.4.5/Cargo.toml",
+        "manifest_sha256": "434867ab97389bff6b1a646e2960da37f14ce77b1aa3ea9e75508322e82c0473",
+        "name": "cc",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "1.4.5"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/cfg-if-1.0.4/Cargo.toml",
+        "manifest_sha256": "281d508beb1fe3927cf03d3f2f8c9a5117b1e4fe97ae21b9026cf318e8c35273",
+        "name": "cfg-if",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "1.0.4"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/combine-4.6.8/Cargo.toml",
+        "manifest_sha256": "a7e5461b82da71ac74acb031a2e70c545be35d2b6634e029b77bea4388bdf49c",
+        "name": "combine",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "4.6.8"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/const-oid-0.9.6/Cargo.toml",
+        "manifest_sha256": "c646206dd9067b48ca550efcedd9eed7fd2ed230e7d05757a569bbe18f01081c",
+        "name": "const-oid",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "0.9.6"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/const-oid-0.10.2/Cargo.toml",
+        "manifest_sha256": "591ac78fc8cd99d8a31110e8cb572534bb9d04af23bc48db855a34d4a6c78569",
+        "name": "const-oid",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "0.10.2"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/const_fn-0.4.12/Cargo.toml",
+        "manifest_sha256": "6b1bada35d5be994ec0de09d30ed374cfa14714f31d62988f0ccdf8f64809d0c",
+        "name": "const_fn",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "0.4.12"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/convert_case-0.4.0/Cargo.toml",
+        "manifest_sha256": "bbd8c27bde074b1c78539307cc2f1770efdaf890253cce4b9557cfdc32d4e605",
+        "name": "convert_case",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "0.4.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/convert_case-0.11.0/Cargo.toml",
+        "manifest_sha256": "08983e3526100ede2b6a2ea7ab7e46a9fe898a3f7eb0021edaeb98ead500ff49",
+        "name": "convert_case",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "0.11.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/cpufeatures-0.2.17/Cargo.toml",
+        "manifest_sha256": "25160ea4dfa195721d352d42827b882a41f18f4c55fff58e5c3878ecae84ca44",
+        "name": "cpufeatures",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "0.2.17"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/cpufeatures-0.3.1/Cargo.toml",
+        "manifest_sha256": "2e82ee61a94e8ef99197ca59723e9794d0f08363f28bacab680292af6ccdde61",
+        "name": "cpufeatures",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "0.3.1"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/crypto-common-0.1.7/Cargo.toml",
+        "manifest_sha256": "303682a6a66fdc98de8a011ac275e18c523f1535ed8de2a291a4fcad91de8348",
+        "name": "crypto-common",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "0.1.7"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/crypto-common-0.2.2/Cargo.toml",
+        "manifest_sha256": "1b47561054dd2fe13246f2f6e19c29eac256269e02c96162fd6efed28247e78a",
+        "name": "crypto-common",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "0.2.2"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/curve25519-dalek-4.1.3/Cargo.toml",
+        "manifest_sha256": "ef9a2ca89de6eb3e09adf27478df06d246f27ee025150241e847aff26d78129d",
+        "name": "curve25519-dalek",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "4.1.3"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/curve25519-dalek-derive-0.1.1/Cargo.toml",
+        "manifest_sha256": "60d2093fbabea9e72ad1350ae4a616ae56b2592742a64d2bd679a749f7a6bb4d",
+        "name": "curve25519-dalek-derive",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "0.1.1"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/der-0.7.10/Cargo.toml",
+        "manifest_sha256": "ab115a95d89b2a7da3cd8264684f74f905322331db94ec7044511ad87d1cf331",
+        "name": "der",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "0.7.10"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/git/checkouts/fe2o3-3973306df8c37287/faaaf15/crates/dialect-amdgcn/Cargo.toml",
+        "manifest_sha256": "4ff4dbb8a0e27ed8f6abc47fe7d37074a06ec049d93f39f1b3288607402d3971",
+        "name": "dialect-amdgcn",
+        "source": "git+https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d68eff996b22951758b1a9fa83317d6d2",
+        "version": "0.1.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/git/checkouts/fe2o3-3973306df8c37287/faaaf15/crates/dialect-gpu/Cargo.toml",
+        "manifest_sha256": "bd268bfa1a1cdd8d4d0b39f42937026fc6b8bee5d342c8f7313329cc5ce8e9d4",
+        "name": "dialect-gpu",
+        "source": "git+https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d68eff996b22951758b1a9fa83317d6d2",
+        "version": "0.1.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/git/checkouts/fe2o3-3973306df8c37287/faaaf15/crates/dialect-kernel/Cargo.toml",
+        "manifest_sha256": "6ac57f305c8edb3929238c068d16ca5dca737be07cee499ce9e270397740372b",
+        "name": "dialect-kernel",
+        "source": "git+https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d68eff996b22951758b1a9fa83317d6d2",
+        "version": "0.1.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/git/checkouts/fe2o3-3973306df8c37287/faaaf15/crates/dialect-mir/Cargo.toml",
+        "manifest_sha256": "a94c9f3a3e9ee3a3f02bcb3eafc9c65d8f37748dc287d890907f677ad60f58ae",
+        "name": "dialect-mir",
+        "source": "git+https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d68eff996b22951758b1a9fa83317d6d2",
+        "version": "0.1.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/git/checkouts/fe2o3-3973306df8c37287/faaaf15/crates/dialect-proof/Cargo.toml",
+        "manifest_sha256": "97084696685535196febf0585d2a63b08eb1166fa89fe013cb29a5173db496c7",
+        "name": "dialect-proof",
+        "source": "git+https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d68eff996b22951758b1a9fa83317d6d2",
+        "version": "0.1.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/digest-0.10.7/Cargo.toml",
+        "manifest_sha256": "f0cc2fc18c6e7f3533658b9e59d71b55e641e7d8226e5d1b915a5e7c0a1d3f36",
+        "name": "digest",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "0.10.7"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/digest-0.11.3/Cargo.toml",
+        "manifest_sha256": "59c4f2cba7e34831c87e8f4844718d91d0f276af7bd192de76fda7d5a8978eb9",
+        "name": "digest",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "0.11.3"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/downcast-rs-2.0.2/Cargo.toml",
+        "manifest_sha256": "e791d7026a3747242cea4a3b4102b7c453dba45cde02ce798483bbcc4991acc4",
+        "name": "downcast-rs",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "2.0.2"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/dyn-clone-1.0.20/Cargo.toml",
+        "manifest_sha256": "6753280e066f943c3569ef818b09e1400cca53501dcd462fa1aa25d4f516c162",
+        "name": "dyn-clone",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "1.0.20"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ed25519-2.2.3/Cargo.toml",
+        "manifest_sha256": "c6fffc86c6297739753fd78ad9ccb9c15385704329259a986530e09732957c82",
+        "name": "ed25519",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "2.2.3"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ed25519-dalek-2.2.0/Cargo.toml",
+        "manifest_sha256": "65e415110f13ea42e3205a6d49426257c3242aa1f46ffca2e6cbafae0b205b14",
+        "name": "ed25519-dalek",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "2.2.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/equivalent-1.0.2/Cargo.toml",
+        "manifest_sha256": "92fcf6d8b32d99f40a5053b9026e417c958d6f5f19581c632d675211b7eeb9f9",
+        "name": "equivalent",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "1.0.2"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/errno-0.3.14/Cargo.toml",
+        "manifest_sha256": "a25f16ccaa127602fc0cc9d1c80186619a0b8f42331a27b6f04b6bfa4aa29de2",
+        "name": "errno",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "0.3.14"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/git/checkouts/fe2o3-3973306df8c37287/faaaf15/crates/fe2o3-amd-target/Cargo.toml",
+        "manifest_sha256": "a1ca0686c6e88d6a2011bd9ed5d09727b3608269f9a50725599e0d47be5edd02",
+        "name": "fe2o3-amd-target",
+        "source": "git+https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d68eff996b22951758b1a9fa83317d6d2",
+        "version": "0.1.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/git/checkouts/fe2o3-3973306df8c37287/faaaf15/crates/fe2o3-amdgcn-model/Cargo.toml",
+        "manifest_sha256": "0853398cc182b355458365be87d6e293be5f119c9793ee7d6b514836f0e31d37",
+        "name": "fe2o3-amdgcn-model",
+        "source": "git+https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d68eff996b22951758b1a9fa83317d6d2",
+        "version": "0.1.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/git/checkouts/fe2o3-3973306df8c37287/faaaf15/crates/fe2o3-amdhsa-loader/Cargo.toml",
+        "manifest_sha256": "38d35b8d51b45e7f5ba4e7a8b36b6f316d6104b6962c1c9ec4c12a1b785b44a0",
+        "name": "fe2o3-amdhsa-loader",
+        "source": "git+https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d68eff996b22951758b1a9fa83317d6d2",
+        "version": "0.1.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/git/checkouts/fe2o3-3973306df8c37287/faaaf15/crates/fe2o3-aql/Cargo.toml",
+        "manifest_sha256": "7bed04a9f75c0688d8d1163c7bda7f646404eef507a8e9224e18b4d633fd09da",
+        "name": "fe2o3-aql",
+        "source": "git+https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d68eff996b22951758b1a9fa83317d6d2",
+        "version": "0.1.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/git/checkouts/fe2o3-3973306df8c37287/faaaf15/crates/fe2o3-artifact-transaction/Cargo.toml",
+        "manifest_sha256": "211563e6fd60b9d6030f95e7bca5c5ef22999bfab3543f1191ae38e1a43799f2",
+        "name": "fe2o3-artifact-transaction",
+        "source": "git+https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d68eff996b22951758b1a9fa83317d6d2",
+        "version": "0.1.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/git/checkouts/fe2o3-3973306df8c37287/faaaf15/crates/fe2o3-artifacts/Cargo.toml",
+        "manifest_sha256": "49fcebb07b98e0806609acf16fe33cc8d6d663e42ecf98bc7d43ffa7ea054f11",
+        "name": "fe2o3-artifacts",
+        "source": "git+https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d68eff996b22951758b1a9fa83317d6d2",
+        "version": "0.1.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/git/checkouts/fe2o3-3973306df8c37287/faaaf15/crates/fe2o3-build-authority/Cargo.toml",
+        "manifest_sha256": "c2f0cb40256a95d364fd8f60af641b21141525dffd3eac6d7d43bd4eb837fcea",
+        "name": "fe2o3-build-authority",
+        "source": "git+https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d68eff996b22951758b1a9fa83317d6d2",
+        "version": "0.1.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/git/checkouts/fe2o3-3973306df8c37287/faaaf15/crates/fe2o3-compiler-closure-capability/Cargo.toml",
+        "manifest_sha256": "de0b7c82049100189958ec76c12bc01a9551651370a239d1c7d7799bc7d51a49",
+        "name": "fe2o3-compiler-closure-capability",
+        "source": "git+https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d68eff996b22951758b1a9fa83317d6d2",
+        "version": "0.1.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/git/checkouts/fe2o3-3973306df8c37287/faaaf15/crates/fe2o3-compiler-execution-client/Cargo.toml",
+        "manifest_sha256": "d4fb12a0035ce2a7d81ef86a7b4730fe0493eba22095385c9686a4673ee5ef4c",
+        "name": "fe2o3-compiler-execution-client",
+        "source": "git+https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d68eff996b22951758b1a9fa83317d6d2",
+        "version": "0.1.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/git/checkouts/fe2o3-3973306df8c37287/faaaf15/crates/fe2o3-compiler-execution-protocol/Cargo.toml",
+        "manifest_sha256": "830d9f8623d860309ebac3db3458498e13f34f2bc96171c77456fb4ace35afef",
+        "name": "fe2o3-compiler-execution-protocol",
+        "source": "git+https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d68eff996b22951758b1a9fa83317d6d2",
+        "version": "0.1.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/git/checkouts/fe2o3-3973306df8c37287/faaaf15/crates/fe2o3-compiler-ffi/Cargo.toml",
+        "manifest_sha256": "76d26b885cbd9e6408cccf7fd7434bba0999d0218a4f40170135e8869c44706d",
+        "name": "fe2o3-compiler-ffi",
+        "source": "git+https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d68eff996b22951758b1a9fa83317d6d2",
+        "version": "0.1.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/git/checkouts/fe2o3-3973306df8c37287/faaaf15/crates/fe2o3-compiler-lineage/Cargo.toml",
+        "manifest_sha256": "5a5252b03a751ff63741dc925eed18f08a48a98b27d6ff16b188eccbcfa981a3",
+        "name": "fe2o3-compiler-lineage",
+        "source": "git+https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d68eff996b22951758b1a9fa83317d6d2",
+        "version": "0.1.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/git/checkouts/fe2o3-3973306df8c37287/faaaf15/crates/fe2o3-contracts/Cargo.toml",
+        "manifest_sha256": "152cb059c738c5b657f63881097063071d69ab36ca7c6f1b426854990a2f9acd",
+        "name": "fe2o3-contracts",
+        "source": "git+https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d68eff996b22951758b1a9fa83317d6d2",
+        "version": "0.1.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/git/checkouts/fe2o3-3973306df8c37287/faaaf15/crates/fe2o3-device/Cargo.toml",
+        "manifest_sha256": "da7bbcd2f3dac75b968f45137c920d94658b5600ff52bf9d843d494bcdd8afb7",
+        "name": "fe2o3-device",
+        "source": "git+https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d68eff996b22951758b1a9fa83317d6d2",
+        "version": "0.1.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/git/checkouts/fe2o3-3973306df8c37287/faaaf15/crates/fe2o3-drm-uapi/Cargo.toml",
+        "manifest_sha256": "d1e8d7a4a55dc9f37b7756eb8d0430b16a8dc273e1c528afee079fd9289f2c89",
+        "name": "fe2o3-drm-uapi",
+        "source": "git+https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d68eff996b22951758b1a9fa83317d6d2",
+        "version": "0.1.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/git/checkouts/fe2o3-3973306df8c37287/faaaf15/crates/fe2o3-external-anchor-protocol/Cargo.toml",
+        "manifest_sha256": "7c51276b35119bc07c0d12702c9998ed06eaa38b0ddfd5886ffb2f92696c6732",
+        "name": "fe2o3-external-anchor-protocol",
+        "source": "git+https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d68eff996b22951758b1a9fa83317d6d2",
+        "version": "0.1.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/git/checkouts/fe2o3-3973306df8c37287/faaaf15/crates/fe2o3-functional-proof/Cargo.toml",
+        "manifest_sha256": "34d955505ce9cf7cf6c1fa9a5aa26bf83653c78f35f3b748a8e0dbf2648feeb6",
+        "name": "fe2o3-functional-proof",
+        "source": "git+https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d68eff996b22951758b1a9fa83317d6d2",
+        "version": "0.1.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/git/checkouts/fe2o3-3973306df8c37287/faaaf15/crates/fe2o3-host/Cargo.toml",
+        "manifest_sha256": "351e7a18a1479ae4a1896b387275b2862a3c0a23ddb2bc165a01a528c5867033",
+        "name": "fe2o3-host",
+        "source": "git+https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d68eff996b22951758b1a9fa83317d6d2",
+        "version": "0.1.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/git/checkouts/fe2o3-3973306df8c37287/faaaf15/crates/fe2o3-host-api/Cargo.toml",
+        "manifest_sha256": "eddb4bcb12da28bd1708cd975da704306a6eda2ba9b99d9ebd7e6027fe3ca6f8",
+        "name": "fe2o3-host-api",
+        "source": "git+https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d68eff996b22951758b1a9fa83317d6d2",
+        "version": "0.1.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/git/checkouts/fe2o3-3973306df8c37287/faaaf15/crates/fe2o3-hsaco/Cargo.toml",
+        "manifest_sha256": "fe6bbb73288d52d7fc14347bb008c9aad6ebd2a363f5f08ea9e6083a80a64da7",
+        "name": "fe2o3-hsaco",
+        "source": "git+https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d68eff996b22951758b1a9fa83317d6d2",
+        "version": "0.1.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/git/checkouts/fe2o3-3973306df8c37287/faaaf15/crates/fe2o3-hsaco-finalize/Cargo.toml",
+        "manifest_sha256": "3d391c185265b5f2a76d1a3826fc166119b753dfdf1f7b21d0f04600081acc55",
+        "name": "fe2o3-hsaco-finalize",
+        "source": "git+https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d68eff996b22951758b1a9fa83317d6d2",
+        "version": "0.1.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/git/checkouts/fe2o3-3973306df8c37287/faaaf15/crates/fe2o3-kernel-analysis/Cargo.toml",
+        "manifest_sha256": "7d5f15b2e18ec7e84f91793dde0d7d7d5639e2f599b85a5692ccc6aa5da40719",
+        "name": "fe2o3-kernel-analysis",
+        "source": "git+https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d68eff996b22951758b1a9fa83317d6d2",
+        "version": "0.1.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/git/checkouts/fe2o3-3973306df8c37287/faaaf15/crates/fe2o3-kernel-descriptor/Cargo.toml",
+        "manifest_sha256": "7e83dae0a05debc9831e4eef57cb00dec8dc19491771e73c5fa26af649bb2c7b",
+        "name": "fe2o3-kernel-descriptor",
+        "source": "git+https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d68eff996b22951758b1a9fa83317d6d2",
+        "version": "0.1.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/git/checkouts/fe2o3-3973306df8c37287/faaaf15/crates/fe2o3-kernel-ir/Cargo.toml",
+        "manifest_sha256": "387a051f6ad6d9f45cc1820e35f76a401354a4dff039ca142b10b49f5b23aaf1",
+        "name": "fe2o3-kernel-ir",
+        "source": "git+https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d68eff996b22951758b1a9fa83317d6d2",
+        "version": "0.1.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/git/checkouts/fe2o3-3973306df8c37287/faaaf15/crates/fe2o3-kernel-opt/Cargo.toml",
+        "manifest_sha256": "afd6410aa74cc921c7432fe4e0d4726bc63fdbf4e80b941aa5cf27094d63a30c",
+        "name": "fe2o3-kernel-opt",
+        "source": "git+https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d68eff996b22951758b1a9fa83317d6d2",
+        "version": "0.1.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/git/checkouts/fe2o3-3973306df8c37287/faaaf15/crates/fe2o3-kfd/Cargo.toml",
+        "manifest_sha256": "866571f328a21953782488e28995d49cc54e3c1adcded44cebb19ce6715a7336",
+        "name": "fe2o3-kfd",
+        "source": "git+https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d68eff996b22951758b1a9fa83317d6d2",
+        "version": "0.1.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/git/checkouts/fe2o3-3973306df8c37287/faaaf15/crates/fe2o3-kfd-uapi/Cargo.toml",
+        "manifest_sha256": "dfc33821449db1b65d563041beb53e591d3fb56dec34089f4200c4652aa9a596",
+        "name": "fe2o3-kfd-uapi",
+        "source": "git+https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d68eff996b22951758b1a9fa83317d6d2",
+        "version": "0.1.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/git/checkouts/fe2o3-3973306df8c37287/faaaf15/crates/fe2o3-llvm-handoff/Cargo.toml",
+        "manifest_sha256": "b4166c4a02538bcf33118529a07768b46067a7059c6f77e0e6b102cc63683648",
+        "name": "fe2o3-llvm-handoff",
+        "source": "git+https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d68eff996b22951758b1a9fa83317d6d2",
+        "version": "0.1.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/git/checkouts/fe2o3-3973306df8c37287/faaaf15/crates/fe2o3-llvm-text/Cargo.toml",
+        "manifest_sha256": "6dfc776d2f38c4007e70b477c172eda8292a23f41d378b2dfd71d2821f6a826c",
+        "name": "fe2o3-llvm-text",
+        "source": "git+https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d68eff996b22951758b1a9fa83317d6d2",
+        "version": "0.1.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/git/checkouts/fe2o3-3973306df8c37287/faaaf15/crates/fe2o3-lower-mir-kernel/Cargo.toml",
+        "manifest_sha256": "df0c389c34ee4a0919a9fe6d22581e2b65643321b0a2e39767652078ddecbe0f",
+        "name": "fe2o3-lower-mir-kernel",
+        "source": "git+https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d68eff996b22951758b1a9fa83317d6d2",
+        "version": "0.1.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/git/checkouts/fe2o3-3973306df8c37287/faaaf15/crates/fe2o3-macros/Cargo.toml",
+        "manifest_sha256": "662e1c4baf8ea80e317e9968c30924121833003452093ecf407d71dd7b62cfe4",
+        "name": "fe2o3-macros",
+        "source": "git+https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d68eff996b22951758b1a9fa83317d6d2",
+        "version": "0.1.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/git/checkouts/fe2o3-3973306df8c37287/faaaf15/crates/fe2o3-mir-model/Cargo.toml",
+        "manifest_sha256": "b1e15ceeef6dc8a6a77cf54fc1bfeab34ed52726a0e4f8c26ad088e480ae0215",
+        "name": "fe2o3-mir-model",
+        "source": "git+https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d68eff996b22951758b1a9fa83317d6d2",
+        "version": "0.1.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/git/checkouts/fe2o3-3973306df8c37287/faaaf15/crates/fe2o3-pliron/Cargo.toml",
+        "manifest_sha256": "6aaaf3f4b937628dd984f21e0f8e9a2c5b379a9e252925e30367e87eca5df3b4",
+        "name": "fe2o3-pliron",
+        "source": "git+https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d68eff996b22951758b1a9fa83317d6d2",
+        "version": "0.1.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/git/checkouts/fe2o3-3973306df8c37287/faaaf15/crates/fe2o3-pliron-owner-core/Cargo.toml",
+        "manifest_sha256": "aad222c6d37fe4efaa7c398561867cae521589e9ea7ada45b2b13bcf71e1d34a",
+        "name": "fe2o3-pliron-owner-core",
+        "source": "git+https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d68eff996b22951758b1a9fa83317d6d2",
+        "version": "0.1.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/git/checkouts/fe2o3-3973306df8c37287/faaaf15/crates/fe2o3-process-identity/Cargo.toml",
+        "manifest_sha256": "465951fc712944b22211c7acc84f67a5e363e2379077bedcb59fdb4ab4b568e9",
+        "name": "fe2o3-process-identity",
+        "source": "git+https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d68eff996b22951758b1a9fa83317d6d2",
+        "version": "0.1.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/git/checkouts/fe2o3-3973306df8c37287/faaaf15/crates/fe2o3-profiler-protocol/Cargo.toml",
+        "manifest_sha256": "e9f3166a3909969657c072f6e576e51a3bb761e261128bf07a3d5e237885bfdf",
+        "name": "fe2o3-profiler-protocol",
+        "source": "git+https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d68eff996b22951758b1a9fa83317d6d2",
+        "version": "0.1.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/git/checkouts/fe2o3-3973306df8c37287/faaaf15/crates/fe2o3-proof-contracts/Cargo.toml",
+        "manifest_sha256": "ded31af1f89dfd5b8a12bae30c919396df2bddeaa25f2f1cad08a691e5757ccb",
+        "name": "fe2o3-proof-contracts",
+        "source": "git+https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d68eff996b22951758b1a9fa83317d6d2",
+        "version": "0.1.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/git/checkouts/fe2o3-3973306df8c37287/faaaf15/crates/fe2o3-runtime/Cargo.toml",
+        "manifest_sha256": "01b87b6b5a3effa78e02c61632778504680e6c927dd08db1a14c4fdf5f4362ca",
+        "name": "fe2o3-runtime",
+        "source": "git+https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d68eff996b22951758b1a9fa83317d6d2",
+        "version": "0.1.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/git/checkouts/fe2o3-3973306df8c37287/faaaf15/crates/fe2o3-runtime-model/Cargo.toml",
+        "manifest_sha256": "d996254c949ffaac7fc5588ecead2a29fa334a4890ef71e848a761da922be7e7",
+        "name": "fe2o3-runtime-model",
+        "source": "git+https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d68eff996b22951758b1a9fa83317d6d2",
+        "version": "0.1.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/git/checkouts/fe2o3-3973306df8c37287/faaaf15/crates/fe2o3-runtime-protocol/Cargo.toml",
+        "manifest_sha256": "091e58e9ab7b3254fbf3029bc97a9cf5ff6e8925f78099cd58e8ebd76afa8083",
+        "name": "fe2o3-runtime-protocol",
+        "source": "git+https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d68eff996b22951758b1a9fa83317d6d2",
+        "version": "0.1.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/git/checkouts/fe2o3-3973306df8c37287/faaaf15/crates/fe2o3-rustc-front/Cargo.toml",
+        "manifest_sha256": "773d951165d7c13d936933b7ade776e659828d67e407d77d6cde30db323061a5",
+        "name": "fe2o3-rustc-front",
+        "source": "git+https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d68eff996b22951758b1a9fa83317d6d2",
+        "version": "0.1.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/git/checkouts/fe2o3-3973306df8c37287/faaaf15/crates/fe2o3-rustc-invocation/Cargo.toml",
+        "manifest_sha256": "1e71bd694cbc2c2b6c721bc013cf20937f06d6eb6a3569f58ba4f1d6255afdba",
+        "name": "fe2o3-rustc-invocation",
+        "source": "git+https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d68eff996b22951758b1a9fa83317d6d2",
+        "version": "0.1.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/git/checkouts/fe2o3-3973306df8c37287/faaaf15/crates/fe2o3-service-host/Cargo.toml",
+        "manifest_sha256": "b4112b7307a2630e1db5bacafaf9a79b293fc1e20ae21bed401faba73203f9c3",
+        "name": "fe2o3-service-host",
+        "source": "git+https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d68eff996b22951758b1a9fa83317d6d2",
+        "version": "0.1.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/git/checkouts/fe2o3-3973306df8c37287/faaaf15/crates/fe2o3-service-model/Cargo.toml",
+        "manifest_sha256": "a0fa57e839b42ac7b53c04179971193fab0d3bc7f58b9543858ea8f79dd3b425",
+        "name": "fe2o3-service-model",
+        "source": "git+https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d68eff996b22951758b1a9fa83317d6d2",
+        "version": "0.1.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/git/checkouts/fe2o3-3973306df8c37287/faaaf15/crates/fe2o3-source-isa-observation/Cargo.toml",
+        "manifest_sha256": "73911e809ad222872c0a42514d9963059811d7775326e920ead624f00f489a2e",
+        "name": "fe2o3-source-isa-observation",
+        "source": "git+https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d68eff996b22951758b1a9fa83317d6d2",
+        "version": "0.1.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/git/checkouts/fe2o3-3973306df8c37287/faaaf15/crates/fe2o3-target-spec/Cargo.toml",
+        "manifest_sha256": "950896784d7931a2100b5ac0804ce7706476f00dd96cfeeed1adbdf63653454c",
+        "name": "fe2o3-target-spec",
+        "source": "git+https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d68eff996b22951758b1a9fa83317d6d2",
+        "version": "0.1.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/git/checkouts/fe2o3-3973306df8c37287/faaaf15/crates/fe2o3-verifier/Cargo.toml",
+        "manifest_sha256": "90794ee4a8203a7050579add9db7a69f4581de098ce0f86f81168d7839c78385",
+        "name": "fe2o3-verifier",
+        "source": "git+https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d68eff996b22951758b1a9fa83317d6d2",
+        "version": "0.1.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/git/checkouts/fe2o3-3973306df8c37287/faaaf15/crates/fe2o3-worker-v3-verification-client/Cargo.toml",
+        "manifest_sha256": "c3937a02da1ed62bea8641478c4a13d88c337c7ae9ccdbbf7f3f53174359639c",
+        "name": "fe2o3-worker-v3-verification-client",
+        "source": "git+https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d68eff996b22951758b1a9fa83317d6d2",
+        "version": "0.1.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/git/checkouts/fe2o3-3973306df8c37287/faaaf15/crates/fe2o3-worker-v3-verification-protocol/Cargo.toml",
+        "manifest_sha256": "d44fcc552d27916b6659c9fa38d6dd44c725de144e55ce019957c8d021d9369c",
+        "name": "fe2o3-worker-v3-verification-protocol",
+        "source": "git+https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d68eff996b22951758b1a9fa83317d6d2",
+        "version": "0.1.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/fiat-crypto-0.2.9/Cargo.toml",
+        "manifest_sha256": "33265490768ba75aae4d3fc75e786eb1d00ee6404a8eac26db80f46c128c6ef4",
+        "name": "fiat-crypto",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "0.2.9"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/find-msvc-tools-0.1.12/Cargo.toml",
+        "manifest_sha256": "33f4196a05941f53100e5c753d17c114958eaacf8411997f7dd12fc0cf33662e",
+        "name": "find-msvc-tools",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "0.1.12"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/foldhash-0.2.0/Cargo.toml",
+        "manifest_sha256": "0a76cc29da1c33f4bdb505f5828ecdc20859c4cb9faa402e000f5f10511a27cc",
+        "name": "foldhash",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "0.2.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/generic-array-0.14.7/Cargo.toml",
+        "manifest_sha256": "4b5daed75505275d11f4854dd9172f910da61d9856ca2936d95e2e6e0c9040e4",
+        "name": "generic-array",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "0.14.7"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/getrandom-0.2.17/Cargo.toml",
+        "manifest_sha256": "032d84ffe843860402ec2339ae4179be20fd6f432109e595a3fa83be54893ec7",
+        "name": "getrandom",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "0.2.17"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/hashbrown-0.17.1/Cargo.toml",
+        "manifest_sha256": "afcb0e62d498f756bd4ddf69785c8282d01ee4fa40016158c7eac12ceb302f8c",
+        "name": "hashbrown",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "0.17.1"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/hi_sparse_bitset-0.9.0/Cargo.toml",
+        "manifest_sha256": "fb71a48a3c6b6a9fd8ad7b3ca44509060745c848be0d8ae8db385b85bfeb3f8c",
+        "name": "hi_sparse_bitset",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "0.9.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/hybrid-array-0.4.14/Cargo.toml",
+        "manifest_sha256": "f6ee14dcb159bf01915d9cb9b0fa99696ebc689e5405953b79e3cb08458022a1",
+        "name": "hybrid-array",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "0.4.14"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/indexmap-2.14.1/Cargo.toml",
+        "manifest_sha256": "a1711bc6d4c39407194075b916a998f71eb2c2edd4cfc89335e4f175e5bc65fe",
+        "name": "indexmap",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "2.14.1"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/inventory-0.3.24/Cargo.toml",
+        "manifest_sha256": "3b0b3dc097f1c314a1db6a648d787176eb753f4dc41962883c21f353b4f9cda7",
+        "name": "inventory",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "0.3.24"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/itoa-1.0.18/Cargo.toml",
+        "manifest_sha256": "894c215e4e7e973b556b0e9627bf9b6a719a043fac9b5af9838660816392a09f",
+        "name": "itoa",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "1.0.18"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/libc-0.2.189/Cargo.toml",
+        "manifest_sha256": "95159789ef9c9aaee8230b13be5c89594833a7bf2db299e61eb23b512cb67144",
+        "name": "libc",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "0.2.189"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/linkme-0.3.37/Cargo.toml",
+        "manifest_sha256": "08ede8eb7f7743bb2421f1fe2986c70e354d318241898699a1d4d050f5f51e64",
+        "name": "linkme",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "0.3.37"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/linkme-impl-0.3.37/Cargo.toml",
+        "manifest_sha256": "c999ddb50a544a33046944b6f4f350f061f6fdbef3abe2fb0e207347144ed375",
+        "name": "linkme-impl",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "0.3.37"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/linux-raw-sys-0.12.1/Cargo.toml",
+        "manifest_sha256": "1d24fe227d87b23fc5220ddf2ca4708e5e0d794a3f77961b71cd8140bf33faa5",
+        "name": "linux-raw-sys",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "0.12.1"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/lock_api-0.4.14/Cargo.toml",
+        "manifest_sha256": "dd67edbeff9cee46c3ea6411098aeec7363cb4fe865006c8eca321d321332484",
+        "name": "lock_api",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "0.4.14"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/log-0.4.34/Cargo.toml",
+        "manifest_sha256": "a6b553a374b237960e65d91de04e102a1755a7a20ff21f2c1ef6ba74b9d0ab76",
+        "name": "log",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "0.4.34"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/memchr-2.8.3/Cargo.toml",
+        "manifest_sha256": "a14f68b8fa55f15fd03b15dced37bcf66a0a628f568eedc82817cdb7f9281951",
+        "name": "memchr",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "2.8.3"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/object-0.39.1/Cargo.toml",
+        "manifest_sha256": "373aa1a7d2fd042ac630d54e405147141e7a3da961e6a81d449c056fa3ae6152",
+        "name": "object",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "0.39.1"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/once_cell-1.21.4/Cargo.toml",
+        "manifest_sha256": "87e5b7ee438abdef12e46386e86370f54ad70cabdcf949556b9ef012a9da9587",
+        "name": "once_cell",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "1.21.4"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/once_vec-0.4.0/Cargo.toml",
+        "manifest_sha256": "7b8edaab7a801a69a1c4246b205daad79afc34e47ed6b53db7a7c589c9d1ee8d",
+        "name": "once_vec",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "0.4.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/onig-6.5.3/Cargo.toml",
+        "manifest_sha256": "06c307e91c70a5659604f4703aa5e67809089ab88e711feae8b6a341d45219f2",
+        "name": "onig",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "6.5.3"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/onig_sys-69.9.3/Cargo.toml",
+        "manifest_sha256": "7915b8ec54838f11c7c66d26dfebe3d106e1ce5d8032690a45a5efe909062b85",
+        "name": "onig_sys",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "69.9.3"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/pkcs8-0.10.2/Cargo.toml",
+        "manifest_sha256": "440cf271c696da0bcef123a4e005f9f47273d140b9b824f4b7b0d4fa4639cb12",
+        "name": "pkcs8",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "0.10.2"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/pkg-config-0.3.34/Cargo.toml",
+        "manifest_sha256": "26612dc6bbb8c045f4c91f95fc026b926e9adb942655dddfd21ffecf2595b70b",
+        "name": "pkg-config",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "0.3.34"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/git/checkouts/pliron-6f963b380d48781e/cc902cc/Cargo.toml",
+        "manifest_sha256": "3a951a10b596138aeb1af988919169b1702fb38ca0a3cd9c9a04db38e50c4c10",
+        "name": "pliron",
+        "source": "git+https://github.com/harsh-nod/pliron.git?rev=cc902cc8c669b5de2b292ae8638d9e8311bc735b#cc902cc8c669b5de2b292ae8638d9e8311bc735b",
+        "version": "0.17.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/git/checkouts/pliron-6f963b380d48781e/cc902cc/pliron-derive/Cargo.toml",
+        "manifest_sha256": "2845b31e7765711cf74ff4277db919e2a046db9506e8775687497d3d9c5819d0",
+        "name": "pliron-derive",
+        "source": "git+https://github.com/harsh-nod/pliron.git?rev=cc902cc8c669b5de2b292ae8638d9e8311bc735b#cc902cc8c669b5de2b292ae8638d9e8311bc735b",
+        "version": "0.17.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/proc-macro-crate-3.5.0/Cargo.toml",
+        "manifest_sha256": "e67f9a551770d5e0eea15db9977f257f390ae893068b1cc6425a0a87ac314bb3",
+        "name": "proc-macro-crate",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "3.5.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/proc-macro2-1.0.107/Cargo.toml",
+        "manifest_sha256": "6bdbe54a7f052e552dcfca90351764476e2767237ec3f954df8bd9f602861056",
+        "name": "proc-macro2",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "1.0.107"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/quote-1.0.47/Cargo.toml",
+        "manifest_sha256": "13d8c50837f14aff48cd622349f98fb2c46350b7a0c08fd574cf7de4def27d06",
+        "name": "quote",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "1.0.47"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rand_core-0.6.4/Cargo.toml",
+        "manifest_sha256": "4a6762f8364d1a60f1436f4ba7d710de22465722340d2028101fcbd68e89396f",
+        "name": "rand_core",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "0.6.4"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/recasting-0.2.3/Cargo.toml",
+        "manifest_sha256": "5d7116b34fb99a375a3d377f02fb311ed9b98314de53d0ceeaf265b57374f8dd",
+        "name": "recasting",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "0.2.3"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/regex-1.13.1/Cargo.toml",
+        "manifest_sha256": "d6695aba00bda6017a25464bdf2c8e8c0d7e769389416d03d53de58cb62dc873",
+        "name": "regex",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "1.13.1"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/regex-automata-0.4.18/Cargo.toml",
+        "manifest_sha256": "25d528e0bd6dd67c78462d3c7a426698b5d6e702052b25daf7599c0a211315b6",
+        "name": "regex-automata",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "0.4.18"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/regex-syntax-0.8.11/Cargo.toml",
+        "manifest_sha256": "10c3f14629c0900ac452dd6d55a62aab561bbabbdf5774a802c8d223933cfa3b",
+        "name": "regex-syntax",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "0.8.11"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/git/checkouts/fe2o3-3973306df8c37287/faaaf15/crates/reserved-fe2o3-symbols/Cargo.toml",
+        "manifest_sha256": "45d2d0476613e4d8079e90fd44e3c7283cb4f13f2040ee46169373e8d35a46ee",
+        "name": "reserved-fe2o3-symbols",
+        "source": "git+https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d68eff996b22951758b1a9fa83317d6d2",
+        "version": "0.1.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rustc-hash-2.1.3/Cargo.toml",
+        "manifest_sha256": "7e6727beb038213a2aa02f90cbbfb1d6651a9fda56f241dd95110a0cb287efc9",
+        "name": "rustc-hash",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "2.1.3"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rustc_apfloat-0.2.3+llvm-462a31f5a5ab/Cargo.toml",
+        "manifest_sha256": "40c040ec4310f7b7060942992ee157daf8db69fc77ba5763bb5287ec438659fa",
+        "name": "rustc_apfloat",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "0.2.3+llvm-462a31f5a5ab"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rustc_version-0.4.1/Cargo.toml",
+        "manifest_sha256": "c7d1d07fcb4f604eac7c2f9ad1262f93c81f2e45c6be6031de2d83da5ab59ccb",
+        "name": "rustc_version",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "0.4.1"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rustix-1.1.4/Cargo.toml",
+        "manifest_sha256": "13302af30f997a373ad50b7aa668d9612483e85be6b455e09d95bbd59fb5296f",
+        "name": "rustix",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "1.1.4"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rustversion-1.0.23/Cargo.toml",
+        "manifest_sha256": "fc211ccd64d3ad59a0715c1a6f8cbfbbd83045f644194394595d16646eee9947",
+        "name": "rustversion",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "1.0.23"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/safe_arch-1.2.0/Cargo.toml",
+        "manifest_sha256": "2b6d8bb3d10aaf57629b49332915b50f768c7ad7f329ff04526261e25a1d6c6f",
+        "name": "safe_arch",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "1.2.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/scopeguard-1.2.0/Cargo.toml",
+        "manifest_sha256": "68899251551903e2e1ba03c927f12e4c19fc8a15e8bd3756610f53f5ec075b48",
+        "name": "scopeguard",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "1.2.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/semver-1.0.28/Cargo.toml",
+        "manifest_sha256": "cf7fb84578260eec81ce5af4bdb176ec590d45fdcb78f06710f0aa13e3078761",
+        "name": "semver",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "1.0.28"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.229/Cargo.toml",
+        "manifest_sha256": "6883caefd46e86eb15d22d3a6d274ad304c5e7934ab70eb58d81b7c4a29ef9db",
+        "name": "serde",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "1.0.229"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde_core-1.0.229/Cargo.toml",
+        "manifest_sha256": "c6049e170e4f7c2b48749fefab59db583bfac4e466cde6d0c53e4f49bc5044f7",
+        "name": "serde_core",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "1.0.229"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde_derive-1.0.229/Cargo.toml",
+        "manifest_sha256": "d2581160ffa61baa386f882e08b0db20051dc3c782a82268d6473998b61c926e",
+        "name": "serde_derive",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "1.0.229"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde_json-1.0.151/Cargo.toml",
+        "manifest_sha256": "00b920255c320a278bf25b962b491263a19d8c90e12e4a91c1d823db71eabb2f",
+        "name": "serde_json",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "1.0.151"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde_spanned-1.1.1/Cargo.toml",
+        "manifest_sha256": "9fdef53ff77894a933022135dfcf0733c9257807a23a387176b2de16b4cb48ba",
+        "name": "serde_spanned",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "1.1.1"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/sha2-0.10.9/Cargo.toml",
+        "manifest_sha256": "f5b86209df69360114aaee67a66c3fcd31d8c840b8f34b9ad383aacd63cd15da",
+        "name": "sha2",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "0.10.9"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/sha2-0.11.0/Cargo.toml",
+        "manifest_sha256": "bb187fe9b788b66dc91c717ace2a41b5da5518672a302696ab79bf4619d510a9",
+        "name": "sha2",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "0.11.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/shlex-2.0.1/Cargo.toml",
+        "manifest_sha256": "b6ead6cf404555ced33f7574c6c11413e29e7bcd5eb0ceeb59452830a46675ed",
+        "name": "shlex",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "2.0.1"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/signature-2.2.0/Cargo.toml",
+        "manifest_sha256": "9a0ed264f832101d9e2e786db0e22d90a2a2544ed19c760ec7f2d501d950a9dd",
+        "name": "signature",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "2.2.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/slotmap-1.1.1/Cargo.toml",
+        "manifest_sha256": "051ed0c65137ce29c8b37ff66d16a9d9190eb1708849e4cc1babcd94b699d764",
+        "name": "slotmap",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "1.1.1"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/smallvec-1.16.0/Cargo.toml",
+        "manifest_sha256": "d2e0be582508883c89bdb4fedab80c204f70fbc1b511f46008a279ccf61e7356",
+        "name": "smallvec",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "1.16.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/spin-0.12.3/Cargo.toml",
+        "manifest_sha256": "f37b70d68ea8bb6d7a333e2df2c1cd74a06d8c9c63f94fa9b2df23e312e3af63",
+        "name": "spin",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "0.12.3"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/spki-0.7.3/Cargo.toml",
+        "manifest_sha256": "c2ce81d32a2e9586591d313c324e83bd3822ba13736fdd5209f06da1ac27bd5e",
+        "name": "spki",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "0.7.3"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/subtle-2.6.1/Cargo.toml",
+        "manifest_sha256": "a3b9aefa358b0cd742de62e880ea080414ead838847a95892acaa58575dfc4cf",
+        "name": "subtle",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "2.6.1"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/syn-2.0.119/Cargo.toml",
+        "manifest_sha256": "da8b83ac2c66a7b404dc55d88ae42592f70714823251f51b620ae349b246a18f",
+        "name": "syn",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "2.0.119"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/syn-3.0.4/Cargo.toml",
+        "manifest_sha256": "5d302a1de007d1717f29182b641e2291547e31088d0a253b36a32d682d80caaf",
+        "name": "syn",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "3.0.4"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/synstructure-0.13.2/Cargo.toml",
+        "manifest_sha256": "a1cc9f5d8a95afc23a3e514e52bc5e2d3f59e30f28c0803eb084e3f2f16dfd3c",
+        "name": "synstructure",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "0.13.2"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.20/Cargo.toml",
+        "manifest_sha256": "217e9b07de46308c0ca5a41f0d629675b44ab8b50d7c25d0e2d6e0723f84539b",
+        "name": "thiserror",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "2.0.20"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-impl-2.0.20/Cargo.toml",
+        "manifest_sha256": "30c237dd0e2a1cdb81608acda8964d8096a055b5540ca65c22538af73bc66c75",
+        "name": "thiserror-impl",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "2.0.20"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/toml-1.1.5+spec-1.1.0/Cargo.toml",
+        "manifest_sha256": "77938c9a9688aec83cfa126f667a707ad43118502e4bff53f0125a63cf7cda94",
+        "name": "toml",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "1.1.5+spec-1.1.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/toml_datetime-1.1.1+spec-1.1.0/Cargo.toml",
+        "manifest_sha256": "97287a69ce6e80e64f90577d254185694042c91903c908001e8c3073e00bea3d",
+        "name": "toml_datetime",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "1.1.1+spec-1.1.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/toml_edit-0.25.13+spec-1.1.0/Cargo.toml",
+        "manifest_sha256": "5e8e0dc898e703e55632c72b3bc1a27bdff28659d511b4da1e5ed03c0008a874",
+        "name": "toml_edit",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "0.25.13+spec-1.1.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/toml_parser-1.1.3+spec-1.1.0/Cargo.toml",
+        "manifest_sha256": "23bf7bc66a7090d0048555ec05a81216a5d335e5648952d7fb266c7529a7ad90",
+        "name": "toml_parser",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "1.1.3+spec-1.1.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/toml_writer-1.1.2+spec-1.1.0/Cargo.toml",
+        "manifest_sha256": "a7ac80731e6c3680daa6dd6051b1199856d162ec213cbfb8706a0a9fd5077ce9",
+        "name": "toml_writer",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "1.1.2+spec-1.1.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/triple_arena-0.15.1/Cargo.toml",
+        "manifest_sha256": "19b02adcba6f248d367c2beed566f1052c029be758d2c91a8592dc19b7bed4e3",
+        "name": "triple_arena",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "0.15.1"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/typenum-1.20.1/Cargo.toml",
+        "manifest_sha256": "00785a81eae34b3298dfdde78a6bd96fe3ec000de46edd509bd13b7cab7a9870",
+        "name": "typenum",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "1.20.1"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/unicode-ident-1.0.24/Cargo.toml",
+        "manifest_sha256": "0bb9c0e006a21355cb85c7df72e78dd8ba6fffbb7dc3f1e7a4c19af53cd354da",
+        "name": "unicode-ident",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "1.0.24"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/unicode-normalization-alignments-0.1.12/Cargo.toml",
+        "manifest_sha256": "2aa1c1854b82a87686875b4d1c7a081e0b6c7d82c3ecf79d09165d327e1cc75a",
+        "name": "unicode-normalization-alignments",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "0.1.12"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/unicode-segmentation-1.13.3/Cargo.toml",
+        "manifest_sha256": "86f0e8158aae32d3791f182cf50131f678462da65a713b18cab6c0b5638f1a50",
+        "name": "unicode-segmentation",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "1.13.3"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/utf8-chars-3.0.7/Cargo.toml",
+        "manifest_sha256": "54b7a51a545a5534240c1d98112a6c7015325dd2bd3a9f50890bf5032d3318fb",
+        "name": "utf8-chars",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "3.0.7"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/version_check-0.9.5/Cargo.toml",
+        "manifest_sha256": "399ea74400a173c02eabe91cb9487d0cf351117857a5d2ebc6231f0efde67681",
+        "name": "version_check",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "0.9.5"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/git/checkouts/verus-e4ebf515fa1de14c/b677dd5/source/builtin/Cargo.toml",
+        "manifest_sha256": "187cac962483e64b09347da1cd0dc738428f2b56a3562c28adbd0b6f7e622a59",
+        "name": "verus_builtin",
+        "source": "git+https://github.com/verus-lang/verus.git?rev=b677dd5#b677dd5a766f25f56e9aa1e32621aa4e53304b47",
+        "version": "0.0.0-2026-08-02-0125"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/git/checkouts/verus-e4ebf515fa1de14c/b677dd5/source/builtin_macros/Cargo.toml",
+        "manifest_sha256": "8e24a2613c5b999b6f76d781601d1b42005320f11ddb96d810595e4c88b30f67",
+        "name": "verus_builtin_macros",
+        "source": "git+https://github.com/verus-lang/verus.git?rev=b677dd5#b677dd5a766f25f56e9aa1e32621aa4e53304b47",
+        "version": "0.0.0-2026-08-02-0125"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/git/checkouts/verus-e4ebf515fa1de14c/b677dd5/dependencies/prettyplease/Cargo.toml",
+        "manifest_sha256": "e924c84ec12e1629243f301b6d250a78fdfdbac649ae2ec7d982be58f6edc5be",
+        "name": "verus_prettyplease",
+        "source": "git+https://github.com/verus-lang/verus.git?rev=b677dd5#b677dd5a766f25f56e9aa1e32621aa4e53304b47",
+        "version": "0.0.0-2026-08-02-0125"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/git/checkouts/verus-e4ebf515fa1de14c/b677dd5/source/state_machines_macros/Cargo.toml",
+        "manifest_sha256": "3affd1d3e4b96019001037b18d0aaab9a402722f9790a31c77213bc2ee5b1893",
+        "name": "verus_state_machines_macros",
+        "source": "git+https://github.com/verus-lang/verus.git?rev=b677dd5#b677dd5a766f25f56e9aa1e32621aa4e53304b47",
+        "version": "0.0.0-2026-08-02-0125"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/git/checkouts/verus-e4ebf515fa1de14c/b677dd5/dependencies/syn/Cargo.toml",
+        "manifest_sha256": "79b4b488578c9980d17a9dd663ee37c8779146484bbe940ddc4f8614b7f28a37",
+        "name": "verus_syn",
+        "source": "git+https://github.com/verus-lang/verus.git?rev=b677dd5#b677dd5a766f25f56e9aa1e32621aa4e53304b47",
+        "version": "0.0.0-2026-08-02-0125"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/git/checkouts/verus-e4ebf515fa1de14c/b677dd5/source/vstd/Cargo.toml",
+        "manifest_sha256": "b67336877ae0d61eba5a5ae077e90660577cea8afb41295ce6106d9506c59f5d",
+        "name": "vstd",
+        "source": "git+https://github.com/verus-lang/verus.git?rev=b677dd5#b677dd5a766f25f56e9aa1e32621aa4e53304b47",
+        "version": "0.0.0-2026-08-02-0125"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/wasi-0.11.1+wasi-snapshot-preview1/Cargo.toml",
+        "manifest_sha256": "25915be68a3057b798a4a6d4e5ceef36047e03bf0353d3f2a99236cd23e410db",
+        "name": "wasi",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "0.11.1+wasi-snapshot-preview1"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/wide-1.7.0/Cargo.toml",
+        "manifest_sha256": "87e3e9bf403f088e5345955ac2116d8ee82e9222b49a78df0ff4f98847a58e63",
+        "name": "wide",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "1.7.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/windows-link-0.2.1/Cargo.toml",
+        "manifest_sha256": "abf0b74b168ec7d7c600f44eb90502c47e44480a199b9adc9ec74ea990605707",
+        "name": "windows-link",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "0.2.1"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/windows-sys-0.61.2/Cargo.toml",
+        "manifest_sha256": "1adbc955d5460fa64dc16e6c8198b25672e8d4b97d45ecfb262eb2693ce08422",
+        "name": "windows-sys",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "0.61.2"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/winnow-1.0.4/Cargo.toml",
+        "manifest_sha256": "cff392f2e5af8a662aed09551f50bbe74eafa5a53dc051c62add73ea82a3cab0",
+        "name": "winnow",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "1.0.4"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/zeroize-1.9.0/Cargo.toml",
+        "manifest_sha256": "d9c34827131f0367c3c209f2c858c142d34be9512a9c6fb59179e369a1d7c32a",
+        "name": "zeroize",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "1.9.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/zmij-1.0.23/Cargo.toml",
+        "manifest_sha256": "b31420c7a806fae5b9ea2438dd4cbb99dcb3a22da67697fdf2776cc44a69527e",
+        "name": "zmij",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "1.0.23"
+      }
+    ],
+    "local": {
+      "ferric-build": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/device-parent-cpu-v228-v1/sources/ferric/crates/ferric-build/Cargo.toml",
+      "ferric-engine": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/device-parent-cpu-v228-v1/sources/ferric/crates/ferric-engine/Cargo.toml",
+      "ferric-generated-runner": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/device-parent-cpu-v228-v1/sources/ferric/crates/ferric-generated-runner/Cargo.toml",
+      "ferric-kernels": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/device-parent-cpu-v228-v1/sources/ferric/crates/ferric-kernels/Cargo.toml",
+      "ferric-m1-engineering-execution-v1": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/device-parent-cpu-v228-v1/sources/ferric/adapters/m1-engineering-execution-v1/Cargo.toml",
+      "ferric-non-authoritative-program-source-v1": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/device-parent-cpu-v228-v1/sources/ferric/crates/ferric-non-authoritative-program-source-v1/Cargo.toml",
+      "ferric-qwen-kernels": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/device-parent-cpu-v228-v1/sources/ferric/crates/ferric-qwen-kernels/Cargo.toml",
+      "ferric-qwen3-all-kernels-device-v1": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/device-parent-cpu-v228-v1/sources/ferric/device/qwen3-all-kernels-v1/Cargo.toml",
+      "ferric-qwen3-all-kernels-worker-v3-source-pin-v1": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/device-parent-cpu-v228-v1/sources/ferric/adapters/qwen3-all-kernels-worker-v3-source-pin-v1/Cargo.toml",
+      "ferric-qwen3-all-kernels-worker-v3-verifier-v1": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/device-parent-cpu-v228-v1/sources/ferric/adapters/qwen3-all-kernels-worker-v3-verifier-v1/Cargo.toml",
+      "ferric-qwen3-draft-batch32-kernels-device-v10": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/device-parent-cpu-v228-v1/sources/ferric/device/qwen3-draft-batch32-kernels-v10/Cargo.toml",
+      "ferric-qwen3-tp-batch-kernels-device-v2": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/device-parent-cpu-v228-v1/sources/ferric/device/qwen3-tp-batch-kernels-v2/Cargo.toml",
+      "ferric-qwen3-tp-batch32-kernels-device-v5": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/device-parent-cpu-v228-v1/sources/ferric/device/qwen3-tp-batch32-kernels-v5/Cargo.toml",
+      "ferric-qwen3-tp-bf16-wave-argmax-kernels-device-v22": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/device-parent-cpu-v228-v1/sources/ferric/device/qwen3-tp-bf16-wave-argmax-kernels-v22/Cargo.toml",
+      "ferric-qwen3-tp-fp32-argmax-kernels-device-v11": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/device-parent-cpu-v228-v1/sources/ferric/device/qwen3-tp-fp32-argmax-kernels-v11/Cargo.toml",
+      "ferric-qwen3-tp-fp32-head-kernels-device-v7": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/device-parent-cpu-v228-v1/sources/ferric/device/qwen3-tp-fp32-head-kernels-v7/Cargo.toml",
+      "ferric-qwen3-tp-fp32-head32-kernels-device-v8": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/device-parent-cpu-v228-v1/sources/ferric/device/qwen3-tp-fp32-head32-kernels-v8/Cargo.toml",
+      "ferric-qwen3-tp-kernels-device-v1": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/device-parent-cpu-v228-v1/sources/ferric/device/qwen3-tp-kernels-v1/Cargo.toml",
+      "ferric-qwen3-tp-large-kv-kernels-device-v9": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/device-parent-cpu-v228-v1/sources/ferric/device/qwen3-tp-large-kv-kernels-v9/Cargo.toml",
+      "ferric-qwen3-tp-parallel-kv-kernels-device-v16": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/device-parent-cpu-v228-v1/sources/ferric/device/qwen3-tp-parallel-kv-kernels-v16/Cargo.toml",
+      "ferric-qwen3-tp-peer-kernels-device-v4": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/device-parent-cpu-v228-v1/sources/ferric/device/qwen3-tp-peer-kernels-v4/Cargo.toml",
+      "ferric-qwen3-tp-peer-tp2-kernels-device-v18": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/device-parent-cpu-v228-v1/sources/ferric/device/qwen3-tp-peer-tp2-kernels-v18/Cargo.toml",
+      "ferric-qwen3-tp-peer32-kernels-device-v6": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/device-parent-cpu-v228-v1/sources/ferric/device/qwen3-tp-peer32-kernels-v6/Cargo.toml",
+      "ferric-qwen3-tp-perf-kernels-device-v3": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/device-parent-cpu-v228-v1/sources/ferric/device/qwen3-tp-perf-kernels-v3/Cargo.toml",
+      "ferric-qwen3-tp-split-context-attention-device-v1": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/device-parent-cpu-v228-v1/sources/ferric/device/qwen3-tp-split-context-attention-v1/Cargo.toml",
+      "ferric-qwen3-tp-wave-query-hoist-kernels-device-v14": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/device-parent-cpu-v228-v1/sources/ferric/device/qwen3-tp-wave-query-hoist-kernels-v14/Cargo.toml",
+      "ferric-qwen3-tp-wave-rmsnorm-kernels-device-v15": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/device-parent-cpu-v228-v1/sources/ferric/device/qwen3-tp-wave-rmsnorm-kernels-v15/Cargo.toml",
+      "ferric-spec": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/device-parent-cpu-v228-v1/sources/ferric/crates/ferric-spec/Cargo.toml"
+    },
+    "package_count": 209
+  },
+  "numerical_acceptance": false,
+  "overlay": {
+    "bytes": 6307,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-device-parent-cpu-v1/overlay.json",
+    "sha256": "d608614c80b8d59b608a3c20f66c88b384b0f68077630eb2bcfa59e021729c01"
+  },
+  "package_manifest": {
+    "bytes": 723,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-device-parent-cpu-v1/manifest.json",
+    "sha256": "2cf709ca3453b4fdb30fffd3c255edd3df1b4a979cedf504a761de0530f979e2"
+  },
+  "parent_rebuilt": false,
+  "passed": false,
+  "performance_claim": false,
+  "phases": {
+    "parent-lib-list": {
+      "cache_bytes": 1015958625,
+      "elapsed_seconds": 369.9566083441023,
+      "exit_code": 0,
+      "group_absent": true,
+      "reason": null,
+      "stderr_sha256": "1ba3e85434f98214288415d0824e07bb228f3a138df39e1d87059bf045911e01",
+      "stdout_sha256": "f96b7625f06e3bce885f122d5cdf32afb2fe8278c4e88d357de685ecc1677b0f"
+    },
+    "parent-metadata": {
+      "cache_bytes": 5394,
+      "elapsed_seconds": 2.0171211599372327,
+      "exit_code": 0,
+      "group_absent": true,
+      "reason": null,
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdout_sha256": "34d83404557126c0714036130ec5e5c1bff3138a4c7ab356d02fc6bb5d34ef1a"
+    }
+  },
+  "postcheck_errors": [],
+  "prior_cpu_complete": {
+    "bytes": 290447,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/host-policy-cpu-v228-v1/complete.json",
+    "sha256": "1fc4d17534161e6e7f96e6d0eba0a2455227ba2166623823f6a74f845b93deae"
+  },
+  "production_authority": false,
+  "raw": {
+    "parent-client-command.json": {
+      "bytes": 2335,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/device-parent-cpu-v228-v1/parent-client-command.json",
+      "sha256": "61a69740b14f5f85267c705b0c78302237f3fc695e313dc371ea9407d454c235"
+    },
+    "parent-client-result.json": {
+      "bytes": 308,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/device-parent-cpu-v228-v1/parent-client-result.json",
+      "sha256": "985c56b4ad8366049166a314d53e69952f7d2eff63c132fd5563a35fd57a1583"
+    },
+    "parent-client-started.json": {
+      "bytes": 40,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/device-parent-cpu-v228-v1/parent-client-started.json",
+      "sha256": "d379551e87adb8cfb154df7a8b6e6494b4f6515b2310d996f2ec0fd9c2ed83aa"
+    },
+    "parent-client-stderr": {
+      "bytes": 134323,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/device-parent-cpu-v228-v1/parent-client-stderr",
+      "sha256": "af81be110b1f4fa844a6d08159199840a3a889780dfc7ccdaaf7e176a3183ec4"
+    },
+    "parent-client-stdout": {
+      "bytes": 18825,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/device-parent-cpu-v228-v1/parent-client-stdout",
+      "sha256": "10d465a9ff9b4a36e341ea02cb2d9e268895325a6242d81c78555cc49889f1c0"
+    },
+    "parent-lib-list-command.json": {
+      "bytes": 2328,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/device-parent-cpu-v228-v1/parent-lib-list-command.json",
+      "sha256": "a55baffe3c862a4d1e755f55efc7adf2d059da09b40798d6a3126732168edb91"
+    },
+    "parent-lib-list-result.json": {
+      "bytes": 306,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/device-parent-cpu-v228-v1/parent-lib-list-result.json",
+      "sha256": "91a2984789d1d0f7761ccf0a56f6c9e771b428dc2502065bb50e6e3c8acdb126"
+    },
+    "parent-lib-list-started.json": {
+      "bytes": 40,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/device-parent-cpu-v228-v1/parent-lib-list-started.json",
+      "sha256": "e7aba9400ae3fab11737781ff5ea63b677b41302949f998e549be758f0d9acb4"
+    },
+    "parent-lib-list-stderr": {
+      "bytes": 18376,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/device-parent-cpu-v228-v1/parent-lib-list-stderr",
+      "sha256": "1ba3e85434f98214288415d0824e07bb228f3a138df39e1d87059bf045911e01"
+    },
+    "parent-lib-list-stdout": {
+      "bytes": 80839,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/device-parent-cpu-v228-v1/parent-lib-list-stdout",
+      "sha256": "f96b7625f06e3bce885f122d5cdf32afb2fe8278c4e88d357de685ecc1677b0f"
+    },
+    "parent-metadata-command.json": {
+      "bytes": 2275,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/device-parent-cpu-v228-v1/parent-metadata-command.json",
+      "sha256": "e51f204fa5cd247bfeaa58bed99ef425e324ca0c279b8a718c6b817228a88db4"
+    },
+    "parent-metadata-result.json": {
+      "bytes": 301,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/device-parent-cpu-v228-v1/parent-metadata-result.json",
+      "sha256": "2ebfdd3790df5e77365604ebab733c75510afba802b2d273d64d7897f32efb7e"
+    },
+    "parent-metadata-started.json": {
+      "bytes": 40,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/device-parent-cpu-v228-v1/parent-metadata-started.json",
+      "sha256": "e16a9855aafc99300b6bc43fb7a0da5db090324d1b327016a400bfa23c518820"
+    },
+    "parent-metadata-stderr": {
+      "bytes": 0,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/device-parent-cpu-v228-v1/parent-metadata-stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "parent-metadata-stdout": {
+      "bytes": 1007995,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/device-parent-cpu-v228-v1/parent-metadata-stdout",
+      "sha256": "34d83404557126c0714036130ec5e5c1bff3138a4c7ab356d02fc6bb5d34ef1a"
+    },
+    "sources-after.json": {
+      "bytes": 1443680,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/device-parent-cpu-v228-v1/sources-after.json",
+      "sha256": "e45ff1f78666fd2632e7019ec4e98a97e4e664f53f3ec0ad1c7f5090ef123cfb"
+    },
+    "sources-base.json": {
+      "bytes": 1443045,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/device-parent-cpu-v228-v1/sources-base.json",
+      "sha256": "632028054493e052c98ed41a696b185bf7044eeaa7c0519cb44d0f3acb08e005"
+    },
+    "sources-before.json": {
+      "bytes": 1443680,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/device-parent-cpu-v228-v1/sources-before.json",
+      "sha256": "e45ff1f78666fd2632e7019ec4e98a97e4e664f53f3ec0ad1c7f5090ef123cfb"
+    }
+  },
+  "schema": "ferric-p228-device-parent-cpu-result-v1",
+  "source_commits": {
+    "fe2o3": "9a321f3f98e597a75e8ebeafdda169ec10e12e9e",
+    "ferric": "dc04a484a2424baa453f73fc832b2fa890875b44"
+  },
+  "source_manifest": {
+    "bytes": 843,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/device-parent-source-inputs-v228-v1.json",
+    "sha256": "1bf4e1e1271995e032a0394020ca18cea5603cb1f12169221cc9a8310402e394"
+  },
+  "source_trees": {
+    "fe2o3": "7d7701d5a453f2d6b5f5c336c8e83e5a836b5b84",
+    "ferric": "46dbd95e493a3bcc47654be139fd2e2a7443cf21"
+  },
+  "source_unchanged": true,
+  "tests": {},
+  "tests_ignored": 0,
+  "tests_passed": 0,
+  "timestamp_calibration": false,
+  "worker_rebuilt": false
+}

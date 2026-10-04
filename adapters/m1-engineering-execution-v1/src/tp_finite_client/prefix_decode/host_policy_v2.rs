@@ -55,7 +55,7 @@ fn sidecar_path(config: &Config) -> Result<PathBuf> {
         .evidence_directory
         .with_file_name(format!("{name}-host-policy-v2.json")))
 }
-fn pin_file(path: &Path, limit: u64) -> Result<FilePin> {
+pub(super) fn pin_file(path: &Path, limit: u64) -> Result<FilePin> {
     require(
         path.is_absolute() && path.canonicalize().map_err(|e| e.to_string())? == path,
         "host retained file canonical path",

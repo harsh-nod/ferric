@@ -29,7 +29,7 @@ all-optimizations-off behavior.
 
 ## Raw Device Diagnostic
 
-The worker-only `--engineering-native-prefix-decode-device-v1` selector uses
+The worker's `--engineering-native-prefix-decode-device-v1` selector uses
 fresh timestamp-enabled queues and requires `--device-sidecar` with a new
 absolute output path. It retains the same Four wire, model roots, kernel
 images, launch geometry and native state checks. It records prefix, MLP,
@@ -43,9 +43,10 @@ becomes available only after consuming native Close and successfully writing
 the Closed response. The output is bounded to 2 MiB. Existing ordinary and host
 diagnostic selectors do not enable timestamp queues.
 
-This is a diagnostic implementation, not a GPU qualification result. A matching
-parent selector, owned-process GPU run and full output-invariance comparison
-are still required. Raw ticks are not nanoseconds; cross-device alignment and
+The [matching parent diagnostic](../m1-engineering-execution-v1/README.md#finite-prefix-device-tick-diagnostic)
+is now implemented and separately CPU-qualified. An owned-process GPU run and
+full output-invariance comparison of this new pair are still required.
+Raw ticks are not nanoseconds; cross-device alignment and
 overlap graphs require separate clock calibration. Single-command raw rounds
 also add a publication fence, so their host timings are not a like-for-like
 optimization of the ordinary single-command path.
@@ -53,7 +54,7 @@ optimization of the ordinary single-command path.
 The [CPU qualification](../../qualification/native-device-routing-v1/README.md)
 retains the fresh `mi350-2` build: 609 Rust tests passed, four existing tests
 were ignored, and 13 controller tests passed. Its source and artifact records
-cover this worker route, not the pending parent integration or a GPU run.
+cover this worker route, not the separate parent qualification or a GPU run.
 
 ## Build Prerequisites
 

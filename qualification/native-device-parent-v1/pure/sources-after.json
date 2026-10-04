@@ -1,0 +1,22 @@
+{
+  "README.md": {
+    "bytes": 6968,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-device-parent-cpu-v2/README.md",
+    "sha256": "89cefff567b5151dee089bbb4363557dbd0a3b147754e52f0b19466321f3e609"
+  },
+  "overlay.json": {
+    "bytes": 6306,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-device-parent-cpu-v2/overlay.json",
+    "sha256": "0b0e2ced7883040cd115de48d15b499501d68eba569b35c51cac8e64eb070340"
+  },
+  "run.py": {
+    "bytes": 24128,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-device-parent-cpu-v2/run.py",
+    "sha256": "44dd337478c1b0609ae22efd4dbdc6c8bb2d8d6fa4070cdec14760c994d54e5b"
+  },
+  "test_run.py": {
+    "bytes": 11226,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-device-parent-cpu-v2/test_run.py",
+    "sha256": "d4b4afef205d979e530a8717310a4fcdd89428683a4bbcb0c324fc3a2d2eda4c"
+  }
+}

@@ -7,6 +7,11 @@ publish = false
 autobins = false
 
 [[bin]]
+name = "ferric-qwen3-finite-prefix-decode-device-engineering"
+path = "src/bin/ferric-qwen3-finite-prefix-decode-device-engineering.rs"
+required-features = ["tp-batch-engineering"]
+
+[[bin]]
 name = "ferric-qwen3-finite-tiles-decode-engineering"
 path = "src/bin/ferric-qwen3-finite-tiles-decode-engineering.rs"
 required-features = ["tp-batch-engineering"]

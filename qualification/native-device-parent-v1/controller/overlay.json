@@ -1,0 +1,113 @@
+{
+  "schema": "ferric-p228-device-parent-cpu-overlay-v1",
+  "source_manifest": {
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/device-parent-source-inputs-v228-v1.json",
+    "bytes": 843,
+    "sha256": "1bf4e1e1271995e032a0394020ca18cea5603cb1f12169221cc9a8310402e394"
+  },
+  "files": [
+    {
+      "path": "adapters/m1-engineering-execution-v1/Cargo.toml",
+      "source": "p228-device-parent-source-v2/draft/adapters/m1-engineering-execution-v1/Cargo.toml",
+      "before": {
+        "bytes": 11685,
+        "sha256": "0c6c05aeb4ee034fee946eabf9d56e0ab48218397a184fb379931367ec690ee1"
+      },
+      "after": {
+        "bytes": 11874,
+        "sha256": "423d4d480106d5ad868e36c5fdd4b58901e55556b55a9cc43b44e842890fb78d"
+      }
+    },
+    {
+      "path": "adapters/m1-engineering-execution-v1/src/bin/ferric-qwen3-finite-prefix-decode-device-engineering.rs",
+      "source": "p228-device-parent-source-v2/draft/adapters/m1-engineering-execution-v1/src/bin/ferric-qwen3-finite-prefix-decode-device-engineering.rs",
+      "before": null,
+      "after": {
+        "bytes": 3126,
+        "sha256": "b38801d73ab25d3c22bdf77c3c9c2211972ff28e21969d7eb88cda79cb73b74f"
+      }
+    },
+    {
+      "path": "adapters/m1-engineering-execution-v1/src/lib.rs",
+      "source": "p228-device-parent-source-v2/draft/adapters/m1-engineering-execution-v1/src/lib.rs",
+      "before": {
+        "bytes": 87861,
+        "sha256": "8c5f5f2cefc68c4a15ea9051a49efe6c9d9b09ae63744b29f84654c90c4ac624"
+      },
+      "after": {
+        "bytes": 88045,
+        "sha256": "4970f773ef31f0f56edde64bd46fb17e9d71b07e7d587228ce70b8acc1bff857"
+      }
+    },
+    {
+      "path": "adapters/m1-engineering-execution-v1/src/tp_finite_client/prefix_decode.rs",
+      "source": "p228-device-parent-source-v2/draft/adapters/m1-engineering-execution-v1/src/tp_finite_client/prefix_decode.rs",
+      "before": {
+        "bytes": 29383,
+        "sha256": "3ac2dff58427d2cf0d26f537c04cb4f2ae6635ffec9f10f216d712cce95e9718"
+      },
+      "after": {
+        "bytes": 29746,
+        "sha256": "f6cf5ff0fbc1069d86e7a6b02257f40e076f6a947369a92e8a41c1ec285cf7ba"
+      }
+    },
+    {
+      "path": "adapters/m1-engineering-execution-v1/src/tp_finite_client/prefix_decode/device_v1.rs",
+      "source": "p228-device-parent-source-v2/draft/adapters/m1-engineering-execution-v1/src/tp_finite_client/prefix_decode/device_v1.rs",
+      "before": null,
+      "after": {
+        "bytes": 7857,
+        "sha256": "2a340954f5bf550096526470d373152cefa1a0d441f2e01c7f07068fe94797e6"
+      }
+    },
+    {
+      "path": "adapters/m1-engineering-execution-v1/src/tp_finite_client/prefix_decode/device_v1_tests.rs",
+      "source": "p228-device-parent-source-v2/draft/adapters/m1-engineering-execution-v1/src/tp_finite_client/prefix_decode/device_v1_tests.rs",
+      "before": null,
+      "after": {
+        "bytes": 12590,
+        "sha256": "657678c9c07da27ac05852a5f1039efcdcaf81eb038e690d5e402f0556494930"
+      }
+    },
+    {
+      "path": "adapters/m1-engineering-execution-v1/src/tp_finite_client/prefix_decode/host_policy_v2.rs",
+      "source": "p228-device-parent-source-v2/draft/adapters/m1-engineering-execution-v1/src/tp_finite_client/prefix_decode/host_policy_v2.rs",
+      "before": {
+        "bytes": 8278,
+        "sha256": "eda0d722ab4fcb8045b33213fc1be73bab6434ea58c37a690701a42fa6604979"
+      },
+      "after": {
+        "bytes": 8289,
+        "sha256": "ce5a49ac520e4cdf9aca0852e50b86dd2c4c285525df6b40e02652b120505a1b"
+      }
+    }
+  ],
+  "added_parent_tests": {
+    "lib": [
+      "prefix_decode_device_observation_v1::tests::device_raw_control_join_checks_all_intervals_digest_and_states",
+      "prefix_decode_device_observation_v1::tests::device_raw_decoder_refuses_unknown_duplicate_legacy_and_oversize_input",
+      "prefix_decode_device_observation_v1::tests::device_raw_inventory_has_exact_stages_layers_and_rank_counts",
+      "prefix_decode_device_observation_v1::tests::device_raw_rejects_all_policy_and_authority_mutations",
+      "prefix_decode_device_observation_v1::tests::device_raw_rejects_completion_history_capture_and_chain_drift",
+      "prefix_decode_device_observation_v1::tests::device_raw_rejects_each_row_identity_and_label_substitution",
+      "prefix_decode_device_observation_v1::tests::device_raw_rejects_missing_duplicate_extra_or_reordered_rows",
+      "prefix_decode_device_observation_v1::tests::device_raw_rejects_process_profile_image_group_or_final_count_drift",
+      "prefix_decode_device_observation_v1::tests::device_raw_rejects_queue_rollover_and_unrecorded_setup_packet",
+      "prefix_decode_device_observation_v1::tests::device_raw_rejects_zero_reversed_ticks_but_accepts_equal_nonzero",
+      "prefix_decode_device_observation_v1::tests::device_raw_schema_roundtrips_tf_and_ar_with_exact_bounded_census",
+      "prefix_decode_device_observation_v1::tests::device_raw_writer_refuses_overflow_before_retaining_more_bytes",
+      "tp_finite_client::prefix_decode::device_v1::tests::prefix_device_parent_binds_all_six_original_and_selected_image_parts_without_truncation",
+      "tp_finite_client::prefix_decode::device_v1::tests::prefix_device_parent_checks_actual_control_for_every_forward_and_stage",
+      "tp_finite_client::prefix_decode::device_v1::tests::prefix_device_parent_refuses_modified_capture_control_or_frame_completion",
+      "tp_finite_client::prefix_decode::device_v1::tests::prefix_device_parent_refuses_tail_copy_substitution_and_false_claims",
+      "tp_finite_client::prefix_decode::device_v1::tests::prefix_device_parent_refuses_unclosed_unreaped_wrong_worker_pid_profile_or_scope",
+      "tp_finite_client::prefix_decode::device_v1::tests::prefix_device_parent_request_is_closed_and_distinct_from_host_and_plain",
+      "tp_finite_client::prefix_decode::device_v1::tests::prefix_device_parent_requires_absent_bounded_regular_sidecar_and_optin",
+      "tp_finite_client::prefix_decode::device_v1::tests::prefix_device_parent_retained_tf_ar_controls_and1172_rows_validate_before_summary",
+      "tp_finite_client::prefix_decode::device_v1::tests::prefix_device_parent_worker_selector_keeps_old_argv_and_only_device_sidecar"
+    ],
+    "bin": [
+      "tests::prefix_device_bin_requires_its_distinct_optin_and_exact_arguments"
+    ]
+  }
+}

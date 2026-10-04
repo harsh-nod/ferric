@@ -192,3 +192,48 @@ Timeouts or malformed responses poison the instance; they cannot count as a
 successful measurement. Binary/artifact identities are observations, not
 publication or launch authority. Actual hardware results are tracked in
 `docs/M1_TEAM_PROGRESS.md`.
+
+## Finite Prefix Device-Tick Diagnostic
+
+The [parent CPU qualification](../../qualification/native-device-parent-v1/README.md)
+passed 257 Rust tests with no ignores and 16 controller tests on `mi350-2`.
+All 12 parent executables built and the default-feature library check passed.
+The [retained result](../../qualification/native-device-parent-v1/result.json)
+binds the exact sources and selected executable. This is not yet a GPU result.
+
+With `tp-batch-engineering`, the separate
+`ferric-qwen3-finite-prefix-decode-device-engineering` binary selects the
+timestamp-enabled native worker. Existing plain and host-only diagnostics
+keep their selectors and behavior.
+
+```sh
+ferric-qwen3-finite-prefix-decode-device-engineering \
+  --request /private/device-request.json \
+  --allow-unauthenticated-machine-code --observe-device-ticks
+```
+
+The request has exactly two fields: `schema`, set to
+`FerricFinitePrefixDecodeDeviceRequestV1`, and `decode`, containing the ordinary
+`FerricFinitePrefixDecodeRequestV1` configuration. The worker executable must
+support `--engineering-native-prefix-decode-device-v1`. The configuration's
+evidence directory and its adjacent `<directory>-device-v1.json` sidecar must
+not already exist. No optional policy or host-timing fallback is accepted.
+
+The parent accepts the report only after four complete forwards, native Close,
+successful worker exit and process-group reap. It binds the actual worker PID,
+executable, model/session, images and transcript, then decodes all four retained
+Controls and rehashes their output captures. Every one of the 1,172 dispatch
+records must match the shared schema and the actual Control. Only after those
+checks does it publish the observation summary. The sidecar is limited to
+2 MiB; retained evidence and sidecar together stay within 8 MiB.
+
+A native `complete.json` alone does not establish diagnostic success. The
+supervisor must also receive the complete diagnostic wrapper and observe a
+successful parent exit; a later output error can leave the native summary.
+
+Raw completion ticks are not calibrated nanoseconds. They do not establish
+cross-GPU clock alignment, overlap, numerical correctness or a performance
+result. Timestamp-enabled singleton dispatches add a publication fence, so
+host latency is not directly interchangeable with the ordinary route. This
+diagnostic does not grant production execution authority or establish the
+2,048/256 workload and 700 tokens/s target.

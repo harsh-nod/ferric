@@ -1,0 +1,19 @@
+{
+  "schema": "ferric-p228-clean-worker-sources-v1",
+  "archives": {
+    "ferric": {
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/device-parent-ferric-dc04a484-v228-v1.tar.gz",
+      "bytes": 17034848,
+      "sha256": "12612bcd934e3429c7ca497f7f3a3b97d37f4a7f9f800c8319433ac82e821e16",
+      "commit": "dc04a484a2424baa453f73fc832b2fa890875b44",
+      "tree": "46dbd95e493a3bcc47654be139fd2e2a7443cf21"
+    },
+    "fe2o3": {
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/device-routing-fe2o3-9a321f3f-v228-v1.tar.gz",
+      "bytes": 13301899,
+      "sha256": "45ae31dcf5a908e8977fedcded194a1fb60ebc64d9266bcd4c7e53c24214ceb8",
+      "commit": "9a321f3f98e597a75e8ebeafdda169ec10e12e9e",
+      "tree": "7d7701d5a453f2d6b5f5c336c8e83e5a836b5b84"
+    }
+  }
+}

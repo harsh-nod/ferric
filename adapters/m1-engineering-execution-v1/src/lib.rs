@@ -49,6 +49,9 @@ pub mod finite_setup_wire_v1;
 pub mod finite_tiles_decode_wire_v1;
 pub mod host_timing;
 #[cfg(feature = "tp-batch-engineering")]
+#[path = "../../tp-peer-finite-engineering-worker-v1/src/prefix_decode_device_observation_v1.rs"]
+pub mod prefix_decode_device_observation_v1;
+#[cfg(feature = "tp-batch-engineering")]
 #[path = "../../tp-peer-finite-engineering-worker-v1/src/prefix_decode_host_observation_v1.rs"]
 pub mod prefix_decode_host_observation_v1;
 #[cfg(feature = "tp-batch-engineering")]

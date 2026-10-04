@@ -1,0 +1,35 @@
+{
+  "controller_sha256": "5bef84b48de03a445fdcf139654389e7e885d387eebd7622069f19a8673cfe9e",
+  "elapsed_seconds": 0.010164662031456828,
+  "errors": 0,
+  "failures": 0,
+  "full_model_acceptance": false,
+  "gpu_execution": false,
+  "manifest_sha256": "753760a5ea122e0d2d0c47fe393d9171c41efef94917bae0011738ae934e69f1",
+  "native_execution": false,
+  "numerical_acceptance": false,
+  "passed": true,
+  "performance_claim": false,
+  "production_authority": false,
+  "schema": "ferric-p228-device-parent-pure-v1",
+  "skipped": 0,
+  "source_postchecks_passed": true,
+  "source_sha256": "c64d8052607314929c759aec590c8eb77acd05ba65ff67da4e2c20a0a78cc154",
+  "sources_after": {
+    "bytes": 997,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/device-parent-pure-v228-v2/sources-after.json",
+    "sha256": "c64d8052607314929c759aec590c8eb77acd05ba65ff67da4e2c20a0a78cc154"
+  },
+  "sources_before": {
+    "bytes": 997,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/device-parent-pure-v228-v2/sources-before.json",
+    "sha256": "c64d8052607314929c759aec590c8eb77acd05ba65ff67da4e2c20a0a78cc154"
+  },
+  "synthetic_policy_tests_only": true,
+  "tests": 16,
+  "transcript": {
+    "bytes": 1527,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/device-parent-pure-v228-v2/tests.log",
+    "sha256": "1366c5d2825e759be95dbc84aa14bd3e782345d957fb41ca07c6bf9bd1460501"
+  }
+}

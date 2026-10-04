@@ -6,7 +6,22 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Latest: the [resident-state GPU comparison](../qualification/resident-state-decode-observation-v1/tf4/README.md)
+Latest: the [device-tick parent](../adapters/m1-engineering-execution-v1/README.md#finite-prefix-device-tick-diagnostic)
+is implemented and [CPU-qualified](../qualification/native-device-parent-v1/README.md)
+on `mi350-2`: 257 Rust tests passed with no ignores, 16 controller tests passed,
+all 12 parent executables built, and the default-feature check passed. All 41
+owned phases exited naturally and source postchecks passed. Its report checks
+all 1,172 raw dispatch rows against four actual Control/capture pairs, only
+after worker Close and reap. Existing plain and host-only selectors are unchanged.
+The separately [qualified worker](../qualification/native-device-routing-v1/README.md)
+passed 609 Rust tests with four existing ignores and 13 controller tests.
+These are distinct CPU cohorts, not a combined new test run. The matching pair's
+GPU execution and output-invariance comparison are pending; raw ticks still
+provide no calibrated latency, cross-device alignment or overlap claim.
+The retained parent history includes the first failed test fixture and its
+test-only overflow correction; that attempt is not counted as a passing run.
+
+The [resident-state GPU comparison](../qualification/resident-state-decode-observation-v1/tf4/README.md)
 passes on MI350: all 152 tensors and four tokens are bitwise unchanged, with
 576 fewer full group checks per forward and unchanged publication/rank operation
 counts. Six audits and clean Close/reaping passed. The four host forward times
