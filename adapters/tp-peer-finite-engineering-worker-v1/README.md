@@ -99,8 +99,11 @@ The separate V2 admission-cache arm also passed those parity, audit and teardown
 checks. Repeated admissions fell to zero, but no overall latency improvement
 is established by these single diagnostic runs; see the
 [comparison](../../docs/GFX950_HOST_POLICY_V2.md#admission-cache-observation).
-The baseline repeat, shared-currentness arm and V2 autoregressive diagnostic
-remain pending. The earlier
+The [baseline repeat](../../docs/GFX950_HOST_POLICY_V2.md#baseline-repeat)
+also passed parity, six audits and clean teardown. Its total forward duration
+exposes baseline drift larger than the initial aggregate cache delta; these
+three runs do not establish a reliable speedup. The shared-currentness arm
+and V2 autoregressive diagnostic remain pending. The earlier
 uninstrumented GPU generation passed four teacher-forced and four
 autoregressive forwards with bitwise native-baseline parity. The V1
 host-instrumented (CPU605) generation has separately completed its teacher-forced

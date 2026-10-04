@@ -3,8 +3,8 @@
 This opt-in engineering diagnostic isolates two host-overhead optimizations
 for the four-forward gfx950 prefix route. It does not change production
 admission or the V1 diagnostic. The V2 baseline and admission-cache arm have
-completed on `mi350`. The repeated baseline and shared-currentness arm remain
-pending; no speedup is reported here.
+completed on `mi350`, as has a repeated baseline. The shared-currentness arm
+remains pending; no speedup is reported here.
 
 ## Policies
 
@@ -160,9 +160,35 @@ seconds, Close 26.697 seconds, parent 414.917 seconds and controller 432.616
 seconds. Do not attribute the cross-run setup difference to caching when
 initial admission and setup operation counts did not change.
 
-The next comparison is a fresh baseline repeat, then the separate
-`shared-full-currentness` arm. This is pre-qualification host-overhead
-diagnosis, not completion of issue #42's M6 performance gate.
+## Baseline Repeat
+
+A fresh baseline worker ran after the cache arm with both optional policies
+off. All 152 native tensor rows, six device audits and clean Close/reap checks
+passed again. All 57 final outputs were independently rehashed locally. The
+[repeat record](assets/finite-prefix-v228/host-policy-baseline-repeat.json)
+retains its separate receipt and the unchanged binary identities. Deterministic
+operation counts match the first baseline, including the restored 148 / 145
+admissions per forward. Completion-poll counts can vary with timing.
+
+| Position | First Baseline (ms) | Cache (ms) | Repeated Baseline (ms) |
+| --- | ---: | ---: | ---: |
+| 0 | 18,266.096 | 18,368.441 | 18,464.903 |
+| 1 | 18,304.417 | 18,268.495 | 18,401.490 |
+| 2 | 20,174.308 | 20,133.830 | 20,317.262 |
+| 3 | 20,171.139 | 20,162.169 | 20,286.874 |
+| Sum | 76,915.960 | 76,932.935 | 77,470.528 |
+
+The baseline totals differ by 554.568 ms, compared with the initial cache
+minus baseline difference of 16.974 ms. The cache total lies between the
+two baseline totals; not every individual position lies between its baseline
+samples. This A/B/A sequence establishes the intended admission-counter
+reduction, not a reliable end-to-end speedup, confidence interval or linear
+drift correction. The repeated baseline's setup interval was 167.248 seconds,
+Close 27.115 seconds, parent 415.551 seconds and controller 433.236 seconds.
+
+The next comparison is the separate `shared-full-currentness` arm. This is
+pre-qualification host-overhead diagnosis, not completion of issue #42's M6
+performance gate.
 
 ## GPU Comparison Gates
 
