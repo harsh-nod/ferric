@@ -1,0 +1,35 @@
+{
+  "controller_sha256": "c18b9fa391cfd27ba8ecac50bc23150d85261c031364d077e2fa7cd5951af696",
+  "elapsed_seconds": 7.912481934996322,
+  "errors": 0,
+  "failures": 0,
+  "full_model_acceptance": false,
+  "gpu_execution": false,
+  "manifest_sha256": "10125c91f9c83c55379c5769b2d1bfa099835744b10f292c9ebd5f152ae7e9c3",
+  "native_execution": false,
+  "numerical_acceptance": false,
+  "passed": true,
+  "performance_claim": false,
+  "production_authority": false,
+  "schema": "ferric-p228-independent-decode-pure-v1",
+  "skipped": 0,
+  "source_postchecks_passed": true,
+  "source_sha256": "ea807fbcdc64d4e7e7cac97c55a4edfe6bdf0412df6b84a5a2d68e323829041f",
+  "sources_after": {
+    "bytes": 5787,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/independent-decode-pure-v228-v1/sources-after.json",
+    "sha256": "ea807fbcdc64d4e7e7cac97c55a4edfe6bdf0412df6b84a5a2d68e323829041f"
+  },
+  "sources_before": {
+    "bytes": 5787,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/independent-decode-pure-v228-v1/sources-before.json",
+    "sha256": "ea807fbcdc64d4e7e7cac97c55a4edfe6bdf0412df6b84a5a2d68e323829041f"
+  },
+  "synthetic_policy_tests_only": true,
+  "tests": 84,
+  "transcript": {
+    "bytes": 13126,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/independent-decode-pure-v228-v1/tests.log",
+    "sha256": "863010d72fd35300f290208fd07f78448a73b5ee336f6c9d495636c2e0721178"
+  }
+}
