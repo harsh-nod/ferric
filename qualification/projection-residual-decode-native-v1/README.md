@@ -35,7 +35,8 @@ Git.
 This establishes execution and structurally valid capture, not independent
 numerical acceptance. The corrected arithmetic is intentionally not required
 to equal the old native output. The independent framework comparison is a
-separate CPU diagnostic.
+separate [CPU diagnostic](../projection-residual-decode-comparison-v1/README.md):
+all four output tokens match, while tensor differences remain.
 
 This run used four teacher-forced positions, not a 2,048-token prompt followed
 by 256 generated tokens. Its roughly 390-second outer wall time includes setup

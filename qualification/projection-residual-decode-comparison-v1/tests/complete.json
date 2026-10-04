@@ -1,0 +1,49 @@
+{
+  "controller": {
+    "bytes": 7889,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-projection-residual-decode-comparison-harness-v1/pure.py",
+    "sha256": "67b9307e79f5e9dac440acabd5637304803f035be027cb757b32fc22898eb07d"
+  },
+  "errors": 0,
+  "failures": 0,
+  "full_model_acceptance": false,
+  "gpu_execution": false,
+  "names": [
+    "projection_decode_comparison_tests.ComparisonTests.test_all152_direct_rows_and_four_token_records",
+    "projection_decode_comparison_tests.ComparisonTests.test_candidate_nested_schema_real_validator_and_seven_leaves",
+    "projection_decode_comparison_tests.ComparisonTests.test_capture_digest_structural_result_and_request_cannot_drift",
+    "projection_decode_comparison_tests.ComparisonTests.test_changed_tf_input_is_not_same_workload",
+    "projection_decode_comparison_tests.ComparisonTests.test_failed_or_authority_bearing_gpu_receipt_refuses",
+    "projection_decode_comparison_tests.ComparisonTests.test_failed_owner_wrong_selector_and_missing_audit_refuse",
+    "projection_decode_comparison_tests.ComparisonTests.test_last_hidden_norm_and_logits_keep_exact_differences",
+    "projection_decode_comparison_tests.ComparisonTests.test_layer_error_can_shrink_without_causal_claim",
+    "projection_decode_comparison_tests.ComparisonTests.test_nonfinite_tensor_refuses",
+    "projection_decode_comparison_tests.ComparisonTests.test_output_token_mismatch_is_diagnostic_not_rejection",
+    "projection_decode_comparison_tests.ComparisonTests.test_signed_zero_is_nonexact_with_zero_absolute_error",
+    "projection_decode_comparison_tests.ComparisonTests.test_truncated_payload_and_wrong_own_argmax_refuse"
+  ],
+  "numerical_acceptance": false,
+  "passed": true,
+  "performance_claim": false,
+  "production_authority": false,
+  "schema": "ferric-p228-projection-residual-decode-comparison-pure-v1",
+  "skipped": 0,
+  "source_postchecks_passed": true,
+  "sources_after": {
+    "bytes": 3432,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-residual-decode-comparison-pure-v228-v1/sources-after.json",
+    "sha256": "b68a338681254fdbb03215597442826816feb13663b26aa6264ce7b838363e8e"
+  },
+  "sources_before": {
+    "bytes": 3432,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-residual-decode-comparison-pure-v228-v1/sources-before.json",
+    "sha256": "b68a338681254fdbb03215597442826816feb13663b26aa6264ce7b838363e8e"
+  },
+  "synthetic_only": true,
+  "tests": 12,
+  "transcript": {
+    "bytes": 1440,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-residual-decode-comparison-pure-v228-v1/tests.log",
+    "sha256": "6671076dff80086c5e10a180981b8dc44c3e3cd4991187c0ba01f3b016490214"
+  }
+}

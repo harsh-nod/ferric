@@ -6,13 +6,21 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Latest: the [projection-residual four-step GPU run](../qualification/projection-residual-decode-native-v1/README.md)
+Latest: the [independent four-step framework comparison](../qualification/projection-residual-decode-comparison-v1/README.md)
+completed on ASROCK across all 152 tensor slices. All four output tokens match;
+no complete tensor slice is bitwise identical. Logit relative-L2 error is
+0.332344%, 0.757311%, 0.410781% and 0.859355% at positions 0-3.
+The twelve comparator tests passed separately. Full tables and per-layer
+trajectories retain every difference without introducing an acceptance
+threshold. Numerical acceptance and sustained performance remain open.
+
+The [projection-residual four-step GPU run](../qualification/projection-residual-decode-native-v1/README.md)
 passed on `mi350`: four full 36-layer forwards, all 152 tensor captures,
 576 terminal state records, six idle-device audits and seven natural/reaped
 process leaves. One attempt completed without retry or forced cleanup.
 Output tokens were 67, 198, 25 and 16. This establishes execution and structural
-validity; independent framework comparison, full-model acceptance and sustained
-performance remain open.
+validity. Independent framework comparison completed as recorded above;
+full-model acceptance and sustained performance remain open.
 
 The [four-step candidate supervisor](../qualification/projection-residual-decode-supervisor-v1/README.md)
 passed 35 synthetic policy tests on `mi350`; the separate executable-selector
