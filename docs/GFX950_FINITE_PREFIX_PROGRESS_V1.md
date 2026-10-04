@@ -6,12 +6,19 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Latest: the [BF16 RoPE candidate passed CPU qualification](../qualification/rope-materialized-cpu-v1/README.md)
+Latest: the [RoPE checked-lowering attempt](../qualification/rope-materialized-lowering-attempt-v1/README.md)
+stopped at the existing semantic SSA partial-move storage limit. No candidate
+HSACO was emitted or launched. The failed process tree exited naturally and was
+reaped; all input postchecks passed. The exact refusal and earlier manifest
+syntax failure are retained. A branch-reduced validity expression is the next
+source experiment; no compiler limit or proof check has been relaxed.
+
+The [BF16 RoPE candidate passed CPU qualification](../qualification/rope-materialized-cpu-v1/README.md)
 on ASROCK: twenty new tests and thirteen reciprocal regression tests, including
 the separately selected exhaustive case. All eleven build/test phases completed
 with unchanged source and provider snapshots. The full tested fixture is
 published; the default device crate and production route are unchanged. Checked
-gfx950 lowering and GPU execution remain pending for this candidate.
+gfx950 lowering was subsequently attempted as above; GPU execution remains pending.
 
 An [independent RoPE materialization diagnostic](../qualification/rope-framework-reference-v1/README.md)
 completed on ASROCK. All 38,528 conditional BF16 words match the installed

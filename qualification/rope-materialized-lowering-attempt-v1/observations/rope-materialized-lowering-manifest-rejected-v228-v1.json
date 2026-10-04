@@ -1,0 +1,33 @@
+{
+  "schema": "ferric-p228-rope-materialized-lowering-package-v1",
+  "files": [
+    {"path": "run.py", "bytes": 36957, "sha256": "72bb54198478ee3277c9ef3c3d957c84c39335e8ec1e7f11979cfff39a0bea20"},
+    {"path": "contracts.py", "bytes": 13306, "sha256": "694be9d199cd92b2d11ff4fe8401ad3728497bd8846b5d6924311330f3d9de1a"},
+    {"path": "test_run.py", "bytes": 10164, "sha256": "dcb2d8a7b1d98c24a498aa9689632dadac9d86be5a18b65e4d8b74a1c2d839a9"},
+    {"path": "README.md", "bytes": 4991, "sha256": "e8e139d87927d2ac6cf39b053bd078920bbeb52922e52043fae925a492bf280c"}
+  ],
+  "pure_tests": 14,
+  "test_census": {
+    "test_run.PolicyTests": [
+      "test_guard_accepts_ordinary_python",
+      "test_guard_rejects_optimized_or_inherited_optimization",
+      "test_actual_cpu_path_rejects_aliases_and_wrong_basename",
+      "test_relocation_does_not_rename_prefix_or_external_retained_tools",
+      "test_recipe_retains_all_prefix_commands_env_and_generation",
+      "test_recipe_refuses_changed_symbol_stage_or_bounds",
+      "test_lowering_fixture_is_exactly_eight_rust_plus_cargo_pair",
+      "test_source_transition_allows_only_candidate_formatting",
+      "test_source_transition_refuses_original_fixture_or_postcheck_drift",
+      "test_cpu_gate_rejects_wrong_outcome_or_cohort_before_io",
+      "test_original_prefix_metadata_contract_preserves_fifteen_root_abi",
+      "test_metadata_refuses_mlp_abi_or_new_authority",
+      "test_exact_replay_must_be_one_executed_not_ignored_test",
+      "test_both_scopes_recheck_original_source_map_bytes_and_stamps"
+    ]
+  ],
+  "authored_not_executed": true,
+  "gpu_execution": false,
+  "numerical_acceptance": false,
+  "production_authority": false,
+  "performance_claim": false
+}

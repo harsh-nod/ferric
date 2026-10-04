@@ -1,0 +1,22 @@
+{
+  "schema": "ferric-p228-rope-lowering-launch-tool-observation-v1",
+  "provenance": "Primary-agent observation of SSH exec_command output; not a remote owned-process completion receipt.",
+  "command": "ssh.exe -o BatchMode=yes -o ConnectTimeout=20 -o HostName=asrock-1w300-g2-2b.mkm.dcgpu -o UserKnownHostsFile=//wsl.localhost/Ubuntu/home/harsh/.ssh/known_hosts -l harmenon mi350-2 'env -i HOME=/home/harmenon PATH=/usr/bin:/bin LANG=C.UTF-8 LC_ALL=C.UTF-8 HIP_VISIBLE_DEVICES= ROCR_VISIBLE_DEVICES= CUDA_VISIBLE_DEVICES= /usr/bin/taskset -c 8,9 /usr/bin/nice -n 10 /usr/bin/python3 -B /home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-rope-materialized-lowering-v1/run.py ddd9e03c914ba3024797cc4cbf8487453026c043898b110db148d04e7faaa90a /home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rope-materialized-cpu-v228-v2/complete.json fae8773996fb7555fd12fe69a0c4dea28f69f0d9834f5022b287cef2036c4fe6'",
+  "session_id": 43498,
+  "final_chunk_id": "a8f77a",
+  "exit_code": 1,
+  "error": "json.decoder.JSONDecodeError: Expecting ',' delimiter: line 27 column 3 (char 1563)",
+  "failure_location": "context(): pins.json(PACKAGE / 'manifest.json', manifest_sha), before owner/output creation and compiler launch",
+  "rejected_manifest": {
+    "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/rope-materialized-lowering-manifest-rejected-v228-v1.json",
+    "sha256": "ddd9e03c914ba3024797cc4cbf8487453026c043898b110db148d04e7faaa90a"
+  },
+  "corrected_manifest": {
+    "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/p228-rope-materialized-lowering-v1/manifest.json",
+    "sha256": "31214b439a7ae6b599803fc021d4035784b5084d917c85d3a28033c5a2639ddd"
+  },
+  "compiler_executed": false,
+  "gpu_executed": false,
+  "numerical_acceptance": false,
+  "performance_claim": false
+}

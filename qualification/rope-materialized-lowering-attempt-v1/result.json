@@ -1,0 +1,576 @@
+{
+  "all_test_executable_bodies_rehashed": false,
+  "compilation_passed": false,
+  "compiler_error": "production semantic SSA partial-move validation for function 0 requires 2097153 storage words, limit is 2097152",
+  "courier_archive": {
+    "bytes": 5930052,
+    "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/rope-materialized-checked-lowering-v228-v1-retained.tar.gz",
+    "sha256": "b00191b860b87418ff761c62f4190e3e465351e21250a537d3c6f9a84e1f9bee"
+  },
+  "files": {
+    "controller/README.md": {
+      "retained": {
+        "bytes": 4991,
+        "path": "/home/harsh/ferric-p227-integration/qualification/rope-materialized-lowering-attempt-v1/controller/README.md",
+        "sha256": "e8e139d87927d2ac6cf39b053bd078920bbeb52922e52043fae925a492bf280c"
+      },
+      "source": {
+        "bytes": 4991,
+        "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/p228-rope-materialized-lowering-v1/README.md",
+        "sha256": "e8e139d87927d2ac6cf39b053bd078920bbeb52922e52043fae925a492bf280c"
+      }
+    },
+    "controller/contracts.py": {
+      "retained": {
+        "bytes": 13306,
+        "path": "/home/harsh/ferric-p227-integration/qualification/rope-materialized-lowering-attempt-v1/controller/contracts.py",
+        "sha256": "694be9d199cd92b2d11ff4fe8401ad3728497bd8846b5d6924311330f3d9de1a"
+      },
+      "source": {
+        "bytes": 13306,
+        "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/p228-rope-materialized-lowering-v1/contracts.py",
+        "sha256": "694be9d199cd92b2d11ff4fe8401ad3728497bd8846b5d6924311330f3d9de1a"
+      }
+    },
+    "controller/manifest.json": {
+      "retained": {
+        "bytes": 1722,
+        "path": "/home/harsh/ferric-p227-integration/qualification/rope-materialized-lowering-attempt-v1/controller/manifest.json",
+        "sha256": "31214b439a7ae6b599803fc021d4035784b5084d917c85d3a28033c5a2639ddd"
+      },
+      "source": {
+        "bytes": 1722,
+        "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/p228-rope-materialized-lowering-v1/manifest.json",
+        "sha256": "31214b439a7ae6b599803fc021d4035784b5084d917c85d3a28033c5a2639ddd"
+      }
+    },
+    "controller/run.py": {
+      "retained": {
+        "bytes": 36957,
+        "path": "/home/harsh/ferric-p227-integration/qualification/rope-materialized-lowering-attempt-v1/controller/run.py",
+        "sha256": "72bb54198478ee3277c9ef3c3d957c84c39335e8ec1e7f11979cfff39a0bea20"
+      },
+      "source": {
+        "bytes": 36957,
+        "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/p228-rope-materialized-lowering-v1/run.py",
+        "sha256": "72bb54198478ee3277c9ef3c3d957c84c39335e8ec1e7f11979cfff39a0bea20"
+      }
+    },
+    "controller/test_run.py": {
+      "retained": {
+        "bytes": 10164,
+        "path": "/home/harsh/ferric-p227-integration/qualification/rope-materialized-lowering-attempt-v1/controller/test_run.py",
+        "sha256": "dcb2d8a7b1d98c24a498aa9689632dadac9d86be5a18b65e4d8b74a1c2d839a9"
+      },
+      "source": {
+        "bytes": 10164,
+        "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/p228-rope-materialized-lowering-v1/test_run.py",
+        "sha256": "dcb2d8a7b1d98c24a498aa9689632dadac9d86be5a18b65e4d8b74a1c2d839a9"
+      }
+    },
+    "failed.json": {
+      "retained": {
+        "bytes": 9953,
+        "path": "/home/harsh/ferric-p227-integration/qualification/rope-materialized-lowering-attempt-v1/failed.json",
+        "sha256": "32aeb4127b38d0f50aabba67afd907f369185b46b64ebc012e2425acf31294f0"
+      },
+      "source": {
+        "bytes": 9953,
+        "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/row-rope-materialized-checked-probe-v228-v1/failed.json",
+        "sha256": "32aeb4127b38d0f50aabba67afd907f369185b46b64ebc012e2425acf31294f0"
+      }
+    },
+    "observations/rope-materialized-lowering-first-launch-v228-v1.json": {
+      "retained": {
+        "bytes": 1892,
+        "path": "/home/harsh/ferric-p227-integration/qualification/rope-materialized-lowering-attempt-v1/observations/rope-materialized-lowering-first-launch-v228-v1.json",
+        "sha256": "2cf187bc93c039410bf0a939dfd1f9d1a8b06e052188dcc97d18cf9eb27f5be8"
+      },
+      "source": {
+        "bytes": 1892,
+        "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/rope-materialized-lowering-first-launch-v228-v1.json",
+        "sha256": "2cf187bc93c039410bf0a939dfd1f9d1a8b06e052188dcc97d18cf9eb27f5be8"
+      }
+    },
+    "observations/rope-materialized-lowering-manifest-rejected-v228-v1.json": {
+      "retained": {
+        "bytes": 1722,
+        "path": "/home/harsh/ferric-p227-integration/qualification/rope-materialized-lowering-attempt-v1/observations/rope-materialized-lowering-manifest-rejected-v228-v1.json",
+        "sha256": "ddd9e03c914ba3024797cc4cbf8487453026c043898b110db148d04e7faaa90a"
+      },
+      "source": {
+        "bytes": 1722,
+        "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/rope-materialized-lowering-manifest-rejected-v228-v1.json",
+        "sha256": "ddd9e03c914ba3024797cc4cbf8487453026c043898b110db148d04e7faaa90a"
+      }
+    },
+    "observations/rope-materialized-lowering-pure-v228-v1.json": {
+      "retained": {
+        "bytes": 2657,
+        "path": "/home/harsh/ferric-p227-integration/qualification/rope-materialized-lowering-attempt-v1/observations/rope-materialized-lowering-pure-v228-v1.json",
+        "sha256": "eaac3fd3529b2a781702133de4797e08a684b5f815006f647972f12d0d4725f0"
+      },
+      "source": {
+        "bytes": 2657,
+        "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/rope-materialized-lowering-pure-v228-v1.json",
+        "sha256": "eaac3fd3529b2a781702133de4797e08a684b5f815006f647972f12d0d4725f0"
+      }
+    },
+    "owner/command.json": {
+      "retained": {
+        "bytes": 2272,
+        "path": "/home/harsh/ferric-p227-integration/qualification/rope-materialized-lowering-attempt-v1/owner/command.json",
+        "sha256": "f7ccf660ea378cfb1b37db8b46f977fa46040c4365c1679559877a723484d54a"
+      },
+      "source": {
+        "bytes": 2272,
+        "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/rope-materialized-checked-probe-owner-v228-v1/command.json",
+        "sha256": "f7ccf660ea378cfb1b37db8b46f977fa46040c4365c1679559877a723484d54a"
+      }
+    },
+    "owner/failed.json": {
+      "retained": {
+        "bytes": 20838,
+        "path": "/home/harsh/ferric-p227-integration/qualification/rope-materialized-lowering-attempt-v1/owner/failed.json",
+        "sha256": "46586eedb8fc35243c5e4bc920ef35e17323a1c0e371d0a33a8f94df6e9cf99e"
+      },
+      "source": {
+        "bytes": 20838,
+        "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/rope-materialized-checked-probe-owner-v228-v1/failed.json",
+        "sha256": "46586eedb8fc35243c5e4bc920ef35e17323a1c0e371d0a33a8f94df6e9cf99e"
+      }
+    },
+    "owner/owned-result.json": {
+      "retained": {
+        "bytes": 9684,
+        "path": "/home/harsh/ferric-p227-integration/qualification/rope-materialized-lowering-attempt-v1/owner/owned-result.json",
+        "sha256": "19a2c4f5961e344193d0e2c9207647e76f33db9e35af955ebc210a168789e711"
+      },
+      "source": {
+        "bytes": 9684,
+        "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/rope-materialized-checked-probe-owner-v228-v1/owned-result.json",
+        "sha256": "19a2c4f5961e344193d0e2c9207647e76f33db9e35af955ebc210a168789e711"
+      }
+    },
+    "owner/started.json": {
+      "retained": {
+        "bytes": 190,
+        "path": "/home/harsh/ferric-p227-integration/qualification/rope-materialized-lowering-attempt-v1/owner/started.json",
+        "sha256": "e9df9b92ab851e77f63f1cc5249ee5b462fa67797fddffd5bcdcf715dc9de62f"
+      },
+      "source": {
+        "bytes": 190,
+        "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/rope-materialized-checked-probe-owner-v228-v1/started.json",
+        "sha256": "e9df9b92ab851e77f63f1cc5249ee5b462fa67797fddffd5bcdcf715dc9de62f"
+      }
+    },
+    "owner/stderr": {
+      "retained": {
+        "bytes": 0,
+        "path": "/home/harsh/ferric-p227-integration/qualification/rope-materialized-lowering-attempt-v1/owner/stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "source": {
+        "bytes": 0,
+        "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/rope-materialized-checked-probe-owner-v228-v1/stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    "owner/stdout": {
+      "retained": {
+        "bytes": 7979,
+        "path": "/home/harsh/ferric-p227-integration/qualification/rope-materialized-lowering-attempt-v1/owner/stdout",
+        "sha256": "90c536e06bb20511f71e4d7978dd5837744fee83660de66055d7df8944a9776f"
+      },
+      "source": {
+        "bytes": 7979,
+        "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/rope-materialized-checked-probe-owner-v228-v1/stdout",
+        "sha256": "90c536e06bb20511f71e4d7978dd5837744fee83660de66055d7df8944a9776f"
+      }
+    },
+    "publish.py": {
+      "retained": {
+        "bytes": 8054,
+        "path": "/home/harsh/ferric-p227-integration/qualification/rope-materialized-lowering-attempt-v1/publish.py",
+        "sha256": "bd036ba5e006dd7a76d6fd83ad0233f1092e8ef2b2a0a46808a29f4c9328583f"
+      },
+      "source": {
+        "bytes": 8054,
+        "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/publish_rope_lowering_refusal_p228_v1.py",
+        "sha256": "bd036ba5e006dd7a76d6fd83ad0233f1092e8ef2b2a0a46808a29f4c9328583f"
+      }
+    },
+    "raw/checked-lowering-command.json": {
+      "retained": {
+        "bytes": 5925,
+        "path": "/home/harsh/ferric-p227-integration/qualification/rope-materialized-lowering-attempt-v1/raw/checked-lowering-command.json",
+        "sha256": "dff3a6ddc0d724d6c5280a12062309df9f0108b8fd1290f31a351f94b91a0448"
+      },
+      "source": {
+        "bytes": 5925,
+        "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/row-rope-materialized-checked-probe-v228-v1/checked-lowering-command.json",
+        "sha256": "dff3a6ddc0d724d6c5280a12062309df9f0108b8fd1290f31a351f94b91a0448"
+      }
+    },
+    "raw/checked-lowering-result.json": {
+      "retained": {
+        "bytes": 307,
+        "path": "/home/harsh/ferric-p227-integration/qualification/rope-materialized-lowering-attempt-v1/raw/checked-lowering-result.json",
+        "sha256": "b9291186e93fda1a06c7d2dbc4ba0971222e68d25f9d809cfa4d276358b82105"
+      },
+      "source": {
+        "bytes": 307,
+        "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/row-rope-materialized-checked-probe-v228-v1/checked-lowering-result.json",
+        "sha256": "b9291186e93fda1a06c7d2dbc4ba0971222e68d25f9d809cfa4d276358b82105"
+      }
+    },
+    "raw/checked-lowering-started.json": {
+      "retained": {
+        "bytes": 38,
+        "path": "/home/harsh/ferric-p227-integration/qualification/rope-materialized-lowering-attempt-v1/raw/checked-lowering-started.json",
+        "sha256": "5a88de11bd385d9d12299ad87a5a8c63609178146623794c59868f93c3db8d54"
+      },
+      "source": {
+        "bytes": 38,
+        "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/row-rope-materialized-checked-probe-v228-v1/checked-lowering-started.json",
+        "sha256": "5a88de11bd385d9d12299ad87a5a8c63609178146623794c59868f93c3db8d54"
+      }
+    },
+    "raw/checked-lowering-stderr": {
+      "retained": {
+        "bytes": 6994,
+        "path": "/home/harsh/ferric-p227-integration/qualification/rope-materialized-lowering-attempt-v1/raw/checked-lowering-stderr",
+        "sha256": "e0e9804c121a173872637abe8ad0eaf58f248192901d9d29468fe08080163221"
+      },
+      "source": {
+        "bytes": 6994,
+        "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/row-rope-materialized-checked-probe-v228-v1/checked-lowering-stderr",
+        "sha256": "e0e9804c121a173872637abe8ad0eaf58f248192901d9d29468fe08080163221"
+      }
+    },
+    "raw/checked-lowering-stdout": {
+      "retained": {
+        "bytes": 0,
+        "path": "/home/harsh/ferric-p227-integration/qualification/rope-materialized-lowering-attempt-v1/raw/checked-lowering-stdout",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "source": {
+        "bytes": 0,
+        "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/row-rope-materialized-checked-probe-v228-v1/checked-lowering-stdout",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    "raw/fixture-metadata-command.json": {
+      "retained": {
+        "bytes": 2377,
+        "path": "/home/harsh/ferric-p227-integration/qualification/rope-materialized-lowering-attempt-v1/raw/fixture-metadata-command.json",
+        "sha256": "e633ab9ba05576946e80163423e73e7c9ce9787a3357fc7b5678397ec86f0584"
+      },
+      "source": {
+        "bytes": 2377,
+        "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/row-rope-materialized-checked-probe-v228-v1/fixture-metadata-command.json",
+        "sha256": "e633ab9ba05576946e80163423e73e7c9ce9787a3357fc7b5678397ec86f0584"
+      }
+    },
+    "raw/fixture-metadata-result.json": {
+      "retained": {
+        "bytes": 300,
+        "path": "/home/harsh/ferric-p227-integration/qualification/rope-materialized-lowering-attempt-v1/raw/fixture-metadata-result.json",
+        "sha256": "8134894d89dbda58769f6b584c0330bc465b24729b319094d2289bd9d7a26679"
+      },
+      "source": {
+        "bytes": 300,
+        "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/row-rope-materialized-checked-probe-v228-v1/fixture-metadata-result.json",
+        "sha256": "8134894d89dbda58769f6b584c0330bc465b24729b319094d2289bd9d7a26679"
+      }
+    },
+    "raw/fixture-metadata-started.json": {
+      "retained": {
+        "bytes": 38,
+        "path": "/home/harsh/ferric-p227-integration/qualification/rope-materialized-lowering-attempt-v1/raw/fixture-metadata-started.json",
+        "sha256": "2167ca94f49503d6e8acba468f3977b17c4ed97a1182b18569a9d55ab10f4ef3"
+      },
+      "source": {
+        "bytes": 38,
+        "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/row-rope-materialized-checked-probe-v228-v1/fixture-metadata-started.json",
+        "sha256": "2167ca94f49503d6e8acba468f3977b17c4ed97a1182b18569a9d55ab10f4ef3"
+      }
+    },
+    "raw/fixture-metadata-stderr": {
+      "retained": {
+        "bytes": 0,
+        "path": "/home/harsh/ferric-p227-integration/qualification/rope-materialized-lowering-attempt-v1/raw/fixture-metadata-stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "source": {
+        "bytes": 0,
+        "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/row-rope-materialized-checked-probe-v228-v1/fixture-metadata-stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    "raw/fixture-metadata-stdout": {
+      "retained": {
+        "bytes": 724149,
+        "path": "/home/harsh/ferric-p227-integration/qualification/rope-materialized-lowering-attempt-v1/raw/fixture-metadata-stdout",
+        "sha256": "e684bcdf9ec98e77087203ee672c6ace976fc2cdcd388f64fa068fb9c7b194f3"
+      },
+      "source": {
+        "bytes": 724149,
+        "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/row-rope-materialized-checked-probe-v228-v1/fixture-metadata-stdout",
+        "sha256": "e684bcdf9ec98e77087203ee672c6ace976fc2cdcd388f64fa068fb9c7b194f3"
+      }
+    },
+    "recipe.json": {
+      "retained": {
+        "bytes": 41298,
+        "path": "/home/harsh/ferric-p227-integration/qualification/rope-materialized-lowering-attempt-v1/recipe.json",
+        "sha256": "ae268868db63db9da54d1025cc24ebeefc753995aa2f4fb563560896981e325f"
+      },
+      "source": {
+        "bytes": 41298,
+        "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/row-rope-materialized-checked-probe-v228-v1/recipe.json",
+        "sha256": "ae268868db63db9da54d1025cc24ebeefc753995aa2f4fb563560896981e325f"
+      }
+    }
+  },
+  "full_model_acceptance": false,
+  "gpu_execution": false,
+  "locally_rehashed_inputs": [
+    {
+      "bytes": 5930052,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/rope-materialized-checked-lowering-v228-v1-retained.tar.gz",
+      "sha256": "b00191b860b87418ff761c62f4190e3e465351e21250a537d3c6f9a84e1f9bee"
+    },
+    {
+      "bytes": 9953,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/row-rope-materialized-checked-probe-v228-v1/failed.json",
+      "sha256": "32aeb4127b38d0f50aabba67afd907f369185b46b64ebc012e2425acf31294f0"
+    },
+    {
+      "bytes": 20838,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/rope-materialized-checked-probe-owner-v228-v1/failed.json",
+      "sha256": "46586eedb8fc35243c5e4bc920ef35e17323a1c0e371d0a33a8f94df6e9cf99e"
+    },
+    {
+      "bytes": 14768041,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/rope-materialized-checked-probe-owner-v228-v1/after.json",
+      "sha256": "68abe38475a5abdf22bcfa4a454f0c540cc4999217e1fcaa1be62896e0f5b9b4"
+    },
+    {
+      "bytes": 14096304,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/rope-materialized-checked-probe-owner-v228-v1/before.json",
+      "sha256": "955aac57c15a4a8320e12458da60e87807b2b6956c0523ae9a2054dcd1cabe26"
+    },
+    {
+      "bytes": 2272,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/rope-materialized-checked-probe-owner-v228-v1/command.json",
+      "sha256": "f7ccf660ea378cfb1b37db8b46f977fa46040c4365c1679559877a723484d54a"
+    },
+    {
+      "bytes": 9684,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/rope-materialized-checked-probe-owner-v228-v1/owned-result.json",
+      "sha256": "19a2c4f5961e344193d0e2c9207647e76f33db9e35af955ebc210a168789e711"
+    },
+    {
+      "bytes": 190,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/rope-materialized-checked-probe-owner-v228-v1/started.json",
+      "sha256": "e9df9b92ab851e77f63f1cc5249ee5b462fa67797fddffd5bcdcf715dc9de62f"
+    },
+    {
+      "bytes": 0,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/rope-materialized-checked-probe-owner-v228-v1/stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 7979,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/rope-materialized-checked-probe-owner-v228-v1/stdout",
+      "sha256": "90c536e06bb20511f71e4d7978dd5837744fee83660de66055d7df8944a9776f"
+    },
+    {
+      "bytes": 6341653,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/row-rope-materialized-checked-probe-v228-v1/before.json",
+      "sha256": "a11fec9dd5860a3be19deb4270df43865249aa56a873b320fdbd9c87ce9a2d78"
+    },
+    {
+      "bytes": 7024372,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/row-rope-materialized-checked-probe-v228-v1/after.json",
+      "sha256": "2b4d6b7ed987aa901a701599c75e57b1d0b28d557bb954ccf3ef633d52e6c720"
+    },
+    {
+      "bytes": 5698213,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/row-rope-materialized-checked-probe-v228-v1/package-sources-before.json",
+      "sha256": "bcc1584b9db7e0257d64df007b913209b760e26fd94def1404b3ff91c362d062"
+    },
+    {
+      "bytes": 5698213,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/row-rope-materialized-checked-probe-v228-v1/package-sources-after.json",
+      "sha256": "bcc1584b9db7e0257d64df007b913209b760e26fd94def1404b3ff91c362d062"
+    },
+    {
+      "bytes": 68573,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/rope-materialized-cpu-v228-v2/complete.json",
+      "sha256": "fae8773996fb7555fd12fe69a0c4dea28f69f0d9834f5022b287cef2036c4fe6"
+    },
+    {
+      "bytes": 1722,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/p228-rope-materialized-lowering-v1/manifest.json",
+      "sha256": "31214b439a7ae6b599803fc021d4035784b5084d917c85d3a28033c5a2639ddd"
+    },
+    {
+      "bytes": 4429,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/p228-rope-materialized-source-v1/source-manifest.json",
+      "sha256": "728edfbfaa684279fc603c03356682ebda0e3f3e72a604d53670d5427ac94837"
+    },
+    {
+      "bytes": 36957,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/p228-rope-materialized-lowering-v1/run.py",
+      "sha256": "72bb54198478ee3277c9ef3c3d957c84c39335e8ec1e7f11979cfff39a0bea20"
+    },
+    {
+      "bytes": 13306,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/p228-rope-materialized-lowering-v1/contracts.py",
+      "sha256": "694be9d199cd92b2d11ff4fe8401ad3728497bd8846b5d6924311330f3d9de1a"
+    },
+    {
+      "bytes": 10164,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/p228-rope-materialized-lowering-v1/test_run.py",
+      "sha256": "dcb2d8a7b1d98c24a498aa9689632dadac9d86be5a18b65e4d8b74a1c2d839a9"
+    },
+    {
+      "bytes": 4991,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/p228-rope-materialized-lowering-v1/README.md",
+      "sha256": "e8e139d87927d2ac6cf39b053bd078920bbeb52922e52043fae925a492bf280c"
+    },
+    {
+      "bytes": 41298,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/row-rope-materialized-checked-probe-v228-v1/recipe.json",
+      "sha256": "ae268868db63db9da54d1025cc24ebeefc753995aa2f4fb563560896981e325f"
+    },
+    {
+      "bytes": 33839,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/row-rope-materialized-checked-probe-v228-v1/fixture/Cargo.lock",
+      "sha256": "8e56bdd313ea40d46277870eab953e5b6832d1c26d427ff3c81c5ecf93968d85"
+    },
+    {
+      "bytes": 436,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/row-rope-materialized-checked-probe-v228-v1/fixture/Cargo.toml",
+      "sha256": "971675fb4f2a11fe066612b3123db65240fcb89e03169e89c95b6cf90765b114"
+    },
+    {
+      "bytes": 3066,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/row-rope-materialized-checked-probe-v228-v1/fixture/src/attention_online.rs",
+      "sha256": "105a7065a7856d1c6f14e3edb743887e734231b1f42a3e0d42727a5b64ffde7b"
+    },
+    {
+      "bytes": 5884,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/row-rope-materialized-checked-probe-v228-v1/fixture/src/head_rope_numerics_v3.rs",
+      "sha256": "4b88b9ce6608c791a0df8d0d2c5166de7aad77d63e7b2c52383cce068a1996e9"
+    },
+    {
+      "bytes": 7168,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/row-rope-materialized-checked-probe-v228-v1/fixture/src/lib.rs",
+      "sha256": "d0dd70478f67b80aca49e479221b56092f270869583f8a6c360b6fdd8eb60dd1"
+    },
+    {
+      "bytes": 2033,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/row-rope-materialized-checked-probe-v228-v1/fixture/src/output_projection_numerics_v5.rs",
+      "sha256": "ef397ea5bfe59d6284172e0b2dda6c0f37eef69b48c1392274941d5b521cffd5"
+    },
+    {
+      "bytes": 6056,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/row-rope-materialized-checked-probe-v228-v1/fixture/src/prefix_reciprocal_numerics_v1.rs",
+      "sha256": "d2da6d5c02474556ab606a923c065d7146a2527a36400999431df0111fd2cca6"
+    },
+    {
+      "bytes": 4057,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/row-rope-materialized-checked-probe-v228-v1/fixture/src/prefix_rope_materialized_numerics_v1.rs",
+      "sha256": "6ca7fede05ad41173f974e55700539194349c3bd738ee94c2daf62d3f15603ad"
+    },
+    {
+      "bytes": 6092,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/row-rope-materialized-checked-probe-v228-v1/fixture/src/prefix_tiles_numerics_v6.rs",
+      "sha256": "3f729b83bc50d4e252a73911ac69bb4e4e1829e1cb05ca3f0bcffa36f09475ad"
+    },
+    {
+      "bytes": 2235,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/row-rope-materialized-checked-probe-v228-v1/fixture/src/wave_numerics_v1.rs",
+      "sha256": "22ef471c341936b3bc6f7b5812405c60152292cef07dcbd03173bf2dd7ee49ea"
+    },
+    {
+      "bytes": 300,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/row-rope-materialized-checked-probe-v228-v1/fixture-metadata-result.json",
+      "sha256": "8134894d89dbda58769f6b584c0330bc465b24729b319094d2289bd9d7a26679"
+    },
+    {
+      "bytes": 2377,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/row-rope-materialized-checked-probe-v228-v1/fixture-metadata-command.json",
+      "sha256": "e633ab9ba05576946e80163423e73e7c9ce9787a3357fc7b5678397ec86f0584"
+    },
+    {
+      "bytes": 38,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/row-rope-materialized-checked-probe-v228-v1/fixture-metadata-started.json",
+      "sha256": "2167ca94f49503d6e8acba468f3977b17c4ed97a1182b18569a9d55ab10f4ef3"
+    },
+    {
+      "bytes": 724149,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/row-rope-materialized-checked-probe-v228-v1/fixture-metadata-stdout",
+      "sha256": "e684bcdf9ec98e77087203ee672c6ace976fc2cdcd388f64fa068fb9c7b194f3"
+    },
+    {
+      "bytes": 0,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/row-rope-materialized-checked-probe-v228-v1/fixture-metadata-stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 307,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/row-rope-materialized-checked-probe-v228-v1/checked-lowering-result.json",
+      "sha256": "b9291186e93fda1a06c7d2dbc4ba0971222e68d25f9d809cfa4d276358b82105"
+    },
+    {
+      "bytes": 5925,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/row-rope-materialized-checked-probe-v228-v1/checked-lowering-command.json",
+      "sha256": "dff3a6ddc0d724d6c5280a12062309df9f0108b8fd1290f31a351f94b91a0448"
+    },
+    {
+      "bytes": 38,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/row-rope-materialized-checked-probe-v228-v1/checked-lowering-started.json",
+      "sha256": "5a88de11bd385d9d12299ad87a5a8c63609178146623794c59868f93c3db8d54"
+    },
+    {
+      "bytes": 0,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/row-rope-materialized-checked-probe-v228-v1/checked-lowering-stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 6994,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/row-rope-materialized-checked-probe-v228-v1/checked-lowering-stderr",
+      "sha256": "e0e9804c121a173872637abe8ad0eaf58f248192901d9d29468fe08080163221"
+    },
+    {
+      "bytes": 2657,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/rope-materialized-lowering-pure-v228-v1.json",
+      "sha256": "eaac3fd3529b2a781702133de4797e08a684b5f815006f647972f12d0d4725f0"
+    },
+    {
+      "bytes": 1892,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/rope-materialized-lowering-first-launch-v228-v1.json",
+      "sha256": "2cf187bc93c039410bf0a939dfd1f9d1a8b06e052188dcc97d18cf9eb27f5be8"
+    },
+    {
+      "bytes": 1722,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/rope-materialized-lowering-manifest-rejected-v228-v1.json",
+      "sha256": "ddd9e03c914ba3024797cc4cbf8487453026c043898b110db148d04e7faaa90a"
+    },
+    {
+      "bytes": 8054,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/publish_rope_lowering_refusal_p228_v1.py",
+      "sha256": "bd036ba5e006dd7a76d6fd83ad0233f1092e8ef2b2a0a46808a29f4c9328583f"
+    }
+  ],
+  "numerical_acceptance": false,
+  "performance_claim": false,
+  "production_authority": false,
+  "publication_passed": true,
+  "schema": "ferric-p228-rope-lowering-refusal-publication-v1",
+  "transitive_input_bodies_rehashed": false
+}

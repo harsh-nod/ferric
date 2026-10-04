@@ -1,0 +1,22 @@
+{
+  "schema": "ferric-p228-rope-lowering-root-test-observation-v1",
+  "host": "mi350-2 (asrock-1w300-g2-2b)",
+  "command": "ssh.exe -o BatchMode=yes -o ConnectTimeout=20 -o HostName=asrock-1w300-g2-2b.mkm.dcgpu -o UserKnownHostsFile=//wsl.localhost/Ubuntu/home/harsh/.ssh/known_hosts -l harmenon mi350-2 'env -u PYTHONPATH -u PYTHONHOME -u PYTHONOPTIMIZE HIP_VISIBLE_DEVICES= ROCR_VISIBLE_DEVICES= CUDA_VISIBLE_DEVICES= /usr/bin/timeout --signal=INT --kill-after=15 120 /usr/bin/taskset -c 8,9 /usr/bin/nice -n 10 /usr/bin/python3 -E -B /home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-rope-materialized-lowering-v1/test_run.py -v'",
+  "tool_session": 56116,
+  "terminal_chunk": "605bb1",
+  "exit_code": 0,
+  "tests": 14,
+  "failures": 0,
+  "errors": 0,
+  "test_output_excerpt": "test_actual_cpu_path_rejects_aliases_and_wrong_basename (__main__.PolicyTests) ... ok\ntest_both_scopes_recheck_original_source_map_bytes_and_stamps (__main__.PolicyTests) ... ok\ntest_cpu_gate_rejects_wrong_outcome_or_cohort_before_io (__main__.PolicyTests) ... ok\ntest_exact_replay_must_be_one_executed_not_ignored_test (__main__.PolicyTests) ... ok\ntest_guard_accepts_ordinary_python (__main__.PolicyTests) ... ok\ntest_guard_rejects_optimized_or_inherited_optimization (__main__.PolicyTests) ... ok\ntest_lowering_fixture_is_exactly_eight_rust_plus_cargo_pair (__main__.PolicyTests) ... ok\ntest_metadata_refuses_mlp_abi_or_new_authority (__main__.PolicyTests) ... ok\ntest_original_prefix_metadata_contract_preserves_fifteen_root_abi (__main__.PolicyTests) ... ok\ntest_recipe_refuses_changed_symbol_stage_or_bounds (__main__.PolicyTests) ... ok\ntest_recipe_retains_all_prefix_commands_env_and_generation (__main__.PolicyTests) ... ok\ntest_relocation_does_not_rename_prefix_or_external_retained_tools (__main__.PolicyTests) ... ok\ntest_source_transition_allows_only_candidate_formatting (__main__.PolicyTests) ... ok\ntest_source_transition_refuses_original_fixture_or_postcheck_drift (__main__.PolicyTests) ... ok\n\n----------------------------------------------------------------------\nRan 14 tests in 0.011s\n\nOK\n",
+  "package_manifest_sha256": "ddd9e03c914ba3024797cc4cbf8487453026c043898b110db148d04e7faaa90a",
+  "source_sha256": {
+    "run": "72bb54198478ee3277c9ef3c3d957c84c39335e8ec1e7f11979cfff39a0bea20",
+    "test": "dcb2d8a7b1d98c24a498aa9689632dadac9d86be5a18b65e4d8b74a1c2d839a9"
+  },
+  "observation_kind": "Primary-agent observation of actual SSH tool output; not a remote supervisor receipt",
+  "gpu_execution": false,
+  "compiler_executed": false,
+  "numerical_acceptance": false,
+  "production_authority": false
+}
