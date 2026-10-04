@@ -1,0 +1,14 @@
+{
+  "schema": "ferric-p228-resident-state-fence-source-preimages-v1",
+  "base_commit": "725ecc6a500ff49e7dfaefb38b027f6bcc223ebf",
+  "files": {
+    "crates/fe2o3-kfd/src/engineering_gfx950_peer_wave_mlp_tiles_state_v2.rs": "c22f8245f938c886b36d3d6ba23b33ca33f5816b31440b6de85d05dbfb2f13f4",
+    "crates/fe2o3-kfd/src/engineering_gfx950_peer_wave_mlp_tiles_state_v2_tests.rs": "b0f0c2353d41c8c5dae1865492d3de754d826b2108f26be294aa71699575733d",
+    "crates/fe2o3-kfd/src/engineering_gfx950_peer_wave_mlp_tiles_v2.rs": "3181c7f41f6f70a13f653741f438fa45d3609752487466ec5fc703c39a9150bb",
+    "crates/fe2o3-kfd/src/engineering_gfx950_peer_wave_mlp_tiles_v2_tests.rs": "d7968a0dcd614cce951d12af51c58f6ed55dc487dae37c3ad30ba2ba9fe6150b",
+    "crates/fe2o3-kfd/src/engineering_gfx950_peer_wave_qkv_attention_output_tiles_state_v6.rs": "8f29773751462a09b97294700aede5325ddfdc30e6e2be54fcd6e63fb82b4d89",
+    "crates/fe2o3-kfd/src/engineering_gfx950_peer_wave_qkv_attention_output_tiles_state_v6_tests.rs": "0519b3c74fc98fba1e9094f0c153f8bc6086457af7fd725b9391ecdd75c5ea26",
+    "crates/fe2o3-kfd/src/engineering_gfx950_peer_wave_qkv_attention_output_tiles_v6.rs": "be87d399c198114110e7850e63fd4149a0aa24d1bd6f19447eac66c466795b51",
+    "crates/fe2o3-kfd/src/engineering_gfx950_peer_wave_qkv_attention_output_tiles_v6_tests.rs": "7a08a365791d46d4461860c4171adabd78a16c6db4b602cc7fc26d7c10bd9270"
+  }
+}

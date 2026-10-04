@@ -1,0 +1,33 @@
+{
+  "authority": "none",
+  "bounded_commands": 17,
+  "code_scope": "eight fe2o3-kfd files",
+  "cpu_receipt": {
+    "bytes": 120723,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/resident-state-fence-cpu-v228-v2/complete.json",
+    "sha256": "33fb539a0823dcaa988d9091d7712f40cfb0ed656c87b6e958df98f8e35ccdf9"
+  },
+  "expected_group_checks_removed_per_forward": 576,
+  "expected_reduction_measured": false,
+  "gpu_execution": false,
+  "gpu_numerical_validation": false,
+  "new_tests": 6,
+  "numerical_acceptance": false,
+  "parent_rebuilt": false,
+  "passed": true,
+  "performance_claim": false,
+  "production_authority": false,
+  "raw_files_rehashed": 88,
+  "runtime_tests": 124,
+  "schema": "ferric-p228-resident-state-fence-public-cpu-v1",
+  "source_files": 6928,
+  "sustained_2048_256": false,
+  "tests_ignored": 4,
+  "tests_passed": 522,
+  "worker": {
+    "bytes": 4780024,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/resident-state-fence-cpu-v228-v2/target/debug/ferric-tp-peer-finite-engineering-worker-v1",
+    "sha256": "79d2b50a080a39300d02648c2844a398907ac4f89a41abff01c720ac58d42430"
+  },
+  "worker_tests": 398
+}

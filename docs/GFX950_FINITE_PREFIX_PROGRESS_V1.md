@@ -6,7 +6,14 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Latest: the [V7 all-layer autoregressive run](../qualification/independent-decode-observation-v1/ar4/README.md)
+Latest: the [paired resident-state fence candidate](../qualification/resident-state-fence-consolidation-v1/README.md)
+passed 522 selected CPU tests with four ignored on `mi350-2`; a fresh worker
+was built and all 17 bounded commands exited naturally. It removes redundant
+private-observer fences while retaining the coordinator's outer fences and
+public observers. The predicted 576 fewer group checks per forward have not
+been measured on GPU. The deployed worker and production path are unchanged.
+
+The [V7 all-layer autoregressive run](../qualification/independent-decode-observation-v1/ar4/README.md)
 completed four own-token forwards on MI350 with six audits and clean Close/reap.
 Outputs 67, 25, 576 and 2701 match the independent framework; all 152 complete
 tensor rows still differ. Logit relative-L2 errors range from 0.00387545 to
@@ -69,6 +76,7 @@ earlier checkpoints and their limitations at the time they were recorded.
 | New V7 image through 36-layer TF4 on `mi350` | 152 captures, four matching framework argmax tokens, six audits and clean Close/reap | All 152 complete tensor rows differ from framework; no numerical or performance acceptance |
 | New V7 image through 36-layer AR4 on `mi350` | Four own-token forwards, matching framework histories and outputs, 152 captures, six audits and clean Close/reap | All 152 complete tensor rows differ from framework; not the 2,048/256 workload or numerical acceptance |
 | Historical MLP capture replay on `mi350` | All 20 conditional stage checks and 41 CPU tests pass; maximum down error/bound ratio 0.0148193 | Original layer-0 captures; no new GPU run, V7 or all-layer acceptance |
+| Paired resident-state fence candidate on `mi350-2` | 522 CPU tests passed, four ignored; fresh worker built; 17 natural command exits | Eight exact source files and six new regressions; predicted counter reduction is not a GPU or performance result |
 
 Both four-forward runs completed their Close protocol, reaped their owned
 processes, and passed their six surrounding device-state audits. The CPU suite

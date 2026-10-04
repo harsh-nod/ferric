@@ -1,0 +1,19 @@
+
+running 14 tests
+test engineering_gfx950::tests::completed_signal_never_fabricates_ring_capacity_or_allows_overwrite ... ok
+test engineering_gfx950::tests::completion_requires_exact_write_read_order_signal_and_no_exception ... ok
+test engineering_gfx950::tests::malformed_pointer_metadata_and_address_are_rejected ... ok
+test engineering_gfx950::tests::operational_fence_preserves_live_checks_and_full_public_api ... ok
+test engineering_gfx950::tests::pending_dispatch_rejects_foreign_device_epoch_frontier_and_repeated_completion ... ok
+test engineering_gfx950::tests::pointer_aliasing_allows_reads_and_exact_zero_extent_only ... ok
+test engineering_gfx950::tests::performance_configuration_cannot_change_a_live_or_previously_used_session ... ok
+test engineering_gfx950::tests::pointer_binding_is_owned_exact_and_fail_atomic ... ok
+test engineering_gfx950::tests::profile_counters_fail_closed_and_disabled_timers_do_not_change_values ... ok
+test engineering_gfx950::tests::rollover_requires_exact_epoch_and_successful_completion_frontier ... ok
+test engineering_gfx950::tests::rollover_destroys_old_queue_before_releasing_or_resetting_and_retains_user_resources ... ok
+test engineering_gfx950::tests::sequence_capacity_never_fabricates_retirement_or_wraps ... ok
+test engineering_gfx950::tests::userptr_output_offset_is_opaque_but_bo_mapping_identity_is_exact ... ok
+test engineering_gfx950::tests::sequence_prevalidates_all_bindings_before_any_publication ... ok
+
+test result: ok. 14 passed; 0 failed; 0 ignored; 0 measured; 853 filtered out; finished in 0.00s
+

@@ -1,0 +1,25 @@
+{
+  "schema": "ferric-p228-resident-state-fence-cpu-package-v1",
+  "status": "draft-unexecuted",
+  "executed": false,
+  "expected_runtime_passed": 124,
+  "expected_worker_passed": 398,
+  "expected_ignored": 4,
+  "files": [
+    {
+      "path": "run.py",
+      "bytes": 13482,
+      "sha256": "c16fce5d5e431f893bfccc5f1124ba20cbfca2544e26501e221c3ba452fdbedc"
+    },
+    {
+      "path": "overlay.json",
+      "bytes": 3380,
+      "sha256": "22ed0df3ab7c5844f8bb4e26af5495365c82508c6c1a181d451b4ae01927b8c8"
+    },
+    {
+      "path": "README.md",
+      "bytes": 3808,
+      "sha256": "aa956463a7cd480514861cb400b869e2acf1f7473f01930a1e342f1ce3ef973a"
+    }
+  ]
+}

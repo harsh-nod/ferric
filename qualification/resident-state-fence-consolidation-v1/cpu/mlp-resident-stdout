@@ -1,0 +1,15 @@
+
+running 10 tests
+test engineering_gfx950::peer::wave_mlp_tiles_v2::tests::resident_v2_data_roots_require_exact_requested_extent_kind_and_current_record ... ok
+test engineering_gfx950::peer::wave_mlp_tiles_v2::tests::resident_v2_dispatch_binds_exact_geometry_roots_and_completion_before_state ... ok
+test engineering_gfx950::peer::wave_mlp_tiles_v2::tests::resident_v2_exact_metadata_cannot_be_replaced_by_eleven_word_abi ... ok
+test engineering_gfx950::peer::wave_mlp_tiles_v2::tests::resident_v2_every_failure_poison_blocks_rearm_close_and_second_dispatch ... ok
+test engineering_gfx950::peer::wave_mlp_tiles_v2::tests::resident_v2_native_adapter_routes_to_private_guard_not_public_observer ... ok
+test engineering_gfx950::peer::wave_mlp_tiles_v2::tests::resident_v2_pending_or_wrong_completion_census_never_yields_completed_tokens ... ok
+test engineering_gfx950::peer::wave_mlp_tiles_v2::tests::resident_v2_refuses_digest_timeout_and_foreign_data_before_publication ... ok
+test engineering_gfx950::peer::wave_mlp_tiles_v2::tests::resident_v2_refuses_foreign_swapped_repeated_ranks_states_and_kernel_identity ... ok
+test engineering_gfx950::peer::wave_mlp_tiles_v2::tests::resident_v2_rejects_aliases_even_readonly_and_wrong_physical_extents ... ok
+test engineering_gfx950::peer::wave_mlp_tiles_v2::tests::resident_v2_refuses_each_initial_and_terminal_word_corruption ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 857 filtered out; finished in 0.01s
+

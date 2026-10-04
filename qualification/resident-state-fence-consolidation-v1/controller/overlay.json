@@ -1,0 +1,99 @@
+{
+  "schema": "ferric-p228-resident-state-fence-cpu-overlay-v1",
+  "baseline_head": "725ecc6a500ff49e7dfaefb38b027f6bcc223ebf",
+  "source_directory": "p228-resident-state-fence-consolidation-v2",
+  "preimages": {
+    "bytes": 1393,
+    "sha256": "855a066ba5e4b0deaf6aa1961d15d4e3155e90626f44964bf2280f1857d83721"
+  },
+  "files": [
+    {
+      "path": "crates/fe2o3-kfd/src/engineering_gfx950_peer_wave_mlp_tiles_state_v2.rs",
+      "before": {
+        "bytes": 11847,
+        "sha256": "c22f8245f938c886b36d3d6ba23b33ca33f5816b31440b6de85d05dbfb2f13f4"
+      },
+      "after": {
+        "bytes": 13228,
+        "sha256": "e4d666d4091b78ff0a69f8a59e31f250fca057778ee6c8281a5c858da269b38b"
+      }
+    },
+    {
+      "path": "crates/fe2o3-kfd/src/engineering_gfx950_peer_wave_mlp_tiles_state_v2_tests.rs",
+      "before": {
+        "bytes": 10728,
+        "sha256": "b0f0c2353d41c8c5dae1865492d3de754d826b2108f26be294aa71699575733d"
+      },
+      "after": {
+        "bytes": 13794,
+        "sha256": "20c56532895792cdd34cadd55ae02f2c9050539e201185f7446aad7653ecf27b"
+      }
+    },
+    {
+      "path": "crates/fe2o3-kfd/src/engineering_gfx950_peer_wave_mlp_tiles_v2.rs",
+      "before": {
+        "bytes": 13258,
+        "sha256": "3181c7f41f6f70a13f653741f438fa45d3609752487466ec5fc703c39a9150bb"
+      },
+      "after": {
+        "bytes": 13535,
+        "sha256": "62c2086dc2ff4ba6dc1cadf2ef5dd33418d399b4c5380c9ae9a5303b90ce3b83"
+      }
+    },
+    {
+      "path": "crates/fe2o3-kfd/src/engineering_gfx950_peer_wave_mlp_tiles_v2_tests.rs",
+      "before": {
+        "bytes": 16080,
+        "sha256": "d7968a0dcd614cce951d12af51c58f6ed55dc487dae37c3ad30ba2ba9fe6150b"
+      },
+      "after": {
+        "bytes": 16792,
+        "sha256": "0a6ec221ed7889f8e7fe88353266e65d5be3193429b536928d72d340906685ab"
+      }
+    },
+    {
+      "path": "crates/fe2o3-kfd/src/engineering_gfx950_peer_wave_qkv_attention_output_tiles_state_v6.rs",
+      "before": {
+        "bytes": 12523,
+        "sha256": "8f29773751462a09b97294700aede5325ddfdc30e6e2be54fcd6e63fb82b4d89"
+      },
+      "after": {
+        "bytes": 13922,
+        "sha256": "8bab65844f0beb5c2b15aad5d2a51bdd97c6b021ce6866d21edd9ce8c01d238a"
+      }
+    },
+    {
+      "path": "crates/fe2o3-kfd/src/engineering_gfx950_peer_wave_qkv_attention_output_tiles_state_v6_tests.rs",
+      "before": {
+        "bytes": 11459,
+        "sha256": "0519b3c74fc98fba1e9094f0c153f8bc6086457af7fd725b9391ecdd75c5ea26"
+      },
+      "after": {
+        "bytes": 14534,
+        "sha256": "c1c8db6987be6b416903b7f34ef36f9eec83d828f0feaadfd2c8a3f0012f4f21"
+      }
+    },
+    {
+      "path": "crates/fe2o3-kfd/src/engineering_gfx950_peer_wave_qkv_attention_output_tiles_v6.rs",
+      "before": {
+        "bytes": 11016,
+        "sha256": "be87d399c198114110e7850e63fd4149a0aa24d1bd6f19447eac66c466795b51"
+      },
+      "after": {
+        "bytes": 11280,
+        "sha256": "6041bc39791caa189a7fdb331a8029f1de3bf675f7aeed559c35a51465610f75"
+      }
+    },
+    {
+      "path": "crates/fe2o3-kfd/src/engineering_gfx950_peer_wave_qkv_attention_output_tiles_v6_tests.rs",
+      "before": {
+        "bytes": 16599,
+        "sha256": "7a08a365791d46d4461860c4171adabd78a16c6db4b602cc7fc26d7c10bd9270"
+      },
+      "after": {
+        "bytes": 17308,
+        "sha256": "96c76810599032bebe8700ec380ebf13831d5c9d47d6a585c8ecd54875102d15"
+      }
+    }
+  ]
+}

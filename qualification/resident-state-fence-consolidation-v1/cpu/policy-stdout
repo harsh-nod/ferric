@@ -1,0 +1,10 @@
+
+running 5 tests
+test engineering_gfx950::peer::performance::tests::full_group_fences_bracket_prevalidation_and_every_completion ... ok
+test engineering_gfx950::peer::performance::tests::completion_or_postcheck_failure_never_publishes_later_commands_or_success ... ok
+test engineering_gfx950::peer::performance::tests::malformed_later_command_prevents_every_publication ... ok
+test engineering_gfx950::peer::performance::tests::sequence_roster_rejects_mixed_foreign_or_unbounded_ranks ... ok
+test engineering_gfx950::peer::performance::tests::sequence_timeout_rejects_zero_overflow_and_excess_aggregate ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 862 filtered out; finished in 0.00s
+

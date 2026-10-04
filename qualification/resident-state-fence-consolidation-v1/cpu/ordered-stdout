@@ -1,0 +1,12 @@
+
+running 7 tests
+test engineering_gfx950::ordered_batch::tests::optional_arena_and_signals_are_reinitialized_after_confirmed_queue_rollover ... ok
+test engineering_gfx950::ordered_batch::tests::ordered_boundaries_use_dispatch_policy_without_changing_lifecycle_fences ... ok
+test engineering_gfx950::ordered_batch::tests::ordered_bounds_deadlines_and_every_retained_signal_fail_closed ... ok
+test engineering_gfx950::ordered_batch::tests::ordered_one_and_sixteen_stage_every_argument_before_one_publication_and_final_wait ... ok
+test engineering_gfx950::ordered_batch::tests::every_preparation_reset_publication_completion_and_exit_failure_is_terminal ... ok
+test engineering_gfx950::ordered_batch::tests::ordered_ring_capacity_wrap_and_identity_contract_remain_exact ... ok
+test engineering_gfx950::ordered_batch::tests::ordered_wire_has_separate_exact_schema_aggregate_deadline_and_limits ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 860 filtered out; finished in 0.00s
+
