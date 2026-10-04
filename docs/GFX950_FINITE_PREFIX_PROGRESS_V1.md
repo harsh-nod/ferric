@@ -6,19 +6,28 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Latest: the [four-step candidate supervisor](../qualification/projection-residual-decode-supervisor-v1/README.md)
+Latest: the [projection-residual four-step GPU run](../qualification/projection-residual-decode-native-v1/README.md)
+passed on `mi350`: four full 36-layer forwards, all 152 tensor captures,
+576 terminal state records, six idle-device audits and seven natural/reaped
+process leaves. One attempt completed without retry or forced cleanup.
+Output tokens were 67, 198, 25 and 16. This establishes execution and structural
+validity; independent framework comparison, full-model acceptance and sustained
+performance remain open.
+
+The [four-step candidate supervisor](../qualification/projection-residual-decode-supervisor-v1/README.md)
 passed 35 synthetic policy tests on `mi350`; the separate executable-selector
 suite passed all nine tests. Both retained unchanged sources with no skips.
 These suites did not run a model or GPU kernel. The selected executables also
-completed separate runtime dependency audits; the new GPU attempt is pending.
+completed separate runtime dependency audits; the new GPU attempt completed
+as recorded above.
 
 The [projection-residual four-step decode route](../qualification/projection-residual-decode-cpu-v1/README.md)
 passed joint CPU qualification on ASROCK through `mi350-2`: 1,022 passed,
 four unchanged ignores, all 87 commands naturally completed and reaped,
 and all 17 executables built. The 21 integrated source bodies match the
 remotely tested files. The opt-in route selects the corrected residual image
-across all 36 layers while preserving existing routes. Its GPU run and
-independent numerical comparison remain pending.
+across all 36 layers while preserving existing routes. Its GPU run completed
+as recorded above; independent numerical acceptance remains pending.
 
 The [captured SiLU diagnostic](../qualification/silu-materialization-diagnostic-v1/README.md)
 passed all 18 synthetic tests on ASROCK. Its actual retained-data run reproduced
