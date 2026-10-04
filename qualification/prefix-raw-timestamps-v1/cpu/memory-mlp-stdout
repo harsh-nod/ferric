@@ -1,0 +1,9 @@
+
+running 4 tests
+test memory_linux::wave_mlp_tiles_v2::tests::constructs_all_548_real_atomics_without_touching_page_tail ... ok
+test memory_linux::wave_mlp_tiles_v2::tests::rearm_refuses_wrong_request_and_mapping_without_any_atomic_store ... ok
+test memory_linux::wave_mlp_tiles_v2::tests::rearm_stores_all_548_initialized_atomics_and_preserves_page_tail ... ok
+test memory_linux::wave_mlp_tiles_v2::tests::refuses_old_same_page_state_short_dead_inaccessible_and_unaligned_mappings ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 882 filtered out; finished in 0.00s
+

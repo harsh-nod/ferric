@@ -1,0 +1,11 @@
+{
+  "schema": "ferric-p228-prefix-raw-timestamps-source-preimages-v1",
+  "base_commit": "3d217aabc3c48e9c767fa28a05bd596987c29f9d",
+  "files": {
+    "crates/fe2o3-kfd/src/engineering_gfx950_peer_wave_qkv_attention_output_tiles_v6.rs": "6041bc39791caa189a7fdb331a8029f1de3bf675f7aeed559c35a51465610f75",
+    "crates/fe2o3-kfd/src/engineering_gfx950_peer_wave_qkv_attention_output_tiles_v6_tests.rs": "96c76810599032bebe8700ec380ebf13831d5c9d47d6a585c8ecd54875102d15"
+  },
+  "new_files": [
+    "crates/fe2o3-kfd/src/engineering_gfx950_peer_wave_qkv_attention_output_tiles_timestamp_tests.rs"
+  ]
+}

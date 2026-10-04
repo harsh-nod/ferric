@@ -1,0 +1,21 @@
+test_main_guard_precedes_package_or_authenticated_helpers (test_run.GuardTests) ... ok
+test_optimized_or_inherited_pythonoptimize_refused (test_run.GuardTests) ... ok
+test_pin_shape_rejects_bool_negative_digest_case_and_relative_path (test_run.GuardTests) ... ok
+test_compiled_runtime_inventory_is_an_exact_extension (test_run.InventoryTests) ... ok
+test_existing_filters_survive_and_only_prefix_resident_count_grows (test_run.InventoryTests) ... ok
+test_extra_coverage_keeps_raw_signal_and_queue_tests_distinct (test_run.InventoryTests) ... ok
+test_new_test_names_cover_public_refusal_and_real_poison_join (test_run.InventoryTests) ... ok
+test_added_test_roster_rejects_missing_duplicate_or_renamed_tests (test_run.SourceTests) ... ok
+test_all_preimages_are_checked_before_reading_replacement (test_run.SourceTests) ... ok
+test_clean_archive_pair_binds_both_actual_commits_and_trees (test_run.SourceTests) ... ok
+test_exact_three_file_overlay_and_nine_authored_tests (test_run.SourceTests) ... ok
+test_old_generation_and_archive_path_substitution_refused (test_run.SourceTests) ... ok
+test_overlay_rejects_missing_duplicate_or_foreign_destinations (test_run.SourceTests) ... ok
+test_overlay_rejects_unformatted_generation_and_wrong_new_preimage (test_run.SourceTests) ... ok
+test_pending_archive_or_source_pins_fail_closed (test_run.SourceTests) ... ok
+test_source_schema_and_roster_are_closed (test_run.SourceTests) ... ok
+
+----------------------------------------------------------------------
+Ran 16 tests in 0.002s
+
+OK

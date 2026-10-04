@@ -1,0 +1,59 @@
+{
+  "schema": "ferric-p228-prefix-raw-timestamps-cpu-overlay-v1",
+  "source_manifest": {
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-raw-timestamps-source-inputs-v228-v1.json",
+    "bytes": 858,
+    "sha256": "55cca48de457a203ac5b29277920a5ac2c5181387b1c2d06ccd2ccae091a8674"
+  },
+  "runtime_preimages": {
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-prefix-raw-timestamps-runtime-v2/preimages.json",
+    "bytes": 596,
+    "sha256": "e4391447a2a7fc5f336b243554941ab17593baf9c4887294824540c3b7a39480"
+  },
+  "files": [
+    {
+      "path": "crates/fe2o3-kfd/src/engineering_gfx950_peer_wave_qkv_attention_output_tiles_v6.rs",
+      "source": "p228-prefix-raw-timestamps-runtime-v2/source/engineering_gfx950_peer_wave_qkv_attention_output_tiles_v6.rs",
+      "before": {
+        "bytes": 11280,
+        "sha256": "6041bc39791caa189a7fdb331a8029f1de3bf675f7aeed559c35a51465610f75"
+      },
+      "after": {
+        "bytes": 14450,
+        "sha256": "7a9a1e7c8423f8e3210df57afcf3ada74034003fcdd01a562868e9e89e532190"
+      }
+    },
+    {
+      "path": "crates/fe2o3-kfd/src/engineering_gfx950_peer_wave_qkv_attention_output_tiles_v6_tests.rs",
+      "source": "p228-prefix-raw-timestamps-runtime-v2/source/engineering_gfx950_peer_wave_qkv_attention_output_tiles_v6_tests.rs",
+      "before": {
+        "bytes": 17308,
+        "sha256": "96c76810599032bebe8700ec380ebf13831d5c9d47d6a585c8ecd54875102d15"
+      },
+      "after": {
+        "bytes": 20196,
+        "sha256": "f4c46662aa57d34cf23e0e8e4a59fddc5822710516eb466ed42e65c03b258272"
+      }
+    },
+    {
+      "path": "crates/fe2o3-kfd/src/engineering_gfx950_peer_wave_qkv_attention_output_tiles_timestamp_tests.rs",
+      "source": "p228-prefix-raw-timestamps-runtime-v2/source/engineering_gfx950_peer_wave_qkv_attention_output_tiles_timestamp_tests.rs",
+      "before": null,
+      "after": {
+        "bytes": 3925,
+        "sha256": "6249f307470e3f66ad779e7677203cdc3d3878c76e8f46e71ca0def8c483804b"
+      }
+    }
+  ],
+  "added_runtime_tests": [
+    "engineering_gfx950::peer::wave_qkv_attention_output_tiles_v6::tests::resident_v6_raw_entry_invalid_deadline_poison_blocks_both_modes_and_rearm",
+    "engineering_gfx950::peer::wave_qkv_attention_output_tiles_v6::tests::resident_v6_raw_entry_routes_to_native_validation_before_activation",
+    "engineering_gfx950::peer::wave_qkv_attention_output_tiles_v6::timestamp_tests::timestamp_prefix_join_checks_every_terminal_word_on_both_ranks",
+    "engineering_gfx950::peer::wave_qkv_attention_output_tiles_v6::timestamp_tests::timestamp_prefix_join_failure_enters_existing_group_poison_path",
+    "engineering_gfx950::peer::wave_qkv_attention_output_tiles_v6::timestamp_tests::timestamp_prefix_join_preserves_real_state_host_and_raw_observations",
+    "engineering_gfx950::peer::wave_qkv_attention_output_tiles_v6::timestamp_tests::timestamp_prefix_join_rejects_foreign_group_or_duplicate_device",
+    "engineering_gfx950::peer::wave_qkv_attention_output_tiles_v6::timestamp_tests::timestamp_prefix_join_rejects_host_timer_substitution",
+    "engineering_gfx950::peer::wave_qkv_attention_output_tiles_v6::timestamp_tests::timestamp_prefix_join_rejects_missing_or_extra_observations",
+    "engineering_gfx950::peer::wave_qkv_attention_output_tiles_v6::timestamp_tests::timestamp_prefix_join_rejects_wrong_or_duplicate_rank_order"
+  ]
+}

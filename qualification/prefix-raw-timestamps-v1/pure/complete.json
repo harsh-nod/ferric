@@ -1,0 +1,35 @@
+{
+  "controller_sha256": "81d4f76d2fb6174eabd869606c6e0de6a37ce5d4ca9a2936332e41046a75b2e2",
+  "elapsed_seconds": 0.025046008871868253,
+  "errors": 0,
+  "failures": 0,
+  "full_model_acceptance": false,
+  "gpu_execution": false,
+  "manifest_sha256": "fb938584a0457bc9f0a82007990bb17eb82bd11c999b9fdd24e9bbfb1432c76c",
+  "native_execution": false,
+  "numerical_acceptance": false,
+  "passed": true,
+  "performance_claim": false,
+  "production_authority": false,
+  "schema": "ferric-p228-prefix-raw-timestamps-pure-v1",
+  "skipped": 0,
+  "source_postchecks_passed": true,
+  "source_sha256": "d425469ce2ac3e0eab8784579270ee1a50ced2332c932b13ad35176fddd41928",
+  "sources_after": {
+    "bytes": 1028,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-raw-timestamps-pure-v228-v1/sources-after.json",
+    "sha256": "d425469ce2ac3e0eab8784579270ee1a50ced2332c932b13ad35176fddd41928"
+  },
+  "sources_before": {
+    "bytes": 1028,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-raw-timestamps-pure-v228-v1/sources-before.json",
+    "sha256": "d425469ce2ac3e0eab8784579270ee1a50ced2332c932b13ad35176fddd41928"
+  },
+  "synthetic_policy_tests_only": true,
+  "tests": 16,
+  "transcript": {
+    "bytes": 1524,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-raw-timestamps-pure-v228-v1/tests.log",
+    "sha256": "64b199e608ef0571e8ea902ad218be046b74520d42998b7acb4ad3679846d7af"
+  }
+}

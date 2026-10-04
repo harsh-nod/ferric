@@ -1,0 +1,28 @@
+   Compiling fe2o3-kfd v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-raw-timestamps-cpu-v228-v1/sources/fe2o3/crates/fe2o3-kfd)
+warning: unused import: `prefix::Transaction`
+ --> /home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-raw-timestamps-cpu-v228-v1/sources/fe2o3/crates/fe2o3-kfd/src/engineering_gfx950_resident_layer_tp2_v1.rs:7:5
+  |
+7 | use prefix::Transaction as _;
+  |     ^^^^^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: function `gfx942_cwsr_header_bytes` is never used
+   --> /home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-raw-timestamps-cpu-v228-v1/sources/fe2o3/crates/fe2o3-kfd/src/queue_submit.rs:406:15
+    |
+406 | pub(crate) fn gfx942_cwsr_header_bytes(
+    |               ^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: function `initialize_gfx942_cwsr_headers` is never used
+   --> /home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-raw-timestamps-cpu-v228-v1/sources/fe2o3/crates/fe2o3-kfd/src/queue_submit.rs:415:15
+    |
+415 | pub(crate) fn initialize_gfx942_cwsr_headers(
+    |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+   Compiling ferric-tp-peer-finite-engineering-worker-v1 v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-raw-timestamps-cpu-v228-v1/sources/ferric/adapters/tp-peer-finite-engineering-worker-v1)
+warning: `fe2o3-kfd` (lib) generated 3 warnings
+    Finished `test` profile [optimized] target(s) in 54.48s
+     Running unittests src/lib.rs (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-raw-timestamps-cpu-v228-v1/target/debug/deps/ferric_tp_peer_finite_engineering_worker_v1-6724253ca5eb2519)
+     Running tests/shared_wire.rs (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-raw-timestamps-cpu-v228-v1/target/debug/deps/shared_wire-5601c357ce8cf79d)

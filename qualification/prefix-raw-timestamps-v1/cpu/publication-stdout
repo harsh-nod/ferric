@@ -1,0 +1,21 @@
+
+running 16 tests
+test engineering_gfx950::peer::round::tests::cross_rank_aliases_reject_each_writer_and_allow_only_independent_ranges ... ok
+test engineering_gfx950::peer::round::tests::every_publication_observation_fault_stops_and_poisons_even_after_prior_publish ... ok
+test engineering_gfx950::peer::round::tests::every_publication_observes_a_fresh_full_group_before_all_queue_exceptions ... ok
+test engineering_gfx950::peer::round::tests::every_round_fault_is_terminal_without_partial_success_or_more_publication ... ok
+test engineering_gfx950::peer::round::tests::explicit_operational_or_profiled_path_keeps_individual_exception_order ... ok
+test engineering_gfx950::peer::round::tests::host_observation_keeps_publication_failure_cutoff_before_successful_result ... ok
+test engineering_gfx950::peer::round::tests::host_observation_timers_do_not_change_full_publication_routing_or_trace ... ok
+test engineering_gfx950::peer::round::tests::publication_currentness_refuses_invalid_rosters_before_observation ... ok
+test engineering_gfx950::peer::round::tests::publication_sharing_does_not_move_wait_or_completion_checkpoints ... ok
+test engineering_gfx950::peer::round::tests::publication_sharing_never_enables_operational_mode_or_changes_profile_accounting ... ok
+test engineering_gfx950::peer::round::tests::round_entry_rejection_quarantines_without_native_resources ... ok
+test engineering_gfx950::peer::round::tests::round_alias_checker_bounds_empty_oversized_and_overflow_ranges ... ok
+test engineering_gfx950::peer::round::tests::round_publishes_all_before_polling_and_preserves_input_order ... ok
+test engineering_gfx950::peer::round::tests::round_rejects_invalid_count_before_any_backend_operation ... ok
+test engineering_gfx950::peer::round::tests::round_roster_admits_unique_partial_and_reordered_ranks_only ... ok
+test engineering_gfx950::peer::round::tests::round_timeouts_reject_zero_overflow_and_aggregate_excess ... ok
+
+test result: ok. 16 passed; 0 failed; 0 ignored; 0 measured; 870 filtered out; finished in 0.00s
+

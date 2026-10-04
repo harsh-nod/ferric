@@ -1,0 +1,11 @@
+{
+  "schema": "ferric-p228-prefix-raw-timestamps-cpu-package-v1",
+  "pure_tests": 16,
+  "test_census": {"test_run.py": 16},
+  "files": [
+    {"path": "run.py", "bytes": 22386, "sha256": "91dd8ffc848259644aa8903f9cb83f8eda924cbf2a63c603adcf093a6b24094f"},
+    {"path": "test_run.py", "bytes": 8937, "sha256": "58b367eacb6a460cf9f7265ed1748bf7acb937c5d0c9cc4fdc802d68a27112ca"},
+    {"path": "README.md", "bytes": 5064, "sha256": "451c0bd777ca4e07792c1c0afb0172a60734e8ade78af6dc703e63ec3a0590a0"},
+    {"path": "overlay.json", "bytes": 3431, "sha256": "dd35d8848a8f14fcb3b911c3fd839dd0f8a8bbb9c782febc7c99f0822f507ddc"}
+  ]
+}
