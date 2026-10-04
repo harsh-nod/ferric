@@ -1,0 +1,127 @@
+{
+  "actual_result": {
+    "bytes": 573627,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/silu-materialization-diagnostic-v228-v1/complete.json",
+    "sha256": "c7b0406e5ba6ac4974b7769cd6916afba0b6b597986d070df1f6c3d731bd43ee"
+  },
+  "comparison_receipt": {
+    "bytes": 254897,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-residual-comparison-v228-v1/complete.json",
+    "sha256": "affe711d0dcac8e95609396c74e0f546ca09d9d6a4abf798eab5bfc72a7e7551"
+  },
+  "compiled_lineage": {
+    "image": {
+      "bytes": 33112,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-down2-checked-probe-v228-v1/emitted/artifact.hsaco",
+      "sha256": "65a76f917c12476f4814174ee39d515642a643a0352c6609ee514955a6a97449"
+    },
+    "llvm": {
+      "bytes": 274665,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-down2-checked-probe-v228-v1/extracted/module.ll",
+      "sha256": "d6001c014f8160b1355008742f290fdd58f78c0f12a039aa6d577bbb82cad6fb"
+    },
+    "lowering": {
+      "bytes": 23895,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-down2-checked-probe-v228-v1/complete.json",
+      "sha256": "0ba363b9b4106e5293e4e6152d719c795c2d58f05e062b6a67570f194e0eb68e"
+    },
+    "snapshots": [
+      {
+        "bytes": 6280721,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-down2-checked-probe-v228-v1/before.json",
+        "sha256": "ff7487ca2fc98c980add9357a6db45733330aa48d9b9d462db037887f648a948"
+      },
+      {
+        "bytes": 6963440,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-down2-checked-probe-v228-v1/after.json",
+        "sha256": "733dfe9d74c3de0b3f089602affa0f21c9b0f5505db42ecea55afc94194d6fde"
+      }
+    ],
+    "source": {
+      "bytes": 7417,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-down2-checked-probe-v228-v1/fixture/src/mlp_numerics_v1.rs",
+      "sha256": "2e0edf9efdc1caf19ea574ba9dfeffa375072584d27e21a31308539a6b8115d1"
+    }
+  },
+  "framework_control": {
+    "byte_equal": true,
+    "elements": 12288,
+    "exact_words": 12288,
+    "predicted_sha256": "f26e8d72ce28731ad599ea624948ed497a70f52e484b1ec8bc564d4cedbe0438",
+    "silu_input_equals_gate": true
+  },
+  "full_model_correctness": false,
+  "gpu_execution": false,
+  "materialization_only_cause_proven": false,
+  "native_exp_error_measured": false,
+  "native_silu_intermediate_observed": false,
+  "numerical_acceptance": false,
+  "original_consumed_files": 102,
+  "performance_claim": false,
+  "publication_rechecks_tensor_bodies": false,
+  "publication_reruns_arithmetic": false,
+  "pure_result": {
+    "bytes": 3100,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/silu-materialization-pure-v228-v1/complete.json",
+    "sha256": "d6739b8a8b3e3ea7e0e48c26f0fdf1ebdb9d1a258c7cbb2caf19f8aa87b9e4d6"
+  },
+  "ranks": [
+    {
+      "conditioning": "genuine BF16 SiLU at identical gate; actual native BF16 up",
+      "elements": 6144,
+      "native_different_materialized": 1594,
+      "native_equal_materialized": 4317,
+      "native_silu_intermediate_observed": false,
+      "partition_counts": {
+        "different_gate_different_up": 8,
+        "different_gate_same_up": 225,
+        "same_gate_different_up": 209,
+        "same_gate_same_up": 5702
+      },
+      "predicted_bf16_sha256": "a92b1d728c64154c1b8c48845d17863d020dc673e4aec92ddfd76d68df7c5b11",
+      "rank": 0,
+      "same_gate_elements": 5911,
+      "same_gate_same_up_native_different_framework_count": 1542
+    },
+    {
+      "conditioning": "genuine BF16 SiLU at identical gate; actual native BF16 up",
+      "elements": 6144,
+      "native_different_materialized": 1542,
+      "native_equal_materialized": 4416,
+      "native_silu_intermediate_observed": false,
+      "partition_counts": {
+        "different_gate_different_up": 5,
+        "different_gate_same_up": 181,
+        "same_gate_different_up": 235,
+        "same_gate_same_up": 5723
+      },
+      "predicted_bf16_sha256": "217076b7c352df4c40542a75ea8bb8fb5f7214f8c1eab52e35d334b041be7774",
+      "rank": 1,
+      "same_gate_elements": 5958,
+      "same_gate_same_up_native_different_framework_count": 1473
+    }
+  ],
+  "schema": "ferric-silu-materialization-publication-v1",
+  "sources": {
+    "README.md": {
+      "bytes": 4704,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-silu-materialization-diagnostic-v1/README.md",
+      "sha256": "cd1532e06d1f618b2baca43b89f6db3becc5207ebbe8c63ea0da4e369767968f"
+    },
+    "diagnostic.py": {
+      "bytes": 6066,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-silu-materialization-diagnostic-v1/diagnostic.py",
+      "sha256": "19ac2cf361d5653b4438b77d5a7f5501961ffe1dcabb2606fbf681b5175ab3f8"
+    },
+    "run.py": {
+      "bytes": 9359,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-silu-materialization-diagnostic-v1/run.py",
+      "sha256": "4061ca6148fd369e7872e98242bb3da1c2a25022023c2af3ab4b11355a5dac15"
+    },
+    "test_diagnostic.py": {
+      "bytes": 9908,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-silu-materialization-diagnostic-v1/test_diagnostic.py",
+      "sha256": "3de01407d0d2f5d3c61916066a74d8708dcdc184a0b3c3d7a08e9df8adecf26f"
+    }
+  }
+}

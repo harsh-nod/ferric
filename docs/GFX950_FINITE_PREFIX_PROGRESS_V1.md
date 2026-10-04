@@ -6,7 +6,15 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Latest: the [projection-residual native capture and comparison](../qualification/projection-residual-native-capture-v1/README.md)
+Latest: the [captured SiLU diagnostic](../qualification/silu-materialization-diagnostic-v1/README.md)
+passed all 18 synthetic tests on ASROCK. Its actual retained-data run reproduced
+all 12,288 framework products from captured BF16 SiLU and up. With native gate
+and up both identical to the framework, 1,542/5,702 rank-0 and 1,473/5,723 rank-1
+products still differ. This localizes a remaining activation-path difference;
+it does not establish missing materialization as the only cause. No new GPU
+candidate, tolerance or full-model acceptance is claimed by this diagnostic.
+
+The [projection-residual native capture and comparison](../qualification/projection-residual-native-capture-v1/README.md)
 completed on `mi350`, with the independent comparison on `mi350-2`. All 28 arrays,
 fourteen unchanged upstream arrays, full KV checks and six audits passed. Both
 residual stages matched the independent conditional oracle on both ranks:

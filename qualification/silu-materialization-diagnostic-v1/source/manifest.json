@@ -1,0 +1,55 @@
+{
+  "schema": "ferric-p228-silu-materialization-package-v1",
+  "status": "authored-not-executed",
+  "pure_tests": 18,
+  "files": {
+    "README.md": {
+      "bytes": 4704,
+      "sha256": "cd1532e06d1f618b2baca43b89f6db3becc5207ebbe8c63ea0da4e369767968f"
+    },
+    "diagnostic.py": {
+      "bytes": 6066,
+      "sha256": "19ac2cf361d5653b4438b77d5a7f5501961ffe1dcabb2606fbf681b5175ab3f8"
+    },
+    "run.py": {
+      "bytes": 9359,
+      "sha256": "4061ca6148fd369e7872e98242bb3da1c2a25022023c2af3ab4b11355a5dac15"
+    },
+    "test_diagnostic.py": {
+      "bytes": 9908,
+      "sha256": "3de01407d0d2f5d3c61916066a74d8708dcdc184a0b3c3d7a08e9df8adecf26f"
+    }
+  },
+  "test_census": {
+    "test_diagnostic.py": [
+      "test_signed_zero",
+      "test_normal_products_and_sign",
+      "test_binary32_halfway_rounds_even_both_directions",
+      "test_binary32_subnormal_halfway_and_negative_zero",
+      "test_normal_subnormal_boundary",
+      "test_bf16_product_ties_use_existing_oracle",
+      "test_bf16_tiny_and_underflow",
+      "test_nonfinite_inputs_rejected_even_with_zero",
+      "test_intermediate_and_final_overflow_rejected",
+      "test_invalid_word_types_and_ranges",
+      "test_fraction_neighbor_oracle_deterministic_vectors",
+      "test_full_framework_control_and_nonclaims",
+      "test_same_gate_partition_uses_native_up",
+      "test_prediction_mismatch_preserved_without_acceptance",
+      "test_different_gate_is_excluded_not_called_exp_error",
+      "test_gate_silu_input_join_rejected",
+      "test_wrong_framework_product_rejected",
+      "test_extent_roster_and_nonfinite_capture_rejected"
+    ]
+  },
+  "external_dependencies": {
+    "reader_sha256": "9c3db491d4f8c20890b045474bd1ab5bd8565d42916a8eb7772c0eb07c44717e",
+    "bf16_oracle_sha256": "551f89f968cad8f63073ca975346c593a31dad624115a93059b28a328e312ef3",
+    "actual_comparison_receipt_sha256": "affe711d0dcac8e95609396c74e0f546ca09d9d6a4abf798eab5bfc72a7e7551",
+    "other_helpers": "Exact comparison_sources FilePins in the immutable actual comparison receipt"
+  },
+  "gpu_execution": false,
+  "numerical_acceptance": false,
+  "performance_claim": false,
+  "production_authority": false
+}

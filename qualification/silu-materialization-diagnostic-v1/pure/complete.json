@@ -1,0 +1,58 @@
+{
+  "controller": {
+    "bytes": 4397,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/run_silu_materialization_pure_p228_v1.py",
+    "sha256": "b7a0e5f8679afa535f8735140a5b1b1a773ad8bb597ceba6bf5eea62eb841484"
+  },
+  "errors": 0,
+  "failures": 0,
+  "gpu_execution": false,
+  "names": [
+    "test_diagnostic.ExactProductTests.test_bf16_product_ties_use_existing_oracle",
+    "test_diagnostic.ExactProductTests.test_bf16_tiny_and_underflow",
+    "test_diagnostic.ExactProductTests.test_binary32_halfway_rounds_even_both_directions",
+    "test_diagnostic.ExactProductTests.test_binary32_subnormal_halfway_and_negative_zero",
+    "test_diagnostic.ExactProductTests.test_different_gate_is_excluded_not_called_exp_error",
+    "test_diagnostic.ExactProductTests.test_extent_roster_and_nonfinite_capture_rejected",
+    "test_diagnostic.ExactProductTests.test_fraction_neighbor_oracle_deterministic_vectors",
+    "test_diagnostic.ExactProductTests.test_full_framework_control_and_nonclaims",
+    "test_diagnostic.ExactProductTests.test_gate_silu_input_join_rejected",
+    "test_diagnostic.ExactProductTests.test_intermediate_and_final_overflow_rejected",
+    "test_diagnostic.ExactProductTests.test_invalid_word_types_and_ranges",
+    "test_diagnostic.ExactProductTests.test_nonfinite_inputs_rejected_even_with_zero",
+    "test_diagnostic.ExactProductTests.test_normal_products_and_sign",
+    "test_diagnostic.ExactProductTests.test_normal_subnormal_boundary",
+    "test_diagnostic.ExactProductTests.test_prediction_mismatch_preserved_without_acceptance",
+    "test_diagnostic.ExactProductTests.test_same_gate_partition_uses_native_up",
+    "test_diagnostic.ExactProductTests.test_signed_zero",
+    "test_diagnostic.ExactProductTests.test_wrong_framework_product_rejected"
+  ],
+  "numerical_acceptance": false,
+  "oracle": {
+    "bytes": 4347,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-independent-layer-reference-v1/helpers/residual_oracle.py",
+    "sha256": "551f89f968cad8f63073ca975346c593a31dad624115a93059b28a328e312ef3"
+  },
+  "passed": true,
+  "performance_claim": false,
+  "schema": "ferric-silu-materialization-pure-v1",
+  "skipped": 0,
+  "source_postchecks_passed": true,
+  "sources_after": {
+    "bytes": 1336,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/silu-materialization-pure-v228-v1/sources-after.json",
+    "sha256": "b6c9a915c20e0b47b4e7cc9a752421920eece41c2934dfa60df8e2192809ee88"
+  },
+  "sources_before": {
+    "bytes": 1336,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/silu-materialization-pure-v228-v1/sources-before.json",
+    "sha256": "b6c9a915c20e0b47b4e7cc9a752421920eece41c2934dfa60df8e2192809ee88"
+  },
+  "synthetic_only": true,
+  "tests": 18,
+  "transcript": {
+    "bytes": 1614,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/silu-materialization-pure-v228-v1/tests.log",
+    "sha256": "b1be4c0baaabcce30c237ea24e13a27f6560eb9eb120cca0cd9229ae8b1e0f14"
+  }
+}

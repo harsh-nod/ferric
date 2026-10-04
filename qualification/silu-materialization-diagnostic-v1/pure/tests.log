@@ -1,0 +1,23 @@
+test_bf16_product_ties_use_existing_oracle (test_diagnostic.ExactProductTests) ... ok
+test_bf16_tiny_and_underflow (test_diagnostic.ExactProductTests) ... ok
+test_binary32_halfway_rounds_even_both_directions (test_diagnostic.ExactProductTests) ... ok
+test_binary32_subnormal_halfway_and_negative_zero (test_diagnostic.ExactProductTests) ... ok
+test_different_gate_is_excluded_not_called_exp_error (test_diagnostic.ExactProductTests) ... ok
+test_extent_roster_and_nonfinite_capture_rejected (test_diagnostic.ExactProductTests) ... ok
+test_fraction_neighbor_oracle_deterministic_vectors (test_diagnostic.ExactProductTests) ... ok
+test_full_framework_control_and_nonclaims (test_diagnostic.ExactProductTests) ... ok
+test_gate_silu_input_join_rejected (test_diagnostic.ExactProductTests) ... ok
+test_intermediate_and_final_overflow_rejected (test_diagnostic.ExactProductTests) ... ok
+test_invalid_word_types_and_ranges (test_diagnostic.ExactProductTests) ... ok
+test_nonfinite_inputs_rejected_even_with_zero (test_diagnostic.ExactProductTests) ... ok
+test_normal_products_and_sign (test_diagnostic.ExactProductTests) ... ok
+test_normal_subnormal_boundary (test_diagnostic.ExactProductTests) ... ok
+test_prediction_mismatch_preserved_without_acceptance (test_diagnostic.ExactProductTests) ... ok
+test_same_gate_partition_uses_native_up (test_diagnostic.ExactProductTests) ... ok
+test_signed_zero (test_diagnostic.ExactProductTests) ... ok
+test_wrong_framework_product_rejected (test_diagnostic.ExactProductTests) ... ok
+
+----------------------------------------------------------------------
+Ran 18 tests in 0.539s
+
+OK

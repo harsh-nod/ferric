@@ -1,0 +1,27 @@
+{
+  "README.md": {
+    "bytes": 4704,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-silu-materialization-diagnostic-v1/README.md",
+    "sha256": "cd1532e06d1f618b2baca43b89f6db3becc5207ebbe8c63ea0da4e369767968f"
+  },
+  "diagnostic.py": {
+    "bytes": 6066,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-silu-materialization-diagnostic-v1/diagnostic.py",
+    "sha256": "19ac2cf361d5653b4438b77d5a7f5501961ffe1dcabb2606fbf681b5175ab3f8"
+  },
+  "manifest.json": {
+    "bytes": 2173,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-silu-materialization-diagnostic-v1/manifest.json",
+    "sha256": "9cedc8f71cd4eea8f7559ebdfdc854402be32b3ffe06ccfb097564b294452dc6"
+  },
+  "run.py": {
+    "bytes": 9359,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-silu-materialization-diagnostic-v1/run.py",
+    "sha256": "4061ca6148fd369e7872e98242bb3da1c2a25022023c2af3ab4b11355a5dac15"
+  },
+  "test_diagnostic.py": {
+    "bytes": 9908,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-silu-materialization-diagnostic-v1/test_diagnostic.py",
+    "sha256": "3de01407d0d2f5d3c61916066a74d8708dcdc184a0b3c3d7a08e9df8adecf26f"
+  }
+}
