@@ -1,0 +1,32 @@
+{
+  "README.md": {
+    "bytes": 5948,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-silu-materialized-lowering-v1/README.md",
+    "sha256": "976ce09c53b0d65ae3aec89321360f8300955163ef0e5fa5e8705c9cb13f14b4"
+  },
+  "contracts.py": {
+    "bytes": 4773,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-silu-materialized-lowering-v1/contracts.py",
+    "sha256": "d82facce758c363f13cf97a30cdc04d02ed4673278f53b4a11d9c83fb309f539"
+  },
+  "controller": {
+    "bytes": 3961,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/run_silu_lowering_pure_p228_v1.py",
+    "sha256": "80819ec522b16560add09fccefc04d98477a829538722671abe4e0cbc3ace853"
+  },
+  "manifest.json": {
+    "bytes": 569,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-silu-materialized-lowering-v1/manifest.json",
+    "sha256": "24ff0ec4b86f2e60b7945b06ede8bcdec4fbd99131d33c3eabdb7c22dfb1e8b3"
+  },
+  "run.py": {
+    "bytes": 37315,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-silu-materialized-lowering-v1/run.py",
+    "sha256": "b7a66358a5a2eb53c03842f455cc85e1f2c68ca62b5152c9ad03e357aaa5d8e5"
+  },
+  "test_run.py": {
+    "bytes": 19371,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-silu-materialized-lowering-v1/test_run.py",
+    "sha256": "9ac727a34366345755fd3f54445a38b7977e901e99944e66752d7ea7adbe39af"
+  }
+}

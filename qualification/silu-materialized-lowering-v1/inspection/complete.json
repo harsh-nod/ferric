@@ -1,0 +1,1718 @@
+{
+  "archive": {
+    "bytes": 6957541,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/silu-materialized-inspection-v228-v1/retained.tar.gz",
+    "sha256": "f3e04a89465440dd636bb6a36ef6dc4fa8bdfeec89249d4f838f33563c7ffc59"
+  },
+  "candidate_cpu": {
+    "bytes": 84947,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/silu-materialized-cpu-v228-v1/complete.json",
+    "sha256": "e139729d8fa95715ef8017679ee21f1175ba302b681785789e3dc84137508a30"
+  },
+  "cargo_cache_exported": false,
+  "completion": {
+    "bytes": 25125,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-silu-materialized-checked-probe-v228-v1/complete.json",
+    "sha256": "fd7d4c792dc7ddaa831b3372549fe3896a18e8c94b96598b553df94156d949b4"
+  },
+  "control_flow_equivalence_proved": false,
+  "controller": {
+    "bytes": 17321,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-silu-materialized-inspection-v1/inspect.py",
+    "sha256": "b82f3a59be986c1f60ec88daf38affb56c3c0c8aa3fb2e80471450c5b4f34127"
+  },
+  "exported_inputs": [
+    {
+      "bytes": 20305,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-silu-materialized-cpu-v1/run.py",
+      "sha256": "c083d3fc80405d10767d1a0d231965e240bdee9953978bf8142e2ad3935c1f82"
+    },
+    {
+      "bytes": 17321,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-silu-materialized-inspection-v1/inspect.py",
+      "sha256": "b82f3a59be986c1f60ec88daf38affb56c3c0c8aa3fb2e80471450c5b4f34127"
+    },
+    {
+      "bytes": 3408,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-silu-materialized-kernel-v1/source-manifest.json",
+      "sha256": "ca0bafcdd0297d2d849770791cf04686b33f048402f0fb5cc451183217acb276"
+    },
+    {
+      "bytes": 5948,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-silu-materialized-lowering-v1/README.md",
+      "sha256": "976ce09c53b0d65ae3aec89321360f8300955163ef0e5fa5e8705c9cb13f14b4"
+    },
+    {
+      "bytes": 4773,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-silu-materialized-lowering-v1/contracts.py",
+      "sha256": "d82facce758c363f13cf97a30cdc04d02ed4673278f53b4a11d9c83fb309f539"
+    },
+    {
+      "bytes": 569,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-silu-materialized-lowering-v1/manifest.json",
+      "sha256": "24ff0ec4b86f2e60b7945b06ede8bcdec4fbd99131d33c3eabdb7c22dfb1e8b3"
+    },
+    {
+      "bytes": 37315,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-silu-materialized-lowering-v1/run.py",
+      "sha256": "b7a66358a5a2eb53c03842f455cc85e1f2c68ca62b5152c9ad03e357aaa5d8e5"
+    },
+    {
+      "bytes": 19371,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-silu-materialized-lowering-v1/test_run.py",
+      "sha256": "9ac727a34366345755fd3f54445a38b7977e901e99944e66752d7ea7adbe39af"
+    },
+    {
+      "bytes": 23895,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-down2-checked-probe-v228-v1/complete.json",
+      "sha256": "0ba363b9b4106e5293e4e6152d719c795c2d58f05e062b6a67570f194e0eb68e"
+    },
+    {
+      "bytes": 252032,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-down2-checked-probe-v228-v1/disassembly-stdout",
+      "sha256": "9ae3d9709ce3d649368982a447d3844bf18b2525bafa291912d090b05b0cb680"
+    },
+    {
+      "bytes": 5151,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-down2-checked-probe-v228-v1/elf-notes-stdout",
+      "sha256": "41b16d07dfe178304b00bf83da8632049edfba70f5fd9cb1abe7984badcc0bcb"
+    },
+    {
+      "bytes": 274665,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-down2-checked-probe-v228-v1/extracted/module.ll",
+      "sha256": "d6001c014f8160b1355008742f290fdd58f78c0f12a039aa6d577bbb82cad6fb"
+    },
+    {
+      "bytes": 2738,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-silu-materialized-checked-probe-v228-v1/actual-inert-join-command.json",
+      "sha256": "17486bbd394100726d821c5b6b992c0d660abc5a7d00d96923c50e842804e294"
+    },
+    {
+      "bytes": 306,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-silu-materialized-checked-probe-v228-v1/actual-inert-join-result.json",
+      "sha256": "5e3baa9ca2b0a247370b9e49d66cc3664d09a25dd6be369983144180a454db39"
+    },
+    {
+      "bytes": 38,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-silu-materialized-checked-probe-v228-v1/actual-inert-join-started.json",
+      "sha256": "0c5c3437757283a58f1ffea279465a08c03977b3f5790974928436ee654e1759"
+    },
+    {
+      "bytes": 0,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-silu-materialized-checked-probe-v228-v1/actual-inert-join-stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 332,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-silu-materialized-checked-probe-v228-v1/actual-inert-join-stdout",
+      "sha256": "314709a461de33be595b21442efa350d33c91fe5376fd235337f4c91ae78defa"
+    },
+    {
+      "bytes": 2681,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-silu-materialized-checked-probe-v228-v1/actual-replay-command.json",
+      "sha256": "5c84a162837c92a87305cc35ae93ad30304a1f89699a9995db7e4938e9d12b6c"
+    },
+    {
+      "bytes": 305,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-silu-materialized-checked-probe-v228-v1/actual-replay-result.json",
+      "sha256": "693c7be15922257de644ab7d255bb2f69e02874382d61477a35b9bd5f74a8890"
+    },
+    {
+      "bytes": 38,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-silu-materialized-checked-probe-v228-v1/actual-replay-started.json",
+      "sha256": "e83909df40aa34b3a12d6a328d99e9d840ca1b4b78ba46a74553ee964fa46d72"
+    },
+    {
+      "bytes": 0,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-silu-materialized-checked-probe-v228-v1/actual-replay-stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 804,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-silu-materialized-checked-probe-v228-v1/actual-replay-stdout",
+      "sha256": "88fd84a4dca2e2bf0f212cfeb0eb8a11d8ca9129e67cd2dbd530fc18515634a2"
+    },
+    {
+      "bytes": 7058432,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-silu-materialized-checked-probe-v228-v1/after.json",
+      "sha256": "a501e24bf6cb30499cac8cb98924d7f5398fb7eb8b1a5b467a5f933a6dc48998"
+    },
+    {
+      "bytes": 6375713,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-silu-materialized-checked-probe-v228-v1/before.json",
+      "sha256": "e4c0726034f76937f3ce26773ef826807cc69be9d63aa797821c6686df650268"
+    },
+    {
+      "bytes": 5913,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-silu-materialized-checked-probe-v228-v1/checked-lowering-command.json",
+      "sha256": "26b56015f7890fed99b5ff7a1d36be723a1da0f1240c8741a179a8febf45b1b9"
+    },
+    {
+      "bytes": 305,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-silu-materialized-checked-probe-v228-v1/checked-lowering-result.json",
+      "sha256": "8e4a2cd4aa83e7511d44b2eee8b1c8066e7d45e64b550ae765933e5169c38c0e"
+    },
+    {
+      "bytes": 38,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-silu-materialized-checked-probe-v228-v1/checked-lowering-started.json",
+      "sha256": "2f9c4bd978d645e70aa9a48ef379e7c7082e1220567ff1546bdf4f0de576f37d"
+    },
+    {
+      "bytes": 4909,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-silu-materialized-checked-probe-v228-v1/checked-lowering-stderr",
+      "sha256": "028fa3fca121d87351a467aa7e4d370556e62d5844d0e37c0aa5532f30680a91"
+    },
+    {
+      "bytes": 0,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-silu-materialized-checked-probe-v228-v1/checked-lowering-stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 25125,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-silu-materialized-checked-probe-v228-v1/complete.json",
+      "sha256": "fd7d4c792dc7ddaa831b3372549fe3896a18e8c94b96598b553df94156d949b4"
+    },
+    {
+      "bytes": 2415,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-silu-materialized-checked-probe-v228-v1/descriptor-metadata-command.json",
+      "sha256": "7a5b9da3cfac18ceaebc520d58a0c7ae9400206419875a43b2f910951519f1d3"
+    },
+    {
+      "bytes": 305,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-silu-materialized-checked-probe-v228-v1/descriptor-metadata-result.json",
+      "sha256": "b840b4ca785f23c5155e157ed05a2285afaecf8d240b630ef80d98c7c9f077e0"
+    },
+    {
+      "bytes": 38,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-silu-materialized-checked-probe-v228-v1/descriptor-metadata-started.json",
+      "sha256": "5b4a1cc955b88a6ff89b250b39377bb1775456aa46af7b642ff8da236712b720"
+    },
+    {
+      "bytes": 0,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-silu-materialized-checked-probe-v228-v1/descriptor-metadata-stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 703,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-silu-materialized-checked-probe-v228-v1/descriptor-metadata-stdout",
+      "sha256": "f27fe343a1bdf9ab14d4130a80ff34c4969009dcf22ee450dc7e277d7d014667"
+    },
+    {
+      "bytes": 2246,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-silu-materialized-checked-probe-v228-v1/disassembly-command.json",
+      "sha256": "b010002189a1f2e07f6f1bf47ac52a7aac9c5f927e3319069f53b5130722e375"
+    },
+    {
+      "bytes": 305,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-silu-materialized-checked-probe-v228-v1/disassembly-result.json",
+      "sha256": "122850ab67aeaa7628c46f289caae00f8c026146e13e6c7ce737f9ec24b624c4"
+    },
+    {
+      "bytes": 38,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-silu-materialized-checked-probe-v228-v1/disassembly-started.json",
+      "sha256": "ea24e849c831f6464a7720ccf20df20b7d5d77adbdc8be4cd7d466439dcc0247"
+    },
+    {
+      "bytes": 0,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-silu-materialized-checked-probe-v228-v1/disassembly-stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 254744,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-silu-materialized-checked-probe-v228-v1/disassembly-stdout",
+      "sha256": "3cd976f21eedab4396baaac7c5911badf3cf832d16551c0a2580561a6795f01d"
+    },
+    {
+      "bytes": 2236,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-silu-materialized-checked-probe-v228-v1/elf-notes-command.json",
+      "sha256": "ca9e706af662759150a8195a83358cda344dde8024545bc945c875782f84dfff"
+    },
+    {
+      "bytes": 305,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-silu-materialized-checked-probe-v228-v1/elf-notes-result.json",
+      "sha256": "72ab809504ad2279ab31a9947fe7b27ccdaa8020cb8aa2baccf1c49e3764f974"
+    },
+    {
+      "bytes": 38,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-silu-materialized-checked-probe-v228-v1/elf-notes-started.json",
+      "sha256": "688bb35d3223d0dfca25621dbb9330eb7205522b132e5d9faf4b252cd8a12e56"
+    },
+    {
+      "bytes": 0,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-silu-materialized-checked-probe-v228-v1/elf-notes-stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 5163,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-silu-materialized-checked-probe-v228-v1/elf-notes-stdout",
+      "sha256": "b19d77c778c2a4d40be5f7a1c0bc0945950575d0b0d3d879d2ad311f6e8b110b"
+    },
+    {
+      "bytes": 2958,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-silu-materialized-checked-probe-v228-v1/emit-command.json",
+      "sha256": "64f28ba99d225c42a92dc0d3740143f5d42e6d4fc8ddc1f2f5d284caa97a7fbb"
+    },
+    {
+      "bytes": 305,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-silu-materialized-checked-probe-v228-v1/emit-result.json",
+      "sha256": "5189ceaba5721ee1d6a3ab8b2304e92595ca5c0f09b6e8eed170a79ba04a5b8a"
+    },
+    {
+      "bytes": 38,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-silu-materialized-checked-probe-v228-v1/emit-started.json",
+      "sha256": "909f2d5b61a0ccaa1527bc1e61f3f4a89de4b3694af196607fb69d22b59f51db"
+    },
+    {
+      "bytes": 0,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-silu-materialized-checked-probe-v228-v1/emit-stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 2851,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-silu-materialized-checked-probe-v228-v1/emit-stdout",
+      "sha256": "b5ac5375dbf99d6d974b0fa0c232b4cd9f46a265632ed46f051a14cfc67a9a3f"
+    },
+    {
+      "bytes": 33320,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-silu-materialized-checked-probe-v228-v1/emitted/artifact.hsaco",
+      "sha256": "b0d1766fdb0fda17ab09496d1120ba3cee29100692b48fcc5b05cf0db0a8d589"
+    },
+    {
+      "bytes": 277827,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-silu-materialized-checked-probe-v228-v1/emitted/compiler.handoff-v2",
+      "sha256": "e7f82fe071f7876377231d3868f0f03d09bf78a1dbc9cbd133d10ae961f9d5c2"
+    },
+    {
+      "bytes": 2850,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-silu-materialized-checked-probe-v228-v1/emitted/receipt.txt",
+      "sha256": "a89983b9cb815a88ec3bc89a10890930d8b803bdc0e24b0dba26e68a7b1949cd"
+    },
+    {
+      "bytes": 2598066,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-silu-materialized-checked-probe-v228-v1/emitted/source.handoff-v3",
+      "sha256": "301f882fd3bfb7a28ae33f0d1e0013a91d971bb9dee972a325b4e645792a3b77"
+    },
+    {
+      "bytes": 2433,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-silu-materialized-checked-probe-v228-v1/extract-retained-command.json",
+      "sha256": "ff75259414d90b7c1e915a66527c9e8ffdbe90e6500b1559d1d0370476d1853c"
+    },
+    {
+      "bytes": 306,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-silu-materialized-checked-probe-v228-v1/extract-retained-result.json",
+      "sha256": "40ac03b1d29fea8e5d3460fcbe0f4eba43aa811f916cec07d409e4d13414f73c"
+    },
+    {
+      "bytes": 38,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-silu-materialized-checked-probe-v228-v1/extract-retained-started.json",
+      "sha256": "6048afbc5048ee189be8c84bfaeba33b28357d6d237c8b8853062128d7dec629"
+    },
+    {
+      "bytes": 0,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-silu-materialized-checked-probe-v228-v1/extract-retained-stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 228,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-silu-materialized-checked-probe-v228-v1/extract-retained-stdout",
+      "sha256": "1c6c6a7c18c03b8fcac3021a477c9af6d4ea2e0067b4281b8193e68d13b28e2c"
+    },
+    {
+      "bytes": 593284,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-silu-materialized-checked-probe-v228-v1/extracted/formal.archive",
+      "sha256": "47d9a5d4b0f2e0d24129ad07b71ea6918a10b14f7991a8d8ec59621be936f8b5"
+    },
+    {
+      "bytes": 277100,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-silu-materialized-checked-probe-v228-v1/extracted/module.ll",
+      "sha256": "531e8cf4a30591d4c51e3f1d07c6c59caa03ec0de52e7d7cd2459013db08003d"
+    },
+    {
+      "bytes": 2377,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-silu-materialized-checked-probe-v228-v1/fixture-metadata-command.json",
+      "sha256": "84ff14b53552c6d02dc41f9d1ffa93a8b6821c175f5163a2e06c3cc9c9d97c70"
+    },
+    {
+      "bytes": 301,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-silu-materialized-checked-probe-v228-v1/fixture-metadata-result.json",
+      "sha256": "60c10b16df7eb0dce1696303b1aef6881aa05273fac024d652d2380040da95e3"
+    },
+    {
+      "bytes": 38,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-silu-materialized-checked-probe-v228-v1/fixture-metadata-started.json",
+      "sha256": "175a6f2f09c6ec7a96708cb29524fc02aa8d60083b75cdbe4cdcff4755df2342"
+    },
+    {
+      "bytes": 0,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-silu-materialized-checked-probe-v228-v1/fixture-metadata-stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 724149,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-silu-materialized-checked-probe-v228-v1/fixture-metadata-stdout",
+      "sha256": "80ab8aab1f2b16c1493decbfc29c554cda7208eed62ea08686dc682da0c32d77"
+    },
+    {
+      "bytes": 33839,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-silu-materialized-checked-probe-v228-v1/fixture/Cargo.lock",
+      "sha256": "8e56bdd313ea40d46277870eab953e5b6832d1c26d427ff3c81c5ecf93968d85"
+    },
+    {
+      "bytes": 436,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-silu-materialized-checked-probe-v228-v1/fixture/Cargo.toml",
+      "sha256": "971675fb4f2a11fe066612b3123db65240fcb89e03169e89c95b6cf90765b114"
+    },
+    {
+      "bytes": 3687,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-silu-materialized-checked-probe-v228-v1/fixture/src/lib.rs",
+      "sha256": "794bac2a76ced9ddcf3aa3abdaea6c41850e861a1d253837c321efc9c3ceef34"
+    },
+    {
+      "bytes": 7417,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-silu-materialized-checked-probe-v228-v1/fixture/src/mlp_numerics_v1.rs",
+      "sha256": "2e0edf9efdc1caf19ea574ba9dfeffa375072584d27e21a31308539a6b8115d1"
+    },
+    {
+      "bytes": 1730,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-silu-materialized-checked-probe-v228-v1/fixture/src/mlp_silu_materialized_numerics_v1.rs",
+      "sha256": "a3b60023a1438424b2971109ba1b01e62b613dd6f7edbd98ad4d9591e5b15954"
+    },
+    {
+      "bytes": 4908,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-silu-materialized-checked-probe-v228-v1/fixture/src/mlp_tile_numerics_v2.rs",
+      "sha256": "2b49dac2d9bc12772d48cbaf8a3513e38bbcaba9dc1466bd85f78af69d575245"
+    },
+    {
+      "bytes": 2235,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-silu-materialized-checked-probe-v228-v1/fixture/src/wave_numerics_v1.rs",
+      "sha256": "22ef471c341936b3bc6f7b5812405c60152292cef07dcbd03173bf2dd7ee49ea"
+    },
+    {
+      "bytes": 51810,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-silu-materialized-checked-probe-v228-v1/mlp-tiles-neutral-kir.bin",
+      "sha256": "fea0d9b1aa9c9200a5119bddfed63f0080c36ea175acb56cfb7ac72fee1fc951"
+    },
+    {
+      "bytes": 776439,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-silu-materialized-checked-probe-v228-v1/mlp-tiles-semantic.bin",
+      "sha256": "981905ecb60728bc9a0a51daeb92c20d7db89f57a83fa6435caf1959b219c686"
+    },
+    {
+      "bytes": 47236,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-silu-materialized-checked-probe-v228-v1/mlp-tiles-target-kir.bin",
+      "sha256": "3d28832f8217416d9169eff45093435653da4ef10115329ccda96b2eb8eab906"
+    },
+    {
+      "bytes": 2598066,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-silu-materialized-checked-probe-v228-v1/mlp-tiles.handoff-v3",
+      "sha256": "301f882fd3bfb7a28ae33f0d1e0013a91d971bb9dee972a325b4e645792a3b77"
+    },
+    {
+      "bytes": 5696431,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-silu-materialized-checked-probe-v228-v1/package-sources-after.json",
+      "sha256": "86b559dbc3cf631cf9cfec48d0cb4b426418698c0cfbcb0a0b4161cd93cf9e9c"
+    },
+    {
+      "bytes": 5696431,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-silu-materialized-checked-probe-v228-v1/package-sources-before.json",
+      "sha256": "86b559dbc3cf631cf9cfec48d0cb4b426418698c0cfbcb0a0b4161cd93cf9e9c"
+    },
+    {
+      "bytes": 40020,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-silu-materialized-checked-probe-v228-v1/recipe.json",
+      "sha256": "f0d836c298a76e33b1fcaea45da03b09db852b71c32cd4b164fc64321dd68f6e"
+    },
+    {
+      "bytes": 14835764,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/silu-materialized-checked-probe-owner-v228-v1/after.json",
+      "sha256": "9e87b2b90797162c7f7aad907f51b70543334cb5164ba77e79b64c7c941f934f"
+    },
+    {
+      "bytes": 14164027,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/silu-materialized-checked-probe-owner-v228-v1/before.json",
+      "sha256": "9a4ca83ca27ae7fe73b5c912b300ac6d32052e5bf8044dd44bf5d798e14efab3"
+    },
+    {
+      "bytes": 2272,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/silu-materialized-checked-probe-owner-v228-v1/command.json",
+      "sha256": "8701c29d8b82a5c320bab42793b0a25533d3747a63b2dcb84e0a66a391fd4490"
+    },
+    {
+      "bytes": 21726,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/silu-materialized-checked-probe-owner-v228-v1/complete.json",
+      "sha256": "3ee5600755d5b77846d16429d58e2395df0616c86fbe705ea24af07fd9f9e464"
+    },
+    {
+      "bytes": 10314,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/silu-materialized-checked-probe-owner-v228-v1/owned-result.json",
+      "sha256": "3feb91e4b69b8a99b3fcf4ffd77882f54de8e59184ae9c15fcaf9ed06ee7ac9b"
+    },
+    {
+      "bytes": 190,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/silu-materialized-checked-probe-owner-v228-v1/started.json",
+      "sha256": "2b8411c6e5ed9dea9b8d8d7469028005d848c3c05350729b0e12a7219fe4fc83"
+    },
+    {
+      "bytes": 0,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/silu-materialized-checked-probe-owner-v228-v1/stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 3595,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/silu-materialized-checked-probe-owner-v228-v1/stdout",
+      "sha256": "8bcc9b97f798c23cff856f21783de998d28b4f2fd1c9b64676e18ef1b21047df"
+    },
+    {
+      "bytes": 84947,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/silu-materialized-cpu-v228-v1/complete.json",
+      "sha256": "e139729d8fa95715ef8017679ee21f1175ba302b681785789e3dc84137508a30"
+    },
+    {
+      "bytes": 3687,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/silu-materialized-cpu-v228-v1/fixture/src/finite_mlp_tiles_silu_materialized_v1.rs",
+      "sha256": "794bac2a76ced9ddcf3aa3abdaea6c41850e861a1d253837c321efc9c3ceef34"
+    },
+    {
+      "bytes": 7417,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/silu-materialized-cpu-v228-v1/fixture/src/mlp_numerics_v1.rs",
+      "sha256": "2e0edf9efdc1caf19ea574ba9dfeffa375072584d27e21a31308539a6b8115d1"
+    },
+    {
+      "bytes": 1730,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/silu-materialized-cpu-v228-v1/fixture/src/mlp_silu_materialized_numerics_v1.rs",
+      "sha256": "a3b60023a1438424b2971109ba1b01e62b613dd6f7edbd98ad4d9591e5b15954"
+    },
+    {
+      "bytes": 4908,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/silu-materialized-cpu-v228-v1/fixture/src/mlp_tile_numerics_v2.rs",
+      "sha256": "2b49dac2d9bc12772d48cbaf8a3513e38bbcaba9dc1466bd85f78af69d575245"
+    },
+    {
+      "bytes": 2235,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/silu-materialized-cpu-v228-v1/fixture/src/wave_numerics_v1.rs",
+      "sha256": "22ef471c341936b3bc6f7b5812405c60152292cef07dcbd03173bf2dd7ee49ea"
+    },
+    {
+      "bytes": 11093,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/silu-materialized-cpu-v228-v1/fixture/tests/mlp_silu_materialized_v1.rs",
+      "sha256": "d75067ee041862b9ce3ccf4c01e1d6f8bd68a776343535ff1e993a136a8835ec"
+    },
+    {
+      "bytes": 23258,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/silu-materialized-cpu-v228-v1/sources-after.json",
+      "sha256": "b66499a2f0bf13d8fff748a09d628178591446dac6edb620c0b360958a1d377d"
+    },
+    {
+      "bytes": 23258,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/silu-materialized-cpu-v228-v1/sources-before.json",
+      "sha256": "b66499a2f0bf13d8fff748a09d628178591446dac6edb620c0b360958a1d377d"
+    }
+  ],
+  "gpu_execution": false,
+  "isa_arithmetic_equivalence_proved": false,
+  "llvm": {
+    "baseline": {
+      "complete_arithmetic_equivalence_proved": false,
+      "excerpt": [
+        {
+          "line": 2585,
+          "text": "  br label %bb134"
+        },
+        {
+          "line": 2586,
+          "text": "bb134:"
+        },
+        {
+          "line": 2587,
+          "text": "  %v874 = phi i16 [ %v1856, %bb104 ], [ 32704, %bb481 ]"
+        },
+        {
+          "line": 2588,
+          "text": "  call void @llvm.pseudoprobe(i64 6153163813505066415, i64 818, i32 0, i64 -1)"
+        },
+        {
+          "line": 2589,
+          "text": "  %v1858 = add i16 %v892, 0"
+        },
+        {
+          "line": 2590,
+          "text": "  call void @llvm.pseudoprobe(i64 6153163813505066415, i64 819, i32 0, i64 -1)"
+        },
+        {
+          "line": 2591,
+          "text": "  %v1859 = call float @__fe2o3_bf16_to_f32_v1(i16 %v1858)"
+        },
+        {
+          "line": 2592,
+          "text": "  call void @llvm.pseudoprobe(i64 6153163813505066415, i64 820, i32 0, i64 -1)"
+        },
+        {
+          "line": 2593,
+          "text": "  %v1860 = add i16 %v874, 0"
+        },
+        {
+          "line": 2594,
+          "text": "  call void @llvm.pseudoprobe(i64 6153163813505066415, i64 821, i32 0, i64 -1)"
+        },
+        {
+          "line": 2595,
+          "text": "  %v1861 = call float @__fe2o3_bf16_to_f32_v1(i16 %v1860)"
+        },
+        {
+          "line": 2596,
+          "text": "  call void @llvm.pseudoprobe(i64 6153163813505066415, i64 822, i32 0, i64 -1)"
+        },
+        {
+          "line": 2597,
+          "text": "  %v1862 = call float @llvm.fabs.f32(float %v1859)"
+        },
+        {
+          "line": 2598,
+          "text": "  call void @llvm.pseudoprobe(i64 6153163813505066415, i64 823, i32 0, i64 -1)"
+        },
+        {
+          "line": 2599,
+          "text": "  %v1863 = fneg float %v1862"
+        },
+        {
+          "line": 2600,
+          "text": "  call void @llvm.pseudoprobe(i64 6153163813505066415, i64 824, i32 0, i64 -1)"
+        },
+        {
+          "line": 2601,
+          "text": "  %v1864 = call float @__ocml_exp_f32(float %v1863)"
+        },
+        {
+          "line": 2602,
+          "text": "  call void @llvm.pseudoprobe(i64 6153163813505066415, i64 825, i32 0, i64 -1)"
+        },
+        {
+          "line": 2603,
+          "text": "  call void @llvm.pseudoprobe(i64 6153163813505066415, i64 826, i32 0, i64 -1)"
+        },
+        {
+          "line": 2604,
+          "text": "  %v1866 = fcmp oge float %v1859, 0x0000000000000000"
+        },
+        {
+          "line": 2605,
+          "text": "  br i1 %v1866, label %bb592, label %bb642"
+        },
+        {
+          "line": 2606,
+          "text": "bb592:"
+        },
+        {
+          "line": 2607,
+          "text": "  call void @llvm.pseudoprobe(i64 6153163813505066415, i64 827, i32 0, i64 -1)"
+        },
+        {
+          "line": 2608,
+          "text": "  br label %bb571"
+        },
+        {
+          "line": 2609,
+          "text": "bb642:"
+        },
+        {
+          "line": 2610,
+          "text": "  br label %bb571"
+        },
+        {
+          "line": 2611,
+          "text": "bb571:"
+        },
+        {
+          "line": 2612,
+          "text": "  %v962 = phi float [ 0x3FF0000000000000, %bb592 ], [ %v1864, %bb642 ]"
+        },
+        {
+          "line": 2613,
+          "text": "  call void @llvm.pseudoprobe(i64 6153163813505066415, i64 828, i32 0, i64 -1)"
+        },
+        {
+          "line": 2614,
+          "text": "  call void @llvm.pseudoprobe(i64 6153163813505066415, i64 829, i32 0, i64 -1)"
+        },
+        {
+          "line": 2615,
+          "text": "  %v1869 = fadd float 0x3FF0000000000000, %v1864"
+        },
+        {
+          "line": 2616,
+          "text": "  call void @llvm.pseudoprobe(i64 6153163813505066415, i64 830, i32 0, i64 -1)"
+        },
+        {
+          "line": 2617,
+          "text": "  %v1870 = fdiv float %v962, %v1869"
+        },
+        {
+          "line": 2618,
+          "text": "  call void @llvm.pseudoprobe(i64 6153163813505066415, i64 831, i32 0, i64 -1)"
+        },
+        {
+          "line": 2619,
+          "text": "  %v1871 = fmul float %v1859, %v1870"
+        },
+        {
+          "line": 2620,
+          "text": "  call void @llvm.pseudoprobe(i64 6153163813505066415, i64 832, i32 0, i64 -1)"
+        },
+        {
+          "line": 2621,
+          "text": "  %v1872 = fmul float %v1871, %v1861"
+        },
+        {
+          "line": 2622,
+          "text": "  call void @llvm.pseudoprobe(i64 6153163813505066415, i64 833, i32 0, i64 -1)"
+        },
+        {
+          "line": 2623,
+          "text": "  %v1873 = call i16 @__fe2o3_f32_to_bf16_rne_v1(float %v1872)"
+        },
+        {
+          "line": 2624,
+          "text": "  call void @llvm.pseudoprobe(i64 6153163813505066415, i64 834, i32 0, i64 -1)"
+        },
+        {
+          "line": 2625,
+          "text": "  %v1874 = add i16 %v1873, 0"
+        },
+        {
+          "line": 2626,
+          "text": "  call void @llvm.pseudoprobe(i64 6153163813505066415, i64 835, i32 0, i64 -1)"
+        },
+        {
+          "line": 2627,
+          "text": "  call void @llvm.pseudoprobe(i64 6153163813505066415, i64 836, i32 0, i64 -1)"
+        },
+        {
+          "line": 2628,
+          "text": "  %v1876 = and i16 %v892, 32640"
+        },
+        {
+          "line": 2629,
+          "text": "  switch i16 %v1876, label %bb359 ["
+        },
+        {
+          "line": 2630,
+          "text": "    i16 32640, label %bb488"
+        },
+        {
+          "line": 2631,
+          "text": "  ]"
+        },
+        {
+          "line": 2632,
+          "text": "bb359:"
+        },
+        {
+          "line": 2633,
+          "text": "  call void @llvm.pseudoprobe(i64 6153163813505066415, i64 837, i32 0, i64 -1)"
+        },
+        {
+          "line": 2634,
+          "text": "  call void @llvm.pseudoprobe(i64 6153163813505066415, i64 838, i32 0, i64 -1)"
+        },
+        {
+          "line": 2635,
+          "text": "  %v1878 = and i16 %v874, 32640"
+        },
+        {
+          "line": 2636,
+          "text": "  switch i16 %v1878, label %bb81 ["
+        },
+        {
+          "line": 2637,
+          "text": "    i16 32640, label %bb47"
+        },
+        {
+          "line": 2638,
+          "text": "  ]"
+        },
+        {
+          "line": 2639,
+          "text": "bb81:"
+        },
+        {
+          "line": 2640,
+          "text": "  call void @llvm.pseudoprobe(i64 6153163813505066415, i64 839, i32 0, i64 -1)"
+        },
+        {
+          "line": 2641,
+          "text": "  %v1879 = call float @llvm.fabs.f32(float %v1864)"
+        },
+        {
+          "line": 2642,
+          "text": "  call void @llvm.pseudoprobe(i64 6153163813505066415, i64 840, i32 0, i64 -1)"
+        },
+        {
+          "line": 2643,
+          "text": "  call void @llvm.pseudoprobe(i64 6153163813505066415, i64 841, i32 0, i64 -1)"
+        },
+        {
+          "line": 2644,
+          "text": "  %v1881 = fcmp olt float %v1879, 0x7FF0000000000000"
+        },
+        {
+          "line": 2645,
+          "text": "  br i1 %v1881, label %bb155, label %edge_bb81_1_bb296"
+        },
+        {
+          "line": 2646,
+          "text": "edge_bb81_1_bb296:"
+        },
+        {
+          "line": 2647,
+          "text": "  br label %bb296"
+        },
+        {
+          "line": 2648,
+          "text": "bb155:"
+        },
+        {
+          "line": 2649,
+          "text": "  call void @llvm.pseudoprobe(i64 6153163813505066415, i64 842, i32 0, i64 -1)"
+        },
+        {
+          "line": 2650,
+          "text": "  %v1882 = call float @llvm.fabs.f32(float %v1870)"
+        },
+        {
+          "line": 2651,
+          "text": "  call void @llvm.pseudoprobe(i64 6153163813505066415, i64 843, i32 0, i64 -1)"
+        },
+        {
+          "line": 2652,
+          "text": "  call void @llvm.pseudoprobe(i64 6153163813505066415, i64 844, i32 0, i64 -1)"
+        },
+        {
+          "line": 2653,
+          "text": "  %v1884 = fcmp olt float %v1882, 0x7FF0000000000000"
+        },
+        {
+          "line": 2654,
+          "text": "  br i1 %v1884, label %bb60, label %edge_bb155_1_bb296"
+        },
+        {
+          "line": 2655,
+          "text": "edge_bb155_1_bb296:"
+        },
+        {
+          "line": 2656,
+          "text": "  br label %bb296"
+        },
+        {
+          "line": 2657,
+          "text": "bb60:"
+        },
+        {
+          "line": 2658,
+          "text": "  call void @llvm.pseudoprobe(i64 6153163813505066415, i64 845, i32 0, i64 -1)"
+        },
+        {
+          "line": 2659,
+          "text": "  %v1885 = call float @llvm.fabs.f32(float %v1871)"
+        },
+        {
+          "line": 2660,
+          "text": "  call void @llvm.pseudoprobe(i64 6153163813505066415, i64 846, i32 0, i64 -1)"
+        },
+        {
+          "line": 2661,
+          "text": "  call void @llvm.pseudoprobe(i64 6153163813505066415, i64 847, i32 0, i64 -1)"
+        },
+        {
+          "line": 2662,
+          "text": "  %v1887 = fcmp olt float %v1885, 0x7FF0000000000000"
+        },
+        {
+          "line": 2663,
+          "text": "  br i1 %v1887, label %bb173, label %edge_bb60_1_bb296"
+        },
+        {
+          "line": 2664,
+          "text": "edge_bb60_1_bb296:"
+        },
+        {
+          "line": 2665,
+          "text": "  br label %bb296"
+        },
+        {
+          "line": 2666,
+          "text": "bb173:"
+        },
+        {
+          "line": 2667,
+          "text": "  call void @llvm.pseudoprobe(i64 6153163813505066415, i64 848, i32 0, i64 -1)"
+        },
+        {
+          "line": 2668,
+          "text": "  %v1888 = call float @llvm.fabs.f32(float %v1872)"
+        }
+      ],
+      "finite_guard_control_flow_verified": false,
+      "input_root_equivalence_verified": false,
+      "literal_chain_matched": true,
+      "materialization_expected": false,
+      "nodes": {
+        "absolute": {
+          "instruction": "call float @llvm.fabs.f32(float %v1859)",
+          "line": 2597,
+          "ssa": "%v1862"
+        },
+        "denominator": {
+          "instruction": "fadd float 0x3FF0000000000000, %v1864",
+          "line": 2615,
+          "ssa": "%v1869"
+        },
+        "exp": {
+          "instruction": "call float @__ocml_exp_f32(float %v1863)",
+          "line": 2601,
+          "ssa": "%v1864"
+        },
+        "final_bf16": {
+          "instruction": "call i16 @__fe2o3_f32_to_bf16_rne_v1(float %v1872)",
+          "line": 2623,
+          "ssa": "%v1873"
+        },
+        "gate": {
+          "instruction": "call float @__fe2o3_bf16_to_f32_v1(i16 %v1858)",
+          "line": 2591,
+          "ssa": "%v1859"
+        },
+        "negative": {
+          "instruction": "fneg float %v1862",
+          "line": 2599,
+          "ssa": "%v1863"
+        },
+        "numerator": {
+          "instruction": "phi float [ 0x3FF0000000000000, %bb592 ], [ %v1864, %bb642 ]",
+          "line": 2612,
+          "ssa": "%v962"
+        },
+        "product_fp32": {
+          "instruction": "fmul float %v1871, %v1861",
+          "line": 2621,
+          "ssa": "%v1872"
+        },
+        "sigmoid": {
+          "instruction": "fdiv float %v962, %v1869",
+          "line": 2617,
+          "ssa": "%v1870"
+        },
+        "sign_test": {
+          "instruction": "fcmp oge float %v1859, 0x0000000000000000",
+          "line": 2604,
+          "ssa": "%v1866"
+        },
+        "silu_fp32": {
+          "instruction": "fmul float %v1859, %v1870",
+          "line": 2619,
+          "ssa": "%v1871"
+        },
+        "up": {
+          "instruction": "call float @__fe2o3_bf16_to_f32_v1(i16 %v1860)",
+          "line": 2595,
+          "ssa": "%v1861"
+        }
+      },
+      "phi_predecessor_semantics_verified": false
+    },
+    "candidate": {
+      "complete_arithmetic_equivalence_proved": false,
+      "excerpt": [
+        {
+          "line": 2585,
+          "text": "  br label %bb260"
+        },
+        {
+          "line": 2586,
+          "text": "bb260:"
+        },
+        {
+          "line": 2587,
+          "text": "  %v886 = phi i16 [ %v1860, %bb177 ], [ 32704, %bb339 ]"
+        },
+        {
+          "line": 2588,
+          "text": "  call void @llvm.pseudoprobe(i64 12358122272754065159, i64 818, i32 0, i64 -1)"
+        },
+        {
+          "line": 2589,
+          "text": "  %v1862 = add i16 %v923, 0"
+        },
+        {
+          "line": 2590,
+          "text": "  call void @llvm.pseudoprobe(i64 12358122272754065159, i64 819, i32 0, i64 -1)"
+        },
+        {
+          "line": 2591,
+          "text": "  %v1863 = call float @__fe2o3_bf16_to_f32_v1(i16 %v1862)"
+        },
+        {
+          "line": 2592,
+          "text": "  call void @llvm.pseudoprobe(i64 12358122272754065159, i64 820, i32 0, i64 -1)"
+        },
+        {
+          "line": 2593,
+          "text": "  %v1864 = add i16 %v886, 0"
+        },
+        {
+          "line": 2594,
+          "text": "  call void @llvm.pseudoprobe(i64 12358122272754065159, i64 821, i32 0, i64 -1)"
+        },
+        {
+          "line": 2595,
+          "text": "  %v1865 = call float @__fe2o3_bf16_to_f32_v1(i16 %v1864)"
+        },
+        {
+          "line": 2596,
+          "text": "  call void @llvm.pseudoprobe(i64 12358122272754065159, i64 822, i32 0, i64 -1)"
+        },
+        {
+          "line": 2597,
+          "text": "  %v1866 = call float @llvm.fabs.f32(float %v1863)"
+        },
+        {
+          "line": 2598,
+          "text": "  call void @llvm.pseudoprobe(i64 12358122272754065159, i64 823, i32 0, i64 -1)"
+        },
+        {
+          "line": 2599,
+          "text": "  %v1867 = fneg float %v1866"
+        },
+        {
+          "line": 2600,
+          "text": "  call void @llvm.pseudoprobe(i64 12358122272754065159, i64 824, i32 0, i64 -1)"
+        },
+        {
+          "line": 2601,
+          "text": "  %v1868 = call float @__ocml_exp_f32(float %v1867)"
+        },
+        {
+          "line": 2602,
+          "text": "  call void @llvm.pseudoprobe(i64 12358122272754065159, i64 825, i32 0, i64 -1)"
+        },
+        {
+          "line": 2603,
+          "text": "  call void @llvm.pseudoprobe(i64 12358122272754065159, i64 826, i32 0, i64 -1)"
+        },
+        {
+          "line": 2604,
+          "text": "  %v1870 = fcmp oge float %v1863, 0x0000000000000000"
+        },
+        {
+          "line": 2605,
+          "text": "  br i1 %v1870, label %bb466, label %bb104"
+        },
+        {
+          "line": 2606,
+          "text": "bb466:"
+        },
+        {
+          "line": 2607,
+          "text": "  call void @llvm.pseudoprobe(i64 12358122272754065159, i64 827, i32 0, i64 -1)"
+        },
+        {
+          "line": 2608,
+          "text": "  br label %bb639"
+        },
+        {
+          "line": 2609,
+          "text": "bb104:"
+        },
+        {
+          "line": 2610,
+          "text": "  br label %bb639"
+        },
+        {
+          "line": 2611,
+          "text": "bb639:"
+        },
+        {
+          "line": 2612,
+          "text": "  %v976 = phi float [ 0x3FF0000000000000, %bb466 ], [ %v1868, %bb104 ]"
+        },
+        {
+          "line": 2613,
+          "text": "  call void @llvm.pseudoprobe(i64 12358122272754065159, i64 828, i32 0, i64 -1)"
+        },
+        {
+          "line": 2614,
+          "text": "  call void @llvm.pseudoprobe(i64 12358122272754065159, i64 829, i32 0, i64 -1)"
+        },
+        {
+          "line": 2615,
+          "text": "  %v1873 = fadd float 0x3FF0000000000000, %v1868"
+        },
+        {
+          "line": 2616,
+          "text": "  call void @llvm.pseudoprobe(i64 12358122272754065159, i64 830, i32 0, i64 -1)"
+        },
+        {
+          "line": 2617,
+          "text": "  %v1874 = fdiv float %v976, %v1873"
+        },
+        {
+          "line": 2618,
+          "text": "  call void @llvm.pseudoprobe(i64 12358122272754065159, i64 831, i32 0, i64 -1)"
+        },
+        {
+          "line": 2619,
+          "text": "  %v1875 = fmul float %v1863, %v1874"
+        },
+        {
+          "line": 2620,
+          "text": "  call void @llvm.pseudoprobe(i64 12358122272754065159, i64 832, i32 0, i64 -1)"
+        },
+        {
+          "line": 2621,
+          "text": "  %v1876 = call i16 @__fe2o3_f32_to_bf16_rne_v1(float %v1875)"
+        },
+        {
+          "line": 2622,
+          "text": "  call void @llvm.pseudoprobe(i64 12358122272754065159, i64 833, i32 0, i64 -1)"
+        },
+        {
+          "line": 2623,
+          "text": "  %v1877 = add i16 %v1876, 0"
+        },
+        {
+          "line": 2624,
+          "text": "  call void @llvm.pseudoprobe(i64 12358122272754065159, i64 834, i32 0, i64 -1)"
+        },
+        {
+          "line": 2625,
+          "text": "  %v1878 = add i16 %v1877, 0"
+        },
+        {
+          "line": 2626,
+          "text": "  call void @llvm.pseudoprobe(i64 12358122272754065159, i64 835, i32 0, i64 -1)"
+        },
+        {
+          "line": 2627,
+          "text": "  %v1879 = call float @__fe2o3_bf16_to_f32_v1(i16 %v1878)"
+        },
+        {
+          "line": 2628,
+          "text": "  call void @llvm.pseudoprobe(i64 12358122272754065159, i64 836, i32 0, i64 -1)"
+        },
+        {
+          "line": 2629,
+          "text": "  %v1880 = fmul float %v1879, %v1865"
+        },
+        {
+          "line": 2630,
+          "text": "  call void @llvm.pseudoprobe(i64 12358122272754065159, i64 837, i32 0, i64 -1)"
+        },
+        {
+          "line": 2631,
+          "text": "  %v1881 = call i16 @__fe2o3_f32_to_bf16_rne_v1(float %v1880)"
+        },
+        {
+          "line": 2632,
+          "text": "  call void @llvm.pseudoprobe(i64 12358122272754065159, i64 838, i32 0, i64 -1)"
+        },
+        {
+          "line": 2633,
+          "text": "  %v1882 = add i16 %v1881, 0"
+        },
+        {
+          "line": 2634,
+          "text": "  call void @llvm.pseudoprobe(i64 12358122272754065159, i64 839, i32 0, i64 -1)"
+        },
+        {
+          "line": 2635,
+          "text": "  call void @llvm.pseudoprobe(i64 12358122272754065159, i64 840, i32 0, i64 -1)"
+        },
+        {
+          "line": 2636,
+          "text": "  %v1884 = and i16 %v923, 32640"
+        },
+        {
+          "line": 2637,
+          "text": "  switch i16 %v1884, label %bb524 ["
+        },
+        {
+          "line": 2638,
+          "text": "    i16 32640, label %bb126"
+        },
+        {
+          "line": 2639,
+          "text": "  ]"
+        },
+        {
+          "line": 2640,
+          "text": "bb524:"
+        },
+        {
+          "line": 2641,
+          "text": "  call void @llvm.pseudoprobe(i64 12358122272754065159, i64 841, i32 0, i64 -1)"
+        },
+        {
+          "line": 2642,
+          "text": "  call void @llvm.pseudoprobe(i64 12358122272754065159, i64 842, i32 0, i64 -1)"
+        },
+        {
+          "line": 2643,
+          "text": "  %v1886 = and i16 %v886, 32640"
+        },
+        {
+          "line": 2644,
+          "text": "  switch i16 %v1886, label %bb404 ["
+        },
+        {
+          "line": 2645,
+          "text": "    i16 32640, label %bb389"
+        },
+        {
+          "line": 2646,
+          "text": "  ]"
+        },
+        {
+          "line": 2647,
+          "text": "bb404:"
+        },
+        {
+          "line": 2648,
+          "text": "  call void @llvm.pseudoprobe(i64 12358122272754065159, i64 843, i32 0, i64 -1)"
+        },
+        {
+          "line": 2649,
+          "text": "  %v1887 = call float @llvm.fabs.f32(float %v1868)"
+        },
+        {
+          "line": 2650,
+          "text": "  call void @llvm.pseudoprobe(i64 12358122272754065159, i64 844, i32 0, i64 -1)"
+        },
+        {
+          "line": 2651,
+          "text": "  call void @llvm.pseudoprobe(i64 12358122272754065159, i64 845, i32 0, i64 -1)"
+        },
+        {
+          "line": 2652,
+          "text": "  %v1889 = fcmp olt float %v1887, 0x7FF0000000000000"
+        },
+        {
+          "line": 2653,
+          "text": "  br i1 %v1889, label %bb628, label %edge_bb404_1_bb244"
+        },
+        {
+          "line": 2654,
+          "text": "edge_bb404_1_bb244:"
+        },
+        {
+          "line": 2655,
+          "text": "  br label %bb244"
+        },
+        {
+          "line": 2656,
+          "text": "bb628:"
+        },
+        {
+          "line": 2657,
+          "text": "  call void @llvm.pseudoprobe(i64 12358122272754065159, i64 846, i32 0, i64 -1)"
+        },
+        {
+          "line": 2658,
+          "text": "  %v1890 = call float @llvm.fabs.f32(float %v1874)"
+        },
+        {
+          "line": 2659,
+          "text": "  call void @llvm.pseudoprobe(i64 12358122272754065159, i64 847, i32 0, i64 -1)"
+        },
+        {
+          "line": 2660,
+          "text": "  call void @llvm.pseudoprobe(i64 12358122272754065159, i64 848, i32 0, i64 -1)"
+        },
+        {
+          "line": 2661,
+          "text": "  %v1892 = fcmp olt float %v1890, 0x7FF0000000000000"
+        },
+        {
+          "line": 2662,
+          "text": "  br i1 %v1892, label %bb410, label %edge_bb628_1_bb244"
+        },
+        {
+          "line": 2663,
+          "text": "edge_bb628_1_bb244:"
+        },
+        {
+          "line": 2664,
+          "text": "  br label %bb244"
+        },
+        {
+          "line": 2665,
+          "text": "bb410:"
+        },
+        {
+          "line": 2666,
+          "text": "  call void @llvm.pseudoprobe(i64 12358122272754065159, i64 849, i32 0, i64 -1)"
+        },
+        {
+          "line": 2667,
+          "text": "  %v1893 = call float @llvm.fabs.f32(float %v1875)"
+        },
+        {
+          "line": 2668,
+          "text": "  call void @llvm.pseudoprobe(i64 12358122272754065159, i64 850, i32 0, i64 -1)"
+        },
+        {
+          "line": 2669,
+          "text": "  call void @llvm.pseudoprobe(i64 12358122272754065159, i64 851, i32 0, i64 -1)"
+        },
+        {
+          "line": 2670,
+          "text": "  %v1895 = fcmp olt float %v1893, 0x7FF0000000000000"
+        },
+        {
+          "line": 2671,
+          "text": "  br i1 %v1895, label %bb459, label %edge_bb410_1_bb244"
+        },
+        {
+          "line": 2672,
+          "text": "edge_bb410_1_bb244:"
+        },
+        {
+          "line": 2673,
+          "text": "  br label %bb244"
+        },
+        {
+          "line": 2674,
+          "text": "bb459:"
+        },
+        {
+          "line": 2675,
+          "text": "  call void @llvm.pseudoprobe(i64 12358122272754065159, i64 852, i32 0, i64 -1)"
+        },
+        {
+          "line": 2676,
+          "text": "  call void @llvm.pseudoprobe(i64 12358122272754065159, i64 853, i32 0, i64 -1)"
+        }
+      ],
+      "finite_guard_control_flow_verified": false,
+      "input_root_equivalence_verified": false,
+      "literal_chain_matched": true,
+      "materialization_expected": true,
+      "nodes": {
+        "absolute": {
+          "instruction": "call float @llvm.fabs.f32(float %v1863)",
+          "line": 2597,
+          "ssa": "%v1866"
+        },
+        "denominator": {
+          "instruction": "fadd float 0x3FF0000000000000, %v1868",
+          "line": 2615,
+          "ssa": "%v1873"
+        },
+        "exp": {
+          "instruction": "call float @__ocml_exp_f32(float %v1867)",
+          "line": 2601,
+          "ssa": "%v1868"
+        },
+        "final_bf16": {
+          "instruction": "call i16 @__fe2o3_f32_to_bf16_rne_v1(float %v1880)",
+          "line": 2631,
+          "ssa": "%v1881"
+        },
+        "gate": {
+          "instruction": "call float @__fe2o3_bf16_to_f32_v1(i16 %v1862)",
+          "line": 2591,
+          "ssa": "%v1863"
+        },
+        "negative": {
+          "instruction": "fneg float %v1866",
+          "line": 2599,
+          "ssa": "%v1867"
+        },
+        "numerator": {
+          "instruction": "phi float [ 0x3FF0000000000000, %bb466 ], [ %v1868, %bb104 ]",
+          "line": 2612,
+          "ssa": "%v976"
+        },
+        "product_fp32": {
+          "instruction": "fmul float %v1879, %v1865",
+          "line": 2629,
+          "ssa": "%v1880"
+        },
+        "sigmoid": {
+          "instruction": "fdiv float %v976, %v1873",
+          "line": 2617,
+          "ssa": "%v1874"
+        },
+        "sign_test": {
+          "instruction": "fcmp oge float %v1863, 0x0000000000000000",
+          "line": 2604,
+          "ssa": "%v1870"
+        },
+        "silu_bf16": {
+          "instruction": "call i16 @__fe2o3_f32_to_bf16_rne_v1(float %v1875)",
+          "line": 2621,
+          "ssa": "%v1876"
+        },
+        "silu_fp32": {
+          "instruction": "fmul float %v1863, %v1874",
+          "line": 2619,
+          "ssa": "%v1875"
+        },
+        "silu_widened": {
+          "instruction": "call float @__fe2o3_bf16_to_f32_v1(i16 %v1878)",
+          "line": 2627,
+          "ssa": "%v1879"
+        },
+        "up": {
+          "instruction": "call float @__fe2o3_bf16_to_f32_v1(i16 %v1864)",
+          "line": 2595,
+          "ssa": "%v1865"
+        }
+      },
+      "phi_predecessor_semantics_verified": false
+    },
+    "error": null,
+    "exact_bf16_helper_bodies_equal": true,
+    "literal_fp32_exp_div_expression_shape_matches": true
+  },
+  "native_execution": false,
+  "numerical_acceptance": false,
+  "ocml_accuracy_proved": false,
+  "owner": {
+    "bytes": 21726,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/silu-materialized-checked-probe-owner-v228-v1/complete.json",
+    "sha256": "3ee5600755d5b77846d16429d58e2395df0616c86fbe705ea24af07fd9f9e464"
+  },
+  "performance_claim": false,
+  "production_authority": false,
+  "resources": {
+    "baseline": {
+      "decoded_instruction_lines": 2736,
+      "gpu_duration_measured": false,
+      "instruction_census_scope": "whole retained disassembly, including library bodies",
+      "instruction_count_is_not_dynamic_work": true,
+      "metadata": {
+        "group_segment_fixed_size": 512,
+        "kernarg_segment_align": 8,
+        "kernarg_segment_size": 344,
+        "max_flat_workgroup_size": 64,
+        "private_segment_fixed_size": 0,
+        "sgpr_count": 106,
+        "sgpr_spill_count": 0,
+        "vgpr_count": 106,
+        "vgpr_spill_count": 0,
+        "wavefront_size": 64
+      },
+      "mnemonic_counts": {
+        "buffer_inv": 22,
+        "buffer_wbl2": 11,
+        "ds_bpermute_b32": 13,
+        "ds_read2_b32": 64,
+        "ds_read_b32": 1,
+        "ds_swizzle_b32": 12,
+        "ds_write_b32": 3,
+        "global_atomic_add": 2,
+        "global_atomic_cmpswap": 23,
+        "global_load_dword": 36,
+        "global_load_ushort": 42,
+        "global_store_dword": 2,
+        "global_store_short": 5,
+        "s_add_i32": 3,
+        "s_add_u32": 16,
+        "s_addc_u32": 16,
+        "s_and_b32": 2,
+        "s_and_b64": 159,
+        "s_and_saveexec_b64": 108,
+        "s_andn2_b64": 58,
+        "s_andn2_saveexec_b64": 18,
+        "s_barrier": 3,
+        "s_bitcmp0_b32": 1,
+        "s_bitcmp1_b32": 3,
+        "s_branch": 31,
+        "s_cbranch_execnz": 25,
+        "s_cbranch_execz": 109,
+        "s_cbranch_scc0": 4,
+        "s_cbranch_scc1": 16,
+        "s_cbranch_vccnz": 13,
+        "s_cbranch_vccz": 4,
+        "s_cmp_eq_u32": 2,
+        "s_cmp_eq_u64": 4,
+        "s_cmp_lg_u32": 7,
+        "s_cmp_lg_u64": 7,
+        "s_cmpk_lg_i32": 1,
+        "s_cselect_b32": 13,
+        "s_cselect_b64": 5,
+        "s_endpgm": 1,
+        "s_ff1_i32_b64": 1,
+        "s_load_dword": 1,
+        "s_load_dwordx16": 1,
+        "s_load_dwordx2": 1,
+        "s_load_dwordx4": 1,
+        "s_lshl_b32": 3,
+        "s_lshl_b64": 5,
+        "s_lshr_b32": 1,
+        "s_mov_b32": 19,
+        "s_mov_b64": 110,
+        "s_movk_i32": 15,
+        "s_nop": 323,
+        "s_nor_b64": 3,
+        "s_not_b32": 1,
+        "s_or_b32": 2,
+        "s_or_b64": 171,
+        "s_or_saveexec_b64": 7,
+        "s_orn2_b64": 6,
+        "s_setpc_b64": 1,
+        "s_trap": 3,
+        "s_waitcnt": 175,
+        "s_xor_b64": 48,
+        "v_add3_u32": 7,
+        "v_add_co_u32_e32": 4,
+        "v_add_f32_dpp": 15,
+        "v_add_f32_e32": 43,
+        "v_add_u32_e32": 13,
+        "v_addc_co_u32_e32": 4,
+        "v_alignbit_b32": 1,
+        "v_and_b32_e32": 30,
+        "v_bfe_u32": 7,
+        "v_bfrev_b32_e32": 1,
+        "v_bitop3_b32": 3,
+        "v_cmp_class_f32_e32": 2,
+        "v_cmp_class_f32_e64": 59,
+        "v_cmp_eq_u32_e32": 59,
+        "v_cmp_eq_u32_e64": 1,
+        "v_cmp_eq_u64_e32": 14,
+        "v_cmp_eq_u64_e64": 1,
+        "v_cmp_ge_f32_e64": 1,
+        "v_cmp_ge_u32_e32": 2,
+        "v_cmp_gt_f32_e32": 1,
+        "v_cmp_gt_u32_e32": 8,
+        "v_cmp_gt_u64_e32": 3,
+        "v_cmp_lg_f32_e32": 1,
+        "v_cmp_lt_f32_e32": 6,
+        "v_cmp_lt_f32_e64": 1,
+        "v_cmp_lt_i32_e32": 4,
+        "v_cmp_lt_i64_e32": 9,
+        "v_cmp_lt_i64_e64": 2,
+        "v_cmp_lt_u32_e32": 6,
+        "v_cmp_lt_u32_e64": 1,
+        "v_cmp_lt_u64_e32": 1,
+        "v_cmp_lt_u64_e64": 3,
+        "v_cmp_ne_u16_e32": 9,
+        "v_cmp_ne_u16_e64": 10,
+        "v_cmp_ne_u32_e32": 18,
+        "v_cmp_ne_u32_e64": 3,
+        "v_cmp_ne_u64_e32": 1,
+        "v_cmp_ne_u64_e64": 1,
+        "v_cmp_ngt_f32_e32": 1,
+        "v_cmp_ngt_f32_e64": 1,
+        "v_cmp_nle_f32_e32": 1,
+        "v_cmp_nlg_f32_e64": 2,
+        "v_cmp_nlt_f32_e32": 1,
+        "v_cmp_nlt_f32_e64": 1,
+        "v_cmp_u_f32_e32": 7,
+        "v_cndmask_b32_e32": 26,
+        "v_cndmask_b32_e64": 13,
+        "v_cvt_i32_f32_e32": 2,
+        "v_div_fixup_f32": 2,
+        "v_div_fmas_f32": 2,
+        "v_div_scale_f32": 4,
+        "v_exp_f32_e32": 2,
+        "v_fma_f32": 11,
+        "v_fmac_f32_e32": 4,
+        "v_fmamk_f32": 1,
+        "v_ldexp_f32": 2,
+        "v_lshl_add_u64": 45,
+        "v_lshlrev_b32_e32": 54,
+        "v_lshlrev_b32_e64": 2,
+        "v_lshlrev_b64": 2,
+        "v_lshrrev_b32_e32": 10,
+        "v_mad_u64_u32": 1,
+        "v_mbcnt_hi_u32_b32": 20,
+        "v_mbcnt_lo_u32_b32": 20,
+        "v_mov_b32_dpp": 3,
+        "v_mov_b32_e32": 125,
+        "v_mov_b64_e32": 36,
+        "v_mul_f32_e32": 36,
+        "v_mul_f32_e64": 1,
+        "v_or_b32_e32": 156,
+        "v_or_b32_sdwa": 7,
+        "v_rcp_f32_e32": 2,
+        "v_readfirstlane_b32": 6,
+        "v_readlane_b32": 1,
+        "v_rndne_f32_e32": 2,
+        "v_sqrt_f32_e32": 1,
+        "v_sub_f32_e32": 2,
+        "v_writelane_b32": 1,
+        "v_xor_b32_e32": 2
+      }
+    },
+    "candidate": {
+      "decoded_instruction_lines": 2765,
+      "gpu_duration_measured": false,
+      "instruction_census_scope": "whole retained disassembly, including library bodies",
+      "instruction_count_is_not_dynamic_work": true,
+      "metadata": {
+        "group_segment_fixed_size": 512,
+        "kernarg_segment_align": 8,
+        "kernarg_segment_size": 344,
+        "max_flat_workgroup_size": 64,
+        "private_segment_fixed_size": 0,
+        "sgpr_count": 106,
+        "sgpr_spill_count": 0,
+        "vgpr_count": 106,
+        "vgpr_spill_count": 0,
+        "wavefront_size": 64
+      },
+      "mnemonic_counts": {
+        "buffer_inv": 22,
+        "buffer_wbl2": 11,
+        "ds_bpermute_b32": 13,
+        "ds_read2_b32": 64,
+        "ds_read_b32": 1,
+        "ds_swizzle_b32": 12,
+        "ds_write_b32": 3,
+        "global_atomic_add": 2,
+        "global_atomic_cmpswap": 23,
+        "global_load_dword": 36,
+        "global_load_ushort": 42,
+        "global_store_dword": 2,
+        "global_store_short": 5,
+        "s_add_i32": 3,
+        "s_add_u32": 18,
+        "s_addc_u32": 18,
+        "s_and_b32": 2,
+        "s_and_b64": 160,
+        "s_and_saveexec_b64": 108,
+        "s_andn2_b64": 58,
+        "s_andn2_saveexec_b64": 20,
+        "s_barrier": 3,
+        "s_bitcmp0_b32": 1,
+        "s_bitcmp1_b32": 3,
+        "s_branch": 31,
+        "s_cbranch_execnz": 25,
+        "s_cbranch_execz": 109,
+        "s_cbranch_scc0": 4,
+        "s_cbranch_scc1": 16,
+        "s_cbranch_vccnz": 13,
+        "s_cbranch_vccz": 4,
+        "s_cmp_eq_u32": 2,
+        "s_cmp_eq_u64": 4,
+        "s_cmp_lg_u32": 7,
+        "s_cmp_lg_u64": 7,
+        "s_cmpk_lg_i32": 1,
+        "s_cselect_b32": 13,
+        "s_cselect_b64": 5,
+        "s_endpgm": 1,
+        "s_ff1_i32_b64": 1,
+        "s_load_dword": 1,
+        "s_load_dwordx16": 1,
+        "s_load_dwordx2": 1,
+        "s_load_dwordx4": 1,
+        "s_lshl_b32": 3,
+        "s_lshl_b64": 5,
+        "s_lshr_b32": 1,
+        "s_mov_b32": 19,
+        "s_mov_b64": 110,
+        "s_movk_i32": 15,
+        "s_nop": 330,
+        "s_nor_b64": 3,
+        "s_not_b32": 1,
+        "s_or_b32": 2,
+        "s_or_b64": 171,
+        "s_or_saveexec_b64": 7,
+        "s_orn2_b64": 6,
+        "s_setpc_b64": 1,
+        "s_trap": 3,
+        "s_waitcnt": 175,
+        "s_xor_b64": 52,
+        "v_add3_u32": 8,
+        "v_add_co_u32_e32": 4,
+        "v_add_f32_dpp": 15,
+        "v_add_f32_e32": 43,
+        "v_add_u32_e32": 13,
+        "v_addc_co_u32_e32": 4,
+        "v_alignbit_b32": 1,
+        "v_and_b32_e32": 31,
+        "v_bfe_u32": 8,
+        "v_bfrev_b32_e32": 1,
+        "v_bitop3_b32": 3,
+        "v_cmp_class_f32_e32": 2,
+        "v_cmp_class_f32_e64": 59,
+        "v_cmp_eq_u32_e32": 59,
+        "v_cmp_eq_u32_e64": 1,
+        "v_cmp_eq_u64_e32": 14,
+        "v_cmp_eq_u64_e64": 1,
+        "v_cmp_ge_f32_e64": 1,
+        "v_cmp_ge_u32_e32": 2,
+        "v_cmp_gt_f32_e32": 1,
+        "v_cmp_gt_u32_e32": 8,
+        "v_cmp_gt_u64_e32": 3,
+        "v_cmp_lg_f32_e32": 1,
+        "v_cmp_lt_f32_e32": 6,
+        "v_cmp_lt_f32_e64": 1,
+        "v_cmp_lt_i32_e32": 4,
+        "v_cmp_lt_i64_e32": 9,
+        "v_cmp_lt_i64_e64": 2,
+        "v_cmp_lt_u32_e32": 6,
+        "v_cmp_lt_u32_e64": 1,
+        "v_cmp_lt_u64_e32": 1,
+        "v_cmp_lt_u64_e64": 3,
+        "v_cmp_ne_u16_e32": 5,
+        "v_cmp_ne_u16_e64": 14,
+        "v_cmp_ne_u32_e32": 17,
+        "v_cmp_ne_u32_e64": 5,
+        "v_cmp_ne_u64_e32": 1,
+        "v_cmp_ne_u64_e64": 1,
+        "v_cmp_ngt_f32_e32": 1,
+        "v_cmp_ngt_f32_e64": 1,
+        "v_cmp_nle_f32_e32": 1,
+        "v_cmp_nlg_f32_e64": 2,
+        "v_cmp_nlt_f32_e32": 1,
+        "v_cmp_nlt_f32_e64": 1,
+        "v_cmp_u_f32_e32": 4,
+        "v_cmp_u_f32_e64": 4,
+        "v_cndmask_b32_e32": 23,
+        "v_cndmask_b32_e64": 17,
+        "v_cvt_i32_f32_e32": 2,
+        "v_div_fixup_f32": 2,
+        "v_div_fmas_f32": 2,
+        "v_div_scale_f32": 4,
+        "v_exp_f32_e32": 2,
+        "v_fma_f32": 11,
+        "v_fmac_f32_e32": 4,
+        "v_fmamk_f32": 1,
+        "v_ldexp_f32": 2,
+        "v_lshl_add_u64": 45,
+        "v_lshlrev_b32_e32": 55,
+        "v_lshlrev_b32_e64": 2,
+        "v_lshlrev_b64": 2,
+        "v_lshrrev_b32_e32": 11,
+        "v_mad_u64_u32": 1,
+        "v_mbcnt_hi_u32_b32": 20,
+        "v_mbcnt_lo_u32_b32": 20,
+        "v_mov_b32_dpp": 3,
+        "v_mov_b32_e32": 125,
+        "v_mov_b64_e32": 38,
+        "v_mul_f32_e32": 36,
+        "v_mul_f32_e64": 1,
+        "v_or_b32_e32": 156,
+        "v_or_b32_sdwa": 8,
+        "v_rcp_f32_e32": 2,
+        "v_readfirstlane_b32": 6,
+        "v_readlane_b32": 1,
+        "v_rndne_f32_e32": 2,
+        "v_sqrt_f32_e32": 1,
+        "v_sub_f32_e32": 2,
+        "v_writelane_b32": 1,
+        "v_xor_b32_e32": 2
+      }
+    }
+  },
+  "root_manual_review_required": true,
+  "schema": "ferric-p228-silu-materialized-inspection-v1",
+  "source_manifest": {
+    "bytes": 3408,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-silu-materialized-kernel-v1/source-manifest.json",
+    "sha256": "ca0bafcdd0297d2d849770791cf04686b33f048402f0fb5cc451183217acb276"
+  },
+  "static_inspection_complete": true,
+  "transitive_compiler_sources_replayed": false
+}

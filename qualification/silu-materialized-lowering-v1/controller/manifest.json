@@ -1,0 +1,9 @@
+{
+  "schema": "ferric-p228-silu-materialized-lowering-package-v1",
+  "files": [
+    {"path": "run.py", "bytes": 37315, "sha256": "b7a66358a5a2eb53c03842f455cc85e1f2c68ca62b5152c9ad03e357aaa5d8e5"},
+    {"path": "contracts.py", "bytes": 4773, "sha256": "d82facce758c363f13cf97a30cdc04d02ed4673278f53b4a11d9c83fb309f539"},
+    {"path": "test_run.py", "bytes": 19371, "sha256": "9ac727a34366345755fd3f54445a38b7977e901e99944e66752d7ea7adbe39af"},
+    {"path": "README.md", "bytes": 5948, "sha256": "976ce09c53b0d65ae3aec89321360f8300955163ef0e5fa5e8705c9cb13f14b4"}
+  ]
+}

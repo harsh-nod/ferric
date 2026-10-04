@@ -6,13 +6,22 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Latest: the [explicit BF16 SiLU candidate](../qualification/silu-materialized-cpu-v1/README.md)
+Latest: the [BF16 SiLU candidate completed checked gfx950 emission](../qualification/silu-materialized-lowering-v1/README.md)
+on ASROCK, including all nine stages, actual replay and natural/reaped owner
+completion. The 33,320-byte image retains the same ABI, 106 SGPRs, 106 VGPRs,
+512 bytes LDS and zero reported spills/private scratch. Actual LLVM contains
+the new BF16 narrow/widen before the up product. Separate policy suites passed
+27 lowering and 36 capture tests. GPU execution and numerical acceptance for
+this image remain open; this is not a throughput result or production admission.
+
+The [explicit BF16 SiLU candidate](../qualification/silu-materialized-cpu-v1/README.md)
 passed all 38 Rust tests and twelve controller-policy tests on ASROCK. The
 candidate adds BF16 rounding between SiLU and its up product; existing
 exponential arithmetic and Down2 scheduling are unchanged. The full tested
 fixture is published separately because its dependencies differ from the live
-default device crate. Checked lowering, GPU execution and numerical comparison
-are separate gates; no production route or acceptance threshold changed.
+default device crate. Checked lowering completed as recorded above; GPU execution
+and numerical comparison remain separate gates. No production route or acceptance
+threshold changed.
 
 The [independent four-step framework comparison](../qualification/projection-residual-decode-comparison-v1/README.md)
 completed on ASROCK across all 152 tensor slices. All four output tokens match;

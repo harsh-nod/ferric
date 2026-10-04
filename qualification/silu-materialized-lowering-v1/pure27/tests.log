@@ -1,0 +1,32 @@
+test_actual_cpu_digest_is_required_without_guessed_default (test_run.PolicyTests) ... ok
+test_actual_cpu_path_is_a_closed_fresh_namespace (test_run.PolicyTests) ... ok
+test_actual_cpu_path_refuses_old_alias_escape_and_wrong_basename (test_run.PolicyTests) ... ok
+test_both_completion_scopes_recheck_source_map_bytes_and_stamps (test_run.PolicyTests) ... ok
+test_cpu_cohort_retains_all_sixteen_phases_and_eighty_six_raw_records (test_run.PolicyTests) ... ok
+test_cpu_gate_refuses_failed_or_wrong_total_before_any_io (test_run.PolicyTests) ... ok
+test_cpu_source_transition_allows_only_formatting_the_three_additions (test_run.PolicyTests) ... ok
+test_cpu_source_transition_rejects_changed_old_missing_new_and_post_drift (test_run.PolicyTests) ... ok
+test_emission_binds_exact_artifacts_and_keeps_requirements_open (test_run.PolicyTests) ... ok
+test_emission_refuses_budget_or_authority_relaxation (test_run.PolicyTests) ... ok
+test_emission_refuses_import_provider_or_image_drift (test_run.PolicyTests) ... ok
+test_fixture_is_exactly_five_rust_and_seven_total_files (test_run.PolicyTests) ... ok
+test_fixture_refuses_missing_extra_duplicate_and_test_source (test_run.PolicyTests) ... ok
+test_fixture_refuses_reusing_one_body_path_for_two_includes (test_run.PolicyTests) ... ok
+test_fresh_target_is_disjoint_from_preserved_targets (test_run.PolicyTests) ... ok
+test_guard_accepts_ordinary_python (test_run.PolicyTests) ... ok
+test_guard_refuses_optimized_or_inherited_optimization (test_run.PolicyTests) ... ok
+test_metadata_preserves_eleven_root_abi (test_run.PolicyTests) ... ok
+test_metadata_refuses_duplicate_unknown_and_wrong_header (test_run.PolicyTests) ... ok
+test_metadata_rejects_changed_image_geometry_abi_or_authority (test_run.PolicyTests) ... ok
+test_one_exact_ignored_callback_must_actually_pass (test_run.PolicyTests) ... ok
+test_pin_exact_joins_extent_and_digest_not_only_path (test_run.PolicyTests) ... ok
+test_recipe_preserves_tool_generation_resources_and_template_bytes (test_run.PolicyTests) ... ok
+test_recipe_rejects_missing_reordered_or_duplicate_stage (test_run.PolicyTests) ... ok
+test_recipe_rejects_widened_or_gpu_bounds (test_run.PolicyTests) ... ok
+test_recipe_selects_actual_mlp_replay_finalizer_and_capture_names (test_run.PolicyTests) ... ok
+test_relocation_changes_only_candidate_output_not_retained_prefix_tools (test_run.PolicyTests) ... ok
+
+----------------------------------------------------------------------
+Ran 27 tests in 0.012s
+
+OK
