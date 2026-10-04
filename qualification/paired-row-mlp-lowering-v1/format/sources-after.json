@@ -1,0 +1,123 @@
+{
+  "p228-gfx950-clock-parent-v1": {
+    "adapters/m1-engineering-execution-v1/Cargo.toml": {
+      "bytes": 12075,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-gfx950-clock-parent-source-v2/draft/adapters/m1-engineering-execution-v1/Cargo.toml",
+      "sha256": "5465ad6c0ab5b5ae981a984d8f9883a8f7b8bcf66600a7eba1052d21b1466157"
+    },
+    "adapters/m1-engineering-execution-v1/src/bin/ferric-qwen3-finite-prefix-decode-device-clock-engineering.rs": {
+      "bytes": 3193,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-gfx950-clock-parent-source-v2/draft/adapters/m1-engineering-execution-v1/src/bin/ferric-qwen3-finite-prefix-decode-device-clock-engineering.rs",
+      "sha256": "3577478a3e92c2fd25b26a46e35a3558b080e9b799f063c1e3efad316be52726"
+    },
+    "adapters/m1-engineering-execution-v1/src/lib.rs": {
+      "bytes": 88241,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-gfx950-clock-parent-source-v2/draft/adapters/m1-engineering-execution-v1/src/lib.rs",
+      "sha256": "415b3cdf75002f1b93ef1e05bf530aa234939064913665fe8786a1a29cdabb87"
+    },
+    "adapters/m1-engineering-execution-v1/src/tp_finite_client/prefix_decode.rs": {
+      "bytes": 30052,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-gfx950-clock-parent-source-v2/draft/adapters/m1-engineering-execution-v1/src/tp_finite_client/prefix_decode.rs",
+      "sha256": "d2501492c5ba3da56fbad28c3c72d0af89b1bf7395920465319f61830afc8edc"
+    },
+    "adapters/m1-engineering-execution-v1/src/tp_finite_client/prefix_decode/device_clock_v2.rs": {
+      "bytes": 4379,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-gfx950-clock-parent-source-v2/draft/adapters/m1-engineering-execution-v1/src/tp_finite_client/prefix_decode/device_clock_v2.rs",
+      "sha256": "3778451d647a2df09c0e32cf24baa21b7d3d6321dbe0e66f197a77fc6c552d92"
+    },
+    "adapters/m1-engineering-execution-v1/src/tp_finite_client/prefix_decode/device_clock_v2_tests.rs": {
+      "bytes": 13055,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-gfx950-clock-parent-source-v2/draft/adapters/m1-engineering-execution-v1/src/tp_finite_client/prefix_decode/device_clock_v2_tests.rs",
+      "sha256": "62d8f83d6ef0281dafa92176526a9d8ed6d333e98156b3331b542d6b0304dbb6"
+    },
+    "adapters/m1-engineering-execution-v1/src/tp_finite_client/prefix_decode/device_v1.rs": {
+      "bytes": 8365,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-gfx950-clock-parent-source-v2/draft/adapters/m1-engineering-execution-v1/src/tp_finite_client/prefix_decode/device_v1.rs",
+      "sha256": "11b40f4de1faccefe7386f349e80c0b723ca6972e0931d1e40493e03f6add584"
+    },
+    "adapters/m1-engineering-execution-v1/src/tp_finite_client/prefix_decode/device_v1_tests.rs": {
+      "bytes": 12601,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-gfx950-clock-parent-source-v2/draft/adapters/m1-engineering-execution-v1/src/tp_finite_client/prefix_decode/device_v1_tests.rs",
+      "sha256": "83d775dfa0b462bea39d2f5bd95cf455bd564ea9e13a9dfe34cd1dcae15c703c"
+    }
+  },
+  "p228-gfx950-clock-recorder-v1": {
+    "adapters/tp-peer-finite-engineering-worker-v1/src/lib.rs": {
+      "bytes": 1878,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-gfx950-clock-recorder-source-v2/draft/adapters/tp-peer-finite-engineering-worker-v1/src/lib.rs",
+      "sha256": "fea58b17f8109e89996d0d974bbe8a63fad1b1f7971a8086b16aac79471d9993"
+    },
+    "adapters/tp-peer-finite-engineering-worker-v1/src/main.rs": {
+      "bytes": 9205,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-gfx950-clock-recorder-source-v2/draft/adapters/tp-peer-finite-engineering-worker-v1/src/main.rs",
+      "sha256": "28402738fb3970e038ccd9bf456f629e5c537df99161076d58d8554c4dfe6175"
+    },
+    "adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_decode_cli_v1.rs": {
+      "bytes": 21609,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-gfx950-clock-recorder-source-v2/draft/adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_decode_cli_v1.rs",
+      "sha256": "79ca73daa35849121194dfcf4a160f0e5174ddf176d3b755f9509c84dcfaea2a"
+    },
+    "adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_decode_clock_cli_tests.rs": {
+      "bytes": 3088,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-gfx950-clock-recorder-source-v2/draft/adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_decode_clock_cli_tests.rs",
+      "sha256": "a560ba2b22b245a2e530e58380ded18eaa75de02a4406297806168f6eb5eb256"
+    },
+    "adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_decode_device_clock_v2.rs": {
+      "bytes": 2493,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-gfx950-clock-recorder-source-v2/draft/adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_decode_device_clock_v2.rs",
+      "sha256": "4aec273ed7e63ceae58a73734756b266ee0df848c472d4c4f121424cee66b5ef"
+    },
+    "adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_decode_device_clock_v2_tests.rs": {
+      "bytes": 2909,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-gfx950-clock-recorder-source-v2/draft/adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_decode_device_clock_v2_tests.rs",
+      "sha256": "8ab94d5effa0db55c1cb40edc5e32c8cff6ec46e424fc710d993d08fae5e36b0"
+    },
+    "adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_device_clock_recorder_v2.rs": {
+      "bytes": 9833,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-gfx950-clock-recorder-source-v2/draft/adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_device_clock_recorder_v2.rs",
+      "sha256": "9a43fd1fa2d2d6427f13055324e6b74690402174fe787ff66a9784aa0d6613fe"
+    },
+    "adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_device_clock_recorder_v2_tests.rs": {
+      "bytes": 7567,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-gfx950-clock-recorder-source-v2/draft/adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_device_clock_recorder_v2_tests.rs",
+      "sha256": "c6228c571f8af03bd19e41a6feec103df81a107b2cf8840ed99ed80362234c84"
+    },
+    "adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_device_recorder_v1.rs": {
+      "bytes": 11444,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-gfx950-clock-recorder-source-v2/draft/adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_device_recorder_v1.rs",
+      "sha256": "493b84f9360741ef1ebf321edaad11d59312ff56ca4aa3d789809813fbb5b2fa"
+    },
+    "adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_tiles_decode_v6.rs": {
+      "bytes": 15386,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-gfx950-clock-recorder-source-v2/draft/adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_tiles_decode_v6.rs",
+      "sha256": "22caf67d3f8fd6230291bf8123be87a619d989455821c88731e677c2d9d5060a"
+    },
+    "adapters/tp-peer-finite-engineering-worker-v1/src/prefix_decode_device_clock_observation_v2.rs": {
+      "bytes": 5686,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-gfx950-clock-recorder-source-v2/draft/adapters/tp-peer-finite-engineering-worker-v1/src/prefix_decode_device_clock_observation_v2.rs",
+      "sha256": "9971942da081cccb5ceb1193b354ece259cce4f9e113452a0df1546b4156e3a8"
+    },
+    "adapters/tp-peer-finite-engineering-worker-v1/src/prefix_decode_device_clock_observation_v2_tests.rs": {
+      "bytes": 6531,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-gfx950-clock-recorder-source-v2/draft/adapters/tp-peer-finite-engineering-worker-v1/src/prefix_decode_device_clock_observation_v2_tests.rs",
+      "sha256": "8d50e40a209e3921aa7fce590a45fe9e70c71c54688be403ab5179a3c4bb3508"
+    }
+  },
+  "p228-mlp-down-two-row-v1": {
+    "device/qwen3-tp-wave-rmsnorm-kernels-v15/src/finite_mlp_tiles_v2.rs": {
+      "bytes": 3535,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-mlp-down-two-row-source-v2/draft/device/qwen3-tp-wave-rmsnorm-kernels-v15/src/finite_mlp_tiles_v2.rs",
+      "sha256": "a0327c4b3d7b4bbd1b4be87a7392fde3666e1750148d67666eb4364876b0d9d1"
+    },
+    "device/qwen3-tp-wave-rmsnorm-kernels-v15/src/mlp_tile_numerics_v2.rs": {
+      "bytes": 4908,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-mlp-down-two-row-source-v2/draft/device/qwen3-tp-wave-rmsnorm-kernels-v15/src/mlp_tile_numerics_v2.rs",
+      "sha256": "2b49dac2d9bc12772d48cbaf8a3513e38bbcaba9dc1466bd85f78af69d575245"
+    },
+    "device/qwen3-tp-wave-rmsnorm-kernels-v15/tests/mlp_down_two_row_v1.rs": {
+      "bytes": 17107,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-mlp-down-two-row-source-v2/draft/device/qwen3-tp-wave-rmsnorm-kernels-v15/tests/mlp_down_two_row_v1.rs",
+      "sha256": "c3a20cb806e8bae3df5a9c8de5076f29254ea240343519e1db9d319d1b3b94c7"
+    }
+  }
+}

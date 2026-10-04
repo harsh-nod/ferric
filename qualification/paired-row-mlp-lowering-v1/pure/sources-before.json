@@ -1,0 +1,22 @@
+{
+  "README.md": {
+    "bytes": 7588,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-down2-lowering-v2/README.md",
+    "sha256": "cc25530d066366a39e52d38f5e12fccb33ec793147ee192d906014d6f509e6bb"
+  },
+  "contracts.py": {
+    "bytes": 4773,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-down2-lowering-v2/contracts.py",
+    "sha256": "d82facce758c363f13cf97a30cdc04d02ed4673278f53b4a11d9c83fb309f539"
+  },
+  "run.py": {
+    "bytes": 27386,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-down2-lowering-v2/run.py",
+    "sha256": "c7ae8e1b22e3dd6aaf1d69eb22174206b3a3437d3e4006c34f8b1418f94b76db"
+  },
+  "test_run.py": {
+    "bytes": 13659,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-down2-lowering-v2/test_run.py",
+    "sha256": "2528d87f2d551dbd131f8341fc1318fe18a48521ad18f7d38f76cabe6a2a78cc"
+  }
+}

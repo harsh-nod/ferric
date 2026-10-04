@@ -1,0 +1,56 @@
+{
+  "schema": "ferric-p228-mlp-down-two-row-source-manifest-v1",
+  "base_commit": "924703865d9cfcb1dc791af211b7558ff7c58894",
+  "status": "authored-unexecuted",
+  "files": [
+    {
+      "path": "device/qwen3-tp-wave-rmsnorm-kernels-v15/src/finite_mlp_tiles_v2.rs",
+      "source": "draft/device/qwen3-tp-wave-rmsnorm-kernels-v15/src/finite_mlp_tiles_v2.rs",
+      "before": {
+        "bytes": 3534,
+        "sha256": "d421ea6dfeda8cecb1049f90ae7049c437b1a26c93e998bcfa1d62b5d2760d9b"
+      },
+      "after": {
+        "bytes": 3535,
+        "sha256": "a0327c4b3d7b4bbd1b4be87a7392fde3666e1750148d67666eb4364876b0d9d1"
+      }
+    },
+    {
+      "path": "device/qwen3-tp-wave-rmsnorm-kernels-v15/src/mlp_tile_numerics_v2.rs",
+      "source": "draft/device/qwen3-tp-wave-rmsnorm-kernels-v15/src/mlp_tile_numerics_v2.rs",
+      "before": {
+        "bytes": 2231,
+        "sha256": "1277f4cf1f7fec1d900f6704ea4a13e3b597128e91137e1f6774e5d19823ae5f"
+      },
+      "after": {
+        "bytes": 4908,
+        "sha256": "2b49dac2d9bc12772d48cbaf8a3513e38bbcaba9dc1466bd85f78af69d575245"
+      }
+    },
+    {
+      "path": "device/qwen3-tp-wave-rmsnorm-kernels-v15/tests/mlp_down_two_row_v1.rs",
+      "source": "draft/device/qwen3-tp-wave-rmsnorm-kernels-v15/tests/mlp_down_two_row_v1.rs",
+      "before": null,
+      "after": {
+        "bytes": 17107,
+        "sha256": "c3a20cb806e8bae3df5a9c8de5076f29254ea240343519e1db9d319d1b3b94c7"
+      }
+    }
+  ],
+  "tests_authored_not_run": [
+    "all_lanes_match_original_partial_bits_reductions_and_ordered_writes",
+    "every_down_tile_preserves_first_last_rows_and_original_weight_layout",
+    "cancellation_signed_zero_and_subnormal_rounding_are_bitwise_unchanged",
+    "nonfinite_product_partial_and_reduction_overflow_keep_all_collectives",
+    "first_row_failure_poisons_cached_second_partial_before_its_reduction",
+    "second_row_failure_does_not_prematurely_reject_the_first_row",
+    "failed_even_and_odd_writes_preserve_sticky_rejection_and_census",
+    "missing_acquired_input_still_reads_all_weights_and_reduces_all_rows",
+    "source_selects_only_down2_and_preserves_fixed_rounds_geometry_and_storage",
+    "closed_macro_has_two_ordered_scalar_accumulators_without_new_control_exits"
+  ],
+  "tests_executed": false,
+  "gpu_execution": false,
+  "compiler_changed": false,
+  "provider_changed": false
+}

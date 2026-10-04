@@ -1,0 +1,29 @@
+{
+  "schema": "ferric-p228-down2-lowering-package-v2",
+  "files": [
+    {
+      "path": "README.md",
+      "bytes": 7588,
+      "sha256": "cc25530d066366a39e52d38f5e12fccb33ec793147ee192d906014d6f509e6bb"
+    },
+    {
+      "path": "contracts.py",
+      "bytes": 4773,
+      "sha256": "d82facce758c363f13cf97a30cdc04d02ed4673278f53b4a11d9c83fb309f539"
+    },
+    {
+      "path": "run.py",
+      "bytes": 27386,
+      "sha256": "c7ae8e1b22e3dd6aaf1d69eb22174206b3a3437d3e4006c34f8b1418f94b76db"
+    },
+    {
+      "path": "test_run.py",
+      "bytes": 13659,
+      "sha256": "2528d87f2d551dbd131f8341fc1318fe18a48521ad18f7d38f76cabe6a2a78cc"
+    }
+  ],
+  "pure_tests": 17,
+  "test_census": {
+    "test_run.py": 17
+  }
+}

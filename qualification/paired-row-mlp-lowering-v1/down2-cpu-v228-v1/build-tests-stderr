@@ -1,0 +1,39 @@
+   Compiling typenum v1.20.1
+   Compiling cfg-if v1.0.5
+   Compiling cpufeatures v0.3.1
+   Compiling libc v0.2.189
+   Compiling fe2o3-target-spec v0.1.0 (/home/harmenon/ferric-asrock-42/fe2o3/crates/fe2o3-target-spec)
+   Compiling fe2o3-amd-target v0.1.0 (/home/harmenon/ferric-asrock-42/fe2o3/crates/fe2o3-amd-target)
+   Compiling hybrid-array v0.4.15
+   Compiling quote v1.0.47
+   Compiling crypto-common v0.2.2
+   Compiling block-buffer v0.12.1
+   Compiling digest v0.11.3
+   Compiling sha2 v0.11.0
+   Compiling rustix v1.1.5
+   Compiling proc-macro2 v1.0.107
+   Compiling fe2o3-build-authority v0.1.0 (/home/harmenon/ferric-asrock-42/fe2o3/crates/fe2o3-build-authority)
+   Compiling fe2o3-kernel-descriptor v0.1.0 (/home/harmenon/ferric-asrock-42/fe2o3/crates/fe2o3-kernel-descriptor)
+   Compiling fe2o3-rustc-invocation v0.1.0 (/home/harmenon/ferric-asrock-42/fe2o3/crates/fe2o3-rustc-invocation)
+   Compiling fe2o3-compiler-lineage v0.1.0 (/home/harmenon/ferric-asrock-42/fe2o3/crates/fe2o3-compiler-lineage)
+   Compiling reserved-fe2o3-symbols v0.1.0 (/home/harmenon/ferric-asrock-42/fe2o3/crates/reserved-fe2o3-symbols)
+   Compiling hashbrown v0.17.1
+   Compiling linux-raw-sys v0.12.1
+   Compiling winnow v1.0.4
+   Compiling bitflags v2.13.2
+   Compiling equivalent v1.0.2
+   Compiling unicode-ident v1.0.26
+   Compiling toml_parser v1.1.3+spec-1.1.0
+   Compiling indexmap v2.14.2
+   Compiling fe2o3-compiler-ffi v0.1.0 (/home/harmenon/ferric-asrock-42/fe2o3/crates/fe2o3-compiler-ffi)
+   Compiling toml_datetime v1.1.1+spec-1.1.0
+   Compiling toml_edit v0.25.15+spec-1.1.0
+   Compiling fe2o3-artifact-transaction v0.1.0 (/home/harmenon/ferric-asrock-42/fe2o3/crates/fe2o3-artifact-transaction)
+   Compiling syn v2.0.119
+   Compiling fe2o3-artifacts v0.1.0 (/home/harmenon/ferric-asrock-42/fe2o3/crates/fe2o3-artifacts)
+   Compiling proc-macro-crate v3.5.0
+   Compiling fe2o3-rustc-front v0.1.0 (/home/harmenon/ferric-asrock-42/fe2o3/crates/fe2o3-rustc-front)
+   Compiling fe2o3-macros v0.1.0 (/home/harmenon/ferric-asrock-42/fe2o3/crates/fe2o3-macros)
+   Compiling fe2o3-device v0.1.0 (/home/harmenon/ferric-asrock-42/fe2o3/crates/fe2o3-device)
+   Compiling ferric-row-numerical-cpu-fixture-v225 v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/down2-cpu-v228-v1/fixture)
+    Finished `test` profile [optimized] target(s) in 25.58s

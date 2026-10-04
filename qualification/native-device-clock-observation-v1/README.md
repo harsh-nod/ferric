@@ -54,7 +54,7 @@ wrap repair or cross-device alignment.
 
 The [worker](../gfx950-clock-recorder-v1/README.md) and
 [parent](../gfx950-clock-parent-v1/README.md) are the exact separately qualified
-CPU669 and CPU275 executables. Fresh runtime audits resolve their system
+669-test worker and 275-test parent builds. Fresh runtime audits resolve their system
 libraries and bind the current host. The model, weights, kernel images,
 launch geometry, four inputs and six prefix prerequisites are unchanged.
 The nested model request is unchanged except for worker, session and output
@@ -77,8 +77,9 @@ preparation and host checks and must not be reported as decode throughput.
 ## Next Gates
 
 Establish the dispatch/counter clock-domain relationship and bounded clock
-calibration before reporting GPU durations or overlap. Independently qualify
-the paired-row MLP candidate through checked HSACO lowering, resource/ISA
-inspection and GPU output comparison before an equal-workload timing ablation.
+calibration before reporting GPU durations or overlap. The
+[paired-row MLP candidate](../paired-row-mlp-lowering-v1/README.md) subsequently
+passed checked HSACO lowering and resource inspection. It still needs GPU
+output comparison before an equal-workload timing ablation.
 Full-model numerical acceptance and the sustained 2,048/256 benchmark remain
 separate requirements.

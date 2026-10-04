@@ -1,0 +1,19 @@
+{"phase": "fixture-metadata", "status": "RUNNING", "pid": 3978403}
+{"phase": "fixture-metadata", "exit_code": 0, "reason": null, "elapsed_seconds": 2.0139574829954654, "group_absent": true, "cache_bytes": 4096, "stdout_sha256": "7fb57e7f4ef181949281b19095fb689e3c6a7803e2f18546589c65211c7594dc", "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"}
+{"phase": "checked-lowering", "status": "RUNNING", "pid": 3978422}
+{"phase": "checked-lowering", "exit_code": 0, "reason": null, "elapsed_seconds": 638.7598597849719, "group_absent": true, "cache_bytes": 257916629, "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855", "stderr_sha256": "02d8b0c35ce9f4e6e127ee64df94cf09f801446603d4f0b3fd69cd09f2d76127"}
+{"phase": "actual-replay", "status": "RUNNING", "pid": 4000157}
+{"phase": "actual-replay", "exit_code": 0, "reason": null, "elapsed_seconds": 471.58684041001834, "group_absent": true, "cache_bytes": 257916629, "stdout_sha256": "41d08d299ed58953c45aa712743920def81fab10ef47dab5e3635cda55952305", "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"}
+{"phase": "actual-inert-join", "status": "RUNNING", "pid": 4012048}
+{"phase": "actual-inert-join", "exit_code": 0, "reason": null, "elapsed_seconds": 2.015108725056052, "group_absent": true, "cache_bytes": 257916629, "stdout_sha256": "314709a461de33be595b21442efa350d33c91fe5376fd235337f4c91ae78defa", "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"}
+{"phase": "emit", "status": "RUNNING", "pid": 4012123}
+{"phase": "emit", "exit_code": 0, "reason": null, "elapsed_seconds": 4.0260696350596845, "group_absent": true, "cache_bytes": 257916629, "stdout_sha256": "7b7b761e7b71e99d64ae50ef21f691f2da94cbb077f2fb135e71fd6e77bb1519", "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"}
+{"phase": "extract-retained", "status": "RUNNING", "pid": 4012295}
+{"phase": "extract-retained", "exit_code": 0, "reason": null, "elapsed_seconds": 2.0272670560516417, "group_absent": true, "cache_bytes": 257916629, "stdout_sha256": "e14758438c18a4c028afbc6a5bd505a758394a43ced3f50b8e663199e53ae0d4", "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"}
+{"phase": "descriptor-metadata", "status": "RUNNING", "pid": 4012872}
+{"phase": "descriptor-metadata", "exit_code": 0, "reason": null, "elapsed_seconds": 2.0151364849880338, "group_absent": true, "cache_bytes": 257916629, "stdout_sha256": "83018fae53cc176be97113e8b6e9b24852d288b63fae0c46f9fcc42e92db9e24", "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"}
+{"phase": "elf-notes", "status": "RUNNING", "pid": 4012945}
+{"phase": "elf-notes", "exit_code": 0, "reason": null, "elapsed_seconds": 2.017279135994613, "group_absent": true, "cache_bytes": 257916629, "stdout_sha256": "41b16d07dfe178304b00bf83da8632049edfba70f5fd9cb1abe7984badcc0bcb", "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"}
+{"phase": "disassembly", "status": "RUNNING", "pid": 4013046}
+{"phase": "disassembly", "exit_code": 0, "reason": null, "elapsed_seconds": 2.0165291661396623, "group_absent": true, "cache_bytes": 257916629, "stdout_sha256": "9ae3d9709ce3d649368982a447d3844bf18b2525bafa291912d090b05b0cb680", "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"}
+{"passed": true, "error": null, "postcheck_errors": [], "output": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-down2-checked-probe-v228-v1"}

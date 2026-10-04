@@ -1,0 +1,35 @@
+{
+  "controller_sha256": "45abd9c62819846ebfe0957ac4ea62b020acfcdaae8cc399fa9cefc714fb4240",
+  "elapsed_seconds": 0.017251363024115562,
+  "errors": 0,
+  "failures": 0,
+  "full_model_acceptance": false,
+  "gpu_execution": false,
+  "manifest_sha256": "07985b893769d3aabd8037d9c111f4f806aff127cb6973abe925a9c009a68f9f",
+  "native_execution": false,
+  "numerical_acceptance": false,
+  "passed": true,
+  "performance_claim": false,
+  "production_authority": false,
+  "schema": "ferric-p228-down2-lowering-pure-v1",
+  "skipped": 0,
+  "source_postchecks_passed": true,
+  "source_sha256": "e974ea73a18fca2fb757e489fc3c19b79ed99dced240dca8077f1538f0a61a6a",
+  "sources_after": {
+    "bytes": 985,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/down2-lowering-pure-v228-v2/sources-after.json",
+    "sha256": "e974ea73a18fca2fb757e489fc3c19b79ed99dced240dca8077f1538f0a61a6a"
+  },
+  "sources_before": {
+    "bytes": 985,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/down2-lowering-pure-v228-v2/sources-before.json",
+    "sha256": "e974ea73a18fca2fb757e489fc3c19b79ed99dced240dca8077f1538f0a61a6a"
+  },
+  "synthetic_policy_tests_only": true,
+  "tests": 17,
+  "transcript": {
+    "bytes": 1558,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/down2-lowering-pure-v228-v2/tests.log",
+    "sha256": "c3f30ab0d27d1e3b425990ecf79b2174d521d0ea34b103051a5bb1dc5263a427"
+  }
+}
