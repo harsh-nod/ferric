@@ -1,0 +1,28 @@
+{
+  "schema": "ferric-p227-prefix-stage-policy-v1",
+  "authority": "none",
+  "adaptive_tolerance": false,
+  "conditioning": "Actual accepted preceding BF16 arrays, not an independently evolved full-prefix or model trajectory.",
+  "wave_norm": "Unchanged P218 width4096 dual-BF16 norm interval: depth71,8255 half-subnormal allowances,epsilon bits897988541,reviewed sqrt <=1 F32 ULP,correctly rounded F32 divide,32 first-narrow candidates maximum.",
+  "qkv": "Unchanged P218 BF16 GEMV envelope at K4096/depth71;3072 packed output rows in Q2048,K512,V512 order. Actual accepted normalized input conditions this check.",
+  "serial_headnorm": {
+    "width": 128,
+    "exact_reference": "Integer BF16 units2^-133;sum of128 squared integers scaled2^-266,without a floating reduction.",
+    "gamma_f32_depth": 129,
+    "half_subnormal_allowances": 256,
+    "derivation": "At most one rounded product and128 sequential rounded additions on a contribution path. Count128 products+128 additions for underflow. gamma129 and256*2^-150/(1-129*2^-24) outward enclose source sum;no fitted relative tolerance.",
+    "epsilon_f32_bits": 897988541,
+    "sqrt_max_f32_ulp": 1,
+    "divide": "Correctly rounded binary32 RNE;no approximate reciprocal substitution.",
+    "maximum_first_bf16_candidates": 32,
+    "candidate_cap": "Refuse uncertainty,never enlarge the cap after reading outputs.",
+    "correlation": "Per-coordinate candidates overapproximate shared inverse correlation;pair membership is necessary conditional consistency,not a joint existence proof."
+  },
+  "rope": "Authenticated supplied FP32 rotary words;split-half lane,lane+64;separate FP32 ac,bs,bc,as products and first=ac-bs,second=bc+as additions,then BF16 RNE. Enumerate bounded headnorm candidate pairs and require the joint observed pair. No contraction or trig-error allowance is added.",
+  "value_append": "Exact current-slot BF16 V slice from actual accepted packed QKV;does not independently validate prior KV history.",
+  "nonfinite": "Refuse nonfinite inputs,accepted intermediates,output words and overflowing interval endpoints.",
+  "full_prefix_acceptance": false,
+  "full_model_acceptance": false,
+  "runtime_premises_discharged": false,
+  "production_authority": false
+}

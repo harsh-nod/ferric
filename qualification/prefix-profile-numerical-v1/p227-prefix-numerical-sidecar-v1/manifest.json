@@ -1,0 +1,57 @@
+{
+  "expected_nonignored_tests": 18,
+  "files": [
+    {
+      "bytes": 5837,
+      "path": "README.txt",
+      "sha256": "e9d78fb994384099cb9d6162145e49a00973150ca7cfc295519087ee5b063821"
+    },
+    {
+      "bytes": 571,
+      "path": "attention-policy.json",
+      "sha256": "438b10d7cf2bdc7cd693024edcfa7f3f84929e4a852787d72964c43263cd0fc2"
+    },
+    {
+      "bytes": 16398,
+      "path": "attention_reference.py",
+      "sha256": "99d61a03e5ad31642f322dc614c9098b26a8374a3f83c55c8ccecce3ec92466c"
+    },
+    {
+      "bytes": 12495,
+      "path": "compare_numerical.py",
+      "sha256": "b0423467ddda3f55d9e3fb33d5dab186312695d03445db3809f4e903c3c328d8"
+    },
+    {
+      "bytes": 11065,
+      "path": "output_reference.py",
+      "sha256": "34d86aa6e02f872b219cbb105c335633ca0dc8ed666e97a29376606cd97137cc"
+    },
+    {
+      "bytes": 15789,
+      "path": "test_compare_numerical.py",
+      "sha256": "581473b9e193640ef54a962702ce34c4c14d6e1934da9d72f8aedfb29bd3ae42"
+    },
+    {
+      "bytes": 15359,
+      "path": "validation.py",
+      "sha256": "cdaf6dc53208bbca8f23b2a3fa3eca9d28fe00ca4cfc74b36d225f3ebe8d28d1"
+    }
+  ],
+  "full_model_acceptance": false,
+  "full_prefix_acceptance": false,
+  "gpu_execution": false,
+  "new_numerical_thresholds": false,
+  "numpy_version": "2.2.6",
+  "performance_claim": false,
+  "production_authority": false,
+  "read_only_reviewers": [
+    "root",
+    "attention_backend_plan_v200",
+    "worker_expansion_v200"
+  ],
+  "schema": "ferric-p227-prefix-numerical-sidecar-proposal-v1",
+  "source_or_kernel_changed": false,
+  "status": "frozen_author_unrun",
+  "test_pattern": "test_compare_numerical.py",
+  "tests_run": false
+}

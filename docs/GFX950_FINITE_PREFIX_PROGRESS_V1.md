@@ -28,6 +28,7 @@ engineering branch; it does not change the production execution path.
 | Checked reciprocal probe with new compiler on `mi350-2` | Previous storage gate cleared; canonical semantic capture emitted | Ranked projection rejects 1,027 blocks against the unchanged 1,024 limit; no HSACO or GPU run |
 | Reduced-CFG reciprocal V3 on `mi350-2` | Exact census measures 1,013 blocks, 14 fewer; CFG-size gate cleared | Checked lowering now rejects an unsupported induction-latch form; no HSACO or GPU run |
 | Canonical-counter reciprocal V4 on `mi350-2` | CPU arithmetic passes; fresh checked probe fails cumulative partial-move storage limit | No semantic capture or HSACO; prior V3 compiler successes do not transfer |
+| Independent per-profile comparator on `mi350-2` | 20 CPU tests and eight historical rank rows passed | No paired bitwise prerequisite; unchanged bounds; not a new GPU run or new-image acceptance |
 
 Both four-forward runs completed their Close protocol, reaped their owned
 processes, and passed their six surrounding device-state audits. The CPU suite
@@ -159,6 +160,18 @@ the first rejected cumulative charge is 2,097,153 against the unchanged
 storage and CFG checks cannot be carried forward. All postchecks passed and
 the owned tree exited naturally and was reaped. The latch fix remains
 unqualified, with no new HSACO or GPU result.
+
+The new [per-profile comparator](../qualification/prefix-profile-numerical-v1/README.md)
+checks each implementation against the independent norm/QKV/head/RoPE,
+attention and output references without first requiring V5/V6 bitwise parity.
+All 20 CPU tests passed on `mi350-2`, including nonzero historical KV across a
+page boundary and rejection of a finite historical-value corruption. Four
+independent replays of retained position-15/16 profiles passed, covering eight
+rank rows. All 16,384 attention BF16 words match the rounded reference; the
+largest O error/bound ratio is below 0.011039. These are conditional checks of
+older captures, not new GPU execution or validation of the reciprocal candidate.
+The future native-child adapter still must authenticate ownership, captures,
+untouched KV and actual-image arithmetic/ISA prerequisites.
 
 ## Source Publication
 

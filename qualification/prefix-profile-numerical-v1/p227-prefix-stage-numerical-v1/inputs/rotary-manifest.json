@@ -1,0 +1,71 @@
+{
+  "files": {
+    "metadata-pos0.u32": {
+      "bytes": 580,
+      "file": "metadata-pos0.u32",
+      "sha256": "5bb65ea5d2571d863832d2c31c3cfb2003f321dcfb7c206d3a8e8d2d3317c07c"
+    },
+    "metadata-pos1.u32": {
+      "bytes": 580,
+      "file": "metadata-pos1.u32",
+      "sha256": "a44bd1a26df511212255601f02438152f8656476827530a92205e5d7157853f2"
+    },
+    "metadata-pos2.u32": {
+      "bytes": 580,
+      "file": "metadata-pos2.u32",
+      "sha256": "080e664cf7527290a75b98e0c141d25068ccd413945e7a7f931d6cef60c466a1"
+    },
+    "metadata-pos3.u32": {
+      "bytes": 580,
+      "file": "metadata-pos3.u32",
+      "sha256": "18d4209eca0b594acc43ac22533417e1f605d4bb7d98afcf6f157fff9962a757"
+    },
+    "metadata-pos4.u32": {
+      "bytes": 580,
+      "file": "metadata-pos4.u32",
+      "sha256": "5ea3fd980f0113697727138c72cbbcf613e6eeecaadac84a9d297dae9f782dd7"
+    },
+    "rotary-pos0.f32": {
+      "bytes": 512,
+      "file": "rotary-pos0.f32",
+      "sha256": "cd7e9627ec9cd9a96d820930586698c4c1e67f2958a3b5f08db3371cb4826368"
+    },
+    "rotary-pos1.f32": {
+      "bytes": 512,
+      "file": "rotary-pos1.f32",
+      "sha256": "5d7196431f5419561268f5c5d50a03d85027bb3b86aee19a6d7f3ef6b146963f"
+    },
+    "rotary-pos2.f32": {
+      "bytes": 512,
+      "file": "rotary-pos2.f32",
+      "sha256": "7927ef8061104bcf2e409e9ff4527d5e31b24490b5e8d80881e03a91c1c4f8a7"
+    },
+    "rotary-pos3.f32": {
+      "bytes": 512,
+      "file": "rotary-pos3.f32",
+      "sha256": "4fabdbe250c99085a2142bb1b880087016d478fb05800483db1720bf013ab8b5"
+    },
+    "rotary-pos4.f32": {
+      "bytes": 512,
+      "file": "rotary-pos4.f32",
+      "sha256": "39e14121aed64a81ee5688930b93bc9b274b158c6962268cd3ed343e7418ee8f"
+    }
+  },
+  "formula": "angle=position*pow(1000000,-pair/64); f32(cos(angle)),f32(sin(angle)); page=(5*logical+7)%144",
+  "genuine_manifest_sha256": "fbf766e1ded38055e03bfd512184eb4b54f362eedc08c2ea9388b00171a041ea",
+  "gpu_execution": false,
+  "head_dim": 128,
+  "oracle_changed": false,
+  "page_size": 16,
+  "rope_theta": 1000000.0,
+  "schema": "ferric-genuine-rotary-supplement-v214",
+  "token_ids": [
+    785,
+    6722,
+    315,
+    9625,
+    374
+  ],
+  "tolerance_policy_sha256": "438b10d7cf2bdc7cd693024edcfa7f3f84929e4a852787d72964c43263cd0fc2",
+  "weights_copied": false
+}

@@ -1,0 +1,12 @@
+{
+  "acceptance": "exact at position 0; otherwise steps <= 1 OR abs_error <= 5e-5 * per_kv_head_max_abs_V",
+  "adaptive_tolerance": false,
+  "bf16_steps": 1,
+  "cancellation_coefficient": 5e-05,
+  "exact_position_zero": true,
+  "gpu_execution": false,
+  "max_abs_V": "maximum magnitude over all causal value words for the mapped KV head",
+  "nonfinite": "reject query, every causal K/V word, scores and outputs; future poison is never read",
+  "reference_rounding": "FP64 oracle -> FP32 ties-to-even -> BF16 ties-to-even",
+  "schema": "ferric-attention-tolerance-v214"
+}

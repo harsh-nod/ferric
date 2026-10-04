@@ -1,0 +1,147 @@
+P227 M0/M3 numerical-policy audit
+================================
+
+Scope: current all36 Prefix284 + MLP548 engineering route. Read-only audit and
+isolated CPU-only proposal; no live edits, remote jobs, GPU evaluation or new
+acceptance authority. All M0-M7 milestones remain open.
+
+Existing contracts, not interchangeable
+--------------------------------------
+P/p225-m0-scope-protocol/draft/ferric-performance/docs/
+GFX950_FINITE_WORKER_SCOPE_PROTOCOL_V1.md:113-140 records the unresolved conflict
+between historical FP32-logit/early projection narrowing prose and TP2 retained
+FP32 rank partials, ordered residual addition and BF16 logits.
+
+P/p226-m0-upstream-decisions/draft/ferric-performance/docs/
+GFX950_FINITE_WORKER_M0_DECISIONS_V1.md:73-207 is a proposed decision, not evidence
+that M0 is closed. Bf16StorageAscendingFp32Bf16Rne and
+Bf16StorageMfmaK16Fp32Bf16Rne are distinct arithmetic contracts. The TP2 candidate
+keeps +0 + rank0, then + rank1, then + original widened BF16 residual as separately
+rounded FP32 operations before final BF16 RNE. It preserves two normalization
+BF16 boundaries, exact head/rotary/math-provider routes, and lowest-index ties
+after BF16 logits. TP2 partitioning is not the upstream single-device dot order.
+
+P/p225-numerical-policy-boundaries/test_boundary_fixtures.py:47-136 already tests
+projection/residual ordering, rank-partial narrowing, cancellation, signed zero,
+tie behavior and nonfinite refusal. P/p226-m0-actual-row-boundary-v1/
+test_actual_row_boundary.py:127 checks an authentic exact rational boundary;
+neither suite proves a GPU reduction equals the exact real sum. Reuse these
+discriminators; do not replace them with post-hoc tolerances.
+
+Existing fixed conditional gates
+--------------------------------
+P/p227-prefix-numerical-sidecar-v1/attention-policy.json: position0 exact;
+otherwise ordered BF16 distance <=1 OR absolute error <=5e-5 times causal
+per-KV-head max|V|. This is unchanged P214 policy, not a whole-model tolerance.
+
+Its output_reference.py:45-82 derives the P215 O K2048 bound from gamma39,
+FP64 gamma2048, outward sum|w*x| and4159 half-subnormal allowances. P218
+reference.py:109-246 and policy.json fix K4096/depth71/8255 and
+K6144/depth103/12351, dual-BF16 norm intervals with <=1-F32-ULP sqrt prerequisite
+and a32-candidate refusal cap. SwiGLU allows at most one ordered BF16 step versus
+independent stable FP64 SiLU, conditional on accepted actual gate/up; residual
+uses the frozen exact integer oracle. These are operator checks conditional on
+actual preceding arrays, not independent own-KV model propagation.
+
+The prior prefix sidecar compare_numerical.py:205-220 consumes only captured
+query/causalKV/attention/O. Captured normalized and packed QKV stages were not
+numerically checked there. This proposal fills that specific CPU-only gap and
+adds source-counted serial128 headnorm plus staged RoPE/current V append checks.
+It does not silently extend the old attention/O result.
+
+Source-derived obligations and remaining gaps
+---------------------------------------------
+inputs/wave_numerics_v1.rs:4-56 has64 products/additions per lane and six Wave64
+XOR reduction stages at K4096. Reusing the unchanged P218 gamma71 class is
+justified for exactly this shape and separate arithmetic, not arbitrary GEMM.
+inputs/finite_qkv_attention_output_tiles_v6.rs:37-103 retains the same input
+norm/epsilon/dual narrowing and delegates the same head post-processing.
+
+inputs/head_rope_numerics_v3.rs:5-31 instead serially sums128 squares. It cannot
+inherit the wave-norm gamma71. The new preregistered bound counts a maximum
+129 rounding depth and256 half-subnormal operations, starting from an exact
+integer BF16 square sum. It retains the existing <=1-F32-ULP sqrt/RNE divide
+prerequisites and fixed32-candidate cap. Lines34-129 require two BF16 norm
+boundaries, split-half pairs and separate FP32 multiply/add stages for RoPE.
+This checker conditions on authenticated supplied FP32 rotary words; it does
+not prove their trigonometric generation error. Candidate sets overapproximate
+shared-inverse correlation and are explicitly only necessary consistency tests.
+
+Open: artifact-linked sqrt/divide and OCML contracts over their admitted input
+domain; mathematically justified error for online attention over propagated
+query/key/value uncertainty; retained final-norm operation/reduction contract;
+MFMA head error/rounding contract (do not reuse gamma71/39); propagation through
+both residual fences and independent all36 own-KV trajectories. BF16 boundaries
+are discontinuous and require cell/interval reasoning, not accumulated RMSE.
+
+The all36 payload exposes36 hidden outputs, final norm and logits, not each
+layer's normalized/QKV/headnorm/gate/up/activation/rank-partial arrays. Therefore
+the existing152 tensor rows cannot retrospectively discharge all conditional
+operator premises. More layer-stage capture or independently propagated bounds
+is needed; no generic evidence framework is needed for that arithmetic work.
+
+Independently retained reference evidence
+----------------------------------------
+Read directly from retained tar members, without importing or running a model:
+L/tiles-tf4-reference-courier-v225-v1.tar.gz:
+  framework-rearm-v224-v1/complete.json8288B
+  cac5d79969c2e17a19630a581b5e21c594ea65b452806630ee87bf7855396036
+  reference/reference.json128641B
+  2edddf40cc6195fdd622e479e8e46f2a659f1b569106f5f4e51afdb83bdc2416
+L/tiles-ar4-reference-compact-v225-v1.tar.gz:
+  framework-tiles-ar4-v225-v1/complete.json8347B
+  385dc945b9bcd7e6c93d24cddde9afea24c7ed93c2708f5453aeac9dd9e2a69f
+  reference/reference.json129032B
+  3f45657f510fd5b0afc609e8cf9249c3218e91a4a696667f8e1fcad474fa797f
+
+All16 payloads were independently size/SHA checked:606976B each,38 descriptors,
+two fresh passes per mode with byte-identical outputs and records. TF outputs
+67/198/25/16; AR outputs67/25/576/2701. The reference receipts themselves retain
+numerical_acceptance=false, full_model_correctness=false and threshold=null.
+Their repeatability does not make them bit replicas of Ferric's wave/MFMA/OCML.
+
+P/p222-model-reference/policy.json uses independent FP64 equations with explicit
+narrowing and ownKV, but explicitly denies source bit-equivalence/acceptance.
+P/p224-rearm-framework/reference/policy.json:12-17 and the AR successor retain
+exact-word counts/maxabs/RMSE/relativeL2/BF16-distance as diagnostics only.
+P/p227-prefix-decode-gpu-qualification-v2/compare.py:245-302 correctly separates
+old-native bit parity from independent framework comparison; AR comparisons
+stop permanently after input-history divergence, even if tokens later reconverge.
+Root reports current TF4 and AR4 native parity PASS; no numerical threshold is
+derived from those observations in this proposal.
+
+P/p227-long-model-comparison-v1/policy.json is explicitly the old Prefix22 route.
+Its exact256-token and sampled strict margin>2*observed-coordinate-error checks
+leave tensor_acceptance=NOT_ASSESSED. Token stability is not tensor acceptance.
+The existing long_reference.py:250-298 records256 output logit rows, not all36
+hidden outputs/final norms. A future Prefix284 long intake needs a distinct
+version and reference capture extension; it cannot relabel that old schema.
+
+Minimum held-out plan to preregister, not an acceptance claim
+-----------------------------------------------------------
+1. Fix the TP2 operator catalog, admitted numerical domains, exact source/object
+   prerequisites, outward bounds and refusal behavior before evaluating new
+   data. Run this new checker first on synthetic source-derived discriminators;
+   only afterward root may evaluate the retained standalone captures. A bound
+   refusal is retained, never repaired by increasing a tolerance after exposure.
+2. Freeze fresh prompt tokens and deterministic stress seeds before candidate
+   execution. Proposed new positions1/63/64/127/128/1023/1024/2302 exercise page,
+   reduction and context boundaries outside the old six cases. Use actual layer
+   weights from layers0/17/35,both ranks, then all36 boundary outputs. Include
+   cancellation, BF16 midpoints, signed zeros, gradual underflow and near-overflow
+   admitted inputs. These cases/seeds are proposed, not yet frozen or executed.
+3. Run a genuinely held-out authenticated2048-token prompt plus256 own-output
+   decode, with two fresh independent ownKV reference passes. Extend reference
+   capture to the new Long257 full-payload positions0 and2047..2302 (38 tensors
+   each), not just tokens/logits. Keep fixed-input teacher forcing separate from
+   target-only AR; after divergence do not claim same-input tensor comparison.
+4. Accept tensors only under independently justified operator/propagation
+   envelopes or an explicitly accepted upstream numerical contract. Where a
+   logit interval gives lower(winner)>all competing uppers, record a token
+   certificate; otherwise report uncertified, not an invented global tolerance.
+   Passing finite held-out cases remains bounded validation, not a proof over
+   every model input. No aggregate threshold is supplied here.
+
+The original single-gfx950 Qwen3-0.6B then8B/batches1,2,4,8/contexts1024,4096,8192
+matrix remains separate. Current TP2 capacity2304 does not cover4096/8192;
+the0.6B geometry unit-test successor is not an authenticated0.6B model result.

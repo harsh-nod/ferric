@@ -1,0 +1,289 @@
+{
+  "status": "AUTHENTICATED_REAL_FIRST_LAYER_QKV_FIXTURE_V2",
+  "model": "Qwen/Qwen3-8B",
+  "revision": "b968826d9c46dd6066d109eabc6255188de91218",
+  "token_id": 785,
+  "prompt_token_index": 0,
+  "input_kind": "exact embedding row, not a retained long-context decode activation",
+  "hidden": 4096,
+  "tensor_parallel": 2,
+  "rank_local_qkv_width": 3072,
+  "packing": [
+    [
+      "query_weight",
+      2048,
+      0
+    ],
+    [
+      "key_weight",
+      512,
+      2048
+    ],
+    [
+      "value_weight",
+      512,
+      2560
+    ]
+  ],
+  "attention_ready": false,
+  "pending_ops": [
+    "Q/K per-head RMSNorm",
+    "RoPE",
+    "KV append"
+  ],
+  "source_shard": {
+    "path": "/home/harmenon/ferric-asrock-42/models/qwen3-source-v1/target/model-00001-of-00005.safetensors",
+    "sha256": "31d6a825ae35f11fb85b195b4c42c146c051e446433125a215336abdf95cbf5f",
+    "bytes": 3996250744,
+    "identity_before_after": [
+      66306,
+      17489361,
+      3996250744,
+      1789674367199912186,
+      1789674378075834522
+    ],
+    "stream_hash_seconds": 2.77252145903185
+  },
+  "source_header": {
+    "input": {
+      "dtype": "BF16",
+      "shape": [
+        151936,
+        4096
+      ],
+      "data_offsets": [
+        0,
+        1244659712
+      ]
+    },
+    "norm_weight": {
+      "dtype": "BF16",
+      "shape": [
+        4096
+      ],
+      "data_offsets": [
+        1244659712,
+        1244667904
+      ]
+    },
+    "key_weight": {
+      "dtype": "BF16",
+      "shape": [
+        1024,
+        4096
+      ],
+      "data_offsets": [
+        1546666240,
+        1555054848
+      ]
+    },
+    "query_weight": {
+      "dtype": "BF16",
+      "shape": [
+        4096,
+        4096
+      ],
+      "data_offsets": [
+        1588609536,
+        1622163968
+      ]
+    },
+    "value_weight": {
+      "dtype": "BF16",
+      "shape": [
+        1024,
+        4096
+      ],
+      "data_offsets": [
+        1622163968,
+        1630552576
+      ]
+    },
+    "query_norm": {
+      "dtype": "BF16",
+      "shape": [
+        128
+      ],
+      "data_offsets": [
+        1588609280,
+        1588609536
+      ]
+    },
+    "key_norm": {
+      "dtype": "BF16",
+      "shape": [
+        128
+      ],
+      "data_offsets": [
+        1546665984,
+        1546666240
+      ]
+    }
+  },
+  "full_projection_sha256": {
+    "query_weight": "fd56b85bf301661c8655ed517928304d25df7d6b3ea3d9be85c021159d61bad8",
+    "key_weight": "3ce9fdf6ee30ef2f24ad3629b506415ca91fe40f790e568a9ea3fea2978feee0",
+    "value_weight": "767a6c48457974bb02dd90aeec270f4d68289527a353c3c28964ab2069a966ee"
+  },
+  "files": {
+    "input.bf16": {
+      "file": "input.bf16",
+      "bytes": 8192,
+      "sha256": "92d39b34b5492ea292bbf8643470756468af0048ddcec36f526395286c9d5a60",
+      "source_tensor": "model.embed_tokens.weight",
+      "absolute_byte_offset": 6440056,
+      "source_tensor_byte_offset": 6430720
+    },
+    "norm-weight.bf16": {
+      "file": "norm-weight.bf16",
+      "bytes": 8192,
+      "sha256": "00695bad97c2abc77a9d1ce57e4d4a5e5c2b574387fcb4029ef5ce12239b2530",
+      "source_tensor": "model.layers.0.input_layernorm.weight",
+      "absolute_byte_offset": 1244669048,
+      "source_tensor_byte_offset": 0
+    },
+    "query-norm.bf16": {
+      "file": "query-norm.bf16",
+      "bytes": 256,
+      "sha256": "ad88a3013b2d8ecd138c36460751296c56bed2eff2d5d3a66377db04fd9e0799",
+      "source_tensor": "model.layers.0.self_attn.q_norm.weight",
+      "absolute_byte_offset": 1588618616,
+      "source_tensor_byte_offset": 0
+    },
+    "key-norm.bf16": {
+      "file": "key-norm.bf16",
+      "bytes": 256,
+      "sha256": "aaf5042c20082b5c13daed62ad9627f426cda5edc38eca48bd3f956da4eb05cd",
+      "source_tensor": "model.layers.0.self_attn.k_norm.weight",
+      "absolute_byte_offset": 1546675320,
+      "source_tensor_byte_offset": 0
+    },
+    "packed-qkv-rank0.bf16": {
+      "file": "packed-qkv-rank0.bf16",
+      "bytes": 25165824,
+      "sha256": "f1d51970183aef10357a69cd80e138f936e99fbd2ebd9133435b0cab2fb71248",
+      "rank": 0,
+      "shape": [
+        3072,
+        4096
+      ],
+      "components": [
+        {
+          "bytes": 16777216,
+          "sha256": "8c8f19735f3b2f9c1ff8636e5e5c98f9fa0faa33e1805aeb630a86ad54b0e27b",
+          "source_tensor": "model.layers.0.self_attn.q_proj.weight",
+          "absolute_byte_offset": 1588618872,
+          "source_tensor_byte_offset": 0,
+          "role": "query_weight",
+          "source_rows": [
+            0,
+            2048
+          ],
+          "packed_rows": [
+            0,
+            2048
+          ]
+        },
+        {
+          "bytes": 4194304,
+          "sha256": "d2d2672d68d6c7ad38ff575dafd8a2a9a6a3a266ffedc11a3cad76fd8c02d0bd",
+          "source_tensor": "model.layers.0.self_attn.k_proj.weight",
+          "absolute_byte_offset": 1546675576,
+          "source_tensor_byte_offset": 0,
+          "role": "key_weight",
+          "source_rows": [
+            0,
+            512
+          ],
+          "packed_rows": [
+            2048,
+            2560
+          ]
+        },
+        {
+          "bytes": 4194304,
+          "sha256": "4370ed10bd5f3007265a965b33e12703beeb32498dd857734d35c21c07b456b3",
+          "source_tensor": "model.layers.0.self_attn.v_proj.weight",
+          "absolute_byte_offset": 1622173304,
+          "source_tensor_byte_offset": 0,
+          "role": "value_weight",
+          "source_rows": [
+            0,
+            512
+          ],
+          "packed_rows": [
+            2560,
+            3072
+          ]
+        }
+      ]
+    },
+    "packed-qkv-rank1.bf16": {
+      "file": "packed-qkv-rank1.bf16",
+      "bytes": 25165824,
+      "sha256": "b2bb9c215888c94f800040e1bc981ecd44062857ba9ce938d99b103aa153881a",
+      "rank": 1,
+      "shape": [
+        3072,
+        4096
+      ],
+      "components": [
+        {
+          "bytes": 16777216,
+          "sha256": "288f18a0e31b65fdd7b9383b5d23b5f527ce786251e3dddfecde7d63e84ec1be",
+          "source_tensor": "model.layers.0.self_attn.q_proj.weight",
+          "absolute_byte_offset": 1605396088,
+          "source_tensor_byte_offset": 16777216,
+          "role": "query_weight",
+          "source_rows": [
+            2048,
+            4096
+          ],
+          "packed_rows": [
+            0,
+            2048
+          ]
+        },
+        {
+          "bytes": 4194304,
+          "sha256": "4d7c36dff0ae17ef049607a1c6f761f2597d19aea5e65eb81e34d282015d434b",
+          "source_tensor": "model.layers.0.self_attn.k_proj.weight",
+          "absolute_byte_offset": 1550869880,
+          "source_tensor_byte_offset": 4194304,
+          "role": "key_weight",
+          "source_rows": [
+            512,
+            1024
+          ],
+          "packed_rows": [
+            2048,
+            2560
+          ]
+        },
+        {
+          "bytes": 4194304,
+          "sha256": "586514388cdf5f9c949b9f63c186388ac2a39671d4f4e1c7bf9c88ade3475a36",
+          "source_tensor": "model.layers.0.self_attn.v_proj.weight",
+          "absolute_byte_offset": 1626367608,
+          "source_tensor_byte_offset": 4194304,
+          "role": "value_weight",
+          "source_rows": [
+            512,
+            1024
+          ],
+          "packed_rows": [
+            2560,
+            3072
+          ]
+        }
+      ]
+    }
+  },
+  "reference_sha256": "1ed868663df52a146dd7921f9fbb2cf1e1d0c0ceed8a7bfda030d65f8ec5b094",
+  "config_sha256": "f7c4eadfbbf522470667b797a3c89be2524832d2d599797248dc304fff447c30",
+  "index_sha256": "f9fdbcb91c23971c13ec5d5f2573d2349e8f61f2f049371ec699281748fdb1bc",
+  "safetensors_native_sha256": "b6e76bd9023344f6edeeffb935279f94ad8316bcb80857c0d91cf75a19c8f5c5",
+  "safetensors_native_path": "/home/harmenon/ferric-asrock-42/evidence/qwen3-long-reference-env-v1/venv/lib/python3.10/site-packages/safetensors/_safetensors_rust.abi3.so",
+  "gpu": false,
+  "whole_model_qualification": false
+}

@@ -1,0 +1,104 @@
+{
+  "authority": "none",
+  "files": [
+    {
+      "bytes": 9328,
+      "path": "AUDIT.txt",
+      "sha256": "f156fc41a13857bc4ec0582bb4ba293a43f7bc82586c86a683987bb31893c2d4"
+    },
+    {
+      "bytes": 3300,
+      "path": "README.txt",
+      "sha256": "eada6bf925faa93a2e512f0a21e601194f0b08fb69e298c4b28ae469ad3afb20"
+    },
+    {
+      "bytes": 11421,
+      "path": "compare_prefix.py",
+      "sha256": "d03e52b797ab2f969f51829038bb4a3669a219aea3178f8bfc503d907491fdcb"
+    },
+    {
+      "bytes": 12495,
+      "path": "helpers/compare_numerical.py",
+      "sha256": "b0423467ddda3f55d9e3fb33d5dab186312695d03445db3809f4e903c3c328d8"
+    },
+    {
+      "bytes": 10473,
+      "path": "helpers/extract.py",
+      "sha256": "76872f3558d6f90c21b9eee3ec0ba4ebdd79168b620338faa6bdbdd8b78bdf4a"
+    },
+    {
+      "bytes": 23782,
+      "path": "helpers/reference.py",
+      "sha256": "2e41d6e5715cc561bf818fdee794e4ced74a77f93acd4961d8b15f427f196c6e"
+    },
+    {
+      "bytes": 15359,
+      "path": "helpers/validation.py",
+      "sha256": "cdaf6dc53208bbca8f23b2a3fa3eca9d28fe00ca4cfc74b36d225f3ebe8d28d1"
+    },
+    {
+      "bytes": 6998,
+      "path": "inputs/finite_qkv_attention_output_tiles_v6.rs",
+      "sha256": "3a18e3cb7bab842249bbbef1fd3d5470ead1e7ab5760ae2c5a3b8fae08499bcd"
+    },
+    {
+      "bytes": 14862,
+      "path": "inputs/genuine-manifest.json",
+      "sha256": "fbf766e1ded38055e03bfd512184eb4b54f362eedc08c2ea9388b00171a041ea"
+    },
+    {
+      "bytes": 5884,
+      "path": "inputs/head_rope_numerics_v3.rs",
+      "sha256": "4b88b9ce6608c791a0df8d0d2c5166de7aad77d63e7b2c52383cce068a1996e9"
+    },
+    {
+      "bytes": 11138,
+      "path": "inputs/post-report.json",
+      "sha256": "d6b2fdba3e4b9a1d24860d083928cfdd65faaf60d00edd53f5432c9c5b3e7f6b"
+    },
+    {
+      "bytes": 6092,
+      "path": "inputs/prefix_tiles_numerics_v6.rs",
+      "sha256": "3f729b83bc50d4e252a73911ac69bb4e4e1829e1cb05ca3f0bcffa36f09475ad"
+    },
+    {
+      "bytes": 7827,
+      "path": "inputs/qkv-manifest.json",
+      "sha256": "9516d017300facd7c481149f865c6a4817045d083702d05558297a82619b0eda"
+    },
+    {
+      "bytes": 2290,
+      "path": "inputs/rotary-manifest.json",
+      "sha256": "6b99079c47aade347a4f13f197b8897b6f3d0b390ec723396489ea85c99383c9"
+    },
+    {
+      "bytes": 2235,
+      "path": "inputs/wave_numerics_v1.rs",
+      "sha256": "22ef471c341936b3bc6f7b5812405c60152292cef07dcbd03173bf2dd7ee49ea"
+    },
+    {
+      "bytes": 2239,
+      "path": "policy.json",
+      "sha256": "c3f085ad8230f4dcac7a36dd2a72872f00bc454f0996467af90ea4fde69a0f8d"
+    },
+    {
+      "bytes": 6843,
+      "path": "prefix_math.py",
+      "sha256": "407cbf19a1c68ce4ee3d9672c6ecacb4bc42fb683f65b0841aeb47a73d477016"
+    },
+    {
+      "bytes": 20797,
+      "path": "test_compare_prefix.py",
+      "sha256": "43d526856f80da786a83755170ac55ae4ece81d6ad688721fbb7a0d819174ae0"
+    }
+  ],
+  "full_model_acceptance": false,
+  "full_prefix_acceptance": false,
+  "gpu_execution": false,
+  "policy_sha256": "c3f085ad8230f4dcac7a36dd2a72872f00bc454f0996467af90ea4fde69a0f8d",
+  "production_authority": false,
+  "pure_tests": 25,
+  "runtime_premises_discharged": false,
+  "schema": "ferric-p227-prefix-stage-numerical-proposal-v1",
+  "status": "frozen-proposal-author-unrun"
+}

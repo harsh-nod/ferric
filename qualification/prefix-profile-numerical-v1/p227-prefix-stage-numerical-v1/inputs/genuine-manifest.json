@@ -1,0 +1,439 @@
+{
+  "files": {
+    "input-pos0.bf16": {
+      "bytes": 8192,
+      "file": "input-pos0.bf16",
+      "sha256": "92d39b34b5492ea292bbf8643470756468af0048ddcec36f526395286c9d5a60"
+    },
+    "input-pos1.bf16": {
+      "bytes": 8192,
+      "file": "input-pos1.bf16",
+      "sha256": "82f8e75d0f379abe09b6455f168609b8f9330f33e1d349a76b96e3d057091b5d"
+    },
+    "input-pos2.bf16": {
+      "bytes": 8192,
+      "file": "input-pos2.bf16",
+      "sha256": "bed849106d40ae29e0ed86105a0ba4febfd0f042bad86adf870a9ed7f8f584c7"
+    },
+    "input-pos3.bf16": {
+      "bytes": 8192,
+      "file": "input-pos3.bf16",
+      "sha256": "d3ef0ce6cf896508b6de1499648c47fa59c1eae05d8146e8f5a8c930f44e44a3"
+    },
+    "input-pos4.bf16": {
+      "bytes": 8192,
+      "file": "input-pos4.bf16",
+      "sha256": "42a7b4e1cf321224926bafd55f65b618f939c4d5d4d42f7abae934631a2b741a"
+    },
+    "normalized-pos0.bf16": {
+      "bytes": 8192,
+      "file": "normalized-pos0.bf16",
+      "sha256": "51cedd785ce8e04fce4d6242df9fab47c281bc94c09c8b938d43135c0ba88fa5"
+    },
+    "normalized-pos1.bf16": {
+      "bytes": 8192,
+      "file": "normalized-pos1.bf16",
+      "sha256": "a84eadf93328d3d5509c99934e5b97716f93ef368d495206ef8b70312dc74b34"
+    },
+    "normalized-pos2.bf16": {
+      "bytes": 8192,
+      "file": "normalized-pos2.bf16",
+      "sha256": "e15772d25c1b983d018c9b751690dfdbe47446b646f91ae0d118c99be068cce9"
+    },
+    "normalized-pos3.bf16": {
+      "bytes": 8192,
+      "file": "normalized-pos3.bf16",
+      "sha256": "ae69f811c8519b5cb48311558ec340daf0b0af6bb9400cd6086ef9f731b31e42"
+    },
+    "normalized-pos4.bf16": {
+      "bytes": 8192,
+      "file": "normalized-pos4.bf16",
+      "sha256": "d5c71f231049130e1dd9e948d29daa673d76321d1aed91f5ffb590ee90cc127a"
+    },
+    "rank0-pos0-key.bf16": {
+      "bytes": 1024,
+      "file": "rank0-pos0-key.bf16",
+      "sha256": "a9ea30c65563e4c6a63da41346c0de8021cba7ebf5225f7a4fdff11d33176bc9"
+    },
+    "rank0-pos0-query.bf16": {
+      "bytes": 4096,
+      "file": "rank0-pos0-query.bf16",
+      "sha256": "97332eda6841b8869a639bfe32ba8b7511ec18dec3938d1abb0374a6ae2ca911"
+    },
+    "rank0-pos0-value.bf16": {
+      "bytes": 1024,
+      "file": "rank0-pos0-value.bf16",
+      "sha256": "8961d703e469e272a1db94719525b58e18ecf19f8771383db7c29ab01d2f1e68"
+    },
+    "rank0-pos1-key.bf16": {
+      "bytes": 1024,
+      "file": "rank0-pos1-key.bf16",
+      "sha256": "1ce9ba39b3d071c5ebeaa2535aa8de27617266925617f09ccdd91353435f34ea"
+    },
+    "rank0-pos1-query.bf16": {
+      "bytes": 4096,
+      "file": "rank0-pos1-query.bf16",
+      "sha256": "7e03360b41e76ed65f135d18ded3b87fdaec5d3be321b3705303a8e86860e827"
+    },
+    "rank0-pos1-value.bf16": {
+      "bytes": 1024,
+      "file": "rank0-pos1-value.bf16",
+      "sha256": "3c5ff3cc0681077033517ed1c11d918326f171e550217221a396be742e2dcb32"
+    },
+    "rank0-pos2-key.bf16": {
+      "bytes": 1024,
+      "file": "rank0-pos2-key.bf16",
+      "sha256": "eac86fd4740205456e29db9a144cbf4ff4f823b26b096571c9f8f53199c55fa0"
+    },
+    "rank0-pos2-query.bf16": {
+      "bytes": 4096,
+      "file": "rank0-pos2-query.bf16",
+      "sha256": "6d19c9b4b7152fcc58ead246003a7e5aee319fd6d76ec86a5cf393471895dd60"
+    },
+    "rank0-pos2-value.bf16": {
+      "bytes": 1024,
+      "file": "rank0-pos2-value.bf16",
+      "sha256": "a268115765ec5e7f2ee2ec8d160cd91aa31497145a7ec438a15cdb5573be4f7f"
+    },
+    "rank0-pos3-key.bf16": {
+      "bytes": 1024,
+      "file": "rank0-pos3-key.bf16",
+      "sha256": "cbaecd01563ca15d9d91c56e7688eede8fb9708ac61c84a0b63abbcb56c007d4"
+    },
+    "rank0-pos3-query.bf16": {
+      "bytes": 4096,
+      "file": "rank0-pos3-query.bf16",
+      "sha256": "ced0c3690f1aa230f4a5debb0b23f4dabe34a8a4aad04ec30bd2a14235f1f4be"
+    },
+    "rank0-pos3-value.bf16": {
+      "bytes": 1024,
+      "file": "rank0-pos3-value.bf16",
+      "sha256": "87047371d75d23c259d9dbf75ff87dca6b1f913f883b2a62f51d713abbf35a1e"
+    },
+    "rank0-pos4-key.bf16": {
+      "bytes": 1024,
+      "file": "rank0-pos4-key.bf16",
+      "sha256": "e47a57f2dcbfec82da364a7bfb3e1fc49341205302524c2a98db6123b69b78ea"
+    },
+    "rank0-pos4-query.bf16": {
+      "bytes": 4096,
+      "file": "rank0-pos4-query.bf16",
+      "sha256": "fd902ad0a39a4e55b373b61b4fed2c87c1d08e83e89d3582afe51e31e0c3f400"
+    },
+    "rank0-pos4-value.bf16": {
+      "bytes": 1024,
+      "file": "rank0-pos4-value.bf16",
+      "sha256": "eafe0bb0dbd2519ac3902f525c24a57ae3d317f40e88c04dc08ea0c9dd53b388"
+    },
+    "rank1-pos0-key.bf16": {
+      "bytes": 1024,
+      "file": "rank1-pos0-key.bf16",
+      "sha256": "85b801a8ef47bb27afbc3748ce90d57b9291d350dd4944257d91b3005954752a"
+    },
+    "rank1-pos0-query.bf16": {
+      "bytes": 4096,
+      "file": "rank1-pos0-query.bf16",
+      "sha256": "3cdd23cfdd595983399fa61b5ca1d206ed455643d01429ca730e83e30941e90e"
+    },
+    "rank1-pos0-value.bf16": {
+      "bytes": 1024,
+      "file": "rank1-pos0-value.bf16",
+      "sha256": "55d29fa9d194202c0719f9df77587c37ec4b56996914f7741f3ce778ff7af1a9"
+    },
+    "rank1-pos1-key.bf16": {
+      "bytes": 1024,
+      "file": "rank1-pos1-key.bf16",
+      "sha256": "6fa071fd3d57cee954dfd71c1b837e39bd1004f578da8a2718df3da65b7c1331"
+    },
+    "rank1-pos1-query.bf16": {
+      "bytes": 4096,
+      "file": "rank1-pos1-query.bf16",
+      "sha256": "d28a69e1aa7d57e095398a624a01cffa77abb5100da60af92d02b957896d9469"
+    },
+    "rank1-pos1-value.bf16": {
+      "bytes": 1024,
+      "file": "rank1-pos1-value.bf16",
+      "sha256": "cd2bdb0f52e09e46d8cff00507f856dfa2facf16e1ef2a0b495dd640e693eefb"
+    },
+    "rank1-pos2-key.bf16": {
+      "bytes": 1024,
+      "file": "rank1-pos2-key.bf16",
+      "sha256": "87834c2ec929f98b368c114de93276e8599b595437070d62d6428a2c01a1c98f"
+    },
+    "rank1-pos2-query.bf16": {
+      "bytes": 4096,
+      "file": "rank1-pos2-query.bf16",
+      "sha256": "e0a35ae50e7defafe249281ee17f559b9f9d6bbcd86684133a5beb4bd5a8dd6f"
+    },
+    "rank1-pos2-value.bf16": {
+      "bytes": 1024,
+      "file": "rank1-pos2-value.bf16",
+      "sha256": "78c13f978a7896bf0021e33d761f7cd16cfc8f9ee7ca152404cf492d450fc2e1"
+    },
+    "rank1-pos3-key.bf16": {
+      "bytes": 1024,
+      "file": "rank1-pos3-key.bf16",
+      "sha256": "e81973f96b0d26bbe4b88eb8b212bc0a38b9696deaabf6bf89952c9c6af01c91"
+    },
+    "rank1-pos3-query.bf16": {
+      "bytes": 4096,
+      "file": "rank1-pos3-query.bf16",
+      "sha256": "316f7c13c3d9f3da602d0ca37c593075fea944c912c8784ae3f4f8a42aad9cec"
+    },
+    "rank1-pos3-value.bf16": {
+      "bytes": 1024,
+      "file": "rank1-pos3-value.bf16",
+      "sha256": "ed4a057c6faa07497b15820b2ef3d2e8a4715451998c1118f9f339b9d2673435"
+    },
+    "rank1-pos4-key.bf16": {
+      "bytes": 1024,
+      "file": "rank1-pos4-key.bf16",
+      "sha256": "deaee814ce9b3ad704ebfb3763bb89d21cb18a475f2f0b5ef7fc767c48fcfb87"
+    },
+    "rank1-pos4-query.bf16": {
+      "bytes": 4096,
+      "file": "rank1-pos4-query.bf16",
+      "sha256": "9168c483df4a4f23181fb3bb9579f207e46769b3b0a9fbf2d168028011ad961e"
+    },
+    "rank1-pos4-value.bf16": {
+      "bytes": 1024,
+      "file": "rank1-pos4-value.bf16",
+      "sha256": "eea416aac633f68108dacd238ef1510130aca95c84ab73e0eb6c65900ad242dd"
+    },
+    "raw-rank0-pos0.bf16": {
+      "bytes": 6144,
+      "file": "raw-rank0-pos0.bf16",
+      "sha256": "2147383a87d2b1e5a3b894bb92e0da81c0db4dded3ca03f3f6e1ca849e40017c"
+    },
+    "raw-rank0-pos1.bf16": {
+      "bytes": 6144,
+      "file": "raw-rank0-pos1.bf16",
+      "sha256": "d23d8cbd4f66489e191da003904c4ca353fd1be8103dabd8155fa905dfcf81bc"
+    },
+    "raw-rank0-pos2.bf16": {
+      "bytes": 6144,
+      "file": "raw-rank0-pos2.bf16",
+      "sha256": "87cb67ded8ee998c0d05189841f729e2d145992e5a4a2374342b209528ad3ae7"
+    },
+    "raw-rank0-pos3.bf16": {
+      "bytes": 6144,
+      "file": "raw-rank0-pos3.bf16",
+      "sha256": "935377bea2f9be8a78c9cac2a72f6785d8854ec2639f65789bdd1c33d3d36699"
+    },
+    "raw-rank0-pos4.bf16": {
+      "bytes": 6144,
+      "file": "raw-rank0-pos4.bf16",
+      "sha256": "259eefa419db387cf5fcacbf7ac5dbfefbe184d9722ed5e47efcfadc1992fab1"
+    },
+    "raw-rank1-pos0.bf16": {
+      "bytes": 6144,
+      "file": "raw-rank1-pos0.bf16",
+      "sha256": "e311d66a4f464015d4dab026e07cd6d3f114b8d2d402d58e2c2de972dcc43924"
+    },
+    "raw-rank1-pos1.bf16": {
+      "bytes": 6144,
+      "file": "raw-rank1-pos1.bf16",
+      "sha256": "29a3e11b889a43fc6f2e87bf8bedb00dc8975ec38f8fe69e5a750ba01c154fb4"
+    },
+    "raw-rank1-pos2.bf16": {
+      "bytes": 6144,
+      "file": "raw-rank1-pos2.bf16",
+      "sha256": "8091f15d53e32ccf6ccb37456f566a358850508934fbd735c2e9f1aabe230eba"
+    },
+    "raw-rank1-pos3.bf16": {
+      "bytes": 6144,
+      "file": "raw-rank1-pos3.bf16",
+      "sha256": "4c93113655de9ef7b09dfe9197ce03c6556fc749e4a008ebe8dd08a565aa71b3"
+    },
+    "raw-rank1-pos4.bf16": {
+      "bytes": 6144,
+      "file": "raw-rank1-pos4.bf16",
+      "sha256": "06729857778d8f14738a03e5f344f1a8e60b178f2a81edbcb58668afdbe40c3a"
+    }
+  },
+  "full_layer_correctness": false,
+  "full_model_correctness": false,
+  "gpu_execution": false,
+  "maximum_fp64_projection_envelope_ratio": 0.9721518731889867,
+  "model": "Qwen/Qwen3-8B",
+  "numerical_semantics": "staged FP32 reductions and BF16 boundaries; head norm and split-half RoPE; not a framework-exact checkpoint oracle",
+  "numpy_version": "2.2.6",
+  "performance_measured": false,
+  "post_report_sha256": "d6b2fdba3e4b9a1d24860d083928cfdd65faaf60d00edd53f5432c9c5b3e7f6b",
+  "python": "3.10.12 (main, Aug 31 2026, 10:18:17) [GCC 11.4.0]",
+  "qkv_manifest_sha256": "9516d017300facd7c481149f865c6a4817045d083702d05558297a82619b0eda",
+  "revision": "b968826d9c46dd6066d109eabc6255188de91218",
+  "schema": "ferric-genuine-first-layer-prompt-v214",
+  "scope": "Authentic embeddings and first-layer weights for five prompt tokens; first-layer QKV and causal history only.",
+  "source": {
+    "bytes": 3996250744,
+    "embedding_rows": [
+      {
+        "absolute_byte_offset": 6440056,
+        "bytes": 8192,
+        "sha256": "92d39b34b5492ea292bbf8643470756468af0048ddcec36f526395286c9d5a60",
+        "token": 785
+      },
+      {
+        "absolute_byte_offset": 55075960,
+        "bytes": 8192,
+        "sha256": "82f8e75d0f379abe09b6455f168609b8f9330f33e1d349a76b96e3d057091b5d",
+        "token": 6722
+      },
+      {
+        "absolute_byte_offset": 2589816,
+        "bytes": 8192,
+        "sha256": "bed849106d40ae29e0ed86105a0ba4febfd0f042bad86adf870a9ed7f8f584c7",
+        "token": 315
+      },
+      {
+        "absolute_byte_offset": 78857336,
+        "bytes": 8192,
+        "sha256": "d3ef0ce6cf896508b6de1499648c47fa59c1eae05d8146e8f5a8c930f44e44a3",
+        "token": 9625
+      },
+      {
+        "absolute_byte_offset": 3073144,
+        "bytes": 8192,
+        "sha256": "42a7b4e1cf321224926bafd55f65b618f939c4d5d4d42f7abae934631a2b741a",
+        "token": 374
+      }
+    ],
+    "header_sha256": "979bbeed365485ddaa67a1ed41d0289e15e2f3ba0b3388cb93e42d31f346d1df",
+    "path": "/home/harmenon/ferric-asrock-42/models/qwen3-source-v1/target/model-00001-of-00005.safetensors",
+    "sha256": "31d6a825ae35f11fb85b195b4c42c146c051e446433125a215336abdf95cbf5f"
+  },
+  "token_ids": [
+    785,
+    6722,
+    315,
+    9625,
+    374
+  ],
+  "token_zero_matches_retained": true,
+  "weight_files_reused": [
+    {
+      "bytes": 25165824,
+      "components": [
+        {
+          "absolute_byte_offset": 1588618872,
+          "bytes": 16777216,
+          "packed_rows": [
+            0,
+            2048
+          ],
+          "role": "query_weight",
+          "sha256": "8c8f19735f3b2f9c1ff8636e5e5c98f9fa0faa33e1805aeb630a86ad54b0e27b",
+          "source_rows": [
+            0,
+            2048
+          ],
+          "source_tensor": "model.layers.0.self_attn.q_proj.weight",
+          "source_tensor_byte_offset": 0
+        },
+        {
+          "absolute_byte_offset": 1546675576,
+          "bytes": 4194304,
+          "packed_rows": [
+            2048,
+            2560
+          ],
+          "role": "key_weight",
+          "sha256": "d2d2672d68d6c7ad38ff575dafd8a2a9a6a3a266ffedc11a3cad76fd8c02d0bd",
+          "source_rows": [
+            0,
+            512
+          ],
+          "source_tensor": "model.layers.0.self_attn.k_proj.weight",
+          "source_tensor_byte_offset": 0
+        },
+        {
+          "absolute_byte_offset": 1622173304,
+          "bytes": 4194304,
+          "packed_rows": [
+            2560,
+            3072
+          ],
+          "role": "value_weight",
+          "sha256": "4370ed10bd5f3007265a965b33e12703beeb32498dd857734d35c21c07b456b3",
+          "source_rows": [
+            0,
+            512
+          ],
+          "source_tensor": "model.layers.0.self_attn.v_proj.weight",
+          "source_tensor_byte_offset": 0
+        }
+      ],
+      "file": "packed-qkv-rank0.bf16",
+      "path": "/home/harmenon/ferric-asrock-42/evidence/wave-qkv-profile-v201/fixture/packed-qkv-rank0.bf16",
+      "rank": 0,
+      "sha256": "f1d51970183aef10357a69cd80e138f936e99fbd2ebd9133435b0cab2fb71248",
+      "shape": [
+        3072,
+        4096
+      ]
+    },
+    {
+      "bytes": 25165824,
+      "components": [
+        {
+          "absolute_byte_offset": 1605396088,
+          "bytes": 16777216,
+          "packed_rows": [
+            0,
+            2048
+          ],
+          "role": "query_weight",
+          "sha256": "288f18a0e31b65fdd7b9383b5d23b5f527ce786251e3dddfecde7d63e84ec1be",
+          "source_rows": [
+            2048,
+            4096
+          ],
+          "source_tensor": "model.layers.0.self_attn.q_proj.weight",
+          "source_tensor_byte_offset": 16777216
+        },
+        {
+          "absolute_byte_offset": 1550869880,
+          "bytes": 4194304,
+          "packed_rows": [
+            2048,
+            2560
+          ],
+          "role": "key_weight",
+          "sha256": "4d7c36dff0ae17ef049607a1c6f761f2597d19aea5e65eb81e34d282015d434b",
+          "source_rows": [
+            512,
+            1024
+          ],
+          "source_tensor": "model.layers.0.self_attn.k_proj.weight",
+          "source_tensor_byte_offset": 4194304
+        },
+        {
+          "absolute_byte_offset": 1626367608,
+          "bytes": 4194304,
+          "packed_rows": [
+            2560,
+            3072
+          ],
+          "role": "value_weight",
+          "sha256": "586514388cdf5f9c949b9f63c186388ac2a39671d4f4e1c7bf9c88ade3475a36",
+          "source_rows": [
+            512,
+            1024
+          ],
+          "source_tensor": "model.layers.0.self_attn.v_proj.weight",
+          "source_tensor_byte_offset": 4194304
+        }
+      ],
+      "file": "packed-qkv-rank1.bf16",
+      "path": "/home/harmenon/ferric-asrock-42/evidence/wave-qkv-profile-v201/fixture/packed-qkv-rank1.bf16",
+      "rank": 1,
+      "sha256": "b2bb9c215888c94f800040e1bc981ecd44062857ba9ce938d99b103aa153881a",
+      "shape": [
+        3072,
+        4096
+      ]
+    }
+  ],
+  "weights_copied": false
+}

@@ -1,0 +1,37 @@
+{
+  "controller": {
+    "bytes": 3103,
+    "sha256": "ba42731baf8a811778356d78ac1784a7c7a1e78b8325873d37f054e47d1cabf1"
+  },
+  "cpu_affinity": [
+    8,
+    9
+  ],
+  "elapsed_host_seconds": 15.062607622006908,
+  "errors": 0,
+  "failures": 0,
+  "fixed_reference_bounds": true,
+  "full_model_acceptance": false,
+  "gpu_execution": false,
+  "host": "asrock-1w300-g2-2b",
+  "nice": 10,
+  "numerical_acceptance": false,
+  "numpy": "2.2.6",
+  "passed": true,
+  "performance_claim": false,
+  "production_authority": false,
+  "python": "3.10.12",
+  "schema": "ferric-prefix-profile-cpu-tests-v1",
+  "skipped": 0,
+  "source_manifest": {
+    "bytes": 5767,
+    "sha256": "d99d27e9912b486ad90b212d08fb297d894033da9845330bea36f199ed4f0122"
+  },
+  "source_postchecks_passed": true,
+  "synthetic_fixtures_only": true,
+  "tests": 20,
+  "transcript": {
+    "bytes": 2096,
+    "sha256": "349fedfe8460367bb53d7335421b44ed2f6fe2dfe0eb22e119d3a36d56b8ac77"
+  }
+}

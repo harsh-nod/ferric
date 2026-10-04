@@ -1,0 +1,302 @@
+{
+  "actual_receipt": {
+    "bytes": 25540,
+    "sha256": "ff239bfba6b7f8d5f5b37890dc32de087b590ebb98d022f638dd6f68e597101f"
+  },
+  "cpu_tests": {
+    "bytes": 942,
+    "sha256": "189bd2fdc8c946777a1216c3578316c1b318b69e8c92ac5ef05ca7c15575f992"
+  },
+  "date": "2026-10-03",
+  "full_model_acceptance": false,
+  "host": "mi350-2",
+  "independent_profiles": true,
+  "input_pins_rechecked": 55,
+  "limitations": [
+    "CPU replay uses retained older-image GPU captures, not the reciprocal candidate.",
+    "Each operator is conditioned on the actual captured preceding stage.",
+    "No paired bitwise match is required or used to rescue a failed bound.",
+    "Historical KV origin, untouched KV and native ownership/provenance remain separate checks.",
+    "Artifact arithmetic prerequisites and the complete 2048/256 decode workload remain open.",
+    "Public sources reproduce synthetic tests; historical replay also needs retained model/capture files."
+  ],
+  "new_gpu_execution": false,
+  "new_kernel_qualified": false,
+  "numerical_acceptance": false,
+  "passed": true,
+  "performance_claim": false,
+  "previous_attempt": {
+    "cause": "Missing cross-host request files; copied exact retained bytes to isolated replicas.",
+    "error": "FileNotFoundError: [Errno 2] No such file or directory: '/home/harmenon/ferric-asrock-42/evidence/resident-output-tp2-v217/prepare-mi350-remaining-v1'",
+    "passed": false,
+    "receipt": {
+      "bytes": 16838,
+      "sha256": "a09671ee9b08d300ee7afba17d62f56ece60df093784017224c5d68e971ac646"
+    }
+  },
+  "production_authority": false,
+  "profiles": 4,
+  "rank_rows": 8,
+  "results": [
+    {
+      "case": "patterned-pos15",
+      "plan": {
+        "bytes": 2777,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-profile-replay-v228-v2/patterned-pos15-baseline_v5-plan.json",
+        "sha256": "4b68e4514f1347521d3ed7a25b39bfe8673ed4cd2cd5e9480e4876edce2cff35"
+      },
+      "profile": "baseline_v5",
+      "rank_rows": 2,
+      "result": {
+        "bytes": 15750,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-profile-replay-v228-v2/patterned-pos15-baseline_v5-result.json",
+        "sha256": "b124fd053b0bb401fbdf89793d20caa5a475fc937c2058cbe5cd13309f67da07"
+      }
+    },
+    {
+      "case": "patterned-pos15",
+      "plan": {
+        "bytes": 2768,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-profile-replay-v228-v2/patterned-pos15-tiles_v6-plan.json",
+        "sha256": "1a868e15b52b794c97934e2bd2545a6f7eefb1dad1a4067c9ea114ea8aa464dd"
+      },
+      "profile": "tiles_v6",
+      "rank_rows": 2,
+      "result": {
+        "bytes": 15723,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-profile-replay-v228-v2/patterned-pos15-tiles_v6-result.json",
+        "sha256": "6d1b39b01622f897ba9e6111e1ee96935c33d94ddde44e34ecdb011eac83b69c"
+      }
+    },
+    {
+      "case": "patterned-pos16",
+      "plan": {
+        "bytes": 2777,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-profile-replay-v228-v2/patterned-pos16-baseline_v5-plan.json",
+        "sha256": "21f19a32839c92139549fb4dcd801725344e944ae84617849fcd4e0f8fd2083f"
+      },
+      "profile": "baseline_v5",
+      "rank_rows": 2,
+      "result": {
+        "bytes": 15750,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-profile-replay-v228-v2/patterned-pos16-baseline_v5-result.json",
+        "sha256": "cee3ad8854c5216224a77f36e6ff726b7c472086c51ce650a12d50c330ab208a"
+      }
+    },
+    {
+      "case": "patterned-pos16",
+      "plan": {
+        "bytes": 2768,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-profile-replay-v228-v2/patterned-pos16-tiles_v6-plan.json",
+        "sha256": "421be2f850e0550f8656e608deb384143ccf21d0082152bfc97be2bf1b27cc56"
+      },
+      "profile": "tiles_v6",
+      "rank_rows": 2,
+      "result": {
+        "bytes": 15723,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-profile-replay-v228-v2/patterned-pos16-tiles_v6-result.json",
+        "sha256": "bf4888d8b7cdef7a5e93b0950492822fc2df4f1fd9488bc3a13b494b38b34eae"
+      }
+    }
+  ],
+  "rows": [
+    {
+      "attention": {
+        "exact": 2048,
+        "max_abs_error": 0.0007543143061218283,
+        "max_bf16_steps": 0,
+        "tolerated": 0
+      },
+      "capture": {
+        "bytes": 4757504,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-parity-gpu-v227-v2/patterned-pos15/captures/baseline-v5-rank0.bin",
+        "sha256": "88c85dce16115db9a0e2a896010529e4e7c934e6aa2c6f7c6a1bf77b1b2a4760"
+      },
+      "case": "patterned-pos15",
+      "current_value_append_exact": true,
+      "norm_qkv_mismatches": 0,
+      "output_partial": {
+        "elements": 4096,
+        "max_abs_error_upper": 5.762922228313983e-08,
+        "max_bound_ratio": 0.008317359468120285
+      },
+      "physical_slot": 127,
+      "profile": "baseline_v5",
+      "rank": 0
+    },
+    {
+      "attention": {
+        "exact": 2048,
+        "max_abs_error": 0.00048700143162230813,
+        "max_bf16_steps": 0,
+        "tolerated": 0
+      },
+      "capture": {
+        "bytes": 4757504,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-parity-gpu-v227-v2/patterned-pos15/captures/baseline-v5-rank1.bin",
+        "sha256": "82e4f000996f06082707fec818f1c9bddb371defb2f72434a17802c49b5fb51d"
+      },
+      "case": "patterned-pos15",
+      "current_value_append_exact": true,
+      "norm_qkv_mismatches": 0,
+      "output_partial": {
+        "elements": 4096,
+        "max_abs_error_upper": 7.988717243279099e-08,
+        "max_bound_ratio": 0.008176172057039481
+      },
+      "physical_slot": 127,
+      "profile": "baseline_v5",
+      "rank": 1
+    },
+    {
+      "attention": {
+        "exact": 2048,
+        "max_abs_error": 0.0007543143061218283,
+        "max_bf16_steps": 0,
+        "tolerated": 0
+      },
+      "capture": {
+        "bytes": 4757504,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-parity-gpu-v227-v2/patterned-pos15/captures/tiles-v6-rank0.bin",
+        "sha256": "88c85dce16115db9a0e2a896010529e4e7c934e6aa2c6f7c6a1bf77b1b2a4760"
+      },
+      "case": "patterned-pos15",
+      "current_value_append_exact": true,
+      "norm_qkv_mismatches": 0,
+      "output_partial": {
+        "elements": 4096,
+        "max_abs_error_upper": 5.762922228313983e-08,
+        "max_bound_ratio": 0.008317359468120285
+      },
+      "physical_slot": 127,
+      "profile": "tiles_v6",
+      "rank": 0
+    },
+    {
+      "attention": {
+        "exact": 2048,
+        "max_abs_error": 0.00048700143162230813,
+        "max_bf16_steps": 0,
+        "tolerated": 0
+      },
+      "capture": {
+        "bytes": 4757504,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-parity-gpu-v227-v2/patterned-pos15/captures/tiles-v6-rank1.bin",
+        "sha256": "82e4f000996f06082707fec818f1c9bddb371defb2f72434a17802c49b5fb51d"
+      },
+      "case": "patterned-pos15",
+      "current_value_append_exact": true,
+      "norm_qkv_mismatches": 0,
+      "output_partial": {
+        "elements": 4096,
+        "max_abs_error_upper": 7.988717243279099e-08,
+        "max_bound_ratio": 0.008176172057039481
+      },
+      "physical_slot": 127,
+      "profile": "tiles_v6",
+      "rank": 1
+    },
+    {
+      "attention": {
+        "exact": 2048,
+        "max_abs_error": 0.00047016719157022546,
+        "max_bf16_steps": 0,
+        "tolerated": 0
+      },
+      "capture": {
+        "bytes": 4757504,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-parity-gpu-v227-v2/patterned-pos16/captures/baseline-v5-rank0.bin",
+        "sha256": "7dbb96dbb0501586a1c403fa29854722f26376411d2af9103dcf031b7b3143e7"
+      },
+      "case": "patterned-pos16",
+      "current_value_append_exact": true,
+      "norm_qkv_mismatches": 0,
+      "output_partial": {
+        "elements": 4096,
+        "max_abs_error_upper": 6.039044819772245e-08,
+        "max_bound_ratio": 0.01103802092584877
+      },
+      "physical_slot": 192,
+      "profile": "baseline_v5",
+      "rank": 0
+    },
+    {
+      "attention": {
+        "exact": 2048,
+        "max_abs_error": 0.0004827674311725094,
+        "max_bf16_steps": 0,
+        "tolerated": 0
+      },
+      "capture": {
+        "bytes": 4757504,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-parity-gpu-v227-v2/patterned-pos16/captures/baseline-v5-rank1.bin",
+        "sha256": "99410aa7651003b8f8805b219283983345c3e726b7a8599e4e7811248e4ac1ed"
+      },
+      "case": "patterned-pos16",
+      "current_value_append_exact": true,
+      "norm_qkv_mismatches": 0,
+      "output_partial": {
+        "elements": 4096,
+        "max_abs_error_upper": 8.228698789025658e-08,
+        "max_bound_ratio": 0.0077022965281536016
+      },
+      "physical_slot": 192,
+      "profile": "baseline_v5",
+      "rank": 1
+    },
+    {
+      "attention": {
+        "exact": 2048,
+        "max_abs_error": 0.00047016719157022546,
+        "max_bf16_steps": 0,
+        "tolerated": 0
+      },
+      "capture": {
+        "bytes": 4757504,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-parity-gpu-v227-v2/patterned-pos16/captures/tiles-v6-rank0.bin",
+        "sha256": "7dbb96dbb0501586a1c403fa29854722f26376411d2af9103dcf031b7b3143e7"
+      },
+      "case": "patterned-pos16",
+      "current_value_append_exact": true,
+      "norm_qkv_mismatches": 0,
+      "output_partial": {
+        "elements": 4096,
+        "max_abs_error_upper": 6.039044819772245e-08,
+        "max_bound_ratio": 0.01103802092584877
+      },
+      "physical_slot": 192,
+      "profile": "tiles_v6",
+      "rank": 0
+    },
+    {
+      "attention": {
+        "exact": 2048,
+        "max_abs_error": 0.0004827674311725094,
+        "max_bf16_steps": 0,
+        "tolerated": 0
+      },
+      "capture": {
+        "bytes": 4757504,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-parity-gpu-v227-v2/patterned-pos16/captures/tiles-v6-rank1.bin",
+        "sha256": "99410aa7651003b8f8805b219283983345c3e726b7a8599e4e7811248e4ac1ed"
+      },
+      "case": "patterned-pos16",
+      "current_value_append_exact": true,
+      "norm_qkv_mismatches": 0,
+      "output_partial": {
+        "elements": 4096,
+        "max_abs_error_upper": 8.228698789025658e-08,
+        "max_bound_ratio": 0.0077022965281536016
+      },
+      "physical_slot": 192,
+      "profile": "tiles_v6",
+      "rank": 1
+    }
+  ],
+  "schema": "FerricPrefixProfileHistoricalReplayV1",
+  "source_manifest": {
+    "bytes": 5767,
+    "sha256": "d99d27e9912b486ad90b212d08fb297d894033da9845330bea36f199ed4f0122"
+  },
+  "unchanged_reference_bounds": true
+}
