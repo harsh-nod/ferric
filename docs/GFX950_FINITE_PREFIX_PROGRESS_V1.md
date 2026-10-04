@@ -29,7 +29,8 @@ engineering branch; it does not change the production execution path.
 | Reduced-CFG reciprocal V3 on `mi350-2` | Exact census measures 1,013 blocks, 14 fewer; CFG-size gate cleared | Checked lowering now rejects an unsupported induction-latch form; no HSACO or GPU run |
 | Canonical-counter reciprocal V4 on `mi350-2` | CPU arithmetic passes; fresh checked probe fails cumulative partial-move storage limit | No semantic capture or HSACO; prior V3 compiler successes do not transfer |
 | Independent per-profile comparator on `mi350-2` | 20 CPU tests and eight historical rank rows passed | No paired bitwise prerequisite; unchanged bounds; not a new GPU run or new-image acceptance |
-| Ordinary induction temporary compiler candidate on `mi350-2` | 2,683 CPU tests passed, 25 ignored; fresh backend and extractor built | Eight new regressions executed; actual prefix replay and matching finalizers still pending |
+| Ordinary induction temporary compiler candidate on `mi350-2` | 2,683 CPU tests passed, 25 ignored; fresh backend and extractor built | Eight new regressions executed; actual prefix replay remains pending |
+| Ordinary induction matching finalizer tools on `mi350-2` | 190 default tests passed, 15 ignored; three tools rebuilt | Exact new compiler generation; actual-capture inert join remains a separate gate |
 
 Both four-forward runs completed their Close protocol, reaped their owned
 processes, and passed their six surrounding device-state audits. The CPU suite
@@ -184,6 +185,15 @@ ran; the extractor/backend built and all postchecks passed. The complete
 5,780-file prior source generation was joined before applying the two-file
 change. The patch, source pins and actual result are published; this CPU result
 does not yet establish full checked lowering or a new GPU image.
+
+The [matching finalizer tools](../qualification/fe2o3-ordinary-induction-alias-v1/finalizer-result.json)
+have now built against that same generation. Their 190 default tests and 14
+controller policy tests passed; 15 finalizer tests remain ignored, including
+the actual-capture inert join. All six commands exited naturally, all five
+compiler products stayed unchanged, and source/dependency/tool/configuration
+and four old-target postchecks passed. The complete archive and selected
+products were retained and rehashed locally. Fresh checked lowering of the V3
+reciprocal source is the next gate, not an established result of these tests.
 
 ## Source Publication
 

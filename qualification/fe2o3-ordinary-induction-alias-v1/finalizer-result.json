@@ -1,0 +1,224 @@
+{
+  "actual_capture_join": false,
+  "artifacts": {
+    "finalizer": {
+      "bytes": 33044032,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/ordinary-induction-compiler-cpu-v228-v1/target/debug/examples/finite_join_engineering_hsaco_v1",
+      "sha256": "1ae67526442f52806b8bd4aa4df6f3a857603088118bc0dde0e5e376cb7c1e3c"
+    },
+    "finalizer-tests": {
+      "bytes": 35542224,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/ordinary-induction-compiler-cpu-v228-v1/target/debug/examples/finite_join_engineering_hsaco_v1-d165b82509d45fc9",
+      "sha256": "bc13a8702fa27e9c48ede642ad302e1f3ec1e6475faa6d6c73bb8ffcdc238673"
+    },
+    "metadata": {
+      "bytes": 23544336,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/ordinary-induction-compiler-cpu-v228-v1/target/debug/examples/finite_join_request_metadata_v1",
+      "sha256": "3c024e79a263a286dc6ab46c5cd3c69e1173c46ba61d1eb415ecde903f74cdb8"
+    }
+  },
+  "checked_lowering": false,
+  "compiler_artifacts": {
+    "compiler-tests": {
+      "bytes": 128970008,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/ordinary-induction-compiler-cpu-v228-v1/target/debug/deps/rustc_codegen_fe2o3-5db184f14eef1d1c",
+      "sha256": "643c7baffcb79da567e20425b8c1df1bbd7f076b22318ed6293c089c23a69920"
+    },
+    "fe2o3-rustc-extract": {
+      "bytes": 205648,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/ordinary-induction-compiler-cpu-v228-v1/target/debug/fe2o3-rustc-extract",
+      "sha256": "cece2097c34ed019e380a512132e8f4d932f127e8dd87793bcd9f0cf620cf3ca"
+    },
+    "librustc_codegen_fe2o3.rlib": {
+      "bytes": 67681872,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/ordinary-induction-compiler-cpu-v228-v1/target/debug/librustc_codegen_fe2o3.rlib",
+      "sha256": "8b0dcaf7bbf8b9e10900ef3a53dd6d7014d7fd6a6639dd9a12883f6347d25f21"
+    },
+    "librustc_codegen_fe2o3.so": {
+      "bytes": 205465840,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/ordinary-induction-compiler-cpu-v228-v1/target/debug/librustc_codegen_fe2o3.so",
+      "sha256": "3a0736577779cf072bb44dacfbda28f0298a39d50a649856ac280a02ac477ade"
+    },
+    "pliron-tests": {
+      "bytes": 68335600,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/ordinary-induction-compiler-cpu-v228-v1/target/debug/deps/fe2o3_pliron-bfbb58262805e3df",
+      "sha256": "d655c5ea569647700feeaf7d80fcb00a68cbf8137e4f635ddd13c20d1950392d"
+    }
+  },
+  "compiler_cpu": {
+    "bytes": 369402,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/ordinary-induction-compiler-cpu-v228-v1/complete.json",
+    "sha256": "c45aa83b01bf76fdfd9962b06884611658dab607b001ba67fecc66db9fd5ba97"
+  },
+  "compiler_owner": {
+    "bytes": 57318,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/ordinary-induction-compiler-cpu-owner-v228-v1/complete.json",
+    "sha256": "85de66610631612ed2473f9d5fbb80ce89ea7ffc6064c1784834a6751d623609"
+  },
+  "date": "2026-10-03",
+  "error": null,
+  "fresh_hsaco_emitted": false,
+  "full_model_acceptance": false,
+  "gpu_execution": false,
+  "host": "mi350-2 (asrock-1w300-g2-2b)",
+  "limitations": [
+    "Actual retained-capture replay and inert join remain separate ignored gates.",
+    "CPU tool generation is not HSACO emission or GPU validation.",
+    "Old-target postchecks are stat inventories, not proof of no transient writes."
+  ],
+  "local_rehash": {
+    "archive_members": 56,
+    "copied_sources": 5781,
+    "new_artifacts": 3,
+    "raw_records": 36,
+    "unchanged_compiler_artifacts": 5
+  },
+  "numerical_acceptance": false,
+  "owner": {
+    "cleanup_signalled": false,
+    "deadline_seconds": 10800,
+    "elapsed_seconds": 47.23354474804364,
+    "exit_code": 0,
+    "owned_groups_absent": true,
+    "owned_processes_reaped": true,
+    "reason": null
+  },
+  "owner_completion": {
+    "bytes": 10396,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/ordinary-induction-finalizer-tools-owner-v228-v1/complete.json",
+    "sha256": "ece336d1234940c312b693f6d6c91a3a8eece275a94f00b06b4e97645971ca97"
+  },
+  "package": {
+    "bytes": 666,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-ordinary-induction-finalizer-tools-v1/manifest.json",
+    "sha256": "ed14d282fa106ef0b48714729e60f08fbcaa1e3cca1c82822d9a35777050ac15"
+  },
+  "passed": true,
+  "patches": {
+    "idempotent": {
+      "bytes": 892,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-partial-move-idempotent-v1/manifest.json",
+      "sha256": "788aed8827fd55fde9f260e227cfb91bc8f9503df98569617112c9c7b3fcc707"
+    },
+    "ordinary": {
+      "bytes": 2513,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-ordinary-induction-alias-v1/manifest.json",
+      "sha256": "a2c6cab1e3a24601015aa45f368e6a4d58bfaa34bbe2150c7f696b8cf1e43135"
+    }
+  },
+  "performance_claim": false,
+  "phases": {
+    "finalizer-build": {
+      "cache_bytes": 2365960582,
+      "elapsed_seconds": 24.322770250961185,
+      "exit_code": 0,
+      "group_absent": true,
+      "reason": null,
+      "stderr_sha256": "cfdea31142602f35ebd2626561a0328bb185b29d9a5499effd585e5c0ae83ce8",
+      "stdout_sha256": "d537eb1ae2bde3ee79d256a652c165afd157ffa481d8d7daac157c64f98e10d9"
+    },
+    "finalizer-build-tests": {
+      "cache_bytes": 2401516660,
+      "elapsed_seconds": 4.042886496055871,
+      "exit_code": 0,
+      "group_absent": true,
+      "reason": null,
+      "stderr_sha256": "18afab2ee1a7dffbb4c2eca2859cd2eecaca9c1d91b9af106c529011a823e33a",
+      "stdout_sha256": "923a0bd63b05529088a208eb5d4d610cfe8448cbea728e743813c95e37f6e99e"
+    },
+    "finalizer-ignored-list": {
+      "cache_bytes": 2401516660,
+      "elapsed_seconds": 2.0220610960386693,
+      "exit_code": 0,
+      "group_absent": true,
+      "reason": null,
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdout_sha256": "44c83411aa31ee93fb38448ae898f601df26e89527e11b9dea0e25ba50fcc705"
+    },
+    "finalizer-list": {
+      "cache_bytes": 2401516660,
+      "elapsed_seconds": 2.023529828991741,
+      "exit_code": 0,
+      "group_absent": true,
+      "reason": null,
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdout_sha256": "a375cc5051e4c7171699ef063de9e35a26e69e832785e65b2795f6595d50f8f1"
+    },
+    "finalizer-tests": {
+      "cache_bytes": 2401516660,
+      "elapsed_seconds": 2.023780884919688,
+      "exit_code": 0,
+      "group_absent": true,
+      "reason": null,
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdout_sha256": "9fec6b095d4047e48fa6a0ae6ffb3d03b3cc29a7f3e87590a56eac9011d3ec9f"
+    },
+    "metadata": {
+      "cache_bytes": 2101878889,
+      "elapsed_seconds": 2.02255483600311,
+      "exit_code": 0,
+      "group_absent": true,
+      "reason": null,
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdout_sha256": "933251b2e05675c2b93f56b94ad105aa856a8be937dc05cd695958d80e406573"
+    }
+  },
+  "postcheck_errors": [],
+  "production_authority": false,
+  "qualified_generation": {
+    "completion": {
+      "bytes": 364397,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/idempotent-compiler-cpu-v228-v2/complete.json",
+      "sha256": "52245c1a713a87c1d60a464bf56998cca612f421386efe715533cfafedc3f9ac"
+    },
+    "sources": {
+      "bytes": 3686065,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/idempotent-compiler-cpu-v228-v2/sources-before.json",
+      "sha256": "d0e15df4e88f2b70844998eefe096984f0203bb3e31bae26c5021ca0fbae5ba4"
+    }
+  },
+  "raw_completion": {
+    "bytes": 45313,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/ordinary-induction-finalizer-tools-v228-v1/complete.json",
+    "sha256": "874a6d2026029619a02283ee9650d682690941c14904d9fa59c101b58b89d6bc"
+  },
+  "retained_archive": {
+    "bytes": 24942811,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/ordinary-induction-finalizer-tools-evidence-v228-v1.tar.gz",
+    "sha256": "f243be26fe9c1196179af078f37c02c6fbf8396eea54e1ae820ac4048c84b531"
+  },
+  "runner_pure_tests": {
+    "passed": 14,
+    "receipt": {
+      "bytes": 461,
+      "sha256": "6ab8422e3ece4e0accedaa276241c6501dcebdceb019112735969cb7cbe817d8"
+    }
+  },
+  "schema": "FerricOrdinaryInductionFinalizerToolsQualificationV1",
+  "source_snapshot": {
+    "bytes": 3779269,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/ordinary-induction-compiler-cpu-v228-v1/sources-before.json",
+    "sha256": "5aad4c8ba6520c323310424ce343de2ae5088e7f8c1c0b1fd67853b5fd3bd9f9"
+  },
+  "tests": {
+    "ignored": 15,
+    "ignored_names": [
+      "linux::multiwave_join_v1::tests::multiwave_emission_actual_retained_v1_passes_full_inert_join",
+      "linux::wave_mlp_tasks_v1::tests::mlp_actual_handoff_measures_shared_work_without_changing_default_policy",
+      "linux::wave_mlp_tasks_v1::tests::wave_emission_actual_retained_v1_passes_full_inert_join",
+      "linux::wave_mlp_tiles_v2::tests::mlp_tile_actual_handoff_measures_shared_work_without_changing_default_policy",
+      "linux::wave_mlp_tiles_v2::tests::wave_emission_actual_retained_v1_passes_full_inert_join",
+      "linux::wave_qkv_attention_output_tasks_v5::tests::attention_actual_handoff_measures_shared_work_without_changing_default_policy",
+      "linux::wave_qkv_attention_output_tasks_v5::tests::wave_emission_actual_retained_v5_passes_full_inert_join",
+      "linux::wave_qkv_attention_output_tiles_v6::tests::attention_actual_handoff_measures_shared_work_without_changing_default_policy",
+      "linux::wave_qkv_attention_output_tiles_v6::tests::wave_emission_actual_retained_v6_passes_full_inert_join",
+      "linux::wave_qkv_attention_tasks_v4::tests::attention_actual_handoff_measures_shared_work_without_changing_default_policy",
+      "linux::wave_qkv_attention_tasks_v4::tests::wave_emission_actual_retained_v4_passes_full_inert_join",
+      "linux::wave_qkv_post_tasks_v3::tests::post_actual_handoff_measures_shared_work_without_changing_default_policy",
+      "linux::wave_qkv_post_tasks_v3::tests::wave_emission_actual_retained_v3_passes_full_inert_join",
+      "linux::wave_qkv_tasks_v2::tests::wave_emission_actual_retained_v3_passes_full_inert_join",
+      "linux::wave_tasks_v1::tests::wave_emission_actual_retained_v3_passes_full_inert_join"
+    ],
+    "passed": 190
+  }
+}

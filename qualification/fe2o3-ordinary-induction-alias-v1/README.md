@@ -58,11 +58,22 @@ source, tool, dependency, configuration and four prior-target postchecks passed.
 The owned tree was reaped without forced cleanup. All 5,873 archive members,
 including 5,781 source files and five selected products, were rehashed locally.
 
+The [matching finalizer tools](finalizer-result.json) subsequently built from
+this exact source generation and passed 190 default tests, with 15 ignored.
+All 14 controller policy tests passed. The controller also replayed both
+compiler suites' retained listings and results before building the tools.
+Both overlays, the prior source generation and all five compiler products
+remained pinned. All six phases exited naturally and source, dependency,
+tool/configuration and four old-target postchecks passed. The 56 archive
+members, three new tools, five unchanged compiler products and full source
+snapshot were rehashed locally. These are CPU results, not GPU performance.
+
 ## Remaining Gates
 
 The new tests exercise induction projection, reconciliation and synthetic
 ranked CFG construction. They do not establish full lowering of the real
-prefix capture; that default-suite replay remains ignored. Matching finalizer
-tools, fresh checked lowering/replay, emission, actual-image reviews and MI350
-numerical validation remain required. No new HSACO, production runtime change,
+prefix capture; that default-suite replay remains ignored. The matching tools
+are now built, but fresh checked lowering/replay, the actual-capture inert join,
+emission, actual-image reviews and MI350 numerical validation remain required.
+No new HSACO, production runtime change,
 full-model certificate or 700 tokens/s result is claimed.
