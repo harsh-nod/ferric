@@ -1,0 +1,52 @@
+{
+  "compiler_exit_code": 101,
+  "compiler_limits_unchanged": true,
+  "date": "2026-10-03",
+  "diagnostic": "production semantic SSA partial-move validation for function 0 requires 2097153 storage words, limit is 2097152",
+  "failed_stage": "checked-lowering",
+  "first_rejected_charge_words": 2097153,
+  "fresh_hsaco_emitted": false,
+  "full_model_acceptance": false,
+  "gpu_execution": false,
+  "host": "mi350-2",
+  "limitations": [
+    "The charge is a cumulative insertion budget, not the complete function requirement or peak memory usage.",
+    "Old-target postchecks compare bounded stat inventories, not content hashes or proof of no transient writes.",
+    "Retained receipt identities are not a publicly downloadable self-contained reproducer.",
+    "CPU arithmetic validation does not establish compiled GPU behavior."
+  ],
+  "metadata_passed": true,
+  "numerical_acceptance": false,
+  "owned_outcome": {
+    "cleanup_signalled": false,
+    "exit_code": 1,
+    "owned_groups_absent": true,
+    "owned_processes_reaped": true,
+    "reason": null
+  },
+  "passed": false,
+  "performance_claim": false,
+  "production_authority": false,
+  "receipts": {
+    "compiler_stderr": {
+      "bytes": 6681,
+      "sha256": "f3d845d5aa96ae2c6ac7ddb6d54ede93d5f8ebcd4d3ea73ee803e7550f8d2238"
+    },
+    "owner": {
+      "bytes": 12229,
+      "sha256": "c824973ef70e3acbe67e15fd68db877610c5b6553a14c4e747283612cae36665"
+    },
+    "probe": {
+      "bytes": 2765,
+      "sha256": "3d3fd530e171a6e2977d995c78d5665d9e5a728e173eb21b445891148ba61e0d"
+    },
+    "retained_archive": {
+      "bytes": 3644043,
+      "sha256": "5de7e5a9b97646cac7be82d2de841da3afeb96eb7cdfd4eb7e54bde3383225d9"
+    }
+  },
+  "schema": "FerricReciprocalCheckedProbeFailureV1",
+  "source_and_old_target_postchecks_passed": true,
+  "storage_limit_words": 2097152,
+  "total_required_storage_unknown": true
+}

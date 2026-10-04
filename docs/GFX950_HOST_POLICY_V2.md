@@ -230,16 +230,68 @@ counts are unchanged. The cache, operational shortcuts and raw timestamps
 remain off in all snapshots. Group-currentness time is its own inclusive
 scope, not an additive cost that can be subtracted into GPU time.
 
-The shared setup snapshot interval was 141.722 seconds, Close 21.901 seconds, the parent 368.802
-seconds and the controller 386.540 seconds. Keep those boundaries separate
+The shared setup snapshot interval was 141.722 seconds, Close 21.901 seconds,
+the parent 368.802 seconds and the controller 386.540 seconds. Keep those boundaries separate
 from forward latency. The current shared path still invokes each rank's full
 idle check immediately after the fresh group fence. The next candidate
 consolidates those duplicate currentness checks while retaining poison,
-queue-counter, completion-frontier and exception validation. That candidate
-needs its own CPU suite, rebuilt worker and GPU comparison before publication.
+queue-counter, completion-frontier and exception validation. Its CPU validation
+is recorded below; its rebuilt worker still needs a separate GPU comparison.
 
 This remains pre-qualification host-overhead diagnosis, not completion of
 issue #42's M6 performance gate. V2 autoregressive validation also remains open.
+
+## Consolidation Candidate
+
+[fe2o3 `725ecc6a5`](https://github.com/harsh-nod/fe2o3/commit/725ecc6a500ff49e7dfaefb38b027f6bcc223ebf)
+factors the existing idle check into its ordinary wrapper and a private queue
+validator. The shared group path calls that validator only after a successful
+fresh full group fence. Standalone and nonshared paths still perform their
+original currentness checks; both paths reject a poisoned ordered context.
+Queue-counter observation, completed frontier, monotone counters, retained
+read frontier and acquired exception checks keep their original order.
+The change does not cache topology or add an operational-currentness shortcut.
+
+Fresh source archives plus the exact overlays passed 475 CPU tests with four
+ignored on `mi350-2`, and a new worker binary built. The
+[CPU record](assets/finite-prefix-v228/group-fence-cpu.json) identifies the
+tested sources, named outcomes and binary separately from CPU633 and the
+four completed GPU arms.
+
+| Selected Runtime Tests | Passed |
+| --- | ---: |
+| Context checks | 14 |
+| Peer group, including three new routing tests | 15 |
+| Fresh device-group currentness | 7 |
+| Publication checks | 16 |
+| Host observation | 13 |
+| Performance policy | 5 |
+| Ordered batches | 7 |
+| Runtime subtotal | 77 |
+| Worker library and shared wire | 398 |
+| Total | 475 |
+
+The production routing function is exercised with recording backends for two
+and eight ranks, every routed failure, repeated fresh fences, and a failing
+later fence. Every injected failure passes through the real group completion
+handler and must quarantine subsequent operations. These CPU tests do not
+execute native queue MMIO. All 12 owned CPU phases completed successfully;
+all 6,928 extracted source files were unchanged after execution. The run used
+an empty target, cached dependencies, two CPU/test threads and the same nightly
+toolchain and checked optimized profile as the earlier worker build. All 62
+raw records and the binary were rehashed after local retention.
+
+The first test launch failed before compilation because Cargo does not accept
+explicit feature switches for this dependency outside the worker workspace.
+The corrected launch retains the worker's declared engineering feature and
+requires the actual 77-test inventory. The failed attempt remains a failure.
+A focused formatting check reported a pre-existing import-wrapping difference;
+it was left unchanged, and no formatting pass is claimed.
+
+This is not a parent rebuild, full workspace regression, new HSACO, GPU parity
+result or speedup measurement. The A/B/A/C graph above still uses the previous
+worker. Next, deploy this new binary with its own runtime review and repeat
+the numerical, audit and cleanup gates before comparing host counters or time.
 
 ## GPU Comparison Gates
 

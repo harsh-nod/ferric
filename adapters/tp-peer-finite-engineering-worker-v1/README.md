@@ -114,6 +114,13 @@ host-instrumented (CPU605) generation has separately completed its teacher-force
 run with all 152 native tensor rows bitwise equal, six passing device audits,
 and clean Close/reap. Its instrumented autoregressive run is still pending.
 
+The later [consolidation candidate](../../docs/GFX950_HOST_POLICY_V2.md#consolidation-candidate)
+uses runtime commit `725ecc6a500ff49e7dfaefb38b027f6bcc223ebf`. It passed 77
+selected runtime tests and 398 worker/shared-wire tests with four ignored,
+and built a distinct worker binary. All retained raw records and the binary
+were rehashed locally. This CPU-only checkpoint is not the source pair used
+for the A/B/A/C GPU graph; the new worker's own GPU validation remains pending.
+
 Host counters are inclusive and nested. Do not sum them as disjoint costs or
 label them GPU time, kernel overlap, or tokens/s. Admission caching, shared
 currentness, operational currentness and raw timestamp queues stay off in the

@@ -18,6 +18,7 @@ engineering branch; it does not change the production execution path.
 | V2 admission-cache arm on `mi350` | 152 native rows bitwise equal; repeated admissions fall to zero; six audits and clean Close/reap | No reliable overall latency improvement from the A/B/A diagnostic |
 | V2 baseline repeat on `mi350` | 152 native rows bitwise equal; six audits and clean Close/reap; baseline operation counts restored | Baseline drift exceeds the initial aggregate cache delta; no confidence interval |
 | V2 shared-currentness arm on `mi350` | 152 native rows bitwise equal; six audits and clean Close/reap; forward host total 61.458 seconds | Shorter than both baselines in this diagnostic, not a qualified speedup or isolated benchmark |
+| Consolidated group-fence candidate on `mi350-2` | 475 selected CPU tests passed, 4 ignored; new worker built | 77 runtime plus 398 worker tests; candidate GPU comparison pending |
 | Four teacher-forced forwards on `mi350` | 152 retained native tensor rows bitwise equal to the prior native route | All 36 layers, TP2, finite engineering images; not an independent full-model numerical bound |
 | Four autoregressive forwards on `mi350` | 152 retained native tensor rows bitwise equal to the prior native route | Own-token history; no 2,048/256 workload or sustained throughput measurement |
 | Six prefix-stage numerical cases | All 24 rank/profile rows satisfy the declared conditional norm/QKV bounds | Independent conditional arithmetic check of retained captures, not a new GPU run |
@@ -46,6 +47,17 @@ actual seed selection or model failures. They show that the assumed division
 rounding does not follow from the tested instruction model and seed envelope;
 the prerequisite remains unresolved. No threshold was widened. The diagnostic
 receipt is `9af99ee3b0b4247a0a7b504f8364fc6ad1dd6f8c825b37f05aedc330140722d8`.
+
+The first fresh checked compiler probe for a separate exact-reciprocal candidate
+passed metadata but failed semantic-SSA partial-move validation before producing
+an HSACO. Its cumulative storage budget first rejected charge 2,097,153 against
+the existing 2,097,152-word limit. This does not mean that one additional word
+would suffice for the whole function. The limit was not raised. Source and
+old-target postchecks passed; the failed owned process tree exited without
+forced cleanup and was reaped. The [failure record](assets/finite-prefix-v228/reciprocal-probe-failure.json)
+keeps this distinct from successful CPU arithmetic checks and from the existing
+GPU images. A smaller candidate control-flow graph needs its own arithmetic and
+checked compiler validation before any GPU claim.
 
 ## Source Publication
 
@@ -160,8 +172,14 @@ counts remain unchanged. The [plot and counter table](GFX950_HOST_POLICY_V2.md#s
 show the observed effect and limits. Another compiler job was observed during
 C preflight on the shared host. This is not an isolated or statistically
 qualified performance result, GPU timing, kernel overlap or sustained decode.
-Consolidating the remaining duplicate checks needs its own validation;
-the V2 autoregressive diagnostic also remains pending.
+The [consolidation candidate](GFX950_HOST_POLICY_V2.md#consolidation-candidate)
+has since passed 475 selected CPU tests with four ignored, and its new worker
+built from fresh sources. It removes duplicate rank currentness checks after
+a fresh group fence while retaining queue and poison validation. Its runtime
+source is published at
+[fe2o3 `725ecc6a5`](https://github.com/harsh-nod/fe2o3/commit/725ecc6a500ff49e7dfaefb38b027f6bcc223ebf)
+in both repositories. Its own GPU comparison and the V2 autoregressive diagnostic
+remain pending; no earlier GPU result is transferred to the new binary.
 
 ## Changes And Retained Failures
 
@@ -195,6 +213,8 @@ alone is not a self-contained reproducer or proof.
 | V2 admission-cache GPU completion | `0952f130801dcf3c958f5dff8b1228a401f436640ee7591465947edcc3881cac` |
 | V2 repeated-baseline GPU completion | `4f5cbd384e136d5c5a05cf0a9d87733b249ee85fec5cd421d3164df87af4110d` |
 | V2 shared-currentness GPU completion | `6aad2f46f234a98ac9f792a6108e98e6bbb6269ad81a6913aa1524f8972cd097` |
+| Consolidated group-fence CPU475 completion | `0231c40bf9a5ff285e041f29b2c958e26972e73f6a4485072e153a0bd178171b` |
+| Exact-reciprocal checked probe failure | `3d3fd530e171a6e2977d995c78d5665d9e5a728e173eb21b445891148ba61e0d` |
 | Corrected CPU605 owner | `dde383021440a721bd2c41bff614ea1156a3b36c6fa48cd2ad27c95337af7cb2` |
 | Historical KFD completion | `e6cdd55c6a2dda4dafdd25a4c8d5e3670312c912cdbc1f20258a6e93db48e603` |
 | Teacher-forced four-forward completion | `56f72c0c8c76e7c2c3f00ca767d5a7b53c66ba4b2c17589059565c2c2532fb8b` |
@@ -211,9 +231,9 @@ alone is not a self-contained reproducer or proof.
 
 1. Extend the freshly built parent/worker source pair to reproducible
    compiler/HSACO builds; the full pipeline is not yet reproduced.
-2. Follow the completed baseline/cache/baseline/shared sequence with tested
-   consolidation of duplicate group-currentness checks, then its own fresh
-   worker GPU comparison on `mi350`, preserving the exact numerical checks.
+2. Follow the completed baseline/cache/baseline/shared sequence and CPU-tested
+   consolidation with the new worker's own GPU comparison on `mi350`, preserving
+   the exact numerical checks and retained-device review.
 3. Close independent numerical obligations and validate the longer resident
    request, multiple requests, KV lifetime and cleanup boundaries.
 4. Qualify the full target workload: single-request Qwen3-8B, BF16,
