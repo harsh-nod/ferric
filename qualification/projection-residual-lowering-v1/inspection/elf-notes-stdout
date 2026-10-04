@@ -1,0 +1,298 @@
+
+File: /home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-residual-lowering-v228-v1/fe2o3-engineering-v1/3c3aec3598514f7f6c2b053ff0c6a8d489951ecb6cb8d95b1cae5ca31035b899/observation.hsaco
+Format: elf64-amdgpu
+Arch: amdgcn
+AddressSize: 64bit
+LoadName: <Not found>
+Symbols [
+  Symbol {
+    Name:  (0)
+    Value: 0x0
+    Size: 0
+    Binding: Local (0x0)
+    Type: None (0x0)
+    Other: 0
+    Section: Undefined (0x0)
+  }
+  Symbol {
+    Name: ferric_qwen3_tp_peer_tp2_projection_residual_bf16_v1.private_seg_size (1)
+    Value: 0x0
+    Size: 0
+    Binding: Local (0x0)
+    Type: None (0x0)
+    Other: 0
+    Section: Absolute (0xFFF1)
+  }
+  Symbol {
+    Name: ferric_qwen3_tp_peer_tp2_projection_residual_bf16_v1.num_vgpr (71)
+    Value: 0x6
+    Size: 0
+    Binding: Local (0x0)
+    Type: None (0x0)
+    Other: 0
+    Section: Absolute (0xFFF1)
+  }
+  Symbol {
+    Name: ferric_qwen3_tp_peer_tp2_projection_residual_bf16_v1.num_agpr (133)
+    Value: 0x0
+    Size: 0
+    Binding: Local (0x0)
+    Type: None (0x0)
+    Other: 0
+    Section: Absolute (0xFFF1)
+  }
+  Symbol {
+    Name: ferric_qwen3_tp_peer_tp2_projection_residual_bf16_v1.numbered_sgpr (195)
+    Value: 0x1E
+    Size: 0
+    Binding: Local (0x0)
+    Type: None (0x0)
+    Other: 0
+    Section: Absolute (0xFFF1)
+  }
+  Symbol {
+    Name: ferric_qwen3_tp_peer_tp2_projection_residual_bf16_v1.uses_vcc (262)
+    Value: 0x1
+    Size: 0
+    Binding: Local (0x0)
+    Type: None (0x0)
+    Other: 0
+    Section: Absolute (0xFFF1)
+  }
+  Symbol {
+    Name: ferric_qwen3_tp_peer_tp2_projection_residual_bf16_v1.uses_flat_scratch (324)
+    Value: 0x0
+    Size: 0
+    Binding: Local (0x0)
+    Type: None (0x0)
+    Other: 0
+    Section: Absolute (0xFFF1)
+  }
+  Symbol {
+    Name: ferric_qwen3_tp_peer_tp2_projection_residual_bf16_v1.has_dyn_sized_stack (395)
+    Value: 0x0
+    Size: 0
+    Binding: Local (0x0)
+    Type: None (0x0)
+    Other: 0
+    Section: Absolute (0xFFF1)
+  }
+  Symbol {
+    Name: ferric_qwen3_tp_peer_tp2_projection_residual_bf16_v1.has_recursion (468)
+    Value: 0x0
+    Size: 0
+    Binding: Local (0x0)
+    Type: None (0x0)
+    Other: 0
+    Section: Absolute (0xFFF1)
+  }
+  Symbol {
+    Name: _DYNAMIC (644)
+    Value: 0x3840
+    Size: 0
+    Binding: Local (0x0)
+    Type: None (0x0)
+    Other [ (0x2)
+      STV_HIDDEN (0x2)
+    ]
+    Section: .dynamic (0x8)
+  }
+  Symbol {
+    Name: ferric_qwen3_tp_peer_tp2_projection_residual_bf16_v1 (535)
+    Value: 0x1E00
+    Size: 1560
+    Binding: Global (0x1)
+    Type: Function (0x2)
+    Other [ (0x3)
+      STV_PROTECTED (0x3)
+    ]
+    Section: .text (0x7)
+  }
+  Symbol {
+    Name: ferric_qwen3_tp_peer_tp2_projection_residual_bf16_v1.kd (588)
+    Value: 0xD40
+    Size: 64
+    Binding: Global (0x1)
+    Type: Object (0x1)
+    Other: 0
+    Section: .rodata (0x6)
+  }
+]
+NoteSections [
+  NoteSection {
+    Name: .note
+    Offset: 0x200
+    Size: 0xA38
+    Notes [
+      {
+        Owner: AMDGPU
+        Data size: 0xA21
+        Type: NT_AMDGPU_METADATA (AMDGPU Metadata)
+        AMDGPU Metadata: ---
+amdhsa.kernels:
+  - .agpr_count:     0
+    .args:
+      - .address_space:  global
+        .name:           arg0.data
+        .offset:         0
+        .size:           8
+        .value_kind:     global_buffer
+      - .name:           arg0.len
+        .offset:         8
+        .size:           8
+        .value_kind:     by_value
+      - .address_space:  global
+        .name:           arg1.data
+        .offset:         16
+        .size:           8
+        .value_kind:     global_buffer
+      - .name:           arg1.len
+        .offset:         24
+        .size:           8
+        .value_kind:     by_value
+      - .address_space:  global
+        .name:           arg2.data
+        .offset:         32
+        .size:           8
+        .value_kind:     global_buffer
+      - .name:           arg2.len
+        .offset:         40
+        .size:           8
+        .value_kind:     by_value
+      - .address_space:  global
+        .name:           arg3.data
+        .offset:         48
+        .size:           8
+        .value_kind:     global_buffer
+      - .name:           arg3.len
+        .offset:         56
+        .size:           8
+        .value_kind:     by_value
+      - .address_space:  global
+        .name:           arg4.data
+        .offset:         64
+        .size:           8
+        .value_kind:     global_buffer
+      - .name:           arg4.len
+        .offset:         72
+        .size:           8
+        .value_kind:     by_value
+      - .address_space:  global
+        .name:           arg5.data
+        .offset:         80
+        .size:           8
+        .value_kind:     global_buffer
+      - .name:           arg5.len
+        .offset:         88
+        .size:           8
+        .value_kind:     by_value
+      - .address_space:  global
+        .name:           arg6.data
+        .offset:         96
+        .size:           8
+        .value_kind:     global_buffer
+      - .name:           arg6.len
+        .offset:         104
+        .size:           8
+        .value_kind:     by_value
+      - .address_space:  global
+        .name:           arg7.data
+        .offset:         112
+        .size:           8
+        .value_kind:     global_buffer
+      - .name:           arg7.len
+        .offset:         120
+        .size:           8
+        .value_kind:     by_value
+      - .address_space:  global
+        .name:           arg8.data
+        .offset:         128
+        .size:           8
+        .value_kind:     global_buffer
+      - .name:           arg8.len
+        .offset:         136
+        .size:           8
+        .value_kind:     by_value
+      - .address_space:  global
+        .name:           arg9.data
+        .offset:         144
+        .size:           8
+        .value_kind:     global_buffer
+      - .name:           arg9.len
+        .offset:         152
+        .size:           8
+        .value_kind:     by_value
+      - .name:           arg10
+        .offset:         160
+        .size:           4
+        .value_kind:     by_value
+      - .name:           arg11
+        .offset:         164
+        .size:           4
+        .value_kind:     by_value
+      - .offset:         168
+        .size:           4
+        .value_kind:     hidden_block_count_x
+      - .offset:         172
+        .size:           4
+        .value_kind:     hidden_block_count_y
+      - .offset:         176
+        .size:           4
+        .value_kind:     hidden_block_count_z
+      - .offset:         180
+        .size:           2
+        .value_kind:     hidden_group_size_x
+      - .offset:         182
+        .size:           2
+        .value_kind:     hidden_group_size_y
+      - .offset:         184
+        .size:           2
+        .value_kind:     hidden_group_size_z
+      - .offset:         186
+        .size:           2
+        .value_kind:     hidden_remainder_x
+      - .offset:         188
+        .size:           2
+        .value_kind:     hidden_remainder_y
+      - .offset:         190
+        .size:           2
+        .value_kind:     hidden_remainder_z
+      - .offset:         208
+        .size:           8
+        .value_kind:     hidden_global_offset_x
+      - .offset:         216
+        .size:           8
+        .value_kind:     hidden_global_offset_y
+      - .offset:         224
+        .size:           8
+        .value_kind:     hidden_global_offset_z
+      - .offset:         232
+        .size:           2
+        .value_kind:     hidden_grid_dims
+    .group_segment_fixed_size: 0
+    .kernarg_segment_align: 8
+    .kernarg_segment_size: 424
+    .max_flat_workgroup_size: 64
+    .name:           ferric_qwen3_tp_peer_tp2_projection_residual_bf16_v1
+    .private_segment_fixed_size: 0
+    .reqd_workgroup_size:
+      - 64
+      - 1
+      - 1
+    .sgpr_count:     36
+    .sgpr_spill_count: 0
+    .symbol:         ferric_qwen3_tp_peer_tp2_projection_residual_bf16_v1.kd
+    .uses_dynamic_stack: false
+    .vgpr_count:     6
+    .vgpr_spill_count: 0
+    .wavefront_size: 64
+amdhsa.target:   'amdgcn-amd-amdhsa--gfx950:xnack-'
+amdhsa.version:
+  - 1
+  - 2
+...
+
+      }
+    ]
+  }
+]

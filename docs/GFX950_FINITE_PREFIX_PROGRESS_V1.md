@@ -6,12 +6,21 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Latest: the separate [BF16 projection-residual candidate](../qualification/projection-residual-cpu-v1/README.md)
+Latest: the [projection-residual candidate's checked gfx950 lowering](../qualification/projection-residual-lowering-v1/README.md)
+passed on `mi350-2`, including exact-output replay and all postchecks. The
+10,864-byte image also passed descriptor, ELF and ISA inspection: Wave64,
+22 explicit arguments, six VGPRs, 36 SGPRs, and no reported spills. Manual
+data-flow review finds the projection rounding before residual addition.
+This remains an unselected candidate; runtime integration, GPU execution and
+independent model numerical acceptance are still open.
+
+The separate [BF16 projection-residual candidate](../qualification/projection-residual-cpu-v1/README.md)
 passed 17 new Rust tests and all 14 unchanged V18 regression tests on
 `mi350-2`, with no ignores. All 18 bounded commands and source/tool/input
 postchecks passed. The new kernel materializes the combined projection in
 BF16 before residual addition; it does not alter the current runtime route.
-Checked lowering, GPU execution, and model numerical acceptance remain open.
+Its checked lowering is recorded above; GPU execution and model numerical
+acceptance remain open.
 
 The [projection-rounding replay](../qualification/output-residual-boundary-v1/README.md)
 completed on `mi350-2`. The current formula reproduces all 4,096 captured native

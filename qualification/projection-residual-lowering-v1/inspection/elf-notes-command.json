@@ -1,0 +1,34 @@
+{
+  "affinity": [
+    8,
+    9
+  ],
+  "argv": [
+    "/opt/rocm-7.3.0/lib/llvm/bin/llvm-readobj",
+    "--notes",
+    "--symbols",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-residual-lowering-v228-v1/fe2o3-engineering-v1/3c3aec3598514f7f6c2b053ff0c6a8d489951ecb6cb8d95b1cae5ca31035b899/observation.hsaco"
+  ],
+  "cache_cap_bytes": 6442450944,
+  "deadline_seconds": 120,
+  "env": {
+    "CUDA_VISIBLE_DEVICES": "",
+    "HIP_VISIBLE_DEVICES": "",
+    "HOME": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-residual-inspection-v228-v2",
+    "LANG": "C.UTF-8",
+    "LC_ALL": "C.UTF-8",
+    "LD_LIBRARY_PATH": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/ordinary-induction-compiler-cpu-v228-v1/target/debug/deps:/home/harmenon/ferric-asrock-42/toolchain/rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/lib",
+    "PATH": "/usr/bin:/bin",
+    "ROCR_VISIBLE_DEVICES": "",
+    "TMPDIR": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-residual-inspection-v228-v2/scratch",
+    "TZ": "UTC"
+  },
+  "expected_exit": 0,
+  "gpu_execution": false,
+  "nice": 10,
+  "tools": {
+    "descriptor-metadata": "3c024e79a263a286dc6ab46c5cd3c69e1173c46ba61d1eb415ecde903f74cdb8",
+    "disassembly": "be832bf5ddf82b3feb8a6e24f453e2602bd01a406f9f5bde47b225c4989d1a83",
+    "elf-notes": "8cb6079bc349196a3f3af7589912ca48f716194970ccd0e6c6a36b09e0b21259"
+  }
+}
