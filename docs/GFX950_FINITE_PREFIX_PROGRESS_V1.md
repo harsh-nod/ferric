@@ -145,6 +145,14 @@ result. The owned tree exits naturally and is reaped; all source/tool/dependency
 and prior-target checks pass. There is still no new ranked/target KIR, handoff,
 HSACO or GPU result. This block-count reduction is not a GPU speedup.
 
+The [V4 source candidate](../qualification/exact-prefix-reciprocal-v4/README.md)
+now changes only the bounded reciprocal counter to `step += 1_u32`, with its
+matching macro contract. The actual V3 capture identifies both rejected
+counter latches as plain temporary copies. V4 passed the same 12 ordinary
+tests, six contracts, explicit exhaustive test and 1,007 Fraction vectors on
+`mi350-2`. The source patch and exact CPU result are published separately from
+runtime adoption; a fresh checked probe must establish the latch fix.
+
 ## Source Publication
 
 The [source index](assets/finite-prefix-v227/source-index.json) binds the 289

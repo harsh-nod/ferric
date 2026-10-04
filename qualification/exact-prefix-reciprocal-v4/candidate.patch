@@ -1,0 +1,1715 @@
+diff --git a/device/qwen3-tp-wave-rmsnorm-kernels-v15/src/finite_qkv_attention_output_tiles_v6.rs b/device/qwen3-tp-wave-rmsnorm-kernels-v15/src/finite_qkv_attention_output_tiles_v6.rs
+--- a/device/qwen3-tp-wave-rmsnorm-kernels-v15/src/finite_qkv_attention_output_tiles_v6.rs
++++ b/device/qwen3-tp-wave-rmsnorm-kernels-v15/src/finite_qkv_attention_output_tiles_v6.rs
+@@ -14,6 +14,7 @@
+ 
+ include!("wave_numerics_v1.rs");
+ include!("head_rope_numerics_v3.rs");
++include!("prefix_reciprocal_numerics_v1.rs");
+ include!("attention_online.rs");
+ include!("output_projection_numerics_v5.rs");
+ include!("prefix_tiles_numerics_v6.rs");
+@@ -60,7 +61,7 @@
+         task.reject();
+         return;
+     }
+-    let inverse = 1.0_f32 / denominator;
++    let inverse = qwen_prefix_reciprocal_rn_v1!(denominator);
+     if !inverse.is_finite() {
+         task.reject();
+         return;
+@@ -100,7 +101,7 @@
+ 
+ #[cfg_attr(target_arch = "amdgpu", rustc_force_inline)]
+ fn postprocess(task: &mut AttentionReadyTileV6<'_, '_>) {
+-    qwen_head_rope_post_v3!(task, stabilized, Math::current().sqrt_f32(stabilized));
++    qwen_prefix_head_rope_post_v6!(task, stabilized, Math::current().sqrt_f32(stabilized));
+ }
+ 
+ #[cfg_attr(target_arch = "amdgpu", rustc_force_inline)]
+diff --git a/device/qwen3-tp-wave-rmsnorm-kernels-v15/src/prefix_reciprocal_numerics_v1.rs b/device/qwen3-tp-wave-rmsnorm-kernels-v15/src/prefix_reciprocal_numerics_v1.rs
+new file mode 100644
+--- /dev/null
++++ b/device/qwen3-tp-wave-rmsnorm-kernels-v15/src/prefix_reciprocal_numerics_v1.rs
+@@ -0,0 +1,144 @@
++// Only the tiled V6 prefix opts into this arithmetic. The shared V3 head
++// macros, including their native-division behavior, remain byte-identical.
++macro_rules! qwen_prefix_reciprocal_rn_v1 {
++    ($denominator:expr) => {{
++        let bits = ($denominator).to_bits();
++        // sqrt(mean + 1e-6) lies in this admitted positive-normal interval.
++        // An unexpected Math result fails closed at each caller's finite check.
++        let admitted = (bits.wrapping_sub(0x3a80_0000_u32) <= 0x2500_0000_u32) as u32;
++        let mask = 0_u32.wrapping_sub(admitted);
++        let exponent = bits >> 23;
++        let significand = (bits & 0x007f_ffff_u32) | 0x0080_0000_u32;
++        let mut remainder = 0x0080_0000_u32;
++        let mut quotient = 0_u32;
++        let mut step = 0_u32;
++        // 2^(23+i) = quotient * significand + remainder, with remainder <=
++        // significand. Equality persists only for significand = 2^23; RNE then
++        // carries the final quotient into the exponent, giving the exact power.
++        while step < 24_u32 {
++            remainder <<= 1;
++            let take = (remainder >= significand) as u32;
++            remainder = remainder.wrapping_sub(
++                significand & 0_u32.wrapping_sub(take),
++            );
++            quotient = (quotient << 1) | take;
++            // The bounded counter uses the compiler's checked induction form.
++            step += 1_u32;
++        }
++        let twice_remainder = remainder << 1;
++        quotient = quotient.wrapping_add(
++            ((twice_remainder > significand)
++                | ((twice_remainder == significand)
++                    & ((quotient & 1_u32) != 0))) as u32,
++        );
++        // Invalid inputs also take this bounded integer path. Wrapping exponent
++        // packing is safe before the final mask replaces their result with NaN.
++        let reciprocal_bits = (253_u32.wrapping_sub(exponent) << 23)
++            .wrapping_add(quotient.wrapping_sub(0x0080_0000_u32));
++        f32::from_bits((reciprocal_bits & mask) | (f32::NAN.to_bits() & !mask))
++    }};
++}
++
++// Keep this small prefix-specific inverse separate from V3. The AST contract
++// checks that its only arithmetic change is the guarded reciprocal above.
++macro_rules! qwen_prefix_head_inverse_v6 {
++    ($task:expr, $head:expr, $stabilized:ident, $sqrt:expr) => {{
++        let mut sum = 0.0_f32;
++        let mut valid = true;
++        let mut column = 0_usize;
++        while column < 128 {
++            let bits = match $task.head_input($head, column) {
++                Some(value) => value,
++                None => 0x7fc0,
++            };
++            let input = Bf16::from_bits(bits);
++            let value = input.to_f32();
++            let square = value * value;
++            sum = sum + square;
++            valid = valid && input.is_finite() && square.is_finite();
++            column += 1;
++        }
++        let mean = sum / 128.0_f32;
++        let $stabilized = mean + 1e-6_f32;
++        valid = valid
++            && sum.is_finite()
++            && mean.is_finite()
++            && $stabilized.is_finite()
++            && $stabilized > 0.0;
++        let denominator = if valid { $sqrt } else { 1.0_f32 };
++        let inverse = qwen_prefix_reciprocal_rn_v1!(denominator);
++        valid = valid && denominator.is_finite() && denominator > 0.0 && inverse.is_finite();
++        (sum, inverse, valid)
++    }};
++}
++
++// Deliberately retain the V3 rejection/write order without changing its other
++// users. A source contract permits only the inverse macro's name to differ.
++macro_rules! qwen_prefix_head_rope_post_v6 {
++    ($task:expr, $stabilized:ident, $sqrt:expr) => {{
++        let task = &mut *$task;
++        let mut head = 0_usize;
++        while head < 20 {
++            let (_, inverse, inverse_valid) = qwen_prefix_head_inverse_v6!(task, head, $stabilized, $sqrt);
++            let (a, b, norm_valid) = qwen_head_weighted_pair_v3!(task, head, inverse);
++            let cosine = match task.rotary(0) {
++                Some(value) => value,
++                None => f32::NAN,
++            };
++            let sine = match task.rotary(1) {
++                Some(value) => value,
++                None => f32::NAN,
++            };
++            let ac = a.to_f32() * cosine;
++            let bs = b.to_f32() * sine;
++            let bc = b.to_f32() * cosine;
++            let asine = a.to_f32() * sine;
++            let first = ac - bs;
++            let second = bc + asine;
++            let rotated_low = Bf16::from_f32(first);
++            let rotated_high = Bf16::from_f32(second);
++            let valid = inverse_valid
++                && norm_valid
++                && cosine.is_finite()
++                && sine.is_finite()
++                && ac.is_finite()
++                && bs.is_finite()
++                && bc.is_finite()
++                && asine.is_finite()
++                && first.is_finite()
++                && second.is_finite()
++                && rotated_low.is_finite()
++                && rotated_high.is_finite();
++            if !valid {
++                task.reject();
++            } else if head < 16 {
++                if !task.write_query_head(head, rotated_low.to_bits(), rotated_high.to_bits()) {
++                    task.reject();
++                }
++            } else {
++                let kv_head = head - 16;
++                let value_low = Bf16::from_bits(match task.value(kv_head, 0) {
++                    Some(value) => value,
++                    None => 0x7fc0,
++                });
++                let value_high = Bf16::from_bits(match task.value(kv_head, 1) {
++                    Some(value) => value,
++                    None => 0x7fc0,
++                });
++                if !value_low.is_finite()
++                    || !value_high.is_finite()
++                    || !task.write_key_value_head(
++                        kv_head,
++                        rotated_low.to_bits(),
++                        rotated_high.to_bits(),
++                        value_low.to_bits(),
++                        value_high.to_bits(),
++                    )
++                {
++                    task.reject();
++                }
++            }
++            head += 1;
++        }
++    }};
++}
+diff --git a/device/qwen3-tp-wave-rmsnorm-kernels-v15/tests/fixtures/prefix_reciprocal_fraction_v1.tsv b/device/qwen3-tp-wave-rmsnorm-kernels-v15/tests/fixtures/prefix_reciprocal_fraction_v1.tsv
+new file mode 100644
+--- /dev/null
++++ b/device/qwen3-tp-wave-rmsnorm-kernels-v15/tests/fixtures/prefix_reciprocal_fraction_v1.tsv
+@@ -0,0 +1,1008 @@
++# Positive normal denominator bits	RN-even reciprocal bits
++3a800000	44800000
++3a800001	447ffffe
++3a800002	447ffffc
++3a800003	447ffffa
++3aa05ecf	444c53ba
++3aaaaaaa	44400001
++3abfffff	442aaaac
++3ac00000	442aaaab
++3ad55555	4419999a
++3af5d8e1	4405493b
++3afb9e4d	44023a9e
++3afffffd	44000002
++3afffffe	44000001
++3affffff	44000001
++3b000000	44000000
++3b000001	43fffffe
++3b000002	43fffffc
++3b000003	43fffffa
++3b113de2	43e19c2f
++3b2aaaaa	43c00001
++3b3fffff	43aaaaac
++3b400000	43aaaaab
++3b4d9ccc	439f5e25
++3b4dab48	439f52ec
++3b555555	4399999a
++3b7ffffd	43800002
++3b7ffffe	43800001
++3b7fffff	43800001
++3b800000	43800000
++3b800001	437ffffe
++3b800002	437ffffc
++3b800003	437ffffa
++3b8923d9	436ef032
++3ba75607	4343d250
++3baaaaaa	43400001
++3bbfffff	432aaaac
++3bc00000	432aaaab
++3bc531bb	43262bd2
++3bd55555	4319999a
++3bfffffd	43000002
++3bfffffe	43000001
++3bffffff	43000001
++3c000000	43000000
++3c000001	42fffffe
++3c000002	42fffffc
++3c000003	42fffffa
++3c05fbde	42f49118
++3c2aaaaa	42c00001
++3c3fffff	42aaaaac
++3c400000	42aaaaab
++3c555555	4299999a
++3c5f3b64	4292c9fc
++3c641bba	428fa6ac
++3c7ffffd	42800002
++3c7ffffe	42800001
++3c7fffff	42800001
++3c800000	42800000
++3c800001	427ffffe
++3c800002	427ffffc
++3c800003	427ffffa
++3caaaaaa	42400001
++3cb2cf73	42374170
++3cba77d1	422fbad8
++3cbfffff	422aaaac
++3cc00000	422aaaab
++3cc531a5	42262be4
++3cd55555	4219999a
++3cfffffd	42000002
++3cfffffe	42000001
++3cffffff	42000001
++3d000000	42000000
++3d000001	41fffffe
++3d000002	41fffffc
++3d000003	41fffffa
++3d0d4efc	41e7e3c7
++3d2aaaaa	41c00001
++3d3fffff	41aaaaac
++3d400000	41aaaaab
++3d555555	4199999a
++3d5736c0	41984202
++3d664e36	418e47d4
++3d7ffffd	41800002
++3d7ffffe	41800001
++3d7fffff	41800001
++3d800000	41800000
++3d800001	417ffffe
++3d800002	417ffffc
++3d800003	417ffffa
++3d90701d	4162dd98
++3daaaaaa	41400001
++3db05e2b	4139cb23
++3dbfffff	412aaaac
++3dc00000	412aaaab
++3dd55555	4119999a
++3ded3b1f	410a2084
++3dfffffd	41000002
++3dfffffe	41000001
++3dffffff	41000001
++3e000000	41000000
++3e000001	40fffffe
++3e000002	40fffffc
++3e000003	40fffffa
++3e104df2	40e3134f
++3e1bdd8e	40d23b8c
++3e2aaaaa	40c00001
++3e3fffff	40aaaaac
++3e400000	40aaaaab
++3e4532d8	40a62ae1
++3e555555	4099999a
++3e7ffffd	40800002
++3e7ffffe	40800001
++3e7fffff	40800001
++3e800000	40800000
++3e800001	407ffffe
++3e800002	407ffffc
++3e800003	407ffffa
++3eaaaaaa	40400001
++3ebfffff	402aaaac
++3ec00000	402aaaab
++3ecc9857	40202907
++3ed55555	4019999a
++3ef354a9	4006aa1b
++3efdc795	40011eb2
++3efffffd	40000002
++3efffffe	40000001
++3effffff	40000001
++3f000000	40000000
++3f000001	3ffffffe
++3f000002	3ffffffc
++3f000003	3ffffffa
++3f0459ca	3ff795a6
++3f0695f4	3ff37918
++3f2aaaaa	3fc00001
++3f3fffff	3faaaaac
++3f400000	3faaaaab
++3f555555	3f99999a
++3f6473f0	3f8f6f34
++3f7ffffd	3f800002
++3f7ffffe	3f800001
++3f7fffff	3f800001
++3f800000	3f800000
++3f800001	3f7ffffe
++3f800002	3f7ffffc
++3f800003	3f7ffffa
++3fa7fea1	3f430dc8
++3faa768f	3f403ab1
++3faaaaaa	3f400001
++3fbfffff	3f2aaaac
++3fc00000	3f2aaaab
++3fd55555	3f19999a
++3fd7c8c3	3f17dafc
++3ffffffd	3f000002
++3ffffffe	3f000001
++3fffffff	3f000001
++40000000	3f000000
++40000001	3efffffe
++40000002	3efffffc
++40000003	3efffffa
++4024078c	3ec7c4db
++402aaaaa	3ec00001
++403fffff	3eaaaaac
++40400000	3eaaaaab
++404af2a2	3ea175d3
++40555555	3e99999a
++406cd746	3e8a5abf
++407ffffd	3e800002
++407ffffe	3e800001
++407fffff	3e800001
++40800000	3e800000
++40800001	3e7ffffe
++40800002	3e7ffffc
++40800003	3e7ffffa
++4091c5ed	3e60c9a2
++40aaaaaa	3e400001
++40bbd199	3e2e7751
++40bfffff	3e2aaaac
++40c00000	3e2aaaab
++40d55555	3e19999a
++40f11d7b	3e07e6e1
++40fffffd	3e000002
++40fffffe	3e000001
++40ffffff	3e000001
++41000000	3e000000
++41000001	3dfffffe
++41000002	3dfffffc
++41000003	3dfffffa
++412aaaaa	3dc00001
++413fffff	3daaaaac
++41400000	3daaaaab
++41555555	3d99999a
++41576e68	3d981aac
++416c8e24	3d8a8585
++416f749e	3d88d802
++417ffffd	3d800002
++417ffffe	3d800001
++417fffff	3d800001
++41800000	3d800000
++41800001	3d7ffffe
++41800002	3d7ffffc
++41800003	3d7ffffa
++4184fea7	3d7662bd
++41988333	3d56dac2
++41aaaaaa	3d400001
++41bfffff	3d2aaaac
++41c00000	3d2aaaab
++41d55555	3d19999a
++41fcd365	3d019b67
++41fffffd	3d000002
++41fffffe	3d000001
++41ffffff	3d000001
++42000000	3d000000
++42000001	3cfffffe
++42000002	3cfffffc
++42000003	3cfffffa
++422aaaaa	3cc00001
++423fffff	3caaaaac
++42400000	3caaaaab
++42555555	3c99999a
++425ced80	3c9451eb
++426eeef6	3c89248e
++42756bda	3c858471
++427ffffd	3c800002
++427ffffe	3c800001
++427fffff	3c800001
++42800000	3c800000
++42800001	3c7ffffe
++42800002	3c7ffffc
++42800003	3c7ffffa
++42a84971	3c42b712
++42aaaaaa	3c400001
++42bfffff	3c2aaaac
++42c00000	3c2aaaab
++42c802df	3c23d4b0
++42cd19dd	3c1fc3e2
++42d55555	3c19999a
++42fffffd	3c000002
++42fffffe	3c000001
++42ffffff	3c000001
++43000000	3c000000
++43000001	3bfffffe
++43000002	3bfffffc
++43000003	3bfffffa
++4302f2b2	3bfa3c97
++432aaaaa	3bc00001
++433c5198	3bae00bd
++433fffff	3baaaaac
++43400000	3baaaaab
++4346b41c	3ba4e8b3
++43555555	3b99999a
++437ffffd	3b800002
++437ffffe	3b800001
++437fffff	3b800001
++43800000	3b800000
++43800001	3b7ffffe
++43800002	3b7ffffc
++43800003	3b7ffffa
++438540cb	3b75e871
++43aa3269	3b4087a9
++43aaaaaa	3b400001
++43bfffff	3b2aaaac
++43c00000	3b2aaaab
++43d55555	3b19999a
++43d9a817	3b168c90
++43fffffd	3b000002
++43fffffe	3b000001
++43ffffff	3b000001
++44000000	3b000000
++44000001	3afffffe
++44000002	3afffffc
++44000003	3afffffa
++442aaaaa	3ac00001
++4434a68a	3ab5638e
++443fffff	3aaaaaac
++44400000	3aaaaaab
++44555555	3a99999a
++44571fae	3a985256
++446a58b4	3a8bd3bf
++447ffffd	3a800002
++447ffffe	3a800001
++447fffff	3a800001
++44800000	3a800000
++44800001	3a7ffffe
++44800002	3a7ffffc
++44800003	3a7ffffa
++44aaaaaa	3a400001
++44bfffff	3a2aaaac
++44c00000	3a2aaaab
++44c12c83	3a29a12b
++44d55555	3a19999a
++44f06461	3a084f86
++44f8e335	3a03a86a
++44fffffd	3a000002
++44fffffe	3a000001
++44ffffff	3a000001
++45000000	3a000000
++45000001	39fffffe
++45000002	39fffffc
++45000003	39fffffa
++451bb24c	39d275f5
++452aaaaa	39c00001
++453fffff	39aaaaac
++45400000	39aaaaab
++45456806	39a5fe1e
++45469b10	39a4fd7f
++45555555	3999999a
++457ffffd	39800002
++457ffffe	39800001
++457fffff	39800001
++45800000	39800000
++45800001	397ffffe
++45800002	397ffffc
++45800003	397ffffa
++45aaaaaa	39400001
++45bfffff	392aaaac
++45c00000	392aaaab
++45cd493b	391f9f05
++45d55555	3919999a
++45dd332f	39142332
++45fd9fad	39013303
++45fffffd	39000002
++45fffffe	39000001
++45ffffff	39000001
++46000000	39000000
++46000001	38fffffe
++46000002	38fffffc
++46000003	38fffffa
++462646c2	38c511c8
++462aaaaa	38c00001
++463fffff	38aaaaac
++46400000	38aaaaab
++464c2d5e	38a07cf0
++4653fd28	389a92fb
++46555555	3899999a
++467ffffd	38800002
++467ffffe	38800001
++467fffff	38800001
++46800000	38800000
++46800001	387ffffe
++46800002	387ffffc
++46800003	387ffffa
++4683d739	38788ad7
++468eb525	38659dca
++46aaaaaa	38400001
++46bfffff	382aaaac
++46c00000	382aaaab
++46d55555	3819999a
++46f8be67	3803bbe5
++46fffffd	38000002
++46fffffe	38000001
++46ffffff	38000001
++47000000	38000000
++47000001	37fffffe
++47000002	37fffffc
++47000003	37fffffa
++472aaaaa	37c00001
++473fffff	37aaaaac
++47400000	37aaaaab
++47555555	3799999a
++47729744	3787133d
++4777e440	37842fd3
++477ca89a	3781b15b
++477ffffd	37800002
++477ffffe	37800001
++477fffff	37800001
++47800000	37800000
++47800001	377ffffe
++47800002	377ffffc
++47800003	377ffffa
++47a9b9d3	37411073
++47aaaaaa	37400001
++47b70a9f	373304ff
++47bfffff	372aaaac
++47c00000	372aaaab
++47d55555	3719999a
++47fadf31	37029dd2
++47fffffd	37000002
++47fffffe	37000001
++47ffffff	37000001
++48000000	37000000
++48000001	36fffffe
++48000002	36fffffc
++48000003	36fffffa
++482aaaaa	36c00001
++48327516	36b79e3b
++483fffff	36aaaaac
++48400000	36aaaaab
++48555555	3699999a
++4862cedc	3690797f
++487cd772	36819954
++487ffffd	36800002
++487ffffe	36800001
++487fffff	36800001
++48800000	36800000
++48800001	367ffffe
++48800002	367ffffc
++48800003	367ffffa
++48aaaaaa	36400001
++48bf5029	362b4788
++48bfffff	362aaaac
++48c00000	362aaaab
++48cba97d	3620e4dc
++48d55555	3619999a
++48db1c8b	36158ca8
++48fffffd	36000002
++48fffffe	36000001
++48ffffff	36000001
++49000000	36000000
++49000001	35fffffe
++49000002	35fffffc
++49000003	35fffffa
++4901c86e	35fc7bae
++49035cb8	35f9729f
++49175b74	35d87e93
++492aaaaa	35c00001
++493fffff	35aaaaac
++49400000	35aaaaab
++49555555	3599999a
++497ffffd	35800002
++497ffffe	35800001
++497fffff	35800001
++49800000	35800000
++49800001	357ffffe
++49800002	357ffffc
++49800003	357ffffa
++4983f8b7	35784bc4
++499ff4f5	354cdaf0
++49aaaaaa	35400001
++49bfffff	352aaaac
++49c00000	352aaaab
++49d55555	3519999a
++49e2d043	3510789a
++49fffffd	35000002
++49fffffe	35000001
++49ffffff	35000001
++4a000000	35000000
++4a000001	34fffffe
++4a000002	34fffffc
++4a000003	34fffffa
++4a1501d0	34dbe8b5
++4a1a7eaa	34d41908
++4a2aaaaa	34c00001
++4a3fffff	34aaaaac
++4a400000	34aaaaab
++4a555555	3499999a
++4a7938c6	34837b36
++4a7ffffd	34800002
++4a7ffffe	34800001
++4a7fffff	34800001
++4a800000	34800000
++4a800001	347ffffe
++4a800002	347ffffc
++4a800003	347ffffa
++4a88eaef	346f5384
++4a8bb96d	346a84da
++4aaaaaaa	34400001
++4abfffff	342aaaac
++4ac00000	342aaaab
++4ad55555	3419999a
++4ad91e01	3416ec50
++4afffffd	34000002
++4afffffe	34000001
++4affffff	34000001
++4b000000	34000000
++4b000001	33fffffe
++4b000002	33fffffc
++4b000003	33fffffa
++4b02df6c	33fa6171
++4b0dcbe8	33e7177b
++4b2aaaaa	33c00001
++4b3fffff	33aaaaac
++4b400000	33aaaaab
++4b551b82	3399c347
++4b555555	3399999a
++4b7ffffd	33800002
++4b7ffffe	33800001
++4b7fffff	33800001
++4b800000	33800000
++4b800001	337ffffe
++4b800002	337ffffc
++4b800003	337ffffa
++4b88be27	336fa1e4
++4ba553db	33463352
++4baaaaaa	33400001
++4bbfffff	332aaaac
++4bc00000	332aaaab
++4bd55555	3319999a
++4be924f9	330c8c4f
++4bfffffd	33000002
++4bfffffe	33000001
++4bffffff	33000001
++4c000000	33000000
++4c000001	32fffffe
++4c000002	32fffffc
++4c000003	32fffffa
++4c20777e	32cc344b
++4c2aaaaa	32c00001
++4c3fffff	32aaaaac
++4c400000	32aaaaab
++4c520a04	329c0250
++4c555555	3299999a
++4c73255a	3286c44e
++4c7ffffd	32800002
++4c7ffffe	32800001
++4c7fffff	32800001
++4c800000	32800000
++4c800001	327ffffe
++4c800002	327ffffc
++4c800003	327ffffa
++4caaaaaa	32400001
++4cbfffff	322aaaac
++4cc00000	322aaaab
++4cd55555	3219999a
++4cf3b4f1	320674e7
++4cfb0d93	320285b1
++4cff38c5	320063eb
++4cfffffd	32000002
++4cfffffe	32000001
++4cffffff	32000001
++4d000000	32000000
++4d000001	31fffffe
++4d000002	31fffffc
++4d000003	31fffffa
++4d2aaaaa	31c00001
++4d3fffff	31aaaaac
++4d400000	31aaaaab
++4d405360	31aa60ae
++4d555555	3199999a
++4d70299c	318870e1
++4d7235d6	31874993
++4d7ffffd	31800002
++4d7ffffe	31800001
++4d7fffff	31800001
++4d800000	31800000
++4d800001	317ffffe
++4d800002	317ffffc
++4d800003	317ffffa
++4d94f33d	315bfe3a
++4daaaaaa	31400001
++4dbfffff	312aaaac
++4dc00000	312aaaab
++4dcb6f3f	312112ec
++4dd55555	3119999a
++4df1384b	3107d7c6
++4dfffffd	31000002
++4dfffffe	31000001
++4dffffff	31000001
++4e000000	31000000
++4e000001	30fffffe
++4e000002	30fffffc
++4e000003	30fffffa
++4e2aaaaa	30c00001
++4e3db392	30acbc0e
++4e3fffff	30aaaaac
++4e400000	30aaaaab
++4e555555	3099999a
++4e5e9b78	30933370
++4e6fb12e	3088b56e
++4e7ffffd	30800002
++4e7ffffe	30800001
++4e7fffff	30800001
++4e800000	30800000
++4e800001	307ffffe
++4e800002	307ffffc
++4e800003	307ffffa
++4eaaaaaa	30400001
++4eb146b5	3038d76d
++4ebfffff	302aaaac
++4ec00000	302aaaab
++4ed55555	3019999a
++4edf3dc9	3012c868
++4ee6a877	300e1027
++4efffffd	30000002
++4efffffe	30000001
++4effffff	30000001
++4f000000	30000000
++4f000001	2ffffffe
++4f000002	2ffffffc
++4f000003	2ffffffa
++4f042c94	2ff7ea56
++4f2aaaaa	2fc00001
++4f3fffff	2faaaaac
++4f400000	2faaaaab
++4f48a890	2fa34d68
++4f555555	2f99999a
++4f63eb6a	2f8fc51f
++4f7ffffd	2f800002
++4f7ffffe	2f800001
++4f7fffff	2f800001
++4f800000	2f800000
++4f800001	2f7ffffe
++4f800002	2f7ffffc
++4f800003	2f7ffffa
++4fa823c1	2f42e2b7
++4faaaaaa	2f400001
++4fbfffff	2f2aaaac
++4fc00000	2f2aaaab
++4fd55555	2f19999a
++4fd8e2af	2f171597
++4fdc2ee3	2f14d252
++4ffffffd	2f000002
++4ffffffe	2f000001
++4fffffff	2f000001
++50000000	2f000000
++50000001	2efffffe
++50000002	2efffffc
++50000003	2efffffa
++5010aa2c	2ee2828b
++502aaaaa	2ec00001
++503fffff	2eaaaaac
++50400000	2eaaaaab
++50555555	2e99999a
++505b3042	2e957f34
++5076c6e6	2e84c8ac
++507ffffd	2e800002
++507ffffe	2e800001
++507fffff	2e800001
++50800000	2e800000
++50800001	2e7ffffe
++50800002	2e7ffffc
++50800003	2e7ffffa
++50aaaaaa	2e400001
++50bcb2b9	2e2da72c
++50bfffff	2e2aaaac
++50c00000	2e2aaaab
++50d55555	2e19999a
++50e11f9b	2e118e42
++50fffffd	2e000002
++50fffffe	2e000001
++50ffffff	2e000001
++51000000	2e000000
++51000001	2dfffffe
++51000002	2dfffffc
++51000003	2dfffffa
++5118503e	2dd722a3
++512aaaaa	2dc00001
++513fffff	2daaaaac
++51400000	2daaaaab
++514abcc4	2da1a0b9
++51555555	2d99999a
++517ffffd	2d800002
++517ffffe	2d800001
++517fffff	2d800001
++51800000	2d800000
++51800001	2d7ffffe
++51800002	2d7ffffc
++51800003	2d7ffffa
++5194a153	2d5c7778
++51aaaaaa	2d400001
++51b1ba85	2d385efb
++51bfffff	2d2aaaac
++51c00000	2d2aaaab
++51d55555	2d19999a
++51fffffd	2d000002
++51fffffe	2d000001
++51ffffff	2d000001
++52000000	2d000000
++52000001	2cfffffe
++52000002	2cfffffc
++52000003	2cfffffa
++522aaaaa	2cc00001
++523fffff	2caaaaac
++52400000	2caaaaab
++52436a20	2ca7af3e
++52555555	2c99999a
++525d3696	2c9420ea
++527ffffd	2c800002
++527ffffe	2c800001
++527fffff	2c800001
++52800000	2c800000
++52800001	2c7ffffe
++52800002	2c7ffffc
++52800003	2c7ffffa
++52907cfd	2c62c961
++52aaaaaa	2c400001
++52bfffff	2c2aaaac
++52c00000	2c2aaaab
++52c416ff	2c271b6a
++52d55555	2c19999a
++52fffffd	2c000002
++52fffffe	2c000001
++52ffffff	2c000001
++53000000	2c000000
++53000001	2bfffffe
++53000002	2bfffffc
++53000003	2bfffffa
++532aaaaa	2bc00001
++533fffff	2baaaaac
++53400000	2baaaaab
++53471a38	2ba49420
++53555555	2b99999a
++5374b852	2b85e664
++537ffffd	2b800002
++537ffffe	2b800001
++537fffff	2b800001
++53800000	2b800000
++53800001	2b7ffffe
++53800002	2b7ffffc
++53800003	2b7ffffa
++53aaaaaa	2b400001
++53bfffff	2b2aaaac
++53c00000	2b2aaaab
++53cefb89	2b1e5017
++53d55555	2b19999a
++53f59837	2b056c53
++53fffffd	2b000002
++53fffffe	2b000001
++53ffffff	2b000001
++54000000	2b000000
++54000001	2afffffe
++54000002	2afffffc
++54000003	2afffffa
++540b4f54	2aeb3775
++542aaaaa	2ac00001
++543fffff	2aaaaaac
++54400000	2aaaaaab
++54555555	2a99999a
++546c982a	2a8a7fa6
++547ffffd	2a800002
++547ffffe	2a800001
++547fffff	2a800001
++54800000	2a800000
++54800001	2a7ffffe
++54800002	2a7ffffc
++54800003	2a7ffffa
++54aaaaaa	2a400001
++54ad6981	2a3cf5d4
++54bfffff	2a2aaaac
++54c00000	2a2aaaab
++54d172a3	2a1c7311
++54d55555	2a19999a
++54fffffd	2a000002
++54fffffe	2a000001
++54ffffff	2a000001
++55000000	2a000000
++55000001	29fffffe
++55000002	29fffffc
++55000003	29fffffa
++5529b7a6	29c112ed
++552aaaaa	29c00001
++553fffff	29aaaaac
++55400000	29aaaaab
++55555555	2999999a
++555fb4ec	29927a3d
++557ffffd	29800002
++557ffffe	29800001
++557fffff	29800001
++55800000	29800000
++55800001	297ffffe
++55800002	297ffffc
++55800003	297ffffa
++55aaaaaa	29400001
++55bfffff	292aaaac
++55c00000	292aaaab
++55d55555	2919999a
++55ed2b5b	290a29b2
++55ef6acd	2908dd9e
++55fffffd	29000002
++55fffffe	29000001
++55ffffff	29000001
++56000000	29000000
++56000001	28fffffe
++56000002	28fffffc
++56000003	28fffffa
++562368fe	28c886b0
++562a0dc8	28c0b122
++562aaaaa	28c00001
++563fffff	28aaaaac
++56400000	28aaaaab
++56555555	2899999a
++567ffffd	28800002
++567ffffe	28800001
++567fffff	28800001
++56800000	28800000
++56800001	287ffffe
++56800002	287ffffc
++56800003	287ffffa
++56975687	2858859f
++56aaaaaa	28400001
++56bfffff	282aaaac
++56c00000	282aaaab
++56d55555	2819999a
++56de7c45	28134814
++56fffffd	28000002
++56fffffe	28000001
++56ffffff	28000001
++57000000	28000000
++57000001	27fffffe
++57000002	27fffffc
++57000003	27fffffa
++572aaaaa	27c00001
++573fffff	27aaaaac
++57400000	27aaaaab
++5747223a	27a48d82
++57555555	2799999a
++577bc0e0	278228bb
++577ffffd	27800002
++577ffffe	27800001
++577fffff	27800001
++57800000	27800000
++57800001	277ffffe
++57800002	277ffffc
++57800003	277ffffa
++57aaaaaa	27400001
++57bfffff	272aaaac
++57c00000	272aaaab
++57d55555	2719999a
++57d8cc51	2717252e
++57f0febf	2707f836
++57fffffd	27000002
++57fffffe	27000001
++57ffffff	27000001
++58000000	27000000
++58000001	26fffffe
++58000002	26fffffc
++58000003	26fffffa
++582aaaaa	26c00001
++583fffff	26aaaaac
++58400000	26aaaaab
++5842997c	26a86307
++5852fd12	269b4e98
++58555555	2699999a
++587ffffd	26800002
++587ffffe	26800001
++587fffff	26800001
++58800000	26800000
++58800001	267ffffe
++58800002	267ffffc
++58800003	267ffffa
++589426ab	265d2dff
++58aaaaaa	26400001
++58bcf949	262d6654
++58bfffff	262aaaac
++58c00000	262aaaab
++58d55555	2619999a
++58fffffd	26000002
++58fffffe	26000001
++58ffffff	26000001
++59000000	26000000
++59000001	25fffffe
++59000002	25fffffc
++59000003	25fffffa
++59100c0e	25e37b2e
++592aaaaa	25c00001
++593fffff	25aaaaac
++59400000	25aaaaab
++59555555	2599999a
++597bb214	25823062
++597ffffd	25800002
++597ffffe	25800001
++597fffff	25800001
++59800000	25800000
++59800001	257ffffe
++59800002	257ffffc
++59800003	257ffffa
++599ef663	254e2301
++59aaaaaa	25400001
++59bfffff	252aaaac
++59c00000	252aaaab
++59d55555	2519999a
++59eb2415	250b5acf
++59fffffd	25000002
++59fffffe	25000001
++59ffffff	25000001
++5a000000	25000000
++5a000001	24fffffe
++5a000002	24fffffc
++5a000003	24fffffa
++5a2aaaaa	24c00001
++5a3fffff	24aaaaac
++5a400000	24aaaaab
++5a4d2670	249fba17
++5a555555	2499999a
++5a57e866	2497c4bb
++5a7ffffd	24800002
++5a7ffffe	24800001
++5a7fffff	24800001
++5a800000	24800000
++5a800001	247ffffe
++5a800002	247ffffc
++5a800003	247ffffa
++5a9a870f	24540d82
++5aaaaaaa	24400001
++5abfffff	242aaaac
++5ac00000	242aaaab
++5ad55555	2419999a
++5af4648d	2406144a
++5afffffd	24000002
++5afffffe	24000001
++5affffff	24000001
++5b000000	24000000
++5b000001	23fffffe
++5b000002	23fffffc
++5b000003	23fffffa
++5b0ec922	23e57da6
++5b2aaaaa	23c00001
++5b2d3c88	23bd26e2
++5b3fffff	23aaaaac
++5b400000	23aaaaab
++5b555555	2399999a
++5b7ffffd	23800002
++5b7ffffe	23800001
++5b7fffff	23800001
++5b800000	23800000
++5b800001	237ffffe
++5b800002	237ffffc
++5b800003	237ffffa
++5ba13647	234b42a2
++5ba4b619	2346f127
++5baaaaaa	23400001
++5bbfffff	232aaaac
++5bc00000	232aaaab
++5bd55555	2319999a
++5bfffffd	23000002
++5bfffffe	23000001
++5bffffff	23000001
++5c000000	23000000
++5c000001	22fffffe
++5c000002	22fffffc
++5c000003	22fffffa
++5c2aaaaa	22c00001
++5c2dfefa	22bc5380
++5c3fffff	22aaaaac
++5c400000	22aaaaab
++5c4b28a4	22a14ae7
++5c555555	2299999a
++5c7ffffd	22800002
++5c7ffffe	22800001
++5c7fffff	22800001
++5c800000	22800000
++5c800001	227ffffe
++5c800002	227ffffc
++5c800003	227ffffa
++5caaaaaa	22400001
++5cbfffff	222aaaac
++5cc00000	222aaaab
++5cc68211	22251246
++5cd55555	2219999a
++5cf55bb3	22058d3b
++5cfffffd	22000002
++5cfffffe	22000001
++5cffffff	22000001
++5d000000	22000000
++5d000001	21fffffe
++5d000002	21fffffc
++5d000003	21fffffa
++5d2aaaaa	21c00001
++5d3fffff	21aaaaac
++5d400000	21aaaaab
++5d555555	2199999a
++5d68ed76	218cadce
++5d7f543c	2180561c
++5d7ffffd	21800002
++5d7ffffe	21800001
++5d7fffff	21800001
++5d800000	21800000
++5d800001	217ffffe
++5d800002	217ffffc
++5d800003	217ffffa
++5daaaaaa	21400001
++5dbfffff	212aaaac
++5dc00000	212aaaab
++5dd2226b	211bf032
++5dd55555	2119999a
++5de6065d	210e7444
++5dfffffd	21000002
++5dfffffe	21000001
++5dffffff	21000001
++5e000000	21000000
++5e000001	20fffffe
++5e000002	20fffffc
++5e000003	20fffffa
++5e2aaaaa	20c00001
++5e3b5418	20aeec34
++5e3fffff	20aaaaac
++5e400000	20aaaaab
++5e4454ce	20a6e6ce
++5e555555	2099999a
++5e7ffffd	20800002
++5e7ffffe	20800001
++5e7fffff	20800001
++5e800000	20800000
++5e800001	207ffffe
++5e800002	207ffffc
++5e800003	207ffffa
++5eaaaaaa	20400001
++5ebfffff	202aaaac
++5ec00000	202aaaab
++5ecbc897	2020cc4e
++5ecf55d5	201e0b25
++5ed55555	2019999a
++5efffffd	20000002
++5efffffe	20000001
++5effffff	20000001
++5f000000	20000000
++5f000001	1ffffffe
++5f000002	1ffffffc
++5f000003	1ffffffa
++5f2aaaaa	1fc00001
++5f3fffff	1faaaaac
++5f400000	1faaaaab
++5f555555	1f99999a
++5f734d0a	1f86ae52
++5f762d30	1f851b95
++5f7ffffd	1f800002
++5f7ffffe	1f800001
++5f7fffff	1f800001
++5f800000	1f800000
+diff --git a/device/qwen3-tp-wave-rmsnorm-kernels-v15/tests/prefix_reciprocal_fraction_v1.py b/device/qwen3-tp-wave-rmsnorm-kernels-v15/tests/prefix_reciprocal_fraction_v1.py
+new file mode 100644
+--- /dev/null
++++ b/device/qwen3-tp-wave-rmsnorm-kernels-v15/tests/prefix_reciprocal_fraction_v1.py
+@@ -0,0 +1,77 @@
++"""Independent exact-rational nearest-neighbor vectors; no floating arithmetic.
++
++Default mode verifies the checked-in TSV. --write regenerates it. This checks
++the u64 Rust reference's exponent packing independently, not GPU execution.
++"""
++import argparse
++from fractions import Fraction
++from pathlib import Path
++
++LOW, HIGH = 0x3A800000, 0x5F800000
++FIXTURE = Path(__file__).with_name("fixtures") / "prefix_reciprocal_fraction_v1.tsv"
++
++
++def value(bits):
++    exponent, fraction = bits >> 23, bits & 0x7FFFFF
++    assert 0 <= bits < 0x7F800000
++    significand = fraction if exponent == 0 else (1 << 23) + fraction
++    shift = -149 if exponent == 0 else exponent - 150
++    return Fraction(significand << shift) if shift >= 0 else Fraction(significand, 1 << -shift)
++
++
++def nearest_reciprocal(bits):
++    assert LOW <= bits <= HIGH
++    target = 1 / value(bits)
++    low, high = 0, 0x7F7FFFFF
++    while low < high:
++        middle = (low + high + 1) // 2
++        if value(middle) <= target:
++            low = middle
++        else:
++            high = middle - 1
++    lower, upper = low, low + 1
++    lower_distance, upper_distance = target - value(lower), value(upper) - target
++    if lower_distance < upper_distance:
++        return lower
++    if upper_distance < lower_distance:
++        return upper
++    return lower if lower % 2 == 0 else upper
++
++
++def cases():
++    words = {LOW, HIGH}
++    mantissas = (0, 1, 2, 3, 0x2AAAAA, 0x3FFFFF, 0x400000, 0x555555, 0x7FFFFD, 0x7FFFFE, 0x7FFFFF)
++    for exponent in range(117, 192):
++        words.update((exponent << 23) | mantissa for mantissa in mantissas)
++    state = 0x31415926
++    for index in range(192):
++        state = (1664525 * state + 1013904223) & 0xFFFFFFFF
++        words.add(((117 + index % 74) << 23) | (state & 0x7FFFFF))
++    return sorted(word for word in words if LOW <= word <= HIGH)
++
++
++def rendered():
++    lines = ["# Positive normal denominator bits\tRN-even reciprocal bits"]
++    lines.extend(f"{word:08x}\t{nearest_reciprocal(word):08x}" for word in cases())
++    return "\n".join(lines) + "\n"
++
++
++def main():
++    parser = argparse.ArgumentParser(description=__doc__)
++    parser.add_argument("--write", action="store_true")
++    args = parser.parse_args()
++    assert value(0x3F800000) == 1
++    assert value(0x3F7FFFFF) == 1 - Fraction(1, 1 << 24)
++    assert nearest_reciprocal(0x3F7FFFFF) == 0x3F800001
++    assert nearest_reciprocal(LOW) == 0x44800000
++    assert nearest_reciprocal(HIGH) == 0x1F800000
++    expected = rendered()
++    if args.write:
++        FIXTURE.parent.mkdir(parents=True, exist_ok=True)
++        FIXTURE.write_text(expected, encoding="ascii")
++    assert FIXTURE.read_text(encoding="ascii") == expected
++    print(f"PASS: {len(cases())} exact Fraction nearest-neighbor vectors; GPU execution not tested")
++
++
++if __name__ == "__main__":
++    main()
+diff --git a/device/qwen3-tp-wave-rmsnorm-kernels-v15/tests/prefix_reciprocal_v1.rs b/device/qwen3-tp-wave-rmsnorm-kernels-v15/tests/prefix_reciprocal_v1.rs
+new file mode 100644
+--- /dev/null
++++ b/device/qwen3-tp-wave-rmsnorm-kernels-v15/tests/prefix_reciprocal_v1.rs
+@@ -0,0 +1,315 @@
++//! CPU arithmetic checks of the actual device macro, not GPU/Math evidence.
++use fe2o3_device::Bf16;
++
++include!("../src/head_rope_numerics_v3.rs");
++include!("../src/prefix_reciprocal_numerics_v1.rs");
++
++const LOW: u32 = 0x3a80_0000;
++const HIGH: u32 = 0x5f80_0000;
++
++// Independent u64 div/mod replaces the device's 24-step u32 restoring loop.
++// A separately generated Fraction fixture also checks exponent/result packing.
++fn divmod_reference(bits: u32) -> Option<u32> {
++    if !(LOW..=HIGH).contains(&bits) {
++        return None;
++    }
++    let exponent = bits >> 23;
++    let mantissa = u64::from((bits & 0x7f_ffff) | (1 << 23));
++    if mantissa == 1 << 23 {
++        return Some((254 - exponent) << 23);
++    }
++    let numerator = 1_u64 << 47;
++    let quotient = numerator / mantissa;
++    let remainder = numerator % mantissa;
++    let rounded = quotient
++        + u64::from(2 * remainder > mantissa || (2 * remainder == mantissa && quotient & 1 != 0));
++    Some(((253 - exponent) << 23) + (rounded as u32 - (1 << 23)))
++}
++
++fn actual(bits: u32) -> f32 {
++    qwen_prefix_reciprocal_rn_v1!(f32::from_bits(bits))
++}
++
++#[test]
++fn all_power_of_two_denominators_and_adjacent_words() {
++    for exponent in 117..=191 {
++        let center = exponent << 23;
++        for bits in [center - 1, center, center + 1] {
++            if let Some(expected) = divmod_reference(bits) {
++                assert_eq!(actual(bits).to_bits(), expected, "{bits:08x}");
++            } else {
++                assert!(actual(bits).is_nan());
++            }
++        }
++    }
++    assert_eq!(actual(LOW).to_bits(), 0x4480_0000);
++    assert_eq!(actual(HIGH).to_bits(), 0x1f80_0000);
++}
++
++#[test]
++fn fixed_mantissas_and_4096_stratified_samples_at_every_admitted_exponent() {
++    let edges = [
++        0, 1, 2, 3, 0x2a_aaaa, 0x3f_ffff, 0x40_0000, 0x55_5555, 0x7f_fffd, 0x7f_fffe, 0x7f_ffff,
++    ];
++    for exponent in 117..=191 {
++        for mantissa in edges
++            .into_iter()
++            .chain((0..4096).map(|i| (i * 2053) & 0x7f_ffff))
++        {
++            let bits = (exponent << 23) | mantissa;
++            if let Some(expected) = divmod_reference(bits) {
++                assert_eq!(actual(bits).to_bits(), expected, "{bits:08x}");
++            }
++        }
++    }
++}
++
++#[test]
++fn independent_fraction_nearest_neighbor_vectors_match_the_actual_macro() {
++    let fixture = include_str!("fixtures/prefix_reciprocal_fraction_v1.tsv");
++    let mut rows = 0;
++    for line in fixture.lines().filter(|line| !line.starts_with('#')) {
++        let (input, output) = line.split_once('\t').unwrap();
++        let bits = u32::from_str_radix(input, 16).unwrap();
++        let expected = u32::from_str_radix(output, 16).unwrap();
++        assert_eq!(actual(bits).to_bits(), expected, "{bits:08x}");
++        assert_eq!(divmod_reference(bits), Some(expected), "{bits:08x}");
++        rows += 1;
++    }
++    assert!(rows > 900);
++}
++
++#[test]
++fn six_permitted_seed_counterexamples_now_round_above_the_power_of_two() {
++    for exponent in [126, 127, 128, 150, 190, 191] {
++        let denominator = (exponent << 23) - 1;
++        let old_seed_result = (254 - exponent) << 23;
++        assert_eq!(actual(denominator).to_bits(), old_seed_result + 1);
++        assert_ne!(actual(denominator).to_bits(), old_seed_result);
++    }
++}
++
++#[test]
++fn invalid_and_out_of_domain_words_fail_closed() {
++    for bits in [
++        0,
++        1,
++        0x007f_ffff,
++        0x0080_0000,
++        LOW - 1,
++        HIGH + 1,
++        0x7f7f_ffff,
++        0x7f80_0000,
++        0x7f80_0001,
++        0x7fc0_0000,
++        0x8000_0000,
++        0x8000_0001,
++        0xbf80_0000,
++        0xff80_0000,
++        0xffff_ffff,
++    ] {
++        assert!(actual(bits).is_nan(), "{bits:08x}");
++        assert_eq!(divmod_reference(bits), None);
++    }
++}
++
++#[test]
++fn macro_evaluates_its_denominator_once() {
++    for bits in [3.0_f32.to_bits(), LOW, HIGH, 0, LOW - 1, HIGH + 1, 0xffff_ffff] {
++        let mut calls = 0;
++        let result = qwen_prefix_reciprocal_rn_v1!({
++            calls += 1;
++            f32::from_bits(bits)
++        });
++        assert_eq!(calls, 1);
++        let expected = divmod_reference(bits).unwrap_or(f32::NAN.to_bits());
++        assert_eq!(result.to_bits(), expected, "{bits:08x}");
++    }
++}
++
++#[test]
++fn rejected_words_at_every_exponent_return_the_exact_nan_sentinel() {
++    for exponent in 0..=255_u32 {
++        for sign in [0, 0x8000_0000_u32] {
++            for mantissa in [0, 1, 0x3f_ffff, 0x40_0000, 0x7f_fffe, 0x7f_ffff] {
++                let bits = sign | (exponent << 23) | mantissa;
++                if !(LOW..=HIGH).contains(&bits) {
++                    assert_eq!(actual(bits).to_bits(), f32::NAN.to_bits(), "{bits:08x}");
++                }
++            }
++        }
++    }
++}
++
++#[test]
++#[ignore = "bounded exhaustive mantissa qualification; run explicitly with optimized test profile"]
++fn exhaustive_all_significands_in_one_binade() {
++    for bits in 0x3f80_0000..0x4000_0000 {
++        assert_eq!(
++            actual(bits).to_bits(),
++            divmod_reference(bits).unwrap(),
++            "{bits:08x}"
++        );
++    }
++}
++
++struct Task {
++    raw: [u16; 3072],
++    weights: [u16; 256],
++    rotary: [f32; 2],
++    output: Vec<u16>,
++    lane: usize,
++    valid: bool,
++}
++impl Task {
++    fn fixture(lane: usize) -> Self {
++        Self {
++            raw: std::array::from_fn(|i| {
++                Bf16::from_f32(((i * 19 % 73) as f32 - 36.0) / 16.0).to_bits()
++            }),
++            weights: std::array::from_fn(|i| {
++                Bf16::from_f32(0.5 + (i % 31) as f32 / 32.0).to_bits()
++            }),
++            rotary: [0.75, 0.25],
++            output: Vec::new(),
++            lane,
++            valid: true,
++        }
++    }
++    fn lane(&self) -> usize {
++        self.lane
++    }
++    fn reject(&mut self) {
++        self.valid = false;
++    }
++    fn head_input(&self, head: usize, column: usize) -> Option<u16> {
++        (self.valid && head < 20 && column < 128).then(|| self.raw[head * 128 + column])
++    }
++    fn head_weight(&self, head: usize, column: usize) -> Option<u16> {
++        (self.valid && head < 20 && column < 128)
++            .then(|| self.weights[usize::from(head >= 16) * 128 + column])
++    }
++    fn rotary(&self, half: usize) -> Option<f32> {
++        (self.valid && half < 2).then(|| self.rotary[half])
++    }
++    fn value(&self, head: usize, half: usize) -> Option<u16> {
++        (self.valid && head < 4 && half < 2)
++            .then(|| self.raw[2560 + head * 128 + self.lane + half * 64])
++    }
++    fn write_query_head(&mut self, head: usize, low: u16, high: u16) -> bool {
++        if !self.valid || self.output.len() != head * 2 || head >= 16 {
++            return false;
++        }
++        self.output.extend([low, high]);
++        true
++    }
++    fn write_key_value_head(&mut self, head: usize, kl: u16, kh: u16, vl: u16, vh: u16) -> bool {
++        if !self.valid || self.output.len() != 32 + head * 4 || head >= 4 {
++            return false;
++        }
++        self.output.extend([kl, kh, vl, vh]);
++        true
++    }
++}
++
++#[test]
++fn head_sum_and_inverse_match_the_legacy_cpu_rne_path_for_each_head() {
++    let task = Task::fixture(0);
++    for head in 0..20 {
++        let old = qwen_head_inverse_v3!(&task, head, stabilized, stabilized.sqrt());
++        let new = qwen_prefix_head_inverse_v6!(&task, head, stabilized, stabilized.sqrt());
++        assert!(old.2 && new.2);
++        assert_eq!(old.0.to_bits(), new.0.to_bits());
++        assert_eq!(old.1.to_bits(), new.1.to_bits());
++    }
++}
++
++#[test]
++fn post_preserves_both_bf16_narrowings_rotary_and_value_append_for_every_lane() {
++    for lane in 0..64 {
++        let mut old = Task::fixture(lane);
++        let mut new = Task::fixture(lane);
++        qwen_head_rope_post_v3!(&mut old, stabilized, stabilized.sqrt());
++        qwen_prefix_head_rope_post_v6!(&mut new, stabilized, stabilized.sqrt());
++        assert!(old.valid && new.valid);
++        assert_eq!(old.output.len(), 48);
++        assert_eq!(new.output, old.output);
++        for head in 0..4 {
++            assert_eq!(new.output[34 + head * 4], new.raw[2560 + head * 128 + lane]);
++            assert_eq!(
++                new.output[35 + head * 4],
++                new.raw[2560 + head * 128 + lane + 64]
++            );
++        }
++    }
++}
++
++#[test]
++fn rejected_denominator_cannot_publish_a_post_output() {
++    for bits in [0, LOW - 1, HIGH + 1, 0x7f80_0000, 0x7fc0_0000, 0xbf80_0000] {
++        let mut task = Task::fixture(0);
++        qwen_prefix_head_rope_post_v6!(&mut task, stabilized, {
++            let _ = stabilized;
++            f32::from_bits(bits)
++        });
++        assert!(!task.valid, "{bits:08x}");
++        assert!(task.output.is_empty(), "{bits:08x}");
++    }
++}
++
++#[test]
++fn invalid_input_weight_rotary_and_value_still_reject() {
++    for case in 0..6 {
++        let mut task = Task::fixture(0);
++        match case {
++            0 => task.raw[0] = 0x7fc0,
++            1 => task.raw[0] = 0x7f7f,
++            2 => task.weights[0] = 0x7f80,
++            3 => task.rotary[0] = f32::NAN,
++            4 => task.rotary[1] = f32::INFINITY,
++            _ => task.raw[2560] = 0x7fc0,
++        }
++        qwen_prefix_head_rope_post_v6!(&mut task, stabilized, stabilized.sqrt());
++        assert!(!task.valid, "case {case}");
++        assert!(task.output.len() < 48, "case {case}");
++    }
++}
++
++#[test]
++fn prefix_head_macro_changes_are_limited_to_the_reciprocal_operation() {
++    fn body(file: &syn::File, name: &str) -> String {
++        file.items
++            .iter()
++            .find_map(|item| {
++                let syn::Item::Macro(item) = item else {
++                    return None;
++                };
++                (item.ident.as_ref().is_some_and(|ident| ident == name))
++                    .then(|| item.mac.tokens.to_string())
++            })
++            .unwrap()
++    }
++    let original = syn::parse_file(include_str!("../src/head_rope_numerics_v3.rs")).unwrap();
++    let candidate =
++        syn::parse_file(include_str!("../src/prefix_reciprocal_numerics_v1.rs")).unwrap();
++    let original_inverse = body(&original, "qwen_head_inverse_v3");
++    let candidate_inverse = body(&candidate, "qwen_prefix_head_inverse_v6");
++    let replacement = "qwen_prefix_reciprocal_rn_v1 ! (denominator)";
++    assert_eq!(candidate_inverse.matches(replacement).count(), 1);
++    assert_eq!(
++        candidate_inverse.replace(replacement, "1.0_f32 / denominator"),
++        original_inverse
++    );
++    let original_post = body(&original, "qwen_head_rope_post_v3");
++    let candidate_post = body(&candidate, "qwen_prefix_head_rope_post_v6");
++    assert_eq!(
++        candidate_post
++            .matches("qwen_prefix_head_inverse_v6")
++            .count(),
++        1
++    );
++    assert_eq!(
++        candidate_post.replace("qwen_prefix_head_inverse_v6", "qwen_head_inverse_v3"),
++        original_post
++    );
++}
+diff --git a/device/qwen3-tp-wave-rmsnorm-kernels-v15/tests/prefix_tiles_source_contract_v6.rs b/device/qwen3-tp-wave-rmsnorm-kernels-v15/tests/prefix_tiles_source_contract_v6.rs
+--- a/device/qwen3-tp-wave-rmsnorm-kernels-v15/tests/prefix_tiles_source_contract_v6.rs
++++ b/device/qwen3-tp-wave-rmsnorm-kernels-v15/tests/prefix_tiles_source_contract_v6.rs
+@@ -10,6 +10,52 @@
+ const OLD: &str = include_str!("../src/finite_qkv_attention_output_tasks.rs");
+ const HELPERS: &str = include_str!("../src/prefix_tiles_numerics_v6.rs");
+ const ENTRY: &str = "ferric_qwen3_claimed_rmsnorm_qkv_attention_output_tiles_bf16_f32_v6";
++
++#[test]
++fn reciprocal_rule_preserves_domain_and_twenty_four_branchless_steps() {
++    let source = syn::parse_file(include_str!("../src/prefix_reciprocal_numerics_v1.rs"))
++        .unwrap();
++    let actual: Vec<_> = source.items.iter().filter_map(|item| match item {
++        Item::Macro(m) if m.ident.as_ref().is_some_and(|i| i == "qwen_prefix_reciprocal_rn_v1") => Some(m),
++        _ => None,
++    }).collect();
++    assert_eq!(actual.len(), 1);
++    // Macro rule tokens remain opaque to syn. Pin their complete structure;
++    // the separate u64, Fraction and exhaustive tests check arithmetic results.
++    let expected: syn::ItemMacro = syn::parse_quote! {
++        macro_rules! qwen_prefix_reciprocal_rn_v1 {
++            ($denominator:expr) => {{
++                let bits = ($denominator).to_bits();
++                let admitted = (bits.wrapping_sub(0x3a80_0000_u32) <= 0x2500_0000_u32) as u32;
++                let mask = 0_u32.wrapping_sub(admitted);
++                let exponent = bits >> 23;
++                let significand = (bits & 0x007f_ffff_u32) | 0x0080_0000_u32;
++                let mut remainder = 0x0080_0000_u32;
++                let mut quotient = 0_u32;
++                let mut step = 0_u32;
++                while step < 24_u32 {
++                    remainder <<= 1;
++                    let take = (remainder >= significand) as u32;
++                    remainder = remainder.wrapping_sub(
++                        significand & 0_u32.wrapping_sub(take),
++                    );
++                    quotient = (quotient << 1) | take;
++                    step += 1_u32;
++                }
++                let twice_remainder = remainder << 1;
++                quotient = quotient.wrapping_add(
++                    ((twice_remainder > significand)
++                        | ((twice_remainder == significand)
++                            & ((quotient & 1_u32) != 0))) as u32,
++                );
++                let reciprocal_bits = (253_u32.wrapping_sub(exponent) << 23)
++                    .wrapping_add(quotient.wrapping_sub(0x0080_0000_u32));
++                f32::from_bits((reciprocal_bits & mask) | (f32::NAN.to_bits() & !mask))
++            }};
++        }
++    };
++    assert_eq!(actual[0].mac.tokens.to_string(), expected.mac.tokens.to_string());
++}
+ 
+ fn function<'a>(file: &'a syn::File, name: &str) -> &'a ItemFn {
+     file.items
+@@ -89,14 +135,45 @@
+ }
+ 
+ #[test]
+-fn norm_and_post_ast_bodies_and_epsilon_are_unchanged_from_v5() {
++fn norm_and_post_only_opt_into_the_prefix_reciprocal_and_preserve_epsilon() {
+     let old = syn::parse_file(OLD).unwrap();
+     let new = syn::parse_file(SOURCE).unwrap();
+     for name in ["norm", "postprocess"] {
+-        // AST-token equality is a source-change tripwire, not a numerical test.
++        let mut body = function(&new, name).block.clone();
++        if name == "norm" {
++            let inverse = body
++                .stmts
++                .iter_mut()
++                .find_map(|statement| {
++                    let syn::Stmt::Local(local) = statement else {
++                        return None;
++                    };
++                    let syn::Pat::Ident(pattern) = &local.pat else {
++                        return None;
++                    };
++                    (pattern.ident == "inverse").then_some(local)
++                })
++                .unwrap();
++            let initializer = &mut inverse.init.as_mut().unwrap().expr;
++            let expected: Expr = syn::parse_quote!(qwen_prefix_reciprocal_rn_v1!(denominator));
++            assert_eq!(
++                initializer.to_token_stream().to_string(),
++                expected.to_token_stream().to_string()
++            );
++            *initializer = Box::new(syn::parse_quote!(1.0_f32 / denominator));
++        } else {
++            assert_eq!(body.stmts.len(), 1);
++            let syn::Stmt::Macro(call) = &mut body.stmts[0] else {
++                panic!("post macro")
++            };
++            assert!(call.mac.path.is_ident("qwen_prefix_head_rope_post_v6"));
++            call.mac.path = syn::parse_quote!(qwen_head_rope_post_v3);
++        }
++        // Normalizing the two explicit changes must recover the old complete
++        // body. This is a source-change tripwire, not a numerical proof.
+         assert_eq!(
+             function(&old, name).block.to_token_stream().to_string(),
+-            function(&new, name).block.to_token_stream().to_string()
++            body.to_token_stream().to_string()
+         );
+     }
+     let host = syn::parse_file(include_str!("prefix_tiles_numerics_v6.rs")).unwrap();
+@@ -125,7 +202,7 @@
+ }
+ 
+ #[test]
+-fn unchanged_arithmetic_files_are_included_and_only_three_sliced_handlers_are_added() {
++fn arithmetic_includes_are_closed_and_sliced_handlers_remain_unchanged() {
+     let file = syn::parse_file(SOURCE).unwrap();
+     let mut includes = std::collections::BTreeSet::new();
+     for item in &file.items {
+@@ -142,6 +219,7 @@
+             "attention_online.rs",
+             "head_rope_numerics_v3.rs",
+             "output_projection_numerics_v5.rs",
++            "prefix_reciprocal_numerics_v1.rs",
+             "prefix_tiles_numerics_v6.rs",
+             "wave_numerics_v1.rs"
+         ]
