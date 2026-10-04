@@ -1,0 +1,88 @@
+   Compiling typenum v1.20.1
+   Compiling cpufeatures v0.3.1
+   Compiling cfg-if v1.0.5
+   Compiling libc v0.2.189
+   Compiling fe2o3-target-spec v0.1.0 (/home/harmenon/ferric-asrock-42/fe2o3/crates/fe2o3-target-spec)
+   Compiling fe2o3-amd-target v0.1.0 (/home/harmenon/ferric-asrock-42/fe2o3/crates/fe2o3-amd-target)
+   Compiling hybrid-array v0.4.15
+   Compiling block-buffer v0.12.1
+   Compiling crypto-common v0.2.2
+   Compiling digest v0.11.3
+   Compiling sha2 v0.11.0
+   Compiling rustix v1.1.5
+   Compiling proc-macro2 v1.0.107
+   Compiling bitflags v2.13.2
+   Compiling fe2o3-build-authority v0.1.0 (/home/harmenon/ferric-asrock-42/fe2o3/crates/fe2o3-build-authority)
+   Compiling fe2o3-kernel-descriptor v0.1.0 (/home/harmenon/ferric-asrock-42/fe2o3/crates/fe2o3-kernel-descriptor)
+   Compiling fe2o3-rustc-invocation v0.1.0 (/home/harmenon/ferric-asrock-42/fe2o3/crates/fe2o3-rustc-invocation)
+   Compiling fe2o3-compiler-lineage v0.1.0 (/home/harmenon/ferric-asrock-42/fe2o3/crates/fe2o3-compiler-lineage)
+   Compiling reserved-fe2o3-symbols v0.1.0 (/home/harmenon/ferric-asrock-42/fe2o3/crates/reserved-fe2o3-symbols)
+   Compiling linux-raw-sys v0.12.1
+   Compiling equivalent v1.0.2
+   Compiling winnow v1.0.4
+   Compiling quote v1.0.47
+   Compiling hashbrown v0.17.1
+   Compiling unicode-ident v1.0.26
+   Compiling toml_parser v1.1.3+spec-1.1.0
+   Compiling indexmap v2.14.2
+   Compiling fe2o3-compiler-ffi v0.1.0 (/home/harmenon/ferric-asrock-42/fe2o3/crates/fe2o3-compiler-ffi)
+   Compiling toml_datetime v1.1.1+spec-1.1.0
+   Compiling toml_edit v0.25.15+spec-1.1.0
+   Compiling fe2o3-artifact-transaction v0.1.0 (/home/harmenon/ferric-asrock-42/fe2o3/crates/fe2o3-artifact-transaction)
+   Compiling compiler_builtins v0.1.160 (/home/harmenon/ferric-asrock-42/toolchain/rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/compiler-builtins/compiler-builtins)
+   Compiling syn v2.0.119
+   Compiling fe2o3-artifacts v0.1.0 (/home/harmenon/ferric-asrock-42/fe2o3/crates/fe2o3-artifacts)
+   Compiling proc-macro-crate v3.5.0
+   Compiling fe2o3-rustc-front v0.1.0 (/home/harmenon/ferric-asrock-42/fe2o3/crates/fe2o3-rustc-front)
+   Compiling core v0.0.0 (/home/harmenon/ferric-asrock-42/toolchain/rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core)
+   Compiling fe2o3-macros v0.1.0 (/home/harmenon/ferric-asrock-42/fe2o3/crates/fe2o3-macros)
+    Checking fe2o3-device v0.1.0 (/home/harmenon/ferric-asrock-42/fe2o3/crates/fe2o3-device)
+warning: unknown and unstable feature specified for `-Ctarget-feature`: `xnack`
+  |
+  = note: it is still passed through to the codegen backend, but use of this feature might be unsound and the behavior of this feature can change in the future
+  = help: consider filing a feature request
+
+warning: unknown and unstable feature specified for `-Ctarget-feature`: `wavefrontsize64`
+  |
+  = note: it is still passed through to the codegen backend, but use of this feature might be unsound and the behavior of this feature can change in the future
+  = help: consider filing a feature request
+
+warning: unknown and unstable feature specified for `-Ctarget-feature`: `wavefrontsize32`
+  |
+  = note: it is still passed through to the codegen backend, but use of this feature might be unsound and the behavior of this feature can change in the future
+  = help: consider filing a feature request
+
+warning: `fe2o3-device` (lib) generated 3 warnings
+    Checking fe2o3-production-extraction-fixture v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-rope-materialized-rpo-checked-probe-v228-v1/fixture)
+warning: unused macro definition: `qwen_head_inverse_v3`
+ --> src/head_rope_numerics_v3.rs:4:14
+  |
+4 | macro_rules! qwen_head_inverse_v3 {
+  |              ^^^^^^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_macros)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused macro definition: `qwen_head_rope_post_v3`
+  --> src/head_rope_numerics_v3.rs:79:14
+   |
+79 | macro_rules! qwen_head_rope_post_v3 {
+   |              ^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused macro definition: `qwen_prefix_head_rope_post_v6`
+  --> src/prefix_reciprocal_numerics_v1.rs:76:14
+   |
+76 | macro_rules! qwen_prefix_head_rope_post_v6 {
+   |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused macro definition: `qwen_attention_emit_kernel_v1`
+ --> src/attention_online.rs:5:14
+  |
+5 | macro_rules! qwen_attention_emit_kernel_v1 {
+  |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+fe2o3 diagnostic semantic MIR: stage=pre-ranked status=complete bytes=1315745 semantic_sha256=8f6bab76b62fd688c0bb06b80fe68c6d136c47dd3bf20130fef1b1048a989f51 error_kind=None
+fe2o3 diagnostic KIR: stage=neutral status=complete bytes=84063 sha256=4fa47118bdb12b110812a905cf90007ca2a816faef887235917c693e97df00ec error_kind=None
+fe2o3 diagnostic KIR: stage=target-before-llvm status=complete bytes=76146 sha256=3580c86ebd271a51bbd0f61a7c602ba96527c775b64d24aae20db93a98a26e4c error_kind=None
+fe2o3 production extraction: Rust -> semantic MIR -> ranked PLIRON -> Kernel IR V11 with 0 GuardedStore operation(s) -> composed formal/ranked memory -> gfx950:xnack- LLVM -> proof-carrying semantic compiler-bound inert handoff; 4078537 handoff byte(s), artifact/launch authority false
+warning: `fe2o3-production-extraction-fixture` (lib) generated 7 warnings (3 duplicates)
+    Finished `dev` profile [unoptimized] target(s) in 12m 26s

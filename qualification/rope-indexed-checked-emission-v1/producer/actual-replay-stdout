@@ -1,0 +1,20 @@
+
+running 1 test
+test production_pipeline::conditional_formal_tests::actual_prefix_tile_v41_reaches_formal_archive_and_outer_lineage_replay ... ok
+
+successes:
+
+---- production_pipeline::conditional_formal_tests::actual_prefix_tile_v41_reaches_formal_archive_and_outer_lineage_replay stdout ----
+stage=pre-ranked status=starting
+stage=recipe status=complete roots=15 accesses=87 memory=212 effects=261
+stage=ranked status=starting
+stage=ranked status=complete roots=1 bytes=127559
+stage=formal status=complete roots=15 unresolved=8
+stage=outer-lineage-replay status=complete formal_bytes=861468
+
+
+successes:
+    production_pipeline::conditional_formal_tests::actual_prefix_tile_v41_reaches_formal_archive_and_outer_lineage_replay
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 1219 filtered out; finished in 192.35s
+

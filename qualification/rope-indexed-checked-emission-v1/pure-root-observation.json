@@ -1,0 +1,40 @@
+{
+  "schema": "ferric-primary-agent-test-observation-v1",
+  "remote_supervisor_receipt": false,
+  "command": "ssh.exe -o BatchMode=yes -o ConnectTimeout=20 -o HostName=asrock-1w300-g2-2b.mkm.dcgpu -o UserKnownHostsFile=//wsl.localhost/Ubuntu/home/harsh/.ssh/known_hosts -l harmenon mi350-2 \"timeout --signal=TERM --kill-after=10s 180s env -u PYTHONPATH -u PYTHONHOME -u PYTHONOPTIMIZE HIP_VISIBLE_DEVICES= ROCR_VISIBLE_DEVICES= CUDA_VISIBLE_DEVICES= taskset -c 8,9 nice -n 10 /usr/bin/python3 -B -m unittest discover -s /home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-rope-indexed-checked-emission-v1 -p test_run.py -v\"",
+  "initial_tool_result": {
+    "chunk_id": "221b65",
+    "wall_time_seconds": 1.001616756,
+    "session_id": 17792,
+    "original_token_count": 0,
+    "output": ""
+  },
+  "terminal_tool_result": {
+    "chunk_id": "85e80d",
+    "wall_time_seconds": 0.000023302,
+    "exit_code": 0,
+    "original_token_count": 389,
+    "output": "test_actual_qualified_consumer_accepted (test_run.ContinuationTests) ... ok\ntest_command_rejects_unexpected_old_namespace_or_unbuilt_tool (test_run.ContinuationTests) ... ok\ntest_command_rejects_unreviewed_bounds_and_diagnostic_flag (test_run.ContinuationTests) ... ok\ntest_command_replaces_only_outputs_tool_loader_and_temporary_target (test_run.ContinuationTests) ... ok\ntest_consumer_cannot_claim_emission_or_compiler_qualification (test_run.ContinuationTests) ... ok\ntest_consumer_full_census_and_repeats_remain_separate (test_run.ContinuationTests) ... ok\ntest_consumer_must_have_full_successful_qualification (test_run.ContinuationTests) ... ok\ntest_consumer_owner_and_proposal_cannot_be_substituted (test_run.ContinuationTests) ... ok\ntest_consumer_source_and_selected_test_are_exact (test_run.ContinuationTests) ... ok\ntest_eight_phases_do_not_rerun_producer_or_full_cohorts (test_run.ContinuationTests) ... ok\ntest_exact_failed_producer_is_retained_as_failed (test_run.ContinuationTests) ... ok\ntest_only_exact_active_target_is_excluded_from_immutability (test_run.ContinuationTests) ... ok\ntest_only_three_consumer_tool_roles_change (test_run.ContinuationTests) ... ok\ntest_producer_captures_and_three_completed_leaves_required (test_run.ContinuationTests) ... ok\ntest_producer_generation_is_not_replaced_with_consumer (test_run.ContinuationTests) ... ok\ntest_producer_owner_must_be_natural_failed_and_reaped (test_run.ContinuationTests) ... ok\n\n----------------------------------------------------------------------\nRan 16 tests in 0.003s\n\nOK\n"
+  },
+  "tests_passed": 16,
+  "tests_failed": 0,
+  "hash_command": "ssh.exe -o BatchMode=yes -o ConnectTimeout=20 -o HostName=asrock-1w300-g2-2b.mkm.dcgpu -o UserKnownHostsFile=//wsl.localhost/Ubuntu/home/harsh/.ssh/known_hosts -l harmenon mi350-2 \"sha256sum /home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-rope-indexed-checked-emission-v1/manifest.json /home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-rope-indexed-checked-emission-v1/run.py /home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-rope-indexed-checked-emission-v1/contracts.py /home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-rope-indexed-checked-emission-v1/test_run.py /home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-rope-indexed-checked-emission-v1/README.md\"",
+  "prehash_tool_result": {
+    "chunk_id": "d85aef",
+    "wall_time_seconds": 0.000025419,
+    "exit_code": 0,
+    "original_token_count": 237,
+    "output": "b46ad9dbfb7d4a9f922adc80a2862df47e3801e4b3acd9d455357cc959a15233  /home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-rope-indexed-checked-emission-v1/manifest.json\nf101c66f29b0d7d143e645d3407a7efa03f8c6cd36b710d1502c08ce316638a0  /home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-rope-indexed-checked-emission-v1/run.py\n694be9d199cd92b2d11ff4fe8401ad3728497bd8846b5d6924311330f3d9de1a  /home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-rope-indexed-checked-emission-v1/contracts.py\n09770a721e536bc4a89a64038f1c46623a8b08a859bb91d51a2998e111836f42  /home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-rope-indexed-checked-emission-v1/test_run.py\n8a967480d0af0c6e59fe53d603dd0cfbb047e25d60f6778994f492712bc6785d  /home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-rope-indexed-checked-emission-v1/README.md\n"
+  },
+  "posthash_tool_result": {
+    "chunk_id": "784de9",
+    "wall_time_seconds": 3.520804548,
+    "exit_code": 0,
+    "original_token_count": 649,
+    "output": "\r\n $$$$$$\\  $$$$$$\\  $$$$$$\\       $$$$$$\\  $$\\   $$\\ $$$$$$$$\\ $$\\   $$\\\r\n$$  __$$\\ \\_$$  _|$$  __$$\\     $$  __$$\\ $$ |  $$ |\\__$$  __|$$ |  $$ |\r\n$$ /  $$ |  $$ |  $$ /  \\__|$$\\ $$ /  $$ |$$ |  $$ |   $$ |   $$ |  $$ |\r\n$$$$$$$$ |  $$ |  $$ |$$$$\\ \\__|$$$$$$$$ |$$ |  $$ |   $$ |   $$$$$$$$ |\r\n$$  __$$ |  $$ |  $$ |\\_$$ |    $$  __$$ |$$ |  $$ |   $$ |   $$  __$$ |\r\n$$ |  $$ |  $$ |  $$ |  $$ |$$\\ $$ |  $$ |$$ |  $$ |   $$ |   $$ |  $$ |\r\n$$ |  $$ |$$$$$$\\ \\$$$$$$  |\\__|$$ |  $$ |\\$$$$$$  |   $$ |   $$ |  $$ |\r\n\\__|  \\__|\\______| \\______/     \\__|  \\__| \\______/    \\__|   \\__|  \\__|\r\n\r\n is protected by Conductor SUT Authentication - 20260511.01-gee7e625.\r\n\r\nReminder: An SSH key is required to access this system. \r\nTo manage your Conductor SSH keys please visit https://conductor.amd.com/user/dashboard/key-management\r\n\r\nYou will be denied access to this system if:\r\n  \u2022 You did not provide a valid SSH key\r\n  \u2022 You do not have an active reservation in Conductor\r\n  \u2022 You are not in the required security groups (ex: mi300_doc.4erminus)\r\n\r\n____________   _______________________________________^__\r\n ___   ___ |||  ___   ___   ___    ___ ___  |   __  ,----\\\r\n|   | |   |||| |   | |   | |   |  |   |   | |  |  | |_____\\\r\n|___| |___|||| |___| |___| |___|  | O | O | |  |  |        \\\r\n           |||                    |___|___| |  |__|         )\r\n___________|||______________________________|______________/\r\n           |||                                        /--------\r\n-----------'''---------------------------------------'\r\n\r\nFor other help resources please visit https://conductor.amd.com/docs\r\n\r\nChecking authorization now...\r\nb46ad9dbfb7d4a9f922adc80a2862df47e3801e4b3acd9d455357cc959a15233  /home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-rope-indexed-checked-emission-v1/manifest.json\nf101c66f29b0d7d143e645d3407a7efa03f8c6cd36b710d1502c08ce316638a0  /home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-rope-indexed-checked-emission-v1/run.py\n694be9d199cd92b2d11ff4fe8401ad3728497bd8846b5d6924311330f3d9de1a  /home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-rope-indexed-checked-emission-v1/contracts.py\n09770a721e536bc4a89a64038f1c46623a8b08a859bb91d51a2998e111836f42  /home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-rope-indexed-checked-emission-v1/test_run.py\n8a967480d0af0c6e59fe53d603dd0cfbb047e25d60f6778994f492712bc6785d  /home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-rope-indexed-checked-emission-v1/README.md\n"
+  },
+  "source_hashes_unchanged": true,
+  "gpu_execution": false,
+  "fresh_hsaco_emitted": false,
+  "production_authority": false
+}

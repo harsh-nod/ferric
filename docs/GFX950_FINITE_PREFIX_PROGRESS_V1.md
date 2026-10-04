@@ -6,14 +6,25 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Latest: the [indexed inert join V2 passed all thirteen staged CPU phases](../qualification/kir-indexed-formal-join-v2/README.md).
+Latest: [linked indexed RoPE emission produced a new gfx950 HSACO](../qualification/rope-indexed-checked-emission-v1/README.md).
+All eight staged phases and sixteen controller-policy tests passed. The
+54,344-byte image has a 376-byte kernarg segment, Wave64, 512 bytes of fixed
+LDS and zero private-segment bytes; ELF notes also report sixteen scalar
+register spills. The continuation authenticates the retained successful
+compiler leaves and uses the separately qualified indexed consumer, without
+relabeling the original failed aggregate. All owned processes were reaped
+and postchecks passed. This is checked emission, not GPU numerical acceptance
+or a performance result. The new image's GPU evaluation is the next gate.
+
+Previously, the [indexed inert join V2 passed all thirteen staged CPU phases](../qualification/kir-indexed-formal-join-v2/README.md).
 The full lower library passed 785 tests without ignores; its twenty indexed
 tests also passed a separate repeat. The finalizer passed 190 default tests
 with fifteen historical ignores, followed by an explicit passing actual
 retained-handoff join. Twenty controller-policy tests passed separately.
 The original work/storage limits remain unchanged, all owned processes were
 reaped, and postchecks passed. This clears the measured inert-join refusal;
-checked HSACO emission and GPU numerical evaluation are still pending.
+checked HSACO emission subsequently passed as above; GPU numerical evaluation
+of that image remains pending.
 
 Previously, an [unchanged-source control](../qualification/kir-indexed-baseline-control-v1/README.md)
 reproduced the existing nested-enum location assertion in both a focused run
@@ -50,7 +61,7 @@ replay, then failed the finalizer's canonical-kernel work budget:
 1,084,825,160 at refusal against the unchanged 1,073,741,824 limit. No HSACO
 was emitted. All process groups exited naturally and postchecks passed.
 The indexed join subsequently cleared this refusal without weakening its checks;
-checked emission remains the next gate.
+the later linked continuation emitted an image as recorded above.
 
 Separately, the [actual four-step coefficient audit](../qualification/ar4-rope-input-audit-v1/README.md)
 found all 512 BF16 coefficients identical to the retained framework tables.
