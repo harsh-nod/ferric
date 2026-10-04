@@ -1,0 +1,51 @@
+{
+  "authority": "none",
+  "binary": {
+    "bytes": 5018856,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/device-clock-runtime-v228-v1/ferric-tp-peer-finite-engineering-worker-v1",
+    "sha256": "d2af909e7fef88af5b20f4ae8f2a5779a7aee93a187169e97a939bec7d3a0fed"
+  },
+  "boot_id": "2dbbbc5a-d8b7-46ac-bd1f-236e5847e24a",
+  "gpu_execution": false,
+  "host": "smci350-rck-g03-b19-03",
+  "ldd": {
+    "bytes": 743,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/device-clock-runtime-worker-v228-v1/ldd/audit.json",
+    "sha256": "23211a5fecae1008217448c64fef0cfd2b5e4fbc99a25c5578607fef6641249c"
+  },
+  "libraries": [
+    {
+      "path": "/lib/x86_64-linux-gnu/libgcc_s.so.1",
+      "resolved": {
+        "bytes": 183024,
+        "path": "/usr/lib/x86_64-linux-gnu/libgcc_s.so.1",
+        "sha256": "d93224d2b0dab4247598be683adca02f5cf00586f99c187579cd7e92058fb7cb"
+      }
+    },
+    {
+      "path": "/lib/x86_64-linux-gnu/libc.so.6",
+      "resolved": {
+        "bytes": 2125328,
+        "path": "/usr/lib/x86_64-linux-gnu/libc.so.6",
+        "sha256": "d8db8739a1633c972cec6a4fe0566bdcec6fd088f98723492ab0361f66238f75"
+      }
+    },
+    {
+      "path": "/lib64/ld-linux-x86-64.so.2",
+      "resolved": {
+        "bytes": 236616,
+        "path": "/usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2",
+        "sha256": "1cd555ac46b7887edeaf3c42aac5408c8135e52f6b37870da2cf82d5fe14e829"
+      }
+    }
+  ],
+  "notes": "",
+  "production_authority": false,
+  "readelf": {
+    "bytes": 766,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/device-clock-runtime-worker-v228-v1/readelf/audit.json",
+    "sha256": "c9278e69a898c41188a599b6582916a8ccaf597e9c0fb11aea79449bc0c0c662"
+  },
+  "reviewed": false,
+  "schema": "ferric-p227-prefix-parity-runtime-review-v1"
+}

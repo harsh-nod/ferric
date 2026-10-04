@@ -1,0 +1,12 @@
+test_both_roles_join_actual_cpu_and_derived_extent_before_audit (test_audit_device_clock_runtime.AuditSelectorTests.test_both_roles_join_actual_cpu_and_derived_extent_before_audit) ... ok
+test_closed_argv_role_label_and_digest_refuse_before_reads (test_audit_device_clock_runtime.AuditSelectorTests.test_closed_argv_role_label_and_digest_refuse_before_reads) ... ok
+test_cpu_and_binary_paths_cannot_escape_or_select_other_generation (test_audit_device_clock_runtime.AuditSelectorTests.test_cpu_and_binary_paths_cannot_escape_or_select_other_generation) ... ok
+test_digest_or_nonexecutable_or_artifact_mismatch_refuses (test_audit_device_clock_runtime.AuditSelectorTests.test_digest_or_nonexecutable_or_artifact_mismatch_refuses) ... ok
+test_layer_alias_is_restored_after_success_and_failure (test_audit_device_clock_runtime.AuditSelectorTests.test_layer_alias_is_restored_after_success_and_failure) ... ok
+test_pending_intake_pin_fails_before_module_loading (test_audit_device_clock_runtime.AuditSelectorTests.test_pending_intake_pin_fails_before_module_loading) ... ok
+test_unqualified_cpu_cannot_reach_binary_selection (test_audit_device_clock_runtime.AuditSelectorTests.test_unqualified_cpu_cannot_reach_binary_selection) ... ok
+
+----------------------------------------------------------------------
+Ran 7 tests in 0.002s
+
+OK

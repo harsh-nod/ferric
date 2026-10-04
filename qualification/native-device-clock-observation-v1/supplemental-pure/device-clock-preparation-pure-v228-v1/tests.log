@@ -1,0 +1,10 @@
+test_closed_configuration_requires_explicit_review_mode (test_prepare_device_clock_inputs.PreparationTests.test_closed_configuration_requires_explicit_review_mode) ... ok
+test_derived_request_changes_only_worker_session_and_evidence (test_prepare_device_clock_inputs.PreparationTests.test_derived_request_changes_only_worker_session_and_evidence) ... ok
+test_duplicate_nonfinite_and_conflicting_json_are_refused (test_prepare_device_clock_inputs.PreparationTests.test_duplicate_nonfinite_and_conflicting_json_are_refused) ... ok
+test_engineering_review_requires_actual_topics_and_exact_binding_types (test_prepare_device_clock_inputs.PreparationTests.test_engineering_review_requires_actual_topics_and_exact_binding_types) ... ok
+test_runtime_template_never_auto_approves (test_prepare_device_clock_inputs.PreparationTests.test_runtime_template_never_auto_approves) ... ok
+
+----------------------------------------------------------------------
+Ran 5 tests in 0.001s
+
+OK

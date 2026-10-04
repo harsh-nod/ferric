@@ -1,0 +1,17 @@
+{
+  "audit_device_clock_runtime.py": {
+    "bytes": 5697,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-device-clock-runtime-v1/audit_device_clock_runtime.py",
+    "sha256": "35f3f585366144e704d86b39b53f07ad596b819664a0294d5da78e9dd883ed86"
+  },
+  "prepare_device_clock_inputs.py": {
+    "bytes": 18360,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-device-clock-runtime-v1/prepare_device_clock_inputs.py",
+    "sha256": "9ab28ee36e0e51e3b1c064a2c1dbc5baf075b3232c800aeae490e3ff4ad23c53"
+  },
+  "test_prepare_device_clock_inputs.py": {
+    "bytes": 6015,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-device-clock-runtime-v1/test_prepare_device_clock_inputs.py",
+    "sha256": "ae65724d5113aaf0c57eb3dea3f315904228ffb5f44e6364686ba9af8b618da0"
+  }
+}

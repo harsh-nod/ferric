@@ -1,0 +1,107 @@
+{
+  "authority": "none",
+  "compiler_queried": false,
+  "files": [
+    {
+      "observed_bytes": 400,
+      "observed_sha256": "01af466feb100306498c86aa6bad1815e33036019aa34d4362c20f374ea5c829",
+      "path": "/etc/os-release",
+      "present": true,
+      "resolved": "/usr/lib/os-release",
+      "text": "PRETTY_NAME=\"Ubuntu 24.04.4 LTS\"\nNAME=\"Ubuntu\"\nVERSION_ID=\"24.04\"\nVERSION=\"24.04.4 LTS (Noble Numbat)\"\nVERSION_CODENAME=noble\nID=ubuntu\nID_LIKE=debian\nHOME_URL=\"https://www.ubuntu.com/\"\nSUPPORT_URL=\"https://help.ubuntu.com/\"\nBUG_REPORT_URL=\"https://bugs.launchpad.net/ubuntu/\"\nPRIVACY_POLICY_URL=\"https://www.ubuntu.com/legal/terms-and-policies/privacy-policy\"\nUBUNTU_CODENAME=noble\nLOGO=ubuntu-logo\n"
+    },
+    {
+      "observed_bytes": 223,
+      "observed_sha256": "da06ffcbc1b8da4ad7abd6d2dbb50a7ee93d003e6ea6aac6150677b3befffedd",
+      "path": "/proc/version",
+      "present": true,
+      "resolved": "/proc/version",
+      "text": "Linux version 6.8.0-124-generic (buildd@lcy02-amd64-019) (x86_64-linux-gnu-gcc-13 (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, GNU ld (GNU Binutils for Ubuntu) 2.42) #124-Ubuntu SMP PREEMPT_DYNAMIC Tue May 26 13:00:45 UTC 2026\n"
+    },
+    {
+      "observed_bytes": 8,
+      "observed_sha256": "78783fb4e4dfe6c370d56226147fbc24a15230c8165c5b57fad2908b74aa1422",
+      "path": "/sys/module/amdgpu/version",
+      "present": true,
+      "resolved": "/sys/module/amdgpu/version",
+      "text": "6.16.13\n"
+    },
+    {
+      "observed_bytes": 24,
+      "observed_sha256": "a60fdecb48ceef490034eaab461e2f1f6ad8c6770fbf95bc722e4b37437f3db2",
+      "path": "/sys/module/amdgpu/srcversion",
+      "present": true,
+      "resolved": "/sys/module/amdgpu/srcversion",
+      "text": "703B1127E578BC5D4BD6615\n"
+    },
+    {
+      "observed_bytes": 6,
+      "observed_sha256": "d4e1b76ed0d76666ba32fcfaf876e4fb8040a8516f3ef2d9affd040aa10cae9a",
+      "path": "/opt/rocm/.info/version",
+      "present": true,
+      "resolved": "/opt/rocm-7.2.1/.info/version",
+      "text": "7.2.1\n"
+    },
+    {
+      "observed_bytes": 9,
+      "observed_sha256": "885e33b6aa3538f77fcf25c66e0913f4981f64c2a5707dad5df6b94a3174d1c4",
+      "path": "/opt/rocm/.info/version-ocl-sdk",
+      "present": true,
+      "resolved": "/opt/rocm-7.2.1/.info/version-ocl-sdk",
+      "text": "7.2.1-81\n"
+    },
+    {
+      "observed_bytes": 9,
+      "observed_sha256": "885e33b6aa3538f77fcf25c66e0913f4981f64c2a5707dad5df6b94a3174d1c4",
+      "path": "/opt/rocm/.info/version-openmp",
+      "present": true,
+      "resolved": "/opt/rocm-7.2.1/.info/version-openmp",
+      "text": "7.2.1-81\n"
+    },
+    {
+      "observed_bytes": 9,
+      "observed_sha256": "885e33b6aa3538f77fcf25c66e0913f4981f64c2a5707dad5df6b94a3174d1c4",
+      "path": "/opt/rocm/.info/version-rocm",
+      "present": true,
+      "resolved": "/opt/rocm-7.2.1/.info/version-rocm",
+      "text": "7.2.1-81\n"
+    },
+    {
+      "observed_bytes": 9,
+      "observed_sha256": "885e33b6aa3538f77fcf25c66e0913f4981f64c2a5707dad5df6b94a3174d1c4",
+      "path": "/opt/rocm/.info/version-rocm-developer-tools",
+      "present": true,
+      "resolved": "/opt/rocm-7.2.1/.info/version-rocm-developer-tools",
+      "text": "7.2.1-81\n"
+    },
+    {
+      "observed_bytes": 9,
+      "observed_sha256": "885e33b6aa3538f77fcf25c66e0913f4981f64c2a5707dad5df6b94a3174d1c4",
+      "path": "/opt/rocm/.info/version-rocm-hip",
+      "present": true,
+      "resolved": "/opt/rocm-7.2.1/.info/version-rocm-hip",
+      "text": "7.2.1-81\n"
+    },
+    {
+      "observed_bytes": 9,
+      "observed_sha256": "885e33b6aa3538f77fcf25c66e0913f4981f64c2a5707dad5df6b94a3174d1c4",
+      "path": "/opt/rocm/.info/version-utils",
+      "present": true,
+      "resolved": "/opt/rocm-7.2.1/.info/version-utils",
+      "text": "7.2.1-81\n"
+    }
+  ],
+  "gpu_execution": false,
+  "numerical_acceptance": false,
+  "production_authority": false,
+  "reviewed": false,
+  "runtime_premises_discharged": false,
+  "schema": "ferric-p227-runtime-software-observation-v1",
+  "uname": {
+    "machine": "x86_64",
+    "nodename": "smci350-rck-g03-b19-03",
+    "release": "6.8.0-124-generic",
+    "sysname": "Linux",
+    "version": "#124-Ubuntu SMP PREEMPT_DYNAMIC Tue May 26 13:00:45 UTC 2026"
+  }
+}

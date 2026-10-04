@@ -1,0 +1,12 @@
+{
+  "parent": {
+    "pgid": 3353554,
+    "pid": 3353554,
+    "ppid": 3353507,
+    "sid": 3353554,
+    "starttime": 51675632,
+    "state": "R",
+    "uid": 9661
+  },
+  "supervisor_pid": 3353507
+}

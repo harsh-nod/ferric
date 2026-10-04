@@ -1,0 +1,28 @@
+{
+  "schema": "ferric-p228-device-clock-preparation-v1",
+  "input_label": "prefix-device-clock-tf4-inputs-v228-v1",
+  "output_label": "prefix-device-clock-tf4-shared-full-currentness-gpu-v228-v1",
+  "package_manifest": {
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-device-clock-gpu-v1/manifest.json",
+    "bytes": 2513,
+    "sha256": "2f8387de7fca50496c5c1cb8f42df3bc294d0633d54a7086ef82f0abdcbbf94c"
+  },
+  "supervisor_tests": {
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/device-clock-gpu-pure-v228-v1/complete.json",
+    "bytes": 1481,
+    "sha256": "28d3914c1249aa16e4f07199cd5905dcda23657269c804ace2349529932d3f7c"
+  },
+  "parent_audit": {
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/device-clock-runtime-parent-v228-v1/complete.json",
+    "bytes": 21971,
+    "sha256": "1442f4f0ca54a3669866a9ca2391c1663b3ddf8547409683630c3de19bee6422"
+  },
+  "worker_audit": {
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/device-clock-runtime-worker-v228-v1/complete.json",
+    "bytes": 21469,
+    "sha256": "4dd5783891e9cd9a926f22c49fdd6fa6ae1cf23f095d3698a0d5f8e7acf48261"
+  },
+  "parent_runtime_review": null,
+  "worker_runtime_review": null,
+  "decode_review": null
+}

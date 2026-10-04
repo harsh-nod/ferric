@@ -1,0 +1,40 @@
+{
+  "decode_review": {
+    "bytes": 45820,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-device-clock-tf4-inputs-v228-v1/decode-review.json",
+    "sha256": "ea6858a678e91e7a49c95f373c684208eb46af1538f095c7ce398a15b2d3f085"
+  },
+  "input_label": "prefix-device-clock-tf4-inputs-v228-v1",
+  "output_label": "prefix-device-clock-tf4-shared-full-currentness-gpu-v228-v1",
+  "package_manifest": {
+    "bytes": 2513,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-device-clock-gpu-v1/manifest.json",
+    "sha256": "2f8387de7fca50496c5c1cb8f42df3bc294d0633d54a7086ef82f0abdcbbf94c"
+  },
+  "parent_audit": {
+    "bytes": 21971,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/device-clock-runtime-parent-v228-v1/complete.json",
+    "sha256": "1442f4f0ca54a3669866a9ca2391c1663b3ddf8547409683630c3de19bee6422"
+  },
+  "parent_runtime_review": {
+    "bytes": 2792,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-device-clock-tf4-inputs-v228-v1/parent-runtime-review.json",
+    "sha256": "eea09676b1c8cb2599fe8fb73fe1ae9652112642612dc460185c7cda6006b0f0"
+  },
+  "schema": "ferric-p228-device-clock-preparation-v1",
+  "supervisor_tests": {
+    "bytes": 1481,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/device-clock-gpu-pure-v228-v1/complete.json",
+    "sha256": "28d3914c1249aa16e4f07199cd5905dcda23657269c804ace2349529932d3f7c"
+  },
+  "worker_audit": {
+    "bytes": 21469,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/device-clock-runtime-worker-v228-v1/complete.json",
+    "sha256": "4dd5783891e9cd9a926f22c49fdd6fa6ae1cf23f095d3698a0d5f8e7acf48261"
+  },
+  "worker_runtime_review": {
+    "bytes": 2521,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-device-clock-tf4-inputs-v228-v1/worker-runtime-review.json",
+    "sha256": "4fbee0a79525f45dc1c36345b94fd218aaa713dc4d95032f4ca780a3c774abe0"
+  }
+}

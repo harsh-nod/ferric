@@ -272,5 +272,8 @@ values; system-clock frequency is not used as a GPU tick frequency.
 The [parent clock qualification](../../qualification/gfx950-clock-parent-v1/README.md)
 is separate from the worker qualification and any native GPU capture. The
 parent retains its existing locked Git dependency graph; it does not compile
-the worker's sibling runtime checkout. No calibration, clock-domain alignment,
-overlap, numerical acceptance or throughput is implied by this interface.
+the worker's sibling runtime checkout. The subsequent
+[native MI350 capture](../../qualification/native-device-clock-observation-v1/README.md)
+passed all sixteen sample and output-invariance checks. No calibration,
+clock-domain alignment, overlap, full-model numerical acceptance or throughput
+is implied by this interface or raw capture.

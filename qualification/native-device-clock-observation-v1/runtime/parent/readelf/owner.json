@@ -1,0 +1,40 @@
+{
+  "command": {
+    "bytes": 1019,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/device-clock-runtime-parent-v228-v1/readelf/command.json",
+    "sha256": "1e2254d29ed063629158374723399856ec930a7004d98d002aef0c355fde1376"
+  },
+  "gpu_execution": false,
+  "outcome": {
+    "cleanup_signalled": false,
+    "deadline_seconds": 30,
+    "elapsed_seconds": 0.3029164479812607,
+    "exit_code": 0,
+    "lineage": [
+      {
+        "event": "owned",
+        "identity": {
+          "pgid": 3353554,
+          "pid": 3353554,
+          "ppid": 3353507,
+          "sid": 3353554,
+          "starttime": 51675632,
+          "state": "R",
+          "uid": 9661
+        },
+        "reason": "spawned-parent"
+      }
+    ],
+    "owned_groups": [
+      3353554
+    ],
+    "owned_groups_absent": true,
+    "owned_processes_reaped": true,
+    "reason": null
+  },
+  "started": {
+    "bytes": 194,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/device-clock-runtime-parent-v228-v1/readelf/started.json",
+    "sha256": "67f8c8f0df2354520e373aa56c979c09653540b3bab7dea10028d16a6414bcc6"
+  }
+}

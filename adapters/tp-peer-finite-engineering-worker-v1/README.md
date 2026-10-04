@@ -80,9 +80,11 @@ passed 669 selected Rust tests with four existing ignores and fifteen
 controller-policy tests on `mi350-2`. This qualifies the worker build and
 synthetic failure boundaries, not a native clock sample. The
 [matching parent](../../qualification/gfx950-clock-parent-v1/README.md) now has
-its separate passing CPU qualification. GPU capture and calibration remain
-separate gates; no duration,
-cross-device alignment, overlap or throughput claim follows from this result.
+its separate passing CPU qualification. The subsequent
+[native MI350 capture](../../qualification/native-device-clock-observation-v1/README.md)
+recorded all sixteen samples with exact output invariance and clean Close/reap.
+Calibration remains a separate gate; no calibrated duration, cross-device
+alignment, overlap or throughput claim follows from these raw observations.
 
 ## Build Prerequisites
 

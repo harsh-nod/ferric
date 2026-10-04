@@ -1,0 +1,10 @@
+test_closed_flags_frequencies_and_host_bracket_order_are_required (test_report.RawClockReportTests.test_closed_flags_frequencies_and_host_bracket_order_are_required) ... ok
+test_exact_sixteen_samples_produce_eight_same_rank_integer_differences (test_report.RawClockReportTests.test_exact_sixteen_samples_produce_eight_same_rank_integer_differences) ... ok
+test_integer_types_exact_roster_and_native_identity_are_required (test_report.RawClockReportTests.test_integer_types_exact_roster_and_native_identity_are_required) ... ok
+test_markdown_keeps_counter_differences_and_host_spans_explicit (test_report.RawClockReportTests.test_markdown_keeps_counter_differences_and_host_spans_explicit) ... ok
+test_zero_decreasing_and_full_width_raw_values_are_not_converted_or_repaired (test_report.RawClockReportTests.test_zero_decreasing_and_full_width_raw_values_are_not_converted_or_repaired) ... ok
+
+----------------------------------------------------------------------
+Ran 5 tests in 0.005s
+
+OK

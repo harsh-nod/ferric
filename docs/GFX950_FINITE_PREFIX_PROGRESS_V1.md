@@ -6,14 +6,23 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Latest: the [matching clock parent](../qualification/gfx950-clock-parent-v1/README.md)
+Latest: the [native clock V2 capture](../qualification/native-device-clock-observation-v1/README.md)
+passed on `mi350`: sixteen clock samples, all 1,172 dispatch rows and exact
+agreement across four complete output buffers and 152 tensor comparisons.
+One attempt, six audits and seven natural/reaped process leaves completed
+without forced cleanup. The report includes raw clock tables, per-device tick
+distributions and layer/position plots. The controller passed 61 tests; separate
+audit, input-preparation and report suites passed 7, 5 and 5 tests. Clock-domain
+validation, calibration, aligned overlap and sustained throughput remain open.
+
+The [matching clock parent](../qualification/gfx950-clock-parent-v1/README.md)
 passed 275 Rust tests with no ignores, twenty separate controller tests, all
 thirteen executable builds and the default-feature check on `mi350-2`.
 All 44 bounded commands and source/input/artifact postchecks passed. The route
 requires its own request, worker selector and sixteen-sample V2 sidecar, while
 preserving the existing raw Control/capture joins and evidence limits. Its
 locked parent dependencies remain distinct from the worker's newer runtime.
-Both binaries still need fresh runtime audits and a native clock capture.
+Both binaries subsequently passed runtime audits and the native capture above.
 
 The [versioned clock recorder](../qualification/gfx950-clock-recorder-v1/README.md)
 passed 669 selected Rust tests with four existing ignores on `mi350-2`.
@@ -21,8 +30,8 @@ All 21 new tests passed, the worker was rebuilt, and all 33 commands exited
 naturally with unchanged input/source postchecks. Fifteen separate controller
 tests passed. The new route retains the V1 dispatch report and samples both
 ranks before and after each forward; errors poison the real owner even after
-a committed forward. Native clock sampling and calibrated timings remain
-pending. No kernel image or arithmetic changed.
+a committed forward. Native clock sampling passed in the capture above;
+calibrated timings remain pending. No kernel image or arithmetic changed.
 
 The [gfx950 raw clock-sampling API](../qualification/gfx950-clock-sampling-v1/README.md)
 passed 648 selected Rust tests with four existing worker ignores on `mi350-2`.
@@ -31,7 +40,7 @@ build, 33 naturally completed commands and unchanged source/input postchecks.
 A separate 14-test controller-policy run also passed. The API retains owned
 descriptors, full currentness checks, rank identity and host sampling brackets.
 The later worker checkpoint above wires it into Ferric's dispatch recorder;
-native sampling and calibration remain unqualified.
+native sampling is now observed, while calibration remains unqualified.
 
 The [timestamp-enabled parent and worker run on MI350](../qualification/native-device-observation-v1/README.md).
 The four-forward Qwen3-8B BF16 TP2 capture contains all 1,172 raw dispatch rows,

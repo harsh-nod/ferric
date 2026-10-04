@@ -1,0 +1,87 @@
+{
+  "files": [
+    {
+      "path": "INTAKE.md",
+      "bytes": 3446,
+      "sha256": "35bde4054fbfe1793f23dba0513f3c83f52f0c591e71f9d64eb38f0f0e8b1762"
+    },
+    {
+      "path": "README.md",
+      "bytes": 5496,
+      "sha256": "c4aef9f62888cd932900de737d0d7c5c6a9f1f909e6b75b1982f8ab9f5e82540"
+    },
+    {
+      "path": "baseline_comparison.py",
+      "bytes": 21802,
+      "sha256": "413e8bb4ea5637cb3ca67003433b62bf7cb90832c4f88101d2c9ea9fa7bcc512"
+    },
+    {
+      "path": "baseline_diagnostic.py",
+      "bytes": 13589,
+      "sha256": "259f6f233be23da36eac213bfb5e0c905afa43461461fbb0305efcc45c08d930"
+    },
+    {
+      "path": "device_validation.py",
+      "bytes": 9521,
+      "sha256": "b6cbd84c8c473c0185367d3e0e48d260fa9bd54c16fc7da32e4bc0d1ac5182ee"
+    },
+    {
+      "path": "host_validation.py",
+      "bytes": 10099,
+      "sha256": "2f32426a80aca05125112ee3f023c075caea2f9360cbbde1fcb6c3b54cc4f73f"
+    },
+    {
+      "path": "intake.py",
+      "bytes": 21894,
+      "sha256": "98d0edefc1b8f0f23deed70d1e93499c394b0a43f998a51e9361a5ca12206092"
+    },
+    {
+      "path": "layer_validation.py",
+      "bytes": 16186,
+      "sha256": "757c077979b7ee02d4c0e7d222e75292cd9d417927f84ae9a8134344f8e217b9"
+    },
+    {
+      "path": "raw_validation.py",
+      "bytes": 15293,
+      "sha256": "b07590d64d17627cc09c7bcf6312d7c62360329967078e31b5e5cb9adb1b1771"
+    },
+    {
+      "path": "run.py",
+      "bytes": 15566,
+      "sha256": "9106ce237f9bbe989b9111498077b3de3ce5cf34cd3ebd10787ded634a17d193"
+    },
+    {
+      "path": "run_row_facts_v2.py",
+      "bytes": 12424,
+      "sha256": "244c12f62c8a439aa01b44380fc464008b94006bc919201c8d510c64177fc820"
+    },
+    {
+      "path": "test_device_validation.py",
+      "bytes": 10336,
+      "sha256": "deb2ea75ff5d039232e1e22ecc0b11b87eed4fdee709c42ca9ffdddde806ec9e"
+    },
+    {
+      "path": "test_intake.py",
+      "bytes": 16206,
+      "sha256": "cf6f5504a70987521982c26a31f9e1d1d0f2573b4e9a496b3151538176177c1b"
+    },
+    {
+      "path": "test_raw_validation.py",
+      "bytes": 15654,
+      "sha256": "599c6226f5b75a1ac19e027211f78cfdce0385f06e822932a56d1a1796238cff"
+    },
+    {
+      "path": "test_run.py",
+      "bytes": 15742,
+      "sha256": "5d74b3a093521224f24a02f8c102cfa1f680f9251f9b83a95be9be116097adfe"
+    }
+  ],
+  "pure_tests": 61,
+  "schema": "ferric-p228-device-clock-package-v1",
+  "test_census": {
+    "test_device_validation.py": 12,
+    "test_intake.py": 19,
+    "test_raw_validation.py": 17,
+    "test_run.py": 13
+  }
+}
