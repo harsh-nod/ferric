@@ -1,0 +1,60 @@
+{
+  "affinity": [
+    8,
+    9
+  ],
+  "argv": [
+    "/home/harmenon/ferric-asrock-42/toolchain/rustup/toolchains/1.97.1-x86_64-unknown-linux-gnu/bin/cargo",
+    "test",
+    "--offline",
+    "--locked",
+    "--jobs",
+    "2",
+    "--manifest-path",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/layer0-native-capture-cpu-v228-v2/sources/ferric/adapters/m1-engineering-execution-v1/Cargo.toml",
+    "--features",
+    "tp-batch-engineering",
+    "--bin",
+    "ferric-qwen3-finite-tiles-decode-engineering",
+    "--",
+    "--test-threads=2"
+  ],
+  "cache_cap_bytes": 6442450944,
+  "deadline_seconds": 1200,
+  "env": {
+    "CARGO_BUILD_JOBS": "2",
+    "CARGO_HOME": "/home/harmenon/ferric-asrock-42/toolchain/cargo",
+    "CARGO_INCREMENTAL": "0",
+    "CARGO_PROFILE_DEV_DEBUG": "0",
+    "CARGO_PROFILE_DEV_OPT_LEVEL": "2",
+    "CARGO_PROFILE_TEST_DEBUG": "0",
+    "CARGO_PROFILE_TEST_OPT_LEVEL": "2",
+    "CARGO_TARGET_DIR": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/layer0-native-capture-cpu-v228-v2/target",
+    "CUDA_VISIBLE_DEVICES": "",
+    "HIP_VISIBLE_DEVICES": "",
+    "HOME": "/home/harmenon",
+    "LANG": "C.UTF-8",
+    "LC_ALL": "C.UTF-8",
+    "MKL_NUM_THREADS": "1",
+    "OMP_NUM_THREADS": "1",
+    "OPENBLAS_NUM_THREADS": "1",
+    "PATH": "/home/harmenon/ferric-asrock-42/toolchain/rustup/toolchains/1.97.1-x86_64-unknown-linux-gnu/bin:/usr/bin:/bin",
+    "ROCR_VISIBLE_DEVICES": "",
+    "RUSTC": "/home/harmenon/ferric-asrock-42/toolchain/rustup/toolchains/1.97.1-x86_64-unknown-linux-gnu/bin/rustc",
+    "RUSTC_BOOTSTRAP": "fe2o3_device,fe2o3_macros",
+    "RUSTDOC": "/home/harmenon/ferric-asrock-42/toolchain/rustup/toolchains/1.97.1-x86_64-unknown-linux-gnu/bin/rustdoc",
+    "RUSTUP_HOME": "/home/harmenon/ferric-asrock-42/toolchain/rustup",
+    "RUSTUP_TOOLCHAIN": "1.97.1-x86_64-unknown-linux-gnu",
+    "RUST_TEST_THREADS": "2",
+    "TMPDIR": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/layer0-native-capture-cpu-v228-v2/tmp",
+    "TZ": "UTC"
+  },
+  "expected_exit": 0,
+  "gpu_execution": false,
+  "nice": 10,
+  "tools": {
+    "cargo": "828980723df339d62434390e9fb8ef8831036583343ae2316b7ab5646b5c1953",
+    "rustc": "d3a664c970a9fd8361b64194861bebc1ae37b9054e5ee3400dc1c9e691797eea",
+    "rustdoc": "3b0c7aef20e0dfdfe2dd19ddb0b40d3b744f76318a44031813f501e1912934df"
+  }
+}

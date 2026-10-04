@@ -277,3 +277,26 @@ the worker's sibling runtime checkout. The subsequent
 passed all sixteen sample and output-invariance checks. No calibration,
 clock-domain alignment, overlap, full-model numerical acceptance or throughput
 is implied by this interface or raw capture.
+
+## Candidate-Only Layer-Zero Capture
+
+The separate `ferric-qwen3-finite-prefix-layer-capture-engineering` binary
+captures one genuine layer-zero execution for numerical diagnosis. It requires
+`tp-batch-engineering` and the exact invocation:
+
+```sh
+ferric-qwen3-finite-prefix-layer-capture-engineering \
+  --request /private/layer-capture-request.json \
+  --capture-layer-zero --allow-unauthenticated-machine-code
+```
+
+The flat `FerricFinitePrefixLayerCaptureRequestV1` schema preserves the existing
+model, prompt, image, worker, device and lifecycle checks. It accepts no injected
+intermediate values. The observation reports 28 typed arrays only after native
+Close and worker reap. It omits `bitwise_equal`: this route makes no paired
+comparison. The existing paired layer route is unchanged.
+
+The [CPU qualification](../../qualification/layer0-native-capture-parent-v1/README.md)
+passed 289 Rust tests on `mi350-2`. GPU capture and independent numerical
+acceptance remain separate, pending checks. This is an engineering diagnostic,
+not a production or sustained-throughput entry point.

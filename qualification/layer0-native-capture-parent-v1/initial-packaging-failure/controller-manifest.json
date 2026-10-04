@@ -1,0 +1,25 @@
+{
+  "schema": "ferric-p228-layer0-native-capture-cpu-package-v1",
+  "files": [
+    {
+      "path": "run.py",
+      "bytes": 27037,
+      "sha256": "585cc23deac1615f9742dcf032aba2fc805f72e18e9bec83d8bf0a6fb9dd8713"
+    },
+    {
+      "path": "overlay.json",
+      "bytes": 5308,
+      "sha256": "23a41387e579b6eed3771e95bf5bfebf2a239b32f01bc4050602663667f7fb14"
+    },
+    {
+      "path": "test_run.py",
+      "bytes": 14673,
+      "sha256": "b025cd2b4c5e0204ad55650e8912c20bec2655d1dd7f429cd1ce49b90a38aa7e"
+    },
+    {
+      "path": "README.md",
+      "bytes": 4358,
+      "sha256": "261d36f2ab763e3deda098d1f85e0a2615957fea9da5f957765ed220ed2766c2"
+    }
+  ]
+}

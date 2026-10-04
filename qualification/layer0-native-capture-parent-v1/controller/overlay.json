@@ -1,0 +1,102 @@
+{
+  "schema": "ferric-p228-layer0-native-capture-cpu-overlay-v1",
+  "source_manifest": {
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/layer0-native-capture-source-inputs-v228-v2.json",
+    "bytes": 844,
+    "sha256": "c52178efe8973549afa55c09d4c7615a88dee407f537c2bb95496455300664f9"
+  },
+  "files": [
+    {
+      "path": "adapters/m1-engineering-execution-v1/Cargo.toml",
+      "source": "p228-layer0-native-capture-source-v1/draft/adapters/m1-engineering-execution-v1/Cargo.toml",
+      "before": {
+        "bytes": 12075,
+        "sha256": "5465ad6c0ab5b5ae981a984d8f9883a8f7b8bcf66600a7eba1052d21b1466157"
+      },
+      "after": {
+        "bytes": 12264,
+        "sha256": "901c4a3d2e8555fd4596cae103d14f2c977a5d0432c7d739ec0ad51286e8c283"
+      }
+    },
+    {
+      "path": "adapters/m1-engineering-execution-v1/src/bin/ferric-qwen3-finite-prefix-layer-capture-engineering.rs",
+      "source": "p228-layer0-native-capture-source-v1/draft/adapters/m1-engineering-execution-v1/src/bin/ferric-qwen3-finite-prefix-layer-capture-engineering.rs",
+      "before": null,
+      "after": {
+        "bytes": 3043,
+        "sha256": "1509b3a84b37cb3c7fbc20ddfc35bdc8a94ba0a646e74b009fcf7b70ff34a443"
+      }
+    },
+    {
+      "path": "adapters/m1-engineering-execution-v1/src/tp_finite_client/prefix_layer.rs",
+      "source": "p228-layer0-native-capture-source-v1/draft/adapters/m1-engineering-execution-v1/src/tp_finite_client/prefix_layer.rs",
+      "before": {
+        "bytes": 22091,
+        "sha256": "5922ffba2e4a1f88fcb0754fe7f7cef866986a375a5654a5cdd6c44718338ffd"
+      },
+      "after": {
+        "bytes": 22274,
+        "sha256": "52384fce79d779125a671713c01b2edf0cdff0a6fe6d089d32850c202b6ef267"
+      }
+    },
+    {
+      "path": "adapters/m1-engineering-execution-v1/src/tp_finite_client/prefix_layer/capture_evidence_tests.rs",
+      "source": "p228-layer0-native-capture-source-v1/draft/adapters/m1-engineering-execution-v1/src/tp_finite_client/prefix_layer/capture_evidence_tests.rs",
+      "before": null,
+      "after": {
+        "bytes": 2897,
+        "sha256": "670c81cac767312855f9a4f62a771de67dafd19981296f9b67730447be58e5d0"
+      }
+    },
+    {
+      "path": "adapters/m1-engineering-execution-v1/src/tp_finite_client/prefix_layer/capture_tests.rs",
+      "source": "p228-layer0-native-capture-source-v1/draft/adapters/m1-engineering-execution-v1/src/tp_finite_client/prefix_layer/capture_tests.rs",
+      "before": null,
+      "after": {
+        "bytes": 9989,
+        "sha256": "55a98f1435cf230cfbb6480440118a1e79fd79838fcfb3950b9ff8c8f76fe9c2"
+      }
+    },
+    {
+      "path": "adapters/m1-engineering-execution-v1/src/tp_finite_client/prefix_layer/capture.rs",
+      "source": "p228-layer0-native-capture-source-v1/draft/adapters/m1-engineering-execution-v1/src/tp_finite_client/prefix_layer/capture.rs",
+      "before": null,
+      "after": {
+        "bytes": 6912,
+        "sha256": "5daa32fc5f8c00272c5a09036d5814189527365b5468408a1572a1ddc329f79f"
+      }
+    },
+    {
+      "path": "adapters/m1-engineering-execution-v1/src/tp_finite_client/prefix_layer/evidence.rs",
+      "source": "p228-layer0-native-capture-source-v1/draft/adapters/m1-engineering-execution-v1/src/tp_finite_client/prefix_layer/evidence.rs",
+      "before": {
+        "bytes": 4272,
+        "sha256": "5dd9e04d0607b0d2e840446e9685b6c25210c13a500b9a63e4589ba673df481d"
+      },
+      "after": {
+        "bytes": 5262,
+        "sha256": "8bdce684444e29f401196d5e9435457e200195288c7a2c4584bee93ca85bab40"
+      }
+    }
+  ],
+  "added_parent_tests": {
+    "lib": [
+      "tp_finite_client::prefix_layer::capture::tests::capture_binds_current_images_child_scope_and_genuine_input",
+      "tp_finite_client::prefix_layer::capture::tests::capture_entry_requires_explicit_optin_before_io",
+      "tp_finite_client::prefix_layer::capture::tests::capture_observation_is_bounded_and_never_claims_comparison_or_numerical_acceptance",
+      "tp_finite_client::prefix_layer::capture::tests::capture_records_all_twenty_eight_stage_extents_offsets_and_digests",
+      "tp_finite_client::prefix_layer::capture::tests::capture_rejects_nonfinite_truncation_mutation_and_untouched_kv_writes",
+      "tp_finite_client::prefix_layer::capture::tests::capture_request_and_legacy_comparison_schemas_do_not_alias",
+      "tp_finite_client::prefix_layer::capture::tests::capture_request_refuses_identity_and_input_bounds_before_io",
+      "tp_finite_client::prefix_layer::capture::tests::capture_request_rejects_extra_modes_and_injected_inputs",
+      "tp_finite_client::prefix_layer::capture::tests::capture_requires_complete_terminal_close_and_reaped_child",
+      "tp_finite_client::prefix_layer::evidence::capture_tests::candidate_roster_rejects_missing_extra_reordered_and_paired_names",
+      "tp_finite_client::prefix_layer::evidence::capture_tests::candidate_summary_refuses_changed_deleted_and_symlinked_capture",
+      "tp_finite_client::prefix_layer::evidence::capture_tests::candidate_summary_retains_original_aggregate_and_summary_bounds",
+      "tp_finite_client::prefix_layer::evidence::capture_tests::exact_candidate_roster_can_finalize_but_not_as_paired_evidence"
+    ],
+    "bin": [
+      "tests::capture_cli_is_exact_optin_and_rejects_old_or_additional_modes"
+    ]
+  }
+}

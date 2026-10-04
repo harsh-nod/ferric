@@ -1,0 +1,30 @@
+warning: unused macro definition: `qwen_attention_emit_pair_v1`
+  --> /home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/layer0-native-capture-cpu-v228-v2/sources/ferric/device/qwen3-tp-perf-kernels-v3/src/attention_online.rs:11:14
+   |
+11 | macro_rules! qwen_attention_emit_pair_v1 {
+   |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = note: `#[warn(unused_macros)]` (part of `#[warn(unused)]`) on by default
+
+warning: `ferric-qwen3-tp-perf-kernels-device-v3` (lib) generated 1 warning
+warning: method `encode` is never used
+   --> src/../../tp-peer-finite-engineering-worker-v1/src/prefix_decode_device_observation_v1.rs:327:19
+    |
+249 | impl Report {
+    | ----------- method in this implementation
+...
+327 |     pub(crate) fn encode(&self) -> io::Result<Vec<u8>> {
+    |                   ^^^^^^
+    |
+    = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: struct `Bounded` is never constructed
+   --> src/../../tp-peer-finite-engineering-worker-v1/src/prefix_decode_device_observation_v1.rs:334:8
+    |
+334 | struct Bounded(Vec<u8>);
+    |        ^^^^^^^
+
+warning: `ferric-m1-engineering-execution-v1` (lib) generated 2 warnings
+   Compiling ferric-m1-engineering-execution-v1 v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/layer0-native-capture-cpu-v228-v2/sources/ferric/adapters/m1-engineering-execution-v1)
+    Finished `test` profile [optimized] target(s) in 0.64s
+     Running unittests src/bin/ferric-qwen3-finite-prefix-decode-device-engineering.rs (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/layer0-native-capture-cpu-v228-v2/target/debug/deps/ferric_qwen3_finite_prefix_decode_device_engineering-5514b4bc7d7f91f0)

@@ -1,0 +1,2498 @@
+{
+  "all_cpu_input_bodies_locally_rehashed": false,
+  "binary_tests_passed": 14,
+  "cargo_artifact_records": 14,
+  "compiled_source_unchanged": true,
+  "compiler_hsaco_reproduced": false,
+  "cpu_receipt": {
+    "bytes": 326552,
+    "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/layer0-native-capture-cpu-v228-v2/complete.json",
+    "sha256": "78c12f822e95d50a1239f56411c5b8da9411a3fbda7510fbbf38d5644e1dffbb"
+  },
+  "cpu_receipt_sha256": "78c12f822e95d50a1239f56411c5b8da9411a3fbda7510fbbf38d5644e1dffbb",
+  "cpu_tests_ignored": 0,
+  "cpu_tests_passed": 289,
+  "cross_device_clock_alignment": false,
+  "down2_qualified_here": false,
+  "external_dependency_bodies_locally_rehashed": false,
+  "format_receipt": {
+    "bytes": 8256,
+    "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/layer0-native-capture-format-v228-v1/complete.json",
+    "sha256": "d718a2638fbcc6135130c98dd64178ccbc3ec0d340ca7b15acc0b10f0c4e3421"
+  },
+  "formatted_files": 7,
+  "full_model_acceptance": false,
+  "gpu_clock_domain_relationship_established": false,
+  "gpu_execution": false,
+  "initial_packaging_failure": {
+    "archive": {
+      "bytes": 24832983,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/layer0-capture-ferric-1a9a2551-v228-v1.tar.gz",
+      "sha256": "d58264ff8e5a91c1cc7f315a28c3c578d91bb371273347cd1bf2d2b7bef4ee0e"
+    },
+    "compiler_failure": false,
+    "failed_inputs_preserved": true,
+    "gpu_execution": false,
+    "record": {
+      "bytes": 1605,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/layer0-native-capture-archive-v1-failure.json",
+      "sha256": "6e7257fec107831580d5e70849e66bfe11acc2313c4d4b4e1378c6587f9b90e6"
+    },
+    "rejected_before_compiler": true,
+    "root_observed_not_controller_completion": true
+  },
+  "library_inventory": 778,
+  "library_tests_passed": 275,
+  "live_compiled_files_joined": 802,
+  "locally_retained_parent": {
+    "bytes": 13480088,
+    "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/layer0-native-capture-parent-v228-v2",
+    "sha256": "e7fb0571cfb8114ef86987525a6b882c4fdc84329022db5eabfdb131f3e3e12d"
+  },
+  "manifest_only_new_bin_registration": true,
+  "native_layer_capture_executed": false,
+  "new_parent_tests": 14,
+  "numerical_acceptance": false,
+  "original_cpu_controller_rerun": false,
+  "other_thirteen_parent_binaries_locally_rehashed": false,
+  "package_manifest": {
+    "bytes": 664,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-layer0-native-capture-cpu-v2/manifest.json",
+    "sha256": "301f6311e2a6163b356131c5f2a9bce0029d7c71b21c9ffe1b6be99f62fe3449"
+  },
+  "parent": {
+    "bytes": 13480088,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/layer0-native-capture-cpu-v228-v2/target/debug/ferric-qwen3-finite-prefix-layer-capture-engineering",
+    "sha256": "e7fb0571cfb8114ef86987525a6b882c4fdc84329022db5eabfdb131f3e3e12d"
+  },
+  "parent_dependency_generation": {
+    "external": [
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/aho-corasick-1.1.5/Cargo.toml",
+        "manifest_sha256": "7ff243aed78547f286729c3c60d97577fbc685546120263548d7c4f2a3884bc1",
+        "name": "aho-corasick",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "1.1.5"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/allocator-api2-0.2.21/Cargo.toml",
+        "manifest_sha256": "ddaa434cc54a30a33bbe0096e72479d71ba5deffa2ad9bee39419d4e50b75275",
+        "name": "allocator-api2",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "0.2.21"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/arrayvec-0.7.8/Cargo.toml",
+        "manifest_sha256": "20e9a4f27b17531ac0c3ab9f403e52c9d567eea254703df3b3b18ca36d5f7927",
+        "name": "arrayvec",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "0.7.8"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/awint-0.19.0/Cargo.toml",
+        "manifest_sha256": "3f1922dab48ca75a13335b20dc81013fd4215f1ba83a65f024398ac0d3f61668",
+        "name": "awint",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "0.19.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/awint_core-0.19.0/Cargo.toml",
+        "manifest_sha256": "1adfe02cc3ae1d4704f7c8b03b84fc579a8ea78cd2a0d3cd47d85377cd4b1b48",
+        "name": "awint_core",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "0.19.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/awint_dag-0.19.0/Cargo.toml",
+        "manifest_sha256": "cce37e9205612cadfa1eca9fdc67d3ad9b9c0eb52f9a117e58a5a9e3efb3334f",
+        "name": "awint_dag",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "0.19.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/awint_ext-0.19.0/Cargo.toml",
+        "manifest_sha256": "a531698e12da18892697ea06012207430f7411c1230ca60d9ee57832e151abad",
+        "name": "awint_ext",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "0.19.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/awint_internals-0.19.0/Cargo.toml",
+        "manifest_sha256": "416a0e817004d6be3b219f7e0df2e9004f25260d95a7e80f742a5e01b3473c93",
+        "name": "awint_internals",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "0.19.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/awint_macro_internals-0.19.0/Cargo.toml",
+        "manifest_sha256": "336c0e31e20a5b9fbbbac116b78af3e1b2dd0e4577a1532b21e1b9d4b68e291b",
+        "name": "awint_macro_internals",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "0.19.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/awint_macros-0.19.0/Cargo.toml",
+        "manifest_sha256": "5f8878e1eeaa466398272480ff156520848c58748d1d5f3f295d71bb35e8757d",
+        "name": "awint_macros",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "0.19.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/base64ct-1.8.3/Cargo.toml",
+        "manifest_sha256": "950ec911574afbf038e970968c9bcd03df0fe56d78eabee157012e54d487cb29",
+        "name": "base64ct",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "1.8.3"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/bitflags-2.13.1/Cargo.toml",
+        "manifest_sha256": "b13b9b7edbbb039205f57f107acdba1840b7c8452c6fdf4e04bc58124f7b5e0c",
+        "name": "bitflags",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "2.13.1"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/block-buffer-0.10.4/Cargo.toml",
+        "manifest_sha256": "c76e4bd298cd6223882238449e31939d75613e82757ca87e249df843decf5f9a",
+        "name": "block-buffer",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "0.10.4"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/block-buffer-0.12.1/Cargo.toml",
+        "manifest_sha256": "f21191120ab1d04327657b7125f25b0e3f2bce34af5e921d3c66d24de11d5e60",
+        "name": "block-buffer",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "0.12.1"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/bytemuck-1.25.2/Cargo.toml",
+        "manifest_sha256": "7b99bce6fd19ac16efd0fa94051b95f6cee7945f9d76842e072e4176a152794c",
+        "name": "bytemuck",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "1.25.2"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/bytes-1.12.1/Cargo.toml",
+        "manifest_sha256": "dc260d0d04b58aea819f8d6762c2feb51e66f8edd77e4e64cc1eac6f447a8143",
+        "name": "bytes",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "1.12.1"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/cc-1.4.5/Cargo.toml",
+        "manifest_sha256": "434867ab97389bff6b1a646e2960da37f14ce77b1aa3ea9e75508322e82c0473",
+        "name": "cc",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "1.4.5"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/cfg-if-1.0.4/Cargo.toml",
+        "manifest_sha256": "281d508beb1fe3927cf03d3f2f8c9a5117b1e4fe97ae21b9026cf318e8c35273",
+        "name": "cfg-if",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "1.0.4"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/combine-4.6.8/Cargo.toml",
+        "manifest_sha256": "a7e5461b82da71ac74acb031a2e70c545be35d2b6634e029b77bea4388bdf49c",
+        "name": "combine",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "4.6.8"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/const-oid-0.9.6/Cargo.toml",
+        "manifest_sha256": "c646206dd9067b48ca550efcedd9eed7fd2ed230e7d05757a569bbe18f01081c",
+        "name": "const-oid",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "0.9.6"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/const-oid-0.10.2/Cargo.toml",
+        "manifest_sha256": "591ac78fc8cd99d8a31110e8cb572534bb9d04af23bc48db855a34d4a6c78569",
+        "name": "const-oid",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "0.10.2"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/const_fn-0.4.12/Cargo.toml",
+        "manifest_sha256": "6b1bada35d5be994ec0de09d30ed374cfa14714f31d62988f0ccdf8f64809d0c",
+        "name": "const_fn",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "0.4.12"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/convert_case-0.4.0/Cargo.toml",
+        "manifest_sha256": "bbd8c27bde074b1c78539307cc2f1770efdaf890253cce4b9557cfdc32d4e605",
+        "name": "convert_case",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "0.4.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/convert_case-0.11.0/Cargo.toml",
+        "manifest_sha256": "08983e3526100ede2b6a2ea7ab7e46a9fe898a3f7eb0021edaeb98ead500ff49",
+        "name": "convert_case",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "0.11.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/cpufeatures-0.2.17/Cargo.toml",
+        "manifest_sha256": "25160ea4dfa195721d352d42827b882a41f18f4c55fff58e5c3878ecae84ca44",
+        "name": "cpufeatures",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "0.2.17"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/cpufeatures-0.3.1/Cargo.toml",
+        "manifest_sha256": "2e82ee61a94e8ef99197ca59723e9794d0f08363f28bacab680292af6ccdde61",
+        "name": "cpufeatures",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "0.3.1"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/crypto-common-0.1.7/Cargo.toml",
+        "manifest_sha256": "303682a6a66fdc98de8a011ac275e18c523f1535ed8de2a291a4fcad91de8348",
+        "name": "crypto-common",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "0.1.7"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/crypto-common-0.2.2/Cargo.toml",
+        "manifest_sha256": "1b47561054dd2fe13246f2f6e19c29eac256269e02c96162fd6efed28247e78a",
+        "name": "crypto-common",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "0.2.2"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/curve25519-dalek-4.1.3/Cargo.toml",
+        "manifest_sha256": "ef9a2ca89de6eb3e09adf27478df06d246f27ee025150241e847aff26d78129d",
+        "name": "curve25519-dalek",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "4.1.3"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/curve25519-dalek-derive-0.1.1/Cargo.toml",
+        "manifest_sha256": "60d2093fbabea9e72ad1350ae4a616ae56b2592742a64d2bd679a749f7a6bb4d",
+        "name": "curve25519-dalek-derive",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "0.1.1"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/der-0.7.10/Cargo.toml",
+        "manifest_sha256": "ab115a95d89b2a7da3cd8264684f74f905322331db94ec7044511ad87d1cf331",
+        "name": "der",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "0.7.10"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/git/checkouts/fe2o3-3973306df8c37287/faaaf15/crates/dialect-amdgcn/Cargo.toml",
+        "manifest_sha256": "4ff4dbb8a0e27ed8f6abc47fe7d37074a06ec049d93f39f1b3288607402d3971",
+        "name": "dialect-amdgcn",
+        "source": "git+https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d68eff996b22951758b1a9fa83317d6d2",
+        "version": "0.1.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/git/checkouts/fe2o3-3973306df8c37287/faaaf15/crates/dialect-gpu/Cargo.toml",
+        "manifest_sha256": "bd268bfa1a1cdd8d4d0b39f42937026fc6b8bee5d342c8f7313329cc5ce8e9d4",
+        "name": "dialect-gpu",
+        "source": "git+https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d68eff996b22951758b1a9fa83317d6d2",
+        "version": "0.1.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/git/checkouts/fe2o3-3973306df8c37287/faaaf15/crates/dialect-kernel/Cargo.toml",
+        "manifest_sha256": "6ac57f305c8edb3929238c068d16ca5dca737be07cee499ce9e270397740372b",
+        "name": "dialect-kernel",
+        "source": "git+https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d68eff996b22951758b1a9fa83317d6d2",
+        "version": "0.1.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/git/checkouts/fe2o3-3973306df8c37287/faaaf15/crates/dialect-mir/Cargo.toml",
+        "manifest_sha256": "a94c9f3a3e9ee3a3f02bcb3eafc9c65d8f37748dc287d890907f677ad60f58ae",
+        "name": "dialect-mir",
+        "source": "git+https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d68eff996b22951758b1a9fa83317d6d2",
+        "version": "0.1.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/git/checkouts/fe2o3-3973306df8c37287/faaaf15/crates/dialect-proof/Cargo.toml",
+        "manifest_sha256": "97084696685535196febf0585d2a63b08eb1166fa89fe013cb29a5173db496c7",
+        "name": "dialect-proof",
+        "source": "git+https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d68eff996b22951758b1a9fa83317d6d2",
+        "version": "0.1.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/digest-0.10.7/Cargo.toml",
+        "manifest_sha256": "f0cc2fc18c6e7f3533658b9e59d71b55e641e7d8226e5d1b915a5e7c0a1d3f36",
+        "name": "digest",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "0.10.7"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/digest-0.11.3/Cargo.toml",
+        "manifest_sha256": "59c4f2cba7e34831c87e8f4844718d91d0f276af7bd192de76fda7d5a8978eb9",
+        "name": "digest",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "0.11.3"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/downcast-rs-2.0.2/Cargo.toml",
+        "manifest_sha256": "e791d7026a3747242cea4a3b4102b7c453dba45cde02ce798483bbcc4991acc4",
+        "name": "downcast-rs",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "2.0.2"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/dyn-clone-1.0.20/Cargo.toml",
+        "manifest_sha256": "6753280e066f943c3569ef818b09e1400cca53501dcd462fa1aa25d4f516c162",
+        "name": "dyn-clone",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "1.0.20"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ed25519-2.2.3/Cargo.toml",
+        "manifest_sha256": "c6fffc86c6297739753fd78ad9ccb9c15385704329259a986530e09732957c82",
+        "name": "ed25519",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "2.2.3"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ed25519-dalek-2.2.0/Cargo.toml",
+        "manifest_sha256": "65e415110f13ea42e3205a6d49426257c3242aa1f46ffca2e6cbafae0b205b14",
+        "name": "ed25519-dalek",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "2.2.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/equivalent-1.0.2/Cargo.toml",
+        "manifest_sha256": "92fcf6d8b32d99f40a5053b9026e417c958d6f5f19581c632d675211b7eeb9f9",
+        "name": "equivalent",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "1.0.2"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/errno-0.3.14/Cargo.toml",
+        "manifest_sha256": "a25f16ccaa127602fc0cc9d1c80186619a0b8f42331a27b6f04b6bfa4aa29de2",
+        "name": "errno",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "0.3.14"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/git/checkouts/fe2o3-3973306df8c37287/faaaf15/crates/fe2o3-amd-target/Cargo.toml",
+        "manifest_sha256": "a1ca0686c6e88d6a2011bd9ed5d09727b3608269f9a50725599e0d47be5edd02",
+        "name": "fe2o3-amd-target",
+        "source": "git+https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d68eff996b22951758b1a9fa83317d6d2",
+        "version": "0.1.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/git/checkouts/fe2o3-3973306df8c37287/faaaf15/crates/fe2o3-amdgcn-model/Cargo.toml",
+        "manifest_sha256": "0853398cc182b355458365be87d6e293be5f119c9793ee7d6b514836f0e31d37",
+        "name": "fe2o3-amdgcn-model",
+        "source": "git+https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d68eff996b22951758b1a9fa83317d6d2",
+        "version": "0.1.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/git/checkouts/fe2o3-3973306df8c37287/faaaf15/crates/fe2o3-amdhsa-loader/Cargo.toml",
+        "manifest_sha256": "38d35b8d51b45e7f5ba4e7a8b36b6f316d6104b6962c1c9ec4c12a1b785b44a0",
+        "name": "fe2o3-amdhsa-loader",
+        "source": "git+https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d68eff996b22951758b1a9fa83317d6d2",
+        "version": "0.1.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/git/checkouts/fe2o3-3973306df8c37287/faaaf15/crates/fe2o3-aql/Cargo.toml",
+        "manifest_sha256": "7bed04a9f75c0688d8d1163c7bda7f646404eef507a8e9224e18b4d633fd09da",
+        "name": "fe2o3-aql",
+        "source": "git+https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d68eff996b22951758b1a9fa83317d6d2",
+        "version": "0.1.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/git/checkouts/fe2o3-3973306df8c37287/faaaf15/crates/fe2o3-artifact-transaction/Cargo.toml",
+        "manifest_sha256": "211563e6fd60b9d6030f95e7bca5c5ef22999bfab3543f1191ae38e1a43799f2",
+        "name": "fe2o3-artifact-transaction",
+        "source": "git+https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d68eff996b22951758b1a9fa83317d6d2",
+        "version": "0.1.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/git/checkouts/fe2o3-3973306df8c37287/faaaf15/crates/fe2o3-artifacts/Cargo.toml",
+        "manifest_sha256": "49fcebb07b98e0806609acf16fe33cc8d6d663e42ecf98bc7d43ffa7ea054f11",
+        "name": "fe2o3-artifacts",
+        "source": "git+https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d68eff996b22951758b1a9fa83317d6d2",
+        "version": "0.1.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/git/checkouts/fe2o3-3973306df8c37287/faaaf15/crates/fe2o3-build-authority/Cargo.toml",
+        "manifest_sha256": "c2f0cb40256a95d364fd8f60af641b21141525dffd3eac6d7d43bd4eb837fcea",
+        "name": "fe2o3-build-authority",
+        "source": "git+https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d68eff996b22951758b1a9fa83317d6d2",
+        "version": "0.1.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/git/checkouts/fe2o3-3973306df8c37287/faaaf15/crates/fe2o3-compiler-closure-capability/Cargo.toml",
+        "manifest_sha256": "de0b7c82049100189958ec76c12bc01a9551651370a239d1c7d7799bc7d51a49",
+        "name": "fe2o3-compiler-closure-capability",
+        "source": "git+https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d68eff996b22951758b1a9fa83317d6d2",
+        "version": "0.1.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/git/checkouts/fe2o3-3973306df8c37287/faaaf15/crates/fe2o3-compiler-execution-client/Cargo.toml",
+        "manifest_sha256": "d4fb12a0035ce2a7d81ef86a7b4730fe0493eba22095385c9686a4673ee5ef4c",
+        "name": "fe2o3-compiler-execution-client",
+        "source": "git+https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d68eff996b22951758b1a9fa83317d6d2",
+        "version": "0.1.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/git/checkouts/fe2o3-3973306df8c37287/faaaf15/crates/fe2o3-compiler-execution-protocol/Cargo.toml",
+        "manifest_sha256": "830d9f8623d860309ebac3db3458498e13f34f2bc96171c77456fb4ace35afef",
+        "name": "fe2o3-compiler-execution-protocol",
+        "source": "git+https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d68eff996b22951758b1a9fa83317d6d2",
+        "version": "0.1.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/git/checkouts/fe2o3-3973306df8c37287/faaaf15/crates/fe2o3-compiler-ffi/Cargo.toml",
+        "manifest_sha256": "76d26b885cbd9e6408cccf7fd7434bba0999d0218a4f40170135e8869c44706d",
+        "name": "fe2o3-compiler-ffi",
+        "source": "git+https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d68eff996b22951758b1a9fa83317d6d2",
+        "version": "0.1.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/git/checkouts/fe2o3-3973306df8c37287/faaaf15/crates/fe2o3-compiler-lineage/Cargo.toml",
+        "manifest_sha256": "5a5252b03a751ff63741dc925eed18f08a48a98b27d6ff16b188eccbcfa981a3",
+        "name": "fe2o3-compiler-lineage",
+        "source": "git+https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d68eff996b22951758b1a9fa83317d6d2",
+        "version": "0.1.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/git/checkouts/fe2o3-3973306df8c37287/faaaf15/crates/fe2o3-contracts/Cargo.toml",
+        "manifest_sha256": "152cb059c738c5b657f63881097063071d69ab36ca7c6f1b426854990a2f9acd",
+        "name": "fe2o3-contracts",
+        "source": "git+https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d68eff996b22951758b1a9fa83317d6d2",
+        "version": "0.1.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/git/checkouts/fe2o3-3973306df8c37287/faaaf15/crates/fe2o3-device/Cargo.toml",
+        "manifest_sha256": "da7bbcd2f3dac75b968f45137c920d94658b5600ff52bf9d843d494bcdd8afb7",
+        "name": "fe2o3-device",
+        "source": "git+https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d68eff996b22951758b1a9fa83317d6d2",
+        "version": "0.1.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/git/checkouts/fe2o3-3973306df8c37287/faaaf15/crates/fe2o3-drm-uapi/Cargo.toml",
+        "manifest_sha256": "d1e8d7a4a55dc9f37b7756eb8d0430b16a8dc273e1c528afee079fd9289f2c89",
+        "name": "fe2o3-drm-uapi",
+        "source": "git+https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d68eff996b22951758b1a9fa83317d6d2",
+        "version": "0.1.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/git/checkouts/fe2o3-3973306df8c37287/faaaf15/crates/fe2o3-external-anchor-protocol/Cargo.toml",
+        "manifest_sha256": "7c51276b35119bc07c0d12702c9998ed06eaa38b0ddfd5886ffb2f92696c6732",
+        "name": "fe2o3-external-anchor-protocol",
+        "source": "git+https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d68eff996b22951758b1a9fa83317d6d2",
+        "version": "0.1.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/git/checkouts/fe2o3-3973306df8c37287/faaaf15/crates/fe2o3-functional-proof/Cargo.toml",
+        "manifest_sha256": "34d955505ce9cf7cf6c1fa9a5aa26bf83653c78f35f3b748a8e0dbf2648feeb6",
+        "name": "fe2o3-functional-proof",
+        "source": "git+https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d68eff996b22951758b1a9fa83317d6d2",
+        "version": "0.1.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/git/checkouts/fe2o3-3973306df8c37287/faaaf15/crates/fe2o3-host/Cargo.toml",
+        "manifest_sha256": "351e7a18a1479ae4a1896b387275b2862a3c0a23ddb2bc165a01a528c5867033",
+        "name": "fe2o3-host",
+        "source": "git+https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d68eff996b22951758b1a9fa83317d6d2",
+        "version": "0.1.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/git/checkouts/fe2o3-3973306df8c37287/faaaf15/crates/fe2o3-host-api/Cargo.toml",
+        "manifest_sha256": "eddb4bcb12da28bd1708cd975da704306a6eda2ba9b99d9ebd7e6027fe3ca6f8",
+        "name": "fe2o3-host-api",
+        "source": "git+https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d68eff996b22951758b1a9fa83317d6d2",
+        "version": "0.1.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/git/checkouts/fe2o3-3973306df8c37287/faaaf15/crates/fe2o3-hsaco/Cargo.toml",
+        "manifest_sha256": "fe6bbb73288d52d7fc14347bb008c9aad6ebd2a363f5f08ea9e6083a80a64da7",
+        "name": "fe2o3-hsaco",
+        "source": "git+https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d68eff996b22951758b1a9fa83317d6d2",
+        "version": "0.1.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/git/checkouts/fe2o3-3973306df8c37287/faaaf15/crates/fe2o3-hsaco-finalize/Cargo.toml",
+        "manifest_sha256": "3d391c185265b5f2a76d1a3826fc166119b753dfdf1f7b21d0f04600081acc55",
+        "name": "fe2o3-hsaco-finalize",
+        "source": "git+https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d68eff996b22951758b1a9fa83317d6d2",
+        "version": "0.1.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/git/checkouts/fe2o3-3973306df8c37287/faaaf15/crates/fe2o3-kernel-analysis/Cargo.toml",
+        "manifest_sha256": "7d5f15b2e18ec7e84f91793dde0d7d7d5639e2f599b85a5692ccc6aa5da40719",
+        "name": "fe2o3-kernel-analysis",
+        "source": "git+https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d68eff996b22951758b1a9fa83317d6d2",
+        "version": "0.1.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/git/checkouts/fe2o3-3973306df8c37287/faaaf15/crates/fe2o3-kernel-descriptor/Cargo.toml",
+        "manifest_sha256": "7e83dae0a05debc9831e4eef57cb00dec8dc19491771e73c5fa26af649bb2c7b",
+        "name": "fe2o3-kernel-descriptor",
+        "source": "git+https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d68eff996b22951758b1a9fa83317d6d2",
+        "version": "0.1.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/git/checkouts/fe2o3-3973306df8c37287/faaaf15/crates/fe2o3-kernel-ir/Cargo.toml",
+        "manifest_sha256": "387a051f6ad6d9f45cc1820e35f76a401354a4dff039ca142b10b49f5b23aaf1",
+        "name": "fe2o3-kernel-ir",
+        "source": "git+https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d68eff996b22951758b1a9fa83317d6d2",
+        "version": "0.1.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/git/checkouts/fe2o3-3973306df8c37287/faaaf15/crates/fe2o3-kernel-opt/Cargo.toml",
+        "manifest_sha256": "afd6410aa74cc921c7432fe4e0d4726bc63fdbf4e80b941aa5cf27094d63a30c",
+        "name": "fe2o3-kernel-opt",
+        "source": "git+https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d68eff996b22951758b1a9fa83317d6d2",
+        "version": "0.1.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/git/checkouts/fe2o3-3973306df8c37287/faaaf15/crates/fe2o3-kfd/Cargo.toml",
+        "manifest_sha256": "866571f328a21953782488e28995d49cc54e3c1adcded44cebb19ce6715a7336",
+        "name": "fe2o3-kfd",
+        "source": "git+https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d68eff996b22951758b1a9fa83317d6d2",
+        "version": "0.1.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/git/checkouts/fe2o3-3973306df8c37287/faaaf15/crates/fe2o3-kfd-uapi/Cargo.toml",
+        "manifest_sha256": "dfc33821449db1b65d563041beb53e591d3fb56dec34089f4200c4652aa9a596",
+        "name": "fe2o3-kfd-uapi",
+        "source": "git+https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d68eff996b22951758b1a9fa83317d6d2",
+        "version": "0.1.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/git/checkouts/fe2o3-3973306df8c37287/faaaf15/crates/fe2o3-llvm-handoff/Cargo.toml",
+        "manifest_sha256": "b4166c4a02538bcf33118529a07768b46067a7059c6f77e0e6b102cc63683648",
+        "name": "fe2o3-llvm-handoff",
+        "source": "git+https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d68eff996b22951758b1a9fa83317d6d2",
+        "version": "0.1.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/git/checkouts/fe2o3-3973306df8c37287/faaaf15/crates/fe2o3-llvm-text/Cargo.toml",
+        "manifest_sha256": "6dfc776d2f38c4007e70b477c172eda8292a23f41d378b2dfd71d2821f6a826c",
+        "name": "fe2o3-llvm-text",
+        "source": "git+https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d68eff996b22951758b1a9fa83317d6d2",
+        "version": "0.1.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/git/checkouts/fe2o3-3973306df8c37287/faaaf15/crates/fe2o3-lower-mir-kernel/Cargo.toml",
+        "manifest_sha256": "df0c389c34ee4a0919a9fe6d22581e2b65643321b0a2e39767652078ddecbe0f",
+        "name": "fe2o3-lower-mir-kernel",
+        "source": "git+https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d68eff996b22951758b1a9fa83317d6d2",
+        "version": "0.1.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/git/checkouts/fe2o3-3973306df8c37287/faaaf15/crates/fe2o3-macros/Cargo.toml",
+        "manifest_sha256": "662e1c4baf8ea80e317e9968c30924121833003452093ecf407d71dd7b62cfe4",
+        "name": "fe2o3-macros",
+        "source": "git+https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d68eff996b22951758b1a9fa83317d6d2",
+        "version": "0.1.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/git/checkouts/fe2o3-3973306df8c37287/faaaf15/crates/fe2o3-mir-model/Cargo.toml",
+        "manifest_sha256": "b1e15ceeef6dc8a6a77cf54fc1bfeab34ed52726a0e4f8c26ad088e480ae0215",
+        "name": "fe2o3-mir-model",
+        "source": "git+https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d68eff996b22951758b1a9fa83317d6d2",
+        "version": "0.1.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/git/checkouts/fe2o3-3973306df8c37287/faaaf15/crates/fe2o3-pliron/Cargo.toml",
+        "manifest_sha256": "6aaaf3f4b937628dd984f21e0f8e9a2c5b379a9e252925e30367e87eca5df3b4",
+        "name": "fe2o3-pliron",
+        "source": "git+https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d68eff996b22951758b1a9fa83317d6d2",
+        "version": "0.1.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/git/checkouts/fe2o3-3973306df8c37287/faaaf15/crates/fe2o3-pliron-owner-core/Cargo.toml",
+        "manifest_sha256": "aad222c6d37fe4efaa7c398561867cae521589e9ea7ada45b2b13bcf71e1d34a",
+        "name": "fe2o3-pliron-owner-core",
+        "source": "git+https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d68eff996b22951758b1a9fa83317d6d2",
+        "version": "0.1.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/git/checkouts/fe2o3-3973306df8c37287/faaaf15/crates/fe2o3-process-identity/Cargo.toml",
+        "manifest_sha256": "465951fc712944b22211c7acc84f67a5e363e2379077bedcb59fdb4ab4b568e9",
+        "name": "fe2o3-process-identity",
+        "source": "git+https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d68eff996b22951758b1a9fa83317d6d2",
+        "version": "0.1.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/git/checkouts/fe2o3-3973306df8c37287/faaaf15/crates/fe2o3-profiler-protocol/Cargo.toml",
+        "manifest_sha256": "e9f3166a3909969657c072f6e576e51a3bb761e261128bf07a3d5e237885bfdf",
+        "name": "fe2o3-profiler-protocol",
+        "source": "git+https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d68eff996b22951758b1a9fa83317d6d2",
+        "version": "0.1.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/git/checkouts/fe2o3-3973306df8c37287/faaaf15/crates/fe2o3-proof-contracts/Cargo.toml",
+        "manifest_sha256": "ded31af1f89dfd5b8a12bae30c919396df2bddeaa25f2f1cad08a691e5757ccb",
+        "name": "fe2o3-proof-contracts",
+        "source": "git+https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d68eff996b22951758b1a9fa83317d6d2",
+        "version": "0.1.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/git/checkouts/fe2o3-3973306df8c37287/faaaf15/crates/fe2o3-runtime/Cargo.toml",
+        "manifest_sha256": "01b87b6b5a3effa78e02c61632778504680e6c927dd08db1a14c4fdf5f4362ca",
+        "name": "fe2o3-runtime",
+        "source": "git+https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d68eff996b22951758b1a9fa83317d6d2",
+        "version": "0.1.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/git/checkouts/fe2o3-3973306df8c37287/faaaf15/crates/fe2o3-runtime-model/Cargo.toml",
+        "manifest_sha256": "d996254c949ffaac7fc5588ecead2a29fa334a4890ef71e848a761da922be7e7",
+        "name": "fe2o3-runtime-model",
+        "source": "git+https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d68eff996b22951758b1a9fa83317d6d2",
+        "version": "0.1.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/git/checkouts/fe2o3-3973306df8c37287/faaaf15/crates/fe2o3-runtime-protocol/Cargo.toml",
+        "manifest_sha256": "091e58e9ab7b3254fbf3029bc97a9cf5ff6e8925f78099cd58e8ebd76afa8083",
+        "name": "fe2o3-runtime-protocol",
+        "source": "git+https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d68eff996b22951758b1a9fa83317d6d2",
+        "version": "0.1.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/git/checkouts/fe2o3-3973306df8c37287/faaaf15/crates/fe2o3-rustc-front/Cargo.toml",
+        "manifest_sha256": "773d951165d7c13d936933b7ade776e659828d67e407d77d6cde30db323061a5",
+        "name": "fe2o3-rustc-front",
+        "source": "git+https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d68eff996b22951758b1a9fa83317d6d2",
+        "version": "0.1.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/git/checkouts/fe2o3-3973306df8c37287/faaaf15/crates/fe2o3-rustc-invocation/Cargo.toml",
+        "manifest_sha256": "1e71bd694cbc2c2b6c721bc013cf20937f06d6eb6a3569f58ba4f1d6255afdba",
+        "name": "fe2o3-rustc-invocation",
+        "source": "git+https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d68eff996b22951758b1a9fa83317d6d2",
+        "version": "0.1.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/git/checkouts/fe2o3-3973306df8c37287/faaaf15/crates/fe2o3-service-host/Cargo.toml",
+        "manifest_sha256": "b4112b7307a2630e1db5bacafaf9a79b293fc1e20ae21bed401faba73203f9c3",
+        "name": "fe2o3-service-host",
+        "source": "git+https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d68eff996b22951758b1a9fa83317d6d2",
+        "version": "0.1.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/git/checkouts/fe2o3-3973306df8c37287/faaaf15/crates/fe2o3-service-model/Cargo.toml",
+        "manifest_sha256": "a0fa57e839b42ac7b53c04179971193fab0d3bc7f58b9543858ea8f79dd3b425",
+        "name": "fe2o3-service-model",
+        "source": "git+https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d68eff996b22951758b1a9fa83317d6d2",
+        "version": "0.1.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/git/checkouts/fe2o3-3973306df8c37287/faaaf15/crates/fe2o3-source-isa-observation/Cargo.toml",
+        "manifest_sha256": "73911e809ad222872c0a42514d9963059811d7775326e920ead624f00f489a2e",
+        "name": "fe2o3-source-isa-observation",
+        "source": "git+https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d68eff996b22951758b1a9fa83317d6d2",
+        "version": "0.1.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/git/checkouts/fe2o3-3973306df8c37287/faaaf15/crates/fe2o3-target-spec/Cargo.toml",
+        "manifest_sha256": "950896784d7931a2100b5ac0804ce7706476f00dd96cfeeed1adbdf63653454c",
+        "name": "fe2o3-target-spec",
+        "source": "git+https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d68eff996b22951758b1a9fa83317d6d2",
+        "version": "0.1.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/git/checkouts/fe2o3-3973306df8c37287/faaaf15/crates/fe2o3-verifier/Cargo.toml",
+        "manifest_sha256": "90794ee4a8203a7050579add9db7a69f4581de098ce0f86f81168d7839c78385",
+        "name": "fe2o3-verifier",
+        "source": "git+https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d68eff996b22951758b1a9fa83317d6d2",
+        "version": "0.1.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/git/checkouts/fe2o3-3973306df8c37287/faaaf15/crates/fe2o3-worker-v3-verification-client/Cargo.toml",
+        "manifest_sha256": "c3937a02da1ed62bea8641478c4a13d88c337c7ae9ccdbbf7f3f53174359639c",
+        "name": "fe2o3-worker-v3-verification-client",
+        "source": "git+https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d68eff996b22951758b1a9fa83317d6d2",
+        "version": "0.1.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/git/checkouts/fe2o3-3973306df8c37287/faaaf15/crates/fe2o3-worker-v3-verification-protocol/Cargo.toml",
+        "manifest_sha256": "d44fcc552d27916b6659c9fa38d6dd44c725de144e55ce019957c8d021d9369c",
+        "name": "fe2o3-worker-v3-verification-protocol",
+        "source": "git+https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d68eff996b22951758b1a9fa83317d6d2",
+        "version": "0.1.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/fiat-crypto-0.2.9/Cargo.toml",
+        "manifest_sha256": "33265490768ba75aae4d3fc75e786eb1d00ee6404a8eac26db80f46c128c6ef4",
+        "name": "fiat-crypto",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "0.2.9"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/find-msvc-tools-0.1.12/Cargo.toml",
+        "manifest_sha256": "33f4196a05941f53100e5c753d17c114958eaacf8411997f7dd12fc0cf33662e",
+        "name": "find-msvc-tools",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "0.1.12"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/foldhash-0.2.0/Cargo.toml",
+        "manifest_sha256": "0a76cc29da1c33f4bdb505f5828ecdc20859c4cb9faa402e000f5f10511a27cc",
+        "name": "foldhash",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "0.2.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/generic-array-0.14.7/Cargo.toml",
+        "manifest_sha256": "4b5daed75505275d11f4854dd9172f910da61d9856ca2936d95e2e6e0c9040e4",
+        "name": "generic-array",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "0.14.7"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/getrandom-0.2.17/Cargo.toml",
+        "manifest_sha256": "032d84ffe843860402ec2339ae4179be20fd6f432109e595a3fa83be54893ec7",
+        "name": "getrandom",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "0.2.17"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/hashbrown-0.17.1/Cargo.toml",
+        "manifest_sha256": "afcb0e62d498f756bd4ddf69785c8282d01ee4fa40016158c7eac12ceb302f8c",
+        "name": "hashbrown",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "0.17.1"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/hi_sparse_bitset-0.9.0/Cargo.toml",
+        "manifest_sha256": "fb71a48a3c6b6a9fd8ad7b3ca44509060745c848be0d8ae8db385b85bfeb3f8c",
+        "name": "hi_sparse_bitset",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "0.9.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/hybrid-array-0.4.14/Cargo.toml",
+        "manifest_sha256": "f6ee14dcb159bf01915d9cb9b0fa99696ebc689e5405953b79e3cb08458022a1",
+        "name": "hybrid-array",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "0.4.14"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/indexmap-2.14.1/Cargo.toml",
+        "manifest_sha256": "a1711bc6d4c39407194075b916a998f71eb2c2edd4cfc89335e4f175e5bc65fe",
+        "name": "indexmap",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "2.14.1"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/inventory-0.3.24/Cargo.toml",
+        "manifest_sha256": "3b0b3dc097f1c314a1db6a648d787176eb753f4dc41962883c21f353b4f9cda7",
+        "name": "inventory",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "0.3.24"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/itoa-1.0.18/Cargo.toml",
+        "manifest_sha256": "894c215e4e7e973b556b0e9627bf9b6a719a043fac9b5af9838660816392a09f",
+        "name": "itoa",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "1.0.18"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/libc-0.2.189/Cargo.toml",
+        "manifest_sha256": "95159789ef9c9aaee8230b13be5c89594833a7bf2db299e61eb23b512cb67144",
+        "name": "libc",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "0.2.189"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/linkme-0.3.37/Cargo.toml",
+        "manifest_sha256": "08ede8eb7f7743bb2421f1fe2986c70e354d318241898699a1d4d050f5f51e64",
+        "name": "linkme",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "0.3.37"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/linkme-impl-0.3.37/Cargo.toml",
+        "manifest_sha256": "c999ddb50a544a33046944b6f4f350f061f6fdbef3abe2fb0e207347144ed375",
+        "name": "linkme-impl",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "0.3.37"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/linux-raw-sys-0.12.1/Cargo.toml",
+        "manifest_sha256": "1d24fe227d87b23fc5220ddf2ca4708e5e0d794a3f77961b71cd8140bf33faa5",
+        "name": "linux-raw-sys",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "0.12.1"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/lock_api-0.4.14/Cargo.toml",
+        "manifest_sha256": "dd67edbeff9cee46c3ea6411098aeec7363cb4fe865006c8eca321d321332484",
+        "name": "lock_api",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "0.4.14"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/log-0.4.34/Cargo.toml",
+        "manifest_sha256": "a6b553a374b237960e65d91de04e102a1755a7a20ff21f2c1ef6ba74b9d0ab76",
+        "name": "log",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "0.4.34"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/memchr-2.8.3/Cargo.toml",
+        "manifest_sha256": "a14f68b8fa55f15fd03b15dced37bcf66a0a628f568eedc82817cdb7f9281951",
+        "name": "memchr",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "2.8.3"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/object-0.39.1/Cargo.toml",
+        "manifest_sha256": "373aa1a7d2fd042ac630d54e405147141e7a3da961e6a81d449c056fa3ae6152",
+        "name": "object",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "0.39.1"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/once_cell-1.21.4/Cargo.toml",
+        "manifest_sha256": "87e5b7ee438abdef12e46386e86370f54ad70cabdcf949556b9ef012a9da9587",
+        "name": "once_cell",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "1.21.4"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/once_vec-0.4.0/Cargo.toml",
+        "manifest_sha256": "7b8edaab7a801a69a1c4246b205daad79afc34e47ed6b53db7a7c589c9d1ee8d",
+        "name": "once_vec",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "0.4.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/onig-6.5.3/Cargo.toml",
+        "manifest_sha256": "06c307e91c70a5659604f4703aa5e67809089ab88e711feae8b6a341d45219f2",
+        "name": "onig",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "6.5.3"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/onig_sys-69.9.3/Cargo.toml",
+        "manifest_sha256": "7915b8ec54838f11c7c66d26dfebe3d106e1ce5d8032690a45a5efe909062b85",
+        "name": "onig_sys",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "69.9.3"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/pkcs8-0.10.2/Cargo.toml",
+        "manifest_sha256": "440cf271c696da0bcef123a4e005f9f47273d140b9b824f4b7b0d4fa4639cb12",
+        "name": "pkcs8",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "0.10.2"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/pkg-config-0.3.34/Cargo.toml",
+        "manifest_sha256": "26612dc6bbb8c045f4c91f95fc026b926e9adb942655dddfd21ffecf2595b70b",
+        "name": "pkg-config",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "0.3.34"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/git/checkouts/pliron-6f963b380d48781e/cc902cc/Cargo.toml",
+        "manifest_sha256": "3a951a10b596138aeb1af988919169b1702fb38ca0a3cd9c9a04db38e50c4c10",
+        "name": "pliron",
+        "source": "git+https://github.com/harsh-nod/pliron.git?rev=cc902cc8c669b5de2b292ae8638d9e8311bc735b#cc902cc8c669b5de2b292ae8638d9e8311bc735b",
+        "version": "0.17.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/git/checkouts/pliron-6f963b380d48781e/cc902cc/pliron-derive/Cargo.toml",
+        "manifest_sha256": "2845b31e7765711cf74ff4277db919e2a046db9506e8775687497d3d9c5819d0",
+        "name": "pliron-derive",
+        "source": "git+https://github.com/harsh-nod/pliron.git?rev=cc902cc8c669b5de2b292ae8638d9e8311bc735b#cc902cc8c669b5de2b292ae8638d9e8311bc735b",
+        "version": "0.17.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/proc-macro-crate-3.5.0/Cargo.toml",
+        "manifest_sha256": "e67f9a551770d5e0eea15db9977f257f390ae893068b1cc6425a0a87ac314bb3",
+        "name": "proc-macro-crate",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "3.5.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/proc-macro2-1.0.107/Cargo.toml",
+        "manifest_sha256": "6bdbe54a7f052e552dcfca90351764476e2767237ec3f954df8bd9f602861056",
+        "name": "proc-macro2",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "1.0.107"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/quote-1.0.47/Cargo.toml",
+        "manifest_sha256": "13d8c50837f14aff48cd622349f98fb2c46350b7a0c08fd574cf7de4def27d06",
+        "name": "quote",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "1.0.47"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rand_core-0.6.4/Cargo.toml",
+        "manifest_sha256": "4a6762f8364d1a60f1436f4ba7d710de22465722340d2028101fcbd68e89396f",
+        "name": "rand_core",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "0.6.4"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/recasting-0.2.3/Cargo.toml",
+        "manifest_sha256": "5d7116b34fb99a375a3d377f02fb311ed9b98314de53d0ceeaf265b57374f8dd",
+        "name": "recasting",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "0.2.3"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/regex-1.13.1/Cargo.toml",
+        "manifest_sha256": "d6695aba00bda6017a25464bdf2c8e8c0d7e769389416d03d53de58cb62dc873",
+        "name": "regex",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "1.13.1"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/regex-automata-0.4.18/Cargo.toml",
+        "manifest_sha256": "25d528e0bd6dd67c78462d3c7a426698b5d6e702052b25daf7599c0a211315b6",
+        "name": "regex-automata",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "0.4.18"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/regex-syntax-0.8.11/Cargo.toml",
+        "manifest_sha256": "10c3f14629c0900ac452dd6d55a62aab561bbabbdf5774a802c8d223933cfa3b",
+        "name": "regex-syntax",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "0.8.11"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/git/checkouts/fe2o3-3973306df8c37287/faaaf15/crates/reserved-fe2o3-symbols/Cargo.toml",
+        "manifest_sha256": "45d2d0476613e4d8079e90fd44e3c7283cb4f13f2040ee46169373e8d35a46ee",
+        "name": "reserved-fe2o3-symbols",
+        "source": "git+https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d68eff996b22951758b1a9fa83317d6d2",
+        "version": "0.1.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rustc-hash-2.1.3/Cargo.toml",
+        "manifest_sha256": "7e6727beb038213a2aa02f90cbbfb1d6651a9fda56f241dd95110a0cb287efc9",
+        "name": "rustc-hash",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "2.1.3"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rustc_apfloat-0.2.3+llvm-462a31f5a5ab/Cargo.toml",
+        "manifest_sha256": "40c040ec4310f7b7060942992ee157daf8db69fc77ba5763bb5287ec438659fa",
+        "name": "rustc_apfloat",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "0.2.3+llvm-462a31f5a5ab"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rustc_version-0.4.1/Cargo.toml",
+        "manifest_sha256": "c7d1d07fcb4f604eac7c2f9ad1262f93c81f2e45c6be6031de2d83da5ab59ccb",
+        "name": "rustc_version",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "0.4.1"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rustix-1.1.4/Cargo.toml",
+        "manifest_sha256": "13302af30f997a373ad50b7aa668d9612483e85be6b455e09d95bbd59fb5296f",
+        "name": "rustix",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "1.1.4"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rustversion-1.0.23/Cargo.toml",
+        "manifest_sha256": "fc211ccd64d3ad59a0715c1a6f8cbfbbd83045f644194394595d16646eee9947",
+        "name": "rustversion",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "1.0.23"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/safe_arch-1.2.0/Cargo.toml",
+        "manifest_sha256": "2b6d8bb3d10aaf57629b49332915b50f768c7ad7f329ff04526261e25a1d6c6f",
+        "name": "safe_arch",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "1.2.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/scopeguard-1.2.0/Cargo.toml",
+        "manifest_sha256": "68899251551903e2e1ba03c927f12e4c19fc8a15e8bd3756610f53f5ec075b48",
+        "name": "scopeguard",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "1.2.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/semver-1.0.28/Cargo.toml",
+        "manifest_sha256": "cf7fb84578260eec81ce5af4bdb176ec590d45fdcb78f06710f0aa13e3078761",
+        "name": "semver",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "1.0.28"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.229/Cargo.toml",
+        "manifest_sha256": "6883caefd46e86eb15d22d3a6d274ad304c5e7934ab70eb58d81b7c4a29ef9db",
+        "name": "serde",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "1.0.229"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde_core-1.0.229/Cargo.toml",
+        "manifest_sha256": "c6049e170e4f7c2b48749fefab59db583bfac4e466cde6d0c53e4f49bc5044f7",
+        "name": "serde_core",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "1.0.229"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde_derive-1.0.229/Cargo.toml",
+        "manifest_sha256": "d2581160ffa61baa386f882e08b0db20051dc3c782a82268d6473998b61c926e",
+        "name": "serde_derive",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "1.0.229"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde_json-1.0.151/Cargo.toml",
+        "manifest_sha256": "00b920255c320a278bf25b962b491263a19d8c90e12e4a91c1d823db71eabb2f",
+        "name": "serde_json",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "1.0.151"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde_spanned-1.1.1/Cargo.toml",
+        "manifest_sha256": "9fdef53ff77894a933022135dfcf0733c9257807a23a387176b2de16b4cb48ba",
+        "name": "serde_spanned",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "1.1.1"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/sha2-0.10.9/Cargo.toml",
+        "manifest_sha256": "f5b86209df69360114aaee67a66c3fcd31d8c840b8f34b9ad383aacd63cd15da",
+        "name": "sha2",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "0.10.9"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/sha2-0.11.0/Cargo.toml",
+        "manifest_sha256": "bb187fe9b788b66dc91c717ace2a41b5da5518672a302696ab79bf4619d510a9",
+        "name": "sha2",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "0.11.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/shlex-2.0.1/Cargo.toml",
+        "manifest_sha256": "b6ead6cf404555ced33f7574c6c11413e29e7bcd5eb0ceeb59452830a46675ed",
+        "name": "shlex",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "2.0.1"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/signature-2.2.0/Cargo.toml",
+        "manifest_sha256": "9a0ed264f832101d9e2e786db0e22d90a2a2544ed19c760ec7f2d501d950a9dd",
+        "name": "signature",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "2.2.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/slotmap-1.1.1/Cargo.toml",
+        "manifest_sha256": "051ed0c65137ce29c8b37ff66d16a9d9190eb1708849e4cc1babcd94b699d764",
+        "name": "slotmap",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "1.1.1"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/smallvec-1.16.0/Cargo.toml",
+        "manifest_sha256": "d2e0be582508883c89bdb4fedab80c204f70fbc1b511f46008a279ccf61e7356",
+        "name": "smallvec",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "1.16.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/spin-0.12.3/Cargo.toml",
+        "manifest_sha256": "f37b70d68ea8bb6d7a333e2df2c1cd74a06d8c9c63f94fa9b2df23e312e3af63",
+        "name": "spin",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "0.12.3"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/spki-0.7.3/Cargo.toml",
+        "manifest_sha256": "c2ce81d32a2e9586591d313c324e83bd3822ba13736fdd5209f06da1ac27bd5e",
+        "name": "spki",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "0.7.3"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/subtle-2.6.1/Cargo.toml",
+        "manifest_sha256": "a3b9aefa358b0cd742de62e880ea080414ead838847a95892acaa58575dfc4cf",
+        "name": "subtle",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "2.6.1"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/syn-2.0.119/Cargo.toml",
+        "manifest_sha256": "da8b83ac2c66a7b404dc55d88ae42592f70714823251f51b620ae349b246a18f",
+        "name": "syn",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "2.0.119"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/syn-3.0.4/Cargo.toml",
+        "manifest_sha256": "5d302a1de007d1717f29182b641e2291547e31088d0a253b36a32d682d80caaf",
+        "name": "syn",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "3.0.4"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/synstructure-0.13.2/Cargo.toml",
+        "manifest_sha256": "a1cc9f5d8a95afc23a3e514e52bc5e2d3f59e30f28c0803eb084e3f2f16dfd3c",
+        "name": "synstructure",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "0.13.2"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.20/Cargo.toml",
+        "manifest_sha256": "217e9b07de46308c0ca5a41f0d629675b44ab8b50d7c25d0e2d6e0723f84539b",
+        "name": "thiserror",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "2.0.20"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-impl-2.0.20/Cargo.toml",
+        "manifest_sha256": "30c237dd0e2a1cdb81608acda8964d8096a055b5540ca65c22538af73bc66c75",
+        "name": "thiserror-impl",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "2.0.20"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/toml-1.1.5+spec-1.1.0/Cargo.toml",
+        "manifest_sha256": "77938c9a9688aec83cfa126f667a707ad43118502e4bff53f0125a63cf7cda94",
+        "name": "toml",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "1.1.5+spec-1.1.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/toml_datetime-1.1.1+spec-1.1.0/Cargo.toml",
+        "manifest_sha256": "97287a69ce6e80e64f90577d254185694042c91903c908001e8c3073e00bea3d",
+        "name": "toml_datetime",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "1.1.1+spec-1.1.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/toml_edit-0.25.13+spec-1.1.0/Cargo.toml",
+        "manifest_sha256": "5e8e0dc898e703e55632c72b3bc1a27bdff28659d511b4da1e5ed03c0008a874",
+        "name": "toml_edit",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "0.25.13+spec-1.1.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/toml_parser-1.1.3+spec-1.1.0/Cargo.toml",
+        "manifest_sha256": "23bf7bc66a7090d0048555ec05a81216a5d335e5648952d7fb266c7529a7ad90",
+        "name": "toml_parser",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "1.1.3+spec-1.1.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/toml_writer-1.1.2+spec-1.1.0/Cargo.toml",
+        "manifest_sha256": "a7ac80731e6c3680daa6dd6051b1199856d162ec213cbfb8706a0a9fd5077ce9",
+        "name": "toml_writer",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "1.1.2+spec-1.1.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/triple_arena-0.15.1/Cargo.toml",
+        "manifest_sha256": "19b02adcba6f248d367c2beed566f1052c029be758d2c91a8592dc19b7bed4e3",
+        "name": "triple_arena",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "0.15.1"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/typenum-1.20.1/Cargo.toml",
+        "manifest_sha256": "00785a81eae34b3298dfdde78a6bd96fe3ec000de46edd509bd13b7cab7a9870",
+        "name": "typenum",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "1.20.1"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/unicode-ident-1.0.24/Cargo.toml",
+        "manifest_sha256": "0bb9c0e006a21355cb85c7df72e78dd8ba6fffbb7dc3f1e7a4c19af53cd354da",
+        "name": "unicode-ident",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "1.0.24"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/unicode-normalization-alignments-0.1.12/Cargo.toml",
+        "manifest_sha256": "2aa1c1854b82a87686875b4d1c7a081e0b6c7d82c3ecf79d09165d327e1cc75a",
+        "name": "unicode-normalization-alignments",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "0.1.12"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/unicode-segmentation-1.13.3/Cargo.toml",
+        "manifest_sha256": "86f0e8158aae32d3791f182cf50131f678462da65a713b18cab6c0b5638f1a50",
+        "name": "unicode-segmentation",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "1.13.3"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/utf8-chars-3.0.7/Cargo.toml",
+        "manifest_sha256": "54b7a51a545a5534240c1d98112a6c7015325dd2bd3a9f50890bf5032d3318fb",
+        "name": "utf8-chars",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "3.0.7"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/version_check-0.9.5/Cargo.toml",
+        "manifest_sha256": "399ea74400a173c02eabe91cb9487d0cf351117857a5d2ebc6231f0efde67681",
+        "name": "version_check",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "0.9.5"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/git/checkouts/verus-e4ebf515fa1de14c/b677dd5/source/builtin/Cargo.toml",
+        "manifest_sha256": "187cac962483e64b09347da1cd0dc738428f2b56a3562c28adbd0b6f7e622a59",
+        "name": "verus_builtin",
+        "source": "git+https://github.com/verus-lang/verus.git?rev=b677dd5#b677dd5a766f25f56e9aa1e32621aa4e53304b47",
+        "version": "0.0.0-2026-08-02-0125"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/git/checkouts/verus-e4ebf515fa1de14c/b677dd5/source/builtin_macros/Cargo.toml",
+        "manifest_sha256": "8e24a2613c5b999b6f76d781601d1b42005320f11ddb96d810595e4c88b30f67",
+        "name": "verus_builtin_macros",
+        "source": "git+https://github.com/verus-lang/verus.git?rev=b677dd5#b677dd5a766f25f56e9aa1e32621aa4e53304b47",
+        "version": "0.0.0-2026-08-02-0125"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/git/checkouts/verus-e4ebf515fa1de14c/b677dd5/dependencies/prettyplease/Cargo.toml",
+        "manifest_sha256": "e924c84ec12e1629243f301b6d250a78fdfdbac649ae2ec7d982be58f6edc5be",
+        "name": "verus_prettyplease",
+        "source": "git+https://github.com/verus-lang/verus.git?rev=b677dd5#b677dd5a766f25f56e9aa1e32621aa4e53304b47",
+        "version": "0.0.0-2026-08-02-0125"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/git/checkouts/verus-e4ebf515fa1de14c/b677dd5/source/state_machines_macros/Cargo.toml",
+        "manifest_sha256": "3affd1d3e4b96019001037b18d0aaab9a402722f9790a31c77213bc2ee5b1893",
+        "name": "verus_state_machines_macros",
+        "source": "git+https://github.com/verus-lang/verus.git?rev=b677dd5#b677dd5a766f25f56e9aa1e32621aa4e53304b47",
+        "version": "0.0.0-2026-08-02-0125"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/git/checkouts/verus-e4ebf515fa1de14c/b677dd5/dependencies/syn/Cargo.toml",
+        "manifest_sha256": "79b4b488578c9980d17a9dd663ee37c8779146484bbe940ddc4f8614b7f28a37",
+        "name": "verus_syn",
+        "source": "git+https://github.com/verus-lang/verus.git?rev=b677dd5#b677dd5a766f25f56e9aa1e32621aa4e53304b47",
+        "version": "0.0.0-2026-08-02-0125"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/git/checkouts/verus-e4ebf515fa1de14c/b677dd5/source/vstd/Cargo.toml",
+        "manifest_sha256": "b67336877ae0d61eba5a5ae077e90660577cea8afb41295ce6106d9506c59f5d",
+        "name": "vstd",
+        "source": "git+https://github.com/verus-lang/verus.git?rev=b677dd5#b677dd5a766f25f56e9aa1e32621aa4e53304b47",
+        "version": "0.0.0-2026-08-02-0125"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/wasi-0.11.1+wasi-snapshot-preview1/Cargo.toml",
+        "manifest_sha256": "25915be68a3057b798a4a6d4e5ceef36047e03bf0353d3f2a99236cd23e410db",
+        "name": "wasi",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "0.11.1+wasi-snapshot-preview1"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/wide-1.7.0/Cargo.toml",
+        "manifest_sha256": "87e3e9bf403f088e5345955ac2116d8ee82e9222b49a78df0ff4f98847a58e63",
+        "name": "wide",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "1.7.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/windows-link-0.2.1/Cargo.toml",
+        "manifest_sha256": "abf0b74b168ec7d7c600f44eb90502c47e44480a199b9adc9ec74ea990605707",
+        "name": "windows-link",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "0.2.1"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/windows-sys-0.61.2/Cargo.toml",
+        "manifest_sha256": "1adbc955d5460fa64dc16e6c8198b25672e8d4b97d45ecfb262eb2693ce08422",
+        "name": "windows-sys",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "0.61.2"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/winnow-1.0.4/Cargo.toml",
+        "manifest_sha256": "cff392f2e5af8a662aed09551f50bbe74eafa5a53dc051c62add73ea82a3cab0",
+        "name": "winnow",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "1.0.4"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/zeroize-1.9.0/Cargo.toml",
+        "manifest_sha256": "d9c34827131f0367c3c209f2c858c142d34be9512a9c6fb59179e369a1d7c32a",
+        "name": "zeroize",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "1.9.0"
+      },
+      {
+        "manifest": "/home/harmenon/ferric-asrock-42/toolchain/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/zmij-1.0.23/Cargo.toml",
+        "manifest_sha256": "b31420c7a806fae5b9ea2438dd4cbb99dcb3a22da67697fdf2776cc44a69527e",
+        "name": "zmij",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "version": "1.0.23"
+      }
+    ],
+    "local": {
+      "ferric-build": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/layer0-native-capture-cpu-v228-v2/sources/ferric/crates/ferric-build/Cargo.toml",
+      "ferric-engine": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/layer0-native-capture-cpu-v228-v2/sources/ferric/crates/ferric-engine/Cargo.toml",
+      "ferric-generated-runner": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/layer0-native-capture-cpu-v228-v2/sources/ferric/crates/ferric-generated-runner/Cargo.toml",
+      "ferric-kernels": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/layer0-native-capture-cpu-v228-v2/sources/ferric/crates/ferric-kernels/Cargo.toml",
+      "ferric-m1-engineering-execution-v1": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/layer0-native-capture-cpu-v228-v2/sources/ferric/adapters/m1-engineering-execution-v1/Cargo.toml",
+      "ferric-non-authoritative-program-source-v1": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/layer0-native-capture-cpu-v228-v2/sources/ferric/crates/ferric-non-authoritative-program-source-v1/Cargo.toml",
+      "ferric-qwen-kernels": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/layer0-native-capture-cpu-v228-v2/sources/ferric/crates/ferric-qwen-kernels/Cargo.toml",
+      "ferric-qwen3-all-kernels-device-v1": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/layer0-native-capture-cpu-v228-v2/sources/ferric/device/qwen3-all-kernels-v1/Cargo.toml",
+      "ferric-qwen3-all-kernels-worker-v3-source-pin-v1": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/layer0-native-capture-cpu-v228-v2/sources/ferric/adapters/qwen3-all-kernels-worker-v3-source-pin-v1/Cargo.toml",
+      "ferric-qwen3-all-kernels-worker-v3-verifier-v1": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/layer0-native-capture-cpu-v228-v2/sources/ferric/adapters/qwen3-all-kernels-worker-v3-verifier-v1/Cargo.toml",
+      "ferric-qwen3-draft-batch32-kernels-device-v10": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/layer0-native-capture-cpu-v228-v2/sources/ferric/device/qwen3-draft-batch32-kernels-v10/Cargo.toml",
+      "ferric-qwen3-tp-batch-kernels-device-v2": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/layer0-native-capture-cpu-v228-v2/sources/ferric/device/qwen3-tp-batch-kernels-v2/Cargo.toml",
+      "ferric-qwen3-tp-batch32-kernels-device-v5": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/layer0-native-capture-cpu-v228-v2/sources/ferric/device/qwen3-tp-batch32-kernels-v5/Cargo.toml",
+      "ferric-qwen3-tp-bf16-wave-argmax-kernels-device-v22": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/layer0-native-capture-cpu-v228-v2/sources/ferric/device/qwen3-tp-bf16-wave-argmax-kernels-v22/Cargo.toml",
+      "ferric-qwen3-tp-fp32-argmax-kernels-device-v11": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/layer0-native-capture-cpu-v228-v2/sources/ferric/device/qwen3-tp-fp32-argmax-kernels-v11/Cargo.toml",
+      "ferric-qwen3-tp-fp32-head-kernels-device-v7": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/layer0-native-capture-cpu-v228-v2/sources/ferric/device/qwen3-tp-fp32-head-kernels-v7/Cargo.toml",
+      "ferric-qwen3-tp-fp32-head32-kernels-device-v8": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/layer0-native-capture-cpu-v228-v2/sources/ferric/device/qwen3-tp-fp32-head32-kernels-v8/Cargo.toml",
+      "ferric-qwen3-tp-kernels-device-v1": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/layer0-native-capture-cpu-v228-v2/sources/ferric/device/qwen3-tp-kernels-v1/Cargo.toml",
+      "ferric-qwen3-tp-large-kv-kernels-device-v9": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/layer0-native-capture-cpu-v228-v2/sources/ferric/device/qwen3-tp-large-kv-kernels-v9/Cargo.toml",
+      "ferric-qwen3-tp-parallel-kv-kernels-device-v16": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/layer0-native-capture-cpu-v228-v2/sources/ferric/device/qwen3-tp-parallel-kv-kernels-v16/Cargo.toml",
+      "ferric-qwen3-tp-peer-kernels-device-v4": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/layer0-native-capture-cpu-v228-v2/sources/ferric/device/qwen3-tp-peer-kernels-v4/Cargo.toml",
+      "ferric-qwen3-tp-peer-tp2-kernels-device-v18": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/layer0-native-capture-cpu-v228-v2/sources/ferric/device/qwen3-tp-peer-tp2-kernels-v18/Cargo.toml",
+      "ferric-qwen3-tp-peer32-kernels-device-v6": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/layer0-native-capture-cpu-v228-v2/sources/ferric/device/qwen3-tp-peer32-kernels-v6/Cargo.toml",
+      "ferric-qwen3-tp-perf-kernels-device-v3": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/layer0-native-capture-cpu-v228-v2/sources/ferric/device/qwen3-tp-perf-kernels-v3/Cargo.toml",
+      "ferric-qwen3-tp-split-context-attention-device-v1": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/layer0-native-capture-cpu-v228-v2/sources/ferric/device/qwen3-tp-split-context-attention-v1/Cargo.toml",
+      "ferric-qwen3-tp-wave-query-hoist-kernels-device-v14": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/layer0-native-capture-cpu-v228-v2/sources/ferric/device/qwen3-tp-wave-query-hoist-kernels-v14/Cargo.toml",
+      "ferric-qwen3-tp-wave-rmsnorm-kernels-device-v15": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/layer0-native-capture-cpu-v228-v2/sources/ferric/device/qwen3-tp-wave-rmsnorm-kernels-v15/Cargo.toml",
+      "ferric-spec": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/layer0-native-capture-cpu-v228-v2/sources/ferric/crates/ferric-spec/Cargo.toml"
+    },
+    "package_count": 209
+  },
+  "parent_files": 7,
+  "parent_rebuilt": true,
+  "parent_runtime_from_sibling_archive": false,
+  "parent_runtime_git_source": "git+https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d68eff996b22951758b1a9fa83317d6d2",
+  "passed": true,
+  "performance_claim": false,
+  "phases": 46,
+  "prior_cpu_receipt": {
+    "bytes": 316284,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/gfx950-clock-parent-cpu-v228-v1/complete.json",
+    "sha256": "d2a118dd2a3bfac749b18de26883a661a1078a22ebf374853a11b081f43b1484"
+  },
+  "production_authority": false,
+  "pure_receipt": {
+    "bytes": 1505,
+    "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/layer0-native-capture-cpu-pure-v228-v2/complete.json",
+    "sha256": "ab67599ef1e653c0099ab00f4c04cc1a739b8ba26e92fc38ef9b7c880d807012"
+  },
+  "pure_tests_passed": 20,
+  "raw_records": 233,
+  "retained": {
+    "controller/README.md": {
+      "bytes": 4909,
+      "sha256": "5e8c359310a77103ea1a7f3ec17a3235cfc42d20fc50ca6b2611154ef5e363af"
+    },
+    "controller/manifest.json": {
+      "bytes": 664,
+      "sha256": "301f6311e2a6163b356131c5f2a9bce0029d7c71b21c9ffe1b6be99f62fe3449"
+    },
+    "controller/overlay.json": {
+      "bytes": 5308,
+      "sha256": "c96372cf07a41555c99874f7c1db63c9e0913c100c79671ffc05baac6e403078"
+    },
+    "controller/run.py": {
+      "bytes": 27037,
+      "sha256": "fc55d1156a6b2b9eeab77760f59bc2f56e6c48201dcba0485b1d2e72b45a80ef"
+    },
+    "controller/test_run.py": {
+      "bytes": 14673,
+      "sha256": "99c83030d6bfea179e44f5912d17253398a008542ac9188bce24bbe9ca979ec3"
+    },
+    "cpu/complete.json": {
+      "bytes": 326552,
+      "sha256": "78c12f822e95d50a1239f56411c5b8da9411a3fbda7510fbbf38d5644e1dffbb"
+    },
+    "cpu/ferric-qwen3-finite-long-engineering-list-command.json": {
+      "bytes": 2396,
+      "sha256": "3fca7446367e753b78ddc8848c3fda72fd7d14af0c4ae99aa4e88a22faaa3beb"
+    },
+    "cpu/ferric-qwen3-finite-long-engineering-list-result.json": {
+      "bytes": 307,
+      "sha256": "09ca3356b4a82a0272e108ff79f204dad4b7b412f924f8f531cf45867a973692"
+    },
+    "cpu/ferric-qwen3-finite-long-engineering-list-started.json": {
+      "bytes": 40,
+      "sha256": "f37c5016ad6f302cdb863da0d54ec3724b2496788fb4f6b2435797b1baa8d061"
+    },
+    "cpu/ferric-qwen3-finite-long-engineering-list-stderr": {
+      "bytes": 1722,
+      "sha256": "c3ad8d320966198fb6973522d77dcd3bc78dfddf5b6a16ded38aff434ad5b13f"
+    },
+    "cpu/ferric-qwen3-finite-long-engineering-list-stdout": {
+      "bytes": 76,
+      "sha256": "fb6bea608fad2e98cd7e8646605846f71e2b685d065a94b7acfa25523f621d29"
+    },
+    "cpu/ferric-qwen3-finite-long-engineering-tests-command.json": {
+      "bytes": 2377,
+      "sha256": "db80a5563f368e6645de1028869e4dc16529061af09b86855cbde0ac98dd0b24"
+    },
+    "cpu/ferric-qwen3-finite-long-engineering-tests-result.json": {
+      "bytes": 307,
+      "sha256": "258f6473edbd748e2b5e8a032df3967a68434e63c9248647761caf4ede696497"
+    },
+    "cpu/ferric-qwen3-finite-long-engineering-tests-started.json": {
+      "bytes": 40,
+      "sha256": "b7009dbed9b81c92a76a6df815f2e8af679e58e8e690c25b84bbd808bac254cb"
+    },
+    "cpu/ferric-qwen3-finite-long-engineering-tests-stderr": {
+      "bytes": 1505,
+      "sha256": "de08350654ce0128f3d3b7d4a0a0bc6e379754d638b8de31863263ed90859926"
+    },
+    "cpu/ferric-qwen3-finite-long-engineering-tests-stdout": {
+      "bytes": 194,
+      "sha256": "077c873c577668d233282771bc539b61564a9586e42cc2c0ed73e16b000426a6"
+    },
+    "cpu/ferric-qwen3-finite-mlp-tiles-comparison-engineering-list-command.json": {
+      "bytes": 2412,
+      "sha256": "1d742c0b64a0228f73c351577b4c9d0a64113f57c438f762bb42cb367686a212"
+    },
+    "cpu/ferric-qwen3-finite-mlp-tiles-comparison-engineering-list-result.json": {
+      "bytes": 307,
+      "sha256": "0d722c3e9e0619f27dbb2c7e0008df8530dd4f291e84b9059f35c0ff74fd0a20"
+    },
+    "cpu/ferric-qwen3-finite-mlp-tiles-comparison-engineering-list-started.json": {
+      "bytes": 40,
+      "sha256": "c9047b3938e1d84eed72de678bdf533b3ce13774ca5bdf9b1c398aac3192003d"
+    },
+    "cpu/ferric-qwen3-finite-mlp-tiles-comparison-engineering-list-stderr": {
+      "bytes": 1754,
+      "sha256": "36d475771924e0b829bb3027c4393f121e0f0604e2eaa8b4b5089022c779b076"
+    },
+    "cpu/ferric-qwen3-finite-mlp-tiles-comparison-engineering-list-stdout": {
+      "bytes": 74,
+      "sha256": "b5ca1a964b28b6ac7796bfbd108e9fb12d4af33737934fc34ed3877a8a42b57a"
+    },
+    "cpu/ferric-qwen3-finite-mlp-tiles-comparison-engineering-tests-command.json": {
+      "bytes": 2393,
+      "sha256": "19d2191881b67068ed3fe63edec21fb137869c75123798e3cf992b0876fd3284"
+    },
+    "cpu/ferric-qwen3-finite-mlp-tiles-comparison-engineering-tests-result.json": {
+      "bytes": 307,
+      "sha256": "59e10b40ff07afe862e97366f3359a83f10ac1e3db1b186bc1b45db2e6c742c7"
+    },
+    "cpu/ferric-qwen3-finite-mlp-tiles-comparison-engineering-tests-started.json": {
+      "bytes": 40,
+      "sha256": "a08ca76855f0218af3a4dd9bfc7c2300b578eef3f4c3a40e5d24a11e3cb2a013"
+    },
+    "cpu/ferric-qwen3-finite-mlp-tiles-comparison-engineering-tests-stderr": {
+      "bytes": 1537,
+      "sha256": "630eb16a522334e88dc9009ba0dc482aa1d8ac8ec023bca54a974ff12eff853c"
+    },
+    "cpu/ferric-qwen3-finite-mlp-tiles-comparison-engineering-tests-stdout": {
+      "bytes": 192,
+      "sha256": "e33dc02a8968beb2ec4487eaf6853c20fc499090c9ac2c598fc839ba392727a5"
+    },
+    "cpu/ferric-qwen3-finite-prefix-decode-device-clock-engineering-list-command.json": {
+      "bytes": 2418,
+      "sha256": "94c53aed1f4a18eabb6c3182a880e9f1ef17e1b347828e5df95d4fde4d96140a"
+    },
+    "cpu/ferric-qwen3-finite-prefix-decode-device-clock-engineering-list-result.json": {
+      "bytes": 307,
+      "sha256": "e8332a209ef988997b51313b4d284c52e64c2e0e2cdc3c2e5b68fbcb6f3f4cfa"
+    },
+    "cpu/ferric-qwen3-finite-prefix-decode-device-clock-engineering-list-started.json": {
+      "bytes": 40,
+      "sha256": "ea39c4da8f6623c6b4b5e1496abdbf70f174fdd0da02d48f772cb6fcebea0ae1"
+    },
+    "cpu/ferric-qwen3-finite-prefix-decode-device-clock-engineering-list-stderr": {
+      "bytes": 1766,
+      "sha256": "d840a9f98525e01e0be4125fb67f615aeba57fd0f37793b01dc03685f6b4d6ac"
+    },
+    "cpu/ferric-qwen3-finite-prefix-decode-device-clock-engineering-list-stdout": {
+      "bytes": 85,
+      "sha256": "f0946db911b20f1ab774183d3aac0b6be7d630e491f52e6a37d0d4e5e4178e9c"
+    },
+    "cpu/ferric-qwen3-finite-prefix-decode-device-clock-engineering-tests-command.json": {
+      "bytes": 2399,
+      "sha256": "13aeebf035bacc9bfd7a2b557bcb5d5766e93eaf28e0a90d2721400599d9a106"
+    },
+    "cpu/ferric-qwen3-finite-prefix-decode-device-clock-engineering-tests-result.json": {
+      "bytes": 307,
+      "sha256": "f3d98865162fdbc27a06290fec68ecb0e6cebee1c6aa6524e2a8af1b89fb1489"
+    },
+    "cpu/ferric-qwen3-finite-prefix-decode-device-clock-engineering-tests-started.json": {
+      "bytes": 40,
+      "sha256": "269e5d2810d736fd16b0f527d36053a72d50f1ea21ce076d5affe5366df55b08"
+    },
+    "cpu/ferric-qwen3-finite-prefix-decode-device-clock-engineering-tests-stderr": {
+      "bytes": 1549,
+      "sha256": "272f31052ce27ae78b5f8671cdf5ebeb0d7987169b88143d41c8289987c1fcc5"
+    },
+    "cpu/ferric-qwen3-finite-prefix-decode-device-clock-engineering-tests-stdout": {
+      "bytes": 203,
+      "sha256": "eb373173fed2e0f5d3f48973a70b9019b6844a1e94df36231d0ac97416440cde"
+    },
+    "cpu/ferric-qwen3-finite-prefix-decode-device-engineering-list-command.json": {
+      "bytes": 2412,
+      "sha256": "dc03af64293ef035c944d093807e7236b2be0837c26a20217a8d8fb6f2161276"
+    },
+    "cpu/ferric-qwen3-finite-prefix-decode-device-engineering-list-result.json": {
+      "bytes": 307,
+      "sha256": "90d8e71d15075a2370e8b436272843af7a67aa963469b0d802fcb72d47171f3d"
+    },
+    "cpu/ferric-qwen3-finite-prefix-decode-device-engineering-list-started.json": {
+      "bytes": 40,
+      "sha256": "9c59ef64862870be93a3e11604947166404b463721d6141826c26635dbea05cb"
+    },
+    "cpu/ferric-qwen3-finite-prefix-decode-device-engineering-list-stderr": {
+      "bytes": 1754,
+      "sha256": "0d34e93a793f76c6a51ae58a13e048da16558ec1ff701f9a46897ec7cd22fa88"
+    },
+    "cpu/ferric-qwen3-finite-prefix-decode-device-engineering-list-stdout": {
+      "bytes": 79,
+      "sha256": "cd5a2f0d543147d87646dc69b9129fa67d8d85d896814ad257c731154913062f"
+    },
+    "cpu/ferric-qwen3-finite-prefix-decode-device-engineering-tests-command.json": {
+      "bytes": 2393,
+      "sha256": "7ffcb1f15898c7b79ca4c985af4287d65e7b5ab34aec4b7e387fcee1ace01c6e"
+    },
+    "cpu/ferric-qwen3-finite-prefix-decode-device-engineering-tests-result.json": {
+      "bytes": 307,
+      "sha256": "b36e139225bed77e2d02989c1edd26662c7aa174dcec922360fadf9a53f9b6a6"
+    },
+    "cpu/ferric-qwen3-finite-prefix-decode-device-engineering-tests-started.json": {
+      "bytes": 40,
+      "sha256": "daf7eeb8f526f8b2d6fc12bd07d6748b11847903d98838571c20ad65d69bb56a"
+    },
+    "cpu/ferric-qwen3-finite-prefix-decode-device-engineering-tests-stderr": {
+      "bytes": 1537,
+      "sha256": "ae9863cc093f3b197611d6327c7773ec43596d81f74cf6a8cb559d2343d10311"
+    },
+    "cpu/ferric-qwen3-finite-prefix-decode-device-engineering-tests-stdout": {
+      "bytes": 197,
+      "sha256": "2b48eb4ee8544e4c9d1cb32293fa7a2d879450daaf31c689876e28a4bd73b0ed"
+    },
+    "cpu/ferric-qwen3-finite-prefix-decode-engineering-list-command.json": {
+      "bytes": 2405,
+      "sha256": "daa93b907f3a31e284f80d7636961e6a922d6cd052894053eef36dc7b0bbb499"
+    },
+    "cpu/ferric-qwen3-finite-prefix-decode-engineering-list-result.json": {
+      "bytes": 306,
+      "sha256": "cbd7e4029257c11bebc2a92c55b5eda70569a35873a0db2ae97a2fbea7051fe8"
+    },
+    "cpu/ferric-qwen3-finite-prefix-decode-engineering-list-started.json": {
+      "bytes": 40,
+      "sha256": "5b20159459338b08e623a4c7d6f515ffecba519377a70ac9f51410cc0b5067fd"
+    },
+    "cpu/ferric-qwen3-finite-prefix-decode-engineering-list-stderr": {
+      "bytes": 1740,
+      "sha256": "409d7b35a95c9fccdf77a9b16e18efc96207fe4e20baec60382c065744cdab64"
+    },
+    "cpu/ferric-qwen3-finite-prefix-decode-engineering-list-stdout": {
+      "bytes": 58,
+      "sha256": "279a0b38edd22c4854c600abad066990220c8efba99fa4e1a7411ff2ce871630"
+    },
+    "cpu/ferric-qwen3-finite-prefix-decode-engineering-tests-command.json": {
+      "bytes": 2386,
+      "sha256": "b85e525c2d8951ef45383b128223fcf860913a375413203d7da4090f2744f409"
+    },
+    "cpu/ferric-qwen3-finite-prefix-decode-engineering-tests-result.json": {
+      "bytes": 307,
+      "sha256": "6c1526a1bfc8964efa90ecb160eb9e74025e9d9ac871bfbc8bf38f93c5021c19"
+    },
+    "cpu/ferric-qwen3-finite-prefix-decode-engineering-tests-started.json": {
+      "bytes": 40,
+      "sha256": "71c35eb1742660a37e3ae2ea660af504f84843e2e7b4801c3a5b7603c0139aff"
+    },
+    "cpu/ferric-qwen3-finite-prefix-decode-engineering-tests-stderr": {
+      "bytes": 1523,
+      "sha256": "a6d972eaea32d475d09c8a73894ecd0f963feadf7db6a1ca674c777041f273f8"
+    },
+    "cpu/ferric-qwen3-finite-prefix-decode-engineering-tests-stdout": {
+      "bytes": 176,
+      "sha256": "9900e9976bb1fae70026cdd129438348dcdc18f91591159569db4bc4773c9325"
+    },
+    "cpu/ferric-qwen3-finite-prefix-decode-host-engineering-list-command.json": {
+      "bytes": 2410,
+      "sha256": "0994df5d891b51eb3a1b0a8c3a7cd26a425dceb4a6308fc9ce5c7aa1e7e0b55d"
+    },
+    "cpu/ferric-qwen3-finite-prefix-decode-host-engineering-list-result.json": {
+      "bytes": 306,
+      "sha256": "9ae67b2ed2b2aa7a7b7bcc4bb893e1f9dd09220866eb8f49e0f557d83e16ad67"
+    },
+    "cpu/ferric-qwen3-finite-prefix-decode-host-engineering-list-started.json": {
+      "bytes": 40,
+      "sha256": "e8a25bd002ffe11717f96b7d74fa8f476a79244cd34411119b73b95bccfadd3c"
+    },
+    "cpu/ferric-qwen3-finite-prefix-decode-host-engineering-list-stderr": {
+      "bytes": 1750,
+      "sha256": "5a2eb7991f25a8f053f1907cbd4fa147421243e1258583e45dc72001bdfe1a2f"
+    },
+    "cpu/ferric-qwen3-finite-prefix-decode-host-engineering-list-stdout": {
+      "bytes": 75,
+      "sha256": "2e305141195f971b9ea1a87f56544dc6daa79218d1872cd30526324e16500602"
+    },
+    "cpu/ferric-qwen3-finite-prefix-decode-host-engineering-tests-command.json": {
+      "bytes": 2391,
+      "sha256": "5484c31089c420e68278b1e3d3965cbb4b483e34f1f374c59cc8f2b1f342f26f"
+    },
+    "cpu/ferric-qwen3-finite-prefix-decode-host-engineering-tests-result.json": {
+      "bytes": 307,
+      "sha256": "c76914fadc0b4f91d654aedad657bdacfa5056d7c631ce966479de4d2ccd01e7"
+    },
+    "cpu/ferric-qwen3-finite-prefix-decode-host-engineering-tests-started.json": {
+      "bytes": 40,
+      "sha256": "eece5142d47ec692b01b2e19ae4fef56f732718392736f4b55c152aa07f4e21a"
+    },
+    "cpu/ferric-qwen3-finite-prefix-decode-host-engineering-tests-stderr": {
+      "bytes": 1533,
+      "sha256": "bbd62a50c77ef0dfe9e3d344b6c6235e58f89003b7009e60f8b86779e88a34ba"
+    },
+    "cpu/ferric-qwen3-finite-prefix-decode-host-engineering-tests-stdout": {
+      "bytes": 193,
+      "sha256": "53926a919d3bc35b5b904b12e32aa6189a55bde1e48ac0bf531c28f1aa3faf89"
+    },
+    "cpu/ferric-qwen3-finite-prefix-decode-host-policy-engineering-list-command.json": {
+      "bytes": 2417,
+      "sha256": "e963e232711443f689bc7e09ad1f390ddf2a464c2bbc8cbeaa70da2defd96e02"
+    },
+    "cpu/ferric-qwen3-finite-prefix-decode-host-policy-engineering-list-result.json": {
+      "bytes": 307,
+      "sha256": "a4b74a8f31c2ee98c2fd778d8a7799cbf38cdf13171e81d25770d90134702d55"
+    },
+    "cpu/ferric-qwen3-finite-prefix-decode-host-policy-engineering-list-started.json": {
+      "bytes": 40,
+      "sha256": "6bd55c0f44befbf48a99a90f1bf2d6145f06c99d2c25e4f8378b073bce51b841"
+    },
+    "cpu/ferric-qwen3-finite-prefix-decode-host-policy-engineering-list-stderr": {
+      "bytes": 1764,
+      "sha256": "39a63cfd4ad4350d4f1eecefd4318b0acea28efda1934315e078ff9f95d3794e"
+    },
+    "cpu/ferric-qwen3-finite-prefix-decode-host-policy-engineering-list-stdout": {
+      "bytes": 79,
+      "sha256": "6c34941656654299f1a4b79437474008279a7b7cedc6214ff8e6daaf674ccdb7"
+    },
+    "cpu/ferric-qwen3-finite-prefix-decode-host-policy-engineering-tests-command.json": {
+      "bytes": 2398,
+      "sha256": "8dceebd3cb78bdda084813a670842a1166318a6e91e2db7d9aa9474e06222f6a"
+    },
+    "cpu/ferric-qwen3-finite-prefix-decode-host-policy-engineering-tests-result.json": {
+      "bytes": 306,
+      "sha256": "6f548a5d4dafd0e4185cdb7469cab722d41a10564f62ecf3f9228b4dde869e7b"
+    },
+    "cpu/ferric-qwen3-finite-prefix-decode-host-policy-engineering-tests-started.json": {
+      "bytes": 40,
+      "sha256": "634462e8bba057b06860eb8cde9bc8f87b43fc9d7b0c6f4c0e1f9a7aaa40eec5"
+    },
+    "cpu/ferric-qwen3-finite-prefix-decode-host-policy-engineering-tests-stderr": {
+      "bytes": 1547,
+      "sha256": "964dbe4e6591062d7ef04e2540070ef0f47366540937660bb162bc2b5b7eb63b"
+    },
+    "cpu/ferric-qwen3-finite-prefix-decode-host-policy-engineering-tests-stdout": {
+      "bytes": 197,
+      "sha256": "cf8ebfd61fa202231439c8d9e1bcb6244a69fcd5e6cbf0e84fb81270a44c3a8b"
+    },
+    "cpu/ferric-qwen3-finite-prefix-layer-capture-engineering-list-command.json": {
+      "bytes": 2412,
+      "sha256": "87824dcfc57bba7445b2c6a684260b21168f1491de5b2dee55f42a30c145f7ce"
+    },
+    "cpu/ferric-qwen3-finite-prefix-layer-capture-engineering-list-result.json": {
+      "bytes": 307,
+      "sha256": "c755b965af1d79c17764dff71f3b7889dc0d6fe2ee46413bb83a5837dcb14ea8"
+    },
+    "cpu/ferric-qwen3-finite-prefix-layer-capture-engineering-list-started.json": {
+      "bytes": 40,
+      "sha256": "43a5a0306d3405ce5bebfea36a9ebd57b4332c7029cab30eab4baa9d4c702113"
+    },
+    "cpu/ferric-qwen3-finite-prefix-layer-capture-engineering-list-stderr": {
+      "bytes": 1754,
+      "sha256": "fe51f98154e6df39068396e639d8624c3d89bbc6d0e45d910e747cdcf5571618"
+    },
+    "cpu/ferric-qwen3-finite-prefix-layer-capture-engineering-list-stdout": {
+      "bytes": 76,
+      "sha256": "d32c435c48a3ac6d4b519e7f9c7c2c42b9b3cd0cab68d0ff04600b8ce0260c9d"
+    },
+    "cpu/ferric-qwen3-finite-prefix-layer-capture-engineering-tests-command.json": {
+      "bytes": 2393,
+      "sha256": "a461412e12a214e02f80c19aea1682cac144c503919b4014030abf044d8a1613"
+    },
+    "cpu/ferric-qwen3-finite-prefix-layer-capture-engineering-tests-result.json": {
+      "bytes": 306,
+      "sha256": "2f4cef4ef8d40e1b9327c705f6335c08e6fe1716f5de52e08c72a947d9749cc5"
+    },
+    "cpu/ferric-qwen3-finite-prefix-layer-capture-engineering-tests-started.json": {
+      "bytes": 40,
+      "sha256": "1ab33bcdca41f1b51bee98cc96608765a3de60179322598a4dafa274fd777190"
+    },
+    "cpu/ferric-qwen3-finite-prefix-layer-capture-engineering-tests-stderr": {
+      "bytes": 1537,
+      "sha256": "7f05e98b02a4020af997200a834aecd2180251c9e365830462515e1705ab84d9"
+    },
+    "cpu/ferric-qwen3-finite-prefix-layer-capture-engineering-tests-stdout": {
+      "bytes": 194,
+      "sha256": "443e3d1bc63cdaec1c3def8635d18cdd235eb514bd7ea8395dd7b4d0a1db2f90"
+    },
+    "cpu/ferric-qwen3-finite-prefix-layer-engineering-list-command.json": {
+      "bytes": 2404,
+      "sha256": "1ef17b3140571c81e1fafd7b1c5e58003b5f268402ba3b6e3be044c60e3f059b"
+    },
+    "cpu/ferric-qwen3-finite-prefix-layer-engineering-list-result.json": {
+      "bytes": 307,
+      "sha256": "6184c4502f528e46f0f33e7d3bc219ac285fc9798abdc03f6c8eb609e6c0532f"
+    },
+    "cpu/ferric-qwen3-finite-prefix-layer-engineering-list-started.json": {
+      "bytes": 40,
+      "sha256": "53e79d7912cd882a815559af8cf497213bee0eca80010617c4df8c989cae3241"
+    },
+    "cpu/ferric-qwen3-finite-prefix-layer-engineering-list-stderr": {
+      "bytes": 1738,
+      "sha256": "cb2be32a15e5384a2d5fcd294798f08a262e3589e26736fe63ad3a48748df011"
+    },
+    "cpu/ferric-qwen3-finite-prefix-layer-engineering-list-stdout": {
+      "bytes": 44,
+      "sha256": "6dbb15f121f676510af6f34376aa53df43f5f28b868dbc29af4087450ed50a98"
+    },
+    "cpu/ferric-qwen3-finite-prefix-layer-engineering-tests-command.json": {
+      "bytes": 2385,
+      "sha256": "efec157a42ad46554eccc37e49cf2a25f6d86f68b09652d1d948bfa5065c7ae0"
+    },
+    "cpu/ferric-qwen3-finite-prefix-layer-engineering-tests-result.json": {
+      "bytes": 307,
+      "sha256": "a0dc388eca613c53c8832d9051478a5b0823cf4b7aee374b344db842c0ddc1a5"
+    },
+    "cpu/ferric-qwen3-finite-prefix-layer-engineering-tests-started.json": {
+      "bytes": 40,
+      "sha256": "ed0dc08d5dcdae642db6c9311ba7a3de67040296fc5dacae3b27ff2d3c65e8b8"
+    },
+    "cpu/ferric-qwen3-finite-prefix-layer-engineering-tests-stderr": {
+      "bytes": 1521,
+      "sha256": "ccc4bfbea90f8affc907ed5b2ddd8636f97cc3a70ecd2df2f9f3f26d66f19823"
+    },
+    "cpu/ferric-qwen3-finite-prefix-layer-engineering-tests-stdout": {
+      "bytes": 162,
+      "sha256": "89785b89e67db5d7efea5109a4d78ca3e5b6b25e8ded40014be61eade9cd76e3"
+    },
+    "cpu/ferric-qwen3-finite-queued-mlp-comparison-engineering-list-command.json": {
+      "bytes": 2413,
+      "sha256": "2104fc2a34b63d13beda94510fe5feb33d9fd77f8bab375df6697ab1d3f7c92b"
+    },
+    "cpu/ferric-qwen3-finite-queued-mlp-comparison-engineering-list-result.json": {
+      "bytes": 307,
+      "sha256": "ab63ffe898ee0701bc00f79d4fd13b9adfa18326a177de049f715980ee4e3c45"
+    },
+    "cpu/ferric-qwen3-finite-queued-mlp-comparison-engineering-list-started.json": {
+      "bytes": 40,
+      "sha256": "b59c743d3eef7818790acf033a9c0ce22402aceb801ec8101e826d2329b0f981"
+    },
+    "cpu/ferric-qwen3-finite-queued-mlp-comparison-engineering-list-stderr": {
+      "bytes": 1756,
+      "sha256": "a80d463c09d057cd7a687f54b2b43f025303af1448228277730a02b98e44c802"
+    },
+    "cpu/ferric-qwen3-finite-queued-mlp-comparison-engineering-list-stdout": {
+      "bytes": 74,
+      "sha256": "b5ca1a964b28b6ac7796bfbd108e9fb12d4af33737934fc34ed3877a8a42b57a"
+    },
+    "cpu/ferric-qwen3-finite-queued-mlp-comparison-engineering-tests-command.json": {
+      "bytes": 2394,
+      "sha256": "7c97d74ad3dbb0fd294bf62d7cd83bcaeebf58a9a07414a51db241f0b36f44be"
+    },
+    "cpu/ferric-qwen3-finite-queued-mlp-comparison-engineering-tests-result.json": {
+      "bytes": 306,
+      "sha256": "66a0895d96c761361554b4abf357d02d5b234efca4c10e2f7bf6515f7c11e888"
+    },
+    "cpu/ferric-qwen3-finite-queued-mlp-comparison-engineering-tests-started.json": {
+      "bytes": 40,
+      "sha256": "84eece505ebef908d90900caf11aa03660eb1194cda05cecc73366283cf0a4fa"
+    },
+    "cpu/ferric-qwen3-finite-queued-mlp-comparison-engineering-tests-stderr": {
+      "bytes": 1539,
+      "sha256": "71a1bfff8bbbbea122bfa10b1f833e8f1092429891e7cf20f13ce38d019b8132"
+    },
+    "cpu/ferric-qwen3-finite-queued-mlp-comparison-engineering-tests-stdout": {
+      "bytes": 192,
+      "sha256": "e33dc02a8968beb2ec4487eaf6853c20fc499090c9ac2c598fc839ba392727a5"
+    },
+    "cpu/ferric-qwen3-finite-queued-projection-comparison-engineering-list-command.json": {
+      "bytes": 2420,
+      "sha256": "733a1b13628f6a1b77f5f136a8e2d9aa4e95d59cbc9a063ebf6526dca23b7dee"
+    },
+    "cpu/ferric-qwen3-finite-queued-projection-comparison-engineering-list-result.json": {
+      "bytes": 307,
+      "sha256": "420d917727ba1ee7562588e0e32b1af9e22d8a59c2b6071426e4117e54de7828"
+    },
+    "cpu/ferric-qwen3-finite-queued-projection-comparison-engineering-list-started.json": {
+      "bytes": 40,
+      "sha256": "23a4065781f88347f78314a0605294ab70ece7b1bdd90039d400eae339afd812"
+    },
+    "cpu/ferric-qwen3-finite-queued-projection-comparison-engineering-list-stderr": {
+      "bytes": 1770,
+      "sha256": "4870ff74e0d42cbeaa765479cac82e8f68a566f9ab224e16d04ee81ed97a8473"
+    },
+    "cpu/ferric-qwen3-finite-queued-projection-comparison-engineering-list-stdout": {
+      "bytes": 74,
+      "sha256": "b5ca1a964b28b6ac7796bfbd108e9fb12d4af33737934fc34ed3877a8a42b57a"
+    },
+    "cpu/ferric-qwen3-finite-queued-projection-comparison-engineering-tests-command.json": {
+      "bytes": 2401,
+      "sha256": "e6c3ba054d016e5a7b9847ee956712650e1a9697d72288fa09c57e4b37e05c81"
+    },
+    "cpu/ferric-qwen3-finite-queued-projection-comparison-engineering-tests-result.json": {
+      "bytes": 307,
+      "sha256": "20d528a1b3ab580a269be4ef9ab0acfe22fa636420cdc159ba53bbbfc64f7c90"
+    },
+    "cpu/ferric-qwen3-finite-queued-projection-comparison-engineering-tests-started.json": {
+      "bytes": 40,
+      "sha256": "a79e8a973923caa362780476e3a5da199953b92b58bf7367a5627c0c4f8b881e"
+    },
+    "cpu/ferric-qwen3-finite-queued-projection-comparison-engineering-tests-stderr": {
+      "bytes": 1553,
+      "sha256": "dcc78998ee49832b0a4e579d9304ebcfb34e2bff45aff8b551d76e3acf302d3c"
+    },
+    "cpu/ferric-qwen3-finite-queued-projection-comparison-engineering-tests-stdout": {
+      "bytes": 192,
+      "sha256": "e33dc02a8968beb2ec4487eaf6853c20fc499090c9ac2c598fc839ba392727a5"
+    },
+    "cpu/ferric-qwen3-finite-rearm-smoke-engineering-list-command.json": {
+      "bytes": 2403,
+      "sha256": "d8da093b5940f817b4cc546c3d3bfcfa64cd609d3ef4048663eddcd31aa82001"
+    },
+    "cpu/ferric-qwen3-finite-rearm-smoke-engineering-list-result.json": {
+      "bytes": 306,
+      "sha256": "6ef6c5c435c7ab4739dba46360b805119eb7977d473425d7661427eecd07a28e"
+    },
+    "cpu/ferric-qwen3-finite-rearm-smoke-engineering-list-started.json": {
+      "bytes": 40,
+      "sha256": "8639336049e10ad9dff0fd214c983f1d4de4fda2f0af770ab07e7d7206e57b9c"
+    },
+    "cpu/ferric-qwen3-finite-rearm-smoke-engineering-list-stderr": {
+      "bytes": 1736,
+      "sha256": "4c7ad7fcd2bf26e4134e0f98b3be97dc152e283fe5158f395a9f86535334fd65"
+    },
+    "cpu/ferric-qwen3-finite-rearm-smoke-engineering-list-stdout": {
+      "bytes": 76,
+      "sha256": "fb6bea608fad2e98cd7e8646605846f71e2b685d065a94b7acfa25523f621d29"
+    },
+    "cpu/ferric-qwen3-finite-rearm-smoke-engineering-tests-command.json": {
+      "bytes": 2384,
+      "sha256": "3a21d87f5bb063aa322febecb27b08ab2df7870f221b1b153dddc9d42270159e"
+    },
+    "cpu/ferric-qwen3-finite-rearm-smoke-engineering-tests-result.json": {
+      "bytes": 306,
+      "sha256": "24fbdb8731b20882e66c6ea772b33f2ff9dcfa3e14d76b9bd953f96e3d6ee3ad"
+    },
+    "cpu/ferric-qwen3-finite-rearm-smoke-engineering-tests-started.json": {
+      "bytes": 40,
+      "sha256": "7a99ac66036779860176c609f3dde1c3695622ec84372e84df260811d73313b8"
+    },
+    "cpu/ferric-qwen3-finite-rearm-smoke-engineering-tests-stderr": {
+      "bytes": 1519,
+      "sha256": "bd33c58e7e7e9daee8fb5852c12b11148bb066cd7ae1d4b3fcc84cc813580943"
+    },
+    "cpu/ferric-qwen3-finite-rearm-smoke-engineering-tests-stdout": {
+      "bytes": 194,
+      "sha256": "077c873c577668d233282771bc539b61564a9586e42cc2c0ed73e16b000426a6"
+    },
+    "cpu/ferric-qwen3-finite-tiles-decode-engineering-list-command.json": {
+      "bytes": 2404,
+      "sha256": "2496f1013c241b7a587d670eb3c99337d9822e5090cdfbcc90ea9dccd2b5811a"
+    },
+    "cpu/ferric-qwen3-finite-tiles-decode-engineering-list-result.json": {
+      "bytes": 306,
+      "sha256": "de7ac6eba2ba0a45ae28973a124356374c83c6e7573a926f9a1becb08710bf10"
+    },
+    "cpu/ferric-qwen3-finite-tiles-decode-engineering-list-started.json": {
+      "bytes": 40,
+      "sha256": "dccf0895f987bcd82c9767eec1ccd4e9f75f24511ed086ce6e1d03af2b6a2ab0"
+    },
+    "cpu/ferric-qwen3-finite-tiles-decode-engineering-list-stderr": {
+      "bytes": 1738,
+      "sha256": "98e483a50179848beda550258963ceaaec45fc47ce599ed8bcb700d6af0035de"
+    },
+    "cpu/ferric-qwen3-finite-tiles-decode-engineering-list-stdout": {
+      "bytes": 54,
+      "sha256": "960ca977ab5c9f0acd83f7a3f7e2a4ab16cbdf91f0883752b4928ae05a12cfbe"
+    },
+    "cpu/ferric-qwen3-finite-tiles-decode-engineering-tests-command.json": {
+      "bytes": 2385,
+      "sha256": "60335d77f181c4bd0c64ad244732aec8821ad48cb57b49f4c3eaa2176252e1f1"
+    },
+    "cpu/ferric-qwen3-finite-tiles-decode-engineering-tests-result.json": {
+      "bytes": 307,
+      "sha256": "565d382e26c1ed8288bc5ef103a5aef3fa962d8538d697e83de07b470dd73302"
+    },
+    "cpu/ferric-qwen3-finite-tiles-decode-engineering-tests-started.json": {
+      "bytes": 40,
+      "sha256": "35c9111462835917fb9931033705bfd802283433feacc189a2eee230b8af50d2"
+    },
+    "cpu/ferric-qwen3-finite-tiles-decode-engineering-tests-stderr": {
+      "bytes": 1521,
+      "sha256": "f10854dc84cba627d6e77b6313132cd6fdbb92e3c49bd309f707216823d52d35"
+    },
+    "cpu/ferric-qwen3-finite-tiles-decode-engineering-tests-stdout": {
+      "bytes": 172,
+      "sha256": "c51805bda9355923cc4371f9cf4a0adf9f6ecf0e887d27c34c8e2457eb556a1a"
+    },
+    "cpu/ferric-qwen3-finite-two-forward-engineering-list-command.json": {
+      "bytes": 2403,
+      "sha256": "5d33843e241d5653b5aa0ab723132b4e40f7a4d4d7b1648bfa2d64b6bd527da6"
+    },
+    "cpu/ferric-qwen3-finite-two-forward-engineering-list-result.json": {
+      "bytes": 306,
+      "sha256": "a1c69a5934f1af6721dad9c50e68588aed775ffd4710a72d6def82d1d7b6641e"
+    },
+    "cpu/ferric-qwen3-finite-two-forward-engineering-list-started.json": {
+      "bytes": 40,
+      "sha256": "6f790a7faa1136e7c131dfd521a99bf4a9c0316be388e983fda744003de25143"
+    },
+    "cpu/ferric-qwen3-finite-two-forward-engineering-list-stderr": {
+      "bytes": 1737,
+      "sha256": "9d92b5725f50bcd3052564c5c52ba3b443f5219ed0d474e6c2c7f8e2cdcbe0a4"
+    },
+    "cpu/ferric-qwen3-finite-two-forward-engineering-list-stdout": {
+      "bytes": 73,
+      "sha256": "c943d92bec16b6d3e7978ac1d475caa617802f9b50713ea9e5f76f6baaf862c0"
+    },
+    "cpu/ferric-qwen3-finite-two-forward-engineering-tests-command.json": {
+      "bytes": 2384,
+      "sha256": "66193c3ecab4f7b5e9f10e059843b7b9102f5545d83cd01954296de4c6b16bc3"
+    },
+    "cpu/ferric-qwen3-finite-two-forward-engineering-tests-result.json": {
+      "bytes": 306,
+      "sha256": "536ffedf6d2c9514b920cfe453b2d362873aa7685d82d37011f286b61b0404ca"
+    },
+    "cpu/ferric-qwen3-finite-two-forward-engineering-tests-started.json": {
+      "bytes": 40,
+      "sha256": "d471d28a8197f3702080f41f8ed535b27de99996dca8c8b15c588243e5c2ad65"
+    },
+    "cpu/ferric-qwen3-finite-two-forward-engineering-tests-stderr": {
+      "bytes": 1519,
+      "sha256": "6bf06b3686fef232ac3d8bb3092a039887301b75886664ea686414a56ad85c7c"
+    },
+    "cpu/ferric-qwen3-finite-two-forward-engineering-tests-stdout": {
+      "bytes": 191,
+      "sha256": "6c9439098fc26222c642ebde9f3b528a1bc205c80088061e8c8d9526cda853f8"
+    },
+    "cpu/parent-builds-command.json": {
+      "bytes": 3328,
+      "sha256": "f03cc86b89ccd74e1de823b7774d14cbd4ca0679a8e32ae6563204f6a7d10f1f"
+    },
+    "cpu/parent-builds-result.json": {
+      "bytes": 306,
+      "sha256": "9a0fd58b265ccf65a7ffea525b9ece2c04b428d976df577775165c615327c7eb"
+    },
+    "cpu/parent-builds-started.json": {
+      "bytes": 40,
+      "sha256": "fea14b406e52d61026404013e9dfd8a5f2488a1e85b44997cd9562e0ffca26ad"
+    },
+    "cpu/parent-builds-stderr": {
+      "bytes": 276,
+      "sha256": "405b47d6d102acaa5e21a980b9545c1ab02e563f9dd22c9390e7b716303fad89"
+    },
+    "cpu/parent-builds-stdout": {
+      "bytes": 346201,
+      "sha256": "24cf3b619aadd1c93ce32d1edb984a0d47427d5d869611af33168bb045014e99"
+    },
+    "cpu/parent-client-command.json": {
+      "bytes": 2359,
+      "sha256": "6973db9cae4125668dfe5cca52dab62ce1bd75bab180d61b16c1a7cb2c597dd8"
+    },
+    "cpu/parent-client-result.json": {
+      "bytes": 307,
+      "sha256": "5af7f9a786347744b0d8c3850117571146751e533335cd31c09f24f8cf27a1a0"
+    },
+    "cpu/parent-client-started.json": {
+      "bytes": 40,
+      "sha256": "2fcf06280b76aea298b91e1d115a0604c33ce04c803061c386195439aa80a717"
+    },
+    "cpu/parent-client-stderr": {
+      "bytes": 134297,
+      "sha256": "84150d042f3286957ddc7ce48d33ee50fe8e4b314ba67ddebe9542b74ec4c597"
+    },
+    "cpu/parent-client-stdout": {
+      "bytes": 21237,
+      "sha256": "682762fb3692981e5795b4c89d636170068d053c36f23fde4a96bf95fd519ec2"
+    },
+    "cpu/parent-clock-data-command.json": {
+      "bytes": 2391,
+      "sha256": "14c398c703579c3d4133e2ab02c603d9085e86ebda61f3a0ef63007c757dd7f7"
+    },
+    "cpu/parent-clock-data-result.json": {
+      "bytes": 306,
+      "sha256": "78a2ae2b7cf52708a669e8605471f69e55e3612f41736e552aeae945e45d449d"
+    },
+    "cpu/parent-clock-data-started.json": {
+      "bytes": 40,
+      "sha256": "6edf6ffceaacddf15bda33d4febfddee6d36c1d65f00831a616e02cbf19c76e3"
+    },
+    "cpu/parent-clock-data-stderr": {
+      "bytes": 787,
+      "sha256": "fd2d85cce738aa0691e461525fa376c221b0515e9a2172294fae05358c055aa9"
+    },
+    "cpu/parent-clock-data-stdout": {
+      "bytes": 987,
+      "sha256": "ddc98d184bfcd60fb1aa96a322d8a9312d8fda6faac2bc9e79f20e14669f54de"
+    },
+    "cpu/parent-decode-wire-command.json": {
+      "bytes": 2370,
+      "sha256": "fda58cf91d914631e7e5f15d9de831b8e14bb575dd5710e1aeef2a7f4c1b7999"
+    },
+    "cpu/parent-decode-wire-result.json": {
+      "bytes": 307,
+      "sha256": "d5ee546f1be5c4970dfa35b0a15bdd6c2014f6fbabf794b7e987fe5af0e63bfe"
+    },
+    "cpu/parent-decode-wire-started.json": {
+      "bytes": 40,
+      "sha256": "1adfe07538ec92d7f4c393a7869151cd67e448197e9b6545374e1ec611893a04"
+    },
+    "cpu/parent-decode-wire-stderr": {
+      "bytes": 787,
+      "sha256": "fd2d85cce738aa0691e461525fa376c221b0515e9a2172294fae05358c055aa9"
+    },
+    "cpu/parent-decode-wire-stdout": {
+      "bytes": 1214,
+      "sha256": "d60bdcb60a98f205562474ea79f15877c4cab806c83c696f50e7d39098195c34"
+    },
+    "cpu/parent-default-check-command.json": {
+      "bytes": 2283,
+      "sha256": "2011c1eee6d621ef2218533ba023be5385079793eb6eb5bf0784c937a3770480"
+    },
+    "cpu/parent-default-check-result.json": {
+      "bytes": 306,
+      "sha256": "f6039e95bbc3116cefeaa4347fd236cf36a6ac80b073d85ccbbc5c1a3b7ac432"
+    },
+    "cpu/parent-default-check-started.json": {
+      "bytes": 40,
+      "sha256": "bb7f02306a6642a3094d032e5399f59ff935807a22a3f0211f00cacfd992d0b7"
+    },
+    "cpu/parent-default-check-stderr": {
+      "bytes": 12627,
+      "sha256": "0b61991faef7fc670ee7e60ae1f001ca07b79f2e647640a9fedbbf52c2a4145d"
+    },
+    "cpu/parent-default-check-stdout": {
+      "bytes": 256761,
+      "sha256": "302765b0354ab52accbe400220aaea7448aab06eb4d71e0b28654a5054ddc680"
+    },
+    "cpu/parent-device-data-command.json": {
+      "bytes": 2385,
+      "sha256": "63af5dd18f09446c1195d1e7dd7b244e80a2bacb7002c1b9592ca4d1d2143a76"
+    },
+    "cpu/parent-device-data-result.json": {
+      "bytes": 307,
+      "sha256": "c769f22db9065e4a449d6ff8109fe8280b112252fcafa4544f900e0f38348425"
+    },
+    "cpu/parent-device-data-started.json": {
+      "bytes": 40,
+      "sha256": "a226949870feffdebb0c70960887d22dcaf50293270693eadecd04e10ea90b2b"
+    },
+    "cpu/parent-device-data-stderr": {
+      "bytes": 787,
+      "sha256": "fd2d85cce738aa0691e461525fa376c221b0515e9a2172294fae05358c055aa9"
+    },
+    "cpu/parent-device-data-stdout": {
+      "bytes": 1544,
+      "sha256": "af1f5d3a3c498015108877530e614a2be7f158823a1e39936d5a7956c13e9e31"
+    },
+    "cpu/parent-host-data-v1-command.json": {
+      "bytes": 2376,
+      "sha256": "48eaead384da5f5d50e22b76227732204ed7d78f2207d99e3779f7befb9e72dc"
+    },
+    "cpu/parent-host-data-v1-result.json": {
+      "bytes": 307,
+      "sha256": "b146009f51434b665015a5a2fad07d84b3f6a6fd0904f685fa214135d99f7932"
+    },
+    "cpu/parent-host-data-v1-started.json": {
+      "bytes": 40,
+      "sha256": "4eb71a0b213467dd2a81e6700d95aae9db0f10ea63e5e2c9721047c2bb38bc1b"
+    },
+    "cpu/parent-host-data-v1-stderr": {
+      "bytes": 787,
+      "sha256": "fd2d85cce738aa0691e461525fa376c221b0515e9a2172294fae05358c055aa9"
+    },
+    "cpu/parent-host-data-v1-stdout": {
+      "bytes": 949,
+      "sha256": "3f2a8d820d80493c6ff69e3ca1c01cfa253494c19c2f90af00716dcdc4d0a3da"
+    },
+    "cpu/parent-host-data-v2-command.json": {
+      "bytes": 2376,
+      "sha256": "b4fed3968d265ba9048698e2c3daaa98a63a1c497eed040610bd6306f104a56f"
+    },
+    "cpu/parent-host-data-v2-result.json": {
+      "bytes": 306,
+      "sha256": "7c4b294bca3d22732b332e74359e91e3aeab63dde83af930b44dd39ba2df4e25"
+    },
+    "cpu/parent-host-data-v2-started.json": {
+      "bytes": 40,
+      "sha256": "9baabb37e087461366084ae9b3afe8faff0224cc8241766ce8703df881002d73"
+    },
+    "cpu/parent-host-data-v2-stderr": {
+      "bytes": 787,
+      "sha256": "fd2d85cce738aa0691e461525fa376c221b0515e9a2172294fae05358c055aa9"
+    },
+    "cpu/parent-host-data-v2-stdout": {
+      "bytes": 1189,
+      "sha256": "fcdb043025fd29794aeec9ff5ea894a6e63ba805eb40dd5d04b81cba14dbeeb8"
+    },
+    "cpu/parent-lib-list-command.json": {
+      "bytes": 2352,
+      "sha256": "84bca61dd7ab259f28d2ddf8a5f3add7dac591364d5ae16949bacaa962e69d79"
+    },
+    "cpu/parent-lib-list-result.json": {
+      "bytes": 307,
+      "sha256": "5142d395d7a4997fd251f69ea6b6738ad5f077bd036d34a088cfd437c8821cad"
+    },
+    "cpu/parent-lib-list-started.json": {
+      "bytes": 40,
+      "sha256": "8258e683f88c5cc93ceb3bf86c6693f48e08d698736f45933f069758e1915d1a"
+    },
+    "cpu/parent-lib-list-stderr": {
+      "bytes": 18616,
+      "sha256": "d18299475a0ff6bd6b6169d33c9742276367274ff639a5694b1de2b7e3796daf"
+    },
+    "cpu/parent-lib-list-stdout": {
+      "bytes": 84563,
+      "sha256": "7423c21b06680c5d44bd1cf500915afc46ea64359f1f7b97c373afcac7eddfde"
+    },
+    "cpu/parent-long-wire-command.json": {
+      "bytes": 2362,
+      "sha256": "4f05c93c9f2267fdad537764117e134ffb8c47cf3fe166eae9139524e411b8ed"
+    },
+    "cpu/parent-long-wire-result.json": {
+      "bytes": 307,
+      "sha256": "ae04236da633a2487f2912c20089b685378a2786c99c5af3263a10990a660de7"
+    },
+    "cpu/parent-long-wire-started.json": {
+      "bytes": 40,
+      "sha256": "5d5b43756245df7293738a516b568366a6d3e4ffee2d054a4788dc24d61c5d65"
+    },
+    "cpu/parent-long-wire-stderr": {
+      "bytes": 787,
+      "sha256": "fd2d85cce738aa0691e461525fa376c221b0515e9a2172294fae05358c055aa9"
+    },
+    "cpu/parent-long-wire-stdout": {
+      "bytes": 980,
+      "sha256": "30ad098043be794d43e0b889e8c09e316ec912098d3d516b48256eb113c24ab6"
+    },
+    "cpu/parent-metadata-command.json": {
+      "bytes": 2299,
+      "sha256": "92b402af97bb3a0bab793ae9b9d458238df173366287b9c1bdd65c40c6613fb4"
+    },
+    "cpu/parent-metadata-result.json": {
+      "bytes": 301,
+      "sha256": "07c9c9ee0637d83c5bbfbb3b0c6b16020de7eeb3cb5556762186be70591ecfc9"
+    },
+    "cpu/parent-metadata-started.json": {
+      "bytes": 40,
+      "sha256": "102c91b2385228a8e8db56e9a402e0fbd3abdd3afda2b4641a9f2242b9a5ad0a"
+    },
+    "cpu/parent-metadata-stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cpu/parent-metadata-stdout": {
+      "bytes": 1011661,
+      "sha256": "f3731e4a16cb312c22d7d7e6d05a23ddc05b380be0162633076788e66834956a"
+    },
+    "cpu/parent-old-wire-command.json": {
+      "bytes": 2365,
+      "sha256": "f551b180f36de00f7ae20121fa8561f29da5c9c62f6c5f0967309ec66c1fcbf8"
+    },
+    "cpu/parent-old-wire-result.json": {
+      "bytes": 306,
+      "sha256": "b57f7cd2496ea59af869f949c8d219edb46e8f827123780967cc9c31c67b506f"
+    },
+    "cpu/parent-old-wire-started.json": {
+      "bytes": 40,
+      "sha256": "5c8e9395f1be6a9581294b2dafae326844a5cca3e022868ca26520f426eacc6a"
+    },
+    "cpu/parent-old-wire-stderr": {
+      "bytes": 787,
+      "sha256": "fd2d85cce738aa0691e461525fa376c221b0515e9a2172294fae05358c055aa9"
+    },
+    "cpu/parent-old-wire-stdout": {
+      "bytes": 625,
+      "sha256": "a6b07efc48d6c8a2ece747ed0a7cade0945ea5a8fdb64eb4ee30844b5d722526"
+    },
+    "cpu/parent-prefix-decode-wire-command.json": {
+      "bytes": 2371,
+      "sha256": "6891901c9550579485f350873e8f4bf6f527c7b5ea1e6104d98fdb0b913257dc"
+    },
+    "cpu/parent-prefix-decode-wire-result.json": {
+      "bytes": 307,
+      "sha256": "a155db6c7d3cedb808b722bc1595f898af3f38d16d1179f594cf255cc775431b"
+    },
+    "cpu/parent-prefix-decode-wire-started.json": {
+      "bytes": 40,
+      "sha256": "d1060648bfacb669508674f6250318eff4e7b4fa32e25c033f892300b2beb768"
+    },
+    "cpu/parent-prefix-decode-wire-stderr": {
+      "bytes": 787,
+      "sha256": "fd2d85cce738aa0691e461525fa376c221b0515e9a2172294fae05358c055aa9"
+    },
+    "cpu/parent-prefix-decode-wire-stdout": {
+      "bytes": 1112,
+      "sha256": "50ac010a05a87c08db32b55062ee2f6951abee4f00e81aa6bbee81f278f7ac3f"
+    },
+    "cpu/parent-prefix-layer-wire-command.json": {
+      "bytes": 2370,
+      "sha256": "cb488ab789f90bad62f7f5832c8a1467a7a82f6ca31b7614ef5b44990f7621e8"
+    },
+    "cpu/parent-prefix-layer-wire-result.json": {
+      "bytes": 306,
+      "sha256": "7d2f21dee6d293683688907084aa4ce4ca1604dbe4288dc762d66546bddbbfc7"
+    },
+    "cpu/parent-prefix-layer-wire-started.json": {
+      "bytes": 40,
+      "sha256": "3b96833c4d722fbdbd2daf33bd672f9b3eed50b925579c35e58dc2d8068cb863"
+    },
+    "cpu/parent-prefix-layer-wire-stderr": {
+      "bytes": 787,
+      "sha256": "fd2d85cce738aa0691e461525fa376c221b0515e9a2172294fae05358c055aa9"
+    },
+    "cpu/parent-prefix-layer-wire-stdout": {
+      "bytes": 849,
+      "sha256": "bc7c301d0a821bcdc65225e32afe08ff30439b5fb4ae0429c1704f0416befdf8"
+    },
+    "cpu/parent-projection-wire-command.json": {
+      "bytes": 2386,
+      "sha256": "2c04242be7cf51162db3d0877fc618d258bfba6132241976980d601f73876cbb"
+    },
+    "cpu/parent-projection-wire-result.json": {
+      "bytes": 307,
+      "sha256": "3a5f2628e33dd00bd6a55029bffb3ccc36e92ad06e8d967e00cd974fa9ca3927"
+    },
+    "cpu/parent-projection-wire-started.json": {
+      "bytes": 40,
+      "sha256": "15425a5ac5e8144400f20aa7c6052eec3d2069624468c09f4b0f763d795ca430"
+    },
+    "cpu/parent-projection-wire-stderr": {
+      "bytes": 787,
+      "sha256": "fd2d85cce738aa0691e461525fa376c221b0515e9a2172294fae05358c055aa9"
+    },
+    "cpu/parent-projection-wire-stdout": {
+      "bytes": 1036,
+      "sha256": "6a599e22eff2aec020a887911c1cd07f6c1f8e0829a3277a86b0573320c11fc9"
+    },
+    "cpu/parent-queued-mlp-wire-command.json": {
+      "bytes": 2379,
+      "sha256": "a9039b85ce8ee9d3ae1dc0a124063c7a92a6218339b85c3e0ef97ffc7dc7a12f"
+    },
+    "cpu/parent-queued-mlp-wire-result.json": {
+      "bytes": 306,
+      "sha256": "7ed44826ae1ebbe449fa1bf091eb810697ba485eeb417c8f6e81562877e47227"
+    },
+    "cpu/parent-queued-mlp-wire-started.json": {
+      "bytes": 40,
+      "sha256": "8d82ff00bb6825a2784482cc44ab8191683e25e74a9be06f0bb46b6e74fb0d15"
+    },
+    "cpu/parent-queued-mlp-wire-stderr": {
+      "bytes": 787,
+      "sha256": "fd2d85cce738aa0691e461525fa376c221b0515e9a2172294fae05358c055aa9"
+    },
+    "cpu/parent-queued-mlp-wire-stdout": {
+      "bytes": 863,
+      "sha256": "00ebe7eb6c09493a3b49e9d2f210ce01147c79ca49dee8dbbb9e19f899d72cff"
+    },
+    "cpu/parent-smoke-wire-command.json": {
+      "bytes": 2369,
+      "sha256": "6c570dea6af00d2f85c176b59d1d215f6da711fec0af751afdf7cb7807f4d817"
+    },
+    "cpu/parent-smoke-wire-result.json": {
+      "bytes": 306,
+      "sha256": "336074b143f103b21bb53014eebae4ea0fb372cba0aed44f6c19c9b9d2a36690"
+    },
+    "cpu/parent-smoke-wire-started.json": {
+      "bytes": 40,
+      "sha256": "a6971b9e6ca41403b42a28084a7427c32563e1ec50a4c9e35ed638f325a9b8d4"
+    },
+    "cpu/parent-smoke-wire-stderr": {
+      "bytes": 787,
+      "sha256": "fd2d85cce738aa0691e461525fa376c221b0515e9a2172294fae05358c055aa9"
+    },
+    "cpu/parent-smoke-wire-stdout": {
+      "bytes": 967,
+      "sha256": "4da4600cf3c3f08e38f22f18a0bece2687935ec4ff6e5754c3a18ba8fb8f3896"
+    },
+    "cpu/parent-tiles-wire-command.json": {
+      "bytes": 2378,
+      "sha256": "d7db893e114a34aebd0a4ea312639bb4f0f0a9e80039c57b7dc71eb2819c8b5a"
+    },
+    "cpu/parent-tiles-wire-result.json": {
+      "bytes": 306,
+      "sha256": "120bb4a66a6aa409cbc762ff33df5c0f7c05e03447655aa832dedf273f5cc1eb"
+    },
+    "cpu/parent-tiles-wire-started.json": {
+      "bytes": 40,
+      "sha256": "f7806fe95d9bb7b5739721f25bb9bc75a80764741d63d05c295fd95acd4fa346"
+    },
+    "cpu/parent-tiles-wire-stderr": {
+      "bytes": 787,
+      "sha256": "fd2d85cce738aa0691e461525fa376c221b0515e9a2172294fae05358c055aa9"
+    },
+    "cpu/parent-tiles-wire-stdout": {
+      "bytes": 1202,
+      "sha256": "017ca70e65a238ea802a66e069826bd3c0cee4a1bf14a96ac32caf034edcf05a"
+    },
+    "cpu/sources-after.json": {
+      "bytes": 1778026,
+      "sha256": "076dda3948d35319b8ff1fbe64b14dce107e7863c17590534fe3bb8c19ca0074"
+    },
+    "cpu/sources-base.json": {
+      "bytes": 1777182,
+      "sha256": "6a27671004b340aa3c9b28812e829d2929b64dab2c91e931e4c4673e46c403d7"
+    },
+    "cpu/sources-before.json": {
+      "bytes": 1778026,
+      "sha256": "076dda3948d35319b8ff1fbe64b14dce107e7863c17590534fe3bb8c19ca0074"
+    },
+    "format/complete.json": {
+      "bytes": 8256,
+      "sha256": "d718a2638fbcc6135130c98dd64178ccbc3ec0d340ca7b15acc0b10f0c4e3421"
+    },
+    "format/rustfmt-check-command.json": {
+      "bytes": 3425,
+      "sha256": "0b989e7e868b118506f5af5d023f93ee81a1dc8089cf153c37d4e30bd2b72baf"
+    },
+    "format/rustfmt-check-result.json": {
+      "bytes": 301,
+      "sha256": "fefef676d6a187d7ef25fe31bdd00c7ee3cfdfb5952c1fe5e582c658552fdc9e"
+    },
+    "format/rustfmt-check-started.json": {
+      "bytes": 40,
+      "sha256": "b8dfe507d02ef6b821b487d4f632775dd407f410cf4446203b7ed9ba5f0ab917"
+    },
+    "format/rustfmt-check-stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "format/rustfmt-check-stdout": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "format/rustfmt-command.json": {
+      "bytes": 3410,
+      "sha256": "ec4766630c9f383b6daf5662f3aa849357d54f54269f1cf2c00a25992e6cf8b2"
+    },
+    "format/rustfmt-result.json": {
+      "bytes": 300,
+      "sha256": "f6ac8e3d24ab03c4863014da252e51e3415aa681a86d44649eb5b48d70b9965e"
+    },
+    "format/rustfmt-started.json": {
+      "bytes": 40,
+      "sha256": "34f52d9509dceaf537105971aab7a3f1a32ab0b923db94be2a67fbafb6407c9e"
+    },
+    "format/rustfmt-stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "format/rustfmt-stdout": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "format/sources-after.json": {
+      "bytes": 2859,
+      "sha256": "7e16927ea4a9a61fa0a528651eec6c40112c640b2bb2688bac9897e7f96178e3"
+    },
+    "format/sources-before.json": {
+      "bytes": 2810,
+      "sha256": "ac8e7e0617bd20fdf44ccf2250e3e6c4e6b2945af79b82e8f9da0876c305d669"
+    },
+    "initial-packaging-failure/controller-manifest.json": {
+      "bytes": 664,
+      "sha256": "27eff38fd5c7d9464c9f914ccf40e5357c71176a0503f352ba3dbb392702cbaa"
+    },
+    "initial-packaging-failure/root-observation.json": {
+      "bytes": 1605,
+      "sha256": "6e7257fec107831580d5e70849e66bfe11acc2313c4d4b4e1378c6587f9b90e6"
+    },
+    "initial-packaging-failure/source-inputs.json": {
+      "bytes": 844,
+      "sha256": "f5abaecf4412b03b66738da722eb8dfa076b0d75c37959504805ccf75b6e2116"
+    },
+    "parent-source/adapters/m1-engineering-execution-v1/Cargo.toml": {
+      "bytes": 12264,
+      "sha256": "901c4a3d2e8555fd4596cae103d14f2c977a5d0432c7d739ec0ad51286e8c283"
+    },
+    "parent-source/adapters/m1-engineering-execution-v1/src/bin/ferric-qwen3-finite-prefix-layer-capture-engineering.rs": {
+      "bytes": 3043,
+      "sha256": "1509b3a84b37cb3c7fbc20ddfc35bdc8a94ba0a646e74b009fcf7b70ff34a443"
+    },
+    "parent-source/adapters/m1-engineering-execution-v1/src/tp_finite_client/prefix_layer.rs": {
+      "bytes": 22274,
+      "sha256": "52384fce79d779125a671713c01b2edf0cdff0a6fe6d089d32850c202b6ef267"
+    },
+    "parent-source/adapters/m1-engineering-execution-v1/src/tp_finite_client/prefix_layer/capture.rs": {
+      "bytes": 6912,
+      "sha256": "5daa32fc5f8c00272c5a09036d5814189527365b5468408a1572a1ddc329f79f"
+    },
+    "parent-source/adapters/m1-engineering-execution-v1/src/tp_finite_client/prefix_layer/capture_evidence_tests.rs": {
+      "bytes": 2897,
+      "sha256": "670c81cac767312855f9a4f62a771de67dafd19981296f9b67730447be58e5d0"
+    },
+    "parent-source/adapters/m1-engineering-execution-v1/src/tp_finite_client/prefix_layer/capture_tests.rs": {
+      "bytes": 9989,
+      "sha256": "55a98f1435cf230cfbb6480440118a1e79fd79838fcfb3950b9ff8c8f76fe9c2"
+    },
+    "parent-source/adapters/m1-engineering-execution-v1/src/tp_finite_client/prefix_layer/evidence.rs": {
+      "bytes": 5262,
+      "sha256": "8bdce684444e29f401196d5e9435457e200195288c7a2c4584bee93ca85bab40"
+    },
+    "prior/complete.json": {
+      "bytes": 316284,
+      "sha256": "d2a118dd2a3bfac749b18de26883a661a1078a22ebf374853a11b081f43b1484"
+    },
+    "publish.py": {
+      "bytes": 29565,
+      "sha256": "a1d250e9d440c3df9a66a69ee007449f69ce1b703595846b0c95471f853abbeb"
+    },
+    "pure/complete.json": {
+      "bytes": 1505,
+      "sha256": "ab67599ef1e653c0099ab00f4c04cc1a739b8ba26e92fc38ef9b7c880d807012"
+    },
+    "pure/sources-after.json": {
+      "bytes": 513,
+      "sha256": "8b8c4136acc095700f5e4d0163ed3531eb644c1c289f44946494bd6f56e2a185"
+    },
+    "pure/sources-before.json": {
+      "bytes": 513,
+      "sha256": "8b8c4136acc095700f5e4d0163ed3531eb644c1c289f44946494bd6f56e2a185"
+    },
+    "pure/tests.log": {
+      "bytes": 1935,
+      "sha256": "2a7ae4f012b529cf01022790f51c1652b4d7df27bfd9d820a19aa371f23ef68b"
+    },
+    "source-inputs.json": {
+      "bytes": 844,
+      "sha256": "c52178efe8973549afa55c09d4c7615a88dee407f537c2bb95496455300664f9"
+    },
+    "tools/format_layer0_native_capture_p228_v1.py": {
+      "bytes": 5148,
+      "sha256": "21861f85096185c7508a6f00f1b96cf4e6b366001c7e7a8feb26588c78263720"
+    },
+    "tools/run_layer0_native_capture_cpu_pure_p228_v2.py": {
+      "bytes": 4051,
+      "sha256": "20b12225a7256c576d6a852b8ffd1aebc240018ea919dcf0f9c153e50c37280b"
+    }
+  },
+  "root_authored_readme": {
+    "bytes": 4154,
+    "path": "/home/harsh/ferric-p227-integration/qualification/layer0-native-capture-parent-v1/README.md",
+    "sha256": "225899bfcaba37cb4e26aa1ea3415636d1b79033f77c5128a58f1be86a1921f0"
+  },
+  "same_parent275_compiled_base": true,
+  "schema": "ferric-p228-layer0-native-capture-parent-public-result-v1",
+  "shared_worker_source_files": 0,
+  "sibling_runtime_rebuilt": false,
+  "source_archive_maps_replayed": true,
+  "source_commits": {
+    "fe2o3": "27b53d2b74c1f239988a891a4aed39e089b05663",
+    "ferric": "1a9a2551ee7af44d5482cc37f46cf008158b8d10"
+  },
+  "source_files": 9614,
+  "source_trees": {
+    "fe2o3": "3c2fa509b7328c4bf7d8e2ef2aab3a0e0c4a422e",
+    "ferric": "6a7ebe6691d2ef7ec96b9da3a4ad1874b1e33a2a"
+  },
+  "sustained_2048_256": false,
+  "timestamp_calibration": false,
+  "worker_rebuilt": false
+}

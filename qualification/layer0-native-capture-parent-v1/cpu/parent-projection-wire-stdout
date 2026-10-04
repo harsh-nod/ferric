@@ -1,0 +1,12 @@
+
+running 7 tests
+test finite_queued_projection_comparison_wire_v1::tests::comparison_report_rejects_wrong_finite_state_timing_stage_rank_and_claims ... ok
+test finite_queued_projection_comparison_wire_v1::tests::chain_binds_comparison_body_and_close_is_not_an_old_profile_completion ... ok
+test finite_queued_projection_comparison_wire_v1::tests::explicit_projection_bootstrap_binds_pid_scope_and_does_not_consume_setup_bytes ... ok
+test finite_queued_projection_comparison_wire_v1::tests::corruption_truncation_nonfinite_and_wrong_argmax_are_rejected ... ok
+test finite_queued_projection_comparison_wire_v1::tests::mlp_profile_and_projection_profile_are_not_interchangeable ... ok
+test finite_queued_projection_comparison_wire_v1::tests::only_one_first_forward_and_explicit_close_are_admitted ... ok
+test finite_queued_projection_comparison_wire_v1::tests::full_main_control_and_comparison_roundtrip_preserves_separate_provenance ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 771 filtered out; finished in 0.01s
+

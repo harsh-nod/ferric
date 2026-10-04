@@ -1,0 +1,27 @@
+{
+  "schema": "ferric-p228-layer0-capture-precompiler-packaging-failure-v1",
+  "record_kind": "root-observed terminal tool output, not an executed controller completion",
+  "ssh_session_id": 73345,
+  "terminal_output_chunk": "5310ab",
+  "exit_code": 1,
+  "controller_package_manifest_sha256": "27eff38fd5c7d9464c9f914ccf40e5357c71176a0503f352ba3dbb392702cbaa",
+  "source_inputs_sha256": "f5abaecf4412b03b66738da722eb8dfa076b0d75c37959504805ccf75b6e2116",
+  "archive": {
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/layer0-capture-ferric-1a9a2551-v228-v1.tar.gz",
+    "bytes": 24832983,
+    "sha256": "d58264ff8e5a91c1cc7f315a28c3c578d91bb371273347cd1bf2d2b7bef4ee0e"
+  },
+  "exception": "AssertionError in run_clean_worker_p228_v1.py:44, called from run.py:368: assert rel.parts and rel.parts[0] == prefix and not rel.is_absolute()",
+  "cause": "The root-created git archive lacked the required ferric/ member prefix.",
+  "followup_probe_session_id": 76577,
+  "followup_probe_terminal_chunk": "55b895",
+  "followup_probe_exit_code": 0,
+  "output_directory": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/layer0-native-capture-cpu-v228-v1",
+  "observed_entries": ["sources/", "target/", "tmp/"],
+  "all_observed_directories_empty": true,
+  "cargo_phase_records": [],
+  "compiler_execution": false,
+  "gpu_execution": false,
+  "original_inputs_and_directory_preserved": true,
+  "recovery": "Use a separate prefixed V2 archive, source-input manifest, controller package and fresh output directory. Do not weaken extractor validation."
+}

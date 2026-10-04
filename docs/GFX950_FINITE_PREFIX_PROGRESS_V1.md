@@ -6,7 +6,15 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Latest: the [independent layer-zero capture](../qualification/layer0-framework-capture-v1/README.md)
+Latest: the [candidate-only native capture parent](../qualification/layer0-native-capture-parent-v1/README.md)
+passed 289 Rust tests, including 14 new tests, with no ignores on `mi350-2`.
+All fourteen executables, the default-feature check, 46 bounded commands and
+source/input/artifact postchecks passed. Twenty separate controller tests and
+format checks also passed. This enables a genuine current-image layer-zero
+intermediate capture; the new GPU route has not yet run and does not establish
+numerical acceptance or performance.
+
+The [independent layer-zero capture](../qualification/layer0-framework-capture-v1/README.md)
 passed on `mi350-2`: 33 genuine BF16 framework intermediates repeated exactly
 across two fresh-KV passes. The new layer-zero output matches the original
 framework reference byte for byte. Separate capture, launcher and comparison

@@ -1,0 +1,25 @@
+test_added_names_must_all_be_executed (test_run.PolicyTests) ... ok
+test_compatibility_preserves_dependencies_and_shared_worker_but_not_uncompiled_runtime (test_run.PolicyTests) ... ok
+test_compatibility_refuses_changed_added_or_missing_compiled_inputs (test_run.PolicyTests) ... ok
+test_compatibility_requires_actual_parent_local_root_and_ferric_only (test_run.PolicyTests) ... ok
+test_default_check_and_all_commands_keep_offline_locked_parent_target (test_run.PolicyTests) ... ok
+test_full_inventory_refuses_removed_or_undeclared_or_already_old_names (test_run.PolicyTests) ... ok
+test_main_guard_precedes_all_authenticated_loads (test_run.PolicyTests) ... ok
+test_manifest_allows_only_one_new_opt_in_bin (test_run.PolicyTests) ... ok
+test_manifest_refuses_dependency_feature_and_duplicate_changes (test_run.PolicyTests) ... ok
+test_metadata_relocates_only_local_roots_and_preserves_dependencies (test_run.PolicyTests) ... ok
+test_nested_capture_tests_count_once_and_old_shared_schemas_stay_exact (test_run.PolicyTests) ... ok
+test_optimized_python_is_rejected_before_helpers (test_run.PolicyTests) ... ok
+test_overlay_accepts_exact_seven_parent_members (test_run.PolicyTests) ... ok
+test_overlay_refuses_runtime_lockfile_duplicate_and_missing_members (test_run.PolicyTests) ... ok
+test_overlay_refuses_unknown_generation_and_wrong_preimage_kind (test_run.PolicyTests) ... ok
+test_overlay_requires_thirteen_nested_tests_one_bin_and_actual_pins (test_run.PolicyTests) ... ok
+test_pins_refuse_boolean_sizes_relative_paths_and_bad_digests (test_run.PolicyTests) ... ok
+test_recipe_preserves_44_old_phases_and_adds_only_two (test_run.PolicyTests) ... ok
+test_source_manifest_requires_exact_pushed_pair (test_run.PolicyTests) ... ok
+test_stable_environment_keeps_bootstrap_and_only_declared_profile_overrides (test_run.PolicyTests) ... ok
+
+----------------------------------------------------------------------
+Ran 20 tests in 0.005s
+
+OK
