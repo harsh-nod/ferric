@@ -3,6 +3,7 @@
 use super::{FilePin, ImagePins, Result, hash, process, require, setup};
 use crate::finite_forward_wire_v1 as old;
 use crate::finite_prefix_decode_wire_v1 as wire;
+use crate::finite_projection_residual_decode_wire_v1 as projection_wire;
 use crate::finite_setup_wire_v1 as setup_wire;
 use crate::tp_execution::batched::EngineeringTp2FiniteSourceRecorderV1;
 use crate::tp_execution::{
@@ -24,6 +25,7 @@ pub mod device_v1;
 mod evidence;
 pub mod host_observation;
 pub mod host_policy_v2;
+pub mod projection;
 
 const VOCABULARY: u32 = 151_936;
 const INPUT_TOKENS: [u32; 4] = [9112, 2190, 3772, 220];
@@ -448,11 +450,40 @@ fn run_with_diagnostic(
     allow_unauthenticated_machine_code: bool,
     diagnostic: Option<HostDiagnostic>,
 ) -> Result<(Observation, Option<FilePin>)> {
+    run_selected(config, allow_unauthenticated_machine_code, diagnostic, None)
+        .map(|(observation, host, _)| (observation, host))
+}
+
+fn worker_flag(diagnostic: Option<&HostDiagnostic>, projection: bool) -> Result<&'static str> {
+    require(
+        !projection || diagnostic.is_none(),
+        "projection decode has no legacy diagnostics",
+    )?;
+    Ok(if projection {
+        "--engineering-native-projection-residual-decode-v1"
+    } else {
+        diagnostic
+            .map(HostDiagnostic::launch_flag)
+            .unwrap_or("--engineering-native-prefix-decode-v1")
+    })
+}
+
+fn run_selected(
+    config: Config,
+    allow_unauthenticated_machine_code: bool,
+    diagnostic: Option<HostDiagnostic>,
+    projection: Option<&FilePin>,
+) -> Result<(
+    Observation,
+    Option<FilePin>,
+    Option<projection_wire::Bootstrap>,
+)> {
     require(
         allow_unauthenticated_machine_code,
         "prefix decode explicit engineering machine-code opt-in required",
     )?;
     config.validate()?;
+    let launch_flag = worker_flag(diagnostic.as_ref(), projection.is_some())?;
     if let Some(diagnostic) = &diagnostic {
         host_observation::preflight(diagnostic.path())?;
     }
@@ -460,6 +491,9 @@ fn run_with_diagnostic(
     let images = config.images.read()?;
     let tiles_image = config.read_tiles_image()?;
     let prefix_image = config.read_prefix_image()?;
+    let projection_image = projection
+        .map(|pin| pin.read(wire::MAX_IMAGE_BYTES as u64, true))
+        .transpose()?;
     let (prompt_text, prompt) = config.prompt.read()?;
     let model = EngineeringQwenModelV1::open(&config.source)?;
     require(
@@ -488,10 +522,7 @@ fn run_with_diagnostic(
     let mut command = Command::new(&config.worker.path);
     command
         .args([
-            diagnostic
-                .as_ref()
-                .map(HostDiagnostic::launch_flag)
-                .unwrap_or("--engineering-native-prefix-decode-v1"),
+            launch_flag,
             "--allow-unauthenticated-machine-code",
             "--devices",
         ])
@@ -513,7 +544,12 @@ fn run_with_diagnostic(
     let pid = child.id();
     eprintln!("finite engineering owned child pid={pid} pgid={pid}; no native setup acknowledged");
     eprintln!(
-        "finite explicit profile=prefix284-mlp548-four-forward-v1 mode={:?}",
+        "finite explicit profile={} mode={:?}",
+        if projection.is_some() {
+            "projection-residual-prefix284-mlp548-four-forward-v1"
+        } else {
+            "prefix284-mlp548-four-forward-v1"
+        },
         config.mode
     );
     config.worker.read(512 << 20, false)?;
@@ -526,6 +562,7 @@ fn run_with_diagnostic(
         program_sha256,
         manifest_sha256,
         bootstrap,
+        projection_bootstrap,
         profile_sha256,
         setup_commands,
     ) = recorder.with_plan(|composition, source, uploads| {
@@ -582,18 +619,34 @@ fn run_with_diagnostic(
                 config.mode,
             )
             .map_err(|e| e.to_string())?;
-        let profile = bootstrap.sha256().map_err(|e| e.to_string())?;
+        let projection_bootstrap = projection
+            .map(|pin| projection::bootstrap(bootstrap.clone(), pin))
+            .transpose()?;
+        let profile = match &projection_bootstrap {
+            Some(selected) => selected.sha256(),
+            None => bootstrap.sha256(),
+        }
+        .map_err(|e| e.to_string())?;
         child.check_deadline()?;
-        wire::write_bootstrap(
-            child
-                .input
-                .as_mut()
-                .ok_or("prefix decode closed bootstrap stdin")?,
-            &mut sent,
-            &bootstrap,
-            &tiles_image,
-            &prefix_image,
-        )
+        let input = child
+            .input
+            .as_mut()
+            .ok_or("prefix decode closed bootstrap stdin")?;
+        match &projection_bootstrap {
+            Some(selected) => projection_wire::write_bootstrap(
+                input,
+                &mut sent,
+                selected,
+                &tiles_image,
+                &prefix_image,
+                projection_image
+                    .as_deref()
+                    .ok_or("projection decode image missing")?,
+            ),
+            None => {
+                wire::write_bootstrap(input, &mut sent, &bootstrap, &tiles_image, &prefix_image)
+            }
+        }
         .map_err(|e| e.to_string())?;
         wire::account_begin(&mut sent, &bootstrap).map_err(|e| e.to_string())?;
         let mut stream = setup::Stream::begin(
@@ -636,6 +689,7 @@ fn run_with_diagnostic(
             hash(&program),
             manifest_sha,
             bootstrap,
+            projection_bootstrap,
             profile,
             stream.seal()?,
         ))
@@ -771,6 +825,9 @@ fn run_with_diagnostic(
     config
         .prefix_image
         .read(wire::MAX_IMAGE_BYTES as u64, false)?;
+    if let Some(pin) = projection {
+        pin.read(wire::MAX_IMAGE_BYTES as u64, false)?;
+    }
     let files = evidence.finish(&stderr)?;
     let mut observation = Observation {
         schema: "FerricFinitePrefixDecodeObservationV1",
@@ -806,10 +863,10 @@ fn run_with_diagnostic(
         .as_ref()
         .map(|diagnostic| diagnostic.validate(&observation))
         .transpose()?;
-    if diagnostic.is_none() {
+    if diagnostic.is_none() && projection.is_none() {
         evidence::publish(&mut observation)?;
     }
-    Ok((observation, host))
+    Ok((observation, host, projection_bootstrap))
 }
 
 #[cfg(test)]

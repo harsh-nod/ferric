@@ -191,7 +191,7 @@ impl Evidence {
     }
 }
 
-pub(super) fn publish(observation: &mut Observation) -> Result<()> {
+pub(super) fn validate_closed(observation: &Observation) -> Result<()> {
     require(
         observation.completed_forwards == 4
             && observation.native_closed
@@ -252,30 +252,36 @@ pub(super) fn publish(observation: &mut Observation) -> Result<()> {
         actual == expected,
         "prefix decode exact pre-publication evidence census",
     )?;
+    Ok(())
+}
+
+pub(super) fn publish_summary(
+    directory: &Path,
+    bytes_before_summary: u64,
+    mut serialize: impl FnMut(u64, u64) -> Result<Vec<u8>>,
+) -> Result<()> {
+    let mut summary_bytes = 0;
+    let mut total_bytes = bytes_before_summary;
     let mut bytes = Vec::new();
     for _ in 0..8 {
-        bytes = serde_json::to_vec(observation).map_err(|e| e.to_string())?;
+        bytes = serialize(summary_bytes, total_bytes)?;
         bytes.push(b'\n');
         require(
             bytes.len() <= SUMMARY_LIMIT,
             "prefix decode final summary bound",
         )?;
-        if observation.files.summary_bytes == bytes.len() as u64 {
+        if summary_bytes == bytes.len() as u64 {
             break;
         }
-        observation.files.summary_bytes = bytes.len() as u64;
-        observation.files.total_bytes = observation
-            .files
-            .bytes_before_summary
+        summary_bytes = bytes.len() as u64;
+        total_bytes = bytes_before_summary
             .checked_add(bytes.len() as u64)
             .ok_or("prefix decode summary accounting overflow")?;
     }
     require(
-        observation.files.summary_bytes == bytes.len() as u64
-            && observation.files.total_bytes <= OWN_LIMIT,
+        summary_bytes == bytes.len() as u64 && total_bytes <= OWN_LIMIT,
         "prefix decode final accounting",
     )?;
-    let directory = &observation.request.evidence_directory;
     let pending = directory.join("complete.pending");
     write_file(pending.clone(), &bytes, SUMMARY_LIMIT as u64)?;
     std::fs::hard_link(&pending, directory.join("complete.json")).map_err(|e| e.to_string())?;
@@ -284,6 +290,20 @@ pub(super) fn publish(observation: &mut Observation) -> Result<()> {
         .and_then(|dir| dir.sync_all())
         .map_err(|e| e.to_string())?;
     Ok(())
+}
+
+pub(super) fn publish(observation: &mut Observation) -> Result<()> {
+    validate_closed(observation)?;
+    let directory = observation.request.evidence_directory.clone();
+    publish_summary(
+        &directory,
+        observation.files.bytes_before_summary,
+        |summary, total| {
+            observation.files.summary_bytes = summary;
+            observation.files.total_bytes = total;
+            serde_json::to_vec(observation).map_err(|e| e.to_string())
+        },
+    )
 }
 
 #[cfg(test)]

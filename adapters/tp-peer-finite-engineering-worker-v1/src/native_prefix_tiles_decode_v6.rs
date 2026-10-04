@@ -5,6 +5,7 @@ use crate::forward_sequence::Backend as OriginalBackend;
 use crate::native_prefix_device_recorder_v1::Recorder;
 use crate::resident_artifacts::ResidentKind;
 use crate::resident_layer::prefix_tiles_decode_v6 as layer;
+use crate::resident_layer::prefix_tiles_v6::projection_residual;
 use crate::state_roster::prefix_tiles_decode_v6::{COUNTS, Roster};
 use crate::tail_artifacts::TailKind;
 use sha2::{Digest, Sha256};
@@ -22,6 +23,7 @@ pub(crate) struct Profile {
     mode: Mode,
     timeout_ms: u32,
     sha256: [u8; 32],
+    projection: Option<[u8; 32]>,
 }
 impl Profile {
     pub(crate) fn new(
@@ -80,7 +82,18 @@ impl Profile {
             mode,
             timeout_ms,
             sha256: h.finalize().into(),
+            projection: None,
         })
+    }
+    pub(crate) fn with_projection(mut self, image: [u8; 32]) -> Result<Self> {
+        if self.projection.is_some() || !matches!(self.mode, Mode::TeacherForced(_)) {
+            return Err("projection decode requires a fresh teacher-forced profile".into());
+        }
+        self.sha256 =
+            crate::finite_projection_residual_decode_wire_v1::profile_sha256(self.sha256, image)
+                .map_err(|error| error.to_string())?;
+        self.projection = Some(image);
+        Ok(self)
     }
     pub(crate) fn sha256(&self) -> [u8; 32] {
         self.sha256
@@ -107,6 +120,18 @@ pub(crate) struct Owner {
     states: Roster,
     sequence: sequence::Sequence,
     profile: Profile,
+    projection: Option<projection_residual::Loaded>,
+}
+fn finish_projection_load<T>(
+    result: Result<T>,
+    phase: &mut Phase,
+    poison: impl FnOnce(),
+) -> Result<T> {
+    if result.is_err() {
+        *phase = Phase::Terminal;
+        poison();
+    }
+    result
 }
 fn close_ready(exhausted: bool, between: bool, completed: u64) -> Result<()> {
     if !exhausted || !between || completed != 4 {
@@ -143,6 +168,7 @@ impl Owner {
     pub(crate) fn bind_device_images(&mut self, recorder: &mut Recorder) -> Result<()> {
         let result = (|| {
             if self.owner.catalog.phase != Phase::LayersSealed
+                || self.projection.is_some()
                 || !self.sequence.pristine()
                 || !self.states.between()
                 || self.states.completed() != 0
@@ -194,7 +220,27 @@ impl Owner {
     /// # Safety
     /// Actual source/model/image provenance and TP2 runtime premises require
     /// independent review. A setup/profile digest is not a proof issuer.
-    pub(crate) unsafe fn from_sealed(mut owner: NativeOwner, profile: Profile) -> Result<Self> {
+    pub(crate) unsafe fn from_sealed(owner: NativeOwner, profile: Profile) -> Result<Self> {
+        unsafe { Self::from_sealed_selected(owner, profile, None) }
+    }
+    /// # Safety
+    /// In addition to the ordinary owner premises, the actual candidate is
+    /// independently reviewed for both O and Down residuals of every layer.
+    pub(crate) unsafe fn from_sealed_projection(
+        owner: NativeOwner,
+        profile: Profile,
+        image: projection_residual::Image,
+    ) -> Result<Self> {
+        unsafe { Self::from_sealed_selected(owner, profile, Some(image)) }
+    }
+    unsafe fn from_sealed_selected(
+        mut owner: NativeOwner,
+        profile: Profile,
+        image: Option<projection_residual::Image>,
+    ) -> Result<Self> {
+        if image.as_ref().map(projection_residual::Image::sha256) != profile.projection {
+            return Err("projection decode image/profile mismatch".into());
+        }
         let s = &owner.catalog.scope;
         if owner.catalog.profile != super::super::ExecutionProfile::PrefixTilesDecodeV6
             || owner.catalog.phase != Phase::LayersSealed
@@ -228,16 +274,25 @@ impl Owner {
         {
             return Err("prefix decode sealed scope/profile/roster/images/tail".into());
         }
-        let states = owner
+        let mut states = owner
             .prefix_decode_states
             .take()
             .ok_or("prefix decode roster missing")?;
+        let projection = match image {
+            Some(image) => Some(finish_projection_load(
+                projection_residual::load(&mut owner.catalog.backend, image),
+                &mut owner.catalog.phase,
+                || states.poison(),
+            )?),
+            None => None,
+        };
         let sequence = sequence::Sequence::new(&profile);
         Ok(Self {
             owner,
             states,
             sequence,
             profile,
+            projection,
         })
     }
     pub(crate) fn run(&mut self, profile: [u8; 32], input: &ForwardInput) -> Result<Run> {
@@ -257,6 +312,10 @@ impl Owner {
         input: &ForwardInput,
         recorder: Option<&mut Recorder>,
     ) -> Result<Run> {
+        if recorder.is_some() && self.projection.is_some() {
+            self.poison_device_recording();
+            return Err("projection decode does not use legacy device reports".into());
+        }
         let mut active = Native {
             base: Active {
                 owner: &mut self.owner,
@@ -269,6 +328,7 @@ impl Owner {
                 reuse: None,
             },
             states: &mut self.states,
+            projection: self.projection.as_ref(),
             generation: input.generation,
             position: input.cache_metadata[0],
             recorder,
@@ -309,6 +369,7 @@ impl Owner {
 struct Native<'a> {
     base: Active<'a>,
     states: &'a mut Roster,
+    projection: Option<&'a projection_residual::Loaded>,
     generation: u64,
     position: u32,
     recorder: Option<&'a mut Recorder>,
@@ -377,7 +438,7 @@ impl sequence::Backend for Native<'_> {
                     self.position,
                 )
             } else {
-                layer::execute(
+                layer::execute_selected(
                     &mut owner.catalog.backend,
                     self.states,
                     owner
@@ -395,6 +456,7 @@ impl sequence::Backend for Native<'_> {
                     roots,
                     index,
                     self.base.timeout_ms,
+                    self.projection,
                 )
             }
         }?;
@@ -435,3 +497,7 @@ mod sequence;
 #[cfg(test)]
 #[path = "native_prefix_tiles_decode_v6/tests.rs"]
 mod tests;
+
+#[cfg(test)]
+#[path = "native_prefix_tiles_decode_v6/projection_tests.rs"]
+mod projection_tests;

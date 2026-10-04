@@ -1,6 +1,8 @@
 //! All-layer typed284/548 dispatch, with both paired scratch-consumer fences.
 use super::mlp_tiles_v2::artifacts::LoadedKernels;
 use super::prefix_tiles_v6::artifacts::Loaded as LoadedPrefix;
+use super::prefix_tiles_v6::projection_residual::Loaded as LoadedProjection;
+use super::prefix_tiles_v6::select_residual;
 use super::{
     Access, Dispatch, Group, LayerBindings, LoadedResidentArtifacts, ResidentKind, Result,
     consumer_bytes,
@@ -49,12 +51,29 @@ struct Native<'a> {
     group: &'a mut Group,
     states: &'a mut Roster,
     original: &'a LoadedResidentArtifacts,
+    projection: Option<&'a LoadedProjection>,
     prefix: &'a LoadedPrefix,
     mlp: &'a LoadedKernels,
     roots: &'a LayerBindings,
     layer: usize,
     timeout_ms: u32,
     recording: Option<(&'a mut Recorder, u64, u32)>,
+}
+fn residual_kernel<'a>(
+    original: &'a LoadedResidentArtifacts,
+    projection: Option<&'a LoadedProjection>,
+    rank: usize,
+) -> Result<&'a Kernel> {
+    select_residual(projection.map(|p| &p.kernels), rank, |r| {
+        original.kernel(r, ResidentKind::Residual)
+    })
+}
+fn residual_roots<T: Copy>(first: bool, prefix: T, mlp: T, final_hidden: T) -> (T, T) {
+    if first {
+        (prefix, mlp)
+    } else {
+        (mlp, final_hidden)
+    }
 }
 fn record_pair(
     recording: &mut Option<(&mut Recorder, u64, u32)>,
@@ -89,11 +108,14 @@ impl Backend for Native<'_> {
                 return Err("prefix decode raw recording generation".into());
             }
         }
+        if self.projection.is_some() && self.recording.is_some() {
+            return Err("projection decode and legacy device recording are distinct".into());
+        }
         self.roots.validate()?;
         for rank in 0..2 {
             if self.prefix.kernels[rank].rank() != rank
                 || self.mlp.kernels[rank].rank() != rank
-                || self.original.kernel(rank, ResidentKind::Residual)?.rank() != rank
+                || residual_kernel(self.original, self.projection, rank)?.rank() != rank
             {
                 return Err("prefix decode artifact owner".into());
             }
@@ -168,15 +190,16 @@ impl Backend for Native<'_> {
                         )
                     })
                     .collect::<Vec<_>>();
-                let (original, output) = if first {
-                    (self.roots.prefix[rank][0], self.roots.mlp[rank][0])
-                } else {
-                    (self.roots.mlp[rank][0], self.roots.final_hidden[rank])
-                };
+                let (original, output) = residual_roots(
+                    first,
+                    self.roots.prefix[rank][0],
+                    self.roots.mlp[rank][0],
+                    self.roots.final_hidden[rank],
+                );
                 pointers.push(original.pointer(128, 0, 8192, Access::Read));
                 pointers.push(output.pointer(144, 0, 8192, Access::Write));
                 commands.push(Dispatch {
-                    kernel: self.original.kernel(rank, ResidentKind::Residual)?,
+                    kernel: residual_kernel(self.original, self.projection, rank)?,
                     bytes: consumer_bytes(),
                     workgroup: [64, 1, 1],
                     grid: [4096, 1, 1],
@@ -298,10 +321,32 @@ pub(crate) unsafe fn execute(
     layer: usize,
     timeout_ms: u32,
 ) -> Result<Completion> {
+    unsafe {
+        execute_selected(
+            group, states, original, prefix, mlp, roots, layer, timeout_ms, None,
+        )
+    }
+}
+
+/// # Safety
+/// Same paired producer/consumer and owner obligations as execute. The optional
+/// pair belongs to this sealed group and authenticates the separate arithmetic.
+pub(crate) unsafe fn execute_selected(
+    group: &mut Group,
+    states: &mut Roster,
+    original: &LoadedResidentArtifacts,
+    prefix: &LoadedPrefix,
+    mlp: &LoadedKernels,
+    roots: &LayerBindings,
+    layer: usize,
+    timeout_ms: u32,
+    projection: Option<&LoadedProjection>,
+) -> Result<Completion> {
     coordinate(&mut Native {
         group,
         states,
         original,
+        projection,
         prefix,
         mlp,
         roots,
@@ -336,9 +381,14 @@ pub(crate) unsafe fn execute_recorded(
         roots,
         layer,
         timeout_ms,
+        projection: None,
         recording: Some((recorder, generation, position)),
     })
 }
 
 #[cfg(test)]
 mod tests;
+
+#[cfg(test)]
+#[path = "prefix_tiles_decode_v6/projection_tests.rs"]
+mod projection_tests;

@@ -6,7 +6,15 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Latest: the [captured SiLU diagnostic](../qualification/silu-materialization-diagnostic-v1/README.md)
+Latest: the [projection-residual four-step decode route](../qualification/projection-residual-decode-cpu-v1/README.md)
+passed joint CPU qualification on ASROCK through `mi350-2`: 1,022 passed,
+four unchanged ignores, all 87 commands naturally completed and reaped,
+and all 17 executables built. The 21 integrated source bodies match the
+remotely tested files. The opt-in route selects the corrected residual image
+across all 36 layers while preserving existing routes. Its GPU run and
+independent numerical comparison remain pending.
+
+The [captured SiLU diagnostic](../qualification/silu-materialization-diagnostic-v1/README.md)
 passed all 18 synthetic tests on ASROCK. Its actual retained-data run reproduced
 all 12,288 framework products from captured BF16 SiLU and up. With native gate
 and up both identical to the framework, 1,542/5,702 rank-0 and 1,473/5,723 rank-1

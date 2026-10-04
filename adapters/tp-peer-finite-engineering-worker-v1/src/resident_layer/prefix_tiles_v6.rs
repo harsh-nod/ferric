@@ -110,7 +110,7 @@ struct Native<'a> {
     roots: &'a LayerBindings,
     timeout_ms: u32,
 }
-fn select_residual<'a, T>(
+pub(super) fn select_residual<'a, T>(
     projection: Option<&'a [T; 2]>,
     rank: usize,
     original: impl FnOnce(usize) -> Result<&'a T>,

@@ -7,6 +7,11 @@ publish = false
 autobins = false
 
 [[bin]]
+name = "ferric-qwen3-finite-projection-residual-decode-engineering"
+path = "src/bin/ferric-qwen3-finite-projection-residual-decode-engineering.rs"
+required-features = ["tp-batch-engineering"]
+
+[[bin]]
 name = "ferric-qwen3-finite-projection-residual-layer-capture-engineering"
 path = "src/bin/ferric-qwen3-finite-projection-residual-layer-capture-engineering.rs"
 required-features = ["tp-batch-engineering"]

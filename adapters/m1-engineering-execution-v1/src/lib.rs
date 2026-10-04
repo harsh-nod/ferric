@@ -29,6 +29,9 @@ pub mod finite_prefix_decode_wire_v1;
 #[path = "../../tp-peer-finite-engineering-worker-v1/src/finite_prefix_layer_wire_v1.rs"]
 pub mod finite_prefix_layer_wire_v1;
 #[cfg(feature = "tp-batch-engineering")]
+#[path = "../../tp-peer-finite-engineering-worker-v1/src/finite_projection_residual_decode_wire_v1.rs"]
+pub mod finite_projection_residual_decode_wire_v1;
+#[cfg(feature = "tp-batch-engineering")]
 #[path = "../../tp-peer-finite-engineering-worker-v1/src/finite_projection_residual_layer_wire_v1.rs"]
 pub mod finite_projection_residual_layer_wire_v1;
 /// Explicit one-forward finite-versus-queued layer-zero MLP diagnostic.

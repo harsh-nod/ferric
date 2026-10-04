@@ -538,7 +538,16 @@ fn serve(
     b: &Bootstrap,
     incoming: &mut FrameBudget,
 ) -> io::Result<()> {
-    let profile = b.sha256()?;
+    serve_profile(backend, r, w, b, incoming, b.sha256()?)
+}
+fn serve_profile(
+    backend: &mut impl Backend,
+    r: &mut impl Read,
+    w: &mut impl Write,
+    b: &Bootstrap,
+    incoming: &mut FrameBudget,
+    profile: [u8; 32],
+) -> io::Result<()> {
     let mut outgoing = FrameBudget::new();
     let mut chain = Chain::new(b.registration, profile);
     let mut previous = None;
@@ -621,3 +630,67 @@ mod device_tests;
 #[cfg(test)]
 #[path = "native_prefix_decode_clock_cli_tests.rs"]
 mod clock_tests;
+
+pub(crate) fn serve_projection_owner(
+    mut owner: Owner,
+    r: &mut impl Read,
+    w: &mut impl Write,
+    b: &crate::finite_projection_residual_decode_wire_v1::Bootstrap,
+    incoming: &mut FrameBudget,
+) -> io::Result<()> {
+    let profile = match b.sha256() {
+        Ok(profile) => profile,
+        Err(error) => {
+            owner.poison_device_recording();
+            return Err(error);
+        }
+    };
+    let mut backend = ProjectionNative {
+        owner: Some(owner),
+        profile,
+    };
+    serve_projection(&mut backend, r, w, b, incoming)
+}
+struct ProjectionNative {
+    owner: Option<Owner>,
+    profile: [u8; 32],
+}
+impl Backend for ProjectionNative {
+    fn run(&mut self, input: &ForwardInput) -> io::Result<Run> {
+        self.owner
+            .as_mut()
+            .ok_or_else(|| io::Error::other("projection owner consumed"))?
+            .run(self.profile, input)
+            .map_err(io::Error::other)
+    }
+    fn close(&mut self) -> io::Result<()> {
+        self.owner
+            .take()
+            .ok_or_else(|| io::Error::other("projection owner consumed"))?
+            .close()
+            .map_err(io::Error::other)
+    }
+    fn failed(&mut self) {
+        if let Some(owner) = self.owner.as_mut() {
+            owner.poison_device_recording();
+        }
+    }
+}
+fn serve_projection(
+    backend: &mut impl Backend,
+    r: &mut impl Read,
+    w: &mut impl Write,
+    b: &crate::finite_projection_residual_decode_wire_v1::Bootstrap,
+    incoming: &mut FrameBudget,
+) -> io::Result<()> {
+    let result = b
+        .sha256()
+        .and_then(|profile| serve_profile(backend, r, w, &b.decode, incoming, profile));
+    if result.is_err() {
+        backend.failed();
+    }
+    result
+}
+#[cfg(test)]
+#[path = "native_prefix_decode_projection_tests.rs"]
+mod projection_tests;
