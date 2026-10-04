@@ -1,0 +1,89 @@
+{
+  "schema": "ferric-p228-kir-indexed-formal-join-source-v1",
+  "tentative": true,
+  "diagnostic_site_measured": false,
+  "compiled": false,
+  "tests_executed": false,
+  "base_cpu": {
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rpo-compiler-cpu-v228-v2/complete.json",
+    "bytes": 375781,
+    "sha256": "56fc51fc326980e00156d550d0a7052f44bb481ded7b9948c06217653fb246c1"
+  },
+  "base_source_snapshot": {
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rpo-compiler-cpu-v228-v2/sources-before.json",
+    "bytes": 3607137,
+    "sha256": "77fbdd63c370665ea80bf70e8dd8f4a45533bcde8e5ba6ffd670ab497ebc6665"
+  },
+  "files": [
+    {
+      "path": "crates/fe2o3-lower-mir-kernel/src/production_semantic_kir_v1/wave_formal_evidence_join_v1.rs",
+      "source": "draft/crates/fe2o3-lower-mir-kernel/src/production_semantic_kir_v1/wave_formal_evidence_join_v1.rs",
+      "before": {
+        "bytes": 16534,
+        "sha256": "a4920913a9f23a5d880be129f99b7ba4b04842336fb93fad1208574f16c07fe0"
+      },
+      "after": {
+        "bytes": 16444,
+        "sha256": "a6f202bc218bb6546000813ff6135e38642c8f0c5b11362e2afce5d816786246"
+      }
+    },
+    {
+      "path": "crates/fe2o3-lower-mir-kernel/src/production_semantic_kir_v1/wave_formal_evidence_index_v1.rs",
+      "source": "draft/crates/fe2o3-lower-mir-kernel/src/production_semantic_kir_v1/wave_formal_evidence_index_v1.rs",
+      "before": null,
+      "after": {
+        "bytes": 6935,
+        "sha256": "ab9729a2227218d06637460a66a86f89b2c0767a3961a2d443ca063592dcc990"
+      }
+    },
+    {
+      "path": "crates/fe2o3-lower-mir-kernel/src/production_semantic_kir_v1/wave_formal_evidence_v1_tests.rs",
+      "source": "draft/crates/fe2o3-lower-mir-kernel/src/production_semantic_kir_v1/wave_formal_evidence_v1_tests.rs",
+      "before": {
+        "bytes": 22677,
+        "sha256": "768f1fe283eedda154596b68d7686652bdb3f5bd676aa96c5947f19cfa7ed4a1"
+      },
+      "after": {
+        "bytes": 22729,
+        "sha256": "604dfd35aebacad935f34632100e7e099234c68a82b15451e31cd35229a9a135"
+      }
+    },
+    {
+      "path": "crates/fe2o3-lower-mir-kernel/src/production_semantic_kir_v1/wave_formal_evidence_index_v1_tests.rs",
+      "source": "draft/crates/fe2o3-lower-mir-kernel/src/production_semantic_kir_v1/wave_formal_evidence_index_v1_tests.rs",
+      "before": null,
+      "after": {
+        "bytes": 18840,
+        "sha256": "58888a5a61ab6241242c2b3c570299bb78ed4e68068ac2271d4bed4d15706275"
+      }
+    }
+  ],
+  "added_tests": [
+    "production_semantic_kir_v1::wave_formal_evidence_v1::tests::indexed_formal_join_preserves_six_root_census",
+    "production_semantic_kir_v1::wave_formal_evidence_v1::tests::indexed_formal_join_preserves_fifteen_root_prefix_census",
+    "production_semantic_kir_v1::wave_formal_evidence_v1::tests::indexed_formal_join_handles_sparse_nonmonotonic_blocks_and_values",
+    "production_semantic_kir_v1::wave_formal_evidence_v1::tests::indexed_formal_join_preserves_parameter_first_definition",
+    "production_semantic_kir_v1::wave_formal_evidence_v1::tests::indexed_formal_join_preserves_block_parameter_first_definition",
+    "production_semantic_kir_v1::wave_formal_evidence_v1::tests::indexed_formal_join_preserves_operation_first_definition",
+    "production_semantic_kir_v1::wave_formal_evidence_v1::tests::indexed_formal_join_rejects_absent_pointer_definition",
+    "production_semantic_kir_v1::wave_formal_evidence_v1::tests::indexed_formal_join_rejects_duplicate_block_ids",
+    "production_semantic_kir_v1::wave_formal_evidence_v1::tests::indexed_formal_join_matches_root_type_space_and_census_mutations",
+    "production_semantic_kir_v1::wave_formal_evidence_v1::tests::indexed_formal_join_preserves_stream_order_and_trailing_rejection",
+    "production_semantic_kir_v1::wave_formal_evidence_v1::tests::indexed_formal_join_rejects_unknown_call_effects",
+    "production_semantic_kir_v1::wave_formal_evidence_v1::tests::indexed_formal_join_preserves_reason_locations_and_missing_refusal",
+    "production_semantic_kir_v1::wave_formal_evidence_v1::tests::indexed_formal_join_exact_and_one_under_resources_restore_floor",
+    "production_semantic_kir_v1::wave_formal_evidence_v1::tests::indexed_formal_join_work_refusal_prefixes_restore_floor",
+    "production_semantic_kir_v1::wave_formal_evidence_v1::tests::indexed_formal_join_sort_matches_tuple_order_with_duplicate_ids",
+    "production_semantic_kir_v1::wave_formal_evidence_v1::tests::indexed_formal_join_sort_one_under_refuses_before_mutation",
+    "production_semantic_kir_v1::wave_formal_evidence_v1::tests::indexed_formal_join_checked_work_formulas_refuse_overflow",
+    "production_semantic_kir_v1::wave_formal_evidence_v1::tests::indexed_formal_join_keeps_inert_identity_and_no_admission_result",
+    "production_semantic_kir_v1::wave_formal_evidence_v1::tests::indexed_formal_join_repeated_validation_has_identical_resources",
+    "production_semantic_kir_v1::wave_formal_evidence_v1::tests::indexed_formal_join_duplicate_definition_type_refusals_match_legacy"
+  ],
+  "added_test_count": 20,
+  "work_limit": 1073741824,
+  "storage_limit": 134217728,
+  "changes_live_join": false,
+  "changes_canonical_bytes": false,
+  "changes_authority": false
+}

@@ -1,0 +1,117 @@
+{"phase": "rustfmt", "status": "RUNNING", "pid": 881251}
+{"phase": "rustfmt", "exit_code": 0, "reason": null, "elapsed_seconds": 2.015638681128621, "group_absent": true, "cache_bytes": 8192, "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855", "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"}
+{"phase": "rustfmt-check", "status": "RUNNING", "pid": 881254}
+{"phase": "rustfmt-check", "exit_code": 0, "reason": null, "elapsed_seconds": 2.011895622126758, "group_absent": true, "cache_bytes": 8192, "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855", "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"}
+{"phase": "metadata", "status": "RUNNING", "pid": 881300}
+{"phase": "metadata", "exit_code": 0, "reason": null, "elapsed_seconds": 2.01517347805202, "group_absent": true, "cache_bytes": 8192, "stdout_sha256": "2e3b0014d7f86b61657bfd2c7a4e1778615206e3235db1cd73011b6d8670fa53", "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"}
+{"phase": "lower-build-tests", "status": "RUNNING", "pid": 881332}
+{"phase": "lower-build-tests", "exit_code": 0, "reason": null, "elapsed_seconds": 58.67303670709953, "group_absent": true, "cache_bytes": 616146100, "stdout_sha256": "58ac437d4db143329ac1960289b820c828382587d417cd2f0a36039996922bd2", "stderr_sha256": "cb8f72e812eead31dc0589d4eefffc53662c0d20835c5e882db68cd9bbbb5e59"}
+{"phase": "lower-list", "status": "RUNNING", "pid": 885353}
+{"phase": "lower-list", "exit_code": 0, "reason": null, "elapsed_seconds": 2.019461735151708, "group_absent": true, "cache_bytes": 616146100, "stdout_sha256": "402b3ff0c956e2becfb280a3e49540046ae00456408b096499f9816f14556edf", "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"}
+{"phase": "lower-ignored-list", "status": "RUNNING", "pid": 885440}
+{"phase": "lower-ignored-list", "exit_code": 0, "reason": null, "elapsed_seconds": 2.0198690937832, "group_absent": true, "cache_bytes": 616146100, "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855", "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"}
+{"phase": "lower-tests", "status": "RUNNING", "pid": 885511}
+{"phase": "lower-tests", "exit_code": 101, "reason": null, "elapsed_seconds": 6.062382458243519, "group_absent": true, "cache_bytes": 616146100, "stdout_sha256": "0c506adeead8c27ff9f6323125b69f19b1c106238ce9acc0f08963fae9af05b3", "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"}
+
+d_enum_outer_discriminator_does_not_authenticate_inner_payload ... ok
+test production_semantic_kir_v1::wave_task_entry_parameter_tests::access_roots::retained_fields::retained_nested_enum_payload_requires_the_original_worker_to_remain_alive ... ok
+test production_semantic_kir_v1::wave_task_entry_parameter_tests::access_roots::retained_fields::retained_nested_enum_referent_scalar_move_invalidates_saved_references ... FAILED
+test production_semantic_kir_v1::wave_task_entry_parameter_tests::access_roots::retained_fields::retained_nested_enum_reinitialized_loop_roots_do_not_revive_the_saved_carrier ... ok
+test production_semantic_kir_v1::wave_task_entry_parameter_tests::access_roots::retained_fields::retained_nested_enum_same_block_unknown_reassignment_uses_the_current_ssa_definition ... ok
+test production_semantic_kir_v1::wave_task_entry_parameter_tests::access_roots::retained_fields::retained_nested_enum_same_root_sibling_path_does_not_authenticate_this_payload ... ok
+test production_semantic_kir_v1::wave_task_entry_parameter_tests::access_roots::retained_fields::retained_nested_enum_same_type_sibling_tag_does_not_authenticate_this_carrier ... ok
+test production_semantic_kir_v1::wave_task_entry_parameter_tests::access_roots::retained_fields::retained_nested_enum_scalar_repair_does_not_revive_saved_references ... ok
+test production_semantic_kir_v1::wave_task_entry_parameter_tests::access_roots::retained_fields::retained_projected_enum_custody_moves_inner_enum_with_guarded_outputs ... ok
+test production_semantic_kir_v1::wave_task_entry_parameter_tests::access_roots::retained_fields::retained_projected_enum_custody_rejects_stale_backing_and_saved_tag ... ok
+test production_semantic_kir_v1::wave_task_entry_parameter_tests::access_roots::retained_fields::retained_nested_enum_analysis_uses_the_existing_shared_resource_budget ... ok
+test production_semantic_kir_v1::wave_task_entry_parameter_tests::access_roots::retained_fields::retained_projected_enum_custody_requires_both_guards_and_exact_projection ... ok
+test production_semantic_kir_v1::wave_task_entry_parameter_tests::access_roots::retained_fields::retained_projected_enum_custody_requires_identical_join_origin_and_fresh_loop_transfer ... ok
+test production_semantic_kir_v1::wave_task_entry_parameter_tests::access_roots::retained_fields::retained_scalar_index_transport_cast_obeys_exact_operation_budget ... ok
+test production_semantic_kir_v1::wave_task_entry_parameter_tests::access_roots::retained_fields::retained_scalar_index_transport_direct_initializer_reaches_observable_output ... ok
+test production_semantic_kir_v1::wave_task_entry_parameter_tests::access_roots::retained_fields::retained_scalar_index_transport_equal_u64_store_does_not_cast ... ok
+test production_semantic_kir_v1::wave_task_entry_parameter_tests::access_roots::retained_fields::retained_scalar_index_transport_rejects_non_equivalent_bindings ... ok
+test production_semantic_kir_v1::wave_task_entry_parameter_tests::access_roots::retained_fields::retained_scalar_move_bool_keeps_the_disjoint_written_alias_available ... ok
+test production_semantic_kir_v1::wave_task_entry_parameter_tests::access_roots::retained_fields::retained_scalar_move_both_branch_repairs_allow_fresh_join_reborrow ... ok
+test production_semantic_kir_v1::wave_task_entry_parameter_tests::access_roots::retained_fields::retained_scalar_move_branch_keeps_disjoint_aliases_at_the_join ... ok
+test production_semantic_kir_v1::wave_task_entry_parameter_tests::access_roots::retained_fields::retained_scalar_move_does_not_enable_partial_reference_custody_writes ... ok
+test production_semantic_kir_v1::wave_task_entry_parameter_tests::access_roots::retained_fields::retained_scalar_move_loop_repair_does_not_revive_the_saved_alias ... ok
+test production_semantic_kir_v1::wave_task_entry_parameter_tests::access_roots::retained_fields::retained_scalar_move_loop_repair_refreshes_only_the_new_borrow ... ok
+test production_semantic_kir_v1::wave_task_entry_parameter_tests::access_roots::retained_fields::retained_scalar_move_one_cfg_predecessor_invalidates_the_overlapping_saved_alias ... ok
+test production_semantic_kir_v1::wave_task_entry_parameter_tests::access_roots::retained_fields::retained_projected_enum_custody_respects_shared_limits ... ok
+test production_semantic_kir_v1::wave_task_entry_parameter_tests::access_roots::retained_fields::retained_scalar_move_refreshing_one_reference_does_not_revive_its_copy ... ok
+test production_semantic_kir_v1::wave_task_entry_parameter_tests::access_roots::retained_fields::retained_scalar_move_preserves_multi_operand_evaluation_order ... ok
+test production_semantic_kir_v1::wave_task_entry_parameter_tests::access_roots::retained_fields::retained_scalar_move_repair_then_fresh_reborrow_reads_the_same_slot ... ok
+test production_semantic_kir_v1::wave_task_entry_parameter_tests::access_roots::retained_fields::retained_scalar_move_rejects_direct_moved_double_and_whole_reads_at_ssa ... ok
+test production_semantic_kir_v1::wave_task_entry_parameter_tests::access_roots::retained_fields::retained_scalar_move_self_assignment_reads_rhs_before_repairing_the_field ... ok
+test production_semantic_kir_v1::wave_task_entry_parameter_tests::access_roots::retained_fields::retained_scalar_move_saved_alias_is_stale_before_and_after_scalar_repair ... ok
+test production_semantic_kir_v1::wave_task_entry_parameter_tests::access_roots::retained_fields::retained_scalar_move_stale_carrier_rhs_cannot_be_revived_by_rebinding ... ok
+test production_semantic_kir_v1::wave_task_entry_parameter_tests::access_roots::retained_fields::retained_scalar_move_through_a_shared_alias_preserves_the_typed_refusal ... ok
+test production_semantic_kir_v1::wave_task_entry_parameter_tests::access_roots::retained_fields::retained_scalar_move_through_alias_blocks_a_new_borrow_before_repair ... ok
+test production_semantic_kir_v1::wave_task_entry_parameter_tests::access_roots::retained_fields::retained_scalar_move_through_alias_blocks_direct_and_whole_object_reads ... ok
+test production_semantic_kir_v1::wave_task_entry_parameter_tests::access_roots::retained_fields::retained_scalar_move_through_writable_alias_keeps_disjoint_storage_available ... ok
+test production_semantic_kir_v1::wave_task_entry_parameter_tests::access_roots::retained_fields::retained_scalar_move_u32_matches_the_source_token_representation ... ok
+test production_semantic_kir_v1::wave_task_entry_parameter_tests::access_roots::retained_fields::retained_scalar_move_u64_keeps_disjoint_field_aliases_and_external_roots ... ok
+test production_semantic_kir_v1::wave_task_entry_parameter_tests::access_roots::retained_fields::retained_transport_array_pointer_refusal_preserves_the_admitted_local_context ... ok
+test production_semantic_kir_v1::wave_task_entry_parameter_tests::access_roots::retained_fields::retained_transport_context_has_exact_shared_budget_and_nonzero_identity ... ok
+test production_semantic_kir_v1::wave_task_entry_parameter_tests::access_roots::retained_fields::retained_transport_dominating_array_pointer_keeps_its_existing_binding ... ok
+test production_semantic_kir_v1::wave_task_entry_parameter_tests::access_roots::retained_fields::wave_recipe_censuses_real_result_pipeline_private_slots_and_shared_effects ... ok
+test production_semantic_kir_v1::wave_task_entry_parameter_tests::access_roots::retained_fields::wave_recipe_rejects_omitted_original_pipeline_pointer_custody_rows ... ok
+test production_semantic_kir_v1::wave_task_entry_parameter_tests::access_roots::wave_access_public_owner_checks_fixed_array_bounds ... ok
+test production_semantic_kir_v1::wave_task_entry_parameter_tests::access_roots::wave_access_public_owner_materializes_writable_field_pointee_stores ... ok
+test production_semantic_kir_v1::wave_task_entry_parameter_tests::access_roots::wave_access_public_owner_rejects_a_store_through_read_only_array_pointer ... ok
+test production_semantic_kir_v1::wave_task_entry_parameter_tests::access_roots::wave_access_public_query_borrows_a_valid_retained_owner_and_refuses_substitution ... ok
+test production_semantic_kir_v1::wave_task_entry_parameter_tests::access_roots::wave_access_public_query_preserves_nonzero_and_from_end_fixed_array_indices ... ok
+test production_semantic_kir_v1::wave_task_entry_parameter_tests::access_roots::wave_access_roots_do_not_audit_unrelated_pointer_casts ... ok
+test production_semantic_kir_v1::wave_task_entry_parameter_tests::access_roots::wave_access_roots_do_not_renumber_source_workgroup_effects ... ok
+test production_semantic_kir_v1::wave_task_entry_parameter_tests::access_roots::wave_access_roots_exclude_only_authenticated_retained_private_accesses ... ok
+test production_semantic_kir_v1::wave_task_entry_parameter_tests::access_roots::wave_access_roots_follow_a_gep_and_provenance_preserving_cast ... ok
+test production_semantic_kir_v1::wave_task_entry_parameter_tests::access_roots::wave_access_roots_preserve_one_real_root_through_a_cyclic_phi ... ok
+test production_semantic_kir_v1::wave_task_entry_parameter_tests::access_roots::wave_access_roots_preserve_six_roles_and_actual_sites ... ok
+test production_semantic_kir_v1::wave_task_entry_parameter_tests::access_roots::wave_access_roots_reject_numeric_and_address_space_cast_reconstruction ... ok
+test production_semantic_kir_v1::wave_task_entry_parameter_tests::access_roots::wave_access_roots_reject_same_type_swap_and_missing_role ... ok
+test production_semantic_kir_v1::wave_task_entry_parameter_tests::access_roots::wave_access_roots_reject_unknown_load_origins_and_budget_exhaustion ... ok
+test production_semantic_kir_v1::wave_task_entry_parameter_tests::access_roots::wave_access_roots_reject_writes_to_inputs_and_non_atomic_state ... ok
+test production_semantic_kir_v1::wave_task_entry_parameter_tests::access_roots::wave_access_roots_require_all_select_origins_to_agree ... ok
+test production_semantic_kir_v1::wave_task_entry_parameter_tests::access_roots::wave_access_roots_require_every_cfg_predecessor_to_agree ... ok
+test production_semantic_kir_v1::wave_task_entry_parameter_tests::access_roots::retained_fields::retained_scalar_move_shared_budget_has_measured_exact_and_one_short_boundaries ... ok
+test production_semantic_kir_v1::wave_task_entry_parameter_tests::access_roots::wave_recipe_conditional_join_replays_exact_source_and_every_memory_effect ... ok
+test production_semantic_kir_v1::wave_task_entry_parameter_tests::access_roots::wave_recipe_keeps_actual_read_store_pointer_and_source_ordinals ... ok
+test production_semantic_kir_v1::wave_task_entry_parameter_tests::access_roots::wave_recipe_keeps_ordinary_roots_separate_and_rejects_other_source_selection ... ok
+test production_semantic_kir_v1::wave_task_entry_parameter_tests::access_roots::wave_recipe_conditional_join_rejects_wrong_roots_ordinals_and_incomplete_census ... ok
+test production_semantic_kir_v1::wave_task_entry_parameter_tests::access_roots::wave_recipe_malformed_correlation_charges_work_without_losing_incoming_floors ... ok
+test production_semantic_kir_v1::wave_task_entry_parameter_tests::access_roots::wave_recipe_preflight_rejects_empty_summaries_from_unknown_effects ... ok
+test production_semantic_kir_v1::wave_task_entry_parameter_tests::access_roots::wave_recipe_shared_budget_exact_and_one_short_preserve_owner_floor ... ok
+test production_semantic_kir_v1::wave_task_entry_parameter_tests::wave_component_roles_reject_missing_duplicate_cross_owner_and_old_roles ... ok
+test production_semantic_kir_v1::wave_task_entry_parameter_tests::wave_entry_is_six_typed_values_and_ordinary_eight_field_ssa_without_terminal ... ok
+test production_semantic_kir_v1::wave_task_entry_parameter_tests::wave_entry_checks_each_root_extent_access_and_atomic_nominality ... ok
+test production_semantic_kir_v1::wave_task_entry_parameter_tests::wave_entry_rejects_ownership_abi_identity_overflow_and_local_alias ... ok
+test production_semantic_kir_v1::wave_task_entry_parameter_tests::wave_entry_rejects_u16_shape_with_signed_backend_scalar ... ok
+test production_semantic_kir_v1::wave_task_entry_parameter_tests::wave_origins_validate_roster_order_types_values_and_budget_without_legacy_source_alias ... ok
+test production_semantic_kir_v1::wave_task_entry_parameter_tests::wave_profiles_preserve_mixed_argument_origins_and_reject_cross_profile_roles ... ok
+test production_source_launch_v1::tests::extent_product_checks_overflow_after_dynamic_sentinel ... ok
+test raw_owner_safety_tests::equal_slot_foreign_context_rejects_result_before_pointer_dereference ... ok
+test raw_owner_safety_tests::registration_rejects_missing_colliding_and_corrupt_markers ... ok
+test raw_owner_safety_tests::transplanted_session_marker_cannot_transfer_result_ownership ... ok
+test raw_owner_safety_tests::unsupported_raw_operations_and_foreign_argument_types_fail_closed ... ok
+test raw_owner_safety_tests::validation_rejects_stale_source_and_live_mutated_output ... ok
+test raw_owner_safety_tests::verifier_failure_clears_a_prior_success ... ok
+test raw_owner_safety_tests::erased_private_handles_return_typed_errors_without_unwinding ... ok
+
+failures:
+
+---- production_semantic_kir_v1::wave_task_entry_parameter_tests::access_roots::retained_fields::retained_nested_enum_referent_scalar_move_invalidates_saved_references stdout ----
+
+thread 'production_semantic_kir_v1::wave_task_entry_parameter_tests::access_roots::retained_fields::retained_nested_enum_referent_scalar_move_invalidates_saved_references' (886371) panicked at crates/fe2o3-lower-mir-kernel/src/production_semantic_kir_v1/retained_field_scalar_moves_v1_tests.rs:173:13:
+assertion `left == right` failed
+  left: (8, Some(7), 5)
+ right: (7, Some(4), 5)
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    production_semantic_kir_v1::wave_task_entry_parameter_tests::access_roots::retained_fields::retained_nested_enum_referent_scalar_move_invalidates_saved_references
+
+test result: FAILED. 784 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.77s
+
+
+{"passed": false, "error": "AssertionError: lower-tests", "postcheck_errors": [], "output": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/kir-indexed-formal-join-cpu-v228-v1"}

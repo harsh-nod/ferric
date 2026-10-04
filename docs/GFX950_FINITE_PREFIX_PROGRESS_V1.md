@@ -6,7 +6,17 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Latest: the [canonical KIR work diagnostic](../qualification/kir-join-work-diagnostic-v1/README.md)
+Latest: the [indexed inert-join attempt](../qualification/kir-indexed-formal-join-attempt-v1/README.md)
+compiled and passed all twenty new tests, but the full lower-library suite
+stopped at 784 passed / 1 failed / 0 ignored. An existing nested-enum test
+expected diagnostic location `(7, Some(4), 5)` and observed `(8, Some(7), 5)`.
+An unchanged-RPO control is needed to test the scheduler-order hypothesis;
+the failure has not been suppressed or attributed to the baseline as fact.
+The subsequent finalizer and actual-handoff stages were not attempted.
+All process groups exited naturally and postchecks passed; no new image,
+GPU execution or numerical/performance qualification follows.
+
+Previously, the [canonical KIR work diagnostic](../qualification/kir-join-work-diagnostic-v1/README.md)
 localized the actual refusal to the inert formal layout join: 318 evidence
 rows, 1,019 blocks and 6,096 nodes cause a 1,044,025,344-unit pending charge
 after 40,799,816 units have already been accepted. The limits are unchanged.

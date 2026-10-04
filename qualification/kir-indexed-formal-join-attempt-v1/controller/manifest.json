@@ -1,0 +1,43 @@
+{
+  "schema": "ferric-p228-kir-indexed-formal-join-cpu-package-v1",
+  "compiler_built": false,
+  "gpu_execution": false,
+  "production_authority": false,
+  "pure_tests_defined": 16,
+  "pure_tests_run": false,
+  "test_census": [
+    "IndexedTests.test_actual_join_accepts_real_stdout_shape_only",
+    "IndexedTests.test_actual_join_requires_natural0_and_absent_group",
+    "IndexedTests.test_added_tests_must_all_be_present_unique_and_nonignored",
+    "IndexedTests.test_dependencies_add_only_two_declared_files",
+    "IndexedTests.test_dependencies_preserve_external_and_local_bodies",
+    "IndexedTests.test_exact_thirteen_phase_boundary_and_metadata_relocation",
+    "IndexedTests.test_handoff_and_ignored_selector_are_immutable",
+    "IndexedTests.test_ignored_inventory_cannot_hide_unlisted_names",
+    "IndexedTests.test_join_cannot_relabel_prior_refusal_or_diagnostic",
+    "IndexedTests.test_join_rejects_substituted_name_summary_and_duplicate",
+    "IndexedTests.test_lower_inventory_is_actual_dynamic_not_guessed_count",
+    "IndexedTests.test_proposal_preserves_source_generation_and_limits",
+    "IndexedTests.test_proposal_requires_twenty_distinct_declared_names",
+    "IndexedTests.test_retained_environment_has_no_instrumentation_flag",
+    "IndexedTests.test_source_adds_exact_two_files_and_formats_only_four",
+    "IndexedTests.test_wrong_preimage_absent_claim_or_extra_file_refused"
+  ],
+  "files": [
+    {
+      "path": "README.md",
+      "bytes": 5079,
+      "sha256": "3a755b8f11a968fda8bb4a11ec7f850635b0c812e97fa0985132e463e3066d39"
+    },
+    {
+      "path": "run.py",
+      "bytes": 30422,
+      "sha256": "3ad6ed9c801b561b50219fcee55b0dacec2785ca0153bffa057181f8335b6431"
+    },
+    {
+      "path": "test_run.py",
+      "bytes": 10227,
+      "sha256": "8a2edd440ce8c2280edba2376e7bd49115a1dab30acc08deb0fd2732b3886463"
+    }
+  ]
+}
