@@ -1,0 +1,8 @@
+collective::tests::active_nonfinite_inputs_trap: test
+collective::tests::all_finite_bf16_residuals_match_zero_partial_reference: test
+collective::tests::analytical_pairs_match_independent_f64_staged_reference: test
+collective::tests::intermediate_final_and_narrowed_overflow_trap: test
+collective::tests::nonuniform_full_active_vectors_match_reference_for_two_generations: test
+collective::tests::one_final_rounding_does_not_narrow_partials_or_each_addition: test
+collective::tests::rank_expressions_are_evaluated_once_in_order: test
+collective::tests::residual_is_added_after_both_partials: test

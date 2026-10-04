@@ -1,0 +1,17 @@
+
+running 12 tests
+test collective::tests::active_nonfinite_inputs_trap ... ok
+test collective::tests::all_finite_bf16_residuals_match_zero_projection_reference ... ok
+test collective::tests::analytical_pairs_match_independent_staged_reference ... ok
+test collective::tests::expressions_are_evaluated_once_in_rank_then_residual_order ... ok
+test collective::tests::fp32_rank_sum_rounds_before_residual ... ok
+test collective::tests::leading_positive_zero_and_exact_cancellation_stay_positive ... ok
+test collective::tests::materialization_overflow_traps_before_cancelling_residual_is_evaluated ... ok
+test collective::tests::neither_rank_partial_is_narrowed ... ok
+test collective::tests::projection_ties_round_before_residual_addition ... ok
+test collective::tests::rank_sum_and_final_output_overflows_trap ... ok
+test collective::tests::tiny_projection_uses_bf16_rne_without_flushing_subnormals ... ok
+test collective::tests::two_generations_cover_all_4096_active_elements ... ok
+
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+

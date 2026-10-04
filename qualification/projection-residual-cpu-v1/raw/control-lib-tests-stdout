@@ -1,0 +1,13 @@
+
+running 8 tests
+test collective::tests::active_nonfinite_inputs_trap ... ok
+test collective::tests::all_finite_bf16_residuals_match_zero_partial_reference ... ok
+test collective::tests::analytical_pairs_match_independent_f64_staged_reference ... ok
+test collective::tests::intermediate_final_and_narrowed_overflow_trap ... ok
+test collective::tests::nonuniform_full_active_vectors_match_reference_for_two_generations ... ok
+test collective::tests::one_final_rounding_does_not_narrow_partials_or_each_addition ... ok
+test collective::tests::rank_expressions_are_evaluated_once_in_order ... ok
+test collective::tests::residual_is_added_after_both_partials ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+

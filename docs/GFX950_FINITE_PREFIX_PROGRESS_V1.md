@@ -6,7 +6,14 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Latest: the [projection-rounding replay](../qualification/output-residual-boundary-v1/README.md)
+Latest: the separate [BF16 projection-residual candidate](../qualification/projection-residual-cpu-v1/README.md)
+passed 17 new Rust tests and all 14 unchanged V18 regression tests on
+`mi350-2`, with no ignores. All 18 bounded commands and source/tool/input
+postchecks passed. The new kernel materializes the combined projection in
+BF16 before residual addition; it does not alter the current runtime route.
+Checked lowering, GPU execution, and model numerical acceptance remain open.
+
+The [projection-rounding replay](../qualification/output-residual-boundary-v1/README.md)
 completed on `mi350-2`. The current formula reproduces all 4,096 captured native
 residual values on both ranks. Materializing the projection in BF16 before
 residual addition improves framework agreement from 2,886 to 4,094 values;

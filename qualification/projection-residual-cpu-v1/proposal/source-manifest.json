@@ -1,0 +1,75 @@
+{
+  "schema": "ferric-p228-projection-residual-kernel-proposal-v1",
+  "formatted": false,
+  "tests_executed": false,
+  "gpu_executed": false,
+  "files": [
+    {
+      "path": "device/qwen3-tp-projection-residual-kernels-v1/build.rs",
+      "source": "draft/device/qwen3-tp-projection-residual-kernels-v1/build.rs",
+      "before": null,
+      "after": {"bytes": 1413, "sha256": "03ed8d61082999157472cfa2df52630830d1c4d60fbc7df23827aebdf325d285"}
+    },
+    {
+      "path": "device/qwen3-tp-projection-residual-kernels-v1/Cargo.toml",
+      "source": "draft/device/qwen3-tp-projection-residual-kernels-v1/Cargo.toml",
+      "before": null,
+      "after": {"bytes": 710, "sha256": "5ca41676b76d8a120fee6559aa8cca6522e43e3b836dca2bf1b028339214ced5"}
+    },
+    {
+      "path": "device/qwen3-tp-projection-residual-kernels-v1/src/lib.rs",
+      "source": "draft/device/qwen3-tp-projection-residual-kernels-v1/src/lib.rs",
+      "before": null,
+      "after": {"bytes": 838, "sha256": "090343ba016d32d49edcc5de612f705468d1365b544ab11edb834702481235e1"}
+    },
+    {
+      "path": "device/qwen3-tp-projection-residual-kernels-v1/src/collective.rs",
+      "source": "draft/device/qwen3-tp-projection-residual-kernels-v1/src/collective.rs",
+      "before": null,
+      "after": {"bytes": 8595, "sha256": "0af6388214c7c9ba2b4e4da3e3d772fa0c02cc1a20852830aca3e274e3de8c5c"}
+    },
+    {
+      "path": "device/qwen3-tp-projection-residual-kernels-v1/tests/contract.rs",
+      "source": "draft/device/qwen3-tp-projection-residual-kernels-v1/tests/contract.rs",
+      "before": null,
+      "after": {"bytes": 4194, "sha256": "4b99db644882513b232c2ab5668647e6d2b136a4946ceedcb3a775f28e83ed9c"}
+    }
+  ],
+  "unchanged_v18_basis": {
+    "root": "/home/harsh/ferric-p227-integration/device/qwen3-tp-peer-tp2-kernels-v18",
+    "files": {
+      "Cargo.toml": {"bytes": 690, "sha256": "981fb820206bab880607f58f0c54f0edbb2a0c89f42cbadd66f18c3ea308b33a"},
+      "Cargo.lock": {"bytes": 41300, "sha256": "e69451fab45d0855bb7a6dc08bc1dc6474d0271bed9d1e53d94dfc30292c8470"},
+      "src/lib.rs": {"bytes": 1081, "sha256": "6800ea442ac0a656ab3ae01f43f772d0809d307cd74aebea17db11195475843b"},
+      "src/collective.rs": {"bytes": 6560, "sha256": "dac509f21bdd5f43c5f6334f4d36a9ddb6c3fda2de710c9d4f8936df233541f0"},
+      "tests/contract.rs": {"bytes": 6425, "sha256": "abd1d0bb007c9faae6b57e6e1d9c143fdf11e11e635d3bf1b5d305c4bcbff97d"}
+    }
+  },
+  "test_census": {
+    "arithmetic": [
+      "collective::tests::analytical_pairs_match_independent_staged_reference",
+      "collective::tests::two_generations_cover_all_4096_active_elements",
+      "collective::tests::projection_ties_round_before_residual_addition",
+      "collective::tests::neither_rank_partial_is_narrowed",
+      "collective::tests::fp32_rank_sum_rounds_before_residual",
+      "collective::tests::expressions_are_evaluated_once_in_rank_then_residual_order",
+      "collective::tests::leading_positive_zero_and_exact_cancellation_stay_positive",
+      "collective::tests::tiny_projection_uses_bf16_rne_without_flushing_subnormals",
+      "collective::tests::all_finite_bf16_residuals_match_zero_projection_reference",
+      "collective::tests::active_nonfinite_inputs_trap",
+      "collective::tests::materialization_overflow_traps_before_cancelling_residual_is_evaluated",
+      "collective::tests::rank_sum_and_final_output_overflows_trap"
+    ],
+    "source_contract": [
+      "exact_single_root_roster_excludes_old_residual_and_copy",
+      "abi_keeps_ten_slices_then_rows_world_and_168_explicit_bytes",
+      "original_row_one_world_two_and_launch_checks_precede_loads",
+      "sixty_four_groups_have_exact_injective_4096_element_ownership",
+      "two_materializations_surround_only_the_residual_add"
+    ]
+  },
+  "compiler_qualified": false,
+  "numerical_accepted": false,
+  "production_accepted": false,
+  "performance_claimed": false
+}

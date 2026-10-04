@@ -1,0 +1,12 @@
+collective::tests::active_nonfinite_inputs_trap: test
+collective::tests::all_finite_bf16_residuals_match_zero_projection_reference: test
+collective::tests::analytical_pairs_match_independent_staged_reference: test
+collective::tests::expressions_are_evaluated_once_in_rank_then_residual_order: test
+collective::tests::fp32_rank_sum_rounds_before_residual: test
+collective::tests::leading_positive_zero_and_exact_cancellation_stay_positive: test
+collective::tests::materialization_overflow_traps_before_cancelling_residual_is_evaluated: test
+collective::tests::neither_rank_partial_is_narrowed: test
+collective::tests::projection_ties_round_before_residual_addition: test
+collective::tests::rank_sum_and_final_output_overflows_trap: test
+collective::tests::tiny_projection_uses_bf16_rne_without_flushing_subnormals: test
+collective::tests::two_generations_cover_all_4096_active_elements: test
