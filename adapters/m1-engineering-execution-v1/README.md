@@ -200,6 +200,9 @@ passed 257 Rust tests with no ignores and 16 controller tests on `mi350-2`.
 All 12 parent executables built and the default-feature library check passed.
 The [retained result](../../qualification/native-device-parent-v1/result.json)
 binds the exact sources and selected executable. This is not yet a GPU result.
+The transported parent and worker also pass [MI350 runtime dependency audits](../../qualification/native-device-runtime-v1/README.md).
+The first controller admission failed before native launch on a legacy import;
+the audit and controller-test passes do not establish GPU execution.
 
 With `tp-batch-engineering`, the separate
 `ferric-qwen3-finite-prefix-decode-device-engineering` binary selects the

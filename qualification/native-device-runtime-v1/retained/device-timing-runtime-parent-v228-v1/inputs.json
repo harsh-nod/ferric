@@ -1,0 +1,195 @@
+{
+  "binary": {
+    "bytes": 13691232,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/device-timing-runtime-v228-v1/ferric-qwen3-finite-prefix-decode-device-engineering",
+    "sha256": "cfb38b6c06bf39bd0928e3066204753cd6b5998e9331c5aa77295aa246323a7d"
+  },
+  "source_pins": {
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/device-parent-cpu-v228-v2/complete.json": {
+      "bytes": 298774,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/device-parent-cpu-v228-v2/complete.json",
+      "sha256": "3b51d61268bee492dd6ded7623742153513c46cd3d246ebc60a6bc9a2555077b"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/device-parent-cpu-v228-v2/parent-builds-stdout": {
+      "bytes": 337041,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/device-parent-cpu-v228-v2/parent-builds-stdout",
+      "sha256": "6a77c503e5e35d1861db31ee10992631f16bc971301ba16899e8feb7d27dd5bb"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/device-parent-cpu-v228-v2/sources-after.json": {
+      "bytes": 1443680,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/device-parent-cpu-v228-v2/sources-after.json",
+      "sha256": "cdf700a8360bd650e4eb4d93a1beea62341bde553b75c914fa8e9289d677ce16"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/device-parent-cpu-v228-v2/sources-before.json": {
+      "bytes": 1443680,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/device-parent-cpu-v228-v2/sources-before.json",
+      "sha256": "cdf700a8360bd650e4eb4d93a1beea62341bde553b75c914fa8e9289d677ce16"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/device-timing-runtime-v228-v1/ferric-qwen3-finite-prefix-decode-device-engineering": {
+      "bytes": 13691232,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/device-timing-runtime-v228-v1/ferric-qwen3-finite-prefix-decode-device-engineering",
+      "sha256": "cfb38b6c06bf39bd0928e3066204753cd6b5998e9331c5aa77295aa246323a7d"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p227-prefix-runtime-audit-v2/README.txt": {
+      "bytes": 4605,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p227-prefix-runtime-audit-v2/README.txt",
+      "sha256": "6cd61459b3a7ef09da9095a24f4ca470a642909800523a6c8fd46285ad414a02"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p227-prefix-runtime-audit-v2/audit.py": {
+      "bytes": 12875,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p227-prefix-runtime-audit-v2/audit.py",
+      "sha256": "def16c2f69c082fa273596bef0caf7a2af195d07d2ac6f96d944706d5f44a514"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p227-prefix-runtime-audit-v2/fixtures/actual-ldd.stdout": {
+      "bytes": 230,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p227-prefix-runtime-audit-v2/fixtures/actual-ldd.stdout",
+      "sha256": "8614b3c271fa6997a2d0096563f3d82c040021118e4ac64a9466870cbee23940"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p227-prefix-runtime-audit-v2/fixtures/actual-readelf.stdout": {
+      "bytes": 1615,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p227-prefix-runtime-audit-v2/fixtures/actual-readelf.stdout",
+      "sha256": "c4c154492d1bc30d10731adb430915f5a251e3369e379b0c525fa25d52deb48b"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p227-prefix-runtime-audit-v2/frozen_owned.py": {
+      "bytes": 30433,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p227-prefix-runtime-audit-v2/frozen_owned.py",
+      "sha256": "ab41af455396322303bb8ebd4132e680affc3bdc5830608fad36736c92024583"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p227-prefix-runtime-audit-v2/manifest.json": {
+      "bytes": 2557,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p227-prefix-runtime-audit-v2/manifest.json",
+      "sha256": "9b80913aa0dac2da2a52bfe6e053a4db09a5e4c5647731fd269f39719e8bb062"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p227-prefix-runtime-audit-v2/run_row_facts_v2.py": {
+      "bytes": 12424,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p227-prefix-runtime-audit-v2/run_row_facts_v2.py",
+      "sha256": "244c12f62c8a439aa01b44380fc464008b94006bc919201c8d510c64177fc820"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p227-prefix-runtime-audit-v2/test_audit.py": {
+      "bytes": 14883,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p227-prefix-runtime-audit-v2/test_audit.py",
+      "sha256": "622a469ba7fc900d7e92154e72c01525704c91a1a680f9e11c10125d9e273815"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-device-runtime-audit-v1/audit_device_runtime.py": {
+      "bytes": 5703,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-device-runtime-audit-v1/audit_device_runtime.py",
+      "sha256": "519a45de5f545c6da130c6c52a03d85691f52e886bbb9c486839bd225a1da43e"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-device-timing-gpu-v1/INTAKE.md": {
+      "bytes": 6548,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-device-timing-gpu-v1/INTAKE.md",
+      "sha256": "acb4b0671866e8097f42a2203852c6d47f4947fbccb4f4f407425bc4a7e1e285"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-device-timing-gpu-v1/README.md": {
+      "bytes": 4393,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-device-timing-gpu-v1/README.md",
+      "sha256": "144d5087fa9b44baa1f1a08bf5f9df57bab99ac3c5a34bcc293164cbc44457ed"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-device-timing-gpu-v1/baseline_comparison.py": {
+      "bytes": 21802,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-device-timing-gpu-v1/baseline_comparison.py",
+      "sha256": "413e8bb4ea5637cb3ca67003433b62bf7cb90832c4f88101d2c9ea9fa7bcc512"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-device-timing-gpu-v1/baseline_diagnostic.py": {
+      "bytes": 13589,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-device-timing-gpu-v1/baseline_diagnostic.py",
+      "sha256": "259f6f233be23da36eac213bfb5e0c905afa43461461fbb0305efcc45c08d930"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-device-timing-gpu-v1/device_validation.py": {
+      "bytes": 15110,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-device-timing-gpu-v1/device_validation.py",
+      "sha256": "6a641750a14038fcbf94431bdc675dec287bc7fca2c650058f66baf0526216c7"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-device-timing-gpu-v1/host_validation.py": {
+      "bytes": 10099,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-device-timing-gpu-v1/host_validation.py",
+      "sha256": "2f32426a80aca05125112ee3f023c075caea2f9360cbbde1fcb6c3b54cc4f73f"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-device-timing-gpu-v1/intake.py": {
+      "bytes": 20261,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-device-timing-gpu-v1/intake.py",
+      "sha256": "ffad65de6c066d5e6f9a2c70a6c35bf2ef7832aa6f31e97ab51ee3bd7afa0288"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-device-timing-gpu-v1/layer_validation.py": {
+      "bytes": 16186,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-device-timing-gpu-v1/layer_validation.py",
+      "sha256": "757c077979b7ee02d4c0e7d222e75292cd9d417927f84ae9a8134344f8e217b9"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-device-timing-gpu-v1/manifest.json": {
+      "bytes": 2170,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-device-timing-gpu-v1/manifest.json",
+      "sha256": "6c4a3c8323d7d75cdfb62b781f9e03460da774428fe05a2c22c0d6fae5662710"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-device-timing-gpu-v1/run.py": {
+      "bytes": 15396,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-device-timing-gpu-v1/run.py",
+      "sha256": "886ff23e9a580bafdca2474811e183725155fc0749f842f458a4987421ebec96"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-device-timing-gpu-v1/run_row_facts_v2.py": {
+      "bytes": 12424,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-device-timing-gpu-v1/run_row_facts_v2.py",
+      "sha256": "244c12f62c8a439aa01b44380fc464008b94006bc919201c8d510c64177fc820"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-device-timing-gpu-v1/test_device_validation.py": {
+      "bytes": 15657,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-device-timing-gpu-v1/test_device_validation.py",
+      "sha256": "086c2560a89d2911a8f69a4f30c054dfff339952977c6ff7d890fb9ca4aeed30"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-device-timing-gpu-v1/test_intake.py": {
+      "bytes": 10572,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-device-timing-gpu-v1/test_intake.py",
+      "sha256": "f8a2af3993fa35d8621e38251769d94b3854a4fd4e96a922366ec6b6487377f1"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-device-timing-gpu-v1/test_run.py": {
+      "bytes": 15599,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-device-timing-gpu-v1/test_run.py",
+      "sha256": "e8c81b7b6eb397a3124fab6f3ee75dad4e677a32381e6f4ee58902f6701a0b89"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/resident-output-tp2-v217/run_p217_mi350.py": {
+      "bytes": 13733,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/resident-output-tp2-v217/run_p217_mi350.py",
+      "sha256": "6016c30f46aa32abf9d175f329a0110e86cbf79d1363f1803dba3c86c1bad50a"
+    },
+    "/usr/bin/ldd": {
+      "bytes": 5382,
+      "path": "/usr/bin/ldd",
+      "sha256": "91ff41f256c1b168518fcac7ec850a6036584747660db9d8c5a13be9b63b72eb"
+    },
+    "/usr/bin/prlimit": {
+      "bytes": 27536,
+      "path": "/usr/bin/prlimit",
+      "sha256": "17064f67e650d6152a6902b013aab496b54c87587c8eea6f5023aafee6154069"
+    },
+    "/usr/bin/x86_64-linux-gnu-readelf": {
+      "bytes": 789280,
+      "path": "/usr/bin/x86_64-linux-gnu-readelf",
+      "sha256": "64c58e15274bbbb5153f31078e455e9e77ee5f51489e709bba5bb788ce9df2b0"
+    }
+  },
+  "tools": [
+    {
+      "path": "/usr/bin/prlimit",
+      "resolved": {
+        "bytes": 27536,
+        "path": "/usr/bin/prlimit",
+        "sha256": "17064f67e650d6152a6902b013aab496b54c87587c8eea6f5023aafee6154069"
+      }
+    },
+    {
+      "path": "/usr/bin/readelf",
+      "resolved": {
+        "bytes": 789280,
+        "path": "/usr/bin/x86_64-linux-gnu-readelf",
+        "sha256": "64c58e15274bbbb5153f31078e455e9e77ee5f51489e709bba5bb788ce9df2b0"
+      }
+    },
+    {
+      "path": "/usr/bin/ldd",
+      "resolved": {
+        "bytes": 5382,
+        "path": "/usr/bin/ldd",
+        "sha256": "91ff41f256c1b168518fcac7ec850a6036584747660db9d8c5a13be9b63b72eb"
+      }
+    }
+  ]
+}

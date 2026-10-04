@@ -1,0 +1,35 @@
+{
+  "argv": [
+    "/usr/bin/prlimit",
+    "--as=2147483648",
+    "--cpu=30",
+    "--fsize=1048576",
+    "--core=0",
+    "--",
+    "/usr/bin/readelf",
+    "-d",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/device-timing-runtime-v228-v1/ferric-qwen3-finite-prefix-decode-device-engineering"
+  ],
+  "audit_argv": [
+    "/usr/bin/readelf",
+    "-d",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/device-timing-runtime-v228-v1/ferric-qwen3-finite-prefix-decode-device-engineering"
+  ],
+  "cwd": "/home/harmenon/ferric-asrock-42",
+  "deadline_seconds": 30,
+  "env": {
+    "CUDA_VISIBLE_DEVICES": "",
+    "HIP_VISIBLE_DEVICES": "",
+    "HOME": "/home/harmenon",
+    "LANG": "C.UTF-8",
+    "LC_ALL": "C.UTF-8",
+    "MKL_NUM_THREADS": "1",
+    "OMP_NUM_THREADS": "1",
+    "OPENBLAS_NUM_THREADS": "1",
+    "PATH": "/usr/bin:/bin",
+    "ROCR_VISIBLE_DEVICES": "",
+    "TZ": "UTC"
+  },
+  "gpu_execution_requested": false,
+  "stream_cap_bytes": 1048576
+}

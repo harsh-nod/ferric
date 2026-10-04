@@ -1,0 +1,35 @@
+{
+  "controller_sha256": "667f62cd755605d0b5758b568f5e38f8575f5ea9863d9573484db7247939794f",
+  "elapsed_seconds": 1.4897192129865289,
+  "errors": 0,
+  "failures": 0,
+  "full_model_acceptance": false,
+  "gpu_execution": false,
+  "manifest_sha256": "6c4a3c8323d7d75cdfb62b781f9e03460da774428fe05a2c22c0d6fae5662710",
+  "native_execution": false,
+  "numerical_acceptance": false,
+  "passed": true,
+  "performance_claim": false,
+  "production_authority": false,
+  "schema": "ferric-p228-device-timing-pure-v1",
+  "skipped": 0,
+  "source_postchecks_passed": true,
+  "source_sha256": "a8e1e07fef03e10f502f24886b6345d84491d688cdb3318f389e804b906c67fe",
+  "sources_after": {
+    "bytes": 3397,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/device-timing-gpu-pure-v228-v1/sources-after.json",
+    "sha256": "a8e1e07fef03e10f502f24886b6345d84491d688cdb3318f389e804b906c67fe"
+  },
+  "sources_before": {
+    "bytes": 3397,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/device-timing-gpu-pure-v228-v1/sources-before.json",
+    "sha256": "a8e1e07fef03e10f502f24886b6345d84491d688cdb3318f389e804b906c67fe"
+  },
+  "synthetic_policy_tests_only": true,
+  "tests": 44,
+  "transcript": {
+    "bytes": 6768,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/device-timing-gpu-pure-v228-v1/tests.log",
+    "sha256": "8636c54c0a0ddc4882af3d14830bdfadf9ca3688455954f2ce626fb4fd6a7fde"
+  }
+}

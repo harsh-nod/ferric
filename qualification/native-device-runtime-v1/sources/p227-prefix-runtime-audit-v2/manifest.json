@@ -1,0 +1,73 @@
+{
+  "authority": "none",
+  "direct_loader": "ld-linux-x86-64.so.2",
+  "files": [
+    {
+      "bytes": 4605,
+      "path": "README.txt",
+      "sha256": "6cd61459b3a7ef09da9095a24f4ca470a642909800523a6c8fd46285ad414a02"
+    },
+    {
+      "bytes": 12875,
+      "path": "audit.py",
+      "sha256": "def16c2f69c082fa273596bef0caf7a2af195d07d2ac6f96d944706d5f44a514"
+    },
+    {
+      "bytes": 230,
+      "path": "fixtures/actual-ldd.stdout",
+      "sha256": "8614b3c271fa6997a2d0096563f3d82c040021118e4ac64a9466870cbee23940"
+    },
+    {
+      "bytes": 1615,
+      "path": "fixtures/actual-readelf.stdout",
+      "sha256": "c4c154492d1bc30d10731adb430915f5a251e3369e379b0c525fa25d52deb48b"
+    },
+    {
+      "bytes": 30433,
+      "path": "frozen_owned.py",
+      "sha256": "ab41af455396322303bb8ebd4132e680affc3bdc5830608fad36736c92024583"
+    },
+    {
+      "bytes": 12424,
+      "path": "run_row_facts_v2.py",
+      "sha256": "244c12f62c8a439aa01b44380fc464008b94006bc919201c8d510c64177fc820"
+    },
+    {
+      "bytes": 14883,
+      "path": "test_audit.py",
+      "sha256": "622a469ba7fc900d7e92154e72c01525704c91a1a680f9e11c10125d9e273815"
+    }
+  ],
+  "gpu_execution": false,
+  "numerical_acceptance": false,
+  "observer_manifest_sha256": "82faa88c4acc88d6cb473c20354d076aa9c8184c31b03f72e9bea69c0ea96f9a",
+  "output_schema_changed": false,
+  "previous_manifest_sha256": "e9b9f7a9c871b40d4d600af71a2d564e6fd7644fda4d8da5ca7ae703e0002a76",
+  "prior_failure": {
+    "bytes": 685,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-runtime-audit-v227-v1/failed.json",
+    "sha256": "319e7ef614d360d13b6aa10158f282e369d0b719a23d2750845bfb759ccb4ceb"
+  },
+  "production_authority": false,
+  "pure_tests": 14,
+  "reviewed": false,
+  "runtime_limits": {
+    "accepted_observation_interval_seconds": 120,
+    "controller_address_space_bytes": 2147483648,
+    "controller_cpu_seconds": 120,
+    "leaf_address_space_bytes": 2147483648,
+    "leaf_cpu_seconds": 30,
+    "leaf_file_bytes": 1048576,
+    "leaf_wall_seconds": 30,
+    "leaves": 2
+  },
+  "runtime_premises_discharged": false,
+  "schema": "ferric-p227-prefix-runtime-audit-contracts-v2",
+  "status": "FROZEN_AUTHOR_UNRUN",
+  "test_read_dependencies": {
+    "prepare.py": "ed4b8770dc90d48f393bbdc292d3eb91ea441c8f3420f0b39f013db4f962dcf4",
+    "validation.py": "cdaf6dc53208bbca8f23b2a3fa3eca9d28fe00ca4cfc74b36d225f3ebe8d28d1"
+  },
+  "tests_run_by_author": false,
+  "topology_helper_sha256": "6016c30f46aa32abf9d175f329a0110e86cbf79d1363f1803dba3c86c1bad50a"
+}

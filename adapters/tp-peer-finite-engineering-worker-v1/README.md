@@ -46,6 +46,8 @@ diagnostic selectors do not enable timestamp queues.
 The [matching parent diagnostic](../m1-engineering-execution-v1/README.md#finite-prefix-device-tick-diagnostic)
 is now implemented and separately CPU-qualified. An owned-process GPU run and
 full output-invariance comparison of this new pair are still required.
+Both transported binaries pass [MI350 runtime dependency audits](../../qualification/native-device-runtime-v1/README.md);
+the first controller admission stopped on a legacy-import defect before native launch.
 Raw ticks are not nanoseconds; cross-device alignment and
 overlap graphs require separate clock calibration. Single-command raw rounds
 also add a publication fence, so their host timings are not a like-for-like

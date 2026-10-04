@@ -1,0 +1,19 @@
+{
+  "argv": [
+    "/usr/bin/readelf",
+    "-d",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/device-timing-runtime-v228-v1/ferric-tp-peer-finite-engineering-worker-v1"
+  ],
+  "deadline_seconds": 30,
+  "exit_code": 0,
+  "stderr": {
+    "bytes": 0,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/device-timing-runtime-worker-v228-v1/readelf/stderr",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "stdout": {
+    "bytes": 1614,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/device-timing-runtime-worker-v228-v1/readelf/stdout",
+    "sha256": "82c2dc733eb3bd0612e0de58ae066e033282f34cf638a992b68b7a0bb8bf34d0"
+  }
+}

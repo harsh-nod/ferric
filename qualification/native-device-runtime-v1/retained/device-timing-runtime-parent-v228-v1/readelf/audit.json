@@ -1,0 +1,19 @@
+{
+  "argv": [
+    "/usr/bin/readelf",
+    "-d",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/device-timing-runtime-v228-v1/ferric-qwen3-finite-prefix-decode-device-engineering"
+  ],
+  "deadline_seconds": 30,
+  "exit_code": 0,
+  "stderr": {
+    "bytes": 0,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/device-timing-runtime-parent-v228-v1/readelf/stderr",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "stdout": {
+    "bytes": 1689,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/device-timing-runtime-parent-v228-v1/readelf/stdout",
+    "sha256": "260dbfab7d9883e337482e5efe71511fa50b7817b7f900b2390a86f296a77cc7"
+  }
+}

@@ -16,7 +16,10 @@ after worker Close and reap. Existing plain and host-only selectors are unchange
 The separately [qualified worker](../qualification/native-device-routing-v1/README.md)
 passed 609 Rust tests with four existing ignores and 13 controller tests.
 These are distinct CPU cohorts, not a combined new test run. The matching pair's
-GPU execution and output-invariance comparison are pending; raw ticks still
+transported binaries now pass [runtime dependency audits](../qualification/native-device-runtime-v1/README.md)
+on `mi350`: four natural inspection exits/reaps, seven auditor tests and a
+separate 44-test controller cohort. Real admission then exposed a legacy-import
+wiring defect before any native launch. GPU execution and output-invariance comparison are pending; raw ticks still
 provide no calibrated latency, cross-device alignment or overlap claim.
 The retained parent history includes the first failed test fixture and its
 test-only overflow correction; that attempt is not counted as a passing run.
@@ -75,6 +78,7 @@ earlier checkpoints and their limitations at the time they were recorded.
 
 | Check | Observed result | Boundary |
 | --- | --- | --- |
+| Device-tick parent/worker runtime audits on `mi350` | Both exact CPU-qualified ELFs inspected; four natural exits/reaps; all dependencies resolved | Seven auditor tests and 44 controller tests are separate; real admission failed before native launch |
 | Corrected finite parent/worker CPU suite on `mi350-2` | 605 passed, 4 ignored; 34 owned commands | Includes 24 tests for the opt-in host-observation extension; no GPU execution |
 | Historical KFD host-observation suite on `mi350-2` | 1,776 selected tests passed | Overlapping selections, including 15 new tests; separate source generation |
 | Fresh Git-source worker build on `mi350-2` | 387 passed, 4 ignored; binary built from an empty target | Published Ferric/fe2o3 source pair; cached registry/toolchain, no parent or GPU run |
