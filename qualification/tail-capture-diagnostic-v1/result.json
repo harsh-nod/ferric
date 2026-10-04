@@ -1,0 +1,50 @@
+{
+  "acceptance_threshold": null,
+  "authority": "none",
+  "cpu": {
+    "bytes": 1460,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/tail-capture-diagnostic-v228-v1/complete.json",
+    "sha256": "9bf6dfa3f907093cb035835b95d0add61c4e3e14f0672e4fbc1a13e2ce84960f"
+  },
+  "diagnostic": {
+    "bytes": 82487,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/tail-capture-diagnostic-v228-v1/diagnostic/complete.json",
+    "sha256": "3523e70fa7940ca31c1cb8560988808630f2cba0020055812f304f87a7a80990"
+  },
+  "full_model_acceptance": false,
+  "independent_tensor_acceptance": false,
+  "numerical_acceptance": false,
+  "original_reference_manifest": {
+    "bytes": 2958,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/tail-p222-reference-v228-v1/manifest.json",
+    "sha256": "7c19a46b59c67094447152d3e30c2c9bbe1deedfbef4a20c2a23ed4574b3efe3"
+  },
+  "performance_claim": false,
+  "production_authority": false,
+  "pure": {
+    "bytes": 1474,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/tail-capture-pure-v228-v1/complete.json",
+    "sha256": "51fa3afc00b95a0844d4a83550b1eb66d150a962f68ca20d5d9fd21d92529ab7"
+  },
+  "retained_trees": {
+    "tail-capture-diagnostic-v228-v1": {
+      "bytes": 1384965,
+      "files": 14
+    },
+    "tail-capture-pure-v228-v1": {
+      "bytes": 6009,
+      "files": 4
+    }
+  },
+  "schema": "ferric-p228-tail-capture-public-result-v1",
+  "summary": {
+    "conditional_stage_rows": 8,
+    "head_argmax_matches": 4,
+    "head_elements": 607744,
+    "head_exact_words": 607704,
+    "norm_elements": 16384,
+    "norm_exact_words": 16384,
+    "positions": 4
+  },
+  "whole_tail_reference_chain_performed": false
+}

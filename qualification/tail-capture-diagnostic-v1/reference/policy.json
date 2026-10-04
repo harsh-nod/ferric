@@ -1,0 +1,31 @@
+{
+  "schema": "ferric-p222-original-model-reference-policy-v1",
+  "reference_mode": "independent-original-weight-fp64-projection-f32-boundary-two-forward-v1",
+  "scope": "Two complete Qwen3-8B TP2-equation forwards from pinned original safetensors, original embedding rows and internally computed per-layer causal KV history.",
+  "model": "Qwen/Qwen3-8B",
+  "revision": "b968826d9c46dd6066d109eabc6255188de91218",
+  "arithmetic": {
+    "projection": "Independent chunked dense FP64 BF16-product row sum; QKV/gate/up narrow FP64 -> FP32 -> BF16 RNE. FP64 sums are retained. No GPU lane-tree replay.",
+    "norm": "Independent FP64 sum of squares and inverse sqrt using the exact FP32 epsilon bit pattern; BF16 normalized value then BF16 weight product. Not source-exact FP32 norm intermediates.",
+    "rope": "Cosine/sine recomputed independently from original position and theta1000000, narrowed to FP32; split-half separate FP32 multiplications and add/subtract before BF16 RNE.",
+    "attention": "Unpaged independent FP64 two-pass causal softmax, source FP32 scale1/sqrt128, GQA head/4; FP64 output -> FP32 -> BF16 RNE. No OCML or online-wave recurrence replay.",
+    "swiglu": "Frozen P218 independent FP64 stable sigmoid, SiLU times up, direct BF16 RNE. Not an OCML exact-bit claim.",
+    "partial": "Each rank's original-NxK O/down independent FP64 dot narrows once to FP32 before ordered TP2 residual.",
+    "residual": "Frozen P216 integer-bit oracle computes RNE_F32(p0+p1), RNE_F32(sum+BF16_original), then one BF16 RNE. No approximate FP64-add shortcut.",
+    "tail": "Independent FP64 dual-boundary final norm and original-NxK FP64 language-model head -> FP32 -> BF16 RNE, then first-index maximum. Not a bit replica of retained sequential-FP32 final norm or MFMA head."
+  },
+  "input_modes": {
+    "teacher_forced": "Exactly two supplied token IDs; retained token provenance is a pinned caller input, not tokenizer execution by this script.",
+    "autoregressive": "Exactly one supplied initial token; the CPU reference consumes its own first checked argmax as token1. If GPU argmax0 differs, second-forward tensors follow different input trajectories and must not be reported as same-input mismatches."
+  },
+  "source_custody": "Explicit pinned input roster, five original safetensors, exact config/index, source authentication and token provenance receipts. Receipt bytes are retained; this diagnostic does not upgrade them to compiler or native execution authority.",
+  "actual_gpu_intermediate_substitution": false,
+  "adaptive_tolerance": false,
+  "numerical_acceptance": false,
+  "acceptance_threshold": null,
+  "framework_equivalence": false,
+  "source_reduction_bit_equivalence": false,
+  "full_model_correctness": false,
+  "performance_measured": false,
+  "gpu_execution": false
+}

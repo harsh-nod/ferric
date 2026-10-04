@@ -15,6 +15,12 @@ diagnostic pair, not a qualified speedup or GPU/sustained-throughput measurement
 The page includes measured tables and a plot. Its comparison reader passed
 21 tests; deployment/controller tests remain a separate 116-test checkpoint.
 
+The [conditional final-norm/head replay](../qualification/tail-capture-diagnostic-v1/README.md)
+completed eight diagnostics and 22 policy/layout tests on MI350. All 16,384 norm
+words match; 40 of 607,744 logits differ, with all four argmax tokens matching.
+Each stage uses its own captured immediate input and authentic original weights.
+No head acceptance bound was invented; full-model numerical acceptance remains open.
+
 The [paired resident-state fence candidate](../qualification/resident-state-fence-consolidation-v1/README.md)
 passed 522 selected CPU tests with four ignored on `mi350-2`; a fresh worker
 was built and all 17 bounded commands exited naturally. It removes redundant
@@ -88,6 +94,7 @@ earlier checkpoints and their limitations at the time they were recorded.
 | Paired resident-state fence candidate on `mi350-2` | 522 CPU tests passed, four ignored; fresh worker built; 17 natural command exits | Eight exact source files and six new regressions; predicted counter reduction is not a GPU or performance result |
 | Resident-state deployment/controller on `mi350` and `mi350-2` | 116 CPU policy tests pass; actual worker export verifies source/build/test evidence | No GPU execution of the new worker yet; parent, prior worker and V7 provenance remain distinct |
 | Resident-state worker on `mi350` | 152 tensor rows bitwise equal; 2,304 fewer full group checks; six audits and clean Close/reap; 21 comparison tests pass | One unchanged-V7 TF4 pair; 26.212 vs 30.030 seconds host forward total, not a qualified speedup or sustained benchmark |
+| Conditional final norm/head replay on `mi350` | 16,384 exact norm words; 40 differing logits of 607,744; four matching argmax tokens; 22 tests pass | Eight immediate-input diagnostics, not a chained reference, justified MFMA error bound or full-model acceptance |
 
 Both four-forward runs completed their Close protocol, reaped their owned
 processes, and passed their six surrounding device-state audits. The CPU suite

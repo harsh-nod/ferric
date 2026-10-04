@@ -1,0 +1,27 @@
+test_capture_extent_nonfinite_and_offset_corruption_fail (test_run.ConditionalTests.test_capture_extent_nonfinite_and_offset_corruption_fail) ... ok
+test_captured_token_disagreement_fails (test_run.ConditionalTests.test_captured_token_disagreement_fails) ... ok
+test_different_reference_token_is_reported_not_accepted_or_rejected (test_run.ConditionalTests.test_different_reference_token_is_reported_not_accepted_or_rejected) ... ok
+test_reference_failure_is_not_hidden (test_run.ConditionalTests.test_reference_failure_is_not_hidden) ... ok
+test_reference_receives_separate_captured_immediate_inputs (test_run.ConditionalTests.test_reference_receives_separate_captured_immediate_inputs) ... ok
+test_wrong_reference_geometry_fails (test_run.ConditionalTests.test_wrong_reference_geometry_fails) ... ok
+test_noncontiguous_view_preserves_logical_order (test_run.LayoutTests.test_noncontiguous_view_preserves_logical_order) ... ok
+test_nxk_and_transpose_hash_exact_order (test_run.LayoutTests.test_nxk_and_transpose_hash_exact_order) ... ok
+test_rejects_invalid_layout_dtype_extent_and_block (test_run.LayoutTests.test_rejects_invalid_layout_dtype_extent_and_block) ... ok
+test_transpose_hash_chunk_boundary_invariant (test_run.LayoutTests.test_transpose_hash_chunk_boundary_invariant) ... ok
+test_nonempty_pythonoptimize_rejected_even_zero (test_run.PolicyTests.test_nonempty_pythonoptimize_rejected_even_zero) ... ok
+test_optimized_interpreter_rejected_without_environment (test_run.PolicyTests.test_optimized_interpreter_rejected_without_environment) ... ok
+test_success_is_diagnostic_only (test_run.PolicyTests.test_success_is_diagnostic_only) ... ok
+test_byte_digest_rejects_bool_and_bad_extent (test_run.ProvenanceTests.test_byte_digest_rejects_bool_and_bad_extent) ... ok
+test_exact_actual_tail_dispatch_and_head_source (test_run.ProvenanceTests.test_exact_actual_tail_dispatch_and_head_source) ... ok
+test_new_bootstrap_join_requires_exact_size_and_content (test_run.ProvenanceTests.test_new_bootstrap_join_requires_exact_size_and_content) ... ok
+test_original_index_rejects_wrong_shard_shape_and_byte_total (test_run.ProvenanceTests.test_original_index_rejects_wrong_shard_shape_and_byte_total) ... ok
+test_original_index_selects_shards_four_and_five (test_run.ProvenanceTests.test_original_index_selects_shards_four_and_five) ... ok
+test_tail_dispatch_rejects_wrong_source_epsilon_and_world_size (test_run.ProvenanceTests.test_tail_dispatch_rejects_wrong_source_epsilon_and_world_size) ... ok
+test_uploads_keep_original_and_transposed_distinct (test_run.ProvenanceTests.test_uploads_keep_original_and_transposed_distinct) ... ok
+test_uploads_reject_duplicate_wrong_source_and_extent (test_run.ProvenanceTests.test_uploads_reject_duplicate_wrong_source_and_extent) ... ok
+test_uploads_reject_original_as_transposed_digest (test_run.ProvenanceTests.test_uploads_reject_original_as_transposed_digest) ... ok
+
+----------------------------------------------------------------------
+Ran 22 tests in 0.004s
+
+OK

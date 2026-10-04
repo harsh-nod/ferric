@@ -1,0 +1,34 @@
+{
+  "schema": "ferric-p222-original-model-reference-proposal-v1",
+  "status": "frozen-unexecuted-proposal",
+  "production_edits": false,
+  "tests_executed": false,
+  "authored_unit_tests": 14,
+  "gpu_execution": false,
+  "numerical_acceptance": false,
+  "policy_sha256": "8978c56f1b0c108c9aee7cdbe7f8ef2de11181bf83ca8f68fa4c69ff247bf031",
+  "files": [
+    {"path": "model_reference.py", "bytes": 26431, "sha256": "a058b58c17446e9fa6bfd1e8e5ae2231fb0727401a609a0d6c02b05c6326c37f", "unchanged_retained_helper": false},
+    {"path": "policy.json", "bytes": 2803, "sha256": "8978c56f1b0c108c9aee7cdbe7f8ef2de11181bf83ca8f68fa4c69ff247bf031", "unchanged_retained_helper": false},
+    {"path": "test_model_reference.py", "bytes": 10653, "sha256": "2f68cc8d8d20e26cb7a549cba93384d40fcf85fb03c87a5ed79fd830fc27c3e8", "unchanged_retained_helper": false},
+    {"path": "README.txt", "bytes": 3805, "sha256": "29d68423bcb49b0d4862df46d42677a5d470b67950a760922c847a7c8f223061", "unchanged_retained_helper": false},
+    {"path": "helpers/layer_reference_v2.py", "bytes": 20605, "sha256": "3facbd495b6fd0dd01856fd389101ed7c7b0af3c28d94171d185d3a28335c60f", "unchanged_retained_helper": true},
+    {"path": "helpers/extract.py", "bytes": 10473, "sha256": "76872f3558d6f90c21b9eee3ec0ba4ebdd79168b620338faa6bdbdd8b78bdf4a", "unchanged_retained_helper": true},
+    {"path": "helpers/reference.py", "bytes": 23782, "sha256": "2e41d6e5715cc561bf818fdee794e4ced74a77f93acd4961d8b15f427f196c6e", "unchanged_retained_helper": true},
+    {"path": "helpers/policy.json", "bytes": 2799, "sha256": "9497e55e70a42630d50b74ea33b0856a385d051fb60bc7f23124ee5cbd46e44b", "unchanged_retained_helper": true},
+    {"path": "helpers/attention_reference.py", "bytes": 16810, "sha256": "b0aaa60d86ea3ef940a82cf910753f4480a71adbd816073ad5406465c31b486a", "unchanged_retained_helper": true},
+    {"path": "helpers/residual_oracle.py", "bytes": 4347, "sha256": "551f89f968cad8f63073ca975346c593a31dad624115a93059b28a328e312ef3", "unchanged_retained_helper": true}
+  ],
+  "execution": {
+    "python": "/usr/bin/python3",
+    "numpy": "2.2.6",
+    "unit_command": "/usr/bin/python3 -B -m unittest discover -v -s PROPOSAL -p test_model_reference.py",
+    "reference_command": "/usr/bin/python3 -B PROPOSAL/model_reference.py ROSTER EXPECTED_SHA NEW_OUTPUT_DIR",
+    "original_weight_payload_bytes": 16381470720,
+    "output_payload_limit_bytes": 67108864,
+    "output_manifest_limit_bytes": 4194304,
+    "output_file_limit": 4096,
+    "resource_note": "Root must select a separate bounded CPU/address-space envelope above the complete read-only original model mappings; no elapsed-time or memory measurement has been performed."
+  },
+  "scope": "Independent original-weight 36-layer two-forward NumPy diagnostic, with internally computed hidden and causal KV recurrence. No GPU intermediate inputs, numerical acceptance threshold, framework equivalence, production admission or performance claim."
+}

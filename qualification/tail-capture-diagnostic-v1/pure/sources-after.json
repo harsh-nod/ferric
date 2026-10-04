@@ -1,0 +1,17 @@
+{
+  "README.md": {
+    "bytes": 8242,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-tail-capture-diagnostic-v1/README.md",
+    "sha256": "09f6820ae758fb74c68bc72e7f5211f9c2c6ee6d22ae752ed6af48c3c4d7fb61"
+  },
+  "run.py": {
+    "bytes": 20757,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-tail-capture-diagnostic-v1/run.py",
+    "sha256": "1b45818cff51f7ab802329dd83ef248370cc50945695a994a78e7b197694295c"
+  },
+  "test_run.py": {
+    "bytes": 14258,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-tail-capture-diagnostic-v1/test_run.py",
+    "sha256": "dbf7bfb54634ebe4842c2cf0abe9e5d139158dba58e8b4156563e10efa9386bb"
+  }
+}
