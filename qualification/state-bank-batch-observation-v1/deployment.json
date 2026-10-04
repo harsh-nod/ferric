@@ -1,0 +1,1590 @@
+{
+  "aliases": {
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-state-bank-batch-cpu-v1/README.md": {
+      "original": {
+        "bytes": 5106,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-state-bank-batch-cpu-v1/README.md",
+        "sha256": "2ac3bb351a9ca4721a47f89a6fcae8774cda3adee92b2b0291a8ca0962a3b791"
+      },
+      "relocated": {
+        "bytes": 5106,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-deployment-v228-v1/objects/2ac3bb351a9ca4721a47f89a6fcae8774cda3adee92b2b0291a8ca0962a3b791",
+        "sha256": "2ac3bb351a9ca4721a47f89a6fcae8774cda3adee92b2b0291a8ca0962a3b791"
+      }
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-state-bank-batch-cpu-v1/manifest.json": {
+      "original": {
+        "bytes": 724,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-state-bank-batch-cpu-v1/manifest.json",
+        "sha256": "f882275f45f49bd3b999422f668c7ccfee3c1b47d173a98c17a19e5887551b49"
+      },
+      "relocated": {
+        "bytes": 724,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-deployment-v228-v1/objects/f882275f45f49bd3b999422f668c7ccfee3c1b47d173a98c17a19e5887551b49",
+        "sha256": "f882275f45f49bd3b999422f668c7ccfee3c1b47d173a98c17a19e5887551b49"
+      }
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-state-bank-batch-cpu-v1/overlay.json": {
+      "original": {
+        "bytes": 4977,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-state-bank-batch-cpu-v1/overlay.json",
+        "sha256": "73b74e8fe343ecdad622e8e1a4967b9bb096f21ead6992f82d8dd02b797ef8cb"
+      },
+      "relocated": {
+        "bytes": 4977,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-deployment-v228-v1/objects/73b74e8fe343ecdad622e8e1a4967b9bb096f21ead6992f82d8dd02b797ef8cb",
+        "sha256": "73b74e8fe343ecdad622e8e1a4967b9bb096f21ead6992f82d8dd02b797ef8cb"
+      }
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-state-bank-batch-cpu-v1/run.py": {
+      "original": {
+        "bytes": 22805,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-state-bank-batch-cpu-v1/run.py",
+        "sha256": "d5c2237645915cd965aeb46fadf70130486abfc894fffafc9fc3513f277925da"
+      },
+      "relocated": {
+        "bytes": 22805,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-deployment-v228-v1/objects/d5c2237645915cd965aeb46fadf70130486abfc894fffafc9fc3513f277925da",
+        "sha256": "d5c2237645915cd965aeb46fadf70130486abfc894fffafc9fc3513f277925da"
+      }
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-state-bank-batch-cpu-v1/test_run.py": {
+      "original": {
+        "bytes": 7717,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-state-bank-batch-cpu-v1/test_run.py",
+        "sha256": "632d6c5d6f0f04b981db889a14ac22cda98be2d343f40efa95f0253d1d441fcd"
+      },
+      "relocated": {
+        "bytes": 7717,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-deployment-v228-v1/objects/632d6c5d6f0f04b981db889a14ac22cda98be2d343f40efa95f0253d1d441fcd",
+        "sha256": "632d6c5d6f0f04b981db889a14ac22cda98be2d343f40efa95f0253d1d441fcd"
+      }
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-state-bank-batch-ferric-v2/draft/adapters/tp-peer-finite-engineering-worker-v1/src/state_roster/prefix_tiles_decode_v6/bank_batch_tests.rs": {
+      "original": {
+        "bytes": 10845,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-state-bank-batch-ferric-v2/draft/adapters/tp-peer-finite-engineering-worker-v1/src/state_roster/prefix_tiles_decode_v6/bank_batch_tests.rs",
+        "sha256": "362d33aad4ac0e8c27f999330e8cd1176d36edda581d34137f22352cc554ab77"
+      },
+      "relocated": {
+        "bytes": 10845,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-deployment-v228-v1/objects/362d33aad4ac0e8c27f999330e8cd1176d36edda581d34137f22352cc554ab77",
+        "sha256": "362d33aad4ac0e8c27f999330e8cd1176d36edda581d34137f22352cc554ab77"
+      }
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-state-bank-batch-ferric-v2/draft/adapters/tp-peer-finite-engineering-worker-v1/src/state_roster/prefix_tiles_decode_v6/reuse.rs": {
+      "original": {
+        "bytes": 8571,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-state-bank-batch-ferric-v2/draft/adapters/tp-peer-finite-engineering-worker-v1/src/state_roster/prefix_tiles_decode_v6/reuse.rs",
+        "sha256": "52a8229cb1aa98ae3e25ec5bdaf335badf7f01a1761d4d4de5ca5650ac932b90"
+      },
+      "relocated": {
+        "bytes": 8571,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-deployment-v228-v1/objects/52a8229cb1aa98ae3e25ec5bdaf335badf7f01a1761d4d4de5ca5650ac932b90",
+        "sha256": "52a8229cb1aa98ae3e25ec5bdaf335badf7f01a1761d4d4de5ca5650ac932b90"
+      }
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-state-bank-batch-ferric-v2/draft/adapters/tp-peer-finite-engineering-worker-v1/src/state_roster/prefix_tiles_decode_v6/tests.rs": {
+      "original": {
+        "bytes": 11731,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-state-bank-batch-ferric-v2/draft/adapters/tp-peer-finite-engineering-worker-v1/src/state_roster/prefix_tiles_decode_v6/tests.rs",
+        "sha256": "aeb0230d17cd5315e9aae93aa29a3153cb6161e65b0d81a307378ce3d606ee83"
+      },
+      "relocated": {
+        "bytes": 11731,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-deployment-v228-v1/objects/aeb0230d17cd5315e9aae93aa29a3153cb6161e65b0d81a307378ce3d606ee83",
+        "sha256": "aeb0230d17cd5315e9aae93aa29a3153cb6161e65b0d81a307378ce3d606ee83"
+      }
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-state-bank-batch-ferric-v2/source-pins.json": {
+      "original": {
+        "bytes": 1405,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-state-bank-batch-ferric-v2/source-pins.json",
+        "sha256": "07773e4259d5b1226c9e26650bb2bf4c17ec1227a089ca2c7684ba8952804fb0"
+      },
+      "relocated": {
+        "bytes": 1405,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-deployment-v228-v1/objects/07773e4259d5b1226c9e26650bb2bf4c17ec1227a089ca2c7684ba8952804fb0",
+        "sha256": "07773e4259d5b1226c9e26650bb2bf4c17ec1227a089ca2c7684ba8952804fb0"
+      }
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-state-bank-batch-runtime-v2/preimages.json": {
+      "original": {
+        "bytes": 965,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-state-bank-batch-runtime-v2/preimages.json",
+        "sha256": "d8f74d763507b055f109d7b6f49fd86b992e9c610ba3b59931ad015801192f73"
+      },
+      "relocated": {
+        "bytes": 965,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-deployment-v228-v1/objects/d8f74d763507b055f109d7b6f49fd86b992e9c610ba3b59931ad015801192f73",
+        "sha256": "d8f74d763507b055f109d7b6f49fd86b992e9c610ba3b59931ad015801192f73"
+      }
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-state-bank-batch-runtime-v2/source/engineering_gfx950.rs": {
+      "original": {
+        "bytes": 78137,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-state-bank-batch-runtime-v2/source/engineering_gfx950.rs",
+        "sha256": "45642f3a677f4a8f777024fa50461afcbceb4c7f1e3aca96279ddd59c65082d1"
+      },
+      "relocated": {
+        "bytes": 78137,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-deployment-v228-v1/objects/45642f3a677f4a8f777024fa50461afcbceb4c7f1e3aca96279ddd59c65082d1",
+        "sha256": "45642f3a677f4a8f777024fa50461afcbceb4c7f1e3aca96279ddd59c65082d1"
+      }
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-state-bank-batch-runtime-v2/source/engineering_gfx950_peer.rs": {
+      "original": {
+        "bytes": 29696,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-state-bank-batch-runtime-v2/source/engineering_gfx950_peer.rs",
+        "sha256": "5ae01dc80c8a7a7c902492be6d8be767667f8e183ddcaf14f8dc165c6bff8aae"
+      },
+      "relocated": {
+        "bytes": 29696,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-deployment-v228-v1/objects/5ae01dc80c8a7a7c902492be6d8be767667f8e183ddcaf14f8dc165c6bff8aae",
+        "sha256": "5ae01dc80c8a7a7c902492be6d8be767667f8e183ddcaf14f8dc165c6bff8aae"
+      }
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-state-bank-batch-runtime-v2/source/engineering_gfx950_peer_state_bank_v1.rs": {
+      "original": {
+        "bytes": 4918,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-state-bank-batch-runtime-v2/source/engineering_gfx950_peer_state_bank_v1.rs",
+        "sha256": "6a2d52e1a3f369dc7420075cd54b0ffb2a14065bd2f63b09263810a54d400bdb"
+      },
+      "relocated": {
+        "bytes": 4918,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-deployment-v228-v1/objects/6a2d52e1a3f369dc7420075cd54b0ffb2a14065bd2f63b09263810a54d400bdb",
+        "sha256": "6a2d52e1a3f369dc7420075cd54b0ffb2a14065bd2f63b09263810a54d400bdb"
+      }
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-state-bank-batch-runtime-v2/source/engineering_gfx950_peer_state_bank_v1_tests.rs": {
+      "original": {
+        "bytes": 15300,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-state-bank-batch-runtime-v2/source/engineering_gfx950_peer_state_bank_v1_tests.rs",
+        "sha256": "d8ae79a5e05ee30fdfa9fd9f04f7c31cd66646c8e1fc8198d63be8f085eeb5f7"
+      },
+      "relocated": {
+        "bytes": 15300,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-deployment-v228-v1/objects/d8ae79a5e05ee30fdfa9fd9f04f7c31cd66646c8e1fc8198d63be8f085eeb5f7",
+        "sha256": "d8ae79a5e05ee30fdfa9fd9f04f7c31cd66646c8e1fc8198d63be8f085eeb5f7"
+      }
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-state-bank-batch-runtime-v2/source/engineering_gfx950_peer_wave_mlp_tiles_state_v2.rs": {
+      "original": {
+        "bytes": 14676,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-state-bank-batch-runtime-v2/source/engineering_gfx950_peer_wave_mlp_tiles_state_v2.rs",
+        "sha256": "33fec03089e8685bd27d42799ef70c86d3610372c1601397f6cb18e2f339a9c2"
+      },
+      "relocated": {
+        "bytes": 14676,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-deployment-v228-v1/objects/33fec03089e8685bd27d42799ef70c86d3610372c1601397f6cb18e2f339a9c2",
+        "sha256": "33fec03089e8685bd27d42799ef70c86d3610372c1601397f6cb18e2f339a9c2"
+      }
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-state-bank-batch-runtime-v2/source/engineering_gfx950_peer_wave_qkv_attention_output_tiles_state_v6.rs": {
+      "original": {
+        "bytes": 15403,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-state-bank-batch-runtime-v2/source/engineering_gfx950_peer_wave_qkv_attention_output_tiles_state_v6.rs",
+        "sha256": "51fd538a15ff6b793c7ad776d206c48b49476c8087805e522fce24798426ab0f"
+      },
+      "relocated": {
+        "bytes": 15403,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-deployment-v228-v1/objects/51fd538a15ff6b793c7ad776d206c48b49476c8087805e522fce24798426ab0f",
+        "sha256": "51fd538a15ff6b793c7ad776d206c48b49476c8087805e522fce24798426ab0f"
+      }
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-state-bank-batch-runtime-v2/source/lib.rs": {
+      "original": {
+        "bytes": 20358,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-state-bank-batch-runtime-v2/source/lib.rs",
+        "sha256": "ea0f56965b4afcdd949e467c7011928c9f3cf39eb69870849f87bfced0615f03"
+      },
+      "relocated": {
+        "bytes": 20358,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-deployment-v228-v1/objects/ea0f56965b4afcdd949e467c7011928c9f3cf39eb69870849f87bfced0615f03",
+        "sha256": "ea0f56965b4afcdd949e467c7011928c9f3cf39eb69870849f87bfced0615f03"
+      }
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-review-v228-v1.json": {
+      "original": {
+        "bytes": 3637,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-review-v228-v1.json",
+        "sha256": "673aab66c3c376c539532fa4f923c8d512bcfb51ea8f4cc5227e55a82deb1f92"
+      },
+      "relocated": {
+        "bytes": 3637,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-deployment-v228-v1/objects/673aab66c3c376c539532fa4f923c8d512bcfb51ea8f4cc5227e55a82deb1f92",
+        "sha256": "673aab66c3c376c539532fa4f923c8d512bcfb51ea8f4cc5227e55a82deb1f92"
+      }
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/complete.json": {
+      "original": {
+        "bytes": 162810,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/complete.json",
+        "sha256": "14dab6e776cdc2184457b2865cf7d48b91a71008d49bea040deca68bba75838f"
+      },
+      "relocated": {
+        "bytes": 162810,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-deployment-v228-v1/objects/14dab6e776cdc2184457b2865cf7d48b91a71008d49bea040deca68bba75838f",
+        "sha256": "14dab6e776cdc2184457b2865cf7d48b91a71008d49bea040deca68bba75838f"
+      }
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/context-command.json": {
+      "original": {
+        "bytes": 2551,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/context-command.json",
+        "sha256": "a1147dbea7117f5e2a13c5046d2563d1f26e20931a6d0facad55b1d8099264fe"
+      },
+      "relocated": {
+        "bytes": 2551,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-deployment-v228-v1/objects/a1147dbea7117f5e2a13c5046d2563d1f26e20931a6d0facad55b1d8099264fe",
+        "sha256": "a1147dbea7117f5e2a13c5046d2563d1f26e20931a6d0facad55b1d8099264fe"
+      }
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/context-result.json": {
+      "original": {
+        "bytes": 305,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/context-result.json",
+        "sha256": "702d8c95e5682d933fa850fe922874974c6a01dce202974f8c444bb0faaf88a9"
+      },
+      "relocated": {
+        "bytes": 305,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-deployment-v228-v1/objects/702d8c95e5682d933fa850fe922874974c6a01dce202974f8c444bb0faaf88a9",
+        "sha256": "702d8c95e5682d933fa850fe922874974c6a01dce202974f8c444bb0faaf88a9"
+      }
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/context-started.json": {
+      "original": {
+        "bytes": 40,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/context-started.json",
+        "sha256": "966dfdf425c9d58e4a2645f1b3216b9058a775535ee345dd0aea9b9ffc92c7ef"
+      },
+      "relocated": {
+        "bytes": 40,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-deployment-v228-v1/objects/966dfdf425c9d58e4a2645f1b3216b9058a775535ee345dd0aea9b9ffc92c7ef",
+        "sha256": "966dfdf425c9d58e4a2645f1b3216b9058a775535ee345dd0aea9b9ffc92c7ef"
+      }
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/context-stderr": {
+      "original": {
+        "bytes": 681,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/context-stderr",
+        "sha256": "657c6d410eda79967bf791981ca9ccb753d7f2a7911a1b126d8cedcfb8d06c06"
+      },
+      "relocated": {
+        "bytes": 681,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-deployment-v228-v1/objects/657c6d410eda79967bf791981ca9ccb753d7f2a7911a1b126d8cedcfb8d06c06",
+        "sha256": "657c6d410eda79967bf791981ca9ccb753d7f2a7911a1b126d8cedcfb8d06c06"
+      }
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/context-stdout": {
+      "original": {
+        "bytes": 1565,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/context-stdout",
+        "sha256": "fe72a77aa0c4721b3f5ed9c0a39912daf233004fc57b2b11f5b2716a0eb9884c"
+      },
+      "relocated": {
+        "bytes": 1565,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-deployment-v228-v1/objects/fe72a77aa0c4721b3f5ed9c0a39912daf233004fc57b2b11f5b2716a0eb9884c",
+        "sha256": "fe72a77aa0c4721b3f5ed9c0a39912daf233004fc57b2b11f5b2716a0eb9884c"
+      }
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/device-group-command.json": {
+      "original": {
+        "bytes": 2566,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/device-group-command.json",
+        "sha256": "4e7632d4373de813df8ecee939684d2bd821df1b1248b5207c66aed79a3db9f3"
+      },
+      "relocated": {
+        "bytes": 2566,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-deployment-v228-v1/objects/4e7632d4373de813df8ecee939684d2bd821df1b1248b5207c66aed79a3db9f3",
+        "sha256": "4e7632d4373de813df8ecee939684d2bd821df1b1248b5207c66aed79a3db9f3"
+      }
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/device-group-result.json": {
+      "original": {
+        "bytes": 306,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/device-group-result.json",
+        "sha256": "b14f6b7b5b0ee997285a93cb68793b53ecff926e71ecc22691a9786a3b5e0a2d"
+      },
+      "relocated": {
+        "bytes": 306,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-deployment-v228-v1/objects/b14f6b7b5b0ee997285a93cb68793b53ecff926e71ecc22691a9786a3b5e0a2d",
+        "sha256": "b14f6b7b5b0ee997285a93cb68793b53ecff926e71ecc22691a9786a3b5e0a2d"
+      }
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/device-group-started.json": {
+      "original": {
+        "bytes": 40,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/device-group-started.json",
+        "sha256": "512074abbd2975a0c1085d7f516161f85d4a90846a9e73f2e1b2c29ef71ceb4c"
+      },
+      "relocated": {
+        "bytes": 40,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-deployment-v228-v1/objects/512074abbd2975a0c1085d7f516161f85d4a90846a9e73f2e1b2c29ef71ceb4c",
+        "sha256": "512074abbd2975a0c1085d7f516161f85d4a90846a9e73f2e1b2c29ef71ceb4c"
+      }
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/device-group-stderr": {
+      "original": {
+        "bytes": 681,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/device-group-stderr",
+        "sha256": "657c6d410eda79967bf791981ca9ccb753d7f2a7911a1b126d8cedcfb8d06c06"
+      },
+      "relocated": {
+        "bytes": 681,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-deployment-v228-v1/objects/657c6d410eda79967bf791981ca9ccb753d7f2a7911a1b126d8cedcfb8d06c06",
+        "sha256": "657c6d410eda79967bf791981ca9ccb753d7f2a7911a1b126d8cedcfb8d06c06"
+      }
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/device-group-stdout": {
+      "original": {
+        "bytes": 939,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/device-group-stdout",
+        "sha256": "35e063c44721e1db4e54326df7151f6d6665d346f98237658cf408d27286b04f"
+      },
+      "relocated": {
+        "bytes": 939,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-deployment-v228-v1/objects/35e063c44721e1db4e54326df7151f6d6665d346f98237658cf408d27286b04f",
+        "sha256": "35e063c44721e1db4e54326df7151f6d6665d346f98237658cf408d27286b04f"
+      }
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/memory-mlp-command.json": {
+      "original": {
+        "bytes": 2564,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/memory-mlp-command.json",
+        "sha256": "05055749e57f1bfce205806f10912232755db8ddf473bee9af220a60b734ebcd"
+      },
+      "relocated": {
+        "bytes": 2564,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-deployment-v228-v1/objects/05055749e57f1bfce205806f10912232755db8ddf473bee9af220a60b734ebcd",
+        "sha256": "05055749e57f1bfce205806f10912232755db8ddf473bee9af220a60b734ebcd"
+      }
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/memory-mlp-result.json": {
+      "original": {
+        "bytes": 306,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/memory-mlp-result.json",
+        "sha256": "089c1043cc0b7a54e196405143685584be618e8a9a63e10bb44a827565c1c6a3"
+      },
+      "relocated": {
+        "bytes": 306,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-deployment-v228-v1/objects/089c1043cc0b7a54e196405143685584be618e8a9a63e10bb44a827565c1c6a3",
+        "sha256": "089c1043cc0b7a54e196405143685584be618e8a9a63e10bb44a827565c1c6a3"
+      }
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/memory-mlp-started.json": {
+      "original": {
+        "bytes": 40,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/memory-mlp-started.json",
+        "sha256": "caa791032aa139f4927bf43a2c3168744cc1c086ab16a87baed27d3dde5f2789"
+      },
+      "relocated": {
+        "bytes": 40,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-deployment-v228-v1/objects/caa791032aa139f4927bf43a2c3168744cc1c086ab16a87baed27d3dde5f2789",
+        "sha256": "caa791032aa139f4927bf43a2c3168744cc1c086ab16a87baed27d3dde5f2789"
+      }
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/memory-mlp-stderr": {
+      "original": {
+        "bytes": 681,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/memory-mlp-stderr",
+        "sha256": "657c6d410eda79967bf791981ca9ccb753d7f2a7911a1b126d8cedcfb8d06c06"
+      },
+      "relocated": {
+        "bytes": 681,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-deployment-v228-v1/objects/657c6d410eda79967bf791981ca9ccb753d7f2a7911a1b126d8cedcfb8d06c06",
+        "sha256": "657c6d410eda79967bf791981ca9ccb753d7f2a7911a1b126d8cedcfb8d06c06"
+      }
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/memory-mlp-stdout": {
+      "original": {
+        "bytes": 587,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/memory-mlp-stdout",
+        "sha256": "d9030620cf08a8433614b7fa216617222a85e32c061cf976b974be186c357b47"
+      },
+      "relocated": {
+        "bytes": 587,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-deployment-v228-v1/objects/d9030620cf08a8433614b7fa216617222a85e32c061cf976b974be186c357b47",
+        "sha256": "d9030620cf08a8433614b7fa216617222a85e32c061cf976b974be186c357b47"
+      }
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/memory-prefix-command.json": {
+      "original": {
+        "bytes": 2581,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/memory-prefix-command.json",
+        "sha256": "2af3503d91e59c1c49c0fcde2285653372b114c7ffb5be0e71fe091efc09d93e"
+      },
+      "relocated": {
+        "bytes": 2581,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-deployment-v228-v1/objects/2af3503d91e59c1c49c0fcde2285653372b114c7ffb5be0e71fe091efc09d93e",
+        "sha256": "2af3503d91e59c1c49c0fcde2285653372b114c7ffb5be0e71fe091efc09d93e"
+      }
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/memory-prefix-result.json": {
+      "original": {
+        "bytes": 305,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/memory-prefix-result.json",
+        "sha256": "2c89474ead61896b56e3c2edff4b488054c140794f97bc200fa886838330c6d0"
+      },
+      "relocated": {
+        "bytes": 305,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-deployment-v228-v1/objects/2c89474ead61896b56e3c2edff4b488054c140794f97bc200fa886838330c6d0",
+        "sha256": "2c89474ead61896b56e3c2edff4b488054c140794f97bc200fa886838330c6d0"
+      }
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/memory-prefix-started.json": {
+      "original": {
+        "bytes": 40,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/memory-prefix-started.json",
+        "sha256": "5996332632927b504dd99e35efeb0405402445a39789b248ede9361f62b73b79"
+      },
+      "relocated": {
+        "bytes": 40,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-deployment-v228-v1/objects/5996332632927b504dd99e35efeb0405402445a39789b248ede9361f62b73b79",
+        "sha256": "5996332632927b504dd99e35efeb0405402445a39789b248ede9361f62b73b79"
+      }
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/memory-prefix-stderr": {
+      "original": {
+        "bytes": 681,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/memory-prefix-stderr",
+        "sha256": "657c6d410eda79967bf791981ca9ccb753d7f2a7911a1b126d8cedcfb8d06c06"
+      },
+      "relocated": {
+        "bytes": 681,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-deployment-v228-v1/objects/657c6d410eda79967bf791981ca9ccb753d7f2a7911a1b126d8cedcfb8d06c06",
+        "sha256": "657c6d410eda79967bf791981ca9ccb753d7f2a7911a1b126d8cedcfb8d06c06"
+      }
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/memory-prefix-stdout": {
+      "original": {
+        "bytes": 655,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/memory-prefix-stdout",
+        "sha256": "4b8fb5665b07147f4e6997c418fd5b52e6c03023067209b02e4629f89a9de942"
+      },
+      "relocated": {
+        "bytes": 655,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-deployment-v228-v1/objects/4b8fb5665b07147f4e6997c418fd5b52e6c03023067209b02e4629f89a9de942",
+        "sha256": "4b8fb5665b07147f4e6997c418fd5b52e6c03023067209b02e4629f89a9de942"
+      }
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/memory-rearm-command.json": {
+      "original": {
+        "bytes": 2557,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/memory-rearm-command.json",
+        "sha256": "805b326a23f470c2840af710e501f4c1a4a3c17b9dbf63b4298be3d00e359ee0"
+      },
+      "relocated": {
+        "bytes": 2557,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-deployment-v228-v1/objects/805b326a23f470c2840af710e501f4c1a4a3c17b9dbf63b4298be3d00e359ee0",
+        "sha256": "805b326a23f470c2840af710e501f4c1a4a3c17b9dbf63b4298be3d00e359ee0"
+      }
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/memory-rearm-result.json": {
+      "original": {
+        "bytes": 305,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/memory-rearm-result.json",
+        "sha256": "3e48e5479ef18848710e33a72640ff925a9f3ae13ad239e1cffe009e28e60299"
+      },
+      "relocated": {
+        "bytes": 305,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-deployment-v228-v1/objects/3e48e5479ef18848710e33a72640ff925a9f3ae13ad239e1cffe009e28e60299",
+        "sha256": "3e48e5479ef18848710e33a72640ff925a9f3ae13ad239e1cffe009e28e60299"
+      }
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/memory-rearm-started.json": {
+      "original": {
+        "bytes": 40,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/memory-rearm-started.json",
+        "sha256": "7eda602b68364253e42b5010ad7ed4b021c95a8c5f1947603cef3347483ae4a7"
+      },
+      "relocated": {
+        "bytes": 40,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-deployment-v228-v1/objects/7eda602b68364253e42b5010ad7ed4b021c95a8c5f1947603cef3347483ae4a7",
+        "sha256": "7eda602b68364253e42b5010ad7ed4b021c95a8c5f1947603cef3347483ae4a7"
+      }
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/memory-rearm-stderr": {
+      "original": {
+        "bytes": 681,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/memory-rearm-stderr",
+        "sha256": "657c6d410eda79967bf791981ca9ccb753d7f2a7911a1b126d8cedcfb8d06c06"
+      },
+      "relocated": {
+        "bytes": 681,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-deployment-v228-v1/objects/657c6d410eda79967bf791981ca9ccb753d7f2a7911a1b126d8cedcfb8d06c06",
+        "sha256": "657c6d410eda79967bf791981ca9ccb753d7f2a7911a1b126d8cedcfb8d06c06"
+      }
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/memory-rearm-stdout": {
+      "original": {
+        "bytes": 318,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/memory-rearm-stdout",
+        "sha256": "21c78cfe4992a3e75aa8c87f3e022b43179ff5dc55fd09ee473fecda079f6263"
+      },
+      "relocated": {
+        "bytes": 318,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-deployment-v228-v1/objects/21c78cfe4992a3e75aa8c87f3e022b43179ff5dc55fd09ee473fecda079f6263",
+        "sha256": "21c78cfe4992a3e75aa8c87f3e022b43179ff5dc55fd09ee473fecda079f6263"
+      }
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/metadata-command.json": {
+      "original": {
+        "bytes": 2455,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/metadata-command.json",
+        "sha256": "f5b9acd26b48334ce27e6ba8125dbbea07d6380c0766458c11328d8298f32253"
+      },
+      "relocated": {
+        "bytes": 2455,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-deployment-v228-v1/objects/f5b9acd26b48334ce27e6ba8125dbbea07d6380c0766458c11328d8298f32253",
+        "sha256": "f5b9acd26b48334ce27e6ba8125dbbea07d6380c0766458c11328d8298f32253"
+      }
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/metadata-result.json": {
+      "original": {
+        "bytes": 300,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/metadata-result.json",
+        "sha256": "0bda66f5449b645d15e8e36688a77222f59b56d5aaf87f6388a16aaa7249bc01"
+      },
+      "relocated": {
+        "bytes": 300,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-deployment-v228-v1/objects/0bda66f5449b645d15e8e36688a77222f59b56d5aaf87f6388a16aaa7249bc01",
+        "sha256": "0bda66f5449b645d15e8e36688a77222f59b56d5aaf87f6388a16aaa7249bc01"
+      }
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/metadata-started.json": {
+      "original": {
+        "bytes": 40,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/metadata-started.json",
+        "sha256": "b09a391f5b96f0f7c5719b7fc6a7d24090c95591db29a9372c166ba92ab64494"
+      },
+      "relocated": {
+        "bytes": 40,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-deployment-v228-v1/objects/b09a391f5b96f0f7c5719b7fc6a7d24090c95591db29a9372c166ba92ab64494",
+        "sha256": "b09a391f5b96f0f7c5719b7fc6a7d24090c95591db29a9372c166ba92ab64494"
+      }
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/metadata-stderr": {
+      "original": {
+        "bytes": 0,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/metadata-stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "relocated": {
+        "bytes": 0,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-deployment-v228-v1/objects/e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/metadata-stdout": {
+      "original": {
+        "bytes": 174744,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/metadata-stdout",
+        "sha256": "e3250a131f0a83a55f4cdac69fa7e7b0ac25a2c9078dc42f999c0328ab18dc5e"
+      },
+      "relocated": {
+        "bytes": 174744,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-deployment-v228-v1/objects/e3250a131f0a83a55f4cdac69fa7e7b0ac25a2c9078dc42f999c0328ab18dc5e",
+        "sha256": "e3250a131f0a83a55f4cdac69fa7e7b0ac25a2c9078dc42f999c0328ab18dc5e"
+      }
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/mlp-resident-command.json": {
+      "original": {
+        "bytes": 2576,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/mlp-resident-command.json",
+        "sha256": "20599706e1403b03b20748f100db3b5435c5a2f0a2c63feb26e4d160379c8f48"
+      },
+      "relocated": {
+        "bytes": 2576,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-deployment-v228-v1/objects/20599706e1403b03b20748f100db3b5435c5a2f0a2c63feb26e4d160379c8f48",
+        "sha256": "20599706e1403b03b20748f100db3b5435c5a2f0a2c63feb26e4d160379c8f48"
+      }
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/mlp-resident-result.json": {
+      "original": {
+        "bytes": 303,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/mlp-resident-result.json",
+        "sha256": "db0cc4924d6fab12b581c51ece6684b15e970242020b8d68910f25e22f5aaec9"
+      },
+      "relocated": {
+        "bytes": 303,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-deployment-v228-v1/objects/db0cc4924d6fab12b581c51ece6684b15e970242020b8d68910f25e22f5aaec9",
+        "sha256": "db0cc4924d6fab12b581c51ece6684b15e970242020b8d68910f25e22f5aaec9"
+      }
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/mlp-resident-started.json": {
+      "original": {
+        "bytes": 40,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/mlp-resident-started.json",
+        "sha256": "79b5bb5583526cebb1eef69e6ae8cee2042685ccde8182f38bed1d08f5fe2df1"
+      },
+      "relocated": {
+        "bytes": 40,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-deployment-v228-v1/objects/79b5bb5583526cebb1eef69e6ae8cee2042685ccde8182f38bed1d08f5fe2df1",
+        "sha256": "79b5bb5583526cebb1eef69e6ae8cee2042685ccde8182f38bed1d08f5fe2df1"
+      }
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/mlp-resident-stderr": {
+      "original": {
+        "bytes": 681,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/mlp-resident-stderr",
+        "sha256": "657c6d410eda79967bf791981ca9ccb753d7f2a7911a1b126d8cedcfb8d06c06"
+      },
+      "relocated": {
+        "bytes": 681,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-deployment-v228-v1/objects/657c6d410eda79967bf791981ca9ccb753d7f2a7911a1b126d8cedcfb8d06c06",
+        "sha256": "657c6d410eda79967bf791981ca9ccb753d7f2a7911a1b126d8cedcfb8d06c06"
+      }
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/mlp-resident-stdout": {
+      "original": {
+        "bytes": 1476,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/mlp-resident-stdout",
+        "sha256": "6f31dba44ef17baba804948ae341a4462b9aaf3fc9036b339c7d3e20205d2250"
+      },
+      "relocated": {
+        "bytes": 1476,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-deployment-v228-v1/objects/6f31dba44ef17baba804948ae341a4462b9aaf3fc9036b339c7d3e20205d2250",
+        "sha256": "6f31dba44ef17baba804948ae341a4462b9aaf3fc9036b339c7d3e20205d2250"
+      }
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/mlp-state-command.json": {
+      "original": {
+        "bytes": 2582,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/mlp-state-command.json",
+        "sha256": "5ada5882e12d77c612e623d88a05100e3743abb2af82effaed9045b7e9dd030b"
+      },
+      "relocated": {
+        "bytes": 2582,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-deployment-v228-v1/objects/5ada5882e12d77c612e623d88a05100e3743abb2af82effaed9045b7e9dd030b",
+        "sha256": "5ada5882e12d77c612e623d88a05100e3743abb2af82effaed9045b7e9dd030b"
+      }
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/mlp-state-result.json": {
+      "original": {
+        "bytes": 305,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/mlp-state-result.json",
+        "sha256": "e4b963044283cea021a790d27c3674af282121a4b26e7d60de6d2200c7df1357"
+      },
+      "relocated": {
+        "bytes": 305,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-deployment-v228-v1/objects/e4b963044283cea021a790d27c3674af282121a4b26e7d60de6d2200c7df1357",
+        "sha256": "e4b963044283cea021a790d27c3674af282121a4b26e7d60de6d2200c7df1357"
+      }
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/mlp-state-started.json": {
+      "original": {
+        "bytes": 40,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/mlp-state-started.json",
+        "sha256": "362ced7bf5be5bf68ec31939b72ddfd180b6ffd4a135f1f6707a5badcdc77092"
+      },
+      "relocated": {
+        "bytes": 40,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-deployment-v228-v1/objects/362ced7bf5be5bf68ec31939b72ddfd180b6ffd4a135f1f6707a5badcdc77092",
+        "sha256": "362ced7bf5be5bf68ec31939b72ddfd180b6ffd4a135f1f6707a5badcdc77092"
+      }
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/mlp-state-stderr": {
+      "original": {
+        "bytes": 681,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/mlp-state-stderr",
+        "sha256": "657c6d410eda79967bf791981ca9ccb753d7f2a7911a1b126d8cedcfb8d06c06"
+      },
+      "relocated": {
+        "bytes": 681,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-deployment-v228-v1/objects/657c6d410eda79967bf791981ca9ccb753d7f2a7911a1b126d8cedcfb8d06c06",
+        "sha256": "657c6d410eda79967bf791981ca9ccb753d7f2a7911a1b126d8cedcfb8d06c06"
+      }
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/mlp-state-stdout": {
+      "original": {
+        "bytes": 1435,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/mlp-state-stdout",
+        "sha256": "481322b209cc6ce638b125018d4f08e0e341ce2b8774c455899d48d073d6d7b3"
+      },
+      "relocated": {
+        "bytes": 1435,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-deployment-v228-v1/objects/481322b209cc6ce638b125018d4f08e0e341ce2b8774c455899d48d073d6d7b3",
+        "sha256": "481322b209cc6ce638b125018d4f08e0e341ce2b8774c455899d48d073d6d7b3"
+      }
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/mlp-timestamps-command.json": {
+      "original": {
+        "bytes": 2586,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/mlp-timestamps-command.json",
+        "sha256": "4246a3164480366d05d14ecc1c3e9ca77a4d8828688090407e234b7feae70d2c"
+      },
+      "relocated": {
+        "bytes": 2586,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-deployment-v228-v1/objects/4246a3164480366d05d14ecc1c3e9ca77a4d8828688090407e234b7feae70d2c",
+        "sha256": "4246a3164480366d05d14ecc1c3e9ca77a4d8828688090407e234b7feae70d2c"
+      }
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/mlp-timestamps-result.json": {
+      "original": {
+        "bytes": 305,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/mlp-timestamps-result.json",
+        "sha256": "f1aa97a0a872f66b06b2b9705be2cb94a47d66fb78600cfccab72dc6d811586c"
+      },
+      "relocated": {
+        "bytes": 305,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-deployment-v228-v1/objects/f1aa97a0a872f66b06b2b9705be2cb94a47d66fb78600cfccab72dc6d811586c",
+        "sha256": "f1aa97a0a872f66b06b2b9705be2cb94a47d66fb78600cfccab72dc6d811586c"
+      }
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/mlp-timestamps-started.json": {
+      "original": {
+        "bytes": 40,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/mlp-timestamps-started.json",
+        "sha256": "23d13a8ef70dd61d0e42eb4a32ea2a02f8d1d2105e682472666df97a0ce6157c"
+      },
+      "relocated": {
+        "bytes": 40,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-deployment-v228-v1/objects/23d13a8ef70dd61d0e42eb4a32ea2a02f8d1d2105e682472666df97a0ce6157c",
+        "sha256": "23d13a8ef70dd61d0e42eb4a32ea2a02f8d1d2105e682472666df97a0ce6157c"
+      }
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/mlp-timestamps-stderr": {
+      "original": {
+        "bytes": 681,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/mlp-timestamps-stderr",
+        "sha256": "657c6d410eda79967bf791981ca9ccb753d7f2a7911a1b126d8cedcfb8d06c06"
+      },
+      "relocated": {
+        "bytes": 681,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-deployment-v228-v1/objects/657c6d410eda79967bf791981ca9ccb753d7f2a7911a1b126d8cedcfb8d06c06",
+        "sha256": "657c6d410eda79967bf791981ca9ccb753d7f2a7911a1b126d8cedcfb8d06c06"
+      }
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/mlp-timestamps-stdout": {
+      "original": {
+        "bytes": 1060,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/mlp-timestamps-stdout",
+        "sha256": "a496f9c43018fb02f14c51d85f8791160551a9e1add22fd5f9f83851c6b7db1e"
+      },
+      "relocated": {
+        "bytes": 1060,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-deployment-v228-v1/objects/a496f9c43018fb02f14c51d85f8791160551a9e1add22fd5f9f83851c6b7db1e",
+        "sha256": "a496f9c43018fb02f14c51d85f8791160551a9e1add22fd5f9f83851c6b7db1e"
+      }
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/observation-command.json": {
+      "original": {
+        "bytes": 2575,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/observation-command.json",
+        "sha256": "8c52b92c7f83c0b7890e9320bda2e94d1ecdd2691959ec1d317f54493c6cf9c8"
+      },
+      "relocated": {
+        "bytes": 2575,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-deployment-v228-v1/objects/8c52b92c7f83c0b7890e9320bda2e94d1ecdd2691959ec1d317f54493c6cf9c8",
+        "sha256": "8c52b92c7f83c0b7890e9320bda2e94d1ecdd2691959ec1d317f54493c6cf9c8"
+      }
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/observation-result.json": {
+      "original": {
+        "bytes": 306,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/observation-result.json",
+        "sha256": "e9407e275b844c4a16018d18427bd3aafcfa1d207c348c75dfc20775fa23e293"
+      },
+      "relocated": {
+        "bytes": 306,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-deployment-v228-v1/objects/e9407e275b844c4a16018d18427bd3aafcfa1d207c348c75dfc20775fa23e293",
+        "sha256": "e9407e275b844c4a16018d18427bd3aafcfa1d207c348c75dfc20775fa23e293"
+      }
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/observation-started.json": {
+      "original": {
+        "bytes": 40,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/observation-started.json",
+        "sha256": "b8203e0be74ec1ee932c4c8c57d27139bc14c39842ecc4bca5c770534e35faf4"
+      },
+      "relocated": {
+        "bytes": 40,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-deployment-v228-v1/objects/b8203e0be74ec1ee932c4c8c57d27139bc14c39842ecc4bca5c770534e35faf4",
+        "sha256": "b8203e0be74ec1ee932c4c8c57d27139bc14c39842ecc4bca5c770534e35faf4"
+      }
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/observation-stderr": {
+      "original": {
+        "bytes": 681,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/observation-stderr",
+        "sha256": "657c6d410eda79967bf791981ca9ccb753d7f2a7911a1b126d8cedcfb8d06c06"
+      },
+      "relocated": {
+        "bytes": 681,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-deployment-v228-v1/objects/657c6d410eda79967bf791981ca9ccb753d7f2a7911a1b126d8cedcfb8d06c06",
+        "sha256": "657c6d410eda79967bf791981ca9ccb753d7f2a7911a1b126d8cedcfb8d06c06"
+      }
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/observation-stdout": {
+      "original": {
+        "bytes": 1834,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/observation-stdout",
+        "sha256": "07dae51f516299681e7a3ccbd1eb72a9e1080d9f645dbd1c531afae0a4bf3841"
+      },
+      "relocated": {
+        "bytes": 1834,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-deployment-v228-v1/objects/07dae51f516299681e7a3ccbd1eb72a9e1080d9f645dbd1c531afae0a4bf3841",
+        "sha256": "07dae51f516299681e7a3ccbd1eb72a9e1080d9f645dbd1c531afae0a4bf3841"
+      }
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/ordered-command.json": {
+      "original": {
+        "bytes": 2566,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/ordered-command.json",
+        "sha256": "88ce74f351be6cefb4cd6b089325a49098392e1424c63a69d40f678e77798ec6"
+      },
+      "relocated": {
+        "bytes": 2566,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-deployment-v228-v1/objects/88ce74f351be6cefb4cd6b089325a49098392e1424c63a69d40f678e77798ec6",
+        "sha256": "88ce74f351be6cefb4cd6b089325a49098392e1424c63a69d40f678e77798ec6"
+      }
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/ordered-result.json": {
+      "original": {
+        "bytes": 306,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/ordered-result.json",
+        "sha256": "0c75b05f089be08ba83852771b5e0e55e02393aa0ac648b334d6ab5e9ed07387"
+      },
+      "relocated": {
+        "bytes": 306,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-deployment-v228-v1/objects/0c75b05f089be08ba83852771b5e0e55e02393aa0ac648b334d6ab5e9ed07387",
+        "sha256": "0c75b05f089be08ba83852771b5e0e55e02393aa0ac648b334d6ab5e9ed07387"
+      }
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/ordered-started.json": {
+      "original": {
+        "bytes": 40,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/ordered-started.json",
+        "sha256": "f08d64ffd40d9de27543c95cffa1fea7a4538b22eb1bb27fd556ccc299e5713f"
+      },
+      "relocated": {
+        "bytes": 40,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-deployment-v228-v1/objects/f08d64ffd40d9de27543c95cffa1fea7a4538b22eb1bb27fd556ccc299e5713f",
+        "sha256": "f08d64ffd40d9de27543c95cffa1fea7a4538b22eb1bb27fd556ccc299e5713f"
+      }
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/ordered-stderr": {
+      "original": {
+        "bytes": 681,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/ordered-stderr",
+        "sha256": "657c6d410eda79967bf791981ca9ccb753d7f2a7911a1b126d8cedcfb8d06c06"
+      },
+      "relocated": {
+        "bytes": 681,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-deployment-v228-v1/objects/657c6d410eda79967bf791981ca9ccb753d7f2a7911a1b126d8cedcfb8d06c06",
+        "sha256": "657c6d410eda79967bf791981ca9ccb753d7f2a7911a1b126d8cedcfb8d06c06"
+      }
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/ordered-stdout": {
+      "original": {
+        "bytes": 995,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/ordered-stdout",
+        "sha256": "a084e357ca511729e1622c11328e64bb5cbabf34492c0908d16de7a609ff9b32"
+      },
+      "relocated": {
+        "bytes": 995,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-deployment-v228-v1/objects/a084e357ca511729e1622c11328e64bb5cbabf34492c0908d16de7a609ff9b32",
+        "sha256": "a084e357ca511729e1622c11328e64bb5cbabf34492c0908d16de7a609ff9b32"
+      }
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/peer-command.json": {
+      "original": {
+        "bytes": 2557,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/peer-command.json",
+        "sha256": "d79b4f551e2ecf9fde6c12ebdaaaaea4b71c99e50a0e2f77e7202e0083805cd7"
+      },
+      "relocated": {
+        "bytes": 2557,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-deployment-v228-v1/objects/d79b4f551e2ecf9fde6c12ebdaaaaea4b71c99e50a0e2f77e7202e0083805cd7",
+        "sha256": "d79b4f551e2ecf9fde6c12ebdaaaaea4b71c99e50a0e2f77e7202e0083805cd7"
+      }
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/peer-result.json": {
+      "original": {
+        "bytes": 305,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/peer-result.json",
+        "sha256": "b94e1c3e93d73c3d504120f3f3d62969f5cb16b5eb4a55f19c3fb6a87fd15496"
+      },
+      "relocated": {
+        "bytes": 305,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-deployment-v228-v1/objects/b94e1c3e93d73c3d504120f3f3d62969f5cb16b5eb4a55f19c3fb6a87fd15496",
+        "sha256": "b94e1c3e93d73c3d504120f3f3d62969f5cb16b5eb4a55f19c3fb6a87fd15496"
+      }
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/peer-started.json": {
+      "original": {
+        "bytes": 40,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/peer-started.json",
+        "sha256": "1ded29d3e6739310ad0ed88053a512cfb77a756c7b11f5688229f14734eccf88"
+      },
+      "relocated": {
+        "bytes": 40,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-deployment-v228-v1/objects/1ded29d3e6739310ad0ed88053a512cfb77a756c7b11f5688229f14734eccf88",
+        "sha256": "1ded29d3e6739310ad0ed88053a512cfb77a756c7b11f5688229f14734eccf88"
+      }
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/peer-stderr": {
+      "original": {
+        "bytes": 681,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/peer-stderr",
+        "sha256": "657c6d410eda79967bf791981ca9ccb753d7f2a7911a1b126d8cedcfb8d06c06"
+      },
+      "relocated": {
+        "bytes": 681,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-deployment-v228-v1/objects/657c6d410eda79967bf791981ca9ccb753d7f2a7911a1b126d8cedcfb8d06c06",
+        "sha256": "657c6d410eda79967bf791981ca9ccb753d7f2a7911a1b126d8cedcfb8d06c06"
+      }
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/peer-stdout": {
+      "original": {
+        "bytes": 1825,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/peer-stdout",
+        "sha256": "940099ab908ac4049a1e3625be804a6eb5653290dc500668187f99b81a4cb8dc"
+      },
+      "relocated": {
+        "bytes": 1825,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-deployment-v228-v1/objects/940099ab908ac4049a1e3625be804a6eb5653290dc500668187f99b81a4cb8dc",
+        "sha256": "940099ab908ac4049a1e3625be804a6eb5653290dc500668187f99b81a4cb8dc"
+      }
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/policy-command.json": {
+      "original": {
+        "bytes": 2570,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/policy-command.json",
+        "sha256": "6a222a8e6f16004f6218aeb2699301c26f3ddb4900b2c5192b57cc63a83f0644"
+      },
+      "relocated": {
+        "bytes": 2570,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-deployment-v228-v1/objects/6a222a8e6f16004f6218aeb2699301c26f3ddb4900b2c5192b57cc63a83f0644",
+        "sha256": "6a222a8e6f16004f6218aeb2699301c26f3ddb4900b2c5192b57cc63a83f0644"
+      }
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/policy-result.json": {
+      "original": {
+        "bytes": 306,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/policy-result.json",
+        "sha256": "7f1421a0c5656d236a09e2977a53ddd0e612d4d48cdf4c22f595fd1e0b002885"
+      },
+      "relocated": {
+        "bytes": 306,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-deployment-v228-v1/objects/7f1421a0c5656d236a09e2977a53ddd0e612d4d48cdf4c22f595fd1e0b002885",
+        "sha256": "7f1421a0c5656d236a09e2977a53ddd0e612d4d48cdf4c22f595fd1e0b002885"
+      }
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/policy-started.json": {
+      "original": {
+        "bytes": 40,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/policy-started.json",
+        "sha256": "96986d637b35c66fdb8b8ca7fcaeb0943c902c58492b032037aa5eff7c852bff"
+      },
+      "relocated": {
+        "bytes": 40,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-deployment-v228-v1/objects/96986d637b35c66fdb8b8ca7fcaeb0943c902c58492b032037aa5eff7c852bff",
+        "sha256": "96986d637b35c66fdb8b8ca7fcaeb0943c902c58492b032037aa5eff7c852bff"
+      }
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/policy-stderr": {
+      "original": {
+        "bytes": 681,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/policy-stderr",
+        "sha256": "657c6d410eda79967bf791981ca9ccb753d7f2a7911a1b126d8cedcfb8d06c06"
+      },
+      "relocated": {
+        "bytes": 681,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-deployment-v228-v1/objects/657c6d410eda79967bf791981ca9ccb753d7f2a7911a1b126d8cedcfb8d06c06",
+        "sha256": "657c6d410eda79967bf791981ca9ccb753d7f2a7911a1b126d8cedcfb8d06c06"
+      }
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/policy-stdout": {
+      "original": {
+        "bytes": 708,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/policy-stdout",
+        "sha256": "bae68d9823c71cbeb6bce34b8934d7ff3e3e2c9a5b4ba6d6d762734bdfcd0b81"
+      },
+      "relocated": {
+        "bytes": 708,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-deployment-v228-v1/objects/bae68d9823c71cbeb6bce34b8934d7ff3e3e2c9a5b4ba6d6d762734bdfcd0b81",
+        "sha256": "bae68d9823c71cbeb6bce34b8934d7ff3e3e2c9a5b4ba6d6d762734bdfcd0b81"
+      }
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/prefix-resident-command.json": {
+      "original": {
+        "bytes": 2593,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/prefix-resident-command.json",
+        "sha256": "d82f07bf9395b89210fae6707aff2b5751bb6f4521c7acbd246a4e27d62657ef"
+      },
+      "relocated": {
+        "bytes": 2593,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-deployment-v228-v1/objects/d82f07bf9395b89210fae6707aff2b5751bb6f4521c7acbd246a4e27d62657ef",
+        "sha256": "d82f07bf9395b89210fae6707aff2b5751bb6f4521c7acbd246a4e27d62657ef"
+      }
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/prefix-resident-result.json": {
+      "original": {
+        "bytes": 306,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/prefix-resident-result.json",
+        "sha256": "5b38ad5ad73411d0cb8f539616c293af67d1adfa6e2b315b66f31948c907afc0"
+      },
+      "relocated": {
+        "bytes": 306,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-deployment-v228-v1/objects/5b38ad5ad73411d0cb8f539616c293af67d1adfa6e2b315b66f31948c907afc0",
+        "sha256": "5b38ad5ad73411d0cb8f539616c293af67d1adfa6e2b315b66f31948c907afc0"
+      }
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/prefix-resident-started.json": {
+      "original": {
+        "bytes": 40,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/prefix-resident-started.json",
+        "sha256": "660b4b06758e0ba7dd8c18662747870249f43a474beeab00c1709f96cf890e01"
+      },
+      "relocated": {
+        "bytes": 40,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-deployment-v228-v1/objects/660b4b06758e0ba7dd8c18662747870249f43a474beeab00c1709f96cf890e01",
+        "sha256": "660b4b06758e0ba7dd8c18662747870249f43a474beeab00c1709f96cf890e01"
+      }
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/prefix-resident-stderr": {
+      "original": {
+        "bytes": 681,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/prefix-resident-stderr",
+        "sha256": "657c6d410eda79967bf791981ca9ccb753d7f2a7911a1b126d8cedcfb8d06c06"
+      },
+      "relocated": {
+        "bytes": 681,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-deployment-v228-v1/objects/657c6d410eda79967bf791981ca9ccb753d7f2a7911a1b126d8cedcfb8d06c06",
+        "sha256": "657c6d410eda79967bf791981ca9ccb753d7f2a7911a1b126d8cedcfb8d06c06"
+      }
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/prefix-resident-stdout": {
+      "original": {
+        "bytes": 1655,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/prefix-resident-stdout",
+        "sha256": "5fd09eb19084ea1607ee1069509c3a1729afa826c4f01ba8a0d226b3f4b50bc6"
+      },
+      "relocated": {
+        "bytes": 1655,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-deployment-v228-v1/objects/5fd09eb19084ea1607ee1069509c3a1729afa826c4f01ba8a0d226b3f4b50bc6",
+        "sha256": "5fd09eb19084ea1607ee1069509c3a1729afa826c4f01ba8a0d226b3f4b50bc6"
+      }
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/prefix-state-command.json": {
+      "original": {
+        "bytes": 2599,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/prefix-state-command.json",
+        "sha256": "fc0250e9f7603b1d3e8aeac95f89abfebcb7fda4fd21277e6defa4b84d466256"
+      },
+      "relocated": {
+        "bytes": 2599,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-deployment-v228-v1/objects/fc0250e9f7603b1d3e8aeac95f89abfebcb7fda4fd21277e6defa4b84d466256",
+        "sha256": "fc0250e9f7603b1d3e8aeac95f89abfebcb7fda4fd21277e6defa4b84d466256"
+      }
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/prefix-state-result.json": {
+      "original": {
+        "bytes": 306,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/prefix-state-result.json",
+        "sha256": "0a124cb78daa34b406f7cc5386b08c0ad559616cc6755a9ab5c790ec60e64b43"
+      },
+      "relocated": {
+        "bytes": 306,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-deployment-v228-v1/objects/0a124cb78daa34b406f7cc5386b08c0ad559616cc6755a9ab5c790ec60e64b43",
+        "sha256": "0a124cb78daa34b406f7cc5386b08c0ad559616cc6755a9ab5c790ec60e64b43"
+      }
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/prefix-state-started.json": {
+      "original": {
+        "bytes": 40,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/prefix-state-started.json",
+        "sha256": "0e0e6e4977b264daf79f4669038bba9d4713171d59d29899929001daedacfe2e"
+      },
+      "relocated": {
+        "bytes": 40,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-deployment-v228-v1/objects/0e0e6e4977b264daf79f4669038bba9d4713171d59d29899929001daedacfe2e",
+        "sha256": "0e0e6e4977b264daf79f4669038bba9d4713171d59d29899929001daedacfe2e"
+      }
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/prefix-state-stderr": {
+      "original": {
+        "bytes": 681,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/prefix-state-stderr",
+        "sha256": "657c6d410eda79967bf791981ca9ccb753d7f2a7911a1b126d8cedcfb8d06c06"
+      },
+      "relocated": {
+        "bytes": 681,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-deployment-v228-v1/objects/657c6d410eda79967bf791981ca9ccb753d7f2a7911a1b126d8cedcfb8d06c06",
+        "sha256": "657c6d410eda79967bf791981ca9ccb753d7f2a7911a1b126d8cedcfb8d06c06"
+      }
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/prefix-state-stdout": {
+      "original": {
+        "bytes": 1605,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/prefix-state-stdout",
+        "sha256": "db8c68081676cb4218f3f641bf9441a67febb7cdcbbc035a10cc0464abdf8c92"
+      },
+      "relocated": {
+        "bytes": 1605,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-deployment-v228-v1/objects/db8c68081676cb4218f3f641bf9441a67febb7cdcbbc035a10cc0464abdf8c92",
+        "sha256": "db8c68081676cb4218f3f641bf9441a67febb7cdcbbc035a10cc0464abdf8c92"
+      }
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/publication-command.json": {
+      "original": {
+        "bytes": 2564,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/publication-command.json",
+        "sha256": "d909eb073bb1074f519d75e9fa1c6268c09379866fec71c01ffc6d63dca3e44d"
+      },
+      "relocated": {
+        "bytes": 2564,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-deployment-v228-v1/objects/d909eb073bb1074f519d75e9fa1c6268c09379866fec71c01ffc6d63dca3e44d",
+        "sha256": "d909eb073bb1074f519d75e9fa1c6268c09379866fec71c01ffc6d63dca3e44d"
+      }
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/publication-result.json": {
+      "original": {
+        "bytes": 305,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/publication-result.json",
+        "sha256": "c2217b9ab8145b305447c10dc67db3e173a0729b3dc1dfc26e2cf09a87472b4a"
+      },
+      "relocated": {
+        "bytes": 305,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-deployment-v228-v1/objects/c2217b9ab8145b305447c10dc67db3e173a0729b3dc1dfc26e2cf09a87472b4a",
+        "sha256": "c2217b9ab8145b305447c10dc67db3e173a0729b3dc1dfc26e2cf09a87472b4a"
+      }
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/publication-started.json": {
+      "original": {
+        "bytes": 40,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/publication-started.json",
+        "sha256": "37a074237104e6cf95b59064df4bfe18820add1adfac6c3aaa702763e1048643"
+      },
+      "relocated": {
+        "bytes": 40,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-deployment-v228-v1/objects/37a074237104e6cf95b59064df4bfe18820add1adfac6c3aaa702763e1048643",
+        "sha256": "37a074237104e6cf95b59064df4bfe18820add1adfac6c3aaa702763e1048643"
+      }
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/publication-stderr": {
+      "original": {
+        "bytes": 681,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/publication-stderr",
+        "sha256": "657c6d410eda79967bf791981ca9ccb753d7f2a7911a1b126d8cedcfb8d06c06"
+      },
+      "relocated": {
+        "bytes": 681,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-deployment-v228-v1/objects/657c6d410eda79967bf791981ca9ccb753d7f2a7911a1b126d8cedcfb8d06c06",
+        "sha256": "657c6d410eda79967bf791981ca9ccb753d7f2a7911a1b126d8cedcfb8d06c06"
+      }
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/publication-stdout": {
+      "original": {
+        "bytes": 2036,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/publication-stdout",
+        "sha256": "cd9fb6ccb45dfdf978a0391e3a2142001f7286388528f0a89e6a5fd382f6b294"
+      },
+      "relocated": {
+        "bytes": 2036,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-deployment-v228-v1/objects/cd9fb6ccb45dfdf978a0391e3a2142001f7286388528f0a89e6a5fd382f6b294",
+        "sha256": "cd9fb6ccb45dfdf978a0391e3a2142001f7286388528f0a89e6a5fd382f6b294"
+      }
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/runtime-list-command.json": {
+      "original": {
+        "bytes": 2535,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/runtime-list-command.json",
+        "sha256": "1b1a415d4a70f91cf0d84d022a7ae456cb85d08e9de0b456eea256fdca74b972"
+      },
+      "relocated": {
+        "bytes": 2535,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-deployment-v228-v1/objects/1b1a415d4a70f91cf0d84d022a7ae456cb85d08e9de0b456eea256fdca74b972",
+        "sha256": "1b1a415d4a70f91cf0d84d022a7ae456cb85d08e9de0b456eea256fdca74b972"
+      }
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/runtime-list-result.json": {
+      "original": {
+        "bytes": 306,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/runtime-list-result.json",
+        "sha256": "d4d33e5f95b4d314d404151d6035327680916d774dec9287cf86e3d3450b9a13"
+      },
+      "relocated": {
+        "bytes": 306,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-deployment-v228-v1/objects/d4d33e5f95b4d314d404151d6035327680916d774dec9287cf86e3d3450b9a13",
+        "sha256": "d4d33e5f95b4d314d404151d6035327680916d774dec9287cf86e3d3450b9a13"
+      }
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/runtime-list-started.json": {
+      "original": {
+        "bytes": 40,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/runtime-list-started.json",
+        "sha256": "92315355a3a387aecd05356def5ebbced476062e88147a4e177e7d93a607a2ce"
+      },
+      "relocated": {
+        "bytes": 40,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-deployment-v228-v1/objects/92315355a3a387aecd05356def5ebbced476062e88147a4e177e7d93a607a2ce",
+        "sha256": "92315355a3a387aecd05356def5ebbced476062e88147a4e177e7d93a607a2ce"
+      }
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/runtime-list-stderr": {
+      "original": {
+        "bytes": 3046,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/runtime-list-stderr",
+        "sha256": "d5a73fa3bcdf07bd05c82eb9983f87afa8e0591356d0e43a50431c99533abc4a"
+      },
+      "relocated": {
+        "bytes": 3046,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-deployment-v228-v1/objects/d5a73fa3bcdf07bd05c82eb9983f87afa8e0591356d0e43a50431c99533abc4a",
+        "sha256": "d5a73fa3bcdf07bd05c82eb9983f87afa8e0591356d0e43a50431c99533abc4a"
+      }
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/runtime-list-stdout": {
+      "original": {
+        "bytes": 90002,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/runtime-list-stdout",
+        "sha256": "5321b635276258b2bdf200ea68f435b6c75124f49aeed38a96cb6ae810014d1a"
+      },
+      "relocated": {
+        "bytes": 90002,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-deployment-v228-v1/objects/5321b635276258b2bdf200ea68f435b6c75124f49aeed38a96cb6ae810014d1a",
+        "sha256": "5321b635276258b2bdf200ea68f435b6c75124f49aeed38a96cb6ae810014d1a"
+      }
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/sources-after.json": {
+      "original": {
+        "bytes": 1255492,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/sources-after.json",
+        "sha256": "dfd1c547fed8401825583f133518668414048f9eb88032275c97f331a4e133e4"
+      },
+      "relocated": {
+        "bytes": 1255492,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-deployment-v228-v1/objects/dfd1c547fed8401825583f133518668414048f9eb88032275c97f331a4e133e4",
+        "sha256": "dfd1c547fed8401825583f133518668414048f9eb88032275c97f331a4e133e4"
+      }
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/sources-base.json": {
+      "original": {
+        "bytes": 1253422,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/sources-base.json",
+        "sha256": "14c988d67474bfbabc0fe302515dcd9234a8bf321ce87f5f52dd60d4690cefc1"
+      },
+      "relocated": {
+        "bytes": 1253422,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-deployment-v228-v1/objects/14c988d67474bfbabc0fe302515dcd9234a8bf321ce87f5f52dd60d4690cefc1",
+        "sha256": "14c988d67474bfbabc0fe302515dcd9234a8bf321ce87f5f52dd60d4690cefc1"
+      }
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/sources-before.json": {
+      "original": {
+        "bytes": 1255492,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/sources-before.json",
+        "sha256": "dfd1c547fed8401825583f133518668414048f9eb88032275c97f331a4e133e4"
+      },
+      "relocated": {
+        "bytes": 1255492,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-deployment-v228-v1/objects/dfd1c547fed8401825583f133518668414048f9eb88032275c97f331a4e133e4",
+        "sha256": "dfd1c547fed8401825583f133518668414048f9eb88032275c97f331a4e133e4"
+      }
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/sources-prior.json": {
+      "original": {
+        "bytes": 1254899,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/sources-prior.json",
+        "sha256": "c7c2042eafef985f27d69ee9113e2e9bde0a173d20137c131bcf191657368edb"
+      },
+      "relocated": {
+        "bytes": 1254899,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-deployment-v228-v1/objects/c7c2042eafef985f27d69ee9113e2e9bde0a173d20137c131bcf191657368edb",
+        "sha256": "c7c2042eafef985f27d69ee9113e2e9bde0a173d20137c131bcf191657368edb"
+      }
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/state-bank-command.json": {
+      "original": {
+        "bytes": 2572,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/state-bank-command.json",
+        "sha256": "8363901fd0ce07cc0b92acc8611a4bf04d2a70427c2fe4026b0ccc46a0026216"
+      },
+      "relocated": {
+        "bytes": 2572,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-deployment-v228-v1/objects/8363901fd0ce07cc0b92acc8611a4bf04d2a70427c2fe4026b0ccc46a0026216",
+        "sha256": "8363901fd0ce07cc0b92acc8611a4bf04d2a70427c2fe4026b0ccc46a0026216"
+      }
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/state-bank-result.json": {
+      "original": {
+        "bytes": 306,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/state-bank-result.json",
+        "sha256": "fe0189e53be91764e877f68d6d9e9f7574139980e2c7ea0a2aac4379f639b8bb"
+      },
+      "relocated": {
+        "bytes": 306,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-deployment-v228-v1/objects/fe0189e53be91764e877f68d6d9e9f7574139980e2c7ea0a2aac4379f639b8bb",
+        "sha256": "fe0189e53be91764e877f68d6d9e9f7574139980e2c7ea0a2aac4379f639b8bb"
+      }
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/state-bank-started.json": {
+      "original": {
+        "bytes": 40,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/state-bank-started.json",
+        "sha256": "561d03200d637c46ec08f8ca792495b93be73444a18858669485b29d8df9e68f"
+      },
+      "relocated": {
+        "bytes": 40,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-deployment-v228-v1/objects/561d03200d637c46ec08f8ca792495b93be73444a18858669485b29d8df9e68f",
+        "sha256": "561d03200d637c46ec08f8ca792495b93be73444a18858669485b29d8df9e68f"
+      }
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/state-bank-stderr": {
+      "original": {
+        "bytes": 681,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/state-bank-stderr",
+        "sha256": "657c6d410eda79967bf791981ca9ccb753d7f2a7911a1b126d8cedcfb8d06c06"
+      },
+      "relocated": {
+        "bytes": 681,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-deployment-v228-v1/objects/657c6d410eda79967bf791981ca9ccb753d7f2a7911a1b126d8cedcfb8d06c06",
+        "sha256": "657c6d410eda79967bf791981ca9ccb753d7f2a7911a1b126d8cedcfb8d06c06"
+      }
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/state-bank-stdout": {
+      "original": {
+        "bytes": 1425,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/state-bank-stdout",
+        "sha256": "e51f279746ad849f762315d45d167a5d034fb1d055a1e6375a1c21430d96f3d6"
+      },
+      "relocated": {
+        "bytes": 1425,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-deployment-v228-v1/objects/e51f279746ad849f762315d45d167a5d034fb1d055a1e6375a1c21430d96f3d6",
+        "sha256": "e51f279746ad849f762315d45d167a5d034fb1d055a1e6375a1c21430d96f3d6"
+      }
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/target/debug/ferric-tp-peer-finite-engineering-worker-v1": {
+      "original": {
+        "bytes": 4797496,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/target/debug/ferric-tp-peer-finite-engineering-worker-v1",
+        "sha256": "6901a1319352d0401e452d616efa50d2de08c40943f50cb054d89f3f26d7fd52"
+      },
+      "relocated": {
+        "bytes": 4797496,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-deployment-v228-v1/objects/6901a1319352d0401e452d616efa50d2de08c40943f50cb054d89f3f26d7fd52",
+        "sha256": "6901a1319352d0401e452d616efa50d2de08c40943f50cb054d89f3f26d7fd52"
+      }
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/worker-build-command.json": {
+      "original": {
+        "bytes": 2565,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/worker-build-command.json",
+        "sha256": "f635d4ad9c9643ae4e416b8b76ca401420ea746b82d27d7880aff1433995135a"
+      },
+      "relocated": {
+        "bytes": 2565,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-deployment-v228-v1/objects/f635d4ad9c9643ae4e416b8b76ca401420ea746b82d27d7880aff1433995135a",
+        "sha256": "f635d4ad9c9643ae4e416b8b76ca401420ea746b82d27d7880aff1433995135a"
+      }
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/worker-build-result.json": {
+      "original": {
+        "bytes": 306,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/worker-build-result.json",
+        "sha256": "98915a353155b27a6a9aff6a0531dfcc86e793f536db059395cf4c6812b8f0bf"
+      },
+      "relocated": {
+        "bytes": 306,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-deployment-v228-v1/objects/98915a353155b27a6a9aff6a0531dfcc86e793f536db059395cf4c6812b8f0bf",
+        "sha256": "98915a353155b27a6a9aff6a0531dfcc86e793f536db059395cf4c6812b8f0bf"
+      }
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/worker-build-started.json": {
+      "original": {
+        "bytes": 40,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/worker-build-started.json",
+        "sha256": "c02e149a86d4873cdbc0519cb438363d9fc1872b65c24849a1cbfa0ecce70b7a"
+      },
+      "relocated": {
+        "bytes": 40,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-deployment-v228-v1/objects/c02e149a86d4873cdbc0519cb438363d9fc1872b65c24849a1cbfa0ecce70b7a",
+        "sha256": "c02e149a86d4873cdbc0519cb438363d9fc1872b65c24849a1cbfa0ecce70b7a"
+      }
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/worker-build-stderr": {
+      "original": {
+        "bytes": 59,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/worker-build-stderr",
+        "sha256": "b5904af9b8294b36636707bdaeadbd93e621806ce69a219e852995cc1d87e757"
+      },
+      "relocated": {
+        "bytes": 59,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-deployment-v228-v1/objects/b5904af9b8294b36636707bdaeadbd93e621806ce69a219e852995cc1d87e757",
+        "sha256": "b5904af9b8294b36636707bdaeadbd93e621806ce69a219e852995cc1d87e757"
+      }
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/worker-build-stdout": {
+      "original": {
+        "bytes": 54412,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/worker-build-stdout",
+        "sha256": "6250e22a29063339b8134895c6fe8f2e75bda8be7aa86ec84c991186c8b73478"
+      },
+      "relocated": {
+        "bytes": 54412,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-deployment-v228-v1/objects/6250e22a29063339b8134895c6fe8f2e75bda8be7aa86ec84c991186c8b73478",
+        "sha256": "6250e22a29063339b8134895c6fe8f2e75bda8be7aa86ec84c991186c8b73478"
+      }
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/worker-list-command.json": {
+      "original": {
+        "bytes": 2541,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/worker-list-command.json",
+        "sha256": "2675c74536295c547262a8f97c7b085a6dead031fddea2cc8f8c4abf8fac4431"
+      },
+      "relocated": {
+        "bytes": 2541,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-deployment-v228-v1/objects/2675c74536295c547262a8f97c7b085a6dead031fddea2cc8f8c4abf8fac4431",
+        "sha256": "2675c74536295c547262a8f97c7b085a6dead031fddea2cc8f8c4abf8fac4431"
+      }
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/worker-list-result.json": {
+      "original": {
+        "bytes": 305,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/worker-list-result.json",
+        "sha256": "8e7124e1b267b1f85754786194b1b6a545e51b7b8178648529c60bc2272b74ff"
+      },
+      "relocated": {
+        "bytes": 305,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-deployment-v228-v1/objects/8e7124e1b267b1f85754786194b1b6a545e51b7b8178648529c60bc2272b74ff",
+        "sha256": "8e7124e1b267b1f85754786194b1b6a545e51b7b8178648529c60bc2272b74ff"
+      }
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/worker-list-started.json": {
+      "original": {
+        "bytes": 40,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/worker-list-started.json",
+        "sha256": "427b904b05f5707d5671b7ab01953632a561604083606d91a45d20bf46a5b04d"
+      },
+      "relocated": {
+        "bytes": 40,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-deployment-v228-v1/objects/427b904b05f5707d5671b7ab01953632a561604083606d91a45d20bf46a5b04d",
+        "sha256": "427b904b05f5707d5671b7ab01953632a561604083606d91a45d20bf46a5b04d"
+      }
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/worker-list-stderr": {
+      "original": {
+        "bytes": 2043,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/worker-list-stderr",
+        "sha256": "9b8f3b2b3776a8e8f5c5650a3b6da98ff43047f248339ad766f729251d018578"
+      },
+      "relocated": {
+        "bytes": 2043,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-deployment-v228-v1/objects/9b8f3b2b3776a8e8f5c5650a3b6da98ff43047f248339ad766f729251d018578",
+        "sha256": "9b8f3b2b3776a8e8f5c5650a3b6da98ff43047f248339ad766f729251d018578"
+      }
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/worker-list-stdout": {
+      "original": {
+        "bytes": 43833,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/worker-list-stdout",
+        "sha256": "5cbabdb6e0e46d909f3a48bd8cc4a510c2dc7370bd0bd5db3118f0c1d84279fd"
+      },
+      "relocated": {
+        "bytes": 43833,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-deployment-v228-v1/objects/5cbabdb6e0e46d909f3a48bd8cc4a510c2dc7370bd0bd5db3118f0c1d84279fd",
+        "sha256": "5cbabdb6e0e46d909f3a48bd8cc4a510c2dc7370bd0bd5db3118f0c1d84279fd"
+      }
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/worker-tests-command.json": {
+      "original": {
+        "bytes": 2522,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/worker-tests-command.json",
+        "sha256": "9db91fde5e7140684774d91273d2508264050c9fb7d25026e9b2776bfd70c147"
+      },
+      "relocated": {
+        "bytes": 2522,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-deployment-v228-v1/objects/9db91fde5e7140684774d91273d2508264050c9fb7d25026e9b2776bfd70c147",
+        "sha256": "9db91fde5e7140684774d91273d2508264050c9fb7d25026e9b2776bfd70c147"
+      }
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/worker-tests-result.json": {
+      "original": {
+        "bytes": 304,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/worker-tests-result.json",
+        "sha256": "b4243a5e18e40c277a4edeb2824c2b050247d9c8cefebe89cc7853066872b00d"
+      },
+      "relocated": {
+        "bytes": 304,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-deployment-v228-v1/objects/b4243a5e18e40c277a4edeb2824c2b050247d9c8cefebe89cc7853066872b00d",
+        "sha256": "b4243a5e18e40c277a4edeb2824c2b050247d9c8cefebe89cc7853066872b00d"
+      }
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/worker-tests-started.json": {
+      "original": {
+        "bytes": 40,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/worker-tests-started.json",
+        "sha256": "4ffee69aa895e681b7c694e7396642923b4cd9f6447a6cef3fd4ffd9984fca7c"
+      },
+      "relocated": {
+        "bytes": 40,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-deployment-v228-v1/objects/4ffee69aa895e681b7c694e7396642923b4cd9f6447a6cef3fd4ffd9984fca7c",
+        "sha256": "4ffee69aa895e681b7c694e7396642923b4cd9f6447a6cef3fd4ffd9984fca7c"
+      }
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/worker-tests-stderr": {
+      "original": {
+        "bytes": 1646,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/worker-tests-stderr",
+        "sha256": "7d94d5d1b5fabc05537cb1c1766386e11bd95514119b2e1e5be0a1c3e3dd168e"
+      },
+      "relocated": {
+        "bytes": 1646,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-deployment-v228-v1/objects/7d94d5d1b5fabc05537cb1c1766386e11bd95514119b2e1e5be0a1c3e3dd168e",
+        "sha256": "7d94d5d1b5fabc05537cb1c1766386e11bd95514119b2e1e5be0a1c3e3dd168e"
+      }
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/worker-tests-stdout": {
+      "original": {
+        "bytes": 46826,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/worker-tests-stdout",
+        "sha256": "fa74a274fcf5cf7d50b25abb725af9951f61f696e2da5e5a961f0c9cf1d6023a"
+      },
+      "relocated": {
+        "bytes": 46826,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-deployment-v228-v1/objects/fa74a274fcf5cf7d50b25abb725af9951f61f696e2da5e5a961f0c9cf1d6023a",
+        "sha256": "fa74a274fcf5cf7d50b25abb725af9951f61f696e2da5e5a961f0c9cf1d6023a"
+      }
+    }
+  },
+  "base_deployment": {
+    "bytes": 202889,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-decode-host-policy-deployment-v228-v1/complete.json",
+    "sha256": "4870de9c93693d073f77a1acdf88d77f23a6c6af8440ba88402af2f7320c01db"
+  },
+  "prior_deployment": {
+    "bytes": 102348,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/resident-state-deployment-v228-v1/complete.json",
+    "sha256": "49f3a097e85d8d5020ac5ca4d7a962eb281900ff58c0f8b84510dbb51af1adbc"
+  },
+  "runtime": {
+    "image": {
+      "bytes": 48512,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-parity-deployment-v227-v2/artifact.hsaco",
+      "sha256": "141fabf4f430b8458007798362f87d69f09d0b3ddb77ed2b93bf0f9bdd83e020"
+    },
+    "parent": {
+      "bytes": 13618248,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-decode-host-policy-deployment-v228-v1/bin/ferric-qwen3-finite-prefix-decode-host-policy-engineering",
+      "sha256": "830f90b17bde546fb0d236a127f4bff055b31b4f0b46e2381e22ec072cb9d4d0"
+    },
+    "worker": {
+      "bytes": 4797496,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-deployment-v228-v1/bin/ferric-tp-peer-finite-engineering-worker-v1",
+      "sha256": "6901a1319352d0401e452d616efa50d2de08c40943f50cb054d89f3f26d7fd52"
+    }
+  },
+  "schema": "ferric-p228-state-bank-batch-deployment-v1",
+  "worker_cpu": {
+    "bytes": 162810,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/complete.json",
+    "sha256": "14dab6e776cdc2184457b2865cf7d48b91a71008d49bea040deca68bba75838f"
+  },
+  "worker_cpu_review": {
+    "bytes": 3637,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-review-v228-v1.json",
+    "sha256": "673aab66c3c376c539532fa4f923c8d512bcfb51ea8f4cc5227e55a82deb1f92"
+  }
+}

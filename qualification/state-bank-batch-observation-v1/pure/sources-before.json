@@ -1,0 +1,147 @@
+{
+  "INTAKE.md": {
+    "bytes": 3861,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-state-bank-batch-observation-v1/INTAKE.md",
+    "sha256": "79a80acdda435fcf9ed4507ca6ce486e828cc6ad1296bc4f814bee7d8844e76b"
+  },
+  "README.md": {
+    "bytes": 2044,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-state-bank-batch-observation-v1/README.md",
+    "sha256": "880e9e9f1f71522e5fdb25b05c8b828b96ef14a1883451ed36f11be6fafdc76d"
+  },
+  "RUN.md": {
+    "bytes": 1892,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-state-bank-batch-observation-v1/RUN.md",
+    "sha256": "1c3d56f81d2825816e8f263f1b6f763c0090a0842bb3e7f132c7c889e6000996"
+  },
+  "audit_bank_batch_runtime.py": {
+    "bytes": 2590,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-state-bank-batch-observation-v1/audit_bank_batch_runtime.py",
+    "sha256": "498efa838232dbc82e5161089d5fb9a4a4de7415e81d49cd1f051cd0868d7992"
+  },
+  "audit_resident_state_runtime.py": {
+    "bytes": 2564,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-state-bank-batch-observation-v1/audit_resident_state_runtime.py",
+    "sha256": "9a20480589a8fee6813d5a579cb2d7679a8a52802b9bc65ed8bbadb9242f7198"
+  },
+  "bank_batch_portable.py": {
+    "bytes": 26214,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-state-bank-batch-observation-v1/bank_batch_portable.py",
+    "sha256": "6a26b9fcfb00eeef79245301fcd95f71c9a632f8f053a36f79fbfc733c4611ff"
+  },
+  "export_bank_batch.py": {
+    "bytes": 2995,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-state-bank-batch-observation-v1/export_bank_batch.py",
+    "sha256": "a8953c781113088f7e2e6a23b75f0e0ecd29c82495dc2ec31f9eba8937e44ea0"
+  },
+  "export_group_fence.py": {
+    "bytes": 3338,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-state-bank-batch-observation-v1/export_group_fence.py",
+    "sha256": "378a098343004a0d6f39e8393b941f37a2f991f675134198d8e6733b2e9f4783"
+  },
+  "export_resident_state.py": {
+    "bytes": 3019,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-state-bank-batch-observation-v1/export_resident_state.py",
+    "sha256": "08edaa9c9ae4d2c4dc96de9c4f286776b303506ab7e1622422718e8b5a0ad48e"
+  },
+  "frozen_owned.py": {
+    "bytes": 30433,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-state-bank-batch-observation-v1/frozen_owned.py",
+    "sha256": "ab41af455396322303bb8ebd4132e680affc3bdc5830608fad36736c92024583"
+  },
+  "group_fence_portable.py": {
+    "bytes": 14671,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-state-bank-batch-observation-v1/group_fence_portable.py",
+    "sha256": "18c2c243d308faf7cf57b375ca3d08570547f51840db67275543a1dca78ab66d"
+  },
+  "host_comparison.py": {
+    "bytes": 5561,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-state-bank-batch-observation-v1/host_comparison.py",
+    "sha256": "73443888b48ace65ffe51aab500a42a64058839f978bfeb23ad03040b6ab24f7"
+  },
+  "host_validation.py": {
+    "bytes": 10099,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-state-bank-batch-observation-v1/host_validation.py",
+    "sha256": "2f32426a80aca05125112ee3f023c075caea2f9360cbbde1fcb6c3b54cc4f73f"
+  },
+  "intake.py": {
+    "bytes": 25959,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-state-bank-batch-observation-v1/intake.py",
+    "sha256": "f79c98d3f6089bfb1eb09c919f5bbcd2fa6fb967a72f5d0ed6bb7c07ba9d4015"
+  },
+  "layer_validation.py": {
+    "bytes": 16186,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-state-bank-batch-observation-v1/layer_validation.py",
+    "sha256": "757c077979b7ee02d4c0e7d222e75292cd9d417927f84ae9a8134344f8e217b9"
+  },
+  "observation.py": {
+    "bytes": 2250,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-state-bank-batch-observation-v1/observation.py",
+    "sha256": "700d3f62ad974bec86b4b6c4771bd1ab1b8307b44db9b25a55f139a484d4f691"
+  },
+  "policy_portable.py": {
+    "bytes": 24807,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-state-bank-batch-observation-v1/policy_portable.py",
+    "sha256": "aec0caa8a338e843de01f31a4057a5f5c333ec98a0e843c71a18399b1e3ba566"
+  },
+  "resident_state_portable.py": {
+    "bytes": 18554,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-state-bank-batch-observation-v1/resident_state_portable.py",
+    "sha256": "7b3187df1d8c2c492d47f1954adda25e3d78a2f280396c8604c1f9ea154e9f12"
+  },
+  "run.py": {
+    "bytes": 16035,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-state-bank-batch-observation-v1/run.py",
+    "sha256": "41d223c39c25991a0300dd135261e9169aaf299b3b379ce438a7e6b759122bc0"
+  },
+  "run_row_facts_v2.py": {
+    "bytes": 12424,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-state-bank-batch-observation-v1/run_row_facts_v2.py",
+    "sha256": "244c12f62c8a439aa01b44380fc464008b94006bc919201c8d510c64177fc820"
+  },
+  "test_bank_batch_portable.py": {
+    "bytes": 16453,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-state-bank-batch-observation-v1/test_bank_batch_portable.py",
+    "sha256": "837d22487be21d3bf0e133e8f58d6a63e5f737dc625becc8ebcd84e4da7dbda5"
+  },
+  "test_group_fence_portable.py": {
+    "bytes": 4643,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-state-bank-batch-observation-v1/test_group_fence_portable.py",
+    "sha256": "f0971b191c96ca3d8343c6f69418c5a8d5856252436c6901f7a489a32381a304"
+  },
+  "test_host_comparison.py": {
+    "bytes": 5619,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-state-bank-batch-observation-v1/test_host_comparison.py",
+    "sha256": "18bb70cc6ffc48f82aafc18b51c869128175cf0736e94b44755393f724983c91"
+  },
+  "test_host_validation.py": {
+    "bytes": 15083,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-state-bank-batch-observation-v1/test_host_validation.py",
+    "sha256": "dd4514fbaf5a048984f7cbf68ac53e17e4b1704f07be9ae6fa9720887c44f88f"
+  },
+  "test_intake.py": {
+    "bytes": 22016,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-state-bank-batch-observation-v1/test_intake.py",
+    "sha256": "4f05263c6e98c989e2bd6324f9b031278194aba3bc11ae13c2ac63f58d3b3b16"
+  },
+  "test_observation.py": {
+    "bytes": 6529,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-state-bank-batch-observation-v1/test_observation.py",
+    "sha256": "95658ca79f59bc6fc6abc4b9090b6aa0c8d2d28cbea5710c06aa13c83cf7ac01"
+  },
+  "test_policy_portable.py": {
+    "bytes": 10460,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-state-bank-batch-observation-v1/test_policy_portable.py",
+    "sha256": "8142ad7d2e4165c32acbdf958ed7c4a06bfcff399a130a63dcc476dec1927e71"
+  },
+  "test_resident_state_portable.py": {
+    "bytes": 19814,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-state-bank-batch-observation-v1/test_resident_state_portable.py",
+    "sha256": "714361a45411dbaef676c2769abaebe26c431361e5759b42d68c0e8abf689a02"
+  },
+  "test_run.py": {
+    "bytes": 20464,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-state-bank-batch-observation-v1/test_run.py",
+    "sha256": "8ba3406253bc8df4b6b7a3015dcd5a1c3037cf1736911cc77c8baa9b3c1bc35d"
+  }
+}

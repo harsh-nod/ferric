@@ -1,0 +1,55 @@
+{
+  "authority": "none",
+  "base_deployment": {
+    "bytes": 202889,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-decode-host-policy-deployment-v228-v1/complete.json",
+    "sha256": "4870de9c93693d073f77a1acdf88d77f23a6c6af8440ba88402af2f7320c01db"
+  },
+  "complete": {
+    "bytes": 162810,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/state-bank-batch-cpu-v228-v1/complete.json",
+    "sha256": "14dab6e776cdc2184457b2865cf7d48b91a71008d49bea040deca68bba75838f"
+  },
+  "ferric_source_manifest": {
+    "bytes": 1405,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-state-bank-batch-ferric-v2/source-pins.json",
+    "sha256": "07773e4259d5b1226c9e26650bb2bf4c17ec1227a089ca2c7684ba8952804fb0"
+  },
+  "notes": "Root reviewed the actual CPU553 completion, all21 natural successful leaves and absent owned groups, exact144 runtime plus409 worker outcomes and four unchanged ignores. All109 raw records,6931 source files and selected4797496-byte worker6901a131 were retained and rehashed locally. Tested paired sources match Ferric524b5071 and fe2o3 3d217aabc. Root and independent peers reviewed complete-bank validation before stores, both fresh batch fences, all unchanged individual rearm validations/order, outer ledger checks and terminal poisoning. Actual metadata, compiler/tool routing, offline locked dependency and original byte-preimage chains were reviewed. CPU633 parent and CPU522 prior remain explicit distinct prerequisites. This review covers only source/build custody and regression scope; it does not establish GPU coherence, numerical acceptance, sustained throughput or production admission. Cache retirement does not remove selected worker, raw receipts, archives or overlays used for portable replay.",
+  "overlay": {
+    "bytes": 4977,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-state-bank-batch-cpu-v1/overlay.json",
+    "sha256": "73b74e8fe343ecdad622e8e1a4967b9bb096f21ead6992f82d8dd02b797ef8cb"
+  },
+  "owned_leaf_results_reviewed": true,
+  "package_manifest": {
+    "bytes": 724,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-state-bank-batch-cpu-v1/manifest.json",
+    "sha256": "f882275f45f49bd3b999422f668c7ccfee3c1b47d173a98c17a19e5887551b49"
+  },
+  "performance_claim": false,
+  "prior_cpu_complete": {
+    "bytes": 120723,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/resident-state-fence-cpu-v228-v2/complete.json",
+    "sha256": "33fb539a0823dcaa988d9091d7712f40cfb0ed656c87b6e958df98f8e35ccdf9"
+  },
+  "prior_deployment": {
+    "bytes": 102348,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/resident-state-deployment-v228-v1/complete.json",
+    "sha256": "49f3a097e85d8d5020ac5ca4d7a962eb281900ff58c0f8b84510dbb51af1adbc"
+  },
+  "production_authority": false,
+  "reviewed": true,
+  "runner": {
+    "bytes": 22805,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-state-bank-batch-cpu-v1/run.py",
+    "sha256": "d5c2237645915cd965aeb46fadf70130486abfc894fffafc9fc3513f277925da"
+  },
+  "runtime_preimages": {
+    "bytes": 965,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-state-bank-batch-runtime-v2/preimages.json",
+    "sha256": "d8f74d763507b055f109d7b6f49fd86b992e9c610ba3b59931ad015801192f73"
+  },
+  "schema": "ferric-p228-state-bank-batch-cpu-review-v1",
+  "source_and_toolchain_reviewed": true
+}

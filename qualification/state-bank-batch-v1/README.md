@@ -4,6 +4,8 @@ CPU-tested engineering checkpoint, 2026-10-04. Ferric now reads each complete
 prefix/MLP state bank through a bounded fe2o3 batch operation. This candidate
 has compiled and passed its CPU tests on `ssh mi350-2`
 (`asrock-1w300-g2-2b`). It has not yet been deployed or measured on the GPU.
+The subsequent [deployment/controller checkpoint](../state-bank-batch-observation-v1/README.md)
+records 144 passing policy tests and a completed worker export, not a GPU run.
 All issue #42 milestones and the single-request BF16 Qwen3-8B 2,048/256,
 700 tokens/s target remain open.
 

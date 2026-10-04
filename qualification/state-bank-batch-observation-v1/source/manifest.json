@@ -1,0 +1,162 @@
+{
+  "files": [
+    {
+      "bytes": 3861,
+      "path": "INTAKE.md",
+      "sha256": "79a80acdda435fcf9ed4507ca6ce486e828cc6ad1296bc4f814bee7d8844e76b"
+    },
+    {
+      "bytes": 2044,
+      "path": "README.md",
+      "sha256": "880e9e9f1f71522e5fdb25b05c8b828b96ef14a1883451ed36f11be6fafdc76d"
+    },
+    {
+      "bytes": 1892,
+      "path": "RUN.md",
+      "sha256": "1c3d56f81d2825816e8f263f1b6f763c0090a0842bb3e7f132c7c889e6000996"
+    },
+    {
+      "bytes": 2590,
+      "path": "audit_bank_batch_runtime.py",
+      "sha256": "498efa838232dbc82e5161089d5fb9a4a4de7415e81d49cd1f051cd0868d7992"
+    },
+    {
+      "bytes": 2564,
+      "path": "audit_resident_state_runtime.py",
+      "sha256": "9a20480589a8fee6813d5a579cb2d7679a8a52802b9bc65ed8bbadb9242f7198"
+    },
+    {
+      "bytes": 26214,
+      "path": "bank_batch_portable.py",
+      "sha256": "6a26b9fcfb00eeef79245301fcd95f71c9a632f8f053a36f79fbfc733c4611ff"
+    },
+    {
+      "bytes": 2995,
+      "path": "export_bank_batch.py",
+      "sha256": "a8953c781113088f7e2e6a23b75f0e0ecd29c82495dc2ec31f9eba8937e44ea0"
+    },
+    {
+      "bytes": 3338,
+      "path": "export_group_fence.py",
+      "sha256": "378a098343004a0d6f39e8393b941f37a2f991f675134198d8e6733b2e9f4783"
+    },
+    {
+      "bytes": 3019,
+      "path": "export_resident_state.py",
+      "sha256": "08edaa9c9ae4d2c4dc96de9c4f286776b303506ab7e1622422718e8b5a0ad48e"
+    },
+    {
+      "bytes": 30433,
+      "path": "frozen_owned.py",
+      "sha256": "ab41af455396322303bb8ebd4132e680affc3bdc5830608fad36736c92024583"
+    },
+    {
+      "bytes": 14671,
+      "path": "group_fence_portable.py",
+      "sha256": "18c2c243d308faf7cf57b375ca3d08570547f51840db67275543a1dca78ab66d"
+    },
+    {
+      "bytes": 5561,
+      "path": "host_comparison.py",
+      "sha256": "73443888b48ace65ffe51aab500a42a64058839f978bfeb23ad03040b6ab24f7"
+    },
+    {
+      "bytes": 10099,
+      "path": "host_validation.py",
+      "sha256": "2f32426a80aca05125112ee3f023c075caea2f9360cbbde1fcb6c3b54cc4f73f"
+    },
+    {
+      "bytes": 25959,
+      "path": "intake.py",
+      "sha256": "f79c98d3f6089bfb1eb09c919f5bbcd2fa6fb967a72f5d0ed6bb7c07ba9d4015"
+    },
+    {
+      "bytes": 16186,
+      "path": "layer_validation.py",
+      "sha256": "757c077979b7ee02d4c0e7d222e75292cd9d417927f84ae9a8134344f8e217b9"
+    },
+    {
+      "bytes": 2250,
+      "path": "observation.py",
+      "sha256": "700d3f62ad974bec86b4b6c4771bd1ab1b8307b44db9b25a55f139a484d4f691"
+    },
+    {
+      "bytes": 24807,
+      "path": "policy_portable.py",
+      "sha256": "aec0caa8a338e843de01f31a4057a5f5c333ec98a0e843c71a18399b1e3ba566"
+    },
+    {
+      "bytes": 18554,
+      "path": "resident_state_portable.py",
+      "sha256": "7b3187df1d8c2c492d47f1954adda25e3d78a2f280396c8604c1f9ea154e9f12"
+    },
+    {
+      "bytes": 16035,
+      "path": "run.py",
+      "sha256": "41d223c39c25991a0300dd135261e9169aaf299b3b379ce438a7e6b759122bc0"
+    },
+    {
+      "bytes": 12424,
+      "path": "run_row_facts_v2.py",
+      "sha256": "244c12f62c8a439aa01b44380fc464008b94006bc919201c8d510c64177fc820"
+    },
+    {
+      "bytes": 16453,
+      "path": "test_bank_batch_portable.py",
+      "sha256": "837d22487be21d3bf0e133e8f58d6a63e5f737dc625becc8ebcd84e4da7dbda5"
+    },
+    {
+      "bytes": 4643,
+      "path": "test_group_fence_portable.py",
+      "sha256": "f0971b191c96ca3d8343c6f69418c5a8d5856252436c6901f7a489a32381a304"
+    },
+    {
+      "bytes": 5619,
+      "path": "test_host_comparison.py",
+      "sha256": "18bb70cc6ffc48f82aafc18b51c869128175cf0736e94b44755393f724983c91"
+    },
+    {
+      "bytes": 15083,
+      "path": "test_host_validation.py",
+      "sha256": "dd4514fbaf5a048984f7cbf68ac53e17e4b1704f07be9ae6fa9720887c44f88f"
+    },
+    {
+      "bytes": 22016,
+      "path": "test_intake.py",
+      "sha256": "4f05263c6e98c989e2bd6324f9b031278194aba3bc11ae13c2ac63f58d3b3b16"
+    },
+    {
+      "bytes": 6529,
+      "path": "test_observation.py",
+      "sha256": "95658ca79f59bc6fc6abc4b9090b6aa0c8d2d28cbea5710c06aa13c83cf7ac01"
+    },
+    {
+      "bytes": 10460,
+      "path": "test_policy_portable.py",
+      "sha256": "8142ad7d2e4165c32acbdf958ed7c4a06bfcff399a130a63dcc476dec1927e71"
+    },
+    {
+      "bytes": 19814,
+      "path": "test_resident_state_portable.py",
+      "sha256": "714361a45411dbaef676c2769abaebe26c431361e5759b42d68c0e8abf689a02"
+    },
+    {
+      "bytes": 20464,
+      "path": "test_run.py",
+      "sha256": "8ba3406253bc8df4b6b7a3015dcd5a1c3037cf1736911cc77c8baa9b3c1bc35d"
+    }
+  ],
+  "pure_tests": 144,
+  "schema": "ferric-p228-state-bank-batch-observation-package-v1",
+  "test_census": {
+    "test_bank_batch_portable.py": 25,
+    "test_group_fence_portable.py": 10,
+    "test_host_comparison.py": 6,
+    "test_host_validation.py": 10,
+    "test_intake.py": 28,
+    "test_observation.py": 10,
+    "test_policy_portable.py": 15,
+    "test_resident_state_portable.py": 24,
+    "test_run.py": 16
+  }
+}
