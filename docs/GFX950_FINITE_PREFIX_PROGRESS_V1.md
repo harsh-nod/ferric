@@ -1,12 +1,18 @@
 # Finite Qwen3 Prefix Progress
 
 This is an engineering checkpoint for [issue #42](https://github.com/harsh-nod/ferric/issues/42),
-recorded on 2026-10-03. It is not a production admission, a sustained decode
+updated on 2026-10-04. It is not a production admission, a sustained decode
 benchmark, or a claim that the 700 tokens/s target has been reached. All issue #42 M0-M7
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Latest: the [six-case new-image matrix](../qualification/independent-prefix-case-matrix-v1/README.md)
+Latest: the [historical two-residual replay](../qualification/historical-residual-capture-replay-v1/README.md)
+matches all 32,768 captured BF16 words exactly across both residual stages,
+both ranks and both profiles. This checks historical layer-0 residual boundaries,
+not V7 or upstream MLP arithmetic. The new all-layer observation controller also
+passed 84 CPU policy tests on MI350; its actual V7 GPU run is still pending.
+
+The [six-case new-image matrix](../qualification/independent-prefix-case-matrix-v1/README.md)
 passes GPU execution and separate conditional numerical checks on MI350.
 It covers genuine positions 0/4 and patterned positions 15/16/2,047/2,048,
 not a full-model prefill or sustained decode. The observations below preserve
@@ -43,6 +49,7 @@ earlier checkpoints and their limitations at the time they were recorded.
 | Independent runtime-audit collector on `mi350-2` | 18 synthetic policy tests passed, no skips | New deployment namespace; actual MI350 ELF/library audit still pending |
 | First new independent prefix case on `mi350` | Both profiles and both ranks pass GPU execution and separate conditional numerical checks at genuine position 0 | 8,192 attention BF16 values exact; maximum output error/bound ratio 0.015053; not full-model or throughput acceptance |
 | Complete new-image prefix matrix on `mi350` | Six cases and 24 profile/rank rows pass; 49,144 attention values exact and eight within one BF16 step | No norm/QKV bound violations; maximum output error/bound ratio 0.0229955; patterned long KV is not authentic model prefill |
+| Historical two-residual capture replay on `mi350` | 32,768 BF16 words exact; 14 policy/layout tests passed | Original layer-0 captures and authenticated embedding row; no new GPU run, V7 or MLP acceptance |
 
 Both four-forward runs completed their Close protocol, reaped their owned
 processes, and passed their six surrounding device-state audits. The CPU suite

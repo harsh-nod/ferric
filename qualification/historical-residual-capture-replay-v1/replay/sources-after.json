@@ -1,0 +1,17 @@
+{
+  "README.md": {
+    "bytes": 5415,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-residual-capture-replay-v1/README.md",
+    "sha256": "fcf594296e6ae7804415dca4c55759ff4ba38042491fdc3c914a910183db6263"
+  },
+  "run.py": {
+    "bytes": 14960,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-residual-capture-replay-v1/run.py",
+    "sha256": "88f6e66fccb2ea1ef0d6079858a4b6af1d0b609fa50ec3ea02cb21329300021a"
+  },
+  "test_run.py": {
+    "bytes": 8703,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-residual-capture-replay-v1/test_run.py",
+    "sha256": "39efc6facf38da8cc5b0efb1a39df79a8369f6c121fdd7c8f953a5845c8a0a98"
+  }
+}

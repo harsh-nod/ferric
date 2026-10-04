@@ -1,0 +1,19 @@
+test_all28_capture_offsets_and_selected_rank_pairs (test_run.ReplayPolicyTests.test_all28_capture_offsets_and_selected_rank_pairs) ... ok
+test_changed_executable_helper_refuses_before_import (test_run.ReplayPolicyTests.test_changed_executable_helper_refuses_before_import) ... ok
+test_changed_slice_order_cannot_be_claimed_as_original_offset (test_run.ReplayPolicyTests.test_changed_slice_order_cannot_be_claimed_as_original_offset) ... ok
+test_duplicate_embedding_registration_or_upload_refuses (test_run.ReplayPolicyTests.test_duplicate_embedding_registration_or_upload_refuses) ... ok
+test_embedding_upload_binds_registered_source_and_whole_tensor (test_run.ReplayPolicyTests.test_embedding_upload_binds_registered_source_and_whole_tensor) ... ok
+test_reader_changed_or_wrong_sized_bytes_refuse (test_run.ReplayPolicyTests.test_reader_changed_or_wrong_sized_bytes_refuse) ... ok
+test_reader_conflicting_origin_refuses (test_run.ReplayPolicyTests.test_reader_conflicting_origin_refuses) ... ok
+test_reader_escape_symlink_and_relative_paths_refuse (test_run.ReplayPolicyTests.test_reader_escape_symlink_and_relative_paths_refuse) ... ok
+test_reader_records_original_and_transport_paths (test_run.ReplayPolicyTests.test_reader_records_original_and_transport_paths) ... ok
+test_rust_pin_digest_is_exact_unsigned_bytes (test_run.ReplayPolicyTests.test_rust_pin_digest_is_exact_unsigned_bytes) ... ok
+test_streaming_span_hashes_complete_shard_tensor_and_selected_row (test_run.ReplayPolicyTests.test_streaming_span_hashes_complete_shard_tensor_and_selected_row) ... ok
+test_tensor_header_authenticates_dtype_shape_and_bounded_offsets (test_run.ReplayPolicyTests.test_tensor_header_authenticates_dtype_shape_and_bounded_offsets) ... ok
+test_truncated_tensor_or_row_escape_refuses (test_run.ReplayPolicyTests.test_truncated_tensor_or_row_escape_refuses) ... ok
+test_wrong_capture_extent_or_stage_contract_refuses (test_run.ReplayPolicyTests.test_wrong_capture_extent_or_stage_contract_refuses) ... ok
+
+----------------------------------------------------------------------
+Ran 14 tests in 0.024s
+
+OK

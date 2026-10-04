@@ -1,0 +1,35 @@
+{
+  "controller": {
+    "bytes": 5140,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/run_residual_capture_replay_p228_v2.py",
+    "sha256": "7fb31bbc6c558610667f8cb5f03f66d6c67a759b0da29885e537bc644ce5141c"
+  },
+  "details": {
+    "historical_result": {
+      "bytes": 41488,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/residual-capture-replay-v228-v2/residuals.json",
+      "sha256": "ff9942f1f20343f3a21df3632167472bb06aeeacfe6aa47e2b211e85d3417275"
+    }
+  },
+  "elapsed_seconds": 3.6129075099597685,
+  "full_layer_acceptance": false,
+  "full_model_acceptance": false,
+  "gpu_execution": false,
+  "mode": "replay",
+  "new_v7_image_checked": false,
+  "passed": true,
+  "performance_claim": false,
+  "production_authority": false,
+  "schema": "ferric-p228-residual-capture-cpu-v1",
+  "source_postchecks_passed": true,
+  "sources_after": {
+    "bytes": 761,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/residual-capture-replay-v228-v2/sources-after.json",
+    "sha256": "65032049b1b28dd2ed84aa5e6c7b9577fcf62511093f9474df053de8e391e991"
+  },
+  "sources_before": {
+    "bytes": 761,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/residual-capture-replay-v228-v2/sources-before.json",
+    "sha256": "65032049b1b28dd2ed84aa5e6c7b9577fcf62511093f9474df053de8e391e991"
+  }
+}

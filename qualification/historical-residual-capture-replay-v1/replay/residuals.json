@@ -1,0 +1,1168 @@
+{
+  "arithmetic_prerequisites_verified": false,
+  "authority": "none",
+  "full_layer_acceptance": false,
+  "full_model_acceptance": false,
+  "gpu_execution_requested": false,
+  "historical_images": {
+    "baseline": {
+      "bytes": 48584,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/p223-runtime-v1/prefix.hsaco",
+      "sha256": [
+        77,
+        15,
+        232,
+        53,
+        238,
+        243,
+        183,
+        107,
+        193,
+        182,
+        12,
+        165,
+        96,
+        230,
+        168,
+        2,
+        143,
+        133,
+        187,
+        156,
+        226,
+        146,
+        186,
+        199,
+        124,
+        207,
+        108,
+        109,
+        166,
+        94,
+        98,
+        133
+      ]
+    },
+    "candidate": {
+      "bytes": 48512,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-parity-deployment-v227-v2/artifact.hsaco",
+      "sha256": [
+        20,
+        31,
+        171,
+        244,
+        244,
+        48,
+        184,
+        69,
+        128,
+        7,
+        121,
+        131,
+        98,
+        248,
+        125,
+        105,
+        240,
+        157,
+        11,
+        61,
+        219,
+        119,
+        237,
+        43,
+        147,
+        191,
+        15,
+        155,
+        221,
+        131,
+        224,
+        32
+      ]
+    },
+    "mlp": {
+      "bytes": 32328,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/p225-tiles-tf4-runtime-v1/tiles.hsaco",
+      "sha256": [
+        234,
+        213,
+        127,
+        155,
+        183,
+        77,
+        71,
+        222,
+        20,
+        171,
+        91,
+        139,
+        132,
+        244,
+        114,
+        141,
+        243,
+        206,
+        110,
+        98,
+        250,
+        196,
+        216,
+        205,
+        242,
+        212,
+        207,
+        11,
+        227,
+        224,
+        177,
+        230
+      ]
+    },
+    "residual": {
+      "bytes": 14624,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/p223-runtime-v1/residual.hsaco",
+      "sha256": [
+        132,
+        54,
+        193,
+        134,
+        29,
+        204,
+        20,
+        240,
+        52,
+        106,
+        238,
+        204,
+        19,
+        110,
+        65,
+        135,
+        196,
+        89,
+        172,
+        28,
+        11,
+        49,
+        119,
+        130,
+        101,
+        200,
+        139,
+        61,
+        140,
+        99,
+        57,
+        109
+      ]
+    }
+  },
+  "historical_layer_validator_checks_revalidated": true,
+  "historical_record": {
+    "bytes": 465821,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-layer-replay-v227-v1/complete.json",
+    "sha256": "d9958b9a6d37fc707993aa4dd4ae05ca062820df4692bf9ab37d8df7821f8d8a"
+  },
+  "historical_v227_image": true,
+  "input_pins": [
+    {
+      "bytes": 16186,
+      "original_path": null,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p227-prefix-layer-replay-v1/layer_validation.py",
+      "sha256": "757c077979b7ee02d4c0e7d222e75292cd9d417927f84ae9a8134344f8e217b9"
+    },
+    {
+      "bytes": 465821,
+      "original_path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-layer-replay-v227-v1/complete.json",
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-layer-replay-v227-v1/complete.json",
+      "sha256": "d9958b9a6d37fc707993aa4dd4ae05ca062820df4692bf9ab37d8df7821f8d8a"
+    },
+    {
+      "bytes": 6959,
+      "original_path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-layer-inputs-v227-v2/request.json",
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-layer-inputs-v227-v2/request.json",
+      "sha256": "08de56a2e553bfe63f3e2e8c6564d733b8f4436266b11ad43a07d4c2213a074c"
+    },
+    {
+      "bytes": 3240,
+      "original_path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-layer-gpu-v227-v1/native/baseline-bootstrap.json",
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-layer-gpu-v227-v1/native/baseline-bootstrap.json",
+      "sha256": "b2fdd66c1988398d9e9b92a4fae4c987ff932f63730d7b19a267aa32026826d2"
+    },
+    {
+      "bytes": 9670656,
+      "original_path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-layer-gpu-v227-v1/native/baseline-capture.bin",
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-layer-gpu-v227-v1/native/baseline-capture.bin",
+      "sha256": "c46324f59a03f3db83e891475261cf527d19b7c1b5a981ce21b7b763e182f52f"
+    },
+    {
+      "bytes": 871211,
+      "original_path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-layer-gpu-v227-v1/native/baseline-program.json",
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-layer-gpu-v227-v1/native/baseline-program.json",
+      "sha256": "eb8607aae21d2774b188c3477e0b03a0b924dcd75638b18624707e543b743392"
+    },
+    {
+      "bytes": 122071,
+      "original_path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-layer-gpu-v227-v1/native/baseline-registration.json",
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-layer-gpu-v227-v1/native/baseline-registration.json",
+      "sha256": "1d9a5b8bd87ce4f676f2c30a43a5f8b554e0801fa19922f432af71e212d83e6b"
+    },
+    {
+      "bytes": 167,
+      "original_path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-layer-gpu-v227-v1/native/baseline-request-1.json",
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-layer-gpu-v227-v1/native/baseline-request-1.json",
+      "sha256": "0bccdce1528685514e4f60a35c046a5fef5715c570b5498a31fcf9d77b7ded44"
+    },
+    {
+      "bytes": 169,
+      "original_path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-layer-gpu-v227-v1/native/baseline-request-2.json",
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-layer-gpu-v227-v1/native/baseline-request-2.json",
+      "sha256": "561c871c13879e2a321fcecbcef54dd33a9a7d6ef621fce56604f341238660a6"
+    },
+    {
+      "bytes": 359,
+      "original_path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-layer-gpu-v227-v1/native/baseline-response-1.json",
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-layer-gpu-v227-v1/native/baseline-response-1.json",
+      "sha256": "0485c9c894d2b2b3324609a7c76c963083df9bebc67a029feb2d82de203f7328"
+    },
+    {
+      "bytes": 4252,
+      "original_path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-layer-gpu-v227-v1/native/baseline-response-2.json",
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-layer-gpu-v227-v1/native/baseline-response-2.json",
+      "sha256": "d35b639c8ed0d172055985e65a357bd9b80db54974932def16ea3a9f61601d8e"
+    },
+    {
+      "bytes": 0,
+      "original_path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-layer-gpu-v227-v1/native/baseline-stderr.bin",
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-layer-gpu-v227-v1/native/baseline-stderr.bin",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 178103,
+      "original_path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-layer-gpu-v227-v1/native/baseline-uploads.json",
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-layer-gpu-v227-v1/native/baseline-uploads.json",
+      "sha256": "d5e66dbf7e3abfec463424addb6735f9a3a5b2d50653d56689ee79d01404da47"
+    },
+    {
+      "bytes": 3374,
+      "original_path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-layer-gpu-v227-v1/native/candidate-bootstrap.json",
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-layer-gpu-v227-v1/native/candidate-bootstrap.json",
+      "sha256": "4c91a56ec01af0651017ea954fb33de655dd35031b6d7eaa2b7e7d6bd5bb3b9f"
+    },
+    {
+      "bytes": 9670656,
+      "original_path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-layer-gpu-v227-v1/native/candidate-capture.bin",
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-layer-gpu-v227-v1/native/candidate-capture.bin",
+      "sha256": "c46324f59a03f3db83e891475261cf527d19b7c1b5a981ce21b7b763e182f52f"
+    },
+    {
+      "bytes": 871211,
+      "original_path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-layer-gpu-v227-v1/native/candidate-program.json",
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-layer-gpu-v227-v1/native/candidate-program.json",
+      "sha256": "eb8607aae21d2774b188c3477e0b03a0b924dcd75638b18624707e543b743392"
+    },
+    {
+      "bytes": 122071,
+      "original_path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-layer-gpu-v227-v1/native/candidate-registration.json",
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-layer-gpu-v227-v1/native/candidate-registration.json",
+      "sha256": "a34b06806ce8be5c775034b8308ac79a8eabad62be1923f6b8ed90462243a785"
+    },
+    {
+      "bytes": 176,
+      "original_path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-layer-gpu-v227-v1/native/candidate-request-1.json",
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-layer-gpu-v227-v1/native/candidate-request-1.json",
+      "sha256": "7e3f0525b64e29a6b6ce05318c65b7729a0687eb7e5ac7af913e3b815b515011"
+    },
+    {
+      "bytes": 178,
+      "original_path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-layer-gpu-v227-v1/native/candidate-request-2.json",
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-layer-gpu-v227-v1/native/candidate-request-2.json",
+      "sha256": "056be77cf3e053dc6499cc97849e2e1ca14376cc15473617e73b3dddb3a39a2e"
+    },
+    {
+      "bytes": 367,
+      "original_path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-layer-gpu-v227-v1/native/candidate-response-1.json",
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-layer-gpu-v227-v1/native/candidate-response-1.json",
+      "sha256": "94c6342416de167e67b998ac056c81f4cfef449f405bf78f7f517ae972eace53"
+    },
+    {
+      "bytes": 5885,
+      "original_path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-layer-gpu-v227-v1/native/candidate-response-2.json",
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-layer-gpu-v227-v1/native/candidate-response-2.json",
+      "sha256": "a7157bbff7773770fe9215a0549905526cea2e1fd8a2501b7b6ee93cd0a86753"
+    },
+    {
+      "bytes": 0,
+      "original_path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-layer-gpu-v227-v1/native/candidate-stderr.bin",
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-layer-gpu-v227-v1/native/candidate-stderr.bin",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 178103,
+      "original_path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-layer-gpu-v227-v1/native/candidate-uploads.json",
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-layer-gpu-v227-v1/native/candidate-uploads.json",
+      "sha256": "d5e66dbf7e3abfec463424addb6735f9a3a5b2d50653d56689ee79d01404da47"
+    },
+    {
+      "bytes": 9855,
+      "original_path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-layer-gpu-v227-v1/native/parity.json",
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-layer-gpu-v227-v1/native/parity.json",
+      "sha256": "ec35a1c13c0bd2503ae0395e39e3b4086d16e82f68fe0eabe167a7cce42d88d8"
+    },
+    {
+      "bytes": 3333,
+      "original_path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-layer-gpu-v227-v1/native/request.json",
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-layer-gpu-v227-v1/native/request.json",
+      "sha256": "7e1edcff982a7e72d5a9adbd3e2620dc94d2922361262c7d1c25b846ba728b47"
+    },
+    {
+      "bytes": 34549,
+      "original_path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-layer-gpu-v227-v1/native/summary.json",
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-layer-gpu-v227-v1/native/summary.json",
+      "sha256": "e3742d086a6ccc1ccd3c226deb6d34a848ee8db0cd6f7d884a2c86314c1b4988"
+    },
+    {
+      "bytes": 8192,
+      "original_path": "/home/harmenon/ferric-asrock-42/evidence/finite-two-forward-v223/p224-prompt-v1/prompt.u32le",
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-two-forward-v223/p224-prompt-v1/prompt.u32le",
+      "sha256": "2e81cc60562760f972450ef9205a4e764fa3cce6289d85754e7dfbd7de4d4d02"
+    },
+    {
+      "bytes": 4338,
+      "original_path": null,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-independent-layer-reference-v1/residual_reference.py",
+      "sha256": "72f22c7134d609034a033e5ac70fb8c67032a95b9ad96eeafb399092b3655ad8"
+    },
+    {
+      "bytes": 4347,
+      "original_path": null,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-independent-layer-reference-v1/helpers/residual_oracle.py",
+      "sha256": "551f89f968cad8f63073ca975346c593a31dad624115a93059b28a328e312ef3"
+    },
+    {
+      "bytes": 9284,
+      "original_path": null,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-independent-layer-reference-v1/test_residual_reference.py",
+      "sha256": "4ff70d01d01aef66711b4b129a7f394dc7eb10cece9c3df1a812be1a42b03d0b"
+    },
+    {
+      "bytes": 6861,
+      "original_path": null,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-independent-layer-reference-v1/README.md",
+      "sha256": "7ece2a87b1c2b3f9fdb60b28985c6d4c07e3dc3d64cf989d9ab79fe3c89732ea"
+    }
+  ],
+  "layer": 0,
+  "mlp_numerics_checked": false,
+  "model": {
+    "bundle_id": [
+      109,
+      251,
+      160,
+      172,
+      209,
+      192,
+      12,
+      225,
+      60,
+      236,
+      123,
+      94,
+      235,
+      177,
+      128,
+      105,
+      27,
+      219,
+      136,
+      85,
+      167,
+      238,
+      232,
+      152,
+      118,
+      223,
+      42,
+      10,
+      18,
+      162,
+      128,
+      43
+    ],
+    "model_id": [
+      241,
+      143,
+      196,
+      97,
+      87,
+      109,
+      26,
+      48,
+      83,
+      161,
+      154,
+      186,
+      89,
+      70,
+      239,
+      123,
+      59,
+      69,
+      170,
+      247,
+      203,
+      180,
+      93,
+      119,
+      245,
+      194,
+      118,
+      241,
+      133,
+      103,
+      34,
+      74
+    ],
+    "original_directory": "/home/harmenon/ferric-mi350-model-b968-c189-r1.kUjwIKs0/model",
+    "original_embedding_upload": {
+      "bytes": 1244659712,
+      "key": {
+        "id": 185,
+        "kind": "source",
+        "rank": 0
+      },
+      "sha256": [
+        69,
+        139,
+        74,
+        241,
+        210,
+        46,
+        216,
+        215,
+        209,
+        34,
+        53,
+        237,
+        82,
+        73,
+        164,
+        96,
+        108,
+        118,
+        6,
+        227,
+        94,
+        119,
+        94,
+        126,
+        162,
+        36,
+        75,
+        166,
+        35,
+        176,
+        49,
+        46
+      ]
+    },
+    "source": {
+      "bytes": 3996250744,
+      "path": "/home/harmenon/ferric-mi350-model-b968-c189-r1.kUjwIKs0/model/target/model-00001-of-00005.safetensors",
+      "row_bytes": 8192,
+      "row_offset": 74654840,
+      "row_sha256": "68b2cf48a968e475175c36edb4b0fb94836fcb2afcdedcb4403b208cf98f6b1c",
+      "sha256": "31d6a825ae35f11fb85b195b4c42c146c051e446433125a215336abdf95cbf5f",
+      "stamp": [
+        66307,
+        110541485,
+        3996250744,
+        1787465855000000000,
+        1789675775983034534
+      ],
+      "tensor": "model.embed_tokens.weight",
+      "tensor_bytes": 1244659712,
+      "tensor_offset": 9336,
+      "tensor_sha256": "458b4af1d22ed8d7d12235ed5249a4606c7606e35e775e7ea2244ba623b0312e",
+      "token": 9112
+    }
+  },
+  "new_v7_image_checked": false,
+  "passed": true,
+  "performance_claim": false,
+  "position": 0,
+  "production_authority": false,
+  "profiles": [
+    {
+      "capture": {
+        "bytes": 9670656,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-layer-gpu-v227-v1/native/baseline-capture.bin",
+        "sha256": "c46324f59a03f3db83e891475261cf527d19b7c1b5a981ce21b7b763e182f52f"
+      },
+      "capture_slices": [
+        {
+          "bytes": 8192,
+          "element_bytes": 2,
+          "offset": 0,
+          "rank": 0,
+          "sha256": "49b3afa6ca46528ec64673ca0e1a660e013fffc08717589ad78221c999fc379f",
+          "stage": "norm"
+        },
+        {
+          "bytes": 6144,
+          "element_bytes": 2,
+          "offset": 8192,
+          "rank": 0,
+          "sha256": "c8cd97f6d91137862fe61db6d342136429ca5ad7d8d26e8ec1e519c24d6d1680",
+          "stage": "qkv"
+        },
+        {
+          "bytes": 4096,
+          "element_bytes": 2,
+          "offset": 14336,
+          "rank": 0,
+          "sha256": "f2f110aa84e6b9d56e7899390c44e1c6d0eb98aeebd20abd6efabd9cea4ca562",
+          "stage": "query"
+        },
+        {
+          "bytes": 2359296,
+          "element_bytes": 2,
+          "offset": 18432,
+          "rank": 0,
+          "sha256": "b11e09523219e2f77b88d7efe9b7e8f9a6323d4a4a420cf3e80c40f675f20078",
+          "stage": "key-cache"
+        },
+        {
+          "bytes": 2359296,
+          "element_bytes": 2,
+          "offset": 2377728,
+          "rank": 0,
+          "sha256": "47e43ac17b6a6840225e1ccc3bdb4037b33ff25b64f37e34958f0d13c456126a",
+          "stage": "value-cache"
+        },
+        {
+          "bytes": 4096,
+          "element_bytes": 2,
+          "offset": 4737024,
+          "rank": 0,
+          "sha256": "2e3d129d209db99e0b2d3d30fd3a144777ed2eac1dd129069c19aff356c50310",
+          "stage": "attention"
+        },
+        {
+          "bytes": 16384,
+          "element_bytes": 4,
+          "offset": 4741120,
+          "rank": 0,
+          "sha256": "ead5ec3fc0954f2eccfdb94a3c775d41bb6672bdeb6056fd774ab6402279b56c",
+          "stage": "output-partial"
+        },
+        {
+          "bytes": 8192,
+          "element_bytes": 2,
+          "offset": 4757504,
+          "rank": 0,
+          "sha256": "00e5a0bf5610bc110507bc5b2dbc9a257823a1568ab5e24ace9f3a48bd01baaa",
+          "stage": "first-residual"
+        },
+        {
+          "bytes": 8192,
+          "element_bytes": 2,
+          "offset": 4765696,
+          "rank": 0,
+          "sha256": "92bc4fa88713ad003b58f1d7d8a495793a897e6b7113e58048081f3e9f473bdc",
+          "stage": "mlp-norm"
+        },
+        {
+          "bytes": 12288,
+          "element_bytes": 2,
+          "offset": 4773888,
+          "rank": 0,
+          "sha256": "8bf6f60226303029180ca2af0188dc11f32b2aff9143ac32f647134af2baf679",
+          "stage": "gate"
+        },
+        {
+          "bytes": 12288,
+          "element_bytes": 2,
+          "offset": 4786176,
+          "rank": 0,
+          "sha256": "53f065d20d1ddfbd62a8fbf82a7546e2883ea505e81674b00ab1cdb5f99f6320",
+          "stage": "up"
+        },
+        {
+          "bytes": 12288,
+          "element_bytes": 2,
+          "offset": 4798464,
+          "rank": 0,
+          "sha256": "04136e0ab56b28d185980c81986ca05bd2e1db144792b69eee24dd4397fb1d78",
+          "stage": "activation"
+        },
+        {
+          "bytes": 16384,
+          "element_bytes": 4,
+          "offset": 4810752,
+          "rank": 0,
+          "sha256": "542a6d2b32c9a0f8cebb92d5a2bda029f87143442ad79719b57c85ac6889eaf7",
+          "stage": "down-partial"
+        },
+        {
+          "bytes": 8192,
+          "element_bytes": 2,
+          "offset": 4827136,
+          "rank": 0,
+          "sha256": "faa56202578a3d3497bbe779137736439957e473775bd6f677dbce466a9d6979",
+          "stage": "final-hidden"
+        },
+        {
+          "bytes": 8192,
+          "element_bytes": 2,
+          "offset": 4835328,
+          "rank": 1,
+          "sha256": "49b3afa6ca46528ec64673ca0e1a660e013fffc08717589ad78221c999fc379f",
+          "stage": "norm"
+        },
+        {
+          "bytes": 6144,
+          "element_bytes": 2,
+          "offset": 4843520,
+          "rank": 1,
+          "sha256": "c9e9f8a616130678efa7434e3b9d098651f7d8b79778dc3af73c74195029047b",
+          "stage": "qkv"
+        },
+        {
+          "bytes": 4096,
+          "element_bytes": 2,
+          "offset": 4849664,
+          "rank": 1,
+          "sha256": "b2fc190e1ad5f9bcdaf1dede858fd9560b7e44cf40038e564b9793948ec755c0",
+          "stage": "query"
+        },
+        {
+          "bytes": 2359296,
+          "element_bytes": 2,
+          "offset": 4853760,
+          "rank": 1,
+          "sha256": "2920442877753dc4f21cef32f795f6606f9f95c7202927e8b0250b00587f6e8d",
+          "stage": "key-cache"
+        },
+        {
+          "bytes": 2359296,
+          "element_bytes": 2,
+          "offset": 7213056,
+          "rank": 1,
+          "sha256": "89150708b7f18b952fc616e92a39a93d97da2d2de60b9f727fa4e35e9efa98cb",
+          "stage": "value-cache"
+        },
+        {
+          "bytes": 4096,
+          "element_bytes": 2,
+          "offset": 9572352,
+          "rank": 1,
+          "sha256": "d4609f6429ee3a4bde1516dc449d2ed491ee90d5f88767028ecb3e1252965365",
+          "stage": "attention"
+        },
+        {
+          "bytes": 16384,
+          "element_bytes": 4,
+          "offset": 9576448,
+          "rank": 1,
+          "sha256": "ca5bb8ef89d40fb4cee172b2978d9358d15e8e8c08f27547c01bb9bddf1de883",
+          "stage": "output-partial"
+        },
+        {
+          "bytes": 8192,
+          "element_bytes": 2,
+          "offset": 9592832,
+          "rank": 1,
+          "sha256": "00e5a0bf5610bc110507bc5b2dbc9a257823a1568ab5e24ace9f3a48bd01baaa",
+          "stage": "first-residual"
+        },
+        {
+          "bytes": 8192,
+          "element_bytes": 2,
+          "offset": 9601024,
+          "rank": 1,
+          "sha256": "92bc4fa88713ad003b58f1d7d8a495793a897e6b7113e58048081f3e9f473bdc",
+          "stage": "mlp-norm"
+        },
+        {
+          "bytes": 12288,
+          "element_bytes": 2,
+          "offset": 9609216,
+          "rank": 1,
+          "sha256": "d6eaa79a3e8f849b1f3b3b15ae1e79813a7903481875865f31f20400a904f41d",
+          "stage": "gate"
+        },
+        {
+          "bytes": 12288,
+          "element_bytes": 2,
+          "offset": 9621504,
+          "rank": 1,
+          "sha256": "71fde0ac6b1da8a223686df3a65140e34bea4a32a01142449b3388cbcbce7ea5",
+          "stage": "up"
+        },
+        {
+          "bytes": 12288,
+          "element_bytes": 2,
+          "offset": 9633792,
+          "rank": 1,
+          "sha256": "441db53c493428b8bcf42238e2c35d7b7fe10216c02a5eedadd1b7570a654ece",
+          "stage": "activation"
+        },
+        {
+          "bytes": 16384,
+          "element_bytes": 4,
+          "offset": 9646080,
+          "rank": 1,
+          "sha256": "6f53900915bca7076d02e96a03578315f7ed2aa04db999f6094612ce1eb4d4bf",
+          "stage": "down-partial"
+        },
+        {
+          "bytes": 8192,
+          "element_bytes": 2,
+          "offset": 9662464,
+          "rank": 1,
+          "sha256": "faa56202578a3d3497bbe779137736439957e473775bd6f677dbce466a9d6979",
+          "stage": "final-hidden"
+        }
+      ],
+      "conditional_comparison": {
+        "arithmetic_prerequisites_verified": false,
+        "authority": "none",
+        "conditional_residual_sequence_checks_passed": true,
+        "full_layer_numerics_accepted": false,
+        "full_model_acceptance": false,
+        "gpu_execution_verified": false,
+        "input_provenance_verified": false,
+        "oracle_sha256": "551f89f968cad8f63073ca975346c593a31dad624115a93059b28a328e312ef3",
+        "performance_claim": false,
+        "production_authority": false,
+        "runtime_premises_discharged": false,
+        "schema": "ferric-p228-independent-two-residual-stages-v1",
+        "stages": [
+          {
+            "arithmetic_prerequisites_verified": false,
+            "authority": "none",
+            "conditional_tp_residual_checks_passed": true,
+            "conditioning": {
+              "output_sha256": [
+                "00e5a0bf5610bc110507bc5b2dbc9a257823a1568ab5e24ace9f3a48bd01baaa",
+                "00e5a0bf5610bc110507bc5b2dbc9a257823a1568ab5e24ace9f3a48bd01baaa"
+              ],
+              "partial_sha256": [
+                "ead5ec3fc0954f2eccfdb94a3c775d41bb6672bdeb6056fd774ab6402279b56c",
+                "ca5bb8ef89d40fb4cee172b2978d9358d15e8e8c08f27547c01bb9bddf1de883"
+              ],
+              "residual_sha256": [
+                "68b2cf48a968e475175c36edb4b0fb94836fcb2afcdedcb4403b208cf98f6b1c",
+                "68b2cf48a968e475175c36edb4b0fb94836fcb2afcdedcb4403b208cf98f6b1c"
+              ]
+            },
+            "elements": 4096,
+            "exact_bf16_words": 8192,
+            "expected_sha256": "00e5a0bf5610bc110507bc5b2dbc9a257823a1568ab5e24ace9f3a48bd01baaa",
+            "full_layer_numerics_accepted": false,
+            "full_model_acceptance": false,
+            "gpu_execution_verified": false,
+            "input_provenance_verified": false,
+            "oracle_sha256": "551f89f968cad8f63073ca975346c593a31dad624115a93059b28a328e312ef3",
+            "performance_claim": false,
+            "production_authority": false,
+            "ranks": 2,
+            "required_prerequisites": [
+              "binary32-rne-gradual-underflow",
+              "separate-ordered-additions-no-reassociation",
+              "bf16-rne-finite-boundaries"
+            ],
+            "runtime_premises_discharged": false,
+            "schema": "ferric-p228-independent-tp2-residual-reference-v1",
+            "source_symbol": "ferric_qwen3_tp_peer_tp2_ordered_residual_bf16_v18",
+            "stage": "post_attention",
+            "tolerance": "exact BF16 words including signed zero",
+            "upstream_partial_numerics_checked": false
+          },
+          {
+            "arithmetic_prerequisites_verified": false,
+            "authority": "none",
+            "conditional_tp_residual_checks_passed": true,
+            "conditioning": {
+              "output_sha256": [
+                "faa56202578a3d3497bbe779137736439957e473775bd6f677dbce466a9d6979",
+                "faa56202578a3d3497bbe779137736439957e473775bd6f677dbce466a9d6979"
+              ],
+              "partial_sha256": [
+                "542a6d2b32c9a0f8cebb92d5a2bda029f87143442ad79719b57c85ac6889eaf7",
+                "6f53900915bca7076d02e96a03578315f7ed2aa04db999f6094612ce1eb4d4bf"
+              ],
+              "residual_sha256": [
+                "00e5a0bf5610bc110507bc5b2dbc9a257823a1568ab5e24ace9f3a48bd01baaa",
+                "00e5a0bf5610bc110507bc5b2dbc9a257823a1568ab5e24ace9f3a48bd01baaa"
+              ]
+            },
+            "elements": 4096,
+            "exact_bf16_words": 8192,
+            "expected_sha256": "faa56202578a3d3497bbe779137736439957e473775bd6f677dbce466a9d6979",
+            "full_layer_numerics_accepted": false,
+            "full_model_acceptance": false,
+            "gpu_execution_verified": false,
+            "input_provenance_verified": false,
+            "oracle_sha256": "551f89f968cad8f63073ca975346c593a31dad624115a93059b28a328e312ef3",
+            "performance_claim": false,
+            "production_authority": false,
+            "ranks": 2,
+            "required_prerequisites": [
+              "binary32-rne-gradual-underflow",
+              "separate-ordered-additions-no-reassociation",
+              "bf16-rne-finite-boundaries"
+            ],
+            "runtime_premises_discharged": false,
+            "schema": "ferric-p228-independent-tp2-residual-reference-v1",
+            "source_symbol": "ferric_qwen3_tp_peer_tp2_ordered_residual_bf16_v18",
+            "stage": "post_mlp",
+            "tolerance": "exact BF16 words including signed zero",
+            "upstream_partial_numerics_checked": false
+          }
+        ],
+        "upstream_partial_numerics_checked": false
+      },
+      "profile": "baseline"
+    },
+    {
+      "capture": {
+        "bytes": 9670656,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-layer-gpu-v227-v1/native/candidate-capture.bin",
+        "sha256": "c46324f59a03f3db83e891475261cf527d19b7c1b5a981ce21b7b763e182f52f"
+      },
+      "capture_slices": [
+        {
+          "bytes": 8192,
+          "element_bytes": 2,
+          "offset": 0,
+          "rank": 0,
+          "sha256": "49b3afa6ca46528ec64673ca0e1a660e013fffc08717589ad78221c999fc379f",
+          "stage": "norm"
+        },
+        {
+          "bytes": 6144,
+          "element_bytes": 2,
+          "offset": 8192,
+          "rank": 0,
+          "sha256": "c8cd97f6d91137862fe61db6d342136429ca5ad7d8d26e8ec1e519c24d6d1680",
+          "stage": "qkv"
+        },
+        {
+          "bytes": 4096,
+          "element_bytes": 2,
+          "offset": 14336,
+          "rank": 0,
+          "sha256": "f2f110aa84e6b9d56e7899390c44e1c6d0eb98aeebd20abd6efabd9cea4ca562",
+          "stage": "query"
+        },
+        {
+          "bytes": 2359296,
+          "element_bytes": 2,
+          "offset": 18432,
+          "rank": 0,
+          "sha256": "b11e09523219e2f77b88d7efe9b7e8f9a6323d4a4a420cf3e80c40f675f20078",
+          "stage": "key-cache"
+        },
+        {
+          "bytes": 2359296,
+          "element_bytes": 2,
+          "offset": 2377728,
+          "rank": 0,
+          "sha256": "47e43ac17b6a6840225e1ccc3bdb4037b33ff25b64f37e34958f0d13c456126a",
+          "stage": "value-cache"
+        },
+        {
+          "bytes": 4096,
+          "element_bytes": 2,
+          "offset": 4737024,
+          "rank": 0,
+          "sha256": "2e3d129d209db99e0b2d3d30fd3a144777ed2eac1dd129069c19aff356c50310",
+          "stage": "attention"
+        },
+        {
+          "bytes": 16384,
+          "element_bytes": 4,
+          "offset": 4741120,
+          "rank": 0,
+          "sha256": "ead5ec3fc0954f2eccfdb94a3c775d41bb6672bdeb6056fd774ab6402279b56c",
+          "stage": "output-partial"
+        },
+        {
+          "bytes": 8192,
+          "element_bytes": 2,
+          "offset": 4757504,
+          "rank": 0,
+          "sha256": "00e5a0bf5610bc110507bc5b2dbc9a257823a1568ab5e24ace9f3a48bd01baaa",
+          "stage": "first-residual"
+        },
+        {
+          "bytes": 8192,
+          "element_bytes": 2,
+          "offset": 4765696,
+          "rank": 0,
+          "sha256": "92bc4fa88713ad003b58f1d7d8a495793a897e6b7113e58048081f3e9f473bdc",
+          "stage": "mlp-norm"
+        },
+        {
+          "bytes": 12288,
+          "element_bytes": 2,
+          "offset": 4773888,
+          "rank": 0,
+          "sha256": "8bf6f60226303029180ca2af0188dc11f32b2aff9143ac32f647134af2baf679",
+          "stage": "gate"
+        },
+        {
+          "bytes": 12288,
+          "element_bytes": 2,
+          "offset": 4786176,
+          "rank": 0,
+          "sha256": "53f065d20d1ddfbd62a8fbf82a7546e2883ea505e81674b00ab1cdb5f99f6320",
+          "stage": "up"
+        },
+        {
+          "bytes": 12288,
+          "element_bytes": 2,
+          "offset": 4798464,
+          "rank": 0,
+          "sha256": "04136e0ab56b28d185980c81986ca05bd2e1db144792b69eee24dd4397fb1d78",
+          "stage": "activation"
+        },
+        {
+          "bytes": 16384,
+          "element_bytes": 4,
+          "offset": 4810752,
+          "rank": 0,
+          "sha256": "542a6d2b32c9a0f8cebb92d5a2bda029f87143442ad79719b57c85ac6889eaf7",
+          "stage": "down-partial"
+        },
+        {
+          "bytes": 8192,
+          "element_bytes": 2,
+          "offset": 4827136,
+          "rank": 0,
+          "sha256": "faa56202578a3d3497bbe779137736439957e473775bd6f677dbce466a9d6979",
+          "stage": "final-hidden"
+        },
+        {
+          "bytes": 8192,
+          "element_bytes": 2,
+          "offset": 4835328,
+          "rank": 1,
+          "sha256": "49b3afa6ca46528ec64673ca0e1a660e013fffc08717589ad78221c999fc379f",
+          "stage": "norm"
+        },
+        {
+          "bytes": 6144,
+          "element_bytes": 2,
+          "offset": 4843520,
+          "rank": 1,
+          "sha256": "c9e9f8a616130678efa7434e3b9d098651f7d8b79778dc3af73c74195029047b",
+          "stage": "qkv"
+        },
+        {
+          "bytes": 4096,
+          "element_bytes": 2,
+          "offset": 4849664,
+          "rank": 1,
+          "sha256": "b2fc190e1ad5f9bcdaf1dede858fd9560b7e44cf40038e564b9793948ec755c0",
+          "stage": "query"
+        },
+        {
+          "bytes": 2359296,
+          "element_bytes": 2,
+          "offset": 4853760,
+          "rank": 1,
+          "sha256": "2920442877753dc4f21cef32f795f6606f9f95c7202927e8b0250b00587f6e8d",
+          "stage": "key-cache"
+        },
+        {
+          "bytes": 2359296,
+          "element_bytes": 2,
+          "offset": 7213056,
+          "rank": 1,
+          "sha256": "89150708b7f18b952fc616e92a39a93d97da2d2de60b9f727fa4e35e9efa98cb",
+          "stage": "value-cache"
+        },
+        {
+          "bytes": 4096,
+          "element_bytes": 2,
+          "offset": 9572352,
+          "rank": 1,
+          "sha256": "d4609f6429ee3a4bde1516dc449d2ed491ee90d5f88767028ecb3e1252965365",
+          "stage": "attention"
+        },
+        {
+          "bytes": 16384,
+          "element_bytes": 4,
+          "offset": 9576448,
+          "rank": 1,
+          "sha256": "ca5bb8ef89d40fb4cee172b2978d9358d15e8e8c08f27547c01bb9bddf1de883",
+          "stage": "output-partial"
+        },
+        {
+          "bytes": 8192,
+          "element_bytes": 2,
+          "offset": 9592832,
+          "rank": 1,
+          "sha256": "00e5a0bf5610bc110507bc5b2dbc9a257823a1568ab5e24ace9f3a48bd01baaa",
+          "stage": "first-residual"
+        },
+        {
+          "bytes": 8192,
+          "element_bytes": 2,
+          "offset": 9601024,
+          "rank": 1,
+          "sha256": "92bc4fa88713ad003b58f1d7d8a495793a897e6b7113e58048081f3e9f473bdc",
+          "stage": "mlp-norm"
+        },
+        {
+          "bytes": 12288,
+          "element_bytes": 2,
+          "offset": 9609216,
+          "rank": 1,
+          "sha256": "d6eaa79a3e8f849b1f3b3b15ae1e79813a7903481875865f31f20400a904f41d",
+          "stage": "gate"
+        },
+        {
+          "bytes": 12288,
+          "element_bytes": 2,
+          "offset": 9621504,
+          "rank": 1,
+          "sha256": "71fde0ac6b1da8a223686df3a65140e34bea4a32a01142449b3388cbcbce7ea5",
+          "stage": "up"
+        },
+        {
+          "bytes": 12288,
+          "element_bytes": 2,
+          "offset": 9633792,
+          "rank": 1,
+          "sha256": "441db53c493428b8bcf42238e2c35d7b7fe10216c02a5eedadd1b7570a654ece",
+          "stage": "activation"
+        },
+        {
+          "bytes": 16384,
+          "element_bytes": 4,
+          "offset": 9646080,
+          "rank": 1,
+          "sha256": "6f53900915bca7076d02e96a03578315f7ed2aa04db999f6094612ce1eb4d4bf",
+          "stage": "down-partial"
+        },
+        {
+          "bytes": 8192,
+          "element_bytes": 2,
+          "offset": 9662464,
+          "rank": 1,
+          "sha256": "faa56202578a3d3497bbe779137736439957e473775bd6f677dbce466a9d6979",
+          "stage": "final-hidden"
+        }
+      ],
+      "conditional_comparison": {
+        "arithmetic_prerequisites_verified": false,
+        "authority": "none",
+        "conditional_residual_sequence_checks_passed": true,
+        "full_layer_numerics_accepted": false,
+        "full_model_acceptance": false,
+        "gpu_execution_verified": false,
+        "input_provenance_verified": false,
+        "oracle_sha256": "551f89f968cad8f63073ca975346c593a31dad624115a93059b28a328e312ef3",
+        "performance_claim": false,
+        "production_authority": false,
+        "runtime_premises_discharged": false,
+        "schema": "ferric-p228-independent-two-residual-stages-v1",
+        "stages": [
+          {
+            "arithmetic_prerequisites_verified": false,
+            "authority": "none",
+            "conditional_tp_residual_checks_passed": true,
+            "conditioning": {
+              "output_sha256": [
+                "00e5a0bf5610bc110507bc5b2dbc9a257823a1568ab5e24ace9f3a48bd01baaa",
+                "00e5a0bf5610bc110507bc5b2dbc9a257823a1568ab5e24ace9f3a48bd01baaa"
+              ],
+              "partial_sha256": [
+                "ead5ec3fc0954f2eccfdb94a3c775d41bb6672bdeb6056fd774ab6402279b56c",
+                "ca5bb8ef89d40fb4cee172b2978d9358d15e8e8c08f27547c01bb9bddf1de883"
+              ],
+              "residual_sha256": [
+                "68b2cf48a968e475175c36edb4b0fb94836fcb2afcdedcb4403b208cf98f6b1c",
+                "68b2cf48a968e475175c36edb4b0fb94836fcb2afcdedcb4403b208cf98f6b1c"
+              ]
+            },
+            "elements": 4096,
+            "exact_bf16_words": 8192,
+            "expected_sha256": "00e5a0bf5610bc110507bc5b2dbc9a257823a1568ab5e24ace9f3a48bd01baaa",
+            "full_layer_numerics_accepted": false,
+            "full_model_acceptance": false,
+            "gpu_execution_verified": false,
+            "input_provenance_verified": false,
+            "oracle_sha256": "551f89f968cad8f63073ca975346c593a31dad624115a93059b28a328e312ef3",
+            "performance_claim": false,
+            "production_authority": false,
+            "ranks": 2,
+            "required_prerequisites": [
+              "binary32-rne-gradual-underflow",
+              "separate-ordered-additions-no-reassociation",
+              "bf16-rne-finite-boundaries"
+            ],
+            "runtime_premises_discharged": false,
+            "schema": "ferric-p228-independent-tp2-residual-reference-v1",
+            "source_symbol": "ferric_qwen3_tp_peer_tp2_ordered_residual_bf16_v18",
+            "stage": "post_attention",
+            "tolerance": "exact BF16 words including signed zero",
+            "upstream_partial_numerics_checked": false
+          },
+          {
+            "arithmetic_prerequisites_verified": false,
+            "authority": "none",
+            "conditional_tp_residual_checks_passed": true,
+            "conditioning": {
+              "output_sha256": [
+                "faa56202578a3d3497bbe779137736439957e473775bd6f677dbce466a9d6979",
+                "faa56202578a3d3497bbe779137736439957e473775bd6f677dbce466a9d6979"
+              ],
+              "partial_sha256": [
+                "542a6d2b32c9a0f8cebb92d5a2bda029f87143442ad79719b57c85ac6889eaf7",
+                "6f53900915bca7076d02e96a03578315f7ed2aa04db999f6094612ce1eb4d4bf"
+              ],
+              "residual_sha256": [
+                "00e5a0bf5610bc110507bc5b2dbc9a257823a1568ab5e24ace9f3a48bd01baaa",
+                "00e5a0bf5610bc110507bc5b2dbc9a257823a1568ab5e24ace9f3a48bd01baaa"
+              ]
+            },
+            "elements": 4096,
+            "exact_bf16_words": 8192,
+            "expected_sha256": "faa56202578a3d3497bbe779137736439957e473775bd6f677dbce466a9d6979",
+            "full_layer_numerics_accepted": false,
+            "full_model_acceptance": false,
+            "gpu_execution_verified": false,
+            "input_provenance_verified": false,
+            "oracle_sha256": "551f89f968cad8f63073ca975346c593a31dad624115a93059b28a328e312ef3",
+            "performance_claim": false,
+            "production_authority": false,
+            "ranks": 2,
+            "required_prerequisites": [
+              "binary32-rne-gradual-underflow",
+              "separate-ordered-additions-no-reassociation",
+              "bf16-rne-finite-boundaries"
+            ],
+            "runtime_premises_discharged": false,
+            "schema": "ferric-p228-independent-tp2-residual-reference-v1",
+            "source_symbol": "ferric_qwen3_tp_peer_tp2_ordered_residual_bf16_v18",
+            "stage": "post_mlp",
+            "tolerance": "exact BF16 words including signed zero",
+            "upstream_partial_numerics_checked": false
+          }
+        ],
+        "upstream_partial_numerics_checked": false
+      },
+      "profile": "candidate"
+    }
+  ],
+  "runtime_premises_discharged": false,
+  "schema": "ferric-p228-historical-two-residual-replay-v1",
+  "source_postchecks_passed": true,
+  "token": 9112
+}
