@@ -6,7 +6,14 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Latest: an [independent RoPE materialization diagnostic](../qualification/rope-framework-reference-v1/README.md)
+Latest: the [BF16 RoPE candidate passed CPU qualification](../qualification/rope-materialized-cpu-v1/README.md)
+on ASROCK: twenty new tests and thirteen reciprocal regression tests, including
+the separately selected exhaustive case. All eleven build/test phases completed
+with unchanged source and provider snapshots. The full tested fixture is
+published; the default device crate and production route are unchanged. Checked
+gfx950 lowering and GPU execution remain pending for this candidate.
+
+An [independent RoPE materialization diagnostic](../qualification/rope-framework-reference-v1/README.md)
 completed on ASROCK. All 38,528 conditional BF16 words match the installed
 framework when coefficients and products use its BF16 boundaries; fourteen
 reference tests passed. Keeping products in FP32 produces differences at all

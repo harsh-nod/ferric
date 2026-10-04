@@ -1,0 +1,363 @@
+{
+  "configurations": {
+    "/.cargo/config": null,
+    "/.cargo/config.toml": null,
+    "/home/.cargo/config": null,
+    "/home/.cargo/config.toml": null,
+    "/home/harmenon/.cargo/config": null,
+    "/home/harmenon/.cargo/config.toml": null,
+    "/home/harmenon/ferric-asrock-42/.cargo/config": null,
+    "/home/harmenon/ferric-asrock-42/.cargo/config.toml": null,
+    "/home/harmenon/ferric-asrock-42/evidence/.cargo/config": null,
+    "/home/harmenon/ferric-asrock-42/evidence/.cargo/config.toml": null,
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/.cargo/config": null,
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/.cargo/config.toml": null,
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rope-materialized-cpu-v228-v2/.cargo/config": null,
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rope-materialized-cpu-v228-v2/.cargo/config.toml": null,
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rope-materialized-cpu-v228-v2/fixture/.cargo/config": null,
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rope-materialized-cpu-v228-v2/fixture/.cargo/config.toml": null,
+    "/home/harmenon/ferric-asrock-42/toolchain/cargo/config": null,
+    "/home/harmenon/ferric-asrock-42/toolchain/cargo/config.toml": null
+  },
+  "fixture": {
+    "Cargo.lock": {
+      "bytes": 8897,
+      "sha256": "93282dd447e56780f5c830431520ce3b101d52db6c14c83db4432f1ea122b445"
+    },
+    "Cargo.toml": {
+      "bytes": 348,
+      "sha256": "9db18beef4cdb3f477f0a0de8214bda95541f1b45a84552aa0218c3687a6e188"
+    },
+    "src/attention_online.rs": {
+      "bytes": 3066,
+      "sha256": "105a7065a7856d1c6f14e3edb743887e734231b1f42a3e0d42727a5b64ffde7b"
+    },
+    "src/fixture_lib.rs": {
+      "bytes": 81,
+      "sha256": "1e16c6e8c0fb1251ae9fab205acbdabb4c505e0032f00e8880d717593511186f"
+    },
+    "src/head_rope_numerics_v3.rs": {
+      "bytes": 5884,
+      "sha256": "4b88b9ce6608c791a0df8d0d2c5166de7aad77d63e7b2c52383cce068a1996e9"
+    },
+    "src/lib.rs": {
+      "bytes": 7168,
+      "sha256": "d0dd70478f67b80aca49e479221b56092f270869583f8a6c360b6fdd8eb60dd1"
+    },
+    "src/output_projection_numerics_v5.rs": {
+      "bytes": 2033,
+      "sha256": "ef397ea5bfe59d6284172e0b2dda6c0f37eef69b48c1392274941d5b521cffd5"
+    },
+    "src/prefix_reciprocal_numerics_v1.rs": {
+      "bytes": 6056,
+      "sha256": "d2da6d5c02474556ab606a923c065d7146a2527a36400999431df0111fd2cca6"
+    },
+    "src/prefix_rope_materialized_numerics_v1.rs": {
+      "bytes": 4057,
+      "sha256": "6ca7fede05ad41173f974e55700539194349c3bd738ee94c2daf62d3f15603ad"
+    },
+    "src/prefix_tiles_numerics_v6.rs": {
+      "bytes": 6092,
+      "sha256": "3f729b83bc50d4e252a73911ac69bb4e4e1829e1cb05ca3f0bcffa36f09475ad"
+    },
+    "src/wave_numerics_v1.rs": {
+      "bytes": 2235,
+      "sha256": "22ef471c341936b3bc6f7b5812405c60152292cef07dcbd03173bf2dd7ee49ea"
+    },
+    "tests/fixtures/prefix_reciprocal_fraction_v1.tsv": {
+      "bytes": 18185,
+      "sha256": "79c7ed45639e642d56ba14cc2f0edf40097cd986dc40ea5e300859d6ce94d0ee"
+    },
+    "tests/fixtures/v7_lib.rs": {
+      "bytes": 7072,
+      "sha256": "d5c2ee3ca4f619080a8b544bc4e47b8ae4a55642ba2eb84448c8d32e91056c37"
+    },
+    "tests/prefix_reciprocal_v1.rs": {
+      "bytes": 10716,
+      "sha256": "ec040d00660c8431effaa55bf5df70d2a1c1a5fd6611a8a2c2350a504d3fab45"
+    },
+    "tests/rope_materialized_v1.rs": {
+      "bytes": 10883,
+      "sha256": "cccaab5c0b5c13f8789e8d2bbe6d1ffac2d888b13fdd036d5ae442ff0df61b9d"
+    }
+  },
+  "provider": {
+    "/home/harmenon/ferric-asrock-42/fe2o3/crates/fe2o3-device/Cargo.toml": {
+      "bytes": 398,
+      "path": "/home/harmenon/ferric-asrock-42/fe2o3/crates/fe2o3-device/Cargo.toml",
+      "sha256": "da7bbcd2f3dac75b968f45137c920d94658b5600ff52bf9d843d494bcdd8afb7"
+    },
+    "/home/harmenon/ferric-asrock-42/fe2o3/crates/fe2o3-device/src/atomic.rs": {
+      "bytes": 3292,
+      "path": "/home/harmenon/ferric-asrock-42/fe2o3/crates/fe2o3-device/src/atomic.rs",
+      "sha256": "0501dfb6c5ed5eee67676a1afe7424ac58ce227071006d11d8c04b50dd7341fc"
+    },
+    "/home/harmenon/ferric-asrock-42/fe2o3/crates/fe2o3-device/src/collective.rs": {
+      "bytes": 27879,
+      "path": "/home/harmenon/ferric-asrock-42/fe2o3/crates/fe2o3-device/src/collective.rs",
+      "sha256": "3b6f320c8af2276165c974657d5ab966be3bfe854adcb6134b12e423d0723f0f"
+    },
+    "/home/harmenon/ferric-asrock-42/fe2o3/crates/fe2o3-device/src/collective/tests.rs": {
+      "bytes": 10950,
+      "path": "/home/harmenon/ferric-asrock-42/fe2o3/crates/fe2o3-device/src/collective/tests.rs",
+      "sha256": "240e74044c0b9a85d663d63445247e1a3a160101ac07729b176b70690109a106"
+    },
+    "/home/harmenon/ferric-asrock-42/fe2o3/crates/fe2o3-device/src/context.rs": {
+      "bytes": 4124,
+      "path": "/home/harmenon/ferric-asrock-42/fe2o3/crates/fe2o3-device/src/context.rs",
+      "sha256": "1801347b009dc909854004576653664b3998dd382b714add00e2ddce7f32fd71"
+    },
+    "/home/harmenon/ferric-asrock-42/fe2o3/crates/fe2o3-device/src/diagnostics.rs": {
+      "bytes": 5802,
+      "path": "/home/harmenon/ferric-asrock-42/fe2o3/crates/fe2o3-device/src/diagnostics.rs",
+      "sha256": "a6c816485d36102a75c817af1ac465e119dc7650ec26f01945481b19007fe8a6"
+    },
+    "/home/harmenon/ferric-asrock-42/fe2o3/crates/fe2o3-device/src/execution.rs": {
+      "bytes": 3679,
+      "path": "/home/harmenon/ferric-asrock-42/fe2o3/crates/fe2o3-device/src/execution.rs",
+      "sha256": "db559e3c19cad9e82287651badf450b316dfb77e80f21ac7b18daaff61aa3dee"
+    },
+    "/home/harmenon/ferric-asrock-42/fe2o3/crates/fe2o3-device/src/ffi.rs": {
+      "bytes": 5189,
+      "path": "/home/harmenon/ferric-asrock-42/fe2o3/crates/fe2o3-device/src/ffi.rs",
+      "sha256": "760db3eba62c6fbef0ba5b6c3a202fca73e05b99ca770fec8fcc7a8547f88ff8"
+    },
+    "/home/harmenon/ferric-asrock-42/fe2o3/crates/fe2o3-device/src/finite_join.rs": {
+      "bytes": 8814,
+      "path": "/home/harmenon/ferric-asrock-42/fe2o3/crates/fe2o3-device/src/finite_join.rs",
+      "sha256": "f900ecc61dc1795cfbd20b8326ecb444276bae4be8a129180a0ee52c8b46ffe4"
+    },
+    "/home/harmenon/ferric-asrock-42/fe2o3/crates/fe2o3-device/src/finite_join/multiwave_join_v1.rs": {
+      "bytes": 16056,
+      "path": "/home/harmenon/ferric-asrock-42/fe2o3/crates/fe2o3-device/src/finite_join/multiwave_join_v1.rs",
+      "sha256": "26da501451c79fb44df5b20d5fcf9deb0622369b303c37a8b84ad2a0461f58b3"
+    },
+    "/home/harmenon/ferric-asrock-42/fe2o3/crates/fe2o3-device/src/finite_join/multiwave_join_v1_tests.rs": {
+      "bytes": 28084,
+      "path": "/home/harmenon/ferric-asrock-42/fe2o3/crates/fe2o3-device/src/finite_join/multiwave_join_v1_tests.rs",
+      "sha256": "364a0700aa15b579e360791199d6c6e9752524395b433b03ad2947a25db2c01b"
+    },
+    "/home/harmenon/ferric-asrock-42/fe2o3/crates/fe2o3-device/src/finite_join/wave_mlp_tasks_v1.rs": {
+      "bytes": 29856,
+      "path": "/home/harmenon/ferric-asrock-42/fe2o3/crates/fe2o3-device/src/finite_join/wave_mlp_tasks_v1.rs",
+      "sha256": "be30f00371f766dda2c05e6d317520ff25f1b1663a48dad981c466f818455bb9"
+    },
+    "/home/harmenon/ferric-asrock-42/fe2o3/crates/fe2o3-device/src/finite_join/wave_mlp_tasks_v1_tests.rs": {
+      "bytes": 18150,
+      "path": "/home/harmenon/ferric-asrock-42/fe2o3/crates/fe2o3-device/src/finite_join/wave_mlp_tasks_v1_tests.rs",
+      "sha256": "36412966965eac70f1920d196f99a384e8e85312dc9efe95b515bb0ed1c770d6"
+    },
+    "/home/harmenon/ferric-asrock-42/fe2o3/crates/fe2o3-device/src/finite_join/wave_mlp_tiles_v2.rs": {
+      "bytes": 35976,
+      "path": "/home/harmenon/ferric-asrock-42/fe2o3/crates/fe2o3-device/src/finite_join/wave_mlp_tiles_v2.rs",
+      "sha256": "f292dd381b827946b037a39b05548ed2a8819420686f2069b5432845530992b6"
+    },
+    "/home/harmenon/ferric-asrock-42/fe2o3/crates/fe2o3-device/src/finite_join/wave_mlp_tiles_v2_tests.rs": {
+      "bytes": 25636,
+      "path": "/home/harmenon/ferric-asrock-42/fe2o3/crates/fe2o3-device/src/finite_join/wave_mlp_tiles_v2_tests.rs",
+      "sha256": "d5c527ff2134aaf32dcf2832842e99c615e7e04d64779061825246db948fe466"
+    },
+    "/home/harmenon/ferric-asrock-42/fe2o3/crates/fe2o3-device/src/finite_join/wave_qkv_attention_output_tasks_v5.rs": {
+      "bytes": 49002,
+      "path": "/home/harmenon/ferric-asrock-42/fe2o3/crates/fe2o3-device/src/finite_join/wave_qkv_attention_output_tasks_v5.rs",
+      "sha256": "9cbc34323a54e2b35875f47a14cd1520c221236512394caf0c3234759e769e18"
+    },
+    "/home/harmenon/ferric-asrock-42/fe2o3/crates/fe2o3-device/src/finite_join/wave_qkv_attention_output_tasks_v5_tests.rs": {
+      "bytes": 65743,
+      "path": "/home/harmenon/ferric-asrock-42/fe2o3/crates/fe2o3-device/src/finite_join/wave_qkv_attention_output_tasks_v5_tests.rs",
+      "sha256": "41939c85058dd1838acf615ffcbc403511a8d813ae47ce056362fbb043597bff"
+    },
+    "/home/harmenon/ferric-asrock-42/fe2o3/crates/fe2o3-device/src/finite_join/wave_qkv_attention_output_tiles_v6.rs": {
+      "bytes": 42925,
+      "path": "/home/harmenon/ferric-asrock-42/fe2o3/crates/fe2o3-device/src/finite_join/wave_qkv_attention_output_tiles_v6.rs",
+      "sha256": "6d20ef894b082767a660d051e51e17c3e211cc673a77bfa0b33392efaac69dda"
+    },
+    "/home/harmenon/ferric-asrock-42/fe2o3/crates/fe2o3-device/src/finite_join/wave_qkv_attention_output_tiles_v6_tests.rs": {
+      "bytes": 32430,
+      "path": "/home/harmenon/ferric-asrock-42/fe2o3/crates/fe2o3-device/src/finite_join/wave_qkv_attention_output_tiles_v6_tests.rs",
+      "sha256": "a339b318511669b4cfe01f0d7b77d00689f523f89e2478d253b6affb0427d224"
+    },
+    "/home/harmenon/ferric-asrock-42/fe2o3/crates/fe2o3-device/src/finite_join/wave_qkv_attention_tasks_v4.rs": {
+      "bytes": 44304,
+      "path": "/home/harmenon/ferric-asrock-42/fe2o3/crates/fe2o3-device/src/finite_join/wave_qkv_attention_tasks_v4.rs",
+      "sha256": "f71d0b06d7687bb171ffc527cff2a0d891d51f3dbc3134eb8de14ab2556e9586"
+    },
+    "/home/harmenon/ferric-asrock-42/fe2o3/crates/fe2o3-device/src/finite_join/wave_qkv_attention_tasks_v4_tests.rs": {
+      "bytes": 53446,
+      "path": "/home/harmenon/ferric-asrock-42/fe2o3/crates/fe2o3-device/src/finite_join/wave_qkv_attention_tasks_v4_tests.rs",
+      "sha256": "4b6f5cda9fb833af80949ba2aae21b55b715fc385f4bcc5f47c1f44a2f1cf7bc"
+    },
+    "/home/harmenon/ferric-asrock-42/fe2o3/crates/fe2o3-device/src/finite_join/wave_qkv_post_tasks_v3.rs": {
+      "bytes": 37381,
+      "path": "/home/harmenon/ferric-asrock-42/fe2o3/crates/fe2o3-device/src/finite_join/wave_qkv_post_tasks_v3.rs",
+      "sha256": "f92a6ff3b22e38a9508cab9eee2ac49e5db60d67790336fb8323a22a347c345e"
+    },
+    "/home/harmenon/ferric-asrock-42/fe2o3/crates/fe2o3-device/src/finite_join/wave_qkv_post_tasks_v3_tests.rs": {
+      "bytes": 40247,
+      "path": "/home/harmenon/ferric-asrock-42/fe2o3/crates/fe2o3-device/src/finite_join/wave_qkv_post_tasks_v3_tests.rs",
+      "sha256": "263180d1b15af4b607e5150adb4f65acafbe74c0650f7d20b82a6e709653de66"
+    },
+    "/home/harmenon/ferric-asrock-42/fe2o3/crates/fe2o3-device/src/finite_join/wave_qkv_tasks_v2.rs": {
+      "bytes": 26343,
+      "path": "/home/harmenon/ferric-asrock-42/fe2o3/crates/fe2o3-device/src/finite_join/wave_qkv_tasks_v2.rs",
+      "sha256": "23fc1c4091a41b5fcec15648a116d97a801bf62f42cb49d57fb517e894dea761"
+    },
+    "/home/harmenon/ferric-asrock-42/fe2o3/crates/fe2o3-device/src/finite_join/wave_qkv_tasks_v2_tests.rs": {
+      "bytes": 23852,
+      "path": "/home/harmenon/ferric-asrock-42/fe2o3/crates/fe2o3-device/src/finite_join/wave_qkv_tasks_v2_tests.rs",
+      "sha256": "81ab1ae60c66da045484e1920d9052d22f36be71b4cb72b662956f09b74aee89"
+    },
+    "/home/harmenon/ferric-asrock-42/fe2o3/crates/fe2o3-device/src/finite_join/wave_tasks.rs": {
+      "bytes": 23606,
+      "path": "/home/harmenon/ferric-asrock-42/fe2o3/crates/fe2o3-device/src/finite_join/wave_tasks.rs",
+      "sha256": "644cddc64c149c9d2eaddf645d3dbefe5a5d48cf007148b77d2e6c183e2c0b63"
+    },
+    "/home/harmenon/ferric-asrock-42/fe2o3/crates/fe2o3-device/src/finite_join/wave_tasks_run_tests.rs": {
+      "bytes": 12412,
+      "path": "/home/harmenon/ferric-asrock-42/fe2o3/crates/fe2o3-device/src/finite_join/wave_tasks_run_tests.rs",
+      "sha256": "765ea1245f29078c6b81f1853b1c25582605e67af7f797a251732c1ab19de74b"
+    },
+    "/home/harmenon/ferric-asrock-42/fe2o3/crates/fe2o3-device/src/finite_join/wave_tasks_scheduler_tests.rs": {
+      "bytes": 10207,
+      "path": "/home/harmenon/ferric-asrock-42/fe2o3/crates/fe2o3-device/src/finite_join/wave_tasks_scheduler_tests.rs",
+      "sha256": "b1f1f41c739d4cf6711e24e32e1d03509e4d381ecdea018f54ce11e71da71d00"
+    },
+    "/home/harmenon/ferric-asrock-42/fe2o3/crates/fe2o3-device/src/finite_join/wave_tasks_tests.rs": {
+      "bytes": 18411,
+      "path": "/home/harmenon/ferric-asrock-42/fe2o3/crates/fe2o3-device/src/finite_join/wave_tasks_tests.rs",
+      "sha256": "df8ffffae811e0bf4f55e83362fe21a2e043ff8b63b3d4ac409484eec45366f1"
+    },
+    "/home/harmenon/ferric-asrock-42/fe2o3/crates/fe2o3-device/src/finite_join_dispatch.rs": {
+      "bytes": 3767,
+      "path": "/home/harmenon/ferric-asrock-42/fe2o3/crates/fe2o3-device/src/finite_join_dispatch.rs",
+      "sha256": "07c2de8cc0013fb516ff884be33c3fb55428d2f5cb55eb57c39768dd5edcfeda"
+    },
+    "/home/harmenon/ferric-asrock-42/fe2o3/crates/fe2o3-device/src/finite_join_dispatch_tests.rs": {
+      "bytes": 4588,
+      "path": "/home/harmenon/ferric-asrock-42/fe2o3/crates/fe2o3-device/src/finite_join_dispatch_tests.rs",
+      "sha256": "2051ba1516a2535aa157cae17661a850808cf93292733af16162a0f550cee27c"
+    },
+    "/home/harmenon/ferric-asrock-42/fe2o3/crates/fe2o3-device/src/finite_join_tests.rs": {
+      "bytes": 14737,
+      "path": "/home/harmenon/ferric-asrock-42/fe2o3/crates/fe2o3-device/src/finite_join_tests.rs",
+      "sha256": "0e12b73a0c50a63b9f5a60ecaa4c8df0d7f95c7df79dc623733d1fd3e26c41f6"
+    },
+    "/home/harmenon/ferric-asrock-42/fe2o3/crates/fe2o3-device/src/fp8.rs": {
+      "bytes": 16707,
+      "path": "/home/harmenon/ferric-asrock-42/fe2o3/crates/fe2o3-device/src/fp8.rs",
+      "sha256": "cfef17bf75e8da8f90f23e50c215205bbc3438c78e535c2be26fcaf744a687f1"
+    },
+    "/home/harmenon/ferric-asrock-42/fe2o3/crates/fe2o3-device/src/gfx950.rs": {
+      "bytes": 35227,
+      "path": "/home/harmenon/ferric-asrock-42/fe2o3/crates/fe2o3-device/src/gfx950.rs",
+      "sha256": "197afb65be1d8313964925d8f8c08daa88ca84ad31b4909fac64ee985e4db879"
+    },
+    "/home/harmenon/ferric-asrock-42/fe2o3/crates/fe2o3-device/src/group.rs": {
+      "bytes": 15780,
+      "path": "/home/harmenon/ferric-asrock-42/fe2o3/crates/fe2o3-device/src/group.rs",
+      "sha256": "d1fcf565e84205c6943a1f87bbb72bf35cad8645064ebeb53fd8fe767bb3f324"
+    },
+    "/home/harmenon/ferric-asrock-42/fe2o3/crates/fe2o3-device/src/group/tests.rs": {
+      "bytes": 10940,
+      "path": "/home/harmenon/ferric-asrock-42/fe2o3/crates/fe2o3-device/src/group/tests.rs",
+      "sha256": "56684abf5cccd2361007969672180f744481786b7e28b08cd70034fbf5788e88"
+    },
+    "/home/harmenon/ferric-asrock-42/fe2o3/crates/fe2o3-device/src/half.rs": {
+      "bytes": 16232,
+      "path": "/home/harmenon/ferric-asrock-42/fe2o3/crates/fe2o3-device/src/half.rs",
+      "sha256": "0d7b2193ec67c34919181a1ecefff23d24ee9af45ec567c5a4f57772792f10af"
+    },
+    "/home/harmenon/ferric-asrock-42/fe2o3/crates/fe2o3-device/src/kernel_result.rs": {
+      "bytes": 2698,
+      "path": "/home/harmenon/ferric-asrock-42/fe2o3/crates/fe2o3-device/src/kernel_result.rs",
+      "sha256": "5d4d9cfa2e9d815b1e6fd5e8478124d30c22b6311134c138e761d3345467067f"
+    },
+    "/home/harmenon/ferric-asrock-42/fe2o3/crates/fe2o3-device/src/lds.rs": {
+      "bytes": 29551,
+      "path": "/home/harmenon/ferric-asrock-42/fe2o3/crates/fe2o3-device/src/lds.rs",
+      "sha256": "6fc1503a9b750abcaf50da9ca53bb7883d4a3ba95110df813d4bd9bf8284c510"
+    },
+    "/home/harmenon/ferric-asrock-42/fe2o3/crates/fe2o3-device/src/lib.rs": {
+      "bytes": 40693,
+      "path": "/home/harmenon/ferric-asrock-42/fe2o3/crates/fe2o3-device/src/lib.rs",
+      "sha256": "ae46d532933ca6b9f1075274ef61c843ad12648d71f74176259a9296e8edc739"
+    },
+    "/home/harmenon/ferric-asrock-42/fe2o3/crates/fe2o3-device/src/math.rs": {
+      "bytes": 7905,
+      "path": "/home/harmenon/ferric-asrock-42/fe2o3/crates/fe2o3-device/src/math.rs",
+      "sha256": "edb6ca6b58f981be97289b11547ffe8599cb2bf019725291f9b22668d3b32223"
+    },
+    "/home/harmenon/ferric-asrock-42/fe2o3/crates/fe2o3-device/src/memory.rs": {
+      "bytes": 10486,
+      "path": "/home/harmenon/ferric-asrock-42/fe2o3/crates/fe2o3-device/src/memory.rs",
+      "sha256": "63595d2dda14ad76a2f818c62d18c0138ccdc52eadd89f5516863a193079146b"
+    },
+    "/home/harmenon/ferric-asrock-42/fe2o3/crates/fe2o3-device/src/mx.rs": {
+      "bytes": 7170,
+      "path": "/home/harmenon/ferric-asrock-42/fe2o3/crates/fe2o3-device/src/mx.rs",
+      "sha256": "f9967d6717f80370ed8ea58efab8f9e6bf2d98c452828d69ef7034e60e07a24b"
+    },
+    "/home/harmenon/ferric-asrock-42/fe2o3/crates/fe2o3-device/src/read_only_allocation.rs": {
+      "bytes": 3863,
+      "path": "/home/harmenon/ferric-asrock-42/fe2o3/crates/fe2o3-device/src/read_only_allocation.rs",
+      "sha256": "4444c47abbcf4da16fbad366b7b9208f809a191c00c587aba0bc8bcf59b330af"
+    },
+    "/home/harmenon/ferric-asrock-42/fe2o3/crates/fe2o3-device/src/simd.rs": {
+      "bytes": 6948,
+      "path": "/home/harmenon/ferric-asrock-42/fe2o3/crates/fe2o3-device/src/simd.rs",
+      "sha256": "9acac9bd020334d5b20d3c170cd820f8d5a9990f240ce790a6c76506d0dae82f"
+    },
+    "/home/harmenon/ferric-asrock-42/fe2o3/crates/fe2o3-device/src/static_publication.rs": {
+      "bytes": 7028,
+      "path": "/home/harmenon/ferric-asrock-42/fe2o3/crates/fe2o3-device/src/static_publication.rs",
+      "sha256": "dfb741934be63ddf37b3ec2c7d1cc2404b77772e7698a7530102e831c52ab952"
+    },
+    "/home/harmenon/ferric-asrock-42/fe2o3/crates/fe2o3-device/src/sync.rs": {
+      "bytes": 12810,
+      "path": "/home/harmenon/ferric-asrock-42/fe2o3/crates/fe2o3-device/src/sync.rs",
+      "sha256": "995323c2c1518f31f4b970d7d71c5135040e3147047b850fa3849f1f5d5da8f7"
+    },
+    "/home/harmenon/ferric-asrock-42/fe2o3/crates/fe2o3-device/src/tensor.rs": {
+      "bytes": 27741,
+      "path": "/home/harmenon/ferric-asrock-42/fe2o3/crates/fe2o3-device/src/tensor.rs",
+      "sha256": "486f9b669c41049ae62d70483d4fe0929daac5d4d99e46c0be97e8b6d24ed612"
+    },
+    "/home/harmenon/ferric-asrock-42/fe2o3/crates/fe2o3-device/src/tensor/column_major.rs": {
+      "bytes": 8473,
+      "path": "/home/harmenon/ferric-asrock-42/fe2o3/crates/fe2o3-device/src/tensor/column_major.rs",
+      "sha256": "86d464e4c962766c0348b6205a6bde6eb4ebadd3bb54f942cae4957b11e36dc5"
+    },
+    "/home/harmenon/ferric-asrock-42/fe2o3/crates/fe2o3-device/src/thread.rs": {
+      "bytes": 38957,
+      "path": "/home/harmenon/ferric-asrock-42/fe2o3/crates/fe2o3-device/src/thread.rs",
+      "sha256": "bed648e3cc96fcc2104e7babcc126214efd010c01806086d981233da855ff8ab"
+    },
+    "/home/harmenon/ferric-asrock-42/fe2o3/crates/fe2o3-device/src/tile.rs": {
+      "bytes": 5266,
+      "path": "/home/harmenon/ferric-asrock-42/fe2o3/crates/fe2o3-device/src/tile.rs",
+      "sha256": "a5239f7877c65ce27ff7af712b4901b770425aa1b75822f5e30e650efa69ab47"
+    },
+    "/home/harmenon/ferric-asrock-42/fe2o3/crates/fe2o3-device/src/views.rs": {
+      "bytes": 25742,
+      "path": "/home/harmenon/ferric-asrock-42/fe2o3/crates/fe2o3-device/src/views.rs",
+      "sha256": "63073f5b2df825fca332ab98ef64ce661abb973caa78e647f08c6ddc9e43ae2e"
+    },
+    "/home/harmenon/ferric-asrock-42/fe2o3/crates/fe2o3-device/src/wave.rs": {
+      "bytes": 6105,
+      "path": "/home/harmenon/ferric-asrock-42/fe2o3/crates/fe2o3-device/src/wave.rs",
+      "sha256": "0ee4cd026550506669e8d8e06e81088e54756c68bdad82672bd51efbdcef7f5b"
+    }
+  },
+  "workspace": {
+    "Cargo.lock": {
+      "bytes": 94611,
+      "path": "/home/harmenon/ferric-asrock-42/fe2o3/Cargo.lock",
+      "sha256": "f0950d120a5decc8e52cd1160c31820f7703e72448d70061852d044fa925bcfc"
+    },
+    "Cargo.toml": {
+      "bytes": 9409,
+      "path": "/home/harmenon/ferric-asrock-42/fe2o3/Cargo.toml",
+      "sha256": "cb3099e0ebf7c6b04c21349d27569e7fcb7a2ec6199d6b9868421748263aa183"
+    }
+  }
+}

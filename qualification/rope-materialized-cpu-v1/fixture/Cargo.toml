@@ -1,0 +1,17 @@
+[package]
+name = "ferric-row-numerical-cpu-fixture-v225"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[workspace]
+
+[dependencies]
+fe2o3-device = { path = "/home/harmenon/ferric-asrock-42/fe2o3/crates/fe2o3-device" }
+
+[dev-dependencies]
+quote = "=1.0.47"
+syn = { version = "=2.0.119", features = ["full"] }
+
+[lib]
+path = "src/fixture_lib.rs"
