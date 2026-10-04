@@ -118,8 +118,12 @@ The later [consolidation candidate](../../docs/GFX950_HOST_POLICY_V2.md#consolid
 uses runtime commit `725ecc6a500ff49e7dfaefb38b027f6bcc223ebf`. It passed 77
 selected runtime tests and 398 worker/shared-wire tests with four ignored,
 and built a distinct worker binary. All retained raw records and the binary
-were rehashed locally. This CPU-only checkpoint is not the source pair used
-for the A/B/A/C GPU graph; the new worker's own GPU validation remains pending.
+were rehashed locally. The original A/B/A/C graph still uses the older worker.
+The new worker's [separate GPU comparison](../../docs/GFX950_HOST_POLICY_V2.md#consolidation-gpu-observation)
+passed all 152 native rows, six audits and clean Close/reap. Four-forward host
+time was 30.394 seconds versus 61.458 seconds for the old shared worker, with
+18,720 duplicate full checks removed and unchanged dispatch/transfer counts.
+This single unisolated diagnostic is not a sustained decode speedup claim.
 
 Host counters are inclusive and nested. Do not sum them as disjoint costs or
 label them GPU time, kernel overlap, or tokens/s. Admission caching, shared

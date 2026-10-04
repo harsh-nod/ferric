@@ -236,7 +236,7 @@ from forward latency. The current shared path still invokes each rank's full
 idle check immediately after the fresh group fence. The next candidate
 consolidates those duplicate currentness checks while retaining poison,
 queue-counter, completion-frontier and exception validation. Its CPU validation
-is recorded below; its rebuilt worker still needs a separate GPU comparison.
+and separate rebuilt-worker GPU comparison are recorded below.
 
 This remains pre-qualification host-overhead diagnosis, not completion of
 issue #42's M6 performance gate. V2 autoregressive validation also remains open.
@@ -288,9 +288,9 @@ named test outcomes and the single emitted artifact. The source census must
 differ from the earlier worker by exactly the three reviewed runtime files.
 All 90 retained aliases and 83 unique objects were rehashed locally. The new
 controller passed 68 pure tests, and its input builder passed 12, on ASROCK.
-These are separate cohorts, not one combined parent/worker build. Existing
-GPU observations still belong to the older worker until the new worker's own
-runtime audit and native comparison complete.
+These are separate cohorts, not one combined parent/worker build. The A/B/A/C
+observations above still belong to the older worker; the new worker has its
+own runtime audit and native comparison below.
 
 The first test launch failed before compilation because Cargo does not accept
 explicit feature switches for this dependency outside the worker workspace.
@@ -299,10 +299,45 @@ requires the actual 77-test inventory. The failed attempt remains a failure.
 A focused formatting check reported a pre-existing import-wrapping difference;
 it was left unchanged, and no formatting pass is claimed.
 
-This is not a parent rebuild, full workspace regression, new HSACO, GPU parity
-result or speedup measurement. The A/B/A/C graph above still uses the previous
-worker. Next, deploy this new binary with its own runtime review and repeat
-the numerical, audit and cleanup gates before comparing host counters or time.
+This CPU cohort is not a parent rebuild, full workspace regression, new HSACO
+or GPU qualification. The A/B/A/C graph above still uses the previous worker.
+
+## Consolidation GPU Observation
+
+The CPU475 worker completed its own MI350 ELF/library audit and four-forward
+shared-policy run with the unchanged CPU633 parent and images. All 152 native
+tensor rows were bitwise equal, all six device audits passed, and all seven
+owned leaves exited naturally with confirmed reap and no forced cleanup.
+All 57 final output files were independently rehashed after local retention.
+The [GPU record](assets/finite-prefix-v228/group-fence-gpu.json) preserves
+separate parent and worker CPU provenance, the deployment and actual receipt.
+
+![Old and consolidated shared-fence worker host timings](assets/finite-prefix-v228/group-fence-comparison.svg)
+
+| Position | Old Shared Worker (ms) | Consolidated Worker (ms) | Old Rank-Full Checks, Both Ranks | New Rank-Full Checks, Both Ranks |
+| --- | ---: | ---: | ---: | ---: |
+| 0 | 14,703.166 | 7,339.242 | 5,724 | 1,332 |
+| 1 | 14,669.381 | 7,325.718 | 5,724 | 1,332 |
+| 2 | 16,065.775 | 7,846.297 | 6,300 | 1,332 |
+| 3 | 16,019.419 | 7,883.008 | 6,300 | 1,332 |
+| Sum | 61,457.741 | 30,394.265 | 24,048 | 5,328 |
+
+The intended reduction is exact in this run: one duplicate individual full
+check per rank per shared group fence, totaling 18,720 removed checks over
+the four forwards. Each forward retains 676 / 656 individual checks. Shared
+group checks stay at 2,196 / 2,196 / 2,484 / 2,484, and publication checks stay
+at 288 per forward. Admissions, dispatches, read/write counts and byte extents
+are unchanged. Setup also removes 15,320 duplicate full checks per rank.
+Completion-poll counts and durations vary with timing; they are not equality gates.
+
+The summed forward host time is 50.54% lower in this single comparison.
+Setup's snapshot interval was 90.566 seconds, Close 12.443 seconds, parent
+277.112 seconds and controller 294.975 seconds. These are distinct, inclusive
+timing boundaries. Another CPU compiler was observed during preflight and
+left untouched; neither run was performance-isolated. This observation does
+not establish a confidence interval, additive optimization costs, kernel
+overlap, independent full-model acceptance, sustained 2,048/256 throughput
+or a qualified decode speedup. All issue #42 milestones remain open.
 
 ## GPU Comparison Gates
 

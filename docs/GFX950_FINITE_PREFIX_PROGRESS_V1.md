@@ -18,7 +18,8 @@ engineering branch; it does not change the production execution path.
 | V2 admission-cache arm on `mi350` | 152 native rows bitwise equal; repeated admissions fall to zero; six audits and clean Close/reap | No reliable overall latency improvement from the A/B/A diagnostic |
 | V2 baseline repeat on `mi350` | 152 native rows bitwise equal; six audits and clean Close/reap; baseline operation counts restored | Baseline drift exceeds the initial aggregate cache delta; no confidence interval |
 | V2 shared-currentness arm on `mi350` | 152 native rows bitwise equal; six audits and clean Close/reap; forward host total 61.458 seconds | Shorter than both baselines in this diagnostic, not a qualified speedup or isolated benchmark |
-| Consolidated group-fence candidate on `mi350-2` | 475 selected CPU tests passed, 4 ignored; new worker built | 77 runtime plus 398 worker tests; candidate GPU comparison pending |
+| Consolidated group-fence candidate on `mi350-2` | 475 selected CPU tests passed, 4 ignored; new worker built | 77 runtime plus 398 worker tests; parent remains separately qualified CPU633 |
+| Consolidated group-fence worker on `mi350` | 152 native rows bitwise equal; six audits and clean Close/reap; forward host total 30.394 seconds | 18,720 duplicate full checks removed versus old shared worker; unisolated diagnostic, not sustained decode |
 | Four teacher-forced forwards on `mi350` | 152 retained native tensor rows bitwise equal to the prior native route | All 36 layers, TP2, finite engineering images; not an independent full-model numerical bound |
 | Four autoregressive forwards on `mi350` | 152 retained native tensor rows bitwise equal to the prior native route | Own-token history; no 2,048/256 workload or sustained throughput measurement |
 | Six prefix-stage numerical cases | All 24 rank/profile rows satisfy the declared conditional norm/QKV bounds | Independent conditional arithmetic check of retained captures, not a new GPU run |
