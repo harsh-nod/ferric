@@ -132,15 +132,95 @@ pub(crate) unsafe fn run_observed(
     w: &mut impl Write,
     diagnostic: Option<(std::path::PathBuf, [u8; 32])>,
 ) -> io::Result<()> {
+    unsafe {
+        run_with_observer(
+            options,
+            r,
+            w,
+            diagnostic.map(|(path, worker)| Diagnostic::V1(path, worker)),
+        )
+    }
+}
+#[allow(unsafe_code)]
+pub(crate) unsafe fn run_policy_observed(
+    options: NativeOptions,
+    r: &mut impl Read,
+    w: &mut impl Write,
+    path: std::path::PathBuf,
+    worker: [u8; 32],
+    policy: crate::prefix_decode_host_observation_v2::Policy,
+) -> io::Result<()> {
+    unsafe { run_with_observer(options, r, w, Some(Diagnostic::V2(path, worker, policy))) }
+}
+enum Diagnostic {
+    V1(std::path::PathBuf, [u8; 32]),
+    V2(
+        std::path::PathBuf,
+        [u8; 32],
+        crate::prefix_decode_host_observation_v2::Policy,
+    ),
+}
+enum Observer {
+    V1(crate::native_prefix_decode_host_v1::Recorder),
+    V2(crate::native_prefix_decode_host_v2::Recorder),
+}
+impl Observer {
+    fn record(&mut self, raw: fe2o3_kfd::Gfx950EngineeringPeerHostObservationV1) -> io::Result<()> {
+        match self {
+            Self::V1(v) => v.record(raw),
+            Self::V2(v) => v.record(raw),
+        }
+    }
+    fn forward(
+        &mut self,
+        raw: fe2o3_kfd::Gfx950EngineeringPeerHostObservationV1,
+        elapsed: std::time::Duration,
+    ) -> io::Result<()> {
+        match self {
+            Self::V1(v) => v.forward(raw, elapsed),
+            Self::V2(v) => v.forward(raw, elapsed),
+        }
+    }
+    fn completed(&mut self, value: &Completion) -> io::Result<()> {
+        match self {
+            Self::V1(v) => v.completed(value),
+            Self::V2(v) => v.completed(value),
+        }
+    }
+    fn closed(&mut self, elapsed: std::time::Duration) -> io::Result<()> {
+        match self {
+            Self::V1(v) => v.closed(elapsed),
+            Self::V2(v) => v.closed(elapsed),
+        }
+    }
+    fn finish(self, path: &std::path::Path) -> io::Result<()> {
+        match self {
+            Self::V1(v) => v.finish(path),
+            Self::V2(v) => v.finish(path),
+        }
+    }
+}
+#[allow(unsafe_code)]
+unsafe fn run_with_observer(
+    options: NativeOptions,
+    r: &mut impl Read,
+    w: &mut impl Write,
+    diagnostic: Option<Diagnostic>,
+) -> io::Result<()> {
     let mut incoming = FrameBudget::new();
     let (b, prepared) = prepare(&options, r, &mut incoming)?;
     // SAFETY: complete CPU scope/image/profile checks precede the unique opener.
     let mut group =
         unsafe { Group::open_unchecked(&prepared.device_ids()) }.map_err(io::Error::other)?;
     let mut observer = match &diagnostic {
-        Some((_, worker)) => Some(crate::native_prefix_decode_host_v1::Recorder::enable(
-            &mut group, &b, *worker,
-        )?),
+        Some(Diagnostic::V1(_, worker)) => Some(Observer::V1(
+            crate::native_prefix_decode_host_v1::Recorder::enable(&mut group, &b, *worker)?,
+        )),
+        Some(Diagnostic::V2(_, worker, policy)) => Some(Observer::V2(
+            crate::native_prefix_decode_host_v2::Recorder::enable(
+                &mut group, &b, *worker, *policy,
+            )?,
+        )),
         None => None,
     };
     let mut setup = prepared.into_processor(group).map_err(io::Error::other)?;
@@ -163,7 +243,10 @@ pub(crate) unsafe fn run_observed(
         observer,
     };
     serve(&mut backend, r, w, &b, &mut incoming)?;
-    if let Some((path, _)) = diagnostic {
+    if let Some(diagnostic) = diagnostic {
+        let path = match diagnostic {
+            Diagnostic::V1(path, _) | Diagnostic::V2(path, _, _) => path,
+        };
         backend
             .observer
             .take()
@@ -182,7 +265,7 @@ trait Backend {
 struct Native {
     owner: Option<Owner>,
     profile: [u8; 32],
-    observer: Option<crate::native_prefix_decode_host_v1::Recorder>,
+    observer: Option<Observer>,
 }
 impl Backend for Native {
     fn run(&mut self, input: &ForwardInput) -> io::Result<Run> {

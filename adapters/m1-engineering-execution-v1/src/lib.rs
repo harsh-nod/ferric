@@ -51,6 +51,9 @@ pub mod host_timing;
 #[cfg(feature = "tp-batch-engineering")]
 #[path = "../../tp-peer-finite-engineering-worker-v1/src/prefix_decode_host_observation_v1.rs"]
 pub mod prefix_decode_host_observation_v1;
+#[cfg(feature = "tp-batch-engineering")]
+#[path = "../../tp-peer-finite-engineering-worker-v1/src/prefix_decode_host_observation_v2.rs"]
+pub mod prefix_decode_host_observation_v2;
 pub mod r33_lifecycle;
 pub mod r33_production_backend;
 #[allow(dead_code)] // Reviewed custody shell awaits its concrete daemon join.

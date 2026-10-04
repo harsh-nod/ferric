@@ -1,0 +1,130 @@
+{
+  "baseline_commit": "9eca257697069f10c87ee9f624016391f6a2e479",
+  "cpu_receipt_sha256": "1fc4d17534161e6e7f96e6d0eba0a2455227ba2166623823f6a74f845b93deae",
+  "files": [
+    {
+      "after": {
+        "bytes": 11685,
+        "sha256": "0c6c05aeb4ee034fee946eabf9d56e0ab48218397a184fb379931367ec690ee1"
+      },
+      "before": {
+        "bytes": 11486,
+        "sha256": "848da576fa2dfad5c62338b0ca29ef78eb24d301565448687a4fd1319ed51ad7"
+      },
+      "path": "adapters/m1-engineering-execution-v1/Cargo.toml"
+    },
+    {
+      "after": {
+        "bytes": 2935,
+        "sha256": "23f7b98745e3b8d31c3870452767b3cb8c12bdfeb6d4c983894b77229823ed34"
+      },
+      "before": null,
+      "path": "adapters/m1-engineering-execution-v1/src/bin/ferric-qwen3-finite-prefix-decode-host-policy-engineering.rs"
+    },
+    {
+      "after": {
+        "bytes": 87861,
+        "sha256": "8c5f5f2cefc68c4a15ea9051a49efe6c9d9b09ae63744b29f84654c90c4ac624"
+      },
+      "before": {
+        "bytes": 87681,
+        "sha256": "840835d69a6bb02002203df0c1d0dba3d006429665edb3b878df417dc6ca0d78"
+      },
+      "path": "adapters/m1-engineering-execution-v1/src/lib.rs"
+    },
+    {
+      "after": {
+        "bytes": 8278,
+        "sha256": "eda0d722ab4fcb8045b33213fc1be73bab6434ea58c37a690701a42fa6604979"
+      },
+      "before": null,
+      "path": "adapters/m1-engineering-execution-v1/src/tp_finite_client/prefix_decode/host_policy_v2.rs"
+    },
+    {
+      "after": {
+        "bytes": 10949,
+        "sha256": "1841f2ea4cbc0e6db93a9d6988990bf9c4924d12c6388a130062cdd55d010b66"
+      },
+      "before": null,
+      "path": "adapters/m1-engineering-execution-v1/src/tp_finite_client/prefix_decode/host_policy_v2_tests.rs"
+    },
+    {
+      "after": {
+        "bytes": 29383,
+        "sha256": "3ac2dff58427d2cf0d26f537c04cb4f2ae6635ffec9f10f216d712cce95e9718"
+      },
+      "before": {
+        "bytes": 28053,
+        "sha256": "7cc459db5fc127182489e94833ddd693ec1f7b67a4312a317544c7b598fdf1da"
+      },
+      "path": "adapters/m1-engineering-execution-v1/src/tp_finite_client/prefix_decode.rs"
+    },
+    {
+      "after": {
+        "bytes": 1658,
+        "sha256": "d6bb904a9e8452cb286598378a913581059b4973a4bfb663e2fa644055e5fe7a"
+      },
+      "before": {
+        "bytes": 1577,
+        "sha256": "26c21d84290f1dcf1a8b3e2c29cede0a8ad20fe2c97b1487a0298a3aa0d38bf1"
+      },
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/lib.rs"
+    },
+    {
+      "after": {
+        "bytes": 7992,
+        "sha256": "2c26d2f65826ea057cb73bfaad8c5987ddfab02c0e7a36918df76463ddf295d5"
+      },
+      "before": {
+        "bytes": 7366,
+        "sha256": "ea46ee64fb211e508217ef95d9dd7cb1b5f9fe97263f3d4c99fb9812b4d692fb"
+      },
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/main.rs"
+    },
+    {
+      "after": {
+        "bytes": 16388,
+        "sha256": "e75eed58f7437f59b1f551f30a9cf5ab6f41ecd5bfd6c1aa572ae9fb39171115"
+      },
+      "before": {
+        "bytes": 13882,
+        "sha256": "3782bbdbb1e261290f719cd44e53017b57f8983d1bce972b92b4393b96fc0d57"
+      },
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_decode_cli_v1.rs"
+    },
+    {
+      "after": {
+        "bytes": 9148,
+        "sha256": "7921daf8dd6cdce2f09c9773cd8cdadcdf59bb167fd58a428b32df67ae0ed5cf"
+      },
+      "before": null,
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_decode_host_v2.rs"
+    },
+    {
+      "after": {
+        "bytes": 2191,
+        "sha256": "7f4f24fa58205f460082b78087acdee8acec21786b874451aac1950cfa1543f4"
+      },
+      "before": null,
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_decode_host_v2_tests.rs"
+    },
+    {
+      "after": {
+        "bytes": 7954,
+        "sha256": "8d72d7e97bc54bb0295a06e252b878738aae5206c6e87af6763600ff5945020b"
+      },
+      "before": null,
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/prefix_decode_host_observation_v2.rs"
+    },
+    {
+      "after": {
+        "bytes": 10990,
+        "sha256": "cba028128ebf6ad5e2087dace779296e5acfa9adcf1c12d8671e4611a53eccd8"
+      },
+      "before": null,
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/prefix_decode_host_observation_v2_tests.rs"
+    }
+  ],
+  "proposal_sha256": "e69a6206e86c61de07c9643d8684c6b7a084ca9bf053ac7ced0f36ce407e8dc9",
+  "schema": "FerricFinitePrefixHostPolicySourceIndexV1"
+}

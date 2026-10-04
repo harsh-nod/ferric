@@ -21,6 +21,7 @@ use std::time::{Duration, Instant};
 
 mod evidence;
 pub mod host_observation;
+pub mod host_policy_v2;
 
 const VOCABULARY: u32 = 151_936;
 const INPUT_TOKENS: [u32; 4] = [9112, 2190, 3772, 220];
@@ -391,13 +392,53 @@ fn run_inner(
     allow_unauthenticated_machine_code: bool,
     diagnostic: Option<PathBuf>,
 ) -> Result<(Observation, Option<FilePin>)> {
+    run_with_diagnostic(
+        config,
+        allow_unauthenticated_machine_code,
+        diagnostic.map(HostDiagnostic::V1),
+    )
+}
+enum HostDiagnostic {
+    V1(PathBuf),
+    V2(PathBuf, crate::prefix_decode_host_observation_v2::Policy),
+}
+impl HostDiagnostic {
+    fn path(&self) -> &std::path::Path {
+        match self {
+            Self::V1(path) | Self::V2(path, _) => path,
+        }
+    }
+    fn launch_flag(&self) -> &'static str {
+        match self {
+            Self::V1(_) => "--engineering-native-prefix-decode-host-v1",
+            Self::V2(_, _) => "--engineering-native-prefix-decode-host-v2",
+        }
+    }
+    fn append_args(&self, command: &mut Command) {
+        command.arg("--host-sidecar").arg(self.path());
+        if let Self::V2(_, policy) = self {
+            command.arg("--host-policy").arg(policy.name());
+        }
+    }
+    fn validate(&self, observation: &Observation) -> Result<FilePin> {
+        match self {
+            Self::V1(path) => host_observation::validate(path, observation),
+            Self::V2(path, policy) => host_policy_v2::validate(path, observation, *policy),
+        }
+    }
+}
+fn run_with_diagnostic(
+    config: Config,
+    allow_unauthenticated_machine_code: bool,
+    diagnostic: Option<HostDiagnostic>,
+) -> Result<(Observation, Option<FilePin>)> {
     require(
         allow_unauthenticated_machine_code,
         "prefix decode explicit engineering machine-code opt-in required",
     )?;
     config.validate()?;
-    if let Some(path) = &diagnostic {
-        host_observation::preflight(path)?;
+    if let Some(diagnostic) = &diagnostic {
+        host_observation::preflight(diagnostic.path())?;
     }
     config.worker.read(512 << 20, false)?;
     let images = config.images.read()?;
@@ -431,11 +472,10 @@ fn run_inner(
     let mut command = Command::new(&config.worker.path);
     command
         .args([
-            if diagnostic.is_some() {
-                "--engineering-native-prefix-decode-host-v1"
-            } else {
-                "--engineering-native-prefix-decode-v1"
-            },
+            diagnostic
+                .as_ref()
+                .map(HostDiagnostic::launch_flag)
+                .unwrap_or("--engineering-native-prefix-decode-v1"),
             "--allow-unauthenticated-machine-code",
             "--devices",
         ])
@@ -450,8 +490,8 @@ fn run_inner(
         .env_clear()
         .env("PATH", "/usr/bin:/bin")
         .env("LANG", "C");
-    if let Some(path) = &diagnostic {
-        command.arg("--host-sidecar").arg(path);
+    if let Some(diagnostic) = &diagnostic {
+        diagnostic.append_args(&mut command);
     }
     let mut child = process::OwnedChild::spawn_command(command, deadline)?;
     let pid = child.id();
@@ -748,7 +788,7 @@ fn run_inner(
     };
     let host = diagnostic
         .as_ref()
-        .map(|path| host_observation::validate(path, &observation))
+        .map(|diagnostic| diagnostic.validate(&observation))
         .transpose()?;
     if diagnostic.is_none() {
         evidence::publish(&mut observation)?;

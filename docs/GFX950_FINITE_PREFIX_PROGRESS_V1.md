@@ -13,14 +13,15 @@ engineering branch; it does not change the production execution path.
 | Corrected finite parent/worker CPU suite on `mi350-2` | 605 passed, 4 ignored; 34 owned commands | Includes 24 tests for the opt-in host-observation extension; no GPU execution |
 | Historical KFD host-observation suite on `mi350-2` | 1,776 selected tests passed | Overlapping selections, including 15 new tests; separate source generation |
 | Fresh Git-source worker build on `mi350-2` | 387 passed, 4 ignored; binary built from an empty target | Published Ferric/fe2o3 source pair; cached registry/toolchain, no parent or GPU run |
+| Fresh-source V2 host-policy parent/worker cohort on `mi350-2` | 633 passed, 4 ignored; 12 binaries built and default-library check passed | Exact 13-file overlay; no V2 GPU execution or speedup claim |
 | Four teacher-forced forwards on `mi350` | 152 retained native tensor rows bitwise equal to the prior native route | All 36 layers, TP2, finite engineering images; not an independent full-model numerical bound |
 | Four autoregressive forwards on `mi350` | 152 retained native tensor rows bitwise equal to the prior native route | Own-token history; no 2,048/256 workload or sustained throughput measurement |
 | Six prefix-stage numerical cases | All 24 rank/profile rows satisfy the declared conditional norm/QKV bounds | Independent conditional arithmetic check of retained captures, not a new GPU run |
 
 Both four-forward runs completed their Close protocol, reaped their owned
 processes, and passed their six surrounding device-state audits. The CPU suite
-also completed with no forced cleanup. The newer instrumented generation has
-now independently completed its teacher-forced run, described below. Its
+also completed with no forced cleanup. The V1 host-instrumented (CPU605)
+generation has independently completed its teacher-forced run, described below. Its
 autoregressive run has not yet been repeated with instrumentation.
 
 The six numerical cases cover genuine positions 0 and 4, plus patterned
@@ -49,6 +50,9 @@ imported files to the build-host source snapshot. All 355 Ferric paths in the
 CPU cohort's source map were checked against the published tree. Cargo path
 dependencies and literal source/fixture includes were audited separately;
 the 167-file finite test census alone was not a complete source closure.
+That index describes the original CPU605 generation. The separately tested
+[V2 overlay](assets/finite-prefix-v228/host-policy-source.json) records later
+changes without rewriting the original source evidence.
 
 This includes the finite parent/worker, shared wire imports, consumed tokenizer
 fixtures, and required device source/test dependencies. Only the four shared
@@ -115,6 +119,15 @@ observation in the baseline, so that existing behavior cannot be claimed as a
 new optimization. No speedup is claimed until the separate variants pass their
 own numerical, ownership and measurement checks.
 
+The explicit V2 policy implementation has now passed a fresh-source CPU
+cohort: 398 worker/shared-wire tests, 224 disjoint parent-library tests and
+11 parent CLI tests, with four ignored. All 12 binaries built, the default
+parent library check passed, and all 6,928 post-overlay source files stayed unchanged.
+All 213 retained raw records and 12 binary bodies were rehashed after transfer.
+The [policy guide](GFX950_HOST_POLICY_V2.md) documents the checks each arm
+retains and the [CPU record](assets/finite-prefix-v228/host-policy-cpu.json)
+identifies this new generation. The V2 GPU comparisons have not run yet.
+
 ## Changes And Retained Failures
 
 The finite route uses an explicit bounded parent/worker protocol, typed
@@ -142,6 +155,7 @@ alone is not a self-contained reproducer or proof.
 | Retained receipt | SHA-256 |
 | --- | --- |
 | Corrected CPU605 completion | `f9b4da95d00cb62a3eadb33d86ee942d0bdf0ecb5c559650161846f4dcd081e8` |
+| Fresh-source V2 CPU633 completion | `1fc4d17534161e6e7f96e6d0eba0a2455227ba2166623823f6a74f845b93deae` |
 | Corrected CPU605 owner | `dde383021440a721bd2c41bff614ea1156a3b36c6fa48cd2ad27c95337af7cb2` |
 | Historical KFD completion | `e6cdd55c6a2dda4dafdd25a4c8d5e3670312c912cdbc1f20258a6e93db48e603` |
 | Teacher-forced four-forward completion | `56f72c0c8c76e7c2c3f00ca767d5a7b53c66ba4b2c17589059565c2c2532fb8b` |
@@ -156,8 +170,8 @@ alone is not a self-contained reproducer or proof.
 
 ## Next Gates
 
-1. Extend the published, freshly built worker source pair to reproducible
-   parent and compiler/HSACO builds; the full pipeline is not yet reproduced.
+1. Extend the freshly built parent/worker source pair to reproducible
+   compiler/HSACO builds; the full pipeline is not yet reproduced.
 2. Run separately versioned, one-factor host-overhead variants on `mi350`,
    preserving the measured baseline and its exact numerical checks.
 3. Close independent numerical obligations and validate the longer resident

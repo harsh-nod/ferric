@@ -6,6 +6,7 @@ use ferric_tp_peer_finite_engineering_worker_v1::native_long_cli_v1 as long;
 use ferric_tp_peer_finite_engineering_worker_v1::native_mlp_tiles_comparison_cli_v1 as tiles;
 use ferric_tp_peer_finite_engineering_worker_v1::native_prefix_decode_cli_v1 as prefix_decode;
 use ferric_tp_peer_finite_engineering_worker_v1::native_prefix_decode_host_v1 as prefix_host;
+use ferric_tp_peer_finite_engineering_worker_v1::native_prefix_decode_host_v2 as prefix_host_policy;
 use ferric_tp_peer_finite_engineering_worker_v1::native_prefix_layer_cli_v1 as layer;
 use ferric_tp_peer_finite_engineering_worker_v1::native_queued_mlp_comparison_cli_v1 as comparison;
 use ferric_tp_peer_finite_engineering_worker_v1::native_queued_projection_comparison_cli_v1 as projection;
@@ -16,6 +17,14 @@ use std::io::{self, IsTerminal};
 #[allow(unsafe_code)]
 fn run() -> io::Result<i32> {
     let args: Vec<_> = std::env::args_os().skip(1).collect();
+    let host_policy_options = if args
+        .first()
+        .is_some_and(|arg| arg == "--engineering-native-prefix-decode-host-v2")
+    {
+        Some(prefix_host_policy::parse_args(&args)?)
+    } else {
+        None
+    };
     let host_options = if args
         .first()
         .is_some_and(|arg| arg == "--engineering-native-prefix-decode-host-v1")
@@ -89,6 +98,7 @@ fn run() -> io::Result<i32> {
         None
     };
     let invocation = if long_options.is_none()
+        && host_policy_options.is_none()
         && host_options.is_none()
         && smoke_options.is_none()
         && comparison_options.is_none()
@@ -108,6 +118,11 @@ fn run() -> io::Result<i32> {
         ));
     }
     let mut input = io::stdin().lock();
+    if let Some(options) = host_policy_options {
+        // SAFETY: closed explicit host policy; same owned Four native lifetime.
+        unsafe { prefix_host_policy::run_native(options, &mut input, &mut io::stdout().lock()) }?;
+        return Ok(0);
+    }
     if let Some(options) = host_options {
         // SAFETY: explicit trusted-parent diagnostic; policy and Four wire unchanged.
         unsafe { prefix_host::run_native(options, &mut input, &mut io::stdout().lock()) }?;

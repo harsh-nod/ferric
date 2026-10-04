@@ -20,12 +20,14 @@ pub mod native_long_cli_v1;
 pub mod native_mlp_tiles_comparison_cli_v1;
 pub mod native_prefix_decode_cli_v1;
 pub mod native_prefix_decode_host_v1;
+pub mod native_prefix_decode_host_v2;
 pub mod native_prefix_layer_cli_v1;
 pub mod native_queued_mlp_comparison_cli_v1;
 pub mod native_queued_projection_comparison_cli_v1;
 pub mod native_rearm_smoke_cli_v1;
 pub mod native_tiles_decode_cli_v1;
 pub mod prefix_decode_host_observation_v1;
+pub mod prefix_decode_host_observation_v2;
 mod rearm_smoke_sequence_v1;
 
 // Private ownership: no raw Group or token is exposed by the CLI.

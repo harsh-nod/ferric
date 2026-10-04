@@ -17,6 +17,11 @@ path = "src/bin/ferric-qwen3-finite-prefix-decode-engineering.rs"
 required-features = ["tp-batch-engineering"]
 
 [[bin]]
+name = "ferric-qwen3-finite-prefix-decode-host-policy-engineering"
+path = "src/bin/ferric-qwen3-finite-prefix-decode-host-policy-engineering.rs"
+required-features = ["tp-batch-engineering"]
+
+[[bin]]
 name = "ferric-qwen3-finite-prefix-decode-host-engineering"
 path = "src/bin/ferric-qwen3-finite-prefix-decode-host-engineering.rs"
 required-features = ["tp-batch-engineering"]

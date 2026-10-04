@@ -21,6 +21,12 @@ It requires `--allow-unauthenticated-machine-code` and `--observe-host` for the
 diagnostic route. This opt-in does not constitute production admission.
 Other finite experiments remain distinct typed routes, not silent fallbacks.
 
+The separately versioned V2 route adds three explicit host policies: baseline,
+immutable-admission caching, and shared full-currentness fences. See the
+[policy guide](../../docs/GFX950_HOST_POLICY_V2.md) for the new parent command,
+request schema, retained mutable checks, and measurement limits. V1 keeps its
+all-optimizations-off behavior.
+
 ## Build Prerequisites
 
 The finite worker uses `../../../fe2o3/crates/fe2o3-kfd`, a sibling checkout
@@ -81,10 +87,14 @@ CPU tests do not launch the GPU experiment.
 
 ## Evidence Limits
 
-The current CPU cohort passed 605 tests with four ignored. The earlier
+The original CPU cohort passed 605 tests with four ignored. The newer V2
+host-policy cohort passed 633 with four ignored from fresh source archives
+and its exact overlay. All 12 binaries built and the parent default-library
+check passed. Its separate [record](../../docs/assets/finite-prefix-v228/host-policy-cpu.json)
+does not qualify those new binaries for GPU use. The earlier
 uninstrumented GPU generation passed four teacher-forced and four
-autoregressive forwards with bitwise native-baseline parity. The newer
-host-instrumented generation has now separately completed its teacher-forced
+autoregressive forwards with bitwise native-baseline parity. The V1
+host-instrumented (CPU605) generation has separately completed its teacher-forced
 run with all 152 native tensor rows bitwise equal, six passing device audits,
 and clean Close/reap. Its instrumented autoregressive run is still pending.
 
