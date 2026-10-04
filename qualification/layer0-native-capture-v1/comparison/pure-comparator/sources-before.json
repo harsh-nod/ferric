@@ -1,0 +1,22 @@
+{
+  "compare.py": {
+    "bytes": 16337,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-layer0-current-diagnostic-v1/compare.py",
+    "sha256": "1598e22a3460a9ed2c350fb5d2b5fec6b8c37648b53bb2f1fc714c1fb3506d3f"
+  },
+  "current.py": {
+    "bytes": 15641,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-layer0-current-diagnostic-v1/current.py",
+    "sha256": "eb103b681c54b0c880bc6e692363208dae837eb322845bab7e593bdea6330d7b"
+  },
+  "diagnostics.py": {
+    "bytes": 5084,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-layer0-current-diagnostic-v1/diagnostics.py",
+    "sha256": "38cee89882d13dce81a992a64d4931c52a6f5b0b2dc77f5cddf1fc7cfe37ccaf"
+  },
+  "test_current.py": {
+    "bytes": 19382,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-layer0-current-diagnostic-v1/test_current.py",
+    "sha256": "55260e410cb601e9af38cb6e7c35c6c153c7a0f7d11269a40d581cad1c56b3b4"
+  }
+}

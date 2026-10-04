@@ -1,0 +1,37 @@
+{
+  "compiler_execution": false,
+  "controller": {
+    "bytes": 4064,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/run_layer0_current_comparison_pure_p228_v1.py",
+    "sha256": "9d9fdf938c56918acfb11565665c1f1d1f143a9732ae565b7760754e7024411b"
+  },
+  "errors": 0,
+  "failures": 0,
+  "framework_execution": false,
+  "gpu_execution": false,
+  "numerical_acceptance": false,
+  "passed": true,
+  "performance_claim": false,
+  "production_authority": false,
+  "runtime_audit_executed": false,
+  "schema": "ferric-p228-layer0-current-comparison-pure-v1",
+  "skipped": 0,
+  "source_postchecks_passed": true,
+  "sources_after": {
+    "bytes": 513,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/layer0-current-comparison-pure-v228-v1/sources-after.json",
+    "sha256": "4fc89cf7cfb1e3a5dfdf08180e3f6422ac983af868e4ef4ef2ac541c1fa282e4"
+  },
+  "sources_before": {
+    "bytes": 513,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/layer0-current-comparison-pure-v228-v1/sources-before.json",
+    "sha256": "4fc89cf7cfb1e3a5dfdf08180e3f6422ac983af868e4ef4ef2ac541c1fa282e4"
+  },
+  "synthetic_policy_tests_only": true,
+  "tests": 15,
+  "transcript": {
+    "bytes": 1478,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/layer0-current-comparison-pure-v228-v1/tests.log",
+    "sha256": "3ff4dfb28c31c85868d58e4b6d3f3b828f1f0ceadd14c983c9800d58d4f6b600"
+  }
+}

@@ -1,0 +1,23 @@
+test_activation_is_product_not_silu_and_partials_are_excluded (test_current.CurrentDiagnostic) ... ok
+test_all_twenty_eight_stage_metadata_and_digests_are_exact (test_current.CurrentDiagnostic) ... ok
+test_body_request_bootstrap_and_close_join_to_summary (test_current.CurrentDiagnostic) ... ok
+test_bootstrap_own_child_source_body_and_scope_are_checked (test_current.CurrentDiagnostic) ... ok
+test_bootstrap_physical_page_and_genuine_input_are_not_guessed (test_current.CurrentDiagnostic) ... ok
+test_cache_only_current_slot_may_change_and_page_is_bounded (test_current.CurrentDiagnostic) ... ok
+test_each_final_hidden_rank_must_match_authenticated_tf4_not_each_other_only (test_current.CurrentDiagnostic) ... ok
+test_earliest_observed_stage_is_stage_order_not_rank_major_or_cause (test_current.CurrentDiagnostic) ... ok
+test_explicit_and_bootstrap_images_cannot_be_interchanged (test_current.CurrentDiagnostic) ... ok
+test_framework_repeat_source_and_no_conditional_input_gates_are_reused (test_current.CurrentDiagnostic) ... ok
+test_full_capture_rejects_bf16_and_fp32_nonfinite_values (test_current.CurrentDiagnostic) ... ok
+test_full_data_path_has_twenty_four_rows_and_no_acceptance (test_current.CurrentDiagnostic) ... ok
+test_native_file_roster_and_actual_capture_hash_are_checked (test_current.CurrentDiagnostic) ... ok
+test_rank_sharding_qkv_and_current_page_mapping (test_current.CurrentDiagnostic) ... ok
+test_reused_source_bytes_are_unchanged (test_current.CurrentDiagnostic) ... ok
+test_run_close_order_and_profile_are_bound_to_one_owner (test_current.CurrentDiagnostic) ... ok
+test_scoped_sessions_may_differ_but_source_and_prompt_may_not (test_current.CurrentDiagnostic) ... ok
+test_unqualified_summary_modes_nonclaims_and_changed_pins_are_refused (test_current.CurrentDiagnostic) ... ok
+
+----------------------------------------------------------------------
+Ran 18 tests in 11.529s
+
+OK

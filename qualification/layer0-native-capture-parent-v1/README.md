@@ -53,8 +53,9 @@ and the historical internal capture uses older images.
 
 The [subsequent GPU experiment](../layer0-native-capture-v1/README.md) captured
 the current images with matching input and joined its final hidden values
-exactly to the current native output. Comparing the observed intermediates
-against the independent framework remains next. A rank-local
+exactly to the current native output. The [completed stage comparison](../layer0-native-capture-v1/comparison/README.md)
+finds exact input norms and attention outputs, with the larger difference
+appearing at output projection/first residual. A rank-local
 FP32 partial is not a full BF16 projection. No tolerance is fitted to the
 observed error, and capturing intermediate values is not numerical acceptance.
 

@@ -11,8 +11,11 @@ passed on `mi350`: 28 typed arrays were retained, both final hidden states
 match the current native baseline byte for byte, and untouched KV regions
 passed checks. One attempt, six selected-device audits and seven natural/reaped
 process leaves completed without retries or forced cleanup. The controller's
-40 tests also passed. Independent stage-by-stage comparison is next; this
-capture alone does not establish numerical acceptance or performance.
+40 tests also passed. The [independent 24-row stage comparison](../qualification/layer0-native-capture-v1/comparison/README.md)
+also completed: both input norms and attention outputs match exactly. One
+rank-0 QKV word differs, while the larger difference appears at output
+projection/first residual. The comparison adapter and comparator separately
+passed 15 and 18 tests. Numerical acceptance and performance remain open.
 
 The [candidate-only native capture parent](../qualification/layer0-native-capture-parent-v1/README.md)
 passed 289 Rust tests, including 14 new tests, with no ignores on `mi350-2`.

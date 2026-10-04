@@ -1,0 +1,20 @@
+test_all_seven_authentic_shaped_leaf_records_replay (test_run.AdapterTests) ... ok
+test_duplicate_nonfinite_json_and_invalid_filepins_refuse (test_run.AdapterTests) ... ok
+test_full_native_adapter_routes_retained_bytes_through_capture_validator (test_run.AdapterTests) ... ok
+test_leaf_roster_paths_stream_and_result_substitution_refuse (test_run.AdapterTests) ... ok
+test_module_alias_restores_absent_object_and_none_on_failure (test_run.AdapterTests) ... ok
+test_original_selector_limits_and_gpu_class_are_closed (test_run.AdapterTests) ... ok
+test_outer_requires_success_no_retries_all_seven_and_diagnostic_scope (test_run.AdapterTests) ... ok
+test_owned_result_cleanup_exit_and_reap_refusals (test_run.AdapterTests) ... ok
+test_pure_receipt_requires_actual_count_source_snapshots_and_transcript (test_run.AdapterTests) ... ok
+test_reader_refuses_changed_bytes_extent_and_postread_drift (test_run.AdapterTests) ... ok
+test_reader_refuses_symlink_and_changed_transport_hash (test_run.AdapterTests) ... ok
+test_reader_retains_original_transport_identity_and_empty_body (test_run.AdapterTests) ... ok
+test_six_audits_call_original_data_only_helpers_and_join_leaves (test_run.AdapterTests) ... ok
+test_started_command_and_owned_parent_identity_are_bound (test_run.AdapterTests) ... ok
+test_wrong_topology_busy_and_original_audit_rejection_propagate (test_run.AdapterTests) ... ok
+
+----------------------------------------------------------------------
+Ran 15 tests in 0.027s
+
+OK

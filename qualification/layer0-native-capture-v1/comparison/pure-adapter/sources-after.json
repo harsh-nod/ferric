@@ -1,0 +1,12 @@
+{
+  "run.py": {
+    "bytes": 23607,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-layer0-current-comparison-v1/run.py",
+    "sha256": "9c3db491d4f8c20890b045474bd1ab5bd8565d42916a8eb7772c0eb07c44717e"
+  },
+  "test_run.py": {
+    "bytes": 19274,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-layer0-current-comparison-v1/test_run.py",
+    "sha256": "0fbb477fa54d5034ce727909b7a4a87f6a5a771f17fccd1cf0f11b6482d3c389"
+  }
+}

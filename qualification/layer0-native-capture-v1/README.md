@@ -39,10 +39,13 @@ full-forward native path. That makes its intermediates useful for investigating
 the known difference from the [independent framework](../layer0-framework-capture-v1/README.md).
 It does not establish that those hidden values are numerically correct.
 
-The next comparison uses matching BF16 stage values. Rank-local FP32 output
+The [completed framework comparison](comparison/README.md) covers 24 matching
+BF16 stage values. Input normalization and attention output match exactly on
+both ranks. Rank-0 QKV differs in one word; the larger discrepancy appears at
+the output-projection/first-residual boundary. Rank-local FP32 output
 and down-projection partials are separately typed and must not be compared
 directly with complete BF16 framework projections. The first observable
-divergence will locate a diagnostic boundary, not prove a causal explanation.
+divergence locates a diagnostic boundary, not a causal explanation.
 No acceptance tolerance is inferred from the measured discrepancy.
 
 ## Evidence
