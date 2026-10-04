@@ -1,0 +1,138 @@
+{
+  "schema": "ferric-p228-kir-indexed-formal-join-source-v2",
+  "tentative": true,
+  "diagnostic_site_measured": true,
+  "compiled": false,
+  "tests_executed": false,
+  "base_cpu": {
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rpo-compiler-cpu-v228-v2/complete.json",
+    "bytes": 375781,
+    "sha256": "56fc51fc326980e00156d550d0a7052f44bb481ded7b9948c06217653fb246c1"
+  },
+  "base_source_snapshot": {
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rpo-compiler-cpu-v228-v2/sources-before.json",
+    "bytes": 3607137,
+    "sha256": "77fbdd63c370665ea80bf70e8dd8f4a45533bcde8e5ba6ffd670ab497ebc6665"
+  },
+  "files": [
+    {
+      "path": "crates/fe2o3-lower-mir-kernel/src/production_semantic_kir_v1/wave_formal_evidence_join_v1.rs",
+      "source": "draft/crates/fe2o3-lower-mir-kernel/src/production_semantic_kir_v1/wave_formal_evidence_join_v1.rs",
+      "before": {
+        "bytes": 16534,
+        "sha256": "a4920913a9f23a5d880be129f99b7ba4b04842336fb93fad1208574f16c07fe0"
+      },
+      "after": {
+        "bytes": 16444,
+        "sha256": "a6f202bc218bb6546000813ff6135e38642c8f0c5b11362e2afce5d816786246"
+      }
+    },
+    {
+      "path": "crates/fe2o3-lower-mir-kernel/src/production_semantic_kir_v1/wave_formal_evidence_index_v1.rs",
+      "source": "draft/crates/fe2o3-lower-mir-kernel/src/production_semantic_kir_v1/wave_formal_evidence_index_v1.rs",
+      "before": null,
+      "after": {
+        "bytes": 6935,
+        "sha256": "ab9729a2227218d06637460a66a86f89b2c0767a3961a2d443ca063592dcc990"
+      }
+    },
+    {
+      "path": "crates/fe2o3-lower-mir-kernel/src/production_semantic_kir_v1/wave_formal_evidence_v1_tests.rs",
+      "source": "draft/crates/fe2o3-lower-mir-kernel/src/production_semantic_kir_v1/wave_formal_evidence_v1_tests.rs",
+      "before": {
+        "bytes": 22677,
+        "sha256": "768f1fe283eedda154596b68d7686652bdb3f5bd676aa96c5947f19cfa7ed4a1"
+      },
+      "after": {
+        "bytes": 22729,
+        "sha256": "604dfd35aebacad935f34632100e7e099234c68a82b15451e31cd35229a9a135"
+      }
+    },
+    {
+      "path": "crates/fe2o3-lower-mir-kernel/src/production_semantic_kir_v1/wave_formal_evidence_index_v1_tests.rs",
+      "source": "draft/crates/fe2o3-lower-mir-kernel/src/production_semantic_kir_v1/wave_formal_evidence_index_v1_tests.rs",
+      "before": null,
+      "after": {
+        "bytes": 18840,
+        "sha256": "58888a5a61ab6241242c2b3c570299bb78ed4e68068ac2271d4bed4d15706275"
+      }
+    },
+    {
+      "path": "crates/fe2o3-lower-mir-kernel/src/production_semantic_kir_v1/retained_nested_enum_transport_v1_tests.rs",
+      "source": "draft/crates/fe2o3-lower-mir-kernel/src/production_semantic_kir_v1/retained_nested_enum_transport_v1_tests.rs",
+      "before": {
+        "bytes": 42350,
+        "sha256": "4235c5d9bece86dc631f4dfbc081a3eb233539628f1af4db7b0ca0db7ede16be"
+      },
+      "after": {
+        "bytes": 42352,
+        "sha256": "6167e96fb65e3fca91f117c8873a29a5e756a34a5ab0b222c4cd285395b721cb"
+      }
+    }
+  ],
+  "added_tests": [
+    "production_semantic_kir_v1::wave_formal_evidence_v1::tests::indexed_formal_join_preserves_six_root_census",
+    "production_semantic_kir_v1::wave_formal_evidence_v1::tests::indexed_formal_join_preserves_fifteen_root_prefix_census",
+    "production_semantic_kir_v1::wave_formal_evidence_v1::tests::indexed_formal_join_handles_sparse_nonmonotonic_blocks_and_values",
+    "production_semantic_kir_v1::wave_formal_evidence_v1::tests::indexed_formal_join_preserves_parameter_first_definition",
+    "production_semantic_kir_v1::wave_formal_evidence_v1::tests::indexed_formal_join_preserves_block_parameter_first_definition",
+    "production_semantic_kir_v1::wave_formal_evidence_v1::tests::indexed_formal_join_preserves_operation_first_definition",
+    "production_semantic_kir_v1::wave_formal_evidence_v1::tests::indexed_formal_join_rejects_absent_pointer_definition",
+    "production_semantic_kir_v1::wave_formal_evidence_v1::tests::indexed_formal_join_rejects_duplicate_block_ids",
+    "production_semantic_kir_v1::wave_formal_evidence_v1::tests::indexed_formal_join_matches_root_type_space_and_census_mutations",
+    "production_semantic_kir_v1::wave_formal_evidence_v1::tests::indexed_formal_join_preserves_stream_order_and_trailing_rejection",
+    "production_semantic_kir_v1::wave_formal_evidence_v1::tests::indexed_formal_join_rejects_unknown_call_effects",
+    "production_semantic_kir_v1::wave_formal_evidence_v1::tests::indexed_formal_join_preserves_reason_locations_and_missing_refusal",
+    "production_semantic_kir_v1::wave_formal_evidence_v1::tests::indexed_formal_join_exact_and_one_under_resources_restore_floor",
+    "production_semantic_kir_v1::wave_formal_evidence_v1::tests::indexed_formal_join_work_refusal_prefixes_restore_floor",
+    "production_semantic_kir_v1::wave_formal_evidence_v1::tests::indexed_formal_join_sort_matches_tuple_order_with_duplicate_ids",
+    "production_semantic_kir_v1::wave_formal_evidence_v1::tests::indexed_formal_join_sort_one_under_refuses_before_mutation",
+    "production_semantic_kir_v1::wave_formal_evidence_v1::tests::indexed_formal_join_checked_work_formulas_refuse_overflow",
+    "production_semantic_kir_v1::wave_formal_evidence_v1::tests::indexed_formal_join_keeps_inert_identity_and_no_admission_result",
+    "production_semantic_kir_v1::wave_formal_evidence_v1::tests::indexed_formal_join_repeated_validation_has_identical_resources",
+    "production_semantic_kir_v1::wave_formal_evidence_v1::tests::indexed_formal_join_duplicate_definition_type_refusals_match_legacy"
+  ],
+  "added_test_count": 20,
+  "work_limit": 1073741824,
+  "storage_limit": 134217728,
+  "changes_live_join": false,
+  "changes_canonical_bytes": false,
+  "changes_authority": false,
+  "frozen": true,
+  "baseline_control_status": "measured_original_RPO_control",
+  "baseline_control": {
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/kir-indexed-formal-join-baseline-cpu-v228-v1/complete.json",
+    "bytes": 244380,
+    "sha256": "a95ee1e3fb32cd50745a0bba5274e5688b72e7ee3f26de25ddbe0cd936e667ee"
+  },
+  "baseline_failure_reproduced": true,
+  "previous_source_proposal": {
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-kir-indexed-formal-join-v1/source-manifest.json",
+    "bytes": 5277,
+    "sha256": "6501750a4ac345cbd47e543954580775eab5b8df406bc302117906b5c1265560"
+  },
+  "previous_indexed_attempt": {
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/kir-indexed-formal-join-cpu-v228-v1/failed.json",
+    "bytes": 142699,
+    "sha256": "88d0fa37ebdbe9bda0501af8693f664c8dbfb5b909b586f2b930b16d37fb7b89"
+  },
+  "diagnostic": {
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/kir-join-work-diagnostic-cpu-v228-v1/complete.json",
+    "bytes": 52551,
+    "sha256": "71ea46649382eed953ec5075524d831169ea92031b6ccaf1dbbeeb99937d2faf"
+  },
+  "changed_existing_test": {
+    "name": "production_semantic_kir_v1::wave_task_entry_parameter_tests::access_roots::retained_fields::retained_nested_enum_referent_scalar_move_invalidates_saved_references",
+    "old_expected_location": [
+      7,
+      4,
+      5
+    ],
+    "proposed_expected_location": [
+      8,
+      7,
+      5
+    ],
+    "alias_only_proof_refusal_unchanged": true
+  }
+}

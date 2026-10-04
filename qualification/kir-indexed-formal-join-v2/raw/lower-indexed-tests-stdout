@@ -1,0 +1,25 @@
+
+running 20 tests
+test production_semantic_kir_v1::wave_formal_evidence_v1::tests::indexed_formal_join_duplicate_definition_type_refusals_match_legacy ... ok
+test production_semantic_kir_v1::wave_formal_evidence_v1::tests::indexed_formal_join_checked_work_formulas_refuse_overflow ... ok
+test production_semantic_kir_v1::wave_formal_evidence_v1::tests::indexed_formal_join_exact_and_one_under_resources_restore_floor ... ok
+test production_semantic_kir_v1::wave_formal_evidence_v1::tests::indexed_formal_join_handles_sparse_nonmonotonic_blocks_and_values ... ok
+test production_semantic_kir_v1::wave_formal_evidence_v1::tests::indexed_formal_join_keeps_inert_identity_and_no_admission_result ... ok
+test production_semantic_kir_v1::wave_formal_evidence_v1::tests::indexed_formal_join_preserves_block_parameter_first_definition ... ok
+test production_semantic_kir_v1::wave_formal_evidence_v1::tests::indexed_formal_join_preserves_fifteen_root_prefix_census ... ok
+test production_semantic_kir_v1::wave_formal_evidence_v1::tests::indexed_formal_join_preserves_operation_first_definition ... ok
+test production_semantic_kir_v1::wave_formal_evidence_v1::tests::indexed_formal_join_preserves_parameter_first_definition ... ok
+test production_semantic_kir_v1::wave_formal_evidence_v1::tests::indexed_formal_join_preserves_reason_locations_and_missing_refusal ... ok
+test production_semantic_kir_v1::wave_formal_evidence_v1::tests::indexed_formal_join_preserves_six_root_census ... ok
+test production_semantic_kir_v1::wave_formal_evidence_v1::tests::indexed_formal_join_matches_root_type_space_and_census_mutations ... ok
+test production_semantic_kir_v1::wave_formal_evidence_v1::tests::indexed_formal_join_rejects_absent_pointer_definition ... ok
+test production_semantic_kir_v1::wave_formal_evidence_v1::tests::indexed_formal_join_rejects_duplicate_block_ids ... ok
+test production_semantic_kir_v1::wave_formal_evidence_v1::tests::indexed_formal_join_preserves_stream_order_and_trailing_rejection ... ok
+test production_semantic_kir_v1::wave_formal_evidence_v1::tests::indexed_formal_join_rejects_unknown_call_effects ... ok
+test production_semantic_kir_v1::wave_formal_evidence_v1::tests::indexed_formal_join_repeated_validation_has_identical_resources ... ok
+test production_semantic_kir_v1::wave_formal_evidence_v1::tests::indexed_formal_join_sort_one_under_refuses_before_mutation ... ok
+test production_semantic_kir_v1::wave_formal_evidence_v1::tests::indexed_formal_join_sort_matches_tuple_order_with_duplicate_ids ... ok
+test production_semantic_kir_v1::wave_formal_evidence_v1::tests::indexed_formal_join_work_refusal_prefixes_restore_floor ... ok
+
+test result: ok. 20 passed; 0 failed; 0 ignored; 0 measured; 765 filtered out; finished in 0.01s
+

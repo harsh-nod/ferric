@@ -6,14 +6,23 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Latest: an [unchanged-source control](../qualification/kir-indexed-baseline-control-v1/README.md)
+Latest: the [indexed inert join V2 passed all thirteen staged CPU phases](../qualification/kir-indexed-formal-join-v2/README.md).
+The full lower library passed 785 tests without ignores; its twenty indexed
+tests also passed a separate repeat. The finalizer passed 190 default tests
+with fifteen historical ignores, followed by an explicit passing actual
+retained-handoff join. Twenty controller-policy tests passed separately.
+The original work/storage limits remain unchanged, all owned processes were
+reaped, and postchecks passed. This clears the measured inert-join refusal;
+checked HSACO emission and GPU numerical evaluation are still pending.
+
+Previously, an [unchanged-source control](../qualification/kir-indexed-baseline-control-v1/README.md)
 reproduced the existing nested-enum location assertion in both a focused run
 and the full original library (764 passed, 1 failed, 0 ignored). The 5,783-file
 original RPO copy had no overlay or formatting changes. All six phases
 completed naturally with clean postchecks. This establishes that the failure
 predates the indexed join; it does not qualify the failing library. The next
-candidate changes only that expectation in addition to the indexed-join source,
-retains the alias-only rejection check, and must pass the full staged suite.
+candidate changed only that expectation in addition to the indexed-join source,
+retained the alias-only rejection check, and passed the staged suite above.
 
 Previously, the [indexed inert-join attempt](../qualification/kir-indexed-formal-join-attempt-v1/README.md)
 compiled and passed all twenty new tests, but the full lower-library suite
@@ -32,15 +41,16 @@ after 40,799,816 units have already been accepted. The limits are unchanged.
 All 190 default finalizer tests and 16 controller-policy tests passed; the
 separate actual-capture test reproduced the expected exit-101 refusal.
 All owned processes exited naturally and postchecks passed. An indexed join
-is the next candidate, not yet a qualified fix. No new image or GPU result
-follows from this diagnostic.
+was subsequently qualified for the staged CPU join as recorded above. No new
+image or GPU result follows from this diagnostic.
 
 Previously, the [RoPE/RPO checked-lowering attempt](../qualification/rope-materialized-rpo-lowering-v1/README.md)
 cleared the previous semantic storage refusal and passed actual compiler
 replay, then failed the finalizer's canonical-kernel work budget:
 1,084,825,160 at refusal against the unchanged 1,073,741,824 limit. No HSACO
 was emitted. All process groups exited naturally and postchecks passed.
-The next task is to resolve this analysis cost without weakening its checks.
+The indexed join subsequently cleared this refusal without weakening its checks;
+checked emission remains the next gate.
 
 Separately, the [actual four-step coefficient audit](../qualification/ar4-rope-input-audit-v1/README.md)
 found all 512 BF16 coefficients identical to the retained framework tables.

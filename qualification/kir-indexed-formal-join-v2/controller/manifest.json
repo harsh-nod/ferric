@@ -1,0 +1,47 @@
+{
+  "schema": "ferric-p228-kir-indexed-formal-join-cpu-package-v2",
+  "compiler_built": false,
+  "gpu_execution": false,
+  "production_authority": false,
+  "pure_tests_defined": 20,
+  "pure_tests_run": false,
+  "test_census": [
+    "IndexedTests.test_actual_join_accepts_real_stdout_shape_only",
+    "IndexedTests.test_actual_join_requires_natural0_and_absent_group",
+    "IndexedTests.test_added_tests_must_all_be_present_unique_and_nonignored",
+    "IndexedTests.test_baseline_binds_generation_and_sole_original_failure",
+    "IndexedTests.test_baseline_requires_completed_negative_observation",
+    "IndexedTests.test_dependencies_add_only_two_declared_files",
+    "IndexedTests.test_dependencies_preserve_external_and_local_bodies",
+    "IndexedTests.test_exact_thirteen_phase_boundary_and_metadata_relocation",
+    "IndexedTests.test_handoff_and_ignored_selector_are_immutable",
+    "IndexedTests.test_ignored_inventory_cannot_hide_unlisted_names",
+    "IndexedTests.test_join_cannot_relabel_prior_refusal_or_diagnostic",
+    "IndexedTests.test_join_rejects_substituted_name_summary_and_duplicate",
+    "IndexedTests.test_lower_inventory_is_measured_original_plus_twenty",
+    "IndexedTests.test_pending_proposal_cannot_authorize_expectation_fix",
+    "IndexedTests.test_proposal_preserves_source_generation_and_limits",
+    "IndexedTests.test_proposal_requires_twenty_distinct_declared_names",
+    "IndexedTests.test_retained_environment_has_no_instrumentation_flag",
+    "IndexedTests.test_source_adds_exact_two_files_and_formats_only_five",
+    "IndexedTests.test_unbound_actual_pins_refused",
+    "IndexedTests.test_wrong_preimage_absent_claim_or_extra_file_refused"
+  ],
+  "files": [
+    {
+      "path": "README.md",
+      "bytes": 5990,
+      "sha256": "4138183916783659167324b6dde08ad68a2a8b8575e379fff88b3ba4bafd3f6d"
+    },
+    {
+      "path": "run.py",
+      "bytes": 38338,
+      "sha256": "02621c9ccbad3f9843e0c0250f9a3546de2c2bee8ac01b502c681c8b7576b6b6"
+    },
+    {
+      "path": "test_run.py",
+      "bytes": 15931,
+      "sha256": "3903034ed45209d6fbc12206484425cc7a2a133945de9ecbf7263581888699b0"
+    }
+  ]
+}
