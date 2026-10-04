@@ -1,0 +1,17 @@
+{
+  "README.md": {
+    "bytes": 6348,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-independent-profile-numerical-cli-v1/README.md",
+    "sha256": "b8331efdb74eda2fcfef68d256e80c19acd2d21e5a993b00c59acfc22f37fd14"
+  },
+  "run.py": {
+    "bytes": 18942,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-independent-profile-numerical-cli-v1/run.py",
+    "sha256": "17a963b528fa7e91b4c9496ff03dd96181e712d57b3139175668d1cb659bba65"
+  },
+  "test_run.py": {
+    "bytes": 11584,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-independent-profile-numerical-cli-v1/test_run.py",
+    "sha256": "90fefe412aa913c34a70606857419e3742ab8432a4d8acf6ef63cf38155cb175"
+  }
+}

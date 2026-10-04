@@ -1,0 +1,22 @@
+test_comparison_delegates_unchanged_adapter_then_rechecks_both_ledgers (test_run.WiringTests.test_comparison_delegates_unchanged_adapter_then_rechecks_both_ledgers) ... ok
+test_completed_rejection_has_nonzero_exit_and_requires_explicit_boolean (test_run.WiringTests.test_completed_rejection_has_nonzero_exit_and_requires_explicit_boolean) ... ok
+test_custody_failure_is_fatal_not_downgraded_to_numerical_rejection (test_run.WiringTests.test_custody_failure_is_fatal_not_downgraded_to_numerical_rejection) ... ok
+test_frozen_observer_needs_actual_receipt_pin (test_run.WiringTests.test_frozen_observer_needs_actual_receipt_pin) ... ok
+test_inputs_require_exact_scope_and_distinct_original_weight_files (test_run.WiringTests.test_inputs_require_exact_scope_and_distinct_original_weight_files) ... ok
+test_mathematical_rejection_stays_explicit_data_without_retry (test_run.WiringTests.test_mathematical_rejection_stays_explicit_data_without_retry) ... ok
+test_missing_post_audit_or_native_failure_prevents_math (test_run.WiringTests.test_missing_post_audit_or_native_failure_prevents_math) ... ok
+test_pin_rejects_bool_extent_relative_path_and_extra_fields (test_run.WiringTests.test_pin_rejects_bool_extent_relative_path_and_extra_fields) ... ok
+test_plan_uses_actual_case_paths_without_paired_parity (test_run.WiringTests.test_plan_uses_actual_case_paths_without_paired_parity) ... ok
+test_reference_authority_substitution_is_refused (test_run.WiringTests.test_reference_authority_substitution_is_refused) ... ok
+test_review_binds_actual_v7_evidence_and_records_unproven_assumptions (test_run.WiringTests.test_review_binds_actual_v7_evidence_and_records_unproven_assumptions) ... ok
+test_review_cannot_claim_universal_discharge_or_production (test_run.WiringTests.test_review_cannot_claim_universal_discharge_or_production) ... ok
+test_review_cannot_widen_bounds_or_drop_a_prerequisite (test_run.WiringTests.test_review_cannot_widen_bounds_or_drop_a_prerequisite) ... ok
+test_review_refuses_old_source_cpu_or_swapped_isa_pins (test_run.WiringTests.test_review_refuses_old_source_cpu_or_swapped_isa_pins) ... ok
+test_review_requires_explicit_notes_limitations_and_reviewed_scope (test_run.WiringTests.test_review_requires_explicit_notes_limitations_and_reviewed_scope) ... ok
+test_review_uses_baseline_producer_and_third_isa_review_not_formal (test_run.WiringTests.test_review_uses_baseline_producer_and_third_isa_review_not_formal) ... ok
+test_unfrozen_observer_refuses_before_any_host_probe (test_run.WiringTests.test_unfrozen_observer_refuses_before_any_host_probe) ... ok
+
+----------------------------------------------------------------------
+Ran 17 tests in 0.002s
+
+OK

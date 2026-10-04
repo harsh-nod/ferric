@@ -1,0 +1,138 @@
+{
+  "actual_observer_replay": false,
+  "actual_receipt": {
+    "bytes": 2951,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/independent-numerical-cli-pure-v228-v1/complete.json",
+    "sha256": "b712dd14bc46d4736e6615e394369ab90c85d51e8ae699ec114844baabfdda3b"
+  },
+  "authority": "none",
+  "controller": {
+    "bytes": 5312,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/run_independent_numerical_cli_pure_p228_v1.py",
+    "sha256": "db28e02fab8751afc99311be796d81ee53598d55fe6037b90b8c73d743592ef3"
+  },
+  "date": "2026-10-03",
+  "elapsed_host_seconds": 0.02003440202679485,
+  "errors": 0,
+  "failures": 0,
+  "full_model_acceptance": false,
+  "gpu_execution": false,
+  "launch_authority": false,
+  "limitations": [
+    "All seventeen tests use synthetic pins and mocked observer/reference calls.",
+    "This receipt does not execute or accept a real observer replay, independent reference, native worker, or GPU case.",
+    "The CLI delegates unchanged conditional numerical policies; it does not discharge their arithmetic premises.",
+    "The author-time draft wording in package/README.md is preserved byte-for-byte; the frozen manifest and actual receipt establish this checkpoint.",
+    "External frozen observer/reference packages remain prerequisites; this source checkpoint is not a standalone complete runtime reproducer."
+  ],
+  "native_execution": false,
+  "numerical_acceptance": false,
+  "package_manifest": {
+    "bytes": 664,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-independent-profile-numerical-cli-v1/manifest.json",
+    "sha256": "bbd9d3e89f0036b06d3080750f01c8003284ed9e1a48570632d27a731a371464"
+  },
+  "passed": true,
+  "performance_claim": false,
+  "production_authority": false,
+  "published_files": {
+    "README.md": {
+      "bytes": 2269,
+      "sha256": "191d141981dda08fc1a8c02c4d98e2ace54b7b11aba951db64cfc70f8345b4c6"
+    },
+    "evidence/complete.json": {
+      "bytes": 2951,
+      "sha256": "b712dd14bc46d4736e6615e394369ab90c85d51e8ae699ec114844baabfdda3b"
+    },
+    "evidence/sources-after.json": {
+      "bytes": 792,
+      "sha256": "ca779ed67ed0faa967e9e6528b91f2e83f062d3b9230202ea76efc45484da8b3"
+    },
+    "evidence/sources-before.json": {
+      "bytes": 792,
+      "sha256": "ca779ed67ed0faa967e9e6528b91f2e83f062d3b9230202ea76efc45484da8b3"
+    },
+    "evidence/tests.log": {
+      "bytes": 2673,
+      "sha256": "09c9a0210699f787620a4a0612319eb938e30bc15d76568d388da062097c9361"
+    },
+    "package/README.md": {
+      "bytes": 6348,
+      "sha256": "b8331efdb74eda2fcfef68d256e80c19acd2d21e5a993b00c59acfc22f37fd14"
+    },
+    "package/manifest.json": {
+      "bytes": 664,
+      "sha256": "bbd9d3e89f0036b06d3080750f01c8003284ed9e1a48570632d27a731a371464"
+    },
+    "package/run.py": {
+      "bytes": 18942,
+      "sha256": "17a963b528fa7e91b4c9496ff03dd96181e712d57b3139175668d1cb659bba65"
+    },
+    "package/test_run.py": {
+      "bytes": 11584,
+      "sha256": "90fefe412aa913c34a70606857419e3742ab8432a4d8acf6ef63cf38155cb175"
+    },
+    "test-driver/run_independent_numerical_cli_pure_p228_v1.py": {
+      "bytes": 5312,
+      "sha256": "db28e02fab8751afc99311be796d81ee53598d55fe6037b90b8c73d743592ef3"
+    }
+  },
+  "real_numerical_reference_execution": false,
+  "schema": "FerricIndependentProfileNumericalCliQualificationV1",
+  "skipped": 0,
+  "source_pins": {
+    "README.md": {
+      "bytes": 6348,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-independent-profile-numerical-cli-v1/README.md",
+      "sha256": "b8331efdb74eda2fcfef68d256e80c19acd2d21e5a993b00c59acfc22f37fd14"
+    },
+    "run.py": {
+      "bytes": 18942,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-independent-profile-numerical-cli-v1/run.py",
+      "sha256": "17a963b528fa7e91b4c9496ff03dd96181e712d57b3139175668d1cb659bba65"
+    },
+    "test_run.py": {
+      "bytes": 11584,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-independent-profile-numerical-cli-v1/test_run.py",
+      "sha256": "90fefe412aa913c34a70606857419e3742ab8432a4d8acf6ef63cf38155cb175"
+    }
+  },
+  "source_postchecks_passed": true,
+  "sources_after": {
+    "bytes": 792,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/independent-numerical-cli-pure-v228-v1/sources-after.json",
+    "sha256": "ca779ed67ed0faa967e9e6528b91f2e83f062d3b9230202ea76efc45484da8b3"
+  },
+  "sources_before": {
+    "bytes": 792,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/independent-numerical-cli-pure-v228-v1/sources-before.json",
+    "sha256": "ca779ed67ed0faa967e9e6528b91f2e83f062d3b9230202ea76efc45484da8b3"
+  },
+  "synthetic_wiring_tests_only": true,
+  "test_host": "smci350-rck-g03-b19-03",
+  "test_names": [
+    "test_comparison_delegates_unchanged_adapter_then_rechecks_both_ledgers",
+    "test_completed_rejection_has_nonzero_exit_and_requires_explicit_boolean",
+    "test_custody_failure_is_fatal_not_downgraded_to_numerical_rejection",
+    "test_frozen_observer_needs_actual_receipt_pin",
+    "test_inputs_require_exact_scope_and_distinct_original_weight_files",
+    "test_mathematical_rejection_stays_explicit_data_without_retry",
+    "test_missing_post_audit_or_native_failure_prevents_math",
+    "test_pin_rejects_bool_extent_relative_path_and_extra_fields",
+    "test_plan_uses_actual_case_paths_without_paired_parity",
+    "test_reference_authority_substitution_is_refused",
+    "test_review_binds_actual_v7_evidence_and_records_unproven_assumptions",
+    "test_review_cannot_claim_universal_discharge_or_production",
+    "test_review_cannot_widen_bounds_or_drop_a_prerequisite",
+    "test_review_refuses_old_source_cpu_or_swapped_isa_pins",
+    "test_review_requires_explicit_notes_limitations_and_reviewed_scope",
+    "test_review_uses_baseline_producer_and_third_isa_review_not_formal",
+    "test_unfrozen_observer_refuses_before_any_host_probe"
+  ],
+  "tests": 17,
+  "transcript": {
+    "bytes": 2673,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/independent-numerical-cli-pure-v228-v1/tests.log",
+    "sha256": "09c9a0210699f787620a4a0612319eb938e30bc15d76568d388da062097c9361"
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "files": [
+    {
+      "bytes": 6348,
+      "path": "README.md",
+      "sha256": "b8331efdb74eda2fcfef68d256e80c19acd2d21e5a993b00c59acfc22f37fd14"
+    },
+    {
+      "bytes": 18942,
+      "path": "run.py",
+      "sha256": "17a963b528fa7e91b4c9496ff03dd96181e712d57b3139175668d1cb659bba65"
+    },
+    {
+      "bytes": 11584,
+      "path": "test_run.py",
+      "sha256": "90fefe412aa913c34a70606857419e3742ab8432a4d8acf6ef63cf38155cb175"
+    }
+  ],
+  "gpu_execution": false,
+  "numerical_acceptance": false,
+  "production_authority": false,
+  "pure_tests": 17,
+  "schema": "ferric-p228-independent-profile-numerical-cli-package-v1",
+  "tests_executed": false
+}
