@@ -1,0 +1,40 @@
+{
+  "authority": "none",
+  "base_deployment": {
+    "bytes": 202889,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-decode-host-policy-deployment-v228-v1/complete.json",
+    "sha256": "4870de9c93693d073f77a1acdf88d77f23a6c6af8440ba88402af2f7320c01db"
+  },
+  "complete": {
+    "bytes": 120723,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/resident-state-fence-cpu-v228-v2/complete.json",
+    "sha256": "33fb539a0823dcaa988d9091d7712f40cfb0ed656c87b6e958df98f8e35ccdf9"
+  },
+  "notes": "Root reviewed the actual normalized CPU522 run: 124 selected runtime plus398 worker tests pass, four worker tests remain ignored, and all17 bounded commands exit naturally with absent owned groups. All88 raw files, all6928 source files and the4780024-byte worker79d2b50a were retained and rehashed locally. The eight runtime bodies exactly match published fe2o3 commit36734d3bc; the full source before/after maps agree. Sequential archive and13+3+8 overlays preserve actual byte preimages rather than equating differing Git labels. Root and independent peer review confirm unchanged resident outer fence pairs, public observers, Acquire loads, refusal checks and error quarantine. Private paired reads remove nested full fences; six new regression tests passed. Parent CPU633 and prior CPU475 remain separate generations; this is not a joint parent build, GPU coherence proof, full-model numerical acceptance, timing measurement or production admission. Compiler/tool/environment and locked dependency identities remain those recorded in the completed CPU run. The superseded formatting V1 receipt is not used. Only the completed V2 source copy and dependency build cache were retired after local retention; the selected worker, raw records, original source archives and overlays remain at their pinned paths for portable replay.",
+  "overlay": {
+    "bytes": 3380,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-resident-state-fence-cpu-v2/overlay.json",
+    "sha256": "22ed0df3ab7c5844f8bb4e26af5495365c82508c6c1a181d451b4ae01927b8c8"
+  },
+  "owned_leaf_results_reviewed": true,
+  "package_manifest": {
+    "bytes": 661,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-resident-state-fence-cpu-v2/manifest.json",
+    "sha256": "dff56a535d112d608d04a79d16bb88f3047f67eadcffa94513aa6f07c062390e"
+  },
+  "performance_claim": false,
+  "prior_deployment": {
+    "bytes": 70251,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/group-fence-deployment-v228-v1/complete.json",
+    "sha256": "28b679450730f0e89b8b08b41eb9fb6ad7d6fa067f3f39fd12c178713cd9c646"
+  },
+  "production_authority": false,
+  "reviewed": true,
+  "runner": {
+    "bytes": 13482,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-resident-state-fence-cpu-v2/run.py",
+    "sha256": "c16fce5d5e431f893bfccc5f1124ba20cbfca2544e26501e221c3ba452fdbedc"
+  },
+  "schema": "ferric-p228-resident-state-cpu-review-v1",
+  "source_and_toolchain_reviewed": true
+}
