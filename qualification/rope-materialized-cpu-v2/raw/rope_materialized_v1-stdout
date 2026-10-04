@@ -1,0 +1,25 @@
+
+running 20 tests
+test all_lanes_keep_twenty_head_routes_and_value_bits ... ok
+test all_nonfinite_inputs_are_rejected ... ok
+test coefficient_halfway_rounds_even_before_multiplication ... ok
+test exact_cancellation_is_positive_zero ... ok
+test failed_write_preserves_prefix_and_rejects_remaining_heads ... ok
+test final_addition_still_rounds_bf16_ties_even ... ok
+test finite_bf16_products_with_overflowing_sum_are_rejected ... ok
+test finite_coefficient_that_overflows_bf16_is_rejected ... ok
+test finite_product_that_overflows_bf16_is_not_hidden_by_cancellation ... ok
+test high_product_has_independent_materialization ... ok
+test missing_coefficient_poison_is_sticky_without_shortening_head_loop ... ok
+test negate_before_product_preserves_framework_signed_zero ... ok
+test nonfinite_value_is_rejected_without_changing_completed_query_writes ... ok
+test position_zero_is_identity_for_nonzero_finite_pairs ... ok
+test post_uses_materialized_arithmetic_and_preserves_raw_values ... ok
+test product_halfway_rounds_before_opposite_sign_addend ... ok
+test quarter_turn_uses_split_half_negative_high_then_low ... ok
+test selected_entry_changes_only_include_and_post_selector ... ok
+test sine_coefficient_has_its_own_bf16_boundary ... ok
+test subnormal_product_rounds_before_small_addend ... ok
+
+test result: ok. 20 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

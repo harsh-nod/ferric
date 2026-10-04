@@ -1,0 +1,18 @@
+
+running 13 tests
+test all_power_of_two_denominators_and_adjacent_words ... ok
+test exhaustive_all_significands_in_one_binade ... ignored, bounded exhaustive mantissa qualification; run explicitly with optimized test profile
+test fixed_mantissas_and_4096_stratified_samples_at_every_admitted_exponent ... ok
+test head_sum_and_inverse_match_the_legacy_cpu_rne_path_for_each_head ... ok
+test independent_fraction_nearest_neighbor_vectors_match_the_actual_macro ... ok
+test invalid_and_out_of_domain_words_fail_closed ... ok
+test invalid_input_weight_rotary_and_value_still_reject ... ok
+test macro_evaluates_its_denominator_once ... ok
+test post_preserves_both_bf16_narrowings_rotary_and_value_append_for_every_lane ... ok
+test prefix_head_macro_changes_are_limited_to_the_reciprocal_operation ... ok
+test rejected_denominator_cannot_publish_a_post_output ... ok
+test rejected_words_at_every_exponent_return_the_exact_nan_sentinel ... ok
+test six_permitted_seed_counterexamples_now_round_above_the_power_of_two ... ok
+
+test result: ok. 12 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 0.02s
+

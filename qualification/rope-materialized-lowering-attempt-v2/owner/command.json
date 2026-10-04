@@ -1,0 +1,47 @@
+{
+  "address_space_bytes": 12884901888,
+  "affinity": [
+    8,
+    9
+  ],
+  "argv": [
+    "/usr/bin/python3",
+    "-B",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-rope-materialized-lowering-v2/run.py",
+    "fe58dd94a259347e65f8ca6006f6df7ed4b582b57aef5d45bcc0d45d78d0cd47",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rope-materialized-cpu-v228-v3/complete.json",
+    "8dcb4f2b326ab909c52039273515f44eb4f88cd91a967c8816f866d5514c864a",
+    "--child"
+  ],
+  "core_bytes": 0,
+  "cwd": "/home/harmenon/ferric-asrock-42/fe2o3",
+  "deadline_seconds": 10800,
+  "env": {
+    "CARGO_BUILD_JOBS": "2",
+    "CARGO_HOME": "/home/harmenon/ferric-asrock-42/toolchain/cargo",
+    "CARGO_INCREMENTAL": "0",
+    "CARGO_PROFILE_DEV_DEBUG": "0",
+    "CARGO_PROFILE_TEST_DEBUG": "0",
+    "CARGO_TARGET_DIR": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-rope-materialized-checked-probe-v228-v2/target",
+    "CUDA_VISIBLE_DEVICES": "",
+    "HIP_VISIBLE_DEVICES": "",
+    "HOME": "/home/harmenon",
+    "LANG": "C.UTF-8",
+    "LC_ALL": "C.UTF-8",
+    "LD_LIBRARY_PATH": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/ordinary-induction-compiler-cpu-v228-v1/target/debug/deps:/home/harmenon/ferric-asrock-42/toolchain/rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/lib",
+    "MKL_NUM_THREADS": "1",
+    "OMP_NUM_THREADS": "1",
+    "OPENBLAS_NUM_THREADS": "1",
+    "PATH": "/home/harmenon/ferric-asrock-42/toolchain/rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/bin:/usr/bin:/bin",
+    "ROCR_VISIBLE_DEVICES": "",
+    "RUSTC": "/home/harmenon/ferric-asrock-42/toolchain/rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/bin/rustc",
+    "RUSTDOC": "/home/harmenon/ferric-asrock-42/toolchain/rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/bin/rustdoc",
+    "RUSTUP_HOME": "/home/harmenon/ferric-asrock-42/toolchain/rustup",
+    "RUSTUP_TOOLCHAIN": "nightly-2026-04-03",
+    "TMPDIR": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-rope-materialized-checked-probe-v228-v2/tmp",
+    "TZ": "UTC"
+  },
+  "file_cap_bytes": 1073741824,
+  "gpu_execution": false,
+  "nice": 10
+}

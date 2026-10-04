@@ -1,0 +1,604 @@
+{
+  "candidate_cpu": {
+    "bytes": 68573,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rope-materialized-cpu-v228-v3/complete.json",
+    "sha256": "8dcb4f2b326ab909c52039273515f44eb4f88cd91a967c8816f866d5514c864a"
+  },
+  "compiler_generation": {
+    "backend_dynamic_library": {
+      "bytes": 205465840,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/ordinary-induction-compiler-cpu-v228-v1/target/debug/deps/librustc_codegen_fe2o3.so",
+      "sha256": "3a0736577779cf072bb44dacfbda28f0298a39d50a649856ac280a02ac477ade"
+    },
+    "compiler_products": {
+      "compiler-tests": {
+        "bytes": 128970008,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/ordinary-induction-compiler-cpu-v228-v1/target/debug/deps/rustc_codegen_fe2o3-5db184f14eef1d1c",
+        "sha256": "643c7baffcb79da567e20425b8c1df1bbd7f076b22318ed6293c089c23a69920"
+      },
+      "fe2o3-rustc-extract": {
+        "bytes": 205648,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/ordinary-induction-compiler-cpu-v228-v1/target/debug/fe2o3-rustc-extract",
+        "sha256": "cece2097c34ed019e380a512132e8f4d932f127e8dd87793bcd9f0cf620cf3ca"
+      },
+      "librustc_codegen_fe2o3.rlib": {
+        "bytes": 67681872,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/ordinary-induction-compiler-cpu-v228-v1/target/debug/librustc_codegen_fe2o3.rlib",
+        "sha256": "8b0dcaf7bbf8b9e10900ef3a53dd6d7014d7fd6a6639dd9a12883f6347d25f21"
+      },
+      "librustc_codegen_fe2o3.so": {
+        "bytes": 205465840,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/ordinary-induction-compiler-cpu-v228-v1/target/debug/librustc_codegen_fe2o3.so",
+        "sha256": "3a0736577779cf072bb44dacfbda28f0298a39d50a649856ac280a02ac477ade"
+      },
+      "pliron-tests": {
+        "bytes": 68335600,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/ordinary-induction-compiler-cpu-v228-v1/target/debug/deps/fe2o3_pliron-bfbb58262805e3df",
+        "sha256": "d655c5ea569647700feeaf7d80fcb00a68cbf8137e4f635ddd13c20d1950392d"
+      }
+    },
+    "patches": {
+      "idempotent": {
+        "bytes": 892,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-partial-move-idempotent-v1/manifest.json",
+        "sha256": "788aed8827fd55fde9f260e227cfb91bc8f9503df98569617112c9c7b3fcc707"
+      },
+      "ordinary": {
+        "bytes": 2513,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-ordinary-induction-alias-v1/manifest.json",
+        "sha256": "a2c6cab1e3a24601015aa45f368e6a4d58bfaa34bbe2150c7f696b8cf1e43135"
+      }
+    },
+    "prerequisites": {
+      "cpu": {
+        "bytes": 369402,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/ordinary-induction-compiler-cpu-v228-v1/complete.json",
+        "sha256": "c45aa83b01bf76fdfd9962b06884611658dab607b001ba67fecc66db9fd5ba97"
+      },
+      "cpu_owner": {
+        "bytes": 57318,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/ordinary-induction-compiler-cpu-owner-v228-v1/complete.json",
+        "sha256": "85de66610631612ed2473f9d5fbb80ce89ea7ffc6064c1784834a6751d623609"
+      },
+      "tools": {
+        "bytes": 45313,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/ordinary-induction-finalizer-tools-v228-v1/complete.json",
+        "sha256": "874a6d2026029619a02283ee9650d682690941c14904d9fa59c101b58b89d6bc"
+      },
+      "tools_owner": {
+        "bytes": 10396,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/ordinary-induction-finalizer-tools-owner-v228-v1/complete.json",
+        "sha256": "ece336d1234940c312b693f6d6c91a3a8eece275a94f00b06b4e97645971ca97"
+      }
+    },
+    "qualified_generation": {
+      "completion": {
+        "bytes": 364397,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/idempotent-compiler-cpu-v228-v2/complete.json",
+        "sha256": "52245c1a713a87c1d60a464bf56998cca612f421386efe715533cfafedc3f9ac"
+      },
+      "sources": {
+        "bytes": 3686065,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/idempotent-compiler-cpu-v228-v2/sources-before.json",
+        "sha256": "d0e15df4e88f2b70844998eefe096984f0203bb3e31bae26c5021ca0fbae5ba4"
+      }
+    },
+    "roles": {
+      "compiler-tests": {
+        "bytes": 128970008,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/ordinary-induction-compiler-cpu-v228-v1/target/debug/deps/rustc_codegen_fe2o3-5db184f14eef1d1c",
+        "sha256": "643c7baffcb79da567e20425b8c1df1bbd7f076b22318ed6293c089c23a69920"
+      },
+      "fe2o3-rustc-extract": {
+        "bytes": 205648,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/ordinary-induction-compiler-cpu-v228-v1/target/debug/fe2o3-rustc-extract",
+        "sha256": "cece2097c34ed019e380a512132e8f4d932f127e8dd87793bcd9f0cf620cf3ca"
+      },
+      "finalizer": {
+        "bytes": 33044032,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/ordinary-induction-compiler-cpu-v228-v1/target/debug/examples/finite_join_engineering_hsaco_v1",
+        "sha256": "1ae67526442f52806b8bd4aa4df6f3a857603088118bc0dde0e5e376cb7c1e3c"
+      },
+      "finalizer-tests": {
+        "bytes": 35542224,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/ordinary-induction-compiler-cpu-v228-v1/target/debug/examples/finite_join_engineering_hsaco_v1-d165b82509d45fc9",
+        "sha256": "bc13a8702fa27e9c48ede642ad302e1f3ec1e6475faa6d6c73bb8ffcdc238673"
+      },
+      "librustc_codegen_fe2o3.so": {
+        "bytes": 205465840,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/ordinary-induction-compiler-cpu-v228-v1/target/debug/librustc_codegen_fe2o3.so",
+        "sha256": "3a0736577779cf072bb44dacfbda28f0298a39d50a649856ac280a02ac477ade"
+      },
+      "metadata": {
+        "bytes": 23544336,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/ordinary-induction-compiler-cpu-v228-v1/target/debug/examples/finite_join_request_metadata_v1",
+        "sha256": "3c024e79a263a286dc6ab46c5cd3c69e1173c46ba61d1eb415ecde903f74cdb8"
+      }
+    },
+    "source": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/ordinary-induction-compiler-cpu-v228-v1/source/fe2o3",
+    "target": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/ordinary-induction-compiler-cpu-v228-v1/target"
+  },
+  "completion": null,
+  "error": "RuntimeError: natural successful owned-tree exit required",
+  "full_model_acceptance": false,
+  "gpu_execution": false,
+  "launch_authority": false,
+  "numerical_acceptance": false,
+  "owned": {
+    "cleanup_signalled": false,
+    "deadline_seconds": 10800,
+    "elapsed_seconds": 109.76084565231577,
+    "exit_code": 1,
+    "lineage": [
+      {
+        "event": "owned",
+        "identity": {
+          "pgid": 585409,
+          "pid": 585409,
+          "ppid": 585320,
+          "sid": 585409,
+          "starttime": 210598683,
+          "state": "R",
+          "uid": 9661
+        },
+        "reason": "spawned-parent"
+      },
+      {
+        "event": "owned",
+        "identity": {
+          "pgid": 585417,
+          "pid": 585417,
+          "ppid": 585409,
+          "sid": 585417,
+          "starttime": 210599203,
+          "state": "Z",
+          "uid": 9661
+        },
+        "reason": "ancestry"
+      },
+      {
+        "event": "owned",
+        "identity": {
+          "pgid": 585451,
+          "pid": 585451,
+          "ppid": 585409,
+          "sid": 585451,
+          "starttime": 210599524,
+          "state": "S",
+          "uid": 9661
+        },
+        "reason": "ancestry"
+      },
+      {
+        "event": "owned",
+        "identity": {
+          "pgid": 585451,
+          "pid": 585487,
+          "ppid": 585451,
+          "sid": 585451,
+          "starttime": 210599597,
+          "state": "S",
+          "uid": 9661
+        },
+        "reason": "ancestry"
+      },
+      {
+        "event": "owned",
+        "identity": {
+          "pgid": 585451,
+          "pid": 585540,
+          "ppid": 585451,
+          "sid": 585451,
+          "starttime": 210599644,
+          "state": "S",
+          "uid": 9661
+        },
+        "reason": "ancestry"
+      },
+      {
+        "event": "owned",
+        "identity": {
+          "pgid": 585451,
+          "pid": 585561,
+          "ppid": 585451,
+          "sid": 585451,
+          "starttime": 210599656,
+          "state": "S",
+          "uid": 9661
+        },
+        "reason": "ancestry"
+      },
+      {
+        "event": "owned",
+        "identity": {
+          "pgid": 585451,
+          "pid": 585569,
+          "ppid": 585451,
+          "sid": 585451,
+          "starttime": 210599674,
+          "state": "S",
+          "uid": 9661
+        },
+        "reason": "ancestry"
+      },
+      {
+        "event": "owned",
+        "identity": {
+          "pgid": 585451,
+          "pid": 585613,
+          "ppid": 585451,
+          "sid": 585451,
+          "starttime": 210599727,
+          "state": "S",
+          "uid": 9661
+        },
+        "reason": "ancestry"
+      },
+      {
+        "event": "owned",
+        "identity": {
+          "pgid": 585451,
+          "pid": 585621,
+          "ppid": 585451,
+          "sid": 585451,
+          "starttime": 210599731,
+          "state": "S",
+          "uid": 9661
+        },
+        "reason": "ancestry"
+      },
+      {
+        "event": "owned",
+        "identity": {
+          "pgid": 585451,
+          "pid": 585669,
+          "ppid": 585451,
+          "sid": 585451,
+          "starttime": 210599758,
+          "state": "S",
+          "uid": 9661
+        },
+        "reason": "ancestry"
+      },
+      {
+        "event": "owned",
+        "identity": {
+          "pgid": 585451,
+          "pid": 585680,
+          "ppid": 585451,
+          "sid": 585451,
+          "starttime": 210599773,
+          "state": "S",
+          "uid": 9661
+        },
+        "reason": "ancestry"
+      },
+      {
+        "event": "owned",
+        "identity": {
+          "pgid": 585451,
+          "pid": 585693,
+          "ppid": 585451,
+          "sid": 585451,
+          "starttime": 210599799,
+          "state": "S",
+          "uid": 9661
+        },
+        "reason": "ancestry"
+      },
+      {
+        "event": "owned",
+        "identity": {
+          "pgid": 585451,
+          "pid": 585710,
+          "ppid": 585451,
+          "sid": 585451,
+          "starttime": 210599836,
+          "state": "S",
+          "uid": 9661
+        },
+        "reason": "ancestry"
+      },
+      {
+        "event": "owned",
+        "identity": {
+          "pgid": 585451,
+          "pid": 585743,
+          "ppid": 585451,
+          "sid": 585451,
+          "starttime": 210599873,
+          "state": "S",
+          "uid": 9661
+        },
+        "reason": "ancestry"
+      },
+      {
+        "event": "owned",
+        "identity": {
+          "pgid": 585451,
+          "pid": 585766,
+          "ppid": 585451,
+          "sid": 585451,
+          "starttime": 210599918,
+          "state": "S",
+          "uid": 9661
+        },
+        "reason": "ancestry"
+      },
+      {
+        "event": "owned",
+        "identity": {
+          "pgid": 585451,
+          "pid": 585807,
+          "ppid": 585451,
+          "sid": 585451,
+          "starttime": 210599981,
+          "state": "S",
+          "uid": 9661
+        },
+        "reason": "ancestry"
+      },
+      {
+        "event": "owned",
+        "identity": {
+          "pgid": 585451,
+          "pid": 585832,
+          "ppid": 585451,
+          "sid": 585451,
+          "starttime": 210600019,
+          "state": "S",
+          "uid": 9661
+        },
+        "reason": "ancestry"
+      },
+      {
+        "event": "owned",
+        "identity": {
+          "pgid": 585451,
+          "pid": 585838,
+          "ppid": 585451,
+          "sid": 585451,
+          "starttime": 210600023,
+          "state": "S",
+          "uid": 9661
+        },
+        "reason": "ancestry"
+      },
+      {
+        "event": "owned",
+        "identity": {
+          "pgid": 585451,
+          "pid": 585861,
+          "ppid": 585451,
+          "sid": 585451,
+          "starttime": 210600099,
+          "state": "S",
+          "uid": 9661
+        },
+        "reason": "ancestry"
+      },
+      {
+        "event": "owned",
+        "identity": {
+          "pgid": 585451,
+          "pid": 585876,
+          "ppid": 585451,
+          "sid": 585451,
+          "starttime": 210600132,
+          "state": "S",
+          "uid": 9661
+        },
+        "reason": "ancestry"
+      },
+      {
+        "event": "owned",
+        "identity": {
+          "pgid": 585451,
+          "pid": 585902,
+          "ppid": 585451,
+          "sid": 585451,
+          "starttime": 210600178,
+          "state": "S",
+          "uid": 9661
+        },
+        "reason": "ancestry"
+      },
+      {
+        "event": "owned",
+        "identity": {
+          "pgid": 585451,
+          "pid": 585937,
+          "ppid": 585451,
+          "sid": 585451,
+          "starttime": 210600231,
+          "state": "S",
+          "uid": 9661
+        },
+        "reason": "ancestry"
+      },
+      {
+        "event": "owned",
+        "identity": {
+          "pgid": 585451,
+          "pid": 585973,
+          "ppid": 585451,
+          "sid": 585451,
+          "starttime": 210600277,
+          "state": "S",
+          "uid": 9661
+        },
+        "reason": "ancestry"
+      },
+      {
+        "event": "owned",
+        "identity": {
+          "pgid": 585451,
+          "pid": 586505,
+          "ppid": 585451,
+          "sid": 585451,
+          "starttime": 210600480,
+          "state": "S",
+          "uid": 9661
+        },
+        "reason": "ancestry"
+      },
+      {
+        "event": "owned",
+        "identity": {
+          "pgid": 585451,
+          "pid": 586533,
+          "ppid": 585451,
+          "sid": 585451,
+          "starttime": 210600574,
+          "state": "S",
+          "uid": 9661
+        },
+        "reason": "ancestry"
+      },
+      {
+        "event": "owned",
+        "identity": {
+          "pgid": 585451,
+          "pid": 586554,
+          "ppid": 585451,
+          "sid": 585451,
+          "starttime": 210600598,
+          "state": "S",
+          "uid": 9661
+        },
+        "reason": "ancestry"
+      },
+      {
+        "event": "owned",
+        "identity": {
+          "pgid": 585451,
+          "pid": 586561,
+          "ppid": 585451,
+          "sid": 585451,
+          "starttime": 210600602,
+          "state": "S",
+          "uid": 9661
+        },
+        "reason": "ancestry"
+      },
+      {
+        "event": "owned",
+        "identity": {
+          "pgid": 585451,
+          "pid": 586584,
+          "ppid": 585451,
+          "sid": 585451,
+          "starttime": 210600684,
+          "state": "S",
+          "uid": 9661
+        },
+        "reason": "ancestry"
+      },
+      {
+        "event": "owned",
+        "identity": {
+          "pgid": 585451,
+          "pid": 586632,
+          "ppid": 585451,
+          "sid": 585451,
+          "starttime": 210601236,
+          "state": "S",
+          "uid": 9661
+        },
+        "reason": "ancestry"
+      },
+      {
+        "event": "owned",
+        "identity": {
+          "pgid": 585451,
+          "pid": 586680,
+          "ppid": 585451,
+          "sid": 585451,
+          "starttime": 210601786,
+          "state": "S",
+          "uid": 9661
+        },
+        "reason": "ancestry"
+      },
+      {
+        "event": "owned",
+        "identity": {
+          "pgid": 585451,
+          "pid": 586685,
+          "ppid": 585451,
+          "sid": 585451,
+          "starttime": 210601845,
+          "state": "S",
+          "uid": 9661
+        },
+        "reason": "ancestry"
+      }
+    ],
+    "owned_groups": [
+      585409,
+      585417,
+      585451
+    ],
+    "owned_groups_absent": true,
+    "owned_processes_reaped": true,
+    "reason": null
+  },
+  "package_manifest": {
+    "bytes": 1722,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-rope-materialized-lowering-v2/manifest.json",
+    "sha256": "fe58dd94a259347e65f8ca6006f6df7ed4b582b57aef5d45bcc0d45d78d0cd47"
+  },
+  "passed": false,
+  "performance_claim": false,
+  "postcheck_errors": [],
+  "prior_lowering": {
+    "bytes": 25107,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-reciprocal-checked-probe-v228-v7/complete.json",
+    "sha256": "6ba25826b71e30f5106e1efc9e786c021c56f5bab397add20b365373685081a9"
+  },
+  "production_authority": false,
+  "raw": {
+    "after.json": {
+      "bytes": 14794067,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rope-materialized-checked-probe-owner-v228-v2/after.json",
+      "sha256": "8dad4be5c2e0340d9ca48a03226c2fc802a36c249f656e4c53e52d111924efaf"
+    },
+    "before.json": {
+      "bytes": 14122330,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rope-materialized-checked-probe-owner-v228-v2/before.json",
+      "sha256": "8064051887d83fdca6304efce81f7d497d6dae61b7a7c6f6d4509fd5af2a6e97"
+    },
+    "command.json": {
+      "bytes": 2272,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rope-materialized-checked-probe-owner-v228-v2/command.json",
+      "sha256": "cd92cbab401f2658744b59f9b3a4f6cb94624a36ff2e6578452f4b4ea28629a5"
+    },
+    "owned-result.json": {
+      "bytes": 8380,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rope-materialized-checked-probe-owner-v228-v2/owned-result.json",
+      "sha256": "d8478b4d67a8b30d23e313d60cd851f71f05150aa2162123c1d545991b819328"
+    },
+    "started.json": {
+      "bytes": 190,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rope-materialized-checked-probe-owner-v228-v2/started.json",
+      "sha256": "9688d5bcc9a5fdf9f1c66464238f6cf0c031db23add1799cde8ea7e006e1b950"
+    },
+    "stderr": {
+      "bytes": 0,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rope-materialized-checked-probe-owner-v228-v2/stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "stdout": {
+      "bytes": 7977,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rope-materialized-checked-probe-owner-v228-v2/stdout",
+      "sha256": "4d2bf3d7d6db8646150910e91f5074c5c2e3a5e7a9ae6494ef9a4f8f3bd81500"
+    }
+  },
+  "runtime_requirements_discharged": false,
+  "schema": "ferric-p228-rope-materialized-lowering-owned-result-v2",
+  "source_manifest": {
+    "bytes": 5220,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-rope-materialized-source-v2/source-manifest.json",
+    "sha256": "7f1f447852f01bad9b6dedb9b40a7969961d45861592465548e6401615318d23"
+  }
+}

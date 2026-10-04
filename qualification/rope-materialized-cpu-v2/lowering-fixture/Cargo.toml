@@ -1,0 +1,17 @@
+[package]
+name = "fe2o3-production-extraction-fixture"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[workspace]
+
+[dependencies]
+fe2o3-device = { path = "/home/harmenon/ferric-asrock-42/fe2o3/crates/fe2o3-device" }
+
+[target.'cfg(not(target_arch = "amdgpu"))'.dependencies]
+fe2o3-host = { path = "/home/harmenon/ferric-asrock-42/fe2o3/crates/fe2o3-host" }
+
+[lib]
+name = "fe2o3_production_source_safety_fixture"
+path = "src/lib.rs"

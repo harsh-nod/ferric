@@ -1,0 +1,62 @@
+{
+  "Cargo.lock": {
+    "bytes": 8897,
+    "sha256": "93282dd447e56780f5c830431520ce3b101d52db6c14c83db4432f1ea122b445"
+  },
+  "Cargo.toml": {
+    "bytes": 348,
+    "sha256": "9db18beef4cdb3f477f0a0de8214bda95541f1b45a84552aa0218c3687a6e188"
+  },
+  "src/attention_online.rs": {
+    "bytes": 3066,
+    "sha256": "105a7065a7856d1c6f14e3edb743887e734231b1f42a3e0d42727a5b64ffde7b"
+  },
+  "src/fixture_lib.rs": {
+    "bytes": 81,
+    "sha256": "1e16c6e8c0fb1251ae9fab205acbdabb4c505e0032f00e8880d717593511186f"
+  },
+  "src/head_rope_numerics_v3.rs": {
+    "bytes": 5884,
+    "sha256": "4b88b9ce6608c791a0df8d0d2c5166de7aad77d63e7b2c52383cce068a1996e9"
+  },
+  "src/lib.rs": {
+    "bytes": 7138,
+    "sha256": "59ae725bb65627d53bc15528a9fbc846b79d3191f5dbeed6544b2d227195c202"
+  },
+  "src/output_projection_numerics_v5.rs": {
+    "bytes": 2033,
+    "sha256": "ef397ea5bfe59d6284172e0b2dda6c0f37eef69b48c1392274941d5b521cffd5"
+  },
+  "src/prefix_reciprocal_numerics_v1.rs": {
+    "bytes": 6056,
+    "sha256": "d2da6d5c02474556ab606a923c065d7146a2527a36400999431df0111fd2cca6"
+  },
+  "src/prefix_rope_materialized_numerics_v1.rs": {
+    "bytes": 4024,
+    "sha256": "71f6e77cd36611f8ccf8d60cbb294139c9ea24dd10855845ca26782da5b45542"
+  },
+  "src/prefix_tiles_numerics_v6.rs": {
+    "bytes": 6092,
+    "sha256": "3f729b83bc50d4e252a73911ac69bb4e4e1829e1cb05ca3f0bcffa36f09475ad"
+  },
+  "src/wave_numerics_v1.rs": {
+    "bytes": 2235,
+    "sha256": "22ef471c341936b3bc6f7b5812405c60152292cef07dcbd03173bf2dd7ee49ea"
+  },
+  "tests/fixtures/prefix_reciprocal_fraction_v1.tsv": {
+    "bytes": 18185,
+    "sha256": "79c7ed45639e642d56ba14cc2f0edf40097cd986dc40ea5e300859d6ce94d0ee"
+  },
+  "tests/fixtures/v7_lib.rs": {
+    "bytes": 7072,
+    "sha256": "d5c2ee3ca4f619080a8b544bc4e47b8ae4a55642ba2eb84448c8d32e91056c37"
+  },
+  "tests/prefix_reciprocal_v1.rs": {
+    "bytes": 10716,
+    "sha256": "ec040d00660c8431effaa55bf5df70d2a1c1a5fd6611a8a2c2350a504d3fab45"
+  },
+  "tests/rope_materialized_v1.rs": {
+    "bytes": 10217,
+    "sha256": "d4d9d16edef7a8c0c3aa36337e87d702f0278cba3dcf95683247746ff559c93c"
+  }
+}

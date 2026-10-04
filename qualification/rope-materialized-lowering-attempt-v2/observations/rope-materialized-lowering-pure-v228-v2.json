@@ -1,0 +1,16 @@
+{
+  "schema": "ferric-p228-rope-lowering-pure-tool-observation-v2",
+  "provenance": "Primary-agent observation of SSH tool output, not a remote process-supervisor receipt",
+  "host": "ASROCK through mi350-2",
+  "session_id": 19964,
+  "final_chunk_id": "1c2f23",
+  "exit_code": 0,
+  "test_count": 14,
+  "output": "test_actual_cpu_path_rejects_aliases_and_wrong_basename (__main__.PolicyTests) ... ok\ntest_both_scopes_recheck_original_source_map_bytes_and_stamps (__main__.PolicyTests) ... ok\ntest_cpu_gate_rejects_wrong_outcome_or_cohort_before_io (__main__.PolicyTests) ... ok\ntest_exact_replay_must_be_one_executed_not_ignored_test (__main__.PolicyTests) ... ok\ntest_guard_accepts_ordinary_python (__main__.PolicyTests) ... ok\ntest_guard_rejects_optimized_or_inherited_optimization (__main__.PolicyTests) ... ok\ntest_lowering_fixture_is_exactly_eight_rust_plus_cargo_pair (__main__.PolicyTests) ... ok\ntest_metadata_refuses_mlp_abi_or_new_authority (__main__.PolicyTests) ... ok\ntest_original_prefix_metadata_contract_preserves_fifteen_root_abi (__main__.PolicyTests) ... ok\ntest_recipe_refuses_changed_symbol_stage_or_bounds (__main__.PolicyTests) ... ok\ntest_recipe_retains_all_prefix_commands_env_and_generation (__main__.PolicyTests) ... ok\ntest_relocation_does_not_rename_prefix_or_external_retained_tools (__main__.PolicyTests) ... ok\ntest_source_transition_allows_only_candidate_formatting (__main__.PolicyTests) ... ok\ntest_source_transition_refuses_original_fixture_or_postcheck_drift (__main__.PolicyTests) ... ok\n\n----------------------------------------------------------------------\nRan 14 tests in 0.011s\n\nOK\n",
+  "controller_sha256": "003a94d3d84ec9c107a272e989abf98115f70dcd719ab26c7449c2ee88299a60",
+  "test_source_sha256": "dcb2d8a7b1d98c24a498aa9689632dadac9d86be5a18b65e4d8b74a1c2d839a9",
+  "manifest_sha256": "fe58dd94a259347e65f8ca6006f6df7ed4b582b57aef5d45bcc0d45d78d0cd47",
+  "gpu_execution": false,
+  "compiler_executed": false,
+  "numerical_acceptance": false
+}

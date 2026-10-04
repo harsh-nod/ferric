@@ -1,0 +1,740 @@
+{
+  "commands": [
+    {
+      "affinity": [
+        8,
+        9
+      ],
+      "argv": [
+        "/home/harmenon/ferric-asrock-42/toolchain/rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/bin/cargo",
+        "metadata",
+        "--offline",
+        "--locked",
+        "--format-version",
+        "1",
+        "--manifest-path",
+        "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-rope-materialized-checked-probe-v228-v2/fixture/Cargo.toml"
+      ],
+      "cache_cap_bytes": 6442450944,
+      "cwd": "/home/harmenon/ferric-asrock-42/fe2o3",
+      "deadline_seconds": 900,
+      "env": {
+        "CARGO_BUILD_JOBS": "2",
+        "CARGO_HOME": "/home/harmenon/ferric-asrock-42/toolchain/cargo",
+        "CARGO_INCREMENTAL": "0",
+        "CARGO_PROFILE_DEV_DEBUG": "0",
+        "CARGO_PROFILE_TEST_DEBUG": "0",
+        "CARGO_TARGET_DIR": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-rope-materialized-checked-probe-v228-v2/target",
+        "CUDA_VISIBLE_DEVICES": "",
+        "HIP_VISIBLE_DEVICES": "",
+        "HOME": "/home/harmenon",
+        "LANG": "C.UTF-8",
+        "LC_ALL": "C.UTF-8",
+        "LD_LIBRARY_PATH": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/ordinary-induction-compiler-cpu-v228-v1/target/debug/deps:/home/harmenon/ferric-asrock-42/toolchain/rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/lib",
+        "MKL_NUM_THREADS": "1",
+        "OMP_NUM_THREADS": "1",
+        "OPENBLAS_NUM_THREADS": "1",
+        "PATH": "/home/harmenon/ferric-asrock-42/toolchain/rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/bin:/usr/bin:/bin",
+        "ROCR_VISIBLE_DEVICES": "",
+        "RUSTC": "/home/harmenon/ferric-asrock-42/toolchain/rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/bin/rustc",
+        "RUSTDOC": "/home/harmenon/ferric-asrock-42/toolchain/rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/bin/rustdoc",
+        "RUSTUP_HOME": "/home/harmenon/ferric-asrock-42/toolchain/rustup",
+        "RUSTUP_TOOLCHAIN": "nightly-2026-04-03",
+        "TMPDIR": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-rope-materialized-checked-probe-v228-v2/tmp",
+        "TZ": "UTC"
+      },
+      "expected_exit": 0,
+      "gpu_execution": false,
+      "name": "fixture-metadata",
+      "nice": 10,
+      "tools": {
+        "cargo": "c9ad606cb1dbb4a65aa27c80be88ed61eb2b811b6450eeec6794f60ed78b94a3",
+        "rustc": "08dfef109ad22d90556dbd2f964543cd93843dcd75a2e9792c173667392a1950",
+        "rustdoc": "475ad4924e815034ed7ec5f85edfc8a99b2df99eab8695a76debb1eb64a9bd44"
+      }
+    },
+    {
+      "affinity": [
+        8,
+        9
+      ],
+      "argv": [
+        "/home/harmenon/ferric-asrock-42/toolchain/rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/bin/cargo",
+        "check",
+        "--offline",
+        "--locked",
+        "-Zbuild-std=core",
+        "--target",
+        "amdgcn-amd-amdhsa",
+        "--manifest-path",
+        "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-rope-materialized-checked-probe-v228-v2/fixture/Cargo.toml",
+        "--target-dir",
+        "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-rope-materialized-checked-probe-v228-v2/target"
+      ],
+      "cache_cap_bytes": 6442450944,
+      "cwd": "/home/harmenon/ferric-asrock-42/fe2o3",
+      "deadline_seconds": 1800,
+      "env": {
+        "CARGO_BUILD_JOBS": "2",
+        "CARGO_HOME": "/home/harmenon/ferric-asrock-42/toolchain/cargo",
+        "CARGO_INCREMENTAL": "0",
+        "CARGO_PROFILE_DEV_DEBUG": "0",
+        "CARGO_PROFILE_TEST_DEBUG": "0",
+        "CARGO_TARGET_AMDGCN_AMD_AMDHSA_RUSTFLAGS": "-Zalways-encode-mir -Zinline-mir=yes -Zmir-enable-passes=-JumpThreading -Copt-level=3 -Zinline-mir-hint-threshold=16384 -Ctarget-cpu=gfx950 -Ctarget-feature=-xnack,+wavefrontsize64,-wavefrontsize32",
+        "CARGO_TARGET_DIR": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-rope-materialized-checked-probe-v228-v2/target",
+        "CUDA_VISIBLE_DEVICES": "",
+        "FE2O3_CARGO_METADATA_BUILD_OBSERVATION_V2": "5555555555555555555555555555555555555555555555555555555555555555",
+        "FE2O3_CRATE_BINDING_ID_V1": "7777777777777777777777777777777777777777777777777777777777777777",
+        "FE2O3_DIAGNOSTIC_NEUTRAL_KIR_PATH_V1": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-rope-materialized-checked-probe-v228-v2/prefix-tiles-neutral-kir.bin",
+        "FE2O3_DIAGNOSTIC_SEMANTIC_MIR_PATH_V1": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-rope-materialized-checked-probe-v228-v2/prefix-tiles-semantic.bin",
+        "FE2O3_DIAGNOSTIC_TARGET_KIR_PATH_V1": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-rope-materialized-checked-probe-v228-v2/prefix-tiles-target-kir.bin",
+        "FE2O3_EXTRACT_AMDGPU_COMPILER_HANDOFF_PATH_V1": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-rope-materialized-checked-probe-v228-v2/prefix-tiles.handoff-v3",
+        "FE2O3_EXTRACT_CRATE_V1": "fe2o3_production_source_safety_fixture",
+        "FE2O3_EXTRACT_INERT_RUSTC_INVOCATION_V3_HEX": "4645324f33524900030000007003000000000000010011111111111111111111111111111111111111111111111111111111111111112222222222222222222222222222222222222222222222222222222222222222333333333333333333333333333333333333333333333333333333333333333344444444444444444444444444444444444444444444444444444444444444445555555555555555555555555555555555555555555555555555555555555555666666666666666666666666666666666666666666666666666666666666666644444444444444444444444444444444444444444444444444444444444444446666666666666666666666666666666666666666666666666666666666666666100000002f776f726b73706163652f6665326f330f000000100000002f6f70742f6665326f332f72757374630c0000002d2d63726174652d6e616d65180000006665326f335f65787472616374696f6e5f666978747572651e0000006372617465732f6665326f332d6465766963652f7372632f6c69622e7273100000002d2d63726174652d747970653d6c69620e0000002d2d65646974696f6e3d323032340f0000002d436d657461646174613d30313233130000002d5a616c776179732d656e636f64652d6d6972100000002d5a696e6c696e652d6d69723d796573220000002d5a6d69722d656e61626c652d7061737365733d2d4a756d70546872656164696e670d0000002d436f70742d6c6576656c3d33200000002d5a696e6c696e652d6d69722d68696e742d7468726573686f6c643d34303936130000002d437461726765742d6370753d676678393530390000002d437461726765742d666561747572653d2d786e61636b2c2b7761766566726f6e7473697a6536342c2d7761766566726f6e7473697a653332360000002d5a636f646567656e2d6261636b656e643d2f6f70742f6665326f332f6c696272757374635f636f646567656e5f6665326f332e736f040000001500434152474f5f4346475f5441524745545f4152434806000000616d6467636e0f004645324f335f485341434f5f4449521d0000002f776f726b73706163652f6665326f332f7461726765742f6665326f330c004645324f335f5441524745540d0000006766783935303a786e61636b2d16004645324f335f5645524946595f4b45524e454c5f49520100000031",
+        "FE2O3_EXTRACT_WORKER_LAYOUT_V1": "llvm23-elf-v1",
+        "HIP_VISIBLE_DEVICES": "",
+        "HOME": "/home/harmenon",
+        "LANG": "C.UTF-8",
+        "LC_ALL": "C.UTF-8",
+        "LD_LIBRARY_PATH": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/ordinary-induction-compiler-cpu-v228-v1/target/debug/deps:/home/harmenon/ferric-asrock-42/toolchain/rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/lib",
+        "MKL_NUM_THREADS": "1",
+        "OMP_NUM_THREADS": "1",
+        "OPENBLAS_NUM_THREADS": "1",
+        "PATH": "/home/harmenon/ferric-asrock-42/toolchain/rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/bin:/usr/bin:/bin",
+        "ROCR_VISIBLE_DEVICES": "",
+        "RUSTC": "/home/harmenon/ferric-asrock-42/toolchain/rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/bin/rustc",
+        "RUSTC_WORKSPACE_WRAPPER": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/ordinary-induction-compiler-cpu-v228-v1/target/debug/fe2o3-rustc-extract",
+        "RUSTDOC": "/home/harmenon/ferric-asrock-42/toolchain/rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/bin/rustdoc",
+        "RUSTUP_HOME": "/home/harmenon/ferric-asrock-42/toolchain/rustup",
+        "RUSTUP_TOOLCHAIN": "nightly-2026-04-03",
+        "TMPDIR": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-rope-materialized-checked-probe-v228-v2/tmp",
+        "TZ": "UTC"
+      },
+      "expected_exit": 0,
+      "gpu_execution": false,
+      "name": "checked-lowering",
+      "nice": 10,
+      "tools": {
+        "cargo": "c9ad606cb1dbb4a65aa27c80be88ed61eb2b811b6450eeec6794f60ed78b94a3",
+        "rustc": "08dfef109ad22d90556dbd2f964543cd93843dcd75a2e9792c173667392a1950",
+        "rustdoc": "475ad4924e815034ed7ec5f85edfc8a99b2df99eab8695a76debb1eb64a9bd44"
+      }
+    },
+    {
+      "affinity": [
+        8,
+        9
+      ],
+      "argv": [
+        "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/ordinary-induction-compiler-cpu-v228-v1/target/debug/deps/rustc_codegen_fe2o3-5db184f14eef1d1c",
+        "--exact",
+        "production_pipeline::conditional_formal_tests::actual_prefix_tile_v41_reaches_formal_archive_and_outer_lineage_replay",
+        "--ignored",
+        "--show-output",
+        "--test-threads=1"
+      ],
+      "cache_cap_bytes": 6442450944,
+      "cwd": "/home/harmenon/ferric-asrock-42/fe2o3",
+      "deadline_seconds": 1800,
+      "env": {
+        "CARGO_BUILD_JOBS": "2",
+        "CARGO_HOME": "/home/harmenon/ferric-asrock-42/toolchain/cargo",
+        "CARGO_INCREMENTAL": "0",
+        "CARGO_PROFILE_DEV_DEBUG": "0",
+        "CARGO_PROFILE_TEST_DEBUG": "0",
+        "CARGO_TARGET_DIR": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-rope-materialized-checked-probe-v228-v2/target",
+        "CUDA_VISIBLE_DEVICES": "",
+        "FE2O3_PREFIX_TILE_V6_SEMANTIC_CAPTURE": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-rope-materialized-checked-probe-v228-v2/prefix-tiles-semantic.bin",
+        "FE2O3_PREFIX_TILE_V6_SEMANTIC_CAPTURE_SHA256": "@candidate.semantic.sha256",
+        "HIP_VISIBLE_DEVICES": "",
+        "HOME": "/home/harmenon",
+        "LANG": "C.UTF-8",
+        "LC_ALL": "C.UTF-8",
+        "LD_LIBRARY_PATH": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/ordinary-induction-compiler-cpu-v228-v1/target/debug/deps:/home/harmenon/ferric-asrock-42/toolchain/rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/lib",
+        "MKL_NUM_THREADS": "1",
+        "OMP_NUM_THREADS": "1",
+        "OPENBLAS_NUM_THREADS": "1",
+        "PATH": "/home/harmenon/ferric-asrock-42/toolchain/rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/bin:/usr/bin:/bin",
+        "ROCR_VISIBLE_DEVICES": "",
+        "RUSTC": "/home/harmenon/ferric-asrock-42/toolchain/rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/bin/rustc",
+        "RUSTDOC": "/home/harmenon/ferric-asrock-42/toolchain/rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/bin/rustdoc",
+        "RUSTUP_HOME": "/home/harmenon/ferric-asrock-42/toolchain/rustup",
+        "RUSTUP_TOOLCHAIN": "nightly-2026-04-03",
+        "TMPDIR": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-rope-materialized-checked-probe-v228-v2/tmp",
+        "TZ": "UTC"
+      },
+      "expected_exit": 0,
+      "gpu_execution": false,
+      "name": "actual-replay",
+      "nice": 10,
+      "tools": {
+        "cargo": "c9ad606cb1dbb4a65aa27c80be88ed61eb2b811b6450eeec6794f60ed78b94a3",
+        "rustc": "08dfef109ad22d90556dbd2f964543cd93843dcd75a2e9792c173667392a1950",
+        "rustdoc": "475ad4924e815034ed7ec5f85edfc8a99b2df99eab8695a76debb1eb64a9bd44"
+      }
+    },
+    {
+      "affinity": [
+        8,
+        9
+      ],
+      "argv": [
+        "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/ordinary-induction-compiler-cpu-v228-v1/target/debug/examples/finite_join_engineering_hsaco_v1-d165b82509d45fc9",
+        "--exact",
+        "linux::wave_qkv_attention_output_tiles_v6::tests::wave_emission_actual_retained_v6_passes_full_inert_join",
+        "--ignored",
+        "--show-output",
+        "--test-threads=1"
+      ],
+      "cache_cap_bytes": 6442450944,
+      "cwd": "/home/harmenon/ferric-asrock-42/fe2o3",
+      "deadline_seconds": 900,
+      "env": {
+        "CARGO_BUILD_JOBS": "2",
+        "CARGO_HOME": "/home/harmenon/ferric-asrock-42/toolchain/cargo",
+        "CARGO_INCREMENTAL": "0",
+        "CARGO_PROFILE_DEV_DEBUG": "0",
+        "CARGO_PROFILE_TEST_DEBUG": "0",
+        "CARGO_TARGET_DIR": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-rope-materialized-checked-probe-v228-v2/target",
+        "CUDA_VISIBLE_DEVICES": "",
+        "FE2O3_WAVE_QKV_ATTENTION_OUTPUT_TILE_ENGINEERING_V6_BYTES": "@candidate.handoff.bytes",
+        "FE2O3_WAVE_QKV_ATTENTION_OUTPUT_TILE_ENGINEERING_V6_PATH": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-rope-materialized-checked-probe-v228-v2/prefix-tiles.handoff-v3",
+        "FE2O3_WAVE_QKV_ATTENTION_OUTPUT_TILE_ENGINEERING_V6_SHA256": "@candidate.handoff.sha256",
+        "HIP_VISIBLE_DEVICES": "",
+        "HOME": "/home/harmenon",
+        "LANG": "C.UTF-8",
+        "LC_ALL": "C.UTF-8",
+        "LD_LIBRARY_PATH": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/ordinary-induction-compiler-cpu-v228-v1/target/debug/deps:/home/harmenon/ferric-asrock-42/toolchain/rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/lib",
+        "MKL_NUM_THREADS": "1",
+        "OMP_NUM_THREADS": "1",
+        "OPENBLAS_NUM_THREADS": "1",
+        "PATH": "/home/harmenon/ferric-asrock-42/toolchain/rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/bin:/usr/bin:/bin",
+        "ROCR_VISIBLE_DEVICES": "",
+        "RUSTC": "/home/harmenon/ferric-asrock-42/toolchain/rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/bin/rustc",
+        "RUSTDOC": "/home/harmenon/ferric-asrock-42/toolchain/rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/bin/rustdoc",
+        "RUSTUP_HOME": "/home/harmenon/ferric-asrock-42/toolchain/rustup",
+        "RUSTUP_TOOLCHAIN": "nightly-2026-04-03",
+        "TMPDIR": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-rope-materialized-checked-probe-v228-v2/tmp",
+        "TZ": "UTC"
+      },
+      "expected_exit": 0,
+      "gpu_execution": false,
+      "name": "actual-inert-join",
+      "nice": 10,
+      "tools": {
+        "cargo": "c9ad606cb1dbb4a65aa27c80be88ed61eb2b811b6450eeec6794f60ed78b94a3",
+        "rustc": "08dfef109ad22d90556dbd2f964543cd93843dcd75a2e9792c173667392a1950",
+        "rustdoc": "475ad4924e815034ed7ec5f85edfc8a99b2df99eab8695a76debb1eb64a9bd44"
+      }
+    },
+    {
+      "affinity": [
+        8,
+        9
+      ],
+      "argv": [
+        "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/ordinary-induction-compiler-cpu-v228-v1/target/debug/examples/finite_join_engineering_hsaco_v1",
+        "--wave-qkv-attention-output-tiles-v6",
+        "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-rope-materialized-checked-probe-v228-v2/prefix-tiles.handoff-v3",
+        "@candidate.handoff.sha256",
+        "@candidate.handoff.bytes",
+        "/home/harmenon/ferric-asrock-42/evidence/wave-worker-probe-fix-v195/build/fe2o3-llvm-link-worker",
+        "d79f577b918fcad537d573444bb26deb1e565216faa486dc953d06e92d3b63ac",
+        "4414152",
+        "fe2o3-worker-v1-sha256-b1d2e5a24ae51c40606dcf5ed667fcd39d247d9783ee1f8479e29cae8637d03f",
+        "llvm23-scheduler-sha256:190de29aa13ed184099447b47d6f71d081040cba187f413c292f3727139b9f5f",
+        "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-rope-materialized-checked-probe-v228-v2/emitted"
+      ],
+      "cache_cap_bytes": 6442450944,
+      "cwd": "/home/harmenon/ferric-asrock-42/fe2o3",
+      "deadline_seconds": 900,
+      "env": {
+        "CARGO_BUILD_JOBS": "2",
+        "CARGO_HOME": "/home/harmenon/ferric-asrock-42/toolchain/cargo",
+        "CARGO_INCREMENTAL": "0",
+        "CARGO_PROFILE_DEV_DEBUG": "0",
+        "CARGO_PROFILE_TEST_DEBUG": "0",
+        "CARGO_TARGET_DIR": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-rope-materialized-checked-probe-v228-v2/target",
+        "CUDA_VISIBLE_DEVICES": "",
+        "HIP_VISIBLE_DEVICES": "",
+        "HOME": "/home/harmenon",
+        "LANG": "C.UTF-8",
+        "LC_ALL": "C.UTF-8",
+        "LD_LIBRARY_PATH": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/ordinary-induction-compiler-cpu-v228-v1/target/debug/deps:/home/harmenon/ferric-asrock-42/toolchain/rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/lib",
+        "MKL_NUM_THREADS": "1",
+        "OMP_NUM_THREADS": "1",
+        "OPENBLAS_NUM_THREADS": "1",
+        "PATH": "/home/harmenon/ferric-asrock-42/toolchain/rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/bin:/usr/bin:/bin",
+        "ROCR_VISIBLE_DEVICES": "",
+        "RUSTC": "/home/harmenon/ferric-asrock-42/toolchain/rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/bin/rustc",
+        "RUSTDOC": "/home/harmenon/ferric-asrock-42/toolchain/rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/bin/rustdoc",
+        "RUSTUP_HOME": "/home/harmenon/ferric-asrock-42/toolchain/rustup",
+        "RUSTUP_TOOLCHAIN": "nightly-2026-04-03",
+        "TMPDIR": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-rope-materialized-checked-probe-v228-v2/tmp",
+        "TZ": "UTC"
+      },
+      "expected_exit": 0,
+      "gpu_execution": false,
+      "name": "emit",
+      "nice": 10,
+      "tools": {
+        "cargo": "c9ad606cb1dbb4a65aa27c80be88ed61eb2b811b6450eeec6794f60ed78b94a3",
+        "rustc": "08dfef109ad22d90556dbd2f964543cd93843dcd75a2e9792c173667392a1950",
+        "rustdoc": "475ad4924e815034ed7ec5f85edfc8a99b2df99eab8695a76debb1eb64a9bd44"
+      }
+    },
+    {
+      "affinity": [
+        8,
+        9
+      ],
+      "argv": [
+        "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-prefix-tiles-source-v227-v5/extract-retained",
+        "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-rope-materialized-checked-probe-v228-v2/prefix-tiles.handoff-v3",
+        "@candidate.handoff.bytes",
+        "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-rope-materialized-checked-probe-v228-v2/extracted"
+      ],
+      "cache_cap_bytes": 6442450944,
+      "cwd": "/home/harmenon/ferric-asrock-42/fe2o3",
+      "deadline_seconds": 900,
+      "env": {
+        "CARGO_BUILD_JOBS": "2",
+        "CARGO_HOME": "/home/harmenon/ferric-asrock-42/toolchain/cargo",
+        "CARGO_INCREMENTAL": "0",
+        "CARGO_PROFILE_DEV_DEBUG": "0",
+        "CARGO_PROFILE_TEST_DEBUG": "0",
+        "CARGO_TARGET_DIR": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-rope-materialized-checked-probe-v228-v2/target",
+        "CUDA_VISIBLE_DEVICES": "",
+        "HIP_VISIBLE_DEVICES": "",
+        "HOME": "/home/harmenon",
+        "LANG": "C.UTF-8",
+        "LC_ALL": "C.UTF-8",
+        "LD_LIBRARY_PATH": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/ordinary-induction-compiler-cpu-v228-v1/target/debug/deps:/home/harmenon/ferric-asrock-42/toolchain/rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/lib",
+        "MKL_NUM_THREADS": "1",
+        "OMP_NUM_THREADS": "1",
+        "OPENBLAS_NUM_THREADS": "1",
+        "PATH": "/home/harmenon/ferric-asrock-42/toolchain/rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/bin:/usr/bin:/bin",
+        "ROCR_VISIBLE_DEVICES": "",
+        "RUSTC": "/home/harmenon/ferric-asrock-42/toolchain/rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/bin/rustc",
+        "RUSTDOC": "/home/harmenon/ferric-asrock-42/toolchain/rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/bin/rustdoc",
+        "RUSTUP_HOME": "/home/harmenon/ferric-asrock-42/toolchain/rustup",
+        "RUSTUP_TOOLCHAIN": "nightly-2026-04-03",
+        "TMPDIR": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-rope-materialized-checked-probe-v228-v2/tmp",
+        "TZ": "UTC"
+      },
+      "expected_exit": 0,
+      "gpu_execution": false,
+      "name": "extract-retained",
+      "nice": 10,
+      "tools": {
+        "cargo": "c9ad606cb1dbb4a65aa27c80be88ed61eb2b811b6450eeec6794f60ed78b94a3",
+        "rustc": "08dfef109ad22d90556dbd2f964543cd93843dcd75a2e9792c173667392a1950",
+        "rustdoc": "475ad4924e815034ed7ec5f85edfc8a99b2df99eab8695a76debb1eb64a9bd44"
+      }
+    },
+    {
+      "affinity": [
+        8,
+        9
+      ],
+      "argv": [
+        "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/ordinary-induction-compiler-cpu-v228-v1/target/debug/examples/finite_join_request_metadata_v1",
+        "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-rope-materialized-checked-probe-v228-v2/emitted/artifact.hsaco",
+        "@candidate.image.sha256",
+        "@candidate.image.bytes"
+      ],
+      "cache_cap_bytes": 6442450944,
+      "cwd": "/home/harmenon/ferric-asrock-42/fe2o3",
+      "deadline_seconds": 900,
+      "env": {
+        "CARGO_BUILD_JOBS": "2",
+        "CARGO_HOME": "/home/harmenon/ferric-asrock-42/toolchain/cargo",
+        "CARGO_INCREMENTAL": "0",
+        "CARGO_PROFILE_DEV_DEBUG": "0",
+        "CARGO_PROFILE_TEST_DEBUG": "0",
+        "CARGO_TARGET_DIR": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-rope-materialized-checked-probe-v228-v2/target",
+        "CUDA_VISIBLE_DEVICES": "",
+        "HIP_VISIBLE_DEVICES": "",
+        "HOME": "/home/harmenon",
+        "LANG": "C.UTF-8",
+        "LC_ALL": "C.UTF-8",
+        "LD_LIBRARY_PATH": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/ordinary-induction-compiler-cpu-v228-v1/target/debug/deps:/home/harmenon/ferric-asrock-42/toolchain/rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/lib",
+        "MKL_NUM_THREADS": "1",
+        "OMP_NUM_THREADS": "1",
+        "OPENBLAS_NUM_THREADS": "1",
+        "PATH": "/home/harmenon/ferric-asrock-42/toolchain/rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/bin:/usr/bin:/bin",
+        "ROCR_VISIBLE_DEVICES": "",
+        "RUSTC": "/home/harmenon/ferric-asrock-42/toolchain/rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/bin/rustc",
+        "RUSTDOC": "/home/harmenon/ferric-asrock-42/toolchain/rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/bin/rustdoc",
+        "RUSTUP_HOME": "/home/harmenon/ferric-asrock-42/toolchain/rustup",
+        "RUSTUP_TOOLCHAIN": "nightly-2026-04-03",
+        "TMPDIR": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-rope-materialized-checked-probe-v228-v2/tmp",
+        "TZ": "UTC"
+      },
+      "expected_exit": 0,
+      "gpu_execution": false,
+      "name": "descriptor-metadata",
+      "nice": 10,
+      "tools": {
+        "cargo": "c9ad606cb1dbb4a65aa27c80be88ed61eb2b811b6450eeec6794f60ed78b94a3",
+        "rustc": "08dfef109ad22d90556dbd2f964543cd93843dcd75a2e9792c173667392a1950",
+        "rustdoc": "475ad4924e815034ed7ec5f85edfc8a99b2df99eab8695a76debb1eb64a9bd44"
+      }
+    },
+    {
+      "affinity": [
+        8,
+        9
+      ],
+      "argv": [
+        "/opt/rocm-7.3.0/lib/llvm/bin/llvm-readobj",
+        "--notes",
+        "--symbols",
+        "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-rope-materialized-checked-probe-v228-v2/emitted/artifact.hsaco"
+      ],
+      "cache_cap_bytes": 6442450944,
+      "cwd": "/home/harmenon/ferric-asrock-42/fe2o3",
+      "deadline_seconds": 900,
+      "env": {
+        "CARGO_BUILD_JOBS": "2",
+        "CARGO_HOME": "/home/harmenon/ferric-asrock-42/toolchain/cargo",
+        "CARGO_INCREMENTAL": "0",
+        "CARGO_PROFILE_DEV_DEBUG": "0",
+        "CARGO_PROFILE_TEST_DEBUG": "0",
+        "CARGO_TARGET_DIR": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-rope-materialized-checked-probe-v228-v2/target",
+        "CUDA_VISIBLE_DEVICES": "",
+        "HIP_VISIBLE_DEVICES": "",
+        "HOME": "/home/harmenon",
+        "LANG": "C.UTF-8",
+        "LC_ALL": "C.UTF-8",
+        "LD_LIBRARY_PATH": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/ordinary-induction-compiler-cpu-v228-v1/target/debug/deps:/home/harmenon/ferric-asrock-42/toolchain/rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/lib",
+        "MKL_NUM_THREADS": "1",
+        "OMP_NUM_THREADS": "1",
+        "OPENBLAS_NUM_THREADS": "1",
+        "PATH": "/home/harmenon/ferric-asrock-42/toolchain/rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/bin:/usr/bin:/bin",
+        "ROCR_VISIBLE_DEVICES": "",
+        "RUSTC": "/home/harmenon/ferric-asrock-42/toolchain/rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/bin/rustc",
+        "RUSTDOC": "/home/harmenon/ferric-asrock-42/toolchain/rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/bin/rustdoc",
+        "RUSTUP_HOME": "/home/harmenon/ferric-asrock-42/toolchain/rustup",
+        "RUSTUP_TOOLCHAIN": "nightly-2026-04-03",
+        "TMPDIR": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-rope-materialized-checked-probe-v228-v2/tmp",
+        "TZ": "UTC"
+      },
+      "expected_exit": 0,
+      "gpu_execution": false,
+      "name": "elf-notes",
+      "nice": 10,
+      "tools": {
+        "cargo": "c9ad606cb1dbb4a65aa27c80be88ed61eb2b811b6450eeec6794f60ed78b94a3",
+        "rustc": "08dfef109ad22d90556dbd2f964543cd93843dcd75a2e9792c173667392a1950",
+        "rustdoc": "475ad4924e815034ed7ec5f85edfc8a99b2df99eab8695a76debb1eb64a9bd44"
+      }
+    },
+    {
+      "affinity": [
+        8,
+        9
+      ],
+      "argv": [
+        "/opt/rocm-7.3.0/lib/llvm/bin/llvm-objdump",
+        "--disassemble",
+        "--mcpu=gfx950",
+        "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-rope-materialized-checked-probe-v228-v2/emitted/artifact.hsaco"
+      ],
+      "cache_cap_bytes": 6442450944,
+      "cwd": "/home/harmenon/ferric-asrock-42/fe2o3",
+      "deadline_seconds": 900,
+      "env": {
+        "CARGO_BUILD_JOBS": "2",
+        "CARGO_HOME": "/home/harmenon/ferric-asrock-42/toolchain/cargo",
+        "CARGO_INCREMENTAL": "0",
+        "CARGO_PROFILE_DEV_DEBUG": "0",
+        "CARGO_PROFILE_TEST_DEBUG": "0",
+        "CARGO_TARGET_DIR": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-rope-materialized-checked-probe-v228-v2/target",
+        "CUDA_VISIBLE_DEVICES": "",
+        "HIP_VISIBLE_DEVICES": "",
+        "HOME": "/home/harmenon",
+        "LANG": "C.UTF-8",
+        "LC_ALL": "C.UTF-8",
+        "LD_LIBRARY_PATH": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/ordinary-induction-compiler-cpu-v228-v1/target/debug/deps:/home/harmenon/ferric-asrock-42/toolchain/rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/lib",
+        "MKL_NUM_THREADS": "1",
+        "OMP_NUM_THREADS": "1",
+        "OPENBLAS_NUM_THREADS": "1",
+        "PATH": "/home/harmenon/ferric-asrock-42/toolchain/rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/bin:/usr/bin:/bin",
+        "ROCR_VISIBLE_DEVICES": "",
+        "RUSTC": "/home/harmenon/ferric-asrock-42/toolchain/rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/bin/rustc",
+        "RUSTDOC": "/home/harmenon/ferric-asrock-42/toolchain/rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/bin/rustdoc",
+        "RUSTUP_HOME": "/home/harmenon/ferric-asrock-42/toolchain/rustup",
+        "RUSTUP_TOOLCHAIN": "nightly-2026-04-03",
+        "TMPDIR": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-rope-materialized-checked-probe-v228-v2/tmp",
+        "TZ": "UTC"
+      },
+      "expected_exit": 0,
+      "gpu_execution": false,
+      "name": "disassembly",
+      "nice": 10,
+      "tools": {
+        "cargo": "c9ad606cb1dbb4a65aa27c80be88ed61eb2b811b6450eeec6794f60ed78b94a3",
+        "rustc": "08dfef109ad22d90556dbd2f964543cd93843dcd75a2e9792c173667392a1950",
+        "rustdoc": "475ad4924e815034ed7ec5f85edfc8a99b2df99eab8695a76debb1eb64a9bd44"
+      }
+    }
+  ],
+  "compiler_generation": {
+    "cpu": {
+      "bytes": 369402,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/ordinary-induction-compiler-cpu-v228-v1/complete.json",
+      "sha256": "c45aa83b01bf76fdfd9962b06884611658dab607b001ba67fecc66db9fd5ba97"
+    },
+    "cpu_owner": {
+      "bytes": 57318,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/ordinary-induction-compiler-cpu-owner-v228-v1/complete.json",
+      "sha256": "85de66610631612ed2473f9d5fbb80ce89ea7ffc6064c1784834a6751d623609"
+    },
+    "tools": {
+      "bytes": 45313,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/ordinary-induction-finalizer-tools-v228-v1/complete.json",
+      "sha256": "874a6d2026029619a02283ee9650d682690941c14904d9fa59c101b58b89d6bc"
+    },
+    "tools_owner": {
+      "bytes": 10396,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/ordinary-induction-finalizer-tools-owner-v228-v1/complete.json",
+      "sha256": "ece336d1234940c312b693f6d6c91a3a8eece275a94f00b06b4e97645971ca97"
+    }
+  },
+  "fixture": [
+    {
+      "destination": "Cargo.lock",
+      "source": {
+        "bytes": 33839,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-reciprocal-checked-probe-v228-v7/fixture/Cargo.lock",
+        "sha256": "8e56bdd313ea40d46277870eab953e5b6832d1c26d427ff3c81c5ecf93968d85"
+      }
+    },
+    {
+      "destination": "Cargo.toml",
+      "source": {
+        "bytes": 436,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-reciprocal-checked-probe-v228-v7/fixture/Cargo.toml",
+        "sha256": "971675fb4f2a11fe066612b3123db65240fcb89e03169e89c95b6cf90765b114"
+      }
+    },
+    {
+      "destination": "src/attention_online.rs",
+      "source": {
+        "bytes": 3066,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rope-materialized-cpu-v228-v3/fixture/src/attention_online.rs",
+        "sha256": "105a7065a7856d1c6f14e3edb743887e734231b1f42a3e0d42727a5b64ffde7b"
+      }
+    },
+    {
+      "destination": "src/head_rope_numerics_v3.rs",
+      "source": {
+        "bytes": 5884,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rope-materialized-cpu-v228-v3/fixture/src/head_rope_numerics_v3.rs",
+        "sha256": "4b88b9ce6608c791a0df8d0d2c5166de7aad77d63e7b2c52383cce068a1996e9"
+      }
+    },
+    {
+      "destination": "src/lib.rs",
+      "source": {
+        "bytes": 7168,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rope-materialized-cpu-v228-v3/fixture/src/lib.rs",
+        "sha256": "d0dd70478f67b80aca49e479221b56092f270869583f8a6c360b6fdd8eb60dd1"
+      }
+    },
+    {
+      "destination": "src/output_projection_numerics_v5.rs",
+      "source": {
+        "bytes": 2033,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rope-materialized-cpu-v228-v3/fixture/src/output_projection_numerics_v5.rs",
+        "sha256": "ef397ea5bfe59d6284172e0b2dda6c0f37eef69b48c1392274941d5b521cffd5"
+      }
+    },
+    {
+      "destination": "src/prefix_reciprocal_numerics_v1.rs",
+      "source": {
+        "bytes": 6056,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rope-materialized-cpu-v228-v3/fixture/src/prefix_reciprocal_numerics_v1.rs",
+        "sha256": "d2da6d5c02474556ab606a923c065d7146a2527a36400999431df0111fd2cca6"
+      }
+    },
+    {
+      "destination": "src/prefix_rope_materialized_numerics_v1.rs",
+      "source": {
+        "bytes": 4040,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rope-materialized-cpu-v228-v3/fixture/src/prefix_rope_materialized_numerics_v1.rs",
+        "sha256": "cb189d988102a51add478377acd6033d47730ea056b0e4c0147c5509c9e4c996"
+      }
+    },
+    {
+      "destination": "src/prefix_tiles_numerics_v6.rs",
+      "source": {
+        "bytes": 6092,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rope-materialized-cpu-v228-v3/fixture/src/prefix_tiles_numerics_v6.rs",
+        "sha256": "3f729b83bc50d4e252a73911ac69bb4e4e1829e1cb05ca3f0bcffa36f09475ad"
+      }
+    },
+    {
+      "destination": "src/wave_numerics_v1.rs",
+      "source": {
+        "bytes": 2235,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rope-materialized-cpu-v228-v3/fixture/src/wave_numerics_v1.rs",
+        "sha256": "22ef471c341936b3bc6f7b5812405c60152292cef07dcbd03173bf2dd7ee49ea"
+      }
+    }
+  ],
+  "fresh_output": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-rope-materialized-checked-probe-v228-v2",
+  "fresh_target": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-rope-materialized-checked-probe-v228-v2/target",
+  "retained_modules": [
+    {
+      "bytes": 6101,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/bounded.py",
+      "sha256": "e634e1b3be3b122b2231ad134c770f25d7d71d10ec767d61a16d03e726bdf4f1"
+    },
+    {
+      "bytes": 13306,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p227-prefix-tiles-source-pipeline-v5/contracts.py",
+      "sha256": "694be9d199cd92b2d11ff4fe8401ad3728497bd8846b5d6924311330f3d9de1a"
+    }
+  ],
+  "schema": "ferric-p228-rope-materialized-lowering-recipe-v2",
+  "symbol": "ferric_qwen3_claimed_rmsnorm_qkv_attention_output_tiles_bf16_f32_v6",
+  "toolchain_and_retained_tool_pins": [
+    {
+      "bytes": 120279,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-join-entry-parameters-v1/wave-typed-source-canonical-intrinsic-roster-v183-a.stdout",
+      "sha256": "da9eabf6ac6f0fa071f836e970029263b1ddaeaa097ba79b0208500827b53ca1"
+    },
+    {
+      "bytes": 68335600,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/ordinary-induction-compiler-cpu-v228-v1/target/debug/deps/fe2o3_pliron-bfbb58262805e3df",
+      "sha256": "d655c5ea569647700feeaf7d80fcb00a68cbf8137e4f635ddd13c20d1950392d"
+    },
+    {
+      "bytes": 128970008,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/ordinary-induction-compiler-cpu-v228-v1/target/debug/deps/rustc_codegen_fe2o3-5db184f14eef1d1c",
+      "sha256": "643c7baffcb79da567e20425b8c1df1bbd7f076b22318ed6293c089c23a69920"
+    },
+    {
+      "bytes": 33044032,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/ordinary-induction-compiler-cpu-v228-v1/target/debug/examples/finite_join_engineering_hsaco_v1",
+      "sha256": "1ae67526442f52806b8bd4aa4df6f3a857603088118bc0dde0e5e376cb7c1e3c"
+    },
+    {
+      "bytes": 35542224,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/ordinary-induction-compiler-cpu-v228-v1/target/debug/examples/finite_join_engineering_hsaco_v1-d165b82509d45fc9",
+      "sha256": "bc13a8702fa27e9c48ede642ad302e1f3ec1e6475faa6d6c73bb8ffcdc238673"
+    },
+    {
+      "bytes": 23544336,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/ordinary-induction-compiler-cpu-v228-v1/target/debug/examples/finite_join_request_metadata_v1",
+      "sha256": "3c024e79a263a286dc6ab46c5cd3c69e1173c46ba61d1eb415ecde903f74cdb8"
+    },
+    {
+      "bytes": 205648,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/ordinary-induction-compiler-cpu-v228-v1/target/debug/fe2o3-rustc-extract",
+      "sha256": "cece2097c34ed019e380a512132e8f4d932f127e8dd87793bcd9f0cf620cf3ca"
+    },
+    {
+      "bytes": 67681872,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/ordinary-induction-compiler-cpu-v228-v1/target/debug/librustc_codegen_fe2o3.rlib",
+      "sha256": "8b0dcaf7bbf8b9e10900ef3a53dd6d7014d7fd6a6639dd9a12883f6347d25f21"
+    },
+    {
+      "bytes": 205465840,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/ordinary-induction-compiler-cpu-v228-v1/target/debug/librustc_codegen_fe2o3.so",
+      "sha256": "3a0736577779cf072bb44dacfbda28f0298a39d50a649856ac280a02ac477ade"
+    },
+    {
+      "bytes": 5798888,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-prefix-tiles-source-v227-v5/extract-retained",
+      "sha256": "699bc719b4390bf500fe43e896ca963fe6cbfddc257d0a8d57a058a9d0eb8605"
+    },
+    {
+      "bytes": 266372,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/native-draft-v10-prep/gfx950-reviewed-libs/ockl.bc",
+      "sha256": "8320aec59c4dc87cb28fdb374a44a55088a6258b59dffae4a85e8eacec8be456"
+    },
+    {
+      "bytes": 2368,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/native-draft-v10-prep/gfx950-reviewed-libs/oclc_abi_version_600.bc",
+      "sha256": "79d3d09404f5df01c484dc15cc64583c7c1803234463eee6505226f0186a71b1"
+    },
+    {
+      "bytes": 2292,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/native-draft-v10-prep/gfx950-reviewed-libs/oclc_correctly_rounded_sqrt_on.bc",
+      "sha256": "3b2344acba86e174b87961e8a5e4a164ab61addf8c8a035e9b6dcd03ddab23fa"
+    },
+    {
+      "bytes": 2292,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/native-draft-v10-prep/gfx950-reviewed-libs/oclc_daz_opt_off.bc",
+      "sha256": "3b2344acba86e174b87961e8a5e4a164ab61addf8c8a035e9b6dcd03ddab23fa"
+    },
+    {
+      "bytes": 2376,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/native-draft-v10-prep/gfx950-reviewed-libs/oclc_finite_only_off.bc",
+      "sha256": "e1d1fddf85577b078d02a07212f670324e1e157d1b6608a8c765ad3c171a7b29"
+    },
+    {
+      "bytes": 2368,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/native-draft-v10-prep/gfx950-reviewed-libs/oclc_isa_version_950.bc",
+      "sha256": "9ea1498966ac0b4d0a54677501a847cb1ee932768e78576613d42985bf394d34"
+    },
+    {
+      "bytes": 2376,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/native-draft-v10-prep/gfx950-reviewed-libs/oclc_unsafe_math_off.bc",
+      "sha256": "a500bc03fd046bcd7806938ea323758e5c9ba8d56cfd767cef71612b3bd87d37"
+    },
+    {
+      "bytes": 2444,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/native-draft-v10-prep/gfx950-reviewed-libs/oclc_wavefrontsize64_on.bc",
+      "sha256": "9560b0d120b9e7c6b28a56a87eeed4ae155b60dec54152700ff9f60b69de1259"
+    },
+    {
+      "bytes": 206684,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/native-draft-v10-prep/gfx950-reviewed-libs/ocml.bc",
+      "sha256": "2e3451857fcf47b931c5c5a29e9c42a6ddc3099c8359079441a9a06a217ead7e"
+    },
+    {
+      "bytes": 175223968,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/wave-scheduler-fix-v194/libfe2o3-LLVM23-probe-fix.so",
+      "sha256": "508049ba2760bbe326daca7ac173ba1f28fea5a9143071c6434783987c168ab1"
+    },
+    {
+      "bytes": 882,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/wave-worker-probe-fix-v195/build/fe2o3-gfx950-ocml-provider.txt",
+      "sha256": "a25df0fec459ac4e38b541d028d8d5f89c6ca7969f30b654958243de29289171"
+    },
+    {
+      "bytes": 4414152,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/wave-worker-probe-fix-v195/build/fe2o3-llvm-link-worker",
+      "sha256": "d79f577b918fcad537d573444bb26deb1e565216faa486dc953d06e92d3b63ac"
+    },
+    {
+      "bytes": 42375992,
+      "path": "/home/harmenon/ferric-asrock-42/toolchain/rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/bin/cargo",
+      "sha256": "c9ad606cb1dbb4a65aa27c80be88ed61eb2b811b6450eeec6794f60ed78b94a3"
+    },
+    {
+      "bytes": 645760,
+      "path": "/home/harmenon/ferric-asrock-42/toolchain/rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/bin/rustc",
+      "sha256": "08dfef109ad22d90556dbd2f964543cd93843dcd75a2e9792c173667392a1950"
+    },
+    {
+      "bytes": 13348368,
+      "path": "/home/harmenon/ferric-asrock-42/toolchain/rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/bin/rustdoc",
+      "sha256": "475ad4924e815034ed7ec5f85edfc8a99b2df99eab8695a76debb1eb64a9bd44"
+    },
+    {
+      "bytes": 29241992,
+      "path": "/opt/rocm-7.3.0/lib/llvm/bin/llvm-objdump",
+      "sha256": "be832bf5ddf82b3feb8a6e24f453e2602bd01a406f9f5bde47b225c4989d1a83"
+    },
+    {
+      "bytes": 12210352,
+      "path": "/opt/rocm-7.3.0/lib/llvm/bin/llvm-readobj",
+      "sha256": "8cb6079bc349196a3f3af7589912ca48f716194970ccd0e6c6a36b09e0b21259"
+    }
+  ]
+}

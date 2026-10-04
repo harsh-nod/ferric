@@ -6,12 +6,23 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Latest: the [RoPE checked-lowering attempt](../qualification/rope-materialized-lowering-attempt-v1/README.md)
+Latest: the [branch-reduced RoPE candidate passed fresh CPU qualification](../qualification/rope-materialized-cpu-v2/README.md)
+on ASROCK: all 33 Rust tests and eleven build/test phases passed with clean
+postchecks. Only seventeen pure finite-check conjunctions changed; arithmetic,
+all eighteen predicates and compiler limits are unchanged. Its subsequent
+[checked gfx950 lowering attempt](../qualification/rope-materialized-lowering-attempt-v2/README.md)
+hit the same semantic SSA partial-move storage limit. Both failed process trees
+exited naturally and were reaped with clean postchecks. Neither attempt emitted
+a candidate HSACO. Compiler state propagation and accounting are under review;
+no compiler limit or proof check has been relaxed.
+
+The earlier [RoPE checked-lowering attempt](../qualification/rope-materialized-lowering-attempt-v1/README.md)
 stopped at the existing semantic SSA partial-move storage limit. No candidate
 HSACO was emitted or launched. The failed process tree exited naturally and was
 reaped; all input postchecks passed. The exact refusal and earlier manifest
-syntax failure are retained. A branch-reduced validity expression is the next
-source experiment; no compiler limit or proof check has been relaxed.
+syntax failure are retained. The subsequent branch-reduced validity expression
+is the experiment recorded above; its fresh CPU qualification passed, but its
+checked lowering also failed at the same limit.
 
 The [BF16 RoPE candidate passed CPU qualification](../qualification/rope-materialized-cpu-v1/README.md)
 on ASROCK: twenty new tests and thirteen reciprocal regression tests, including

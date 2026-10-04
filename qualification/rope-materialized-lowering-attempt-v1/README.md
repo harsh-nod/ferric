@@ -57,9 +57,11 @@ Owner failure SHA-256:
 
 ## Next Candidate
 
-The next source experiment replaces the pair-validity expression's
+The [next source experiment](../rope-materialized-cpu-v2/README.md) replaces the pair-validity expression's
 short-circuit conjunctions with eager boolean conjunctions. All operands are
 pure finite checks of already-computed values. The aim is to reduce control-flow
 branches without removing any checks or changing arithmetic. That explanation
-is a hypothesis about this refusal, not a successful compiler result. Fresh CPU
-tests and checked lowering are required before any candidate GPU execution.
+is a hypothesis about this refusal, not a successful compiler result. Its fresh
+CPU qualification passed 33 tests, but its subsequent
+[checked lowering](../rope-materialized-lowering-attempt-v2/README.md) also hit
+the same storage limit. Neither attempt produced a candidate GPU image.

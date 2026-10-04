@@ -1,0 +1,69 @@
+{
+  "schema": "ferric-p228-rope-materialized-source-proposal-v2",
+  "status": "authored-not-executed",
+  "predecessor": {
+    "source_manifest": {"path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-rope-materialized-source-v1/source-manifest.json", "bytes": 4429, "sha256": "728edfbfaa684279fc603c03356682ebda0e3f3e72a604d53670d5427ac94837"},
+    "helper": {"path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-rope-materialized-source-v1/draft/src/prefix_rope_materialized_numerics_v1.rs", "bytes": 4041, "sha256": "a4df352e1ee6663adb87c7abbf89a260f3e6086b640c1eccf46faf95957ec8f9"},
+    "delta": "Only 17 pair-valid && operators become bool &; all 18 pure finite predicates, arithmetic, post-task routing and 20 tests are unchanged.",
+    "entry_and_tests_byte_identical": true,
+    "compiler_limits_changed": false
+  },
+  "files": [
+    {"path": "src/lib.rs", "source": "draft/src/lib.rs", "before": {"bytes": 7072, "sha256": "d5c2ee3ca4f619080a8b544bc4e47b8ae4a55642ba2eb84448c8d32e91056c37"}, "after": {"bytes": 7138, "sha256": "59ae725bb65627d53bc15528a9fbc846b79d3191f5dbeed6544b2d227195c202"}},
+    {"path": "src/prefix_rope_materialized_numerics_v1.rs", "source": "draft/src/prefix_rope_materialized_numerics_v1.rs", "before": null, "after": {"bytes": 4024, "sha256": "71f6e77cd36611f8ccf8d60cbb294139c9ea24dd10855845ca26782da5b45542"}},
+    {"path": "tests/rope_materialized_v1.rs", "source": "draft/tests/rope_materialized_v1.rs", "before": null, "after": {"bytes": 10217, "sha256": "d4d9d16edef7a8c0c3aa36337e87d702f0278cba3dcf95683247746ff559c93c"}},
+    {"path": "tests/fixtures/v7_lib.rs", "source": "draft/tests/fixtures/v7_lib.rs", "before": null, "after": {"bytes": 7072, "sha256": "d5c2ee3ca4f619080a8b544bc4e47b8ae4a55642ba2eb84448c8d32e91056c37"}}
+  ],
+  "baseline_fixture": {
+    "directory": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-reciprocal-checked-probe-v228-v7/fixture",
+    "complete": {"path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-reciprocal-checked-probe-v228-v7/complete.json", "bytes": 25107, "sha256": "6ba25826b71e30f5106e1efc9e786c021c56f5bab397add20b365373685081a9"},
+    "files": {
+      "Cargo.toml": {"bytes": 436, "sha256": "971675fb4f2a11fe066612b3123db65240fcb89e03169e89c95b6cf90765b114"},
+      "Cargo.lock": {"bytes": 33839, "sha256": "8e56bdd313ea40d46277870eab953e5b6832d1c26d427ff3c81c5ecf93968d85"},
+      "src/lib.rs": {"bytes": 7072, "sha256": "d5c2ee3ca4f619080a8b544bc4e47b8ae4a55642ba2eb84448c8d32e91056c37"},
+      "src/wave_numerics_v1.rs": {"bytes": 2235, "sha256": "22ef471c341936b3bc6f7b5812405c60152292cef07dcbd03173bf2dd7ee49ea"},
+      "src/head_rope_numerics_v3.rs": {"bytes": 5884, "sha256": "4b88b9ce6608c791a0df8d0d2c5166de7aad77d63e7b2c52383cce068a1996e9"},
+      "src/prefix_reciprocal_numerics_v1.rs": {"bytes": 6056, "sha256": "d2da6d5c02474556ab606a923c065d7146a2527a36400999431df0111fd2cca6"},
+      "src/attention_online.rs": {"bytes": 3066, "sha256": "105a7065a7856d1c6f14e3edb743887e734231b1f42a3e0d42727a5b64ffde7b"},
+      "src/output_projection_numerics_v5.rs": {"bytes": 2033, "sha256": "ef397ea5bfe59d6284172e0b2dda6c0f37eef69b48c1392274941d5b521cffd5"},
+      "src/prefix_tiles_numerics_v6.rs": {"bytes": 6092, "sha256": "3f729b83bc50d4e252a73911ac69bb4e4e1829e1cb05ca3f0bcffa36f09475ad"}
+    },
+    "image_sha256": "4885204c8d510122588549107f42d2bc6f180f48fbc4eddd3bb1260e8d6629c5",
+    "llvm_sha256": "df75a6fd370774e05568031fffdbfeca026059542c9cddb6db79b4b881b1e94a"
+  },
+  "test_census": {
+    "rope_materialized_v1": [
+      "position_zero_is_identity_for_nonzero_finite_pairs",
+      "quarter_turn_uses_split_half_negative_high_then_low",
+      "coefficient_halfway_rounds_even_before_multiplication",
+      "sine_coefficient_has_its_own_bf16_boundary",
+      "product_halfway_rounds_before_opposite_sign_addend",
+      "high_product_has_independent_materialization",
+      "final_addition_still_rounds_bf16_ties_even",
+      "negate_before_product_preserves_framework_signed_zero",
+      "exact_cancellation_is_positive_zero",
+      "subnormal_product_rounds_before_small_addend",
+      "all_nonfinite_inputs_are_rejected",
+      "finite_coefficient_that_overflows_bf16_is_rejected",
+      "finite_product_that_overflows_bf16_is_not_hidden_by_cancellation",
+      "finite_bf16_products_with_overflowing_sum_are_rejected",
+      "all_lanes_keep_twenty_head_routes_and_value_bits",
+      "post_uses_materialized_arithmetic_and_preserves_raw_values",
+      "missing_coefficient_poison_is_sticky_without_shortening_head_loop",
+      "failed_write_preserves_prefix_and_rejects_remaining_heads",
+      "nonfinite_value_is_rejected_without_changing_completed_query_writes",
+      "selected_entry_changes_only_include_and_post_selector"
+    ]
+  },
+  "authored_tests": 20,
+  "tests_executed": false,
+  "old_sources_modified": false,
+  "default_route_modified": false,
+  "provider_modified": false,
+  "compiler_modified": false,
+  "gpu_execution": false,
+  "table_generation_equality": false,
+  "numerical_acceptance": false,
+  "performance_claim": false,
+  "production_authority": false
+}
