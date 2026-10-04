@@ -1,0 +1,37 @@
+{
+  "argv": [
+    "/usr/bin/python3",
+    "-B",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-kir-join-work-diagnostic-cpu-v1/run.py",
+    "ff66f002141884538d54cc338ea34dd478c56f6ea97e5f120ae91b37680d8319",
+    "2dc0563b1e09531aed6ced32cc0c9fa839ed7e66215d4072d7a2bd1023806c13",
+    "--child"
+  ],
+  "deadline_seconds": 10800,
+  "env": {
+    "CARGO_BUILD_JOBS": "2",
+    "CARGO_HOME": "/home/harmenon/ferric-asrock-42/toolchain/cargo",
+    "CARGO_INCREMENTAL": "0",
+    "CARGO_PROFILE_DEV_DEBUG": "0",
+    "CARGO_PROFILE_TEST_DEBUG": "0",
+    "CARGO_TARGET_DIR": "/home/harmenon/ferric-asrock-42/evidence/wave-attention-v214/target-nightly",
+    "CUDA_VISIBLE_DEVICES": "",
+    "HIP_VISIBLE_DEVICES": "",
+    "HOME": "/home/harmenon",
+    "LANG": "C.UTF-8",
+    "LC_ALL": "C.UTF-8",
+    "LD_LIBRARY_PATH": "/home/harmenon/ferric-asrock-42/evidence/wave-attention-v214/target-nightly/debug/deps:/home/harmenon/ferric-asrock-42/toolchain/rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/lib",
+    "MKL_NUM_THREADS": "1",
+    "OMP_NUM_THREADS": "1",
+    "OPENBLAS_NUM_THREADS": "1",
+    "PATH": "/home/harmenon/ferric-asrock-42/toolchain/rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/bin:/usr/bin:/bin",
+    "ROCR_VISIBLE_DEVICES": "",
+    "RUSTC": "/home/harmenon/ferric-asrock-42/toolchain/rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/bin/rustc",
+    "RUSTDOC": "/home/harmenon/ferric-asrock-42/toolchain/rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/bin/rustdoc",
+    "RUSTUP_HOME": "/home/harmenon/ferric-asrock-42/toolchain/rustup",
+    "RUSTUP_TOOLCHAIN": "nightly-2026-04-03",
+    "TMPDIR": "/home/harmenon/ferric-asrock-42/evidence/wave-output-lowering-v216/tmp",
+    "TZ": "UTC"
+  },
+  "gpu_execution": false
+}

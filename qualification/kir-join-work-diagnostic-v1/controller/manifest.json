@@ -1,0 +1,43 @@
+{
+  "schema": "ferric-p228-kir-join-work-diagnostic-cpu-package-v1",
+  "compiler_built": false,
+  "gpu_execution": false,
+  "production_authority": false,
+  "pure_tests_defined": 16,
+  "pure_tests_run": false,
+  "test_census": [
+    "DiagnosticTests.test_any_nested_prefix_is_localization_not_inferred_failure",
+    "DiagnosticTests.test_dependency_subset_preserves_full_tree_separately",
+    "DiagnosticTests.test_environment_changes_only_owned_paths_and_opt_in",
+    "DiagnosticTests.test_handoff_and_selector_cannot_change",
+    "DiagnosticTests.test_leaf_must_be_natural101_and_group_absent",
+    "DiagnosticTests.test_limits_storage_and_pending_charge_refused",
+    "DiagnosticTests.test_marker_shape_unknown_field_and_stage_refused",
+    "DiagnosticTests.test_metadata_relocation_does_not_change_other_values",
+    "DiagnosticTests.test_missing_duplicate_and_reordered_markers_refused",
+    "DiagnosticTests.test_proposal_requires_actual_generation_and_unchanged_scope",
+    "DiagnosticTests.test_refused_bulk_joins_actual_attempted_work",
+    "DiagnosticTests.test_shape_formula_and_next_charge_checked",
+    "DiagnosticTests.test_source_overlay_and_formatter_only_three_bodies",
+    "DiagnosticTests.test_successful_bulk_delta_checked",
+    "DiagnosticTests.test_work_and_peak_regression_refused",
+    "DiagnosticTests.test_wrong_source_preimage_and_new_member_refused"
+  ],
+  "files": [
+    {
+      "path": "README.md",
+      "bytes": 5176,
+      "sha256": "c27eda0a2b476ac3635ae1f9019ad701b02f539108dcf76bd6e69005d46ff6e2"
+    },
+    {
+      "path": "run.py",
+      "bytes": 28531,
+      "sha256": "b15343d2fb1a244ddd64d87e71f9a683027684d8239ecafcebeac42276c18e73"
+    },
+    {
+      "path": "test_run.py",
+      "bytes": 9907,
+      "sha256": "eeae0bd8612a70e0b5f1ef78d20aa72ddfac361e0d21fcfd2b75b744a9955f62"
+    }
+  ]
+}

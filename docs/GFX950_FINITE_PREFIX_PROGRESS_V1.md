@@ -6,7 +6,17 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Latest: the [RoPE/RPO checked-lowering attempt](../qualification/rope-materialized-rpo-lowering-v1/README.md)
+Latest: the [canonical KIR work diagnostic](../qualification/kir-join-work-diagnostic-v1/README.md)
+localized the actual refusal to the inert formal layout join: 318 evidence
+rows, 1,019 blocks and 6,096 nodes cause a 1,044,025,344-unit pending charge
+after 40,799,816 units have already been accepted. The limits are unchanged.
+All 190 default finalizer tests and 16 controller-policy tests passed; the
+separate actual-capture test reproduced the expected exit-101 refusal.
+All owned processes exited naturally and postchecks passed. An indexed join
+is the next candidate, not yet a qualified fix. No new image or GPU result
+follows from this diagnostic.
+
+Previously, the [RoPE/RPO checked-lowering attempt](../qualification/rope-materialized-rpo-lowering-v1/README.md)
 cleared the previous semantic storage refusal and passed actual compiler
 replay, then failed the finalizer's canonical-kernel work budget:
 1,084,825,160 at refusal against the unchanged 1,073,741,824 limit. No HSACO

@@ -1,0 +1,50 @@
+{
+  "schema": "ferric-p228-kir-join-work-diagnostic-root-test-observation-v1",
+  "observation_kind": "Primary-agent observation of actual SSH tool output; not a remote supervisor receipt",
+  "command": "ssh.exe -o BatchMode=yes -o ConnectTimeout=20 -o HostName=asrock-1w300-g2-2b.mkm.dcgpu -o UserKnownHostsFile=//wsl.localhost/Ubuntu/home/harsh/.ssh/known_hosts -l harmenon mi350-2  \"timeout --signal=TERM --kill-after=10s 180s env -u PYTHONPATH -u PYTHONHOME -u PYTHONOPTIMIZE HIP_VISIBLE_DEVICES= ROCR_VISIBLE_DEVICES= CUDA_VISIBLE_DEVICES= taskset -c 8,9 nice -n 10 prlimit --as=2147483648 --cpu=120 --fsize=16777216 --core=0 python3 -B /home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-kir-join-work-diagnostic-cpu-v1/test_run.py\"",
+  "session_id": 97199,
+  "initial_tool_output": {
+    "chunk_id": "65be9a",
+    "wall_time_seconds": 1.00194485,
+    "session_id": 97199,
+    "original_token_count": 413,
+    "output": "\r\n $$$$$$\\  $$$$$$\\  $$$$$$\\       $$$$$$\\  $$\\   $$\\ $$$$$$$$\\ $$\\   $$\\\r\n$$  __$$\\ \\_$$  _|$$  __$$\\     $$  __$$\\ $$ |  $$ |\\__$$  __|$$ |  $$ |\r\n$$ /  $$ |  $$ |  $$ /  \\__|$$\\ $$ /  $$ |$$ |  $$ |   $$ |   $$ |  $$ |\r\n$$$$$$$$ |  $$ |  $$ |$$$$\\ \\__|$$$$$$$$ |$$ |  $$ |   $$ |   $$$$$$$$ |\r\n$$  __$$ |  $$ |  $$ |\\_$$ |    $$  __$$ |$$ |  $$ |   $$ |   $$  __$$ |\r\n$$ |  $$ |  $$ |  $$ |  $$ |$$\\ $$ |  $$ |$$ |  $$ |   $$ |   $$ |  $$ |\r\n$$ |  $$ |$$$$$$\\ \\$$$$$$  |\\__|$$ |  $$ |\\$$$$$$  |   $$ |   $$ |  $$ |\r\n\\__|  \\__|\\______| \\______/     \\__|  \\__| \\______/    \\__|   \\__|  \\__|\r\n\r\n is protected by Conductor SUT Authentication - 20260511.01-gee7e625.\r\n\r\nReminder: An SSH key is required to access this system. \r\nTo manage your Conductor SSH keys please visit https://conductor.amd.com/user/dashboard/key-management\r\n\r\nYou will be denied access to this system if:\r\n  • You did not provide a valid SSH key\r\n  • You do not have an active reservation in Conductor\r\n  • You are not in the required security groups (ex: mi300_doc.4erminus)\r\n\r\n____________   _______________________________________^__\r\n ___   ___ |||  ___   ___   ___    ___ ___  |   __  ,----\\\r\n|   | |   |||| |   | |   | |   |  |   |   | |  |  | |_____\\\r\n|___| |___|||| |___| |___| |___|  | O | O | |  |  |        \\\r\n           |||                    |___|___| |  |__|         )\r\n___________|||______________________________|______________/\r\n           |||                                        /--------\r\n-----------'''---------------------------------------'\r\n\r\nFor other help resources please visit https://conductor.amd.com/docs\r\n\r\nChecking authorization now...\r\n"
+  },
+  "terminal_tool_output": {
+    "chunk_id": "2ffa69",
+    "wall_time_seconds": 0.000018273,
+    "exit_code": 0,
+    "original_token_count": 357,
+    "output": "test_any_nested_prefix_is_localization_not_inferred_failure (__main__.DiagnosticTests) ... ok\ntest_dependency_subset_preserves_full_tree_separately (__main__.DiagnosticTests) ... ok\ntest_environment_changes_only_owned_paths_and_opt_in (__main__.DiagnosticTests) ... ok\ntest_handoff_and_selector_cannot_change (__main__.DiagnosticTests) ... ok\ntest_leaf_must_be_natural101_and_group_absent (__main__.DiagnosticTests) ... ok\ntest_limits_storage_and_pending_charge_refused (__main__.DiagnosticTests) ... ok\ntest_marker_shape_unknown_field_and_stage_refused (__main__.DiagnosticTests) ... ok\ntest_metadata_relocation_does_not_change_other_values (__main__.DiagnosticTests) ... ok\ntest_missing_duplicate_and_reordered_markers_refused (__main__.DiagnosticTests) ... ok\ntest_proposal_requires_actual_generation_and_unchanged_scope (__main__.DiagnosticTests) ... ok\ntest_refused_bulk_joins_actual_attempted_work (__main__.DiagnosticTests) ... ok\ntest_shape_formula_and_next_charge_checked (__main__.DiagnosticTests) ... ok\ntest_source_overlay_and_formatter_only_three_bodies (__main__.DiagnosticTests) ... ok\ntest_successful_bulk_delta_checked (__main__.DiagnosticTests) ... ok\ntest_work_and_peak_regression_refused (__main__.DiagnosticTests) ... ok\ntest_wrong_source_preimage_and_new_member_refused (__main__.DiagnosticTests) ... ok\n\n----------------------------------------------------------------------\nRan 16 tests in 0.003s\n\nOK\n"
+  },
+  "source_hash_before": {
+    "chunk_id": "d1d698",
+    "wall_time_seconds": 0.000018498,
+    "exit_code": 0,
+    "original_token_count": 188,
+    "output": "ff66f002141884538d54cc338ea34dd478c56f6ea97e5f120ae91b37680d8319  /home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-kir-join-work-diagnostic-cpu-v1/manifest.json\nb15343d2fb1a244ddd64d87e71f9a683027684d8239ecafcebeac42276c18e73  /home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-kir-join-work-diagnostic-cpu-v1/run.py\neeae0bd8612a70e0b5f1ef78d20aa72ddfac361e0d21fcfd2b75b744a9955f62  /home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-kir-join-work-diagnostic-cpu-v1/test_run.py\nc27eda0a2b476ac3635ae1f9019ad701b02f539108dcf76bd6e69005d46ff6e2  /home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-kir-join-work-diagnostic-cpu-v1/README.md\n"
+  },
+  "source_hash_after": {
+    "chunk_id": "122854",
+    "wall_time_seconds": 0.000023933,
+    "exit_code": 0,
+    "original_token_count": 188,
+    "output": "ff66f002141884538d54cc338ea34dd478c56f6ea97e5f120ae91b37680d8319  /home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-kir-join-work-diagnostic-cpu-v1/manifest.json\nb15343d2fb1a244ddd64d87e71f9a683027684d8239ecafcebeac42276c18e73  /home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-kir-join-work-diagnostic-cpu-v1/run.py\neeae0bd8612a70e0b5f1ef78d20aa72ddfac361e0d21fcfd2b75b744a9955f62  /home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-kir-join-work-diagnostic-cpu-v1/test_run.py\nc27eda0a2b476ac3635ae1f9019ad701b02f539108dcf76bd6e69005d46ff6e2  /home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-kir-join-work-diagnostic-cpu-v1/README.md\n"
+  },
+  "exit_code": 0,
+  "tests": 16,
+  "errors": 0,
+  "failures": 0,
+  "skipped": 0,
+  "source_sha256": {
+    "manifest": "ff66f002141884538d54cc338ea34dd478c56f6ea97e5f120ae91b37680d8319",
+    "run": "b15343d2fb1a244ddd64d87e71f9a683027684d8239ecafcebeac42276c18e73",
+    "test": "eeae0bd8612a70e0b5f1ef78d20aa72ddfac361e0d21fcfd2b75b744a9955f62",
+    "readme": "c27eda0a2b476ac3635ae1f9019ad701b02f539108dcf76bd6e69005d46ff6e2"
+  },
+  "remote_supervisor_receipt": false,
+  "compiler_execution": false,
+  "gpu_execution": false,
+  "numerical_acceptance": false,
+  "performance_claim": false
+}

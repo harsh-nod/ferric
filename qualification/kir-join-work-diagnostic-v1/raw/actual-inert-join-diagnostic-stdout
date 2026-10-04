@@ -1,0 +1,38 @@
+
+running 1 test
+test linux::wave_qkv_attention_output_tiles_v6::tests::wave_emission_actual_retained_v6_passes_full_inert_join ... FAILED
+
+successes:
+
+successes:
+
+failures:
+
+---- linux::wave_qkv_attention_output_tiles_v6::tests::wave_emission_actual_retained_v6_passes_full_inert_join stdout ----
+kir-join-work-v1 stage=outer-middle-before work=200 remaining=1073741624 storage=4078537 peak=4078537 charge=0
+kir-join-work-v1 stage=outer-middle-after work=12211016 remaining=1061530808 storage=5477534 peak=5477534 charge=0
+kir-join-work-v1 stage=outer-formal-before work=12211016 remaining=1061530808 storage=5477534 peak=5477534 charge=0
+kir-join-work-v1 stage=formal-archive-before work=12211016 remaining=1061530808 storage=5477534 peak=5477534 charge=13783488
+kir-join-work-v1 stage=formal-archive-after work=25994504 remaining=1047747320 storage=5477534 peak=5477534 charge=0
+kir-join-work-v1 stage=formal-receipt-before work=25994504 remaining=1047747320 storage=5477534 peak=5477534 charge=1009936
+kir-join-work-v1 stage=formal-receipt-after work=27004440 remaining=1046737384 storage=5477534 peak=5477534 charge=0
+kir-join-work-v1 stage=formal-kir-before work=27004440 remaining=1046737384 storage=5477534 peak=5537966 charge=0
+kir-join-work-v1 stage=formal-kir-after work=27243992 remaining=1046497832 storage=5477534 peak=7141208 charge=0
+kir-join-work-v1 stage=formal-middle-before work=27243992 remaining=1046497832 storage=7140576 peak=7141208 charge=0
+kir-join-work-v1 stage=formal-middle-after work=39454808 remaining=1034287016 storage=8539573 peak=8539573 charge=0
+kir-join-work-v1 stage=formal-layout-before work=39454808 remaining=1034287016 storage=8539573 peak=8539573 charge=0
+kir-join-work-v1 stage=layout-bytes-before work=39454808 remaining=1034287016 storage=8539573 peak=8539573 charge=1345008
+kir-join-work-v1 stage=layout-bytes-after work=40799816 remaining=1032942008 storage=8539573 peak=8539573 charge=0
+kir-join-work-v1 stage=join-shape rows=318 blocks=1019 nodes=6096 charge=1044025344
+kir-join-work-v1 stage=layout-join-before work=40799816 remaining=1032942008 storage=8539573 peak=8539573 charge=1044025344
+
+thread 'linux::wave_qkv_attention_output_tiles_v6::tests::wave_emission_actual_retained_v6_passes_full_inert_join' (859144) panicked at crates/fe2o3-hsaco-finalize/examples/finite_join_engineering_hsaco_v1/wave_qkv_attention_output_tiles_v6_tests.rs:973:55:
+called `Result::unwrap()` on an `Err` value: Resource(Work(CanonicalKernelIrWorkLimitV1 { actual: 1084825160, limit: 1073741824 }))
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    linux::wave_qkv_attention_output_tiles_v6::tests::wave_emission_actual_retained_v6_passes_full_inert_join
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 204 filtered out; finished in 0.80s
+

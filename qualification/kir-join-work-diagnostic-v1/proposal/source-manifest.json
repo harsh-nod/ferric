@@ -1,0 +1,71 @@
+{
+  "schema": "ferric-p228-kir-join-work-diagnostic-source-v1",
+  "diagnostic_only": true,
+  "compiled": false,
+  "tests_executed": false,
+  "base_cpu": {
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rpo-compiler-cpu-v228-v2/complete.json",
+    "bytes": 375781,
+    "sha256": "56fc51fc326980e00156d550d0a7052f44bb481ded7b9948c06217653fb246c1"
+  },
+  "base_source_snapshot": {
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rpo-compiler-cpu-v228-v2/sources-before.json",
+    "bytes": 3607137,
+    "sha256": "77fbdd63c370665ea80bf70e8dd8f4a45533bcde8e5ba6ffd670ab497ebc6665"
+  },
+  "files": [
+    {
+      "path": "crates/fe2o3-hsaco-finalize/examples/finite_join_engineering_hsaco_v1/wave_qkv_attention_output_tiles_v6.rs",
+      "source": "draft/crates/fe2o3-hsaco-finalize/examples/finite_join_engineering_hsaco_v1/wave_qkv_attention_output_tiles_v6.rs",
+      "before": {
+        "bytes": 33439,
+        "sha256": "edfe342653e3414ed2d11e464c7f8177b08bccde68a8d56ed6b7683198eba440"
+      },
+      "after": {
+        "bytes": 34305,
+        "sha256": "a1c82dc907fa7ff7ac01b3614dea028955d4375806d3629fdd66ee1faefc0d2c"
+      }
+    },
+    {
+      "path": "crates/fe2o3-lower-mir-kernel/src/production_semantic_kir_v1/wave_formal_evidence_v1.rs",
+      "source": "draft/crates/fe2o3-lower-mir-kernel/src/production_semantic_kir_v1/wave_formal_evidence_v1.rs",
+      "before": {
+        "bytes": 29241,
+        "sha256": "ac9555d5cf58b113ef637d57c6a99cec71d8374042366317895e5a9b0384e67a"
+      },
+      "after": {
+        "bytes": 30472,
+        "sha256": "8af768e54c833624017ea42d970960f401dca2effa7b8815f653e3415defee1c"
+      }
+    },
+    {
+      "path": "crates/fe2o3-lower-mir-kernel/src/production_semantic_kir_v1/wave_formal_evidence_join_v1.rs",
+      "source": "draft/crates/fe2o3-lower-mir-kernel/src/production_semantic_kir_v1/wave_formal_evidence_join_v1.rs",
+      "before": {
+        "bytes": 16534,
+        "sha256": "a4920913a9f23a5d880be129f99b7ba4b04842336fb93fad1208574f16c07fe0"
+      },
+      "after": {
+        "bytes": 17182,
+        "sha256": "9497389e50133434d9e220d85cc74fcba3854384c2ac2b77586f87a33c2926b2"
+      }
+    }
+  ],
+  "added_tests": [],
+  "diagnostic_environment": {
+    "FE2O3_KIR_JOIN_WORK_DIAGNOSTIC_V1": "1"
+  },
+  "work_limit": 1073741824,
+  "storage_limit": 134217728,
+  "expected_refusal": {
+    "selector": "linux::wave_qkv_attention_output_tiles_v6::tests::wave_emission_actual_retained_v6_passes_full_inert_join",
+    "natural_exit_code": 101,
+    "actual_work": 1084825160,
+    "work_limit": 1073741824
+  },
+  "handoff": {
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-rope-materialized-rpo-checked-probe-v228-v1/prefix-tiles.handoff-v3",
+    "bytes": 4078537,
+    "sha256": "ad4b31ee88efa54702dc8dff13e1e3c331c296734f7cdcfa52e8249ed9fa37fc"
+  }
+}
