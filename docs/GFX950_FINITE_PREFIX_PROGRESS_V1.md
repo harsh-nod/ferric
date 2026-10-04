@@ -24,6 +24,7 @@ engineering branch; it does not change the production execution path.
 | Four autoregressive forwards on `mi350` | 152 retained native tensor rows bitwise equal to the prior native route | Own-token history; no 2,048/256 workload or sustained throughput measurement |
 | Six prefix-stage numerical cases | All 24 rank/profile rows satisfy the declared conditional norm/QKV bounds | Independent conditional arithmetic check of retained captures, not a new GPU run |
 | Idempotent partial-move compiler candidate on `mi350-2` | 2,675 CPU tests passed, 25 ignored; fresh compiler built | Six new regressions executed; actual prefix-tile replay remains ignored and checked lowering is still pending |
+| Matching finalizer tools on `mi350-2` | 190 default example tests passed, 15 ignored; three tools rebuilt | Same compiler source generation; actual-capture inert join remains ignored, no new HSACO |
 
 Both four-forward runs completed their Close protocol, reaped their owned
 processes, and passed their six surrounding device-state audits. The CPU suite
@@ -107,9 +108,13 @@ annotation. Its failure was retained; the parser fix passed nine policy tests,
 then both suites and the compiler build were rerun under fresh paths. The
 completed run's 59 raw records, full copied compiler source and five selected
 artifacts were retained and rehashed locally. This is not evidence that the
-complete reciprocal function fits: coherent finalizer tools and a new checked
-probe are still required. Compiler limits, numerical tolerances and production
-admission remain unchanged.
+complete reciprocal function fits. The [matching finalizer build](../qualification/fe2o3-partial-move-idempotent-v1/finalizer-result.json)
+subsequently passed 190 default tests with 15 ignored, rebuilt three tools,
+and preserved all five qualified compiler products. Its six commands exited
+naturally; source, dependency and prior-target checks passed. The 36 raw
+records and three new tools were retained and rehashed locally. The actual
+V6 capture join remains ignored, and a new checked probe is still required.
+Compiler limits, numerical tolerances and production admission remain unchanged.
 
 ## Source Publication
 
@@ -284,8 +289,8 @@ alone is not a self-contained reproducer or proof.
 ## Next Gates
 
 1. Extend the freshly built parent/worker source pair to reproducible
-   compiler/HSACO builds. Rebuild the finalizer tools against the tested
-   idempotent compiler generation, then retry checked reciprocal lowering;
+   compiler/HSACO builds. Use the tested idempotent compiler and newly rebuilt
+   matching finalizer tools to retry checked reciprocal lowering;
    the full pipeline is not yet reproduced.
 2. Follow the consolidated worker's completed teacher-forced GPU comparison
    with its autoregressive check and repeated shared-currentness timing on

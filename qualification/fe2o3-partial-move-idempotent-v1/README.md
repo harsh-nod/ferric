@@ -65,6 +65,21 @@ The actual prefix-tile replay is among the 24 ignored compiler tests. CPU
 success therefore does not qualify that replay; it must execute against the
 next candidate's actual retained captures.
 
+## Matching Finalizer Tools
+
+The [follow-on build](finalizer-result.json) used the same qualified source
+copy and target to rebuild the engineering finalizer, its test harness and
+descriptor-metadata tool. All 190 default example tests passed; 15 actual-input
+tests remained ignored, including the V6 actual-capture inert join. The
+runner's eight prerequisite/routing tests also passed.
+
+All six build/test commands completed naturally and were reaped. The five
+accepted compiler products remained unchanged, as did the copied source,
+dependencies, configurations and prior targets. The 36 raw records and three
+new tool products were retained and rehashed locally. These matching tools
+are ready for a new checked probe; this step did not emit an HSACO or execute
+the actual-capture join.
+
 ## Source Boundary
 
 The implementation preimage is SHA-256
