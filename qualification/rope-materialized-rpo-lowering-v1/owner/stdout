@@ -1,0 +1,33 @@
+{"phase": "fixture-metadata", "status": "RUNNING", "pid": 789545}
+{"phase": "fixture-metadata", "exit_code": 0, "reason": null, "elapsed_seconds": 2.0143122412264347, "group_absent": true, "cache_bytes": 4096, "stdout_sha256": "4d610dae10208b3628d3648643deb60f044f0be9a9dd17a929b9c1b1f1acfc63", "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"}
+{"phase": "checked-lowering", "status": "RUNNING", "pid": 789690}
+{"phase": "checked-lowering", "exit_code": 0, "reason": null, "elapsed_seconds": 747.6111661451869, "group_absent": true, "cache_bytes": 257917771, "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855", "stderr_sha256": "bf7752c0853beb8e335786ca3328b76d6840d32e47d5115eb9d36d57d609c7ef"}
+{"phase": "actual-replay", "status": "RUNNING", "pid": 814899}
+{"phase": "actual-replay", "exit_code": 0, "reason": null, "elapsed_seconds": 193.4237859309651, "group_absent": true, "cache_bytes": 257917771, "stdout_sha256": "78b985fc7a70c384e3f51d7c63dca133cfbca44fbf597db3b6693a21d0511591", "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"}
+{"phase": "actual-inert-join", "status": "RUNNING", "pid": 821231}
+{"phase": "actual-inert-join", "exit_code": 101, "reason": null, "elapsed_seconds": 2.0147817181423306, "group_absent": true, "cache_bytes": 257917771, "stdout_sha256": "9e49bc58a17e52b611688438ed8f1eb56618cdc3839f689f733c28f216f7b840", "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"}
+
+
+running 1 test
+test linux::wave_qkv_attention_output_tiles_v6::tests::wave_emission_actual_retained_v6_passes_full_inert_join ... FAILED
+
+successes:
+
+successes:
+
+failures:
+
+---- linux::wave_qkv_attention_output_tiles_v6::tests::wave_emission_actual_retained_v6_passes_full_inert_join stdout ----
+
+thread 'linux::wave_qkv_attention_output_tiles_v6::tests::wave_emission_actual_retained_v6_passes_full_inert_join' (821233) panicked at crates/fe2o3-hsaco-finalize/examples/finite_join_engineering_hsaco_v1/wave_qkv_attention_output_tiles_v6_tests.rs:973:55:
+called `Result::unwrap()` on an `Err` value: Resource(Work(CanonicalKernelIrWorkLimitV1 { actual: 1084825160, limit: 1073741824 }))
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    linux::wave_qkv_attention_output_tiles_v6::tests::wave_emission_actual_retained_v6_passes_full_inert_join
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 204 filtered out; finished in 0.78s
+
+
+{"passed": false, "error": "AssertionError: actual-inert-join", "postcheck_errors": [], "output": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-rope-materialized-rpo-checked-probe-v228-v1"}

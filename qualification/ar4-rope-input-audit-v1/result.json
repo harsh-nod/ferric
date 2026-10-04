@@ -1,0 +1,234 @@
+{
+  "actual_gpu_trigonometry_validated": false,
+  "actual_long_position_tables_validated": false,
+  "all_bf16_coefficients_equal": true,
+  "bf16_exact_words": 512,
+  "caveat": "Position-zero residual differences remain; four-position coefficient equality does not identify every error source.",
+  "coefficient_rounding_recomputed": false,
+  "coefficient_words": 512,
+  "complete": {
+    "bytes": 6672,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/ar4-rope-input-audit-v228-v1/complete.json",
+    "sha256": "e9fd60f1a25b79237406dfe9fdb4c1ce142b1576515e2a06ceabba60b3387cf9"
+  },
+  "files": {
+    "complete.json": {
+      "bytes": 6672,
+      "original": {
+        "bytes": 6672,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/ar4-rope-input-audit-v228-v1/complete.json",
+        "sha256": "e9fd60f1a25b79237406dfe9fdb4c1ce142b1576515e2a06ceabba60b3387cf9"
+      },
+      "sha256": "e9fd60f1a25b79237406dfe9fdb4c1ce142b1576515e2a06ceabba60b3387cf9"
+    },
+    "publish.py": {
+      "bytes": 14268,
+      "original": {
+        "bytes": 14268,
+        "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/p228-ar4-rope-input-audit-publication-v1/publish.py",
+        "sha256": "65ff1df8d4e343c9b24dcf61c0953c1c4f7a9b240981b75f06ae7aff82d8673e"
+      },
+      "sha256": "65ff1df8d4e343c9b24dcf61c0953c1c4f7a9b240981b75f06ae7aff82d8673e"
+    },
+    "pure-root-observation.json": {
+      "bytes": 4193,
+      "original": {
+        "bytes": 4193,
+        "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/ar4-rope-input-audit-root-test-observation-v228-v1.json",
+        "sha256": "eb10babdc5398ffc5d4e5f832ce18199efd9d9e31ab71fefe0faedc7c74641c4"
+      },
+      "sha256": "eb10babdc5398ffc5d4e5f832ce18199efd9d9e31ab71fefe0faedc7c74641c4"
+    },
+    "source/README.md": {
+      "bytes": 5340,
+      "original": {
+        "bytes": 5340,
+        "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/p228-ar4-rope-input-audit-v1/README.md",
+        "sha256": "dd1622b92129eab6f4b27a293f0389838485f4d898d7e95770471985bf6577bc"
+      },
+      "sha256": "dd1622b92129eab6f4b27a293f0389838485f4d898d7e95770471985bf6577bc"
+    },
+    "source/run.py": {
+      "bytes": 10211,
+      "original": {
+        "bytes": 10211,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-ar4-rope-input-audit-v1/run.py",
+        "sha256": "9a45f4dd519b49ba949a247b90da09bbaa8c98b025d92a9c86f10d0500ba8df6"
+      },
+      "sha256": "9a45f4dd519b49ba949a247b90da09bbaa8c98b025d92a9c86f10d0500ba8df6"
+    },
+    "source/test_run.py": {
+      "bytes": 4419,
+      "original": {
+        "bytes": 4419,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-ar4-rope-input-audit-v1/test_run.py",
+        "sha256": "810a4becf62bfaf42ebe9f83bd56007ed82e779b9974f1397a1bb40e1def9365"
+      },
+      "sha256": "810a4becf62bfaf42ebe9f83bd56007ed82e779b9974f1397a1bb40e1def9365"
+    }
+  },
+  "full_model_correctness": false,
+  "input_bodies": [
+    {
+      "original": {
+        "bytes": 330074,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rope-framework-reference-v228-v1/complete.json",
+        "sha256": "f5c47aabf7a307a19f9fe54fa37187f8548ceab4ac92eeeac2638fc9cc4589b4"
+      },
+      "retained": {
+        "bytes": 330074,
+        "path": "/home/harsh/ferric-p227-integration/qualification/rope-framework-reference-v1/complete.json",
+        "sha256": "f5c47aabf7a307a19f9fe54fa37187f8548ceab4ac92eeeac2638fc9cc4589b4"
+      }
+    },
+    {
+      "original": {
+        "bytes": 201239,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-ar4-framework-reference-v228-v1/reference.json",
+        "sha256": "00952244362ad51d241d179f741ae5ae61ff8acfcb3fd160b9dc64ce3b5f699e"
+      },
+      "retained": {
+        "bytes": 201239,
+        "path": "/home/harsh/ferric-p227-integration/qualification/projection-ar4-framework-v1/reference/reference.json",
+        "sha256": "00952244362ad51d241d179f741ae5ae61ff8acfcb3fd160b9dc64ce3b5f699e"
+      }
+    },
+    {
+      "original": {
+        "bytes": 1054985,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-ar4-framework-inputs-v228-v1/native-case/complete.json",
+        "sha256": "15938580d218f855883a589c819d532bbf941a02c4677cb29928f7bf7106d1cb"
+      },
+      "retained": {
+        "bytes": 1054985,
+        "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/projection-ar4-framework-evidence-v228-v1/projection-ar4-framework-inputs-v228-v1/native-case/complete.json",
+        "sha256": "15938580d218f855883a589c819d532bbf941a02c4677cb29928f7bf7106d1cb"
+      }
+    },
+    {
+      "original": {
+        "bytes": 1865,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-ar4-framework-inputs-v228-v1/native/request-0.json",
+        "sha256": "dfdfef97a872fcb7622998489f219b61cff5a9d4dbe4c27c1955b7ab0c6066ce"
+      },
+      "retained": {
+        "bytes": 1865,
+        "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/projection-ar4-framework-evidence-v228-v1/projection-ar4-framework-inputs-v228-v1/native/request-0.json",
+        "sha256": "dfdfef97a872fcb7622998489f219b61cff5a9d4dbe4c27c1955b7ab0c6066ce"
+      }
+    },
+    {
+      "original": {
+        "bytes": 2400,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-ar4-framework-inputs-v228-v1/native/request-1.json",
+        "sha256": "04cd581b9b4c7b75f1bb988e0f6c9f8e5bff828b412347ebbdfad9d665429c00"
+      },
+      "retained": {
+        "bytes": 2400,
+        "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/projection-ar4-framework-evidence-v228-v1/projection-ar4-framework-inputs-v228-v1/native/request-1.json",
+        "sha256": "04cd581b9b4c7b75f1bb988e0f6c9f8e5bff828b412347ebbdfad9d665429c00"
+      }
+    },
+    {
+      "original": {
+        "bytes": 2404,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-ar4-framework-inputs-v228-v1/native/request-2.json",
+        "sha256": "bba7e200de72e40866022407e2781769a5c48b75b0021e0947bdf850386e75c4"
+      },
+      "retained": {
+        "bytes": 2404,
+        "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/projection-ar4-framework-evidence-v228-v1/projection-ar4-framework-inputs-v228-v1/native/request-2.json",
+        "sha256": "bba7e200de72e40866022407e2781769a5c48b75b0021e0947bdf850386e75c4"
+      }
+    },
+    {
+      "original": {
+        "bytes": 2405,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-ar4-framework-inputs-v228-v1/native/request-3.json",
+        "sha256": "0acf40630457e988af9f6e003def15f8f5c3562756616deaa03cac0964b3533e"
+      },
+      "retained": {
+        "bytes": 2405,
+        "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/projection-ar4-framework-evidence-v228-v1/projection-ar4-framework-inputs-v228-v1/native/request-3.json",
+        "sha256": "0acf40630457e988af9f6e003def15f8f5c3562756616deaa03cac0964b3533e"
+      }
+    }
+  ],
+  "model_or_gpu_rerun": false,
+  "native_or_framework_lifecycle_replayed": false,
+  "new_rope_image_validated": false,
+  "numerical_acceptance": false,
+  "original_and_retained_complete": {
+    "original": {
+      "bytes": 6672,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/ar4-rope-input-audit-v228-v1/complete.json",
+      "sha256": "e9fd60f1a25b79237406dfe9fdb4c1ce142b1576515e2a06ceabba60b3387cf9"
+    },
+    "retained": {
+      "bytes": 6672,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/ar4-rope-input-audit-complete-v228-v1.json",
+      "sha256": "e9fd60f1a25b79237406dfe9fdb4c1ce142b1576515e2a06ceabba60b3387cf9"
+    }
+  },
+  "performance_claim": false,
+  "primary_test_observation_kind": "Primary-agent observation of actual SSH tool output; not a remote supervisor receipt",
+  "prior_framework_publication": {
+    "bytes": 140789,
+    "path": "/home/harsh/ferric-p227-integration/qualification/projection-ar4-framework-v1/result.json",
+    "sha256": "23567420a73dc63a393ab54da8606b24ceedd4afee866aab9967fd3196c21075"
+  },
+  "production_authority": false,
+  "publication_helper": {
+    "bytes": 14268,
+    "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/p228-ar4-rope-input-audit-publication-v1/publish.py",
+    "sha256": "65ff1df8d4e343c9b24dcf61c0953c1c4f7a9b240981b75f06ae7aff82d8673e"
+  },
+  "publication_passed": true,
+  "pure_observation": {
+    "bytes": 4193,
+    "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/ar4-rope-input-audit-root-test-observation-v228-v1.json",
+    "sha256": "eb10babdc5398ffc5d4e5f832ce18199efd9d9e31ab71fefe0faedc7c74641c4"
+  },
+  "pure_tests": 11,
+  "recorded_summary_consistency_checked": true,
+  "rows": [
+    {
+      "bf16_different_indices": [],
+      "bf16_exact_words": 128,
+      "coefficient_words": 128,
+      "position": 0,
+      "raw_f32_equal_to_framework_companion": 128,
+      "raw_f32_equal_to_retained_libm_model": 128
+    },
+    {
+      "bf16_different_indices": [],
+      "bf16_exact_words": 128,
+      "coefficient_words": 128,
+      "position": 1,
+      "raw_f32_equal_to_framework_companion": 101,
+      "raw_f32_equal_to_retained_libm_model": 128
+    },
+    {
+      "bf16_different_indices": [],
+      "bf16_exact_words": 128,
+      "coefficient_words": 128,
+      "position": 2,
+      "raw_f32_equal_to_framework_companion": 91,
+      "raw_f32_equal_to_retained_libm_model": 128
+    },
+    {
+      "bf16_different_indices": [],
+      "bf16_exact_words": 128,
+      "coefficient_words": 128,
+      "position": 3,
+      "raw_f32_equal_to_framework_companion": 94,
+      "raw_f32_equal_to_retained_libm_model": 128
+    }
+  ],
+  "schema": "ferric-p228-ar4-rope-input-audit-publication-v1",
+  "seven_input_bodies_rehashed": true,
+  "sustained_2048_256": false,
+  "tested_modules_imported": false,
+  "tests_rerun": false,
+  "transitive_input_bodies_rehashed": false
+}

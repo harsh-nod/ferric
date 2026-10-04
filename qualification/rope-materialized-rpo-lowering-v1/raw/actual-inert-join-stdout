@@ -1,0 +1,22 @@
+
+running 1 test
+test linux::wave_qkv_attention_output_tiles_v6::tests::wave_emission_actual_retained_v6_passes_full_inert_join ... FAILED
+
+successes:
+
+successes:
+
+failures:
+
+---- linux::wave_qkv_attention_output_tiles_v6::tests::wave_emission_actual_retained_v6_passes_full_inert_join stdout ----
+
+thread 'linux::wave_qkv_attention_output_tiles_v6::tests::wave_emission_actual_retained_v6_passes_full_inert_join' (821233) panicked at crates/fe2o3-hsaco-finalize/examples/finite_join_engineering_hsaco_v1/wave_qkv_attention_output_tiles_v6_tests.rs:973:55:
+called `Result::unwrap()` on an `Err` value: Resource(Work(CanonicalKernelIrWorkLimitV1 { actual: 1084825160, limit: 1073741824 }))
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    linux::wave_qkv_attention_output_tiles_v6::tests::wave_emission_actual_retained_v6_passes_full_inert_join
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 204 filtered out; finished in 0.78s
+

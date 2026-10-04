@@ -1,0 +1,33 @@
+{
+  "schema": "ferric-p228-ar4-rope-input-audit-root-test-observation-v1",
+  "observation_kind": "Primary-agent observation of actual SSH tool output; not a remote supervisor receipt",
+  "command": "ssh.exe -o BatchMode=yes -o ConnectTimeout=20 -o HostName=asrock-1w300-g2-2b.mkm.dcgpu -o UserKnownHostsFile=//wsl.localhost/Ubuntu/home/harsh/.ssh/known_hosts -l harmenon mi350-2  'timeout --signal=TERM --kill-after=10s 180s env -u PYTHONPATH -u PYTHONHOME -u PYTHONOPTIMIZE HIP_VISIBLE_DEVICES= ROCR_VISIBLE_DEVICES= CUDA_VISIBLE_DEVICES= taskset -c 8,9 nice -n 10 prlimit --as=2147483648 --cpu=120 --fsize=16777216 --core=0 python3 -B /home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-ar4-rope-input-audit-v1/test_run.py'",
+  "session_id": 56382,
+  "initial_tool_output": {
+    "chunk_id": "65ab67",
+    "wall_time_seconds": 1.001700254,
+    "session_id": 56382,
+    "original_token_count": 413,
+    "output": "\r\n $$$$$$\\  $$$$$$\\  $$$$$$\\       $$$$$$\\  $$\\   $$\\ $$$$$$$$\\ $$\\   $$\\\r\n$$  __$$\\ \\_$$  _|$$  __$$\\     $$  __$$\\ $$ |  $$ |\\__$$  __|$$ |  $$ |\r\n$$ /  $$ |  $$ |  $$ /  \\__|$$\\ $$ /  $$ |$$ |  $$ |   $$ |   $$ |  $$ |\r\n$$$$$$$$ |  $$ |  $$ |$$$$\\ \\__|$$$$$$$$ |$$ |  $$ |   $$ |   $$$$$$$$ |\r\n$$  __$$ |  $$ |  $$ |\\_$$ |    $$  __$$ |$$ |  $$ |   $$ |   $$  __$$ |\r\n$$ |  $$ |  $$ |  $$ |  $$ |$$\\ $$ |  $$ |$$ |  $$ |   $$ |   $$ |  $$ |\r\n$$ |  $$ |$$$$$$\\ \\$$$$$$  |\\__|$$ |  $$ |\\$$$$$$  |   $$ |   $$ |  $$ |\r\n\\__|  \\__|\\______| \\______/     \\__|  \\__| \\______/    \\__|   \\__|  \\__|\r\n\r\n is protected by Conductor SUT Authentication - 20260511.01-gee7e625.\r\n\r\nReminder: An SSH key is required to access this system. \r\nTo manage your Conductor SSH keys please visit https://conductor.amd.com/user/dashboard/key-management\r\n\r\nYou will be denied access to this system if:\r\n  • You did not provide a valid SSH key\r\n  • You do not have an active reservation in Conductor\r\n  • You are not in the required security groups (ex: mi300_doc.4erminus)\r\n\r\n____________   _______________________________________^__\r\n ___   ___ |||  ___   ___   ___    ___ ___  |   __  ,----\\\r\n|   | |   |||| |   | |   | |   |  |   |   | |  |  | |_____\\\r\n|___| |___|||| |___| |___| |___|  | O | O | |  |  |        \\\r\n           |||                    |___|___| |  |__|         )\r\n___________|||______________________________|______________/\r\n           |||                                        /--------\r\n-----------'''---------------------------------------'\r\n\r\nFor other help resources please visit https://conductor.amd.com/docs\r\n\r\nChecking authorization now...\r\n"
+  },
+  "terminal_tool_chunk_id": "d269a9",
+  "exit_code": 0,
+  "tests": 11,
+  "failures": 0,
+  "errors": 0,
+  "skipped": 0,
+  "source_sha256": {
+    "run": "9a45f4dd519b49ba949a247b90da09bbaa8c98b025d92a9c86f10d0500ba8df6",
+    "test": "810a4becf62bfaf42ebe9f83bd56007ed82e779b9974f1397a1bb40e1def9365"
+  },
+  "source_hash_observation_chunks": {
+    "before": "9c7dda",
+    "after": "d41b2c"
+  },
+  "test_output_excerpt": "test_all_four_split_half_tables (__main__.AuditTests) ... ok\ntest_duplicate_and_nonfinite_json_refused (__main__.AuditTests) ... ok\ntest_exact_finite_and_signed_zero_words (__main__.AuditTests) ... ok\ntest_invalid_words_and_overflow_refuse (__main__.AuditTests) ... ok\ntest_material_coefficient_difference_is_reported_not_accepted (__main__.AuditTests) ... ok\ntest_missing_duplicate_or_wrong_position_refused (__main__.AuditTests) ... ok\ntest_raw_difference_can_disappear_at_bf16_boundary (__main__.AuditTests) ... ok\ntest_subnormal_boundary_rounding (__main__.AuditTests) ... ok\ntest_ties_to_even_positive_and_negative (__main__.AuditTests) ... ok\ntest_wrong_extent_or_half_duplication_refused (__main__.AuditTests) ... ok\ntest_wrong_generation_and_bool_identity_refused (__main__.AuditTests) ... ok\n\n----------------------------------------------------------------------\nRan 11 tests in 0.006s\n\nOK\n",
+  "remote_supervisor_receipt": false,
+  "model_execution": false,
+  "gpu_execution": false,
+  "numerical_acceptance": false,
+  "performance_claim": false
+}
