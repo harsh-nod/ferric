@@ -1,0 +1,41 @@
+{
+  "schema": "ferric-p228-silu-materialized-cpu-package-v1",
+  "files": {
+    "run.py": {
+      "bytes": 20305,
+      "sha256": "c083d3fc80405d10767d1a0d231965e240bdee9953978bf8142e2ad3935c1f82"
+    },
+    "test_run.py": {
+      "bytes": 6405,
+      "sha256": "3fceeeeca48dd07a17465c808d528619451d58853fb221c0a50d3c9a606a9ab4"
+    },
+    "README.md": {
+      "bytes": 5419,
+      "sha256": "8f8e2d3fb367d28a077706e1b24404d7684b1fce2ab8c3be78638f709839ff01"
+    }
+  },
+  "pure_tests": 12,
+  "test_census": {
+    "test_run.py": [
+      "test_exact_additive_candidate_and_sixteen_names",
+      "test_duplicate_candidate_path_or_test_name_is_refused",
+      "test_existing_file_replacement_is_refused",
+      "test_original_four_and_ten_cohorts_are_required",
+      "test_failed_or_changed_provider_prerequisite_is_refused",
+      "test_formatting_only_new_copies_is_allowed",
+      "test_formatter_cannot_change_original_macro_or_lock",
+      "test_formatter_cannot_change_roster",
+      "test_actual_cargo_shape_selects_all_four_fresh_binaries",
+      "test_unchecked_or_unoptimized_artifacts_are_refused",
+      "test_wrong_manifest_source_target_duplicate_or_failed_build_is_refused",
+      "test_optimized_python_or_bytecode_writes_are_refused"
+    ]
+  },
+  "status": "authored-not-executed",
+  "expected_rust_tests": 38,
+  "expected_rust_ignored": 0,
+  "gpu_execution": false,
+  "numerical_acceptance": false,
+  "performance_claim": false,
+  "production_authority": false
+}

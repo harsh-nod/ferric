@@ -1,0 +1,13 @@
+
+running 8 tests
+test both_projection_handlers_preserve_all_rows_and_only_lane_zero_writes ... ok
+test down_keeps_fp32_low_bits_and_meets_independent_fp64_bound ... ok
+test norm_preserves_two_bf16_rounds_and_all_lane_coverage ... ok
+test norm_rejects_collective_invalid_math_and_local_write_failure ... ok
+test rejected_projection_and_down_still_execute_every_collective ... ok
+test specialized_down_matches_every_active_queued_iteration_and_overflow_status ... ok
+test swiglu_full_coverage_stable_expression_and_zero_signs ... ok
+test swiglu_invalid_inputs_exp_and_writes_finish_all_components ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.09s
+

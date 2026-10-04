@@ -1,0 +1,27 @@
+{
+  "README.md": {
+    "bytes": 5419,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-silu-materialized-cpu-v1/README.md",
+    "sha256": "8f8e2d3fb367d28a077706e1b24404d7684b1fce2ab8c3be78638f709839ff01"
+  },
+  "controller": {
+    "bytes": 3723,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/run_silu_cpu_pure_p228_v1.py",
+    "sha256": "19ee906451b9d68fbc4048176874ce75c9ba9d07fe2de5b6ea9d1fd45460351a"
+  },
+  "manifest.json": {
+    "bytes": 1477,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-silu-materialized-cpu-v1/manifest.json",
+    "sha256": "ad306aeb5ecc446ab8d4f0cf48a0f83e4b28626781743adf82332c140e7dac14"
+  },
+  "run.py": {
+    "bytes": 20305,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-silu-materialized-cpu-v1/run.py",
+    "sha256": "c083d3fc80405d10767d1a0d231965e240bdee9953978bf8142e2ad3935c1f82"
+  },
+  "test_run.py": {
+    "bytes": 6405,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-silu-materialized-cpu-v1/test_run.py",
+    "sha256": "3fceeeeca48dd07a17465c808d528619451d58853fb221c0a50d3c9a606a9ab4"
+  }
+}

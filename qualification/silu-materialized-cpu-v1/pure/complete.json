@@ -1,0 +1,51 @@
+{
+  "controller": {
+    "bytes": 3723,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/run_silu_cpu_pure_p228_v1.py",
+    "sha256": "19ee906451b9d68fbc4048176874ce75c9ba9d07fe2de5b6ea9d1fd45460351a"
+  },
+  "errors": 0,
+  "failures": 0,
+  "gpu_execution": false,
+  "names": [
+    "test_run.PolicyTests.test_actual_cargo_shape_selects_all_four_fresh_binaries",
+    "test_run.PolicyTests.test_duplicate_candidate_path_or_test_name_is_refused",
+    "test_run.PolicyTests.test_exact_additive_candidate_and_sixteen_names",
+    "test_run.PolicyTests.test_existing_file_replacement_is_refused",
+    "test_run.PolicyTests.test_failed_or_changed_provider_prerequisite_is_refused",
+    "test_run.PolicyTests.test_formatter_cannot_change_original_macro_or_lock",
+    "test_run.PolicyTests.test_formatter_cannot_change_roster",
+    "test_run.PolicyTests.test_formatting_only_new_copies_is_allowed",
+    "test_run.PolicyTests.test_optimized_python_or_bytecode_writes_are_refused",
+    "test_run.PolicyTests.test_original_four_and_ten_cohorts_are_required",
+    "test_run.PolicyTests.test_unchecked_or_unoptimized_artifacts_are_refused",
+    "test_run.PolicyTests.test_wrong_manifest_source_target_duplicate_or_failed_build_is_refused"
+  ],
+  "numerical_acceptance": false,
+  "passed": true,
+  "performance_claim": false,
+  "production_authority": false,
+  "raw": {
+    "sources-after.json": {
+      "bytes": 1254,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/silu-materialized-cpu-pure-v228-v1/sources-after.json",
+      "sha256": "0458f89dbdb1cd85da9205e9b7b185c559d5f26c9ad85815155511f69e849aee"
+    },
+    "sources-before.json": {
+      "bytes": 1254,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/silu-materialized-cpu-pure-v228-v1/sources-before.json",
+      "sha256": "0458f89dbdb1cd85da9205e9b7b185c559d5f26c9ad85815155511f69e849aee"
+    },
+    "tests.log": {
+      "bytes": 1070,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/silu-materialized-cpu-pure-v228-v1/tests.log",
+      "sha256": "d7940653b0ce7ac8b1bb86c4a7aa15a2f3d5c2c7deba858dd71998f4e5a22974"
+    }
+  },
+  "rust_compilation": false,
+  "schema": "ferric-p228-silu-materialized-cpu-pure-v1",
+  "skipped": 0,
+  "source_postchecks_passed": true,
+  "synthetic_only": true,
+  "tests": 12
+}

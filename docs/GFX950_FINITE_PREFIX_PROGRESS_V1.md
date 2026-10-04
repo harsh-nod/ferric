@@ -6,7 +6,15 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Latest: the [independent four-step framework comparison](../qualification/projection-residual-decode-comparison-v1/README.md)
+Latest: the [explicit BF16 SiLU candidate](../qualification/silu-materialized-cpu-v1/README.md)
+passed all 38 Rust tests and twelve controller-policy tests on ASROCK. The
+candidate adds BF16 rounding between SiLU and its up product; existing
+exponential arithmetic and Down2 scheduling are unchanged. The full tested
+fixture is published separately because its dependencies differ from the live
+default device crate. Checked lowering, GPU execution and numerical comparison
+are separate gates; no production route or acceptance threshold changed.
+
+The [independent four-step framework comparison](../qualification/projection-residual-decode-comparison-v1/README.md)
 completed on ASROCK across all 152 tensor slices. All four output tokens match;
 no complete tensor slice is bitwise identical. Logit relative-L2 error is
 0.332344%, 0.757311%, 0.410781% and 0.859355% at positions 0-3.

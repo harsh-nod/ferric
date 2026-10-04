@@ -1,0 +1,65 @@
+{
+  "schema": "ferric-p228-silu-materialized-kernel-proposal-v1",
+  "status": "authored-not-executed",
+  "files": [
+    {
+      "path": "device/qwen3-tp-wave-rmsnorm-kernels-v15/src/finite_mlp_tiles_silu_materialized_v1.rs",
+      "source": "draft/device/qwen3-tp-wave-rmsnorm-kernels-v15/src/finite_mlp_tiles_silu_materialized_v1.rs",
+      "before": null,
+      "after": {"bytes": 3687, "sha256": "794bac2a76ced9ddcf3aa3abdaea6c41850e861a1d253837c321efc9c3ceef34"}
+    },
+    {
+      "path": "device/qwen3-tp-wave-rmsnorm-kernels-v15/src/mlp_silu_materialized_numerics_v1.rs",
+      "source": "draft/device/qwen3-tp-wave-rmsnorm-kernels-v15/src/mlp_silu_materialized_numerics_v1.rs",
+      "before": null,
+      "after": {"bytes": 1730, "sha256": "a3b60023a1438424b2971109ba1b01e62b613dd6f7edbd98ad4d9591e5b15954"}
+    },
+    {
+      "path": "device/qwen3-tp-wave-rmsnorm-kernels-v15/tests/mlp_silu_materialized_v1.rs",
+      "source": "draft/device/qwen3-tp-wave-rmsnorm-kernels-v15/tests/mlp_silu_materialized_v1.rs",
+      "before": null,
+      "after": {"bytes": 10199, "sha256": "28267f04eafb4519e0f9b245eb662822cb10c82930cda400ad0261ed695b8d87"}
+    }
+  ],
+  "baseline_fixture": {
+    "directory": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-down2-checked-probe-v228-v1/fixture",
+    "source_pins": {
+      "src/lib.rs": {"bytes": 3535, "sha256": "a0327c4b3d7b4bbd1b4be87a7392fde3666e1750148d67666eb4364876b0d9d1"},
+      "src/wave_numerics_v1.rs": {"bytes": 2235, "sha256": "22ef471c341936b3bc6f7b5812405c60152292cef07dcbd03173bf2dd7ee49ea"},
+      "src/mlp_numerics_v1.rs": {"bytes": 7417, "sha256": "2e0edf9efdc1caf19ea574ba9dfeffa375072584d27e21a31308539a6b8115d1"},
+      "src/mlp_tile_numerics_v2.rs": {"bytes": 4908, "sha256": "2b49dac2d9bc12772d48cbaf8a3513e38bbcaba9dc1466bd85f78af69d575245"}
+    },
+    "lowering_complete_sha256": "0ba363b9b4106e5293e4e6152d719c795c2d58f05e062b6a67570f194e0eb68e",
+    "image_sha256": "65a76f917c12476f4814174ee39d515642a643a0352c6609ee514955a6a97449"
+  },
+  "test_census": {
+    "mlp_silu_materialized_v1": [
+      "all_lanes_keep_full_component_coverage_and_exp_arguments",
+      "negative_gate_preserves_numerator_and_division_before_rounding",
+      "first_halfway_rounds_up_to_even_and_differs_from_unchanged_fused_macro",
+      "first_halfway_rounds_down_to_even",
+      "final_product_keeps_its_own_bf16_ties_even_rounding",
+      "signed_zero_survives_both_materializations",
+      "tiny_silu_rounds_at_bf16_boundary_before_amplifying_up",
+      "nonfinite_gate_rejects_without_shortening_components",
+      "nonfinite_up_rejects_even_when_gate_is_zero",
+      "nonfinite_exp_rejects_without_committing_zero",
+      "fp32_silu_overflow_stays_rejected",
+      "materialized_silu_overflow_rejects_before_a_small_up_can_hide_it",
+      "final_product_overflow_remains_rejected",
+      "missing_inputs_keep_sticky_rejection_and_complete_read_census",
+      "failed_writes_preserve_prefix_and_poison_all_remaining_components",
+      "complete_candidate_entry_changes_only_selected_swiglu_and_one_include"
+    ]
+  },
+  "authored_tests": 16,
+  "tests_executed": false,
+  "old_sources_modified": false,
+  "default_route_modified": false,
+  "provider_modified": false,
+  "compiler_modified": false,
+  "gpu_execution": false,
+  "numerical_acceptance": false,
+  "performance_claim": false,
+  "production_authority": false
+}

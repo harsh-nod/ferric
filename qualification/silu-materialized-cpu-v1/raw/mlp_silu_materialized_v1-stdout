@@ -1,0 +1,21 @@
+
+running 16 tests
+test all_lanes_keep_full_component_coverage_and_exp_arguments ... ok
+test complete_candidate_entry_changes_only_selected_swiglu_and_one_include ... ok
+test failed_writes_preserve_prefix_and_poison_all_remaining_components ... ok
+test final_product_keeps_its_own_bf16_ties_even_rounding ... ok
+test final_product_overflow_remains_rejected ... ok
+test first_halfway_rounds_down_to_even ... ok
+test first_halfway_rounds_up_to_even_and_differs_from_unchanged_fused_macro ... ok
+test fp32_silu_overflow_stays_rejected ... ok
+test materialized_silu_overflow_rejects_before_a_small_up_can_hide_it ... ok
+test missing_inputs_keep_sticky_rejection_and_complete_read_census ... ok
+test negative_gate_preserves_numerator_and_division_before_rounding ... ok
+test nonfinite_exp_rejects_without_committing_zero ... ok
+test nonfinite_gate_rejects_without_shortening_components ... ok
+test nonfinite_up_rejects_even_when_gate_is_zero ... ok
+test signed_zero_survives_both_materializations ... ok
+test tiny_silu_rounds_at_bf16_boundary_before_amplifying_up ... ok
+
+test result: ok. 16 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

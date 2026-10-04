@@ -1,0 +1,17 @@
+test_actual_cargo_shape_selects_all_four_fresh_binaries (test_run.PolicyTests) ... ok
+test_duplicate_candidate_path_or_test_name_is_refused (test_run.PolicyTests) ... ok
+test_exact_additive_candidate_and_sixteen_names (test_run.PolicyTests) ... ok
+test_existing_file_replacement_is_refused (test_run.PolicyTests) ... ok
+test_failed_or_changed_provider_prerequisite_is_refused (test_run.PolicyTests) ... ok
+test_formatter_cannot_change_original_macro_or_lock (test_run.PolicyTests) ... ok
+test_formatter_cannot_change_roster (test_run.PolicyTests) ... ok
+test_formatting_only_new_copies_is_allowed (test_run.PolicyTests) ... ok
+test_optimized_python_or_bytecode_writes_are_refused (test_run.PolicyTests) ... ok
+test_original_four_and_ten_cohorts_are_required (test_run.PolicyTests) ... ok
+test_unchecked_or_unoptimized_artifacts_are_refused (test_run.PolicyTests) ... ok
+test_wrong_manifest_source_target_duplicate_or_failed_build_is_refused (test_run.PolicyTests) ... ok
+
+----------------------------------------------------------------------
+Ran 12 tests in 0.004s
+
+OK

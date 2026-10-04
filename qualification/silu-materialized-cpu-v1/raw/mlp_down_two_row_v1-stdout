@@ -1,0 +1,15 @@
+
+running 10 tests
+test all_lanes_match_original_partial_bits_reductions_and_ordered_writes ... ok
+test cancellation_signed_zero_and_subnormal_rounding_are_bitwise_unchanged ... ok
+test closed_macro_has_two_ordered_scalar_accumulators_without_new_control_exits ... ok
+test every_down_tile_preserves_first_last_rows_and_original_weight_layout ... ok
+test failed_even_and_odd_writes_preserve_sticky_rejection_and_census ... ok
+test first_row_failure_poisons_cached_second_partial_before_its_reduction ... ok
+test missing_acquired_input_still_reads_all_weights_and_reduces_all_rows ... ok
+test nonfinite_product_partial_and_reduction_overflow_keep_all_collectives ... ok
+test second_row_failure_does_not_prematurely_reject_the_first_row ... ok
+test source_selects_only_down2_and_preserves_fixed_rounds_geometry_and_storage ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.43s
+
