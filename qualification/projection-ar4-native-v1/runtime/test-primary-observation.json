@@ -1,0 +1,26 @@
+{
+  "schema": "ferric-p228-projection-ar4-runtime-root-test-observation-v1",
+  "observation_kind": "Primary-agent observation of actual SSH tool output; not a remote supervisor receipt",
+  "host": "smci350-rck-g03-b19-03",
+  "tool_session": 7201,
+  "terminal_chunk": "57eadb",
+  "exit_code": 0,
+  "tests": 12,
+  "errors": 0,
+  "failures": 0,
+  "skipped": 0,
+  "command": "env HIP_VISIBLE_DEVICES= ROCR_VISIBLE_DEVICES= CUDA_VISIBLE_DEVICES= timeout --signal=INT --kill-after=5 120 taskset -c 8,9 nice -n 10 /usr/bin/python3 -E -B /home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-projection-ar4-decode-runtime-v1/test_audit_projection_ar4_decode_runtime.py -v",
+  "test_output_excerpt": "Ran 12 tests in 0.016s\n\nOK\n",
+  "expected_transported_source_sha256": {
+    "audit_projection_ar4_decode_runtime.py": "72898b3024ec502a1a2cc7dbcbfd6b133fb6d37f9beeb170c6f2faa366db308a",
+    "test_audit_projection_ar4_decode_runtime.py": "2eea826ac170a494699eb70ad2c5db4ee7968f5296868ac76ef259d4073a57af",
+    "README.md": "99c802d1def42c459bf3c2ef429bcaffd2ae267dd2afa04e53fb967a8be96a0f"
+  },
+  "separate_test_source_postcheck_observed": false,
+  "full_transcript_retained_in_this_record": false,
+  "native_execution": false,
+  "gpu_execution": false,
+  "numerical_acceptance": false,
+  "performance_claim": false,
+  "production_authority": false
+}

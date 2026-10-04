@@ -6,15 +6,24 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Latest: the [AR4 supervisor and independent-reference policy suites passed](../qualification/projection-ar4-supervisor-v1/README.md):
+Latest: the [AR4 runtime completed four full-model forwards on MI350](../qualification/projection-ar4-native-v1/README.md).
+The input chain was 9112, 67, 25, 576; outputs were 67, 25, 576, 2701.
+Each next input equals the preceding checked argmax. All 152 tensor slices,
+576 terminal state records, seven natural/reaped process leaves and six idle
+audits passed structural checks in one attempt without retry. Fresh runtime
+audits bind both CPU1037 executables. This is a native execution result, not
+independent numerical acceptance. Genuine framework comparison, sustained
+2,048/256 qualification and the 700-token/s target remain open.
+
+Previously, the [AR4 supervisor and independent-reference policy suites passed](../qualification/projection-ar4-supervisor-v1/README.md):
 52 CPU-only policy tests on MI350 and 38 on ASROCK, with unchanged source
 snapshots. The framework result is explicitly retained as a primary-agent SSH
 output observation, distinct from the bounded MI350 wrapper receipt. The tests
 cover own-output recurrence, nonrecovering history comparability, separately
 labeled conditional replay and the existing owned lifecycle. No model or GPU
-kernel was executed by these suites. Native AR4 observation and its independent
-framework comparison remain separate gates; numerical acceptance, the long
-workload and 700 tokens/s remain open.
+kernel was executed by these suites. The separate native observation completed
+as recorded above; independent framework comparison, numerical acceptance,
+the long workload and 700 tokens/s remain open.
 
 Previously, the [projection-residual autoregressive route passed fresh CPU qualification](../qualification/projection-ar4-cpu-v1/README.md)
 on ASROCK through `mi350-2`: 1,037 Rust tests passed, with four unchanged worker
@@ -23,8 +32,8 @@ support while preserving the teacher-forced format and image bindings. Each
 next input must equal the previous checked output; wrong trajectories, mode
 mismatches and premature Close remain rejection cases. All seventeen selected
 executables were rebuilt and all source/input postchecks passed. This is CPU
-qualification, not a new GPU observation. The matching GPU AR4 run and its
-independent history-aware framework comparison remain pending; the 2,048/256
+qualification, not a GPU observation. The matching GPU AR4 run completed as
+recorded above; independent history-aware framework comparison and the 2,048/256
 workload, numerical acceptance and 700 tokens/s target remain open.
 
 The [branch-reduced RoPE candidate passed fresh CPU qualification](../qualification/rope-materialized-cpu-v2/README.md)

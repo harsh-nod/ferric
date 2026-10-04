@@ -1,0 +1,40 @@
+{
+  "command": {
+    "bytes": 1027,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-ar4-decode-runtime-parent-v228-v1/ldd/command.json",
+    "sha256": "3b23765fa0c8d14e25c573ce18d6a91bbaa259548563cf4e21150f4bc1ef6904"
+  },
+  "gpu_execution": false,
+  "outcome": {
+    "cleanup_signalled": false,
+    "deadline_seconds": 30,
+    "elapsed_seconds": 0.32107306900434196,
+    "exit_code": 0,
+    "lineage": [
+      {
+        "event": "owned",
+        "identity": {
+          "pgid": 1161405,
+          "pid": 1161405,
+          "ppid": 1161403,
+          "sid": 1161405,
+          "starttime": 54533753,
+          "state": "R",
+          "uid": 9661
+        },
+        "reason": "spawned-parent"
+      }
+    ],
+    "owned_groups": [
+      1161405
+    ],
+    "owned_groups_absent": true,
+    "owned_processes_reaped": true,
+    "reason": null
+  },
+  "started": {
+    "bytes": 194,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-ar4-decode-runtime-parent-v228-v1/ldd/started.json",
+    "sha256": "446dcf11834cc5e1cb022ce31788d5e81a46b4c07378a4da77e51f829a7490bd"
+  }
+}

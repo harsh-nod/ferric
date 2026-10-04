@@ -1,0 +1,379 @@
+{
+  "authority": "none",
+  "binary": {
+    "bytes": 13827528,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-ar4-cpu-v228-v1/target/parent/debug/ferric-qwen3-finite-projection-residual-decode-engineering",
+    "sha256": "22d2cb744117af5232e29001f49ff265c25d94f9326ee48a1eb3ddc5aeab6319"
+  },
+  "boot_id": "2dbbbc5a-d8b7-46ac-bd1f-236e5847e24a",
+  "commands": [
+    {
+      "bytes": 1055,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-ar4-decode-runtime-parent-v228-v1/readelf/command.json",
+      "sha256": "ae84ca3ef4829563109227273a37cc05bb3f9ef044eca1611f199ab8c902bdf3"
+    },
+    {
+      "bytes": 1027,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-ar4-decode-runtime-parent-v228-v1/ldd/command.json",
+      "sha256": "3b23765fa0c8d14e25c573ce18d6a91bbaa259548563cf4e21150f4bc1ef6904"
+    }
+  ],
+  "devices": [
+    16366993098680759275,
+    10838076764495710945
+  ],
+  "elapsed_seconds": 0.8312406549230218,
+  "gpu_execution": false,
+  "host": "smci350-rck-g03-b19-03",
+  "ldd": {
+    "bytes": 794,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-ar4-decode-runtime-parent-v228-v1/ldd/audit.json",
+    "sha256": "081e108afdc1d45d2e35bfbf399fa5f564ba9259d13c2638e0e2387be15a6a16"
+  },
+  "libraries": [
+    {
+      "path": "/lib/x86_64-linux-gnu/libgcc_s.so.1",
+      "resolved": {
+        "bytes": 183024,
+        "path": "/usr/lib/x86_64-linux-gnu/libgcc_s.so.1",
+        "sha256": "d93224d2b0dab4247598be683adca02f5cf00586f99c187579cd7e92058fb7cb"
+      }
+    },
+    {
+      "path": "/lib/x86_64-linux-gnu/libm.so.6",
+      "resolved": {
+        "bytes": 952616,
+        "path": "/usr/lib/x86_64-linux-gnu/libm.so.6",
+        "sha256": "1b87a1a50b496cfead2b0ad134c2ff536705c82608db240c7e8aa48d6c0e4217"
+      }
+    },
+    {
+      "path": "/lib/x86_64-linux-gnu/libc.so.6",
+      "resolved": {
+        "bytes": 2125328,
+        "path": "/usr/lib/x86_64-linux-gnu/libc.so.6",
+        "sha256": "d8db8739a1633c972cec6a4fe0566bdcec6fd088f98723492ab0361f66238f75"
+      }
+    },
+    {
+      "path": "/lib64/ld-linux-x86-64.so.2",
+      "resolved": {
+        "bytes": 236616,
+        "path": "/usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2",
+        "sha256": "1cd555ac46b7887edeaf3c42aac5408c8135e52f6b37870da2cf82d5fe14e829"
+      }
+    }
+  ],
+  "numerical_acceptance": false,
+  "owners": [
+    {
+      "bytes": 1171,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-ar4-decode-runtime-parent-v228-v1/readelf/owner.json",
+      "sha256": "6ef6e0d651152db6c754db0f82d1061f64154fd5be6c1eda648b54cdadacf571"
+    },
+    {
+      "bytes": 1164,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-ar4-decode-runtime-parent-v228-v1/ldd/owner.json",
+      "sha256": "51bd928623ee67b51243f37b953d25c28faba60496fdf37d9359ec7064f83f20"
+    }
+  ],
+  "production_authority": false,
+  "readelf": {
+    "bytes": 817,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-ar4-decode-runtime-parent-v228-v1/readelf/audit.json",
+    "sha256": "23d3ccd684197aa2588b497a0f75f14967eb0cd1537dd0c524d39a185ecaec92"
+  },
+  "reviewed": false,
+  "runtime_premises_discharged": false,
+  "schema": "ferric-p227-prefix-runtime-audit-v1",
+  "software_audit": {
+    "bytes": 4255,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-ar4-decode-runtime-parent-v228-v1/software.json",
+    "sha256": "1a6fc74382084131afa9094f6135a86cfa06dc586ddd71e90d19bc9e7a9a39be"
+  },
+  "source_pins": {
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p227-prefix-runtime-audit-v2/README.txt": {
+      "bytes": 4605,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p227-prefix-runtime-audit-v2/README.txt",
+      "sha256": "6cd61459b3a7ef09da9095a24f4ca470a642909800523a6c8fd46285ad414a02"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p227-prefix-runtime-audit-v2/audit.py": {
+      "bytes": 12875,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p227-prefix-runtime-audit-v2/audit.py",
+      "sha256": "def16c2f69c082fa273596bef0caf7a2af195d07d2ac6f96d944706d5f44a514"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p227-prefix-runtime-audit-v2/fixtures/actual-ldd.stdout": {
+      "bytes": 230,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p227-prefix-runtime-audit-v2/fixtures/actual-ldd.stdout",
+      "sha256": "8614b3c271fa6997a2d0096563f3d82c040021118e4ac64a9466870cbee23940"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p227-prefix-runtime-audit-v2/fixtures/actual-readelf.stdout": {
+      "bytes": 1615,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p227-prefix-runtime-audit-v2/fixtures/actual-readelf.stdout",
+      "sha256": "c4c154492d1bc30d10731adb430915f5a251e3369e379b0c525fa25d52deb48b"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p227-prefix-runtime-audit-v2/frozen_owned.py": {
+      "bytes": 30433,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p227-prefix-runtime-audit-v2/frozen_owned.py",
+      "sha256": "ab41af455396322303bb8ebd4132e680affc3bdc5830608fad36736c92024583"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p227-prefix-runtime-audit-v2/manifest.json": {
+      "bytes": 2557,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p227-prefix-runtime-audit-v2/manifest.json",
+      "sha256": "9b80913aa0dac2da2a52bfe6e053a4db09a5e4c5647731fd269f39719e8bb062"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p227-prefix-runtime-audit-v2/run_row_facts_v2.py": {
+      "bytes": 12424,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p227-prefix-runtime-audit-v2/run_row_facts_v2.py",
+      "sha256": "244c12f62c8a439aa01b44380fc464008b94006bc919201c8d510c64177fc820"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p227-prefix-runtime-audit-v2/test_audit.py": {
+      "bytes": 14883,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p227-prefix-runtime-audit-v2/test_audit.py",
+      "sha256": "622a469ba7fc900d7e92154e72c01525704c91a1a680f9e11c10125d9e273815"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-projection-ar4-cpu-v1/run.py": {
+      "bytes": 19413,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-projection-ar4-cpu-v1/run.py",
+      "sha256": "a4f9fe5df6d6203003eaffd11ba0a7dee0586e16a5b0fc419599c8bab16b57b3"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-projection-ar4-decode-runtime-v1/audit_projection_ar4_decode_runtime.py": {
+      "bytes": 10670,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-projection-ar4-decode-runtime-v1/audit_projection_ar4_decode_runtime.py",
+      "sha256": "72898b3024ec502a1a2cc7dbcbfd6b133fb6d37f9beeb170c6f2faa366db308a"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-ar4-cpu-v228-v1/complete.json": {
+      "bytes": 583779,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-ar4-cpu-v228-v1/complete.json",
+      "sha256": "7a3c170ca6ffe6000517588280fcdb99cb58c0cbb22cc3f4be910232f7d51c54"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-ar4-cpu-v228-v1/parent-builds-stdout": {
+      "bytes": 347660,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-ar4-cpu-v228-v1/parent-builds-stdout",
+      "sha256": "fb30e716db8f5bdc4509d1d6492b4198b757966ce89271e0b0555db2e1ea756d"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-ar4-cpu-v228-v1/sources-after.json": {
+      "bytes": 1268153,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-ar4-cpu-v228-v1/sources-after.json",
+      "sha256": "22c23c3effbf79c1b38e8c816f43474cdc201aedb971d81bffd75c99dc5ba0a9"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-ar4-cpu-v228-v1/sources-before.json": {
+      "bytes": 1268153,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-ar4-cpu-v228-v1/sources-before.json",
+      "sha256": "22c23c3effbf79c1b38e8c816f43474cdc201aedb971d81bffd75c99dc5ba0a9"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-ar4-cpu-v228-v1/target/parent/debug/ferric-qwen3-finite-projection-residual-decode-engineering": {
+      "bytes": 13827528,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-ar4-cpu-v228-v1/target/parent/debug/ferric-qwen3-finite-projection-residual-decode-engineering",
+      "sha256": "22d2cb744117af5232e29001f49ff265c25d94f9326ee48a1eb3ddc5aeab6319"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/resident-output-tp2-v217/run_p217_mi350.py": {
+      "bytes": 13733,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/resident-output-tp2-v217/run_p217_mi350.py",
+      "sha256": "6016c30f46aa32abf9d175f329a0110e86cbf79d1363f1803dba3c86c1bad50a"
+    },
+    "/usr/bin/ldd": {
+      "bytes": 5382,
+      "path": "/usr/bin/ldd",
+      "sha256": "91ff41f256c1b168518fcac7ec850a6036584747660db9d8c5a13be9b63b72eb"
+    },
+    "/usr/bin/prlimit": {
+      "bytes": 27536,
+      "path": "/usr/bin/prlimit",
+      "sha256": "17064f67e650d6152a6902b013aab496b54c87587c8eea6f5023aafee6154069"
+    },
+    "/usr/bin/x86_64-linux-gnu-readelf": {
+      "bytes": 789280,
+      "path": "/usr/bin/x86_64-linux-gnu-readelf",
+      "sha256": "64c58e15274bbbb5153f31078e455e9e77ee5f51489e709bba5bb788ce9df2b0"
+    },
+    "/usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2": {
+      "bytes": 236616,
+      "path": "/usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2",
+      "sha256": "1cd555ac46b7887edeaf3c42aac5408c8135e52f6b37870da2cf82d5fe14e829"
+    },
+    "/usr/lib/x86_64-linux-gnu/libc.so.6": {
+      "bytes": 2125328,
+      "path": "/usr/lib/x86_64-linux-gnu/libc.so.6",
+      "sha256": "d8db8739a1633c972cec6a4fe0566bdcec6fd088f98723492ab0361f66238f75"
+    },
+    "/usr/lib/x86_64-linux-gnu/libgcc_s.so.1": {
+      "bytes": 183024,
+      "path": "/usr/lib/x86_64-linux-gnu/libgcc_s.so.1",
+      "sha256": "d93224d2b0dab4247598be683adca02f5cf00586f99c187579cd7e92058fb7cb"
+    },
+    "/usr/lib/x86_64-linux-gnu/libm.so.6": {
+      "bytes": 952616,
+      "path": "/usr/lib/x86_64-linux-gnu/libm.so.6",
+      "sha256": "1b87a1a50b496cfead2b0ad134c2ff536705c82608db240c7e8aa48d6c0e4217"
+    }
+  },
+  "tools": [
+    {
+      "path": "/usr/bin/prlimit",
+      "resolved": {
+        "bytes": 27536,
+        "path": "/usr/bin/prlimit",
+        "sha256": "17064f67e650d6152a6902b013aab496b54c87587c8eea6f5023aafee6154069"
+      }
+    },
+    {
+      "path": "/usr/bin/readelf",
+      "resolved": {
+        "bytes": 789280,
+        "path": "/usr/bin/x86_64-linux-gnu-readelf",
+        "sha256": "64c58e15274bbbb5153f31078e455e9e77ee5f51489e709bba5bb788ce9df2b0"
+      }
+    },
+    {
+      "path": "/usr/bin/ldd",
+      "resolved": {
+        "bytes": 5382,
+        "path": "/usr/bin/ldd",
+        "sha256": "91ff41f256c1b168518fcac7ec850a6036584747660db9d8c5a13be9b63b72eb"
+      }
+    }
+  ],
+  "topology_after": {
+    "bytes": 4180,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-ar4-decode-runtime-parent-v228-v1/topology-after.json",
+    "sha256": "85b3f897da147ce777c8097df56ab2fcf41c1fae8abb7bce8c6a0848e987405e"
+  },
+  "topology_before": {
+    "bytes": 4180,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-ar4-decode-runtime-parent-v228-v1/topology-before.json",
+    "sha256": "ebbccf110720715b99e28504d29c6dc82f2ca731593ca4eb32df8e79b4904013"
+  },
+  "topology_identity": [
+    {
+      "compute_partition": "SPX",
+      "device_path": "/sys/devices/pci0000:00/0000:00:01.1/0000:01:00.0/0000:02:00.0/0000:03:00.0/0000:04:00.0/0000:05:00.0",
+      "direct_link": {
+        "flags": 1,
+        "max_bandwidth": 0,
+        "max_latency": 0,
+        "min_bandwidth": 0,
+        "min_latency": 0,
+        "node_from": 2,
+        "node_to": 3,
+        "recommended_sdma_engine_id_mask": 16384,
+        "recommended_transfer_size": 0,
+        "type": 11,
+        "version_major": 0,
+        "version_minor": 0,
+        "weight": 15
+      },
+      "memory_partition": "NPS1",
+      "node": 2,
+      "properties": {
+        "array_count": 32,
+        "caches_count": 552,
+        "capability": 2889327232,
+        "capability2": 1,
+        "cpu_core_id_base": 0,
+        "cpu_cores_count": 0,
+        "cu_per_simd_array": 9,
+        "debug_prop": 1494,
+        "device_id": 30112,
+        "domain": 0,
+        "drm_render_minor": 128,
+        "fw_version": 41,
+        "gds_size_in_kb": 0,
+        "gfx_target_version": 90500,
+        "hive_id": 4409598424993686390,
+        "io_links_count": 8,
+        "lds_size_in_kb": 160,
+        "local_mem_size": 0,
+        "location_id": 1280,
+        "max_engine_clk_ccompute": 3300,
+        "max_engine_clk_fcompute": 2200,
+        "max_slots_scratch_cu": 32,
+        "max_waves_per_simd": 8,
+        "mem_banks_count": 1,
+        "num_cp_queues": 24,
+        "num_gws": 64,
+        "num_sdma_engines": 2,
+        "num_sdma_queues_per_engine": 8,
+        "num_sdma_xgmi_engines": 14,
+        "num_xcc": 8,
+        "p2p_links_count": 1,
+        "sdma_fw_version": 12,
+        "simd_arrays_per_engine": 1,
+        "simd_count": 1024,
+        "simd_id_base": 2147487744,
+        "simd_per_cu": 4,
+        "unique_id": 16366993098680759275,
+        "vendor_id": 4098,
+        "wave_front_size": 64
+      },
+      "render_minor": 128,
+      "unique_id": 16366993098680759275,
+      "vram_total": 270566162432
+    },
+    {
+      "compute_partition": "SPX",
+      "device_path": "/sys/devices/pci0000:10/0000:10:01.1/0000:11:00.0/0000:12:00.0/0000:13:00.0/0000:14:00.0/0000:15:00.0",
+      "direct_link": {
+        "flags": 1,
+        "max_bandwidth": 0,
+        "max_latency": 0,
+        "min_bandwidth": 0,
+        "min_latency": 0,
+        "node_from": 3,
+        "node_to": 2,
+        "recommended_sdma_engine_id_mask": 16384,
+        "recommended_transfer_size": 0,
+        "type": 11,
+        "version_major": 0,
+        "version_minor": 0,
+        "weight": 15
+      },
+      "memory_partition": "NPS1",
+      "node": 3,
+      "properties": {
+        "array_count": 32,
+        "caches_count": 546,
+        "capability": 2889327232,
+        "capability2": 1,
+        "cpu_core_id_base": 0,
+        "cpu_cores_count": 0,
+        "cu_per_simd_array": 9,
+        "debug_prop": 1494,
+        "device_id": 30112,
+        "domain": 0,
+        "drm_render_minor": 136,
+        "fw_version": 41,
+        "gds_size_in_kb": 0,
+        "gfx_target_version": 90500,
+        "hive_id": 4409598424993686390,
+        "io_links_count": 8,
+        "lds_size_in_kb": 160,
+        "local_mem_size": 0,
+        "location_id": 5376,
+        "max_engine_clk_ccompute": 3300,
+        "max_engine_clk_fcompute": 2200,
+        "max_slots_scratch_cu": 32,
+        "max_waves_per_simd": 8,
+        "mem_banks_count": 1,
+        "num_cp_queues": 24,
+        "num_gws": 64,
+        "num_sdma_engines": 2,
+        "num_sdma_queues_per_engine": 8,
+        "num_sdma_xgmi_engines": 14,
+        "num_xcc": 8,
+        "p2p_links_count": 1,
+        "sdma_fw_version": 12,
+        "simd_arrays_per_engine": 1,
+        "simd_count": 1024,
+        "simd_id_base": 2147487780,
+        "simd_per_cu": 4,
+        "unique_id": 10838076764495710945,
+        "vendor_id": 4098,
+        "wave_front_size": 64
+      },
+      "render_minor": 136,
+      "unique_id": 10838076764495710945,
+      "vram_total": 270566162432
+    }
+  ]
+}

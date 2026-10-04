@@ -57,8 +57,9 @@ integration step.
 
 ## Remaining Gates
 
-The matching native AR4 run and independent history-aware framework comparison
-remain pending. Successful CPU tests do not demonstrate GPU execution, numerical
+The matching [native AR4 run subsequently completed](../projection-ar4-native-v1/README.md).
+Independent history-aware framework comparison remains pending.
+Successful CPU tests alone do not demonstrate GPU execution, numerical
 acceptance, model quality, overlap or sustained throughput. The target remains
 single-request Qwen3-8B BF16 target-only decoding with a 2,048-token prompt and
 256 generated tokens. No 700 tokens/s result is claimed; all issue #42 M0-M7
