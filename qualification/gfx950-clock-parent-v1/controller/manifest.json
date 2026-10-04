@@ -1,0 +1,29 @@
+{
+  "schema": "ferric-p228-gfx950-clock-parent-cpu-package-v1",
+  "files": [
+    {
+      "path": "run.py",
+      "bytes": 29208,
+      "sha256": "8b78543ee92862a53e6b4ed8e41942aec559b7e8b5dd513886e6966ff9d27332"
+    },
+    {
+      "path": "test_run.py",
+      "bytes": 14369,
+      "sha256": "f4f4baf6608bd827775d1275192d65f3cbdacd75e360697e3a0b43a102554f14"
+    },
+    {
+      "path": "overlay.json",
+      "bytes": 12123,
+      "sha256": "60a0e81aa891d68388efdc404629dbf217817daa3acddb55ffd54f7cb2e96037"
+    },
+    {
+      "path": "README.md",
+      "bytes": 4432,
+      "sha256": "caba1c0afce3cda4f2830773960a446f420d59e61d73549bb652aedf433b0d0a"
+    }
+  ],
+  "pure_tests": 20,
+  "test_census": {
+    "test_run.py": 20
+  }
+}

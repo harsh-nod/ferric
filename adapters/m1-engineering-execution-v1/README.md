@@ -243,3 +243,34 @@ result. Timestamp-enabled singleton dispatches add a publication fence, so
 host latency is not directly interchangeable with the ordinary route. This
 diagnostic does not grant production execution authority or establish the
 2,048/256 workload and 700 tokens/s target.
+
+## Finite Prefix Device Clock Diagnostic
+
+The separate `ferric-qwen3-finite-prefix-decode-device-clock-engineering` binary
+adds raw clock samples to the existing dispatch report. It requires
+`tp-batch-engineering` and its own explicit opt-in:
+
+```sh
+ferric-qwen3-finite-prefix-decode-device-clock-engineering \
+  --request /private/device-clock-request.json \
+  --allow-unauthenticated-machine-code --observe-device-clocks
+```
+
+The request's exact fields are `schema`, set to
+`FerricFinitePrefixDecodeDeviceClockRequestV2`, and the ordinary `decode`
+configuration. The worker must support
+`--engineering-native-prefix-decode-device-clock-v2`. The evidence directory
+and adjacent `<directory>-device-clock-v2.json` sidecar must be new paths.
+V1 requests, flags and sidecars are not fallback inputs for this route.
+
+The parent checks all sixteen samples against the embedded raw report, then
+applies the existing worker/image/Control/capture joins after native Close and
+worker reap. It charges the complete V2 sidecar against the unchanged 2 MiB
+file and 8 MiB aggregate limits. GPU and system counters remain separate raw
+values; system-clock frequency is not used as a GPU tick frequency.
+
+The [parent clock qualification](../../qualification/gfx950-clock-parent-v1/README.md)
+is separate from the worker qualification and any native GPU capture. The
+parent retains its existing locked Git dependency graph; it does not compile
+the worker's sibling runtime checkout. No calibration, clock-domain alignment,
+overlap, numerical acceptance or throughput is implied by this interface.

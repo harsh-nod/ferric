@@ -78,8 +78,10 @@ Existing plain, host-only and raw-device V1 routes remain separate.
 The [clock-recorder CPU qualification](../../qualification/gfx950-clock-recorder-v1/README.md)
 passed 669 selected Rust tests with four existing ignores and fifteen
 controller-policy tests on `mi350-2`. This qualifies the worker build and
-synthetic failure boundaries, not a native clock sample. The matching parent
-route, GPU capture and calibration remain separate gates; no duration,
+synthetic failure boundaries, not a native clock sample. The
+[matching parent](../../qualification/gfx950-clock-parent-v1/README.md) now has
+its separate passing CPU qualification. GPU capture and calibration remain
+separate gates; no duration,
 cross-device alignment, overlap or throughput claim follows from this result.
 
 ## Build Prerequisites

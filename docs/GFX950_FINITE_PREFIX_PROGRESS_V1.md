@@ -6,14 +6,23 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Latest: the [versioned clock recorder](../qualification/gfx950-clock-recorder-v1/README.md)
+Latest: the [matching clock parent](../qualification/gfx950-clock-parent-v1/README.md)
+passed 275 Rust tests with no ignores, twenty separate controller tests, all
+thirteen executable builds and the default-feature check on `mi350-2`.
+All 44 bounded commands and source/input/artifact postchecks passed. The route
+requires its own request, worker selector and sixteen-sample V2 sidecar, while
+preserving the existing raw Control/capture joins and evidence limits. Its
+locked parent dependencies remain distinct from the worker's newer runtime.
+Both binaries still need fresh runtime audits and a native clock capture.
+
+The [versioned clock recorder](../qualification/gfx950-clock-recorder-v1/README.md)
 passed 669 selected Rust tests with four existing ignores on `mi350-2`.
 All 21 new tests passed, the worker was rebuilt, and all 33 commands exited
 naturally with unchanged input/source postchecks. Fifteen separate controller
 tests passed. The new route retains the V1 dispatch report and samples both
 ranks before and after each forward; errors poison the real owner even after
-a committed forward. Native clock sampling, the matching parent qualification
-and calibrated timings remain pending. No kernel image or arithmetic changed.
+a committed forward. Native clock sampling and calibrated timings remain
+pending. No kernel image or arithmetic changed.
 
 The [gfx950 raw clock-sampling API](../qualification/gfx950-clock-sampling-v1/README.md)
 passed 648 selected Rust tests with four existing worker ignores on `mi350-2`.

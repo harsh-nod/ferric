@@ -1,0 +1,22 @@
+{
+  "README.md": {
+    "bytes": 4432,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-gfx950-clock-parent-cpu-v1/README.md",
+    "sha256": "caba1c0afce3cda4f2830773960a446f420d59e61d73549bb652aedf433b0d0a"
+  },
+  "overlay.json": {
+    "bytes": 12123,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-gfx950-clock-parent-cpu-v1/overlay.json",
+    "sha256": "60a0e81aa891d68388efdc404629dbf217817daa3acddb55ffd54f7cb2e96037"
+  },
+  "run.py": {
+    "bytes": 29208,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-gfx950-clock-parent-cpu-v1/run.py",
+    "sha256": "8b78543ee92862a53e6b4ed8e41942aec559b7e8b5dd513886e6966ff9d27332"
+  },
+  "test_run.py": {
+    "bytes": 14369,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-gfx950-clock-parent-cpu-v1/test_run.py",
+    "sha256": "f4f4baf6608bd827775d1275192d65f3cbdacd75e360697e3a0b43a102554f14"
+  }
+}

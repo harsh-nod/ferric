@@ -1,0 +1,19 @@
+{
+  "schema": "ferric-p228-clean-worker-sources-v1",
+  "archives": {
+    "ferric": {
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/clock-recorder-ferric-92470386-v228-v1.tar.gz",
+      "bytes": 20399448,
+      "sha256": "07942e8a9f9f2b3bf9fc2a57cfa49414d7a37dc23d8a849cdde5c57c5994792a",
+      "commit": "924703865d9cfcb1dc791af211b7558ff7c58894",
+      "tree": "66b302c5ee7a71993685df884229514d2196b785"
+    },
+    "fe2o3": {
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/clock-recorder-fe2o3-27b53d2b-v228-v1.tar.gz",
+      "bytes": 13304758,
+      "sha256": "0b46296ffaa6d4990caa03a700f45284b405a234c5be5b8516d0e88282ac59b7",
+      "commit": "27b53d2b74c1f239988a891a4aed39e089b05663",
+      "tree": "3c2fa509b7328c4bf7d8e2ef2aab3a0e0c4a422e"
+    }
+  }
+}
