@@ -1,0 +1,11 @@
+
+running 6 tests
+test device::gfx950::clock_correlation::tests::clock_already_poisoned_refuses_before_ioctl ... ok
+test device::gfx950::clock_correlation::tests::clock_entry_ioctl_and_exit_failure_latch_poison ... ok
+test device::gfx950::clock_correlation::tests::clock_public_sampler_signatures_remain_target_specific ... ok
+test device::gfx950::clock_correlation::tests::clock_repeated_samples_are_fresh_without_counter_order_assumptions ... ok
+test device::gfx950::clock_correlation::tests::clock_raw_values_preserved_under_two_full_checks ... ok
+test device::gfx950::clock_correlation::tests::clock_wrong_gpu_padding_and_zero_frequency_poison ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 894 filtered out; finished in 0.00s
+

@@ -1,0 +1,11 @@
+
+running 6 tests
+test memory_linux::raw_timestamps_tests::raw_signal_preserves_64_bit_ticks_without_conversion ... ok
+test memory_linux::raw_timestamps_tests::raw_signal_initial_arm_clears_both_fields_before_pending ... ok
+test memory_linux::raw_timestamps_tests::raw_signal_rejects_inactive_inaccessible_and_retired_mapping ... ok
+test memory_linux::raw_timestamps_tests::raw_signal_rejects_wrong_extent_and_alignment ... ok
+test memory_linux::raw_timestamps_tests::raw_signal_requires_exact_kind_and_acquired_zero ... ok
+test memory_linux::raw_timestamps_tests::raw_signal_reuse_requires_complete_then_discards_prior_ticks ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 894 filtered out; finished in 0.00s
+

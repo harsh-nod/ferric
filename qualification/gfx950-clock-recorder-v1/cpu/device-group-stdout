@@ -1,0 +1,12 @@
+
+running 7 tests
+test device::gfx950::group_currentness::tests::a_later_publication_fence_cannot_reuse_an_earlier_topology_observation ... ok
+test device::gfx950::group_currentness::tests::changed_topology_or_any_retained_rank_rejects_without_exit_checks ... ok
+test device::gfx950::group_currentness::tests::each_repeated_full_fence_keeps_generation_and_all_mutable_checks ... ok
+test device::gfx950::group_currentness::tests::invalid_or_partial_roster_never_starts_observation ... ok
+test device::gfx950::group_currentness::tests::every_before_discovery_compare_and_after_failure_poison_all_without_later_work ... ok
+test device::gfx950::group_currentness::tests::one_fresh_discovery_is_bracketed_by_all_participants ... ok
+test device::gfx950::group_currentness::tests::topology_change_between_ranks_or_after_discovery_cannot_pass ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 893 filtered out; finished in 0.00s
+

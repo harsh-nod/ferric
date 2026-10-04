@@ -1,0 +1,156 @@
+{
+  "schema": "ferric-p228-gfx950-clock-recorder-cpu-overlay-v1",
+  "source_manifest": {
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/clock-recorder-source-inputs-v228-v1.json",
+    "bytes": 844,
+    "sha256": "055b5b6995f199dd81560734ade5f04f2970534cb3aae62dee47c4f9b149a6ff"
+  },
+  "files": [
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/lib.rs",
+      "source": "p228-gfx950-clock-recorder-source-v2/draft/adapters/tp-peer-finite-engineering-worker-v1/src/lib.rs",
+      "before": {
+        "bytes": 1781,
+        "sha256": "4db76274be0542fc43aa964f52c7341b4f647a97eda26e15aa607e2d42580287"
+      },
+      "after": {
+        "bytes": 1878,
+        "sha256": "fea58b17f8109e89996d0d974bbe8a63fad1b1f7971a8086b16aac79471d9993"
+      }
+    },
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/main.rs",
+      "source": "p228-gfx950-clock-recorder-source-v2/draft/adapters/tp-peer-finite-engineering-worker-v1/src/main.rs",
+      "before": {
+        "bytes": 8596,
+        "sha256": "a15b0eba1b0c6aba8d8d7f6dff1e3140b57d8c7aeb259cb4162f834017610d84"
+      },
+      "after": {
+        "bytes": 9205,
+        "sha256": "28402738fb3970e038ccd9bf456f629e5c537df99161076d58d8554c4dfe6175"
+      }
+    },
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_decode_cli_v1.rs",
+      "source": "p228-gfx950-clock-recorder-source-v2/draft/adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_decode_cli_v1.rs",
+      "before": {
+        "bytes": 18920,
+        "sha256": "eca120f970274a356cf7cff7529d772f0c9bd1f088d2e5a99204e906299b7714"
+      },
+      "after": {
+        "bytes": 21609,
+        "sha256": "79ca73daa35849121194dfcf4a160f0e5174ddf176d3b755f9509c84dcfaea2a"
+      }
+    },
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_decode_clock_cli_tests.rs",
+      "source": "p228-gfx950-clock-recorder-source-v2/draft/adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_decode_clock_cli_tests.rs",
+      "before": null,
+      "after": {
+        "bytes": 3088,
+        "sha256": "a560ba2b22b245a2e530e58380ded18eaa75de02a4406297806168f6eb5eb256"
+      }
+    },
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_decode_device_clock_v2.rs",
+      "source": "p228-gfx950-clock-recorder-source-v2/draft/adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_decode_device_clock_v2.rs",
+      "before": null,
+      "after": {
+        "bytes": 2493,
+        "sha256": "4aec273ed7e63ceae58a73734756b266ee0df848c472d4c4f121424cee66b5ef"
+      }
+    },
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_decode_device_clock_v2_tests.rs",
+      "source": "p228-gfx950-clock-recorder-source-v2/draft/adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_decode_device_clock_v2_tests.rs",
+      "before": null,
+      "after": {
+        "bytes": 2909,
+        "sha256": "8ab94d5effa0db55c1cb40edc5e32c8cff6ec46e424fc710d993d08fae5e36b0"
+      }
+    },
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_device_clock_recorder_v2.rs",
+      "source": "p228-gfx950-clock-recorder-source-v2/draft/adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_device_clock_recorder_v2.rs",
+      "before": null,
+      "after": {
+        "bytes": 9833,
+        "sha256": "9a43fd1fa2d2d6427f13055324e6b74690402174fe787ff66a9784aa0d6613fe"
+      }
+    },
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_device_clock_recorder_v2_tests.rs",
+      "source": "p228-gfx950-clock-recorder-source-v2/draft/adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_device_clock_recorder_v2_tests.rs",
+      "before": null,
+      "after": {
+        "bytes": 7567,
+        "sha256": "c6228c571f8af03bd19e41a6feec103df81a107b2cf8840ed99ed80362234c84"
+      }
+    },
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_device_recorder_v1.rs",
+      "source": "p228-gfx950-clock-recorder-source-v2/draft/adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_device_recorder_v1.rs",
+      "before": {
+        "bytes": 11281,
+        "sha256": "37e345634f5fdc53e01adecdc1f2a213747b3006830b16c0f954f035eba6041b"
+      },
+      "after": {
+        "bytes": 11444,
+        "sha256": "493b84f9360741ef1ebf321edaad11d59312ff56ca4aa3d789809813fbb5b2fa"
+      }
+    },
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_tiles_decode_v6.rs",
+      "source": "p228-gfx950-clock-recorder-source-v2/draft/adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_tiles_decode_v6.rs",
+      "before": {
+        "bytes": 14445,
+        "sha256": "6f0af62dd95ae1fc6b1d37963ad6a304a8b1460dcbce5e4c65ca4865cb3f1a31"
+      },
+      "after": {
+        "bytes": 15386,
+        "sha256": "22caf67d3f8fd6230291bf8123be87a619d989455821c88731e677c2d9d5060a"
+      }
+    },
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/prefix_decode_device_clock_observation_v2.rs",
+      "source": "p228-gfx950-clock-recorder-source-v2/draft/adapters/tp-peer-finite-engineering-worker-v1/src/prefix_decode_device_clock_observation_v2.rs",
+      "before": null,
+      "after": {
+        "bytes": 5686,
+        "sha256": "9971942da081cccb5ceb1193b354ece259cce4f9e113452a0df1546b4156e3a8"
+      }
+    },
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/prefix_decode_device_clock_observation_v2_tests.rs",
+      "source": "p228-gfx950-clock-recorder-source-v2/draft/adapters/tp-peer-finite-engineering-worker-v1/src/prefix_decode_device_clock_observation_v2_tests.rs",
+      "before": null,
+      "after": {
+        "bytes": 6531,
+        "sha256": "8d50e40a209e3921aa7fce590a45fe9e70c71c54688be403ab5179a3c4bb3508"
+      }
+    }
+  ],
+  "added_worker_tests": [
+    "native_prefix_decode_cli_v1::clock_tests::clock_wire_failure_boundary_poisoning_includes_eof_before_any_forward",
+    "native_prefix_decode_cli_v1::clock_tests::clock_wire_failure_boundary_poisoning_includes_post_run_capture_errors",
+    "native_prefix_decode_device_clock_v2::tests::clock_cli_exact_selector_and_legacy_separation",
+    "native_prefix_decode_device_clock_v2::tests::clock_cli_incomplete_bootstrap_creates_no_sidecar_before_open",
+    "native_prefix_decode_device_clock_v2::tests::clock_cli_rejects_malformed_device_deadline_mode_and_path",
+    "native_prefix_device_recorder_v1::clocks::tests::clock_recorder_bad_pair_is_atomic_and_terminalizes_both_recorders",
+    "native_prefix_device_recorder_v1::clocks::tests::clock_recorder_forward_scope_and_incomplete_previous_forward_are_refused",
+    "native_prefix_device_recorder_v1::clocks::tests::clock_recorder_full_synthetic_route_requires_consuming_raw_close",
+    "native_prefix_device_recorder_v1::clocks::tests::clock_recorder_host_offset_refuses_before_origin_and_overflow",
+    "native_prefix_device_recorder_v1::clocks::tests::clock_recorder_missing_samples_refuse_close_without_calling_owner",
+    "native_prefix_device_recorder_v1::clocks::tests::clock_recorder_post_sample_requires_exact_forward_packet_boundary",
+    "native_prefix_device_recorder_v1::clocks::tests::clock_recorder_raw_close_failure_cannot_construct_clock_report",
+    "native_prefix_device_recorder_v1::clocks::tests::clock_recorder_raw_control_error_runs_terminal_callback_after_post_samples",
+    "native_prefix_device_recorder_v1::clocks::tests::clock_recorder_sample_failure_callback_poisoning_forbids_retry",
+    "prefix_decode_device_clock_observation_v2::tests::clock_schema_checks_host_brackets_but_does_not_infer_counter_domains",
+    "prefix_decode_device_clock_observation_v2::tests::clock_schema_refuses_authority_flags_and_invalid_inner_raw_report",
+    "prefix_decode_device_clock_observation_v2::tests::clock_schema_refuses_endpoint_boundary_and_native_identity_drift",
+    "prefix_decode_device_clock_observation_v2::tests::clock_schema_refuses_kfd_identity_and_frequency_changes",
+    "prefix_decode_device_clock_observation_v2::tests::clock_schema_refuses_missing_extra_duplicate_and_reordered_samples",
+    "prefix_decode_device_clock_observation_v2::tests::clock_schema_retains_exact_control_join_and_bounds",
+    "prefix_decode_device_clock_observation_v2::tests::clock_schema_roundtrip_preserves_raw_report_and_sixteen_samples"
+  ]
+}

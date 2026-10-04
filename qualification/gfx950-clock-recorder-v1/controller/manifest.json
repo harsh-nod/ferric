@@ -1,0 +1,29 @@
+{
+  "schema": "ferric-p228-gfx950-clock-recorder-cpu-package-v1",
+  "files": [
+    {
+      "path": "run.py",
+      "bytes": 20890,
+      "sha256": "c496ad5041c4c235953d0057708d1799a6050d9e596d421146c1528cb831adeb"
+    },
+    {
+      "path": "test_run.py",
+      "bytes": 8538,
+      "sha256": "93759bd9c1a048a16d7b9d58b50ffe63debfc0fad96c8972581f8c804fb601d4"
+    },
+    {
+      "path": "overlay.json",
+      "bytes": 8463,
+      "sha256": "ace875d71f089e1b4f4f005f662fabb7953484ae032c3e0ac7660597f53d91f4"
+    },
+    {
+      "path": "README.md",
+      "bytes": 1093,
+      "sha256": "686a70d8622981084c71c8c22c93828633205cb4f29a371cd074894fcc6158a4"
+    }
+  ],
+  "pure_tests": 15,
+  "test_census": {
+    "test_run.py": 15
+  }
+}

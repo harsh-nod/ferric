@@ -1,0 +1,22 @@
+{
+  "README.md": {
+    "bytes": 1093,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-gfx950-clock-recorder-cpu-v1/README.md",
+    "sha256": "686a70d8622981084c71c8c22c93828633205cb4f29a371cd074894fcc6158a4"
+  },
+  "overlay.json": {
+    "bytes": 8463,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-gfx950-clock-recorder-cpu-v1/overlay.json",
+    "sha256": "ace875d71f089e1b4f4f005f662fabb7953484ae032c3e0ac7660597f53d91f4"
+  },
+  "run.py": {
+    "bytes": 20890,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-gfx950-clock-recorder-cpu-v1/run.py",
+    "sha256": "c496ad5041c4c235953d0057708d1799a6050d9e596d421146c1528cb831adeb"
+  },
+  "test_run.py": {
+    "bytes": 8538,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-gfx950-clock-recorder-cpu-v1/test_run.py",
+    "sha256": "93759bd9c1a048a16d7b9d58b50ffe63debfc0fad96c8972581f8c804fb601d4"
+  }
+}

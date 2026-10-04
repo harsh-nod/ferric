@@ -1,0 +1,35 @@
+{
+  "controller_sha256": "7e108806d4ff164e53ddf2959149531ca68fa0ac920ac03473cc3117841a59e3",
+  "elapsed_seconds": 0.02505114790983498,
+  "errors": 0,
+  "failures": 0,
+  "full_model_acceptance": false,
+  "gpu_execution": false,
+  "manifest_sha256": "db325121121fa198e51668fc6c25a111e858edb917fa50ed0dea82fd5f5ddda4",
+  "native_execution": false,
+  "numerical_acceptance": false,
+  "passed": true,
+  "performance_claim": false,
+  "production_authority": false,
+  "schema": "ferric-p228-gfx950-clock-recorder-pure-v1",
+  "skipped": 0,
+  "source_postchecks_passed": true,
+  "source_sha256": "a4404aa5a453c03d8a84c213780880f9b9ed0b2819a6088cc69056af73d82453",
+  "sources_after": {
+    "bytes": 1028,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/gfx950-clock-recorder-pure-v228-v1/sources-after.json",
+    "sha256": "a4404aa5a453c03d8a84c213780880f9b9ed0b2819a6088cc69056af73d82453"
+  },
+  "sources_before": {
+    "bytes": 1028,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/gfx950-clock-recorder-pure-v228-v1/sources-before.json",
+    "sha256": "a4404aa5a453c03d8a84c213780880f9b9ed0b2819a6088cc69056af73d82453"
+  },
+  "synthetic_policy_tests_only": true,
+  "tests": 15,
+  "transcript": {
+    "bytes": 1457,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/gfx950-clock-recorder-pure-v228-v1/tests.log",
+    "sha256": "49b56d98b421624d3a4e3de4baf728f049c265772c87129ea897c1062b8f1882"
+  }
+}

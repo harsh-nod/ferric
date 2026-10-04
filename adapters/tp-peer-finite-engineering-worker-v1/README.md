@@ -61,12 +61,33 @@ retains the fresh `mi350-2` build: 609 Rust tests passed, four existing tests
 were ignored, and 13 controller tests passed. Its source and artifact records
 cover this worker route, not the separate parent qualification or a GPU run.
 
+## Clock Recorder V2
+
+The separate `--engineering-native-prefix-decode-device-clock-v2` selector
+retains the complete V1 raw dispatch report and adds sixteen native clock
+samples: before and after each of four forwards, on both ranks. Each sample
+binds the generation, packet boundary, device identity, queue epoch and a
+monotonic host sampling bracket. GPU, CPU and system counters remain raw;
+the system counter frequency is not treated as the GPU frequency.
+
+The recorder consumes the existing native Close result before publication.
+Sampling, wire, capture and control failures poison both the recorder and
+the real owner, including failures discovered after a forward has committed.
+Existing plain, host-only and raw-device V1 routes remain separate.
+
+The [clock-recorder CPU qualification](../../qualification/gfx950-clock-recorder-v1/README.md)
+passed 669 selected Rust tests with four existing ignores and fifteen
+controller-policy tests on `mi350-2`. This qualifies the worker build and
+synthetic failure boundaries, not a native clock sample. The matching parent
+route, GPU capture and calibration remain separate gates; no duration,
+cross-device alignment, overlap or throughput claim follows from this result.
+
 ## Build Prerequisites
 
 The finite worker uses `../../../fe2o3/crates/fe2o3-kfd`, a sibling checkout
 relative to this repository. Its matching engineering runtime is published at
-[fe2o3 `9a321f3f9`](https://github.com/harsh-nod/fe2o3/commit/9a321f3f98e597a75e8ebeafdda169ec10e12e9e),
-also available in the [mirror](https://github.com/powderluv/fe2o3/commit/9a321f3f98e597a75e8ebeafdda169ec10e12e9e).
+[fe2o3 `27b53d2b7`](https://github.com/harsh-nod/fe2o3/commit/27b53d2b74c1f239988a891a4aed39e089b05663),
+also available in the [mirror](https://github.com/powderluv/fe2o3/commit/27b53d2b74c1f239988a891a4aed39e089b05663).
 An arbitrary fe2o3 checkout, or the parent adapter's pinned fe2o3 Git revision,
 is not an equivalent dependency. The parent dependency graph remains unchanged.
 
@@ -87,7 +108,7 @@ To select the current integration branch and its required runtime:
 
 ```sh
 git clone --branch codex/p228-finite-runtime-integration-v1 https://github.com/harsh-nod/fe2o3.git fe2o3
-git -C fe2o3 checkout --detach 9a321f3f98e597a75e8ebeafdda169ec10e12e9e
+git -C fe2o3 checkout --detach 27b53d2b74c1f239988a891a4aed39e089b05663
 git clone --branch codex/p227-finite-prefix-integration-v1 https://github.com/harsh-nod/ferric.git ferric
 cd ferric
 ```
