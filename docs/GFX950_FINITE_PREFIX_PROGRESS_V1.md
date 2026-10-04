@@ -6,7 +6,17 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Latest: the [projection-residual autoregressive route passed fresh CPU qualification](../qualification/projection-ar4-cpu-v1/README.md)
+Latest: the [AR4 supervisor and independent-reference policy suites passed](../qualification/projection-ar4-supervisor-v1/README.md):
+52 CPU-only policy tests on MI350 and 38 on ASROCK, with unchanged source
+snapshots. The framework result is explicitly retained as a primary-agent SSH
+output observation, distinct from the bounded MI350 wrapper receipt. The tests
+cover own-output recurrence, nonrecovering history comparability, separately
+labeled conditional replay and the existing owned lifecycle. No model or GPU
+kernel was executed by these suites. Native AR4 observation and its independent
+framework comparison remain separate gates; numerical acceptance, the long
+workload and 700 tokens/s remain open.
+
+Previously, the [projection-residual autoregressive route passed fresh CPU qualification](../qualification/projection-ar4-cpu-v1/README.md)
 on ASROCK through `mi350-2`: 1,037 Rust tests passed, with four unchanged worker
 ignores, across all 87 build/test phases. Nine source files add explicit AR4
 support while preserving the teacher-forced format and image bindings. Each

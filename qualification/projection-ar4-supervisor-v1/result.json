@@ -1,0 +1,417 @@
+{
+  "data_only_publication": true,
+  "files": {
+    "framework/README.md": {
+      "bytes": 5476,
+      "original": {
+        "bytes": 5476,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-projection-ar4-framework-v1/README.md",
+        "sha256": "a246371c6c54002fa39b5665c0bafdc70d658a96402621cdeb6d6303d387969f"
+      },
+      "sha256": "a246371c6c54002fa39b5665c0bafdc70d658a96402621cdeb6d6303d387969f"
+    },
+    "framework/launch.py": {
+      "bytes": 20653,
+      "original": {
+        "bytes": 20653,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-projection-ar4-framework-v1/launch.py",
+        "sha256": "2a0d60facae6f27855d6caa40a584e3257f5580c299527e0d367b824e0031304"
+      },
+      "sha256": "2a0d60facae6f27855d6caa40a584e3257f5580c299527e0d367b824e0031304"
+    },
+    "framework/run.py": {
+      "bytes": 30581,
+      "original": {
+        "bytes": 30581,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-projection-ar4-framework-v1/run.py",
+        "sha256": "cba39ec416fe1d1ac5d586a44a9a73099598ff3600c51bd8df47f365983c3d33"
+      },
+      "sha256": "cba39ec416fe1d1ac5d586a44a9a73099598ff3600c51bd8df47f365983c3d33"
+    },
+    "framework/test_launch.py": {
+      "bytes": 12337,
+      "original": {
+        "bytes": 12337,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-projection-ar4-framework-v1/test_launch.py",
+        "sha256": "c83843cb9924b10490b9068963865ea38d817851f5c2a0784e123b1be904fe12"
+      },
+      "sha256": "c83843cb9924b10490b9068963865ea38d817851f5c2a0784e123b1be904fe12"
+    },
+    "framework/test_run.py": {
+      "bytes": 12897,
+      "original": {
+        "bytes": 12897,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-projection-ar4-framework-v1/test_run.py",
+        "sha256": "b04e78325e4fc6bfe40e96a6e3b1ca4eca3c488c1c955c31f395f24977857675"
+      },
+      "sha256": "b04e78325e4fc6bfe40e96a6e3b1ca4eca3c488c1c955c31f395f24977857675"
+    },
+    "supervisor/INTAKE.md": {
+      "bytes": 3134,
+      "original": {
+        "bytes": 3134,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-projection-ar4-decode-gpu-v1/INTAKE.md",
+        "sha256": "1629e362c9760a8d0716afa811415f40bf6ee482eefa565fa926982a2de6e937"
+      },
+      "sha256": "1629e362c9760a8d0716afa811415f40bf6ee482eefa565fa926982a2de6e937"
+    },
+    "supervisor/README.md": {
+      "bytes": 3989,
+      "original": {
+        "bytes": 3989,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-projection-ar4-decode-gpu-v1/README.md",
+        "sha256": "42f03ea1afdeaaa0e96925e3c6488398d2debc69aae38259ca879d020a9d37ea"
+      },
+      "sha256": "42f03ea1afdeaaa0e96925e3c6488398d2debc69aae38259ca879d020a9d37ea"
+    },
+    "supervisor/decode_validation.py": {
+      "bytes": 20422,
+      "original": {
+        "bytes": 20422,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-projection-ar4-decode-gpu-v1/decode_validation.py",
+        "sha256": "0eb96d4ac5e10e7f6ac10b018692c56f969286949681be336cb6040d56f01422"
+      },
+      "sha256": "0eb96d4ac5e10e7f6ac10b018692c56f969286949681be336cb6040d56f01422"
+    },
+    "supervisor/intake.py": {
+      "bytes": 43675,
+      "original": {
+        "bytes": 43675,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-projection-ar4-decode-gpu-v1/intake.py",
+        "sha256": "f3d6e3f803a54c71b9b0d5bc41a83470d636d37185bd7e5f38de437cc886e8d0"
+      },
+      "sha256": "f3d6e3f803a54c71b9b0d5bc41a83470d636d37185bd7e5f38de437cc886e8d0"
+    },
+    "supervisor/layer_validation.py": {
+      "bytes": 16186,
+      "original": {
+        "bytes": 16186,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-projection-ar4-decode-gpu-v1/layer_validation.py",
+        "sha256": "757c077979b7ee02d4c0e7d222e75292cd9d417927f84ae9a8134344f8e217b9"
+      },
+      "sha256": "757c077979b7ee02d4c0e7d222e75292cd9d417927f84ae9a8134344f8e217b9"
+    },
+    "supervisor/manifest.json": {
+      "bytes": 2386,
+      "original": {
+        "bytes": 2386,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-projection-ar4-decode-gpu-v1/manifest.json",
+        "sha256": "7526f2ad568de0759c6f3bae544608f25033c664d779542fb85484a62400d731"
+      },
+      "sha256": "7526f2ad568de0759c6f3bae544608f25033c664d779542fb85484a62400d731"
+    },
+    "supervisor/run.py": {
+      "bytes": 15059,
+      "original": {
+        "bytes": 15059,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-projection-ar4-decode-gpu-v1/run.py",
+        "sha256": "93cfb14674c1b03146ec4261e316a8633fcc6f5df9f345e21193afacdf7bd01f"
+      },
+      "sha256": "93cfb14674c1b03146ec4261e316a8633fcc6f5df9f345e21193afacdf7bd01f"
+    },
+    "supervisor/run_projection_ar4_decode_gpu_pure_p228_v1.py": {
+      "bytes": 7838,
+      "original": {
+        "bytes": 7838,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-projection-ar4-decode-gpu-v1/run_projection_ar4_decode_gpu_pure_p228_v1.py",
+        "sha256": "9b7093c02ed3868dc6af7272f38faec011f852e13e11b9091856e52feac5995f"
+      },
+      "sha256": "9b7093c02ed3868dc6af7272f38faec011f852e13e11b9091856e52feac5995f"
+    },
+    "supervisor/run_row_facts_v2.py": {
+      "bytes": 12424,
+      "original": {
+        "bytes": 12424,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-projection-ar4-decode-gpu-v1/run_row_facts_v2.py",
+        "sha256": "244c12f62c8a439aa01b44380fc464008b94006bc919201c8d510c64177fc820"
+      },
+      "sha256": "244c12f62c8a439aa01b44380fc464008b94006bc919201c8d510c64177fc820"
+    },
+    "supervisor/smoke_validation.py": {
+      "bytes": 14980,
+      "original": {
+        "bytes": 14980,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-projection-ar4-decode-gpu-v1/smoke_validation.py",
+        "sha256": "9bf460451e722452da9c49168c730615d32e9b73b200c579f003e9e45238ea26"
+      },
+      "sha256": "9bf460451e722452da9c49168c730615d32e9b73b200c579f003e9e45238ea26"
+    },
+    "supervisor/stage_core.py": {
+      "bytes": 12074,
+      "original": {
+        "bytes": 12074,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-projection-ar4-decode-gpu-v1/stage_core.py",
+        "sha256": "7e3d64e80e66bacbbba05ac3236189249949bb95ea3f717150822cf45740eec2"
+      },
+      "sha256": "7e3d64e80e66bacbbba05ac3236189249949bb95ea3f717150822cf45740eec2"
+    },
+    "supervisor/test_decode_validation.py": {
+      "bytes": 18459,
+      "original": {
+        "bytes": 18459,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-projection-ar4-decode-gpu-v1/test_decode_validation.py",
+        "sha256": "f36d5a8cc321cb3df26049a5941ffd52e0ebe401213cce9e03cc7fd987c3c253"
+      },
+      "sha256": "f36d5a8cc321cb3df26049a5941ffd52e0ebe401213cce9e03cc7fd987c3c253"
+    },
+    "supervisor/test_intake.py": {
+      "bytes": 16191,
+      "original": {
+        "bytes": 16191,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-projection-ar4-decode-gpu-v1/test_intake.py",
+        "sha256": "b04dd12e4ce4d4213998d1fe112849cfc145be99ace9faf227bf068c13fb8def"
+      },
+      "sha256": "b04dd12e4ce4d4213998d1fe112849cfc145be99ace9faf227bf068c13fb8def"
+    },
+    "supervisor/test_run.py": {
+      "bytes": 13598,
+      "original": {
+        "bytes": 13598,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-projection-ar4-decode-gpu-v1/test_run.py",
+        "sha256": "db051c5f287db7965cdf6791de7c4f9f829f2a6d56e27fa0a2123e3e5df281b1"
+      },
+      "sha256": "db051c5f287db7965cdf6791de7c4f9f829f2a6d56e27fa0a2123e3e5df281b1"
+    },
+    "supervisor/test_silu_admission.py": {
+      "bytes": 7907,
+      "original": {
+        "bytes": 7907,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-projection-ar4-decode-gpu-v1/test_silu_admission.py",
+        "sha256": "224e3d83ab56d62c0fc69b6e0d07e2baaa5423596d6013604a8dd64c499f72be"
+      },
+      "sha256": "224e3d83ab56d62c0fc69b6e0d07e2baaa5423596d6013604a8dd64c499f72be"
+    },
+    "tests/framework/primary-observation.json": {
+      "bytes": 12678,
+      "original": {
+        "bytes": 12678,
+        "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/projection-ar4-framework-pure-root-v228-v1.json",
+        "sha256": "a54dfbfa2bf653a9507cf1a38f3d1ed85ecb7ca111a8ceda486beeed60372f4b"
+      },
+      "sha256": "a54dfbfa2bf653a9507cf1a38f3d1ed85ecb7ca111a8ceda486beeed60372f4b"
+    },
+    "tests/supervisor/complete.json": {
+      "bytes": 12441,
+      "original": {
+        "bytes": 12441,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-ar4-decode-gpu-pure-v228-v1/complete.json",
+        "sha256": "c3409c69be7d17e922d1b46db6ab5106d7cd4771c953494ad75f9e03b16ee331"
+      },
+      "sha256": "c3409c69be7d17e922d1b46db6ab5106d7cd4771c953494ad75f9e03b16ee331"
+    },
+    "tests/supervisor/sources-after.json": {
+      "bytes": 3811,
+      "original": {
+        "bytes": 3811,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-ar4-decode-gpu-pure-v228-v1/sources-after.json",
+        "sha256": "3454b776236c4b5f7036dab09e784b7a834602f9ee171adfa67b6eff0d66faca"
+      },
+      "sha256": "3454b776236c4b5f7036dab09e784b7a834602f9ee171adfa67b6eff0d66faca"
+    },
+    "tests/supervisor/sources-before.json": {
+      "bytes": 3811,
+      "original": {
+        "bytes": 3811,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-ar4-decode-gpu-pure-v228-v1/sources-before.json",
+        "sha256": "3454b776236c4b5f7036dab09e784b7a834602f9ee171adfa67b6eff0d66faca"
+      },
+      "sha256": "3454b776236c4b5f7036dab09e784b7a834602f9ee171adfa67b6eff0d66faca"
+    },
+    "tests/supervisor/tests.log": {
+      "bytes": 8656,
+      "original": {
+        "bytes": 8656,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-ar4-decode-gpu-pure-v228-v1/tests.log",
+        "sha256": "1448e9e23e913e974727b2a44a0f4c5ad4b6518dd424e640c24ffae11c0fb668"
+      },
+      "sha256": "1448e9e23e913e974727b2a44a0f4c5ad4b6518dd424e640c24ffae11c0fb668"
+    },
+    "tools/publish.py": {
+      "bytes": 14484,
+      "original": {
+        "bytes": 14484,
+        "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/p228-projection-ar4-policy-publication-v1/publish.py",
+        "sha256": "bcb7e66df2ceeee7481e41e9f114e10a8c068d66c47eced2a459dab0cfd6d0d7"
+      },
+      "sha256": "bcb7e66df2ceeee7481e41e9f114e10a8c068d66c47eced2a459dab0cfd6d0d7"
+    }
+  },
+  "framework_model_loaded": false,
+  "full_model_acceptance": false,
+  "gpu_execution": false,
+  "limitations": [
+    "Both suites are synthetic CPU policy tests, not hardware or framework numerical observations.",
+    "Framework38 is a primary-agent SSH output observation, not a remote supervisor receipt.",
+    "The publisher does not replay CPU1037 artifacts, runtime audits, model/source dependencies or native admission.",
+    "No AR4 token, tensor, throughput or full-model acceptance result is produced by this checkpoint."
+  ],
+  "local_input_postchecks_passed": true,
+  "native_execution": false,
+  "numerical_acceptance": false,
+  "performance_claim": false,
+  "production_authority": false,
+  "publisher": {
+    "bytes": 14484,
+    "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/p228-projection-ar4-policy-publication-v1/publish.py",
+    "sha256": "bcb7e66df2ceeee7481e41e9f114e10a8c068d66c47eced2a459dab0cfd6d0d7"
+  },
+  "root_readme_not_part_of_authenticated_copies": true,
+  "runtime_audit_executed": false,
+  "schema": "ferric-p228-projection-ar4-policy-publication-v1",
+  "suites": {
+    "independent_framework_policy": {
+      "errors": 0,
+      "evidence_kind": "Primary-agent observation of actual SSH tool output; not a remote supervisor receipt",
+      "failures": 0,
+      "framework_model_loaded": false,
+      "gpu_execution": false,
+      "host": "asrock-1w300-g2-2b",
+      "inventory": {
+        "test_launch.py": [
+          "test_launch.LaunchPolicy.test_all_three_post_audits_attempted_even_after_each_failure",
+          "test_launch.LaunchPolicy.test_approval_wait_timeout_never_creates_review",
+          "test_launch.LaunchPolicy.test_capture_directory_or_cache_symlinks_are_refused",
+          "test_launch.LaunchPolicy.test_changed_diagnostic_pin_and_policy_refusal_propagate",
+          "test_launch.LaunchPolicy.test_exact_package_and_closed_inputs",
+          "test_launch.LaunchPolicy.test_first_pin_read_refuses_wrong_bytes_without_importing_module",
+          "test_launch.LaunchPolicy.test_late_approval_file_does_not_bypass_wait_deadline",
+          "test_launch.LaunchPolicy.test_launch_review_binds_projection_resources_and_false_claims",
+          "test_launch.LaunchPolicy.test_monitor_uses_fresh_reviewed_process_not_historical_pid",
+          "test_launch.LaunchPolicy.test_monitor_wrong_executable_identity_or_process_shape_refused",
+          "test_launch.LaunchPolicy.test_no_monitor_does_not_create_a_monitor_exception",
+          "test_launch.LaunchPolicy.test_original_namespace_and_wrong_host_refused",
+          "test_launch.LaunchPolicy.test_package_cannot_mix_source_directories",
+          "test_launch.LaunchPolicy.test_post_audits_and_single_attempt_are_required_for_success",
+          "test_launch.LaunchPolicy.test_reference_plan_binds_actual_direct_supervisor_and_no_candidate_inputs",
+          "test_launch.LaunchPolicy.test_reference_report_validation_uses_pinned_original_diagnostics",
+          "test_launch.LaunchPolicy.test_reference_support_is_local_and_complete",
+          "test_launch.LaunchPolicy.test_separate_capture_cache_and_output_keep_original_aggregate_categories"
+        ],
+        "test_run.py": [
+          "test_run.PolicyTests.test_bool_and_out_of_range_tokens_refused",
+          "test_run.PolicyTests.test_conditional_comparison_covers_all_native_inputs",
+          "test_run.PolicyTests.test_conditional_does_not_require_own_output_recurrence",
+          "test_run.PolicyTests.test_conditional_pass_cannot_claim_genuine",
+          "test_run.PolicyTests.test_conditional_wrong_actual_input_rejected",
+          "test_run.PolicyTests.test_duplicate_json_and_nonfinite_refused",
+          "test_run.PolicyTests.test_genuine_comparison_skips_all_post_divergence_tensors",
+          "test_run.PolicyTests.test_genuine_uses_own_previous_output",
+          "test_run.PolicyTests.test_last_output_difference_keeps_all_input_histories_comparable",
+          "test_run.PolicyTests.test_missing_tensor_and_nonfresh_cache_refused",
+          "test_run.PolicyTests.test_native_failed_outer_refused_before_any_validator_load",
+          "test_run.PolicyTests.test_native_validator_generation_and_unused_roles_refused",
+          "test_run.PolicyTests.test_plan_closed_namespace_and_sources",
+          "test_run.PolicyTests.test_position_generation_and_census_refused",
+          "test_run.PolicyTests.test_prefix_comparability_never_recovers",
+          "test_run.PolicyTests.test_repeat_hashes_and_own_cache_checked",
+          "test_run.PolicyTests.test_repeated_and_zero_outputs_are_valid",
+          "test_run.PolicyTests.test_review_binds_native_complete_and_false_authority",
+          "test_run.PolicyTests.test_tf_history_not_autoregressive",
+          "test_run.PolicyTests.test_wrong_seed_rejected"
+        ]
+      },
+      "native_execution": false,
+      "observation": {
+        "bytes": 12678,
+        "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/projection-ar4-framework-pure-root-v228-v1.json",
+        "sha256": "a54dfbfa2bf653a9507cf1a38f3d1ed85ecb7ca111a8ceda486beeed60372f4b"
+      },
+      "passed": 38,
+      "remote_supervisor_receipt": false,
+      "skipped": 0,
+      "source_postchecks_observed": true
+    },
+    "native_supervisor_policy": {
+      "controller": {
+        "bytes": 7838,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/run_projection_ar4_decode_gpu_pure_p228_v1.py",
+        "sha256": "9b7093c02ed3868dc6af7272f38faec011f852e13e11b9091856e52feac5995f"
+      },
+      "elapsed_seconds": 1.8061205390840769,
+      "errors": 0,
+      "evidence_kind": "bounded CPU-only pure-test receipt",
+      "failures": 0,
+      "gpu_execution": false,
+      "host": "mi350 (smci350-rck-g03-b19-03)",
+      "inventory": {
+        "test_decode_validation.py": [
+          "test_decode_validation.ValidationTests.test_bootstrap_seed_and_mode_are_bound_into_ar_profile",
+          "test_decode_validation.ValidationTests.test_candidate_identity_extent_base_profile_and_original_copy_are_joined",
+          "test_decode_validation.ValidationTests.test_chain_close_and_actual_reap_flags_cannot_be_faked",
+          "test_decode_validation.ValidationTests.test_claims_retries_and_final_private_accounting_refuse",
+          "test_decode_validation.ValidationTests.test_closed_teacher_forced_transcript_cannot_be_admitted_as_ar",
+          "test_decode_validation.ValidationTests.test_complete_ar4_binds_all_payloads_controls_and_new_profile",
+          "test_decode_validation.ValidationTests.test_complete_body_roster_and_every_hashed_extent_remain_closed",
+          "test_decode_validation.ValidationTests.test_duplicate_json_keys_and_boolean_counter_are_not_scalar_authority",
+          "test_decode_validation.ValidationTests.test_every_actual_input_generation_page_and_profile_is_checked",
+          "test_decode_validation.ValidationTests.test_every_predecessor_must_be_own_checked_output_not_tf_prompt",
+          "test_decode_validation.ValidationTests.test_exact_outer_request_schema_ar_only_and_closed_fields",
+          "test_decode_validation.ValidationTests.test_extra_image_is_charged_to_original_combined_input_budget",
+          "test_decode_validation.ValidationTests.test_last_layer_last_rank_terminal_state_is_still_checked",
+          "test_decode_validation.ValidationTests.test_nonfinite_payload_and_wrong_lowest_argmax_are_refused",
+          "test_decode_validation.ValidationTests.test_stderr_requires_one_worker_marker_and_all_four_terminal_lines",
+          "test_decode_validation.ValidationTests.test_wrong_seed_refuses_even_with_self_consistent_hashes_and_chain",
+          "test_decode_validation.ValidationTests.test_zero_and_repeated_outputs_are_valid_recurrent_inputs"
+        ],
+        "test_intake.py": [
+          "test_intake.IntakeTests.test_ar4_cpu_lineage_has_cpu1022_between_new_runtime_and_cpu988_layer",
+          "test_intake.IntakeTests.test_ar4_cpu_requires_complete_1037_named_census_not_only_positive_total",
+          "test_intake.IntakeTests.test_ar_admission_keeps_authentic_tf_input_provenance_but_not_its_recurrence",
+          "test_intake.IntakeTests.test_cpu_name_summary_and_phase_mutations_refuse",
+          "test_intake.IntakeTests.test_nested_ar4_preserves_original_copy_v7_and_selects_silu_with_all_input_reads",
+          "test_intake.IntakeTests.test_new_flat_cpu_accounting_and_both_roles",
+          "test_intake.IntakeTests.test_old_tf_cpu_receipt_cannot_admit_ar4_even_with_new_artifact_fixtures",
+          "test_intake.IntakeTests.test_pending_actual_cpu_and_package_inputs_fail_closed",
+          "test_intake.IntakeTests.test_plan_is_separate_closed_ar4_namespace",
+          "test_intake.IntakeTests.test_prior_capture_bindings_do_not_relabel_old_tf4_as_new_capture",
+          "test_intake.IntakeTests.test_request_cannot_enable_tf_clocks_host_policy_or_old_schema",
+          "test_intake.IntakeTests.test_request_refuses_workload_image_session_and_bound_changes",
+          "test_intake.IntakeTests.test_root_review_binds_new_cpu_and_input_without_numerical_authority",
+          "test_intake.IntakeTests.test_selected_artifact_requires_exact_new_source_target_and_profile",
+          "test_intake.IntakeTests.test_transport_cannot_substitute_other_executable_identity",
+          "test_intake.IntakeTests.test_unqualified_image_or_inspection_refuses_before_read"
+        ],
+        "test_run.py": [
+          "test_run.RunTests.test_closed_fourteen_file_roster_refuses_missing_extra_and_symlink",
+          "test_run.RunTests.test_failed_or_forced_owner_never_qualifies",
+          "test_run.RunTests.test_failed_post_audit_does_not_skip_later_checks",
+          "test_run.RunTests.test_failed_pre_audit_prevents_native_and_keeps_all_post_audits",
+          "test_run.RunTests.test_failure_retention_allows_only_partial_known_files",
+          "test_run.RunTests.test_final_input_drift_withholds_complete",
+          "test_run.RunTests.test_inventory_propagates_walk_error_refuses_aliases_and_caps",
+          "test_run.RunTests.test_lineage_checks_actual_child_identity_when_observed",
+          "test_run.RunTests.test_one_attempt_six_audits_exact_cli_and_closed_retention",
+          "test_run.RunTests.test_original_leaf_resources_and_case_bounds_are_unchanged",
+          "test_run.RunTests.test_owner_parser_marker_summary_and_missing_capture_keep_evidence_without_retry"
+        ],
+        "test_silu_admission.py": [
+          "test_silu_admission.SiLUAdmissionTests.test_actual_cpu38_owner_lowering_and_image_must_all_match_layer",
+          "test_silu_admission.SiLUAdmissionTests.test_layer_comparison_accepts_diagnostic_mismatches_without_fitted_bound",
+          "test_silu_admission.SiLUAdmissionTests.test_layer_comparison_rejects_wrong_capture_image_and_unchecked_residual",
+          "test_silu_admission.SiLUAdmissionTests.test_old_down2_cannot_be_reselected_under_new_si_lu_plan",
+          "test_silu_admission.SiLUAdmissionTests.test_private_dependency_aliases_restore_absent_none_and_object_on_all_exits",
+          "test_silu_admission.SiLUAdmissionTests.test_reference_or_gpu_success_does_not_mint_numerical_or_performance_authority",
+          "test_silu_admission.SiLUAdmissionTests.test_silu_only_replaces_selected_tiles_image_not_original_bootstrap_mlp",
+          "test_silu_admission.SiLUAdmissionTests.test_uncompleted_or_wrong_layer_refuses_before_replaying_old_evidence"
+        ]
+      },
+      "native_execution": false,
+      "package": {
+        "bytes": 2386,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-projection-ar4-decode-gpu-v1/manifest.json",
+        "sha256": "7526f2ad568de0759c6f3bae544608f25033c664d779542fb85484a62400d731"
+      },
+      "passed": 52,
+      "receipt": {
+        "bytes": 12441,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-ar4-decode-gpu-pure-v228-v1/complete.json",
+        "sha256": "c3409c69be7d17e922d1b46db6ab5106d7cd4771c953494ad75f9e03b16ee331"
+      },
+      "skipped": 0,
+      "source_postchecks_observed": true
+    }
+  },
+  "sustained_2048_256": false,
+  "tested_modules_imported": false,
+  "tests_rerun": false
+}

@@ -1,0 +1,82 @@
+{
+  "schema": "ferric-p228-projection-ar4-decode-gpu-package-v1",
+  "pure_tests": 52,
+  "test_census": {
+    "test_run.py": 11,
+    "test_decode_validation.py": 17,
+    "test_intake.py": 16,
+    "test_silu_admission.py": 8
+  },
+  "files": [
+    {
+      "path": "INTAKE.md",
+      "bytes": 3134,
+      "sha256": "1629e362c9760a8d0716afa811415f40bf6ee482eefa565fa926982a2de6e937"
+    },
+    {
+      "path": "README.md",
+      "bytes": 3989,
+      "sha256": "42f03ea1afdeaaa0e96925e3c6488398d2debc69aae38259ca879d020a9d37ea"
+    },
+    {
+      "path": "decode_validation.py",
+      "bytes": 20422,
+      "sha256": "0eb96d4ac5e10e7f6ac10b018692c56f969286949681be336cb6040d56f01422"
+    },
+    {
+      "path": "intake.py",
+      "bytes": 43675,
+      "sha256": "f3d6e3f803a54c71b9b0d5bc41a83470d636d37185bd7e5f38de437cc886e8d0"
+    },
+    {
+      "path": "layer_validation.py",
+      "bytes": 16186,
+      "sha256": "757c077979b7ee02d4c0e7d222e75292cd9d417927f84ae9a8134344f8e217b9"
+    },
+    {
+      "path": "run.py",
+      "bytes": 15059,
+      "sha256": "93cfb14674c1b03146ec4261e316a8633fcc6f5df9f345e21193afacdf7bd01f"
+    },
+    {
+      "path": "run_projection_ar4_decode_gpu_pure_p228_v1.py",
+      "bytes": 7838,
+      "sha256": "9b7093c02ed3868dc6af7272f38faec011f852e13e11b9091856e52feac5995f"
+    },
+    {
+      "path": "run_row_facts_v2.py",
+      "bytes": 12424,
+      "sha256": "244c12f62c8a439aa01b44380fc464008b94006bc919201c8d510c64177fc820"
+    },
+    {
+      "path": "smoke_validation.py",
+      "bytes": 14980,
+      "sha256": "9bf460451e722452da9c49168c730615d32e9b73b200c579f003e9e45238ea26"
+    },
+    {
+      "path": "stage_core.py",
+      "bytes": 12074,
+      "sha256": "7e3d64e80e66bacbbba05ac3236189249949bb95ea3f717150822cf45740eec2"
+    },
+    {
+      "path": "test_decode_validation.py",
+      "bytes": 18459,
+      "sha256": "f36d5a8cc321cb3df26049a5941ffd52e0ebe401213cce9e03cc7fd987c3c253"
+    },
+    {
+      "path": "test_intake.py",
+      "bytes": 16191,
+      "sha256": "b04dd12e4ce4d4213998d1fe112849cfc145be99ace9faf227bf068c13fb8def"
+    },
+    {
+      "path": "test_run.py",
+      "bytes": 13598,
+      "sha256": "db051c5f287db7965cdf6791de7c4f9f829f2a6d56e27fa0a2123e3e5df281b1"
+    },
+    {
+      "path": "test_silu_admission.py",
+      "bytes": 7907,
+      "sha256": "224e3d83ab56d62c0fc69b6e0d07e2baaa5423596d6013604a8dd64c499f72be"
+    }
+  ]
+}
