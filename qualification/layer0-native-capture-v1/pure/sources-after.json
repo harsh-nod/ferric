@@ -1,0 +1,52 @@
+{
+  "INTAKE.md": {
+    "bytes": 4506,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-layer0-native-capture-gpu-v1/INTAKE.md",
+    "sha256": "63e390c50f417ca91789d8e1cfa139e5d09283e4930fb4a1a5a11747d21194a5"
+  },
+  "README.md": {
+    "bytes": 6086,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-layer0-native-capture-gpu-v1/README.md",
+    "sha256": "244988a9f0f404767f810eb3d15edd0b72256b4734ba035afebf3bcdd3227e77"
+  },
+  "capture_validation.py": {
+    "bytes": 6376,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-layer0-native-capture-gpu-v1/capture_validation.py",
+    "sha256": "7179179933a826223a87341950f62b196f9bb643fa2238ba25c0ee04b00a9ac7"
+  },
+  "intake.py": {
+    "bytes": 28181,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-layer0-native-capture-gpu-v1/intake.py",
+    "sha256": "36ce14cfd808be3d04229104e4dc55e31bb39a434f0fab060d412b53557ef894"
+  },
+  "layer_validation.py": {
+    "bytes": 16186,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-layer0-native-capture-gpu-v1/layer_validation.py",
+    "sha256": "757c077979b7ee02d4c0e7d222e75292cd9d417927f84ae9a8134344f8e217b9"
+  },
+  "run.py": {
+    "bytes": 14467,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-layer0-native-capture-gpu-v1/run.py",
+    "sha256": "3ba662f337f2456741805bf19930acbe267e0e589b4dcbb9a0d87f81aa5173c2"
+  },
+  "run_row_facts_v2.py": {
+    "bytes": 12424,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-layer0-native-capture-gpu-v1/run_row_facts_v2.py",
+    "sha256": "244c12f62c8a439aa01b44380fc464008b94006bc919201c8d510c64177fc820"
+  },
+  "test_capture_validation.py": {
+    "bytes": 12523,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-layer0-native-capture-gpu-v1/test_capture_validation.py",
+    "sha256": "037b89164c1c0df3e6c542ad12fd5f1186ec99413bbb14ae2af0516058754353"
+  },
+  "test_intake.py": {
+    "bytes": 15788,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-layer0-native-capture-gpu-v1/test_intake.py",
+    "sha256": "ce4adc46dd2a989dc8ef875ec6386b530b9c254fbe0b1097ffb3bc4474fbf092"
+  },
+  "test_run.py": {
+    "bytes": 13060,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-layer0-native-capture-gpu-v1/test_run.py",
+    "sha256": "d726546fa4f248111d6d0a199319b2fef543d0031b32c86ac60ceb4e19d0e2f6"
+  }
+}

@@ -1,0 +1,59 @@
+{
+  "authority": "none",
+  "binary": {
+    "bytes": 13480088,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/layer0-native-capture-runtime-v228-v1/ferric-qwen3-finite-prefix-layer-capture-engineering",
+    "sha256": "e7fb0571cfb8114ef86987525a6b882c4fdc84329022db5eabfdb131f3e3e12d"
+  },
+  "boot_id": "2dbbbc5a-d8b7-46ac-bd1f-236e5847e24a",
+  "gpu_execution": false,
+  "host": "smci350-rck-g03-b19-03",
+  "ldd": {
+    "bytes": 779,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/layer0-native-capture-runtime-parent-v228-v1/ldd/audit.json",
+    "sha256": "2c86f9818ff8db289bd1c8a65b277a563a444c7efc08d08b76f414b4d6097781"
+  },
+  "libraries": [
+    {
+      "path": "/lib/x86_64-linux-gnu/libgcc_s.so.1",
+      "resolved": {
+        "bytes": 183024,
+        "path": "/usr/lib/x86_64-linux-gnu/libgcc_s.so.1",
+        "sha256": "d93224d2b0dab4247598be683adca02f5cf00586f99c187579cd7e92058fb7cb"
+      }
+    },
+    {
+      "path": "/lib/x86_64-linux-gnu/libm.so.6",
+      "resolved": {
+        "bytes": 952616,
+        "path": "/usr/lib/x86_64-linux-gnu/libm.so.6",
+        "sha256": "1b87a1a50b496cfead2b0ad134c2ff536705c82608db240c7e8aa48d6c0e4217"
+      }
+    },
+    {
+      "path": "/lib/x86_64-linux-gnu/libc.so.6",
+      "resolved": {
+        "bytes": 2125328,
+        "path": "/usr/lib/x86_64-linux-gnu/libc.so.6",
+        "sha256": "d8db8739a1633c972cec6a4fe0566bdcec6fd088f98723492ab0361f66238f75"
+      }
+    },
+    {
+      "path": "/lib64/ld-linux-x86-64.so.2",
+      "resolved": {
+        "bytes": 236616,
+        "path": "/usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2",
+        "sha256": "1cd555ac46b7887edeaf3c42aac5408c8135e52f6b37870da2cf82d5fe14e829"
+      }
+    }
+  ],
+  "notes": "Root reviewed the actual retained readelf/ldd streams and their independently owned, naturally successful and reaped executions. The selected CPU-qualified ELF is preserved after transport; all system dependencies resolve without RPATH, RUNPATH or audit stderr. The parent resolves libgcc_s, libm, libc and the loader; the unchanged worker omits libm. These bytes bind the current MI350 host, boot and ordered devices. This is a compatibility review only, not execution of the selected ELF, discharge of runtime proof premises, numerical acceptance or production admission. GPU admission must recheck all libraries and perform fresh topology/process audits.",
+  "production_authority": false,
+  "readelf": {
+    "bytes": 802,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/layer0-native-capture-runtime-parent-v228-v1/readelf/audit.json",
+    "sha256": "300168a9d430d215c65dce52c25a4f21dff688090e0aaea7158d3026cf517742"
+  },
+  "reviewed": true,
+  "schema": "ferric-p227-prefix-parity-runtime-review-v1"
+}

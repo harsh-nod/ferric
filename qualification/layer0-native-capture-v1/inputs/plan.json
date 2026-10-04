@@ -1,0 +1,59 @@
+{
+  "baseline": {
+    "bytes": 963187,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-down2-clock-tf4-shared-full-currentness-gpu-v228-v1/complete.json",
+    "sha256": "00e1af86b1a61894797dc1eeb3202a113d62bd3d11c8069ba6299d63f8875073"
+  },
+  "capture_review": {
+    "bytes": 52045,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-layer0-native-capture-inputs-v228-v1/capture-review.json",
+    "sha256": "a2f080af6091c3c73cbe0d21b82e0948af15298c0574e6a4cbc081082e8dd788"
+  },
+  "output_label": "prefix-layer0-native-capture-gpu-v228-v1",
+  "parent": {
+    "bytes": 13480088,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/layer0-native-capture-runtime-v228-v1/ferric-qwen3-finite-prefix-layer-capture-engineering",
+    "sha256": "e7fb0571cfb8114ef86987525a6b882c4fdc84329022db5eabfdb131f3e3e12d"
+  },
+  "parent_cpu": {
+    "bytes": 326552,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/layer0-native-capture-cpu-v228-v2/complete.json",
+    "sha256": "78c12f822e95d50a1239f56411c5b8da9411a3fbda7510fbbf38d5644e1dffbb"
+  },
+  "parent_runtime_review": {
+    "bytes": 2821,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-layer0-native-capture-inputs-v228-v1/parent-runtime-review.json",
+    "sha256": "fd4cad07fe58851c9923001830836fda44d7160dff53e331d08c5ed3bfaa9c2d"
+  },
+  "request": {
+    "bytes": 7012,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-layer0-native-capture-inputs-v228-v1/request.json",
+    "sha256": "460373998cfee146ad97e47d00ed9bc55f8a6ca66f73a615cad5ae9d9c8aaac1"
+  },
+  "schema": "ferric-p228-layer0-native-capture-inputs-v1",
+  "supervisor_test_sources": {
+    "bytes": 2666,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/layer0-native-capture-gpu-pure-v228-v1/sources-before.json",
+    "sha256": "421f5423c2ccf5782cf8ef5ca17f285d79c5bbf1328fc566a9be5cb8d05e89e2"
+  },
+  "supervisor_tests": {
+    "bytes": 9459,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/layer0-native-capture-gpu-pure-v228-v1/complete.json",
+    "sha256": "68f435d7448c897e8e4b72a2ebeeab1646145bced4188e3b75fbcaa8c82c2cae"
+  },
+  "worker": {
+    "bytes": 5018856,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/device-clock-runtime-v228-v1/ferric-tp-peer-finite-engineering-worker-v1",
+    "sha256": "d2af909e7fef88af5b20f4ae8f2a5779a7aee93a187169e97a939bec7d3a0fed"
+  },
+  "worker_cpu": {
+    "bytes": 213924,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/gfx950-clock-recorder-cpu-v228-v1/complete.json",
+    "sha256": "41ddcf8a9cb48b970d4f9a4187de6f6de1fd0506ba098d524e82d17335030f1d"
+  },
+  "worker_runtime_review": {
+    "bytes": 2547,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-layer0-native-capture-inputs-v228-v1/worker-runtime-review.json",
+    "sha256": "58b9a6010650618a4c26128c9bd3c762f8a28014240e6da27de0422b363fe2ad"
+  }
+}

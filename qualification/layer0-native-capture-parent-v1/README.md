@@ -22,7 +22,7 @@ artifact postchecks passed. GPU visibility was disabled for this CPU run.
 | Default-feature check | Passed |
 | Separate CPU-controller policy tests | 20 passed |
 | Source formatting and format check | Passed |
-| New native intermediate GPU capture | Not yet executed |
+| New native intermediate GPU capture | [Passed in a separate MI350 run](../layer0-native-capture-v1/README.md) |
 
 The seven-file patch changes only the parent. The worker and kernel images
 were not rebuilt or modified. The parent still compiles against its locked
@@ -51,9 +51,10 @@ framework at 1,834 of 4,096 BF16 words, with maximum absolute difference
 a discrepancy, not its cause. The standalone prefix fixture uses another token,
 and the historical internal capture uses older images.
 
-The next GPU experiment must capture the current images with the matching
-input, join its final hidden values to the current native output, and compare
-the observed intermediates against the independent framework. A rank-local
+The [subsequent GPU experiment](../layer0-native-capture-v1/README.md) captured
+the current images with matching input and joined its final hidden values
+exactly to the current native output. Comparing the observed intermediates
+against the independent framework remains next. A rank-local
 FP32 partial is not a full BF16 projection. No tolerance is fitted to the
 observed error, and capturing intermediate values is not numerical acceptance.
 
