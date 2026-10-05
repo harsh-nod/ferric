@@ -1,0 +1,36 @@
+{
+  "schema": "ferric-p228-projection-ar4-host-observation-root-notes-v1",
+  "configuration": {
+    "schema": "ferric-p228-projection-ar4-host-observation-assembly-inputs-v1",
+    "input_label": "prefix-projection-ar4-host-observation-inputs-v228-v1",
+    "output_label": "prefix-projection-ar4-host-observation-gpu-v228-v1",
+    "session": "55cf8e623fe58a2f7f0dd8eee978a58cc547f812f40cc6b3e4a536407ed5497a",
+    "supervisor_tests": {
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-ar4-host-observation-gpu-pure-v228-v1/complete.json",
+      "bytes": 20829,
+      "sha256": "14852452f3a5111a1982575090ce4a3c96c4d6b1cfddda0539f64c317bbd8a80"
+    },
+    "parent_runtime_review": {
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-host-runtime-parent-review-v228-v1.json",
+      "bytes": 2849,
+      "sha256": "0e54997a596a313fcdcd6f3af8180fadaa514b01500fbfc0470802d910736419"
+    },
+    "worker_runtime_review": {
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-host-runtime-worker-review-v228-v1.json",
+      "bytes": 2573,
+      "sha256": "76e54a6b96c7fe21dac36cdd0cd511c1dafe7e3e781477d244862d76c9a7656a"
+    }
+  },
+  "reviewed": true,
+  "authority": "none",
+  "gpu_attempts": 1,
+  "review_topics": {
+    "source_lineage": "Root reviewed actual CPU7d8c qualification:855 scoped Rust tests, four historical ignores,61 natural phases and17 exact integrated source bodies. The opt-in observer changes no compiler, kernel or runtime safety policy. Select only parent1fad2d8a and worker14135b08 with new same-host ELF audits, preserving the29fd prefix, b0d SiLU,2533 projection and all original Begin images. Request changes only worker, session and evidence directory.",
+    "formal": "The preserved checked producer/indexed-consumer RoPE emission, SiLU and projection evidence are unchanged. This route adds host observations and supplies no new arithmetic proof, HSACO or checked-lowering result. The eight retained runtime requirements and full-model numerical acceptance remain unresolved; neither the passing CPU suite nor engineering observation grants production admission.",
+    "isa": "The exact54344-byte prefix29fd58e7 remains gfx950:xnack-, code objectv6,120 explicit argument bytes, kernarg376/alignment8, Wave64,LDS512,private0,no dynamic stack. Existing ABI gates remain enabled. Retain SGPR106 with16 scalar spills and VGPR132 with0 vector spills as metadata, not performance or occupancy evidence. SiLU and projection object identities are unchanged.",
+    "coherence": "Use the same model, prompt, page/control inputs and exactTP2 devices. The native validator must check152 tensor slices,576 terminal states, own-output recurrence, Control/transcript/payload identities and healthy Close5. Then bind the separate observer sidecar to actual parent, worker, bootstrap, profile, completions and summary bytes. Counters are inclusive nested host scopes, not additive GPU times; no clock/overlap or numerical claim is made.",
+    "lifecycle": "One native attempt, no automatic native retry, unchanged dispatch10000ms and child3600000ms limits, owned process groups, EOF/reap and six pre/post idle/topology/process audits. The frozen supervisor91 policy tests, selector14 tests and assembler8 tests passed with unchanged source hashes. Retain failures and audit records. Require exact native14-file roster plus bounded sibling sidecar, wrapper and combined8MiB evidence checks.",
+    "selected_device": "Run on smci350-rck-g03-b19-03 using exact integer device IDs16366993098680759275 and10838076764495710945. Root reviewed fresh parent and worker runtime closures under boot2dbbbc5a-d8b7-46ac-bd1f-236e5847e24a, with natural exit-zero audit results and no missing dependency. Revalidate the actual host, boot, libraries and topology at admission. Preserve MI350 exact-empty process policy, without ASROCK's monitor exception."
+  },
+  "notes": "Primary root authorizes only this bounded host-observation engineering run after reviewing actual source, CPU, pure-policy and fresh runtime-audit evidence. The four forwards start from seed9112 and feed their own outputs; a2048-token prompt file is not a2048-token prefill. Output parity with historical tokens is not forced. Full currentness remains enabled. No new GPU timing, speedup, numerical/full-model acceptance, sustained2048/256 result or700tokens/s claim follows."
+}

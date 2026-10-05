@@ -1,0 +1,59 @@
+{
+  "schema": "ferric-p227-prefix-parity-runtime-review-v1",
+  "reviewed": true,
+  "authority": "none",
+  "binary": {
+    "bytes": 13938936,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-ar4-host-observation-cpu-v228-v1/target/parent/debug/ferric-qwen3-finite-projection-residual-decode-host-engineering",
+    "sha256": "1fad2d8aafe9ce4e799322d42d1015756ead228bf2f237c302ee260fecb656fd"
+  },
+  "host": "smci350-rck-g03-b19-03",
+  "boot_id": "2dbbbc5a-d8b7-46ac-bd1f-236e5847e24a",
+  "readelf": {
+    "bytes": 859,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-ar4-host-observation-runtime-parent-v228-v1/readelf/audit.json",
+    "sha256": "2e26a46bd6b4bc6a0c44e7b88decc6cacacdba77b0ab1af07988a7c2435cba82"
+  },
+  "ldd": {
+    "bytes": 836,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-ar4-host-observation-runtime-parent-v228-v1/ldd/audit.json",
+    "sha256": "4f699bedbff2cd6351ff269a984f49359c170793fc85b06e3d2b1a8eb55f846c"
+  },
+  "libraries": [
+    {
+      "path": "/lib/x86_64-linux-gnu/libgcc_s.so.1",
+      "resolved": {
+        "bytes": 183024,
+        "path": "/usr/lib/x86_64-linux-gnu/libgcc_s.so.1",
+        "sha256": "d93224d2b0dab4247598be683adca02f5cf00586f99c187579cd7e92058fb7cb"
+      }
+    },
+    {
+      "path": "/lib/x86_64-linux-gnu/libm.so.6",
+      "resolved": {
+        "bytes": 952616,
+        "path": "/usr/lib/x86_64-linux-gnu/libm.so.6",
+        "sha256": "1b87a1a50b496cfead2b0ad134c2ff536705c82608db240c7e8aa48d6c0e4217"
+      }
+    },
+    {
+      "path": "/lib/x86_64-linux-gnu/libc.so.6",
+      "resolved": {
+        "bytes": 2125328,
+        "path": "/usr/lib/x86_64-linux-gnu/libc.so.6",
+        "sha256": "d8db8739a1633c972cec6a4fe0566bdcec6fd088f98723492ab0361f66238f75"
+      }
+    },
+    {
+      "path": "/lib64/ld-linux-x86-64.so.2",
+      "resolved": {
+        "bytes": 236616,
+        "path": "/usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2",
+        "sha256": "1cd555ac46b7887edeaf3c42aac5408c8135e52f6b37870da2cf82d5fe14e829"
+      }
+    }
+  ],
+  "notes": "Root reviewed the actual scoped855-qualified parent ELF, fresh MI350 readelf and ldd output, all natural exit-zero/reaped audit outcomes, and resolved shared-library hashes. The 4-library closure contains no missing dependency or RPATH/RUNPATH override. This review selects only the new host-observation executable at its recorded original path, not the prior CPU1037 ELF or its review. Full currentness, topology/library identity, bounded lifecycle and subsequent GPU audits remain required. This is a compatibility review for one engineering observation, not production admission, numerical acceptance or a performance result.",
+  "production_authority": false,
+  "gpu_execution": false
+}

@@ -1,0 +1,63 @@
+{
+  "schema": "ferric-primary-ssh-policy-test-observation-v1",
+  "host": "mi350",
+  "scope": "Eight synthetic observer input-assembly tests; no actual intake, audit or GPU execution.",
+  "command": "ssh.exe -o BatchMode=yes -o ConnectTimeout=20 -o HostName=smci350-rck-g03-b19-03.rck.dcgpu -o UserKnownHostsFile=//wsl.localhost/Ubuntu/home/harsh/.ssh/known_hosts mi350 \"timeout --signal=TERM --kill-after=5s 150s env -u PYTHONPATH -u PYTHONHOME -u PYTHONOPTIMIZE HIP_VISIBLE_DEVICES= ROCR_VISIBLE_DEVICES= CUDA_VISIBLE_DEVICES= taskset -c 8,9 nice -n 10 /usr/bin/prlimit --as=2147483648 --cpu=120 --fsize=67108864 --core=0 -- /usr/bin/python3 -B /home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-projection-ar4-host-observation-inputs-v1/test_prepare.py\"",
+  "pre_hash": {
+    "command": "ssh.exe -o BatchMode=yes -o ConnectTimeout=20 -o HostName=smci350-rck-g03-b19-03.rck.dcgpu -o UserKnownHostsFile=//wsl.localhost/Ubuntu/home/harsh/.ssh/known_hosts mi350 \"sha256sum /home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-projection-ar4-host-observation-inputs-v1/*\"",
+    "initial": {
+      "chunk_id": "684990",
+      "wall_time_seconds": 1.001347704,
+      "session_id": 2249,
+      "original_token_count": 413,
+      "output": "\r\n $$$$$$\\  $$$$$$\\  $$$$$$\\       $$$$$$\\  $$\\   $$\\ $$$$$$$$\\ $$\\   $$\\\r\n$$  __$$\\ \\_$$  _|$$  __$$\\     $$  __$$\\ $$ |  $$ |\\__$$  __|$$ |  $$ |\r\n$$ /  $$ |  $$ |  $$ /  \\__|$$\\ $$ /  $$ |$$ |  $$ |   $$ |   $$ |  $$ |\r\n$$$$$$$$ |  $$ |  $$ |$$$$\\ \\__|$$$$$$$$ |$$ |  $$ |   $$ |   $$$$$$$$ |\r\n$$  __$$ |  $$ |  $$ |\\_$$ |    $$  __$$ |$$ |  $$ |   $$ |   $$  __$$ |\r\n$$ |  $$ |  $$ |  $$ |  $$ |$$\\ $$ |  $$ |$$ |  $$ |   $$ |   $$ |  $$ |\r\n$$ |  $$ |$$$$$$\\ \\$$$$$$  |\\__|$$ |  $$ |\\$$$$$$  |   $$ |   $$ |  $$ |\r\n\\__|  \\__|\\______| \\______/     \\__|  \\__| \\______/    \\__|   \\__|  \\__|\r\n\r\n is protected by Conductor SUT Authentication - 20260511.01-gee7e625.\r\n\r\nReminder: An SSH key is required to access this system. \r\nTo manage your Conductor SSH keys please visit https://conductor.amd.com/user/dashboard/key-management\r\n\r\nYou will be denied access to this system if:\r\n  \u2022 You did not provide a valid SSH key\r\n  \u2022 You do not have an active reservation in Conductor\r\n  \u2022 You are not in the required security groups (ex: mi300_doc.4erminus)\r\n\r\n____________   _______________________________________^__\r\n ___   ___ |||  ___   ___   ___    ___ ___  |   __  ,----\\\r\n|   | |   |||| |   | |   | |   |  |   |   | |  |  | |_____\\\r\n|___| |___|||| |___| |___| |___|  | O | O | |  |  |        \\\r\n           |||                    |___|___| |  |__|         )\r\n___________|||______________________________|______________/\r\n           |||                                        /--------\r\n-----------'''---------------------------------------'\r\n\r\nFor other help resources please visit https://conductor.amd.com/docs\r\n\r\nChecking authorization now...\r\n"
+    },
+    "terminal": {
+      "chunk_id": "a8abca",
+      "wall_time_seconds": 0.000023514,
+      "exit_code": 0,
+      "original_token_count": 150,
+      "output": "35774e0908b9dd311593488620bcc770d935a31d3733ed5aada3b6072a7dde66  /home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-projection-ar4-host-observation-inputs-v1/prepare.py\n346f613d824d3e5074e05f20762cb9d2fa1c5f821604978b88d408d3c8dba5a2  /home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-projection-ar4-host-observation-inputs-v1/README.md\n97cf6e4721d0e2c7404ebebddad122314a09401707c5142ce71e045e0395b022  /home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-projection-ar4-host-observation-inputs-v1/test_prepare.py\n"
+    }
+  },
+  "test": {
+    "initial": {
+      "chunk_id": "0568d7",
+      "wall_time_seconds": 1.000582467,
+      "session_id": 7851,
+      "original_token_count": 413,
+      "output": "\r\n $$$$$$\\  $$$$$$\\  $$$$$$\\       $$$$$$\\  $$\\   $$\\ $$$$$$$$\\ $$\\   $$\\\r\n$$  __$$\\ \\_$$  _|$$  __$$\\     $$  __$$\\ $$ |  $$ |\\__$$  __|$$ |  $$ |\r\n$$ /  $$ |  $$ |  $$ /  \\__|$$\\ $$ /  $$ |$$ |  $$ |   $$ |   $$ |  $$ |\r\n$$$$$$$$ |  $$ |  $$ |$$$$\\ \\__|$$$$$$$$ |$$ |  $$ |   $$ |   $$$$$$$$ |\r\n$$  __$$ |  $$ |  $$ |\\_$$ |    $$  __$$ |$$ |  $$ |   $$ |   $$  __$$ |\r\n$$ |  $$ |  $$ |  $$ |  $$ |$$\\ $$ |  $$ |$$ |  $$ |   $$ |   $$ |  $$ |\r\n$$ |  $$ |$$$$$$\\ \\$$$$$$  |\\__|$$ |  $$ |\\$$$$$$  |   $$ |   $$ |  $$ |\r\n\\__|  \\__|\\______| \\______/     \\__|  \\__| \\______/    \\__|   \\__|  \\__|\r\n\r\n is protected by Conductor SUT Authentication - 20260511.01-gee7e625.\r\n\r\nReminder: An SSH key is required to access this system. \r\nTo manage your Conductor SSH keys please visit https://conductor.amd.com/user/dashboard/key-management\r\n\r\nYou will be denied access to this system if:\r\n  \u2022 You did not provide a valid SSH key\r\n  \u2022 You do not have an active reservation in Conductor\r\n  \u2022 You are not in the required security groups (ex: mi300_doc.4erminus)\r\n\r\n____________   _______________________________________^__\r\n ___   ___ |||  ___   ___   ___    ___ ___  |   __  ,----\\\r\n|   | |   |||| |   | |   | |   |  |   |   | |  |  | |_____\\\r\n|___| |___|||| |___| |___| |___|  | O | O | |  |  |        \\\r\n           |||                    |___|___| |  |__|         )\r\n___________|||______________________________|______________/\r\n           |||                                        /--------\r\n-----------'''---------------------------------------'\r\n\r\nFor other help resources please visit https://conductor.amd.com/docs\r\n\r\nChecking authorization now...\r\n"
+    },
+    "terminal": {
+      "chunk_id": "cefdfa",
+      "wall_time_seconds": 0.000020388,
+      "exit_code": 0,
+      "original_token_count": 283,
+      "output": "test_config_notes_bytes_explicitly_retained (__main__.AssemblyTests.test_config_notes_bytes_explicitly_retained) ... ok\ntest_intake_aliases_restore_on_success_and_failed_import (__main__.AssemblyTests.test_intake_aliases_restore_on_success_and_failed_import) ... ok\ntest_notes_explicit_and_substantive (__main__.AssemblyTests.test_notes_explicit_and_substantive) ... ok\ntest_request_only_three_fields_and_lossless_u64 (__main__.AssemblyTests.test_request_only_three_fields_and_lossless_u64) ... ok\ntest_request_rejects_invalid_modes_ids_and_sessions (__main__.AssemblyTests.test_request_rejects_invalid_modes_ids_and_sessions) ... ok\ntest_request_requires_all_three_fresh_fields (__main__.AssemblyTests.test_request_requires_all_three_fresh_fields) ... ok\ntest_settings_accept_actual_pure_and_root_reviews (__main__.AssemblyTests.test_settings_accept_actual_pure_and_root_reviews) ... ok\ntest_settings_refuses_relabelled_or_unspecified_reviews (__main__.AssemblyTests.test_settings_refuses_relabelled_or_unspecified_reviews) ... ok\n\n----------------------------------------------------------------------\nRan 8 tests in 0.003s\n\nOK\n"
+    }
+  },
+  "post_hash": {
+    "command": "ssh.exe -o BatchMode=yes -o ConnectTimeout=20 -o HostName=smci350-rck-g03-b19-03.rck.dcgpu -o UserKnownHostsFile=//wsl.localhost/Ubuntu/home/harsh/.ssh/known_hosts mi350 \"sha256sum /home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-projection-ar4-host-observation-inputs-v1/*\"",
+    "initial": {
+      "chunk_id": "f2d630",
+      "wall_time_seconds": 1.001520933,
+      "session_id": 87085,
+      "original_token_count": 413,
+      "output": "\r\n $$$$$$\\  $$$$$$\\  $$$$$$\\       $$$$$$\\  $$\\   $$\\ $$$$$$$$\\ $$\\   $$\\\r\n$$  __$$\\ \\_$$  _|$$  __$$\\     $$  __$$\\ $$ |  $$ |\\__$$  __|$$ |  $$ |\r\n$$ /  $$ |  $$ |  $$ /  \\__|$$\\ $$ /  $$ |$$ |  $$ |   $$ |   $$ |  $$ |\r\n$$$$$$$$ |  $$ |  $$ |$$$$\\ \\__|$$$$$$$$ |$$ |  $$ |   $$ |   $$$$$$$$ |\r\n$$  __$$ |  $$ |  $$ |\\_$$ |    $$  __$$ |$$ |  $$ |   $$ |   $$  __$$ |\r\n$$ |  $$ |  $$ |  $$ |  $$ |$$\\ $$ |  $$ |$$ |  $$ |   $$ |   $$ |  $$ |\r\n$$ |  $$ |$$$$$$\\ \\$$$$$$  |\\__|$$ |  $$ |\\$$$$$$  |   $$ |   $$ |  $$ |\r\n\\__|  \\__|\\______| \\______/     \\__|  \\__| \\______/    \\__|   \\__|  \\__|\r\n\r\n is protected by Conductor SUT Authentication - 20260511.01-gee7e625.\r\n\r\nReminder: An SSH key is required to access this system. \r\nTo manage your Conductor SSH keys please visit https://conductor.amd.com/user/dashboard/key-management\r\n\r\nYou will be denied access to this system if:\r\n  \u2022 You did not provide a valid SSH key\r\n  \u2022 You do not have an active reservation in Conductor\r\n  \u2022 You are not in the required security groups (ex: mi300_doc.4erminus)\r\n\r\n____________   _______________________________________^__\r\n ___   ___ |||  ___   ___   ___    ___ ___  |   __  ,----\\\r\n|   | |   |||| |   | |   | |   |  |   |   | |  |  | |_____\\\r\n|___| |___|||| |___| |___| |___|  | O | O | |  |  |        \\\r\n           |||                    |___|___| |  |__|         )\r\n___________|||______________________________|______________/\r\n           |||                                        /--------\r\n-----------'''---------------------------------------'\r\n\r\nFor other help resources please visit https://conductor.amd.com/docs\r\n\r\nChecking authorization now...\r\n"
+    },
+    "terminal": {
+      "chunk_id": "d1ccd5",
+      "wall_time_seconds": 0.000023113,
+      "exit_code": 0,
+      "original_token_count": 150,
+      "output": "35774e0908b9dd311593488620bcc770d935a31d3733ed5aada3b6072a7dde66  /home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-projection-ar4-host-observation-inputs-v1/prepare.py\n346f613d824d3e5074e05f20762cb9d2fa1c5f821604978b88d408d3c8dba5a2  /home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-projection-ar4-host-observation-inputs-v1/README.md\n97cf6e4721d0e2c7404ebebddad122314a09401707c5142ce71e045e0395b022  /home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-projection-ar4-host-observation-inputs-v1/test_prepare.py\n"
+    }
+  },
+  "passed": 8,
+  "failures": 0,
+  "errors": 0,
+  "skipped": 0,
+  "gpu_execution": false,
+  "performance_claim": false,
+  "numerical_acceptance": false
+}
