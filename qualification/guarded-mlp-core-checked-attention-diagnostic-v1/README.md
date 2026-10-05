@@ -7,7 +7,42 @@ The diagnostic uses base source revision
 `d0253acecb63e8884e8727c84204cf2da1d0f00e` plus an explicitly pinned three-file
 overlay. Ferric's production dependency and execution path are unchanged.
 
-## Actual MI350 Run
+## Actual MI350 Runs
+
+The second attempt adds exactly one narrowly selected method to the diagnostic:
+genuine core `u32::overflowing_mul` with signature `(u32, u32) -> (u32, bool)`.
+This captures the independent helper body behind the inlined origin observed
+in `checked_mul`. It changes no production recognition rule. The controller
+uses a fresh run namespace with the same commands, limits and six test names.
+
+Both builds and all six renderer tests passed again. The unchanged attention
+control returned 101 at `usize::checked_add`; its recorded leaf wall time was
+15.445 seconds. The [second receipt](attempt-v2/evidence/failed.json) records
+19 natural, reaped exits with no remaining process groups: 18 zero statuses,
+then the original refusal. Sources were unchanged and postchecks were clean.
+
+The [second raw output](attempt-v2/evidence/attention-extraction-0.stdout)
+contains ten complete selected bodies from the same 29 collected instances,
+with no partial bodies or omissions. The added `overflowing_mul` body has one
+block, five locals and two scopes: `MulWithOverflow`, two tuple projections,
+and return. It has no calls or inline origins. Its independent source check
+remains necessary even when the outer `checked_mul` body is recognized.
+
+The [second marker record](attempt-v2/derived-core-checked-attention-diagnostic.json)
+joins to raw output at offset 5,325 with an extent of 34,470 bytes, including
+a 34,384-byte body. Its SHA-256 is
+`5c717524f42e9971513377dc4dc63dd561f5eaf88895f9030641865d1e342bbd`.
+Six prior body texts match byte-for-byte. The other three, all `Option::ok_or`,
+differ only in the displayed `fe2o3_device` crate disambiguator, `a320` versus
+`6ac4`; substituting that identifier makes those texts identical too. The raw
+records are retained unchanged. This textual comparison is not an admission
+rule or a numerical test.
+
+The [second retention manifest](attempt-v2/retention-manifest.json) pins 105
+original files and one derived observation. Its source manifest binds the
+six-line selector addition; the collector and renderer tests are unchanged.
+
+### First Attempt
 
 Both compiler builds succeeded and all six renderer tests passed. The
 unchanged `dynamic_attention_kernel_reaches_gfx942_llvm` control then returned

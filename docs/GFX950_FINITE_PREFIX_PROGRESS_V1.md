@@ -6,13 +6,15 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Latest: [nine checked-arithmetic and Option helper bodies captured from attention](../qualification/guarded-mlp-core-checked-attention-diagnostic-v1/README.md).
-The isolated diagnostic compiler built on MI350 and all six renderer tests
-passed. The unchanged attention control still rejects `usize::checked_add`;
-the capture grants no admission. All nine selected bodies were fully rendered
-within one 64 KiB limit, with no partial bodies or omissions. All 19 phases
-exited naturally and were reaped, with unchanged sources and clean integrity
-postchecks. Production recognizers and their qualification remain pending.
+Latest: [ten checked-arithmetic and Option helper bodies captured from attention](../qualification/guarded-mlp-core-checked-attention-diagnostic-v1/README.md).
+The second isolated diagnostic compiler built on MI350 and all six renderer
+tests passed. It adds the standalone `u32::overflowing_mul` body to the nine
+previously captured helpers. The unchanged attention control still rejects
+`usize::checked_add`; the capture grants no admission. All ten selected bodies
+were fully rendered within one 64 KiB limit, with no partial bodies or omissions.
+All 19 phases exited naturally and were reaped, with unchanged sources and
+clean integrity postchecks. Production recognizers and their qualification
+remain pending. Both attempts and their unmodified raw records are retained.
 
 Previously, [422 tests and matrix extraction passed; attention reached a checked-add refusal](../qualification/guarded-mlp-core-u32-widening-qualification-v1/README.md).
 The exact widening recognizer and six new tests built and passed on MI350,
