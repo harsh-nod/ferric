@@ -8,7 +8,7 @@ dependency remains unchanged.
 
 ## Implementation
 
-The retained source generation is
+The production checks were introduced in
 `a5720f77e52e6212ad35f675504421b8110db9f7`. It adds two private recognizers,
 their tests, and insertion-only collector hooks. Prior Result and widening
 checks are unchanged.
@@ -24,10 +24,11 @@ initialized tag; inactive payload bytes are not read. Recognizing a wrapper
 does not bypass callee, inline-origin, local unsafe-source, or ordinary MIR
 lowering checks.
 
-The six integer tests author five real positives, fourteen identity/signature
-refusals and 458 cloned-MIR mutations. The ten Option tests author five real
+The six integer tests check five real positives, fourteen identity/signature
+refusals and 458 cloned-MIR mutations; all pass in the second attempt below.
+The ten Option tests author five real
 positives, fifteen refusals and 198 mutations. These are authored assertions,
-not passing results from the first attempt.
+not passing Option results. The first attempt ran no tests.
 
 ## First MI350 Attempt
 
@@ -47,7 +48,42 @@ evidence records. Cargo's original structured diagnostic is retained in
 
 The reviewed repair clones an actual MIR statement before inserting the Nop
 mutation, including when the current block is empty. It changes no production
-check, test name or mutation count. Its fresh qualification remains pending.
+check, test name or mutation count. The second attempt validates that repair.
+
+## Second MI350 Attempt
+
+Generation `4e8d03cd065fc51b810a20ee9af3d2beb9696438` changes only the integer
+fixture's statement construction. Both production and test builds pass,
+in 40.394 and 47.163 seconds respectively. The [actual receipt](attempt-v2/evidence/failed.json)
+records 417 validated passing tests before the Option cohort fails:
+
+| Scope | Passing Tests |
+| --- | ---: |
+| Device library and two UI targets | 358 |
+| Trusted provider and scalar pipeline | 32 |
+| Existing Result and widening wrappers | 21 |
+| New checked-integer wrappers | 6 |
+| Total | 417 |
+
+The [integer transcript](attempt-v2/evidence/core-checked-integer.stdout)
+records six passes, including the real-body mutation and identity assertions.
+The [Option transcript](attempt-v2/evidence/core-attention-option.stdout)
+records ten failures from one cached fixture failure at the first `ok_usize`
+full-authentication assertion. Its preceding signature and MIR-body assertions
+pass. Source inspection identifies a missing metadata-observation environment
+value required by the independent provider authentication; V2 supplies none.
+
+All 26 executed phases exited naturally and were reaped. Sources and
+dependencies remained unchanged, with clean postchecks. The [second retention manifest](attempt-v2/retention-manifest.json)
+pins 147 original files and 134 raw evidence records. Atomic, unsafe-source,
+matrix and attention extraction controls were not reached. Thus 417 is a
+partial-run count, not a regression comparison with the older 422-test run.
+
+The next fixture repair gives the callback an explicit codegen metadata value
+and checks the supplied observation against the public derivation from the
+actual rustc session. The test runner supplies it only to the Option process,
+before its threads start. It changes no production authentication rule and
+grants no artifact authority; fresh execution remains pending.
 
 ## Qualification Contract
 
