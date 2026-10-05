@@ -1,0 +1,24 @@
+{
+  "errors": 0,
+  "failures": 0,
+  "gpu_execution": false,
+  "host": "smci350-rck-g03-b19-03",
+  "log": {
+    "bytes": 1182,
+    "sha256": "bc2636e8329e5718005bf5935446e09c73ec1c2baf5f125291c37198a55c9684"
+  },
+  "passed": true,
+  "skipped": 0,
+  "sources": {
+    "run_cpu.py": {
+      "bytes": 35508,
+      "sha256": "98ab3cedf7d2d1ae283105260f1e40ee70da37cf5d69356d55938301b4f21cf2"
+    },
+    "test_scratch_bytes.py": {
+      "bytes": 4596,
+      "sha256": "19c0f98de3f91992a078d985151379e52ec3b46dcdba2c856f388257ca2094a5"
+    }
+  },
+  "tests": 7,
+  "unchanged": true
+}

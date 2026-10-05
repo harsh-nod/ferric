@@ -1,0 +1,62 @@
+{
+  "adopted_reaped": [
+    {
+      "pid": 2524827,
+      "wait_status": 15
+    },
+    {
+      "pid": 2524862,
+      "wait_status": 15
+    }
+  ],
+  "argv": [
+    "/usr/bin/prlimit",
+    "--as=12884901888",
+    "--cpu=1200",
+    "--fsize=1073741824",
+    "--core=0",
+    "--",
+    "/home/harmenon/.rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/bin/cargo",
+    "test",
+    "--offline",
+    "--locked",
+    "--jobs",
+    "2",
+    "--lib",
+    "--no-run",
+    "--message-format=json",
+    "--manifest-path",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/candidate/Cargo.toml",
+    "--no-default-features",
+    "--features",
+    "gfx950"
+  ],
+  "command": {
+    "bytes": 2148,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/evidence/build-tests.command.json",
+    "sha256": "6aee7ef9c5fbf7cd79361d101e1a47eb8b4dc876fb66bec9511d45e190303562"
+  },
+  "elapsed_ns": 12198529262,
+  "exception": "FileNotFoundError(2, 'No such file or directory')",
+  "exit_code": -15,
+  "forced_cleanup": true,
+  "label": "build-tests",
+  "natural_exit": false,
+  "observed_signals": [],
+  "pgid": 2524320,
+  "pid": 2524320,
+  "process_group_absent": true,
+  "reaped": true,
+  "stderr": {
+    "bytes": 2180,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/evidence/build-tests.stderr",
+    "sha256": "c5d7be1efe1549359ebafbde3da8f46ce63d2e46d204fc9191fe543942754753"
+  },
+  "stdout": {
+    "bytes": 118651,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/evidence/build-tests.stdout",
+    "sha256": "3004c990566cdbfc81ea83732af6357bef81c87e4ef04f4efe76e16227f29647"
+  },
+  "storage_failure": null,
+  "timed_out": false
+}

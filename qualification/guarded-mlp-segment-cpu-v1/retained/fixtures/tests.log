@@ -1,0 +1,12 @@
+test_exact_file_count_bound_and_one_over_remain_enforced (scratch_fixtures.ScratchBytesTests.test_exact_file_count_bound_and_one_over_remain_enforced) ... ok
+test_existing_vanished_file_tolerance_remains (scratch_fixtures.ScratchBytesTests.test_existing_vanished_file_tolerance_remains) ... ok
+test_missing_root_or_unowned_or_ambiguous_path_is_not_suppressed (scratch_fixtures.ScratchBytesTests.test_missing_root_or_unowned_or_ambiguous_path_is_not_suppressed) ... ok
+test_other_os_error_is_not_suppressed (scratch_fixtures.ScratchBytesTests.test_other_os_error_is_not_suppressed) ... ok
+test_permission_error_on_owned_descendant_is_not_suppressed (scratch_fixtures.ScratchBytesTests.test_permission_error_on_owned_descendant_is_not_suppressed) ... ok
+test_sizes_sum_both_owned_trees_and_exclude_outside_files (scratch_fixtures.ScratchBytesTests.test_sizes_sum_both_owned_trees_and_exclude_outside_files) ... ok
+test_vanished_owned_descendant_does_not_discard_remaining_files (scratch_fixtures.ScratchBytesTests.test_vanished_owned_descendant_does_not_discard_remaining_files) ... ok
+
+----------------------------------------------------------------------
+Ran 7 tests in 0.497s
+
+OK

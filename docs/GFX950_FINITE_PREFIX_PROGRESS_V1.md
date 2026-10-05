@@ -6,7 +6,16 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Latest: [the finite two-rank peer-dependency graph passed native GPU qualification on MI350](../qualification/peer-dependency-signal-completion-gpu-v1/README.md).
+Latest: [the full-state validator and guarded final residual passed CPU qualification on MI350](../qualification/guarded-mlp-segment-cpu-v1/README.md).
+All 27 kernel tests and seven harness regression tests passed. Ten bounded
+phases completed naturally, including the non-test typed Marker roster and
+host library build, with clean integrity postchecks. Both earlier harness
+failures are retained. The CPU crate binding is explicitly a host-only fixture,
+not compiler authority. These new kernels are not yet connected to inference;
+checked gfx950 emission, GPU guard controls, reusable arena validation and the
+matched full-worker comparison remain next. All model and performance gates remain open.
+
+Previously, [the finite two-rank peer-dependency graph passed native GPU qualification on MI350](../qualification/peer-dependency-signal-completion-gpu-v1/README.md).
 The V3 runtime passed 1,064 Rust tests with three artifact-dependent ignores;
 45 controller tests then passed before one native attempt on GPUs 1 and 2.
 All sixteen signals completed, all ten guarded buffers matched, the delayed

@@ -1,0 +1,3643 @@
+{
+  "artifacts": {},
+  "boot": "2dbbbc5a-d8b7-46ac-bd1f-236e5847e24a",
+  "compiler_hsaco_reproduced": false,
+  "configurations": {
+    "/.cargo/config": null,
+    "/.cargo/config.toml": null,
+    "/home/.cargo/config": null,
+    "/home/.cargo/config.toml": null,
+    "/home/harmenon/.cargo/config": null,
+    "/home/harmenon/.cargo/config.toml": null,
+    "/home/harmenon/ferric-asrock-42/.cargo/config": null,
+    "/home/harmenon/ferric-asrock-42/.cargo/config.toml": null,
+    "/home/harmenon/ferric-asrock-42/evidence/.cargo/config": null,
+    "/home/harmenon/ferric-asrock-42/evidence/.cargo/config.toml": null,
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/.cargo/config": null,
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/.cargo/config.toml": null,
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/.cargo/config": null,
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/.cargo/config.toml": null,
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/candidate/.cargo/config": null,
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/candidate/.cargo/config.toml": null
+  },
+  "controller": {
+    "bytes": 35121,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/run_cpu.py",
+    "sha256": "1de3f8bac7e40ad74e68d4ad0d396c7d0afd1e03dac2fb8ea1870f278a073c20"
+  },
+  "dependency_commit": "097b4f796a283f554339cc0c0ef5c2c8c3858d2a",
+  "elapsed_seconds": 47.768880911986344,
+  "failure": "RuntimeError('build-tests did not finish naturally/reaped/successfully')",
+  "final_sources": {
+    "bytes": 1966896,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/evidence/sources-after.json",
+    "sha256": "119e1367366b8355925a6835e2c437669c0f27edc5e35c2cc288003be1fce207"
+  },
+  "formatted_sources": {
+    "bytes": 1966896,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/evidence/sources-formatted.json",
+    "sha256": "53b4188cf3f72a48bbd8cca42845d0c3e688deecb0b9c9420e7c1aea50a3bfef"
+  },
+  "full_model_acceptance": false,
+  "gpu_execution": false,
+  "host": "smci350-rck-g03-b19-03",
+  "host_fixture_crate_binding": {
+    "compiler_authority": false,
+    "host_only": true,
+    "input_manifest": {
+      "bytes": 1005910,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/input-manifest.json",
+      "sha256": "f26589d99738f39b608c68b33249d2f68d11a9462ab386bdcab9e60334bb5441"
+    },
+    "value": "f26589d99738f39b608c68b33249d2f68d11a9462ab386bdcab9e60334bb5441"
+  },
+  "input_manifest": {
+    "bytes": 1005910,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/input-manifest.json",
+    "sha256": "f26589d99738f39b608c68b33249d2f68d11a9462ab386bdcab9e60334bb5441"
+  },
+  "input_sources": {
+    "bytes": 1966896,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/evidence/sources-input.json",
+    "sha256": "0eed23da780a2f4a1ced55c52cd6e0be43c802ca5ce044d59db19136b489d23d"
+  },
+  "limits": {
+    "address_space_bytes": 12884901888,
+    "affinity": [
+      8,
+      9
+    ],
+    "cache_bytes": 6442450944,
+    "cargo_jobs": 2,
+    "cleanup_reserve_seconds": 50,
+    "cpu_seconds_per_leaf": 1200,
+    "file_bytes": 1073741824,
+    "incremental": false,
+    "initial_free_bytes": 42949672960,
+    "live_free_bytes": 40802189312,
+    "nice": 10,
+    "stream_bytes": 67108864,
+    "wall_seconds_per_leaf": 1800,
+    "whole_wall_seconds": 7200
+  },
+  "local_dependencies": {
+    "dialect-amdgcn": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/fe2o3/crates/dialect-amdgcn/Cargo.toml",
+    "dialect-gpu": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/fe2o3/crates/dialect-gpu/Cargo.toml",
+    "dialect-kernel": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/fe2o3/crates/dialect-kernel/Cargo.toml",
+    "dialect-mir": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/fe2o3/crates/dialect-mir/Cargo.toml",
+    "dialect-proof": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/fe2o3/crates/dialect-proof/Cargo.toml",
+    "fe2o3-amd-target": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/fe2o3/crates/fe2o3-amd-target/Cargo.toml",
+    "fe2o3-amdgcn-model": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/fe2o3/crates/fe2o3-amdgcn-model/Cargo.toml",
+    "fe2o3-amdhsa-loader": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/fe2o3/crates/fe2o3-amdhsa-loader/Cargo.toml",
+    "fe2o3-aql": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/fe2o3/crates/fe2o3-aql/Cargo.toml",
+    "fe2o3-artifact-transaction": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/fe2o3/crates/fe2o3-artifact-transaction/Cargo.toml",
+    "fe2o3-artifacts": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/fe2o3/crates/fe2o3-artifacts/Cargo.toml",
+    "fe2o3-build-authority": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/fe2o3/crates/fe2o3-build-authority/Cargo.toml",
+    "fe2o3-compiler-closure-capability": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/fe2o3/crates/fe2o3-compiler-closure-capability/Cargo.toml",
+    "fe2o3-compiler-execution-client": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/fe2o3/crates/fe2o3-compiler-execution-client/Cargo.toml",
+    "fe2o3-compiler-execution-protocol": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/fe2o3/crates/fe2o3-compiler-execution-protocol/Cargo.toml",
+    "fe2o3-compiler-ffi": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/fe2o3/crates/fe2o3-compiler-ffi/Cargo.toml",
+    "fe2o3-compiler-lineage": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/fe2o3/crates/fe2o3-compiler-lineage/Cargo.toml",
+    "fe2o3-contracts": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/fe2o3/crates/fe2o3-contracts/Cargo.toml",
+    "fe2o3-device": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/fe2o3/crates/fe2o3-device/Cargo.toml",
+    "fe2o3-drm-uapi": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/fe2o3/crates/fe2o3-drm-uapi/Cargo.toml",
+    "fe2o3-external-anchor-protocol": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/fe2o3/crates/fe2o3-external-anchor-protocol/Cargo.toml",
+    "fe2o3-functional-proof": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/fe2o3/crates/fe2o3-functional-proof/Cargo.toml",
+    "fe2o3-host": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/fe2o3/crates/fe2o3-host/Cargo.toml",
+    "fe2o3-host-api": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/fe2o3/crates/fe2o3-host-api/Cargo.toml",
+    "fe2o3-hsaco": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/fe2o3/crates/fe2o3-hsaco/Cargo.toml",
+    "fe2o3-hsaco-finalize": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/fe2o3/crates/fe2o3-hsaco-finalize/Cargo.toml",
+    "fe2o3-kernel-analysis": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/fe2o3/crates/fe2o3-kernel-analysis/Cargo.toml",
+    "fe2o3-kernel-descriptor": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/fe2o3/crates/fe2o3-kernel-descriptor/Cargo.toml",
+    "fe2o3-kernel-ir": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/fe2o3/crates/fe2o3-kernel-ir/Cargo.toml",
+    "fe2o3-kernel-opt": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/fe2o3/crates/fe2o3-kernel-opt/Cargo.toml",
+    "fe2o3-kfd": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/fe2o3/crates/fe2o3-kfd/Cargo.toml",
+    "fe2o3-kfd-uapi": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/fe2o3/crates/fe2o3-kfd-uapi/Cargo.toml",
+    "fe2o3-llvm-handoff": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/fe2o3/crates/fe2o3-llvm-handoff/Cargo.toml",
+    "fe2o3-llvm-text": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/fe2o3/crates/fe2o3-llvm-text/Cargo.toml",
+    "fe2o3-lower-mir-kernel": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/fe2o3/crates/fe2o3-lower-mir-kernel/Cargo.toml",
+    "fe2o3-macros": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/fe2o3/crates/fe2o3-macros/Cargo.toml",
+    "fe2o3-mir-model": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/fe2o3/crates/fe2o3-mir-model/Cargo.toml",
+    "fe2o3-pliron": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/fe2o3/crates/fe2o3-pliron/Cargo.toml",
+    "fe2o3-pliron-owner-core": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/fe2o3/crates/fe2o3-pliron-owner-core/Cargo.toml",
+    "fe2o3-process-identity": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/fe2o3/crates/fe2o3-process-identity/Cargo.toml",
+    "fe2o3-profiler-protocol": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/fe2o3/crates/fe2o3-profiler-protocol/Cargo.toml",
+    "fe2o3-proof-contracts": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/fe2o3/crates/fe2o3-proof-contracts/Cargo.toml",
+    "fe2o3-runtime": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/fe2o3/crates/fe2o3-runtime/Cargo.toml",
+    "fe2o3-runtime-model": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/fe2o3/crates/fe2o3-runtime-model/Cargo.toml",
+    "fe2o3-runtime-protocol": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/fe2o3/crates/fe2o3-runtime-protocol/Cargo.toml",
+    "fe2o3-rustc-front": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/fe2o3/crates/fe2o3-rustc-front/Cargo.toml",
+    "fe2o3-rustc-invocation": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/fe2o3/crates/fe2o3-rustc-invocation/Cargo.toml",
+    "fe2o3-service-host": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/fe2o3/crates/fe2o3-service-host/Cargo.toml",
+    "fe2o3-service-model": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/fe2o3/crates/fe2o3-service-model/Cargo.toml",
+    "fe2o3-source-isa-observation": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/fe2o3/crates/fe2o3-source-isa-observation/Cargo.toml",
+    "fe2o3-target-spec": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/fe2o3/crates/fe2o3-target-spec/Cargo.toml",
+    "fe2o3-verifier": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/fe2o3/crates/fe2o3-verifier/Cargo.toml",
+    "reserved-fe2o3-symbols": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/fe2o3/crates/reserved-fe2o3-symbols/Cargo.toml"
+  },
+  "lock_transition": {
+    "new_candidate": [
+      "ferric-qwen3-tp-guarded-mlp-segment-kernels-device-v1",
+      "0.1.0",
+      null
+    ],
+    "original_packages": 425,
+    "removed_inactive_edges": [
+      {
+        "alias": "pem-rfc7468",
+        "dependency": [
+          "pem-rfc7468",
+          "0.7.0",
+          "registry+https://github.com/rust-lang/crates.io-index"
+        ],
+        "enabled_features": [
+          "alloc",
+          "oid",
+          "std",
+          "zeroize"
+        ],
+        "package": [
+          "der",
+          "0.7.10",
+          "registry+https://github.com/rust-lang/crates.io-index"
+        ],
+        "reason": "optional-feature-disabled"
+      },
+      {
+        "declarations": [
+          {
+            "features": [],
+            "kind": "dev",
+            "name": "fe2o3-amd-target",
+            "optional": false,
+            "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/fe2o3/crates/fe2o3-amd-target",
+            "registry": null,
+            "rename": null,
+            "req": "*",
+            "source": null,
+            "target": null,
+            "uses_default_features": true
+          }
+        ],
+        "dependency": [
+          "fe2o3-amd-target",
+          "0.1.0",
+          null
+        ],
+        "enabled_features": [],
+        "package": [
+          "dialect-amdgcn",
+          "0.1.0",
+          null
+        ],
+        "reason": "dev-not-workspace"
+      },
+      {
+        "declarations": [
+          {
+            "features": [],
+            "kind": "dev",
+            "name": "fe2o3-kernel-descriptor",
+            "optional": false,
+            "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/fe2o3/crates/fe2o3-kernel-descriptor",
+            "registry": null,
+            "rename": null,
+            "req": "*",
+            "source": null,
+            "target": null,
+            "uses_default_features": true
+          }
+        ],
+        "dependency": [
+          "fe2o3-kernel-descriptor",
+          "0.1.0",
+          null
+        ],
+        "enabled_features": [],
+        "package": [
+          "dialect-amdgcn",
+          "0.1.0",
+          null
+        ],
+        "reason": "dev-not-workspace"
+      },
+      {
+        "declarations": [
+          {
+            "features": [],
+            "kind": "dev",
+            "name": "fe2o3-kernel-ir",
+            "optional": false,
+            "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/fe2o3/crates/fe2o3-kernel-ir",
+            "registry": null,
+            "rename": null,
+            "req": "*",
+            "source": null,
+            "target": null,
+            "uses_default_features": true
+          }
+        ],
+        "dependency": [
+          "fe2o3-kernel-ir",
+          "0.1.0",
+          null
+        ],
+        "enabled_features": [],
+        "package": [
+          "dialect-amdgcn",
+          "0.1.0",
+          null
+        ],
+        "reason": "dev-not-workspace"
+      },
+      {
+        "declarations": [
+          {
+            "features": [],
+            "kind": "dev",
+            "name": "fe2o3-compiler-ffi",
+            "optional": false,
+            "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/fe2o3/crates/fe2o3-compiler-ffi",
+            "registry": null,
+            "rename": null,
+            "req": "*",
+            "source": null,
+            "target": null,
+            "uses_default_features": true
+          }
+        ],
+        "dependency": [
+          "fe2o3-compiler-ffi",
+          "0.1.0",
+          null
+        ],
+        "enabled_features": [
+          "default",
+          "pliron"
+        ],
+        "package": [
+          "dialect-mir",
+          "0.1.0",
+          null
+        ],
+        "reason": "dev-not-workspace"
+      },
+      {
+        "declarations": [
+          {
+            "features": [],
+            "kind": "dev",
+            "name": "fe2o3-pliron",
+            "optional": false,
+            "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/fe2o3/crates/fe2o3-pliron",
+            "registry": null,
+            "rename": null,
+            "req": "*",
+            "source": null,
+            "target": null,
+            "uses_default_features": true
+          }
+        ],
+        "dependency": [
+          "fe2o3-pliron",
+          "0.1.0",
+          null
+        ],
+        "enabled_features": [
+          "default",
+          "pliron"
+        ],
+        "package": [
+          "dialect-mir",
+          "0.1.0",
+          null
+        ],
+        "reason": "dev-not-workspace"
+      },
+      {
+        "declarations": [
+          {
+            "features": [],
+            "kind": "dev",
+            "name": "serde_json",
+            "optional": false,
+            "registry": null,
+            "rename": null,
+            "req": "^1",
+            "source": "registry+https://github.com/rust-lang/crates.io-index",
+            "target": null,
+            "uses_default_features": true
+          }
+        ],
+        "dependency": [
+          "serde_json",
+          "1.0.151",
+          "registry+https://github.com/rust-lang/crates.io-index"
+        ],
+        "enabled_features": [
+          "default",
+          "pliron"
+        ],
+        "package": [
+          "dialect-mir",
+          "0.1.0",
+          null
+        ],
+        "reason": "dev-not-workspace"
+      },
+      {
+        "declarations": [
+          {
+            "features": [],
+            "kind": "dev",
+            "name": "sha2",
+            "optional": false,
+            "registry": null,
+            "rename": null,
+            "req": "^0.11.0",
+            "source": "registry+https://github.com/rust-lang/crates.io-index",
+            "target": null,
+            "uses_default_features": false
+          }
+        ],
+        "dependency": [
+          "sha2",
+          "0.11.0",
+          "registry+https://github.com/rust-lang/crates.io-index"
+        ],
+        "enabled_features": [],
+        "package": [
+          "fe2o3-aql",
+          "0.1.0",
+          null
+        ],
+        "reason": "dev-not-workspace"
+      },
+      {
+        "declarations": [
+          {
+            "features": [],
+            "kind": "dev",
+            "name": "fe2o3-compiler-lineage",
+            "optional": false,
+            "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/fe2o3/crates/fe2o3-compiler-lineage",
+            "registry": null,
+            "rename": null,
+            "req": "*",
+            "source": null,
+            "target": null,
+            "uses_default_features": true
+          }
+        ],
+        "dependency": [
+          "fe2o3-compiler-lineage",
+          "0.1.0",
+          null
+        ],
+        "enabled_features": [],
+        "package": [
+          "fe2o3-artifact-transaction",
+          "0.1.0",
+          null
+        ],
+        "reason": "dev-not-workspace"
+      },
+      {
+        "declarations": [
+          {
+            "features": [
+              "fast",
+              "zeroize"
+            ],
+            "kind": "dev",
+            "name": "ed25519-dalek",
+            "optional": false,
+            "registry": null,
+            "rename": null,
+            "req": "=2.2.0",
+            "source": "registry+https://github.com/rust-lang/crates.io-index",
+            "target": null,
+            "uses_default_features": false
+          }
+        ],
+        "dependency": [
+          "ed25519-dalek",
+          "2.2.0",
+          "registry+https://github.com/rust-lang/crates.io-index"
+        ],
+        "enabled_features": [],
+        "package": [
+          "fe2o3-compiler-execution-client",
+          "0.1.0",
+          null
+        ],
+        "reason": "dev-not-workspace"
+      },
+      {
+        "declarations": [
+          {
+            "features": [],
+            "kind": "dev",
+            "name": "fe2o3-external-anchor-protocol",
+            "optional": false,
+            "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/fe2o3/crates/fe2o3-external-anchor-protocol",
+            "registry": null,
+            "rename": null,
+            "req": "*",
+            "source": null,
+            "target": null,
+            "uses_default_features": true
+          }
+        ],
+        "dependency": [
+          "fe2o3-external-anchor-protocol",
+          "0.1.0",
+          null
+        ],
+        "enabled_features": [],
+        "package": [
+          "fe2o3-compiler-execution-client",
+          "0.1.0",
+          null
+        ],
+        "reason": "dev-not-workspace"
+      },
+      {
+        "declarations": [
+          {
+            "features": [],
+            "kind": "dev",
+            "name": "fe2o3-build-authority",
+            "optional": false,
+            "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/fe2o3/crates/fe2o3-build-authority",
+            "registry": null,
+            "rename": null,
+            "req": "*",
+            "source": null,
+            "target": null,
+            "uses_default_features": true
+          }
+        ],
+        "dependency": [
+          "fe2o3-build-authority",
+          "0.1.0",
+          null
+        ],
+        "enabled_features": [],
+        "package": [
+          "fe2o3-compiler-ffi",
+          "0.1.0",
+          null
+        ],
+        "reason": "dev-not-workspace"
+      },
+      {
+        "declarations": [
+          {
+            "features": [],
+            "kind": "dev",
+            "name": "fe2o3-rustc-invocation",
+            "optional": false,
+            "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/fe2o3/crates/fe2o3-rustc-invocation",
+            "registry": null,
+            "rename": null,
+            "req": "*",
+            "source": null,
+            "target": null,
+            "uses_default_features": true
+          }
+        ],
+        "dependency": [
+          "fe2o3-rustc-invocation",
+          "0.1.0",
+          null
+        ],
+        "enabled_features": [],
+        "package": [
+          "fe2o3-compiler-ffi",
+          "0.1.0",
+          null
+        ],
+        "reason": "dev-not-workspace"
+      },
+      {
+        "declarations": [
+          {
+            "features": [],
+            "kind": "dev",
+            "name": "fe2o3-amd-target",
+            "optional": false,
+            "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/fe2o3/crates/fe2o3-amd-target",
+            "registry": null,
+            "rename": null,
+            "req": "*",
+            "source": null,
+            "target": null,
+            "uses_default_features": true
+          }
+        ],
+        "dependency": [
+          "fe2o3-amd-target",
+          "0.1.0",
+          null
+        ],
+        "enabled_features": [],
+        "package": [
+          "fe2o3-device",
+          "0.1.0",
+          null
+        ],
+        "reason": "dev-not-workspace"
+      },
+      {
+        "declarations": [
+          {
+            "features": [],
+            "kind": "dev",
+            "name": "sha2",
+            "optional": false,
+            "registry": null,
+            "rename": null,
+            "req": "^0.11.0",
+            "source": "registry+https://github.com/rust-lang/crates.io-index",
+            "target": null,
+            "uses_default_features": false
+          }
+        ],
+        "dependency": [
+          "sha2",
+          "0.11.0",
+          "registry+https://github.com/rust-lang/crates.io-index"
+        ],
+        "enabled_features": [],
+        "package": [
+          "fe2o3-device",
+          "0.1.0",
+          null
+        ],
+        "reason": "dev-not-workspace"
+      },
+      {
+        "declarations": [
+          {
+            "features": [],
+            "kind": "dev",
+            "name": "trybuild",
+            "optional": false,
+            "registry": null,
+            "rename": null,
+            "req": "^1",
+            "source": "registry+https://github.com/rust-lang/crates.io-index",
+            "target": null,
+            "uses_default_features": true
+          }
+        ],
+        "dependency": [
+          "trybuild",
+          "1.0.120",
+          "registry+https://github.com/rust-lang/crates.io-index"
+        ],
+        "enabled_features": [],
+        "package": [
+          "fe2o3-device",
+          "0.1.0",
+          null
+        ],
+        "reason": "dev-not-workspace"
+      },
+      {
+        "declarations": [
+          {
+            "features": [],
+            "kind": "dev",
+            "name": "sha2",
+            "optional": false,
+            "registry": null,
+            "rename": null,
+            "req": "^0.11.0",
+            "source": "registry+https://github.com/rust-lang/crates.io-index",
+            "target": null,
+            "uses_default_features": false
+          }
+        ],
+        "dependency": [
+          "sha2",
+          "0.11.0",
+          "registry+https://github.com/rust-lang/crates.io-index"
+        ],
+        "enabled_features": [],
+        "package": [
+          "fe2o3-drm-uapi",
+          "0.1.0",
+          null
+        ],
+        "reason": "dev-not-workspace"
+      },
+      {
+        "declarations": [
+          {
+            "features": [
+              "fast",
+              "zeroize"
+            ],
+            "kind": "dev",
+            "name": "ed25519-dalek",
+            "optional": false,
+            "registry": null,
+            "rename": null,
+            "req": "=2.2.0",
+            "source": "registry+https://github.com/rust-lang/crates.io-index",
+            "target": null,
+            "uses_default_features": false
+          }
+        ],
+        "dependency": [
+          "ed25519-dalek",
+          "2.2.0",
+          "registry+https://github.com/rust-lang/crates.io-index"
+        ],
+        "enabled_features": [],
+        "package": [
+          "fe2o3-host",
+          "0.1.0",
+          null
+        ],
+        "reason": "dev-not-workspace"
+      },
+      {
+        "alias": "fe2o3-core",
+        "dependency": [
+          "fe2o3-core",
+          "0.1.0",
+          null
+        ],
+        "enabled_features": [],
+        "package": [
+          "fe2o3-host",
+          "0.1.0",
+          null
+        ],
+        "reason": "optional-feature-disabled"
+      },
+      {
+        "declarations": [
+          {
+            "features": [],
+            "kind": "dev",
+            "name": "fe2o3-external-anchor-protocol",
+            "optional": false,
+            "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/fe2o3/crates/fe2o3-external-anchor-protocol",
+            "registry": null,
+            "rename": null,
+            "req": "*",
+            "source": null,
+            "target": null,
+            "uses_default_features": true
+          }
+        ],
+        "dependency": [
+          "fe2o3-external-anchor-protocol",
+          "0.1.0",
+          null
+        ],
+        "enabled_features": [],
+        "package": [
+          "fe2o3-host",
+          "0.1.0",
+          null
+        ],
+        "reason": "dev-not-workspace"
+      },
+      {
+        "declarations": [
+          {
+            "features": [],
+            "kind": "dev",
+            "name": "fe2o3-rustc-invocation",
+            "optional": false,
+            "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/fe2o3/crates/fe2o3-rustc-invocation",
+            "registry": null,
+            "rename": null,
+            "req": "*",
+            "source": null,
+            "target": null,
+            "uses_default_features": true
+          }
+        ],
+        "dependency": [
+          "fe2o3-rustc-invocation",
+          "0.1.0",
+          null
+        ],
+        "enabled_features": [],
+        "package": [
+          "fe2o3-host",
+          "0.1.0",
+          null
+        ],
+        "reason": "dev-not-workspace"
+      },
+      {
+        "alias": "rmpv",
+        "dependency": [
+          "rmpv",
+          "1.3.1",
+          "registry+https://github.com/rust-lang/crates.io-index"
+        ],
+        "enabled_features": [],
+        "package": [
+          "fe2o3-host",
+          "0.1.0",
+          null
+        ],
+        "reason": "optional-feature-disabled"
+      },
+      {
+        "declarations": [
+          {
+            "features": [],
+            "kind": "dev",
+            "name": "serde",
+            "optional": false,
+            "registry": null,
+            "rename": null,
+            "req": "^1",
+            "source": "registry+https://github.com/rust-lang/crates.io-index",
+            "target": null,
+            "uses_default_features": true
+          }
+        ],
+        "dependency": [
+          "serde",
+          "1.0.229",
+          "registry+https://github.com/rust-lang/crates.io-index"
+        ],
+        "enabled_features": [],
+        "package": [
+          "fe2o3-host",
+          "0.1.0",
+          null
+        ],
+        "reason": "dev-not-workspace"
+      },
+      {
+        "declarations": [
+          {
+            "features": [],
+            "kind": "dev",
+            "name": "serde_json",
+            "optional": false,
+            "registry": null,
+            "rename": null,
+            "req": "^1",
+            "source": "registry+https://github.com/rust-lang/crates.io-index",
+            "target": null,
+            "uses_default_features": true
+          }
+        ],
+        "dependency": [
+          "serde_json",
+          "1.0.151",
+          "registry+https://github.com/rust-lang/crates.io-index"
+        ],
+        "enabled_features": [],
+        "package": [
+          "fe2o3-host",
+          "0.1.0",
+          null
+        ],
+        "reason": "dev-not-workspace"
+      },
+      {
+        "declarations": [
+          {
+            "features": [],
+            "kind": "dev",
+            "name": "trybuild",
+            "optional": false,
+            "registry": null,
+            "rename": null,
+            "req": "^1",
+            "source": "registry+https://github.com/rust-lang/crates.io-index",
+            "target": null,
+            "uses_default_features": true
+          }
+        ],
+        "dependency": [
+          "trybuild",
+          "1.0.120",
+          "registry+https://github.com/rust-lang/crates.io-index"
+        ],
+        "enabled_features": [],
+        "package": [
+          "fe2o3-host",
+          "0.1.0",
+          null
+        ],
+        "reason": "dev-not-workspace"
+      },
+      {
+        "declarations": [
+          {
+            "features": [],
+            "kind": "dev",
+            "name": "rmpv",
+            "optional": false,
+            "registry": null,
+            "rename": null,
+            "req": "^1.3.1",
+            "source": "registry+https://github.com/rust-lang/crates.io-index",
+            "target": null,
+            "uses_default_features": false
+          }
+        ],
+        "dependency": [
+          "rmpv",
+          "1.3.1",
+          "registry+https://github.com/rust-lang/crates.io-index"
+        ],
+        "enabled_features": [],
+        "package": [
+          "fe2o3-hsaco",
+          "0.1.0",
+          null
+        ],
+        "reason": "dev-not-workspace"
+      },
+      {
+        "declarations": [
+          {
+            "features": [
+              "fast",
+              "zeroize"
+            ],
+            "kind": "dev",
+            "name": "ed25519-dalek",
+            "optional": false,
+            "registry": null,
+            "rename": null,
+            "req": "=2.2.0",
+            "source": "registry+https://github.com/rust-lang/crates.io-index",
+            "target": null,
+            "uses_default_features": false
+          }
+        ],
+        "dependency": [
+          "ed25519-dalek",
+          "2.2.0",
+          "registry+https://github.com/rust-lang/crates.io-index"
+        ],
+        "enabled_features": [],
+        "package": [
+          "fe2o3-hsaco-finalize",
+          "0.1.0",
+          null
+        ],
+        "reason": "dev-not-workspace"
+      },
+      {
+        "declarations": [
+          {
+            "features": [],
+            "kind": "dev",
+            "name": "fe2o3-compiler-api",
+            "optional": false,
+            "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/fe2o3/crates/fe2o3-compiler-api",
+            "registry": null,
+            "rename": null,
+            "req": "*",
+            "source": null,
+            "target": null,
+            "uses_default_features": true
+          }
+        ],
+        "dependency": [
+          "fe2o3-compiler-api",
+          "0.1.0",
+          null
+        ],
+        "enabled_features": [],
+        "package": [
+          "fe2o3-hsaco-finalize",
+          "0.1.0",
+          null
+        ],
+        "reason": "dev-not-workspace"
+      },
+      {
+        "declarations": [
+          {
+            "features": [],
+            "kind": "dev",
+            "name": "fe2o3-functional-proof",
+            "optional": false,
+            "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/fe2o3/crates/fe2o3-functional-proof",
+            "registry": null,
+            "rename": null,
+            "req": "*",
+            "source": null,
+            "target": null,
+            "uses_default_features": true
+          }
+        ],
+        "dependency": [
+          "fe2o3-functional-proof",
+          "0.1.0",
+          null
+        ],
+        "enabled_features": [],
+        "package": [
+          "fe2o3-hsaco-finalize",
+          "0.1.0",
+          null
+        ],
+        "reason": "dev-not-workspace"
+      },
+      {
+        "declarations": [
+          {
+            "features": [],
+            "kind": "dev",
+            "name": "fe2o3-pliron",
+            "optional": false,
+            "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/fe2o3/crates/fe2o3-pliron",
+            "registry": null,
+            "rename": null,
+            "req": "*",
+            "source": null,
+            "target": null,
+            "uses_default_features": true
+          }
+        ],
+        "dependency": [
+          "fe2o3-pliron",
+          "0.1.0",
+          null
+        ],
+        "enabled_features": [],
+        "package": [
+          "fe2o3-hsaco-finalize",
+          "0.1.0",
+          null
+        ],
+        "reason": "dev-not-workspace"
+      },
+      {
+        "declarations": [
+          {
+            "features": [],
+            "kind": "dev",
+            "name": "fe2o3-proof-contracts",
+            "optional": false,
+            "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/fe2o3/crates/fe2o3-proof-contracts",
+            "registry": null,
+            "rename": null,
+            "req": "*",
+            "source": null,
+            "target": null,
+            "uses_default_features": true
+          }
+        ],
+        "dependency": [
+          "fe2o3-proof-contracts",
+          "0.1.0",
+          null
+        ],
+        "enabled_features": [],
+        "package": [
+          "fe2o3-hsaco-finalize",
+          "0.1.0",
+          null
+        ],
+        "reason": "dev-not-workspace"
+      },
+      {
+        "declarations": [
+          {
+            "features": [],
+            "kind": "dev",
+            "name": "fe2o3-verifier",
+            "optional": false,
+            "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/fe2o3/crates/fe2o3-verifier",
+            "registry": null,
+            "rename": null,
+            "req": "*",
+            "source": null,
+            "target": null,
+            "uses_default_features": true
+          }
+        ],
+        "dependency": [
+          "fe2o3-verifier",
+          "0.1.0",
+          null
+        ],
+        "enabled_features": [],
+        "package": [
+          "fe2o3-hsaco-finalize",
+          "0.1.0",
+          null
+        ],
+        "reason": "dev-not-workspace"
+      },
+      {
+        "declarations": [
+          {
+            "features": [],
+            "kind": "dev",
+            "name": "rmpv",
+            "optional": false,
+            "registry": null,
+            "rename": null,
+            "req": "^1.3.1",
+            "source": "registry+https://github.com/rust-lang/crates.io-index",
+            "target": null,
+            "uses_default_features": false
+          }
+        ],
+        "dependency": [
+          "rmpv",
+          "1.3.1",
+          "registry+https://github.com/rust-lang/crates.io-index"
+        ],
+        "enabled_features": [],
+        "package": [
+          "fe2o3-hsaco-finalize",
+          "0.1.0",
+          null
+        ],
+        "reason": "dev-not-workspace"
+      },
+      {
+        "declarations": [
+          {
+            "features": [],
+            "kind": "dev",
+            "name": "trybuild",
+            "optional": false,
+            "registry": null,
+            "rename": null,
+            "req": "^1",
+            "source": "registry+https://github.com/rust-lang/crates.io-index",
+            "target": null,
+            "uses_default_features": true
+          }
+        ],
+        "dependency": [
+          "trybuild",
+          "1.0.120",
+          "registry+https://github.com/rust-lang/crates.io-index"
+        ],
+        "enabled_features": [],
+        "package": [
+          "fe2o3-hsaco-finalize",
+          "0.1.0",
+          null
+        ],
+        "reason": "dev-not-workspace"
+      },
+      {
+        "alias": "fe2o3-artifact-transaction",
+        "dependency": [
+          "fe2o3-artifact-transaction",
+          "0.1.0",
+          null
+        ],
+        "enabled_features": [],
+        "package": [
+          "fe2o3-kernel-analysis",
+          "0.1.0",
+          null
+        ],
+        "reason": "optional-feature-disabled"
+      },
+      {
+        "alias": "rustc_apfloat",
+        "dependency": [
+          "rustc_apfloat",
+          "0.2.3+llvm-462a31f5a5ab",
+          "registry+https://github.com/rust-lang/crates.io-index"
+        ],
+        "enabled_features": [],
+        "package": [
+          "fe2o3-kernel-analysis",
+          "0.1.0",
+          null
+        ],
+        "reason": "optional-feature-disabled"
+      },
+      {
+        "alias": "rustix",
+        "dependency": [
+          "rustix",
+          "1.1.4",
+          "registry+https://github.com/rust-lang/crates.io-index"
+        ],
+        "enabled_features": [],
+        "package": [
+          "fe2o3-kernel-analysis",
+          "0.1.0",
+          null
+        ],
+        "reason": "optional-feature-disabled"
+      },
+      {
+        "alias": "sha2",
+        "dependency": [
+          "sha2",
+          "0.11.0",
+          "registry+https://github.com/rust-lang/crates.io-index"
+        ],
+        "enabled_features": [],
+        "package": [
+          "fe2o3-kernel-analysis",
+          "0.1.0",
+          null
+        ],
+        "reason": "optional-feature-disabled"
+      },
+      {
+        "alias": "serde",
+        "dependency": [
+          "serde",
+          "1.0.229",
+          "registry+https://github.com/rust-lang/crates.io-index"
+        ],
+        "enabled_features": [
+          "default"
+        ],
+        "package": [
+          "fe2o3-kfd",
+          "0.1.0",
+          null
+        ],
+        "reason": "optional-feature-disabled"
+      },
+      {
+        "alias": "serde_json",
+        "dependency": [
+          "serde_json",
+          "1.0.151",
+          "registry+https://github.com/rust-lang/crates.io-index"
+        ],
+        "enabled_features": [
+          "default"
+        ],
+        "package": [
+          "fe2o3-kfd",
+          "0.1.0",
+          null
+        ],
+        "reason": "optional-feature-disabled"
+      },
+      {
+        "declarations": [
+          {
+            "features": [],
+            "kind": "dev",
+            "name": "sha2",
+            "optional": false,
+            "registry": null,
+            "rename": null,
+            "req": "^0.11.0",
+            "source": "registry+https://github.com/rust-lang/crates.io-index",
+            "target": null,
+            "uses_default_features": false
+          }
+        ],
+        "dependency": [
+          "sha2",
+          "0.11.0",
+          "registry+https://github.com/rust-lang/crates.io-index"
+        ],
+        "enabled_features": [],
+        "package": [
+          "fe2o3-kfd-uapi",
+          "0.1.0",
+          null
+        ],
+        "reason": "dev-not-workspace"
+      },
+      {
+        "declarations": [
+          {
+            "features": [],
+            "kind": "dev",
+            "name": "dialect-amdgcn",
+            "optional": false,
+            "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/fe2o3/crates/dialect-amdgcn",
+            "registry": null,
+            "rename": null,
+            "req": "*",
+            "source": null,
+            "target": null,
+            "uses_default_features": true
+          }
+        ],
+        "dependency": [
+          "dialect-amdgcn",
+          "0.1.0",
+          null
+        ],
+        "enabled_features": [],
+        "package": [
+          "fe2o3-lower-mir-kernel",
+          "0.1.0",
+          null
+        ],
+        "reason": "dev-not-workspace"
+      },
+      {
+        "declarations": [
+          {
+            "features": [],
+            "kind": "dev",
+            "name": "fe2o3-kir-sim",
+            "optional": false,
+            "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/fe2o3/crates/fe2o3-kir-sim",
+            "registry": null,
+            "rename": null,
+            "req": "*",
+            "source": null,
+            "target": null,
+            "uses_default_features": true
+          }
+        ],
+        "dependency": [
+          "fe2o3-kir-sim",
+          "0.1.0",
+          null
+        ],
+        "enabled_features": [],
+        "package": [
+          "fe2o3-lower-mir-kernel",
+          "0.1.0",
+          null
+        ],
+        "reason": "dev-not-workspace"
+      },
+      {
+        "declarations": [
+          {
+            "features": [],
+            "kind": "dev",
+            "name": "fe2o3-compiler-ffi",
+            "optional": false,
+            "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/fe2o3/crates/fe2o3-compiler-ffi",
+            "registry": null,
+            "rename": null,
+            "req": "*",
+            "source": null,
+            "target": null,
+            "uses_default_features": true
+          }
+        ],
+        "dependency": [
+          "fe2o3-compiler-ffi",
+          "0.1.0",
+          null
+        ],
+        "enabled_features": [],
+        "package": [
+          "fe2o3-mir-model",
+          "0.1.0",
+          null
+        ],
+        "reason": "dev-not-workspace"
+      },
+      {
+        "declarations": [
+          {
+            "features": [],
+            "kind": "dev",
+            "name": "dialect-autotune",
+            "optional": false,
+            "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/fe2o3/crates/dialect-autotune",
+            "registry": null,
+            "rename": null,
+            "req": "*",
+            "source": null,
+            "target": null,
+            "uses_default_features": true
+          }
+        ],
+        "dependency": [
+          "dialect-autotune",
+          "0.1.0",
+          null
+        ],
+        "enabled_features": [
+          "default",
+          "internal-proof-staging"
+        ],
+        "package": [
+          "fe2o3-pliron",
+          "0.1.0",
+          null
+        ],
+        "reason": "dev-not-workspace"
+      },
+      {
+        "declarations": [
+          {
+            "features": [],
+            "kind": "dev",
+            "name": "dialect-dispatch",
+            "optional": false,
+            "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/fe2o3/crates/dialect-dispatch",
+            "registry": null,
+            "rename": null,
+            "req": "*",
+            "source": null,
+            "target": null,
+            "uses_default_features": true
+          }
+        ],
+        "dependency": [
+          "dialect-dispatch",
+          "0.1.0",
+          null
+        ],
+        "enabled_features": [
+          "default",
+          "internal-proof-staging"
+        ],
+        "package": [
+          "fe2o3-pliron",
+          "0.1.0",
+          null
+        ],
+        "reason": "dev-not-workspace"
+      },
+      {
+        "declarations": [
+          {
+            "features": [],
+            "kind": "dev",
+            "name": "dialect-schedule",
+            "optional": false,
+            "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/fe2o3/crates/dialect-schedule",
+            "registry": null,
+            "rename": null,
+            "req": "*",
+            "source": null,
+            "target": null,
+            "uses_default_features": true
+          }
+        ],
+        "dependency": [
+          "dialect-schedule",
+          "0.1.0",
+          null
+        ],
+        "enabled_features": [
+          "default",
+          "internal-proof-staging"
+        ],
+        "package": [
+          "fe2o3-pliron",
+          "0.1.0",
+          null
+        ],
+        "reason": "dev-not-workspace"
+      },
+      {
+        "declarations": [
+          {
+            "features": [],
+            "kind": "dev",
+            "name": "dialect-tile",
+            "optional": false,
+            "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/fe2o3/crates/dialect-tile",
+            "registry": null,
+            "rename": null,
+            "req": "*",
+            "source": null,
+            "target": null,
+            "uses_default_features": true
+          }
+        ],
+        "dependency": [
+          "dialect-tile",
+          "0.1.0",
+          null
+        ],
+        "enabled_features": [
+          "default",
+          "internal-proof-staging"
+        ],
+        "package": [
+          "fe2o3-pliron",
+          "0.1.0",
+          null
+        ],
+        "reason": "dev-not-workspace"
+      },
+      {
+        "declarations": [
+          {
+            "features": [
+              "fast",
+              "zeroize"
+            ],
+            "kind": "dev",
+            "name": "ed25519-dalek",
+            "optional": false,
+            "registry": null,
+            "rename": null,
+            "req": "^2.2.0",
+            "source": "registry+https://github.com/rust-lang/crates.io-index",
+            "target": null,
+            "uses_default_features": true
+          }
+        ],
+        "dependency": [
+          "ed25519-dalek",
+          "2.2.0",
+          "registry+https://github.com/rust-lang/crates.io-index"
+        ],
+        "enabled_features": [
+          "default",
+          "internal-proof-staging"
+        ],
+        "package": [
+          "fe2o3-pliron",
+          "0.1.0",
+          null
+        ],
+        "reason": "dev-not-workspace"
+      },
+      {
+        "declarations": [
+          {
+            "features": [
+              "full"
+            ],
+            "kind": "dev",
+            "name": "syn",
+            "optional": false,
+            "registry": null,
+            "rename": null,
+            "req": "^2",
+            "source": "registry+https://github.com/rust-lang/crates.io-index",
+            "target": null,
+            "uses_default_features": true
+          }
+        ],
+        "dependency": [
+          "syn",
+          "2.0.119",
+          "registry+https://github.com/rust-lang/crates.io-index"
+        ],
+        "enabled_features": [
+          "default",
+          "internal-proof-staging"
+        ],
+        "package": [
+          "fe2o3-pliron",
+          "0.1.0",
+          null
+        ],
+        "reason": "dev-not-workspace"
+      },
+      {
+        "declarations": [
+          {
+            "features": [],
+            "kind": "dev",
+            "name": "trybuild",
+            "optional": false,
+            "registry": null,
+            "rename": null,
+            "req": "^1",
+            "source": "registry+https://github.com/rust-lang/crates.io-index",
+            "target": null,
+            "uses_default_features": true
+          }
+        ],
+        "dependency": [
+          "trybuild",
+          "1.0.120",
+          "registry+https://github.com/rust-lang/crates.io-index"
+        ],
+        "enabled_features": [
+          "default",
+          "internal-proof-staging"
+        ],
+        "package": [
+          "fe2o3-pliron",
+          "0.1.0",
+          null
+        ],
+        "reason": "dev-not-workspace"
+      },
+      {
+        "declarations": [
+          {
+            "features": [],
+            "kind": "dev",
+            "name": "fe2o3-build-authority",
+            "optional": false,
+            "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/fe2o3/crates/fe2o3-build-authority",
+            "registry": null,
+            "rename": null,
+            "req": "*",
+            "source": null,
+            "target": null,
+            "uses_default_features": true
+          }
+        ],
+        "dependency": [
+          "fe2o3-build-authority",
+          "0.1.0",
+          null
+        ],
+        "enabled_features": [],
+        "package": [
+          "fe2o3-process-identity",
+          "0.1.0",
+          null
+        ],
+        "reason": "dev-not-workspace"
+      },
+      {
+        "declarations": [
+          {
+            "features": [],
+            "kind": "dev",
+            "name": "fe2o3-debug-protocol",
+            "optional": false,
+            "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/fe2o3/crates/fe2o3-debug-protocol",
+            "registry": null,
+            "rename": null,
+            "req": "*",
+            "source": null,
+            "target": null,
+            "uses_default_features": true
+          }
+        ],
+        "dependency": [
+          "fe2o3-debug-protocol",
+          "0.1.0",
+          null
+        ],
+        "enabled_features": [
+          "default"
+        ],
+        "package": [
+          "fe2o3-runtime",
+          "0.1.0",
+          null
+        ],
+        "reason": "dev-not-workspace"
+      },
+      {
+        "declarations": [
+          {
+            "features": [],
+            "kind": "dev",
+            "name": "fe2o3-kfd-uapi",
+            "optional": false,
+            "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/fe2o3/crates/fe2o3-kfd-uapi",
+            "registry": null,
+            "rename": null,
+            "req": "*",
+            "source": null,
+            "target": null,
+            "uses_default_features": true
+          }
+        ],
+        "dependency": [
+          "fe2o3-kfd-uapi",
+          "0.1.0",
+          null
+        ],
+        "enabled_features": [
+          "default"
+        ],
+        "package": [
+          "fe2o3-runtime",
+          "0.1.0",
+          null
+        ],
+        "reason": "dev-not-workspace"
+      },
+      {
+        "declarations": [
+          {
+            "features": [],
+            "kind": "dev",
+            "name": "libc",
+            "optional": false,
+            "registry": null,
+            "rename": null,
+            "req": "^0.2.189",
+            "source": "registry+https://github.com/rust-lang/crates.io-index",
+            "target": null,
+            "uses_default_features": true
+          }
+        ],
+        "dependency": [
+          "libc",
+          "0.2.189",
+          "registry+https://github.com/rust-lang/crates.io-index"
+        ],
+        "enabled_features": [
+          "default"
+        ],
+        "package": [
+          "fe2o3-runtime",
+          "0.1.0",
+          null
+        ],
+        "reason": "dev-not-workspace"
+      },
+      {
+        "declarations": [
+          {
+            "features": [],
+            "kind": "dev",
+            "name": "rmpv",
+            "optional": false,
+            "registry": null,
+            "rename": null,
+            "req": "^1.3.1",
+            "source": "registry+https://github.com/rust-lang/crates.io-index",
+            "target": null,
+            "uses_default_features": false
+          }
+        ],
+        "dependency": [
+          "rmpv",
+          "1.3.1",
+          "registry+https://github.com/rust-lang/crates.io-index"
+        ],
+        "enabled_features": [
+          "default"
+        ],
+        "package": [
+          "fe2o3-runtime",
+          "0.1.0",
+          null
+        ],
+        "reason": "dev-not-workspace"
+      },
+      {
+        "declarations": [
+          {
+            "features": [
+              "fs",
+              "net"
+            ],
+            "kind": "dev",
+            "name": "rustix",
+            "optional": false,
+            "registry": null,
+            "rename": null,
+            "req": "^1.1.4",
+            "source": "registry+https://github.com/rust-lang/crates.io-index",
+            "target": null,
+            "uses_default_features": true
+          }
+        ],
+        "dependency": [
+          "rustix",
+          "1.1.4",
+          "registry+https://github.com/rust-lang/crates.io-index"
+        ],
+        "enabled_features": [
+          "default"
+        ],
+        "package": [
+          "fe2o3-runtime",
+          "0.1.0",
+          null
+        ],
+        "reason": "dev-not-workspace"
+      },
+      {
+        "declarations": [
+          {
+            "features": [],
+            "kind": "dev",
+            "name": "sha2",
+            "optional": false,
+            "registry": null,
+            "rename": null,
+            "req": "^0.11.0",
+            "source": "registry+https://github.com/rust-lang/crates.io-index",
+            "target": null,
+            "uses_default_features": false
+          }
+        ],
+        "dependency": [
+          "sha2",
+          "0.11.0",
+          "registry+https://github.com/rust-lang/crates.io-index"
+        ],
+        "enabled_features": [],
+        "package": [
+          "fe2o3-service-host",
+          "0.1.0",
+          null
+        ],
+        "reason": "dev-not-workspace"
+      },
+      {
+        "alias": "js-sys",
+        "dependency": [
+          "js-sys",
+          "0.3.104",
+          "registry+https://github.com/rust-lang/crates.io-index"
+        ],
+        "enabled_features": [
+          "std"
+        ],
+        "package": [
+          "getrandom",
+          "0.2.17",
+          "registry+https://github.com/rust-lang/crates.io-index"
+        ],
+        "reason": "optional-feature-disabled"
+      },
+      {
+        "alias": "wasm-bindgen",
+        "dependency": [
+          "wasm-bindgen",
+          "0.2.127",
+          "registry+https://github.com/rust-lang/crates.io-index"
+        ],
+        "enabled_features": [
+          "std"
+        ],
+        "package": [
+          "getrandom",
+          "0.2.17",
+          "registry+https://github.com/rust-lang/crates.io-index"
+        ],
+        "reason": "optional-feature-disabled"
+      }
+    ],
+    "removed_packages": [
+      [
+        "addr2line",
+        "0.25.1",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "adler2",
+        "2.0.1",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "ambient-authority",
+        "0.0.2",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "atomic-waker",
+        "1.1.2",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "autocfg",
+        "1.5.1",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "aws-lc-rs",
+        "1.18.0",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "aws-lc-sys",
+        "0.44.0",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "axum",
+        "0.8.4",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "axum-core",
+        "0.5.6",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "backtrace",
+        "0.3.76",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "base64",
+        "0.22.1",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "bumpalo",
+        "3.20.3",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "cap-primitives",
+        "4.0.2",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "cargo-fe2o3",
+        "0.1.0",
+        null
+      ],
+      [
+        "cc",
+        "1.4.4",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "cfg_aliases",
+        "0.2.2",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "chacha20",
+        "0.10.2",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "cmake",
+        "0.1.58",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "csv",
+        "1.4.0",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "csv-core",
+        "0.1.13",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "deranged",
+        "0.5.8",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "device-copy-renamed-dependency",
+        "0.0.0",
+        null
+      ],
+      [
+        "dialect-autotune",
+        "0.1.0",
+        null
+      ],
+      [
+        "dialect-dispatch",
+        "0.1.0",
+        null
+      ],
+      [
+        "dialect-schedule",
+        "0.1.0",
+        null
+      ],
+      [
+        "dialect-tile",
+        "0.1.0",
+        null
+      ],
+      [
+        "displaydoc",
+        "0.2.7",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "dunce",
+        "1.0.5",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "fastrand",
+        "2.5.0",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "fe2o3-add-inplace",
+        "0.1.0",
+        null
+      ],
+      [
+        "fe2o3-axpy-inplace",
+        "0.1.0",
+        null
+      ],
+      [
+        "fe2o3-broker-authority-service",
+        "0.1.0",
+        null
+      ],
+      [
+        "fe2o3-compiler-api",
+        "0.1.0",
+        null
+      ],
+      [
+        "fe2o3-compiler-execution-coordinator",
+        "0.1.0",
+        null
+      ],
+      [
+        "fe2o3-compiler-execution-deployment",
+        "0.1.0",
+        null
+      ],
+      [
+        "fe2o3-compiler-execution-issuer",
+        "0.1.0",
+        null
+      ],
+      [
+        "fe2o3-compiler-execution-lifecycle",
+        "0.1.0",
+        null
+      ],
+      [
+        "fe2o3-compiler-execution-supervisor",
+        "0.1.0",
+        null
+      ],
+      [
+        "fe2o3-completion",
+        "0.1.0",
+        null
+      ],
+      [
+        "fe2o3-copy",
+        "0.1.0",
+        null
+      ],
+      [
+        "fe2o3-core",
+        "0.1.0",
+        null
+      ],
+      [
+        "fe2o3-debug-cli",
+        "0.1.0",
+        null
+      ],
+      [
+        "fe2o3-debug-protocol",
+        "0.1.0",
+        null
+      ],
+      [
+        "fe2o3-differential",
+        "0.1.0",
+        null
+      ],
+      [
+        "fe2o3-downsample",
+        "0.1.0",
+        null
+      ],
+      [
+        "fe2o3-external-anchor-coordinator",
+        "0.1.0",
+        null
+      ],
+      [
+        "fe2o3-external-anchor-provisioner",
+        "0.1.0",
+        null
+      ],
+      [
+        "fe2o3-external-anchor-service",
+        "0.1.0",
+        null
+      ],
+      [
+        "fe2o3-fill",
+        "0.1.0",
+        null
+      ],
+      [
+        "fe2o3-gather-odd",
+        "0.1.0",
+        null
+      ],
+      [
+        "fe2o3-half-math-compiler-fixture",
+        "0.0.0",
+        null
+      ],
+      [
+        "fe2o3-hip-sys",
+        "0.1.0",
+        null
+      ],
+      [
+        "fe2o3-host-link-closure",
+        "0.1.0",
+        null
+      ],
+      [
+        "fe2o3-hsa-runtime",
+        "0.1.0",
+        null
+      ],
+      [
+        "fe2o3-kir-debugger",
+        "0.1.0",
+        null
+      ],
+      [
+        "fe2o3-kir-sim",
+        "0.1.0",
+        null
+      ],
+      [
+        "fe2o3-kir-sim-cli",
+        "0.1.0",
+        null
+      ],
+      [
+        "fe2o3-kir-sim-trace",
+        "0.1.0",
+        null
+      ],
+      [
+        "fe2o3-loop-device",
+        "0.1.0",
+        null
+      ],
+      [
+        "fe2o3-memory-v1-compiler-fixture",
+        "0.0.0",
+        null
+      ],
+      [
+        "fe2o3-negate",
+        "0.1.0",
+        null
+      ],
+      [
+        "fe2o3-normalize",
+        "0.1.0",
+        null
+      ],
+      [
+        "fe2o3-pipeline",
+        "0.1.0",
+        null
+      ],
+      [
+        "fe2o3-pliron-conformance",
+        "0.1.0",
+        null
+      ],
+      [
+        "fe2o3-pliron-llvm-smoke",
+        "0.1.0",
+        null
+      ],
+      [
+        "fe2o3-previous",
+        "0.1.0",
+        null
+      ],
+      [
+        "fe2o3-production-extraction-fixture",
+        "0.1.0",
+        null
+      ],
+      [
+        "fe2o3-production-ranked-bounds-fixture",
+        "0.1.0",
+        null
+      ],
+      [
+        "fe2o3-production-semantic-conformance-fixture",
+        "0.0.0",
+        null
+      ],
+      [
+        "fe2o3-protected-publisher",
+        "0.1.0",
+        null
+      ],
+      [
+        "fe2o3-protected-service-profile",
+        "0.1.0",
+        null
+      ],
+      [
+        "fe2o3-protected-service-spawn",
+        "0.1.0",
+        null
+      ],
+      [
+        "fe2o3-protected-static-executable",
+        "0.1.0",
+        null
+      ],
+      [
+        "fe2o3-raw-add-index",
+        "0.1.0",
+        null
+      ],
+      [
+        "fe2o3-raw-const-minus",
+        "0.1.0",
+        null
+      ],
+      [
+        "fe2o3-raw-disjoint-inplace-shift",
+        "0.1.0",
+        null
+      ],
+      [
+        "fe2o3-raw-disjoint-shift",
+        "0.1.0",
+        null
+      ],
+      [
+        "fe2o3-raw-gather",
+        "0.1.0",
+        null
+      ],
+      [
+        "fe2o3-raw-neighbors",
+        "0.1.0",
+        null
+      ],
+      [
+        "fe2o3-raw-output-shift",
+        "0.1.0",
+        null
+      ],
+      [
+        "fe2o3-raw-parenthesized-sub",
+        "0.1.0",
+        null
+      ],
+      [
+        "fe2o3-runtime-machine-adapter",
+        "0.1.0",
+        null
+      ],
+      [
+        "fe2o3-saxpy",
+        "0.1.0",
+        null
+      ],
+      [
+        "fe2o3-scalar-gemm-v1",
+        "0.1.0",
+        null
+      ],
+      [
+        "fe2o3-scale",
+        "0.1.0",
+        null
+      ],
+      [
+        "fe2o3-semantic-import",
+        "0.1.0",
+        null
+      ],
+      [
+        "fe2o3-semantic-query",
+        "0.1.0",
+        null
+      ],
+      [
+        "fe2o3-semantic-trace",
+        "0.1.0",
+        null
+      ],
+      [
+        "fe2o3-shift",
+        "0.1.0",
+        null
+      ],
+      [
+        "fe2o3-sim-differential",
+        "0.1.0",
+        null
+      ],
+      [
+        "fe2o3-sim-physical-differential",
+        "0.1.0",
+        null
+      ],
+      [
+        "fe2o3-sim-runtime",
+        "0.1.0",
+        null
+      ],
+      [
+        "fe2o3-static-preexec-manifest",
+        "0.1.0",
+        null
+      ],
+      [
+        "fe2o3-stencil",
+        "0.1.0",
+        null
+      ],
+      [
+        "fe2o3-trusted-item-external-spoof",
+        "0.0.0",
+        null
+      ],
+      [
+        "fe2o3-trusted-item-local-marker",
+        "0.0.0",
+        null
+      ],
+      [
+        "fe2o3-trusted-item-lookalike-helper",
+        "0.0.0",
+        null
+      ],
+      [
+        "fe2o3-trusted-item-lookalike-thread",
+        "0.0.0",
+        null
+      ],
+      [
+        "fe2o3-trusted-item-lookalike-type",
+        "0.0.0",
+        null
+      ],
+      [
+        "fe2o3-trusted-item-renamed-genuine",
+        "0.0.0",
+        null
+      ],
+      [
+        "fe2o3-typed-alias-spoof",
+        "0.0.0",
+        null
+      ],
+      [
+        "fe2o3-vecadd",
+        "0.1.0",
+        null
+      ],
+      [
+        "fe2o3-vecadd-f64",
+        "0.1.0",
+        null
+      ],
+      [
+        "fe2o3-virtual-runtime",
+        "0.1.0",
+        null
+      ],
+      [
+        "fe2o3-virtual-runtime-cli",
+        "0.1.0",
+        null
+      ],
+      [
+        "fe2o3-worker-v3-verification-client",
+        "0.1.0",
+        null
+      ],
+      [
+        "fe2o3-worker-v3-verification-protocol",
+        "0.1.0",
+        null
+      ],
+      [
+        "fe2o3-worker-v3-verification-service",
+        "0.1.0",
+        null
+      ],
+      [
+        "find-msvc-tools",
+        "0.1.11",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "form_urlencoded",
+        "1.2.2",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "fs-set-times",
+        "0.20.3",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "fs_extra",
+        "1.3.0",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "futures-channel",
+        "0.3.34",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "futures-core",
+        "0.3.34",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "futures-task",
+        "0.3.34",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "futures-util",
+        "0.3.34",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "getrandom",
+        "0.3.4",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "getrandom",
+        "0.4.3",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "gimli",
+        "0.32.3",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "glob",
+        "0.3.4",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "http",
+        "1.5.0",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "http-body",
+        "1.1.0",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "http-body-util",
+        "0.1.5",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "httparse",
+        "1.10.1",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "httpdate",
+        "1.0.3",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "hyper",
+        "1.11.0",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "hyper-rustls",
+        "0.27.9",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "hyper-util",
+        "0.1.20",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "icu_collections",
+        "2.3.0",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "icu_locale_core",
+        "2.3.0",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "icu_normalizer",
+        "2.3.0",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "icu_normalizer_data",
+        "2.3.0",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "icu_properties",
+        "2.3.0",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "icu_properties_data",
+        "2.3.0",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "icu_provider",
+        "2.3.1",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "idna",
+        "1.1.0",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "idna_adapter",
+        "1.2.2",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "io-extras",
+        "0.19.0",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "io-lifetimes",
+        "2.0.4",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "io-lifetimes",
+        "3.0.1",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "io-uring",
+        "0.7.14",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "ipnet",
+        "2.12.1",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "jobserver",
+        "0.1.35",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "js-sys",
+        "0.3.104",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "jsonwebtoken",
+        "10.3.0",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "litemap",
+        "0.8.3",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "lru-slab",
+        "0.1.2",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "matchit",
+        "0.8.4",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "maybe-owned",
+        "0.3.4",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "mime",
+        "0.3.17",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "miniz_oxide",
+        "0.8.9",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "mio",
+        "1.2.2",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "num-bigint",
+        "0.4.8",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "num-conv",
+        "0.2.2",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "num-integer",
+        "0.1.47",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "num-traits",
+        "0.2.19",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "object",
+        "0.37.3",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "once_cell",
+        "1.21.4",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "pem",
+        "3.0.6",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "pem-rfc7468",
+        "0.7.0",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "percent-encoding",
+        "2.3.2",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "pin-project-lite",
+        "0.2.17",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "pkg-config",
+        "0.3.34",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "pliron-llvm",
+        "0.17.0",
+        "git+https://github.com/harsh-nod/pliron.git?rev=161c385576d45d4e634ba179fa93a545b91124e6#161c385576d45d4e634ba179fa93a545b91124e6"
+      ],
+      [
+        "potential_utf",
+        "0.1.6",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "powerfmt",
+        "0.2.0",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "quinn",
+        "0.11.11",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "quinn-proto",
+        "0.11.17",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "quinn-udp",
+        "0.5.15",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "r-efi",
+        "5.3.0",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "r-efi",
+        "6.0.0",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "rand",
+        "0.10.2",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "rand_core",
+        "0.10.1",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "rand_pcg",
+        "0.10.2",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "reqwest",
+        "0.12.23",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "ring",
+        "0.17.14",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "rmp",
+        "0.8.15",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "rmpv",
+        "1.3.1",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "rustc-codegen-fe2o3",
+        "0.1.0",
+        null
+      ],
+      [
+        "rustc-demangle",
+        "0.1.28",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "rustix-linux-procfs",
+        "0.1.1",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "rustls",
+        "0.23.43",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "rustls-pki-types",
+        "1.15.1",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "rustls-webpki",
+        "0.103.15",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "ryu",
+        "1.0.23",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "serde_path_to_error",
+        "0.1.20",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "serde_urlencoded",
+        "0.7.1",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "shlex",
+        "2.0.1",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "signal-hook",
+        "0.4.4",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "signal-hook-registry",
+        "1.4.8",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "simple_asn1",
+        "0.6.4",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "slab",
+        "0.4.12",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "socket2",
+        "0.6.5",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "stable_deref_trait",
+        "1.2.1",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "sync_wrapper",
+        "1.0.2",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "synstructure",
+        "0.13.2",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "target-triple",
+        "1.0.1",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "tempfile",
+        "3.21.0",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "termcolor",
+        "1.4.1",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "time",
+        "0.3.55",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "time-core",
+        "0.1.9",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "time-macros",
+        "0.2.32",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "tinystr",
+        "0.8.4",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "tinyvec",
+        "1.12.0",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "tinyvec_macros",
+        "0.1.1",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "tokio",
+        "1.47.1",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "tokio-macros",
+        "2.5.0",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "tokio-rustls",
+        "0.26.4",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "tower",
+        "0.5.2",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "tower-http",
+        "0.6.11",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "tower-layer",
+        "0.3.3",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "tower-service",
+        "0.3.3",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "tracing",
+        "0.1.44",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "tracing-core",
+        "0.1.36",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "try-lock",
+        "0.2.5",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "trybuild",
+        "1.0.120",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "untrusted",
+        "0.7.1",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "untrusted",
+        "0.9.0",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "url",
+        "2.5.8",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "utf8_iter",
+        "1.0.4",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "verus-vecadd",
+        "0.1.0",
+        null
+      ],
+      [
+        "want",
+        "0.3.1",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "wasip2",
+        "1.0.4+wasi-0.2.12",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "wasm-bindgen",
+        "0.2.127",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "wasm-bindgen-futures",
+        "0.4.77",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "wasm-bindgen-macro",
+        "0.2.127",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "wasm-bindgen-macro-support",
+        "0.2.127",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "wasm-bindgen-shared",
+        "0.2.127",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "web-sys",
+        "0.3.104",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "web-time",
+        "1.1.0",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "webpki-roots",
+        "1.0.9",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "winapi-util",
+        "0.1.11",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "windows-sys",
+        "0.52.0",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "windows-sys",
+        "0.59.0",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "windows-sys",
+        "0.60.2",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "windows-targets",
+        "0.52.6",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "windows-targets",
+        "0.53.5",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "windows_aarch64_gnullvm",
+        "0.52.6",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "windows_aarch64_gnullvm",
+        "0.53.1",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "windows_aarch64_msvc",
+        "0.52.6",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "windows_aarch64_msvc",
+        "0.53.1",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "windows_i686_gnu",
+        "0.52.6",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "windows_i686_gnu",
+        "0.53.1",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "windows_i686_gnullvm",
+        "0.52.6",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "windows_i686_gnullvm",
+        "0.53.1",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "windows_i686_msvc",
+        "0.52.6",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "windows_i686_msvc",
+        "0.53.1",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "windows_x86_64_gnu",
+        "0.52.6",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "windows_x86_64_gnu",
+        "0.53.1",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "windows_x86_64_gnullvm",
+        "0.52.6",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "windows_x86_64_gnullvm",
+        "0.53.1",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "windows_x86_64_msvc",
+        "0.52.6",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "windows_x86_64_msvc",
+        "0.53.1",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "winx",
+        "0.36.4",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "wit-bindgen",
+        "0.57.1",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "writeable",
+        "0.6.4",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "yoke",
+        "0.8.3",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "yoke-derive",
+        "0.8.2",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "zerofrom",
+        "0.1.8",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "zerofrom-derive",
+        "0.1.7",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "zerotrie",
+        "0.2.5",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "zerovec",
+        "0.11.8",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ],
+      [
+        "zerovec-derive",
+        "0.11.6",
+        "registry+https://github.com/rust-lang/crates.io-index"
+      ]
+    ],
+    "selected_packages": 163
+  },
+  "numerical_acceptance": false,
+  "passed": false,
+  "performance_claim": false,
+  "phases": [
+    {
+      "adopted_reaped": [],
+      "argv": [
+        "/usr/bin/prlimit",
+        "--as=12884901888",
+        "--cpu=1200",
+        "--fsize=1073741824",
+        "--core=0",
+        "--",
+        "/home/harmenon/.rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/bin/rustc",
+        "--version",
+        "--verbose"
+      ],
+      "command": {
+        "bytes": 1836,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/evidence/rustc-version.command.json",
+        "sha256": "815163b9d7c63df54ead7daf2e8161349be7ac985d969a4b0ebc2bdb0b500533"
+      },
+      "elapsed_ns": 101009753,
+      "exception": null,
+      "exit_code": 0,
+      "forced_cleanup": false,
+      "label": "rustc-version",
+      "natural_exit": true,
+      "observed_signals": [],
+      "pgid": 2520538,
+      "pid": 2520538,
+      "process_group_absent": true,
+      "reaped": true,
+      "stderr": {
+        "bytes": 0,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/evidence/rustc-version.stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "stdout": {
+        "bytes": 212,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/evidence/rustc-version.stdout",
+        "sha256": "580dbecb7627e4e8ad67fd0b1d539727ba8d2651d04035c907b406d83200b4e2"
+      },
+      "storage_failure": null,
+      "timed_out": false
+    },
+    {
+      "adopted_reaped": [],
+      "argv": [
+        "/usr/bin/prlimit",
+        "--as=12884901888",
+        "--cpu=1200",
+        "--fsize=1073741824",
+        "--core=0",
+        "--",
+        "/home/harmenon/.rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/bin/rustfmt",
+        "--edition",
+        "2024",
+        "--config",
+        "skip_children=true",
+        "candidate/src/arithmetic.rs",
+        "candidate/src/guard.rs",
+        "candidate/src/guard_tests.rs",
+        "candidate/src/kernels.rs",
+        "candidate/src/lib.rs"
+      ],
+      "command": {
+        "bytes": 2036,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/evidence/format.command.json",
+        "sha256": "53a6ddce5372e524b5666c477ac217b3d947ba4b525bb9551a39c1392c964d8d"
+      },
+      "elapsed_ns": 100782763,
+      "exception": null,
+      "exit_code": 0,
+      "forced_cleanup": false,
+      "label": "format",
+      "natural_exit": true,
+      "observed_signals": [],
+      "pgid": 2520540,
+      "pid": 2520540,
+      "process_group_absent": true,
+      "reaped": true,
+      "stderr": {
+        "bytes": 0,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/evidence/format.stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "stdout": {
+        "bytes": 0,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/evidence/format.stdout",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "storage_failure": null,
+      "timed_out": false
+    },
+    {
+      "adopted_reaped": [],
+      "argv": [
+        "/usr/bin/prlimit",
+        "--as=12884901888",
+        "--cpu=1200",
+        "--fsize=1073741824",
+        "--core=0",
+        "--",
+        "/home/harmenon/.rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/bin/rustfmt",
+        "--edition",
+        "2024",
+        "--check",
+        "--config",
+        "skip_children=true",
+        "candidate/src/arithmetic.rs",
+        "candidate/src/guard.rs",
+        "candidate/src/guard_tests.rs",
+        "candidate/src/kernels.rs",
+        "candidate/src/lib.rs"
+      ],
+      "command": {
+        "bytes": 2051,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/evidence/format-check.command.json",
+        "sha256": "47dcc9d3fae2dbff8d1b669d86a98b9a4969bd7b901580d0f5dcb835910073ec"
+      },
+      "elapsed_ns": 101113523,
+      "exception": null,
+      "exit_code": 0,
+      "forced_cleanup": false,
+      "label": "format-check",
+      "natural_exit": true,
+      "observed_signals": [],
+      "pgid": 2520542,
+      "pid": 2520542,
+      "process_group_absent": true,
+      "reaped": true,
+      "stderr": {
+        "bytes": 0,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/evidence/format-check.stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "stdout": {
+        "bytes": 0,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/evidence/format-check.stdout",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "storage_failure": null,
+      "timed_out": false
+    },
+    {
+      "adopted_reaped": [],
+      "argv": [
+        "/usr/bin/prlimit",
+        "--as=12884901888",
+        "--cpu=1200",
+        "--fsize=1073741824",
+        "--core=0",
+        "--",
+        "/home/harmenon/.rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/bin/cargo",
+        "metadata",
+        "--offline",
+        "--format-version",
+        "1",
+        "--manifest-path",
+        "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/candidate/Cargo.toml",
+        "--no-default-features",
+        "--features",
+        "gfx950"
+      ],
+      "command": {
+        "bytes": 2087,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/evidence/metadata.command.json",
+        "sha256": "c21fa8c78d4310a58aaab400f7dafaabae27fbd92b03cf8c1a8dba5efb6be4c4"
+      },
+      "elapsed_ns": 100882202,
+      "exception": null,
+      "exit_code": 0,
+      "forced_cleanup": false,
+      "label": "metadata",
+      "natural_exit": true,
+      "observed_signals": [],
+      "pgid": 2520543,
+      "pid": 2520543,
+      "process_group_absent": true,
+      "reaped": true,
+      "stderr": {
+        "bytes": 0,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/evidence/metadata.stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "stdout": {
+        "bytes": 781017,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/evidence/metadata.stdout",
+        "sha256": "710a6bafc60e90cafeef38bee0ea64f52779071267c04f314bee4060d79cae65"
+      },
+      "storage_failure": null,
+      "timed_out": false
+    },
+    {
+      "adopted_reaped": [],
+      "argv": [
+        "/usr/bin/prlimit",
+        "--as=12884901888",
+        "--cpu=1200",
+        "--fsize=1073741824",
+        "--core=0",
+        "--",
+        "/home/harmenon/.rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/bin/cargo",
+        "check",
+        "--offline",
+        "--locked",
+        "--jobs",
+        "2",
+        "--lib",
+        "--manifest-path",
+        "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/candidate/Cargo.toml",
+        "--no-default-features",
+        "--features",
+        "gfx950"
+      ],
+      "command": {
+        "bytes": 2104,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/evidence/host-check.command.json",
+        "sha256": "94843b864a1a04c3b32ee55e981cecf6d619bdcaee265270d5b1689d606bfaa9"
+      },
+      "elapsed_ns": 32711977348,
+      "exception": null,
+      "exit_code": 0,
+      "forced_cleanup": false,
+      "label": "host-check",
+      "natural_exit": true,
+      "observed_signals": [],
+      "pgid": 2520550,
+      "pid": 2520550,
+      "process_group_absent": true,
+      "reaped": true,
+      "stderr": {
+        "bytes": 14209,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/evidence/host-check.stderr",
+        "sha256": "d0d5c532aca9be9109d323e70ae717dea10bb4f28e506dda84569e9e70b96f22"
+      },
+      "stdout": {
+        "bytes": 0,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/evidence/host-check.stdout",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "storage_failure": null,
+      "timed_out": false
+    },
+    {
+      "adopted_reaped": [
+        {
+          "pid": 2524827,
+          "wait_status": 15
+        },
+        {
+          "pid": 2524862,
+          "wait_status": 15
+        }
+      ],
+      "argv": [
+        "/usr/bin/prlimit",
+        "--as=12884901888",
+        "--cpu=1200",
+        "--fsize=1073741824",
+        "--core=0",
+        "--",
+        "/home/harmenon/.rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--offline",
+        "--locked",
+        "--jobs",
+        "2",
+        "--lib",
+        "--no-run",
+        "--message-format=json",
+        "--manifest-path",
+        "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/candidate/Cargo.toml",
+        "--no-default-features",
+        "--features",
+        "gfx950"
+      ],
+      "command": {
+        "bytes": 2148,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/evidence/build-tests.command.json",
+        "sha256": "6aee7ef9c5fbf7cd79361d101e1a47eb8b4dc876fb66bec9511d45e190303562"
+      },
+      "elapsed_ns": 12198529262,
+      "exception": "FileNotFoundError(2, 'No such file or directory')",
+      "exit_code": -15,
+      "forced_cleanup": true,
+      "label": "build-tests",
+      "natural_exit": false,
+      "observed_signals": [],
+      "pgid": 2524320,
+      "pid": 2524320,
+      "process_group_absent": true,
+      "reaped": true,
+      "stderr": {
+        "bytes": 2180,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/evidence/build-tests.stderr",
+        "sha256": "c5d7be1efe1549359ebafbde3da8f46ce63d2e46d204fc9191fe543942754753"
+      },
+      "stdout": {
+        "bytes": 118651,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/evidence/build-tests.stdout",
+        "sha256": "3004c990566cdbfc81ea83732af6357bef81c87e4ef04f4efe76e16227f29647"
+      },
+      "storage_failure": null,
+      "timed_out": false
+    }
+  ],
+  "postcheck_errors": [],
+  "production_authority": false,
+  "qualified_rpo_dependency_identity_claim": false,
+  "raw": {
+    "build-tests.command.json": {
+      "bytes": 2148,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/evidence/build-tests.command.json",
+      "sha256": "6aee7ef9c5fbf7cd79361d101e1a47eb8b4dc876fb66bec9511d45e190303562"
+    },
+    "build-tests.result.json": {
+      "bytes": 1889,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/evidence/build-tests.result.json",
+      "sha256": "25a46ace774ad423613ff2f767a644c63bda27d410e128999db1c35c77720d81"
+    },
+    "build-tests.started.json": {
+      "bytes": 613,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/evidence/build-tests.started.json",
+      "sha256": "29359779f09670bfaed1c0220c124901c066d4123bfdf37d8d5faf89de1591d9"
+    },
+    "build-tests.stderr": {
+      "bytes": 2180,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/evidence/build-tests.stderr",
+      "sha256": "c5d7be1efe1549359ebafbde3da8f46ce63d2e46d204fc9191fe543942754753"
+    },
+    "build-tests.stdout": {
+      "bytes": 118651,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/evidence/build-tests.stdout",
+      "sha256": "3004c990566cdbfc81ea83732af6357bef81c87e4ef04f4efe76e16227f29647"
+    },
+    "dependencies-after.json": {
+      "bytes": 1334439,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/evidence/dependencies-after.json",
+      "sha256": "64fae7c4bb0736c454fab9d025b1e423246876665e55dbede5308b70dd1a3325"
+    },
+    "dependencies-before.json": {
+      "bytes": 1334439,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/evidence/dependencies-before.json",
+      "sha256": "64fae7c4bb0736c454fab9d025b1e423246876665e55dbede5308b70dd1a3325"
+    },
+    "format-check.command.json": {
+      "bytes": 2051,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/evidence/format-check.command.json",
+      "sha256": "47dcc9d3fae2dbff8d1b669d86a98b9a4969bd7b901580d0f5dcb835910073ec"
+    },
+    "format-check.result.json": {
+      "bytes": 1619,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/evidence/format-check.result.json",
+      "sha256": "d5f32e0673662142bcfde3349fe8e86b1c8dde8ecf6164df40dfdd4c50a8d664"
+    },
+    "format-check.started.json": {
+      "bytes": 518,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/evidence/format-check.started.json",
+      "sha256": "61f3af5c1c76e5d7e606a8beada98f27325c5406c7e0ea312b8c6fb2ea99f96d"
+    },
+    "format-check.stderr": {
+      "bytes": 0,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/evidence/format-check.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "format-check.stdout": {
+      "bytes": 0,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/evidence/format-check.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "format.command.json": {
+      "bytes": 2036,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/evidence/format.command.json",
+      "sha256": "53a6ddce5372e524b5666c477ac217b3d947ba4b525bb9551a39c1392c964d8d"
+    },
+    "format.result.json": {
+      "bytes": 1580,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/evidence/format.result.json",
+      "sha256": "f6905fa41a51c2e09f4a26eca0a1f248ce45190e51116b6df57c6eb4a512f2a7"
+    },
+    "format.started.json": {
+      "bytes": 503,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/evidence/format.started.json",
+      "sha256": "4d5ef796dbe335d8ca01508c2495b9db749d2b1302a44509649198805cb7026d"
+    },
+    "format.stderr": {
+      "bytes": 0,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/evidence/format.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "format.stdout": {
+      "bytes": 0,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/evidence/format.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "host-check.command.json": {
+      "bytes": 2104,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/evidence/host-check.command.json",
+      "sha256": "94843b864a1a04c3b32ee55e981cecf6d619bdcaee265270d5b1689d606bfaa9"
+    },
+    "host-check.result.json": {
+      "bytes": 1668,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/evidence/host-check.result.json",
+      "sha256": "a184bf9f16c6c7d05b9b2f8152e69ed6fdf9702015ed2f2448eacce6d2a92d8d"
+    },
+    "host-check.started.json": {
+      "bytes": 569,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/evidence/host-check.started.json",
+      "sha256": "9a4062b25343eaef77a9655854f394553df1c2eda11968f3ec1ae7a4b0b9a5c1"
+    },
+    "host-check.stderr": {
+      "bytes": 14209,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/evidence/host-check.stderr",
+      "sha256": "d0d5c532aca9be9109d323e70ae717dea10bb4f28e506dda84569e9e70b96f22"
+    },
+    "host-check.stdout": {
+      "bytes": 0,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/evidence/host-check.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "metadata.command.json": {
+      "bytes": 2087,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/evidence/metadata.command.json",
+      "sha256": "c21fa8c78d4310a58aaab400f7dafaabae27fbd92b03cf8c1a8dba5efb6be4c4"
+    },
+    "metadata.result.json": {
+      "bytes": 1643,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/evidence/metadata.result.json",
+      "sha256": "3df83e7b60695199c38a46a510d61e04e59222ccbc8673dcdb0f8404d52752f0"
+    },
+    "metadata.started.json": {
+      "bytes": 553,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/evidence/metadata.started.json",
+      "sha256": "519774e3cf7af2488cd5a76f917b40d638d8fa10d5c8d18c71c86f23b92bade2"
+    },
+    "metadata.stderr": {
+      "bytes": 0,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/evidence/metadata.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "metadata.stdout": {
+      "bytes": 781017,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/evidence/metadata.stdout",
+      "sha256": "710a6bafc60e90cafeef38bee0ea64f52779071267c04f314bee4060d79cae65"
+    },
+    "rustc-version.command.json": {
+      "bytes": 1836,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/evidence/rustc-version.command.json",
+      "sha256": "815163b9d7c63df54ead7daf2e8161349be7ac985d969a4b0ebc2bdb0b500533"
+    },
+    "rustc-version.result.json": {
+      "bytes": 1410,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/evidence/rustc-version.result.json",
+      "sha256": "10842e236953e16640a5a576dff2306d844ed4c8e39ddc905d4dcb8397ed29e5"
+    },
+    "rustc-version.started.json": {
+      "bytes": 303,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/evidence/rustc-version.started.json",
+      "sha256": "00f05558749378485c6e5ded3ef2e905231788662ce0d019b0a9789e38e1ea8e"
+    },
+    "rustc-version.stderr": {
+      "bytes": 0,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/evidence/rustc-version.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "rustc-version.stdout": {
+      "bytes": 212,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/evidence/rustc-version.stdout",
+      "sha256": "580dbecb7627e4e8ad67fd0b1d539727ba8d2651d04035c907b406d83200b4e2"
+    },
+    "sources-after.json": {
+      "bytes": 1966896,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/evidence/sources-after.json",
+      "sha256": "119e1367366b8355925a6835e2c437669c0f27edc5e35c2cc288003be1fce207"
+    },
+    "sources-formatted.json": {
+      "bytes": 1966896,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/evidence/sources-formatted.json",
+      "sha256": "53b4188cf3f72a48bbd8cca42845d0c3e688deecb0b9c9420e7c1aea50a3bfef"
+    },
+    "sources-input.json": {
+      "bytes": 1966896,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/evidence/sources-input.json",
+      "sha256": "0eed23da780a2f4a1ced55c52cd6e0be43c802ca5ce044d59db19136b489d23d"
+    },
+    "sources-tested.json": {
+      "bytes": 1966896,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/evidence/sources-tested.json",
+      "sha256": "119e1367366b8355925a6835e2c437669c0f27edc5e35c2cc288003be1fce207"
+    }
+  },
+  "schema": "ferric-guarded-mlp-segment-cpu-v1",
+  "source_unchanged": true,
+  "tested_sources": {
+    "bytes": 1966896,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/evidence/sources-tested.json",
+    "sha256": "119e1367366b8355925a6835e2c437669c0f27edc5e35c2cc288003be1fce207"
+  },
+  "tests": null,
+  "tool_pins": {
+    "cargo": {
+      "bytes": 42375992,
+      "path": "/home/harmenon/.rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/bin/cargo",
+      "sha256": "c9ad606cb1dbb4a65aa27c80be88ed61eb2b811b6450eeec6794f60ed78b94a3"
+    },
+    "libLLVM-22-rust-1.96.0-nightly.so": {
+      "bytes": 43,
+      "path": "/home/harmenon/.rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/lib/libLLVM-22-rust-1.96.0-nightly.so",
+      "sha256": "d43c716e9a7f6e673b4021e1ced69208a21e2433f0f90b49a8701f8be7c056be"
+    },
+    "libLLVM.so.22.1-rust-1.96.0-nightly": {
+      "bytes": 199520544,
+      "path": "/home/harmenon/.rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/lib/libLLVM.so.22.1-rust-1.96.0-nightly",
+      "sha256": "8af284bb5ae923ac175ddb3f7b9ad16f1f733f7f5f2779e0c9e8c68ef9ba162b"
+    },
+    "librustc_driver-7bb70639c3ace5a4.so": {
+      "bytes": 152936640,
+      "path": "/home/harmenon/.rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/lib/librustc_driver-7bb70639c3ace5a4.so",
+      "sha256": "a0aa61a461841224222b0064f9d77a84fe6d3410745d3d96ceaade6ee679cade"
+    },
+    "prlimit": {
+      "bytes": 27536,
+      "path": "/usr/bin/prlimit",
+      "sha256": "17064f67e650d6152a6902b013aab496b54c87587c8eea6f5023aafee6154069"
+    },
+    "rustc": {
+      "bytes": 645760,
+      "path": "/home/harmenon/.rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/bin/rustc",
+      "sha256": "08dfef109ad22d90556dbd2f964543cd93843dcd75a2e9792c173667392a1950"
+    },
+    "rustdoc": {
+      "bytes": 13348368,
+      "path": "/home/harmenon/.rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/bin/rustdoc",
+      "sha256": "475ad4924e815034ed7ec5f85edfc8a99b2df99eab8695a76debb1eb64a9bd44"
+    },
+    "rustfmt": {
+      "bytes": 5281712,
+      "path": "/home/harmenon/.rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/bin/rustfmt",
+      "sha256": "a9137d0c198ceb6c72193d517d3c9007b3ec7a90d3d10ec6889773eca48261b4"
+    }
+  }
+}
