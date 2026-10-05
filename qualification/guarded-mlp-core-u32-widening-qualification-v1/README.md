@@ -59,10 +59,11 @@ genuine core `usize::checked_add` helper. Cross-crate HIR is unavailable, and
 optimized MIR does not retain unsafe-block syntax. This failure was previously
 hidden behind the matrix failure; it has not been bypassed or counted as a pass.
 
-Next is a bounded, non-admitting capture of the relevant checked-arithmetic
-helpers and related Option wrappers reached by this attention kernel. Any
-production recognition must retain their arithmetic, overflow, control-flow
-and source-origin checks, then pass the same unchanged controls.
+The subsequent [bounded, non-admitting capture](../guarded-mlp-core-checked-attention-diagnostic-v1/README.md)
+retains nine complete checked-arithmetic and Option wrapper bodies from this
+attention root. The original refusal remains. Any production recognition must
+retain their arithmetic, overflow, control-flow and source-origin checks, then
+pass the same unchanged controls.
 
 The retention manifest pins 193 original files, including six compiler source
 bodies, the controller, input manifest and all raw evidence. Full provider

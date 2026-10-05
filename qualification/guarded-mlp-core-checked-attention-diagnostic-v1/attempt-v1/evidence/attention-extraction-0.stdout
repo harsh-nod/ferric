@@ -1,0 +1,454 @@
+
+running 1 test
+test dynamic_attention_kernel_reaches_gfx942_llvm ... FAILED
+
+failures:
+
+---- dynamic_attention_kernel_reaches_gfx942_llvm stdout ----
+
+thread 'dynamic_attention_kernel_reaches_gfx942_llvm' (169877) panicked at crates/rustc-codegen-fe2o3/tests/production_general_matrix_driver_v1.rs:289:5:
+fe2o3_flash_attention_general_v1 did not complete production extraction:
+   Compiling typenum v1.20.1
+   Compiling cpufeatures v0.3.1
+   Compiling cfg-if v1.0.4
+   Compiling fe2o3-target-spec v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-diagnostic-cpu-v228-v1/fe2o3/crates/fe2o3-target-spec)
+   Compiling libc v0.2.189
+   Compiling fe2o3-amd-target v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-diagnostic-cpu-v228-v1/fe2o3/crates/fe2o3-amd-target)
+   Compiling hybrid-array v0.4.14
+   Compiling crypto-common v0.2.2
+   Compiling block-buffer v0.12.1
+   Compiling rustix v1.1.4
+   Compiling digest v0.11.3
+   Compiling proc-macro2 v1.0.107
+   Compiling sha2 v0.11.0
+   Compiling hashbrown v0.17.1
+   Compiling fe2o3-build-authority v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-diagnostic-cpu-v228-v1/fe2o3/crates/fe2o3-build-authority)
+   Compiling fe2o3-kernel-descriptor v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-diagnostic-cpu-v228-v1/fe2o3/crates/fe2o3-kernel-descriptor)
+   Compiling fe2o3-rustc-invocation v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-diagnostic-cpu-v228-v1/fe2o3/crates/fe2o3-rustc-invocation)
+   Compiling reserved-fe2o3-symbols v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-diagnostic-cpu-v228-v1/fe2o3/crates/reserved-fe2o3-symbols)
+   Compiling fe2o3-compiler-lineage v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-diagnostic-cpu-v228-v1/fe2o3/crates/fe2o3-compiler-lineage)
+   Compiling bitflags v2.13.1
+   Compiling equivalent v1.0.2
+   Compiling linux-raw-sys v0.12.1
+   Compiling winnow v1.0.4
+   Compiling unicode-ident v1.0.24
+   Compiling quote v1.0.47
+   Compiling toml_parser v1.1.3+spec-1.1.0
+   Compiling fe2o3-compiler-ffi v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-diagnostic-cpu-v228-v1/fe2o3/crates/fe2o3-compiler-ffi)
+   Compiling indexmap v2.14.1
+   Compiling toml_datetime v1.1.1+spec-1.1.0
+   Compiling toml_edit v0.25.13+spec-1.1.0
+   Compiling fe2o3-artifact-transaction v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-diagnostic-cpu-v228-v1/fe2o3/crates/fe2o3-artifact-transaction)
+   Compiling compiler_builtins v0.1.160 (/home/harmenon/.rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/compiler-builtins/compiler-builtins)
+   Compiling syn v2.0.119
+   Compiling fe2o3-artifacts v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-diagnostic-cpu-v228-v1/fe2o3/crates/fe2o3-artifacts)
+   Compiling proc-macro-crate v3.5.0
+   Compiling fe2o3-rustc-front v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-diagnostic-cpu-v228-v1/fe2o3/crates/fe2o3-rustc-front)
+   Compiling core v0.0.0 (/home/harmenon/.rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core)
+   Compiling fe2o3-macros v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-diagnostic-cpu-v228-v1/fe2o3/crates/fe2o3-macros)
+    Checking fe2o3-device v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-diagnostic-cpu-v228-v1/fe2o3/crates/fe2o3-device)
+warning: unknown and unstable feature specified for `-Ctarget-feature`: `xnack`
+  |
+  = note: it is still passed through to the codegen backend, but use of this feature might be unsound and the behavior of this feature can change in the future
+  = help: consider filing a feature request
+
+warning: unknown and unstable feature specified for `-Ctarget-feature`: `wavefrontsize64`
+  |
+  = note: it is still passed through to the codegen backend, but use of this feature might be unsound and the behavior of this feature can change in the future
+  = help: consider filing a feature request
+
+warning: unknown and unstable feature specified for `-Ctarget-feature`: `wavefrontsize32`
+  |
+  = note: it is still passed through to the codegen backend, but use of this feature might be unsound and the behavior of this feature can change in the future
+  = help: consider filing a feature request
+
+warning: `fe2o3-device` (lib) generated 3 warnings
+    Checking fe2o3-flash-attention-general-v1 v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-diagnostic-cpu-v228-v1/fe2o3/examples/flash_attention_general_v1)
+FE2O3_CORE_CHECKED_ATTENTION_MIR_BEGIN version=1 authority=none byte_cap=65536
+root="flash_attention_general_v1" rejected_first=true scan_cap=4096 body_cap=24
+BODY_BEGIN index=0 family=UsizeCheckedAdd rejected=true
+instance=Instance { def: Item(DefId(1:27168 ~ core[7021]::num::{impl#11}::checked_add)), args: [] }
+definition=DefId(1:27168 ~ core[7021]::num::{impl#11}::checked_add)
+structural_path=::num::{impl#11}::checked_add
+arguments=[]
+normalized_signature=Ok(fn(usize, usize) -> core::option::Option<usize>)
+input_nominal[0]=None
+input_nominal[1]=None
+output_nominal=Some(DefId(1:40284 ~ core[7021]::option::Option))
+body arg_count=2 locals=7 blocks=5 scopes=2
+statements=13 item_cap=128 statement_cap=1024
+local[_0] raw=core::option::Option<usize> normalized=Ok(core::option::Option<usize>) nominal=Some(DefId(1:40284 ~ core[7021]::option::Option)) scope=scope[0]
+local[_1] raw=usize normalized=Ok(usize) nominal=None scope=scope[0]
+local[_2] raw=usize normalized=Ok(usize) nominal=None scope=scope[0]
+local[_3] raw=bool normalized=Ok(bool) nominal=None scope=scope[0]
+local[_4] raw=(usize, bool) normalized=Ok((usize, bool)) nominal=None scope=scope[0]
+local[_5] raw=usize normalized=Ok(usize) nominal=None scope=scope[0]
+local[_6] raw=() normalized=Ok(()) nominal=None scope=scope[1]
+scope[scope[0]] data=SourceScopeData { span: /home/harmenon/.rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/num/uint_macros.rs:815:9: 829:10 (#40), parent_scope: None, inlined: None, inlined_parent_scope: None, local_data: Clear } normalized_inline=None
+scope[scope[1]] data=SourceScopeData { span: /home/harmenon/.rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/intrinsics/mod.rs:456:1: 463:2 (#0), parent_scope: Some(scope[0]), inlined: Some((Instance { def: Item(DefId(1:1970 ~ core[7021]::intrinsics::unlikely)), args: [] }, /home/harmenon/.rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/num/uint_macros.rs:823:16: 823:80 (#40))), inlined_parent_scope: None, local_data: Clear } normalized_inline=Some(Ok(Instance { def: Item(DefId(1:1970 ~ core[7021]::intrinsics::unlikely)), args: [] }))
+block[bb0] cleanup=false statements=4
+  statement[0] scope=scope[0] kind=StorageLive(_3)
+  statement[1] scope=scope[0] kind=StorageLive(_4)
+  statement[2] scope=scope[0] kind=_4 = AddWithOverflow(copy _1, copy _2)
+  statement[3] scope=scope[0] kind=_3 = copy (_4.1: bool)
+  terminator scope=scope[1] kind=switchInt(copy _3) -> [0: bb4, otherwise: bb2]
+block[bb1] cleanup=false statements=0
+  terminator scope=scope[0] kind=return
+block[bb2] cleanup=false statements=0
+  terminator scope=scope[1] kind=_6 = core::intrinsics::cold_path() -> [return: bb3, unwind unreachable]
+block[bb3] cleanup=false statements=3
+  statement[0] scope=scope[0] kind=StorageDead(_4)
+  statement[1] scope=scope[0] kind=StorageDead(_3)
+  statement[2] scope=scope[0] kind=_0 = const core::option::Option::<usize>::None
+  terminator scope=scope[0] kind=goto -> bb1
+block[bb4] cleanup=false statements=6
+  statement[0] scope=scope[0] kind=StorageDead(_4)
+  statement[1] scope=scope[0] kind=StorageDead(_3)
+  statement[2] scope=scope[0] kind=StorageLive(_5)
+  statement[3] scope=scope[0] kind=_5 = AddUnchecked(copy _1, copy _2)
+  statement[4] scope=scope[0] kind=_0 = core::option::Option::<usize>::Some(move _5)
+  statement[5] scope=scope[0] kind=StorageDead(_5)
+  terminator scope=scope[0] kind=goto -> bb1
+BODY_END index=0 complete=true
+BODY_BEGIN index=1 family=Integer rejected=false
+instance=Instance { def: Item(DefId(1:27182 ~ core[7021]::num::{impl#11}::checked_div)), args: [] }
+definition=DefId(1:27182 ~ core[7021]::num::{impl#11}::checked_div)
+structural_path=::num::{impl#11}::checked_div
+arguments=[]
+normalized_signature=Ok(fn(usize, usize) -> core::option::Option<usize>)
+input_nominal[0]=None
+input_nominal[1]=None
+output_nominal=Some(DefId(1:40284 ~ core[7021]::option::Option))
+body arg_count=2 locals=5 blocks=5 scopes=2
+statements=5 item_cap=128 statement_cap=1024
+local[_0] raw=core::option::Option<usize> normalized=Ok(core::option::Option<usize>) nominal=Some(DefId(1:40284 ~ core[7021]::option::Option)) scope=scope[0]
+local[_1] raw=usize normalized=Ok(usize) nominal=None scope=scope[0]
+local[_2] raw=usize normalized=Ok(usize) nominal=None scope=scope[0]
+local[_3] raw=usize normalized=Ok(usize) nominal=None scope=scope[0]
+local[_4] raw=() normalized=Ok(()) nominal=None scope=scope[1]
+scope[scope[0]] data=SourceScopeData { span: /home/harmenon/.rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/num/uint_macros.rs:1304:9: 1312:10 (#40), parent_scope: None, inlined: None, inlined_parent_scope: None, local_data: Clear } normalized_inline=None
+scope[scope[1]] data=SourceScopeData { span: /home/harmenon/.rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/intrinsics/mod.rs:456:1: 463:2 (#0), parent_scope: Some(scope[0]), inlined: Some((Instance { def: Item(DefId(1:1970 ~ core[7021]::intrinsics::unlikely)), args: [] }, /home/harmenon/.rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/num/uint_macros.rs:1305:16: 1305:46 (#40))), inlined_parent_scope: None, local_data: Clear } normalized_inline=Some(Ok(Instance { def: Item(DefId(1:1970 ~ core[7021]::intrinsics::unlikely)), args: [] }))
+block[bb0] cleanup=false statements=0
+  terminator scope=scope[1] kind=switchInt(copy _2) -> [0: bb2, otherwise: bb4]
+block[bb1] cleanup=false statements=0
+  terminator scope=scope[0] kind=return
+block[bb2] cleanup=false statements=0
+  terminator scope=scope[1] kind=_4 = core::intrinsics::cold_path() -> [return: bb3, unwind unreachable]
+block[bb3] cleanup=false statements=1
+  statement[0] scope=scope[0] kind=_0 = const core::option::Option::<usize>::None
+  terminator scope=scope[0] kind=goto -> bb1
+block[bb4] cleanup=false statements=4
+  statement[0] scope=scope[0] kind=StorageLive(_3)
+  statement[1] scope=scope[0] kind=_3 = Div(copy _1, copy _2)
+  statement[2] scope=scope[0] kind=_0 = core::option::Option::<usize>::Some(move _3)
+  statement[3] scope=scope[0] kind=StorageDead(_3)
+  terminator scope=scope[0] kind=goto -> bb1
+BODY_END index=1 complete=true
+BODY_BEGIN index=2 family=OptionOkOr rejected=false
+instance=Instance { def: Item(DefId(1:10824 ~ core[7021]::option::{impl#0}::ok_or)), args: [fe2o3_device::DisjointTile2D<fe2o3_device::Index1D, 64_usize, 16_usize, 16_usize, 4_usize>, fe2o3_device::KernelError] }
+definition=DefId(1:10824 ~ core[7021]::option::{impl#0}::ok_or)
+structural_path=::option::{impl#0}::ok_or
+arguments=[fe2o3_device::DisjointTile2D<fe2o3_device::Index1D, 64_usize, 16_usize, 16_usize, 4_usize>, fe2o3_device::KernelError]
+normalized_signature=Ok(fn(core::option::Option<fe2o3_device::DisjointTile2D<fe2o3_device::Index1D, 64_usize, 16_usize, 16_usize, 4_usize>>, fe2o3_device::KernelError) -> core::result::Result<fe2o3_device::DisjointTile2D<fe2o3_device::Index1D, 64_usize, 16_usize, 16_usize, 4_usize>, fe2o3_device::KernelError>)
+argument_nominal[0]=Some(DefId(2:3290 ~ fe2o3_device[a320]::thread::DisjointTile2D))
+argument_nominal[1]=Some(DefId(2:4667 ~ fe2o3_device[a320]::kernel_result::KernelError))
+input_nominal[0]=Some(DefId(1:40284 ~ core[7021]::option::Option))
+input_nominal[1]=Some(DefId(2:4667 ~ fe2o3_device[a320]::kernel_result::KernelError))
+output_nominal=Some(DefId(1:40663 ~ core[7021]::result::Result))
+body arg_count=2 locals=6 blocks=5 scopes=2
+statements=7 item_cap=128 statement_cap=1024
+local[_0] raw=core::result::Result<T/#0, E/#1> normalized=Ok(core::result::Result<fe2o3_device::DisjointTile2D<fe2o3_device::Index1D, 64_usize, 16_usize, 16_usize, 4_usize>, fe2o3_device::KernelError>) nominal=Some(DefId(1:40663 ~ core[7021]::result::Result)) scope=scope[0]
+local[_1] raw=core::option::Option<T/#0> normalized=Ok(core::option::Option<fe2o3_device::DisjointTile2D<fe2o3_device::Index1D, 64_usize, 16_usize, 16_usize, 4_usize>>) nominal=Some(DefId(1:40284 ~ core[7021]::option::Option)) scope=scope[0]
+local[_2] raw=E/#1 normalized=Ok(fe2o3_device::KernelError) nominal=Some(DefId(2:4667 ~ fe2o3_device[a320]::kernel_result::KernelError)) scope=scope[0]
+local[_3] raw=isize normalized=Ok(isize) nominal=None scope=scope[0]
+local[_4] raw=T/#0 normalized=Ok(fe2o3_device::DisjointTile2D<fe2o3_device::Index1D, 64_usize, 16_usize, 16_usize, 4_usize>) nominal=Some(DefId(2:3290 ~ fe2o3_device[a320]::thread::DisjointTile2D)) scope=scope[0]
+local[_5] raw=E/#1 normalized=Ok(fe2o3_device::KernelError) nominal=Some(DefId(2:4667 ~ fe2o3_device[a320]::kernel_result::KernelError)) scope=scope[0]
+scope[scope[0]] data=SourceScopeData { span: /home/harmenon/.rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/option.rs:1337:5: 1342:6 (#0), parent_scope: None, inlined: None, inlined_parent_scope: None, local_data: Clear } normalized_inline=None
+scope[scope[1]] data=SourceScopeData { span: /home/harmenon/.rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/option.rs:1339:13: 1339:29 (#0), parent_scope: Some(scope[0]), inlined: None, inlined_parent_scope: None, local_data: Clear } normalized_inline=None
+block[bb0] cleanup=false statements=1
+  statement[0] scope=scope[0] kind=_3 = discriminant(_1)
+  terminator scope=scope[0] kind=switchInt(move _3) -> [0: bb2, 1: bb3, otherwise: bb1]
+block[bb1] cleanup=false statements=0
+  terminator scope=scope[0] kind=unreachable
+block[bb2] cleanup=false statements=4
+  statement[0] scope=scope[0] kind=StorageLive(_5)
+  statement[1] scope=scope[0] kind=_5 = move _2
+  statement[2] scope=scope[0] kind=_0 = core::result::Result::<T, E>::Err(move _5)
+  statement[3] scope=scope[0] kind=StorageDead(_5)
+  terminator scope=scope[0] kind=goto -> bb4
+block[bb3] cleanup=false statements=2
+  statement[0] scope=scope[0] kind=_4 = move ((_1 as Some).0: T)
+  statement[1] scope=scope[1] kind=_0 = core::result::Result::<T, E>::Ok(copy _4)
+  terminator scope=scope[0] kind=drop(_2) -> [return: bb4, unwind unreachable]
+block[bb4] cleanup=false statements=0
+  terminator scope=scope[0] kind=return
+BODY_END index=2 complete=true
+BODY_BEGIN index=3 family=OptionOkOr rejected=false
+instance=Instance { def: Item(DefId(1:10824 ~ core[7021]::option::{impl#0}::ok_or)), args: [usize, fe2o3_device::KernelError] }
+definition=DefId(1:10824 ~ core[7021]::option::{impl#0}::ok_or)
+structural_path=::option::{impl#0}::ok_or
+arguments=[usize, fe2o3_device::KernelError]
+normalized_signature=Ok(fn(core::option::Option<usize>, fe2o3_device::KernelError) -> core::result::Result<usize, fe2o3_device::KernelError>)
+argument_nominal[0]=None
+argument_nominal[1]=Some(DefId(2:4667 ~ fe2o3_device[a320]::kernel_result::KernelError))
+input_nominal[0]=Some(DefId(1:40284 ~ core[7021]::option::Option))
+input_nominal[1]=Some(DefId(2:4667 ~ fe2o3_device[a320]::kernel_result::KernelError))
+output_nominal=Some(DefId(1:40663 ~ core[7021]::result::Result))
+body arg_count=2 locals=6 blocks=5 scopes=2
+statements=7 item_cap=128 statement_cap=1024
+local[_0] raw=core::result::Result<T/#0, E/#1> normalized=Ok(core::result::Result<usize, fe2o3_device::KernelError>) nominal=Some(DefId(1:40663 ~ core[7021]::result::Result)) scope=scope[0]
+local[_1] raw=core::option::Option<T/#0> normalized=Ok(core::option::Option<usize>) nominal=Some(DefId(1:40284 ~ core[7021]::option::Option)) scope=scope[0]
+local[_2] raw=E/#1 normalized=Ok(fe2o3_device::KernelError) nominal=Some(DefId(2:4667 ~ fe2o3_device[a320]::kernel_result::KernelError)) scope=scope[0]
+local[_3] raw=isize normalized=Ok(isize) nominal=None scope=scope[0]
+local[_4] raw=T/#0 normalized=Ok(usize) nominal=None scope=scope[0]
+local[_5] raw=E/#1 normalized=Ok(fe2o3_device::KernelError) nominal=Some(DefId(2:4667 ~ fe2o3_device[a320]::kernel_result::KernelError)) scope=scope[0]
+scope[scope[0]] data=SourceScopeData { span: /home/harmenon/.rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/option.rs:1337:5: 1342:6 (#0), parent_scope: None, inlined: None, inlined_parent_scope: None, local_data: Clear } normalized_inline=None
+scope[scope[1]] data=SourceScopeData { span: /home/harmenon/.rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/option.rs:1339:13: 1339:29 (#0), parent_scope: Some(scope[0]), inlined: None, inlined_parent_scope: None, local_data: Clear } normalized_inline=None
+block[bb0] cleanup=false statements=1
+  statement[0] scope=scope[0] kind=_3 = discriminant(_1)
+  terminator scope=scope[0] kind=switchInt(move _3) -> [0: bb2, 1: bb3, otherwise: bb1]
+block[bb1] cleanup=false statements=0
+  terminator scope=scope[0] kind=unreachable
+block[bb2] cleanup=false statements=4
+  statement[0] scope=scope[0] kind=StorageLive(_5)
+  statement[1] scope=scope[0] kind=_5 = move _2
+  statement[2] scope=scope[0] kind=_0 = core::result::Result::<T, E>::Err(move _5)
+  statement[3] scope=scope[0] kind=StorageDead(_5)
+  terminator scope=scope[0] kind=goto -> bb4
+block[bb3] cleanup=false statements=2
+  statement[0] scope=scope[0] kind=_4 = move ((_1 as Some).0: T)
+  statement[1] scope=scope[1] kind=_0 = core::result::Result::<T, E>::Ok(copy _4)
+  terminator scope=scope[0] kind=drop(_2) -> [return: bb4, unwind unreachable]
+block[bb4] cleanup=false statements=0
+  terminator scope=scope[0] kind=return
+BODY_END index=3 complete=true
+BODY_BEGIN index=4 family=OptionOkOr rejected=false
+instance=Instance { def: Item(DefId(1:10824 ~ core[7021]::option::{impl#0}::ok_or)), args: [u32, fe2o3_device::KernelError] }
+definition=DefId(1:10824 ~ core[7021]::option::{impl#0}::ok_or)
+structural_path=::option::{impl#0}::ok_or
+arguments=[u32, fe2o3_device::KernelError]
+normalized_signature=Ok(fn(core::option::Option<u32>, fe2o3_device::KernelError) -> core::result::Result<u32, fe2o3_device::KernelError>)
+argument_nominal[0]=None
+argument_nominal[1]=Some(DefId(2:4667 ~ fe2o3_device[a320]::kernel_result::KernelError))
+input_nominal[0]=Some(DefId(1:40284 ~ core[7021]::option::Option))
+input_nominal[1]=Some(DefId(2:4667 ~ fe2o3_device[a320]::kernel_result::KernelError))
+output_nominal=Some(DefId(1:40663 ~ core[7021]::result::Result))
+body arg_count=2 locals=6 blocks=5 scopes=2
+statements=7 item_cap=128 statement_cap=1024
+local[_0] raw=core::result::Result<T/#0, E/#1> normalized=Ok(core::result::Result<u32, fe2o3_device::KernelError>) nominal=Some(DefId(1:40663 ~ core[7021]::result::Result)) scope=scope[0]
+local[_1] raw=core::option::Option<T/#0> normalized=Ok(core::option::Option<u32>) nominal=Some(DefId(1:40284 ~ core[7021]::option::Option)) scope=scope[0]
+local[_2] raw=E/#1 normalized=Ok(fe2o3_device::KernelError) nominal=Some(DefId(2:4667 ~ fe2o3_device[a320]::kernel_result::KernelError)) scope=scope[0]
+local[_3] raw=isize normalized=Ok(isize) nominal=None scope=scope[0]
+local[_4] raw=T/#0 normalized=Ok(u32) nominal=None scope=scope[0]
+local[_5] raw=E/#1 normalized=Ok(fe2o3_device::KernelError) nominal=Some(DefId(2:4667 ~ fe2o3_device[a320]::kernel_result::KernelError)) scope=scope[0]
+scope[scope[0]] data=SourceScopeData { span: /home/harmenon/.rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/option.rs:1337:5: 1342:6 (#0), parent_scope: None, inlined: None, inlined_parent_scope: None, local_data: Clear } normalized_inline=None
+scope[scope[1]] data=SourceScopeData { span: /home/harmenon/.rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/option.rs:1339:13: 1339:29 (#0), parent_scope: Some(scope[0]), inlined: None, inlined_parent_scope: None, local_data: Clear } normalized_inline=None
+block[bb0] cleanup=false statements=1
+  statement[0] scope=scope[0] kind=_3 = discriminant(_1)
+  terminator scope=scope[0] kind=switchInt(move _3) -> [0: bb2, 1: bb3, otherwise: bb1]
+block[bb1] cleanup=false statements=0
+  terminator scope=scope[0] kind=unreachable
+block[bb2] cleanup=false statements=4
+  statement[0] scope=scope[0] kind=StorageLive(_5)
+  statement[1] scope=scope[0] kind=_5 = move _2
+  statement[2] scope=scope[0] kind=_0 = core::result::Result::<T, E>::Err(move _5)
+  statement[3] scope=scope[0] kind=StorageDead(_5)
+  terminator scope=scope[0] kind=goto -> bb4
+block[bb3] cleanup=false statements=2
+  statement[0] scope=scope[0] kind=_4 = move ((_1 as Some).0: T)
+  statement[1] scope=scope[1] kind=_0 = core::result::Result::<T, E>::Ok(copy _4)
+  terminator scope=scope[0] kind=drop(_2) -> [return: bb4, unwind unreachable]
+block[bb4] cleanup=false statements=0
+  terminator scope=scope[0] kind=return
+BODY_END index=4 complete=true
+BODY_BEGIN index=5 family=Integer rejected=false
+instance=Instance { def: Item(DefId(1:26676 ~ core[7021]::num::{impl#8}::checked_mul)), args: [] }
+definition=DefId(1:26676 ~ core[7021]::num::{impl#8}::checked_mul)
+structural_path=::num::{impl#8}::checked_mul
+arguments=[]
+normalized_signature=Ok(fn(u32, u32) -> core::option::Option<u32>)
+input_nominal[0]=None
+input_nominal[1]=None
+output_nominal=Some(DefId(1:40284 ~ core[7021]::option::Option))
+body arg_count=2 locals=7 blocks=5 scopes=5
+statements=7 item_cap=128 statement_cap=1024
+local[_0] raw=core::option::Option<u32> normalized=Ok(core::option::Option<u32>) nominal=Some(DefId(1:40284 ~ core[7021]::option::Option)) scope=scope[0]
+local[_1] raw=u32 normalized=Ok(u32) nominal=None scope=scope[0]
+local[_2] raw=u32 normalized=Ok(u32) nominal=None scope=scope[0]
+local[_3] raw=u32 normalized=Ok(u32) nominal=None scope=scope[0]
+local[_4] raw=bool normalized=Ok(bool) nominal=None scope=scope[0]
+local[_5] raw=(u32, bool) normalized=Ok((u32, bool)) nominal=None scope=scope[0]
+local[_6] raw=() normalized=Ok(()) nominal=None scope=scope[4]
+scope[scope[0]] data=SourceScopeData { span: /home/harmenon/.rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/num/uint_macros.rs:1214:9: 1217:10 (#34), parent_scope: None, inlined: None, inlined_parent_scope: None, local_data: Clear } normalized_inline=None
+scope[scope[1]] data=SourceScopeData { span: /home/harmenon/.rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/num/uint_macros.rs:1215:13: 1217:10 (#34), parent_scope: Some(scope[0]), inlined: None, inlined_parent_scope: None, local_data: Clear } normalized_inline=None
+scope[scope[2]] data=SourceScopeData { span: /home/harmenon/.rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/num/uint_macros.rs:3104:9: 3107:10 (#34), parent_scope: Some(scope[0]), inlined: Some((Instance { def: Item(DefId(1:26740 ~ core[7021]::num::{impl#8}::overflowing_mul)), args: [] }, /home/harmenon/.rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/num/uint_macros.rs:1215:31: 1215:51 (#34))), inlined_parent_scope: None, local_data: Clear } normalized_inline=Some(Ok(Instance { def: Item(DefId(1:26740 ~ core[7021]::num::{impl#8}::overflowing_mul)), args: [] }))
+scope[scope[3]] data=SourceScopeData { span: /home/harmenon/.rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/num/uint_macros.rs:3105:13: 3107:10 (#34), parent_scope: Some(scope[2]), inlined: None, inlined_parent_scope: Some(scope[2]), local_data: Clear } normalized_inline=None
+scope[scope[4]] data=SourceScopeData { span: /home/harmenon/.rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/intrinsics/mod.rs:456:1: 463:2 (#0), parent_scope: Some(scope[1]), inlined: Some((Instance { def: Item(DefId(1:1970 ~ core[7021]::intrinsics::unlikely)), args: [] }, /home/harmenon/.rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/num/uint_macros.rs:1216:16: 1216:39 (#34))), inlined_parent_scope: None, local_data: Clear } normalized_inline=Some(Ok(Instance { def: Item(DefId(1:1970 ~ core[7021]::intrinsics::unlikely)), args: [] }))
+block[bb0] cleanup=false statements=5
+  statement[0] scope=scope[0] kind=StorageLive(_5)
+  statement[1] scope=scope[2] kind=_5 = MulWithOverflow(copy _1, copy _2)
+  statement[2] scope=scope[0] kind=_3 = copy (_5.0: u32)
+  statement[3] scope=scope[0] kind=_4 = copy (_5.1: bool)
+  statement[4] scope=scope[0] kind=StorageDead(_5)
+  terminator scope=scope[4] kind=switchInt(copy _4) -> [0: bb4, otherwise: bb2]
+block[bb1] cleanup=false statements=0
+  terminator scope=scope[0] kind=return
+block[bb2] cleanup=false statements=0
+  terminator scope=scope[4] kind=_6 = core::intrinsics::cold_path() -> [return: bb3, unwind unreachable]
+block[bb3] cleanup=false statements=1
+  statement[0] scope=scope[1] kind=_0 = const core::option::Option::<u32>::None
+  terminator scope=scope[1] kind=goto -> bb1
+block[bb4] cleanup=false statements=1
+  statement[0] scope=scope[1] kind=_0 = core::option::Option::<u32>::Some(copy _3)
+  terminator scope=scope[1] kind=goto -> bb1
+BODY_END index=5 complete=true
+BODY_BEGIN index=6 family=Integer rejected=false
+instance=Instance { def: Item(DefId(1:26761 ~ core[7021]::num::{impl#8}::is_multiple_of)), args: [] }
+definition=DefId(1:26761 ~ core[7021]::num::{impl#8}::is_multiple_of)
+structural_path=::num::{impl#8}::is_multiple_of
+arguments=[]
+normalized_signature=Ok(fn(u32, u32) -> bool)
+input_nominal[0]=None
+input_nominal[1]=None
+output_nominal=None
+body arg_count=2 locals=5 blocks=5 scopes=1
+statements=6 item_cap=128 statement_cap=1024
+local[_0] raw=bool normalized=Ok(bool) nominal=None scope=scope[0]
+local[_1] raw=u32 normalized=Ok(u32) nominal=None scope=scope[0]
+local[_2] raw=u32 normalized=Ok(u32) nominal=None scope=scope[0]
+local[_3] raw=u32 normalized=Ok(u32) nominal=None scope=scope[0]
+local[_4] raw=bool normalized=Ok(bool) nominal=None scope=scope[0]
+scope[scope[0]] data=SourceScopeData { span: /home/harmenon/.rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/num/uint_macros.rs:3796:9: 3801:10 (#34), parent_scope: None, inlined: None, inlined_parent_scope: None, local_data: Clear } normalized_inline=None
+block[bb0] cleanup=false statements=0
+  terminator scope=scope[0] kind=switchInt(copy _2) -> [0: bb2, otherwise: bb1]
+block[bb1] cleanup=false statements=2
+  statement[0] scope=scope[0] kind=StorageLive(_3)
+  statement[1] scope=scope[0] kind=_4 = Eq(copy _2, const 0_u32)
+  terminator scope=scope[0] kind=assert(!move _4, "attempt to calculate the remainder of `{}` with a divisor of zero", copy _1) -> [success: bb3, unwind unreachable]
+block[bb2] cleanup=false statements=1
+  statement[0] scope=scope[0] kind=_0 = Eq(copy _1, const 0_u32)
+  terminator scope=scope[0] kind=goto -> bb4
+block[bb3] cleanup=false statements=3
+  statement[0] scope=scope[0] kind=_3 = Rem(copy _1, copy _2)
+  statement[1] scope=scope[0] kind=_0 = Eq(move _3, const 0_u32)
+  statement[2] scope=scope[0] kind=StorageDead(_3)
+  terminator scope=scope[0] kind=goto -> bb4
+block[bb4] cleanup=false statements=0
+  terminator scope=scope[0] kind=return
+BODY_END index=6 complete=true
+BODY_BEGIN index=7 family=OptionAndThen rejected=false
+instance=Instance { def: Item(DefId(1:10835 ~ core[7021]::option::{impl#0}::and_then)), args: [usize, usize, Closure(DefId(0:41 ~ fe2o3_flash_attention_general_v1[044d]::kernel::__fe2o3_kernel_body_v1_b413b0ed06c326282899c6ee9f3cf0cd51eb9fc6998f34904136102dbaf2f136::{closure#0}), [i32, Binder { value: extern "RustCall" fn((usize,)) -> core::option::Option<usize>, bound_vars: [] }, (&'{erased} u32,)])] }
+definition=DefId(1:10835 ~ core[7021]::option::{impl#0}::and_then)
+structural_path=::option::{impl#0}::and_then
+arguments=[usize, usize, Closure(DefId(0:41 ~ fe2o3_flash_attention_general_v1[044d]::kernel::__fe2o3_kernel_body_v1_b413b0ed06c326282899c6ee9f3cf0cd51eb9fc6998f34904136102dbaf2f136::{closure#0}), [i32, Binder { value: extern "RustCall" fn((usize,)) -> core::option::Option<usize>, bound_vars: [] }, (&'{erased} u32,)])]
+normalized_signature=Ok(fn(core::option::Option<usize>, Closure(DefId(0:41 ~ fe2o3_flash_attention_general_v1[044d]::kernel::__fe2o3_kernel_body_v1_b413b0ed06c326282899c6ee9f3cf0cd51eb9fc6998f34904136102dbaf2f136::{closure#0}), [i32, Binder { value: extern "RustCall" fn((usize,)) -> core::option::Option<usize>, bound_vars: [] }, (&'{erased} u32,)])) -> core::option::Option<usize>)
+argument_nominal[0]=None
+argument_nominal[1]=None
+argument_nominal[2]=None
+input_nominal[0]=Some(DefId(1:40284 ~ core[7021]::option::Option))
+input_nominal[1]=None
+output_nominal=Some(DefId(1:40284 ~ core[7021]::option::Option))
+body arg_count=2 locals=7 blocks=6 scopes=2
+statements=9 item_cap=128 statement_cap=1024
+local[_0] raw=core::option::Option<U/#1> normalized=Ok(core::option::Option<usize>) nominal=Some(DefId(1:40284 ~ core[7021]::option::Option)) scope=scope[0]
+local[_1] raw=core::option::Option<T/#0> normalized=Ok(core::option::Option<usize>) nominal=Some(DefId(1:40284 ~ core[7021]::option::Option)) scope=scope[0]
+local[_2] raw=F/#2 normalized=Ok(Closure(DefId(0:41 ~ fe2o3_flash_attention_general_v1[044d]::kernel::__fe2o3_kernel_body_v1_b413b0ed06c326282899c6ee9f3cf0cd51eb9fc6998f34904136102dbaf2f136::{closure#0}), [i32, Binder { value: extern "RustCall" fn((usize,)) -> core::option::Option<usize>, bound_vars: [] }, (&'{erased} u32,)])) nominal=None scope=scope[0]
+local[_3] raw=isize normalized=Ok(isize) nominal=None scope=scope[0]
+local[_4] raw=T/#0 normalized=Ok(usize) nominal=None scope=scope[0]
+local[_5] raw=F/#2 normalized=Ok(Closure(DefId(0:41 ~ fe2o3_flash_attention_general_v1[044d]::kernel::__fe2o3_kernel_body_v1_b413b0ed06c326282899c6ee9f3cf0cd51eb9fc6998f34904136102dbaf2f136::{closure#0}), [i32, Binder { value: extern "RustCall" fn((usize,)) -> core::option::Option<usize>, bound_vars: [] }, (&'{erased} u32,)])) nominal=None scope=scope[0]
+local[_6] raw=(T/#0,) normalized=Ok((usize,)) nominal=None scope=scope[0]
+scope[scope[0]] data=SourceScopeData { span: /home/harmenon/.rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/option.rs:1541:5: 1549:6 (#0), parent_scope: None, inlined: None, inlined_parent_scope: None, local_data: Clear } normalized_inline=None
+scope[scope[1]] data=SourceScopeData { span: /home/harmenon/.rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/option.rs:1546:13: 1546:28 (#0), parent_scope: Some(scope[0]), inlined: None, inlined_parent_scope: None, local_data: Clear } normalized_inline=None
+block[bb0] cleanup=false statements=1
+  statement[0] scope=scope[0] kind=_3 = discriminant(_1)
+  terminator scope=scope[0] kind=switchInt(move _3) -> [0: bb2, 1: bb3, otherwise: bb1]
+block[bb1] cleanup=false statements=0
+  terminator scope=scope[0] kind=unreachable
+block[bb2] cleanup=false statements=1
+  statement[0] scope=scope[0] kind=_0 = core::option::Option::<U>::None
+  terminator scope=scope[0] kind=drop(_2) -> [return: bb5, unwind unreachable]
+block[bb3] cleanup=false statements=5
+  statement[0] scope=scope[0] kind=_4 = move ((_1 as Some).0: T)
+  statement[1] scope=scope[1] kind=StorageLive(_5)
+  statement[2] scope=scope[1] kind=_5 = move _2
+  statement[3] scope=scope[1] kind=StorageLive(_6)
+  statement[4] scope=scope[1] kind=_6 = (copy _4,)
+  terminator scope=scope[1] kind=_0 = <F as core::ops::FnOnce<(T,)>>::call_once(move _5, move _6) -> [return: bb4, unwind unreachable]
+block[bb4] cleanup=false statements=2
+  statement[0] scope=scope[1] kind=StorageDead(_6)
+  statement[1] scope=scope[1] kind=StorageDead(_5)
+  terminator scope=scope[0] kind=goto -> bb5
+block[bb5] cleanup=false statements=0
+  terminator scope=scope[0] kind=return
+BODY_END index=7 complete=true
+BODY_BEGIN index=8 family=OptionAndThen rejected=false
+instance=Instance { def: Item(DefId(1:10835 ~ core[7021]::option::{impl#0}::and_then)), args: [usize, usize, Closure(DefId(0:42 ~ fe2o3_flash_attention_general_v1[044d]::kernel::__fe2o3_kernel_body_v1_b413b0ed06c326282899c6ee9f3cf0cd51eb9fc6998f34904136102dbaf2f136::{closure#1}), [i32, Binder { value: extern "RustCall" fn((usize,)) -> core::option::Option<usize>, bound_vars: [] }, (&'{erased} u32,)])] }
+definition=DefId(1:10835 ~ core[7021]::option::{impl#0}::and_then)
+structural_path=::option::{impl#0}::and_then
+arguments=[usize, usize, Closure(DefId(0:42 ~ fe2o3_flash_attention_general_v1[044d]::kernel::__fe2o3_kernel_body_v1_b413b0ed06c326282899c6ee9f3cf0cd51eb9fc6998f34904136102dbaf2f136::{closure#1}), [i32, Binder { value: extern "RustCall" fn((usize,)) -> core::option::Option<usize>, bound_vars: [] }, (&'{erased} u32,)])]
+normalized_signature=Ok(fn(core::option::Option<usize>, Closure(DefId(0:42 ~ fe2o3_flash_attention_general_v1[044d]::kernel::__fe2o3_kernel_body_v1_b413b0ed06c326282899c6ee9f3cf0cd51eb9fc6998f34904136102dbaf2f136::{closure#1}), [i32, Binder { value: extern "RustCall" fn((usize,)) -> core::option::Option<usize>, bound_vars: [] }, (&'{erased} u32,)])) -> core::option::Option<usize>)
+argument_nominal[0]=None
+argument_nominal[1]=None
+argument_nominal[2]=None
+input_nominal[0]=Some(DefId(1:40284 ~ core[7021]::option::Option))
+input_nominal[1]=None
+output_nominal=Some(DefId(1:40284 ~ core[7021]::option::Option))
+body arg_count=2 locals=7 blocks=6 scopes=2
+statements=9 item_cap=128 statement_cap=1024
+local[_0] raw=core::option::Option<U/#1> normalized=Ok(core::option::Option<usize>) nominal=Some(DefId(1:40284 ~ core[7021]::option::Option)) scope=scope[0]
+local[_1] raw=core::option::Option<T/#0> normalized=Ok(core::option::Option<usize>) nominal=Some(DefId(1:40284 ~ core[7021]::option::Option)) scope=scope[0]
+local[_2] raw=F/#2 normalized=Ok(Closure(DefId(0:42 ~ fe2o3_flash_attention_general_v1[044d]::kernel::__fe2o3_kernel_body_v1_b413b0ed06c326282899c6ee9f3cf0cd51eb9fc6998f34904136102dbaf2f136::{closure#1}), [i32, Binder { value: extern "RustCall" fn((usize,)) -> core::option::Option<usize>, bound_vars: [] }, (&'{erased} u32,)])) nominal=None scope=scope[0]
+local[_3] raw=isize normalized=Ok(isize) nominal=None scope=scope[0]
+local[_4] raw=T/#0 normalized=Ok(usize) nominal=None scope=scope[0]
+local[_5] raw=F/#2 normalized=Ok(Closure(DefId(0:42 ~ fe2o3_flash_attention_general_v1[044d]::kernel::__fe2o3_kernel_body_v1_b413b0ed06c326282899c6ee9f3cf0cd51eb9fc6998f34904136102dbaf2f136::{closure#1}), [i32, Binder { value: extern "RustCall" fn((usize,)) -> core::option::Option<usize>, bound_vars: [] }, (&'{erased} u32,)])) nominal=None scope=scope[0]
+local[_6] raw=(T/#0,) normalized=Ok((usize,)) nominal=None scope=scope[0]
+scope[scope[0]] data=SourceScopeData { span: /home/harmenon/.rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/option.rs:1541:5: 1549:6 (#0), parent_scope: None, inlined: None, inlined_parent_scope: None, local_data: Clear } normalized_inline=None
+scope[scope[1]] data=SourceScopeData { span: /home/harmenon/.rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/option.rs:1546:13: 1546:28 (#0), parent_scope: Some(scope[0]), inlined: None, inlined_parent_scope: None, local_data: Clear } normalized_inline=None
+block[bb0] cleanup=false statements=1
+  statement[0] scope=scope[0] kind=_3 = discriminant(_1)
+  terminator scope=scope[0] kind=switchInt(move _3) -> [0: bb2, 1: bb3, otherwise: bb1]
+block[bb1] cleanup=false statements=0
+  terminator scope=scope[0] kind=unreachable
+block[bb2] cleanup=false statements=1
+  statement[0] scope=scope[0] kind=_0 = core::option::Option::<U>::None
+  terminator scope=scope[0] kind=drop(_2) -> [return: bb5, unwind unreachable]
+block[bb3] cleanup=false statements=5
+  statement[0] scope=scope[0] kind=_4 = move ((_1 as Some).0: T)
+  statement[1] scope=scope[1] kind=StorageLive(_5)
+  statement[2] scope=scope[1] kind=_5 = move _2
+  statement[3] scope=scope[1] kind=StorageLive(_6)
+  statement[4] scope=scope[1] kind=_6 = (copy _4,)
+  terminator scope=scope[1] kind=_0 = <F as core::ops::FnOnce<(T,)>>::call_once(move _5, move _6) -> [return: bb4, unwind unreachable]
+block[bb4] cleanup=false statements=2
+  statement[0] scope=scope[1] kind=StorageDead(_6)
+  statement[1] scope=scope[1] kind=StorageDead(_5)
+  terminator scope=scope[0] kind=goto -> bb5
+block[bb5] cleanup=false statements=0
+  terminator scope=scope[0] kind=return
+BODY_END index=8 complete=true
+
+cohort_counts scanned=29 scan_complete=true matched=9 retained=9 full=9 partial=0 omitted=0 scan_cap=4096 body_cap=24
+
+FE2O3_CORE_CHECKED_ATTENTION_MIR_END status=complete body_bytes=32620 authority=none
+fe2o3 rustc extraction: production extraction collection failed: ordinary production kernel `flash_attention_general_v1` cannot authenticate the absence of user-provided unsafe blocks in external helper `core::num::<impl usize>::checked_add [_RNvMs9_NtCs9CS9M2JBORY_4core3numj11checked_add]`: cross-crate HIR is unavailable and optimized MIR does not retain unsafe-block syntax; reachable call chain: fe2o3_flash_attention_general_v1::kernel::__fe2o3_host_kernel_v1_b413b0ed06c326282899c6ee9f3cf0cd51eb9fc6998f34904136102dbaf2f136 [__fe2o3_host_kernel_v1_b413b0ed06c326282899c6ee9f3cf0cd51eb9fc6998f34904136102dbaf2f136] -> fe2o3_flash_attention_general_v1::kernel::__fe2o3_kernel_body_v1_b413b0ed06c326282899c6ee9f3cf0cd51eb9fc6998f34904136102dbaf2f136 [_RNvNtCsmUq1LS1F6p_32fe2o3_flash_attention_general_v16kernel87___fe2o3_kernel_body_v1_b413b0ed06c326282899c6ee9f3cf0cd51eb9fc6998f34904136102dbaf2f136] -> core::num::<impl usize>::checked_add [_RNvMs9_NtCs9CS9M2JBORY_4core3numj11checked_add]
+warning: `fe2o3-flash-attention-general-v1` (lib) generated 3 warnings (3 duplicates)
+error: could not compile `fe2o3-flash-attention-general-v1` (lib); 3 warnings emitted
+
+Caused by:
+  process didn't exit successfully: `/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-diagnostic-cpu-v228-v1/target/debug/fe2o3-rustc-extract /home/harmenon/.rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/bin/rustc --crate-name fe2o3_flash_attention_general_v1 --edition=2024 src/lib.rs --error-format=json --json=diagnostic-rendered-ansi,artifacts,future-incompat --crate-type lib --emit=dep-info,metadata -C opt-level=3 -C embed-bitcode=no --check-cfg 'cfg(docsrs,test)' --check-cfg 'cfg(feature, values())' -C metadata=6cd637fee32ef1cf -C extra-filename=-e884ce8a20cd83a8 --out-dir /home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-diagnostic-cpu-v228-v1/tmp/fe2o3-production-general-attention-169872-1791242096465726548/cargo/amdgcn-amd-amdhsa/release/deps --target amdgcn-amd-amdhsa -C strip=debuginfo -L dependency=/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-diagnostic-cpu-v228-v1/tmp/fe2o3-production-general-attention-169872-1791242096465726548/cargo/amdgcn-amd-amdhsa/release/deps -L dependency=/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-diagnostic-cpu-v228-v1/tmp/fe2o3-production-general-attention-169872-1791242096465726548/cargo/release/deps --extern 'noprelude,nounused:compiler_builtins=/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-diagnostic-cpu-v228-v1/tmp/fe2o3-production-general-attention-169872-1791242096465726548/cargo/amdgcn-amd-amdhsa/release/deps/libcompiler_builtins-a8bbe6b3b620d318.rlib' --extern 'noprelude,nounused:core=/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-diagnostic-cpu-v228-v1/tmp/fe2o3-production-general-attention-169872-1791242096465726548/cargo/amdgcn-amd-amdhsa/release/deps/libcore-639eef85b1cf6efe.rlib' --extern fe2o3_device=/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-diagnostic-cpu-v228-v1/tmp/fe2o3-production-general-attention-169872-1791242096465726548/cargo/amdgcn-amd-amdhsa/release/deps/libfe2o3_device-bb3a39dd7979c9ea.rmeta -Z unstable-options -Zalways-encode-mir -Ctarget-cpu=gfx942 -Ctarget-feature=-xnack,+wavefrontsize64,-wavefrontsize32` (exit status: 1)
+
+stack backtrace:
+   0: __rustc::rust_begin_unwind
+   1: core::panicking::panic_fmt
+   2: production_general_matrix_driver_v1::assert_workgroup_pipeline_reaches_gfx942_llvm
+   3: production_general_matrix_driver_v1::dynamic_attention_kernel_reaches_gfx942_llvm
+   4: production_general_matrix_driver_v1::dynamic_attention_kernel_reaches_gfx942_llvm::{closure#0}
+   5: <production_general_matrix_driver_v1::dynamic_attention_kernel_reaches_gfx942_llvm::{closure#0} as core::ops::function::FnOnce<()>>::call_once
+note: Some details are omitted, run with `RUST_BACKTRACE=full` for a verbose backtrace.
+
+
+failures:
+    dynamic_attention_kernel_reaches_gfx942_llvm
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 3 filtered out; finished in 15.05s
+

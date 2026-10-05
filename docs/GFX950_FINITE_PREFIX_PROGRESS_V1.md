@@ -6,7 +6,15 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Latest: [422 tests and matrix extraction pass; attention reaches a checked-add refusal](../qualification/guarded-mlp-core-u32-widening-qualification-v1/README.md).
+Latest: [nine checked-arithmetic and Option helper bodies captured from attention](../qualification/guarded-mlp-core-checked-attention-diagnostic-v1/README.md).
+The isolated diagnostic compiler built on MI350 and all six renderer tests
+passed. The unchanged attention control still rejects `usize::checked_add`;
+the capture grants no admission. All nine selected bodies were fully rendered
+within one 64 KiB limit, with no partial bodies or omissions. All 19 phases
+exited naturally and were reaped, with unchanged sources and clean integrity
+postchecks. Production recognizers and their qualification remain pending.
+
+Previously, [422 tests and matrix extraction passed; attention reached a checked-add refusal](../qualification/guarded-mlp-core-u32-widening-qualification-v1/README.md).
 The exact widening recognizer and six new tests built and passed on MI350,
 including 49 real-MIR mutations and eight identity/signature refusals. All
 415 previously passing controls remained green. The unchanged matrix control
