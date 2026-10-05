@@ -1,0 +1,56 @@
+warning: /home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-result-diagnostic-cpu-v228-v2/fe2o3/crates/rustc-codegen-fe2o3/tests/fixtures/local-marker/Cargo.toml: file `/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-result-diagnostic-cpu-v228-v2/fe2o3/crates/rustc-codegen-fe2o3/tests/fixtures/local-marker/src/main.rs` found to be present in multiple build targets:
+  * `lib` target `fe2o3_trusted_item_local_marker`
+  * `bin` target `fe2o3-trusted-item-local-marker`
+   Compiling typenum v1.20.1
+   Compiling cpufeatures v0.3.1
+   Compiling cfg-if v1.0.4
+   Compiling fe2o3-target-spec v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-result-diagnostic-cpu-v228-v2/fe2o3/crates/fe2o3-target-spec)
+   Compiling proc-macro2 v1.0.107
+   Compiling libc v0.2.189
+   Compiling fe2o3-amd-target v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-result-diagnostic-cpu-v228-v2/fe2o3/crates/fe2o3-amd-target)
+   Compiling hybrid-array v0.4.14
+   Compiling unicode-ident v1.0.24
+   Compiling quote v1.0.47
+   Compiling block-buffer v0.12.1
+   Compiling crypto-common v0.2.2
+   Compiling serde_core v1.0.229
+   Compiling digest v0.11.3
+   Compiling sha2 v0.11.0
+   Compiling fe2o3-build-authority v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-result-diagnostic-cpu-v228-v2/fe2o3/crates/fe2o3-build-authority)
+   Compiling fe2o3-kernel-descriptor v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-result-diagnostic-cpu-v228-v2/fe2o3/crates/fe2o3-kernel-descriptor)
+   Compiling fe2o3-rustc-invocation v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-result-diagnostic-cpu-v228-v2/fe2o3/crates/fe2o3-rustc-invocation)
+   Compiling rustix v1.1.4
+   Compiling fe2o3-compiler-lineage v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-result-diagnostic-cpu-v228-v2/fe2o3/crates/fe2o3-compiler-lineage)
+   Compiling reserved-fe2o3-symbols v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-result-diagnostic-cpu-v228-v2/fe2o3/crates/reserved-fe2o3-symbols)
+   Compiling bitflags v2.13.1
+   Compiling hashbrown v0.17.1
+   Compiling linux-raw-sys v0.12.1
+   Compiling equivalent v1.0.2
+   Compiling winnow v1.0.4
+   Compiling toml_parser v1.1.3+spec-1.1.0
+   Compiling indexmap v2.14.1
+   Compiling fe2o3-compiler-ffi v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-result-diagnostic-cpu-v228-v2/fe2o3/crates/fe2o3-compiler-ffi)
+   Compiling toml_datetime v1.1.1+spec-1.1.0
+   Compiling zmij v1.0.23
+   Compiling toml_edit v0.25.13+spec-1.1.0
+   Compiling fe2o3-artifact-transaction v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-result-diagnostic-cpu-v228-v2/fe2o3/crates/fe2o3-artifact-transaction)
+   Compiling serde v1.0.229
+   Compiling serde_json v1.0.151
+   Compiling target-triple v1.0.1
+   Compiling proc-macro-crate v3.5.0
+   Compiling serde_spanned v1.1.1
+   Compiling syn v2.0.119
+   Compiling fe2o3-artifacts v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-result-diagnostic-cpu-v228-v2/fe2o3/crates/fe2o3-artifacts)
+   Compiling syn v3.0.4
+   Compiling fe2o3-rustc-front v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-result-diagnostic-cpu-v228-v2/fe2o3/crates/fe2o3-rustc-front)
+   Compiling toml_writer v1.1.2+spec-1.1.0
+   Compiling memchr v2.8.3
+   Compiling itoa v1.0.18
+   Compiling serde_derive v1.0.229
+   Compiling toml v1.1.4+spec-1.1.0
+   Compiling fe2o3-macros v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-result-diagnostic-cpu-v228-v2/fe2o3/crates/fe2o3-macros)
+   Compiling termcolor v1.4.1
+   Compiling glob v0.3.4
+   Compiling trybuild v1.0.120
+   Compiling fe2o3-device v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-result-diagnostic-cpu-v228-v2/fe2o3/crates/fe2o3-device)
+    Finished `test` profile [unoptimized] target(s) in 11.78s

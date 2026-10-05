@@ -6,7 +6,16 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Latest: [the rejected core Result helper's actual MIR is captured](../qualification/guarded-mlp-core-result-diagnostic-v1/README.md).
+Latest: [the actual core FromResidual wrapper is captured alongside branch](../qualification/guarded-mlp-core-result-residual-diagnostic-v1/README.md).
+The second diagnostic compiler built on MI350 and all ten rendering/census
+tests passed. The complete observation includes the residual discriminant
+assumption and its real error-conversion call; neither is implicitly trusted.
+All 19 phases exited naturally and were reaped, with clean integrity postchecks.
+The unchanged matrix test still returned 101 at its original rejection.
+Exact body matchers and mutation tests are in progress; no provider, GPU,
+model or performance gate is claimed passed.
+
+Previously, [the rejected core Result helper's actual MIR was captured](../qualification/guarded-mlp-core-result-diagnostic-v1/README.md).
 The diagnostic compiler built on MI350, six rendering tests passed, and the
 unchanged matrix test retained its original rejection. The complete bounded
 observation includes five blocks, six locals and three source scopes, with no
