@@ -36,6 +36,7 @@ matrix and attention controls.
 | [V3](attempt-v3/evidence/failed.json) | `87bdf54f4351c43189fe982b1bf6a8059599ea89` | Both builds passed; 390 prior-cohort tests passed; the new cohort reported 1 pass and 14 failures. |
 | [V4](attempt-v4/evidence/failed.json) | `d6eded7d7d187b1be5c2f2d1bb521f6e26246b81` | Both builds and the same 390 tests passed; callbacks advanced past branch checks but failed at the residual-body assertion. The new cohort still reported 1 pass and 14 failures. |
 | [V5](attempt-v5/evidence/failed.json) | `d2d98d302f57d38563b58bd01d168eed092d2692` | Same builds and 390 tests passed; failure-only diagnostics captured the host core's `unwind continue` edge. The new cohort still reported 1 pass and 14 failures. |
+| [V6](attempt-v6/evidence/failed.json) | `661626692d2f3950a427a04f75ecaa353be06e85` | Same builds and 390 tests passed; the AMD-core fixture reached its direct compiler invocation, which failed E0463 for missing `compiler_builtins`. The new cohort remained 1 pass and 14 failures. |
 
 V1's four phases exited naturally and were reaped; the first three returned
 zero, then the compiler build returned 101. Integrity postchecks passed and
@@ -93,11 +94,26 @@ artifacts, which contain no diagnostic hooks; it does not mean the test binary
 has no failure diagnostics. All 23 V5 phases exited naturally and were reaped,
 with unchanged sources and clean integrity postchecks. Qualification remains
 incomplete; the captured mismatch does not make any failed test pass.
+
+V6 builds genuine core metadata with the measured matrix control's gfx942
+release settings, then supplies that metadata to the callback compiler. This
+is a CPU compiler fixture, not gfx950 execution. It got past Cargo build and
+core selection but failed before callback analysis: the
+[compiler diagnostic](attempt-v6/evidence/core-result-control.stderr) is E0463,
+missing `compiler_builtins`. The next correction will select that second
+library from the same structured Cargo artifact output and supply its actual
+metadata explicitly. No production rule or mutation assertion changes.
+
+The complete setup and callback result now cache failures as failures. The
+original error is retained, and subsequent dependent tests fail without
+rebuilding target core. V6's new cohort took 7.829 seconds; no mutation
+completion is claimed. All 23 phases exited naturally and were reaped, with
+unchanged sources and clean integrity postchecks.
 The new cohort, atomic/source-safety controls and both matrix/attention controls
 still require a successful run on this generation.
 
-The retention manifests pin 31 original V1 files, 36 V2 files, 126 V3 files and
-126 files each for V4 and V5, including each
+The retention manifests pin 31 original V1 files, 36 V2 files and 126 files
+each for V3 through V6, including each
 controller, manifest, raw evidence and four compiler source bodies. Failed
 attempts remain failed. Provider qualification, guarded HSACO emission,
 GPU/model correctness, sustained single-request BF16 2,048/256 and 700 tokens/s

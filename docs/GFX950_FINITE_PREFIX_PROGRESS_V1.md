@@ -6,15 +6,16 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Latest: [the residual fixture mismatch is captured, but compiler qualification remains incomplete](../qualification/guarded-mlp-core-result-qualification-v1/README.md).
+Latest: [the AMD-core fixture reaches compilation, but qualification remains incomplete](../qualification/guarded-mlp-core-result-qualification-v1/README.md).
 Both compiler and test binaries built on MI350, and the same 390 prior-cohort
-tests passed. V5's failure-only diagnostics show that the host fixture imports
-a core conversion call with `unwind continue`; the measured AMD-target core
-has `unwind unreachable`. A test-only AMD-core fixture correction is next;
-the production matcher remains unchanged. The new cohort still reported one
-pass and 14 failures through shared initialization. All 23 phases exited
-naturally and were reaped, with clean integrity postchecks. Matrix and attention
-were not reached.
+tests passed. After V5 identified a host-versus-AMD core unwind mismatch,
+V6 supplied genuine AMD core metadata. Its direct compiler invocation then
+failed E0463 for missing `compiler_builtins`, before callback analysis.
+Explicitly supplying that second target library is next; the production
+matcher remains unchanged. Cached failure avoids repeated target-core builds,
+but the new cohort still reported one pass and 14 failures. All 23 phases
+exited naturally and were reaped, with clean integrity postchecks. Matrix and
+attention were not reached.
 Ferric's dependency remains unchanged; no provider, GPU, model or performance
 gate is claimed passed.
 

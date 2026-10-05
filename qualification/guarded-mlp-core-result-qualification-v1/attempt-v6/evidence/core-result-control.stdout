@@ -1,0 +1,249 @@
+
+running 15 tests
+test trusted_device_items::core_result_control_v1::tests::result_branch_real_body_rejects_changed_aggregate_identity_and_moves ... FAILED
+test trusted_device_items::core_result_control_v1::tests::result_branch_real_body_rejects_changed_edges_and_discriminants ... FAILED
+test trusted_device_items::core_result_control_v1::tests::result_branch_real_body_rejects_changed_payload_fields ... FAILED
+test trusted_device_items::core_result_control_v1::tests::result_branch_real_body_rejects_count_and_local_mutations ... FAILED
+test trusted_device_items::core_result_control_v1::tests::result_branch_real_body_rejects_extra_operations_and_cleanup ... FAILED
+test trusted_device_items::core_result_control_v1::tests::result_branch_real_body_rejects_scope_and_inline_origin_mutations ... FAILED
+test trusted_device_items::core_result_control_v1::tests::result_branch_real_core_bodies_and_nominal_refusals ... FAILED
+test trusted_device_items::core_result_control_v1::tests::result_family_table_keeps_exact_source_pairs ... ok
+test trusted_device_items::core_result_control_v1::tests::result_residual_real_body_rejects_changed_assume_and_discriminant ... FAILED
+test trusted_device_items::core_result_control_v1::tests::result_residual_real_body_rejects_changed_conversion_call ... FAILED
+test trusted_device_items::core_result_control_v1::tests::result_residual_real_body_rejects_changed_payload_and_output ... FAILED
+test trusted_device_items::core_result_control_v1::tests::result_residual_real_body_rejects_count_and_local_mutations ... FAILED
+test trusted_device_items::core_result_control_v1::tests::result_residual_real_body_rejects_extra_operations_and_cleanup ... FAILED
+test trusted_device_items::core_result_control_v1::tests::result_residual_real_body_rejects_scope_and_inline_origin_mutations ... FAILED
+test trusted_device_items::core_result_control_v1::tests::result_residual_real_core_bodies_and_nominal_refusals ... FAILED
+
+failures:
+
+---- trusted_device_items::core_result_control_v1::tests::result_branch_real_body_rejects_changed_aggregate_identity_and_moves stdout ----
+
+thread 'trusted_device_items::core_result_control_v1::tests::result_branch_real_body_rejects_changed_aggregate_identity_and_moves' (3543241) panicked at crates/rustc-codegen-fe2o3/src/trusted_device_items/core_result_control_v1_tests.rs:624:46:
+cached core Result fixture failure: core Result fixture initialization panicked with a non-string payload
+stack backtrace:
+   0: __rustc::rust_begin_unwind
+   1: core::panicking::panic_fmt
+   2: rustc_codegen_fe2o3::trusted_device_items::core_result_control_v1::tests::compiler_results::{closure#1}
+   3: <core::result::Result<&rustc_codegen_fe2o3::trusted_device_items::core_result_control_v1::tests::Results, &alloc::string::String>>::unwrap_or_else::<rustc_codegen_fe2o3::trusted_device_items::core_result_control_v1::tests::compiler_results::{closure#1}>
+   4: rustc_codegen_fe2o3::trusted_device_items::core_result_control_v1::tests::compiler_results
+   5: rustc_codegen_fe2o3::trusted_device_items::core_result_control_v1::tests::result_branch_real_body_rejects_changed_aggregate_identity_and_moves
+   6: rustc_codegen_fe2o3::trusted_device_items::core_result_control_v1::tests::result_branch_real_body_rejects_changed_aggregate_identity_and_moves::{closure#0}
+   7: <rustc_codegen_fe2o3::trusted_device_items::core_result_control_v1::tests::result_branch_real_body_rejects_changed_aggregate_identity_and_moves::{closure#0} as core::ops::function::FnOnce<()>>::call_once
+note: Some details are omitted, run with `RUST_BACKTRACE=full` for a verbose backtrace.
+
+---- trusted_device_items::core_result_control_v1::tests::result_branch_real_body_rejects_changed_edges_and_discriminants stdout ----
+
+thread 'trusted_device_items::core_result_control_v1::tests::result_branch_real_body_rejects_changed_edges_and_discriminants' (3543365) panicked at crates/rustc-codegen-fe2o3/src/trusted_device_items/core_result_control_v1_tests.rs:624:46:
+cached core Result fixture failure: core Result fixture initialization panicked with a non-string payload
+stack backtrace:
+   0: __rustc::rust_begin_unwind
+   1: core::panicking::panic_fmt
+   2: rustc_codegen_fe2o3::trusted_device_items::core_result_control_v1::tests::compiler_results::{closure#1}
+   3: <core::result::Result<&rustc_codegen_fe2o3::trusted_device_items::core_result_control_v1::tests::Results, &alloc::string::String>>::unwrap_or_else::<rustc_codegen_fe2o3::trusted_device_items::core_result_control_v1::tests::compiler_results::{closure#1}>
+   4: rustc_codegen_fe2o3::trusted_device_items::core_result_control_v1::tests::compiler_results
+   5: rustc_codegen_fe2o3::trusted_device_items::core_result_control_v1::tests::result_branch_real_body_rejects_changed_edges_and_discriminants
+   6: rustc_codegen_fe2o3::trusted_device_items::core_result_control_v1::tests::result_branch_real_body_rejects_changed_edges_and_discriminants::{closure#0}
+   7: <rustc_codegen_fe2o3::trusted_device_items::core_result_control_v1::tests::result_branch_real_body_rejects_changed_edges_and_discriminants::{closure#0} as core::ops::function::FnOnce<()>>::call_once
+note: Some details are omitted, run with `RUST_BACKTRACE=full` for a verbose backtrace.
+
+---- trusted_device_items::core_result_control_v1::tests::result_branch_real_body_rejects_changed_payload_fields stdout ----
+
+thread 'trusted_device_items::core_result_control_v1::tests::result_branch_real_body_rejects_changed_payload_fields' (3543366) panicked at crates/rustc-codegen-fe2o3/src/trusted_device_items/core_result_control_v1_tests.rs:624:46:
+cached core Result fixture failure: core Result fixture initialization panicked with a non-string payload
+stack backtrace:
+   0: __rustc::rust_begin_unwind
+   1: core::panicking::panic_fmt
+   2: rustc_codegen_fe2o3::trusted_device_items::core_result_control_v1::tests::compiler_results::{closure#1}
+   3: <core::result::Result<&rustc_codegen_fe2o3::trusted_device_items::core_result_control_v1::tests::Results, &alloc::string::String>>::unwrap_or_else::<rustc_codegen_fe2o3::trusted_device_items::core_result_control_v1::tests::compiler_results::{closure#1}>
+   4: rustc_codegen_fe2o3::trusted_device_items::core_result_control_v1::tests::compiler_results
+   5: rustc_codegen_fe2o3::trusted_device_items::core_result_control_v1::tests::result_branch_real_body_rejects_changed_payload_fields
+   6: rustc_codegen_fe2o3::trusted_device_items::core_result_control_v1::tests::result_branch_real_body_rejects_changed_payload_fields::{closure#0}
+   7: <rustc_codegen_fe2o3::trusted_device_items::core_result_control_v1::tests::result_branch_real_body_rejects_changed_payload_fields::{closure#0} as core::ops::function::FnOnce<()>>::call_once
+note: Some details are omitted, run with `RUST_BACKTRACE=full` for a verbose backtrace.
+
+---- trusted_device_items::core_result_control_v1::tests::result_branch_real_body_rejects_count_and_local_mutations stdout ----
+
+thread 'trusted_device_items::core_result_control_v1::tests::result_branch_real_body_rejects_count_and_local_mutations' (3543367) panicked at crates/rustc-codegen-fe2o3/src/trusted_device_items/core_result_control_v1_tests.rs:624:46:
+cached core Result fixture failure: core Result fixture initialization panicked with a non-string payload
+stack backtrace:
+   0: __rustc::rust_begin_unwind
+   1: core::panicking::panic_fmt
+   2: rustc_codegen_fe2o3::trusted_device_items::core_result_control_v1::tests::compiler_results::{closure#1}
+   3: <core::result::Result<&rustc_codegen_fe2o3::trusted_device_items::core_result_control_v1::tests::Results, &alloc::string::String>>::unwrap_or_else::<rustc_codegen_fe2o3::trusted_device_items::core_result_control_v1::tests::compiler_results::{closure#1}>
+   4: rustc_codegen_fe2o3::trusted_device_items::core_result_control_v1::tests::compiler_results
+   5: rustc_codegen_fe2o3::trusted_device_items::core_result_control_v1::tests::result_branch_real_body_rejects_count_and_local_mutations
+   6: rustc_codegen_fe2o3::trusted_device_items::core_result_control_v1::tests::result_branch_real_body_rejects_count_and_local_mutations::{closure#0}
+   7: <rustc_codegen_fe2o3::trusted_device_items::core_result_control_v1::tests::result_branch_real_body_rejects_count_and_local_mutations::{closure#0} as core::ops::function::FnOnce<()>>::call_once
+note: Some details are omitted, run with `RUST_BACKTRACE=full` for a verbose backtrace.
+
+---- trusted_device_items::core_result_control_v1::tests::result_branch_real_body_rejects_extra_operations_and_cleanup stdout ----
+
+thread 'trusted_device_items::core_result_control_v1::tests::result_branch_real_body_rejects_extra_operations_and_cleanup' (3543368) panicked at crates/rustc-codegen-fe2o3/src/trusted_device_items/core_result_control_v1_tests.rs:624:46:
+cached core Result fixture failure: core Result fixture initialization panicked with a non-string payload
+stack backtrace:
+   0: __rustc::rust_begin_unwind
+   1: core::panicking::panic_fmt
+   2: rustc_codegen_fe2o3::trusted_device_items::core_result_control_v1::tests::compiler_results::{closure#1}
+   3: <core::result::Result<&rustc_codegen_fe2o3::trusted_device_items::core_result_control_v1::tests::Results, &alloc::string::String>>::unwrap_or_else::<rustc_codegen_fe2o3::trusted_device_items::core_result_control_v1::tests::compiler_results::{closure#1}>
+   4: rustc_codegen_fe2o3::trusted_device_items::core_result_control_v1::tests::compiler_results
+   5: rustc_codegen_fe2o3::trusted_device_items::core_result_control_v1::tests::result_branch_real_body_rejects_extra_operations_and_cleanup
+   6: rustc_codegen_fe2o3::trusted_device_items::core_result_control_v1::tests::result_branch_real_body_rejects_extra_operations_and_cleanup::{closure#0}
+   7: <rustc_codegen_fe2o3::trusted_device_items::core_result_control_v1::tests::result_branch_real_body_rejects_extra_operations_and_cleanup::{closure#0} as core::ops::function::FnOnce<()>>::call_once
+note: Some details are omitted, run with `RUST_BACKTRACE=full` for a verbose backtrace.
+
+---- trusted_device_items::core_result_control_v1::tests::result_branch_real_body_rejects_scope_and_inline_origin_mutations stdout ----
+
+thread 'trusted_device_items::core_result_control_v1::tests::result_branch_real_body_rejects_scope_and_inline_origin_mutations' (3543369) panicked at crates/rustc-codegen-fe2o3/src/trusted_device_items/core_result_control_v1_tests.rs:624:46:
+cached core Result fixture failure: core Result fixture initialization panicked with a non-string payload
+stack backtrace:
+   0: __rustc::rust_begin_unwind
+   1: core::panicking::panic_fmt
+   2: rustc_codegen_fe2o3::trusted_device_items::core_result_control_v1::tests::compiler_results::{closure#1}
+   3: <core::result::Result<&rustc_codegen_fe2o3::trusted_device_items::core_result_control_v1::tests::Results, &alloc::string::String>>::unwrap_or_else::<rustc_codegen_fe2o3::trusted_device_items::core_result_control_v1::tests::compiler_results::{closure#1}>
+   4: rustc_codegen_fe2o3::trusted_device_items::core_result_control_v1::tests::compiler_results
+   5: rustc_codegen_fe2o3::trusted_device_items::core_result_control_v1::tests::result_branch_real_body_rejects_scope_and_inline_origin_mutations
+   6: rustc_codegen_fe2o3::trusted_device_items::core_result_control_v1::tests::result_branch_real_body_rejects_scope_and_inline_origin_mutations::{closure#0}
+   7: <rustc_codegen_fe2o3::trusted_device_items::core_result_control_v1::tests::result_branch_real_body_rejects_scope_and_inline_origin_mutations::{closure#0} as core::ops::function::FnOnce<()>>::call_once
+note: Some details are omitted, run with `RUST_BACKTRACE=full` for a verbose backtrace.
+
+---- trusted_device_items::core_result_control_v1::tests::result_branch_real_core_bodies_and_nominal_refusals stdout ----
+
+thread 'trusted_device_items::core_result_control_v1::tests::result_branch_real_core_bodies_and_nominal_refusals' (3543370) panicked at crates/rustc-codegen-fe2o3/src/trusted_device_items/core_result_control_v1_tests.rs:624:46:
+cached core Result fixture failure: core Result fixture initialization panicked with a non-string payload
+stack backtrace:
+   0: __rustc::rust_begin_unwind
+   1: core::panicking::panic_fmt
+   2: rustc_codegen_fe2o3::trusted_device_items::core_result_control_v1::tests::compiler_results::{closure#1}
+   3: <core::result::Result<&rustc_codegen_fe2o3::trusted_device_items::core_result_control_v1::tests::Results, &alloc::string::String>>::unwrap_or_else::<rustc_codegen_fe2o3::trusted_device_items::core_result_control_v1::tests::compiler_results::{closure#1}>
+   4: rustc_codegen_fe2o3::trusted_device_items::core_result_control_v1::tests::compiler_results
+   5: rustc_codegen_fe2o3::trusted_device_items::core_result_control_v1::tests::result_branch_real_core_bodies_and_nominal_refusals
+   6: rustc_codegen_fe2o3::trusted_device_items::core_result_control_v1::tests::result_branch_real_core_bodies_and_nominal_refusals::{closure#0}
+   7: <rustc_codegen_fe2o3::trusted_device_items::core_result_control_v1::tests::result_branch_real_core_bodies_and_nominal_refusals::{closure#0} as core::ops::function::FnOnce<()>>::call_once
+note: Some details are omitted, run with `RUST_BACKTRACE=full` for a verbose backtrace.
+
+---- trusted_device_items::core_result_control_v1::tests::result_residual_real_body_rejects_changed_assume_and_discriminant stdout ----
+
+thread 'trusted_device_items::core_result_control_v1::tests::result_residual_real_body_rejects_changed_assume_and_discriminant' (3543372) panicked at crates/rustc-codegen-fe2o3/src/trusted_device_items/core_result_control_v1_tests.rs:624:46:
+cached core Result fixture failure: core Result fixture initialization panicked with a non-string payload
+stack backtrace:
+   0: __rustc::rust_begin_unwind
+   1: core::panicking::panic_fmt
+   2: rustc_codegen_fe2o3::trusted_device_items::core_result_control_v1::tests::compiler_results::{closure#1}
+   3: <core::result::Result<&rustc_codegen_fe2o3::trusted_device_items::core_result_control_v1::tests::Results, &alloc::string::String>>::unwrap_or_else::<rustc_codegen_fe2o3::trusted_device_items::core_result_control_v1::tests::compiler_results::{closure#1}>
+   4: rustc_codegen_fe2o3::trusted_device_items::core_result_control_v1::tests::compiler_results
+   5: rustc_codegen_fe2o3::trusted_device_items::core_result_control_v1::tests::result_residual_real_body_rejects_changed_assume_and_discriminant
+   6: rustc_codegen_fe2o3::trusted_device_items::core_result_control_v1::tests::result_residual_real_body_rejects_changed_assume_and_discriminant::{closure#0}
+   7: <rustc_codegen_fe2o3::trusted_device_items::core_result_control_v1::tests::result_residual_real_body_rejects_changed_assume_and_discriminant::{closure#0} as core::ops::function::FnOnce<()>>::call_once
+note: Some details are omitted, run with `RUST_BACKTRACE=full` for a verbose backtrace.
+
+---- trusted_device_items::core_result_control_v1::tests::result_residual_real_body_rejects_changed_conversion_call stdout ----
+
+thread 'trusted_device_items::core_result_control_v1::tests::result_residual_real_body_rejects_changed_conversion_call' (3543373) panicked at crates/rustc-codegen-fe2o3/src/trusted_device_items/core_result_control_v1_tests.rs:624:46:
+cached core Result fixture failure: core Result fixture initialization panicked with a non-string payload
+stack backtrace:
+   0: __rustc::rust_begin_unwind
+   1: core::panicking::panic_fmt
+   2: rustc_codegen_fe2o3::trusted_device_items::core_result_control_v1::tests::compiler_results::{closure#1}
+   3: <core::result::Result<&rustc_codegen_fe2o3::trusted_device_items::core_result_control_v1::tests::Results, &alloc::string::String>>::unwrap_or_else::<rustc_codegen_fe2o3::trusted_device_items::core_result_control_v1::tests::compiler_results::{closure#1}>
+   4: rustc_codegen_fe2o3::trusted_device_items::core_result_control_v1::tests::compiler_results
+   5: rustc_codegen_fe2o3::trusted_device_items::core_result_control_v1::tests::result_residual_real_body_rejects_changed_conversion_call
+   6: rustc_codegen_fe2o3::trusted_device_items::core_result_control_v1::tests::result_residual_real_body_rejects_changed_conversion_call::{closure#0}
+   7: <rustc_codegen_fe2o3::trusted_device_items::core_result_control_v1::tests::result_residual_real_body_rejects_changed_conversion_call::{closure#0} as core::ops::function::FnOnce<()>>::call_once
+note: Some details are omitted, run with `RUST_BACKTRACE=full` for a verbose backtrace.
+
+---- trusted_device_items::core_result_control_v1::tests::result_residual_real_body_rejects_changed_payload_and_output stdout ----
+
+thread 'trusted_device_items::core_result_control_v1::tests::result_residual_real_body_rejects_changed_payload_and_output' (3543374) panicked at crates/rustc-codegen-fe2o3/src/trusted_device_items/core_result_control_v1_tests.rs:624:46:
+cached core Result fixture failure: core Result fixture initialization panicked with a non-string payload
+stack backtrace:
+   0: __rustc::rust_begin_unwind
+   1: core::panicking::panic_fmt
+   2: rustc_codegen_fe2o3::trusted_device_items::core_result_control_v1::tests::compiler_results::{closure#1}
+   3: <core::result::Result<&rustc_codegen_fe2o3::trusted_device_items::core_result_control_v1::tests::Results, &alloc::string::String>>::unwrap_or_else::<rustc_codegen_fe2o3::trusted_device_items::core_result_control_v1::tests::compiler_results::{closure#1}>
+   4: rustc_codegen_fe2o3::trusted_device_items::core_result_control_v1::tests::compiler_results
+   5: rustc_codegen_fe2o3::trusted_device_items::core_result_control_v1::tests::result_residual_real_body_rejects_changed_payload_and_output
+   6: rustc_codegen_fe2o3::trusted_device_items::core_result_control_v1::tests::result_residual_real_body_rejects_changed_payload_and_output::{closure#0}
+   7: <rustc_codegen_fe2o3::trusted_device_items::core_result_control_v1::tests::result_residual_real_body_rejects_changed_payload_and_output::{closure#0} as core::ops::function::FnOnce<()>>::call_once
+note: Some details are omitted, run with `RUST_BACKTRACE=full` for a verbose backtrace.
+
+---- trusted_device_items::core_result_control_v1::tests::result_residual_real_body_rejects_count_and_local_mutations stdout ----
+
+thread 'trusted_device_items::core_result_control_v1::tests::result_residual_real_body_rejects_count_and_local_mutations' (3543375) panicked at crates/rustc-codegen-fe2o3/src/trusted_device_items/core_result_control_v1_tests.rs:624:46:
+cached core Result fixture failure: core Result fixture initialization panicked with a non-string payload
+stack backtrace:
+   0: __rustc::rust_begin_unwind
+   1: core::panicking::panic_fmt
+   2: rustc_codegen_fe2o3::trusted_device_items::core_result_control_v1::tests::compiler_results::{closure#1}
+   3: <core::result::Result<&rustc_codegen_fe2o3::trusted_device_items::core_result_control_v1::tests::Results, &alloc::string::String>>::unwrap_or_else::<rustc_codegen_fe2o3::trusted_device_items::core_result_control_v1::tests::compiler_results::{closure#1}>
+   4: rustc_codegen_fe2o3::trusted_device_items::core_result_control_v1::tests::compiler_results
+   5: rustc_codegen_fe2o3::trusted_device_items::core_result_control_v1::tests::result_residual_real_body_rejects_count_and_local_mutations
+   6: rustc_codegen_fe2o3::trusted_device_items::core_result_control_v1::tests::result_residual_real_body_rejects_count_and_local_mutations::{closure#0}
+   7: <rustc_codegen_fe2o3::trusted_device_items::core_result_control_v1::tests::result_residual_real_body_rejects_count_and_local_mutations::{closure#0} as core::ops::function::FnOnce<()>>::call_once
+note: Some details are omitted, run with `RUST_BACKTRACE=full` for a verbose backtrace.
+
+---- trusted_device_items::core_result_control_v1::tests::result_residual_real_body_rejects_extra_operations_and_cleanup stdout ----
+
+thread 'trusted_device_items::core_result_control_v1::tests::result_residual_real_body_rejects_extra_operations_and_cleanup' (3543376) panicked at crates/rustc-codegen-fe2o3/src/trusted_device_items/core_result_control_v1_tests.rs:624:46:
+cached core Result fixture failure: core Result fixture initialization panicked with a non-string payload
+stack backtrace:
+   0: __rustc::rust_begin_unwind
+   1: core::panicking::panic_fmt
+   2: rustc_codegen_fe2o3::trusted_device_items::core_result_control_v1::tests::compiler_results::{closure#1}
+   3: <core::result::Result<&rustc_codegen_fe2o3::trusted_device_items::core_result_control_v1::tests::Results, &alloc::string::String>>::unwrap_or_else::<rustc_codegen_fe2o3::trusted_device_items::core_result_control_v1::tests::compiler_results::{closure#1}>
+   4: rustc_codegen_fe2o3::trusted_device_items::core_result_control_v1::tests::compiler_results
+   5: rustc_codegen_fe2o3::trusted_device_items::core_result_control_v1::tests::result_residual_real_body_rejects_extra_operations_and_cleanup
+   6: rustc_codegen_fe2o3::trusted_device_items::core_result_control_v1::tests::result_residual_real_body_rejects_extra_operations_and_cleanup::{closure#0}
+   7: <rustc_codegen_fe2o3::trusted_device_items::core_result_control_v1::tests::result_residual_real_body_rejects_extra_operations_and_cleanup::{closure#0} as core::ops::function::FnOnce<()>>::call_once
+note: Some details are omitted, run with `RUST_BACKTRACE=full` for a verbose backtrace.
+
+---- trusted_device_items::core_result_control_v1::tests::result_residual_real_body_rejects_scope_and_inline_origin_mutations stdout ----
+
+thread 'trusted_device_items::core_result_control_v1::tests::result_residual_real_body_rejects_scope_and_inline_origin_mutations' (3543377) panicked at crates/rustc-codegen-fe2o3/src/trusted_device_items/core_result_control_v1_tests.rs:624:46:
+cached core Result fixture failure: core Result fixture initialization panicked with a non-string payload
+stack backtrace:
+   0: __rustc::rust_begin_unwind
+   1: core::panicking::panic_fmt
+   2: rustc_codegen_fe2o3::trusted_device_items::core_result_control_v1::tests::compiler_results::{closure#1}
+   3: <core::result::Result<&rustc_codegen_fe2o3::trusted_device_items::core_result_control_v1::tests::Results, &alloc::string::String>>::unwrap_or_else::<rustc_codegen_fe2o3::trusted_device_items::core_result_control_v1::tests::compiler_results::{closure#1}>
+   4: rustc_codegen_fe2o3::trusted_device_items::core_result_control_v1::tests::compiler_results
+   5: rustc_codegen_fe2o3::trusted_device_items::core_result_control_v1::tests::result_residual_real_body_rejects_scope_and_inline_origin_mutations
+   6: rustc_codegen_fe2o3::trusted_device_items::core_result_control_v1::tests::result_residual_real_body_rejects_scope_and_inline_origin_mutations::{closure#0}
+   7: <rustc_codegen_fe2o3::trusted_device_items::core_result_control_v1::tests::result_residual_real_body_rejects_scope_and_inline_origin_mutations::{closure#0} as core::ops::function::FnOnce<()>>::call_once
+note: Some details are omitted, run with `RUST_BACKTRACE=full` for a verbose backtrace.
+
+---- trusted_device_items::core_result_control_v1::tests::result_residual_real_core_bodies_and_nominal_refusals stdout ----
+
+thread 'trusted_device_items::core_result_control_v1::tests::result_residual_real_core_bodies_and_nominal_refusals' (3543378) panicked at crates/rustc-codegen-fe2o3/src/trusted_device_items/core_result_control_v1_tests.rs:624:46:
+cached core Result fixture failure: core Result fixture initialization panicked with a non-string payload
+stack backtrace:
+   0: __rustc::rust_begin_unwind
+   1: core::panicking::panic_fmt
+   2: rustc_codegen_fe2o3::trusted_device_items::core_result_control_v1::tests::compiler_results::{closure#1}
+   3: <core::result::Result<&rustc_codegen_fe2o3::trusted_device_items::core_result_control_v1::tests::Results, &alloc::string::String>>::unwrap_or_else::<rustc_codegen_fe2o3::trusted_device_items::core_result_control_v1::tests::compiler_results::{closure#1}>
+   4: rustc_codegen_fe2o3::trusted_device_items::core_result_control_v1::tests::compiler_results
+   5: rustc_codegen_fe2o3::trusted_device_items::core_result_control_v1::tests::result_residual_real_core_bodies_and_nominal_refusals
+   6: rustc_codegen_fe2o3::trusted_device_items::core_result_control_v1::tests::result_residual_real_core_bodies_and_nominal_refusals::{closure#0}
+   7: <rustc_codegen_fe2o3::trusted_device_items::core_result_control_v1::tests::result_residual_real_core_bodies_and_nominal_refusals::{closure#0} as core::ops::function::FnOnce<()>>::call_once
+note: Some details are omitted, run with `RUST_BACKTRACE=full` for a verbose backtrace.
+
+
+failures:
+    trusted_device_items::core_result_control_v1::tests::result_branch_real_body_rejects_changed_aggregate_identity_and_moves
+    trusted_device_items::core_result_control_v1::tests::result_branch_real_body_rejects_changed_edges_and_discriminants
+    trusted_device_items::core_result_control_v1::tests::result_branch_real_body_rejects_changed_payload_fields
+    trusted_device_items::core_result_control_v1::tests::result_branch_real_body_rejects_count_and_local_mutations
+    trusted_device_items::core_result_control_v1::tests::result_branch_real_body_rejects_extra_operations_and_cleanup
+    trusted_device_items::core_result_control_v1::tests::result_branch_real_body_rejects_scope_and_inline_origin_mutations
+    trusted_device_items::core_result_control_v1::tests::result_branch_real_core_bodies_and_nominal_refusals
+    trusted_device_items::core_result_control_v1::tests::result_residual_real_body_rejects_changed_assume_and_discriminant
+    trusted_device_items::core_result_control_v1::tests::result_residual_real_body_rejects_changed_conversion_call
+    trusted_device_items::core_result_control_v1::tests::result_residual_real_body_rejects_changed_payload_and_output
+    trusted_device_items::core_result_control_v1::tests::result_residual_real_body_rejects_count_and_local_mutations
+    trusted_device_items::core_result_control_v1::tests::result_residual_real_body_rejects_extra_operations_and_cleanup
+    trusted_device_items::core_result_control_v1::tests::result_residual_real_body_rejects_scope_and_inline_origin_mutations
+    trusted_device_items::core_result_control_v1::tests::result_residual_real_core_bodies_and_nominal_refusals
+
+test result: FAILED. 1 passed; 14 failed; 0 ignored; 0 measured; 724 filtered out; finished in 7.81s
+

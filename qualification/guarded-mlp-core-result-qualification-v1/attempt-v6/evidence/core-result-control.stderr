@@ -1,0 +1,24 @@
+warning: unknown and unstable feature specified for `-Ctarget-feature`: `xnack`
+  |
+  = note: it is still passed through to the codegen backend, but use of this feature might be unsound and the behavior of this feature can change in the future
+  = help: consider filing a feature request
+
+warning: unknown and unstable feature specified for `-Ctarget-feature`: `wavefrontsize64`
+  |
+  = note: it is still passed through to the codegen backend, but use of this feature might be unsound and the behavior of this feature can change in the future
+  = help: consider filing a feature request
+
+warning: unknown and unstable feature specified for `-Ctarget-feature`: `wavefrontsize32`
+  |
+  = note: it is still passed through to the codegen backend, but use of this feature might be unsound and the behavior of this feature can change in the future
+  = help: consider filing a feature request
+
+error[E0463]: can't find crate for `compiler_builtins`
+ --> /home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-result-qualification-cpu-v228-v6/tmp/fe2o3-core-result-v1-3543240-0/fixture.rs:2:1
+  |
+2 | #![no_std]
+  | ^ can't find crate
+
+error: aborting due to 1 previous error; 3 warnings emitted
+
+For more information about this error, try `rustc --explain E0463`.
