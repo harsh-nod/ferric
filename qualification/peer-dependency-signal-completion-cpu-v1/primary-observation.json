@@ -1,0 +1,16 @@
+{
+  "schema": "ferric-peer-signal-completion-primary-observation-v1",
+  "scope": "MI350 CPU qualification only",
+  "runtime_commit": "097b4f796a283f554339cc0c0ef5c2c8c3858d2a",
+  "cpu_complete_sha256": "b4d6edccd6232fc925305d8053b844c3bf072a3f2aade9a774f44d3e67db059f",
+  "rust_tests": {"passed": 1064, "failed": 0, "ignored": 3},
+  "natural_successful_phases": 13,
+  "tested_crate_files_match": 779,
+  "actual_read_remains_ring_capacity_authority": true,
+  "v1_v2_example_bodies_unchanged": true,
+  "native_v3_attempted_in_this_checkpoint": false,
+  "model_numerically_accepted": false,
+  "sustained_2048_256_accepted": false,
+  "performance_claim": false,
+  "all_issue42_milestones_remain_open": true
+}

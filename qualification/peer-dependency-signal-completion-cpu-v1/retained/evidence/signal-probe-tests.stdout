@@ -1,0 +1,16 @@
+
+running 11 tests
+test tests::all_four_patterns_are_distinct_at_every_word_and_finite ... ok
+test tests::artifact_identity_and_path_are_closed ... ok
+test tests::closed_request_preserves_full_width_device_ids ... ok
+test tests::copy_kernargs_preserve_exact_slice_and_row_geometry ... ok
+test tests::guard_seed_and_wrong_iteration_corruption_are_detected ... ok
+test tests::lagging_queue_frontiers_are_retained_not_promoted_to_write ... ok
+test tests::queue_frontiers_refuse_wrong_write_or_read_ahead_on_either_rank ... ok
+test tests::request_rejects_unknown_fields_duplicates_and_unbounded_timeout ... ok
+test tests::v3_rejects_v1_fourteen_completion_observation ... ok
+test tests::v3_schemas_are_distinct_and_both_previous_requests_are_rejected ... ok
+test tests::witness_and_all_sixteen_completions_are_required ... ok
+
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

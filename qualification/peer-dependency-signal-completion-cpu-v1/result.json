@@ -1,0 +1,1706 @@
+Warning: truncated output (original token count: 47616)
+Total output lines: 4752
+
+{
+  "binary": {
+    "bytes": 1894712,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/peer-dependency-signal-completion-cpu-v228-v1/target/debug/examples/kfd-peer-dependency-signal-completion",
+    "sha256": "072380a5663194b57f9197145fc3d297313886dba1a56b4fe9da7a571bfe9d01"
+  },
+  "boot": "2dbbbc5a-d8b7-46ac-bd1f-236e5847e24a",
+  "compatibility_binary": {
+    "bytes": 1878704,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/peer-dependency-signal-completion-cpu-v228-v1/target/debug/examples/kfd-peer-dependency-sentinel",
+    "sha256": "77235ef8c00d6ac073ccfd9ba25d84abb24c7a3e9eb3652faaa31064c8898571"
+  },
+  "cpu_complete_sha256": "b4d6edccd6232fc925305d8053b844c3bf072a3f2aade9a774f44d3e67db059f",
+  "crate_files_byte_equal": 779,
+  "crate_files_compared": 779,
+  "gpu_execution": false,
+  "host": "smci350-rck-g03-b19-03",
+  "model_acceptance": false,
+  "native_v3_qualified": false,
+  "passed": true,
+  "performance_claim": false,
+  "retained": {
+    "retained/Cargo.lock": {
+      "bytes": 8058,
+      "sha256": "b605fb665bbd9b6ba266c0b6f74f4b9cab50bd1845e136dc6ac6cb6b2dadd252"
+    },
+    "retained/Cargo.lock.input": {
+      "bytes": 94611,
+      "sha256": "f0950d120a5decc8e52cd1160c31820f7703e72448d70061852d044fa925bcfc"
+    },
+    "retained/Cargo.toml": {
+      "bytes": 1191,
+      "sha256": "6335afec26ccb89944892ce8349f4b6681070fb0b7f467cede39538cfc88a743"
+    },
+    "retained/Cargo.toml.original": {
+      "bytes": 9409,
+      "sha256": "cb3099e0ebf7c6b04c21349d27569e7fcb7a2ec6199d6b9868421748263aa183"
+    },
+    "retained/evidence/aql-tests.command.json": {
+      "bytes": 1873,
+      "sha256": "7e4c02d3db7df362eb2896ef1f9fba104c35e6939540e5626ac9aa80314e996a"
+    },
+    "retained/evidence/aql-tests.result.json": {
+      "bytes": 1481,
+      "sha256": "0a292bc293ac7455cfc3410d382b161f3759414ed5b99dd6f634c26c6bb26fb1"
+    },
+    "retained/evidence/aql-tests.started.json": {
+      "bytes": 397,
+      "sha256": "31bdd2a02eeba126c56d81a28fd321541bd580da693648393bc9e423dd79c5e0"
+    },
+    "retained/evidence/aql-tests.stderr": {
+      "bytes": 734,
+      "sha256": "895a987ff199cd3f7f8e48e3b6c6a33dca40adc8a2944c130d2015778ba07da2"
+    },
+    "retained/evidence/aql-tests.stdout": {
+      "bytes": 3114,
+      "sha256": "abe3ee793e20df8aaf78eecb0262607a300ba541c384f78349f600759a38c235"
+    },
+    "retained/evidence/complete.json": {
+      "bytes": 234095,
+      "sha256": "b4d6edccd6232fc925305d8053b844c3bf072a3f2aade9a774f44d3e67db059f"
+    },
+    "retained/evidence/default-check.command.json": {
+      "bytes": 1869,
+      "sha256": "e8dbe61b5a4d3a9b7cf2c9406aeb6cc48c3bae8369fcc57c20ce2adc6c28dafb"
+    },
+    "retained/evidence/default-check.result.json": {
+      "bytes": 1491,
+      "sha256": "c4b596afd29ab8149061c18fd298a39721a0adf36a803335e9ac4577075f102b"
+    },
+    "retained/evidence/default-check.started.json": {
+      "bytes": 393,
+      "sha256": "e58934ea8169024ff0430f9fd9f68476e0b87d4bf60cc71fdc6e35ee60ff28f7"
+    },
+    "retained/evidence/default-check.stderr": {
+      "bytes": 2653,
+      "sha256": "5f5c07bc1a67e589b421213341a2a8b5da371cbb66145a50ec9ccd978e134d6e"
+    },
+    "retained/evidence/default-check.stdout": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "retained/evidence/format-check.command.json": {
+      "bytes": 2423,
+      "sha256": "dd3618f4a03312ce660bf723b90edd4ebdebb1487f8c2b7fbc8b6ea716dd609e"
+    },
+    "retained/evidence/format-check.result.json": {
+      "bytes": 2036,
+      "sha256": "81799be39b67c34183322e48fc2b9f434be717342efd1045d7c653df6b4354b4"
+    },
+    "retained/evidence/format-check.started.json": {
+      "bytes": 947,
+      "sha256": "e6a62862a4b3f5fd6db989143a690f1ded56ea83733184ec8afce95069e34b75"
+    },
+    "retained/evidence/format-check.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "retained/evidence/format-check.stdout": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "retained/evidence/format.command.json": {
+      "bytes": 2408,
+      "sha256": "588a0b94dbbc347788e9fdc647eca10781b6674df582b44695e480fd88e9d2e3"
+    },
+    "retained/evidence/format.result.json": {
+      "bytes": 1997,
+      "sha256": "1d8c62f61db6751f14c50c4e995c0616f0fce8fde954c9d9c42678434a8ee5e7"
+    },
+    "retained/evidence/format.started.json": {
+      "bytes": 932,
+      "sha256": "268a3bbf837d9e1d4aef8e3ca578044fde82d4ae9730c9603e01f69279a467dc"
+    },
+    "retained/evidence/format.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "retained/evidence/format.stdout": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "retained/evidence/kfd-tests.command.json": {
+      "bytes": 1945,
+      "sha256": "8587497ba8b02c26fb15007792a6c9c2272dc3f13c3285676f87aabac1afa071"
+    },
+    "retained/evidence/kfd-tests.result.json": {
+      "bytes": 1557,
+      "sha256": "ddfea7973c8d92b7916ce0df40172c975000f85c9bf53dec540eda21b80435a3"
+    },
+    "retained/evidence/kfd-tests.started.json": {
+      "bytes": 469,
+      "sha256": "c64369065f168564a2ccda1554bdc19a3abd6a8c3dda3b468c755f24f140ca4a"
+    },
+    "retained/evidence/kfd-tests.stderr": {
+      "bytes": 3444,
+      "sha256": "6458142ae3a25f1d12a74c15e9fafe2fac05be126e22b0595e264b7a4c49b14d"
+    },
+    "retained/evidence/kfd-tests.stdout": {
+      "bytes": 110290,
+      "sha256": "e0d3b14fb03fe4aa56d7ffeb2fadbb4c39583befe4fe56364b17eff378837899"
+    },
+    "retained/evidence/lock.command.json": {
+      "bytes": 1810,
+      "sha256": "4ffbabba375a7e8cc61256cc0b731b6d162673e62fdf8b7f54a6b5ce687310d8"
+    },
+    "retained/evidence/lock.result.json": {
+      "bytes": 1396,
+      "sha256": "92a5109854d4ce57161f00c70b4853f9c41db84ca22608259a94609a498c4a50"
+    },
+    "retained/evidence/lock.started.json": {
+      "bytes": 334,
+      "sha256": "f4654ddba0edc75ed5bf07a265e020d950a99d250d44751674166c30e17a7a78"
+    },
+    "retained/evidence/lock.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "retained/evidence/lock.stdout": {
+      "bytes": 128316,
+      "sha256": "6434ccab9409293b6155714642fc87d4df1589b33c53978156814d013aa287f5"
+    },
+    "retained/evidence/probe-build.command.json": {
+      "bytes": 1966,
+      "sha256": "80aebd7cdb01c81a4258e83a844a95625c0a724c4a0dea9a6a1f8f032a512810"
+    },
+    "retained/evidence/probe-build.result.json": {
+      "bytes": 1582,
+      "sha256": "2f4dcc3f23f274438948fe2d5f3d5171216a9cd4957da3b9b8fdbb548d70d895"
+    },
+    "retained/evidence/probe-build.started.json": {
+      "bytes": 490,
+      "sha256": "497aa8e5e5bd7ecdc5dd44ee30f72f1d270e8ceab8f907c37ade6403ebd61a4f"
+    },
+    "retained/evidence/probe-build.stderr": {
+      "bytes": 227,
+      "sha256": "e3c4b16e548c787b05568e920f9fed2ca826d9a33f0dec50f7c08b74a8d74d1d"
+    },
+    "retained/evidence/probe-build.stdout": {
+      "bytes": 51140,
+      "sha256": "a03a9be63d558712d72013c8a03d0f072522d51b0766f5a8105c997f07f8fc4a"
+    },
+    "retained/evidence/probe-tests.command.json": {
+      "bytes": 1970,
+      "sha256": "ec0717268da0d61d5094e06fa10c6015f018d5b6c6d8ee47be4fdade4a9988da"
+    },
+    "retained/evidence/probe-tests.result.json": {
+      "bytes": 1585,
+      "sha256": "3a67c065ef593e2f90895f38e2a9dbc29b1a157dc3266611df266e3037b46b61"
+    },
+    "retained/evidence/probe-tests.started.json": {
+      "bytes": 494,
+      "sha256": "140e80bc9cd21311a34f365e545c36c36a32377ba4bc4b4090c0e62e7e148ac6"
+    },
+    "retained/evidence/probe-tests.stderr": {
+      "bytes": 1194,
+      "sha256": "dc06bffc673be0bd15fbba7f836f5478c5376a972aac59c6b1310fa2bbba91bd"
+    },
+    "retained/evidence/probe-tests.stdout": {
+      "bytes": 608,
+      "sha256": "84cfe3fd609947c318a85ba23e029b7bd06baba0c66760874a4d1c0ec546f667"
+    },
+    "retained/evidence/rustc-version.command.json": {
+      "bytes": 1778,
+      "sha256": "d0566c65c9aa0ce3144262b0e6b9a75a060a61120f3e45c409c2564457f6869a"
+    },
+    "retained/evidence/rustc-version.result.json": {
+      "bytes": 1396,
+      "sha256": "e54e7d7080331ad8d3f56eb0b13df78dc1a570f424077143d85f24fa63e5f209"
+    },
+    "retained/evidence/rustc-version.started.json": {
+      "bytes": 302,
+      "sha256": "c12e78a699f592db1a7e1104037a24ed1be38532d8406390bc10da1b611b1866"
+    },
+    "retained/evidence/rustc-version.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "retained/evidence/rustc-version.stdout": {
+      "bytes": 212,
+      "sha256": "580dbecb7627e4e8ad67fd0b1d539727ba8d2651d04035c907b406d83200b4e2"
+    },
+    "retained/evidence/signal-probe-build.command.json": {
+      "bytes": 1975,
+      "sha256": "18967d3d121d50dac2d4fcc6f72e03a579b9301764bd8ec1ee021c00ff61d42b"
+    },
+    "retained/evidence/signal-probe-build.result.json": {
+      "bytes": 1619,
+      "sha256": "51789038ac5314c65c00321a671a4f8e46beae2da569d37ea25e5771e6b90ea5"
+    },
+    "retained/evidence/signal-probe-build.started.json": {
+      "bytes": 499,
+      "sha256": "f3bad307b81246ff22ff75672a2b55d16e8f98a900d2bcfe4124a4fc064914fd"
+    },
+    "retained/evidence/signal-probe-build.stderr": {
+      "bytes": 227,
+      "sha256": "37df3dbdc83ce098aef4fd4a660963d834c7d16834b63388220acf20968eb9d9"
+    },
+    "retained/evidence/signal-probe-build.stdout": {
+      "bytes": 51176,
+      "sha256": "f044427abe67e94fd58147d5c3e2b8359bd49f1763fb6ac06d83e8c8c23f632f"
+    },
+    "retained/evidence/signal-probe-tests.command.json": {
+      "bytes": 1979,
+      "sha256": "735db2ecb018bc92a7c66f9d91a72df0a1afe6f14c3617d1ac35203285c19c99"
+    },
+    "retained/evidence/signal-probe-tests.result.json": {
+      "bytes": 1622,
+      "sha256": "a26368dc16e421b2ea67c13d61152e98c4e34f2ebd9b626ff98fb19ff3d73d46"
+    },
+    "retained/evidence/signal-probe-tests.started.json": {
+      "bytes": 503,
+      "sha256": "b3eccc80ff3fddbe86146f41c9b26e3283341edbe7110f04736d2b4e53ef81ab"
+    },
+    "retained/evidence/signal-probe-tests.stderr": {
+      "bytes": 1212,
+      "sha256": "f385ba3995e1224568eb240747b539755925a9f057059c3bdf189874b95ef0a8"
+    },
+    "retained/evidence/signal-probe-tests.stdout": {
+      "bytes": 918,
+      "sha256": "725439562fc2a469e1387af9b150110523fe9cd7a4c43835ebe3287d72f1175c"
+    },
+    "retained/evidence/sources-after.json": {
+      "bytes": 307490,
+      "sha256": "e307d81cac3a96e7006a5aa1ffe0b62e2aab746ca5ebb735f3e7c5ecc8d623e1"
+    },
+    "retained/evidence/sources-formatted.json": {
+      "bytes": 307491,
+      "sha256": "629bd831d03fac9682674cbc0d4f7b0828c4152433d515567611cab50abf2bd9"
+    },
+    "retained/evidence/sources-input.json": {
+      "bytes": 307491,
+      "sha256": "3e4b5ab741fa2c14879515ef9b4a7548d855ebbcdee574e2d8dec9a869841607"
+    },
+    "retained/evidence/sources-tested.json": {
+      "bytes": 307490,
+      "sha256": "e307d81cac3a96e7006a5aa1ffe0b62e2aab746ca5ebb735f3e7c5ecc8d623e1"
+    },
+    "retained/evidence/terminal-probe-build.command.json": {
+      "bytes": 1971,
+      "sha256": "e03219986e35a633749009b31c46e86bd3a45e90c57782a0ffb9f508a633c45a"
+    },
+    "retained/evidence/terminal-probe-build.result.json": {
+      "bytes": 1623,
+      "sha256": "9b953b34abb7fa79a7b070119065adb23a800014da1023ce82cbbb81852502f7"
+    },
+    "retained/evidence/terminal-probe-build.started.json": {
+      "bytes": 495,
+      "sha256": "6ad45d13a10850d75af6f345cd0676e2ec5126a06eadc4a959bb88e86c4e2dad"
+    },
+    "retained/evidence/terminal-probe-build.stderr": {
+      "bytes": 227,
+      "sha256": "37df3dbdc83ce098aef4fd4a660963d834c7d16834b63388220acf20968eb9d9"
+    },
+    "retained/evidence/terminal-probe-build.stdout": {
+      "bytes": 51160,
+      "sha256": "492c7ea6b4e662cd2e78b585f7beb9120ddf780a52291bb67882c767e3eb5c8d"
+    },
+    "retained/evidence/terminal-probe-tests.command.json": {
+      "bytes": 1975,
+      "sha256": "5abb6426ff0af8f273112e1c3a6aa9397831727f431c934a784c2b1362fc2efc"
+    },
+    "retained/evidence/terminal-probe-tests.result.json": {
+      "bytes": 1626,
+      "sha256": "35545e202e2640a2dfa78ff080c6ee6ea9f62b515a573f5bf2a17f68dba15389"
+    },
+    "retained/evidence/terminal-probe-tests.started.json": {
+      "bytes": 499,
+      "sha256": "d82d750ef257f885b15529f45aa20496dced1e0a04277a66c98fa0e131f1a829"
+    },
+    "retained/evidence/terminal-probe-tests.stderr": {
+      "bytes": 1204,
+      "sha256": "d928602e978cea86e6ce4ba464e785864a12870e0644ef54da20f08bab0347d3"
+    },
+    "retained/evidence/terminal-probe-tests.stdout": {
+      "bytes": 742,
+      "sha256": "49c51a4afd1ff741522c1f7c627d64d81f52d758462b1e9856c3687327efa240"
+    },
+    "retained/run_cpu.py": {
+      "bytes": 27116,
+      "sha256": "d66b641752986b09952dc73b28ee7984796359e39d1373046dfa2229ffa68406"
+    },
+    "retained/rust-toolchain.toml": {
+      "bytes": 160,
+      "sha256": "49eeb550dd57841add3be3442177e78f6f0668ffc4f31739ce78d75f8129b154"
+    }
+  },
+  "runtime_commit": "097b4f796a283f554339cc0c0ef5c2c8c3858d2a",
+  "schema": "ferric-peer-signal-completion-cpu-checkpoint-v1",
+  "source_archive": {
+    "bytes": 1688489,
+    "files": 855,
+    "name": "peer-dependency-signal-completion-cpu-evidence-v228-v1.tar.gz",
+    "sha256": "114f30c380e50cf0d137013e5be05703cf4474ab83a2b00160b4d7096e7523ef"
+  },
+  "terminal_binary": {
+    "bytes": 1891904,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/peer-dependency-signal-completion-cpu-v228-v1/target/debug/examples/kfd-peer-dependency-terminal-join",
+    "sha256": "b88aa4a3a81d7eabe38a52570edbe56fabb4841a2e0fc3437c482a55df3e5333"
+  },
+  "tests": {
+    "aql-tests": {
+      "failed": 0,
+      "ignored": 0,
+      "named": [
+        {
+          "name": "tests::completion_observation_is_exact",
+          "outcome": "ok"
+        },
+        {
+          "name": "tests::cov6_shape_separates_complete_blocks_from_partial_remainders",
+          "outcome": "ok"
+        },
+        {
+          "name": "a_full_window_uses_each_slot_once",
+          "outcome": "ok"
+        },
+        {
+          "name": "barrier_and_packet_layout_and_encoding_are_exact",
+          "outcome": "ok"
+        },
+        {
+          "name": "barrier_and_rejects_misaligned_completion_signal",
+          "outcome": "ok"
+        },
+        {
+          "name": "barrier_and_schema_digest_is_frozen",
+          "outcome": "ok"
+        },
+        {
+          "name": "batch_count_and_space_rejections_leave_both_counters_unchanged",
+          "outcome": "ok"
+        },
+        {
+          "name": "batch_counter_rejections_leave_both_counters_unchanged",
+          "outcome": "ok"
+        },
+        {
+          "name": "batch_reservation_model_digest_is_frozen_without_changing_the_wire_abi",
+          "outcome": "ok"
+        },
+        {
+          "name": "batch_reservation_wraps_in_order_with_distinct_slots",
+          "outcome": "ok"
+        },
+        {
+          "name": "busy_signal_starts_pending",
+          "outcome": "ok"
+        },
+        {
+          "name": "every_reviewed_batch_count_and_wrap_phase_has_distinct_ordered_slots",
+          "outcome": "ok"
+        },
+        {
+          "name": "exact_unpublished_packet_and_final_header",
+          "outcome": "ok"
+        },
+        {
+          "name": "fixed_batch_v2_admits_8192_with_one_two_phase_publication",
+          "outcome": "ok"
+        },
+        {
+          "name": "fixed_batch_v2_is_additive_and_frozen",
+          "outcome": "ok"
+        },
+        {
+          "name": "fixed_batch_v2_reservation_is_bounded_by_512k_ring_and_checked_arithmetic",
+          "outcome": "ok"
+        },
+        {
+          "name": "geometry_derives_exact_dimensions",
+          "outcome": "ok"
+        },
+        {
+          "name": "geometry_rejects_invalid_dimensions_and_bounds",
+          "outcome": "ok"
+        },
+        {
+          "name": "maximum_batch_and_last_nonoverflowing_counter_are_admitted",
+          "outcome": "ok"
+        },
+        {
+          "name": "minimum_ring_admission_boundaries_are_exhaustive",
+          "outcome": "ok"
+        },
+        {
+          "name": "one_hundred_thousand_completed_reservations_wrap_slots_exactly",
+          "outcome": "ok"
+        },
+        {
+          "name": "packet_and_signal_layouts_are_exact",
+          "outcome": "ok"
+        },
+        {
+          "name": "packet_rejects_address_substitution_and_misalignment",
+          "outcome": "ok"
+        },
+        {
+          "name": "pending_signal_byte_initializer_overwrites_every_byte_exactly",
+          "outcome": "ok"
+        },
+        {
+          "name": "prepared_batch_rejects_counts_outside_the_reviewed_bound",
+          "outcome": "ok"
+        },
+        {
+          "name": "prepared_batch_retains_each_exact_dispatch_ordering_header",
+          "outcome": "ok"
+        },
+        {
+          "name": "prepared_batch_writes_every_invalid_body_before_any_release_header",
+          "outcome": "ok"
+        },
+        {
+          "name": "prepared_publication_keeps_each_setup_dimension_paired",
+          "outcome": "ok"
+        },
+        {
+          "name": "pure_completion_classifier_is_exact_and_preserves_unexpected_values",
+          "outcome": "ok"
+        },
+        {
+          "name": "reviewed_publication_pairs_dispatch_and_barrier_setup_exactly",
+          "outcome": "ok"
+        },
+        {
+          "name": "ring_capacity_and_reservation_are_exact",
+          "outcome": "ok"
+        },
+        {
+          "name": "ring_reservation_fails_closed_on_counter_anomalies",
+          "outcome": "ok"
+        },
+        {
+          "name": "schema_digest_is_frozen",
+          "outcome": "ok"
+        },
+        {
+          "name": "body_failure_never_exposes_a_header",
+          "outcome": "ok"
+        },
+        {
+          "name": "encodes_all_64_signal_address_bits",
+          "outcome": "ok"
+        },
+        {
+          "name": "header_failure_stops_without_later_publication",
+          "outcome": "ok"
+        },
+        {
+          "name": "mixed_batch_writes_all_bodies_before_any_header",
+          "outcome": "ok"
+        },
+        {
+          "name": "packet_count_bounds_preserve_the_existing_policy",
+          "outcome": "ok"
+        },
+        {
+          "name": "peer_barrier_layout_and_exact_wire_bytes",
+          "outcome": "ok"
+        },
+        {
+          "name": "peer_header_gate_does_not_relax_existing_publication",
+          "outcome": "ok"
+        },
+        {
+          "name": "rejects_duplicate_and_self_dependencies",
+          "outcome": "ok"
+        },
+        {
+          "name": "rejects_each_misaligned_signal",
+          "outcome": "ok"
+        },
+        {
+          "name": "unordered_kernel_is_rejected_at_any_batch_position",
+          "outcome": "ok"
+        }
+      ],
+      "passed": 43,
+      "summaries": [
+        {
+          "failed": 0,
+          "filtered_out": 0,
+          "ignored": 0,
+          "measured": 0,
+          "passed": 2,
+          "status": "ok"
+        },
+        {
+          "failed": 0,
+          "filtered_out": 0,
+          "ignored": 0,
+          "measured": 0,
+          "passed": 31,
+          "status": "ok"
+        },
+        {
+          "failed": 0,
+          "filtered_out": 0,
+          "ignored": 0,
+          "measured": 0,
+          "passed": 10,
+          "status": "ok"
+        },
+        {
+          "failed": 0,
+          "filtered_out": 0,
+          "ignored": 0,
+          "measured": 0,
+          "passed": 0,
+          "status": "ok"
+        }
+      ]
+    },
+    "kfd-tests": {
+      "failed": 0,
+      "ignored": 3,
+      "named": [
+        {
+          "name": "currentness::tests::clear_observations_do_not_poison",
+          "outcome": "ok"
+        },
+        {
+          "name": "currentness::tests::clock_correlation_requires_exact_gpu_zero_pad_and_frequency",
+          "outcome": "ok"
+        },
+        {
+          "name": "currentness::tests::first_event_is_permanently_poisoning",
+          "outcome": "ok"
+        },
+        {
+          "name": "currentness::tests::protocol_failure_is_permanently_poisoning",
+          "outcome": "ok"
+        },
+        {
+          "name": "debug_trap::tests::cleanup_attempts_every_owned_restoration_after_failure",
+          "outcome": "ok"
+        },
+        {
+          "name": "debug_trap::tests::debug_session_manifest_is_frozen",
+          "outcome": "ok"
+        },
+        {
+          "name": "debug_trap::tests::hardware_operations_require_runtime_enable",
+          "outcome": "ok"
+        },
+        {
+          "name": "debug_trap::tests::plan_is_bounded_and_cross_process",
+          "outcome": "ok"
+        },
+        {
+          "name": "debug_trap::tests::proc_status_parser_is_fail_closed",
+          "outcome": "ok"
+        },
+        {
+          "name": "debug_trap::tests::process_runtime_info_refreshes_hardware_gate",
+          "outcome": "ok"
+        },
+        {
+          "name": "debug_trap::tests::queue_status_bits_are_decoded_and_only_success_is_owned",
+          "outcome": "ok"
+        },
+        {
+          "name": "debug_trap::tests::runtime_disable_reconciles_kfd_invalidated_hardware_ownership",
+          "outcome": "ok"
+        },
+        {
+          "name": "debug_trap::tests::snapshots_and_events_are_redacted_and_validated",
+          "outcome": "ok"
+        },
+        {
+          "name": "debug_trap::tests::typed_exception_info_rejects_payload_substitution",
+          "outcome": "ok"
+        },
+        {
+          "name": "device::gfx950::asrock::tests::asrock_cannot_mix_fields_with_either_earlier_profile",
+          "outcome": "ok"
+        },
+        {
+          "name": "device::gfx950::asrock::tests::asrock_has_distinct_observation_provenance_without_protected_authority",
+          "outcome": "ok"
+        },
+        {
+          "name": "device::gfx950::asrock::tests::asrock_requires_every_exact_platform_field",
+          "outcome": "ok"
+        },
+        {
+          "name": "device::gfx950::clock_correlation::tests::clock_already_poisoned_refuses_before_ioctl",
+          "outcome": "ok"
+        },
+        {
+          "name": "device::gfx950::clock_correlation::tests::clock_entry_ioctl_and_exit_failure_latch_poison",
+          "outcome": "ok"
+        },
+        {
+          "name": "device::gfx950::clock_correlation::tests::clock_public_sampler_signatures_remain_target_specific",
+          "outcome": "ok"
+        },
+        {
+          "name": "device::gfx950::clock_correlation::tests::clock_raw_values_preserved_under_two_full_checks",
+          "outcome": "ok"
+        },
+        {
+          "name": "device::gfx950::clock_correlation::tests::clock_repeated_samples_are_fresh_without_counter_order_assumptions",
+          "outcome": "ok"
+        },
+        {
+          "name": "device::gfx950::clock_correlation::tests::clock_wrong_gpu_padding_and_zero_frequency_poison",
+          "outcome": "ok"
+        },
+        {
+          "name": "device::gfx950::group_currentness::tests::a_later_publication_fence_cannot_reuse_an_earlier_topology_observation",
+          "outcome": "ok"
+        },
+        {
+          "name": "device::gfx950::group_currentness::tests::changed_topology_or_any_retained_rank_rejects_without_exit_checks",
+          "outcome": "ok"
+        },
+        {
+          "name": "device::gfx950::group_currentness::tests::each_repeated_full_fence_keeps_generation_and_all_mutable_checks",
+          "outcome": "ok"
+        },
+        {
+          "name": "device::gfx950::group_currentness::tests::every_before_discovery_compare_and_after_failure_poison_all_without_later_work",
+          "outcome": "ok"
+        },
+        {
+          "name": "device::gfx950::group_currentness::tests::invalid_or_partial_roster_never_starts_observation",
+          "outcome": "ok"
+        },
+        {
+          "name": "device::gfx950::group_currentness::tests::one_fresh_discovery_is_bracketed_by_all_participants",
+          "outcome": "ok"
+        },
+        {
+          "name": "device::gfx950::group_currentness::tests::topology_change_between_ranks_or_after_discovery_cannot_pass",
+          "outcome": "ok"
+        },
+        {
+          "name": "device::gfx950::mi350_2::tests::every_engineering_platform_field_is_exact",
+          "outcome": "ok"
+        },
+        {
+          "name": "device::gfx950::mi350_2::tests::exact_engineering_profile_has_distinct_retained_provenance",
+          "outcome": "ok"
+        },
+        {
+          "name": "device::gfx950::mi350_2::tests::platform_fields_cannot_be_mixed_between_profiles",
+          "outcome": "ok"
+        },
+        {
+          "name": "device::gfx950::tests::every_exact_profile_field_is_fail_closed",
+          "outcome": "ok"
+        },
+        {
+          "name": "device::gfx950::tests::exact_mi350_profile_is_separate_from_mi300",
+          "outcome": "ok"
+        },
+        {
+          "name": "device::gfx950::tests::platform_observations_must_all_be_exact",
+          "outcome": "ok"
+        },
+        {
+          "name": "device::gfx950::tests::profile_explicitly_grants_no_execution_or_model_authority",
+          "outcome": "ok"
+        },
+        {
+          "name": "device::tests::aperture_validation_rejects_overlap_and_noncanonical_end",
+          "outcome": "ok"
+        },
+        {
+          "name": "device::tests::inactive_retained_history_rejects_domain_change_without_replacement",
+          "outcome": "ok"
+        },
+        {
+          "name": "device::tests::profile_manifest_digest_is_frozen",
+          "outcome": "ok"
+        },
+        {
+          "name": "device::tests::projection_history_capacity_maps_to_named_process_lifetime_error",
+          "outcome": "ok"
+        },
+        {
+          "name": "device::tests::revision_zero_profile_rejects_consistent_nonzero_revision",
+          "outcome": "ok"
+        },
+        {
+          "name": "engineering_gfx950::finite_join::tests::engineering_finite_join_coordinator_returns_only_after_complete_and_close",
+          "outcome": "ok"
+        },
+        {
+          "name": "engineering_gfx950::finite_join::tests::engineering_finite_join_every_operation_failure_quarantines_without_output",
+          "outcome": "ok"
+        },
+        {
+          "name": "engineering_gfx950::finite_join::tests::engineering_finite_join_exact_owned_regions_reject_alias_size_and_offset_mutants",
+          "outcome": "ok"
+        },
+        {
+          "name": "engineering_gfx950::finite_join::tests::engineering_finite_join_metadata_rejects_physical_abi_and_role_mutants",
+          "outcome": "ok"
+        },
+        {
+          "name": "engineering_gfx950::finite_join::tests::engineering_finite_join_readback_mutants_do_not_publish_output_or_close",
+          "outcome": "ok"
+        },
+        {
+          "name": "engineering_gfx950::finite_join::tests::engineering_finite_join_request_and_geometry_are_exact",
+          "outcome": "ok"
+        },
+        {
+          "name": "engineering_gfx950::finite_join::tests::engineering_finite_join_state_initialization_mutants_stop_before_submit",
+          "outcome": "ok"
+        },
+        {
+          "name": "engineering_gfx950::finite_join::tests::engineering_finite_join_terminal_state_requires_exact_conservation_and_owners",
+          "outcome": "ok"
+        },
+        {
+          "name": "engineering_gfx950::ordered_batch::tests::every_preparation_reset_publication_completion_and_exit_failure_is_terminal",
+          "outcome": "ok"
+        },
+        {
+          "name": "engineering_gfx950::ordered_batch::tests::optional_arena_and_signals_are_reinitialized_after_confirmed_queue_rollover",
+          "outcome": "ok"
+        },
+        {
+          "name": "engineering_gfx950::ordered_batch::tests::ordered_boundaries_use_dispatch_policy_without_changing_lifecycle_fences",
+          "outcome": "ok"
+        },
+        {
+          "name": "engineering_gfx950::ordered_batch::tests::ordered_bounds_deadlines_and_every_retained_signal_fail_closed",
+          "outcome": "ok"
+        },
+        {
+          "name": "engineering_gfx950::ordered_batch::tests::ordered_one_and_sixteen_stage_every_argument_before_one_publication_and_final_wait",
+          "outcome": "ok"
+        },
+        {
+          "name": "engineering_gfx950::ordered_batch::tests::ordered_ring_capacity_wrap_and_identity_contract_remain_exact",
+          "outcome": "ok"
+        },
+        {
+          "name": "engineering_gfx950::ordered_batch::tests::ordered_wire_has_separate_exact_schema_aggregate_deadline_and_limits",
+          "outcome": "ok"
+        },
+        {
+          "name": "engineering_gfx950::ordered_batch::tests::paired_ordered_packets_have_distinct_slots_wait_for_prior_and_one_final_doorbell",
+          "outcome": "ok"
+        },
+        {
+          "name": "engineering_gfx950::ordered_batch::tests::paired_prepared_adapter_accepts_empty_transport_payload_only_at_exact_two_count",
+          "outcome": "ok"
+        },
+        {
+          "name": "engineering_gfx950::peer::capacity_v1::tests::already_closed_or_quarantined_owner_does_not_observe_or_reopen",
+          "outcome": "ok"
+        },
+        {
+          "name": "engineering_gfx950::peer::capacity_v1::tests::asymmetric_counts_and_zero_growth_use_each_actual_owner",
+          "outcome": "ok"
+        },
+        {
+          "name": "engineering_gfx950::peer::capacity_v1::tests::changed_accounting_during_exit_fence_is_terminal",
+          "outcome": "ok"
+        },
+        {
+          "name": "engineering_gfx950::peer::capacity_v1::tests::checked_arithmetic_and_closed_world_roster_reject_malformed_counts",
+          "outcome": "ok"
+        },
+        {
+          "name": "engineering_gfx950::peer::capacity_v1::tests::eight_owner_profile_uses_existing_group_limit_without_model_constants",
+          "outcome": "ok…32616 tokens truncated…       },
+        {
+          "name": "shared_memory::tests::device_memory_profile_manifest_and_layout_are_frozen",
+          "outcome": "ok"
+        },
+        {
+          "name": "shared_memory::tests::device_memory_rejects_wrong_device_generation_and_address_overflow",
+          "outcome": "ok"
+        },
+        {
+          "name": "shared_memory::tests::dispatch_transfer_requires_exact_complete_distinct_mapped_lease_set",
+          "outcome": "ok"
+        },
+        {
+          "name": "shared_memory::tests::executable_probe_ring_uses_exact_allocation_and_release_span",
+          "outcome": "ok"
+        },
+        {
+          "name": "shared_memory::tests::failed_live_mutation_retains_one_reclaimable_model_loan",
+          "outcome": "ok"
+        },
+        {
+          "name": "shared_memory::tests::fixed_join_actual_engine_rejects_swapped_foreign_stale_alias_alignment_and_extent",
+          "outcome": "ok"
+        },
+        {
+          "name": "shared_memory::tests::fixed_join_actual_engine_seal_read_release_and_close_errors_never_reactivate",
+          "outcome": "ok"
+        },
+        {
+          "name": "shared_memory::tests::fixed_join_real_engine_allocation_map_and_atomic_initializer_errors_retain_custody",
+          "outcome": "ok"
+        },
+        {
+          "name": "shared_memory::tests::fixed_join_real_engine_roots_code_kernarg_release_before_close",
+          "outcome": "ok"
+        },
+        {
+          "name": "shared_memory::tests::four_profiles_coexist_with_exact_flags_and_gfx942_aql_geometry",
+          "outcome": "ok"
+        },
+        {
+          "name": "shared_memory::tests::gfx942_production_and_executable_probe_rings_are_exact_one_span",
+          "outcome": "ok"
+        },
+        {
+          "name": "shared_memory::tests::gfx950_observed_acquire_and_initialization_backend_failures_are_not_success",
+          "outcome": "ok"
+        },
+        {
+          "name": "shared_memory::tests::gfx950_observed_bad_alignment_or_post_map_currentness_never_returns_token",
+          "outcome": "ok"
+        },
+        {
+          "name": "shared_memory::tests::gfx950_observed_close_with_live_mapping_is_terminal_and_never_frees",
+          "outcome": "ok"
+        },
+        {
+          "name": "shared_memory::tests::gfx950_observed_copy_map_read_release_uses_shared_engine",
+          "outcome": "ok"
+        },
+        {
+          "name": "shared_memory::tests::gfx950_observed_foreign_equal_extent_token_quarantines_without_read",
+          "outcome": "ok"
+        },
+        {
+          "name": "shared_memory::tests::gfx950_observed_partial_or_malformed_mapping_is_retained_not_retried",
+          "outcome": "ok"
+        },
+        {
+          "name": "shared_memory::tests::gfx950_observed_read_currentness_failure_returns_no_staged_bytes",
+          "outcome": "ok"
+        },
+        {
+          "name": "shared_memory::tests::gfx950_observed_three_roots_preserve_identity_and_reverse_release",
+          "outcome": "ok"
+        },
+        {
+          "name": "shared_memory::tests::gfx950_observed_unmap_free_and_va_failures_never_retry_cleanup",
+          "outcome": "ok"
+        },
+        {
+          "name": "shared_memory::tests::initialization_source_preflight_rejects_digest_length_and_empty_substitution",
+          "outcome": "ok"
+        },
+        {
+          "name": "shared_memory::tests::initialization_source_preflight_rejects_mutation_before_ownership_transfer",
+          "outcome": "ok"
+        },
+        {
+          "name": "shared_memory::tests::internal_post_allocation_length_substitution_quarantines",
+          "outcome": "ok"
+        },
+        {
+          "name": "shared_memory::tests::later_allocation_failure_revokes_use_of_prior_tokens",
+          "outcome": "ok"
+        },
+        {
+          "name": "shared_memory::tests::live_foundation_loan_reclaims_concrete_allocation_lifecycle_updates",
+          "outcome": "ok"
+        },
+        {
+          "name": "shared_memory::tests::live_foundation_loan_survives_operation_and_retake_rejection_without_loss",
+          "outcome": "ok"
+        },
+        {
+          "name": "shared_memory::tests::live_queue_model_loan_requires_the_exact_move_only_token",
+          "outcome": "ok"
+        },
+        {
+          "name": "shared_memory::tests::mapped_coherent_subrange_copy_is_exact_and_generation_checked",
+          "outcome": "ok"
+        },
+        {
+          "name": "shared_memory::tests::multiwave_join_actual_engine_rejects_swapped_foreign_stale_alias_alignment_and_extent",
+          "outcome": "ok"
+        },
+        {
+          "name": "shared_memory::tests::multiwave_join_actual_engine_seal_read_release_and_close_errors_never_reactivate",
+          "outcome": "ok"
+        },
+        {
+          "name": "shared_memory::tests::multiwave_join_real_engine_allocation_map_and_atomic_initializer_errors_retain_custody",
+          "outcome": "ok"
+        },
+        {
+          "name": "shared_memory::tests::multiwave_join_real_engine_roots_code_kernarg_release_before_close",
+          "outcome": "ok"
+        },
+        {
+          "name": "shared_memory::tests::observed_barrier_real_signal_resource_preserves_root_and_releases_private_resources",
+          "outcome": "ok"
+        },
+        {
+          "name": "shared_memory::tests::observed_barrier_signal_allocation_or_initialization_failure_quarantines_whole_owner",
+          "outcome": "ok"
+        },
+        {
+          "name": "shared_memory::tests::observed_barrier_signal_release_failure_does_not_release_queue_or_retry",
+          "outcome": "ok"
+        },
+        {
+          "name": "shared_memory::tests::observed_queue_real_resource_allocation_failures_retain_engine_without_cleanup",
+          "outcome": "ok"
+        },
+        {
+          "name": "shared_memory::tests::observed_queue_real_resource_helpers_preserve_original_initialized_root",
+          "outcome": "ok"
+        },
+        {
+          "name": "shared_memory::tests::observed_queue_real_resource_release_failures_do_not_continue_or_retry",
+          "outcome": "ok"
+        },
+        {
+          "name": "shared_memory::tests::observed_queue_real_resource_seal_and_map_failures_never_release_native_roots",
+          "outcome": "ok"
+        },
+        {
+          "name": "shared_memory::tests::overlap_kernel_output_and_cpu_address_substitution_quarantine_globally",
+          "outcome": "ok"
+        },
+        {
+          "name": "shared_memory::tests::private_role_subranges_reject_overlap_misalignment_and_overflow",
+          "outcome": "ok"
+        },
+        {
+          "name": "shared_memory::tests::public_device_initialization_plan_is_bounded_and_covers_uneven_extents",
+          "outcome": "ok"
+        },
+        {
+          "name": "shared_memory::tests::public_device_memory_initialization_checks_mapped_bytes_before_gpu_map",
+          "outcome": "ok"
+        },
+        {
+          "name": "shared_memory::tests::public_device_memory_mapping_failures_quarantine_without_gpu_publication",
+          "outcome": "ok"
+        },
+        {
+          "name": "shared_memory::tests::released_device_memory_does_not_consume_record_capacity",
+          "outcome": "ok"
+        },
+        {
+          "name": "shared_memory::tests::released_device_memory_rejects_forged_double_release_and_use",
+          "outcome": "ok"
+        },
+        {
+          "name": "shared_memory::tests::released_shared_allocations_do_not_consume_record_capacity",
+          "outcome": "ok"
+        },
+        {
+          "name": "shared_memory::tests::repeated_byte_fill_handles_empty_and_hostile_worker_bounds_without_panicking",
+          "outcome": "ok"
+        },
+        {
+          "name": "shared_memory::tests::repeated_byte_fill_threshold_keeps_small_inputs_serial",
+          "outcome": "ok"
+        },
+        {
+          "name": "shared_memory::tests::repeated_byte_initialization_fills_without_readback_and_releases_exact_extent",
+          "outcome": "ok"
+        },
+        {
+          "name": "shared_memory::tests::repeated_byte_worker_panic_becomes_a_typed_failure",
+          "outcome": "ok"
+        },
+        {
+          "name": "shared_memory::tests::repeated_byte_write_failure_quarantines_before_unmap_or_gpu_map",
+          "outcome": "ok"
+        },
+        {
+          "name": "shared_memory::tests::returned_dispatch_session_preserves_and_releases_the_exact_mapped_c3_lease",
+          "outcome": "ok"
+        },
+        {
+          "name": "shared_memory::tests::shared_allocation_identity_rejects_cross_session_substitution",
+          "outcome": "ok"
+        },
+        {
+          "name": "shared_memory::tests::shared_profile_manifest_is_frozen",
+          "outcome": "ok"
+        },
+        {
+          "name": "shared_memory::tests::userptr_allocation_currentness_failures_require_process_terminal_custody",
+          "outcome": "ok"
+        },
+        {
+          "name": "shared_memory::tests::userptr_aql_control_is_exact_same_va_coherent_page",
+          "outcome": "ok"
+        },
+        {
+          "name": "shared_memory::tests::userptr_aql_control_malformed_result_quarantines_without_cleanup",
+          "outcome": "ok"
+        },
+        {
+          "name": "shared_memory::tests::userptr_output_mmap_offset_is_opaque_and_not_collision_authority",
+          "outcome": "ok"
+        },
+        {
+          "name": "shared_memory::tests::userptr_probe_frees_bo_before_unmapping_original_vma",
+          "outcome": "ok"
+        },
+        {
+          "name": "shared_memory::tests::userptr_probe_native_failures_quarantine_without_reordered_cleanup",
+          "outcome": "ok"
+        },
+        {
+          "name": "shared_memory::tests::userptr_probe_ring_is_exact_one_x_registration",
+          "outcome": "ok"
+        },
+        {
+          "name": "shared_memory::tests::userptr_release_currentness_failures_retain_exact_terminal_custody",
+          "outcome": "ok"
+        },
+        {
+          "name": "shared_memory::tests::validated_initialization_source_takes_the_exact_box_without_copying",
+          "outcome": "ok"
+        },
+        {
+          "name": "shared_memory::tests::xgmi_map_errno_at_full_prefix_never_grants_copy_authority",
+          "outcome": "ok"
+        },
+        {
+          "name": "shared_memory::tests::xgmi_mapping_retries_only_advanced_prefixes_and_retains_canonical_roster",
+          "outcome": "ok"
+        },
+        {
+          "name": "shared_memory::tests::xgmi_peer_post_currentness_failure_retains_mapped_cleanup_authority",
+          "outcome": "ok"
+        },
+        {
+          "name": "shared_memory::tests::xgmi_peer_post_unmap_failure_retains_unmapped_free_authority",
+          "outcome": "ok"
+        },
+        {
+          "name": "shared_memory::tests::xgmi_unmap_errno_at_full_prefix_quarantines_without_release",
+          "outcome": "ok"
+        },
+        {
+          "name": "shared_memory::tests::xgmi_unmap_overshoot_is_indeterminate_and_quarantined",
+          "outcome": "ok"
+        },
+        {
+          "name": "shared_memory::tests::xgmi_unmap_regressed_prefix_is_indeterminate_and_quarantined",
+          "outcome": "ok"
+        },
+        {
+          "name": "stopped_state_v1::tests::bounded_empty_range_cursors_are_preserved_without_content_claims",
+          "outcome": "ok"
+        },
+        {
+          "name": "stopped_state_v1::tests::byte_limit_truncation_reads_and_retains_no_segment_prefix",
+          "outcome": "ok"
+        },
+        {
+          "name": "stopped_state_v1::tests::checkpoint_content_change_fails_closed",
+          "outcome": "ok"
+        },
+        {
+          "name": "stopped_state_v1::tests::checkpoint_identity_and_projection_bind_the_exact_capture_limit",
+          "outcome": "ok"
+        },
+        {
+          "name": "stopped_state_v1::tests::checkpoint_identity_binds_exact_queue_and_device_observations",
+          "outcome": "ok"
+        },
+        {
+          "name": "stopped_state_v1::tests::checkpoint_read_failure_and_header_reread_substitution_fail_closed",
+          "outcome": "ok"
+        },
+        {
+          "name": "stopped_state_v1::tests::debug_and_report_do_not_serialize_native_identifiers",
+          "outcome": "ok"
+        },
+        {
+          "name": "stopped_state_v1::tests::exact_gfx942_header_envelope_is_admitted_without_wave_claims",
+          "outcome": "ok"
+        },
+        {
+          "name": "stopped_state_v1::tests::hostile_geometry_reads_and_header_substitution_are_typed",
+          "outcome": "ok"
+        },
+        {
+          "name": "stopped_state_v1::tests::hostile_header_fields_fail_closed_to_typed_unavailability",
+          "outcome": "ok"
+        },
+        {
+          "name": "stopped_state_v1::tests::manifest_digest_and_bounds_are_frozen",
+          "outcome": "ok"
+        },
+        {
+          "name": "stopped_state_v1::tests::native_binding_substitution_includes_hidden_addresses",
+          "outcome": "ok"
+        },
+        {
+          "name": "stopped_state_v1::tests::opaque_checkpoint_debug_never_exposes_private_bytes",
+          "outcome": "ok"
+        },
+        {
+          "name": "stopped_state_v1::tests::proc_mem_exact_read_helper_rejects_short_and_faulted_reads",
+          "outcome": "ok"
+        },
+        {
+          "name": "stopped_state_v1::tests::zero_scope_is_rejected_and_debug_is_redacted",
+          "outcome": "ok"
+        },
+        {
+          "name": "target_debug_telemetry_v2::tests::completed_terminal_requires_an_exact_publication",
+          "outcome": "ok"
+        },
+        {
+          "name": "target_debug_telemetry_v2::tests::credential_bound_channel_accepts_typed_failure_before_publication",
+          "outcome": "ok"
+        },
+        {
+          "name": "target_debug_telemetry_v2::tests::generation_is_nonce_bound_nonzero_and_stable",
+          "outcome": "ok"
+        },
+        {
+          "name": "target_debug_telemetry_v2::tests::rejects_padding_checksum_geometry_and_generation_mutations",
+          "outcome": "ok"
+        },
+        {
+          "name": "target_debug_telemetry_v2::tests::v2_wire_round_trips_and_v1_length_is_unchanged",
+          "outcome": "ok"
+        },
+        {
+          "name": "tests::inherited_process_identity_is_rejected_before_an_ioctl",
+          "outcome": "ok"
+        },
+        {
+          "name": "tests::non_kfd_descriptor_cannot_produce_a_uapi_observation",
+          "outcome": "ok"
+        },
+        {
+          "name": "tests::observation_is_not_implicitly_admitted",
+          "outcome": "ok"
+        },
+        {
+          "name": "topology::tests::boot_id_parser_accepts_only_canonical_lowercase_uuid",
+          "outcome": "ok"
+        },
+        {
+          "name": "topology::tests::bounded_count_field_is_enforced",
+          "outcome": "ok"
+        },
+        {
+          "name": "topology::tests::bounded_node_count_is_enforced_before_node_reads",
+          "outcome": "ok"
+        },
+        {
+          "name": "topology::tests::directional_xgmi_routes_bind_exact_links_engines_and_generation",
+          "outcome": "ok"
+        },
+        {
+          "name": "topology::tests::duplicate_domain_location_is_rejected",
+          "outcome": "ok"
+        },
+        {
+          "name": "topology::tests::duplicate_gpu_id_is_rejected",
+          "outcome": "ok"
+        },
+        {
+          "name": "topology::tests::duplicate_property_is_rejected",
+          "outcome": "ok"
+        },
+        {
+          "name": "topology::tests::duplicate_render_minor_is_rejected",
+          "outcome": "ok"
+        },
+        {
+          "name": "topology::tests::duplicate_unique_id_is_rejected",
+          "outcome": "ok"
+        },
+        {
+          "name": "topology::tests::empty_gpu_set_is_rejected",
+          "outcome": "ok"
+        },
+        {
+          "name": "topology::tests::engineering_group_final_generation_check_binds_root_and_fresh_generation",
+          "outcome": "ok"
+        },
+        {
+          "name": "topology::tests::explicit_gfx950_discovery_preserves_eight_gpu_inventory_and_capacity",
+          "outcome": "ok"
+        },
+        {
+          "name": "topology::tests::explicit_targets_reject_mixed_and_wrong_inventories",
+          "outcome": "ok"
+        },
+        {
+          "name": "topology::tests::firmware_observations_are_required_and_bounded",
+          "outcome": "ok"
+        },
+        {
+          "name": "topology::tests::gfx950_discovery_does_not_skip_identity_validation",
+          "outcome": "ok"
+        },
+        {
+          "name": "topology::tests::gfx950_render_correlation_still_checks_device_identity",
+          "outcome": "ok"
+        },
+        {
+          "name": "topology::tests::gfx950_xcp_tests::asrock_platform_fields_do_not_borrow_the_old_xcp_exception",
+          "outcome": "ok"
+        },
+        {
+          "name": "topology::tests::gfx950_xcp_tests::asrock_rejects_a_mismatch_of_either_uid_observation",
+          "outcome": "ok"
+        },
+        {
+          "name": "topology::tests::gfx950_xcp_tests::asrock_retains_strict_same_device_uid_without_xcp_evidence",
+          "outcome": "ok"
+        },
+        {
+          "name": "topology::tests::gfx950_xcp_tests::missing_module_observations_cannot_select_xcp0_contract",
+          "outcome": "ok"
+        },
+        {
+          "name": "topology::tests::gfx950_xcp_tests::xcp0_directory_replacement_changes_retained_identity",
+          "outcome": "ok"
+        },
+        {
+          "name": "topology::tests::gfx950_xcp_tests::xcp0_mutation_of_either_uid_changes_retained_observation",
+          "outcome": "ok"
+        },
+        {
+          "name": "topology::tests::gfx950_xcp_tests::xcp0_profile_retains_both_uid_domains_and_explicit_contract",
+          "outcome": "ok"
+        },
+        {
+          "name": "topology::tests::gfx950_xcp_tests::xcp0_rejects_missing_symlinked_or_nonregular_evidence",
+          "outcome": "ok"
+        },
+        {
+          "name": "topology::tests::gfx950_xcp_tests::xcp0_rejects_other_partitions_and_every_geometry_mutation",
+          "outcome": "ok"
+        },
+        {
+          "name": "topology::tests::gfx950_xcp_tests::xcp0_rejects_virtual_render_with_same_device_symlink",
+          "outcome": "ok"
+        },
+        {
+          "name": "topology::tests::gfx950_xcp_tests::xcp0_rejects_wrong_pci_location_and_render_minor",
+          "outcome": "ok"
+        },
+        {
+          "name": "topology::tests::gfx950_xcp_tests::xcp0_replaced_evidence_and_duplicate_parent_change_or_reject_identity",
+          "outcome": "ok"
+        },
+        {
+          "name": "topology::tests::gfx950_xcp_tests::xcp0_requires_exact_platform_and_target",
+          "outcome": "ok"
+        },
+        {
+          "name": "topology::tests::gfx950_xcp_tests::xcp0_route_is_selected_by_profile_not_mismatch_fallback",
+          "outcome": "ok"
+        },
+        {
+          "name": "topology::tests::invalid_module_srcversion_is_rejected",
+          "outcome": "ok"
+        },
+        {
+          "name": "topology::tests::kernel_release_parser_is_bounded_and_strict",
+          "outcome": "ok"
+        },
+        {
+          "name": "topology::tests::link_count_endpoint_and_index_are_strict",
+          "outcome": "ok"
+        },
+        {
+          "name": "topology::tests::malformed_numbers_are_rejected",
+          "outcome": "ok"
+        },
+        {
+          "name": "topology::tests::malformed_pci_revision_is_rejected",
+          "outcome": "ok"
+        },
+        {
+          "name": "topology::tests::node_symlink_is_rejected",
+          "outcome": "ok"
+        },
+        {
+          "name": "topology::tests::non_regular_property_file_is_rejected",
+          "outcome": "ok"
+        },
+        {
+          "name": "topology::tests::noncanonical_node_id_is_rejected",
+          "outcome": "ok"
+        },
+        {
+          "name": "topology::tests::oversized_properties_are_rejected",
+          "outcome": "ok"
+        },
+        {
+          "name": "topology::tests::property_symlink_is_rejected",
+          "outcome": "ok"
+        },
+        {
+          "name": "topology::tests::render_bdf_location_mismatch_is_rejected",
+          "outcome": "ok"
+        },
+        {
+          "name": "topology::tests::render_link_must_be_a_kernel_style_symlink",
+          "outcome": "ok"
+        },
+        {
+          "name": "topology::tests::render_node_is_correlated_to_unique_id_bdf_and_partitions",
+          "outcome": "ok"
+        },
+        {
+          "name": "topology::tests::render_symlink_cannot_escape_devices_root",
+          "outcome": "ok"
+        },
+        {
+          "name": "topology::tests::render_unique_id_mismatch_is_rejected",
+          "outcome": "ok"
+        },
+        {
+          "name": "topology::tests::route_admission_rejects_wrong_type_flags_mask_and_inventory",
+          "outcome": "ok"
+        },
+        {
+          "name": "topology::tests::sdma_capability_properties_are_additive_to_base_topology",
+          "outcome": "ok"
+        },
+        {
+          "name": "topology::tests::sdma_topology_capability_manifest_is_frozen",
+          "outcome": "ok"
+        },
+        {
+          "name": "topology::tests::strict_module_observation_reports_optional_fields",
+          "outcome": "ok"
+        },
+        {
+          "name": "topology::tests::terminal_root_symlink_is_rejected",
+          "outcome": "ok"
+        },
+        {
+          "name": "topology::tests::unknown_partition_mode_is_rejected",
+          "outcome": "ok"
+        },
+        {
+          "name": "topology::tests::unknown_property_is_rejected",
+          "outcome": "ok"
+        },
+        {
+          "name": "topology::tests::unknown_top_level_entry_is_rejected",
+          "outcome": "ok"
+        },
+        {
+          "name": "topology::tests::unsupported_target_is_rejected",
+          "outcome": "ok"
+        },
+        {
+          "name": "topology::tests::valid_fixture_produces_sorted_bounded_observations",
+          "outcome": "ok"
+        },
+        {
+          "name": "wait::tests::sustained_waits_progress_from_spin_to_yield_to_bounded_sleep",
+          "outcome": "ok"
+        },
+        {
+          "name": "wait::tests::zero_deadline_is_immediately_expired",
+          "outcome": "ok"
+        },
+        {
+          "name": "absent_environment_is_an_optional_disabled_channel",
+          "outcome": "ok"
+        },
+        {
+          "name": "debugger_pid_environment_requires_canonical_nonzero_u32",
+          "outcome": "ok"
+        },
+        {
+          "name": "descriptor_environment_requires_canonical_nonstdio_i32",
+          "outcome": "ok"
+        },
+        {
+          "name": "every_incomplete_environment_combination_is_rejected",
+          "outcome": "ok"
+        },
+        {
+          "name": "inherited_environment_child_case",
+          "outcome": "ok"
+        },
+        {
+          "name": "nonce_environment_requires_exact_nonzero_lowercase_hex",
+          "outcome": "ok"
+        },
+        {
+          "name": "positive_inherited_channel_emits_records_and_protects_original",
+          "outcome": "ok"
+        },
+        {
+          "name": "socket_peer_must_be_the_declared_live_debugger_process",
+          "outcome": "ok"
+        },
+        {
+          "name": "unavailable_or_wrong_descriptor_never_becomes_an_endpoint",
+          "outcome": "ok"
+        },
+        {
+          "name": "canonical_serialization_has_zero_padding_and_no_string_or_native_fields",
+          "outcome": "ok"
+        },
+        {
+          "name": "decoder_rejects_wrong_length_and_version_before_interpretation",
+          "outcome": "ok"
+        },
+        {
+          "name": "endpoint_admission_rejects_non_seqpacket_descriptors",
+          "outcome": "ok"
+        },
+        {
+          "name": "full_declared_session_round_trips_with_strict_lifecycle",
+          "outcome": "ok"
+        },
+        {
+          "name": "premature_eof_is_distinct_from_a_clean_session_end",
+          "outcome": "ok"
+        },
+        {
+          "name": "proc_stat_parser_handles_the_current_process_identity_stably",
+          "outcome": "ok"
+        },
+        {
+          "name": "receiver_binds_kernel_credentials_to_the_captured_process_instance",
+          "outcome": "ok"
+        },
+        {
+          "name": "receiver_rejects_file_descriptor_ancillary_data",
+          "outcome": "ok"
+        },
+        {
+          "name": "receiver_rejects_missing_start_and_duplicate_sequence",
+          "outcome": "ok"
+        },
+        {
+          "name": "receiver_rejects_nonce_and_sequence_substitution",
+          "outcome": "ok"
+        },
+        {
+          "name": "receiver_rejects_short_and_oversized_packets_and_then_poisoned_state",
+          "outcome": "ok"
+        }
+      ],
+      "passed": 994,
+      "summaries": [
+        {
+          "failed": 0,
+          "filtered_out": 0,
+          "ignored": 3,
+          "measured": 0,
+          "passed": 974,
+          "status": "ok"
+        },
+        {
+          "failed": 0,
+          "filtered_out": 0,
+          "ignored": 0,
+          "measured": 0,
+          "passed": 0,
+          "status": "ok"
+        },
+        {
+          "failed": 0,
+          "filtered_out": 0,
+          "ignored": 0,
+          "measured": 0,
+          "passed": 0,
+          "status": "ok"
+        },
+        {
+          "failed": 0,
+          "filtered_out": 0,
+          "ignored": 0,
+          "measured": 0,
+          "passed": 9,
+          "status": "ok"
+        },
+        {
+          "failed": 0,
+          "filtered_out": 0,
+          "ignored": 0,
+          "measured": 0,
+          "passed": 11,
+          "status": "ok"
+        }
+      ]
+    },
+    "probe-tests": {
+      "failed": 0,
+      "ignored": 0,
+      "named": [
+        {
+          "name": "tests::all_four_patterns_are_distinct_at_every_word_and_finite",
+          "outcome": "ok"
+        },
+        {
+          "name": "tests::artifact_identity_and_path_are_closed",
+          "outcome": "ok"
+        },
+        {
+          "name": "tests::closed_request_preserves_full_width_device_ids",
+          "outcome": "ok"
+        },
+        {
+          "name": "tests::copy_kernargs_preserve_exact_slice_and_row_geometry",
+          "outcome": "ok"
+        },
+        {
+          "name": "tests::guard_seed_and_wrong_iteration_corruption_are_detected",
+          "outcome": "ok"
+        },
+        {
+          "name": "tests::request_rejects_unknown_fields_duplicates_and_unbounded_timeout",
+          "outcome": "ok"
+        },
+        {
+          "name": "tests::witness_and_all_fourteen_completions_are_required",
+          "outcome": "ok"
+        }
+      ],
+      "passed": 7,
+      "summaries": [
+        {
+          "failed": 0,
+          "filtered_out": 0,
+          "ignored": 0,
+          "measured": 0,
+          "passed": 7,
+          "status": "ok"
+        }
+      ]
+    },
+    "signal-probe-tests": {
+      "failed": 0,
+      "ignored": 0,
+      "named": [
+        {
+          "name": "tests::all_four_patterns_are_distinct_at_every_word_and_finite",
+          "outcome": "ok"
+        },
+        {
+          "name": "tests::artifact_identity_and_path_are_closed",
+          "outcome": "ok"
+        },
+        {
+          "name": "tests::closed_request_preserves_full_width_device_ids",
+          "outcome": "ok"
+        },
+        {
+          "name": "tests::copy_kernargs_preserve_exact_slice_and_row_geometry",
+          "outcome": "ok"
+        },
+        {
+          "name": "tests::guard_seed_and_wrong_iteration_corruption_are_detected",
+          "outcome": "ok"
+        },
+        {
+          "name": "tests::lagging_queue_frontiers_are_retained_not_promoted_to_write",
+          "outcome": "ok"
+        },
+        {
+          "name": "tests::queue_frontiers_refuse_wrong_write_or_read_ahead_on_either_rank",
+          "outcome": "ok"
+        },
+        {
+          "name": "tests::request_rejects_unknown_fields_duplicates_and_unbounded_timeout",
+          "outcome": "ok"
+        },
+        {
+          "name": "tests::v3_rejects_v1_fourteen_completion_observation",
+          "outcome": "ok"
+        },
+        {
+          "name": "tests::v3_schemas_are_distinct_and_both_previous_requests_are_rejected",
+          "outcome": "ok"
+        },
+        {
+          "name": "tests::witness_and_all_sixteen_completions_are_required",
+          "outcome": "ok"
+        }
+      ],
+      "passed": 11,
+      "summaries": [
+        {
+          "failed": 0,
+          "filtered_out": 0,
+          "ignored": 0,
+          "measured": 0,
+          "passed": 11,
+          "status": "ok"
+        }
+      ]
+    },
+    "terminal-probe-tests": {
+      "failed": 0,
+      "ignored": 0,
+      "named": [
+        {
+          "name": "tests::all_four_patterns_are_distinct_at_every_word_and_finite",
+          "outcome": "ok"
+        },
+        {
+          "name": "tests::artifact_identity_and_path_are_closed",
+          "outcome": "ok"
+        },
+        {
+          "name": "tests::closed_request_preserves_full_width_device_ids",
+          "outcome": "ok"
+        },
+        {
+          "name": "tests::copy_kernargs_preserve_exact_slice_and_row_geometry",
+          "outcome": "ok"
+        },
+        {
+          "name": "tests::guard_seed_and_wrong_iteration_corruption_are_detected",
+          "outcome": "ok"
+        },
+        {
+          "name": "tests::request_rejects_unknown_fields_duplicates_and_unbounded_timeout",
+          "outcome": "ok"
+        },
+        {
+          "name": "tests::v2_rejects_v1_fourteen_completion_observation",
+          "outcome": "ok"
+        },
+        {
+          "name": "tests::v2_schemas_are_distinct_and_v1_request_is_rejected",
+          "outcome": "ok"
+        },
+        {
+          "name": "tests::witness_and_all_sixteen_completions_are_required",
+          "outcome": "ok"
+        }
+      ],
+      "passed": 9,
+      "summaries": [
+        {
+          "failed": 0,
+          "filtered_out": 0,
+          "ignored": 0,
+          "measured": 0,
+          "passed": 9,
+          "status": "ok"
+        }
+      ]
+    }
+  }
+}

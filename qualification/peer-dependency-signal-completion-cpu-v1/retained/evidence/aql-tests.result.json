@@ -1,0 +1,47 @@
+{
+  "adopted_reaped": [],
+  "argv": [
+    "/usr/bin/prlimit",
+    "--as=8589934592",
+    "--cpu=1200",
+    "--fsize=4294967296",
+    "--core=0",
+    "--",
+    "/home/harmenon/.rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/bin/cargo",
+    "test",
+    "--offline",
+    "--locked",
+    "--jobs",
+    "2",
+    "-p",
+    "fe2o3-aql",
+    "--",
+    "--test-threads=1"
+  ],
+  "command": {
+    "bytes": 1873,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/peer-dependency-signal-completion-cpu-v228-v1/evidence/aql-tests.command.json",
+    "sha256": "7e4c02d3db7df362eb2896ef1f9fba104c35e6939540e5626ac9aa80314e996a"
+  },
+  "elapsed_ns": 1772956939,
+  "exception": null,
+  "exit_code": 0,
+  "forced_cleanup": false,
+  "label": "aql-tests",
+  "natural_exit": true,
+  "pgid": 2286046,
+  "pid": 2286046,
+  "process_group_absent": true,
+  "reaped": true,
+  "stderr": {
+    "bytes": 734,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/peer-dependency-signal-completion-cpu-v228-v1/evidence/aql-tests.stderr",
+    "sha256": "895a987ff199cd3f7f8e48e3b6c6a33dca40adc8a2944c130d2015778ba07da2"
+  },
+  "stdout": {
+    "bytes": 3114,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/peer-dependency-signal-completion-cpu-v228-v1/evidence/aql-tests.stdout",
+    "sha256": "abe3ee793e20df8aaf78eecb0262607a300ba541c384f78349f600759a38c235"
+  },
+  "timed_out": false
+}

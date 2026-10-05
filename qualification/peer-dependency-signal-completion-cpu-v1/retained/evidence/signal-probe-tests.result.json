@@ -1,0 +1,51 @@
+{
+  "adopted_reaped": [],
+  "argv": [
+    "/usr/bin/prlimit",
+    "--as=8589934592",
+    "--cpu=1200",
+    "--fsize=4294967296",
+    "--core=0",
+    "--",
+    "/home/harmenon/.rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/bin/cargo",
+    "test",
+    "--offline",
+    "--locked",
+    "--jobs",
+    "2",
+    "-p",
+    "fe2o3-kfd",
+    "--features",
+    "engineering-gfx950",
+    "--example",
+    "kfd-peer-dependency-signal-completion",
+    "--",
+    "--test-threads=1"
+  ],
+  "command": {
+    "bytes": 1979,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/peer-dependency-signal-completion-cpu-v228-v1/evidence/signal-probe-tests.command.json",
+    "sha256": "735db2ecb018bc92a7c66f9d91a72df0a1afe6f14c3617d1ac35203285c19c99"
+  },
+  "elapsed_ns": 770622807,
+  "exception": null,
+  "exit_code": 0,
+  "forced_cleanup": false,
+  "label": "signal-probe-tests",
+  "natural_exit": true,
+  "pgid": 2291798,
+  "pid": 2291798,
+  "process_group_absent": true,
+  "reaped": true,
+  "stderr": {
+    "bytes": 1212,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/peer-dependency-signal-completion-cpu-v228-v1/evidence/signal-probe-tests.stderr",
+    "sha256": "f385ba3995e1224568eb240747b539755925a9f057059c3bdf189874b95ef0a8"
+  },
+  "stdout": {
+    "bytes": 918,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/peer-dependency-signal-completion-cpu-v228-v1/evidence/signal-probe-tests.stdout",
+    "sha256": "725439562fc2a469e1387af9b150110523fe9cd7a4c43835ebe3287d72f1175c"
+  },
+  "timed_out": false
+}
