@@ -1,0 +1,2287 @@
+{
+  "already_published_inputs": {
+    "prefix-projection-ar4-shared-host-default-inputs-v228-v1/assembly.json": {
+      "original": {
+        "bytes": 744739,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-shared-host-default-inputs-v228-v1/assembly.json",
+        "sha256": "719887bb6b1cbf20071d70f9962d8ddf1e126723102a3e0409c4dea1537b488c"
+      },
+      "published": {
+        "bytes": 744739,
+        "path": "/home/harsh/ferric-p227-integration/qualification/projection-ar4-shared-host-runtime-v1/inputs/default/assembly.json",
+        "sha256": "719887bb6b1cbf20071d70f9962d8ddf1e126723102a3e0409c4dea1537b488c"
+      }
+    },
+    "prefix-projection-ar4-shared-host-default-inputs-v228-v1/decode-review.json": {
+      "original": {
+        "bytes": 80206,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-shared-host-default-inputs-v228-v1/decode-review.json",
+        "sha256": "75f0839815cf8c3de0327c403a7c22a19842717a7ac360b68bf8526ecac5e3cd"
+      },
+      "published": {
+        "bytes": 80206,
+        "path": "/home/harsh/ferric-p227-integration/qualification/projection-ar4-shared-host-runtime-v1/inputs/default/decode-review.json",
+        "sha256": "75f0839815cf8c3de0327c403a7c22a19842717a7ac360b68bf8526ecac5e3cd"
+      }
+    },
+    "prefix-projection-ar4-shared-host-default-inputs-v228-v1/plan.json": {
+      "original": {
+        "bytes": 6710,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-shared-host-default-inputs-v228-v1/plan.json",
+        "sha256": "a41300d9af0d5cc2f81047624d779188b5f042d63913e39989bb3f32a4d2fe56"
+      },
+      "published": {
+        "bytes": 6710,
+        "path": "/home/harsh/ferric-p227-integration/qualification/projection-ar4-shared-host-runtime-v1/inputs/default/plan.json",
+        "sha256": "a41300d9af0d5cc2f81047624d779188b5f042d63913e39989bb3f32a4d2fe56"
+      }
+    },
+    "prefix-projection-ar4-shared-host-default-inputs-v228-v1/request.json": {
+      "original": {
+        "bytes": 8811,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-shared-host-default-inputs-v228-v1/request.json",
+        "sha256": "9dfe2e8be7590e5cde3e687ad8ac27f8a2a0f4bed9d93e1bb7247b7ea172e866"
+      },
+      "published": {
+        "bytes": 8811,
+        "path": "/home/harsh/ferric-p227-integration/qualification/projection-ar4-shared-host-runtime-v1/inputs/default/request.json",
+        "sha256": "9dfe2e8be7590e5cde3e687ad8ac27f8a2a0f4bed9d93e1bb7247b7ea172e866"
+      }
+    },
+    "prefix-projection-ar4-shared-host-shared-inputs-v228-v1/assembly.json": {
+      "original": {
+        "bytes": 744735,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-shared-host-shared-inputs-v228-v1/assembly.json",
+        "sha256": "c75cc37855c8d1348e8e4d7960edda91fbbfbcccc32886685ba80ae058e11b7f"
+      },
+      "published": {
+        "bytes": 744735,
+        "path": "/home/harsh/ferric-p227-integration/qualification/projection-ar4-shared-host-runtime-v1/inputs/shared/assembly.json",
+        "sha256": "c75cc37855c8d1348e8e4d7960edda91fbbfbcccc32886685ba80ae058e11b7f"
+      }
+    },
+    "prefix-projection-ar4-shared-host-shared-inputs-v228-v1/decode-review.json": {
+      "original": {
+        "bytes": 80320,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-shared-host-shared-inputs-v228-v1/decode-review.json",
+        "sha256": "4b76eb55fab689c95c0c9dc892f4821c5f60266fbc6d1c676890eb37c488ac10"
+      },
+      "published": {
+        "bytes": 80320,
+        "path": "/home/harsh/ferric-p227-integration/qualification/projection-ar4-shared-host-runtime-v1/inputs/shared/decode-review.json",
+        "sha256": "4b76eb55fab689c95c0c9dc892f4821c5f60266fbc6d1c676890eb37c488ac10"
+      }
+    },
+    "prefix-projection-ar4-shared-host-shared-inputs-v228-v1/plan.json": {
+      "original": {
+        "bytes": 6712,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-shared-host-shared-inputs-v228-v1/plan.json",
+        "sha256": "c2872faffc036c6bfde8302dd39dfcba6b17e3f9109d5d5542567db31a667f21"
+      },
+      "published": {
+        "bytes": 6712,
+        "path": "/home/harsh/ferric-p227-integration/qualification/projection-ar4-shared-host-runtime-v1/inputs/shared/plan.json",
+        "sha256": "c2872faffc036c6bfde8302dd39dfcba6b17e3f9109d5d5542567db31a667f21"
+      }
+    },
+    "prefix-projection-ar4-shared-host-shared-inputs-v228-v1/request.json": {
+      "original": {
+        "bytes": 8807,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-shared-host-shared-inputs-v228-v1/request.json",
+        "sha256": "7c919d2dc9f08920af898c089a9eeb80952d8850c9daed9cd164aab80e211d69"
+      },
+      "published": {
+        "bytes": 8807,
+        "path": "/home/harsh/ferric-p227-integration/qualification/projection-ar4-shared-host-runtime-v1/inputs/shared/request.json",
+        "sha256": "7c919d2dc9f08920af898c089a9eeb80952d8850c9daed9cd164aab80e211d69"
+      }
+    }
+  },
+  "analysis": {
+    "bytes": 13722,
+    "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/shared-host-pair-analysis-v228-v1/analysis.json",
+    "sha256": "f5a0b6fa5048b1802344610bd7951170956a455f3eab43c32600a08072777e63"
+  },
+  "arms": {
+    "default": {
+      "bytes": 1162862,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-shared-host-default-gpu-v228-v1/complete.json",
+      "sha256": "da039b8dfeea0e11e66440c2c628db1d92da507ec901ef791b46ea6f5ab55bf5"
+    },
+    "shared": {
+      "bytes": 1162983,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-shared-host-shared-gpu-v228-v1/complete.json",
+      "sha256": "4163ba9800fe9176abfacf819d73f0b571b2ac09bcb0ce3d01caefcdf4380bcd"
+    }
+  },
+  "copied": {
+    "analysis/analysis.json": {
+      "original": {
+        "bytes": 13722,
+        "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/shared-host-pair-analysis-v228-v1/analysis.json",
+        "sha256": "f5a0b6fa5048b1802344610bd7951170956a455f3eab43c32600a08072777e63"
+      },
+      "published": {
+        "bytes": 13722,
+        "path": "/home/harsh/ferric-p227-integration/qualification/projection-ar4-shared-host-pair-v1/analysis/analysis.json",
+        "sha256": "f5a0b6fa5048b1802344610bd7951170956a455f3eab43c32600a08072777e63"
+      },
+      "retained": {
+        "bytes": 13722,
+        "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/shared-host-pair-analysis-v228-v1/analysis.json",
+        "sha256": "f5a0b6fa5048b1802344610bd7951170956a455f3eab43c32600a08072777e63"
+      }
+    },
+    "analysis/host-comparison.svg": {
+      "original": {
+        "bytes": 9574,
+        "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/shared-host-pair-analysis-v228-v1/host-comparison.svg",
+        "sha256": "c9677a90380d90993eab43fa4b38bec144c2265c85663b2284bcd40efaa57ec3"
+      },
+      "published": {
+        "bytes": 9574,
+        "path": "/home/harsh/ferric-p227-integration/qualification/projection-ar4-shared-host-pair-v1/analysis/host-comparison.svg",
+        "sha256": "c9677a90380d90993eab43fa4b38bec144c2265c85663b2284bcd40efaa57ec3"
+      },
+      "retained": {
+        "bytes": 9574,
+        "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/shared-host-pair-analysis-v228-v1/host-comparison.svg",
+        "sha256": "c9677a90380d90993eab43fa4b38bec144c2265c85663b2284bcd40efaa57ec3"
+      }
+    },
+    "analysis/intervals.csv": {
+      "original": {
+        "bytes": 1738,
+        "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/shared-host-pair-analysis-v228-v1/intervals.csv",
+        "sha256": "9bff155bd88dee6efe2df8906e4c39b7dbb718404a1426baab71cc5f04b4477b"
+      },
+      "published": {
+        "bytes": 1738,
+        "path": "/home/harsh/ferric-p227-integration/qualification/projection-ar4-shared-host-pair-v1/analysis/intervals.csv",
+        "sha256": "9bff155bd88dee6efe2df8906e4c39b7dbb718404a1426baab71cc5f04b4477b"
+      },
+      "retained": {
+        "bytes": 1738,
+        "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/shared-host-pair-analysis-v228-v1/intervals.csv",
+        "sha256": "9bff155bd88dee6efe2df8906e4c39b7dbb718404a1426baab71cc5f04b4477b"
+      }
+    },
+    "analysis/report.md": {
+      "original": {
+        "bytes": 2308,
+        "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/shared-host-pair-analysis-v228-v1/report.md",
+        "sha256": "8be6479955c2aa5a464841ed3768ed10982251725e35d533f6103f4e91ce1913"
+      },
+      "published": {
+        "bytes": 2308,
+        "path": "/home/harsh/ferric-p227-integration/qualification/projection-ar4-shared-host-pair-v1/analysis/report.md",
+        "sha256": "8be6479955c2aa5a464841ed3768ed10982251725e35d533f6103f4e91ce1913"
+      },
+      "retained": {
+        "bytes": 2308,
+        "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/shared-host-pair-analysis-v228-v1/report.md",
+        "sha256": "8be6479955c2aa5a464841ed3768ed10982251725e35d533f6103f4e91ce1913"
+      }
+    },
+    "capture/default/after-0-topology.json": {
+      "original": {
+        "bytes": 4180,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-shared-host-default-gpu-v228-v1/after-0-topology.json",
+        "sha256": "d4dad97bed162074e2eb5c8414c1dbc7416163d83587eed18cd176a7d2c3f181"
+      },
+      "published": {
+        "bytes": 4180,
+        "path": "/home/harsh/ferric-p227-integration/qualification/projection-ar4-shared-host-pair-v1/capture/default/after-0-topology.json",
+        "sha256": "d4dad97bed162074e2eb5c8414c1dbc7416163d83587eed18cd176a7d2c3f181"
+      },
+      "retained": {
+        "bytes": 4180,
+        "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/shared-host-pair-export-v228-v1/prefix-projection-ar4-shared-host-default-gpu-v228-v1/after-0-topology.json",
+        "sha256": "d4dad97bed162074e2eb5c8414c1dbc7416163d83587eed18cd176a7d2c3f181"
+      }
+    },
+    "capture/default/after-0/command.json": {
+      "original": {
+        "bytes": 706,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-shared-host-default-gpu-v228-v1/after-0/command.json",
+        "sha256": "6e438209610d352a6003f8cb6cf972a9851015711ab0b5ef1bfc58f80ed355d7"
+      },
+      "published": {
+        "bytes": 706,
+        "path": "/home/harsh/ferric-p227-integration/qualification/projection-ar4-shared-host-pair-v1/capture/default/after-0/command.json",
+        "sha256": "6e438209610d352a6003f8cb6cf972a9851015711ab0b5ef1bfc58f80ed355d7"
+      },
+      "retained": {
+        "bytes": 706,
+        "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/shared-host-pair-export-v228-v1/prefix-projection-ar4-shared-host-default-gpu-v228-v1/after-0/command.json",
+        "sha256": "6e438209610d352a6003f8cb6cf972a9851015711ab0b5ef1bfc58f80ed355d7"
+      }
+    },
+    "capture/default/after-0/result.json": {
+      "original": {
+        "bytes": 1653,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-shared-host-default-gpu-v228-v1/after-0/result.json",
+        "sha256": "f9349a83776dd0f0d3d7e364d408f35d440909fe186b6d3424ed3fb5593814d0"
+      },
+      "published": {
+        "bytes": 1653,
+        "path": "/home/harsh/ferric-p227-integration/qualification/projection-ar4-shared-host-pair-v1/capture/default/after-0/result.json",
+        "sha256": "f9349a83776dd0f0d3d7e364d408f35d440909fe186b6d3424ed3fb5593814d0"
+      },
+      "retained": {
+        "bytes": 1653,
+        "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/shared-host-pair-export-v228-v1/prefix-projection-ar4-shared-host-default-gpu-v228-v1/after-0/result.json",
+        "sha256": "f9349a83776dd0f0d3d7e364d408f35d440909fe186b6d3424ed3fb5593814d0"
+      }
+    },
+    "capture/default/after-0/started.json": {
+      "original": {
+        "bytes": 282,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-shared-host-default-gpu-v228-v1/after-0/started.json",
+        "sha256": "910255fd19fd45bce7adc15746a893945678de8ebbd8f65e1230dcf69dc17a8f"
+      },
+      "published": {
+        "bytes": 282,
+        "path": "/home/harsh/ferric-p227-integration/qualification/projection-ar4-shared-host-pair-v1/capture/default/after-0/started.json",
+        "sha256": "910255fd19fd45bce7adc15746a893945678de8ebbd8f65e1230dcf69dc17a8f"
+      },
+      "retained": {
+        "bytes": 282,
+        "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/shared-host-pair-export-v228-v1/prefix-projection-ar4-shared-host-default-gpu-v228-v1/after-0/started.json",
+        "sha256": "910255fd19fd45bce7adc15746a893945678de8ebbd8f65e1230dcf69dc17a8f"
+      }
+    },
+    "capture/default/after-0/stderr": {
+      "original": {
+        "bytes": 0,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-shared-host-default-gpu-v228-v1/after-0/stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "published": {
+        "bytes": 0,
+        "path": "/home/harsh/ferric-p227-integration/qualification/projection-ar4-shared-host-pair-v1/capture/default/after-0/stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "retained": {
+        "bytes": 0,
+        "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/shared-host-pair-export-v228-v1/prefix-projection-ar4-shared-host-default-gpu-v228-v1/after-0/stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    "capture/default/after-0/stdout": {
+      "original": {
+        "bytes": 321,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-shared-host-default-gpu-v228-v1/after-0/stdout",
+        "sha256": "fb1d52be68ef1ca207431343c2fe9d71c4b52ca5589e9a38807effa626b069e9"
+      },
+      "published": {
+        "bytes": 321,
+        "path": "/home/harsh/ferric-p227-integration/qualification/projection-ar4-shared-host-pair-v1/capture/default/after-0/stdout",
+        "sha256": "fb1d52be68ef1ca207431343c2fe9d71c4b52ca5589e9a38807effa626b069e9"
+      },
+      "retained": {
+        "bytes": 321,
+        "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/shared-host-pair-export-v228-v1/prefix-projection-ar4-shared-host-default-gpu-v228-v1/after-0/stdout",
+        "sha256": "fb1d52be68ef1ca207431343c2fe9d71c4b52ca5589e9a38807effa626b069e9"
+      }
+    },
+    "capture/default/after-1-topology.json": {
+      "original": {
+        "bytes": 4180,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-shared-host-default-gpu-v228-v1/after-1-topology.json",
+        "sha256": "5625c0c89ad1fb18d84df186c271124c5016eeaefa3b06f99b0c63d17d0a4103"
+      },
+      "published": {
+        "bytes": 4180,
+        "path": "/home/harsh/ferric-p227-integration/qualification/projection-ar4-shared-host-pair-v1/capture/default/after-1-topology.json",
+        "sha256": "5625c0c89ad1fb18d84df186c271124c5016eeaefa3b06f99b0c63d17d0a4103"
+      },
+      "retained": {
+        "bytes": 4180,
+        "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/shared-host-pair-export-v228-v1/prefix-projection-ar4-shared-host-default-gpu-v228-v1/after-1-topology.json",
+        "sha256": "5625c0c89ad1fb18d84df186c271124c5016eeaefa3b06f99b0c63d17d0a4103"
+      }
+    },
+    "capture/default/after-1/command.json": {
+      "original": {
+        "bytes": 706,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-shared-host-default-gpu-v228-v1/after-1/command.json",
+        "sha256": "6e438209610d352a6003f8cb6cf972a9851015711ab0b5ef1bfc58f80ed355d7"
+      },
+      "published": {
+        "bytes": 706,
+        "path": "/home/harsh/ferric-p227-integration/qualification/projection-ar4-shared-host-pair-v1/capture/default/after-1/command.json",
+        "sha256": "6e438209610d352a6003f8cb6cf972a9851015711ab0b5ef1bfc58f80ed355d7"
+      },
+      "retained": {
+        "bytes": 706,
+        "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/shared-host-pair-export-v228-v1/prefix-projection-ar4-shared-host-default-gpu-v228-v1/after-1/command.json",
+        "sha256": "6e438209610d352a6003f8cb6cf972a9851015711ab0b5ef1bfc58f80ed355d7"
+      }
+    },
+    "capture/default/after-1/result.json": {
+      "original": {
+        "bytes": 1653,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-shared-host-default-gpu-v228-v1/after-1/result.json",
+        "sha256": "fbc69373a9c2962521c572db113a213b04807c269d477cf125781d6e2f060f34"
+      },
+      "published": {
+        "bytes": 1653,
+        "path": "/home/harsh/ferric-p227-integration/qualification/projection-ar4-shared-host-pair-v1/capture/default/after-1/result.json",
+        "sha256": "fbc69373a9c2962521c572db113a213b04807c269d477cf125781d6e2f060f34"
+      },
+      "retained": {
+        "bytes": 1653,
+        "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/shared-host-pair-export-v228-v1/prefix-projection-ar4-shared-host-default-gpu-v228-v1/after-1/result.json",
+        "sha256": "fbc69373a9c2962521c572db113a213b04807c269d477cf125781d6e2f060f34"
+      }
+    },
+    "capture/default/after-1/started.json": {
+      "original": {
+        "bytes": 282,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-shared-host-default-gpu-v228-v1/after-1/started.json",
+        "sha256": "209dba466870e9c29631989a102ad1fc3e9b0105176f24eb24784cbc30f870b5"
+      },
+      "published": {
+        "bytes": 282,
+        "path": "/home/harsh/ferric-p227-integration/qualification/projection-ar4-shared-host-pair-v1/capture/default/after-1/started.json",
+        "sha256": "209dba466870e9c29631989a102ad1fc3e9b0105176f24eb24784cbc30f870b5"
+      },
+      "retained": {
+        "bytes": 282,
+        "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/shared-host-pair-export-v228-v1/prefix-projection-ar4-shared-host-default-gpu-v228-v1/after-1/started.json",
+        "sha256": "209dba466870e9c29631989a102ad1fc3e9b0105176f24eb24784cbc30f870b5"
+      }
+    },
+    "capture/default/after-1/stderr": {
+      "original": {
+        "bytes": 0,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-shared-host-default-gpu-v228-v1/after-1/stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "published": {
+        "bytes": 0,
+        "path": "/home/harsh/ferric-p227-integration/qualification/projection-ar4-shared-host-pair-v1/capture/default/after-1/stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "retained": {
+        "bytes": 0,
+        "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/shared-host-pair-export-v228-v1/prefix-projection-ar4-shared-host-default-gpu-v228-v1/after-1/stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    "capture/default/after-1/stdout": {
+      "original": {
+        "bytes": 321,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-shared-host-default-gpu-v228-v1/after-1/stdout",
+        "sha256": "fb1d52be68ef1ca207431343c2fe9d71c4b52ca5589e9a38807effa626b069e9"
+      },
+      "published": {
+        "bytes": 321,
+        "path": "/home/harsh/ferric-p227-integration/qualification/projection-ar4-shared-host-pair-v1/capture/default/after-1/stdout",
+        "sha256": "fb1d52be68ef1ca207431343c2fe9d71c4b52ca5589e9a38807effa626b069e9"
+      },
+      "retained": {
+        "bytes": 321,
+        "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/shared-host-pair-export-v228-v1/prefix-projection-ar4-shared-host-default-gpu-v228-v1/after-1/stdout",
+        "sha256": "fb1d52be68ef1ca207431343c2fe9d71c4b52ca5589e9a38807effa626b069e9"
+      }
+    },
+    "capture/default/after-2-topology.json": {
+      "original": {
+        "bytes": 4180,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-shared-host-default-gpu-v228-v1/after-2-topology.json",
+        "sha256": "a69cdd33f249c0018758e3b9bde94a178bda8b3a4ee31e7a5a5275abdda7264e"
+      },
+      "published": {
+        "bytes": 4180,
+        "path": "/home/harsh/ferric-p227-integration/qualification/projection-ar4-shared-host-pair-v1/capture/default/after-2-topology.json",
+        "sha256": "a69cdd33f249c0018758e3b9bde94a178bda8b3a4ee31e7a5a5275abdda7264e"
+      },
+      "retained": {
+        "bytes": 4180,
+        "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/shared-host-pair-export-v228-v1/prefix-projection-ar4-shared-host-default-gpu-v228-v1/after-2-topology.json",
+        "sha256": "a69cdd33f249c0018758e3b9bde94a178bda8b3a4ee31e7a5a5275abdda7264e"
+      }
+    },
+    "capture/default/after-2/command.json": {
+      "original": {
+        "bytes": 706,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-shared-host-default-gpu-v228-v1/after-2/command.json",
+        "sha256": "6e438209610d352a6003f8cb6cf972a9851015711ab0b5ef1bfc58f80ed355d7"
+      },
+      "published": {
+        "bytes": 706,
+        "path": "/home/harsh/ferric-p227-integration/qualification/projection-ar4-shared-host-pair-v1/capture/default/after-2/command.json",
+        "sha256": "6e438209610d352a6003f8cb6cf972a9851015711ab0b5ef1bfc58f80ed355d7"
+      },
+      "retained": {
+        "bytes": 706,
+        "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/shared-host-pair-export-v228-v1/prefix-projection-ar4-shared-host-default-gpu-v228-v1/after-2/command.json",
+        "sha256": "6e438209610d352a6003f8cb6cf972a9851015711ab0b5ef1bfc58f80ed355d7"
+      }
+    },
+    "capture/default/after-2/result.json": {
+      "original": {
+        "bytes": 1653,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-shared-host-default-gpu-v228-v1/after-2/result.json",
+        "sha256": "561bb29ece1a927b20c1a54d6ab47896c505bd1407afc78b772e21ec20624a5b"
+      },
+      "published": {
+        "bytes": 1653,
+        "path": "/home/harsh/ferric-p227-integration/qualification/projection-ar4-shared-host-pair-v1/capture/default/after-2/result.json",
+        "sha256": "561bb29ece1a927b20c1a54d6ab47896c505bd1407afc78b772e21ec20624a5b"
+      },
+      "retained": {
+        "bytes": 1653,
+        "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/shared-host-pair-export-v228-v1/prefix-projection-ar4-shared-host-default-gpu-v228-v1/after-2/result.json",
+        "sha256": "561bb29ece1a927b20c1a54d6ab47896c505bd1407afc78b772e21ec20624a5b"
+      }
+    },
+    "capture/default/after-2/started.json": {
+      "original": {
+        "bytes": 282,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-shared-host-default-gpu-v228-v1/after-2/started.json",
+        "sha256": "720540286ab705c4ccb94165d3dcc22c65b62255e19bc6f98911bfbfc58fcb90"
+      },
+      "published": {
+        "bytes": 282,
+        "path": "/home/harsh/ferric-p227-integration/qualification/projection-ar4-shared-host-pair-v1/capture/default/after-2/started.json",
+        "sha256": "720540286ab705c4ccb94165d3dcc22c65b62255e19bc6f98911bfbfc58fcb90"
+      },
+      "retained": {
+        "bytes": 282,
+        "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/shared-host-pair-export-v228-v1/prefix-projection-ar4-shared-host-default-gpu-v228-v1/after-2/started.json",
+        "sha256": "720540286ab705c4ccb94165d3dcc22c65b62255e19bc6f98911bfbfc58fcb90"
+      }
+    },
+    "capture/default/after-2/stderr": {
+      "original": {
+        "bytes": 0,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-shared-host-default-gpu-v228-v1/after-2/stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "published": {
+        "bytes": 0,
+        "path": "/home/harsh/ferric-p227-integration/qualification/projection-ar4-shared-host-pair-v1/capture/default/after-2/stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "retained": {
+        "bytes": 0,
+        "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/shared-host-pair-export-v228-v1/prefix-projection-ar4-shared-host-default-gpu-v228-v1/after-2/stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    "capture/default/after-2/stdout": {
+      "original": {
+        "bytes": 321,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-shared-host-default-gpu-v228-v1/after-2/stdout",
+        "sha256": "fb1d52be68ef1ca207431343c2fe9d71c4b52ca5589e9a38807effa626b069e9"
+      },
+      "published": {
+        "bytes": 321,
+        "path": "/home/harsh/ferric-p227-integration/qualification/projection-ar4-shared-host-pair-v1/capture/default/after-2/stdout",
+        "sha256": "fb1d52be68ef1ca207431343c2fe9d71c4b52ca5589e9a38807effa626b069e9"
+      },
+      "retained": {
+        "bytes": 321,
+        "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/shared-host-pair-export-v228-v1/prefix-projection-ar4-shared-host-default-gpu-v228-v1/after-2/stdout",
+        "sha256": "fb1d52be68ef1ca207431343c2fe9d71c4b52ca5589e9a38807effa626b069e9"
+      }
+    },
+    "capture/default/before-0-topology.json": {
+      "original": {
+        "bytes": 4180,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-shared-host-default-gpu-v228-v1/before-0-topology.json",
+        "sha256": "a88533e5036ad4b224f0cfe85b9637e3538a1fd47be249d291105ce3154d0370"
+      },
+      "published": {
+        "bytes": 4180,
+        "path": "/home/harsh/ferric-p227-integration/qualification/projection-ar4-shared-host-pair-v1/capture/default/before-0-topology.json",
+        "sha256": "a88533e5036ad4b224f0cfe85b9637e3538a1fd47be249d291105ce3154d0370"
+      },
+      "retained": {
+        "bytes": 4180,
+        "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/shared-host-pair-export-v228-v1/prefix-projection-ar4-shared-host-default-gpu-v228-v1/before-0-topology.json",
+        "sha256": "a88533e5036ad4b224f0cfe85b9637e3538a1fd47be249d291105ce3154d0370"
+      }
+    },
+    "capture/default/before-0/command.json": {
+      "original": {
+        "bytes": 706,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-shared-host-default-gpu-v228-v1/before-0/command.json",
+        "sha256": "6e438209610d352a6003f8cb6cf972a9851015711ab0b5ef1bfc58f80ed355d7"
+      },
+      "published": {
+        "bytes": 706,
+        "path": "/home/harsh/ferric-p227-integration/qualification/projection-ar4-shared-host-pair-v1/capture/default/before-0/command.json",
+        "sha256": "6e438209610d352a6003f8cb6cf972a9851015711ab0b5ef1bfc58f80ed355d7"
+      },
+      "retained": {
+        "bytes": 706,
+        "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/shared-host-pair-export-v228-v1/prefix-projection-ar4-shared-host-default-gpu-v228-v1/before-0/command.json",
+        "sha256": "6e438209610d352a6003f8cb6cf972a9851015711ab0b5ef1bfc58f80ed355d7"
+      }
+    },
+    "capture/default/before-0/result.json": {
+      "original": {
+        "bytes": 1657,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-shared-host-default-gpu-v228-v1/before-0/result.json",
+        "sha256": "804525c6d9c946850dbc3b4b2771c049cc1581b42192a9e5d47f744e524aa239"
+      },
+      "published": {
+        "bytes": 1657,
+        "path": "/home/harsh/ferric-p227-integration/qualification/projection-ar4-shared-host-pair-v1/capture/default/before-0/result.json",
+        "sha256": "804525c6d9c946850dbc3b4b2771c049cc1581b42192a9e5d47f744e524aa239"
+      },
+      "retained": {
+        "bytes": 1657,
+        "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/shared-host-pair-export-v228-v1/prefix-projection-ar4-shared-host-default-gpu-v228-v1/before-0/result.json",
+        "sha256": "804525c6d9c946850dbc3b4b2771c049cc1581b42192a9e5d47f744e524aa239"
+      }
+    },
+    "capture/default/before-0/started.json": {
+      "original": {
+        "bytes": 282,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-shared-host-default-gpu-v228-v1/before-0/started.json",
+        "sha256": "416e9a1f900cca5a56f9b0f0e0070e4a63c5c087999ffa8443e052c8e5889e86"
+      },
+      "published": {
+        "bytes": 282,
+        "path": "/home/harsh/ferric-p227-integration/qualification/projection-ar4-shared-host-pair-v1/capture/default/before-0/started.json",
+        "sha256": "416e9a1f900cca5a56f9b0f0e0070e4a63c5c087999ffa8443e052c8e5889e86"
+      },
+      "retained": {
+        "bytes": 282,
+        "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/shared-host-pair-export-v228-v1/prefix-projection-ar4-shared-host-default-gpu-v228-v1/before-0/started.json",
+        "sha256": "416e9a1f900cca5a56f9b0f0e0070e4a63c5c087999ffa8443e052c8e5889e86"
+      }
+    },
+    "capture/default/before-0/stderr": {
+      "original": {
+        "bytes": 0,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-shared-host-default-gpu-v228-v1/before-0/stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "published": {
+        "bytes": 0,
+        "path": "/home/harsh/ferric-p227-integration/qualification/projection-ar4-shared-host-pair-v1/capture/default/before-0/stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "retained": {
+        "bytes": 0,
+        "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/shared-host-pair-export-v228-v1/prefix-projection-ar4-shared-host-default-gpu-v228-v1/before-0/stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    "capture/default/before-0/stdout": {
+      "original": {
+        "bytes": 321,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-shared-host-default-gpu-v228-v1/before-0/stdout",
+        "sha256": "fb1d52be68ef1ca207431343c2fe9d71c4b52ca5589e9a38807effa626b069e9"
+      },
+      "published": {
+        "bytes": 321,
+        "path": "/home/harsh/ferric-p227-integration/qualification/projection-ar4-shared-host-pair-v1/capture/default/before-0/stdout",
+        "sha256": "fb1d52be68ef1ca207431343c2fe9d71c4b52ca5589e9a38807effa626b069e9"
+      },
+      "retained": {
+        "bytes": 321,
+        "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/shared-host-pair-export-v228-v1/prefix-projection-ar4-shared-host-default-gpu-v228-v1/before-0/stdout",
+        "sha256": "fb1d52be68ef1ca207431343c2fe9d71c4b52ca5589e9a38807effa626b069e9"
+      }
+    },
+    "capture/default/before-1-topology.json": {
+      "original": {
+        "bytes": 4180,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-shared-host-default-gpu-v228-v1/before-1-topology.json",
+        "sha256": "78eda93da2e46228c5fda1e56d94171f0c1cbaf5bc5dc092f4f9b922944e7a41"
+      },
+      "published": {
+        "bytes": 4180,
+        "path": "/home/harsh/ferric-p227-integration/qualification/projection-ar4-shared-host-pair-v1/capture/default/before-1-topology.json",
+        "sha256": "78eda93da2e46228c5fda1e56d94171f0c1cbaf5bc5dc092f4f9b922944e7a41"
+      },
+      "retained": {
+        "bytes": 4180,
+        "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/shared-host-pair-export-v228-v1/prefix-projection-ar4-shared-host-default-gpu-v228-v1/before-1-topology.json",
+        "sha256": "78eda93da2e46228c5fda1e56d94171f0c1cbaf5bc5dc092f4f9b922944e7a41"
+      }
+    },
+    "capture/default/before-1/command.json": {
+      "original": {
+        "bytes": 706,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-shared-host-default-gpu-v228-v1/before-1/command.json",
+        "sha256": "6e438209610d352a6003f8cb6cf972a9851015711ab0b5ef1bfc58f80ed355d7"
+      },
+      "published": {
+        "bytes": 706,
+        "path": "/home/harsh/ferric-p227-integration/qualification/projection-ar4-shared-host-pair-v1/capture/default/before-1/command.json",
+        "sha256": "6e438209610d352a6003f8cb6cf972a9851015711ab0b5ef1bfc58f80ed355d7"
+      },
+      "retained": {
+        "bytes": 706,
+        "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/shared-host-pair-export-v228-v1/prefix-projection-ar4-shared-host-default-gpu-v228-v1/before-1/command.json",
+        "sha256": "6e438209610d352a6003f8cb6cf972a9851015711ab0b5ef1bfc58f80ed355d7"
+      }
+    },
+    "capture/default/before-1/result.json": {
+      "original": {
+        "bytes": 1657,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-shared-host-default-gpu-v228-v1/before-1/result.json",
+        "sha256": "978dfb0f50c58caef4e2b78b60e76770f322a8838f733da88b72f4a0192ed6a8"
+      },
+      "published": {
+        "bytes": 1657,
+        "path": "/home/harsh/ferric-p227-integration/qualification/projection-ar4-shared-host-pair-v1/capture/default/before-1/result.json",
+        "sha256": "978dfb0f50c58caef4e2b78b60e76770f322a8838f733da88b72f4a0192ed6a8"
+      },
+      "retained": {
+        "bytes": 1657,
+        "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/shared-host-pair-export-v228-v1/prefix-projection-ar4-shared-host-default-gpu-v228-v1/before-1/result.json",
+        "sha256": "978dfb0f50c58caef4e2b78b60e76770f322a8838f733da88b72f4a0192ed6a8"
+      }
+    },
+    "capture/default/before-1/started.json": {
+      "original": {
+        "bytes": 282,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-shared-host-default-gpu-v228-v1/before-1/started.json",
+        "sha256": "7f61d62006b9c14425829a3ea3017b8be8ebffe9462b322c0afbd34d49d4728a"
+      },
+      "published": {
+        "bytes": 282,
+        "path": "/home/harsh/ferric-p227-integration/qualification/projection-ar4-shared-host-pair-v1/capture/default/before-1/started.json",
+        "sha256": "7f61d62006b9c14425829a3ea3017b8be8ebffe9462b322c0afbd34d49d4728a"
+      },
+      "retained": {
+        "bytes": 282,
+        "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/shared-host-pair-export-v228-v1/prefix-projection-ar4-shared-host-default-gpu-v228-v1/before-1/started.json",
+        "sha256": "7f61d62006b9c14425829a3ea3017b8be8ebffe9462b322c0afbd34d49d4728a"
+      }
+    },
+    "capture/default/before-1/stderr": {
+      "original": {
+        "bytes": 0,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-shared-host-default-gpu-v228-v1/before-1/stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "published": {
+        "bytes": 0,
+        "path": "/home/harsh/ferric-p227-integration/qualification/projection-ar4-shared-host-pair-v1/capture/default/before-1/stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "retained": {
+        "bytes": 0,
+        "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/shared-host-pair-export-v228-v1/prefix-projection-ar4-shared-host-default-gpu-v228-v1/before-1/stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    "capture/default/before-1/stdout": {
+      "original": {
+        "bytes": 321,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-shared-host-default-gpu-v228-v1/before-1/stdout",
+        "sha256": "fb1d52be68ef1ca207431343c2fe9d71c4b52ca5589e9a38807effa626b069e9"
+      },
+      "published": {
+        "bytes": 321,
+        "path": "/home/harsh/ferric-p227-integration/qualification/projection-ar4-shared-host-pair-v1/capture/default/before-1/stdout",
+        "sha256": "fb1d52be68ef1ca207431343c2fe9d71c4b52ca5589e9a38807effa626b069e9"
+      },
+      "retained": {
+        "bytes": 321,
+        "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/shared-host-pair-export-v228-v1/prefix-projection-ar4-shared-host-default-gpu-v228-v1/before-1/stdout",
+        "sha256": "fb1d52be68ef1ca207431343c2fe9d71c4b52ca5589e9a38807effa626b069e9"
+      }
+    },
+    "capture/default/before-2-topology.json": {
+      "original": {
+        "bytes": 4180,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-shared-host-default-gpu-v228-v1/before-2-topology.json",
+        "sha256": "89dd73b8c1c85a7143fb421d97804609d9ea836750431b1608bb3999928c2e24"
+      },
+      "published": {
+        "bytes": 4180,
+        "path": "/home/harsh/ferric-p227-integration/qualification/projection-ar4-shared-host-pair-v1/capture/default/before-2-topology.json",
+        "sha256": "89dd73b8c1c85a7143fb421d97804609d9ea836750431b1608bb3999928c2e24"
+      },
+      "retained": {
+        "bytes": 4180,
+        "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/shared-host-pair-export-v228-v1/prefix-projection-ar4-shared-host-default-gpu-v228-v1/before-2-topology.json",
+        "sha256": "89dd73b8c1c85a7143fb421d97804609d9ea836750431b1608bb3999928c2e24"
+      }
+    },
+    "capture/default/before-2/command.json": {
+      "original": {
+        "bytes": 706,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-shared-host-default-gpu-v228-v1/before-2/command.json",
+        "sha256": "6e438209610d352a6003f8cb6cf972a9851015711ab0b5ef1bfc58f80ed355d7"
+      },
+      "published": {
+        "bytes": 706,
+        "path": "/home/harsh/ferric-p227-integration/qualification/projection-ar4-shared-host-pair-v1/capture/default/before-2/command.json",
+        "sha256": "6e438209610d352a6003f8cb6cf972a9851015711ab0b5ef1bfc58f80ed355d7"
+      },
+      "retained": {
+        "bytes": 706,
+        "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/shared-host-pair-export-v228-v1/prefix-projection-ar4-shared-host-default-gpu-v228-v1/before-2/command.json",
+        "sha256": "6e438209610d352a6003f8cb6cf972a9851015711ab0b5ef1bfc58f80ed355d7"
+      }
+    },
+    "capture/default/before-2/result.json": {
+      "original": {
+        "bytes": 1657,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-shared-host-default-gpu-v228-v1/before-2/result.json",
+        "sha256": "094eee5a5ddf346d8d9c1c1975a9872f312c864c7e38fcab62de62bd203f4a4f"
+      },
+      "published": {
+        "bytes": 1657,
+        "path": "/home/harsh/ferric-p227-integration/qualification/projection-ar4-shared-host-pair-v1/capture/default/before-2/result.json",
+        "sha256": "094eee5a5ddf346d8d9c1c1975a9872f312c864c7e38fcab62de62bd203f4a4f"
+      },
+      "retained": {
+        "bytes": 1657,
+        "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/shared-host-pair-export-v228-v1/prefix-projection-ar4-shared-host-default-gpu-v228-v1/before-2/result.json",
+        "sha256": "094eee5a5ddf346d8d9c1c1975a9872f312c864c7e38fcab62de62bd203f4a4f"
+      }
+    },
+    "capture/default/before-2/started.json": {
+      "original": {
+        "bytes": 282,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-shared-host-default-gpu-v228-v1/before-2/started.json",
+        "sha256": "0ed60cfcb7181a4a0824d1d994678632ebe90ee5f6750adf73d49e0b3ab1a38a"
+      },
+      "published": {
+        "bytes": 282,
+        "path": "/home/harsh/ferric-p227-integration/qualification/projection-ar4-shared-host-pair-v1/capture/default/before-2/started.json",
+        "sha256": "0ed60cfcb7181a4a0824d1d994678632ebe90ee5f6750adf73d49e0b3ab1a38a"
+      },
+      "retained": {
+        "bytes": 282,
+        "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/shared-host-pair-export-v228-v1/prefix-projection-ar4-shared-host-default-gpu-v228-v1/before-2/started.json",
+        "sha256": "0ed60cfcb7181a4a0824d1d994678632ebe90ee5f6750adf73d49e0b3ab1a38a"
+      }
+    },
+    "capture/default/before-2/stderr": {
+      "original": {
+        "bytes": 0,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-shared-host-default-gpu-v228-v1/before-2/stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "published": {
+        "bytes": 0,
+        "path": "/home/harsh/ferric-p227-integration/qualification/projection-ar4-shared-host-pair-v1/capture/default/before-2/stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "retained": {
+        "bytes": 0,
+        "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/shared-host-pair-export-v228-v1/prefix-projection-ar4-shared-host-default-gpu-v228-v1/before-2/stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    "capture/default/before-2/stdout": {
+      "original": {
+        "bytes": 321,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-shared-host-default-gpu-v228-v1/before-2/stdout",
+        "sha256": "fb1d52be68ef1ca207431343c2fe9d71c4b52ca5589e9a38807effa626b069e9"
+      },
+      "published": {
+        "bytes": 321,
+        "path": "/home/harsh/ferric-p227-integration/qualification/projection-ar4-shared-host-pair-v1/capture/default/before-2/stdout",
+        "sha256": "fb1d52be68ef1ca207431343c2fe9d71c4b52ca5589e9a38807effa626b069e9"
+      },
+      "retained": {
+        "bytes": 321,
+        "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/shared-host-pair-export-v228-v1/prefix-projection-ar4-shared-host-default-gpu-v228-v1/before-2/stdout",
+        "sha256": "fb1d52be68ef1ca207431343c2fe9d71c4b52ca5589e9a38807effa626b069e9"
+      }
+    },
+    "capture/default/complete.json": {
+      "original": {
+        "bytes": 1162862,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-shared-host-default-gpu-v228-v1/complete.json",
+        "sha256": "da039b8dfeea0e11e66440c2c628db1d92da507ec901ef791b46ea6f5ab55bf5"
+      },
+      "published": {
+        "bytes": 1162862,
+        "path": "/home/harsh/ferric-p227-integration/qualification/projection-ar4-shared-host-pair-v1/capture/default/complete.json",
+        "sha256": "da039b8dfeea0e11e66440c2c628db1d92da507ec901ef791b46ea6f5ab55bf5"
+      },
+      "retained": {
+        "bytes": 1162862,
+        "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/shared-host-pair-export-v228-v1/prefix-projection-ar4-shared-host-default-gpu-v228-v1/complete.json",
+        "sha256": "da039b8dfeea0e11e66440c2c628db1d92da507ec901ef791b46ea6f5ab55bf5"
+      }
+    },
+    "capture/default/host-observation.json": {
+      "original": {
+        "bytes": 15967,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-shared-host-default-gpu-v228-v1/host-observation.json",
+        "sha256": "cade22318e6de361a197294af9335d1043a34a57684b74d62b15501568b8f10a"
+      },
+      "published": {
+        "bytes": 15967,
+        "path": "/home/harsh/ferric-p227-integration/qualification/projection-ar4-shared-host-pair-v1/capture/default/host-observation.json",
+        "sha256": "cade22318e6de361a197294af9335d1043a34a57684b74d62b15501568b8f10a"
+      },
+      "retained": {
+        "bytes": 15967,
+        "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/shared-host-pair-export-v228-v1/prefix-projection-ar4-shared-host-default-gpu-v228-v1/host-observation.json",
+        "sha256": "cade22318e6de361a197294af9335d1043a34a57684b74d62b15501568b8f10a"
+      }
+    },
+    "capture/default/native-projection-host-observation.json": {
+      "original": {
+        "bytes": 33599,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-shared-host-default-gpu-v228-v1/native-projection-host-observation.json",
+        "sha256": "fdab559734df9df21db09e4cf90bf26ab8e7705db6b15bc708e9abf371bd3a16"
+      },
+      "published": {
+        "bytes": 33599,
+        "path": "/home/harsh/ferric-p227-integration/qualification/projection-ar4-shared-host-pair-v1/capture/default/native-projection-host-observation.json",
+        "sha256": "fdab559734df9df21db09e4cf90bf26ab8e7705db6b15bc708e9abf371bd3a16"
+      },
+      "retained": {
+        "bytes": 33599,
+        "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/shared-host-pair-export-v228-v1/prefix-projection-ar4-shared-host-default-gpu-v228-v1/native-projection-host-observation.json",
+        "sha256": "fdab559734df9df21db09e4cf90bf26ab8e7705db6b15bc708e9abf371bd3a16"
+      }
+    },
+    "capture/default/native/complete.json": {
+      "original": {
+        "bytes": 40144,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-shared-host-default-gpu-v228-v1/native/complete.json",
+        "sha256": "753346c5bf7568ee5f741e8d2387b22194d25f5ae6322d94857863481f4e8363"
+      },
+      "published": {
+        "bytes": 40144,
+        "path": "/home/harsh/ferric-p227-integration/qualification/projection-ar4-shared-host-pair-v1/capture/default/native/complete.json",
+        "sha256": "753346c5bf7568ee5f741e8d2387b22194d25f5ae6322d94857863481f4e8363"
+      },
+      "retained": {
+        "bytes": 40144,
+        "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/shared-host-pair-export-v228-v1/prefix-projection-ar4-shared-host-default-gpu-v228-v1/native/complete.json",
+        "sha256": "753346c5bf7568ee5f741e8d2387b22194d25f5ae6322d94857863481f4e8363"
+      }
+    },
+    "capture/default/native/request-0.json": {
+      "original": {
+        "bytes": 1854,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-shared-host-default-gpu-v228-v1/native/request-0.json",
+        "sha256": "bf90ef1e4ac2874091871f48ac67bd1f5e234a89e571859d4f9a8e9d939f79a0"
+      },
+      "published": {
+        "bytes": 1854,
+        "path": "/home/harsh/ferric-p227-integration/qualification/projection-ar4-shared-host-pair-v1/capture/default/native/request-0.json",
+        "sha256": "bf90ef1e4ac2874091871f48ac67bd1f5e234a89e571859d4f9a8e9d939f79a0"
+      },
+      "retained": {
+        "bytes": 1854,
+        "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/shared-host-pair-export-v228-v1/prefix-projection-ar4-shared-host-default-gpu-v228-v1/native/request-0.json",
+        "sha256": "bf90ef1e4ac2874091871f48ac67bd1f5e234a89e571859d4f9a8e9d939f79a0"
+      }
+    },
+    "capture/default/native/request-1.json": {
+      "original": {
+        "bytes": 2389,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-shared-host-default-gpu-v228-v1/native/request-1.json",
+        "sha256": "b605224e3f4f5e3e81005bccb1ded9179ecf04c568cb65fcec94a3327c4f9208"
+      },
+      "published": {
+        "bytes": 2389,
+        "path": "/home/harsh/ferric-p227-integration/qualification/projection-ar4-shared-host-pair-v1/capture/default/native/request-1.json",
+        "sha256": "b605224e3f4f5e3e81005bccb1ded9179ecf04c568cb65fcec94a3327c4f9208"
+      },
+      "retained": {
+        "bytes": 2389,
+        "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/shared-host-pair-export-v228-v1/prefix-projection-ar4-shared-host-default-gpu-v228-v1/native/request-1.json",
+        "sha256": "b605224e3f4f5e3e81005bccb1ded9179ecf04c568cb65fcec94a3327c4f9208"
+      }
+    },
+    "capture/default/native/request-2.json": {
+      "original": {
+        "bytes": 2393,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-shared-host-default-gpu-v228-v1/native/request-2.json",
+        "sha256": "a18c69070d7241dbcef025b169462f18b848ba2ca2177d39a76ba5b150e1a981"
+      },
+      "published": {
+        "bytes": 2393,
+        "path": "/home/harsh/ferric-p227-integration/qualification/projection-ar4-shared-host-pair-v1/capture/default/native/request-2.json",
+        "sha256": "a18c69070d7241dbcef025b169462f18b848ba2ca2177d39a76ba5b150e1a981"
+      },
+      "retained": {
+        "bytes": 2393,
+        "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/shared-host-pair-export-v228-v1/prefix-projection-ar4-shared-host-default-gpu-v228-v1/native/request-2.json",
+        "sha256": "a18c69070d7241dbcef025b169462f18b848ba2ca2177d39a76ba5b150e1a981"
+      }
+    },
+    "capture/default/native/request-3.json": {
+      "original": {
+        "bytes": 2394,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-shared-host-default-gpu-v228-v1/native/request-3.json",
+        "sha256": "06eab32ee5e69c2a26a4988ad30d0cc37c058aa3761f7f2381e15a355752c11b"
+      },
+      "published": {
+        "bytes": 2394,
+        "path": "/home/harsh/ferric-p227-integration/qualification/projection-ar4-shared-host-pair-v1/capture/default/native/request-3.json",
+        "sha256": "06eab32ee5e69c2a26a4988ad30d0cc37c058aa3761f7f2381e15a355752c11b"
+      },
+      "retained": {
+        "bytes": 2394,
+        "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/shared-host-pair-export-v228-v1/prefix-projection-ar4-shared-host-default-gpu-v228-v1/native/request-3.json",
+        "sha256": "06eab32ee5e69c2a26a4988ad30d0cc37c058aa3761f7f2381e15a355752c11b"
+      }
+    },
+    "capture/default/observation.json": {
+      "original": {
+        "bytes": 5634,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-shared-host-default-gpu-v228-v1/observation.json",
+        "sha256": "a7926a1dff7d83ce499a68b7eed31b6273da3b40506786984d1102cfee3a491c"
+      },
+      "published": {
+        "bytes": 5634,
+        "path": "/home/harsh/ferric-p227-integration/qualification/projection-ar4-shared-host-pair-v1/capture/default/observation.json",
+        "sha256": "a7926a1dff7d83ce499a68b7eed31b6273da3b40506786984d1102cfee3a491c"
+      },
+      "retained": {
+        "bytes": 5634,
+        "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/shared-host-pair-export-v228-v1/prefix-projection-ar4-shared-host-default-gpu-v228-v1/observation.json",
+        "sha256": "a7926a1dff7d83ce499a68b7eed31b6273da3b40506786984d1102cfee3a491c"
+      }
+    },
+    "capture/default/parent/command.json": {
+      "original": {
+        "bytes": 1045,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-shared-host-default-gpu-v228-v1/parent/command.json",
+        "sha256": "ee45b361383ef8dff4bd6bd1b87ee5057f9390bb14245ad0daada075dff80c19"
+      },
+      "published": {
+        "bytes": 1045,
+        "path": "/home/harsh/ferric-p227-integration/qualification/projection-ar4-shared-host-pair-v1/capture/default/parent/command.json",
+        "sha256": "ee45b361383ef8dff4bd6bd1b87ee5057f9390bb14245ad0daada075dff80c19"
+      },
+      "retained": {
+        "bytes": 1045,
+        "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/shared-host-pair-export-v228-v1/prefix-projection-ar4-shared-host-default-gpu-v228-v1/parent/command.json",
+        "sha256": "ee45b361383ef8dff4bd6bd1b87ee5057f9390bb14245ad0daada075dff80c19"
+      }
+    },
+    "capture/default/parent/result.json": {
+      "original": {
+        "bytes": 1930,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-shared-host-default-gpu-v228-v1/parent/result.json",
+        "sha256": "28b274f88d1691f2eb93e271aade26ca3d7284a7f23b7013c9ceade744b24ab2"
+      },
+      "published": {
+        "bytes": 1930,
+        "path": "/home/harsh/ferric-p227-integration/qualification/projection-ar4-shared-host-pair-v1/capture/default/parent/result.json",
+        "sha256": "28b274f88d1691f2eb93e271aade26ca3d7284a7f23b7013c9ceade744b24ab2"
+      },
+      "retained": {
+        "bytes": 1930,
+        "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/shared-host-pair-export-v228-v1/prefix-projection-ar4-shared-host-default-gpu-v228-v1/parent/result.json",
+        "sha256": "28b274f88d1691f2eb93e271aade26ca3d7284a7f23b7013c9ceade744b24ab2"
+      }
+    },
+    "capture/default/parent/started.json": {
+      "original": {
+        "bytes": 282,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-shared-host-default-gpu-v228-v1/parent/started.json",
+        "sha256": "cd3f5ca049b36457630d2d9859c7876e9fcd7adf3c3e5889d99e7380fb8ff2db"
+      },
+      "published": {
+        "bytes": 282,
+        "path": "/home/harsh/ferric-p227-integration/qualification/projection-ar4-shared-host-pair-v1/capture/default/parent/started.json",
+        "sha256": "cd3f5ca049b36457630d2d9859c7876e9fcd7adf3c3e5889d99e7380fb8ff2db"
+      },
+      "retained": {
+        "bytes": 282,
+        "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/shared-host-pair-export-v228-v1/prefix-projection-ar4-shared-host-default-gpu-v228-v1/parent/started.json",
+        "sha256": "cd3f5ca049b36457630d2d9859c7876e9fcd7adf3c3e5889d99e7380fb8ff2db"
+      }
+    },
+    "capture/default/parent/stderr": {
+      "original": {
+        "bytes": 395,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-shared-host-default-gpu-v228-v1/parent/stderr",
+        "sha256": "b9cd08122e268944671dcb455b9e2863af89ebc20daec32b1af63d54d582593c"
+      },
+      "published": {
+        "bytes": 395,
+        "path": "/home/harsh/ferric-p227-integration/qualification/projection-ar4-shared-host-pair-v1/capture/default/parent/stderr",
+        "sha256": "b9cd08122e268944671dcb455b9e2863af89ebc20daec32b1af63d54d582593c"
+      },
+      "retained": {
+        "bytes": 395,
+        "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/shared-host-pair-export-v228-v1/prefix-projection-ar4-shared-host-default-gpu-v228-v1/parent/stderr",
+        "sha256": "b9cd08122e268944671dcb455b9e2863af89ebc20daec32b1af63d54d582593c"
+      }
+    },
+    "capture/default/parent/stdout": {
+      "original": {
+        "bytes": 41209,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-shared-host-default-gpu-v228-v1/parent/stdout",
+        "sha256": "8ef974be280dd4ca38cef6a3edeefb86e1304ca96fc807316036dd6d0e5a7fa1"
+      },
+      "published": {
+        "bytes": 41209,
+        "path": "/home/harsh/ferric-p227-integration/qualification/projection-ar4-shared-host-pair-v1/capture/default/parent/stdout",
+        "sha256": "8ef974be280dd4ca38cef6a3edeefb86e1304ca96fc807316036dd6d0e5a7fa1"
+      },
+      "retained": {
+        "bytes": 41209,
+        "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/shared-host-pair-export-v228-v1/prefix-projection-ar4-shared-host-default-gpu-v228-v1/parent/stdout",
+        "sha256": "8ef974be280dd4ca38cef6a3edeefb86e1304ca96fc807316036dd6d0e5a7fa1"
+      }
+    },
+    "capture/shared/after-0-topology.json": {
+      "original": {
+        "bytes": 4180,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-shared-host-shared-gpu-v228-v1/after-0-topology.json",
+        "sha256": "751fac5734e1f4677bf0224138ff76f76f571862f2cc7aa55b98b751bce4355c"
+      },
+      "published": {
+        "bytes": 4180,
+        "path": "/home/harsh/ferric-p227-integration/qualification/projection-ar4-shared-host-pair-v1/capture/shared/after-0-topology.json",
+        "sha256": "751fac5734e1f4677bf0224138ff76f76f571862f2cc7aa55b98b751bce4355c"
+      },
+      "retained": {
+        "bytes": 4180,
+        "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/shared-host-pair-export-v228-v1/prefix-projection-ar4-shared-host-shared-gpu-v228-v1/after-0-topology.json",
+        "sha256": "751fac5734e1f4677bf0224138ff76f76f571862f2cc7aa55b98b751bce4355c"
+      }
+    },
+    "capture/shared/after-0/command.json": {
+      "original": {
+        "bytes": 706,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-shared-host-shared-gpu-v228-v1/after-0/command.json",
+        "sha256": "6e438209610d352a6003f8cb6cf972a9851015711ab0b5ef1bfc58f80ed355d7"
+      },
+      "published": {
+        "bytes": 706,
+        "path": "/home/harsh/ferric-p227-integration/qualification/projection-ar4-shared-host-pair-v1/capture/shared/after-0/command.json",
+        "sha256": "6e438209610d352a6003f8cb6cf972a9851015711ab0b5ef1bfc58f80ed355d7"
+      },
+      "retained": {
+        "bytes": 706,
+        "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/shared-host-pair-export-v228-v1/prefix-projection-ar4-shared-host-shared-gpu-v228-v1/after-0/command.json",
+        "sha256": "6e438209610d352a6003f8cb6cf972a9851015711ab0b5ef1bfc58f80ed355d7"
+      }
+    },
+    "capture/shared/after-0/result.json": {
+      "original": {
+        "bytes": 1649,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-shared-host-shared-gpu-v228-v1/after-0/result.json",
+        "sha256": "78cc22c5cb095daeeecc3c5b52b0281e4e206a6e2c551ebb6d9a7a37808fb87b"
+      },
+      "published": {
+        "bytes": 1649,
+        "path": "/home/harsh/ferric-p227-integration/qualification/projection-ar4-shared-host-pair-v1/capture/shared/after-0/result.json",
+        "sha256": "78cc22c5cb095daeeecc3c5b52b0281e4e206a6e2c551ebb6d9a7a37808fb87b"
+      },
+      "retained": {
+        "bytes": 1649,
+        "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/shared-host-pair-export-v228-v1/prefix-projection-ar4-shared-host-shared-gpu-v228-v1/after-0/result.json",
+        "sha256": "78cc22c5cb095daeeecc3c5b52b0281e4e206a6e2c551ebb6d9a7a37808fb87b"
+      }
+    },
+    "capture/shared/after-0/started.json": {
+      "original": {
+        "bytes": 282,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-shared-host-shared-gpu-v228-v1/after-0/started.json",
+        "sha256": "b977f8a58441753e00a6d8695936ec942b4b2ac0c4be56d8cff7df0b7e7f94fa"
+      },
+      "published": {
+        "bytes": 282,
+        "path": "/home/harsh/ferric-p227-integration/qualification/projection-ar4-shared-host-pair-v1/capture/shared/after-0/started.json",
+        "sha256": "b977f8a58441753e00a6d8695936ec942b4b2ac0c4be56d8cff7df0b7e7f94fa"
+      },
+      "retained": {
+        "bytes": 282,
+        "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/shared-host-pair-export-v228-v1/prefix-projection-ar4-shared-host-shared-gpu-v228-v1/after-0/started.json",
+        "sha256": "b977f8a58441753e00a6d8695936ec942b4b2ac0c4be56d8cff7df0b7e7f94fa"
+      }
+    },
+    "capture/shared/after-0/stderr": {
+      "original": {
+        "bytes": 0,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-shared-host-shared-gpu-v228-v1/after-0/stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "published": {
+        "bytes": 0,
+        "path": "/home/harsh/ferric-p227-integration/qualification/projection-ar4-shared-host-pair-v1/capture/shared/after-0/stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "retained": {
+        "bytes": 0,
+        "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/shared-host-pair-export-v228-v1/prefix-projection-ar4-shared-host-shared-gpu-v228-v1/after-0/stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    "capture/shared/after-0/stdout": {
+      "original": {
+        "bytes": 321,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-shared-host-shared-gpu-v228-v1/after-0/stdout",
+        "sha256": "fb1d52be68ef1ca207431343c2fe9d71c4b52ca5589e9a38807effa626b069e9"
+      },
+      "published": {
+        "bytes": 321,
+        "path": "/home/harsh/ferric-p227-integration/qualification/projection-ar4-shared-host-pair-v1/capture/shared/after-0/stdout",
+        "sha256": "fb1d52be68ef1ca207431343c2fe9d71c4b52ca5589e9a38807effa626b069e9"
+      },
+      "retained": {
+        "bytes": 321,
+        "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/shared-host-pair-export-v228-v1/prefix-projection-ar4-shared-host-shared-gpu-v228-v1/after-0/stdout",
+        "sha256": "fb1d52be68ef1ca207431343c2fe9d71c4b52ca5589e9a38807effa626b069e9"
+      }
+    },
+    "capture/shared/after-1-topology.json": {
+      "original": {
+        "bytes": 4180,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-shared-host-shared-gpu-v228-v1/after-1-topology.json",
+        "sha256": "f0c2ebf4839d60195dc3b60901f0ab11741764cec3588a2998a9062cd090e88a"
+      },
+      "published": {
+        "bytes": 4180,
+        "path": "/home/harsh/ferric-p227-integration/qualification/projection-ar4-shared-host-pair-v1/capture/shared/after-1-topology.json",
+        "sha256": "f0c2ebf4839d60195dc3b60901f0ab11741764cec3588a2998a9062cd090e88a"
+      },
+      "retained": {
+        "bytes": 4180,
+        "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/shared-host-pair-export-v228-v1/prefix-projection-ar4-shared-host-shared-gpu-v228-v1/after-1-topology.json",
+        "sha256": "f0c2ebf4839d60195dc3b60901f0ab11741764cec3588a2998a9062cd090e88a"
+      }
+    },
+    "capture/shared/after-1/command.json": {
+      "original": {
+        "bytes": 706,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-shared-host-shared-gpu-v228-v1/after-1/command.json",
+        "sha256": "6e438209610d352a6003f8cb6cf972a9851015711ab0b5ef1bfc58f80ed355d7"
+      },
+      "published": {
+        "bytes": 706,
+        "path": "/home/harsh/ferric-p227-integration/qualification/projection-ar4-shared-host-pair-v1/capture/shared/after-1/command.json",
+        "sha256": "6e438209610d352a6003f8cb6cf972a9851015711ab0b5ef1bfc58f80ed355d7"
+      },
+      "retained": {
+        "bytes": 706,
+        "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/shared-host-pair-export-v228-v1/prefix-projection-ar4-shared-host-shared-gpu-v228-v1/after-1/command.json",
+        "sha256": "6e438209610d352a6003f8cb6cf972a9851015711ab0b5ef1bfc58f80ed355d7"
+      }
+    },
+    "capture/shared/after-1/result.json": {
+      "original": {
+        "bytes": 1649,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-shared-host-shared-gpu-v228-v1/after-1/result.json",
+        "sha256": "a2509dfe3e847ecd7765e5d9774c088a7436c6a2d1b4039b667999089aac0971"
+      },
+      "published": {
+        "bytes": 1649,
+        "path": "/home/harsh/ferric-p227-integration/qualification/projection-ar4-shared-host-pair-v1/capture/shared/after-1/result.json",
+        "sha256": "a2509dfe3e847ecd7765e5d9774c088a7436c6a2d1b4039b667999089aac0971"
+      },
+      "retained": {
+        "bytes": 1649,
+        "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/shared-host-pair-export-v228-v1/prefix-projection-ar4-shared-host-shared-gpu-v228-v1/after-1/result.json",
+        "sha256": "a2509dfe3e847ecd7765e5d9774c088a7436c6a2d1b4039b667999089aac0971"
+      }
+    },
+    "capture/shared/after-1/started.json": {
+      "original": {
+        "bytes": 282,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-shared-host-shared-gpu-v228-v1/after-1/started.json",
+        "sha256": "a278dce1c01b5c9513cc4c0f3516d60a9191f02b263fa8d12058b5db985dca77"
+      },
+      "published": {
+        "bytes": 282,
+        "path": "/home/harsh/ferric-p227-integration/qualification/projection-ar4-shared-host-pair-v1/capture/shared/after-1/started.json",
+        "sha256": "a278dce1c01b5c9513cc4c0f3516d60a9191f02b263fa8d12058b5db985dca77"
+      },
+      "retained": {
+        "bytes": 282,
+        "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/shared-host-pair-export-v228-v1/prefix-projection-ar4-shared-host-shared-gpu-v228-v1/after-1/started.json",
+        "sha256": "a278dce1c01b5c9513cc4c0f3516d60a9191f02b263fa8d12058b5db985dca77"
+      }
+    },
+    "capture/shared/after-1/stderr": {
+      "original": {
+        "bytes": 0,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-shared-host-shared-gpu-v228-v1/after-1/stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "published": {
+        "bytes": 0,
+        "path": "/home/harsh/ferric-p227-integration/qualification/projection-ar4-shared-host-pair-v1/capture/shared/after-1/stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "retained": {
+        "bytes": 0,
+        "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/shared-host-pair-export-v228-v1/prefix-projection-ar4-shared-host-shared-gpu-v228-v1/after-1/stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    "capture/shared/after-1/stdout": {
+      "original": {
+        "bytes": 321,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-shared-host-shared-gpu-v228-v1/after-1/stdout",
+        "sha256": "fb1d52be68ef1ca207431343c2fe9d71c4b52ca5589e9a38807effa626b069e9"
+      },
+      "published": {
+        "bytes": 321,
+        "path": "/home/harsh/ferric-p227-integration/qualification/projection-ar4-shared-host-pair-v1/capture/shared/after-1/stdout",
+        "sha256": "fb1d52be68ef1ca207431343c2fe9d71c4b52ca5589e9a38807effa626b069e9"
+      },
+      "retained": {
+        "bytes": 321,
+        "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/shared-host-pair-export-v228-v1/prefix-projection-ar4-shared-host-shared-gpu-v228-v1/after-1/stdout",
+        "sha256": "fb1d52be68ef1ca207431343c2fe9d71c4b52ca5589e9a38807effa626b069e9"
+      }
+    },
+    "capture/shared/after-2-topology.json": {
+      "original": {
+        "bytes": 4178,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-shared-host-shared-gpu-v228-v1/after-2-topology.json",
+        "sha256": "5c63d44f71b5ecfc1ac714e31894c91f93e3a940e13f9868173295748341b6fa"
+      },
+      "published": {
+        "bytes": 4178,
+        "path": "/home/harsh/ferric-p227-integration/qualification/projection-ar4-shared-host-pair-v1/capture/shared/after-2-topology.json",
+        "sha256": "5c63d44f71b5ecfc1ac714e31894c91f93e3a940e13f9868173295748341b6fa"
+      },
+      "retained": {
+        "bytes": 4178,
+        "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/shared-host-pair-export-v228-v1/prefix-projection-ar4-shared-host-shared-gpu-v228-v1/after-2-topology.json",
+        "sha256": "5c63d44f71b5ecfc1ac714e31894c91f93e3a940e13f9868173295748341b6fa"
+      }
+    },
+    "capture/shared/after-2/command.json": {
+      "original": {
+        "bytes": 706,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-shared-host-shared-gpu-v228-v1/after-2/command.json",
+        "sha256": "6e438209610d352a6003f8cb6cf972a9851015711ab0b5ef1bfc58f80ed355d7"
+      },
+      "published": {
+        "bytes": 706,
+        "path": "/home/harsh/ferric-p227-integration/qualification/projection-ar4-shared-host-pair-v1/capture/shared/after-2/command.json",
+        "sha256": "6e438209610d352a6003f8cb6cf972a9851015711ab0b5ef1bfc58f80ed355d7"
+      },
+      "retained": {
+        "bytes": 706,
+        "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/shared-host-pair-export-v228-v1/prefix-projection-ar4-shared-host-shared-gpu-v228-v1/after-2/command.json",
+        "sha256": "6e438209610d352a6003f8cb6cf972a9851015711ab0b5ef1bfc58f80ed355d7"
+      }
+    },
+    "capture/shared/after-2/result.json": {
+      "original": {
+        "bytes": 1648,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-shared-host-shared-gpu-v228-v1/after-2/result.json",
+        "sha256": "4a96850bde1fa6a907c717f9df05e877dbe88ede23d31a6a9320b09df648174e"
+      },
+      "published": {
+        "bytes": 1648,
+        "path": "/home/harsh/ferric-p227-integration/qualification/projection-ar4-shared-host-pair-v1/capture/shared/after-2/result.json",
+        "sha256": "4a96850bde1fa6a907c717f9df05e877dbe88ede23d31a6a9320b09df648174e"
+      },
+      "retained": {
+        "bytes": 1648,
+        "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/shared-host-pair-export-v228-v1/prefix-projection-ar4-shared-host-shared-gpu-v228-v1/after-2/result.json",
+        "sha256": "4a96850bde1fa6a907c717f9df05e877dbe88ede23d31a6a9320b09df648174e"
+      }
+    },
+    "capture/shared/after-2/started.json": {
+      "original": {
+        "bytes": 282,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-shared-host-shared-gpu-v228-v1/after-2/started.json",
+        "sha256": "b609d98595f63e483b5e9ec6f0e73165ee12475b4553eec000c89062f63829ec"
+      },
+      "published": {
+        "bytes": 282,
+        "path": "/home/harsh/ferric-p227-integration/qualification/projection-ar4-shared-host-pair-v1/capture/shared/after-2/started.json",
+        "sha256": "b609d98595f63e483b5e9ec6f0e73165ee12475b4553eec000c89062f63829ec"
+      },
+      "retained": {
+        "bytes": 282,
+        "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/shared-host-pair-export-v228-v1/prefix-projection-ar4-shared-host-shared-gpu-v228-v1/after-2/started.json",
+        "sha256": "b609d98595f63e483b5e9ec6f0e73165ee12475b4553eec000c89062f63829ec"
+      }
+    },
+    "capture/shared/after-2/stderr": {
+      "original": {
+        "bytes": 0,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-shared-host-shared-gpu-v228-v1/after-2/stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "published": {
+        "bytes": 0,
+        "path": "/home/harsh/ferric-p227-integration/qualification/projection-ar4-shared-host-pair-v1/capture/shared/after-2/stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "retained": {
+        "bytes": 0,
+        "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/shared-host-pair-export-v228-v1/prefix-projection-ar4-shared-host-shared-gpu-v228-v1/after-2/stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    "capture/shared/after-2/stdout": {
+      "original": {
+        "bytes": 321,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-shared-host-shared-gpu-v228-v1/after-2/stdout",
+        "sha256": "fb1d52be68ef1ca207431343c2fe9d71c4b52ca5589e9a38807effa626b069e9"
+      },
+      "published": {
+        "bytes": 321,
+        "path": "/home/harsh/ferric-p227-integration/qualification/projection-ar4-shared-host-pair-v1/capture/shared/after-2/stdout",
+        "sha256": "fb1d52be68ef1ca207431343c2fe9d71c4b52ca5589e9a38807effa626b069e9"
+      },
+      "retained": {
+        "bytes": 321,
+        "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/shared-host-pair-export-v228-v1/prefix-projection-ar4-shared-host-shared-gpu-v228-v1/after-2/stdout",
+        "sha256": "fb1d52be68ef1ca207431343c2fe9d71c4b52ca5589e9a38807effa626b069e9"
+      }
+    },
+    "capture/shared/before-0-topology.json": {
+      "original": {
+        "bytes": 4179,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-shared-host-shared-gpu-v228-v1/before-0-topology.json",
+        "sha256": "73480b7981ca3ce5c37f493e5ed661c0fd6bfbbb07fe98dba55ade965fa024d8"
+      },
+      "published": {
+        "bytes": 4179,
+        "path": "/home/harsh/ferric-p227-integration/qualification/projection-ar4-shared-host-pair-v1/capture/shared/before-0-topology.json",
+        "sha256": "73480b7981ca3ce5c37f493e5ed661c0fd6bfbbb07fe98dba55ade965fa024d8"
+      },
+      "retained": {
+        "bytes": 4179,
+        "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/shared-host-pair-export-v228-v1/prefix-projection-ar4-shared-host-shared-gpu-v228-v1/before-0-topology.json",
+        "sha256": "73480b7981ca3ce5c37f493e5ed661c0fd6bfbbb07fe98dba55ade965fa024d8"
+      }
+    },
+    "capture/shared/before-0/command.json": {
+      "original": {
+        "bytes": 706,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-shared-host-shared-gpu-v228-v1/before-0/command.json",
+        "sha256": "6e438209610d352a6003f8cb6cf972a9851015711ab0b5ef1bfc58f80ed355d7"
+      },
+      "published": {
+        "bytes": 706,
+        "path": "/home/harsh/ferric-p227-integration/qualification/projection-ar4-shared-host-pair-v1/capture/shared/before-0/command.json",
+        "sha256": "6e438209610d352a6003f8cb6cf972a9851015711ab0b5ef1bfc58f80ed355d7"
+      },
+      "retained": {
+        "bytes": 706,
+        "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/shared-host-pair-export-v228-v1/prefix-projection-ar4-shared-host-shared-gpu-v228-v1/before-0/command.json",
+        "sha256": "6e438209610d352a6003f8cb6cf972a9851015711ab0b5ef1bfc58f80ed355d7"
+      }
+    },
+    "capture/shared/before-0/result.json": {
+      "original": {
+        "bytes": 1653,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-shared-host-shared-gpu-v228-v1/before-0/result.json",
+        "sha256": "eec1fe7486e295d0559b0173e12e49b56285962a78fe1fb2d89da9f223815460"
+      },
+      "published": {
+        "bytes": 1653,
+        "path": "/home/harsh/ferric-p227-integration/qualification/projection-ar4-shared-host-pair-v1/capture/shared/before-0/result.json",
+        "sha256": "eec1fe7486e295d0559b0173e12e49b56285962a78fe1fb2d89da9f223815460"
+      },
+      "retained": {
+        "bytes": 1653,
+        "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/shared-host-pair-export-v228-v1/prefix-projection-ar4-shared-host-shared-gpu-v228-v1/before-0/result.json",
+        "sha256": "eec1fe7486e295d0559b0173e12e49b56285962a78fe1fb2d89da9f223815460"
+      }
+    },
+    "capture/shared/before-0/started.json": {
+      "original": {
+        "bytes": 282,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-shared-host-shared-gpu-v228-v1/before-0/started.json",
+        "sha256": "909c323d3875a0f7103ab15086f3aa0c9837a0e768982d95ff89534f178f8797"
+      },
+      "published": {
+        "bytes": 282,
+        "path": "/home/harsh/ferric-p227-integration/qualification/projection-ar4-shared-host-pair-v1/capture/shared/before-0/started.json",
+        "sha256": "909c323d3875a0f7103ab15086f3aa0c9837a0e768982d95ff89534f178f8797"
+      },
+      "retained": {
+        "bytes": 282,
+        "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/shared-host-pair-export-v228-v1/prefix-projection-ar4-shared-host-shared-gpu-v228-v1/before-0/started.json",
+        "sha256": "909c323d3875a0f7103ab15086f3aa0c9837a0e768982d95ff89534f178f8797"
+      }
+    },
+    "capture/shared/before-0/stderr": {
+      "original": {
+        "bytes": 0,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-shared-host-shared-gpu-v228-v1/before-0/stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "published": {
+        "bytes": 0,
+        "path": "/home/harsh/ferric-p227-integration/qualification/projection-ar4-shared-host-pair-v1/capture/shared/before-0/stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "retained": {
+        "bytes": 0,
+        "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/shared-host-pair-export-v228-v1/prefix-projection-ar4-shared-host-shared-gpu-v228-v1/before-0/stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    "capture/shared/before-0/stdout": {
+      "original": {
+        "bytes": 321,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-shared-host-shared-gpu-v228-v1/before-0/stdout",
+        "sha256": "fb1d52be68ef1ca207431343c2fe9d71c4b52ca5589e9a38807effa626b069e9"
+      },
+      "published": {
+        "bytes": 321,
+        "path": "/home/harsh/ferric-p227-integration/qualification/projection-ar4-shared-host-pair-v1/capture/shared/before-0/stdout",
+        "sha256": "fb1d52be68ef1ca207431343c2fe9d71c4b52ca5589e9a38807effa626b069e9"
+      },
+      "retained": {
+        "bytes": 321,
+        "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/shared-host-pair-export-v228-v1/prefix-projection-ar4-shared-host-shared-gpu-v228-v1/before-0/stdout",
+        "sha256": "fb1d52be68ef1ca207431343c2fe9d71c4b52ca5589e9a38807effa626b069e9"
+      }
+    },
+    "capture/shared/before-1-topology.json": {
+      "original": {
+        "bytes": 4180,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-shared-host-shared-gpu-v228-v1/before-1-topology.json",
+        "sha256": "fa9464351b9d12338d5ec874a286707a596c5fbdb37e3d50e88f80b16d632029"
+      },
+      "published": {
+        "bytes": 4180,
+        "path": "/home/harsh/ferric-p227-integration/qualification/projection-ar4-shared-host-pair-v1/capture/shared/before-1-topology.json",
+        "sha256": "fa9464351b9d12338d5ec874a286707a596c5fbdb37e3d50e88f80b16d632029"
+      },
+      "retained": {
+        "bytes": 4180,
+        "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/shared-host-pair-export-v228-v1/prefix-projection-ar4-shared-host-shared-gpu-v228-v1/before-1-topology.json",
+        "sha256": "fa9464351b9d12338d5ec874a286707a596c5fbdb37e3d50e88f80b16d632029"
+      }
+    },
+    "capture/shared/before-1/command.json": {
+      "original": {
+        "bytes": 706,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-shared-host-shared-gpu-v228-v1/before-1/command.json",
+        "sha256": "6e438209610d352a6003f8cb6cf972a9851015711ab0b5ef1bfc58f80ed355d7"
+      },
+      "published": {
+        "bytes": 706,
+        "path": "/home/harsh/ferric-p227-integration/qualification/projection-ar4-shared-host-pair-v1/capture/shared/before-1/command.json",
+        "sha256": "6e438209610d352a6003f8cb6cf972a9851015711ab0b5ef1bfc58f80ed355d7"
+      },
+      "retained": {
+        "bytes": 706,
+        "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/shared-host-pair-export-v228-v1/prefix-projection-ar4-shared-host-shared-gpu-v228-v1/before-1/command.json",
+        "sha256": "6e438209610d352a6003f8cb6cf972a9851015711ab0b5ef1bfc58f80ed355d7"
+      }
+    },
+    "capture/shared/before-1/result.json": {
+      "original": {
+        "bytes": 1653,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-shared-host-shared-gpu-v228-v1/before-1/result.json",
+        "sha256": "d7d53fac77d87a51f9365c96a3258b0c60165ab1c8ad5f3e1ad6f0039d732356"
+      },
+      "published": {
+        "bytes": 1653,
+        "path": "/home/harsh/ferric-p227-integration/qualification/projection-ar4-shared-host-pair-v1/capture/shared/before-1/result.json",
+        "sha256": "d7d53fac77d87a51f9365c96a3258b0c60165ab1c8ad5f3e1ad6f0039d732356"
+      },
+      "retained": {
+        "bytes": 1653,
+        "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/shared-host-pair-export-v228-v1/prefix-projection-ar4-shared-host-shared-gpu-v228-v1/before-1/result.json",
+        "sha256": "d7d53fac77d87a51f9365c96a3258b0c60165ab1c8ad5f3e1ad6f0039d732356"
+      }
+    },
+    "capture/shared/before-1/started.json": {
+      "original": {
+        "bytes": 282,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-shared-host-shared-gpu-v228-v1/before-1/started.json",
+        "sha256": "24be620b9d5d3b0fd9dd4fc1bc812e7fa2deaa6b4fb5d80cbc776bcdd63adf6f"
+      },
+      "published": {
+        "bytes": 282,
+        "path": "/home/harsh/ferric-p227-integration/qualification/projection-ar4-shared-host-pair-v1/capture/shared/before-1/started.json",
+        "sha256": "24be620b9d5d3b0fd9dd4fc1bc812e7fa2deaa6b4fb5d80cbc776bcdd63adf6f"
+      },
+      "retained": {
+        "bytes": 282,
+        "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/shared-host-pair-export-v228-v1/prefix-projection-ar4-shared-host-shared-gpu-v228-v1/before-1/started.json",
+        "sha256": "24be620b9d5d3b0fd9dd4fc1bc812e7fa2deaa6b4fb5d80cbc776bcdd63adf6f"
+      }
+    },
+    "capture/shared/before-1/stderr": {
+      "original": {
+        "bytes": 0,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-shared-host-shared-gpu-v228-v1/before-1/stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "published": {
+        "bytes": 0,
+        "path": "/home/harsh/ferric-p227-integration/qualification/projection-ar4-shared-host-pair-v1/capture/shared/before-1/stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "retained": {
+        "bytes": 0,
+        "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/shared-host-pair-export-v228-v1/prefix-projection-ar4-shared-host-shared-gpu-v228-v1/before-1/stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    "capture/shared/before-1/stdout": {
+      "original": {
+        "bytes": 321,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-shared-host-shared-gpu-v228-v1/before-1/stdout",
+        "sha256": "fb1d52be68ef1ca207431343c2fe9d71c4b52ca5589e9a38807effa626b069e9"
+      },
+      "published": {
+        "bytes": 321,
+        "path": "/home/harsh/ferric-p227-integration/qualification/projection-ar4-shared-host-pair-v1/capture/shared/before-1/stdout",
+        "sha256": "fb1d52be68ef1ca207431343c2fe9d71c4b52ca5589e9a38807effa626b069e9"
+      },
+      "retained": {
+        "bytes": 321,
+        "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/shared-host-pair-export-v228-v1/prefix-projection-ar4-shared-host-shared-gpu-v228-v1/before-1/stdout",
+        "sha256": "fb1d52be68ef1ca207431343c2fe9d71c4b52ca5589e9a38807effa626b069e9"
+      }
+    },
+    "capture/shared/before-2-topology.json": {
+      "original": {
+        "bytes": 4180,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-shared-host-shared-gpu-v228-v1/before-2-topology.json",
+        "sha256": "58afc784189d4fa7caf8369d512877814ffaded876644a8acea97b3b9f21ba42"
+      },
+      "published": {
+        "bytes": 4180,
+        "path": "/home/harsh/ferric-p227-integration/qualification/projection-ar4-shared-host-pair-v1/capture/shared/before-2-topology.json",
+        "sha256": "58afc784189d4fa7caf8369d512877814ffaded876644a8acea97b3b9f21ba42"
+      },
+      "retained": {
+        "bytes": 4180,
+        "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/shared-host-pair-export-v228-v1/prefix-projection-ar4-shared-host-shared-gpu-v228-v1/before-2-topology.json",
+        "sha256": "58afc784189d4fa7caf8369d512877814ffaded876644a8acea97b3b9f21ba42"
+      }
+    },
+    "capture/shared/before-2/command.json": {
+      "original": {
+        "bytes": 706,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-shared-host-shared-gpu-v228-v1/before-2/command.json",
+        "sha256": "6e438209610d352a6003f8cb6cf972a9851015711ab0b5ef1bfc58f80ed355d7"
+      },
+      "published": {
+        "bytes": 706,
+        "path": "/home/harsh/ferric-p227-integration/qualification/projection-ar4-shared-host-pair-v1/capture/shared/before-2/command.json",
+        "sha256": "6e438209610d352a6003f8cb6cf972a9851015711ab0b5ef1bfc58f80ed355d7"
+      },
+      "retained": {
+        "bytes": 706,
+        "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/shared-host-pair-export-v228-v1/prefix-projection-ar4-shared-host-shared-gpu-v228-v1/before-2/command.json",
+        "sha256": "6e438209610d352a6003f8cb6cf972a9851015711ab0b5ef1bfc58f80ed355d7"
+      }
+    },
+    "capture/shared/before-2/result.json": {
+      "original": {
+        "bytes": 1653,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-shared-host-shared-gpu-v228-v1/before-2/result.json",
+        "sha256": "7da9b5d4be1e46caeaea1931a447418a71337f678cac5a2c69896eb99d8c875b"
+      },
+      "published": {
+        "bytes": 1653,
+        "path": "/home/harsh/ferric-p227-integration/qualification/projection-ar4-shared-host-pair-v1/capture/shared/before-2/result.json",
+        "sha256": "7da9b5d4be1e46caeaea1931a447418a71337f678cac5a2c69896eb99d8c875b"
+      },
+      "retained": {
+        "bytes": 1653,
+        "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/shared-host-pair-export-v228-v1/prefix-projection-ar4-shared-host-shared-gpu-v228-v1/before-2/result.json",
+        "sha256": "7da9b5d4be1e46caeaea1931a447418a71337f678cac5a2c69896eb99d8c875b"
+      }
+    },
+    "capture/shared/before-2/started.json": {
+      "original": {
+        "bytes": 282,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-shared-host-shared-gpu-v228-v1/before-2/started.json",
+        "sha256": "5f484fde891ff0c5003ff2d9f2514a28a9ce8c1ce9e495cbccaed18db979815d"
+      },
+      "published": {
+        "bytes": 282,
+        "path": "/home/harsh/ferric-p227-integration/qualification/projection-ar4-shared-host-pair-v1/capture/shared/before-2/started.json",
+        "sha256": "5f484fde891ff0c5003ff2d9f2514a28a9ce8c1ce9e495cbccaed18db979815d"
+      },
+      "retained": {
+        "bytes": 282,
+        "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/shared-host-pair-export-v228-v1/prefix-projection-ar4-shared-host-shared-gpu-v228-v1/before-2/started.json",
+        "sha256": "5f484fde891ff0c5003ff2d9f2514a28a9ce8c1ce9e495cbccaed18db979815d"
+      }
+    },
+    "capture/shared/before-2/stderr": {
+      "original": {
+        "bytes": 0,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-shared-host-shared-gpu-v228-v1/before-2/stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "published": {
+        "bytes": 0,
+        "path": "/home/harsh/ferric-p227-integration/qualification/projection-ar4-shared-host-pair-v1/capture/shared/before-2/stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "retained": {
+        "bytes": 0,
+        "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/shared-host-pair-export-v228-v1/prefix-projection-ar4-shared-host-shared-gpu-v228-v1/before-2/stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    "capture/shared/before-2/stdout": {
+      "original": {
+        "bytes": 321,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-shared-host-shared-gpu-v228-v1/before-2/stdout",
+        "sha256": "fb1d52be68ef1ca207431343c2fe9d71c4b52ca5589e9a38807effa626b069e9"
+      },
+      "published": {
+        "bytes": 321,
+        "path": "/home/harsh/ferric-p227-integration/qualification/projection-ar4-shared-host-pair-v1/capture/shared/before-2/stdout",
+        "sha256": "fb1d52be68ef1ca207431343c2fe9d71c4b52ca5589e9a38807effa626b069e9"
+      },
+      "retained": {
+        "bytes": 321,
+        "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/shared-host-pair-export-v228-v1/prefix-projection-ar4-shared-host-shared-gpu-v228-v1/before-2/stdout",
+        "sha256": "fb1d52be68ef1ca207431343c2fe9d71c4b52ca5589e9a38807effa626b069e9"
+      }
+    },
+    "capture/shared/complete.json": {
+      "original": {
+        "bytes": 1162983,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-shared-host-shared-gpu-v228-v1/complete.json",
+        "sha256": "4163ba9800fe9176abfacf819d73f0b571b2ac09bcb0ce3d01caefcdf4380bcd"
+      },
+      "published": {
+        "bytes": 1162983,
+        "path": "/home/harsh/ferric-p227-integration/qualification/projection-ar4-shared-host-pair-v1/capture/shared/complete.json",
+        "sha256": "4163ba9800fe9176abfacf819d73f0b571b2ac09bcb0ce3d01caefcdf4380bcd"
+      },
+      "retained": {
+        "bytes": 1162983,
+        "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/shared-host-pair-export-v228-v1/prefix-projection-ar4-shared-host-shared-gpu-v228-v1/complete.json",
+        "sha256": "4163ba9800fe9176abfacf819d73f0b571b2ac09bcb0ce3d01caefcdf4380bcd"
+      }
+    },
+    "capture/shared/host-observation.json": {
+      "original": {
+        "bytes": 16243,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-shared-host-shared-gpu-v228-v1/host-observation.json",
+        "sha256": "8f5e2145dd560aa51b769b34e9ee47b94354e243816292d710a2f7a8dd06c7df"
+      },
+      "published": {
+        "bytes": 16243,
+        "path": "/home/harsh/ferric-p227-integration/qualification/projection-ar4-shared-host-pair-v1/capture/shared/host-observation.json",
+        "sha256": "8f5e2145dd560aa51b769b34e9ee47b94354e243816292d710a2f7a8dd06c7df"
+      },
+      "retained": {
+        "bytes": 16243,
+        "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/shared-host-pair-export-v228-v1/prefix-projection-ar4-shared-host-shared-gpu-v228-v1/host-observation.json",
+        "sha256": "8f5e2145dd560aa51b769b34e9ee47b94354e243816292d710a2f7a8dd06c7df"
+      }
+    },
+    "capture/shared/native-projection-shared-host-observation.json": {
+      "original": {
+        "bytes": 33855,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-shared-host-shared-gpu-v228-v1/native-projection-shared-host-observation.json",
+        "sha256": "ca26b55e3fb14d7ad9924bcdae95d415407a8383f7573ce83caac122443e2db6"
+      },
+      "published": {
+        "bytes": 33855,
+        "path": "/home/harsh/ferric-p227-integration/qualification/projection-ar4-shared-host-pair-v1/capture/shared/native-projection-shared-host-observation.json",
+        "sha256": "ca26b55e3fb14d7ad9924bcdae95d415407a8383f7573ce83caac122443e2db6"
+      },
+      "retained": {
+        "bytes": 33855,
+        "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/shared-host-pair-export-v228-v1/prefix-projection-ar4-shared-host-shared-gpu-v228-v1/native-projection-shared-host-observation.json",
+        "sha256": "ca26b55e3fb14d7ad9924bcdae95d415407a8383f7573ce83caac122443e2db6"
+      }
+    },
+    "capture/shared/native/complete.json": {
+      "original": {
+        "bytes": 40142,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-shared-host-shared-gpu-v228-v1/native/complete.json",
+        "sha256": "096e821a335834c2b00aab31ab9be8ac1f673bf8e1fd683472e8b1ebee5cdcb6"
+      },
+      "published": {
+        "bytes": 40142,
+        "path": "/home/harsh/ferric-p227-integration/qualification/projection-ar4-shared-host-pair-v1/capture/shared/native/complete.json",
+        "sha256": "096e821a335834c2b00aab31ab9be8ac1f673bf8e1fd683472e8b1ebee5cdcb6"
+      },
+      "retained": {
+        "bytes": 40142,
+        "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/shared-host-pair-export-v228-v1/prefix-projection-ar4-shared-host-shared-gpu-v228-v1/native/complete.json",
+        "sha256": "096e821a335834c2b00aab31ab9be8ac1f673bf8e1fd683472e8b1ebee5cdcb6"
+      }
+    },
+    "capture/shared/native/request-0.json": {
+      "original": {
+        "bytes": 1856,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-shared-host-shared-gpu-v228-v1/native/request-0.json",
+        "sha256": "9871877fadacf795971c6bc10310bd20bc2dcbdbc1e31821dd3116b52dce651e"
+      },
+      "published": {
+        "bytes": 1856,
+        "path": "/home/harsh/ferric-p227-integration/qualification/projection-ar4-shared-host-pair-v1/capture/shared/native/request-0.json",
+        "sha256": "9871877fadacf795971c6bc10310bd20bc2dcbdbc1e31821dd3116b52dce651e"
+      },
+      "retained": {
+        "bytes": 1856,
+        "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/shared-host-pair-export-v228-v1/prefix-projection-ar4-shared-host-shared-gpu-v228-v1/native/request-0.json",
+        "sha256": "9871877fadacf795971c6bc10310bd20bc2dcbdbc1e31821dd3116b52dce651e"
+      }
+    },
+    "capture/shared/native/request-1.json": {
+      "original": {
+        "bytes": 2391,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-shared-host-shared-gpu-v228-v1/native/request-1.json",
+        "sha256": "e788ae121a7cfc228acfc86485b7c7253debb0c639cbe623a7972bf90d4d9e7b"
+      },
+      "published": {
+        "bytes": 2391,
+        "path": "/home/harsh/ferric-p227-integration/qualification/projection-ar4-shared-host-pair-v1/capture/shared/native/request-1.json",
+        "sha256": "e788ae121a7cfc228acfc86485b7c7253debb0c639cbe623a7972bf90d4d9e7b"
+      },
+      "retained": {
+        "bytes": 2391,
+        "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/shared-host-pair-export-v228-v1/prefix-projection-ar4-shared-host-shared-gpu-v228-v1/native/request-1.json",
+        "sha256": "e788ae121a7cfc228acfc86485b7c7253debb0c639cbe623a7972bf90d4d9e7b"
+      }
+    },
+    "capture/shared/native/request-2.json": {
+      "original": {
+        "bytes": 2395,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-shared-host-shared-gpu-v228-v1/native/request-2.json",
+        "sha256": "8a2f08091f2cba173a557443e9a19c39c9fd09416b716d289cae713c35278ee6"
+      },
+      "published": {
+        "bytes": 2395,
+        "path": "/home/harsh/ferric-p227-integration/qualification/projection-ar4-shared-host-pair-v1/capture/shared/native/request-2.json",
+        "sha256": "8a2f08091f2cba173a557443e9a19c39c9fd09416b716d289cae713c35278ee6"
+      },
+      "retained": {
+        "bytes": 2395,
+        "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/shared-host-pair-export-v228-v1/prefix-projection-ar4-shared-host-shared-gpu-v228-v1/native/request-2.json",
+        "sha256": "8a2f08091f2cba173a557443e9a19c39c9fd09416b716d289cae713c35278ee6"
+      }
+    },
+    "capture/shared/native/request-3.json": {
+      "original": {
+        "bytes": 2396,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-shared-host-shared-gpu-v228-v1/native/request-3.json",
+        "sha256": "0d61fb663a50dc3f06f13a0466c6ef49f060ccb54c9c336fd167cf8522729c62"
+      },
+      "published": {
+        "bytes": 2396,
+        "path": "/home/harsh/ferric-p227-integration/qualification/projection-ar4-shared-host-pair-v1/capture/shared/native/request-3.json",
+        "sha256": "0d61fb663a50dc3f06f13a0466c6ef49f060ccb54c9c336fd167cf8522729c62"
+      },
+      "retained": {
+        "bytes": 2396,
+        "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/shared-host-pair-export-v228-v1/prefix-projection-ar4-shared-host-shared-gpu-v228-v1/native/request-3.json",
+        "sha256": "0d61fb663a50dc3f06f13a0466c6ef49f060ccb54c9c336fd167cf8522729c62"
+      }
+    },
+    "capture/shared/observation.json": {
+      "original": {
+        "bytes": 5621,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-shared-host-shared-gpu-v228-v1/observation.json",
+        "sha256": "27ee889aa6cc97d2127a063dba4aedf6681e330a4aed8834a3cbda455163ec91"
+      },
+      "published": {
+        "bytes": 5621,
+        "path": "/home/harsh/ferric-p227-integration/qualification/projection-ar4-shared-host-pair-v1/capture/shared/observation.json",
+        "sha256": "27ee889aa6cc97d2127a063dba4aedf6681e330a4aed8834a3cbda455163ec91"
+      },
+      "retained": {
+        "bytes": 5621,
+        "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/shared-host-pair-export-v228-v1/prefix-projection-ar4-shared-host-shared-gpu-v228-v1/observation.json",
+        "sha256": "27ee889aa6cc97d2127a063dba4aedf6681e330a4aed8834a3cbda455163ec91"
+      }
+    },
+    "capture/shared/parent/command.json": {
+      "original": {
+        "bytes": 1058,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-shared-host-shared-gpu-v228-v1/parent/command.json",
+        "sha256": "77cb4928297b0344df1e81fbd82f8862a5a506e2def19d9da65a22e02041f47b"
+      },
+      "published": {
+        "bytes": 1058,
+        "path": "/home/harsh/ferric-p227-integration/qualification/projection-ar4-shared-host-pair-v1/capture/shared/parent/command.json",
+        "sha256": "77cb4928297b0344df1e81fbd82f8862a5a506e2def19d9da65a22e02041f47b"
+      },
+      "retained": {
+        "bytes": 1058,
+        "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/shared-host-pair-export-v228-v1/prefix-projection-ar4-shared-host-shared-gpu-v228-v1/parent/command.json",
+        "sha256": "77cb4928297b0344df1e81fbd82f8862a5a506e2def19d9da65a22e02041f47b"
+      }
+    },
+    "capture/shared/parent/result.json": {
+      "original": {
+        "bytes": 1926,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-shared-host-shared-gpu-v228-v1/parent/result.json",
+        "sha256": "6e19edaaf7173d2c4e13577a4003af913e4ba5f9e4354281a351c19b57e6bf85"
+      },
+      "published": {
+        "bytes": 1926,
+        "path": "/home/harsh/ferric-p227-integration/qualification/projection-ar4-shared-host-pair-v1/capture/shared/parent/result.json",
+        "sha256": "6e19edaaf7173d2c4e13577a4003af913e4ba5f9e4354281a351c19b57e6bf85"
+      },
+      "retained": {
+        "bytes": 1926,
+        "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/shared-host-pair-export-v228-v1/prefix-projection-ar4-shared-host-shared-gpu-v228-v1/parent/result.json",
+        "sha256": "6e19edaaf7173d2c4e13577a4003af913e4ba5f9e4354281a351c19b57e6bf85"
+      }
+    },
+    "capture/shared/parent/started.json": {
+      "original": {
+        "bytes": 282,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-shared-host-shared-gpu-v228-v1/parent/started.json",
+        "sha256": "29727a832acbe87b181cb0934a9883b2bb68634b6498eae2b8ed9560de2af530"
+      },
+      "published": {
+        "bytes": 282,
+        "path": "/home/harsh/ferric-p227-integration/qualification/projection-ar4-shared-host-pair-v1/capture/shared/parent/started.json",
+        "sha256": "29727a832acbe87b181cb0934a9883b2bb68634b6498eae2b8ed9560de2af530"
+      },
+      "retained": {
+        "bytes": 282,
+        "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/shared-host-pair-export-v228-v1/prefix-projection-ar4-shared-host-shared-gpu-v228-v1/parent/started.json",
+        "sha256": "29727a832acbe87b181cb0934a9883b2bb68634b6498eae2b8ed9560de2af530"
+      }
+    },
+    "capture/shared/parent/stderr": {
+      "original": {
+        "bytes": 395,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-shared-host-shared-gpu-v228-v1/parent/stderr",
+        "sha256": "e8d720a141e78420c81b27fd2d0cbfb6478073aa1874e6a62578546a79c21e55"
+      },
+      "published": {
+        "bytes": 395,
+        "path": "/home/harsh/ferric-p227-integration/qualification/projection-ar4-shared-host-pair-v1/capture/shared/parent/stderr",
+        "sha256": "e8d720a141e78420c81b27fd2d0cbfb6478073aa1874e6a62578546a79c21e55"
+      },
+      "retained": {
+        "bytes": 395,
+        "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/shared-host-pair-export-v228-v1/prefix-projection-ar4-shared-host-shared-gpu-v228-v1/parent/stderr",
+        "sha256": "e8d720a141e78420c81b27fd2d0cbfb6478073aa1874e6a62578546a79c21e55"
+      }
+    },
+    "capture/shared/parent/stdout": {
+      "original": {
+        "bytes": 41220,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-shared-host-shared-gpu-v228-v1/parent/stdout",
+        "sha256": "0af3fe8cc11c7fc0fc18fe1890d5a0271385f2aba0c14349876111d0184d3133"
+      },
+      "published": {
+        "bytes": 41220,
+        "path": "/home/harsh/ferric-p227-integration/qualification/projection-ar4-shared-host-pair-v1/capture/shared/parent/stdout",
+        "sha256": "0af3fe8cc11c7fc0fc18fe1890d5a0271385f2aba0c14349876111d0184d3133"
+      },
+      "retained": {
+        "bytes": 41220,
+        "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/shared-host-pair-export-v228-v1/prefix-projection-ar4-shared-host-shared-gpu-v228-v1/parent/stdout",
+        "sha256": "0af3fe8cc11c7fc0fc18fe1890d5a0271385f2aba0c14349876111d0184d3133"
+      }
+    },
+    "export-manifest.json": {
+      "original": {
+        "bytes": 48945,
+        "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/shared-host-pair-export-v228-v1/export-manifest.json",
+        "sha256": "f4fc8045e5f50023864cb0740a89a347dd29a3503432513d3b93794912a85c5d"
+      },
+      "published": {
+        "bytes": 48945,
+        "path": "/home/harsh/ferric-p227-integration/qualification/projection-ar4-shared-host-pair-v1/export-manifest.json",
+        "sha256": "f4fc8045e5f50023864cb0740a89a347dd29a3503432513d3b93794912a85c5d"
+      },
+      "retained": {
+        "bytes": 48945,
+        "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/shared-host-pair-export-v228-v1/export-manifest.json",
+        "sha256": "f4fc8045e5f50023864cb0740a89a347dd29a3503432513d3b93794912a85c5d"
+      }
+    },
+    "pair-complete.json": {
+      "original": {
+        "bytes": 13101,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-shared-host-pair-v228-v1/complete.json",
+        "sha256": "095070cb312dd286ec76b0b72c11c82c96c073f2dc6fc84996efc30d8ba48994"
+      },
+      "published": {
+        "bytes": 13101,
+        "path": "/home/harsh/ferric-p227-integration/qualification/projection-ar4-shared-host-pair-v1/pair-complete.json",
+        "sha256": "095070cb312dd286ec76b0b72c11c82c96c073f2dc6fc84996efc30d8ba48994"
+      },
+      "retained": {
+        "bytes": 13101,
+        "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/shared-host-pair-export-v228-v1/prefix-projection-ar4-shared-host-pair-v228-v1/complete.json",
+        "sha256": "095070cb312dd286ec76b0b72c11c82c96c073f2dc6fc84996efc30d8ba48994"
+      }
+    },
+    "pair-plan.json": {
+      "original": {
+        "bytes": 690,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/shared-host-pair-plan-v228-v1.json",
+        "sha256": "30f8088099c0a06dbaec121ee736be58cd7fdbbf6db494ae51bf178eb9644b97"
+      },
+      "published": {
+        "bytes": 690,
+        "path": "/home/harsh/ferric-p227-integration/qualification/projection-ar4-shared-host-pair-v1/pair-plan.json",
+        "sha256": "30f8088099c0a06dbaec121ee736be58cd7fdbbf6db494ae51bf178eb9644b97"
+      },
+      "retained": {
+        "bytes": 690,
+        "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/shared-host-pair-export-v228-v1/shared-host-pair-plan-v228-v1.json",
+        "sha256": "30f8088099c0a06dbaec121ee736be58cd7fdbbf6db494ae51bf178eb9644b97"
+      }
+    },
+    "run-observation.json": {
+      "original": {
+        "bytes": 2309,
+        "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/shared-host-pair-primary-v228-v1.json",
+        "sha256": "2e8ba96b82a93c67098edf080b3571519ba4cd90274370b2b187e66e3503a041"
+      },
+      "published": {
+        "bytes": 2309,
+        "path": "/home/harsh/ferric-p227-integration/qualification/projection-ar4-shared-host-pair-v1/run-observation.json",
+        "sha256": "2e8ba96b82a93c67098edf080b3571519ba4cd90274370b2b187e66e3503a041"
+      },
+      "retained": {
+        "bytes": 2309,
+        "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/shared-host-pair-primary-v228-v1.json",
+        "sha256": "2e8ba96b82a93c67098edf080b3571519ba4cd90274370b2b187e66e3503a041"
+      }
+    },
+    "source/analyze.py": {
+      "original": {
+        "bytes": 12467,
+        "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/p228-projection-ar4-shared-host-pair-analysis-v1/analyze.py",
+        "sha256": "2e51255a44ef4198ea550f83dd1c68e1e3925a3ac17530e5733874a30c335b09"
+      },
+      "published": {
+        "bytes": 12467,
+        "path": "/home/harsh/ferric-p227-integration/qualification/projection-ar4-shared-host-pair-v1/source/analyze.py",
+        "sha256": "2e51255a44ef4198ea550f83dd1c68e1e3925a3ac17530e5733874a30c335b09"
+      },
+      "retained": {
+        "bytes": 12467,
+        "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/p228-projection-ar4-shared-host-pair-analysis-v1/analyze.py",
+        "sha256": "2e51255a44ef4198ea550f83dd1c68e1e3925a3ac17530e5733874a30c335b09"
+      }
+    },
+    "source/common.py": {
+      "original": {
+        "bytes": 9780,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/export_rpo_cpu_publication_v228_v1.py",
+        "sha256": "5ba8484263ac02051a06b488f0db6b9565f6cff31d189c8dd35f07d90b08b720"
+      },
+      "published": {
+        "bytes": 9780,
+        "path": "/home/harsh/ferric-p227-integration/qualification/projection-ar4-shared-host-pair-v1/source/common.py",
+        "sha256": "5ba8484263ac02051a06b488f0db6b9565f6cff31d189c8dd35f07d90b08b720"
+      },
+      "retained": {
+        "bytes": 9780,
+        "path": "/home/harsh/ferric-p227-integration/qualification/fe2o3-partial-move-rpo-v1/publication/export.py",
+        "sha256": "5ba8484263ac02051a06b488f0db6b9565f6cff31d189c8dd35f07d90b08b720"
+      }
+    },
+    "source/export.py": {
+      "original": {
+        "bytes": 15870,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/export_projection_ar4_shared_host_pair_v228_v1.py",
+        "sha256": "ac98689d07f55fcba11b3e0c0adf3cb70a26106abc2d3345d087965f88e916c3"
+      },
+      "published": {
+        "bytes": 15870,
+        "path": "/home/harsh/ferric-p227-integration/qualification/projection-ar4-shared-host-pair-v1/source/export.py",
+        "sha256": "ac98689d07f55fcba11b3e0c0adf3cb70a26106abc2d3345d087965f88e916c3"
+      },
+      "retained": {
+        "bytes": 15870,
+        "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/p228-projection-ar4-shared-host-pair-publication-v1/export.py",
+        "sha256": "ac98689d07f55fcba11b3e0c0adf3cb70a26106abc2d3345d087965f88e916c3"
+      }
+    },
+    "source/plot.py": {
+      "original": {
+        "bytes": 4803,
+        "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/p228-projection-ar4-shared-host-pair-analysis-v1/plot.py",
+        "sha256": "ed129add853d301b3fe428e48c5cdaff6fe8d75749fb367d90014f0941613114"
+      },
+      "published": {
+        "bytes": 4803,
+        "path": "/home/harsh/ferric-p227-integration/qualification/projection-ar4-shared-host-pair-v1/source/plot.py",
+        "sha256": "ed129add853d301b3fe428e48c5cdaff6fe8d75749fb367d90014f0941613114"
+      },
+      "retained": {
+        "bytes": 4803,
+        "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/p228-projection-ar4-shared-host-pair-analysis-v1/plot.py",
+        "sha256": "ed129add853d301b3fe428e48c5cdaff6fe8d75749fb367d90014f0941613114"
+      }
+    },
+    "source/publish.py": {
+      "original": {
+        "bytes": 9213,
+        "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/p228-projection-ar4-shared-host-pair-local-publication-v1/publish.py",
+        "sha256": "14b83290f0f52ff3ffc55ffd69bb2f77f0790240b1a6c4f0fa6a77df12f5fc32"
+      },
+      "published": {
+        "bytes": 9213,
+        "path": "/home/harsh/ferric-p227-integration/qualification/projection-ar4-shared-host-pair-v1/source/publish.py",
+        "sha256": "14b83290f0f52ff3ffc55ffd69bb2f77f0790240b1a6c4f0fa6a77df12f5fc32"
+      },
+      "retained": {
+        "bytes": 9213,
+        "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/p228-projection-ar4-shared-host-pair-local-publication-v1/publish.py",
+        "sha256": "14b83290f0f52ff3ffc55ffd69bb2f77f0790240b1a6c4f0fa6a77df12f5fc32"
+      }
+    }
+  },
+  "copied_count": 113,
+  "evidence_or_analysis_executed": false,
+  "gpu_timing": false,
+  "independent_numerical_acceptance": false,
+  "observed_pair_passed": true,
+  "observed_payload_repeatability": [
+    true,
+    true,
+    true,
+    true
+  ],
+  "omitted_binary_bodies": {
+    "prefix-projection-ar4-shared-host-default-gpu-v228-v1/native/child-stderr.bin": {
+      "original": {
+        "bytes": 0,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-shared-host-default-gpu-v228-v1/native/child-stderr.bin",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "retained": {
+        "bytes": 0,
+        "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/shared-host-pair-export-v228-v1/prefix-projection-ar4-shared-host-default-gpu-v228-v1/native/child-stderr.bin",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    "prefix-projection-ar4-shared-host-default-gpu-v228-v1/native/control-0.bin": {
+      "original": {
+        "bytes": 241960,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-shared-host-default-gpu-v228-v1/native/control-0.bin",
+        "sha256": "d249084af5b6de7139978f7f4061c621ba75c7f7d173202e2635f557badcbc7e"
+      },
+      "retained": {
+        "bytes": 241960,
+        "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/shared-host-pair-export-v228-v1/prefix-projection-ar4-shared-host-default-gpu-v228-v1/native/control-0.bin",
+        "sha256": "d249084af5b6de7139978f7f4061c621ba75c7f7d173202e2635f557badcbc7e"
+      }
+    },
+    "prefix-projection-ar4-shared-host-default-gpu-v228-v1/native/control-1.bin": {
+      "original": {
+        "bytes": 241960,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-shared-host-default-gpu-v228-v1/native/control-1.bin",
+        "sha256": "55a958185d8085dcc82a7011e285c92282cdd3a65020e33b14283d684a606270"
+      },
+      "retained": {
+        "bytes": 241960,
+        "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/shared-host-pair-export-v228-v1/prefix-projection-ar4-shared-host-default-gpu-v228-v1/native/control-1.bin",
+        "sha256": "55a958185d8085dcc82a7011e285c92282cdd3a65020e33b14283d684a606270"
+      }
+    },
+    "prefix-projection-ar4-shared-host-default-gpu-v228-v1/native/control-2.bin": {
+      "original": {
+        "bytes": 241960,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-shared-host-default-gpu-v228-v1/native/control-2.bin",
+        "sha256": "b2c2cf930b277bfcfe1666a75a63bca1a15a0e6db8aa5dcd7d1e76258bb09414"
+      },
+      "retained": {
+        "bytes": 241960,
+        "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/shared-host-pair-export-v228-v1/prefix-projection-ar4-shared-host-default-gpu-v228-v1/native/control-2.bin",
+        "sha256": "b2c2cf930b277bfcfe1666a75a63bca1a15a0e6db8aa5dcd7d1e76258bb09414"
+      }
+    },
+    "prefix-projection-ar4-shared-host-default-gpu-v228-v1/native/control-3.bin": {
+      "original": {
+        "bytes": 241960,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-shared-host-default-gpu-v228-v1/native/control-3.bin",
+        "sha256": "61989d1bff4672723d3f3c65e6ef5124c9eef03d9fbd28ee582dfdfd1adf7c1c"
+      },
+      "retained": {
+        "bytes": 241960,
+        "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/shared-host-pair-export-v228-v1/prefix-projection-ar4-shared-host-default-gpu-v228-v1/native/control-3.bin",
+        "sha256": "61989d1bff4672723d3f3c65e6ef5124c9eef03d9fbd28ee582dfdfd1adf7c1c"
+      }
+    },
+    "prefix-projection-ar4-shared-host-default-gpu-v228-v1/native/observation-0.bin": {
+      "original": {
+        "bytes": 606976,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-shared-host-default-gpu-v228-v1/native/observation-0.bin",
+        "sha256": "1324a6056ea6c0308e912c63ed1b6a6d27e103c915c6dde11ff600d97cf9b1b0"
+      },
+      "retained": {
+        "bytes": 606976,
+        "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/shared-host-pair-export-v228-v1/prefix-projection-ar4-shared-host-default-gpu-v228-v1/native/observation-0.bin",
+        "sha256": "1324a6056ea6c0308e912c63ed1b6a6d27e103c915c6dde11ff600d97cf9b1b0"
+      }
+    },
+    "prefix-projection-ar4-shared-host-default-gpu-v228-v1/native/observation-1.bin": {
+      "original": {
+        "bytes": 606976,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-shared-host-default-gpu-v228-v1/native/observation-1.bin",
+        "sha256": "61f56a5b97e4f35922bf7733a74b36b8dec9544a15d66980757bf9ef5aefc6e4"
+      },
+      "retained": {
+        "bytes": 606976,
+        "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/shared-host-pair-export-v228-v1/prefix-projection-ar4-shared-host-default-gpu-v228-v1/native/observation-1.bin",
+        "sha256": "61f56a5b97e4f35922bf7733a74b36b8dec9544a15d66980757bf9ef5aefc6e4"
+      }
+    },
+    "prefix-projection-ar4-shared-host-default-gpu-v228-v1/native/observation-2.bin": {
+      "original": {
+        "bytes": 606976,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-shared-host-default-gpu-v228-v1/native/observation-2.bin",
+        "sha256": "87d3799724693386909e97fd3ea31fab065de021824dea276218614f2a0fc85a"
+      },
+      "retained": {
+        "bytes": 606976,
+        "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/shared-host-pair-export-v228-v1/prefix-projection-ar4-shared-host-default-gpu-v228-v1/native/observation-2.bin",
+        "sha256": "87d3799724693386909e97fd3ea31fab065de021824dea276218614f2a0fc85a"
+      }
+    },
+    "prefix-projection-ar4-shared-host-default-gpu-v228-v1/native/observation-3.bin": {
+      "original": {
+        "bytes": 606976,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-shared-host-default-gpu-v228-v1/native/observation-3.bin",
+        "sha256": "7c40126b76a7eeb7a64ef67950636359ba951cafcdce2ddc42636388de3c5588"
+      },
+      "retained": {
+        "bytes": 606976,
+        "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/shared-host-pair-export-v228-v1/prefix-projection-ar4-shared-host-default-gpu-v228-v1/native/observation-3.bin",
+        "sha256": "7c40126b76a7eeb7a64ef67950636359ba951cafcdce2ddc42636388de3c5588"
+      }
+    },
+    "prefix-projection-ar4-shared-host-shared-gpu-v228-v1/native/child-stderr.bin": {
+      "original": {
+        "bytes": 0,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-shared-host-shared-gpu-v228-v1/native/child-stderr.bin",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "retained": {
+        "bytes": 0,
+        "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/shared-host-pair-export-v228-v1/prefix-projection-ar4-shared-host-shared-gpu-v228-v1/native/child-stderr.bin",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    "prefix-projection-ar4-shared-host-shared-gpu-v228-v1/native/control-0.bin": {
+      "original": {
+        "bytes": 241960,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-shared-host-shared-gpu-v228-v1/native/control-0.bin",
+        "sha256": "ea5554da0ce04e0563f53b9c2b38e8d729c9cac21035f278ca9f35a3a23f0b1b"
+      },
+      "retained": {
+        "bytes": 241960,
+        "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/shared-host-pair-export-v228-v1/prefix-projection-ar4-shared-host-shared-gpu-v228-v1/native/control-0.bin",
+        "sha256": "ea5554da0ce04e0563f53b9c2b38e8d729c9cac21035f278ca9f35a3a23f0b1b"
+      }
+    },
+    "prefix-projection-ar4-shared-host-shared-gpu-v228-v1/native/control-1.bin": {
+      "original": {
+        "bytes": 241960,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-shared-host-shared-gpu-v228-v1/native/control-1.bin",
+        "sha256": "e144ade0b999657587140e21509a0735f03b75fd99ed1bf88603cc4625b65e0b"
+      },
+      "retained": {
+        "bytes": 241960,
+        "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/shared-host-pair-export-v228-v1/prefix-projection-ar4-shared-host-shared-gpu-v228-v1/native/control-1.bin",
+        "sha256": "e144ade0b999657587140e21509a0735f03b75fd99ed1bf88603cc4625b65e0b"
+      }
+    },
+    "prefix-projection-ar4-shared-host-shared-gpu-v228-v1/native/control-2.bin": {
+      "original": {
+        "bytes": 241960,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-shared-host-shared-gpu-v228-v1/native/control-2.bin",
+        "sha256": "c0f2a4dd43158be49ab0779e5823dba501af2bdb230dd19a899a4ea10fd2b915"
+      },
+      "retained": {
+        "bytes": 241960,
+        "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/shared-host-pair-export-v228-v1/prefix-projection-ar4-shared-host-shared-gpu-v228-v1/native/control-2.bin",
+        "sha256": "c0f2a4dd43158be49ab0779e5823dba501af2bdb230dd19a899a4ea10fd2b915"
+      }
+    },
+    "prefix-projection-ar4-shared-host-shared-gpu-v228-v1/native/control-3.bin": {
+      "original": {
+        "bytes": 241960,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-shared-host-shared-gpu-v228-v1/native/control-3.bin",
+        "sha256": "5d4b6e62d5f7359ee8016dcdd46f095a09debc98ced9ed5d5e71f39f78281d53"
+      },
+      "retained": {
+        "bytes": 241960,
+        "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/shared-host-pair-export-v228-v1/prefix-projection-ar4-shared-host-shared-gpu-v228-v1/native/control-3.bin",
+        "sha256": "5d4b6e62d5f7359ee8016dcdd46f095a09debc98ced9ed5d5e71f39f78281d53"
+      }
+    },
+    "prefix-projection-ar4-shared-host-shared-gpu-v228-v1/native/observation-0.bin": {
+      "original": {
+        "bytes": 606976,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-shared-host-shared-gpu-v228-v1/native/observation-0.bin",
+        "sha256": "1324a6056ea6c0308e912c63ed1b6a6d27e103c915c6dde11ff600d97cf9b1b0"
+      },
+      "retained": {
+        "bytes": 606976,
+        "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/shared-host-pair-export-v228-v1/prefix-projection-ar4-shared-host-shared-gpu-v228-v1/native/observation-0.bin",
+        "sha256": "1324a6056ea6c0308e912c63ed1b6a6d27e103c915c6dde11ff600d97cf9b1b0"
+      }
+    },
+    "prefix-projection-ar4-shared-host-shared-gpu-v228-v1/native/observation-1.bin": {
+      "original": {
+        "bytes": 606976,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-shared-host-shared-gpu-v228-v1/native/observation-1.bin",
+        "sha256": "61f56a5b97e4f35922bf7733a74b36b8dec9544a15d66980757bf9ef5aefc6e4"
+      },
+      "retained": {
+        "bytes": 606976,
+        "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/shared-host-pair-export-v228-v1/prefix-projection-ar4-shared-host-shared-gpu-v228-v1/native/observation-1.bin",
+        "sha256": "61f56a5b97e4f35922bf7733a74b36b8dec9544a15d66980757bf9ef5aefc6e4"
+      }
+    },
+    "prefix-projection-ar4-shared-host-shared-gpu-v228-v1/native/observation-2.bin": {
+      "original": {
+        "bytes": 606976,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-shared-host-shared-gpu-v228-v1/native/observation-2.bin",
+        "sha256": "87d3799724693386909e97fd3ea31fab065de021824dea276218614f2a0fc85a"
+      },
+      "retained": {
+        "bytes": 606976,
+        "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/shared-host-pair-export-v228-v1/prefix-projection-ar4-shared-host-shared-gpu-v228-v1/native/observation-2.bin",
+        "sha256": "87d3799724693386909e97fd3ea31fab065de021824dea276218614f2a0fc85a"
+      }
+    },
+    "prefix-projection-ar4-shared-host-shared-gpu-v228-v1/native/observation-3.bin": {
+      "original": {
+        "bytes": 606976,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-shared-host-shared-gpu-v228-v1/native/observation-3.bin",
+        "sha256": "7c40126b76a7eeb7a64ef67950636359ba951cafcdce2ddc42636388de3c5588"
+      },
+      "retained": {
+        "bytes": 606976,
+        "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/shared-host-pair-export-v228-v1/prefix-projection-ar4-shared-host-shared-gpu-v228-v1/native/observation-3.bin",
+        "sha256": "7c40126b76a7eeb7a64ef67950636359ba951cafcdce2ddc42636388de3c5588"
+      }
+    }
+  },
+  "pair": {
+    "bytes": 13101,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-shared-host-pair-v228-v1/complete.json",
+    "sha256": "095070cb312dd286ec76b0b72c11c82c96c073f2dc6fc84996efc30d8ba48994"
+  },
+  "performance_claim": false,
+  "primary_observation": {
+    "bytes": 2309,
+    "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/shared-host-pair-primary-v228-v1.json",
+    "sha256": "2e8ba96b82a93c67098edf080b3571519ba4cd90274370b2b187e66e3503a041"
+  },
+  "primary_observation_is_remote_owner_receipt": false,
+  "production_authority": false,
+  "schema": "ferric-p228-projection-ar4-shared-host-pair-publication-v1",
+  "single_fixed_order_pair": true,
+  "validators_replayed": false,
+  "verified_export_body_count": 128,
+  "warm_cache_order_confound_unresolved": true
+}

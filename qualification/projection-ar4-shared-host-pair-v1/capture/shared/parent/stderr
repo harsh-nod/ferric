@@ -1,0 +1,6 @@
+finite engineering owned child pid=2488395 pgid=2488395; no native setup acknowledged
+finite explicit profile=projection-residual-prefix284-mlp548-four-forward-v1 mode=Autoregressive
+finite prefix decode completed position=0 forwards=1
+finite prefix decode completed position=1 forwards=2
+finite prefix decode completed position=2 forwards=3
+finite prefix decode completed position=3 forwards=4

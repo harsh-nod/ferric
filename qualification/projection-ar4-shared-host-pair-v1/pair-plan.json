@@ -1,0 +1,14 @@
+{
+  "schema": "ferric-p228-projection-ar4-shared-host-pair-inputs-v1",
+  "output_label": "prefix-projection-ar4-shared-host-pair-v228-v1",
+  "default": {
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-shared-host-default-inputs-v228-v1/plan.json",
+    "bytes": 6710,
+    "sha256": "a41300d9af0d5cc2f81047624d779188b5f042d63913e39989bb3f32a4d2fe56"
+  },
+  "shared": {
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-shared-host-shared-inputs-v228-v1/plan.json",
+    "bytes": 6712,
+    "sha256": "c2872faffc036c6bfde8302dd39dfcba6b17e3f9109d5d5542567db31a667f21"
+  }
+}

@@ -6,7 +6,17 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Latest: [both observer parents and their shared worker passed fresh MI350 runtime audits](../qualification/projection-ar4-shared-host-runtime-v1/README.md).
+Latest: [the matched default/shared-full GPU pair completed on MI350](../qualification/projection-ar4-shared-host-pair-v1/README.md).
+Both one-attempt AR4 runs passed structural and lifecycle checks. All four
+606,976-byte payloads are identical across routes, covering 152 captured tensor
+slices. Forward host wall time changed from 10.56-12.49 seconds to 5.25-5.77
+seconds; the ratio of four-forward sums is 2.092. Plots and tables include
+rank/group/publication counters and separate setup, configuration and Close.
+This is one fixed-order diagnostic, subject to warmed-cache/order effects,
+not GPU timing, independent numerical acceptance or sustained throughput.
+All milestones and the 700 tokens/s target remain open.
+
+Previously, [both observer parents and their shared worker passed fresh MI350 runtime audits](../qualification/projection-ar4-shared-host-runtime-v1/README.md).
 All six readelf/ldd commands exited naturally, with complete library closures and
 unchanged topology. Both input assemblies completed with exact same-model,
 same-image requests and lossless device identities. Preparation corrections are

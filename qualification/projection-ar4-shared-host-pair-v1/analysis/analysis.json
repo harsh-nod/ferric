@@ -1,0 +1,409 @@
+{
+  "consumed": [
+    {
+      "bytes": 12467,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/p228-projection-ar4-shared-host-pair-analysis-v1/analyze.py",
+      "sha256": "2e51255a44ef4198ea550f83dd1c68e1e3925a3ac17530e5733874a30c335b09"
+    },
+    {
+      "bytes": 13101,
+      "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/shared-host-pair-export-v228-v1/prefix-projection-ar4-shared-host-pair-v228-v1/complete.json",
+      "sha256": "095070cb312dd286ec76b0b72c11c82c96c073f2dc6fc84996efc30d8ba48994"
+    },
+    {
+      "bytes": 1162862,
+      "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/prefix-projection-ar4-shared-host-default-gpu-v228-v1/complete.json",
+      "sha256": "da039b8dfeea0e11e66440c2c628db1d92da507ec901ef791b46ea6f5ab55bf5"
+    },
+    {
+      "bytes": 40144,
+      "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/prefix-projection-ar4-shared-host-default-gpu-v228-v1/native/complete.json",
+      "sha256": "753346c5bf7568ee5f741e8d2387b22194d25f5ae6322d94857863481f4e8363"
+    },
+    {
+      "bytes": 606976,
+      "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/prefix-projection-ar4-shared-host-default-gpu-v228-v1/native/observation-0.bin",
+      "sha256": "1324a6056ea6c0308e912c63ed1b6a6d27e103c915c6dde11ff600d97cf9b1b0"
+    },
+    {
+      "bytes": 606976,
+      "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/prefix-projection-ar4-shared-host-default-gpu-v228-v1/native/observation-1.bin",
+      "sha256": "61f56a5b97e4f35922bf7733a74b36b8dec9544a15d66980757bf9ef5aefc6e4"
+    },
+    {
+      "bytes": 606976,
+      "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/prefix-projection-ar4-shared-host-default-gpu-v228-v1/native/observation-2.bin",
+      "sha256": "87d3799724693386909e97fd3ea31fab065de021824dea276218614f2a0fc85a"
+    },
+    {
+      "bytes": 606976,
+      "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/prefix-projection-ar4-shared-host-default-gpu-v228-v1/native/observation-3.bin",
+      "sha256": "7c40126b76a7eeb7a64ef67950636359ba951cafcdce2ddc42636388de3c5588"
+    },
+    {
+      "bytes": 33599,
+      "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/prefix-projection-ar4-shared-host-default-gpu-v228-v1/native-projection-host-observation.json",
+      "sha256": "fdab559734df9df21db09e4cf90bf26ab8e7705db6b15bc708e9abf371bd3a16"
+    },
+    {
+      "bytes": 1162983,
+      "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/prefix-projection-ar4-shared-host-shared-gpu-v228-v1/complete.json",
+      "sha256": "4163ba9800fe9176abfacf819d73f0b571b2ac09bcb0ce3d01caefcdf4380bcd"
+    },
+    {
+      "bytes": 40142,
+      "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/prefix-projection-ar4-shared-host-shared-gpu-v228-v1/native/complete.json",
+      "sha256": "096e821a335834c2b00aab31ab9be8ac1f673bf8e1fd683472e8b1ebee5cdcb6"
+    },
+    {
+      "bytes": 606976,
+      "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/prefix-projection-ar4-shared-host-shared-gpu-v228-v1/native/observation-0.bin",
+      "sha256": "1324a6056ea6c0308e912c63ed1b6a6d27e103c915c6dde11ff600d97cf9b1b0"
+    },
+    {
+      "bytes": 606976,
+      "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/prefix-projection-ar4-shared-host-shared-gpu-v228-v1/native/observation-1.bin",
+      "sha256": "61f56a5b97e4f35922bf7733a74b36b8dec9544a15d66980757bf9ef5aefc6e4"
+    },
+    {
+      "bytes": 606976,
+      "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/prefix-projection-ar4-shared-host-shared-gpu-v228-v1/native/observation-2.bin",
+      "sha256": "87d3799724693386909e97fd3ea31fab065de021824dea276218614f2a0fc85a"
+    },
+    {
+      "bytes": 606976,
+      "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/prefix-projection-ar4-shared-host-shared-gpu-v228-v1/native/observation-3.bin",
+      "sha256": "7c40126b76a7eeb7a64ef67950636359ba951cafcdce2ddc42636388de3c5588"
+    },
+    {
+      "bytes": 33855,
+      "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/prefix-projection-ar4-shared-host-shared-gpu-v228-v1/native-projection-shared-host-observation.json",
+      "sha256": "ca26b55e3fb14d7ad9924bcdae95d415407a8383f7573ce83caac122443e2db6"
+    }
+  ],
+  "controller": {
+    "bytes": 12467,
+    "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/p228-projection-ar4-shared-host-pair-analysis-v1/analyze.py",
+    "sha256": "2e51255a44ef4198ea550f83dd1c68e1e3925a3ac17530e5733874a30c335b09"
+  },
+  "counter_interval_is_not_exact_forward_scope": true,
+  "fixed_order": [
+    "default",
+    "shared"
+  ],
+  "gpu_time": false,
+  "histories": [
+    [
+      0,
+      1,
+      9112
+    ],
+    [
+      1,
+      2,
+      67
+    ],
+    [
+      2,
+      3,
+      25
+    ],
+    [
+      3,
+      4,
+      576
+    ]
+  ],
+  "independent_numerical_acceptance": false,
+  "intervals": [
+    {
+      "forward_host_ns": null,
+      "from_phase": "fresh_enabled",
+      "full_over_interval": 0.7697501457805863,
+      "full_sum_ns": 128605162335,
+      "group_full_checks": 0,
+      "group_full_ns": 0,
+      "interval": 0,
+      "interval_full_over_forward": null,
+      "interval_host_ns": 167073904487,
+      "publication_full_checks": 0,
+      "publication_full_ns": 0,
+      "rank_full_checks": 76076,
+      "rank_full_ns": 128605162335,
+      "route": "default",
+      "to_phase": "setup_sealed"
+    },
+    {
+      "forward_host_ns": 10556575434,
+      "from_phase": "setup_sealed",
+      "full_over_interval": 0.9333499758670918,
+      "full_sum_ns": 9853116097,
+      "group_full_checks": 0,
+      "group_full_ns": 0,
+      "interval": 1,
+      "interval_full_over_forward": 0.9333629223418098,
+      "interval_host_ns": 10556721864,
+      "publication_full_checks": 288,
+      "publication_full_ns": 497503721,
+      "rank_full_checks": 5524,
+      "rank_full_ns": 9355612376,
+      "route": "default",
+      "to_phase": "forward_0"
+    },
+    {
+      "forward_host_ns": 10564496619,
+      "from_phase": "forward_0",
+      "full_over_interval": 0.9316695223790052,
+      "full_sum_ns": 9849011251,
+      "group_full_checks": 0,
+      "group_full_ns": 0,
+      "interval": 2,
+      "interval_full_over_forward": 0.9322745423844222,
+      "interval_host_ns": 10571357133,
+      "publication_full_checks": 288,
+      "publication_full_ns": 497757379,
+      "rank_full_checks": 5524,
+      "rank_full_ns": 9351253872,
+      "route": "default",
+      "to_phase": "forward_1"
+    },
+    {
+      "forward_host_ns": 12486571230,
+      "from_phase": "forward_1",
+      "full_over_interval": 0.942703166139083,
+      "full_sum_ns": 11777101818,
+      "group_full_checks": 0,
+      "group_full_ns": 0,
+      "interval": 3,
+      "interval_full_over_forward": 0.9431814067343449,
+      "interval_host_ns": 12492905764,
+      "publication_full_checks": 288,
+      "publication_full_ns": 497926828,
+      "rank_full_checks": 6676,
+      "rank_full_ns": 11279174990,
+      "route": "default",
+      "to_phase": "forward_2"
+    },
+    {
+      "forward_host_ns": 12477321865,
+      "from_phase": "forward_2",
+      "full_over_interval": 0.9427506652517652,
+      "full_sum_ns": 11769089872,
+      "group_full_checks": 0,
+      "group_full_ns": 0,
+      "interval": 4,
+      "interval_full_over_forward": 0.9432384608922646,
+      "interval_host_ns": 12483777849,
+      "publication_full_checks": 288,
+      "publication_full_ns": 496597499,
+      "rank_full_checks": 6676,
+      "rank_full_ns": 11272492373,
+      "route": "default",
+      "to_phase": "forward_3"
+    },
+    {
+      "forward_host_ns": null,
+      "from_phase": "forward_3",
+      "full_over_interval": 0.0,
+      "full_sum_ns": 0,
+      "group_full_checks": 0,
+      "group_full_ns": 0,
+      "interval": 5,
+      "interval_full_over_forward": null,
+      "interval_host_ns": 6514104,
+      "publication_full_checks": 0,
+      "publication_full_ns": 0,
+      "rank_full_checks": 0,
+      "rank_full_ns": 0,
+      "route": "default",
+      "to_phase": "before_close"
+    },
+    {
+      "forward_host_ns": null,
+      "from_phase": "fresh_enabled",
+      "full_over_interval": 0.5729989024067866,
+      "full_sum_ns": 51543174222,
+      "group_full_checks": 15328,
+      "group_full_ns": 26521254624,
+      "interval": 0,
+      "interval_full_over_forward": null,
+      "interval_host_ns": 89953355941,
+      "publication_full_checks": 0,
+      "publication_full_ns": 0,
+      "rank_full_checks": 14764,
+      "rank_full_ns": 25021919598,
+      "route": "shared",
+      "to_phase": "setup_sealed"
+    },
+    {
+      "forward_host_ns": 5245101512,
+      "from_phase": "setup_sealed",
+      "full_over_interval": 0.8649768778634722,
+      "full_sum_ns": 4536995405,
+      "group_full_checks": 1048,
+      "group_full_ns": 1794841023,
+      "interval": 1,
+      "interval_full_over_forward": 0.8649966820699351,
+      "interval_host_ns": 5245221602,
+      "publication_full_checks": 288,
+      "publication_full_ns": 495129494,
+      "rank_full_checks": 1332,
+      "rank_full_ns": 2247024888,
+      "route": "shared",
+      "to_phase": "forward_0"
+    },
+    {
+      "forward_host_ns": 5263023592,
+      "from_phase": "forward_0",
+      "full_over_interval": 0.8658337241940066,
+      "full_sum_ns": 4562654093,
+      "group_full_checks": 1048,
+      "group_full_ns": 1804896197,
+      "interval": 2,
+      "interval_full_over_forward": 0.8669263994817373,
+      "interval_host_ns": 5269665486,
+      "publication_full_checks": 288,
+      "publication_full_ns": 497736156,
+      "rank_full_checks": 1332,
+      "rank_full_ns": 2260021740,
+      "route": "shared",
+      "to_phase": "forward_1"
+    },
+    {
+      "forward_host_ns": 5755813128,
+      "from_phase": "forward_1",
+      "full_over_interval": 0.876133543967369,
+      "full_sum_ns": 5048430197,
+      "group_full_checks": 1336,
+      "group_full_ns": 2295972866,
+      "interval": 3,
+      "interval_full_over_forward": 0.8771011297154816,
+      "interval_host_ns": 5762169742,
+      "publication_full_checks": 288,
+      "publication_full_ns": 496875809,
+      "rank_full_checks": 1332,
+      "rank_full_ns": 2255581522,
+      "route": "shared",
+      "to_phase": "forward_2"
+    },
+    {
+      "forward_host_ns": 5767707055,
+      "from_phase": "forward_2",
+      "full_over_interval": 0.8769213767031617,
+      "full_sum_ns": 5063609560,
+      "group_full_checks": 1336,
+      "group_full_ns": 2299717453,
+      "interval": 4,
+      "interval_full_over_forward": 0.8779241927015657,
+      "interval_host_ns": 5774302799,
+      "publication_full_checks": 288,
+      "publication_full_ns": 498296949,
+      "rank_full_checks": 1332,
+      "rank_full_ns": 2265595158,
+      "route": "shared",
+      "to_phase": "forward_3"
+    },
+    {
+      "forward_host_ns": null,
+      "from_phase": "forward_3",
+      "full_over_interval": 0.0,
+      "full_sum_ns": 0,
+      "group_full_checks": 0,
+      "group_full_ns": 0,
+      "interval": 5,
+      "interval_full_over_forward": null,
+      "interval_host_ns": 6463864,
+      "publication_full_checks": 0,
+      "publication_full_ns": 0,
+      "rank_full_checks": 0,
+      "rank_full_ns": 0,
+      "route": "shared",
+      "to_phase": "before_close"
+    }
+  ],
+  "lifecycle_and_full_admission_replayed": false,
+  "output_tokens": {
+    "default": [
+      67,
+      25,
+      576,
+      2701
+    ],
+    "shared": [
+      67,
+      25,
+      576,
+      2701
+    ]
+  },
+  "pair": {
+    "bytes": 13101,
+    "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/shared-host-pair-export-v228-v1/prefix-projection-ar4-shared-host-pair-v228-v1/complete.json",
+    "sha256": "095070cb312dd286ec76b0b72c11c82c96c073f2dc6fc84996efc30d8ba48994"
+  },
+  "payload_sha256": {
+    "default": [
+      "1324a6056ea6c0308e912c63ed1b6a6d27e103c915c6dde11ff600d97cf9b1b0",
+      "61f56a5b97e4f35922bf7733a74b36b8dec9544a15d66980757bf9ef5aefc6e4",
+      "87d3799724693386909e97fd3ea31fab065de021824dea276218614f2a0fc85a",
+      "7c40126b76a7eeb7a64ef67950636359ba951cafcdce2ddc42636388de3c5588"
+    ],
+    "shared": [
+      "1324a6056ea6c0308e912c63ed1b6a6d27e103c915c6dde11ff600d97cf9b1b0",
+      "61f56a5b97e4f35922bf7733a74b36b8dec9544a15d66980757bf9ef5aefc6e4",
+      "87d3799724693386909e97fd3ea31fab065de021824dea276218614f2a0fc85a",
+      "7c40126b76a7eeb7a64ef67950636359ba951cafcdce2ddc42636388de3c5588"
+    ]
+  },
+  "payloads_byte_equal": [
+    true,
+    true,
+    true,
+    true
+  ],
+  "performance_claim": false,
+  "production_authority": false,
+  "schema": "ferric-p228-projection-ar4-shared-host-pair-analysis-v1",
+  "single_pair": true,
+  "sustained_700_tokens_per_second_claim": false,
+  "timing": {
+    "default": {
+      "close_host_ns": 26449168395,
+      "configuration_host_ns": null,
+      "final_serialization_interval_host_ns": 6514104,
+      "forward_host_ns": [
+        10556575434,
+        10564496619,
+        12486571230,
+        12477321865
+      ],
+      "serialization_host_ns": [
+        2606591,
+        4764643,
+        2518282,
+        2491601
+      ],
+      "setup_interval_host_ns": 167073904487
+    },
+    "shared": {
+      "close_host_ns": 12514136128,
+      "configuration_host_ns": 22003624,
+      "final_serialization_interval_host_ns": 6463864,
+      "forward_host_ns": [
+        5245101512,
+        5263023592,
+        5755813128,
+        5767707055
+      ],
+      "serialization_host_ns": [
+        2609211,
+        2492572,
+        2497202,
+        2476962
+      ],
+      "setup_interval_host_ns": 89953355941
+    }
+  },
+  "timing_categories_are_not_additive": true,
+  "warmed_cache_order_confound": true
+}

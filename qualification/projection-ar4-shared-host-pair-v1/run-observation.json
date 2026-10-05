@@ -1,0 +1,48 @@
+{
+  "schema": "ferric-p228-shared-host-pair-primary-observation-v1",
+  "observed_date_utc": "2026-10-05",
+  "ssh_host": "mi350",
+  "native_execution": {
+    "session_id": 34673,
+    "terminal_output_chunk": "3327dc",
+    "exit_code": 0,
+    "pair_receipt_sha256": "095070cb312dd286ec76b0b72c11c82c96c073f2dc6fc84996efc30d8ba48994",
+    "default_receipt_sha256": "da039b8dfeea0e11e66440c2c628db1d92da507ec901ef791b46ea6f5ab55bf5",
+    "shared_receipt_sha256": "4163ba9800fe9176abfacf819d73f0b571b2ac09bcb0ce3d01caefcdf4380bcd",
+    "passed": true,
+    "retries": 0,
+    "command": "timeout --signal=TERM --kill-after=120s 8860s env -u PYTHONPATH -u PYTHONHOME -u PYTHONOPTIMIZE PYTHONDONTWRITEBYTECODE=1 taskset -c 8,9 /usr/bin/python3 -B /home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-projection-ar4-shared-host-gpu-v1/pair.py /home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/shared-host-pair-plan-v228-v1.json 30f8088099c0a06dbaec121ee736be58cd7fdbbf6db494ae51bf178eb9644b97"
+  },
+  "data_export": {
+    "session_id": 40965,
+    "terminal_output_chunk": "19171b",
+    "exit_code": 0,
+    "archive_bytes": 4405236,
+    "archive_sha256": "59dc2ad042afc92d5676ff05a384133db004f97781a73b28df61b6167821745c",
+    "original_bodies": 128,
+    "original_body_bytes": 11196879,
+    "additional_export_manifest": true,
+    "local_hash_verification_chunk": "328982",
+    "previously_retained_identical_bodies": 9
+  },
+  "local_analysis": {
+    "session_id": 91570,
+    "terminal_output_chunk": "d717b4",
+    "exit_code": 0,
+    "analyzer_sha256": "2e51255a44ef4198ea550f83dd1c68e1e3925a3ac17530e5733874a30c335b09",
+    "analysis_sha256": "f5a0b6fa5048b1802344610bd7951170956a455f3eab43c32600a08072777e63",
+    "payloads_byte_equal": [true, true, true, true],
+    "plot_sha256": "c9677a90380d90993eab43fa4b38bec144c2265c85663b2284bcd40efaa57ec3",
+    "plot_command_output_chunk": "37560e",
+    "plot_chrome_render_session_id": 25919,
+    "plot_chrome_render_terminal_chunk": "523a57",
+    "plot_visually_inspected": true
+  },
+  "single_fixed_order_pair": true,
+  "independent_numerical_acceptance": false,
+  "gpu_time": false,
+  "sustained_2048_256": false,
+  "sustained_700_tokens_per_second": false,
+  "production_authority": false,
+  "milestones_closed": []
+}
