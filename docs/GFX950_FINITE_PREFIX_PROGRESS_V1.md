@@ -6,7 +6,15 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Latest: [the projection-residual / MLP ordered segment passed CPU qualification on ASROCK](../qualification/projection-ordered-segment-cpu-v1/README.md).
+Latest: [the ordered comparison harness passed 174 policy tests on MI350](../qualification/projection-ordered-segment-gpu-preparation-v1/README.md).
+Sixteen deployment-selector and thirteen input-assembler tests also passed,
+with unchanged sources. The preceding V2 missing-artifact error and its fix
+are retained explicitly. These are synthetic CPU tests, not a new native
+GPU result. Fresh runtime audits, reviewed inputs and the matched shared-full /
+ordered comparison remain separate gates. All milestones and the performance
+target remain open.
+
+Previously, [the projection-residual / MLP ordered segment passed CPU qualification on ASROCK](../qualification/projection-ordered-segment-cpu-v1/README.md).
 All 75 phases passed, including the corrected default-feature check: 1,848
 Rust test executions passed with seven historical ignores, five executables
 were built, and all integrity postchecks passed. Seventeen controller policy

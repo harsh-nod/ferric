@@ -1,0 +1,33 @@
+{
+  "schema": "ferric-ordered-segment-mi350-adapter-tests-primary-v1",
+  "scope": "Root-observed CPU-only policy tests on MI350; not executable runtime audits, GPU qualification, numerical acceptance or performance evidence.",
+  "host": "smci350-rck-g03-b19-03",
+  "tests": [
+    {
+      "command": "env -u PYTHONPATH -u PYTHONHOME -u PYTHONOPTIMIZE HIP_VISIBLE_DEVICES= ROCR_VISIBLE_DEVICES= CUDA_VISIBLE_DEVICES= GPU_DEVICE_ORDINAL= timeout --signal=TERM --kill-after=5s 120s prlimit --as=536870912 --cpu=60 --fsize=16777216 --core=0 taskset -c 8,9 nice -n 10 /usr/bin/python3 -B /home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-projection-ordered-segment-deployment-v3/test_audit_projection_ordered_segment_runtime.py -v",
+      "result_chunk": "e1ac61",
+      "exit_code": 0,
+      "passed": 16,
+      "reported_seconds": 0.007,
+      "controller_sha256": "07b3d7e8cbb7890d310d7a69f21cf9a9ae76c67956739332dc54ed6fb216eb80",
+      "test_sha256": "b69d15f8784278fc9995a2d944f01c517e843ce7a5efc8498542276a0288212f",
+      "readme_sha256": "bd9bcd9ebced4efe5032ec1ffe643c3383e7bffd22cc10ac1302c845313fe0db"
+    },
+    {
+      "command": "env -u PYTHONPATH -u PYTHONHOME -u PYTHONOPTIMIZE HIP_VISIBLE_DEVICES= ROCR_VISIBLE_DEVICES= CUDA_VISIBLE_DEVICES= GPU_DEVICE_ORDINAL= timeout --signal=TERM --kill-after=5s 120s prlimit --as=536870912 --cpu=60 --fsize=16777216 --core=0 taskset -c 8,9 nice -n 10 /usr/bin/python3 -B /home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-projection-ordered-segment-inputs-v3/test_prepare.py -v",
+      "result_chunk": "71564f",
+      "exit_code": 0,
+      "passed": 13,
+      "reported_seconds": 0.005,
+      "controller_sha256": "a9c7162c886ddd3a9cbf6b73c0d77f800b18722de2698d6cc1ae427ec7d409f0",
+      "test_sha256": "f77bbdacc37bc6d263cf1050be898a84535050e2b7e5821f6bfb1aba874fcdb4",
+      "readme_sha256": "00b87ea166a15236815db51658965b183a53a36aeb0f97c9e7c2de44830e0369"
+    }
+  ],
+  "body_hashes_before_chunk": "e286eb",
+  "body_hashes_after_chunk": "aa9ea5",
+  "body_hashes_unchanged": true,
+  "gpu_execution": false,
+  "numerical_acceptance": false,
+  "performance_claim": false
+}

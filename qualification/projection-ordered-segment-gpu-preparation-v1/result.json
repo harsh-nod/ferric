@@ -1,0 +1,906 @@
+{
+  "data_only_publication": true,
+  "files": {
+    "adapters/p228-projection-ordered-segment-deployment-v3/README.md": {
+      "bytes": 5392,
+      "original": {
+        "bytes": 5392,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-projection-ordered-segment-deployment-v3/README.md",
+        "sha256": "bd9bcd9ebced4efe5032ec1ffe643c3383e7bffd22cc10ac1302c845313fe0db"
+      },
+      "sha256": "bd9bcd9ebced4efe5032ec1ffe643c3383e7bffd22cc10ac1302c845313fe0db"
+    },
+    "adapters/p228-projection-ordered-segment-deployment-v3/audit_projection_ordered_segment_runtime.py": {
+      "bytes": 9361,
+      "original": {
+        "bytes": 9361,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-projection-ordered-segment-deployment-v3/audit_projection_ordered_segment_runtime.py",
+        "sha256": "07b3d7e8cbb7890d310d7a69f21cf9a9ae76c67956739332dc54ed6fb216eb80"
+      },
+      "sha256": "07b3d7e8cbb7890d310d7a69f21cf9a9ae76c67956739332dc54ed6fb216eb80"
+    },
+    "adapters/p228-projection-ordered-segment-deployment-v3/test_audit_projection_ordered_segment_runtime.py": {
+      "bytes": 10237,
+      "original": {
+        "bytes": 10237,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-projection-ordered-segment-deployment-v3/test_audit_projection_ordered_segment_runtime.py",
+        "sha256": "b69d15f8784278fc9995a2d944f01c517e843ce7a5efc8498542276a0288212f"
+      },
+      "sha256": "b69d15f8784278fc9995a2d944f01c517e843ce7a5efc8498542276a0288212f"
+    },
+    "adapters/p228-projection-ordered-segment-inputs-v3/README.md": {
+      "bytes": 5330,
+      "original": {
+        "bytes": 5330,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-projection-ordered-segment-inputs-v3/README.md",
+        "sha256": "00b87ea166a15236815db51658965b183a53a36aeb0f97c9e7c2de44830e0369"
+      },
+      "sha256": "00b87ea166a15236815db51658965b183a53a36aeb0f97c9e7c2de44830e0369"
+    },
+    "adapters/p228-projection-ordered-segment-inputs-v3/prepare.py": {
+      "bytes": 15731,
+      "original": {
+        "bytes": 15731,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-projection-ordered-segment-inputs-v3/prepare.py",
+        "sha256": "a9c7162c886ddd3a9cbf6b73c0d77f800b18722de2698d6cc1ae427ec7d409f0"
+      },
+      "sha256": "a9c7162c886ddd3a9cbf6b73c0d77f800b18722de2698d6cc1ae427ec7d409f0"
+    },
+    "adapters/p228-projection-ordered-segment-inputs-v3/test_prepare.py": {
+      "bytes": 13903,
+      "original": {
+        "bytes": 13903,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-projection-ordered-segment-inputs-v3/test_prepare.py",
+        "sha256": "f77bbdacc37bc6d263cf1050be898a84535050e2b7e5821f6bfb1aba874fcdb4"
+      },
+      "sha256": "f77bbdacc37bc6d263cf1050be898a84535050e2b7e5821f6bfb1aba874fcdb4"
+    },
+    "failed-v2/pure/failed.json": {
+      "bytes": 37877,
+      "original": {
+        "bytes": 37877,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-ordered-segment-gpu-pure-v228-v2/failed.json",
+        "sha256": "e040e6da0ed04682841b92b4c229fbb86bca8949cb7a3e73c9d08966be9fe393"
+      },
+      "sha256": "e040e6da0ed04682841b92b4c229fbb86bca8949cb7a3e73c9d08966be9fe393"
+    },
+    "failed-v2/pure/sources-after.json": {
+      "bytes": 9189,
+      "original": {
+        "bytes": 9189,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-ordered-segment-gpu-pure-v228-v2/sources-after.json",
+        "sha256": "bb5f76c45963dc57fc6021ccac3377748154a2109fd643fa7474e9ca62589183"
+      },
+      "sha256": "bb5f76c45963dc57fc6021ccac3377748154a2109fd643fa7474e9ca62589183"
+    },
+    "failed-v2/pure/sources-before.json": {
+      "bytes": 9189,
+      "original": {
+        "bytes": 9189,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-ordered-segment-gpu-pure-v228-v2/sources-before.json",
+        "sha256": "bb5f76c45963dc57fc6021ccac3377748154a2109fd643fa7474e9ca62589183"
+      },
+      "sha256": "bb5f76c45963dc57fc6021ccac3377748154a2109fd643fa7474e9ca62589183"
+    },
+    "failed-v2/pure/tests.log": {
+      "bytes": 29453,
+      "original": {
+        "bytes": 29453,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-ordered-segment-gpu-pure-v228-v2/tests.log",
+        "sha256": "9b7ca3ffcf639cdf4f6a9cbde10bf417e71225745800525f24d25851e5d273a5"
+      },
+      "sha256": "9b7ca3ffcf639cdf4f6a9cbde10bf417e71225745800525f24d25851e5d273a5"
+    },
+    "failed-v2/source/intake.py": {
+      "bytes": 74790,
+      "original": {
+        "bytes": 74790,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-projection-ordered-segment-gpu-v2/intake.py",
+        "sha256": "1979e820907c1632c78cda0ef5781fbf3a86aad5a44fa9fd3dc19092c145fdf8"
+      },
+      "sha256": "1979e820907c1632c78cda0ef5781fbf3a86aad5a44fa9fd3dc19092c145fdf8"
+    },
+    "failed-v2/source/manifest.json": {
+      "bytes": 5666,
+      "original": {
+        "bytes": 5666,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-projection-ordered-segment-gpu-v2/manifest.json",
+        "sha256": "adceb1ffceef393ad5f06a797cec0e2d037453b31798fb59c86d29e0109a1177"
+      },
+      "sha256": "adceb1ffceef393ad5f06a797cec0e2d037453b31798fb59c86d29e0109a1177"
+    },
+    "failed-v2/source/run_projection_ordered_segment_gpu_pure_p228_v2.py": {
+      "bytes": 8944,
+      "original": {
+        "bytes": 8944,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-projection-ordered-segment-gpu-v2/run_projection_ordered_segment_gpu_pure_p228_v2.py",
+        "sha256": "20bea4bf63e1fb0cb606930128cce34e1d25a3c1504345cae1eb160585ee9463"
+      },
+      "sha256": "20bea4bf63e1fb0cb606930128cce34e1d25a3c1504345cae1eb160585ee9463"
+    },
+    "failed-v2/source/test_linked_admission.py": {
+      "bytes": 12334,
+      "original": {
+        "bytes": 12334,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-projection-ordered-segment-gpu-v2/test_linked_admission.py",
+        "sha256": "c6ab306043e6a333d807f8aced9994381be5a823790f367968e494a12866d98f"
+      },
+      "sha256": "c6ab306043e6a333d807f8aced9994381be5a823790f367968e494a12866d98f"
+    },
+    "primary/adapter-tests.json": {
+      "bytes": 2181,
+      "original": {
+        "bytes": 2181,
+        "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/ordered-segment-mi350-adapter-tests-primary-v228-v3.json",
+        "sha256": "4b6723dce6ec823c4baa68fb2940e70f82b984ccdc8ad6a46ea03273b7493311"
+      },
+      "sha256": "4b6723dce6ec823c4baa68fb2940e70f82b984ccdc8ad6a46ea03273b7493311"
+    },
+    "pure/complete.json": {
+      "bytes": 37876,
+      "original": {
+        "bytes": 37876,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-ordered-segment-gpu-pure-v228-v3/complete.json",
+        "sha256": "000fb1158483b2a0255d85743da2c9c35e59fd2e6ea5d5c7a3dbc54401dfa4d5"
+      },
+      "sha256": "000fb1158483b2a0255d85743da2c9c35e59fd2e6ea5d5c7a3dbc54401dfa4d5"
+    },
+    "pure/sources-after.json": {
+      "bytes": 9189,
+      "original": {
+        "bytes": 9189,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-ordered-segment-gpu-pure-v228-v3/sources-after.json",
+        "sha256": "c23d87a5ce3ee17078a69d653cf0611f08ba2a66a7849b6e6511a9a2e46d2ac3"
+      },
+      "sha256": "c23d87a5ce3ee17078a69d653cf0611f08ba2a66a7849b6e6511a9a2e46d2ac3"
+    },
+    "pure/sources-before.json": {
+      "bytes": 9189,
+      "original": {
+        "bytes": 9189,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-ordered-segment-gpu-pure-v228-v3/sources-before.json",
+        "sha256": "c23d87a5ce3ee17078a69d653cf0611f08ba2a66a7849b6e6511a9a2e46d2ac3"
+      },
+      "sha256": "c23d87a5ce3ee17078a69d653cf0611f08ba2a66a7849b6e6511a9a2e46d2ac3"
+    },
+    "pure/tests.log": {
+      "bytes": 28104,
+      "original": {
+        "bytes": 28104,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-ordered-segment-gpu-pure-v228-v3/tests.log",
+        "sha256": "ae2c1d09693f8a6c54f94efadab1db11102d72be8cc3356e5774028a2ffb6dd6"
+      },
+      "sha256": "ae2c1d09693f8a6c54f94efadab1db11102d72be8cc3356e5774028a2ffb6dd6"
+    },
+    "source/INTAKE.md": {
+      "bytes": 3685,
+      "original": {
+        "bytes": 3685,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-projection-ordered-segment-gpu-v3/INTAKE.md",
+        "sha256": "68f89cd2aaa64fd6acc5ac3ab78822db723a868fa9afadf1ea5b1c0812695ec7"
+      },
+      "sha256": "68f89cd2aaa64fd6acc5ac3ab78822db723a868fa9afadf1ea5b1c0812695ec7"
+    },
+    "source/README.md": {
+      "bytes": 7760,
+      "original": {
+        "bytes": 7760,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-projection-ordered-segment-gpu-v3/README.md",
+        "sha256": "9e58a58fe68e1906c51010d0c52a81674fbfb0e45948f1a1450025f9c87c306b"
+      },
+      "sha256": "9e58a58fe68e1906c51010d0c52a81674fbfb0e45948f1a1450025f9c87c306b"
+    },
+    "source/decode_validation.py": {
+      "bytes": 20422,
+      "original": {
+        "bytes": 20422,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-projection-ordered-segment-gpu-v3/decode_validation.py",
+        "sha256": "0eb96d4ac5e10e7f6ac10b018692c56f969286949681be336cb6040d56f01422"
+      },
+      "sha256": "0eb96d4ac5e10e7f6ac10b018692c56f969286949681be336cb6040d56f01422"
+    },
+    "source/host_validation.py": {
+      "bytes": 13150,
+      "original": {
+        "bytes": 13150,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-projection-ordered-segment-gpu-v3/host_validation.py",
+        "sha256": "dac901f6b575681945ebd2e9bf5b0c73d74dbd51a35bcb8093cd9dad7e68992b"
+      },
+      "sha256": "dac901f6b575681945ebd2e9bf5b0c73d74dbd51a35bcb8093cd9dad7e68992b"
+    },
+    "source/intake.py": {
+      "bytes": 74896,
+      "original": {
+        "bytes": 74896,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-projection-ordered-segment-gpu-v3/intake.py",
+        "sha256": "b9e3057d08d993e1423e12e3226c64c7beaed9695a6d78c7c306fc229267b04a"
+      },
+      "sha256": "b9e3057d08d993e1423e12e3226c64c7beaed9695a6d78c7c306fc229267b04a"
+    },
+    "source/layer_validation.py": {
+      "bytes": 16186,
+      "original": {
+        "bytes": 16186,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-projection-ordered-segment-gpu-v3/layer_validation.py",
+        "sha256": "757c077979b7ee02d4c0e7d222e75292cd9d417927f84ae9a8134344f8e217b9"
+      },
+      "sha256": "757c077979b7ee02d4c0e7d222e75292cd9d417927f84ae9a8134344f8e217b9"
+    },
+    "source/manifest.json": {
+      "bytes": 5666,
+      "original": {
+        "bytes": 5666,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-projection-ordered-segment-gpu-v3/manifest.json",
+        "sha256": "054b11e3eae9389dad6dc42f216b2ccfc81115436340cab572fda7f93d8d4d69"
+      },
+      "sha256": "054b11e3eae9389dad6dc42f216b2ccfc81115436340cab572fda7f93d8d4d69"
+    },
+    "source/observer_cpu.py": {
+      "bytes": 9772,
+      "original": {
+        "bytes": 9772,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-projection-ordered-segment-gpu-v3/observer_cpu.py",
+        "sha256": "ac69404cec3d51d733daeb81dda3f51947c4c0a8065c7644946b8e4238ea4a72"
+      },
+      "sha256": "ac69404cec3d51d733daeb81dda3f51947c4c0a8065c7644946b8e4238ea4a72"
+    },
+    "source/ordered_cpu.py": {
+      "bytes": 12409,
+      "original": {
+        "bytes": 12409,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-projection-ordered-segment-gpu-v3/ordered_cpu.py",
+        "sha256": "5dab53e4f966e298c34b1ccc1276325d86509962ee13aef7036fd8e0350293da"
+      },
+      "sha256": "5dab53e4f966e298c34b1ccc1276325d86509962ee13aef7036fd8e0350293da"
+    },
+    "source/ordered_pair.py": {
+      "bytes": 11468,
+      "original": {
+        "bytes": 11468,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-projection-ordered-segment-gpu-v3/ordered_pair.py",
+        "sha256": "29a341fd095bd40d3d20ab7128fb2716a6178e96dd8faf2922f3f597a56f0b7a"
+      },
+      "sha256": "29a341fd095bd40d3d20ab7128fb2716a6178e96dd8faf2922f3f597a56f0b7a"
+    },
+    "source/ordered_validation.py": {
+      "bytes": 21182,
+      "original": {
+        "bytes": 21182,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-projection-ordered-segment-gpu-v3/ordered_validation.py",
+        "sha256": "193281915574cdcfcb3da69355fc9ab4edd727ec8c8ae72a146c2d1b03a70e1c"
+      },
+      "sha256": "193281915574cdcfcb3da69355fc9ab4edd727ec8c8ae72a146c2d1b03a70e1c"
+    },
+    "source/pair.py": {
+      "bytes": 10644,
+      "original": {
+        "bytes": 10644,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-projection-ordered-segment-gpu-v3/pair.py",
+        "sha256": "4feae8eade5b78434223ee3bb0d23f7772006a31105e783017415b00613b0b9b"
+      },
+      "sha256": "4feae8eade5b78434223ee3bb0d23f7772006a31105e783017415b00613b0b9b"
+    },
+    "source/prefix_contracts.py": {
+      "bytes": 13306,
+      "original": {
+        "bytes": 13306,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-projection-ordered-segment-gpu-v3/prefix_contracts.py",
+        "sha256": "694be9d199cd92b2d11ff4fe8401ad3728497bd8846b5d6924311330f3d9de1a"
+      },
+      "sha256": "694be9d199cd92b2d11ff4fe8401ad3728497bd8846b5d6924311330f3d9de1a"
+    },
+    "source/run.py": {
+      "bytes": 17137,
+      "original": {
+        "bytes": 17137,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-projection-ordered-segment-gpu-v3/run.py",
+        "sha256": "2eca8d0d42c01fc8cabfb32171f53a9bc772b53628b394905ec771d20ce66e26"
+      },
+      "sha256": "2eca8d0d42c01fc8cabfb32171f53a9bc772b53628b394905ec771d20ce66e26"
+    },
+    "source/run_projection_ordered_segment_gpu_pure_p228_v3.py": {
+      "bytes": 8944,
+      "original": {
+        "bytes": 8944,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-projection-ordered-segment-gpu-v3/run_projection_ordered_segment_gpu_pure_p228_v3.py",
+        "sha256": "c75159850159feab4ae4092c09e649ef1b7b62907b37c741678b7c02a8fffddc"
+      },
+      "sha256": "c75159850159feab4ae4092c09e649ef1b7b62907b37c741678b7c02a8fffddc"
+    },
+    "source/run_row_facts_v2.py": {
+      "bytes": 12424,
+      "original": {
+        "bytes": 12424,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-projection-ordered-segment-gpu-v3/run_row_facts_v2.py",
+        "sha256": "244c12f62c8a439aa01b44380fc464008b94006bc919201c8d510c64177fc820"
+      },
+      "sha256": "244c12f62c8a439aa01b44380fc464008b94006bc919201c8d510c64177fc820"
+    },
+    "source/shared_cpu.py": {
+      "bytes": 11033,
+      "original": {
+        "bytes": 11033,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-projection-ordered-segment-gpu-v3/shared_cpu.py",
+        "sha256": "27bec0dfac25c2f0360589b8455652ea912032161b621dcde77c4ce3dcbf5e34"
+      },
+      "sha256": "27bec0dfac25c2f0360589b8455652ea912032161b621dcde77c4ce3dcbf5e34"
+    },
+    "source/smoke_validation.py": {
+      "bytes": 14980,
+      "original": {
+        "bytes": 14980,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-projection-ordered-segment-gpu-v3/smoke_validation.py",
+        "sha256": "9bf460451e722452da9c49168c730615d32e9b73b200c579f003e9e45238ea26"
+      },
+      "sha256": "9bf460451e722452da9c49168c730615d32e9b73b200c579f003e9e45238ea26"
+    },
+    "source/stage_core.py": {
+      "bytes": 12074,
+      "original": {
+        "bytes": 12074,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-projection-ordered-segment-gpu-v3/stage_core.py",
+        "sha256": "7e3d64e80e66bacbbba05ac3236189249949bb95ea3f717150822cf45740eec2"
+      },
+      "sha256": "7e3d64e80e66bacbbba05ac3236189249949bb95ea3f717150822cf45740eec2"
+    },
+    "source/test_decode_validation.py": {
+      "bytes": 18459,
+      "original": {
+        "bytes": 18459,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-projection-ordered-segment-gpu-v3/test_decode_validation.py",
+        "sha256": "f36d5a8cc321cb3df26049a5941ffd52e0ebe401213cce9e03cc7fd987c3c253"
+      },
+      "sha256": "f36d5a8cc321cb3df26049a5941ffd52e0ebe401213cce9e03cc7fd987c3c253"
+    },
+    "source/test_host_validation.py": {
+      "bytes": 8680,
+      "original": {
+        "bytes": 8680,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-projection-ordered-segment-gpu-v3/test_host_validation.py",
+        "sha256": "10899d67581aa5efa94066a38b634b9437590e0d27b072451e089f4d098585e2"
+      },
+      "sha256": "10899d67581aa5efa94066a38b634b9437590e0d27b072451e089f4d098585e2"
+    },
+    "source/test_intake.py": {
+      "bytes": 16494,
+      "original": {
+        "bytes": 16494,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-projection-ordered-segment-gpu-v3/test_intake.py",
+        "sha256": "6a71722c93f80863849070ce325dc2d5465d72658f3cf48ed1d33fb1502d809f"
+      },
+      "sha256": "6a71722c93f80863849070ce325dc2d5465d72658f3cf48ed1d33fb1502d809f"
+    },
+    "source/test_linked_admission.py": {
+      "bytes": 12847,
+      "original": {
+        "bytes": 12847,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-projection-ordered-segment-gpu-v3/test_linked_admission.py",
+        "sha256": "48a0358b8b50190cfbb55dfdbb4df5619d7b21f81d7b64df5a14b73fec0404af"
+      },
+      "sha256": "48a0358b8b50190cfbb55dfdbb4df5619d7b21f81d7b64df5a14b73fec0404af"
+    },
+    "source/test_observer_cpu.py": {
+      "bytes": 7343,
+      "original": {
+        "bytes": 7343,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-projection-ordered-segment-gpu-v3/test_observer_cpu.py",
+        "sha256": "cceefb3d440df4042218eafba2290acb0b9e8396a5ae77332ae5dce0d1cc3f2e"
+      },
+      "sha256": "cceefb3d440df4042218eafba2290acb0b9e8396a5ae77332ae5dce0d1cc3f2e"
+    },
+    "source/test_ordered_cpu.py": {
+      "bytes": 7444,
+      "original": {
+        "bytes": 7444,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-projection-ordered-segment-gpu-v3/test_ordered_cpu.py",
+        "sha256": "5b07157eadc6c6573b4413facb900f91b51a150e4137951e1f11331bf1552dd8"
+      },
+      "sha256": "5b07157eadc6c6573b4413facb900f91b51a150e4137951e1f11331bf1552dd8"
+    },
+    "source/test_ordered_host.py": {
+      "bytes": 6818,
+      "original": {
+        "bytes": 6818,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-projection-ordered-segment-gpu-v3/test_ordered_host.py",
+        "sha256": "2f45889b12c2d5917c1f636fe9e82d5afba5479ed9a071d3028bf3b2c91343b0"
+      },
+      "sha256": "2f45889b12c2d5917c1f636fe9e82d5afba5479ed9a071d3028bf3b2c91343b0"
+    },
+    "source/test_ordered_pair.py": {
+      "bytes": 9745,
+      "original": {
+        "bytes": 9745,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-projection-ordered-segment-gpu-v3/test_ordered_pair.py",
+        "sha256": "47fc4d183c07a639bdb60d57d16ff1a5db2c98b7f551f3d6c39c0e2880f73e07"
+      },
+      "sha256": "47fc4d183c07a639bdb60d57d16ff1a5db2c98b7f551f3d6c39c0e2880f73e07"
+    },
+    "source/test_ordered_validation.py": {
+      "bytes": 19952,
+      "original": {
+        "bytes": 19952,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-projection-ordered-segment-gpu-v3/test_ordered_validation.py",
+        "sha256": "309beecdabd44c3cffb6ef49b0ec6ae276bb4b3ece2eb6fb1998fb25a6452d42"
+      },
+      "sha256": "309beecdabd44c3cffb6ef49b0ec6ae276bb4b3ece2eb6fb1998fb25a6452d42"
+    },
+    "source/test_pair.py": {
+      "bytes": 9309,
+      "original": {
+        "bytes": 9309,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-projection-ordered-segment-gpu-v3/test_pair.py",
+        "sha256": "46c509b08303129299cc911adf817077da4ef97c1378948dc96085bcf3077891"
+      },
+      "sha256": "46c509b08303129299cc911adf817077da4ef97c1378948dc96085bcf3077891"
+    },
+    "source/test_rope_admission.py": {
+      "bytes": 14278,
+      "original": {
+        "bytes": 14278,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-projection-ordered-segment-gpu-v3/test_rope_admission.py",
+        "sha256": "0abb9c4a03eec3f637d7a86e77bf16d6872bc86f00e80e135f0be4f75cf1c363"
+      },
+      "sha256": "0abb9c4a03eec3f637d7a86e77bf16d6872bc86f00e80e135f0be4f75cf1c363"
+    },
+    "source/test_run.py": {
+      "bytes": 17847,
+      "original": {
+        "bytes": 17847,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-projection-ordered-segment-gpu-v3/test_run.py",
+        "sha256": "ed0115bfacd6d1ae9eec88d08bfcd5807851c034c7befb5cedb7d961902dddf0"
+      },
+      "sha256": "ed0115bfacd6d1ae9eec88d08bfcd5807851c034c7befb5cedb7d961902dddf0"
+    },
+    "source/test_shared_cpu.py": {
+      "bytes": 7295,
+      "original": {
+        "bytes": 7295,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-projection-ordered-segment-gpu-v3/test_shared_cpu.py",
+        "sha256": "c497ebaf133f915296a9fc80db20b2eacd863a2016ada9bf8d698c0c4c7d1423"
+      },
+      "sha256": "c497ebaf133f915296a9fc80db20b2eacd863a2016ada9bf8d698c0c4c7d1423"
+    },
+    "source/test_shared_host.py": {
+      "bytes": 6021,
+      "original": {
+        "bytes": 6021,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-projection-ordered-segment-gpu-v3/test_shared_host.py",
+        "sha256": "733f4729182b615ff34e71baf4c96f4e1756fee91042a7797baf42ca56666cb7"
+      },
+      "sha256": "733f4729182b615ff34e71baf4c96f4e1756fee91042a7797baf42ca56666cb7"
+    },
+    "source/test_silu_admission.py": {
+      "bytes": 7907,
+      "original": {
+        "bytes": 7907,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-projection-ordered-segment-gpu-v3/test_silu_admission.py",
+        "sha256": "224e3d83ab56d62c0fc69b6e0d07e2baaa5423596d6013604a8dd64c499f72be"
+      },
+      "sha256": "224e3d83ab56d62c0fc69b6e0d07e2baaa5423596d6013604a8dd64c499f72be"
+    },
+    "tools/publish.py": {
+      "bytes": 21782,
+      "original": {
+        "bytes": 21782,
+        "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/p228-projection-ordered-segment-gpu-publication-v1/publish.py",
+        "sha256": "750708a33f218441495c47957c2172dca2ff4c6e707bd5c0859a18e276d6b51e"
+      },
+      "sha256": "750708a33f218441495c47957c2172dca2ff4c6e707bd5c0859a18e276d6b51e"
+    },
+    "tools/run_projection_ordered_segment_gpu_pure_p228_v3.py": {
+      "bytes": 8944,
+      "original": {
+        "bytes": 8944,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/run_projection_ordered_segment_gpu_pure_p228_v3.py",
+        "sha256": "c75159850159feab4ae4092c09e649ef1b7b62907b37c741678b7c02a8fffddc"
+      },
+      "sha256": "c75159850159feab4ae4092c09e649ef1b7b62907b37c741678b7c02a8fffddc"
+    }
+  },
+  "full_model_acceptance": false,
+  "gpu_execution": false,
+  "limitations": [
+    "Synthetic CPU policy tests only; no native run or runtime audit is performed by this suite.",
+    "CPU compilation, executable runtime admission and native GPU execution are not performed or qualified by this publisher.",
+    "The adapter29 observation is a root primary-tool summary, not a supervisor receipt or full named transcript.",
+    "The V2 suite remains failed with one artifact-roster KeyError; its outcome is not relabeled.",
+    "External devices, models, prior GPU admissions and numerical comparisons are not revalidated here."
+  ],
+  "native_execution": false,
+  "numerical_acceptance": false,
+  "package": {
+    "bytes": 5666,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-projection-ordered-segment-gpu-v3/manifest.json",
+    "sha256": "054b11e3eae9389dad6dc42f216b2ccfc81115436340cab572fda7f93d8d4d69"
+  },
+  "performance_claim": false,
+  "primary_adapter_tests": {
+    "native_execution": false,
+    "passed": 29,
+    "primary": {
+      "bytes": 2181,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/ordered-segment-mi350-adapter-tests-primary-v228-v3.json",
+      "sha256": "4b6723dce6ec823c4baa68fb2940e70f82b984ccdc8ad6a46ea03273b7493311"
+    },
+    "root_primary_tool_observation": true,
+    "runtime_audits_performed": false,
+    "supervisor_receipt": false,
+    "tests": [
+      {
+        "authored_inventory": [
+          "test_audit_projection_ordered_segment_runtime.SelectorTests.test_actual_binary_extent_digest_and_mode_required",
+          "test_audit_projection_ordered_segment_runtime.SelectorTests.test_aliases_restore_existing_none_and_absent_entries",
+          "test_audit_projection_ordered_segment_runtime.SelectorTests.test_contract_source_or_named_test_refusal_propagates",
+          "test_audit_projection_ordered_segment_runtime.SelectorTests.test_contract_uses_source_and_exact_test_delta_without_gpu_context",
+          "test_audit_projection_ordered_segment_runtime.SelectorTests.test_explicit_package_and_actual_digests_required",
+          "test_audit_projection_ordered_segment_runtime.SelectorTests.test_historical_inventory_pin_cannot_be_omitted_or_duplicated",
+          "test_audit_projection_ordered_segment_runtime.SelectorTests.test_historical_runtime_inventory_is_unique_and_complete",
+          "test_audit_projection_ordered_segment_runtime.SelectorTests.test_loader_failure_restores_aliases",
+          "test_audit_projection_ordered_segment_runtime.SelectorTests.test_old_cpu_namespace_rejected",
+          "test_audit_projection_ordered_segment_runtime.SelectorTests.test_original_header_bytes_not_escaped_text",
+          "test_audit_projection_ordered_segment_runtime.SelectorTests.test_predecessor_package_or_mutated_helper_refuses",
+          "test_audit_projection_ordered_segment_runtime.SelectorTests.test_role_and_label_cannot_cross",
+          "test_audit_projection_ordered_segment_runtime.SelectorTests.test_three_roles_select_only_their_actual_product",
+          "test_audit_projection_ordered_segment_runtime.SelectorTests.test_wrong_predecessor_or_base_map_refuses",
+          "test_audit_projection_ordered_segment_runtime.SelectorTests.test_wrong_role_directory_or_copied_elf_rejected",
+          "test_audit_projection_ordered_segment_runtime.SelectorTests.test_x86_64_little_endian_header_required"
+        ],
+        "full_named_transcript_retained": false,
+        "observation": {
+          "command": "env -u PYTHONPATH -u PYTHONHOME -u PYTHONOPTIMIZE HIP_VISIBLE_DEVICES= ROCR_VISIBLE_DEVICES= CUDA_VISIBLE_DEVICES= GPU_DEVICE_ORDINAL= timeout --signal=TERM --kill-after=5s 120s prlimit --as=536870912 --cpu=60 --fsize=16777216 --core=0 taskset -c 8,9 nice -n 10 /usr/bin/python3 -B /home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-projection-ordered-segment-deployment-v3/test_audit_projection_ordered_segment_runtime.py -v",
+          "controller_sha256": "07b3d7e8cbb7890d310d7a69f21cf9a9ae76c67956739332dc54ed6fb216eb80",
+          "exit_code": 0,
+          "passed": 16,
+          "readme_sha256": "bd9bcd9ebced4efe5032ec1ffe643c3383e7bffd22cc10ac1302c845313fe0db",
+          "reported_seconds": 0.007,
+          "result_chunk": "e1ac61",
+          "test_sha256": "b69d15f8784278fc9995a2d944f01c517e843ce7a5efc8498542276a0288212f"
+        },
+        "passed": 16,
+        "sources": {
+          "controller": {
+            "bytes": 9361,
+            "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-projection-ordered-segment-deployment-v3/audit_projection_ordered_segment_runtime.py",
+            "sha256": "07b3d7e8cbb7890d310d7a69f21cf9a9ae76c67956739332dc54ed6fb216eb80"
+          },
+          "readme": {
+            "bytes": 5392,
+            "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-projection-ordered-segment-deployment-v3/README.md",
+            "sha256": "bd9bcd9ebced4efe5032ec1ffe643c3383e7bffd22cc10ac1302c845313fe0db"
+          },
+          "test": {
+            "bytes": 10237,
+            "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-projection-ordered-segment-deployment-v3/test_audit_projection_ordered_segment_runtime.py",
+            "sha256": "b69d15f8784278fc9995a2d944f01c517e843ce7a5efc8498542276a0288212f"
+          }
+        }
+      },
+      {
+        "authored_inventory": [
+          "test_prepare.AssemblyTests.test_both_routes_require_matching_namespaces",
+          "test_prepare.AssemblyTests.test_config_notes_bytes_explicitly_retained",
+          "test_prepare.AssemblyTests.test_intake_aliases_restore_on_success_and_failed_import",
+          "test_prepare.AssemblyTests.test_notes_explicit_and_substantive",
+          "test_prepare.AssemblyTests.test_old_cpu_or_pure_generation_refused",
+          "test_prepare.AssemblyTests.test_ordered_changes_only_explicit_schema_in_addition_to_shared_delta",
+          "test_prepare.AssemblyTests.test_package_hash_must_be_explicit_before_any_body_read",
+          "test_prepare.AssemblyTests.test_request_only_three_fields_and_lossless_u64",
+          "test_prepare.AssemblyTests.test_request_rejects_invalid_modes_ids_and_sessions",
+          "test_prepare.AssemblyTests.test_request_requires_all_three_fresh_fields",
+          "test_prepare.AssemblyTests.test_request_route_and_predecessor_are_closed",
+          "test_prepare.AssemblyTests.test_settings_accept_actual_pure_and_root_reviews",
+          "test_prepare.AssemblyTests.test_settings_refuses_relabelled_or_unspecified_reviews"
+        ],
+        "full_named_transcript_retained": false,
+        "observation": {
+          "command": "env -u PYTHONPATH -u PYTHONHOME -u PYTHONOPTIMIZE HIP_VISIBLE_DEVICES= ROCR_VISIBLE_DEVICES= CUDA_VISIBLE_DEVICES= GPU_DEVICE_ORDINAL= timeout --signal=TERM --kill-after=5s 120s prlimit --as=536870912 --cpu=60 --fsize=16777216 --core=0 taskset -c 8,9 nice -n 10 /usr/bin/python3 -B /home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-projection-ordered-segment-inputs-v3/test_prepare.py -v",
+          "controller_sha256": "a9c7162c886ddd3a9cbf6b73c0d77f800b18722de2698d6cc1ae427ec7d409f0",
+          "exit_code": 0,
+          "passed": 13,
+          "readme_sha256": "00b87ea166a15236815db51658965b183a53a36aeb0f97c9e7c2de44830e0369",
+          "reported_seconds": 0.005,
+          "result_chunk": "71564f",
+          "test_sha256": "f77bbdacc37bc6d263cf1050be898a84535050e2b7e5821f6bfb1aba874fcdb4"
+        },
+        "passed": 13,
+        "sources": {
+          "controller": {
+            "bytes": 15731,
+            "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-projection-ordered-segment-inputs-v3/prepare.py",
+            "sha256": "a9c7162c886ddd3a9cbf6b73c0d77f800b18722de2698d6cc1ae427ec7d409f0"
+          },
+          "readme": {
+            "bytes": 5330,
+            "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-projection-ordered-segment-inputs-v3/README.md",
+            "sha256": "00b87ea166a15236815db51658965b183a53a36aeb0f97c9e7c2de44830e0369"
+          },
+          "test": {
+            "bytes": 13903,
+            "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-projection-ordered-segment-inputs-v3/test_prepare.py",
+            "sha256": "f77bbdacc37bc6d263cf1050be898a84535050e2b7e5821f6bfb1aba874fcdb4"
+          }
+        }
+      }
+    ]
+  },
+  "prior_failed_policy_run": {
+    "error": "KeyError: 'emitted/source.handoff-v3'",
+    "error_test": "test_linked_admission.LinkedAdmissionTests.test_all_eight_continuation_stages_and_six_artifacts_required",
+    "errors": 1,
+    "failures": 0,
+    "full_source_body_hashes_rechecked": true,
+    "native_execution": false,
+    "package": {
+      "bytes": 5666,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-projection-ordered-segment-gpu-v2/manifest.json",
+      "sha256": "adceb1ffceef393ad5f06a797cec0e2d037453b31798fb59c86d29e0109a1177"
+    },
+    "passed": false,
+    "qualifies_v3": false,
+    "receipt": {
+      "bytes": 37877,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-ordered-segment-gpu-pure-v228-v2/failed.json",
+      "sha256": "e040e6da0ed04682841b92b4c229fbb86bca8949cb7a3e73c9d08966be9fe393"
+    },
+    "selected_source_bodies_retained": 3,
+    "skipped": 0,
+    "tests_run": 174,
+    "transcript": {
+      "bytes": 29453,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-ordered-segment-gpu-pure-v228-v2/tests.log",
+      "sha256": "9b7ca3ffcf639cdf4f6a9cbde10bf417e71225745800525f24d25851e5d273a5"
+    },
+    "unchanged_sources": {
+      "bytes": 9189,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-ordered-segment-gpu-pure-v228-v2/sources-before.json",
+      "sha256": "bb5f76c45963dc57fc6021ccac3377748154a2109fd643fa7474e9ca62589183"
+    }
+  },
+  "production_authority": false,
+  "publisher": {
+    "bytes": 21782,
+    "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/p228-projection-ordered-segment-gpu-publication-v1/publish.py",
+    "sha256": "750708a33f218441495c47957c2172dca2ff4c6e707bd5c0859a18e276d6b51e"
+  },
+  "root_readme_not_part_of_authenticated_copies": true,
+  "runtime_audit_executed": false,
+  "schema": "ferric-p228-projection-ordered-segment-gpu-preparation-publication-v1",
+  "source_postchecks_passed": true,
+  "suite": {
+    "controller": {
+      "bytes": 8944,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/run_projection_ordered_segment_gpu_pure_p228_v3.py",
+      "sha256": "c75159850159feab4ae4092c09e649ef1b7b62907b37c741678b7c02a8fffddc"
+    },
+    "elapsed_seconds": 4.798831193940714,
+    "errors": 0,
+    "failures": 0,
+    "inventory": {
+      "test_decode_validation.py": [
+        "test_decode_validation.ValidationTests.test_bootstrap_seed_and_mode_are_bound_into_ar_profile",
+        "test_decode_validation.ValidationTests.test_candidate_identity_extent_base_profile_and_original_copy_are_joined",
+        "test_decode_validation.ValidationTests.test_chain_close_and_actual_reap_flags_cannot_be_faked",
+        "test_decode_validation.ValidationTests.test_claims_retries_and_final_private_accounting_refuse",
+        "test_decode_validation.ValidationTests.test_closed_teacher_forced_transcript_cannot_be_admitted_as_ar",
+        "test_decode_validation.ValidationTests.test_complete_ar4_binds_all_payloads_controls_and_new_profile",
+        "test_decode_validation.ValidationTests.test_complete_body_roster_and_every_hashed_extent_remain_closed",
+        "test_decode_validation.ValidationTests.test_duplicate_json_keys_and_boolean_counter_are_not_scalar_authority",
+        "test_decode_validation.ValidationTests.test_every_actual_input_generation_page_and_profile_is_checked",
+        "test_decode_validation.ValidationTests.test_every_predecessor_must_be_own_checked_output_not_tf_prompt",
+        "test_decode_validation.ValidationTests.test_exact_outer_request_schema_ar_only_and_closed_fields",
+        "test_decode_validation.ValidationTests.test_extra_image_is_charged_to_original_combined_input_budget",
+        "test_decode_validation.ValidationTests.test_last_layer_last_rank_terminal_state_is_still_checked",
+        "test_decode_validation.ValidationTests.test_nonfinite_payload_and_wrong_lowest_argmax_are_refused",
+        "test_decode_validation.ValidationTests.test_stderr_requires_one_worker_marker_and_all_four_terminal_lines",
+        "test_decode_validation.ValidationTests.test_wrong_seed_refuses_even_with_self_consistent_hashes_and_chain",
+        "test_decode_validation.ValidationTests.test_zero_and_repeated_outputs_are_valid_recurrent_inputs"
+      ],
+      "test_host_validation.py": [
+        "test_host_validation.HostTests.test_closed_json_and_exact_member_preserve_u64",
+        "test_host_validation.HostTests.test_deltas_u64s_fresh_snapshot_and_false_claims",
+        "test_host_validation.HostTests.test_full_currentness_policy_and_rank_epoch_are_mandatory",
+        "test_host_validation.HostTests.test_projection_ar4_native_then_exact_sidecar",
+        "test_host_validation.HostTests.test_projection_schema_and_ar_mode_are_not_legacy_aliases",
+        "test_host_validation.HostTests.test_serialization_uses_following_interval_not_forward_interval",
+        "test_host_validation.HostTests.test_worker_projection_profile_completion_and_close_joins",
+        "test_host_validation.HostTests.test_wrapper_exact_projection_sidecar_pin_and_native_bytes"
+      ],
+      "test_intake.py": [
+        "test_intake.IntakeTests.test_ar4_cpu_lineage_has_cpu1022_between_new_runtime_and_cpu988_layer",
+        "test_intake.IntakeTests.test_ar4_cpu_requires_complete_1037_named_census_not_only_positive_total",
+        "test_intake.IntakeTests.test_ar_admission_keeps_authentic_tf_input_provenance_but_not_its_recurrence",
+        "test_intake.IntakeTests.test_cpu_name_summary_and_phase_mutations_refuse",
+        "test_intake.IntakeTests.test_nested_ar4_preserves_copy_images_and_selects_prefix_with_all_input_reads",
+        "test_intake.IntakeTests.test_new_flat_cpu_accounting_and_both_roles",
+        "test_intake.IntakeTests.test_old_tf_cpu_receipt_cannot_admit_ar4_even_with_new_artifact_fixtures",
+        "test_intake.IntakeTests.test_pending_actual_cpu_and_package_inputs_fail_closed",
+        "test_intake.IntakeTests.test_plan_is_separate_closed_ar4_namespace",
+        "test_intake.IntakeTests.test_prior_capture_bindings_do_not_relabel_old_tf4_as_new_capture",
+        "test_intake.IntakeTests.test_request_cannot_enable_tf_clocks_host_policy_or_old_schema",
+        "test_intake.IntakeTests.test_request_refuses_workload_image_session_and_bound_changes",
+        "test_intake.IntakeTests.test_root_review_binds_new_cpu_and_input_without_numerical_authority",
+        "test_intake.IntakeTests.test_selected_artifact_requires_exact_new_source_target_and_profile",
+        "test_intake.IntakeTests.test_transport_cannot_substitute_other_executable_identity",
+        "test_intake.IntakeTests.test_unqualified_image_or_inspection_refuses_before_read"
+      ],
+      "test_linked_admission.py": [
+        "test_linked_admission.LinkedAdmissionTests.test_aggregate_failure_is_never_relabelled",
+        "test_linked_admission.LinkedAdmissionTests.test_all_eight_continuation_stages_and_six_artifacts_required",
+        "test_linked_admission.LinkedAdmissionTests.test_bad_continuation_namespace_fails_before_reading",
+        "test_linked_admission.LinkedAdmissionTests.test_consumer_qualification_and_full_join_cannot_be_skipped",
+        "test_linked_admission.LinkedAdmissionTests.test_consumer_tools_cannot_use_old_producer_paths",
+        "test_linked_admission.LinkedAdmissionTests.test_false_authority_flags_are_not_inherited_from_success",
+        "test_linked_admission.LinkedAdmissionTests.test_genuine_cargo_tool_stream_and_wrong_role_rejection",
+        "test_linked_admission.LinkedAdmissionTests.test_handoff_and_transported_image_identity_refuse",
+        "test_linked_admission.LinkedAdmissionTests.test_linked_command_changes_only_consumer_paths_and_placeholder_values",
+        "test_linked_admission.LinkedAdmissionTests.test_linked_success_preserves_failed_producer",
+        "test_linked_admission.LinkedAdmissionTests.test_natural_owners_and_exact_completion_are_required",
+        "test_linked_admission.LinkedAdmissionTests.test_new_consumer_cannot_replace_producer_generation",
+        "test_linked_admission.LinkedAdmissionTests.test_old_or_mixed_generation_schema_refuses",
+        "test_linked_admission.LinkedAdmissionTests.test_scope_remains_unqualified_until_actual_new_package_tests",
+        "test_linked_admission.LinkedAdmissionTests.test_source_and_three_checked_leaves_remain_joined"
+      ],
+      "test_observer_cpu.py": [
+        "test_observer_cpu.ObserverCpuTests.test_actual_artifact_fields_not_guessed_future_hash_constants",
+        "test_observer_cpu.ObserverCpuTests.test_cpu1037_and_full_cohort_are_not_current_observer_qualification",
+        "test_observer_cpu.ObserverCpuTests.test_exact_raw_roster_and_original_role_paths",
+        "test_observer_cpu.ObserverCpuTests.test_observer_cargo_target_not_plain_parent_or_test_harness",
+        "test_observer_cpu.ObserverCpuTests.test_old_named_tests_survive_with_exact_additions_only",
+        "test_observer_cpu.ObserverCpuTests.test_root_pin_namespace_refuses_old_cpu_before_any_reader",
+        "test_observer_cpu.ObserverCpuTests.test_scoped_counts_and_natural_success_are_required",
+        "test_observer_cpu.ObserverCpuTests.test_worker_library_shared_wire_split_and_named_outcomes"
+      ],
+      "test_ordered_cpu.py": [
+        "test_ordered_cpu.OrderedCpuTests.test_additions_are_closed_sorted_unique_full_names",
+        "test_ordered_cpu.OrderedCpuTests.test_all75_leaves_and382_raw_records_are_required",
+        "test_ordered_cpu.OrderedCpuTests.test_all_old_names_and_extra_parent_selections_retained",
+        "test_ordered_cpu.OrderedCpuTests.test_four_roles_and_five_actual_products",
+        "test_ordered_cpu.OrderedCpuTests.test_no_predicted_completion_or_partial_runtime_suite",
+        "test_ordered_cpu.OrderedCpuTests.test_old_receipt_namespace_is_refused_before_read",
+        "test_ordered_cpu.OrderedCpuTests.test_role_path_profile_and_cargo_identity_cannot_be_substituted",
+        "test_ordered_cpu.OrderedCpuTests.test_runtime_baseline_has_exact900_names_and_no_addition_collision",
+        "test_ordered_cpu.OrderedCpuTests.test_worker_split_and_runtime_ignores_are_not_hidden",
+        "test_ordered_cpu.OrderedCpuTests.test_wrong_controller_or_plan_cannot_open_sources"
+      ],
+      "test_ordered_host.py": [
+        "test_ordered_host.SharedHostTests.test_configuration_is_u64_and_envelope_is_closed",
+        "test_ordered_host.SharedHostTests.test_configuration_never_changes_zero_baseline_or_interval_accounting",
+        "test_ordered_host.SharedHostTests.test_every_snapshot_requires_shared_true",
+        "test_ordered_host.SharedHostTests.test_legacy_default_and_shared_decoders_cannot_cross_admit",
+        "test_ordered_host.SharedHostTests.test_policy_and_both_schemas_are_exact",
+        "test_ordered_host.SharedHostTests.test_shared_envelope_configuration_and_exact_native_bytes",
+        "test_ordered_host.SharedHostTests.test_shared_retains_operational_cache_epoch_and_delta_refusals",
+        "test_ordered_host.SharedHostTests.test_shared_wrapper_path_pin_schema_and_projection_are_bound"
+      ],
+      "test_ordered_pair.py": [
+        "test_ordered_pair.PairTests.test_actual_generation_or_image_mismatch_cannot_pass_plan_only",
+        "test_ordered_pair.PairTests.test_comparison_records_matching_histories_and_honest_repeatability",
+        "test_ordered_pair.PairTests.test_configuration_duration_is_separate_from_interval_numerator",
+        "test_ordered_pair.PairTests.test_different_actual_own_output_history_refuses_attribution",
+        "test_ordered_pair.PairTests.test_every_snapshot_and_distinct_host_schema_must_agree",
+        "test_ordered_pair.PairTests.test_failed_arm_or_retry_cannot_become_paired_success",
+        "test_ordered_pair.PairTests.test_numerator_contains_only_rank_group_and_publication_full_time",
+        "test_ordered_pair.PairTests.test_pair_plan_has_only_two_explicit_arm_pins_and_fresh_namespace",
+        "test_ordered_pair.PairTests.test_pair_rejects_cross_generation_images_worker_or_pure_evidence",
+        "test_ordered_pair.PairTests.test_payload_acquisition_retains_bytes_before_comparing",
+        "test_ordered_pair.PairTests.test_payload_inequality_is_not_independent_numerical_acceptance",
+        "test_ordered_pair.PairTests.test_same_inputs_preserve_lossless_model_identity_and_distinct_sessions",
+        "test_ordered_pair.PairTests.test_same_model_prompt_devices_and_request_family_are_required"
+      ],
+      "test_ordered_validation.py": [
+        "test_ordered_validation.OrderedBoundaryTests.test_exact_single_segment_timing_without_fabricated_stage_pairs",
+        "test_ordered_validation.OrderedBoundaryTests.test_legacy_profile_domain_refused_even_for_matching_image",
+        "test_ordered_validation.OrderedBoundaryTests.test_ordered_control_never_enters_legacy_decoder",
+        "test_ordered_validation.ValidationTests.test_bootstrap_seed_and_mode_are_bound_into_ar_profile",
+        "test_ordered_validation.ValidationTests.test_candidate_identity_extent_base_profile_and_original_copy_are_joined",
+        "test_ordered_validation.ValidationTests.test_chain_close_and_actual_reap_flags_cannot_be_faked",
+        "test_ordered_validation.ValidationTests.test_claims_retries_and_final_private_accounting_refuse",
+        "test_ordered_validation.ValidationTests.test_closed_teacher_forced_transcript_cannot_be_admitted_as_ar",
+        "test_ordered_validation.ValidationTests.test_complete_ar4_binds_all_payloads_controls_and_new_profile",
+        "test_ordered_validation.ValidationTests.test_complete_body_roster_and_every_hashed_extent_remain_closed",
+        "test_ordered_validation.ValidationTests.test_duplicate_json_keys_and_boolean_counter_are_not_scalar_authority",
+        "test_ordered_validation.ValidationTests.test_every_actual_input_generation_page_and_profile_is_checked",
+        "test_ordered_validation.ValidationTests.test_every_predecessor_must_be_own_checked_output_not_tf_prompt",
+        "test_ordered_validation.ValidationTests.test_exact_outer_request_schema_ar_only_and_closed_fields",
+        "test_ordered_validation.ValidationTests.test_extra_image_is_charged_to_original_combined_input_budget",
+        "test_ordered_validation.ValidationTests.test_last_layer_last_rank_terminal_state_is_still_checked",
+        "test_ordered_validation.ValidationTests.test_nonfinite_payload_and_wrong_lowest_argmax_are_refused",
+        "test_ordered_validation.ValidationTests.test_stderr_requires_one_worker_marker_and_all_four_terminal_lines",
+        "test_ordered_validation.ValidationTests.test_wrong_seed_refuses_even_with_self_consistent_hashes_and_chain",
+        "test_ordered_validation.ValidationTests.test_zero_and_repeated_outputs_are_valid_recurrent_inputs"
+      ],
+      "test_pair.py": [
+        "test_pair.PairTests.test_actual_generation_or_image_mismatch_cannot_pass_plan_only",
+        "test_pair.PairTests.test_comparison_records_matching_histories_and_honest_repeatability",
+        "test_pair.PairTests.test_configuration_duration_is_separate_from_interval_numerator",
+        "test_pair.PairTests.test_different_actual_own_output_history_refuses_attribution",
+        "test_pair.PairTests.test_every_snapshot_and_distinct_host_schema_must_agree",
+        "test_pair.PairTests.test_failed_arm_or_retry_cannot_become_paired_success",
+        "test_pair.PairTests.test_numerator_contains_only_rank_group_and_publication_full_time",
+        "test_pair.PairTests.test_pair_plan_has_only_two_explicit_arm_pins_and_fresh_namespace",
+        "test_pair.PairTests.test_pair_rejects_cross_generation_images_worker_or_pure_evidence",
+        "test_pair.PairTests.test_payload_acquisition_retains_bytes_before_comparing",
+        "test_pair.PairTests.test_payload_inequality_is_not_independent_numerical_acceptance",
+        "test_pair.PairTests.test_same_inputs_preserve_lossless_model_identity_and_distinct_sessions",
+        "test_pair.PairTests.test_same_model_prompt_devices_and_request_family_are_required"
+      ],
+      "test_rope_admission.py": [
+        "test_rope_admission.RoPEAdmissionTests.test_cpu33_counts_and_unique_names_include_explicit_exhaustive",
+        "test_rope_admission.RoPEAdmissionTests.test_cpu_failure_or_native_authority_refuses",
+        "test_rope_admission.RoPEAdmissionTests.test_only_prefix_changes_while_copy_silu_residual_and_workload_stay_fixed",
+        "test_rope_admission.RoPEAdmissionTests.test_prefix_descriptor_keeps_existing_120_376_wave_launch_abi",
+        "test_rope_admission.RoPEAdmissionTests.test_rpo_receipt_and_ordinary_predecessor_pins_are_exact",
+        "test_rope_admission.RoPEAdmissionTests.test_rpo_receipt_failures_source_drift_and_tool_rebinding_refuse",
+        "test_rope_admission.RoPEAdmissionTests.test_rpo_selected_roles_alias_packages_and_sources_are_not_relabelled"
+      ],
+      "test_run.py": [
+        "test_run.RunTests.test_closed_fourteen_file_roster_refuses_missing_extra_and_symlink",
+        "test_run.RunTests.test_failed_or_forced_owner_never_qualifies",
+        "test_run.RunTests.test_failed_post_audit_does_not_skip_later_checks",
+        "test_run.RunTests.test_failed_pre_audit_prevents_native_and_keeps_all_post_audits",
+        "test_run.RunTests.test_failure_retention_allows_only_partial_known_files",
+        "test_run.RunTests.test_final_input_drift_withholds_complete",
+        "test_run.RunTests.test_inventory_propagates_walk_error_refuses_aliases_and_caps",
+        "test_run.RunTests.test_lineage_checks_actual_child_identity_when_observed",
+        "test_run.RunTests.test_one_attempt_six_audits_exact_cli_and_closed_retention",
+        "test_run.RunTests.test_ordered_route_uses_distinct_validator_marker_sidecar_and_keeps_all_audits",
+        "test_run.RunTests.test_original_leaf_resources_and_case_bounds_are_unchanged",
+        "test_run.RunTests.test_owner_parser_marker_summary_and_missing_capture_keep_evidence_without_retry",
+        "test_run.RunTests.test_route_requires_explicit_closed_name_without_fallback",
+        "test_run.RunTests.test_shared_route_keeps_seven_leaves_and_distinct_sidecar",
+        "test_run.RunTests.test_sidecar_failure_still_retains_native_and_all_post_audits"
+      ],
+      "test_shared_cpu.py": [
+        "test_shared_cpu.SharedCpuTests.test_actual_artifact_fields_not_guessed_future_hash_constants",
+        "test_shared_cpu.SharedCpuTests.test_cpu1037_and_full_cohort_are_not_current_observer_qualification",
+        "test_shared_cpu.SharedCpuTests.test_exact_raw_roster_and_original_role_paths",
+        "test_shared_cpu.SharedCpuTests.test_observer_cargo_target_not_plain_parent_or_test_harness",
+        "test_shared_cpu.SharedCpuTests.test_old_named_tests_survive_with_exact_additions_only",
+        "test_shared_cpu.SharedCpuTests.test_root_pin_namespace_refuses_old_cpu_before_any_reader",
+        "test_shared_cpu.SharedCpuTests.test_scoped_counts_and_natural_success_are_required",
+        "test_shared_cpu.SharedCpuTests.test_worker_library_shared_wire_split_and_named_outcomes"
+      ],
+      "test_shared_host.py": [
+        "test_shared_host.SharedHostTests.test_configuration_is_u64_and_envelope_is_closed",
+        "test_shared_host.SharedHostTests.test_configuration_never_changes_zero_baseline_or_interval_accounting",
+        "test_shared_host.SharedHostTests.test_every_snapshot_requires_shared_true",
+        "test_shared_host.SharedHostTests.test_legacy_default_and_shared_decoders_cannot_cross_admit",
+        "test_shared_host.SharedHostTests.test_policy_and_both_schemas_are_exact",
+        "test_shared_host.SharedHostTests.test_shared_envelope_configuration_and_exact_native_bytes",
+        "test_shared_host.SharedHostTests.test_shared_retains_operational_cache_epoch_and_delta_refusals",
+        "test_shared_host.SharedHostTests.test_shared_wrapper_path_pin_schema_and_projection_are_bound"
+      ],
+      "test_silu_admission.py": [
+        "test_silu_admission.SiLUAdmissionTests.test_actual_cpu38_owner_lowering_and_image_must_all_match_layer",
+        "test_silu_admission.SiLUAdmissionTests.test_layer_comparison_accepts_diagnostic_mismatches_without_fitted_bound",
+        "test_silu_admission.SiLUAdmissionTests.test_layer_comparison_rejects_wrong_capture_image_and_unchecked_residual",
+        "test_silu_admission.SiLUAdmissionTests.test_old_down2_cannot_be_reselected_under_new_si_lu_plan",
+        "test_silu_admission.SiLUAdmissionTests.test_private_dependency_aliases_restore_absent_none_and_object_on_all_exits",
+        "test_silu_admission.SiLUAdmissionTests.test_reference_or_gpu_success_does_not_mint_numerical_or_performance_authority",
+        "test_silu_admission.SiLUAdmissionTests.test_silu_only_replaces_selected_tiles_image_not_original_bootstrap_mlp",
+        "test_silu_admission.SiLUAdmissionTests.test_uncompleted_or_wrong_layer_refuses_before_replaying_old_evidence"
+      ]
+    },
+    "native_execution": false,
+    "passed": 174,
+    "receipt": {
+      "bytes": 37876,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-ordered-segment-gpu-pure-v228-v3/complete.json",
+      "sha256": "000fb1158483b2a0255d85743da2c9c35e59fd2e6ea5d5c7a3dbc54401dfa4d5"
+    },
+    "skipped": 0,
+    "sources": {
+      "bytes": 9189,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-ordered-segment-gpu-pure-v228-v3/sources-before.json",
+      "sha256": "c23d87a5ce3ee17078a69d653cf0611f08ba2a66a7849b6e6511a9a2e46d2ac3"
+    },
+    "synthetic_policy_tests_only": true,
+    "transcript": {
+      "bytes": 28104,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-ordered-segment-gpu-pure-v228-v3/tests.log",
+      "sha256": "ae2c1d09693f8a6c54f94efadab1db11102d72be8cc3356e5774028a2ffb6dd6"
+    }
+  },
+  "tested_modules_imported": false,
+  "tests_rerun": false
+}
