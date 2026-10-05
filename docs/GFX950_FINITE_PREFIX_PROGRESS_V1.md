@@ -6,7 +6,15 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Latest: [the matched baseline confirms that the matrix refusal predates provider alignment](../qualification/guarded-mlp-provider-baseline-v1/README.md).
+Latest: [the rejected core Result helper's actual MIR is captured](../qualification/guarded-mlp-core-result-diagnostic-v1/README.md).
+The diagnostic compiler built on MI350, six rendering tests passed, and the
+unchanged matrix test retained its original rejection. The complete bounded
+observation includes five blocks, six locals and three source scopes, with no
+calls or inlined scopes. All 19 phases exited naturally and were reaped, with
+clean integrity postchecks. This enables an exact helper-body check; it grants
+no admission, provider qualification, GPU result or performance claim.
+
+Previously, [the matched baseline confirms that the matrix refusal predates provider alignment](../qualification/guarded-mlp-provider-baseline-v1/README.md).
 The published previous revision failed at the same core `Result::branch`
 source-safety check, using matching build selections, tools and environments.
 All 18 baseline phases exited naturally and were reaped; integrity postchecks
