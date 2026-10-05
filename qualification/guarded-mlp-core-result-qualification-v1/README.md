@@ -126,9 +126,11 @@ now gets past the Result wrappers and rejects
 `core::convert::num::<impl core::convert::From<u32> for u64>::from`, reached
 from `accessed_extent`. Cross-crate HIR is unavailable and optimized MIR does
 not retain unsafe-block syntax. This is the concrete numeric widening
-implementation, not identity `From<T>`. Its actual body must be observed
-before any narrow source-origin rule is added; arbitrary `From` calls remain
-untrusted. The attention control was not reached.
+implementation, not identity `From<T>`. A subsequent
+[diagnostic captured its actual body](../guarded-mlp-core-u32-widening-diagnostic-v1/README.md)
+without granting admission. Any narrow source-origin rule still requires its
+own qualification; arbitrary `From` calls remain untrusted. The attention
+control was not reached.
 
 All 34 V7 phases exited naturally and were reaped. The first 33 returned zero;
 matrix extraction returned 101 after 15.547 seconds. Sources were unchanged

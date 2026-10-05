@@ -1,0 +1,42 @@
+{
+  "adopted_reaped": [],
+  "argv": [
+    "/usr/bin/prlimit",
+    "--as=12884901888",
+    "--cpu=1200",
+    "--fsize=1073741824",
+    "--core=0",
+    "--",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-u32-widening-diagnostic-cpu-v228-v1/target/debug/deps/rustc_codegen_fe2o3-5db184f14eef1d1c",
+    "collector::core_u32_widening_diagnostic_v1::",
+    "--test-threads=1"
+  ],
+  "command": {
+    "bytes": 2414,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-u32-widening-diagnostic-cpu-v228-v1/evidence/core-u32-widening-diagnostic-tests.command.json",
+    "sha256": "ee67904cb31d6810c9be13cb4bb0fedbbf3f84a3eb76fdde2a24c620301435ce"
+  },
+  "elapsed_ns": 112521030,
+  "exception": null,
+  "exit_code": 0,
+  "forced_cleanup": false,
+  "label": "core-u32-widening-diagnostic-tests",
+  "natural_exit": true,
+  "observed_signals": [],
+  "pgid": 3686151,
+  "pid": 3686151,
+  "process_group_absent": true,
+  "reaped": true,
+  "stderr": {
+    "bytes": 0,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-u32-widening-diagnostic-cpu-v228-v1/evidence/core-u32-widening-diagnostic-tests.stderr",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "stdout": {
+    "bytes": 880,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-u32-widening-diagnostic-cpu-v228-v1/evidence/core-u32-widening-diagnostic-tests.stdout",
+    "sha256": "aaa1ebf9fac77511f77990c14c94a3e9d65b12ad8ed96129a51a12a6be361078"
+  },
+  "storage_failure": null,
+  "timed_out": false
+}

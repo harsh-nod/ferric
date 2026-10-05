@@ -6,14 +6,23 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Latest: [415 compiler tests pass; matrix extraction reaches a new core conversion refusal](../qualification/guarded-mlp-core-result-qualification-v1/README.md).
+Latest: [the rejected core u32-to-u64 conversion's complete MIR is captured](../qualification/guarded-mlp-core-u32-widening-diagnostic-v1/README.md).
+A separate diagnostic compiler built on MI350, and all six bounded-renderer
+tests passed. The unchanged matrix control retained its original rejection;
+the observed helper contains one integer widening cast followed by return,
+with no calls, cleanup blocks or inline origins. All 19 phases exited naturally
+and were reaped, with unchanged sources and clean integrity postchecks.
+An exact body recognizer and mutation tests are next. The capture does not
+admit the conversion or qualify any provider, GPU, model or performance gate.
+
+Previously, [415 compiler tests passed before the core conversion refusal](../qualification/guarded-mlp-core-result-qualification-v1/README.md).
 Both compiler and test binaries built on MI350. V7 supplies genuine AMD-target
 `core` and `compiler_builtins` metadata without changing the production matcher.
 All 15 Result tests passed, including 172 MIR mutations, alongside the previous
 390 tests, eight atomic controls and two unsafe/inlined-origin rejection tests.
 The unchanged matrix control now gets past the Result wrappers and rejects
 the concrete core `From<u32> for u64` conversion in `accessed_extent`.
-Capturing that helper's actual body is next; this is not a general `From`
+That helper's body is now captured above; there is no general `From`
 admission. All 34 phases exited naturally and were reaped, with unchanged
 sources and clean integrity postchecks. Attention was not reached.
 Ferric's dependency remains unchanged; no provider, GPU, model or performance

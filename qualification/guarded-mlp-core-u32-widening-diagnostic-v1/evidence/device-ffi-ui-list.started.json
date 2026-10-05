@@ -1,0 +1,15 @@
+{
+  "argv": [
+    "/usr/bin/prlimit",
+    "--as=12884901888",
+    "--cpu=1200",
+    "--fsize=1073741824",
+    "--core=0",
+    "--",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-u32-widening-diagnostic-cpu-v228-v1/target/debug/deps/device_ffi_ui-1df7393b9a225743",
+    "--list",
+    "--format=terse"
+  ],
+  "pgid": 3685871,
+  "pid": 3685871
+}

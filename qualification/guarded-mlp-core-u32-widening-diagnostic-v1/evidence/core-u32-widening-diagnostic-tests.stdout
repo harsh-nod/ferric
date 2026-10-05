@@ -1,0 +1,11 @@
+
+running 6 tests
+test collector::core_u32_widening_diagnostic_v1::tests::core_u32_widening_diagnostic_complete_has_explicit_non_authority_trailer ... ok
+test collector::core_u32_widening_diagnostic_v1::tests::core_u32_widening_diagnostic_exact_payload_cap_leaves_trailer_space ... ok
+test collector::core_u32_widening_diagnostic_v1::tests::core_u32_widening_diagnostic_large_write_is_bounded ... ok
+test collector::core_u32_widening_diagnostic_v1::tests::core_u32_widening_diagnostic_partial_is_not_complete ... ok
+test collector::core_u32_widening_diagnostic_v1::tests::core_u32_widening_diagnostic_render_failure_preserves_partial_evidence ... ok
+test collector::core_u32_widening_diagnostic_v1::tests::core_u32_widening_diagnostic_utf8_cap_uses_bytes_and_keeps_valid_text ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 739 filtered out; finished in 0.00s
+

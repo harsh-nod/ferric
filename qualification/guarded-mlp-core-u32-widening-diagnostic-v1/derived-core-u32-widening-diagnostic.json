@@ -1,0 +1,17 @@
+{
+  "admission_authority": false,
+  "body_bytes": 1180,
+  "byte_offset": 5232,
+  "bytes": 1260,
+  "diagnostic_only": true,
+  "qualification_passed": false,
+  "schema": "ferric-core-u32-widening-diagnostic-marker-extraction-v1",
+  "sha256": "e0b9ea98198ff49cb195e3edbf6bffd179241a5be068258a664a623debb63771",
+  "source": {
+    "bytes": 11042,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-u32-widening-diagnostic-cpu-v228-v1/evidence/matrix-extraction-0.stdout",
+    "sha256": "297ecf08ae675901175fe93d23db7fd0b022293423bcb11c7e6308478f516705"
+  },
+  "status": "complete",
+  "text": "FE2O3_CORE_U32_WIDENING_MIR_BEGIN version=1 authority=none byte_cap=65536\ninstance=Instance { def: Item(DefId(1:28968 ~ core[7021]::convert::num::{impl#72}::from)), args: [] }\ndefinition=DefId(1:28968 ~ core[7021]::convert::num::{impl#72}::from)\nstructural_path=::convert::num::{impl#72}::from\ntrait_method=Some(DefId(1:3683 ~ core[7021]::convert::From::from))\nfrom_trait=Some(DefId(1:3681 ~ core[7021]::convert::From))\narguments=[]\nnormalized_signature=Ok(fn(u32) -> u64)\ninput_nominal[0]=None\noutput_nominal=None\nbody arg_count=1 locals=2 blocks=1 scopes=1\nstatements=1 item_cap=128 statement_cap=1024\nlocal[_0] raw=u64 normalized=Ok(u64) nominal=None scope=scope[0]\nlocal[_1] raw=u32 normalized=Ok(u32) nominal=None scope=scope[0]\nscope[scope[0]] data=SourceScopeData { span: /home/harmenon/.rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/convert/num.rs:79:13: 83:14 (#39), parent_scope: None, inlined: None, inlined_parent_scope: None, local_data: Clear } normalized_inline=None\nblock[bb0] cleanup=false statements=1\n  statement[0] scope=scope[0] kind=_0 = copy _1 as u64 (IntToInt)\n  terminator scope=scope[0] kind=return\n\nFE2O3_CORE_U32_WIDENING_MIR_END status=complete body_bytes=1180 authority=none\n"
+}
