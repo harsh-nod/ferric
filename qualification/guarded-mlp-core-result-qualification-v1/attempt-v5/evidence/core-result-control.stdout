@@ -1,0 +1,543 @@
+
+running 15 tests
+test trusted_device_items::core_result_control_v1::tests::result_branch_real_body_rejects_changed_aggregate_identity_and_moves ... FAILED
+test trusted_device_items::core_result_control_v1::tests::result_branch_real_body_rejects_changed_edges_and_discriminants ... FAILED
+test trusted_device_items::core_result_control_v1::tests::result_branch_real_body_rejects_changed_payload_fields ... FAILED
+test trusted_device_items::core_result_control_v1::tests::result_branch_real_body_rejects_count_and_local_mutations ... FAILED
+test trusted_device_items::core_result_control_v1::tests::result_branch_real_body_rejects_extra_operations_and_cleanup ... FAILED
+test trusted_device_items::core_result_control_v1::tests::result_branch_real_body_rejects_scope_and_inline_origin_mutations ... FAILED
+test trusted_device_items::core_result_control_v1::tests::result_branch_real_core_bodies_and_nominal_refusals ... FAILED
+test trusted_device_items::core_result_control_v1::tests::result_family_table_keeps_exact_source_pairs ... ok
+test trusted_device_items::core_result_control_v1::tests::result_residual_real_body_rejects_changed_assume_and_discriminant ... FAILED
+test trusted_device_items::core_result_control_v1::tests::result_residual_real_body_rejects_changed_conversion_call ... FAILED
+test trusted_device_items::core_result_control_v1::tests::result_residual_real_body_rejects_changed_payload_and_output ... FAILED
+test trusted_device_items::core_result_control_v1::tests::result_residual_real_body_rejects_count_and_local_mutations ... FAILED
+test trusted_device_items::core_result_control_v1::tests::result_residual_real_body_rejects_extra_operations_and_cleanup ... FAILED
+test trusted_device_items::core_result_control_v1::tests::result_residual_real_body_rejects_scope_and_inline_origin_mutations ... FAILED
+test trusted_device_items::core_result_control_v1::tests::result_residual_real_core_bodies_and_nominal_refusals ... FAILED
+
+failures:
+
+---- trusted_device_items::core_result_control_v1::tests::result_branch_real_body_rejects_changed_aggregate_identity_and_moves stdout ----
+
+thread 'rustc' (3468151) panicked at crates/rustc-codegen-fe2o3/src/trusted_device_items/core_result_control_v1_tests.rs:341:9:
+residual body rejected; CORE_RESULT_HOST_RESIDUAL_BEGIN authority=none cap=8192
+instance=Instance { def: Item(DefId(2:11899 ~ core[db70]::result::{impl#28}::from_residual)), args: [(), u32, u32] }
+arguments=1 locals=6 blocks=2 scopes=2
+conversion_call_v1=Some(false)
+local[_0] raw=std::result::Result<T/#0, F/#2> normalized=Some(std::result::Result<(), u32>) scope=scope[0]
+local[_1] raw=std::result::Result<std::convert::Infallible, E/#1> normalized=Some(std::result::Result<std::convert::Infallible, u32>) scope=scope[0]
+local[_2] raw=isize normalized=Some(isize) scope=scope[0]
+local[_3] raw=E/#1 normalized=Some(u32) scope=scope[0]
+local[_4] raw=F/#2 normalized=Some(u32) scope=scope[0]
+local[_5] raw=bool normalized=Some(bool) scope=scope[0]
+scope[scope[0]]=SourceScopeData { span: /home/harmenon/.rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/result.rs:2187:5: 2191:6 (#0), parent_scope: None, inlined: None, inlined_parent_scope: None, local_data: Clear }
+scope[scope[1]]=SourceScopeData { span: /home/harmenon/.rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/result.rs:2189:13: 2189:41 (#0), parent_scope: Some(scope[0]), inlined: None, inlined_parent_scope: None, local_data: Clear }
+block[bb0] cleanup=false
+statement[0] scope=scope[0] kind=_2 = discriminant(_1)
+statement[1] scope=scope[0] kind=_5 = Eq(copy _2, const 1_isize)
+statement[2] scope=scope[0] kind=assume(move _5)
+statement[3] scope=scope[0] kind=_3 = move ((_1 as Err).0: E)
+statement[4] scope=scope[1] kind=StorageLive(_4)
+terminator scope=scope[1] kind=_4 = <F as std::convert::From<E>>::from(move _3) -> [return: bb1, unwind continue]
+block[bb1] cleanup=false
+statement[0] scope=scope[1] kind=_0 = std::result::Result::<T, F>::Err(move _4)
+statement[1] scope=scope[1] kind=StorageDead(_4)
+terminator scope=scope[0] kind=return
+CORE_RESULT_HOST_RESIDUAL_END status=complete body_bytes=1886 authority=none
+
+stack backtrace:
+   0: __rustc::rust_begin_unwind
+   1: core::panicking::panic_fmt
+   2: rustc_codegen_fe2o3::trusted_device_items::core_result_control_v1::tests::inspect_residual_bodies
+   3: <rustc_codegen_fe2o3::trusted_device_items::core_result_control_v1::tests::FixtureCallbacks as rustc_driver_impl::Callbacks>::after_analysis
+   4: rustc_interface::interface::run_compiler::<(), rustc_driver_impl::run_compiler::{closure#0}>::{closure#1}
+note: Some details are omitted, run with `RUST_BACKTRACE=full` for a verbose backtrace.
+
+---- trusted_device_items::core_result_control_v1::tests::result_branch_real_body_rejects_changed_edges_and_discriminants stdout ----
+
+thread 'rustc' (3468158) panicked at crates/rustc-codegen-fe2o3/src/trusted_device_items/core_result_control_v1_tests.rs:341:9:
+residual body rejected; CORE_RESULT_HOST_RESIDUAL_BEGIN authority=none cap=8192
+instance=Instance { def: Item(DefId(2:11899 ~ core[db70]::result::{impl#28}::from_residual)), args: [(), u32, u32] }
+arguments=1 locals=6 blocks=2 scopes=2
+conversion_call_v1=Some(false)
+local[_0] raw=std::result::Result<T/#0, F/#2> normalized=Some(std::result::Result<(), u32>) scope=scope[0]
+local[_1] raw=std::result::Result<std::convert::Infallible, E/#1> normalized=Some(std::result::Result<std::convert::Infallible, u32>) scope=scope[0]
+local[_2] raw=isize normalized=Some(isize) scope=scope[0]
+local[_3] raw=E/#1 normalized=Some(u32) scope=scope[0]
+local[_4] raw=F/#2 normalized=Some(u32) scope=scope[0]
+local[_5] raw=bool normalized=Some(bool) scope=scope[0]
+scope[scope[0]]=SourceScopeData { span: /home/harmenon/.rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/result.rs:2187:5: 2191:6 (#0), parent_scope: None, inlined: None, inlined_parent_scope: None, local_data: Clear }
+scope[scope[1]]=SourceScopeData { span: /home/harmenon/.rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/result.rs:2189:13: 2189:41 (#0), parent_scope: Some(scope[0]), inlined: None, inlined_parent_scope: None, local_data: Clear }
+block[bb0] cleanup=false
+statement[0] scope=scope[0] kind=_2 = discriminant(_1)
+statement[1] scope=scope[0] kind=_5 = Eq(copy _2, const 1_isize)
+statement[2] scope=scope[0] kind=assume(move _5)
+statement[3] scope=scope[0] kind=_3 = move ((_1 as Err).0: E)
+statement[4] scope=scope[1] kind=StorageLive(_4)
+terminator scope=scope[1] kind=_4 = <F as std::convert::From<E>>::from(move _3) -> [return: bb1, unwind continue]
+block[bb1] cleanup=false
+statement[0] scope=scope[1] kind=_0 = std::result::Result::<T, F>::Err(move _4)
+statement[1] scope=scope[1] kind=StorageDead(_4)
+terminator scope=scope[0] kind=return
+CORE_RESULT_HOST_RESIDUAL_END status=complete body_bytes=1886 authority=none
+
+stack backtrace:
+   0: __rustc::rust_begin_unwind
+   1: core::panicking::panic_fmt
+   2: rustc_codegen_fe2o3::trusted_device_items::core_result_control_v1::tests::inspect_residual_bodies
+   3: <rustc_codegen_fe2o3::trusted_device_items::core_result_control_v1::tests::FixtureCallbacks as rustc_driver_impl::Callbacks>::after_analysis
+   4: rustc_interface::interface::run_compiler::<(), rustc_driver_impl::run_compiler::{closure#0}>::{closure#1}
+note: Some details are omitted, run with `RUST_BACKTRACE=full` for a verbose backtrace.
+
+---- trusted_device_items::core_result_control_v1::tests::result_branch_real_body_rejects_changed_payload_fields stdout ----
+
+thread 'rustc' (3468167) panicked at crates/rustc-codegen-fe2o3/src/trusted_device_items/core_result_control_v1_tests.rs:341:9:
+residual body rejected; CORE_RESULT_HOST_RESIDUAL_BEGIN authority=none cap=8192
+instance=Instance { def: Item(DefId(2:11899 ~ core[db70]::result::{impl#28}::from_residual)), args: [(), u32, u32] }
+arguments=1 locals=6 blocks=2 scopes=2
+conversion_call_v1=Some(false)
+local[_0] raw=std::result::Result<T/#0, F/#2> normalized=Some(std::result::Result<(), u32>) scope=scope[0]
+local[_1] raw=std::result::Result<std::convert::Infallible, E/#1> normalized=Some(std::result::Result<std::convert::Infallible, u32>) scope=scope[0]
+local[_2] raw=isize normalized=Some(isize) scope=scope[0]
+local[_3] raw=E/#1 normalized=Some(u32) scope=scope[0]
+local[_4] raw=F/#2 normalized=Some(u32) scope=scope[0]
+local[_5] raw=bool normalized=Some(bool) scope=scope[0]
+scope[scope[0]]=SourceScopeData { span: /home/harmenon/.rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/result.rs:2187:5: 2191:6 (#0), parent_scope: None, inlined: None, inlined_parent_scope: None, local_data: Clear }
+scope[scope[1]]=SourceScopeData { span: /home/harmenon/.rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/result.rs:2189:13: 2189:41 (#0), parent_scope: Some(scope[0]), inlined: None, inlined_parent_scope: None, local_data: Clear }
+block[bb0] cleanup=false
+statement[0] scope=scope[0] kind=_2 = discriminant(_1)
+statement[1] scope=scope[0] kind=_5 = Eq(copy _2, const 1_isize)
+statement[2] scope=scope[0] kind=assume(move _5)
+statement[3] scope=scope[0] kind=_3 = move ((_1 as Err).0: E)
+statement[4] scope=scope[1] kind=StorageLive(_4)
+terminator scope=scope[1] kind=_4 = <F as std::convert::From<E>>::from(move _3) -> [return: bb1, unwind continue]
+block[bb1] cleanup=false
+statement[0] scope=scope[1] kind=_0 = std::result::Result::<T, F>::Err(move _4)
+statement[1] scope=scope[1] kind=StorageDead(_4)
+terminator scope=scope[0] kind=return
+CORE_RESULT_HOST_RESIDUAL_END status=complete body_bytes=1886 authority=none
+
+stack backtrace:
+   0: __rustc::rust_begin_unwind
+   1: core::panicking::panic_fmt
+   2: rustc_codegen_fe2o3::trusted_device_items::core_result_control_v1::tests::inspect_residual_bodies
+   3: <rustc_codegen_fe2o3::trusted_device_items::core_result_control_v1::tests::FixtureCallbacks as rustc_driver_impl::Callbacks>::after_analysis
+   4: rustc_interface::interface::run_compiler::<(), rustc_driver_impl::run_compiler::{closure#0}>::{closure#1}
+note: Some details are omitted, run with `RUST_BACKTRACE=full` for a verbose backtrace.
+
+---- trusted_device_items::core_result_control_v1::tests::result_branch_real_body_rejects_count_and_local_mutations stdout ----
+
+thread 'rustc' (3468176) panicked at crates/rustc-codegen-fe2o3/src/trusted_device_items/core_result_control_v1_tests.rs:341:9:
+residual body rejected; CORE_RESULT_HOST_RESIDUAL_BEGIN authority=none cap=8192
+instance=Instance { def: Item(DefId(2:11899 ~ core[db70]::result::{impl#28}::from_residual)), args: [(), u32, u32] }
+arguments=1 locals=6 blocks=2 scopes=2
+conversion_call_v1=Some(false)
+local[_0] raw=std::result::Result<T/#0, F/#2> normalized=Some(std::result::Result<(), u32>) scope=scope[0]
+local[_1] raw=std::result::Result<std::convert::Infallible, E/#1> normalized=Some(std::result::Result<std::convert::Infallible, u32>) scope=scope[0]
+local[_2] raw=isize normalized=Some(isize) scope=scope[0]
+local[_3] raw=E/#1 normalized=Some(u32) scope=scope[0]
+local[_4] raw=F/#2 normalized=Some(u32) scope=scope[0]
+local[_5] raw=bool normalized=Some(bool) scope=scope[0]
+scope[scope[0]]=SourceScopeData { span: /home/harmenon/.rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/result.rs:2187:5: 2191:6 (#0), parent_scope: None, inlined: None, inlined_parent_scope: None, local_data: Clear }
+scope[scope[1]]=SourceScopeData { span: /home/harmenon/.rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/result.rs:2189:13: 2189:41 (#0), parent_scope: Some(scope[0]), inlined: None, inlined_parent_scope: None, local_data: Clear }
+block[bb0] cleanup=false
+statement[0] scope=scope[0] kind=_2 = discriminant(_1)
+statement[1] scope=scope[0] kind=_5 = Eq(copy _2, const 1_isize)
+statement[2] scope=scope[0] kind=assume(move _5)
+statement[3] scope=scope[0] kind=_3 = move ((_1 as Err).0: E)
+statement[4] scope=scope[1] kind=StorageLive(_4)
+terminator scope=scope[1] kind=_4 = <F as std::convert::From<E>>::from(move _3) -> [return: bb1, unwind continue]
+block[bb1] cleanup=false
+statement[0] scope=scope[1] kind=_0 = std::result::Result::<T, F>::Err(move _4)
+statement[1] scope=scope[1] kind=StorageDead(_4)
+terminator scope=scope[0] kind=return
+CORE_RESULT_HOST_RESIDUAL_END status=complete body_bytes=1886 authority=none
+
+stack backtrace:
+   0: __rustc::rust_begin_unwind
+   1: core::panicking::panic_fmt
+   2: rustc_codegen_fe2o3::trusted_device_items::core_result_control_v1::tests::inspect_residual_bodies
+   3: <rustc_codegen_fe2o3::trusted_device_items::core_result_control_v1::tests::FixtureCallbacks as rustc_driver_impl::Callbacks>::after_analysis
+   4: rustc_interface::interface::run_compiler::<(), rustc_driver_impl::run_compiler::{closure#0}>::{closure#1}
+note: Some details are omitted, run with `RUST_BACKTRACE=full` for a verbose backtrace.
+
+---- trusted_device_items::core_result_control_v1::tests::result_branch_real_body_rejects_extra_operations_and_cleanup stdout ----
+
+thread 'rustc' (3468184) panicked at crates/rustc-codegen-fe2o3/src/trusted_device_items/core_result_control_v1_tests.rs:341:9:
+residual body rejected; CORE_RESULT_HOST_RESIDUAL_BEGIN authority=none cap=8192
+instance=Instance { def: Item(DefId(2:11899 ~ core[db70]::result::{impl#28}::from_residual)), args: [(), u32, u32] }
+arguments=1 locals=6 blocks=2 scopes=2
+conversion_call_v1=Some(false)
+local[_0] raw=std::result::Result<T/#0, F/#2> normalized=Some(std::result::Result<(), u32>) scope=scope[0]
+local[_1] raw=std::result::Result<std::convert::Infallible, E/#1> normalized=Some(std::result::Result<std::convert::Infallible, u32>) scope=scope[0]
+local[_2] raw=isize normalized=Some(isize) scope=scope[0]
+local[_3] raw=E/#1 normalized=Some(u32) scope=scope[0]
+local[_4] raw=F/#2 normalized=Some(u32) scope=scope[0]
+local[_5] raw=bool normalized=Some(bool) scope=scope[0]
+scope[scope[0]]=SourceScopeData { span: /home/harmenon/.rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/result.rs:2187:5: 2191:6 (#0), parent_scope: None, inlined: None, inlined_parent_scope: None, local_data: Clear }
+scope[scope[1]]=SourceScopeData { span: /home/harmenon/.rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/result.rs:2189:13: 2189:41 (#0), parent_scope: Some(scope[0]), inlined: None, inlined_parent_scope: None, local_data: Clear }
+block[bb0] cleanup=false
+statement[0] scope=scope[0] kind=_2 = discriminant(_1)
+statement[1] scope=scope[0] kind=_5 = Eq(copy _2, const 1_isize)
+statement[2] scope=scope[0] kind=assume(move _5)
+statement[3] scope=scope[0] kind=_3 = move ((_1 as Err).0: E)
+statement[4] scope=scope[1] kind=StorageLive(_4)
+terminator scope=scope[1] kind=_4 = <F as std::convert::From<E>>::from(move _3) -> [return: bb1, unwind continue]
+block[bb1] cleanup=false
+statement[0] scope=scope[1] kind=_0 = std::result::Result::<T, F>::Err(move _4)
+statement[1] scope=scope[1] kind=StorageDead(_4)
+terminator scope=scope[0] kind=return
+CORE_RESULT_HOST_RESIDUAL_END status=complete body_bytes=1886 authority=none
+
+stack backtrace:
+   0: __rustc::rust_begin_unwind
+   1: core::panicking::panic_fmt
+   2: rustc_codegen_fe2o3::trusted_device_items::core_result_control_v1::tests::inspect_residual_bodies
+   3: <rustc_codegen_fe2o3::trusted_device_items::core_result_control_v1::tests::FixtureCallbacks as rustc_driver_impl::Callbacks>::after_analysis
+   4: rustc_interface::interface::run_compiler::<(), rustc_driver_impl::run_compiler::{closure#0}>::{closure#1}
+note: Some details are omitted, run with `RUST_BACKTRACE=full` for a verbose backtrace.
+
+---- trusted_device_items::core_result_control_v1::tests::result_branch_real_body_rejects_scope_and_inline_origin_mutations stdout ----
+
+thread 'rustc' (3468191) panicked at crates/rustc-codegen-fe2o3/src/trusted_device_items/core_result_control_v1_tests.rs:341:9:
+residual body rejected; CORE_RESULT_HOST_RESIDUAL_BEGIN authority=none cap=8192
+instance=Instance { def: Item(DefId(2:11899 ~ core[db70]::result::{impl#28}::from_residual)), args: [(), u32, u32] }
+arguments=1 locals=6 blocks=2 scopes=2
+conversion_call_v1=Some(false)
+local[_0] raw=std::result::Result<T/#0, F/#2> normalized=Some(std::result::Result<(), u32>) scope=scope[0]
+local[_1] raw=std::result::Result<std::convert::Infallible, E/#1> normalized=Some(std::result::Result<std::convert::Infallible, u32>) scope=scope[0]
+local[_2] raw=isize normalized=Some(isize) scope=scope[0]
+local[_3] raw=E/#1 normalized=Some(u32) scope=scope[0]
+local[_4] raw=F/#2 normalized=Some(u32) scope=scope[0]
+local[_5] raw=bool normalized=Some(bool) scope=scope[0]
+scope[scope[0]]=SourceScopeData { span: /home/harmenon/.rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/result.rs:2187:5: 2191:6 (#0), parent_scope: None, inlined: None, inlined_parent_scope: None, local_data: Clear }
+scope[scope[1]]=SourceScopeData { span: /home/harmenon/.rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/result.rs:2189:13: 2189:41 (#0), parent_scope: Some(scope[0]), inlined: None, inlined_parent_scope: None, local_data: Clear }
+block[bb0] cleanup=false
+statement[0] scope=scope[0] kind=_2 = discriminant(_1)
+statement[1] scope=scope[0] kind=_5 = Eq(copy _2, const 1_isize)
+statement[2] scope=scope[0] kind=assume(move _5)
+statement[3] scope=scope[0] kind=_3 = move ((_1 as Err).0: E)
+statement[4] scope=scope[1] kind=StorageLive(_4)
+terminator scope=scope[1] kind=_4 = <F as std::convert::From<E>>::from(move _3) -> [return: bb1, unwind continue]
+block[bb1] cleanup=false
+statement[0] scope=scope[1] kind=_0 = std::result::Result::<T, F>::Err(move _4)
+statement[1] scope=scope[1] kind=StorageDead(_4)
+terminator scope=scope[0] kind=return
+CORE_RESULT_HOST_RESIDUAL_END status=complete body_bytes=1886 authority=none
+
+stack backtrace:
+   0: __rustc::rust_begin_unwind
+   1: core::panicking::panic_fmt
+   2: rustc_codegen_fe2o3::trusted_device_items::core_result_control_v1::tests::inspect_residual_bodies
+   3: <rustc_codegen_fe2o3::trusted_device_items::core_result_control_v1::tests::FixtureCallbacks as rustc_driver_impl::Callbacks>::after_analysis
+   4: rustc_interface::interface::run_compiler::<(), rustc_driver_impl::run_compiler::{closure#0}>::{closure#1}
+note: Some details are omitted, run with `RUST_BACKTRACE=full` for a verbose backtrace.
+
+---- trusted_device_items::core_result_control_v1::tests::result_branch_real_core_bodies_and_nominal_refusals stdout ----
+
+thread 'rustc' (3468198) panicked at crates/rustc-codegen-fe2o3/src/trusted_device_items/core_result_control_v1_tests.rs:341:9:
+residual body rejected; CORE_RESULT_HOST_RESIDUAL_BEGIN authority=none cap=8192
+instance=Instance { def: Item(DefId(2:11899 ~ core[db70]::result::{impl#28}::from_residual)), args: [(), u32, u32] }
+arguments=1 locals=6 blocks=2 scopes=2
+conversion_call_v1=Some(false)
+local[_0] raw=std::result::Result<T/#0, F/#2> normalized=Some(std::result::Result<(), u32>) scope=scope[0]
+local[_1] raw=std::result::Result<std::convert::Infallible, E/#1> normalized=Some(std::result::Result<std::convert::Infallible, u32>) scope=scope[0]
+local[_2] raw=isize normalized=Some(isize) scope=scope[0]
+local[_3] raw=E/#1 normalized=Some(u32) scope=scope[0]
+local[_4] raw=F/#2 normalized=Some(u32) scope=scope[0]
+local[_5] raw=bool normalized=Some(bool) scope=scope[0]
+scope[scope[0]]=SourceScopeData { span: /home/harmenon/.rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/result.rs:2187:5: 2191:6 (#0), parent_scope: None, inlined: None, inlined_parent_scope: None, local_data: Clear }
+scope[scope[1]]=SourceScopeData { span: /home/harmenon/.rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/result.rs:2189:13: 2189:41 (#0), parent_scope: Some(scope[0]), inlined: None, inlined_parent_scope: None, local_data: Clear }
+block[bb0] cleanup=false
+statement[0] scope=scope[0] kind=_2 = discriminant(_1)
+statement[1] scope=scope[0] kind=_5 = Eq(copy _2, const 1_isize)
+statement[2] scope=scope[0] kind=assume(move _5)
+statement[3] scope=scope[0] kind=_3 = move ((_1 as Err).0: E)
+statement[4] scope=scope[1] kind=StorageLive(_4)
+terminator scope=scope[1] kind=_4 = <F as std::convert::From<E>>::from(move _3) -> [return: bb1, unwind continue]
+block[bb1] cleanup=false
+statement[0] scope=scope[1] kind=_0 = std::result::Result::<T, F>::Err(move _4)
+statement[1] scope=scope[1] kind=StorageDead(_4)
+terminator scope=scope[0] kind=return
+CORE_RESULT_HOST_RESIDUAL_END status=complete body_bytes=1886 authority=none
+
+stack backtrace:
+   0: __rustc::rust_begin_unwind
+   1: core::panicking::panic_fmt
+   2: rustc_codegen_fe2o3::trusted_device_items::core_result_control_v1::tests::inspect_residual_bodies
+   3: <rustc_codegen_fe2o3::trusted_device_items::core_result_control_v1::tests::FixtureCallbacks as rustc_driver_impl::Callbacks>::after_analysis
+   4: rustc_interface::interface::run_compiler::<(), rustc_driver_impl::run_compiler::{closure#0}>::{closure#1}
+note: Some details are omitted, run with `RUST_BACKTRACE=full` for a verbose backtrace.
+
+---- trusted_device_items::core_result_control_v1::tests::result_residual_real_body_rejects_changed_assume_and_discriminant stdout ----
+
+thread 'rustc' (3468208) panicked at crates/rustc-codegen-fe2o3/src/trusted_device_items/core_result_control_v1_tests.rs:341:9:
+residual body rejected; CORE_RESULT_HOST_RESIDUAL_BEGIN authority=none cap=8192
+instance=Instance { def: Item(DefId(2:11899 ~ core[db70]::result::{impl#28}::from_residual)), args: [(), u32, u32] }
+arguments=1 locals=6 blocks=2 scopes=2
+conversion_call_v1=Some(false)
+local[_0] raw=std::result::Result<T/#0, F/#2> normalized=Some(std::result::Result<(), u32>) scope=scope[0]
+local[_1] raw=std::result::Result<std::convert::Infallible, E/#1> normalized=Some(std::result::Result<std::convert::Infallible, u32>) scope=scope[0]
+local[_2] raw=isize normalized=Some(isize) scope=scope[0]
+local[_3] raw=E/#1 normalized=Some(u32) scope=scope[0]
+local[_4] raw=F/#2 normalized=Some(u32) scope=scope[0]
+local[_5] raw=bool normalized=Some(bool) scope=scope[0]
+scope[scope[0]]=SourceScopeData { span: /home/harmenon/.rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/result.rs:2187:5: 2191:6 (#0), parent_scope: None, inlined: None, inlined_parent_scope: None, local_data: Clear }
+scope[scope[1]]=SourceScopeData { span: /home/harmenon/.rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/result.rs:2189:13: 2189:41 (#0), parent_scope: Some(scope[0]), inlined: None, inlined_parent_scope: None, local_data: Clear }
+block[bb0] cleanup=false
+statement[0] scope=scope[0] kind=_2 = discriminant(_1)
+statement[1] scope=scope[0] kind=_5 = Eq(copy _2, const 1_isize)
+statement[2] scope=scope[0] kind=assume(move _5)
+statement[3] scope=scope[0] kind=_3 = move ((_1 as Err).0: E)
+statement[4] scope=scope[1] kind=StorageLive(_4)
+terminator scope=scope[1] kind=_4 = <F as std::convert::From<E>>::from(move _3) -> [return: bb1, unwind continue]
+block[bb1] cleanup=false
+statement[0] scope=scope[1] kind=_0 = std::result::Result::<T, F>::Err(move _4)
+statement[1] scope=scope[1] kind=StorageDead(_4)
+terminator scope=scope[0] kind=return
+CORE_RESULT_HOST_RESIDUAL_END status=complete body_bytes=1886 authority=none
+
+stack backtrace:
+   0: __rustc::rust_begin_unwind
+   1: core::panicking::panic_fmt
+   2: rustc_codegen_fe2o3::trusted_device_items::core_result_control_v1::tests::inspect_residual_bodies
+   3: <rustc_codegen_fe2o3::trusted_device_items::core_result_control_v1::tests::FixtureCallbacks as rustc_driver_impl::Callbacks>::after_analysis
+   4: rustc_interface::interface::run_compiler::<(), rustc_driver_impl::run_compiler::{closure#0}>::{closure#1}
+note: Some details are omitted, run with `RUST_BACKTRACE=full` for a verbose backtrace.
+
+---- trusted_device_items::core_result_control_v1::tests::result_residual_real_body_rejects_changed_conversion_call stdout ----
+
+thread 'rustc' (3468216) panicked at crates/rustc-codegen-fe2o3/src/trusted_device_items/core_result_control_v1_tests.rs:341:9:
+residual body rejected; CORE_RESULT_HOST_RESIDUAL_BEGIN authority=none cap=8192
+instance=Instance { def: Item(DefId(2:11899 ~ core[db70]::result::{impl#28}::from_residual)), args: [(), u32, u32] }
+arguments=1 locals=6 blocks=2 scopes=2
+conversion_call_v1=Some(false)
+local[_0] raw=std::result::Result<T/#0, F/#2> normalized=Some(std::result::Result<(), u32>) scope=scope[0]
+local[_1] raw=std::result::Result<std::convert::Infallible, E/#1> normalized=Some(std::result::Result<std::convert::Infallible, u32>) scope=scope[0]
+local[_2] raw=isize normalized=Some(isize) scope=scope[0]
+local[_3] raw=E/#1 normalized=Some(u32) scope=scope[0]
+local[_4] raw=F/#2 normalized=Some(u32) scope=scope[0]
+local[_5] raw=bool normalized=Some(bool) scope=scope[0]
+scope[scope[0]]=SourceScopeData { span: /home/harmenon/.rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/result.rs:2187:5: 2191:6 (#0), parent_scope: None, inlined: None, inlined_parent_scope: None, local_data: Clear }
+scope[scope[1]]=SourceScopeData { span: /home/harmenon/.rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/result.rs:2189:13: 2189:41 (#0), parent_scope: Some(scope[0]), inlined: None, inlined_parent_scope: None, local_data: Clear }
+block[bb0] cleanup=false
+statement[0] scope=scope[0] kind=_2 = discriminant(_1)
+statement[1] scope=scope[0] kind=_5 = Eq(copy _2, const 1_isize)
+statement[2] scope=scope[0] kind=assume(move _5)
+statement[3] scope=scope[0] kind=_3 = move ((_1 as Err).0: E)
+statement[4] scope=scope[1] kind=StorageLive(_4)
+terminator scope=scope[1] kind=_4 = <F as std::convert::From<E>>::from(move _3) -> [return: bb1, unwind continue]
+block[bb1] cleanup=false
+statement[0] scope=scope[1] kind=_0 = std::result::Result::<T, F>::Err(move _4)
+statement[1] scope=scope[1] kind=StorageDead(_4)
+terminator scope=scope[0] kind=return
+CORE_RESULT_HOST_RESIDUAL_END status=complete body_bytes=1886 authority=none
+
+stack backtrace:
+   0: __rustc::rust_begin_unwind
+   1: core::panicking::panic_fmt
+   2: rustc_codegen_fe2o3::trusted_device_items::core_result_control_v1::tests::inspect_residual_bodies
+   3: <rustc_codegen_fe2o3::trusted_device_items::core_result_control_v1::tests::FixtureCallbacks as rustc_driver_impl::Callbacks>::after_analysis
+   4: rustc_interface::interface::run_compiler::<(), rustc_driver_impl::run_compiler::{closure#0}>::{closure#1}
+note: Some details are omitted, run with `RUST_BACKTRACE=full` for a verbose backtrace.
+
+---- trusted_device_items::core_result_control_v1::tests::result_residual_real_body_rejects_changed_payload_and_output stdout ----
+
+thread 'rustc' (3468223) panicked at crates/rustc-codegen-fe2o3/src/trusted_device_items/core_result_control_v1_tests.rs:341:9:
+residual body rejected; CORE_RESULT_HOST_RESIDUAL_BEGIN authority=none cap=8192
+instance=Instance { def: Item(DefId(2:11899 ~ core[db70]::result::{impl#28}::from_residual)), args: [(), u32, u32] }
+arguments=1 locals=6 blocks=2 scopes=2
+conversion_call_v1=Some(false)
+local[_0] raw=std::result::Result<T/#0, F/#2> normalized=Some(std::result::Result<(), u32>) scope=scope[0]
+local[_1] raw=std::result::Result<std::convert::Infallible, E/#1> normalized=Some(std::result::Result<std::convert::Infallible, u32>) scope=scope[0]
+local[_2] raw=isize normalized=Some(isize) scope=scope[0]
+local[_3] raw=E/#1 normalized=Some(u32) scope=scope[0]
+local[_4] raw=F/#2 normalized=Some(u32) scope=scope[0]
+local[_5] raw=bool normalized=Some(bool) scope=scope[0]
+scope[scope[0]]=SourceScopeData { span: /home/harmenon/.rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/result.rs:2187:5: 2191:6 (#0), parent_scope: None, inlined: None, inlined_parent_scope: None, local_data: Clear }
+scope[scope[1]]=SourceScopeData { span: /home/harmenon/.rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/result.rs:2189:13: 2189:41 (#0), parent_scope: Some(scope[0]), inlined: None, inlined_parent_scope: None, local_data: Clear }
+block[bb0] cleanup=false
+statement[0] scope=scope[0] kind=_2 = discriminant(_1)
+statement[1] scope=scope[0] kind=_5 = Eq(copy _2, const 1_isize)
+statement[2] scope=scope[0] kind=assume(move _5)
+statement[3] scope=scope[0] kind=_3 = move ((_1 as Err).0: E)
+statement[4] scope=scope[1] kind=StorageLive(_4)
+terminator scope=scope[1] kind=_4 = <F as std::convert::From<E>>::from(move _3) -> [return: bb1, unwind continue]
+block[bb1] cleanup=false
+statement[0] scope=scope[1] kind=_0 = std::result::Result::<T, F>::Err(move _4)
+statement[1] scope=scope[1] kind=StorageDead(_4)
+terminator scope=scope[0] kind=return
+CORE_RESULT_HOST_RESIDUAL_END status=complete body_bytes=1886 authority=none
+
+stack backtrace:
+   0: __rustc::rust_begin_unwind
+   1: core::panicking::panic_fmt
+   2: rustc_codegen_fe2o3::trusted_device_items::core_result_control_v1::tests::inspect_residual_bodies
+   3: <rustc_codegen_fe2o3::trusted_device_items::core_result_control_v1::tests::FixtureCallbacks as rustc_driver_impl::Callbacks>::after_analysis
+   4: rustc_interface::interface::run_compiler::<(), rustc_driver_impl::run_compiler::{closure#0}>::{closure#1}
+note: Some details are omitted, run with `RUST_BACKTRACE=full` for a verbose backtrace.
+
+---- trusted_device_items::core_result_control_v1::tests::result_residual_real_body_rejects_count_and_local_mutations stdout ----
+
+thread 'rustc' (3468230) panicked at crates/rustc-codegen-fe2o3/src/trusted_device_items/core_result_control_v1_tests.rs:341:9:
+residual body rejected; CORE_RESULT_HOST_RESIDUAL_BEGIN authority=none cap=8192
+instance=Instance { def: Item(DefId(2:11899 ~ core[db70]::result::{impl#28}::from_residual)), args: [(), u32, u32] }
+arguments=1 locals=6 blocks=2 scopes=2
+conversion_call_v1=Some(false)
+local[_0] raw=std::result::Result<T/#0, F/#2> normalized=Some(std::result::Result<(), u32>) scope=scope[0]
+local[_1] raw=std::result::Result<std::convert::Infallible, E/#1> normalized=Some(std::result::Result<std::convert::Infallible, u32>) scope=scope[0]
+local[_2] raw=isize normalized=Some(isize) scope=scope[0]
+local[_3] raw=E/#1 normalized=Some(u32) scope=scope[0]
+local[_4] raw=F/#2 normalized=Some(u32) scope=scope[0]
+local[_5] raw=bool normalized=Some(bool) scope=scope[0]
+scope[scope[0]]=SourceScopeData { span: /home/harmenon/.rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/result.rs:2187:5: 2191:6 (#0), parent_scope: None, inlined: None, inlined_parent_scope: None, local_data: Clear }
+scope[scope[1]]=SourceScopeData { span: /home/harmenon/.rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/result.rs:2189:13: 2189:41 (#0), parent_scope: Some(scope[0]), inlined: None, inlined_parent_scope: None, local_data: Clear }
+block[bb0] cleanup=false
+statement[0] scope=scope[0] kind=_2 = discriminant(_1)
+statement[1] scope=scope[0] kind=_5 = Eq(copy _2, const 1_isize)
+statement[2] scope=scope[0] kind=assume(move _5)
+statement[3] scope=scope[0] kind=_3 = move ((_1 as Err).0: E)
+statement[4] scope=scope[1] kind=StorageLive(_4)
+terminator scope=scope[1] kind=_4 = <F as std::convert::From<E>>::from(move _3) -> [return: bb1, unwind continue]
+block[bb1] cleanup=false
+statement[0] scope=scope[1] kind=_0 = std::result::Result::<T, F>::Err(move _4)
+statement[1] scope=scope[1] kind=StorageDead(_4)
+terminator scope=scope[0] kind=return
+CORE_RESULT_HOST_RESIDUAL_END status=complete body_bytes=1886 authority=none
+
+stack backtrace:
+   0: __rustc::rust_begin_unwind
+   1: core::panicking::panic_fmt
+   2: rustc_codegen_fe2o3::trusted_device_items::core_result_control_v1::tests::inspect_residual_bodies
+   3: <rustc_codegen_fe2o3::trusted_device_items::core_result_control_v1::tests::FixtureCallbacks as rustc_driver_impl::Callbacks>::after_analysis
+   4: rustc_interface::interface::run_compiler::<(), rustc_driver_impl::run_compiler::{closure#0}>::{closure#1}
+note: Some details are omitted, run with `RUST_BACKTRACE=full` for a verbose backtrace.
+
+---- trusted_device_items::core_result_control_v1::tests::result_residual_real_body_rejects_extra_operations_and_cleanup stdout ----
+
+thread 'rustc' (3468239) panicked at crates/rustc-codegen-fe2o3/src/trusted_device_items/core_result_control_v1_tests.rs:341:9:
+residual body rejected; CORE_RESULT_HOST_RESIDUAL_BEGIN authority=none cap=8192
+instance=Instance { def: Item(DefId(2:11899 ~ core[db70]::result::{impl#28}::from_residual)), args: [(), u32, u32] }
+arguments=1 locals=6 blocks=2 scopes=2
+conversion_call_v1=Some(false)
+local[_0] raw=std::result::Result<T/#0, F/#2> normalized=Some(std::result::Result<(), u32>) scope=scope[0]
+local[_1] raw=std::result::Result<std::convert::Infallible, E/#1> normalized=Some(std::result::Result<std::convert::Infallible, u32>) scope=scope[0]
+local[_2] raw=isize normalized=Some(isize) scope=scope[0]
+local[_3] raw=E/#1 normalized=Some(u32) scope=scope[0]
+local[_4] raw=F/#2 normalized=Some(u32) scope=scope[0]
+local[_5] raw=bool normalized=Some(bool) scope=scope[0]
+scope[scope[0]]=SourceScopeData { span: /home/harmenon/.rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/result.rs:2187:5: 2191:6 (#0), parent_scope: None, inlined: None, inlined_parent_scope: None, local_data: Clear }
+scope[scope[1]]=SourceScopeData { span: /home/harmenon/.rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/result.rs:2189:13: 2189:41 (#0), parent_scope: Some(scope[0]), inlined: None, inlined_parent_scope: None, local_data: Clear }
+block[bb0] cleanup=false
+statement[0] scope=scope[0] kind=_2 = discriminant(_1)
+statement[1] scope=scope[0] kind=_5 = Eq(copy _2, const 1_isize)
+statement[2] scope=scope[0] kind=assume(move _5)
+statement[3] scope=scope[0] kind=_3 = move ((_1 as Err).0: E)
+statement[4] scope=scope[1] kind=StorageLive(_4)
+terminator scope=scope[1] kind=_4 = <F as std::convert::From<E>>::from(move _3) -> [return: bb1, unwind continue]
+block[bb1] cleanup=false
+statement[0] scope=scope[1] kind=_0 = std::result::Result::<T, F>::Err(move _4)
+statement[1] scope=scope[1] kind=StorageDead(_4)
+terminator scope=scope[0] kind=return
+CORE_RESULT_HOST_RESIDUAL_END status=complete body_bytes=1886 authority=none
+
+stack backtrace:
+   0: __rustc::rust_begin_unwind
+   1: core::panicking::panic_fmt
+   2: rustc_codegen_fe2o3::trusted_device_items::core_result_control_v1::tests::inspect_residual_bodies
+   3: <rustc_codegen_fe2o3::trusted_device_items::core_result_control_v1::tests::FixtureCallbacks as rustc_driver_impl::Callbacks>::after_analysis
+   4: rustc_interface::interface::run_compiler::<(), rustc_driver_impl::run_compiler::{closure#0}>::{closure#1}
+note: Some details are omitted, run with `RUST_BACKTRACE=full` for a verbose backtrace.
+
+---- trusted_device_items::core_result_control_v1::tests::result_residual_real_body_rejects_scope_and_inline_origin_mutations stdout ----
+
+thread 'rustc' (3468246) panicked at crates/rustc-codegen-fe2o3/src/trusted_device_items/core_result_control_v1_tests.rs:341:9:
+residual body rejected; CORE_RESULT_HOST_RESIDUAL_BEGIN authority=none cap=8192
+instance=Instance { def: Item(DefId(2:11899 ~ core[db70]::result::{impl#28}::from_residual)), args: [(), u32, u32] }
+arguments=1 locals=6 blocks=2 scopes=2
+conversion_call_v1=Some(false)
+local[_0] raw=std::result::Result<T/#0, F/#2> normalized=Some(std::result::Result<(), u32>) scope=scope[0]
+local[_1] raw=std::result::Result<std::convert::Infallible, E/#1> normalized=Some(std::result::Result<std::convert::Infallible, u32>) scope=scope[0]
+local[_2] raw=isize normalized=Some(isize) scope=scope[0]
+local[_3] raw=E/#1 normalized=Some(u32) scope=scope[0]
+local[_4] raw=F/#2 normalized=Some(u32) scope=scope[0]
+local[_5] raw=bool normalized=Some(bool) scope=scope[0]
+scope[scope[0]]=SourceScopeData { span: /home/harmenon/.rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/result.rs:2187:5: 2191:6 (#0), parent_scope: None, inlined: None, inlined_parent_scope: None, local_data: Clear }
+scope[scope[1]]=SourceScopeData { span: /home/harmenon/.rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/result.rs:2189:13: 2189:41 (#0), parent_scope: Some(scope[0]), inlined: None, inlined_parent_scope: None, local_data: Clear }
+block[bb0] cleanup=false
+statement[0] scope=scope[0] kind=_2 = discriminant(_1)
+statement[1] scope=scope[0] kind=_5 = Eq(copy _2, const 1_isize)
+statement[2] scope=scope[0] kind=assume(move _5)
+statement[3] scope=scope[0] kind=_3 = move ((_1 as Err).0: E)
+statement[4] scope=scope[1] kind=StorageLive(_4)
+terminator scope=scope[1] kind=_4 = <F as std::convert::From<E>>::from(move _3) -> [return: bb1, unwind continue]
+block[bb1] cleanup=false
+statement[0] scope=scope[1] kind=_0 = std::result::Result::<T, F>::Err(move _4)
+statement[1] scope=scope[1] kind=StorageDead(_4)
+terminator scope=scope[0] kind=return
+CORE_RESULT_HOST_RESIDUAL_END status=complete body_bytes=1886 authority=none
+
+stack backtrace:
+   0: __rustc::rust_begin_unwind
+   1: core::panicking::panic_fmt
+   2: rustc_codegen_fe2o3::trusted_device_items::core_result_control_v1::tests::inspect_residual_bodies
+   3: <rustc_codegen_fe2o3::trusted_device_items::core_result_control_v1::tests::FixtureCallbacks as rustc_driver_impl::Callbacks>::after_analysis
+   4: rustc_interface::interface::run_compiler::<(), rustc_driver_impl::run_compiler::{closure#0}>::{closure#1}
+note: Some details are omitted, run with `RUST_BACKTRACE=full` for a verbose backtrace.
+
+---- trusted_device_items::core_result_control_v1::tests::result_residual_real_core_bodies_and_nominal_refusals stdout ----
+
+thread 'rustc' (3468253) panicked at crates/rustc-codegen-fe2o3/src/trusted_device_items/core_result_control_v1_tests.rs:341:9:
+residual body rejected; CORE_RESULT_HOST_RESIDUAL_BEGIN authority=none cap=8192
+instance=Instance { def: Item(DefId(2:11899 ~ core[db70]::result::{impl#28}::from_residual)), args: [(), u32, u32] }
+arguments=1 locals=6 blocks=2 scopes=2
+conversion_call_v1=Some(false)
+local[_0] raw=std::result::Result<T/#0, F/#2> normalized=Some(std::result::Result<(), u32>) scope=scope[0]
+local[_1] raw=std::result::Result<std::convert::Infallible, E/#1> normalized=Some(std::result::Result<std::convert::Infallible, u32>) scope=scope[0]
+local[_2] raw=isize normalized=Some(isize) scope=scope[0]
+local[_3] raw=E/#1 normalized=Some(u32) scope=scope[0]
+local[_4] raw=F/#2 normalized=Some(u32) scope=scope[0]
+local[_5] raw=bool normalized=Some(bool) scope=scope[0]
+scope[scope[0]]=SourceScopeData { span: /home/harmenon/.rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/result.rs:2187:5: 2191:6 (#0), parent_scope: None, inlined: None, inlined_parent_scope: None, local_data: Clear }
+scope[scope[1]]=SourceScopeData { span: /home/harmenon/.rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/result.rs:2189:13: 2189:41 (#0), parent_scope: Some(scope[0]), inlined: None, inlined_parent_scope: None, local_data: Clear }
+block[bb0] cleanup=false
+statement[0] scope=scope[0] kind=_2 = discriminant(_1)
+statement[1] scope=scope[0] kind=_5 = Eq(copy _2, const 1_isize)
+statement[2] scope=scope[0] kind=assume(move _5)
+statement[3] scope=scope[0] kind=_3 = move ((_1 as Err).0: E)
+statement[4] scope=scope[1] kind=StorageLive(_4)
+terminator scope=scope[1] kind=_4 = <F as std::convert::From<E>>::from(move _3) -> [return: bb1, unwind continue]
+block[bb1] cleanup=false
+statement[0] scope=scope[1] kind=_0 = std::result::Result::<T, F>::Err(move _4)
+statement[1] scope=scope[1] kind=StorageDead(_4)
+terminator scope=scope[0] kind=return
+CORE_RESULT_HOST_RESIDUAL_END status=complete body_bytes=1886 authority=none
+
+stack backtrace:
+   0: __rustc::rust_begin_unwind
+   1: core::panicking::panic_fmt
+   2: rustc_codegen_fe2o3::trusted_device_items::core_result_control_v1::tests::inspect_residual_bodies
+   3: <rustc_codegen_fe2o3::trusted_device_items::core_result_control_v1::tests::FixtureCallbacks as rustc_driver_impl::Callbacks>::after_analysis
+   4: rustc_interface::interface::run_compiler::<(), rustc_driver_impl::run_compiler::{closure#0}>::{closure#1}
+note: Some details are omitted, run with `RUST_BACKTRACE=full` for a verbose backtrace.
+
+
+failures:
+    trusted_device_items::core_result_control_v1::tests::result_branch_real_body_rejects_changed_aggregate_identity_and_moves
+    trusted_device_items::core_result_control_v1::tests::result_branch_real_body_rejects_changed_edges_and_discriminants
+    trusted_device_items::core_result_control_v1::tests::result_branch_real_body_rejects_changed_payload_fields
+    trusted_device_items::core_result_control_v1::tests::result_branch_real_body_rejects_count_and_local_mutations
+    trusted_device_items::core_result_control_v1::tests::result_branch_real_body_rejects_extra_operations_and_cleanup
+    trusted_device_items::core_result_control_v1::tests::result_branch_real_body_rejects_scope_and_inline_origin_mutations
+    trusted_device_items::core_result_control_v1::tests::result_branch_real_core_bodies_and_nominal_refusals
+    trusted_device_items::core_result_control_v1::tests::result_residual_real_body_rejects_changed_assume_and_discriminant
+    trusted_device_items::core_result_control_v1::tests::result_residual_real_body_rejects_changed_conversion_call
+    trusted_device_items::core_result_control_v1::tests::result_residual_real_body_rejects_changed_payload_and_output
+    trusted_device_items::core_result_control_v1::tests::result_residual_real_body_rejects_count_and_local_mutations
+    trusted_device_items::core_result_control_v1::tests::result_residual_real_body_rejects_extra_operations_and_cleanup
+    trusted_device_items::core_result_control_v1::tests::result_residual_real_body_rejects_scope_and_inline_origin_mutations
+    trusted_device_items::core_result_control_v1::tests::result_residual_real_core_bodies_and_nominal_refusals
+
+test result: FAILED. 1 passed; 14 failed; 0 ignored; 0 measured; 724 filtered out; finished in 0.19s
+

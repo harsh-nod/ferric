@@ -35,6 +35,7 @@ matrix and attention controls.
 | [V2](attempt-v2/evidence/failed.json) | `5112b3783e6547d89ca04e1449d3b55bf794ced3` | Production compiler built; test compilation failed with two E0277 diagnostics; no tests ran. |
 | [V3](attempt-v3/evidence/failed.json) | `87bdf54f4351c43189fe982b1bf6a8059599ea89` | Both builds passed; 390 prior-cohort tests passed; the new cohort reported 1 pass and 14 failures. |
 | [V4](attempt-v4/evidence/failed.json) | `d6eded7d7d187b1be5c2f2d1bb521f6e26246b81` | Both builds and the same 390 tests passed; callbacks advanced past branch checks but failed at the residual-body assertion. The new cohort still reported 1 pass and 14 failures. |
+| [V5](attempt-v5/evidence/failed.json) | `d2d98d302f57d38563b58bd01d168eed092d2692` | Same builds and 390 tests passed; failure-only diagnostics captured the host core's `unwind continue` edge. The new cohort still reported 1 pass and 14 failures. |
 
 V1's four phases exited naturally and were reaped; the first three returned
 zero, then the compiler build returned 101. Integrity postchecks passed and
@@ -73,12 +74,30 @@ two scopes. The complete body has not yet been captured. All 23 phases exited
 naturally and were reaped, with unchanged sources and clean integrity postchecks.
 The 14 callback-based tests share initialization, so this remains a failing
 cohort, not separate passing branch tests or completion of all 172 mutations.
-A bounded test-only failure diagnostic is next; production admission is unchanged.
+A bounded test-only failure diagnostic was added for V5; production admission
+is unchanged.
+
+V5's [raw failure output](attempt-v5/evidence/core-result-control.stdout) contains
+14 identical complete residual-body observations, each 1,963 bytes including
+markers. The conversion check reports `Some(false)` and the actual call has
+`unwind continue`. This differs from the previously captured AMD-target core's
+`unwind unreachable`, which the production matcher requires. The fixture used
+the host's prebuilt core; passing `-Cpanic=abort` to that fixture did not replace
+the imported core body. The next test-only correction will use genuine
+AMD-target core metadata rather than relax the production unwind requirement
+or manufacture a positive MIR body.
+
+The diagnostic helper is confined to `#[cfg(test)]` and runs only on assertion
+failure. Thus `diagnostic_build=false` describes the production compiler
+artifacts, which contain no diagnostic hooks; it does not mean the test binary
+has no failure diagnostics. All 23 V5 phases exited naturally and were reaped,
+with unchanged sources and clean integrity postchecks. Qualification remains
+incomplete; the captured mismatch does not make any failed test pass.
 The new cohort, atomic/source-safety controls and both matrix/attention controls
 still require a successful run on this generation.
 
 The retention manifests pin 31 original V1 files, 36 V2 files, 126 V3 files and
-126 V4 files, including each
+126 files each for V4 and V5, including each
 controller, manifest, raw evidence and four compiler source bodies. Failed
 attempts remain failed. Provider qualification, guarded HSACO emission,
 GPU/model correctness, sustained single-request BF16 2,048/256 and 700 tokens/s
