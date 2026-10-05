@@ -6,7 +6,16 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Latest: [the actual core FromResidual wrapper is captured alongside branch](../qualification/guarded-mlp-core-result-residual-diagnostic-v1/README.md).
+Latest: [exact core Result matchers are implemented and the production compiler builds on MI350](../qualification/guarded-mlp-core-result-qualification-v1/README.md).
+The first attempt exposed an indexed-operand API mismatch; the corrected
+compiler built successfully. The separate test build then found two iterator
+constructor mismatches in the mutation fixtures. Both failed attempts are
+retained with clean integrity postchecks and natural, reaped processes.
+Fifteen tests are authored, not yet executed. Test compilation and unchanged
+matrix/attention controls are next. Ferric's dependency remains unchanged;
+no provider, GPU, model or performance gate is claimed passed.
+
+Previously, [the actual core FromResidual wrapper was captured alongside branch](../qualification/guarded-mlp-core-result-residual-diagnostic-v1/README.md).
 The second diagnostic compiler built on MI350 and all ten rendering/census
 tests passed. The complete observation includes the residual discriminant
 assumption and its real error-conversion call; neither is implicitly trusted.
