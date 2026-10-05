@@ -1,0 +1,15 @@
+{
+  "argv": [
+    "/usr/bin/prlimit",
+    "--as=12884901888",
+    "--cpu=1200",
+    "--fsize=1073741824",
+    "--core=0",
+    "--",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-result-qualification-cpu-v228-v4/target/debug/deps/device_api_ui-591eb88a7faad131",
+    "--list",
+    "--format=terse"
+  ],
+  "pgid": 3368512,
+  "pid": 3368512
+}

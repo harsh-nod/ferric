@@ -8,11 +8,12 @@ engineering branch; it does not change the production execution path.
 
 Latest: [the Result matcher builds and reaches tests, but qualification remains incomplete](../qualification/guarded-mlp-core-result-qualification-v1/README.md).
 After two retained API build failures, both compiler and test binaries built
-on MI350. The 390 prior-cohort tests passed; the new cohort reported one pass
-and 14 failures at its shared branch signature assertion, before any MIR
-mutation ran. All 23 phases exited naturally and were reaped, with clean
-integrity postchecks. A structural definition-path correction is next; it
-still needs actual confirmation. Matrix and attention were not reached.
+on MI350. V4's structural definition-path correction advanced callbacks through
+branch checks to a residual-body assertion. The same 390 prior-cohort tests
+passed, but the new cohort still reported one pass and 14 failures through
+shared initialization. All 23 phases exited naturally and were reaped, with
+clean integrity postchecks. A bounded test-only dump of the actual residual
+body is next. Matrix and attention were not reached.
 Ferric's dependency remains unchanged; no provider, GPU, model or performance
 gate is claimed passed.
 
