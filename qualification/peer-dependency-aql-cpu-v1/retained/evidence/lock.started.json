@@ -1,0 +1,8 @@
+{
+  "argv": [
+    "/home/harmenon/.rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/bin/cargo",
+    "generate-lockfile",
+    "--offline"
+  ],
+  "pid": 3078021
+}

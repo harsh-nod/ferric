@@ -1,0 +1,50 @@
+{
+  "schema": "ferric-peer-dependency-aql-root-observation-v1",
+  "scope": "Root agent execution and transport observations, separate from machine-generated receipts",
+  "host_alias": "mi350",
+  "host_name": "smci350-rck-g03-b19-03",
+  "runtime_commit": "774034d4e03817088ff1d245f47e98f3155a9902",
+  "command": "env -u PYTHONPATH -u PYTHONHOME -u PYTHONOPTIMIZE timeout --signal=TERM --kill-after=30s 2400s /usr/bin/python3 -B /home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/peer-dependency-aql-cpu-v228-v1/run.py",
+  "execution": {
+    "session_id": 98269,
+    "terminal_chunk": "6410b8",
+    "exit_code": 0,
+    "receipt_sha256": "06f981beb65b5b76c60e0a82adeba118b6e6b5c9ee6795aaca148d7bd7249e96"
+  },
+  "input": {
+    "archive": "peer-dependency-aql-input-v228-v2.tar.gz",
+    "bytes": 26180,
+    "sha256": "3d081bfc7075aa49ce6fc4461c27b1867ca123ccf413d4ce7ca1ed1c9c840750",
+    "transport_session": 74382,
+    "transport_terminal_chunk": "62c030",
+    "extraction_session": 73542,
+    "extraction_terminal_chunk": "f28b0d"
+  },
+  "export": {
+    "archive": "peer-dependency-aql-evidence-v228-v1.tar.gz",
+    "bytes": 32873,
+    "sha256": "1e79cac9a80affde3da1de25521071cef2e826610f7f802f4cc8ade0d1dea753",
+    "session_id": 79929,
+    "terminal_chunk": "aa0fc4",
+    "transport_session": 17888,
+    "transport_terminal_chunk": "5ce0e6",
+    "extraction_session": 32106,
+    "extraction_terminal_chunk": "7ad535",
+    "copied_files": 45,
+    "omitted": ["native oracle executable", "Cargo target directory"]
+  },
+  "publication": {
+    "copy_session": 11884,
+    "copy_terminal_chunk": "bf431f",
+    "result_sha256": "b1834355c2954dfbe5325358ce387231a55aafffc78bcbbe9624b7fcc3a595ea"
+  },
+  "runtime_pushes": {
+    "harsh_nod": {"session_id": 3732, "terminal_chunk": "9bb1f2", "exit_code": 0, "remote_verification_chunk": "d905f9"},
+    "powderluv": {"session_id": 44189, "terminal_chunk": "484bd3", "exit_code": 0, "remote_verification_chunk": "533037"}
+  },
+  "gpu_execution": false,
+  "native_peer_ordering_qualified": false,
+  "milestones_closed": [],
+  "sustained_2048_256_qualified": false,
+  "performance_target_qualified": false
+}

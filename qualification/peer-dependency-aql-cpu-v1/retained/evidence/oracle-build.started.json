@@ -1,0 +1,14 @@
+{
+  "argv": [
+    "/usr/bin/cc",
+    "-std=c11",
+    "-Wall",
+    "-Wextra",
+    "-Werror",
+    "-I/opt/rocm/include/hsa",
+    "crates/fe2o3-aql/tests/oracles/aql_peer_dependency.c",
+    "-o",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/peer-dependency-aql-cpu-v228-v1/evidence/peer-dependency-oracle"
+  ],
+  "pid": 3078208
+}

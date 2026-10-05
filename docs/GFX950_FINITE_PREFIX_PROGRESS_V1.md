@@ -6,7 +6,17 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Latest: [the shared-full / ordered-segment GPU comparison completed on MI350](../qualification/projection-ordered-segment-pair-v1/README.md).
+Latest: [ordered peer dependency packets passed CPU qualification on MI350](../qualification/peer-dependency-aql-cpu-v1/README.md).
+All 43 Rust tests passed, including ten new dependency/publication tests. A C
+oracle matched the 64-byte packet encoding and system-scoped `0x1503` header
+against the installed ROCm header. All seven bounded phases exited naturally.
+The exact tested Rust/C sources are pushed to both fe2o3 forks; the existing
+publication gate remains unchanged. This is a packet-layer prerequisite, not
+GPU peer synchronization or model qualification. Native signal ownership,
+mixed-packet submission and a two-rank producer/consumer test are next. All
+milestones, numerical acceptance, sustained 2,048/256 and 700 tokens/s remain open.
+
+Previously, [the shared-full / ordered-segment GPU comparison completed on MI350](../qualification/projection-ordered-segment-pair-v1/README.md).
 Both one-attempt four-forward runs passed structural and lifecycle checks;
 all four payloads, covering 152 captured tensor slices per arm, are byte-identical.
 The four-forward host-time sum was 21.908947 seconds shared versus 21.000850

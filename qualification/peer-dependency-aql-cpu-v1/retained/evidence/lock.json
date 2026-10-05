@@ -1,0 +1,25 @@
+{
+  "argv": [
+    "/home/harmenon/.rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/bin/cargo",
+    "generate-lockfile",
+    "--offline"
+  ],
+  "elapsed_ns": 15517930,
+  "exception": null,
+  "exit_code": 0,
+  "forced_cleanup": false,
+  "label": "lock",
+  "pid": 3078021,
+  "process_group_absent": true,
+  "stderr": {
+    "bytes": 54,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/peer-dependency-aql-cpu-v228-v1/evidence/lock.stderr",
+    "sha256": "7a566aeb42d3bbb8f3063d9a5c8cf05652b214e432cc18dcbfadca793825c984"
+  },
+  "stdout": {
+    "bytes": 0,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/peer-dependency-aql-cpu-v228-v1/evidence/lock.stdout",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "timed_out": false
+}

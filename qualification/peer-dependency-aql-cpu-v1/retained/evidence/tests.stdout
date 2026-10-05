@@ -1,0 +1,63 @@
+
+running 2 tests
+test tests::completion_observation_is_exact ... ok
+test tests::cov6_shape_separates_complete_blocks_from_partial_remainders ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 31 tests
+test a_full_window_uses_each_slot_once ... ok
+test barrier_and_packet_layout_and_encoding_are_exact ... ok
+test barrier_and_rejects_misaligned_completion_signal ... ok
+test barrier_and_schema_digest_is_frozen ... ok
+test batch_count_and_space_rejections_leave_both_counters_unchanged ... ok
+test batch_counter_rejections_leave_both_counters_unchanged ... ok
+test batch_reservation_model_digest_is_frozen_without_changing_the_wire_abi ... ok
+test batch_reservation_wraps_in_order_with_distinct_slots ... ok
+test busy_signal_starts_pending ... ok
+test every_reviewed_batch_count_and_wrap_phase_has_distinct_ordered_slots ... ok
+test exact_unpublished_packet_and_final_header ... ok
+test fixed_batch_v2_admits_8192_with_one_two_phase_publication ... ok
+test fixed_batch_v2_is_additive_and_frozen ... ok
+test fixed_batch_v2_reservation_is_bounded_by_512k_ring_and_checked_arithmetic ... ok
+test geometry_derives_exact_dimensions ... ok
+test geometry_rejects_invalid_dimensions_and_bounds ... ok
+test maximum_batch_and_last_nonoverflowing_counter_are_admitted ... ok
+test minimum_ring_admission_boundaries_are_exhaustive ... ok
+test one_hundred_thousand_completed_reservations_wrap_slots_exactly ... ok
+test packet_and_signal_layouts_are_exact ... ok
+test packet_rejects_address_substitution_and_misalignment ... ok
+test pending_signal_byte_initializer_overwrites_every_byte_exactly ... ok
+test prepared_batch_rejects_counts_outside_the_reviewed_bound ... ok
+test prepared_batch_retains_each_exact_dispatch_ordering_header ... ok
+test prepared_batch_writes_every_invalid_body_before_any_release_header ... ok
+test prepared_publication_keeps_each_setup_dimension_paired ... ok
+test pure_completion_classifier_is_exact_and_preserves_unexpected_values ... ok
+test reviewed_publication_pairs_dispatch_and_barrier_setup_exactly ... ok
+test ring_capacity_and_reservation_are_exact ... ok
+test ring_reservation_fails_closed_on_counter_anomalies ... ok
+test schema_digest_is_frozen ... ok
+
+test result: ok. 31 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.21s
+
+
+running 10 tests
+test body_failure_never_exposes_a_header ... ok
+test encodes_all_64_signal_address_bits ... ok
+test header_failure_stops_without_later_publication ... ok
+test mixed_batch_writes_all_bodies_before_any_header ... ok
+test packet_count_bounds_preserve_the_existing_policy ... ok
+test peer_barrier_layout_and_exact_wire_bytes ... ok
+test peer_header_gate_does_not_relax_existing_publication ... ok
+test rejects_duplicate_and_self_dependencies ... ok
+test rejects_each_misaligned_signal ... ok
+test unordered_kernel_is_rejected_at_any_batch_position ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

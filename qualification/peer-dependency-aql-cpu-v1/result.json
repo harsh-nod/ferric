@@ -1,0 +1,241 @@
+{
+  "archive_sha256": "1e79cac9a80affde3da1de25521071cef2e826610f7f802f4cc8ade0d1dea753",
+  "copied": {
+    "retained/Cargo.lock": {
+      "bytes": 2161,
+      "retained": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/peer-dependency-aql-evidence-v228-v1/Cargo.lock",
+      "sha256": "80ad519fec2bf458a85921e8cf5ad714957295f3de71121202a695694c3a79ea"
+    },
+    "retained/Cargo.toml": {
+      "bytes": 281,
+      "retained": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/peer-dependency-aql-evidence-v228-v1/Cargo.toml",
+      "sha256": "7879f57fc05a552840266d7162a88f055495986a83fc49f10aec6793c0fb432e"
+    },
+    "retained/crates/fe2o3-aql/Cargo.toml": {
+      "bytes": 364,
+      "retained": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/peer-dependency-aql-evidence-v228-v1/crates/fe2o3-aql/Cargo.toml",
+      "sha256": "7bed04a9f75c0688d8d1163c7bda7f646404eef507a8e9224e18b4d633fd09da"
+    },
+    "retained/crates/fe2o3-aql/README.md": {
+      "bytes": 5574,
+      "retained": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/peer-dependency-aql-evidence-v228-v1/crates/fe2o3-aql/README.md",
+      "sha256": "62a64727d47f521184a4a960e3a246ec937da80c890afef10d1bd5b39309e3e1"
+    },
+    "retained/crates/fe2o3-aql/src/lib.rs": {
+      "bytes": 45915,
+      "retained": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/peer-dependency-aql-evidence-v228-v1/crates/fe2o3-aql/src/lib.rs",
+      "sha256": "77375acea6782c6d0fac4df3ed963a3725ded06a40a282a3cd19f0476aedd669"
+    },
+    "retained/crates/fe2o3-aql/src/peer_dependency.rs": {
+      "bytes": 8100,
+      "retained": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/peer-dependency-aql-evidence-v228-v1/crates/fe2o3-aql/src/peer_dependency.rs",
+      "sha256": "8deabfd558357f98cc1a36c37a5c532c8fe8295976d52c9c75332294b01823e8"
+    },
+    "retained/crates/fe2o3-aql/tests/abi.rs": {
+      "bytes": 29045,
+      "retained": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/peer-dependency-aql-evidence-v228-v1/crates/fe2o3-aql/tests/abi.rs",
+      "sha256": "3e86508b7f73992807aa38b95ac2c43cd1104441ceee1a24c88d2ae463671e1d"
+    },
+    "retained/crates/fe2o3-aql/tests/oracles/aql_barrier_and_7_2_4.c": {
+      "bytes": 2255,
+      "retained": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/peer-dependency-aql-evidence-v228-v1/crates/fe2o3-aql/tests/oracles/aql_barrier_and_7_2_4.c",
+      "sha256": "e0e3010151a024ee7b775cc852aa184fc29711f11dbc647da63219358a1c1520"
+    },
+    "retained/crates/fe2o3-aql/tests/oracles/aql_dispatch_7_2_4.c": {
+      "bytes": 4267,
+      "retained": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/peer-dependency-aql-evidence-v228-v1/crates/fe2o3-aql/tests/oracles/aql_dispatch_7_2_4.c",
+      "sha256": "f92230334176b1baa41ee8fc8231d6b98af473e47b22cef4d9a74290f8d5758c"
+    },
+    "retained/crates/fe2o3-aql/tests/oracles/aql_peer_dependency.c": {
+      "bytes": 1494,
+      "retained": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/peer-dependency-aql-evidence-v228-v1/crates/fe2o3-aql/tests/oracles/aql_peer_dependency.c",
+      "sha256": "57b6f1b8b1f75317589051181588bedfcd6be66be9206eeacc7826c4afcefd0d"
+    },
+    "retained/crates/fe2o3-aql/tests/oracles/run-aql-dispatch-oracle.sh": {
+      "bytes": 2030,
+      "retained": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/peer-dependency-aql-evidence-v228-v1/crates/fe2o3-aql/tests/oracles/run-aql-dispatch-oracle.sh",
+      "sha256": "ff4e0ad921fc66eff922f860181106ea0c4cb5549e8cb9c738a40aa08060f37b"
+    },
+    "retained/crates/fe2o3-aql/tests/peer_dependency.rs": {
+      "bytes": 8913,
+      "retained": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/peer-dependency-aql-evidence-v228-v1/crates/fe2o3-aql/tests/peer_dependency.rs",
+      "sha256": "f71893e935bb7af54ce500c18b04c1ce82ba2893a3692686ae3ce16680376135"
+    },
+    "retained/evidence/complete.json": {
+      "bytes": 19221,
+      "retained": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/peer-dependency-aql-evidence-v228-v1/evidence/complete.json",
+      "sha256": "06f981beb65b5b76c60e0a82adeba118b6e6b5c9ee6795aaca148d7bd7249e96"
+    },
+    "retained/evidence/format-check.json": {
+      "bytes": 978,
+      "retained": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/peer-dependency-aql-evidence-v228-v1/evidence/format-check.json",
+      "sha256": "84abf4a568b868d00c07d9422da34a2a33dc276e3a79a4b642fc7f1739bd49cf"
+    },
+    "retained/evidence/format-check.started.json": {
+      "bytes": 274,
+      "retained": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/peer-dependency-aql-evidence-v228-v1/evidence/format-check.started.json",
+      "sha256": "c7b8809272a66146b71b56024364e7c5516f67d42519c7770caa6dcbfd7805ee"
+    },
+    "retained/evidence/format-check.stderr": {
+      "bytes": 0,
+      "retained": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/peer-dependency-aql-evidence-v228-v1/evidence/format-check.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "retained/evidence/format-check.stdout": {
+      "bytes": 0,
+      "retained": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/peer-dependency-aql-evidence-v228-v1/evidence/format-check.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "retained/evidence/format.json": {
+      "bytes": 945,
+      "retained": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/peer-dependency-aql-evidence-v228-v1/evidence/format.json",
+      "sha256": "87f393773a61d1cc047d0918ff74185f620bd06ed7fa1ecd36bca0e58efa5c59"
+    },
+    "retained/evidence/format.started.json": {
+      "bytes": 259,
+      "retained": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/peer-dependency-aql-evidence-v228-v1/evidence/format.started.json",
+      "sha256": "515f8b06c4c8e58a6053d17df7d34eb37de2a3124319e6d983ff0fc472d5e36b"
+    },
+    "retained/evidence/format.stderr": {
+      "bytes": 0,
+      "retained": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/peer-dependency-aql-evidence-v228-v1/evidence/format.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "retained/evidence/format.stdout": {
+      "bytes": 0,
+      "retained": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/peer-dependency-aql-evidence-v228-v1/evidence/format.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "retained/evidence/lock.json": {
+      "bytes": 856,
+      "retained": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/peer-dependency-aql-evidence-v228-v1/evidence/lock.json",
+      "sha256": "b883ba3aab5156d01732f9de03af016e26d01bb71a57ad891bc99e06240a5a69"
+    },
+    "retained/evidence/lock.started.json": {
+      "bytes": 174,
+      "retained": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/peer-dependency-aql-evidence-v228-v1/evidence/lock.started.json",
+      "sha256": "b31abc3999bce8c7e40e6f94cbb112093aac2c86c4a4993110ae432017089ca6"
+    },
+    "retained/evidence/lock.stderr": {
+      "bytes": 54,
+      "retained": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/peer-dependency-aql-evidence-v228-v1/evidence/lock.stderr",
+      "sha256": "7a566aeb42d3bbb8f3063d9a5c8cf05652b214e432cc18dcbfadca793825c984"
+    },
+    "retained/evidence/lock.stdout": {
+      "bytes": 0,
+      "retained": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/peer-dependency-aql-evidence-v228-v1/evidence/lock.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "retained/evidence/oracle-build.json": {
+      "bytes": 1066,
+      "retained": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/peer-dependency-aql-evidence-v228-v1/evidence/oracle-build.json",
+      "sha256": "2792082625c47832f4d0fb10e73d3f93f0b3333baa663f0a4dab3c178ebdd501"
+    },
+    "retained/evidence/oracle-build.started.json": {
+      "bytes": 361,
+      "retained": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/peer-dependency-aql-evidence-v228-v1/evidence/oracle-build.started.json",
+      "sha256": "b9641459518036e3929cf5a3faba6abc3685dbdbcab5347b458e8507552c6773"
+    },
+    "retained/evidence/oracle-build.stderr": {
+      "bytes": 0,
+      "retained": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/peer-dependency-aql-evidence-v228-v1/evidence/oracle-build.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "retained/evidence/oracle-build.stdout": {
+      "bytes": 0,
+      "retained": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/peer-dependency-aql-evidence-v228-v1/evidence/oracle-build.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "retained/evidence/oracle-run.json": {
+      "bytes": 882,
+      "retained": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/peer-dependency-aql-evidence-v228-v1/evidence/oracle-run.json",
+      "sha256": "1b723c8a8bbd131e893de8aed616a043989a3a47cca689401c406a3120563cb2"
+    },
+    "retained/evidence/oracle-run.started.json": {
+      "bytes": 182,
+      "retained": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/peer-dependency-aql-evidence-v228-v1/evidence/oracle-run.started.json",
+      "sha256": "5ff9bcaa4f838a3d2c36cf8321c8a90680406699b5f9d9782e1ab16a50fe4d52"
+    },
+    "retained/evidence/oracle-run.stderr": {
+      "bytes": 0,
+      "retained": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/peer-dependency-aql-evidence-v228-v1/evidence/oracle-run.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "retained/evidence/oracle-run.stdout": {
+      "bytes": 164,
+      "retained": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/peer-dependency-aql-evidence-v228-v1/evidence/oracle-run.stdout",
+      "sha256": "13d9785f26d7652af8cccf8ecf917946f4e3651c54672f7b113acafe25151021"
+    },
+    "retained/evidence/rocm-header.json": {
+      "bytes": 143,
+      "retained": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/peer-dependency-aql-evidence-v228-v1/evidence/rocm-header.json",
+      "sha256": "3dc3a57e6627d3b063fbec8b4a6b9fbb5ebf8854edda0094b78efdd7fdec852a"
+    },
+    "retained/evidence/rustc-version.json": {
+      "bytes": 875,
+      "retained": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/peer-dependency-aql-evidence-v228-v1/evidence/rustc-version.json",
+      "sha256": "916cec1810241539d6f338d13eac0c977afbff94dd878ca1c0a53ede2c55cca5"
+    },
+    "retained/evidence/rustc-version.started.json": {
+      "bytes": 166,
+      "retained": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/peer-dependency-aql-evidence-v228-v1/evidence/rustc-version.started.json",
+      "sha256": "9b9087fd4e5e66c654d3e86158f36d7dece553cddf1b6d57d024aa04b67a2da4"
+    },
+    "retained/evidence/rustc-version.stderr": {
+      "bytes": 0,
+      "retained": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/peer-dependency-aql-evidence-v228-v1/evidence/rustc-version.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "retained/evidence/rustc-version.stdout": {
+      "bytes": 212,
+      "retained": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/peer-dependency-aql-evidence-v228-v1/evidence/rustc-version.stdout",
+      "sha256": "580dbecb7627e4e8ad67fd0b1d539727ba8d2651d04035c907b406d83200b4e2"
+    },
+    "retained/evidence/sources-input.json": {
+      "bytes": 3661,
+      "retained": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/peer-dependency-aql-evidence-v228-v1/evidence/sources-input.json",
+      "sha256": "bdb41d2729780b7d898bcdd9530c0b2f6c4c3d5493793a7ae86e7f74c3f3bef8"
+    },
+    "retained/evidence/sources-tested.json": {
+      "bytes": 3661,
+      "retained": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/peer-dependency-aql-evidence-v228-v1/evidence/sources-tested.json",
+      "sha256": "dbec6654a7516fece47b4bcba26b58dd79c8ebf6c621fb1103f8bd88ae514987"
+    },
+    "retained/evidence/tests.json": {
+      "bytes": 929,
+      "retained": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/peer-dependency-aql-evidence-v228-v1/evidence/tests.json",
+      "sha256": "b41f051322f6376cd8fa4d5ec7fb0444f1ade8a67a51758eb315ac8091d3a592"
+    },
+    "retained/evidence/tests.started.json": {
+      "bytes": 238,
+      "retained": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/peer-dependency-aql-evidence-v228-v1/evidence/tests.started.json",
+      "sha256": "dd65dfc9520b898d9f79eed2e9577276da0679f2917acc39f84176fa9d971d06"
+    },
+    "retained/evidence/tests.stderr": {
+      "bytes": 734,
+      "retained": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/peer-dependency-aql-evidence-v228-v1/evidence/tests.stderr",
+      "sha256": "c2a1b21673553c8eb2b5c1c16bfe7676fdca0776b089686c51e34285b26d3197"
+    },
+    "retained/evidence/tests.stdout": {
+      "bytes": 3114,
+      "retained": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/peer-dependency-aql-evidence-v228-v1/evidence/tests.stdout",
+      "sha256": "aa0393a53c5249936376b0046405040b44cc7a0a17eb9325e80f778185192387"
+    },
+    "retained/run.py": {
+      "bytes": 6547,
+      "retained": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/peer-dependency-aql-evidence-v228-v1/run.py",
+      "sha256": "cc75406cd32a4e16ec56912f6e6886ada476170e0647b081340583b0537cf015"
+    }
+  },
+  "copied_count": 45,
+  "gpu_execution": false,
+  "ignored_tests": 0,
+  "input_archive_sha256": "3d081bfc7075aa49ce6fc4461c27b1867ca123ccf413d4ce7ca1ed1c9c840750",
+  "native_peer_ordering_qualified": false,
+  "new_peer_tests_passed": 10,
+  "phases_passed": 7,
+  "receipt_sha256": "06f981beb65b5b76c60e0a82adeba118b6e6b5c9ee6795aaca148d7bd7249e96",
+  "rust_tests_passed": 43,
+  "schema": "ferric-peer-dependency-aql-cpu-publication-v1",
+  "sustained_700_tokens_per_second": false
+}

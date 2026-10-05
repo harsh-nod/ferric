@@ -1,0 +1,11 @@
+{
+  "argv": [
+    "/home/harmenon/.rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/bin/rustfmt",
+    "--edition",
+    "2024",
+    "--check",
+    "crates/fe2o3-aql/src/peer_dependency.rs",
+    "crates/fe2o3-aql/tests/peer_dependency.rs"
+  ],
+  "pid": 3078020
+}

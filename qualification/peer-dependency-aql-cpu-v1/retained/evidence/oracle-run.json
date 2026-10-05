@@ -1,0 +1,23 @@
+{
+  "argv": [
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/peer-dependency-aql-cpu-v228-v1/evidence/peer-dependency-oracle"
+  ],
+  "elapsed_ns": 1464471,
+  "exception": null,
+  "exit_code": 0,
+  "forced_cleanup": false,
+  "label": "oracle-run",
+  "pid": 3078213,
+  "process_group_absent": true,
+  "stderr": {
+    "bytes": 0,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/peer-dependency-aql-cpu-v228-v1/evidence/oracle-run.stderr",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "stdout": {
+    "bytes": 164,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/peer-dependency-aql-cpu-v228-v1/evidence/oracle-run.stdout",
+    "sha256": "13d9785f26d7652af8cccf8ecf917946f4e3651c54672f7b113acafe25151021"
+  },
+  "timed_out": false
+}

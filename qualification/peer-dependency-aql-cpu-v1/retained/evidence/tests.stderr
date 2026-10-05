@@ -1,0 +1,14 @@
+   Compiling typenum v1.20.1
+   Compiling cfg-if v1.0.4
+   Compiling cpufeatures v0.3.1
+   Compiling fe2o3-aql v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/peer-dependency-aql-cpu-v228-v1/crates/fe2o3-aql)
+   Compiling hybrid-array v0.4.14
+   Compiling block-buffer v0.12.1
+   Compiling crypto-common v0.2.2
+   Compiling digest v0.11.3
+   Compiling sha2 v0.11.0
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.25s
+     Running unittests src/lib.rs (target/debug/deps/fe2o3_aql-73d0f8a235684eae)
+     Running tests/abi.rs (target/debug/deps/abi-a9c5768dbf56e846)
+     Running tests/peer_dependency.rs (target/debug/deps/peer_dependency-e60e06799913b81c)
+   Doc-tests fe2o3_aql
