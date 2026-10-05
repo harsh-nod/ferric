@@ -19,7 +19,7 @@ checked explicitly. The normal collector still visits that conversion and
 applies its independent source-safety checks. The separate inline-origin audit
 is unchanged. Diagnostic logging is absent from the production source.
 
-Fifteen authored tests cover the family table, actual compiler callbacks and
+Fifteen tests are authored to exercise the family table, actual compiler callbacks and
 172 mutations of real MIR bodies. Structural callback positives deliberately
 use scalar families that the full provider authenticator still refuses; they
 are not substitutes for provider-positive pipeline extraction. The bounded
@@ -33,6 +33,7 @@ matrix and attention controls.
 | --- | --- | --- |
 | [V1](attempt-v1/evidence/failed.json) | `cb234b949405b782e97768ee7a7f66a6dc889761` | Compiler build failed with E0529; no tests ran. |
 | [V2](attempt-v2/evidence/failed.json) | `5112b3783e6547d89ca04e1449d3b55bf794ced3` | Production compiler built; test compilation failed with two E0277 diagnostics; no tests ran. |
+| [V3](attempt-v3/evidence/failed.json) | `87bdf54f4351c43189fe982b1bf6a8059599ea89` | Both builds passed; 390 prior-cohort tests passed; the new cohort reported 1 pass and 14 failures. |
 
 V1's four phases exited naturally and were reaped; the first three returned
 zero, then the compiler build returned 101. Integrity postchecks passed and
@@ -50,10 +51,24 @@ two mutation-fixture arrays without changing their values or assertions.
 All five V2 phases exited naturally and were reaped, with clean integrity
 postchecks and unchanged sources. The first four returned zero; the test
 build returned 101. Its structured diagnostics are retained in
-[Cargo output](attempt-v2/evidence/compiler-tests-build.stdout). Actual test
-execution and both pipeline controls remain pending.
+[Cargo output](attempt-v2/evidence/compiler-tests-build.stdout).
 
-The retention manifests pin 31 original V1 files and 36 original V2 files, including each
+V3 reached actual test execution: 356 device tests, both UI tests, 28 trusted
+provider tests and four scalar-pipeline tests passed. The new cohort's family
+table test passed, but all 14 callback-based tests failed at the shared branch
+signature assertion, before body recognition or mutation execution. The
+[raw output](attempt-v3/evidence/core-result-control.stdout) retains that failure;
+the 172 mutations are not claimed to have run. All 23 phases exited naturally
+and were reaped, with unchanged sources and clean integrity postchecks.
+
+The next proposed correction binds `Infallible` through rustc's structural
+definition path rather than its display path, which may name a `std` re-export.
+Genuine-core identity, the exact definition, empty enum and zero type arguments
+remain required. This is a source-grounded diagnosis awaiting runtime confirmation.
+The new cohort, atomic/source-safety controls and both matrix/attention controls
+still require a successful run on this generation.
+
+The retention manifests pin 31 original V1 files, 36 V2 files and 126 V3 files, including each
 controller, manifest, raw evidence and four compiler source bodies. Failed
 attempts remain failed. Provider qualification, guarded HSACO emission,
 GPU/model correctness, sustained single-request BF16 2,048/256 and 700 tokens/s

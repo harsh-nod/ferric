@@ -1,0 +1,226 @@
+   Compiling typenum v1.20.1
+   Compiling cpufeatures v0.3.1
+   Compiling cfg-if v1.0.4
+   Compiling fe2o3-target-spec v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-result-qualification-cpu-v228-v3/fe2o3/crates/fe2o3-target-spec)
+   Compiling libc v0.2.189
+   Compiling fe2o3-amd-target v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-result-qualification-cpu-v228-v3/fe2o3/crates/fe2o3-amd-target)
+   Compiling hybrid-array v0.4.14
+   Compiling block-buffer v0.12.1
+   Compiling crypto-common v0.2.2
+   Compiling rustix v1.1.4
+   Compiling proc-macro2 v1.0.107
+   Compiling digest v0.11.3
+   Compiling sha2 v0.11.0
+   Compiling hashbrown v0.17.1
+   Compiling fe2o3-build-authority v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-result-qualification-cpu-v228-v3/fe2o3/crates/fe2o3-build-authority)
+   Compiling fe2o3-kernel-descriptor v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-result-qualification-cpu-v228-v3/fe2o3/crates/fe2o3-kernel-descriptor)
+   Compiling fe2o3-rustc-invocation v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-result-qualification-cpu-v228-v3/fe2o3/crates/fe2o3-rustc-invocation)
+   Compiling reserved-fe2o3-symbols v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-result-qualification-cpu-v228-v3/fe2o3/crates/reserved-fe2o3-symbols)
+   Compiling fe2o3-compiler-lineage v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-result-qualification-cpu-v228-v3/fe2o3/crates/fe2o3-compiler-lineage)
+   Compiling bitflags v2.13.1
+   Compiling linux-raw-sys v0.12.1
+   Compiling equivalent v1.0.2
+   Compiling winnow v1.0.4
+   Compiling quote v1.0.47
+   Compiling unicode-ident v1.0.24
+   Compiling toml_parser v1.1.3+spec-1.1.0
+   Compiling indexmap v2.14.1
+   Compiling fe2o3-compiler-ffi v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-result-qualification-cpu-v228-v3/fe2o3/crates/fe2o3-compiler-ffi)
+   Compiling toml_datetime v1.1.1+spec-1.1.0
+   Compiling toml_edit v0.25.13+spec-1.1.0
+   Compiling fe2o3-artifact-transaction v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-result-qualification-cpu-v228-v3/fe2o3/crates/fe2o3-artifact-transaction)
+   Compiling syn v2.0.119
+   Compiling fe2o3-artifacts v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-result-qualification-cpu-v228-v3/fe2o3/crates/fe2o3-artifacts)
+   Compiling proc-macro-crate v3.5.0
+   Compiling fe2o3-rustc-front v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-result-qualification-cpu-v228-v3/fe2o3/crates/fe2o3-rustc-front)
+   Compiling fe2o3-macros v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-result-qualification-cpu-v228-v3/fe2o3/crates/fe2o3-macros)
+   Compiling fe2o3-device v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-result-qualification-cpu-v228-v3/fe2o3/crates/fe2o3-device)
+   Compiling fe2o3-device-tests v0.0.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-result-qualification-cpu-v228-v3/target/tests/trybuild/fe2o3-device)
+    Finished `dev` profile [unoptimized] target(s) in 8.15s
+
+
+test tests/ui/pass/blocked_disjoint_output.rs [should pass] ... ok
+test tests/ui/pass/bounded_collective_contract.rs [should pass] ... ok
+test tests/ui/pass/checked_static_tile.rs [should pass] ... ok
+test tests/ui/pass/checked_view_question_mark.rs [should pass] ... ok
+test tests/ui/pass/coordinates_and_wave_contracts.rs [should pass] ... ok
+test tests/ui/pass/core_atomic_contract.rs [should pass] ... ok
+test tests/ui/pass/dynamic_lds_typed_contract.rs [should pass] ... ok
+test tests/ui/pass/exact_dynamic_lds_collective.rs [should pass] ... ok
+test tests/ui/pass/generative_tile_provider.rs [should pass] ... ok
+test tests/ui/pass/gfx942_diagnostics_contract.rs [should pass] ... ok
+test tests/ui/pass/gfx950_fp4_mfma_formats.rs [should pass] ... ok
+test tests/ui/pass/global_atomic_views.rs [should pass] ... ok
+test tests/ui/pass/grid_leader_exclusive_access.rs [should pass] ... ok
+test tests/ui/pass/half_and_math_contract.rs [should pass] ... ok
+test tests/ui/pass/kernel_marker_contract.rs [should pass] ... ok
+test tests/ui/pass/managed_barrier_lifecycle.rs [should pass] ... ok
+test tests/ui/pass/memory_write_capabilities.rs [should pass] ... ok
+test tests/ui/pass/row_striped_disjoint_output.rs [should pass] ... ok
+test tests/ui/pass/safe_device_math_acquisition.rs [should pass] ... ok
+test tests/ui/pass/safe_execution_capabilities.rs [should pass] ... ok
+test tests/ui/pass/same_index_space_access.rs [should pass] ... ok
+test tests/ui/pass/shifted_disjoint_index.rs [should pass] ... ok
+test tests/ui/pass/simd_contract.rs [should pass] ... ok
+test tests/ui/pass/static_view_authority_boundary.rs [should pass] ... ok
+test tests/ui/pass/tensor_tile_contract.rs [should pass] ... ok
+test tests/ui/pass/typed_group_contracts.rs [should pass] ... ok
+test tests/ui/fail/active_lane_group_requires_unsafe_mask.rs [should fail to compile] ... ok
+test tests/ui/fail/amdgpu_asm_rejects_unknown_operation.rs [should fail to compile] ... ok
+test tests/ui/fail/arbitrary_integer_access_requires_unsafe.rs [should fail to compile] ... ok
+test tests/ui/fail/blocked_output_rejects_collision_prone_integer.rs [should fail to compile] ... ok
+test tests/ui/fail/blocked_output_rejects_wrong_brand.rs [should fail to compile] ... ok
+test tests/ui/fail/cluster_group_is_unavailable.rs [should fail to compile] ... ok
+test tests/ui/fail/collective_context_has_no_default_constructor.rs [should fail to compile] ... ok
+test tests/ui/fail/collective_context_is_not_clone.rs [should fail to compile] ... ok
+test tests/ui/fail/collective_context_is_not_send.rs [should fail to compile] ... ok
+test tests/ui/fail/collective_scratch_requires_unsafe.rs [should fail to compile] ... ok
+test tests/ui/fail/collective_unsupported_scope.rs [should fail to compile] ... ok
+test tests/ui/fail/collective_unsupported_type.rs [should fail to compile] ... ok
+test tests/ui/fail/collective_unsupported_width.rs [should fail to compile] ... ok
+test tests/ui/fail/device_math_has_no_default_constructor.rs [should fail to compile] ... ok
+test tests/ui/fail/device_math_is_not_clone.rs [should fail to compile] ... ok
+test tests/ui/fail/device_math_is_not_send.rs [should fail to compile] ... ok
+test tests/ui/fail/device_math_is_not_sync.rs [should fail to compile] ... ok
+test tests/ui/fail/device_matrix_has_no_default_constructor.rs [should fail to compile] ... ok
+test tests/ui/fail/device_matrix_is_not_clone.rs [should fail to compile] ... ok
+test tests/ui/fail/device_matrix_is_not_send.rs [should fail to compile] ... ok
+test tests/ui/fail/disjoint_block_is_not_clone.rs [should fail to compile] ... ok
+test tests/ui/fail/disjoint_block_is_not_copy.rs [should fail to compile] ... ok
+test tests/ui/fail/disjoint_block_is_not_send.rs [should fail to compile] ... ok
+test tests/ui/fail/disjoint_block_is_not_sync.rs [should fail to compile] ... ok
+test tests/ui/fail/disjoint_block_private_fields.rs [should fail to compile] ... ok
+test tests/ui/fail/disjoint_index_is_not_clone.rs [should fail to compile] ... ok
+test tests/ui/fail/disjoint_index_is_not_copy.rs [should fail to compile] ... ok
+test tests/ui/fail/disjoint_index_private_fields.rs [should fail to compile] ... ok
+test tests/ui/fail/dynamic_lds_assume_init_requires_unsafe.rs [should fail to compile] ... ok
+test tests/ui/fail/dynamic_lds_is_not_clone.rs [should fail to compile] ... ok
+test tests/ui/fail/dynamic_lds_is_not_send.rs [should fail to compile] ... ok
+test tests/ui/fail/dynamic_lds_is_not_sync.rs [should fail to compile] ... ok
+test tests/ui/fail/dynamic_lds_lifetime_escape.rs [should fail to compile] ... ok
+test tests/ui/fail/dynamic_lds_mutable_alias.rs [should fail to compile] ... ok
+test tests/ui/fail/dynamic_lds_non_pod_element.rs [should fail to compile] ... ok
+test tests/ui/fail/dynamic_lds_overaligned_element.rs [should fail to compile] ... ok
+test tests/ui/fail/dynamic_lds_private_fields.rs [should fail to compile] ... ok
+test tests/ui/fail/dynamic_lds_safe_scope_forgery.rs [should fail to compile] ... ok
+test tests/ui/fail/dynamic_lds_safe_view_forgery.rs [should fail to compile] ... ok
+test tests/ui/fail/dynamic_lds_scope_is_not_send.rs [should fail to compile] ... ok
+test tests/ui/fail/dynamic_lds_scope_is_not_sync.rs [should fail to compile] ... ok
+test tests/ui/fail/dynamic_lds_uninitialized_read.rs [should fail to compile] ... ok
+test tests/ui/fail/dynamic_lds_use_after_split.rs [should fail to compile] ... ok
+test tests/ui/fail/dynamic_lds_zero_sized_element.rs [should fail to compile] ... ok
+test tests/ui/fail/exact_dynamic_lds_rejects_caller_epoch.rs [should fail to compile] ... ok
+test tests/ui/fail/exact_dynamic_lds_rejects_global_pointer.rs [should fail to compile] ... ok
+test tests/ui/fail/exact_dynamic_lds_rejects_zero_elements.rs [should fail to compile] ... ok
+test tests/ui/fail/exact_dynamic_lds_scope_cannot_alias.rs [should fail to compile] ... ok
+test tests/ui/fail/generative_provider_not_copy_clone.rs [should fail to compile] ... ok
+test tests/ui/fail/generative_provider_not_send_sync.rs [should fail to compile] ... ok
+test tests/ui/fail/generative_provider_private_construction.rs [should fail to compile] ... ok
+test tests/ui/fail/generative_provider_private_issuer.rs [should fail to compile] ... ok
+test tests/ui/fail/generative_provider_scope_invariant.rs [should fail to compile] ... ok
+test tests/ui/fail/generative_provider_sealed_markers.rs [should fail to compile] ... ok
+test tests/ui/fail/generative_tile_brand_substitution.rs [should fail to compile] ... ok
+test tests/ui/fail/generative_tile_consumed_once.rs [should fail to compile] ... ok
+test tests/ui/fail/generative_tile_epoch_substitution.rs [should fail to compile] ... ok
+test tests/ui/fail/generative_tile_excess_elements.rs [should fail to compile] ... ok
+test tests/ui/fail/generative_tile_excess_lanes.rs [should fail to compile] ... ok
+test tests/ui/fail/generative_tile_nested_scope_mix.rs [should fail to compile] ... ok
+test tests/ui/fail/generative_tile_no_direct_parts.rs [should fail to compile] ... ok
+test tests/ui/fail/generative_tile_scope_escape.rs [should fail to compile] ... ok
+test tests/ui/fail/generative_tile_unsupported_element.rs [should fail to compile] ... ok
+test tests/ui/fail/generative_tile_zero_elements.rs [should fail to compile] ... ok
+test tests/ui/fail/generative_tile_zero_lanes.rs [should fail to compile] ... ok
+test tests/ui/fail/gfx942_split_barrier_is_unavailable.rs [should fail to compile] ... ok
+test tests/ui/fail/gfx942_static_lds_private_fields.rs [should fail to compile] ... ok
+test tests/ui/fail/gfx950_mixed_mfma_rejects_fp8_a_fp4_b.rs [should fail to compile] ... ok
+test tests/ui/fail/global_atomic_view_lifetime_escape.rs [should fail to compile] ... ok
+test tests/ui/fail/global_atomic_view_rejects_unsupported_type.rs [should fail to compile] ... ok
+test tests/ui/fail/gpu_printf_rejects_format_specifiers.rs [should fail to compile] ... ok
+test tests/ui/fail/gpu_printf_requires_literal.rs [should fail to compile] ... ok
+test tests/ui/fail/grid_exclusive_rejects_identity_index.rs [should fail to compile] ... ok
+test tests/ui/fail/grid_handle_lifetime_escape.rs [should fail to compile] ... ok
+test tests/ui/fail/grid_leader_is_not_clone.rs [should fail to compile] ... ok
+test tests/ui/fail/grid_leader_is_not_copy.rs [should fail to compile] ... ok
+test tests/ui/fail/grid_leader_is_not_send.rs [should fail to compile] ... ok
+test tests/ui/fail/grid_leader_is_not_sync.rs [should fail to compile] ... ok
+test tests/ui/fail/grid_leader_private_fields.rs [should fail to compile] ... ok
+test tests/ui/fail/invocation_3d_is_not_clone.rs [should fail to compile] ... ok
+test tests/ui/fail/invocation_3d_is_not_copy.rs [should fail to compile] ... ok
+test tests/ui/fail/invocation_3d_is_not_send.rs [should fail to compile] ... ok
+test tests/ui/fail/invocation_3d_is_not_sync.rs [should fail to compile] ... ok
+test tests/ui/fail/invocation_3d_safe_forgery.rs [should fail to compile] ... ok
+test tests/ui/fail/kernel_marker_collision.rs [should fail to compile] ... ok
+test tests/ui/fail/kernel_marker_rejects_async.rs [should fail to compile] ... ok
+test tests/ui/fail/kernel_marker_safe_forgery.rs [should fail to compile] ... ok
+test tests/ui/fail/lds_tile_direct_assume_init_is_unavailable.rs [should fail to compile] ... ok
+test tests/ui/fail/lds_tile_read_requires_wave_lane.rs [should fail to compile] ... ok
+test tests/ui/fail/lds_tile_uninitialized_read.rs [should fail to compile] ... ok
+test tests/ui/fail/lookalike_view_error_has_no_kernel_conversion.rs [should fail to compile] ... ok
+test tests/ui/fail/managed_barrier_pending_destroy.rs [should fail to compile] ... ok
+test tests/ui/fail/managed_barrier_wait_before_arrive.rs [should fail to compile] ... ok
+test tests/ui/fail/memory_expert_copy_requires_unsafe.rs [should fail to compile] ... ok
+test tests/ui/fail/memory_write_rejects_integer.rs [should fail to compile] ... ok
+test tests/ui/fail/memory_write_rejects_mismatched_mapping.rs [should fail to compile] ... ok
+test tests/ui/fail/mfma_fragment_is_not_copy.rs [should fail to compile] ... ok
+test tests/ui/fail/mfma_fragment_raw_construction_is_private.rs [should fail to compile] ... ok
+test tests/ui/fail/mfma_fragments_are_not_send.rs [should fail to compile] ... ok
+test tests/ui/fail/mfma_fragments_are_not_sync.rs [should fail to compile] ... ok
+test tests/ui/fail/mfma_operand_roles_cannot_swap.rs [should fail to compile] ... ok
+test tests/ui/fail/mfma_profile_cannot_change.rs [should fail to compile] ... ok
+test tests/ui/fail/mfma_register_distribution_cannot_change.rs [should fail to compile] ... ok
+test tests/ui/fail/mfma_wave_width_cannot_change.rs [should fail to compile] ... ok
+test tests/ui/fail/mismatched_index_spaces.rs [should fail to compile] ... ok
+test tests/ui/fail/row_striped_mapping_must_match.rs [should fail to compile] ... ok
+test tests/ui/fail/shifted_index_rejects_identity_output.rs [should fail to compile] ... ok
+test tests/ui/fail/simd_invalid_element.rs [should fail to compile] ... ok
+test tests/ui/fail/simd_invalid_lane_count.rs [should fail to compile] ... ok
+test tests/ui/fail/static_index_private.rs [should fail to compile] ... ok
+test tests/ui/fail/static_tile_const_out_of_bounds.rs [should fail to compile] ... ok
+test tests/ui/fail/static_tile_parent_borrow_is_exclusive.rs [should fail to compile] ... ok
+test tests/ui/fail/static_tile_private_witness_cannot_be_replaced.rs [should fail to compile] ... ok
+test tests/ui/fail/static_tile_witness_is_not_clone.rs [should fail to compile] ... ok
+test tests/ui/fail/static_tile_witness_private_fields.rs [should fail to compile] ... ok
+test tests/ui/fail/static_view_const_out_of_bounds.rs [should fail to compile] ... ok
+test tests/ui/fail/static_view_disjoint_slice_is_not_shared_authority.rs [should fail to compile] ... ok
+test tests/ui/fail/static_view_is_not_send.rs [should fail to compile] ... ok
+test tests/ui/fail/static_view_is_not_sync.rs [should fail to compile] ... ok
+test tests/ui/fail/static_view_lifetime_escape.rs [should fail to compile] ... ok
+test tests/ui/fail/static_view_mut_constructor_requires_unsafe.rs [should fail to compile] ... ok
+test tests/ui/fail/static_view_mut_disjoint_slice_is_not_global_authority.rs [should fail to compile] ... ok
+test tests/ui/fail/static_view_mut_is_not_clone.rs [should fail to compile] ... ok
+test tests/ui/fail/static_view_mut_is_not_send.rs [should fail to compile] ... ok
+test tests/ui/fail/static_view_mut_is_not_sync.rs [should fail to compile] ... ok
+test tests/ui/fail/static_view_mutable_alias.rs [should fail to compile] ... ok
+test tests/ui/fail/static_view_parent_borrow_is_exclusive.rs [should fail to compile] ... ok
+test tests/ui/fail/static_view_private_fields.rs [should fail to compile] ... ok
+test tests/ui/fail/static_view_shared_has_no_mutation.rs [should fail to compile] ... ok
+test tests/ui/fail/stride_is_not_disjoint_authority.rs [should fail to compile] ... ok
+test tests/ui/fail/thread_index_is_not_clone.rs [should fail to compile] ... ok
+test tests/ui/fail/thread_index_is_not_copy.rs [should fail to compile] ... ok
+test tests/ui/fail/thread_index_is_not_send.rs [should fail to compile] ... ok
+test tests/ui/fail/thread_index_is_not_sync.rs [should fail to compile] ... ok
+test tests/ui/fail/typed_group_handles_are_not_clone.rs [should fail to compile] ... ok
+test tests/ui/fail/typed_group_handles_are_not_send.rs [should fail to compile] ... ok
+test tests/ui/fail/typed_group_handles_are_not_sync.rs [should fail to compile] ... ok
+test tests/ui/fail/typed_group_private_fields.rs [should fail to compile] ... ok
+test tests/ui/fail/unsupported_group_synchronization.rs [should fail to compile] ... ok
+test tests/ui/fail/wave32_cannot_form_wave64_snapshots.rs [should fail to compile] ... ok
+test tests/ui/fail/wave64_tile_rejects_invalid_widths.rs [should fail to compile] ... ok
+test tests/ui/fail/wave_lane_is_not_clone.rs [should fail to compile] ... ok
+test tests/ui/fail/wave_lane_is_not_copy.rs [should fail to compile] ... ok
+test tests/ui/fail/wave_lane_is_not_send.rs [should fail to compile] ... ok
+test tests/ui/fail/wave_lane_is_not_sync.rs [should fail to compile] ... ok
+test tests/ui/fail/wave_lane_safe_forgery.rs [should fail to compile] ... ok
+test tests/ui/fail/wave_snapshot_group_lifetime_escape.rs [should fail to compile] ... ok
+test tests/ui/fail/wave_width_mismatch.rs [should fail to compile] ... ok
+test tests/ui/fail/write_only_block_rejects_tiled_witness.rs [should fail to compile] ... ok
+test tests/ui/fail/write_only_exclusive_rejects_block_witness.rs [should fail to compile] ... ok
+test tests/ui/fail/write_only_has_no_readable_borrow.rs [should fail to compile] ... ok
+test tests/ui/fail/write_only_is_not_clone.rs [should fail to compile] ... ok
+test tests/ui/fail/write_only_is_not_copy.rs [should fail to compile] ... ok
+test tests/ui/fail/write_only_pointer_cannot_escape.rs [should fail to compile] ... ok
+test tests/ui/fail/write_only_row_rejects_block_witness.rs [should fail to compile] ... ok
+test tests/ui/fail/write_only_tiled_rejects_row_witness.rs [should fail to compile] ... ok
+test tests/ui/fail/zero_filled_matrix_load_is_not_optional.rs [should fail to compile] ... ok
+
+
