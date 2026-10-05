@@ -48,7 +48,9 @@ reports that the collector cannot authenticate the external
 matrix example. This is an authentication gap, not evidence that the helper
 contains unsafe code. It occurs before workgroup-pipeline construction, so it
 does not establish a regression from the new private pipeline representation.
-A matched baseline and a narrowly scoped compiler fix remain necessary; the
+The [matched previous-revision baseline](../guarded-mlp-provider-baseline-v1/README.md)
+now reproduces the same refusal, establishing that this specific failure
+predates alignment. A narrowly scoped compiler fix remains necessary; the
 example and failed test have not been rewritten or skipped to obtain a pass.
 
 ## Retained Attempts

@@ -6,7 +6,15 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Latest: [the aligned provider generation passed 398 CPU tests but remains unqualified](../qualification/guarded-mlp-provider-generation-v1/README.md).
+Latest: [the matched baseline confirms that the matrix refusal predates provider alignment](../qualification/guarded-mlp-provider-baseline-v1/README.md).
+The published previous revision failed at the same core `Result::branch`
+source-safety check, using matching build selections, tools and environments.
+All 18 baseline phases exited naturally and were reaped; integrity postchecks
+passed. This identifies a preexisting compiler gap, not a passing pipeline
+control. The provider remains unqualified, its proposed revision unpublished,
+and Ferric's dependency unchanged. No new GPU or performance result is claimed.
+
+Previously, [the aligned provider generation passed 398 CPU tests but remains unqualified](../qualification/guarded-mlp-provider-generation-v1/README.md).
 The full device library, both UI targets, trusted-provider cohort, scalar-pipeline
 controls and eight selected gfx950 atomic extraction tests passed on MI350.
 The existing matrix-pipeline test then failed while authenticating a core

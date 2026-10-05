@@ -1,0 +1,102 @@
+{
+  "added_source_files": [
+    "fe2o3/crates/fe2o3-device/src/finite_join.rs",
+    "fe2o3/crates/fe2o3-device/src/finite_join/multiwave_join_v1.rs",
+    "fe2o3/crates/fe2o3-device/src/finite_join/multiwave_join_v1_tests.rs",
+    "fe2o3/crates/fe2o3-device/src/finite_join/wave_mlp_tasks_v1.rs",
+    "fe2o3/crates/fe2o3-device/src/finite_join/wave_mlp_tasks_v1_tests.rs",
+    "fe2o3/crates/fe2o3-device/src/finite_join/wave_mlp_tiles_v2.rs",
+    "fe2o3/crates/fe2o3-device/src/finite_join/wave_mlp_tiles_v2_tests.rs",
+    "fe2o3/crates/fe2o3-device/src/finite_join/wave_qkv_attention_output_tasks_v5.rs",
+    "fe2o3/crates/fe2o3-device/src/finite_join/wave_qkv_attention_output_tasks_v5_tests.rs",
+    "fe2o3/crates/fe2o3-device/src/finite_join/wave_qkv_attention_output_tiles_v6.rs",
+    "fe2o3/crates/fe2o3-device/src/finite_join/wave_qkv_attention_output_tiles_v6_tests.rs",
+    "fe2o3/crates/fe2o3-device/src/finite_join/wave_qkv_attention_tasks_v4.rs",
+    "fe2o3/crates/fe2o3-device/src/finite_join/wave_qkv_attention_tasks_v4_tests.rs",
+    "fe2o3/crates/fe2o3-device/src/finite_join/wave_qkv_post_tasks_v3.rs",
+    "fe2o3/crates/fe2o3-device/src/finite_join/wave_qkv_post_tasks_v3_tests.rs",
+    "fe2o3/crates/fe2o3-device/src/finite_join/wave_qkv_tasks_v2.rs",
+    "fe2o3/crates/fe2o3-device/src/finite_join/wave_qkv_tasks_v2_tests.rs",
+    "fe2o3/crates/fe2o3-device/src/finite_join/wave_tasks.rs",
+    "fe2o3/crates/fe2o3-device/src/finite_join/wave_tasks_run_tests.rs",
+    "fe2o3/crates/fe2o3-device/src/finite_join/wave_tasks_scheduler_tests.rs",
+    "fe2o3/crates/fe2o3-device/src/finite_join/wave_tasks_tests.rs",
+    "fe2o3/crates/fe2o3-device/src/finite_join_dispatch.rs",
+    "fe2o3/crates/fe2o3-device/src/finite_join_dispatch_tests.rs",
+    "fe2o3/crates/fe2o3-device/src/finite_join_tests.rs"
+  ],
+  "aligned_receipt": {
+    "bytes": 322999,
+    "sha256": "d74c17f6138a2e68d2d802a39c549d402c515e6d4d8e25d843c69a10b2700e3f"
+  },
+  "aligned_source_generation": "a057bf3b0e9175f481a31181b19d587d342bf8f3",
+  "aligned_test_passed": false,
+  "baseline_receipt": {
+    "bytes": 207690,
+    "sha256": "355a77d0819da59417137efac2b2b1bc7c571910be144dce9300f6384f625b30"
+  },
+  "baseline_source_generation": "097b4f796a283f554339cc0c0ef5c2c8c3858d2a",
+  "baseline_test_passed": false,
+  "changed_source_files": [
+    "fe2o3/crates/fe2o3-device/src/lds.rs",
+    "fe2o3/crates/fe2o3-device/src/lib.rs",
+    "fe2o3/crates/rustc-codegen-fe2o3/src/trusted_device_items.rs"
+  ],
+  "command_environment_equal_after_run_root_relocation": [
+    "rustc-version",
+    "metadata",
+    "device-build",
+    "compiler-products",
+    "compiler-tests-build",
+    "matrix-extraction-0"
+  ],
+  "gpu_execution": false,
+  "performance_claim": false,
+  "provider_qualification_passed": false,
+  "removed_source_files": [],
+  "schema": "ferric-guarded-mlp-provider-baseline-comparison-v1",
+  "specific_refusal_predates_alignment": true,
+  "tool_pins_equal": true,
+  "unchanged_source_pins": {
+    "fe2o3/crates/rustc-codegen-fe2o3/src/collector.rs": {
+      "bytes": 166957,
+      "sha256": "2128a39aa6605bce47d7cc2447b997890fe5723a67ae0d135209a6dcaf5d50d6"
+    },
+    "fe2o3/crates/rustc-codegen-fe2o3/tests/production_general_matrix_driver_v1.rs": {
+      "bytes": 11685,
+      "sha256": "38471ea2e470cc400e2d5be5f93e771511f3dbe697a9ed0459538c3057880722"
+    },
+    "fe2o3/examples/flash_attention_general_v1/src/kernel.rs": {
+      "bytes": 16061,
+      "sha256": "f160e1391e1b354657049b5b11d745428fbbfb8fb6e5e2fceb4143ac93e7b00b"
+    },
+    "fe2o3/examples/flash_attention_general_v1/src/lib.rs": {
+      "bytes": 682,
+      "sha256": "ecbf8eab7623b70839228207daa590e54269a84278b677dede099d75ce0d9d33"
+    },
+    "fe2o3/examples/flash_attention_general_v1/src/main.rs": {
+      "bytes": 7321,
+      "sha256": "afb79e75ca9e0f5f5f20ed3a9db15d05a05ba776c1e16ebf03ee6caf55f9c0a1"
+    },
+    "fe2o3/examples/flash_attention_general_v1/src/reference.rs": {
+      "bytes": 7033,
+      "sha256": "a9009840032e64243f47f730ba77d973ddf62289bd87b8a11ed7d119067de5f2"
+    },
+    "fe2o3/examples/tiled_gemm_general_v1/src/kernel.rs": {
+      "bytes": 6703,
+      "sha256": "a898a078ac411b17764d87c0b06681045ddccc83ea8d4314fd2a48b59e8462cd"
+    },
+    "fe2o3/examples/tiled_gemm_general_v1/src/lib.rs": {
+      "bytes": 1448,
+      "sha256": "06d20b06f42d0d2433354770fe567409296e90e47dedbbdc9b5227c34fdf7377"
+    },
+    "fe2o3/examples/tiled_gemm_general_v1/src/main.rs": {
+      "bytes": 5209,
+      "sha256": "fdd4efbeff66aeb7f423abe11ec3ee1330918adde21558525241ca58ce27e64b"
+    },
+    "fe2o3/examples/tiled_gemm_general_v1/src/reference.rs": {
+      "bytes": 4307,
+      "sha256": "80674fede2edfd020254e82637b77618bede8674d67b79e7d5c20ed780c1b5bc"
+    }
+  }
+}

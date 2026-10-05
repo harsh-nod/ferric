@@ -1,0 +1,88 @@
+
+running 1 test
+test dynamic_matrix_kernel_reaches_gfx942_llvm ... FAILED
+
+failures:
+
+---- dynamic_matrix_kernel_reaches_gfx942_llvm stdout ----
+
+thread 'dynamic_matrix_kernel_reaches_gfx942_llvm' (3017096) panicked at crates/rustc-codegen-fe2o3/tests/production_general_matrix_driver_v1.rs:289:5:
+fe2o3_tiled_gemm_general_v1 did not complete production extraction:
+   Compiling typenum v1.20.1
+   Compiling cfg-if v1.0.4
+   Compiling cpufeatures v0.3.1
+   Compiling libc v0.2.189
+   Compiling fe2o3-target-spec v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-provider-baseline-cpu-v228-v1/fe2o3/crates/fe2o3-target-spec)
+   Compiling fe2o3-amd-target v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-provider-baseline-cpu-v228-v1/fe2o3/crates/fe2o3-amd-target)
+   Compiling hybrid-array v0.4.14
+   Compiling crypto-common v0.2.2
+   Compiling block-buffer v0.12.1
+   Compiling rustix v1.1.4
+   Compiling digest v0.11.3
+   Compiling proc-macro2 v1.0.107
+   Compiling sha2 v0.11.0
+   Compiling quote v1.0.47
+   Compiling linux-raw-sys v0.12.1
+   Compiling fe2o3-build-authority v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-provider-baseline-cpu-v228-v1/fe2o3/crates/fe2o3-build-authority)
+   Compiling fe2o3-rustc-invocation v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-provider-baseline-cpu-v228-v1/fe2o3/crates/fe2o3-rustc-invocation)
+   Compiling fe2o3-kernel-descriptor v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-provider-baseline-cpu-v228-v1/fe2o3/crates/fe2o3-kernel-descriptor)
+   Compiling reserved-fe2o3-symbols v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-provider-baseline-cpu-v228-v1/fe2o3/crates/reserved-fe2o3-symbols)
+   Compiling fe2o3-compiler-lineage v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-provider-baseline-cpu-v228-v1/fe2o3/crates/fe2o3-compiler-lineage)
+   Compiling equivalent v1.0.2
+   Compiling winnow v1.0.4
+   Compiling unicode-ident v1.0.24
+   Compiling hashbrown v0.17.1
+   Compiling bitflags v2.13.1
+   Compiling indexmap v2.14.1
+   Compiling toml_parser v1.1.3+spec-1.1.0
+   Compiling fe2o3-compiler-ffi v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-provider-baseline-cpu-v228-v1/fe2o3/crates/fe2o3-compiler-ffi)
+   Compiling toml_datetime v1.1.1+spec-1.1.0
+   Compiling toml_edit v0.25.13+spec-1.1.0
+   Compiling fe2o3-artifact-transaction v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-provider-baseline-cpu-v228-v1/fe2o3/crates/fe2o3-artifact-transaction)
+   Compiling compiler_builtins v0.1.160 (/home/harmenon/.rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/compiler-builtins/compiler-builtins)
+   Compiling proc-macro-crate v3.5.0
+   Compiling syn v2.0.119
+   Compiling fe2o3-artifacts v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-provider-baseline-cpu-v228-v1/fe2o3/crates/fe2o3-artifacts)
+   Compiling fe2o3-rustc-front v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-provider-baseline-cpu-v228-v1/fe2o3/crates/fe2o3-rustc-front)
+   Compiling core v0.0.0 (/home/harmenon/.rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core)
+   Compiling fe2o3-macros v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-provider-baseline-cpu-v228-v1/fe2o3/crates/fe2o3-macros)
+    Checking fe2o3-device v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-provider-baseline-cpu-v228-v1/fe2o3/crates/fe2o3-device)
+warning: unknown and unstable feature specified for `-Ctarget-feature`: `xnack`
+  |
+  = note: it is still passed through to the codegen backend, but use of this feature might be unsound and the behavior of this feature can change in the future
+  = help: consider filing a feature request
+
+warning: unknown and unstable feature specified for `-Ctarget-feature`: `wavefrontsize64`
+  |
+  = note: it is still passed through to the codegen backend, but use of this feature might be unsound and the behavior of this feature can change in the future
+  = help: consider filing a feature request
+
+warning: unknown and unstable feature specified for `-Ctarget-feature`: `wavefrontsize32`
+  |
+  = note: it is still passed through to the codegen backend, but use of this feature might be unsound and the behavior of this feature can change in the future
+  = help: consider filing a feature request
+
+warning: `fe2o3-device` (lib) generated 3 warnings
+    Checking fe2o3-tiled-gemm-general-v1 v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-provider-baseline-cpu-v228-v1/fe2o3/examples/tiled_gemm_general_v1)
+fe2o3 rustc extraction: production extraction collection failed: ordinary production kernel `tiled_gemm_general_v1` cannot authenticate the absence of user-provided unsafe blocks in external helper `<core::result::Result<T, E> as core::ops::Try>::branch [_RNvXsp_NtCs9CS9M2JBORY_4core6resultINtB5_6ResultINtNtCsaHchIjoq5S3_12fe2o3_device6tensor14Bf16MfmaMatrixNtBN_12MfmaOperandAENtBN_19Bf16MatrixViewErrorENtNtNtB7_3ops9try_trait3Try6branchCsfnkQ1xL6XJk_27fe2o3_tiled_gemm_general_v1]`: cross-crate HIR is unavailable and optimized MIR does not retain unsafe-block syntax; reachable call chain: fe2o3_tiled_gemm_general_v1::kernel::__fe2o3_host_kernel_v1_5b656b190c138c90226a00cc0318425f4b18e60c8b79ecb716e69404be61b773 [__fe2o3_host_kernel_v1_5b656b190c138c90226a00cc0318425f4b18e60c8b79ecb716e69404be61b773] -> fe2o3_tiled_gemm_general_v1::kernel::__fe2o3_kernel_body_v1_5b656b190c138c90226a00cc0318425f4b18e60c8b79ecb716e69404be61b773 [_RNvNtCsfnkQ1xL6XJk_27fe2o3_tiled_gemm_general_v16kernel87___fe2o3_kernel_body_v1_5b656b190c138c90226a00cc0318425f4b18e60c8b79ecb716e69404be61b773] -> <core::result::Result<T, E> as core::ops::Try>::branch [_RNvXsp_NtCs9CS9M2JBORY_4core6resultINtB5_6ResultINtNtCsaHchIjoq5S3_12fe2o3_device6tensor14Bf16MfmaMatrixNtBN_12MfmaOperandAENtBN_19Bf16MatrixViewErrorENtNtNtB7_3ops9try_trait3Try6branchCsfnkQ1xL6XJk_27fe2o3_tiled_gemm_general_v1]
+warning: `fe2o3-tiled-gemm-general-v1` (lib) generated 3 warnings (3 duplicates)
+error: could not compile `fe2o3-tiled-gemm-general-v1` (lib); 3 warnings emitted
+
+Caused by:
+  process didn't exit successfully: `/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-provider-baseline-cpu-v228-v1/target/debug/fe2o3-rustc-extract /home/harmenon/.rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/bin/rustc --crate-name fe2o3_tiled_gemm_general_v1 --edition=2024 src/lib.rs --error-format=json --json=diagnostic-rendered-ansi,artifacts,future-incompat --crate-type lib --emit=dep-info,metadata -C opt-level=3 -C embed-bitcode=no --check-cfg 'cfg(docsrs,test)' --check-cfg 'cfg(feature, values())' -C metadata=f8e0597efb78fbf6 -C extra-filename=-e8b6f8e5a4ff4de5 --out-dir /home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-provider-baseline-cpu-v228-v1/tmp/fe2o3-production-general-matrix-3017095-1791227816754437198/cargo/amdgcn-amd-amdhsa/release/deps --target amdgcn-amd-amdhsa -C strip=debuginfo -L dependency=/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-provider-baseline-cpu-v228-v1/tmp/fe2o3-production-general-matrix-3017095-1791227816754437198/cargo/amdgcn-amd-amdhsa/release/deps -L dependency=/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-provider-baseline-cpu-v228-v1/tmp/fe2o3-production-general-matrix-3017095-1791227816754437198/cargo/release/deps --extern 'noprelude,nounused:compiler_builtins=/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-provider-baseline-cpu-v228-v1/tmp/fe2o3-production-general-matrix-3017095-1791227816754437198/cargo/amdgcn-amd-amdhsa/release/deps/libcompiler_builtins-a8bbe6b3b620d318.rlib' --extern 'noprelude,nounused:core=/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-provider-baseline-cpu-v228-v1/tmp/fe2o3-production-general-matrix-3017095-1791227816754437198/cargo/amdgcn-amd-amdhsa/release/deps/libcore-639eef85b1cf6efe.rlib' --extern fe2o3_device=/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-provider-baseline-cpu-v228-v1/tmp/fe2o3-production-general-matrix-3017095-1791227816754437198/cargo/amdgcn-amd-amdhsa/release/deps/libfe2o3_device-451bfde4b40a53a5.rmeta -Z unstable-options -Zalways-encode-mir -Ctarget-cpu=gfx942 -Ctarget-feature=-xnack,+wavefrontsize64,-wavefrontsize32` (exit status: 1)
+
+stack backtrace:
+   0: __rustc::rust_begin_unwind
+   1: core::panicking::panic_fmt
+   2: production_general_matrix_driver_v1::assert_workgroup_pipeline_reaches_gfx942_llvm
+   3: production_general_matrix_driver_v1::dynamic_matrix_kernel_reaches_gfx942_llvm
+   4: production_general_matrix_driver_v1::dynamic_matrix_kernel_reaches_gfx942_llvm::{closure#0}
+   5: <production_general_matrix_driver_v1::dynamic_matrix_kernel_reaches_gfx942_llvm::{closure#0} as core::ops::function::FnOnce<()>>::call_once
+note: Some details are omitted, run with `RUST_BACKTRACE=full` for a verbose backtrace.
+
+
+failures:
+    dynamic_matrix_kernel_reaches_gfx942_llvm
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 3 filtered out; finished in 14.83s
+
