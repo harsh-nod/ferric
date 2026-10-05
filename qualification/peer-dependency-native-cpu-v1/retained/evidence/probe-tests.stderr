@@ -1,0 +1,26 @@
+warning: unused import: `prefix::Transaction`
+ --> crates/fe2o3-kfd/src/engineering_gfx950_resident_layer_tp2_v1.rs:7:5
+  |
+7 | use prefix::Transaction as _;
+  |     ^^^^^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: function `gfx942_cwsr_header_bytes` is never used
+   --> crates/fe2o3-kfd/src/queue_submit.rs:406:15
+    |
+406 | pub(crate) fn gfx942_cwsr_header_bytes(
+    |               ^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: function `initialize_gfx942_cwsr_headers` is never used
+   --> crates/fe2o3-kfd/src/queue_submit.rs:415:15
+    |
+415 | pub(crate) fn initialize_gfx942_cwsr_headers(
+    |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: `fe2o3-kfd` (lib) generated 3 warnings
+   Compiling fe2o3-kfd v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/peer-dependency-native-cpu-v228-v4/crates/fe2o3-kfd)
+    Finished `test` profile [optimized] target(s) in 0.47s
+     Running unittests examples/kfd-peer-dependency-sentinel.rs (target/debug/examples/kfd_peer_dependency_sentinel-7d68102d7e24d0c2)

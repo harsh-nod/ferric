@@ -1,0 +1,20 @@
+{
+  "argv": [
+    "/usr/bin/prlimit",
+    "--as=8589934592",
+    "--cpu=1200",
+    "--fsize=4294967296",
+    "--core=0",
+    "--",
+    "/home/harmenon/.rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/bin/rustfmt",
+    "--edition",
+    "2024",
+    "--config",
+    "skip_children=true",
+    "crates/fe2o3-kfd/examples/kfd-peer-dependency-sentinel.rs",
+    "crates/fe2o3-kfd/src/engineering_gfx950_peer_dependency.rs",
+    "crates/fe2o3-kfd/src/engineering_gfx950_peer_dependency_tests.rs"
+  ],
+  "pgid": 3250107,
+  "pid": 3250107
+}

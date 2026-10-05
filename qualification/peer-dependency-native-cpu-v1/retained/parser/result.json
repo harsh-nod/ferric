@@ -1,0 +1,15 @@
+{
+  "argv": [
+    "/usr/bin/timeout",
+    "30s",
+    "/usr/bin/python3",
+    "-B",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/peer-dependency-native-cpu-v228-v4/test_parser.py",
+    "-v"
+  ],
+  "exit_code": 0,
+  "gpu_execution": false,
+  "script_sha256": "c5d40a390999b2a652b76d598df48099efba20d73e54fde11156c63b24b660b2",
+  "stderr": "test_already_inline_known_parents_remain_valid (__main__.ParserTests.test_already_inline_known_parents_remain_valid) ... ok\ntest_both_actual_split_blocks_become_exact_parent_ok (__main__.ParserTests.test_both_actual_split_blocks_become_exact_parent_ok) ... ok\ntest_duplicate_special_parent_block_is_refused (__main__.ParserTests.test_duplicate_special_parent_block_is_refused) ... ok\ntest_malformed_known_blocks_are_not_repaired (__main__.ParserTests.test_malformed_known_blocks_are_not_repaired) ... ok\ntest_missing_summary_or_mismatched_count_still_refuses (__main__.ParserTests.test_missing_summary_or_mismatched_count_still_refuses) ... ok\ntest_multiple_suite_summaries_and_raw_body_are_preserved (__main__.ParserTests.test_multiple_suite_summaries_and_raw_body_are_preserved) ... ok\ntest_ordinary_output_remains_unchanged (__main__.ParserTests.test_ordinary_output_remains_unchanged) ... ok\ntest_unknown_parent_block_is_not_normalized_or_counted (__main__.ParserTests.test_unknown_parent_block_is_not_normalized_or_counted) ... ok\n\n----------------------------------------------------------------------\nRan 8 tests in 0.002s\n\nOK\n",
+  "stdout": ""
+}
