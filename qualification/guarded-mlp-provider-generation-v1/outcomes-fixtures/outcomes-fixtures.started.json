@@ -1,0 +1,15 @@
+{
+  "argv": [
+    "/usr/bin/prlimit",
+    "--as=12884901888",
+    "--cpu=1200",
+    "--fsize=1073741824",
+    "--core=0",
+    "--",
+    "/usr/bin/python3",
+    "-B",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-provider-generation-cpu-v228-v3/test_outcomes.py"
+  ],
+  "pgid": 2855880,
+  "pid": 2855880
+}

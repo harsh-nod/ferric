@@ -6,7 +6,17 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Latest: [the first guarded MLP lowering attempt reached device extraction but was refused](../qualification/guarded-mlp-lowering-attempt-v1/README.md).
+Latest: [the aligned provider generation passed 398 CPU tests but remains unqualified](../qualification/guarded-mlp-provider-generation-v1/README.md).
+The full device library, both UI targets, trusted-provider cohort, scalar-pipeline
+controls and eight selected gfx950 atomic extraction tests passed on MI350.
+The existing matrix-pipeline test then failed while authenticating a core
+`Result::branch` helper; the attention control was not reached. Integrity
+postchecks passed. Thirteen harness fixtures passed separately, and all earlier
+failed attempts are retained. The proposed dependency remains unpublished;
+Ferric's kernel dependency is unchanged. No new HSACO, GPU or performance
+result is claimed, and all model milestones remain open.
+
+Previously, [the first guarded MLP lowering attempt reached device extraction but was refused](../qualification/guarded-mlp-lowering-attempt-v1/README.md).
 The transferred extractor's reviewed device-source closure does not match the
 candidate's pinned dependency generation. The compiler exited naturally after
 116.347 seconds, with clean integrity postchecks, no timeout and no emitted

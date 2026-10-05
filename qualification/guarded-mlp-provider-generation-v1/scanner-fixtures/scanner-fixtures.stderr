@@ -1,0 +1,10 @@
+test_external_cc_target_module_is_included_and_hashed (__main__.SourceScanTests.test_external_cc_target_module_is_included_and_hashed) ... ok
+test_external_directory_alias_refused (__main__.SourceScanTests.test_external_directory_alias_refused) ... ok
+test_external_file_alias_refused_during_hashing (__main__.SourceScanTests.test_external_file_alias_refused_during_hashing) ... ok
+test_external_git_metadata_remains_included (__main__.SourceScanTests.test_external_git_metadata_remains_included) ... ok
+test_packed_target_and_git_directories_still_refused (__main__.SourceScanTests.test_packed_target_and_git_directories_still_refused) ... ok
+
+----------------------------------------------------------------------
+Ran 5 tests in 0.002s
+
+OK

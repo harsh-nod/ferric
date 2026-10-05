@@ -1,0 +1,14 @@
+memory allocation of 50331648 bytes failed
+stack backtrace:
+   0: std::alloc::rust_oom
+   1: __rustc::__rust_alloc_error_handler
+   2: alloc::alloc::handle_alloc_error
+   3: alloc::raw_vec::handle_error
+   4: <alloc::raw_vec::RawVecInner>::with_capacity_in
+   5: <u16 as alloc::vec::spec_from_elem::SpecFromElem>::from_elem::<alloc::alloc::Global>
+   6: alloc::vec::from_elem::<u16>
+   7: <fe2o3_device::finite_join::wave_mlp_tasks_v1::tests::Fixture>::new
+   8: fe2o3_device::finite_join::wave_mlp_tasks_v1::tests::actual_claim_views_cover_each_output_once_and_preserve_fp32_low_bits
+   9: fe2o3_device::finite_join::wave_mlp_tasks_v1::tests::actual_claim_views_cover_each_output_once_and_preserve_fp32_low_bits::{closure#0}
+  10: <fe2o3_device::finite_join::wave_mlp_tasks_v1::tests::actual_claim_views_cover_each_output_once_and_preserve_fp32_low_bits::{closure#0} as core::ops::function::FnOnce<()>>::call_once
+note: Some details are omitted, run with `RUST_BACKTRACE=full` for a verbose backtrace.

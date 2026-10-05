@@ -1,0 +1,60 @@
+{
+  "controller": {
+    "bytes": 31174,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-provider-generation-cpu-v228-v3/run_cpu.py",
+    "sha256": "437385f6b352c814076acc63ed705e93b52da5fb4b9edd8c6eae9aca0bca8474"
+  },
+  "failure": null,
+  "fixtures": {
+    "bytes": 2757,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-provider-generation-cpu-v228-v3/test_outcomes.py",
+    "sha256": "d33b7abadf57b5fb248d8a71f2100980f3949df316c418b4ff3ec55c4baaf149"
+  },
+  "gpu_execution": false,
+  "passed": true,
+  "phases": [
+    {
+      "adopted_reaped": [],
+      "argv": [
+        "/usr/bin/prlimit",
+        "--as=12884901888",
+        "--cpu=1200",
+        "--fsize=1073741824",
+        "--core=0",
+        "--",
+        "/usr/bin/python3",
+        "-B",
+        "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-provider-generation-cpu-v228-v3/test_outcomes.py"
+      ],
+      "command": {
+        "bytes": 867,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-provider-outcomes-fixtures-v228-v1/outcomes-fixtures.command.json",
+        "sha256": "9fa15390dba10ebae0dd5d06a92be08eaaa7a7e3c3c9a3aedc4abab2200581c6"
+      },
+      "elapsed_ns": 100914072,
+      "exception": null,
+      "exit_code": 0,
+      "forced_cleanup": false,
+      "label": "outcomes-fixtures",
+      "natural_exit": true,
+      "observed_signals": [],
+      "pgid": 2855880,
+      "pid": 2855880,
+      "process_group_absent": true,
+      "reaped": true,
+      "stderr": {
+        "bytes": 884,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-provider-outcomes-fixtures-v228-v1/outcomes-fixtures.stderr",
+        "sha256": "fff1600b610e4fcecf970e2b794f7ad57b7a4e77e448e5a3abf51f087b192b8b"
+      },
+      "stdout": {
+        "bytes": 0,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-provider-outcomes-fixtures-v228-v1/outcomes-fixtures.stdout",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "storage_failure": null,
+      "timed_out": false
+    }
+  ],
+  "tests": 8
+}

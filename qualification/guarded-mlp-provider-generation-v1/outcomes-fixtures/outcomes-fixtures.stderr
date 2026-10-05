@@ -1,0 +1,13 @@
+test_duplicate_name_rejected (__main__.OutcomesTests.test_duplicate_name_rejected) ... ok
+test_failed_status_rejected (__main__.OutcomesTests.test_failed_status_rejected) ... ok
+test_forged_summary_counts_rejected (__main__.OutcomesTests.test_forged_summary_counts_rejected) ... ok
+test_ignored_status_rejected (__main__.OutcomesTests.test_ignored_status_rejected) ... ok
+test_missing_named_line_rejected (__main__.OutcomesTests.test_missing_named_line_rejected) ... ok
+test_ordinary_named_passes (__main__.OutcomesTests.test_ordinary_named_passes) ... ok
+test_standard_should_panic_annotation_passes (__main__.OutcomesTests.test_standard_should_panic_annotation_passes) ... ok
+test_unrecognized_annotation_rejected (__main__.OutcomesTests.test_unrecognized_annotation_rejected) ... ok
+
+----------------------------------------------------------------------
+Ran 8 tests in 0.001s
+
+OK
