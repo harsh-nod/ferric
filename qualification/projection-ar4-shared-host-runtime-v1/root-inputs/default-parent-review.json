@@ -1,0 +1,59 @@
+{
+  "schema": "ferric-p227-prefix-parity-runtime-review-v1",
+  "authority": "none",
+  "reviewed": true,
+  "host": "smci350-rck-g03-b19-03",
+  "boot_id": "2dbbbc5a-d8b7-46ac-bd1f-236e5847e24a",
+  "binary": {
+    "bytes": 13947904,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-ar4-shared-host-cpu-v228-v1/target/parent/debug/ferric-qwen3-finite-projection-residual-decode-host-engineering",
+    "sha256": "a5f8323b87f475f28dea91120742204e9e84b231257a42699967c08b35ea4ace"
+  },
+  "readelf": {
+    "bytes": 860,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-ar4-shared-host-runtime-default-parent-v228-v1/readelf/audit.json",
+    "sha256": "ab998a7717dc2d76ab6151a3389989788a1a9b3d17e490294f75aaafe49134cb"
+  },
+  "ldd": {
+    "bytes": 837,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-ar4-shared-host-runtime-default-parent-v228-v1/ldd/audit.json",
+    "sha256": "01bde66020ab598189d9b041a12fbd7a0d33aa88deaf4256c579785194ebfa6f"
+  },
+  "libraries": [
+    {
+      "path": "/lib/x86_64-linux-gnu/libgcc_s.so.1",
+      "resolved": {
+        "bytes": 183024,
+        "path": "/usr/lib/x86_64-linux-gnu/libgcc_s.so.1",
+        "sha256": "d93224d2b0dab4247598be683adca02f5cf00586f99c187579cd7e92058fb7cb"
+      }
+    },
+    {
+      "path": "/lib/x86_64-linux-gnu/libm.so.6",
+      "resolved": {
+        "bytes": 952616,
+        "path": "/usr/lib/x86_64-linux-gnu/libm.so.6",
+        "sha256": "1b87a1a50b496cfead2b0ad134c2ff536705c82608db240c7e8aa48d6c0e4217"
+      }
+    },
+    {
+      "path": "/lib/x86_64-linux-gnu/libc.so.6",
+      "resolved": {
+        "bytes": 2125328,
+        "path": "/usr/lib/x86_64-linux-gnu/libc.so.6",
+        "sha256": "d8db8739a1633c972cec6a4fe0566bdcec6fd088f98723492ab0361f66238f75"
+      }
+    },
+    {
+      "path": "/lib64/ld-linux-x86-64.so.2",
+      "resolved": {
+        "bytes": 236616,
+        "path": "/usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2",
+        "sha256": "1cd555ac46b7887edeaf3c42aac5408c8135e52f6b37870da2cf82d5fe14e829"
+      }
+    }
+  ],
+  "notes": "Root reviewed the actual CPU883-qualified default-parent ELF and its fresh MI350 readelf/ldd output, natural exit-zero ownership records, complete resolved library closure and before/after topology. The four-library closure has no missing dependency or RPATH/RUNPATH override. This binds only the exact new executable at its original CPU883 path; no previous CPU855 runtime review is reused. Fresh device/process audits, library rechecks, Close/EOF/reap and kernel provenance remain mandatory. This compatibility review does not establish GPU execution, numerical acceptance or production authority.",
+  "production_authority": false,
+  "gpu_execution": false
+}

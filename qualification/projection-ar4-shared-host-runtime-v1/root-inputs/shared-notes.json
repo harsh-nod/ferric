@@ -1,0 +1,42 @@
+{
+  "schema": "ferric-p228-projection-ar4-shared-host-root-notes-v1",
+  "configuration": {
+    "schema": "ferric-p228-projection-ar4-shared-host-assembly-inputs-v1",
+    "route": "shared",
+    "input_label": "prefix-projection-ar4-shared-host-shared-inputs-v228-v1",
+    "output_label": "prefix-projection-ar4-shared-host-shared-gpu-v228-v1",
+    "session": "3822a72607a499cea7ad4652369b4266d9b8bd026ec94679950c496597165a9d",
+    "cpu": {
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-ar4-shared-host-cpu-v228-v1/complete.json",
+      "bytes": 466118,
+      "sha256": "deb2aeacded08c336d1fb5a1638cd2accc2b65ec65ffa3e90177bd5e61146d74"
+    },
+    "supervisor_tests": {
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-ar4-shared-host-gpu-pure-v228-v1/complete.json",
+      "bytes": 26845,
+      "sha256": "299c0d1e80b2329e6f55be14015d57c23e29654b55461a740e7da5aac63683db"
+    },
+    "parent_runtime_review": {
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-projection-ar4-shared-host-root-inputs-v1/shared-parent-review.json",
+      "bytes": 2825,
+      "sha256": "263eb20b9280794aff4d235c5427851c0e39f7e59b23124c4b4864f12340abe7"
+    },
+    "worker_runtime_review": {
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-projection-ar4-shared-host-root-inputs-v1/worker-review.json",
+      "bytes": 2522,
+      "sha256": "c4b43d1ee4a7b48c2848df9f6cb88c79fea1b6977d65f756fc1970f87501bf1a"
+    }
+  },
+  "reviewed": true,
+  "authority": "none",
+  "gpu_attempts": 1,
+  "notes": "Root reviewed this one shared arm for a default-then-shared same-generation AR4 diagnostic pair. Actual CPU883, supervisor122 and fresh selected executable audit results are bound explicitly. Identical kernels and model arithmetic, separate sessions/outputs, no retry, no looser deadline or numerical threshold. Payload equality is route repeatability only; a fixed-order single pair cannot establish sustained throughput or general speedup. The 2048/256 BF16 single-request 700 tokens/s target and all milestones remain open.",
+  "review_topics": {
+    "source_lineage": "Actual CPU883 qualification completed all63 natural phases with four pinned executables and unchanged source/dependency checks. This arm selects its newly built parent and the same new worker, not a historical CPU855 binary. Actual supervisor122 and independent selector14/assembler11 policy tests passed; reviewed source and ELF identities remain pinned.",
+    "formal": "The structural decoder remains byte-identical and binds four own-output forwards, all four payloads, 152 tensor slices, 576 control states, profiles and image provenance. Earlier independent framework comparisons are not full numerical acceptance. No new proof, tolerance fit, mathematical equivalence or production authority is claimed.",
+    "isa": "Both arms retain the exact checked gfx950 RoPE prefix image29fd58e7, SiLU b0d1766f, corrected projection25338bea and original bootstrap copy images. No instruction, launch ABI, BF16 arithmetic, model weight or emission provenance is changed by this host-policy comparison.",
+    "coherence": "This explicit shared route configures(false,false,true) before observer enable. Admission cache and operational-currentness shortcuts remain off; each shared group fence retains fresh discovery, all-rank mutable device checks, generation rechecking and queue checks. All seven snapshots require shared-full true. Configuration is separately reported outside zero-based snapshots; rank+group+publication counters are included without nested read/write/dispatch additions.",
+    "lifecycle": "The existing owned parent/worker lifecycle, pidfd tracking, exclusive bounded evidence, original4000-second native/4300-second case deadlines, natural Close/EOF/reap, six surrounding exact-empty audits and one-attempt/no-retry discipline remain required. A failed arm retains evidence and stops the pair without replacement.",
+    "selected_device": "Fresh MI350 runtime audits selected the same boot2dbbbc5a-d8b7-46ac-bd1f-236e5847e24a and exact two gfx950 device identities from the unchanged losslessly parsed request. The supervisor must redo three before and three after process/topology audits with an exact-empty roster; no ASROCK monitor exception or device substitution is authorized."
+  }
+}

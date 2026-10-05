@@ -1,0 +1,78 @@
+{
+  "schema": "ferric-shared-host-mi350-preparation-primary-v1",
+  "scope": "Primary tool observations for runtime transport, audits and a pre-output input-assembly refusal; not GPU execution or performance evidence.",
+  "runtime_courier": {
+    "session": 86939,
+    "result_chunk": "f46fa7",
+    "exit_code": 0,
+    "archive_sha256": "e005a52527dc0c50c2b31c6bb661666c31086d4141077043e09880ef2b14934d",
+    "archive_bytes": 10621162,
+    "members": 12,
+    "all_four_elfs_verified": true,
+    "three_elfs_exported": true
+  },
+  "runtime_transport": {
+    "local_hash_chunk": "ab87f2",
+    "remote_hash_chunk": "29fadb",
+    "extract_chunk": "eea2ea",
+    "bytes_unchanged": true
+  },
+  "runtime_audits": [
+    {
+      "role": "default-parent",
+      "session": 7452,
+      "result_chunk": "7fbf33",
+      "exit_code": 0,
+      "complete_sha256": "69e5b2c47724cc8dbe87693a708baca560f8a4b8bdc1f40a99df49afefd4e61c"
+    },
+    {
+      "role": "shared-parent",
+      "session": 81516,
+      "result_chunk": "de090b",
+      "exit_code": 0,
+      "complete_sha256": "f542d7d4d2ee86a82b22c6e5e90a4ee08d60cb7775b09c461dd5816190a1af1d"
+    },
+    {
+      "role": "worker",
+      "session": 72363,
+      "result_chunk": "5bc531",
+      "exit_code": 0,
+      "complete_sha256": "0c8c15d9a197909a730192cd2d1e3e4dbafe9c8f53decb8753a312646fd5c330"
+    }
+  ],
+  "root_input_draft_correction": {
+    "description": "A local pre-execution check found 65/63-character session strings from an incorrectly split 128-character random value. Corrected to two distinct64-character strings before any remote assembly. The old v1 transport archive was not extracted; only corrected v2 was extracted.",
+    "corrected_archive_sha256": "8a9e3b7736b7a4b8757b1dbee05f44789de962e444f0ba082bf3120d14aacbe8",
+    "local_check_chunk": "7c76e2",
+    "remote_hashes_chunk": "0d7b17"
+  },
+  "wrapper_transport_correction": {
+    "failed_assembly_session": 7537,
+    "failed_assembly_chunk": "aad2f5",
+    "exit_code": 1,
+    "error": "RuntimeError: ordinary bounded assembly dependency",
+    "cause": "The transport archive represented the external pure-test wrapper as a hardlink to its packaged copy. Both had link count2. The assembler correctly requires single-link source dependencies.",
+    "package_link_count_before": 2,
+    "external_link_count_before": 2,
+    "before_stat_chunk": "2605a6",
+    "before_sha_chunk": "be1e9b",
+    "output_directory_absent_chunk": "801c1f",
+    "replacement_command": "cp --remove-destination --preserve=mode,timestamps /home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-projection-ar4-shared-host-gpu-v1/run_projection_ar4_shared_host_gpu_pure_p228_v1.py /home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/run_projection_ar4_shared_host_gpu_pure_p228_v1.py",
+    "replacement_session": 17170,
+    "replacement_result_chunk": "508af2",
+    "replacement_exit_code": 0,
+    "after_stat_chunk": "cd45d6",
+    "after_sha_chunk": "ebd2be",
+    "package_link_count_after": 1,
+    "external_link_count_after": 1,
+    "identical_both_wrapper_sha256": "c3f3c0693565a2dc1e6f46c44c7974a1455158595a3caecd3cb8b8e8b5cc9a0a",
+    "wrapper_bytes": 8650,
+    "tested_source_bytes_changed": false,
+    "assembly_checks_weakened": false,
+    "failed_attempt_created_input_outputs": false,
+    "failed_attempt_gpu_launches": 0
+  },
+  "gpu_execution": false,
+  "numerical_acceptance": false,
+  "performance_claim": false
+}

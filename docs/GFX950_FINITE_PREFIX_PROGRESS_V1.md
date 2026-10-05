@@ -6,7 +6,14 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Latest: [the shared-full comparison harness passed 122 policy tests on MI350](../qualification/projection-ar4-shared-host-gpu-preparation-v1/README.md).
+Latest: [both observer parents and their shared worker passed fresh MI350 runtime audits](../qualification/projection-ar4-shared-host-runtime-v1/README.md).
+All six readelf/ldd commands exited naturally, with complete library closures and
+unchanged topology. Both input assemblies completed with exact same-model,
+same-image requests and lossless device identities. Preparation corrections are
+documented without weakening the checks. This checkpoint does not establish a
+completed paired GPU run, numerical acceptance or a speedup.
+
+Previously, [the shared-full comparison harness passed 122 policy tests on MI350](../qualification/projection-ar4-shared-host-gpu-preparation-v1/README.md).
 Fourteen deployment-selector and eleven input-assembler tests also passed.
 The paired supervisor checks same-build inputs, honest payload-byte comparison,
 separate configuration timing and rank/group/publication currentness accounting.
@@ -19,8 +26,8 @@ phases exited naturally, four executables were built and integrity postchecks
 passed. Fifteen controller policy tests also passed. Fourteen exact tested source
 bodies are integrated, preserving the default route and introducing an explicit
 shared-full selector with separately measured configuration time. No kernel or
-arithmetic changed. Fresh MI350 executable audits and a same-generation
-default/shared comparison remain pending; no new GPU speedup is claimed.
+arithmetic changed. Fresh MI350 executable audits are linked above; the
+same-generation default/shared GPU comparison is a separate execution gate.
 All M0-M7, numerical acceptance, sustained 2,048/256 and 700 tokens/s remain open.
 
 Previously, [the projection AR4 host observer completed on MI350](../qualification/projection-ar4-host-native-v1/README.md).

@@ -1,0 +1,19 @@
+{
+  "argv": [
+    "/usr/bin/readelf",
+    "-d",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-ar4-shared-host-cpu-v228-v1/target/parent/debug/ferric-qwen3-finite-projection-residual-decode-shared-host-engineering"
+  ],
+  "deadline_seconds": 30,
+  "exit_code": 0,
+  "stderr": {
+    "bytes": 0,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-ar4-shared-host-runtime-shared-parent-v228-v1/readelf/stderr",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "stdout": {
+    "bytes": 1689,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-ar4-shared-host-runtime-shared-parent-v228-v1/readelf/stdout",
+    "sha256": "038db6192e86b458069fffa208686d657bd25258e21243b8a79c31afbc02a2f0"
+  }
+}

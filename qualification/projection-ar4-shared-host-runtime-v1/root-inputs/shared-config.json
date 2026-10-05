@@ -1,0 +1,27 @@
+{
+  "schema": "ferric-p228-projection-ar4-shared-host-assembly-inputs-v1",
+  "route": "shared",
+  "input_label": "prefix-projection-ar4-shared-host-shared-inputs-v228-v1",
+  "output_label": "prefix-projection-ar4-shared-host-shared-gpu-v228-v1",
+  "session": "3822a72607a499cea7ad4652369b4266d9b8bd026ec94679950c496597165a9d",
+  "cpu": {
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-ar4-shared-host-cpu-v228-v1/complete.json",
+    "bytes": 466118,
+    "sha256": "deb2aeacded08c336d1fb5a1638cd2accc2b65ec65ffa3e90177bd5e61146d74"
+  },
+  "supervisor_tests": {
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-ar4-shared-host-gpu-pure-v228-v1/complete.json",
+    "bytes": 26845,
+    "sha256": "299c0d1e80b2329e6f55be14015d57c23e29654b55461a740e7da5aac63683db"
+  },
+  "parent_runtime_review": {
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-projection-ar4-shared-host-root-inputs-v1/shared-parent-review.json",
+    "bytes": 2825,
+    "sha256": "263eb20b9280794aff4d235c5427851c0e39f7e59b23124c4b4864f12340abe7"
+  },
+  "worker_runtime_review": {
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-projection-ar4-shared-host-root-inputs-v1/worker-review.json",
+    "bytes": 2522,
+    "sha256": "c4b43d1ee4a7b48c2848df9f6cb88c79fea1b6977d65f756fc1970f87501bf1a"
+  }
+}
