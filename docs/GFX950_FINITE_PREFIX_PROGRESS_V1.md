@@ -6,7 +6,15 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Latest: [the full-state validator and guarded final residual passed CPU qualification on MI350](../qualification/guarded-mlp-segment-cpu-v1/README.md).
+Latest: [all seven compiler tools passed their MI350 loader audit](../qualification/guarded-mlp-compiler-tools-v1/README.md).
+All fourteen inspection commands completed naturally with clean integrity
+postchecks. The earlier loader-path failure is retained, and about 1.05 GB of
+owned failed-build caches was reclaimed without deleting sources or evidence.
+This establishes deployment and library resolution only. Locked dependency
+preparation and actual checked gfx950 lowering remain next; no new HSACO or
+GPU result is claimed.
+
+Previously, [the full-state validator and guarded final residual passed CPU qualification on MI350](../qualification/guarded-mlp-segment-cpu-v1/README.md).
 All 27 kernel tests and seven harness regression tests passed. Ten bounded
 phases completed naturally, including the non-test typed Marker roster and
 host library build, with clean integrity postchecks. Both earlier harness

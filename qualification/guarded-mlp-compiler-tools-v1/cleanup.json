@@ -1,0 +1,25 @@
+{
+  "removed": [
+    {
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v1/target",
+      "files": 1476,
+      "logical_bytes": 382066594
+    },
+    {
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v1/tmp",
+      "files": 0,
+      "logical_bytes": 0
+    },
+    {
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/target",
+      "files": 1874,
+      "logical_bytes": 663985455
+    },
+    {
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v2/tmp",
+      "files": 0,
+      "logical_bytes": 0
+    }
+  ],
+  "evidence_and_sources_retained": true
+}
