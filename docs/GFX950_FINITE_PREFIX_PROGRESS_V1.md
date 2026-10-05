@@ -1,12 +1,22 @@
 # Finite Qwen3 Prefix Progress
 
 This is an engineering checkpoint for [issue #42](https://github.com/harsh-nod/ferric/issues/42),
-updated on 2026-10-04. It is not a production admission, a sustained decode
+updated on 2026-10-05 UTC. It is not a production admission, a sustained decode
 benchmark, or a claim that the 700 tokens/s target has been reached. All issue #42 M0-M7
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Latest: [fresh observer executable audits and request assembly completed on MI350](../qualification/projection-ar4-host-runtime-v1/README.md).
+Latest: [the projection AR4 host observer completed on MI350](../qualification/projection-ar4-host-native-v1/README.md).
+Four own-output forwards passed structural checks in one attempt without retry;
+all 152 tensor slices, 576 terminal states, seven naturally exited/reaped leaves
+and six surrounding audits passed. Forward host wall times were 10.593, 10.599,
+12.531 and 12.582 seconds. Thousands of full-currentness checks per forward
+dominate the nested host counters; the published table is not GPU timing or an
+additive cost breakdown. The next optimization is a separately qualified
+shared-full group-fence route. Numerical acceptance, sustained 2,048/256,
+throughput and all milestones remain open.
+
+Previously, [fresh observer executable audits and request assembly completed on MI350](../qualification/projection-ar4-host-runtime-v1/README.md).
 Four bounded readelf/ldd commands exited naturally with complete library closures;
 fourteen selector tests and eight assembler tests passed with unchanged sources.
 The new request preserves the kernels, model, prompt, devices and deadlines and
@@ -19,7 +29,7 @@ policy tests also passed. All 61 phases completed naturally, three executables
 were built, and source/dependency/old-target postchecks passed. The seventeen
 tested source bodies are integrated without changing the plain decode route or
 runtime safety checks. The new counters separate inclusive host costs for diagnosis;
-they have not yet been measured on a GPU run. This is not numerical, throughput
+the subsequent GPU measurement is linked above. This is not numerical, throughput
 or sustained 2,048/256 acceptance, and all milestones remain open.
 
 Previously, the [projection AR4 host-observation supervisor passed 91 policy tests on MI350](../qualification/projection-ar4-host-supervisor-v1/README.md).

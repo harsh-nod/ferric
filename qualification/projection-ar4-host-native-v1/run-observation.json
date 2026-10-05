@@ -1,0 +1,45 @@
+{
+  "schema": "ferric-p228-projection-ar4-host-native-primary-observation-v1",
+  "command": "ssh.exe -o BatchMode=yes -o ConnectTimeout=20 -o HostName=smci350-rck-g03-b19-03.rck.dcgpu -o UserKnownHostsFile=//wsl.localhost/Ubuntu/home/harsh/.ssh/known_hosts mi350 \"timeout --signal=TERM --kill-after=120s 4440s env -u PYTHONPATH -u PYTHONHOME -u PYTHONOPTIMIZE taskset -c 8,9 /usr/bin/python3 -B /home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-projection-ar4-host-observation-gpu-v1/run.py /home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-host-observation-inputs-v228-v1/plan.json 6928c127cf5a85d7e41e4a67bf851a299e8723db85a24bdb74bf32abcee016e7\"",
+  "initial": {
+    "chunk_id": "406477",
+    "wall_time_seconds": 1.001768035,
+    "session_id": 36555,
+    "original_token_count": 0,
+    "output": ""
+  },
+  "terminal": {
+    "chunk_id": "61d639",
+    "exit_code": 0,
+    "output": "{\"passed\": true, \"receipt\": {\"path\": \"/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ar4-host-observation-gpu-v228-v1/complete.json\", \"bytes\": 1156839, \"sha256\": \"8341d1012f8d57512e7895a1b809ac9298bf2142943b89545c729c5d09af6393\"}}"
+  },
+  "capture_transfer": {
+    "session_id": 4835,
+    "terminal_chunk_id": "c73631",
+    "exit_code": 0
+  },
+  "local_body_verification": {
+    "terminal_chunk_id": "ea9108",
+    "exit_code": 0,
+    "case_file_count": 59,
+    "case_bytes": 4744664,
+    "referenced_bodies_rehashed": 58,
+    "complete_sha256": "8341d1012f8d57512e7895a1b809ac9298bf2142943b89545c729c5d09af6393"
+  },
+  "native_repeatability_check": {
+    "terminal_chunk_id": "111de9",
+    "exit_code": 0,
+    "prior_complete_sha256": "30119e94b7ef116a8845b2b8819122f039dd1a7688b28b9e7494de3f7d408749",
+    "payloads_compared": 4,
+    "bytes_per_payload": 606976,
+    "byte_equal_payloads": 4,
+    "independent_numerical_comparison": false
+  },
+  "gpu_execution_requested": true,
+  "native_execution_passed": true,
+  "independent_numerical_acceptance": false,
+  "sustained_2048_256": false,
+  "gpu_time": false,
+  "performance_claim": false,
+  "production_authority": false
+}
