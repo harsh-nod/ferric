@@ -1,0 +1,15 @@
+{
+  "argv": [
+    "/usr/bin/prlimit",
+    "--as=8589934592",
+    "--cpu=1200",
+    "--fsize=4294967296",
+    "--core=0",
+    "--",
+    "/home/harmenon/.rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/bin/rustc",
+    "--version",
+    "--verbose"
+  ],
+  "pgid": 2151300,
+  "pid": 2151300
+}

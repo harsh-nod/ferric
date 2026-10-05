@@ -1,0 +1,15 @@
+{
+  "schema": "ferric-terminal-peer-join-primary-observation-v1",
+  "scope": "MI350 CPU qualification only",
+  "runtime_commit": "203cfcbef166932b04683cd5c88f3414fe3b8a25",
+  "cpu_complete_sha256": "4df566a9df1298f396bb5d55308591abbb252d3a57618403f493ad455a7f6956",
+  "rust_tests": {"passed": 1029, "failed": 0, "ignored": 3},
+  "natural_successful_phases": 11,
+  "tested_crate_files_match": 778,
+  "v1_example_unchanged": true,
+  "native_v2_attempted_in_this_checkpoint": false,
+  "model_numerically_accepted": false,
+  "sustained_2048_256_accepted": false,
+  "performance_claim": false,
+  "all_issue42_milestones_remain_open": true
+}
