@@ -1,0 +1,263 @@
+{
+  "schema": "ferric-p228-projection-ar4-shared-host-source-proposal-v1",
+  "status": "authored-not-executed",
+  "base_commit": "e349d342a7ae7f01be4ba50aed8f5f1968b6ffde",
+  "base_cpu": {
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-ar4-host-observation-cpu-v228-v1/complete.json",
+    "bytes": 488734,
+    "sha256": "7d8c08eeffab9cbebbf6abc973c0ba93d80616ad81063b35587e74d04df1d59c"
+  },
+  "base_sources_after": {
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-ar4-host-observation-cpu-v228-v1/sources-after.json",
+    "bytes": 1269472,
+    "sha256": "1d173129c684afe5bcdc009ec939f8e4f0371bad8a4edecdf62b4548cb04f920"
+  },
+  "files": [
+    {
+      "path": "adapters/m1-engineering-execution-v1/Cargo.toml",
+      "source": "draft/adapters/m1-engineering-execution-v1/Cargo.toml",
+      "before": {
+        "bytes": 12891,
+        "sha256": "f00b716402125864025457fbb229908ed66571ef7f2d9ec10fa3a7b4289d83d0"
+      },
+      "after": {
+        "bytes": 13116,
+        "sha256": "107ced9a81978566a443265edda73784a8167326be81da5baa66fb566b940e53"
+      }
+    },
+    {
+      "path": "adapters/m1-engineering-execution-v1/src/bin/ferric-qwen3-finite-projection-residual-decode-shared-host-engineering.rs",
+      "source": "draft/adapters/m1-engineering-execution-v1/src/bin/ferric-qwen3-finite-projection-residual-decode-shared-host-engineering.rs",
+      "before": null,
+      "after": {
+        "bytes": 3180,
+        "sha256": "303c650e518d4070694a6be482d040ca3bc5cdd3d873a469f821d4486ab738d6"
+      }
+    },
+    {
+      "path": "adapters/m1-engineering-execution-v1/src/tp_finite_client/prefix_decode.rs",
+      "source": "draft/adapters/m1-engineering-execution-v1/src/tp_finite_client/prefix_decode.rs",
+      "before": {
+        "bytes": 32534,
+        "sha256": "808ed568b4538468f4ee53d34da83ee9d9b5e7c43dfd3cdc0c7f0675eb45ee3e"
+      },
+      "after": {
+        "bytes": 32956,
+        "sha256": "78ca646a3e4326c12c8b55350dabedcf109e99e3488337faba7c6349ac3e1cec"
+      }
+    },
+    {
+      "path": "adapters/m1-engineering-execution-v1/src/tp_finite_client/prefix_decode/projection_host.rs",
+      "source": "draft/adapters/m1-engineering-execution-v1/src/tp_finite_client/prefix_decode/projection_host.rs",
+      "before": {
+        "bytes": 5408,
+        "sha256": "ac492d6d70ddbfb84f7cc5982ee477ec07c393b4f7f93505faa5d02385c4b711"
+      },
+      "after": {
+        "bytes": 6842,
+        "sha256": "8db577683063a86b075ddb963aee7d2c9e6958c75aa48aa5fdc416d2682aa1ed"
+      }
+    },
+    {
+      "path": "adapters/m1-engineering-execution-v1/src/tp_finite_client/prefix_decode/projection_shared_host_tests.rs",
+      "source": "draft/adapters/m1-engineering-execution-v1/src/tp_finite_client/prefix_decode/projection_shared_host_tests.rs",
+      "before": null,
+      "after": {
+        "bytes": 5779,
+        "sha256": "3a096597a5c2c7154acc8a746d321a1d22b810dbdcf6e07b4e266a3fdef0f6bb"
+      }
+    },
+    {
+      "path": "adapters/m1-engineering-execution-v1/src/tp_finite_client/prefix_decode/projection_tests.rs",
+      "source": "draft/adapters/m1-engineering-execution-v1/src/tp_finite_client/prefix_decode/projection_tests.rs",
+      "before": {
+        "bytes": 20396,
+        "sha256": "c4fee838552a1b9caf7eb0d27fd9c400cbbc06e96a0299097e0a14bad8c5c144"
+      },
+      "after": {
+        "bytes": 20458,
+        "sha256": "f0cfcf111f258269e8a05fa33423b58f7e16874118029390bc4bbab4db665b5c"
+      }
+    },
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/main.rs",
+      "source": "draft/adapters/tp-peer-finite-engineering-worker-v1/src/main.rs",
+      "before": {
+        "bytes": 11184,
+        "sha256": "f7dbd1552cff73f8acfee7d94050b99bee8ea92b2e67a2ff1fc70bc008e1ab81"
+      },
+      "after": {
+        "bytes": 11759,
+        "sha256": "bf30178d85fc77c15d3cf69b37fe9cabd92bcad97f1ee6bf735f31e4087eaa12"
+      }
+    },
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_decode_host_v1.rs",
+      "source": "draft/adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_decode_host_v1.rs",
+      "before": {
+        "bytes": 10399,
+        "sha256": "95817e089fa2ff83258b8682557629520a2a4f990f8325c470b29479ff6c2843"
+      },
+      "after": {
+        "bytes": 10662,
+        "sha256": "5944c85de4547243758fbfd14072052f77d79eca9ba1d6bd9367e9e7a8acd6ab"
+      }
+    },
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_projection_residual_decode_host_v1.rs",
+      "source": "draft/adapters/tp-peer-finite-engineering-worker-v1/src/native_projection_residual_decode_host_v1.rs",
+      "before": {
+        "bytes": 8453,
+        "sha256": "d025027fb858ea4356157c272066715992c72b5712a799900b9e1002443ef546"
+      },
+      "after": {
+        "bytes": 10899,
+        "sha256": "b8b039f374ae42667f16532d3359ea94cff437a3bb3fb115ae91851caf0a68c4"
+      }
+    },
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_projection_residual_decode_shared_host_v1_tests.rs",
+      "source": "draft/adapters/tp-peer-finite-engineering-worker-v1/src/native_projection_residual_decode_shared_host_v1_tests.rs",
+      "before": null,
+      "after": {
+        "bytes": 4642,
+        "sha256": "ddeb928eb9421e5b333f819d32e1e63a42b373c2282cd794db3f0b7151118fda"
+      }
+    },
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/prefix_decode_host_observation_v1.rs",
+      "source": "draft/adapters/tp-peer-finite-engineering-worker-v1/src/prefix_decode_host_observation_v1.rs",
+      "before": {
+        "bytes": 8157,
+        "sha256": "fd7e80018b10ea1fd74d35713eb1e71951cd2eb1adc108574b3912af8d7d2ab6"
+      },
+      "after": {
+        "bytes": 8406,
+        "sha256": "25b525d84aeb888af78e515ab0f7c9154aaaa5aa24e6ae5492803b5c26f5e87b"
+      }
+    },
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/projection_residual_decode_host_observation_v1.rs",
+      "source": "draft/adapters/tp-peer-finite-engineering-worker-v1/src/projection_residual_decode_host_observation_v1.rs",
+      "before": {
+        "bytes": 5940,
+        "sha256": "8e0f0fc5d8365b280c917e6aeb4adfc811fa049840f4f843e7f400a9731835e5"
+      },
+      "after": {
+        "bytes": 7969,
+        "sha256": "4ae1a4e649dadbbbb7b4ee99948dfe4e2af1300e7efee756b11683b17ed22b41"
+      }
+    },
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/projection_residual_decode_host_observation_v1_tests.rs",
+      "source": "draft/adapters/tp-peer-finite-engineering-worker-v1/src/projection_residual_decode_host_observation_v1_tests.rs",
+      "before": {
+        "bytes": 5836,
+        "sha256": "9c5ac0f9646157e196ccfe790326415c99ebb112bb3edb7bb9c992b4c0ee950b"
+      },
+      "after": {
+        "bytes": 5901,
+        "sha256": "73d33aed5053fafd00563b312eb0dbf03dbb8b1c42d3a35deffb1b2c2001c52a"
+      }
+    },
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/projection_residual_decode_shared_host_v1_tests.rs",
+      "source": "draft/adapters/tp-peer-finite-engineering-worker-v1/src/projection_residual_decode_shared_host_v1_tests.rs",
+      "before": null,
+      "after": {
+        "bytes": 6487,
+        "sha256": "026d6260ba13c7568dfee14fbce91bd039c7d8f8ae10283ed6f289f4f8fdda33"
+      }
+    }
+  ],
+  "authored_tests": {
+    "names": [
+      "projection_shared_cli_is_distinct_and_rejects_extra_policies",
+      "projection_shared_cli_retains_ar_device_and_path_bounds",
+      "projection_shared_default_setup_does_not_configure_performance",
+      "projection_shared_host_bin_requires_distinct_optin_and_no_policy_options",
+      "projection_shared_parent_refuses_missing_malformed_and_oversized_sidecars",
+      "projection_shared_parent_rejects_worker_projection_profile_and_payload_changes",
+      "projection_shared_parent_requires_close_reap_ar_and_exact_policy",
+      "projection_shared_parent_selector_keeps_plain_and_v1_argv_unchanged",
+      "projection_shared_parent_validates_full_envelope_and_refuses_v1_cross_use",
+      "projection_shared_recorder_retains_four_serializations_then_close",
+      "projection_shared_report_checks_every_snapshot_rank_and_full_policy",
+      "projection_shared_report_configuration_time_is_outside_snapshot_intervals",
+      "projection_shared_report_keeps_close_extent_and_non_authority_checks",
+      "projection_shared_report_preserves_zero_baseline_and_checked_deltas",
+      "projection_shared_report_rejects_unknown_fields_and_non_u64_configuration",
+      "projection_shared_report_requires_fixed_policy_and_both_schemas",
+      "projection_shared_report_retains_own_recurrence_projection_and_transcript",
+      "projection_shared_report_roundtrips_without_relaxing_v1",
+      "projection_shared_setup_configures_exact_policy_before_enable_once",
+      "projection_shared_setup_refusal_never_enables_after_failed_configuration"
+    ],
+    "count": 20,
+    "executed": false
+  },
+  "added_tests": {
+    "worker": [
+      "native_projection_residual_decode_host_v1::shared_tests::projection_shared_cli_is_distinct_and_rejects_extra_policies",
+      "native_projection_residual_decode_host_v1::shared_tests::projection_shared_cli_retains_ar_device_and_path_bounds",
+      "native_projection_residual_decode_host_v1::shared_tests::projection_shared_default_setup_does_not_configure_performance",
+      "native_projection_residual_decode_host_v1::shared_tests::projection_shared_recorder_retains_four_serializations_then_close",
+      "native_projection_residual_decode_host_v1::shared_tests::projection_shared_setup_configures_exact_policy_before_enable_once",
+      "native_projection_residual_decode_host_v1::shared_tests::projection_shared_setup_refusal_never_enables_after_failed_configuration",
+      "projection_residual_decode_host_observation_v1::tests::projection_shared_report_checks_every_snapshot_rank_and_full_policy",
+      "projection_residual_decode_host_observation_v1::tests::projection_shared_report_configuration_time_is_outside_snapshot_intervals",
+      "projection_residual_decode_host_observation_v1::tests::projection_shared_report_keeps_close_extent_and_non_authority_checks",
+      "projection_residual_decode_host_observation_v1::tests::projection_shared_report_preserves_zero_baseline_and_checked_deltas",
+      "projection_residual_decode_host_observation_v1::tests::projection_shared_report_rejects_unknown_fields_and_non_u64_configuration",
+      "projection_residual_decode_host_observation_v1::tests::projection_shared_report_requires_fixed_policy_and_both_schemas",
+      "projection_residual_decode_host_observation_v1::tests::projection_shared_report_retains_own_recurrence_projection_and_transcript",
+      "projection_residual_decode_host_observation_v1::tests::projection_shared_report_roundtrips_without_relaxing_v1"
+    ],
+    "parent_library": [
+      "projection_residual_decode_host_observation_v1::tests::projection_shared_report_checks_every_snapshot_rank_and_full_policy",
+      "projection_residual_decode_host_observation_v1::tests::projection_shared_report_configuration_time_is_outside_snapshot_intervals",
+      "projection_residual_decode_host_observation_v1::tests::projection_shared_report_keeps_close_extent_and_non_authority_checks",
+      "projection_residual_decode_host_observation_v1::tests::projection_shared_report_preserves_zero_baseline_and_checked_deltas",
+      "projection_residual_decode_host_observation_v1::tests::projection_shared_report_rejects_unknown_fields_and_non_u64_configuration",
+      "projection_residual_decode_host_observation_v1::tests::projection_shared_report_requires_fixed_policy_and_both_schemas",
+      "projection_residual_decode_host_observation_v1::tests::projection_shared_report_retains_own_recurrence_projection_and_transcript",
+      "projection_residual_decode_host_observation_v1::tests::projection_shared_report_roundtrips_without_relaxing_v1",
+      "tp_finite_client::prefix_decode::projection::tests::shared_host::projection_shared_parent_refuses_missing_malformed_and_oversized_sidecars",
+      "tp_finite_client::prefix_decode::projection::tests::shared_host::projection_shared_parent_rejects_worker_projection_profile_and_payload_changes",
+      "tp_finite_client::prefix_decode::projection::tests::shared_host::projection_shared_parent_requires_close_reap_ar_and_exact_policy",
+      "tp_finite_client::prefix_decode::projection::tests::shared_host::projection_shared_parent_selector_keeps_plain_and_v1_argv_unchanged",
+      "tp_finite_client::prefix_decode::projection::tests::shared_host::projection_shared_parent_validates_full_envelope_and_refuses_v1_cross_use"
+    ],
+    "parent_binary": [
+      "tests::projection_shared_host_bin_requires_distinct_optin_and_no_policy_options"
+    ]
+  },
+  "added_worker_test_executions": 14,
+  "added_parent_test_executions": 14,
+  "renamed_tests": [],
+  "old_test_names_removed": [],
+  "new_parent_binary": "ferric-qwen3-finite-projection-residual-decode-shared-host-engineering",
+  "worker_selector": "--engineering-native-projection-residual-decode-shared-host-v1",
+  "shared_runtime_options": [
+    false,
+    false,
+    true
+  ],
+  "original_group_fence_policy_unchanged": false,
+  "fresh_full_currentness_preserved": true,
+  "configuration_clock": "inclusive-host-wall-nanoseconds-before-observer-enable",
+  "configuration_time_in_snapshots": false,
+  "tests_executed": false,
+  "live_sources_modified": false,
+  "kfd_modified": false,
+  "compiler_modified": false,
+  "provider_modified": false,
+  "kernel_modified": false,
+  "limits_changed": false,
+  "operational_currentness_enabled": false,
+  "admission_cache_enabled": false,
+  "gpu_execution": false,
+  "numerical_acceptance": false,
+  "performance_claim": false,
+  "production_authority": false
+}

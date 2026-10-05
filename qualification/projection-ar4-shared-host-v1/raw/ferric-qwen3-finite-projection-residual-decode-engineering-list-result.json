@@ -1,0 +1,9 @@
+{
+  "cache_bytes": 1382017158,
+  "elapsed_seconds": 2.025689957663417,
+  "exit_code": 0,
+  "group_absent": true,
+  "reason": null,
+  "stderr_sha256": "7410f63c76e387d7b0aebcd979458a80edba16a957aa7180b8a77b1efa64f1a6",
+  "stdout_sha256": "ddf7376ee4ae37c13c92400ad1063d0bd93090f68e801d9e765ec0d1d6024a85"
+}

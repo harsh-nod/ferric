@@ -1,0 +1,35 @@
+{
+  "schema": "ferric-shared-host-preparation-tests-primary-v1",
+  "scope": "Root-observed bounded CPU-only policy tests on ASROCK; not Rust compilation, GPU qualification, numerical acceptance or performance evidence.",
+  "host": "asrock-1w300-g2-2b",
+  "tests": [
+    {
+      "command": "timeout --signal=TERM --kill-after=15s 150s env -u PYTHONPATH -u PYTHONHOME -u PYTHONOPTIMIZE HIP_VISIBLE_DEVICES= ROCR_VISIBLE_DEVICES= CUDA_VISIBLE_DEVICES= GPU_DEVICE_ORDINAL= taskset -c 8,9 nice -n 10 prlimit --as=2147483648 --cpu=120 --fsize=67108864 --core=0 /usr/bin/python3 -B /home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-projection-ar4-shared-host-cpu-v1/test_run.py",
+      "session": 78388,
+      "result_chunk": "ffe765",
+      "exit_code": 0,
+      "passed": 15,
+      "reported_seconds": 0.005,
+      "controller_sha256": "1f9fc61f35cc2d8367592ecf29ff7ea48e6d6250556a72940abe3acb028a41c5",
+      "test_sha256": "0777439df0b31a68a57c7a28e9617b1c6f2e25c9a4978e25084727dbadc2c1cf",
+      "readme_sha256": "c53b352f549240a7a9a4d5d14dc6184c7d2182210c47813ed66363094dd08464"
+    },
+    {
+      "command": "timeout --signal=TERM --kill-after=15s 120s env -u PYTHONPATH -u PYTHONHOME -u PYTHONOPTIMIZE HIP_VISIBLE_DEVICES= ROCR_VISIBLE_DEVICES= CUDA_VISIBLE_DEVICES= GPU_DEVICE_ORDINAL= taskset -c 8,9 nice -n 10 prlimit --as=2147483648 --cpu=120 --fsize=67108864 --core=0 /usr/bin/python3 -B /home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-performance-adapter-cache-reclaim-v1/test_retire.py",
+      "session": 32190,
+      "result_chunk": "b44be8",
+      "exit_code": 0,
+      "passed": 12,
+      "reported_seconds": 0.001,
+      "controller_sha256": "0d6ddd848451bd38e866ecdfd39490ddd3eb774052c94eb7f6b6907b2420ec48",
+      "test_sha256": "12a7f86c529e12d694be96fd61317d138f640836ac78029bf0e2c0e0bb89bcc0",
+      "readme_sha256": "46a3f7bd6a7303d2f0969629ccdd7d3756c7a57b120f2a0955eed9444c4411dc"
+    }
+  ],
+  "body_hashes_before_chunk": "a73dfb",
+  "body_hashes_after_chunk": "c17197",
+  "body_hashes_unchanged": true,
+  "gpu_execution": false,
+  "performance_claim": false,
+  "numerical_acceptance": false
+}

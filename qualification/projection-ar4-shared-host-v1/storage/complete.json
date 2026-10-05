@@ -1,0 +1,38 @@
+{
+  "code_object_removed": false,
+  "executable_removed": false,
+  "free_after": 62501548032,
+  "free_before": 41170558976,
+  "gpu_execution": false,
+  "non_target_file_removed": false,
+  "passed": true,
+  "plan": {
+    "bytes": 15098454,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/performance-adapter-cache-reclaim-v228-v1/plan.json",
+    "sha256": "e4aef0f8e5adb08f6cec0848c8969ce45addaf98d39209f0880b307e120ab304"
+  },
+  "protected_files": 34854,
+  "removed": {
+    "bytes": 1929731,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/performance-adapter-cache-reclaim-v228-v1/removed.jsonl",
+    "sha256": "42d8238ec0d3b7ca5a129921ed428fb871cfd3b3f7f3cbca314ecd4116b320ff"
+  },
+  "removed_allocated_bytes": 21333028864,
+  "removed_files": 4008,
+  "restricted_session_processes": [
+    {
+      "comm": "(sd-pam)",
+      "command": "(sd-pam)",
+      "pid": 1216176
+    },
+    {
+      "comm": "sshd",
+      "command": "sshd: harmenon@notty",
+      "pid": 1216241
+    }
+  ],
+  "schema": "ferric-performance-adapter-cache-result-v1",
+  "shared_library_removed": false,
+  "source_removed": false,
+  "terminal_cohort_claimed": false
+}

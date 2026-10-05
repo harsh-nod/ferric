@@ -1,0 +1,1 @@
+tests::command_is_explicit_closed_and_distinct_from_queued_options: test

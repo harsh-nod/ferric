@@ -6,7 +6,17 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Latest: [the projection AR4 host observer completed on MI350](../qualification/projection-ar4-host-native-v1/README.md).
+Latest: [the explicit shared-full projection AR4 route passed Rust qualification on ASROCK](../qualification/projection-ar4-shared-host-v1/README.md).
+All 883 selected Rust tests passed, with four historical ignores; all 63 bounded
+phases exited naturally, four executables were built and integrity postchecks
+passed. Fifteen controller policy tests also passed. Fourteen exact tested source
+bodies are integrated, preserving the default route and introducing an explicit
+shared-full selector with separately measured configuration time. No kernel or
+arithmetic changed. Fresh MI350 executable audits and a same-generation
+default/shared comparison remain pending; no new GPU speedup is claimed.
+All M0-M7, numerical acceptance, sustained 2,048/256 and 700 tokens/s remain open.
+
+Previously, [the projection AR4 host observer completed on MI350](../qualification/projection-ar4-host-native-v1/README.md).
 Four own-output forwards passed structural checks in one attempt without retry;
 all 152 tensor slices, 576 terminal states, seven naturally exited/reaped leaves
 and six surrounding audits passed. Forward host wall times were 10.593, 10.599,
