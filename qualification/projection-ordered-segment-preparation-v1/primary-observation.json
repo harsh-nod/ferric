@@ -1,0 +1,31 @@
+{
+  "schema": "ferric-p228-projection-ordered-segment-preparation-primary-v1",
+  "host": "asrock-1w300-g2-2b.mkm.dcgpu",
+  "ssh_alias": "mi350-2",
+  "controller_sha256": "732df7080ee87561a6e4581f883896fc03b2ea8befd177bf110019e95289be23",
+  "test_sha256": "333f35969eabf4e32a9b99d3b793fc53b25d2360129494cb7d3e0f9e09783bc8",
+  "readme_sha256": "ef188234f3f2decf19e4e1a12c2f9f27cc8c670b38fad817c2b30209a8906c0c",
+  "actual_tool_chunk": "d4716c",
+  "exit_code": 0,
+  "tests_passed": 15,
+  "tests_failed": 0,
+  "tests_ignored": 0,
+  "before_hash_check": "a3a763",
+  "after_hash_check": "0eb78a",
+  "bounded_execution": {
+    "wall_seconds": 120,
+    "cpu_seconds": 60,
+    "address_space_bytes": 536870912,
+    "file_size_bytes": 16777216,
+    "core_bytes": 0,
+    "cpu_affinity": [8, 9],
+    "nice": 10,
+    "gpu_visibility": "empty",
+    "python_bytecode": false
+  },
+  "scope": "Synthetic controller policy tests only. No Rust compilation or GPU invocation.",
+  "rust_qualification": false,
+  "gpu_execution": false,
+  "numerical_acceptance": false,
+  "performance_claim": false
+}
