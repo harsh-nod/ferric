@@ -1,0 +1,17 @@
+{
+  "schema": "ferric-peer-dependency-native-request-v228-v3",
+  "devices": [
+    {
+      "unique_id": 16366993098680759275
+    },
+    {
+      "unique_id": 10838076764495710945
+    }
+  ],
+  "artifact": {
+    "path": "/home/harmenon/ferric-asrock-42/evidence/p223-runtime-v1/residual.hsaco",
+    "sha256": "8436c1861dcc14f0346aeecc136e4187c459ac1c0b31778265c88b3d8c63396d"
+  },
+  "timeout_ms": 60000,
+  "witness": true
+}

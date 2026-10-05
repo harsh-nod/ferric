@@ -1,0 +1,102 @@
+[
+    {
+        "gpu": 0,
+        "process_list": [
+            {
+                "process_info": {
+                    "name": "/usr/bin/python3.12",
+                    "pid": 2295852,
+                    "memory_usage": {
+                        "gtt_mem": {
+                            "value": 8236000,
+                            "unit": "B"
+                        },
+                        "cpu_mem": {
+                            "value": 0,
+                            "unit": "B"
+                        },
+                        "vram_mem": {
+                            "value": 17758676000,
+                            "unit": "B"
+                        }
+                    },
+                    "mem_usage": {
+                        "value": 18706399232,
+                        "unit": "B"
+                    },
+                    "usage": {
+                        "gfx": {
+                            "value": 0,
+                            "unit": "ns"
+                        },
+                        "enc": {
+                            "value": 0,
+                            "unit": "ns"
+                        }
+                    },
+                    "cu_occupancy": 0,
+                    "evicted_time": {
+                        "value": 0,
+                        "unit": "ms"
+                    }
+                }
+            }
+        ]
+    },
+    {
+        "gpu": 1,
+        "process_list": [
+            {
+                "process_info": "No running processes detected"
+            }
+        ]
+    },
+    {
+        "gpu": 2,
+        "process_list": [
+            {
+                "process_info": "No running processes detected"
+            }
+        ]
+    },
+    {
+        "gpu": 3,
+        "process_list": [
+            {
+                "process_info": "No running processes detected"
+            }
+        ]
+    },
+    {
+        "gpu": 4,
+        "process_list": [
+            {
+                "process_info": "No running processes detected"
+            }
+        ]
+    },
+    {
+        "gpu": 5,
+        "process_list": [
+            {
+                "process_info": "No running processes detected"
+            }
+        ]
+    },
+    {
+        "gpu": 6,
+        "process_list": [
+            {
+                "process_info": "No running processes detected"
+            }
+        ]
+    },
+    {
+        "gpu": 7,
+        "process_list": [
+            {
+                "process_info": "No running processes detected"
+            }
+        ]
+    }
+]

@@ -1,0 +1,147 @@
+{
+  "all_issue42_milestones_remain_open": true,
+  "archive": {
+    "bytes": 132759,
+    "files": 30,
+    "name": "peer-dependency-signal-completion-gpu-evidence-v228-v1.tar.gz",
+    "sha256": "0bd12bb61bc0574b5606a671cd40a969b9344fd31cb796b4920b73ca0350c390"
+  },
+  "boot": "2dbbbc5a-d8b7-46ac-bd1f-236e5847e24a",
+  "controller_tests": 33,
+  "cpu_complete_sha256": "b4d6edccd6232fc925305d8053b844c3bf072a3f2aade9a774f44d3e67db059f",
+  "errors": [
+    "RuntimeError('GPU process roster is not exact-empty')",
+    "post-audit: RuntimeError('GPU process roster is not exact-empty')"
+  ],
+  "failed_sha256": "f137bd377dcf9ae5c5961dc24b2ccef474fff87f51542e1d575d0191bcac1393",
+  "host": "smci350-rck-g03-b19-03",
+  "model_acceptance": false,
+  "native_attempts": 0,
+  "passed": false,
+  "performance_claim": false,
+  "retained": {
+    "retained/controller-tests.json": {
+      "bytes": 6325,
+      "sha256": "1a2f1f47b360c772e4f59b99997fcedcafb37fb1602b33b56fda5000fb37d703"
+    },
+    "retained/evidence/after.command.json": {
+      "bytes": 561,
+      "sha256": "b7845f56e7400a9913c4b0c90062c5152399cbcc2b49f4a45baded1c013f5d3a"
+    },
+    "retained/evidence/after.result.json": {
+      "bytes": 1104,
+      "sha256": "74ca1b6b4c69f521238fcd7b656a15b2663329ce537c7d3f25e71bdb6490b82f"
+    },
+    "retained/evidence/after.started.json": {
+      "bytes": 227,
+      "sha256": "a46ba6531c36c8eebfa96974cd5a6497d6573ab9c3c5eae5d338e0b436670634"
+    },
+    "retained/evidence/after.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "retained/evidence/after.stdout": {
+      "bytes": 2506,
+      "sha256": "1ec8f9426a99851df435686ceda5ca83efb8d198004ea5fea18144f0f05d8898"
+    },
+    "retained/evidence/before.command.json": {
+      "bytes": 561,
+      "sha256": "b7845f56e7400a9913c4b0c90062c5152399cbcc2b49f4a45baded1c013f5d3a"
+    },
+    "retained/evidence/before.result.json": {
+      "bytes": 1108,
+      "sha256": "9d03f9681a0a6c3050ad3e435a224fcc13e92c5a7a467f700aaaf41882b3ba1c"
+    },
+    "retained/evidence/before.started.json": {
+      "bytes": 227,
+      "sha256": "1aa1e396d0bbd0471ca6a95303c999b769658daed7e158d4a540624fa8623b80"
+    },
+    "retained/evidence/before.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "retained/evidence/before.stdout": {
+      "bytes": 2506,
+      "sha256": "1ec8f9426a99851df435686ceda5ca83efb8d198004ea5fea18144f0f05d8898"
+    },
+    "retained/evidence/failed.json": {
+      "bytes": 463378,
+      "sha256": "f137bd377dcf9ae5c5961dc24b2ccef474fff87f51542e1d575d0191bcac1393"
+    },
+    "retained/evidence/inputs-before.json": {
+      "bytes": 438292,
+      "sha256": "20bc21f7c062684aaf225a12162b619b234d4d8f4bfe0ec9025e904782b96101"
+    },
+    "retained/evidence/ldd.command.json": {
+      "bytes": 710,
+      "sha256": "92b8e8800ea5aa8a9a65f925155c59693b1e9a0c898aaa048524e9b739a3ca08"
+    },
+    "retained/evidence/ldd.result.json": {
+      "bytes": 1094,
+      "sha256": "af8adc0944ad12b56940f8eeeb711f82eceecc4ada1b6bd840d6a6f1f46ef059"
+    },
+    "retained/evidence/ldd.started.json": {
+      "bytes": 376,
+      "sha256": "d617d66dfcdb81aa06736a6ff5de4fc4cb86a6cfbf6474d485c7e65615253a5e"
+    },
+    "retained/evidence/ldd.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "retained/evidence/ldd.stdout": {
+      "bytes": 230,
+      "sha256": "e789a98b51860daa93365df67e1d4252d47d36f8941563080508bb8ffcebafce"
+    },
+    "retained/evidence/readelf.command.json": {
+      "bytes": 734,
+      "sha256": "213a744f930e97b0d73b0e8607561180c30ec035e143ed94e87279dc74a0301d"
+    },
+    "retained/evidence/readelf.result.json": {
+      "bytes": 1110,
+      "sha256": "75c9e5a345229fb98641a2680d9307f5257e938b08eb6d485f8457529c473327"
+    },
+    "retained/evidence/readelf.started.json": {
+      "bytes": 400,
+      "sha256": "dc9b2dcdd862b298e7bba97c185bfe09b8f906044a5b669eebcbe09a3c7d9090"
+    },
+    "retained/evidence/readelf.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "retained/evidence/readelf.stdout": {
+      "bytes": 4308,
+      "sha256": "458b3a1cd589e686bdd9692f84ca76d7805878f9b4beb6490759bc27b5dbf572"
+    },
+    "retained/evidence/runtime-libraries.json": {
+      "bytes": 1301,
+      "sha256": "84cc21ec5c21247f92e0ab559b59d04544024dd6877c2430b5744f54b28d67ba"
+    },
+    "retained/request.json": {
+      "bytes": 420,
+      "sha256": "36d6478c1f533e30c21d1637b36be46cea02f087e203577ad8bea75913bec8f8"
+    },
+    "retained/run_cpu.py": {
+      "bytes": 27116,
+      "sha256": "d66b641752986b09952dc73b28ee7984796359e39d1373046dfa2229ffa68406"
+    },
+    "retained/run_gpu.py": {
+      "bytes": 28880,
+      "sha256": "dd2067348bcfa78e0b42e8c8c66e763328a8b1185bdc7bb668ba92507e3797d5"
+    },
+    "retained/test_parser.py": {
+      "bytes": 4702,
+      "sha256": "c5d40a390999b2a652b76d598df48099efba20d73e54fde11156c63b24b660b2"
+    },
+    "retained/test_runtime_libraries.py": {
+      "bytes": 6628,
+      "sha256": "2a01b9a86498a5f0327f6b267f1b61e6de20432890ac33813aa40d1480155438"
+    },
+    "retained/test_signal_admission.py": {
+      "bytes": 17691,
+      "sha256": "2a2260fed976fd137665fc7b2384e6da774514f34a476f1daa0cd49026485d00"
+    }
+  },
+  "runtime_commit": "097b4f796a283f554339cc0c0ef5c2c8c3858d2a",
+  "schema": "ferric-peer-signal-completion-preflight-checkpoint-v1",
+  "scope": "retained preflight refusal; no native attempt"
+}
