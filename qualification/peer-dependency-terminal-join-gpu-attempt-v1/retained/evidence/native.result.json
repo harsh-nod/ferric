@@ -1,0 +1,29 @@
+{
+  "adopted_reaped": [],
+  "command": {
+    "bytes": 877,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/peer-dependency-terminal-join-gpu-v228-v1/evidence/native.command.json",
+    "sha256": "6e797d1364b0e301d94043de3f049318f55baef342f11d8763b5b6a73a41fcda"
+  },
+  "elapsed_ns": 60641720581,
+  "exception": null,
+  "exit_code": 1,
+  "forced_cleanup": false,
+  "label": "native",
+  "natural_exit": true,
+  "pgid": 2171074,
+  "pid": 2171074,
+  "process_group_absent": true,
+  "reaped": true,
+  "stderr": {
+    "bytes": 2736,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/peer-dependency-terminal-join-gpu-v228-v1/evidence/native.stderr",
+    "sha256": "9adf064bea0de61d2d599d1d27360176dafb667eb238125faa8a5a14e645b270"
+  },
+  "stdout": {
+    "bytes": 0,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/peer-dependency-terminal-join-gpu-v228-v1/evidence/native.stdout",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "timed_out": false
+}

@@ -1,0 +1,183 @@
+{
+  "archive": {
+    "bytes": 131830,
+    "files": 35,
+    "name": "peer-dependency-terminal-join-gpu-evidence-v228-v1.tar.gz",
+    "sha256": "cc3cba4f60aecfd3a46f908392d118f5c13b8d1bb8ebc5489a571798ebcc86de"
+  },
+  "binary": {
+    "bytes": 1888472,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/peer-dependency-terminal-join-cpu-v228-v1/target/debug/examples/kfd-peer-dependency-terminal-join",
+    "sha256": "5eb29e1b5ef4fab42f7bb4041bbb06e1301b3b0cb77dfcc867a52d50bb4422ad"
+  },
+  "boot": "2dbbbc5a-d8b7-46ac-bd1f-236e5847e24a",
+  "compatibility_binary": {
+    "bytes": 1876160,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/peer-dependency-terminal-join-cpu-v228-v1/target/debug/examples/kfd-peer-dependency-sentinel",
+    "sha256": "1cefdfebda50234b259e9d09bb1de5b68c5c795430e15c8fcfe161897a80b011"
+  },
+  "cpu_commit": "2d54052e45c9a3ed19d72fc756446fa375035359",
+  "cpu_complete": {
+    "bytes": 218171,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/peer-dependency-terminal-join-cpu-v228-v1/evidence/complete.json",
+    "sha256": "4df566a9df1298f396bb5d55308591abbb252d3a57618403f493ad455a7f6956"
+  },
+  "failed_receipt_sha256": "dc9bc553d5f88ee70008521f06c563e6c088adf82f316885691986b99bc96f4d",
+  "healthy_close": false,
+  "host": "smci350-rck-g03-b19-03",
+  "model_acceptance": false,
+  "native_attempts": 1,
+  "output_readback": false,
+  "passed": false,
+  "performance_claim": false,
+  "request": {
+    "bytes": 420,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/peer-dependency-terminal-join-gpu-v228-v1/request.json",
+    "sha256": "74536aa0fa6da08af8f134948b460c1264f7ae43fe2e8ca73dc6cadff4b17c2c"
+  },
+  "retained": {
+    "retained/controller-tests.json": {
+      "bytes": 6171,
+      "sha256": "2d3f6d8e8e0f42f06bc8f520188026e0c70a246fd33d370c3c8434c7bb254d96"
+    },
+    "retained/evidence/after.command.json": {
+      "bytes": 557,
+      "sha256": "44e1e2869c66ad36cf10939c0d3c5e3b5697aa50b46ff48bbc445ac2a41d0c9c"
+    },
+    "retained/evidence/after.result.json": {
+      "bytes": 1092,
+      "sha256": "7fead9137a0497692fd9cbfb3b4bddd699bd3e6731db34c8bea4aea5210d0eb5"
+    },
+    "retained/evidence/after.started.json": {
+      "bytes": 227,
+      "sha256": "fd9f74f72fb103814843bca34c1b35713021cf221637c71665f0383d17c975a8"
+    },
+    "retained/evidence/after.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "retained/evidence/after.stdout": {
+      "bytes": 1275,
+      "sha256": "e70f2d7235dbd50455554f2a277613971e2fcdf117ec1bdcdf47644bcf49c422"
+    },
+    "retained/evidence/before.command.json": {
+      "bytes": 557,
+      "sha256": "44e1e2869c66ad36cf10939c0d3c5e3b5697aa50b46ff48bbc445ac2a41d0c9c"
+    },
+    "retained/evidence/before.result.json": {
+      "bytes": 1096,
+      "sha256": "30a166cd5dfafac4e38a3f4589fb5620a71c99e1818b5752f8c5f08e6f3312dc"
+    },
+    "retained/evidence/before.started.json": {
+      "bytes": 227,
+      "sha256": "184222718f181c72d2eba88f5c5911ddd4bd9002c372fa73c71d837217f65a52"
+    },
+    "retained/evidence/before.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "retained/evidence/before.stdout": {
+      "bytes": 1275,
+      "sha256": "e70f2d7235dbd50455554f2a277613971e2fcdf117ec1bdcdf47644bcf49c422"
+    },
+    "retained/evidence/failed.json": {
+      "bytes": 455492,
+      "sha256": "dc9bc553d5f88ee70008521f06c563e6c088adf82f316885691986b99bc96f4d"
+    },
+    "retained/evidence/inputs-before.json": {
+      "bytes": 426081,
+      "sha256": "742449e5179b1f210d9304ac5bf1ea9e99b7bda4e8e7522c2cfdd2045412950d"
+    },
+    "retained/evidence/ldd.command.json": {
+      "bytes": 698,
+      "sha256": "5a7e27070384707ea3f5d569a9ee6ccaefee2a909ba641e99e240445e6fde325"
+    },
+    "retained/evidence/ldd.result.json": {
+      "bytes": 1082,
+      "sha256": "60864248112f381b28bcbae82c295b96b7172c063d619687df40f4ab93bc2780"
+    },
+    "retained/evidence/ldd.started.json": {
+      "bytes": 368,
+      "sha256": "fbfe1afd7216231bf4df3485e4b407804401e280c0b76f49acee006fa884247f"
+    },
+    "retained/evidence/ldd.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "retained/evidence/ldd.stdout": {
+      "bytes": 230,
+      "sha256": "9455f7a759bb5205bdad4a27dfbcecde9185f3fb8804c8b7f20f9c5fea1c97b7"
+    },
+    "retained/evidence/native.command.json": {
+      "bytes": 877,
+      "sha256": "6e797d1364b0e301d94043de3f049318f55baef342f11d8763b5b6a73a41fcda"
+    },
+    "retained/evidence/native.result.json": {
+      "bytes": 1098,
+      "sha256": "20cbcf92270e4c9792bd2e0b74617c2b8868a6138e27cb4a6e675b721761d8fa"
+    },
+    "retained/evidence/native.started.json": {
+      "bytes": 546,
+      "sha256": "47b60d8703878a1486c097064c68e448fec7eeb99bc9c03154d04dead9da5074"
+    },
+    "retained/evidence/native.stderr": {
+      "bytes": 2736,
+      "sha256": "9adf064bea0de61d2d599d1d27360176dafb667eb238125faa8a5a14e645b270"
+    },
+    "retained/evidence/native.stdout": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "retained/evidence/readelf.command.json": {
+      "bytes": 722,
+      "sha256": "d1762b30712cc7ee546b10cbfd80a626549be57491360b100c1dc31b4342e5ab"
+    },
+    "retained/evidence/readelf.result.json": {
+      "bytes": 1098,
+      "sha256": "00e97af3e8f35e3e49de01145df64b865ad70c498e662a292ed12e1409c362d0"
+    },
+    "retained/evidence/readelf.started.json": {
+      "bytes": 392,
+      "sha256": "7398e3b8d5c0559342cf6658f8ce3707132da07ba2ecc4988560433084259edc"
+    },
+    "retained/evidence/readelf.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "retained/evidence/readelf.stdout": {
+      "bytes": 4308,
+      "sha256": "05fba14dca64ca6ee502b654f09f29cfe9a8bc355505c3fa112870ffd8dde891"
+    },
+    "retained/evidence/runtime-libraries.json": {
+      "bytes": 1301,
+      "sha256": "84cc21ec5c21247f92e0ab559b59d04544024dd6877c2430b5744f54b28d67ba"
+    },
+    "retained/request.json": {
+      "bytes": 420,
+      "sha256": "74536aa0fa6da08af8f134948b460c1264f7ae43fe2e8ca73dc6cadff4b17c2c"
+    },
+    "retained/run_cpu.py": {
+      "bytes": 26130,
+      "sha256": "5227396d5ed2794cf8543e931df47fa99396e794e1087ec691dda85de7df81db"
+    },
+    "retained/run_gpu.py": {
+      "bytes": 27670,
+      "sha256": "f1841c522eb2210a37ef90ca7fe614505d5382bb276de05947b2787889f00090"
+    },
+    "retained/test_parser.py": {
+      "bytes": 4702,
+      "sha256": "c5d40a390999b2a652b76d598df48099efba20d73e54fde11156c63b24b660b2"
+    },
+    "retained/test_runtime_libraries.py": {
+      "bytes": 6628,
+      "sha256": "2a01b9a86498a5f0327f6b267f1b61e6de20432890ac33813aa40d1480155438"
+    },
+    "retained/test_terminal_admission.py": {
+      "bytes": 15481,
+      "sha256": "14354e902ea8e6d6f6bf48e8891041ff5c8d12ec67588984672b8136a903416f"
+    }
+  },
+  "runtime_commit": "203cfcbef166932b04683cd5c88f3414fe3b8a25",
+  "schema": "ferric-terminal-peer-join-native-checkpoint-v1",
+  "scope": "bounded diagnostic; native retirement refused"
+}
