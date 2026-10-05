@@ -6,7 +6,16 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Latest: [ten checked-arithmetic and Option helper bodies captured from attention](../qualification/guarded-mlp-core-checked-attention-diagnostic-v1/README.md).
+Latest: [production attention wrapper checks build; the test fixture needs an API repair](../qualification/guarded-mlp-core-checked-attention-qualification-v1/README.md).
+The integer and Option recognizers are implemented and the production compiler
+built on MI350. The test-binary build rejected a non-exhaustive MIR Statement
+constructor in the new integer fixture; no test suite or extraction control
+ran. All five phases exited naturally and were reaped, with unchanged sources
+and clean postchecks. The test-only clone repair is reviewed; its fresh
+qualification is pending. No production dependency, GPU or performance gate
+has changed.
+
+Previously, [ten checked-arithmetic and Option helper bodies were captured from attention](../qualification/guarded-mlp-core-checked-attention-diagnostic-v1/README.md).
 The second isolated diagnostic compiler built on MI350 and all six renderer
 tests passed. It adds the standalone `u32::overflowing_mul` body to the nine
 previously captured helpers. The unchanged attention control still rejects

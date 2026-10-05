@@ -1,0 +1,942 @@
+{
+  "additional_compiler_cohorts": {
+    "core-attention-option": {
+      "names": [
+        "trusted_device_items::core_attention_option_v1::tests::attention_option_real_callback_call_mutations",
+        "trusted_device_items::core_attention_option_v1::tests::attention_option_real_drop_mutations",
+        "trusted_device_items::core_attention_option_v1::tests::attention_option_real_identity_payload_and_callback_refusals",
+        "trusted_device_items::core_attention_option_v1::tests::attention_option_real_local_type_and_scope_mutations",
+        "trusted_device_items::core_attention_option_v1::tests::attention_option_real_operations_and_cleanup_mutations",
+        "trusted_device_items::core_attention_option_v1::tests::attention_option_real_payload_and_aggregate_mutations",
+        "trusted_device_items::core_attention_option_v1::tests::attention_option_real_provider_and_closure_positives",
+        "trusted_device_items::core_attention_option_v1::tests::attention_option_real_shape_mutations",
+        "trusted_device_items::core_attention_option_v1::tests::attention_option_real_source_scope_mutations",
+        "trusted_device_items::core_attention_option_v1::tests::attention_option_real_switch_and_return_mutations"
+      ],
+      "prefix": "trusted_device_items::core_attention_option_v1::tests::",
+      "source_files": {
+        "fe2o3/crates/rustc-codegen-fe2o3/src/trusted_device_items/core_attention_option_v1.rs": {
+          "bytes": 17635,
+          "sha256": "c1e69c6d5a656cad60dd049b23e4c780562263caacf6610e0a8026be5dd21356"
+        },
+        "fe2o3/crates/rustc-codegen-fe2o3/src/trusted_device_items/core_attention_option_v1_tests.rs": {
+          "bytes": 28697,
+          "sha256": "c8c99ecdc1985dea15d786e40ce06828363ff2fbf78b6e83b9d0c85349730067"
+        }
+      }
+    },
+    "core-checked-integer": {
+      "names": [
+        "trusted_device_items::core_checked_integer_v1::tests::checked_integer_real_body_rejects_control_flow_and_unwind",
+        "trusted_device_items::core_checked_integer_v1::tests::checked_integer_real_body_rejects_extra_operations",
+        "trusted_device_items::core_checked_integer_v1::tests::checked_integer_real_body_rejects_operands_constants_and_variants",
+        "trusted_device_items::core_checked_integer_v1::tests::checked_integer_real_body_rejects_shape_and_local_mutations",
+        "trusted_device_items::core_checked_integer_v1::tests::checked_integer_real_body_rejects_source_scope_and_inline_mutations",
+        "trusted_device_items::core_checked_integer_v1::tests::checked_integer_real_core_identity_and_signature_refusals"
+      ],
+      "prefix": "trusted_device_items::core_checked_integer_v1::tests::",
+      "source_files": {
+        "fe2o3/crates/rustc-codegen-fe2o3/src/trusted_device_items/core_checked_integer_v1.rs": {
+          "bytes": 17744,
+          "sha256": "bf076a1b5ebeab255a85b5cddf294937659858d2fe0f9de0cfde1532b4d00925"
+        },
+        "fe2o3/crates/rustc-codegen-fe2o3/src/trusted_device_items/core_checked_integer_v1_tests.rs": {
+          "bytes": 27770,
+          "sha256": "62f3f777f18d5004d938a1e5b112dcdc795104d312571652ed3ea85f2e9995a1"
+        }
+      }
+    }
+  },
+  "artifacts": {
+    "device-api-ui": {
+      "cargo_artifact": {
+        "executable": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/target/debug/deps/device_api_ui-591eb88a7faad131",
+        "features": [],
+        "filenames": [
+          "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/target/debug/deps/device_api_ui-591eb88a7faad131"
+        ],
+        "fresh": false,
+        "manifest_path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/crates/fe2o3-device/Cargo.toml",
+        "package_id": "path+file:///home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/crates/fe2o3-device#0.1.0",
+        "profile": {
+          "debug_assertions": true,
+          "debuginfo": 0,
+          "opt_level": "0",
+          "overflow_checks": true,
+          "test": true
+        },
+        "reason": "compiler-artifact",
+        "target": {
+          "crate_types": [
+            "bin"
+          ],
+          "doc": false,
+          "doctest": false,
+          "edition": "2024",
+          "kind": [
+            "test"
+          ],
+          "name": "device_api_ui",
+          "src_path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/crates/fe2o3-device/tests/device_api_ui.rs",
+          "test": true
+        }
+      },
+      "pin": {
+        "bytes": 5635920,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/target/debug/deps/device_api_ui-591eb88a7faad131",
+        "sha256": "683882ea1b5f87ba0156a492310c4f718cbdc209e7bfa0e3ab4e2ebc06f3eaf8"
+      }
+    },
+    "device-ffi-ui": {
+      "cargo_artifact": {
+        "executable": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/target/debug/deps/device_ffi_ui-1df7393b9a225743",
+        "features": [],
+        "filenames": [
+          "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/target/debug/deps/device_ffi_ui-1df7393b9a225743"
+        ],
+        "fresh": false,
+        "manifest_path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/crates/fe2o3-device/Cargo.toml",
+        "package_id": "path+file:///home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/crates/fe2o3-device#0.1.0",
+        "profile": {
+          "debug_assertions": true,
+          "debuginfo": 0,
+          "opt_level": "0",
+          "overflow_checks": true,
+          "test": true
+        },
+        "reason": "compiler-artifact",
+        "target": {
+          "crate_types": [
+            "bin"
+          ],
+          "doc": false,
+          "doctest": false,
+          "edition": "2024",
+          "kind": [
+            "test"
+          ],
+          "name": "device_ffi_ui",
+          "src_path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/crates/fe2o3-device/tests/device_ffi_ui.rs",
+          "test": true
+        }
+      },
+      "pin": {
+        "bytes": 5636016,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/target/debug/deps/device_ffi_ui-1df7393b9a225743",
+        "sha256": "b93c780f6efee858a8321b9b4ebf0f55e9e128f62595f68e367228e4d4e18a5c"
+      }
+    },
+    "device-lib": {
+      "cargo_artifact": {
+        "executable": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/target/debug/deps/fe2o3_device-76bccbb59d854414",
+        "features": [],
+        "filenames": [
+          "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/target/debug/deps/fe2o3_device-76bccbb59d854414"
+        ],
+        "fresh": false,
+        "manifest_path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/crates/fe2o3-device/Cargo.toml",
+        "package_id": "path+file:///home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/crates/fe2o3-device#0.1.0",
+        "profile": {
+          "debug_assertions": true,
+          "debuginfo": 0,
+          "opt_level": "0",
+          "overflow_checks": true,
+          "test": true
+        },
+        "reason": "compiler-artifact",
+        "target": {
+          "crate_types": [
+            "lib"
+          ],
+          "doc": true,
+          "doctest": true,
+          "edition": "2024",
+          "kind": [
+            "lib"
+          ],
+          "name": "fe2o3_device",
+          "src_path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/crates/fe2o3-device/src/lib.rs",
+          "test": true
+        }
+      },
+      "pin": {
+        "bytes": 4907288,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/target/debug/deps/fe2o3_device-76bccbb59d854414",
+        "sha256": "facbc84059fe6b057c9abaa52399664117283c4c21f65a0fa9547b0b08ae15ce"
+      }
+    }
+  },
+  "cache_auto_clean": "never",
+  "compiler_products_before_test_build": {
+    "backend": {
+      "cargo_artifact": {
+        "executable": null,
+        "features": [],
+        "filenames": [
+          "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/target/debug/librustc_codegen_fe2o3.rlib",
+          "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/target/debug/librustc_codegen_fe2o3.so"
+        ],
+        "fresh": false,
+        "manifest_path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/crates/rustc-codegen-fe2o3/Cargo.toml",
+        "package_id": "path+file:///home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/crates/rustc-codegen-fe2o3#0.1.0",
+        "profile": {
+          "debug_assertions": true,
+          "debuginfo": 0,
+          "opt_level": "0",
+          "overflow_checks": true,
+          "test": false
+        },
+        "reason": "compiler-artifact",
+        "target": {
+          "crate_types": [
+            "rlib",
+            "dylib"
+          ],
+          "doc": true,
+          "doctest": true,
+          "edition": "2024",
+          "kind": [
+            "rlib",
+            "dylib"
+          ],
+          "name": "rustc_codegen_fe2o3",
+          "src_path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/crates/rustc-codegen-fe2o3/src/lib.rs",
+          "test": true
+        }
+      },
+      "pin": {
+        "bytes": 187499472,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/target/debug/librustc_codegen_fe2o3.so",
+        "sha256": "dbafe8ebd5da1351ab66836d5ca7cec4de3c6bd3bd83782b9e89e5cbbd5ecfdd"
+      }
+    },
+    "extractor": {
+      "cargo_artifact": {
+        "executable": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/target/debug/fe2o3-rustc-extract",
+        "features": [],
+        "filenames": [
+          "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/target/debug/fe2o3-rustc-extract"
+        ],
+        "fresh": false,
+        "manifest_path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/crates/rustc-codegen-fe2o3/Cargo.toml",
+        "package_id": "path+file:///home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/crates/rustc-codegen-fe2o3#0.1.0",
+        "profile": {
+          "debug_assertions": true,
+          "debuginfo": 0,
+          "opt_level": "0",
+          "overflow_checks": true,
+          "test": false
+        },
+        "reason": "compiler-artifact",
+        "target": {
+          "crate_types": [
+            "bin"
+          ],
+          "doc": true,
+          "doctest": false,
+          "edition": "2024",
+          "kind": [
+            "bin"
+          ],
+          "name": "fe2o3-rustc-extract",
+          "src_path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/crates/rustc-codegen-fe2o3/src/bin/fe2o3-rustc-extract.rs",
+          "test": true
+        }
+      },
+      "pin": {
+        "bytes": 199912,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/target/debug/fe2o3-rustc-extract",
+        "sha256": "d38032dfe7aec8d6675f8e74f2444c754e5ecaf445af1a2a2d22b4a241f0d136"
+      }
+    }
+  },
+  "configurations": {
+    "/.cargo/config": null,
+    "/.cargo/config.toml": null,
+    "/home/.cargo/config": null,
+    "/home/.cargo/config.toml": null,
+    "/home/harmenon/.cargo/config": null,
+    "/home/harmenon/.cargo/config.toml": null,
+    "/home/harmenon/ferric-asrock-42/.cargo/config": null,
+    "/home/harmenon/ferric-asrock-42/.cargo/config.toml": null,
+    "/home/harmenon/ferric-asrock-42/evidence/.cargo/config": null,
+    "/home/harmenon/ferric-asrock-42/evidence/.cargo/config.toml": null,
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/.cargo/config": null,
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/.cargo/config.toml": null,
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/.cargo/config": null,
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/.cargo/config.toml": null,
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/.cargo/config": null,
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/.cargo/config.toml": null
+  },
+  "controller": {
+    "bytes": 39514,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/run_cpu.py",
+    "sha256": "f089e44a39db87861579ab0d4d0e33dba9b1bcdb94a12cc671f552e684503342"
+  },
+  "core_result_tests": [
+    "trusted_device_items::core_result_control_v1::tests::result_branch_real_body_rejects_changed_aggregate_identity_and_moves",
+    "trusted_device_items::core_result_control_v1::tests::result_branch_real_body_rejects_changed_edges_and_discriminants",
+    "trusted_device_items::core_result_control_v1::tests::result_branch_real_body_rejects_changed_payload_fields",
+    "trusted_device_items::core_result_control_v1::tests::result_branch_real_body_rejects_count_and_local_mutations",
+    "trusted_device_items::core_result_control_v1::tests::result_branch_real_body_rejects_extra_operations_and_cleanup",
+    "trusted_device_items::core_result_control_v1::tests::result_branch_real_body_rejects_scope_and_inline_origin_mutations",
+    "trusted_device_items::core_result_control_v1::tests::result_branch_real_core_bodies_and_nominal_refusals",
+    "trusted_device_items::core_result_control_v1::tests::result_family_table_keeps_exact_source_pairs",
+    "trusted_device_items::core_result_control_v1::tests::result_residual_real_body_rejects_changed_assume_and_discriminant",
+    "trusted_device_items::core_result_control_v1::tests::result_residual_real_body_rejects_changed_conversion_call",
+    "trusted_device_items::core_result_control_v1::tests::result_residual_real_body_rejects_changed_payload_and_output",
+    "trusted_device_items::core_result_control_v1::tests::result_residual_real_body_rejects_count_and_local_mutations",
+    "trusted_device_items::core_result_control_v1::tests::result_residual_real_body_rejects_extra_operations_and_cleanup",
+    "trusted_device_items::core_result_control_v1::tests::result_residual_real_body_rejects_scope_and_inline_origin_mutations",
+    "trusted_device_items::core_result_control_v1::tests::result_residual_real_core_bodies_and_nominal_refusals"
+  ],
+  "core_u32_widening_tests": [
+    "trusted_device_items::core_u32_widening_v1::tests::u32_widening_real_body_rejects_cast_kind_type_and_operand_mutations",
+    "trusted_device_items::core_u32_widening_v1::tests::u32_widening_real_body_rejects_extra_operations_and_cleanup",
+    "trusted_device_items::core_u32_widening_v1::tests::u32_widening_real_body_rejects_places_and_terminators",
+    "trusted_device_items::core_u32_widening_v1::tests::u32_widening_real_body_rejects_shape_and_local_mutations",
+    "trusted_device_items::core_u32_widening_v1::tests::u32_widening_real_body_rejects_source_scope_mutations",
+    "trusted_device_items::core_u32_widening_v1::tests::u32_widening_real_core_identity_and_signature_refusals"
+  ],
+  "diagnostic_build": false,
+  "elapsed_seconds": 100.48059005697723,
+  "failure": "RuntimeError('compiler-tests-build did not finish naturally/reaped/successfully')",
+  "final_compiler_product_phase": null,
+  "final_sources": {
+    "bytes": 2130078,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/evidence/sources-after.json",
+    "sha256": "edafbfdd0c45d60a704a96f037d40b2698264eb9e43713a2d9491e5f9c81895f"
+  },
+  "full_model_acceptance": false,
+  "gpu_execution": false,
+  "guarded_candidate_hsaco_emitted": false,
+  "historical_product_pins_postchecked": false,
+  "ignored_inventories": {},
+  "input_manifest": {
+    "bytes": 1014550,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/input-manifest.json",
+    "sha256": "c566251c85ef1c98c06f80556fc53cff1435bd03c2ba96a229ee7fdfea652dce"
+  },
+  "input_sources": {
+    "bytes": 2130078,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/evidence/sources-before.json",
+    "sha256": "edafbfdd0c45d60a704a96f037d40b2698264eb9e43713a2d9491e5f9c81895f"
+  },
+  "limits": {
+    "address_space_bytes": 12884901888,
+    "affinity": [
+      8,
+      9
+    ],
+    "cache_bytes": 6442450944,
+    "cargo_jobs": 2,
+    "cleanup_reserve_seconds": 50,
+    "cpu_seconds_per_leaf": 1200,
+    "file_bytes": 1073741824,
+    "initial_free_bytes": 42949672960,
+    "leaf_seconds": 1800,
+    "live_free_bytes": 40802189312,
+    "nice": 10,
+    "stream_bytes": 67108864,
+    "whole_seconds": 7200
+  },
+  "local_dependencies": {
+    "cargo-fe2o3": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/crates/cargo-fe2o3/Cargo.toml",
+    "device-copy-renamed-dependency": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/crates/fe2o3-core/tests/renamed-dependency/Cargo.toml",
+    "dialect-amdgcn": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/crates/dialect-amdgcn/Cargo.toml",
+    "dialect-autotune": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/crates/dialect-autotune/Cargo.toml",
+    "dialect-dispatch": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/crates/dialect-dispatch/Cargo.toml",
+    "dialect-gpu": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/crates/dialect-gpu/Cargo.toml",
+    "dialect-kernel": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/crates/dialect-kernel/Cargo.toml",
+    "dialect-mir": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/crates/dialect-mir/Cargo.toml",
+    "dialect-proof": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/crates/dialect-proof/Cargo.toml",
+    "dialect-schedule": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/crates/dialect-schedule/Cargo.toml",
+    "dialect-tile": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/crates/dialect-tile/Cargo.toml",
+    "fe2o3-add-inplace": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/examples/add_inplace/Cargo.toml",
+    "fe2o3-amd-target": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/crates/fe2o3-amd-target/Cargo.toml",
+    "fe2o3-amdgcn-model": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/crates/fe2o3-amdgcn-model/Cargo.toml",
+    "fe2o3-amdhsa-loader": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/crates/fe2o3-amdhsa-loader/Cargo.toml",
+    "fe2o3-aql": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/crates/fe2o3-aql/Cargo.toml",
+    "fe2o3-artifact-transaction": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/crates/fe2o3-artifact-transaction/Cargo.toml",
+    "fe2o3-artifacts": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/crates/fe2o3-artifacts/Cargo.toml",
+    "fe2o3-axpy-inplace": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/examples/axpy_inplace/Cargo.toml",
+    "fe2o3-broker-authority-service": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/crates/fe2o3-broker-authority-service/Cargo.toml",
+    "fe2o3-build-authority": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/crates/fe2o3-build-authority/Cargo.toml",
+    "fe2o3-compiler-api": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/crates/fe2o3-compiler-api/Cargo.toml",
+    "fe2o3-compiler-closure-capability": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/crates/fe2o3-compiler-closure-capability/Cargo.toml",
+    "fe2o3-compiler-execution-client": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/crates/fe2o3-compiler-execution-client/Cargo.toml",
+    "fe2o3-compiler-execution-coordinator": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/crates/fe2o3-compiler-execution-coordinator/Cargo.toml",
+    "fe2o3-compiler-execution-deployment": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/crates/fe2o3-compiler-execution-deployment/Cargo.toml",
+    "fe2o3-compiler-execution-issuer": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/crates/fe2o3-compiler-execution-issuer/Cargo.toml",
+    "fe2o3-compiler-execution-lifecycle": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/crates/fe2o3-compiler-execution-lifecycle/Cargo.toml",
+    "fe2o3-compiler-execution-protocol": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/crates/fe2o3-compiler-execution-protocol/Cargo.toml",
+    "fe2o3-compiler-execution-supervisor": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/crates/fe2o3-compiler-execution-supervisor/Cargo.toml",
+    "fe2o3-compiler-ffi": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/crates/fe2o3-compiler-ffi/Cargo.toml",
+    "fe2o3-compiler-lineage": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/crates/fe2o3-compiler-lineage/Cargo.toml",
+    "fe2o3-completion": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/crates/fe2o3-completion/Cargo.toml",
+    "fe2o3-contracts": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/crates/fe2o3-contracts/Cargo.toml",
+    "fe2o3-copy": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/examples/copy/Cargo.toml",
+    "fe2o3-core": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/crates/fe2o3-core/Cargo.toml",
+    "fe2o3-debug-cli": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/crates/fe2o3-debug-cli/Cargo.toml",
+    "fe2o3-debug-protocol": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/crates/fe2o3-debug-protocol/Cargo.toml",
+    "fe2o3-device": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/crates/fe2o3-device/Cargo.toml",
+    "fe2o3-differential": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/crates/fe2o3-differential/Cargo.toml",
+    "fe2o3-downsample": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/examples/downsample/Cargo.toml",
+    "fe2o3-drm-uapi": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/crates/fe2o3-drm-uapi/Cargo.toml",
+    "fe2o3-external-anchor-coordinator": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/crates/fe2o3-external-anchor-coordinator/Cargo.toml",
+    "fe2o3-external-anchor-protocol": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/crates/fe2o3-external-anchor-protocol/Cargo.toml",
+    "fe2o3-external-anchor-provisioner": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/crates/fe2o3-external-anchor-provisioner/Cargo.toml",
+    "fe2o3-external-anchor-service": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/crates/fe2o3-external-anchor-service/Cargo.toml",
+    "fe2o3-fill": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/examples/fill/Cargo.toml",
+    "fe2o3-functional-proof": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/crates/fe2o3-functional-proof/Cargo.toml",
+    "fe2o3-gather-odd": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/examples/gather_odd/Cargo.toml",
+    "fe2o3-half-math-compiler-fixture": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/crates/rustc-codegen-fe2o3/tests/fixtures/half-math-compiler/Cargo.toml",
+    "fe2o3-hip-sys": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/crates/fe2o3-hip-sys/Cargo.toml",
+    "fe2o3-host": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/crates/fe2o3-host/Cargo.toml",
+    "fe2o3-host-api": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/crates/fe2o3-host-api/Cargo.toml",
+    "fe2o3-host-link-closure": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/crates/fe2o3-host-link-closure/Cargo.toml",
+    "fe2o3-hsa-runtime": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/crates/fe2o3-hsa-runtime/Cargo.toml",
+    "fe2o3-hsaco": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/crates/fe2o3-hsaco/Cargo.toml",
+    "fe2o3-hsaco-finalize": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/crates/fe2o3-hsaco-finalize/Cargo.toml",
+    "fe2o3-kernel-analysis": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/crates/fe2o3-kernel-analysis/Cargo.toml",
+    "fe2o3-kernel-descriptor": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/crates/fe2o3-kernel-descriptor/Cargo.toml",
+    "fe2o3-kernel-ir": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/crates/fe2o3-kernel-ir/Cargo.toml",
+    "fe2o3-kernel-opt": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/crates/fe2o3-kernel-opt/Cargo.toml",
+    "fe2o3-kfd": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/crates/fe2o3-kfd/Cargo.toml",
+    "fe2o3-kfd-uapi": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/crates/fe2o3-kfd-uapi/Cargo.toml",
+    "fe2o3-kir-debugger": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/crates/fe2o3-kir-debugger/Cargo.toml",
+    "fe2o3-kir-sim": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/crates/fe2o3-kir-sim/Cargo.toml",
+    "fe2o3-kir-sim-cli": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/crates/fe2o3-kir-sim-cli/Cargo.toml",
+    "fe2o3-kir-sim-trace": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/crates/fe2o3-kir-sim-trace/Cargo.toml",
+    "fe2o3-llvm-handoff": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/crates/fe2o3-llvm-handoff/Cargo.toml",
+    "fe2o3-llvm-text": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/crates/fe2o3-llvm-text/Cargo.toml",
+    "fe2o3-loop-device": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/crates/fe2o3-loop-device/Cargo.toml",
+    "fe2o3-lower-mir-kernel": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/crates/fe2o3-lower-mir-kernel/Cargo.toml",
+    "fe2o3-macros": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/crates/fe2o3-macros/Cargo.toml",
+    "fe2o3-memory-v1-compiler-fixture": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/crates/rustc-codegen-fe2o3/tests/fixtures/memory-v1-compiler/Cargo.toml",
+    "fe2o3-mir-model": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/crates/fe2o3-mir-model/Cargo.toml",
+    "fe2o3-negate": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/examples/negate/Cargo.toml",
+    "fe2o3-normalize": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/examples/normalize/Cargo.toml",
+    "fe2o3-pipeline": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/examples/pipeline/Cargo.toml",
+    "fe2o3-pliron": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/crates/fe2o3-pliron/Cargo.toml",
+    "fe2o3-pliron-conformance": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/crates/fe2o3-pliron-conformance/Cargo.toml",
+    "fe2o3-pliron-llvm-smoke": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/crates/fe2o3-pliron-llvm-smoke/Cargo.toml",
+    "fe2o3-pliron-owner-core": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/crates/fe2o3-pliron-owner-core/Cargo.toml",
+    "fe2o3-previous": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/examples/previous/Cargo.toml",
+    "fe2o3-process-identity": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/crates/fe2o3-process-identity/Cargo.toml",
+    "fe2o3-production-extraction-fixture": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/crates/rustc-codegen-fe2o3/tests/fixtures/production-extraction-device/Cargo.toml",
+    "fe2o3-production-ranked-bounds-fixture": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/crates/rustc-codegen-fe2o3/tests/fixtures/production-ranked-bounds-device/Cargo.toml",
+    "fe2o3-production-semantic-conformance-fixture": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/crates/rustc-codegen-fe2o3/tests/fixtures/production-semantic-conformance-device/Cargo.toml",
+    "fe2o3-profiler-protocol": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/crates/fe2o3-profiler-protocol/Cargo.toml",
+    "fe2o3-proof-contracts": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/crates/fe2o3-proof-contracts/Cargo.toml",
+    "fe2o3-protected-publisher": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/crates/fe2o3-protected-publisher/Cargo.toml",
+    "fe2o3-protected-service-profile": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/crates/fe2o3-protected-service-profile/Cargo.toml",
+    "fe2o3-protected-service-spawn": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/crates/fe2o3-protected-service-spawn/Cargo.toml",
+    "fe2o3-protected-static-executable": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/crates/fe2o3-protected-static-executable/Cargo.toml",
+    "fe2o3-raw-add-index": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/examples/raw_add_index/Cargo.toml",
+    "fe2o3-raw-const-minus": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/examples/raw_const_minus/Cargo.toml",
+    "fe2o3-raw-disjoint-inplace-shift": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/examples/raw_disjoint_inplace_shift/Cargo.toml",
+    "fe2o3-raw-disjoint-shift": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/examples/raw_disjoint_shift/Cargo.toml",
+    "fe2o3-raw-gather": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/examples/raw_gather/Cargo.toml",
+    "fe2o3-raw-neighbors": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/examples/raw_neighbors/Cargo.toml",
+    "fe2o3-raw-output-shift": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/examples/raw_output_shift/Cargo.toml",
+    "fe2o3-raw-parenthesized-sub": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/examples/raw_parenthesized_sub/Cargo.toml",
+    "fe2o3-runtime": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/crates/fe2o3-runtime/Cargo.toml",
+    "fe2o3-runtime-machine-adapter": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/crates/fe2o3-runtime-machine-adapter/Cargo.toml",
+    "fe2o3-runtime-model": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/crates/fe2o3-runtime-model/Cargo.toml",
+    "fe2o3-runtime-protocol": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/crates/fe2o3-runtime-protocol/Cargo.toml",
+    "fe2o3-rustc-front": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/crates/fe2o3-rustc-front/Cargo.toml",
+    "fe2o3-rustc-invocation": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/crates/fe2o3-rustc-invocation/Cargo.toml",
+    "fe2o3-saxpy": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/examples/saxpy/Cargo.toml",
+    "fe2o3-scalar-gemm-v1": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/examples/scalar_gemm_v1/Cargo.toml",
+    "fe2o3-scale": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/examples/scale/Cargo.toml",
+    "fe2o3-semantic-import": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/crates/fe2o3-semantic-import/Cargo.toml",
+    "fe2o3-semantic-query": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/crates/fe2o3-semantic-query/Cargo.toml",
+    "fe2o3-semantic-trace": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/crates/fe2o3-semantic-trace/Cargo.toml",
+    "fe2o3-service-host": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/crates/fe2o3-service-host/Cargo.toml",
+    "fe2o3-service-model": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/crates/fe2o3-service-model/Cargo.toml",
+    "fe2o3-shift": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/examples/shift/Cargo.toml",
+    "fe2o3-sim-differential": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/crates/fe2o3-sim-differential/Cargo.toml",
+    "fe2o3-sim-physical-differential": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/crates/fe2o3-sim-physical-differential/Cargo.toml",
+    "fe2o3-sim-runtime": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/crates/fe2o3-sim-runtime/Cargo.toml",
+    "fe2o3-source-isa-observation": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/crates/fe2o3-source-isa-observation/Cargo.toml",
+    "fe2o3-static-preexec-manifest": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/crates/fe2o3-static-preexec-manifest/Cargo.toml",
+    "fe2o3-stencil": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/examples/stencil/Cargo.toml",
+    "fe2o3-target-spec": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/crates/fe2o3-target-spec/Cargo.toml",
+    "fe2o3-trusted-item-external-spoof": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/crates/rustc-codegen-fe2o3/tests/fixtures/external-spoof/Cargo.toml",
+    "fe2o3-trusted-item-local-marker": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/crates/rustc-codegen-fe2o3/tests/fixtures/local-marker/Cargo.toml",
+    "fe2o3-trusted-item-lookalike-helper": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/crates/rustc-codegen-fe2o3/tests/fixtures/lookalike-helper/Cargo.toml",
+    "fe2o3-trusted-item-lookalike-thread": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/crates/rustc-codegen-fe2o3/tests/fixtures/lookalike-thread/Cargo.toml",
+    "fe2o3-trusted-item-lookalike-type": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/crates/rustc-codegen-fe2o3/tests/fixtures/lookalike-type/Cargo.toml",
+    "fe2o3-trusted-item-renamed-genuine": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/crates/rustc-codegen-fe2o3/tests/fixtures/renamed-genuine/Cargo.toml",
+    "fe2o3-typed-alias-spoof": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/crates/rustc-codegen-fe2o3/tests/fixtures/typed-alias-spoof/Cargo.toml",
+    "fe2o3-vecadd": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/examples/vecadd/Cargo.toml",
+    "fe2o3-vecadd-f64": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/examples/vecadd_f64/Cargo.toml",
+    "fe2o3-verifier": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/crates/fe2o3-verifier/Cargo.toml",
+    "fe2o3-virtual-runtime": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/crates/fe2o3-virtual-runtime/Cargo.toml",
+    "fe2o3-virtual-runtime-cli": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/crates/fe2o3-virtual-runtime-cli/Cargo.toml",
+    "fe2o3-worker-v3-verification-client": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/crates/fe2o3-worker-v3-verification-client/Cargo.toml",
+    "fe2o3-worker-v3-verification-protocol": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/crates/fe2o3-worker-v3-verification-protocol/Cargo.toml",
+    "fe2o3-worker-v3-verification-service": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/crates/fe2o3-worker-v3-verification-service/Cargo.toml",
+    "reserved-fe2o3-symbols": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/crates/reserved-fe2o3-symbols/Cargo.toml",
+    "rustc-codegen-fe2o3": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/crates/rustc-codegen-fe2o3/Cargo.toml",
+    "verus-vecadd": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/examples/verus_vecadd/Cargo.toml"
+  },
+  "numerical_acceptance": false,
+  "offline": true,
+  "passed": false,
+  "performance_claim": false,
+  "phases": [
+    {
+      "adopted_reaped": [],
+      "argv": [
+        "/usr/bin/prlimit",
+        "--as=12884901888",
+        "--cpu=1200",
+        "--fsize=1073741824",
+        "--core=0",
+        "--",
+        "/home/harmenon/.rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/bin/rustc",
+        "--version",
+        "--verbose"
+      ],
+      "command": {
+        "bytes": 2086,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/evidence/rustc-version.command.json",
+        "sha256": "b9b49995416811a8015b55365ab0d289280bc9eb7dc089a6fb4d40cfba94ae6a"
+      },
+      "elapsed_ns": 100976423,
+      "exception": null,
+      "exit_code": 0,
+      "forced_cleanup": false,
+      "label": "rustc-version",
+      "natural_exit": true,
+      "observed_signals": [],
+      "pgid": 330915,
+      "pid": 330915,
+      "process_group_absent": true,
+      "reaped": true,
+      "stderr": {
+        "bytes": 0,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/evidence/rustc-version.stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "stdout": {
+        "bytes": 212,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/evidence/rustc-version.stdout",
+        "sha256": "580dbecb7627e4e8ad67fd0b1d539727ba8d2651d04035c907b406d83200b4e2"
+      },
+      "storage_failure": null,
+      "timed_out": false
+    },
+    {
+      "adopted_reaped": [],
+      "argv": [
+        "/usr/bin/prlimit",
+        "--as=12884901888",
+        "--cpu=1200",
+        "--fsize=1073741824",
+        "--core=0",
+        "--",
+        "/home/harmenon/.rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/bin/cargo",
+        "metadata",
+        "--offline",
+        "--locked",
+        "--manifest-path",
+        "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/Cargo.toml",
+        "--format-version",
+        "1"
+      ],
+      "command": {
+        "bytes": 2317,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/evidence/metadata.command.json",
+        "sha256": "0780cd92076a51106982e67efe57ab8722b2328681a5c953a280a0ae84a62086"
+      },
+      "elapsed_ns": 201017025,
+      "exception": null,
+      "exit_code": 0,
+      "forced_cleanup": false,
+      "label": "metadata",
+      "natural_exit": true,
+      "observed_signals": [],
+      "pgid": 331071,
+      "pid": 331071,
+      "process_group_absent": true,
+      "reaped": true,
+      "stderr": {
+        "bytes": 0,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/evidence/metadata.stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "stdout": {
+        "bytes": 2217476,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/evidence/metadata.stdout",
+        "sha256": "592f5f238825ceca8c24a98b2716870556dbbc070ca12cca1476ab86ba07baa8"
+      },
+      "storage_failure": null,
+      "timed_out": false
+    },
+    {
+      "adopted_reaped": [],
+      "argv": [
+        "/usr/bin/prlimit",
+        "--as=12884901888",
+        "--cpu=1200",
+        "--fsize=1073741824",
+        "--core=0",
+        "--",
+        "/home/harmenon/.rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--offline",
+        "--locked",
+        "--manifest-path",
+        "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/Cargo.toml",
+        "--jobs",
+        "2",
+        "-p",
+        "fe2o3-device",
+        "--lib",
+        "--test",
+        "device_api_ui",
+        "--test",
+        "device_ffi_ui",
+        "--no-run",
+        "--message-format=json"
+      ],
+      "command": {
+        "bytes": 2462,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/evidence/device-build.command.json",
+        "sha256": "66c5ae8f70c2783ca0b28034bd4f99402de1fabd6a4b2eb77b8019dfcab6dc38"
+      },
+      "elapsed_ns": 12158171256,
+      "exception": null,
+      "exit_code": 0,
+      "forced_cleanup": false,
+      "label": "device-build",
+      "natural_exit": true,
+      "observed_signals": [],
+      "pgid": 331416,
+      "pid": 331416,
+      "process_group_absent": true,
+      "reaped": true,
+      "stderr": {
+        "bytes": 4602,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/evidence/device-build.stderr",
+        "sha256": "7c4bc1a39eb987f0101508c54da6dcc663968ccc22af1025b33054b36a5bcb1c"
+      },
+      "stdout": {
+        "bytes": 74917,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/evidence/device-build.stdout",
+        "sha256": "b24e73b6364d6cdba4588c26bc1c40e3a2178000dfb2323fbee5a772a64bb925"
+      },
+      "storage_failure": null,
+      "timed_out": false
+    },
+    {
+      "adopted_reaped": [],
+      "argv": [
+        "/usr/bin/prlimit",
+        "--as=12884901888",
+        "--cpu=1200",
+        "--fsize=1073741824",
+        "--core=0",
+        "--",
+        "/home/harmenon/.rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/bin/cargo",
+        "build",
+        "--offline",
+        "--locked",
+        "--manifest-path",
+        "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/Cargo.toml",
+        "--jobs",
+        "2",
+        "-p",
+        "rustc-codegen-fe2o3",
+        "--lib",
+        "--bin",
+        "fe2o3-rustc-extract",
+        "--message-format=json"
+      ],
+      "command": {
+        "bytes": 2424,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/evidence/compiler-products.command.json",
+        "sha256": "e79113014db4f9800f2f4a5d5b5ab99bc5cb6b4cfb82cfd08ab3b71f94c2d78b"
+      },
+      "elapsed_ns": 40819604473,
+      "exception": null,
+      "exit_code": 0,
+      "forced_cleanup": false,
+      "label": "compiler-products",
+      "natural_exit": true,
+      "observed_signals": [],
+      "pgid": 333805,
+      "pid": 333805,
+      "process_group_absent": true,
+      "reaped": true,
+      "stderr": {
+        "bytes": 8701,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/evidence/compiler-products.stderr",
+        "sha256": "63b87f8e44508ef49ad3560efb34992015dce05a54384e2fc4566b4f22a09656"
+      },
+      "stdout": {
+        "bytes": 173287,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/evidence/compiler-products.stdout",
+        "sha256": "a5183ac6772704201670da338a04a5cf5a6c493a386006796a02daaad618902e"
+      },
+      "storage_failure": null,
+      "timed_out": false
+    },
+    {
+      "adopted_reaped": [],
+      "argv": [
+        "/usr/bin/prlimit",
+        "--as=12884901888",
+        "--cpu=1200",
+        "--fsize=1073741824",
+        "--core=0",
+        "--",
+        "/home/harmenon/.rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--offline",
+        "--locked",
+        "--manifest-path",
+        "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/fe2o3/Cargo.toml",
+        "--jobs",
+        "2",
+        "-p",
+        "rustc-codegen-fe2o3",
+        "--lib",
+        "--test",
+        "production_extraction_driver_v1",
+        "--test",
+        "production_general_matrix_driver_v1",
+        "--no-run",
+        "--message-format=json"
+      ],
+      "command": {
+        "bytes": 2509,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/evidence/compiler-tests-build.command.json",
+        "sha256": "b7d90362a6569e395cd9fa904d67cd43d4b2b8a99ca3863b5922360f17ea2fa3"
+      },
+      "elapsed_ns": 43225847776,
+      "exception": null,
+      "exit_code": 101,
+      "forced_cleanup": false,
+      "label": "compiler-tests-build",
+      "natural_exit": true,
+      "observed_signals": [],
+      "pgid": 341485,
+      "pid": 341485,
+      "process_group_absent": true,
+      "reaped": true,
+      "stderr": {
+        "bytes": 11580,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/evidence/compiler-tests-build.stderr",
+        "sha256": "81976759df7b8f37e3008d5733903f137cbffbc995e263426e3795be159239d8"
+      },
+      "stdout": {
+        "bytes": 235502,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/evidence/compiler-tests-build.stdout",
+        "sha256": "0d428cf0dca34364aa6dbcdf0f4939c5227840a3c77602166dfcbf770a224ca8"
+      },
+      "storage_failure": null,
+      "timed_out": false
+    }
+  ],
+  "postcheck_errors": [],
+  "raw": {
+    "compiler-products.command.json": {
+      "bytes": 2424,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/evidence/compiler-products.command.json",
+      "sha256": "e79113014db4f9800f2f4a5d5b5ab99bc5cb6b4cfb82cfd08ab3b71f94c2d78b"
+    },
+    "compiler-products.result.json": {
+      "bytes": 1855,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/evidence/compiler-products.result.json",
+      "sha256": "226fe4cec5227128a642fdccfd94e04b0434365460fa00f473a9ad4132699205"
+    },
+    "compiler-products.started.json": {
+      "bytes": 637,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/evidence/compiler-products.started.json",
+      "sha256": "f75eba0dd8fc98e17ba34aa8391930accdb98d7305cda43d4364a75b42f8664d"
+    },
+    "compiler-products.stderr": {
+      "bytes": 8701,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/evidence/compiler-products.stderr",
+      "sha256": "63b87f8e44508ef49ad3560efb34992015dce05a54384e2fc4566b4f22a09656"
+    },
+    "compiler-products.stdout": {
+      "bytes": 173287,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/evidence/compiler-products.stdout",
+      "sha256": "a5183ac6772704201670da338a04a5cf5a6c493a386006796a02daaad618902e"
+    },
+    "compiler-tests-build.command.json": {
+      "bytes": 2509,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/evidence/compiler-tests-build.command.json",
+      "sha256": "b7d90362a6569e395cd9fa904d67cd43d4b2b8a99ca3863b5922360f17ea2fa3"
+    },
+    "compiler-tests-build.result.json": {
+      "bytes": 1955,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/evidence/compiler-tests-build.result.json",
+      "sha256": "2027c0b2e602d998d8d34ebb63eabfd0cec33c6aa2d746c9ed3e0d48b96aa4ff"
+    },
+    "compiler-tests-build.started.json": {
+      "bytes": 722,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/evidence/compiler-tests-build.started.json",
+      "sha256": "44ab0f5098c656ea49c8ff961964c735b4f3b732fee3b4a97c5dac50a3cfbf32"
+    },
+    "compiler-tests-build.stderr": {
+      "bytes": 11580,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/evidence/compiler-tests-build.stderr",
+      "sha256": "81976759df7b8f37e3008d5733903f137cbffbc995e263426e3795be159239d8"
+    },
+    "compiler-tests-build.stdout": {
+      "bytes": 235502,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/evidence/compiler-tests-build.stdout",
+      "sha256": "0d428cf0dca34364aa6dbcdf0f4939c5227840a3c77602166dfcbf770a224ca8"
+    },
+    "dependencies-after.json": {
+      "bytes": 4417353,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/evidence/dependencies-after.json",
+      "sha256": "c06805349cf003e3935d977151ff30ab398f528b29b4a255b7498251958d5991"
+    },
+    "dependencies-before.json": {
+      "bytes": 4417353,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/evidence/dependencies-before.json",
+      "sha256": "c06805349cf003e3935d977151ff30ab398f528b29b4a255b7498251958d5991"
+    },
+    "device-build.command.json": {
+      "bytes": 2462,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/evidence/device-build.command.json",
+      "sha256": "66c5ae8f70c2783ca0b28034bd4f99402de1fabd6a4b2eb77b8019dfcab6dc38"
+    },
+    "device-build.result.json": {
+      "bytes": 1872,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/evidence/device-build.result.json",
+      "sha256": "15ebc64e43b330ec29932a00937bd1374f9ad0d77044115bdd357994ac98b266"
+    },
+    "device-build.started.json": {
+      "bytes": 675,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/evidence/device-build.started.json",
+      "sha256": "86ed1393c547e55fa662a43470e8ef52689ff1314dc010f529aae81c67ff5190"
+    },
+    "device-build.stderr": {
+      "bytes": 4602,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/evidence/device-build.stderr",
+      "sha256": "7c4bc1a39eb987f0101508c54da6dcc663968ccc22af1025b33054b36a5bcb1c"
+    },
+    "device-build.stdout": {
+      "bytes": 74917,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/evidence/device-build.stdout",
+      "sha256": "b24e73b6364d6cdba4588c26bc1c40e3a2178000dfb2323fbee5a772a64bb925"
+    },
+    "metadata.command.json": {
+      "bytes": 2317,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/evidence/metadata.command.json",
+      "sha256": "0780cd92076a51106982e67efe57ab8722b2328681a5c953a280a0ae84a62086"
+    },
+    "metadata.result.json": {
+      "bytes": 1709,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/evidence/metadata.result.json",
+      "sha256": "f92a809ad86e4f655b61ff69a73943eb47d5015b97b36f0268cb068346335fe6"
+    },
+    "metadata.started.json": {
+      "bytes": 531,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/evidence/metadata.started.json",
+      "sha256": "6383fa85bca1248866bceb3ae36f496ab01d870af04d50087afc4a0a9d00c018"
+    },
+    "metadata.stderr": {
+      "bytes": 0,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/evidence/metadata.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "metadata.stdout": {
+      "bytes": 2217476,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/evidence/metadata.stdout",
+      "sha256": "592f5f238825ceca8c24a98b2716870556dbbc070ca12cca1476ab86ba07baa8"
+    },
+    "rustc-version.command.json": {
+      "bytes": 2086,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/evidence/rustc-version.command.json",
+      "sha256": "b9b49995416811a8015b55365ab0d289280bc9eb7dc089a6fb4d40cfba94ae6a"
+    },
+    "rustc-version.result.json": {
+      "bytes": 1495,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/evidence/rustc-version.result.json",
+      "sha256": "b30f6bf3285ef7e90dee50d1a68c08dc0ff711d291a65ceebd8d24089e11d97e"
+    },
+    "rustc-version.started.json": {
+      "bytes": 301,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/evidence/rustc-version.started.json",
+      "sha256": "18840a8fddb59f4ba728d858c70a66a9d174b79aa372372dd727c0bf05592588"
+    },
+    "rustc-version.stderr": {
+      "bytes": 0,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/evidence/rustc-version.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "rustc-version.stdout": {
+      "bytes": 212,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/evidence/rustc-version.stdout",
+      "sha256": "580dbecb7627e4e8ad67fd0b1d539727ba8d2651d04035c907b406d83200b4e2"
+    },
+    "sources-after.json": {
+      "bytes": 2130078,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/evidence/sources-after.json",
+      "sha256": "edafbfdd0c45d60a704a96f037d40b2698264eb9e43713a2d9491e5f9c81895f"
+    },
+    "sources-before.json": {
+      "bytes": 2130078,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-checked-attention-qualification-cpu-v228-v1/evidence/sources-before.json",
+      "sha256": "edafbfdd0c45d60a704a96f037d40b2698264eb9e43713a2d9491e5f9c81895f"
+    }
+  },
+  "schema": "ferric-guarded-mlp-core-checked-attention-qualification-cpu-v1",
+  "source_generation": "a5720f77e52e6212ad35f675504421b8110db9f7",
+  "source_unchanged": true,
+  "test_inventories": {},
+  "tests": {},
+  "tests_ignored": 0,
+  "tests_passed": 0,
+  "tool_pins": {
+    "cargo": {
+      "bytes": 42375992,
+      "path": "/home/harmenon/.rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/bin/cargo",
+      "sha256": "c9ad606cb1dbb4a65aa27c80be88ed61eb2b811b6450eeec6794f60ed78b94a3"
+    },
+    "libLLVM-22-rust-1.96.0-nightly.so": {
+      "bytes": 43,
+      "path": "/home/harmenon/.rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/lib/libLLVM-22-rust-1.96.0-nightly.so",
+      "sha256": "d43c716e9a7f6e673b4021e1ced69208a21e2433f0f90b49a8701f8be7c056be"
+    },
+    "libLLVM.so.22.1-rust-1.96.0-nightly": {
+      "bytes": 199520544,
+      "path": "/home/harmenon/.rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/lib/libLLVM.so.22.1-rust-1.96.0-nightly",
+      "sha256": "8af284bb5ae923ac175ddb3f7b9ad16f1f733f7f5f2779e0c9e8c68ef9ba162b"
+    },
+    "librustc_driver-7bb70639c3ace5a4.so": {
+      "bytes": 152936640,
+      "path": "/home/harmenon/.rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/lib/librustc_driver-7bb70639c3ace5a4.so",
+      "sha256": "a0aa61a461841224222b0064f9d77a84fe6d3410745d3d96ceaade6ee679cade"
+    },
+    "prlimit": {
+      "bytes": 27536,
+      "path": "/usr/bin/prlimit",
+      "sha256": "17064f67e650d6152a6902b013aab496b54c87587c8eea6f5023aafee6154069"
+    },
+    "rustc": {
+      "bytes": 645760,
+      "path": "/home/harmenon/.rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/bin/rustc",
+      "sha256": "08dfef109ad22d90556dbd2f964543cd93843dcd75a2e9792c173667392a1950"
+    },
+    "rustdoc": {
+      "bytes": 13348368,
+      "path": "/home/harmenon/.rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/bin/rustdoc",
+      "sha256": "475ad4924e815034ed7ec5f85edfc8a99b2df99eab8695a76debb1eb64a9bd44"
+    },
+    "rustfmt": {
+      "bytes": 5281712,
+      "path": "/home/harmenon/.rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/bin/rustfmt",
+      "sha256": "a9137d0c198ceb6c72193d517d3c9007b3ec7a90d3d10ec6889773eca48261b4"
+    }
+  }
+}
