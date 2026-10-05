@@ -37,6 +37,7 @@ matrix and attention controls.
 | [V4](attempt-v4/evidence/failed.json) | `d6eded7d7d187b1be5c2f2d1bb521f6e26246b81` | Both builds and the same 390 tests passed; callbacks advanced past branch checks but failed at the residual-body assertion. The new cohort still reported 1 pass and 14 failures. |
 | [V5](attempt-v5/evidence/failed.json) | `d2d98d302f57d38563b58bd01d168eed092d2692` | Same builds and 390 tests passed; failure-only diagnostics captured the host core's `unwind continue` edge. The new cohort still reported 1 pass and 14 failures. |
 | [V6](attempt-v6/evidence/failed.json) | `661626692d2f3950a427a04f75ecaa353be06e85` | Same builds and 390 tests passed; the AMD-core fixture reached its direct compiler invocation, which failed E0463 for missing `compiler_builtins`. The new cohort remained 1 pass and 14 failures. |
+| [V7](attempt-v7/evidence/failed.json) | `b4705801ef39840ad6a408c2669dc38e80182cc0` | Both builds and 415 tests passed, including all 15 Result tests and 172 MIR mutations. Matrix extraction advanced to a source-origin refusal for core `From<u32> for u64`; attention was not reached. |
 
 V1's four phases exited naturally and were reaped; the first three returned
 zero, then the compiler build returned 101. Integrity postchecks passed and
@@ -109,11 +110,33 @@ original error is retained, and subsequent dependent tests fail without
 rebuilding target core. V6's new cohort took 7.829 seconds; no mutation
 completion is claimed. All 23 phases exited naturally and were reaped, with
 unchanged sources and clean integrity postchecks.
-The new cohort, atomic/source-safety controls and both matrix/attention controls
-still require a successful run on this generation.
+Those controls still required a successful run on V6; its failure is retained.
+
+V7 supplies both genuine AMD-target `core` and `compiler_builtins` metadata
+from the same structured Cargo output. The production matcher is unchanged.
+All [15 Result tests](attempt-v7/evidence/core-result-control.stdout) passed
+in 7.85 seconds, including the assertions covering 98 branch and 74 residual
+MIR mutations. Together with the previous 390 tests, eight atomic extraction
+controls and two unsafe/inlined-origin rejection controls, this is 415 passing
+tests. The callback positives still do not replace provider-positive pipeline
+extraction.
+
+The unchanged [matrix control](attempt-v7/evidence/matrix-extraction-0.stdout)
+now gets past the Result wrappers and rejects
+`core::convert::num::<impl core::convert::From<u32> for u64>::from`, reached
+from `accessed_extent`. Cross-crate HIR is unavailable and optimized MIR does
+not retain unsafe-block syntax. This is the concrete numeric widening
+implementation, not identity `From<T>`. Its actual body must be observed
+before any narrow source-origin rule is added; arbitrary `From` calls remain
+untrusted. The attention control was not reached.
+
+All 34 V7 phases exited naturally and were reaped. The first 33 returned zero;
+matrix extraction returned 101 after 15.547 seconds. Sources were unchanged
+and integrity postchecks were clean. This closes the new Result test cohort,
+not the full compiler qualification or any GPU/model gate.
 
 The retention manifests pin 31 original V1 files, 36 V2 files and 126 files
-each for V3 through V6, including each
+each for V3 through V6, plus 181 V7 files, including each
 controller, manifest, raw evidence and four compiler source bodies. Failed
 attempts remain failed. Provider qualification, guarded HSACO emission,
 GPU/model correctness, sustained single-request BF16 2,048/256 and 700 tokens/s

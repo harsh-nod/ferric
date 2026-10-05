@@ -1,0 +1,44 @@
+{
+  "adopted_reaped": [],
+  "argv": [
+    "/usr/bin/prlimit",
+    "--as=12884901888",
+    "--cpu=1200",
+    "--fsize=1073741824",
+    "--core=0",
+    "--",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-result-qualification-cpu-v228-v7/target/debug/deps/production_extraction_driver_v1-cb9b8b5de4191776",
+    "indexed_atomic_slice_exclusive_input_reaches_exact_system_scope_llvm",
+    "--ignored",
+    "--exact",
+    "--test-threads=1"
+  ],
+  "command": {
+    "bytes": 2464,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-result-qualification-cpu-v228-v7/evidence/atomic-extraction-3.command.json",
+    "sha256": "fb44c79f7cd0d48901452a4dc5dbb2644111d7266944d5f2a1a5dad50c503384"
+  },
+  "elapsed_ns": 15874251160,
+  "exception": null,
+  "exit_code": 0,
+  "forced_cleanup": false,
+  "label": "atomic-extraction-3",
+  "natural_exit": true,
+  "observed_signals": [],
+  "pgid": 3598004,
+  "pid": 3598004,
+  "process_group_absent": true,
+  "reaped": true,
+  "stderr": {
+    "bytes": 0,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-result-qualification-cpu-v228-v7/evidence/atomic-extraction-3.stderr",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "stdout": {
+    "bytes": 195,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-result-qualification-cpu-v228-v7/evidence/atomic-extraction-3.stdout",
+    "sha256": "95e2306dee5eb7370e1043f0ea5eb556e65ca8b00dc0b95bbc03f640a65990ed"
+  },
+  "storage_failure": null,
+  "timed_out": false
+}

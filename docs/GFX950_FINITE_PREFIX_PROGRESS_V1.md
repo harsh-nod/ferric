@@ -6,16 +6,16 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Latest: [the AMD-core fixture reaches compilation, but qualification remains incomplete](../qualification/guarded-mlp-core-result-qualification-v1/README.md).
-Both compiler and test binaries built on MI350, and the same 390 prior-cohort
-tests passed. After V5 identified a host-versus-AMD core unwind mismatch,
-V6 supplied genuine AMD core metadata. Its direct compiler invocation then
-failed E0463 for missing `compiler_builtins`, before callback analysis.
-Explicitly supplying that second target library is next; the production
-matcher remains unchanged. Cached failure avoids repeated target-core builds,
-but the new cohort still reported one pass and 14 failures. All 23 phases
-exited naturally and were reaped, with clean integrity postchecks. Matrix and
-attention were not reached.
+Latest: [415 compiler tests pass; matrix extraction reaches a new core conversion refusal](../qualification/guarded-mlp-core-result-qualification-v1/README.md).
+Both compiler and test binaries built on MI350. V7 supplies genuine AMD-target
+`core` and `compiler_builtins` metadata without changing the production matcher.
+All 15 Result tests passed, including 172 MIR mutations, alongside the previous
+390 tests, eight atomic controls and two unsafe/inlined-origin rejection tests.
+The unchanged matrix control now gets past the Result wrappers and rejects
+the concrete core `From<u32> for u64` conversion in `accessed_extent`.
+Capturing that helper's actual body is next; this is not a general `From`
+admission. All 34 phases exited naturally and were reaped, with unchanged
+sources and clean integrity postchecks. Attention was not reached.
 Ferric's dependency remains unchanged; no provider, GPU, model or performance
 gate is claimed passed.
 
