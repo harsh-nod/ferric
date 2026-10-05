@@ -6,7 +6,15 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Latest: [locked offline dependencies are prepared for guarded MLP lowering](../qualification/guarded-mlp-dependency-preparation-v1/README.md).
+Latest: [the first guarded MLP lowering attempt reached device extraction but was refused](../qualification/guarded-mlp-lowering-attempt-v1/README.md).
+The transferred extractor's reviewed device-source closure does not match the
+candidate's pinned dependency generation. The compiler exited naturally after
+116.347 seconds, with clean integrity postchecks, no timeout and no emitted
+HSACO. Its trust check remains intact. A coherent published compiler/device
+generation and fresh qualification are next; no new GPU or performance result
+is claimed.
+
+Previously, [locked offline dependencies are prepared for guarded MLP lowering](../qualification/guarded-mlp-dependency-preparation-v1/README.md).
 Vendoring passed for 145 packages with unchanged kernel sources and lockfiles.
 A separate fetch command downloaded missing crates but failed its preservation
 check after older extracted cache packages disappeared. All 133 affected

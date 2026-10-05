@@ -1,0 +1,32 @@
+{
+  "adopted_reaped": [],
+  "command": {
+    "bytes": 7135,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-lowering-v228-v1/compile.command.json",
+    "sha256": "1a2bba1d5e6af24e8720cb7ef3a7f10e0c20c90eea6832186e937db780393327"
+  },
+  "elapsed_ns": 116346727942,
+  "exception": null,
+  "exit_code": 1,
+  "forced_cleanup": false,
+  "label": "compile",
+  "minimum_free_bytes": 63698841600,
+  "natural_exit": true,
+  "observed_signals": [],
+  "peak_private_scratch_bytes": 954756239,
+  "pgid": 2714479,
+  "pid": 2714479,
+  "process_group_absent": true,
+  "reaped": true,
+  "stderr": {
+    "bytes": 8427,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-lowering-v228-v1/compile.stderr",
+    "sha256": "e8847d3a44018d2c936418d4424552b4185812b7d35bd52fe74016df31e19a42"
+  },
+  "stdout": {
+    "bytes": 0,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-lowering-v228-v1/compile.stdout",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "timed_out": false
+}
