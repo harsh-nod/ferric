@@ -1,0 +1,18 @@
+{
+  "argv": [
+    "/usr/bin/ldd",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-ordered-segment-cpu-v228-v2/target/worker/debug/ferric-tp-peer-finite-engineering-worker-v1"
+  ],
+  "deadline_seconds": 30,
+  "exit_code": 0,
+  "stderr": {
+    "bytes": 0,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-ordered-segment-runtime-worker-v228-v1/ldd/stderr",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "stdout": {
+    "bytes": 230,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-ordered-segment-runtime-worker-v228-v1/ldd/stdout",
+    "sha256": "b0133ecce7ae36063f54219ebab4ed9f31f2c7ddd5afc36804b69d7f71a43b17"
+  }
+}

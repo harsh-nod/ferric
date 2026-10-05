@@ -1,0 +1,27 @@
+{
+  "schema": "ferric-p228-projection-ordered-segment-assembly-inputs-v1",
+  "route": "ordered",
+  "input_label": "prefix-projection-ordered-segment-ordered-inputs-v228-v1",
+  "output_label": "prefix-projection-ordered-segment-ordered-gpu-v228-v1",
+  "session": "8f3340377709c2ae4c7982de94690fcdf66c24b6fd871adc97b9b6893599d024",
+  "cpu": {
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-ordered-segment-cpu-v228-v2/complete.json",
+    "bytes": 624332,
+    "sha256": "6ac67053d9b7d5d15772b5e4071a09933f013b6efa27394c31eb2b8279af884f"
+  },
+  "supervisor_tests": {
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-ordered-segment-gpu-pure-v228-v3/complete.json",
+    "bytes": 37876,
+    "sha256": "000fb1158483b2a0255d85743da2c9c35e59fd2e6ea5d5c7a3dbc54401dfa4d5"
+  },
+  "parent_runtime_review": {
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-projection-ordered-segment-root-inputs-v1/ordered-parent-review.json",
+    "bytes": 3037,
+    "sha256": "4209b24267ff7ee4a86b3900660bf28244fd0d482d9ee01b8aa81017ad0d28b8"
+  },
+  "worker_runtime_review": {
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-projection-ordered-segment-root-inputs-v1/worker-review.json",
+    "bytes": 2730,
+    "sha256": "fdcbb596f0531564dcab2a50a28b295f61f31b55eaa3dfd64a14d650707f01ad"
+  }
+}

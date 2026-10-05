@@ -1,0 +1,42 @@
+{
+  "schema": "ferric-p228-projection-ordered-segment-root-notes-v1",
+  "configuration": {
+    "schema": "ferric-p228-projection-ordered-segment-assembly-inputs-v1",
+    "route": "shared",
+    "input_label": "prefix-projection-ordered-segment-shared-inputs-v228-v1",
+    "output_label": "prefix-projection-ordered-segment-shared-gpu-v228-v1",
+    "session": "564e2062f33b24969b7d3d14f13a72891b8325ea15e85359b15fb926f978569b",
+    "cpu": {
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-ordered-segment-cpu-v228-v2/complete.json",
+      "bytes": 624332,
+      "sha256": "6ac67053d9b7d5d15772b5e4071a09933f013b6efa27394c31eb2b8279af884f"
+    },
+    "supervisor_tests": {
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-ordered-segment-gpu-pure-v228-v3/complete.json",
+      "bytes": 37876,
+      "sha256": "000fb1158483b2a0255d85743da2c9c35e59fd2e6ea5d5c7a3dbc54401dfa4d5"
+    },
+    "parent_runtime_review": {
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-projection-ordered-segment-root-inputs-v1/shared-parent-review.json",
+      "bytes": 3033,
+      "sha256": "64fc7142d3117f24b4e150933b4a853cce4ffd50425cd8b16b729423ed345c78"
+    },
+    "worker_runtime_review": {
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-projection-ordered-segment-root-inputs-v1/worker-review.json",
+      "bytes": 2730,
+      "sha256": "fdcbb596f0531564dcab2a50a28b295f61f31b55eaa3dfd64a14d650707f01ad"
+    }
+  },
+  "reviewed": true,
+  "authority": "none",
+  "gpu_attempts": 1,
+  "review_topics": {
+    "source_lineage": "Root reviewed successful CPU V2 completion6ac67053: all75 phases exited naturally,1848 test executions passed with seven historical ignores, five qualified executables and clean source/dependency/old-target checks. The failed CPU V1 default-feature check is not reused as qualification. This arm selects only the exact new-generation parent and common worker with fresh reviewed MI350 library audits. GPU V3 policy174 and deployment16/assembly13 tests passed; failed GPU V2 is retained as failed. Exact source bodies were integrated and pushed in Ferric dadd67c0 and runtime abb13a375.",
+    "formal": "The matched comparison binds four own-output forwards, all four actual606976-byte payloads,152 captured tensor slices and576 terminal states. The ordered route requires its distinct241096-byte control, typed request/bootstrap/sidecar and explicit selector; legacy control equality is not assumed. Payload byte equality is route repeatability only. The shared and ordered algorithms use unchanged images; CPU tests do not establish hardware AQL ordering, independent mathematical accuracy, a numerical tolerance or production authority.",
+    "isa": "Both arms retain the checked gfx950 RoPE prefix29fd58e7, SiLU MLPb0d1766f, projection residual25338bea and original Begin copy images. No instruction, launch ABI, BF16 arithmetic, weight, prompt or kernel-emission provenance is changed. Source and CPU metadata do not substitute for actual image pins.",
+    "coherence": "This shared-full control route explicitly configures(false,false,true) before observer enable; admission caching and operational-currentness shortcuts remain off. It retains the separate projection-residual and MLP host-coordinated rounds with fresh all-rank discovery, mutable-device, generation and queue checks. The same new worker and kernels are used. Only the ordered comparison arm replaces the intermediate host fence with rank-local ordered GPU packets, retained arenas and distinct Down partials; control does not silently enable that route.",
+    "lifecycle": "The existing owned parent/worker lifecycle, pidfd tracking, exclusive evidence,4000-second native and4300-second case bounds, natural Close/EOF/reap, six surrounding exact-empty audits and one-attempt/no-retry policy remain required. The two arms have distinct sessions and output paths. Any failed arm is retained and stops the pair; no retry, reset or replacement is authorized. Ordered queue faults poison both contexts and the group and must not free or rearm uncertain in-flight storage.",
+    "selected_device": "Fresh runtime audits bind MI350 host smci350-rck-g03-b19-03, boot2dbbbc5a-d8b7-46ac-bd1f-236e5847e24a and the same two original gfx950 identities. Request JSON must preserve full unsigned64-bit IDs losslessly. Native supervision must redo all three pre-run and three post-run process/topology audits with an exact-empty GPU process roster. No ASROCK monitor exception or device substitution is allowed."
+  },
+  "notes": "Root reviewed this shared arm for one shared-first/ordered-second same-generation AR4 diagnostic pair. Primary timing is enclosing forward host wall time, with setup/configuration/Close separate. Ordered segment timing includes preflight, first-use allocation, staging, fences and readback; publish/wait/poll counters have changed scopes and overlapping rank waits. Do not sum them as a GPU makespan or invent separate residual/MLP timings. Fixed order, cache warmth, scheduling and first-use cost limit interpretation. No independent numerical, sustained2048/256, throughput or700 tokens/s acceptance follows; all milestones remain open."
+}

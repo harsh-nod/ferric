@@ -6,7 +6,16 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Latest: [the ordered comparison harness passed 174 policy tests on MI350](../qualification/projection-ordered-segment-gpu-preparation-v1/README.md).
+Latest: [both ordered-comparison parents and the common worker passed fresh MI350 runtime audits](../qualification/projection-ordered-segment-runtime-v1/README.md).
+All six bounded readelf/ldd commands exited naturally, with complete library
+closures and unchanged topology. Both matched input assemblies completed,
+each checking 1,847 recorded identities. They retain the same model, images,
+prompt, worker and lossless device IDs while selecting distinct shared-full
+and ordered parents. This is preparation, not a completed native comparison,
+independent numerical acceptance or sustained throughput result. All milestones
+and the 700 tokens/s target remain open.
+
+Previously, [the ordered comparison harness passed 174 policy tests on MI350](../qualification/projection-ordered-segment-gpu-preparation-v1/README.md).
 Sixteen deployment-selector and thirteen input-assembler tests also passed,
 with unchanged sources. The preceding V2 missing-artifact error and its fix
 are retained explicitly. These are synthetic CPU tests, not a new native

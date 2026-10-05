@@ -1,0 +1,59 @@
+{
+  "schema": "ferric-p227-prefix-parity-runtime-review-v1",
+  "authority": "none",
+  "reviewed": true,
+  "binary": {
+    "bytes": 14029072,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-ordered-segment-cpu-v228-v2/target/parent/debug/ferric-qwen3-finite-projection-residual-decode-ordered-host-engineering",
+    "sha256": "0cb1806bc90654efb64871041123a8ece5b0465d2f1adcc5acb8d65b53517340"
+  },
+  "boot_id": "2dbbbc5a-d8b7-46ac-bd1f-236e5847e24a",
+  "host": "smci350-rck-g03-b19-03",
+  "ldd": {
+    "bytes": 845,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-ordered-segment-runtime-ordered-parent-v228-v1/ldd/audit.json",
+    "sha256": "4edb54c6928a39fd39b33f4601e2f20d8ce70c0aac60c8306c78efe21e638105"
+  },
+  "libraries": [
+    {
+      "path": "/lib/x86_64-linux-gnu/libgcc_s.so.1",
+      "resolved": {
+        "bytes": 183024,
+        "path": "/usr/lib/x86_64-linux-gnu/libgcc_s.so.1",
+        "sha256": "d93224d2b0dab4247598be683adca02f5cf00586f99c187579cd7e92058fb7cb"
+      }
+    },
+    {
+      "path": "/lib/x86_64-linux-gnu/libm.so.6",
+      "resolved": {
+        "bytes": 952616,
+        "path": "/usr/lib/x86_64-linux-gnu/libm.so.6",
+        "sha256": "1b87a1a50b496cfead2b0ad134c2ff536705c82608db240c7e8aa48d6c0e4217"
+      }
+    },
+    {
+      "path": "/lib/x86_64-linux-gnu/libc.so.6",
+      "resolved": {
+        "bytes": 2125328,
+        "path": "/usr/lib/x86_64-linux-gnu/libc.so.6",
+        "sha256": "d8db8739a1633c972cec6a4fe0566bdcec6fd088f98723492ab0361f66238f75"
+      }
+    },
+    {
+      "path": "/lib64/ld-linux-x86-64.so.2",
+      "resolved": {
+        "bytes": 236616,
+        "path": "/usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2",
+        "sha256": "1cd555ac46b7887edeaf3c42aac5408c8135e52f6b37870da2cf82d5fe14e829"
+      }
+    }
+  ],
+  "readelf": {
+    "bytes": 868,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-ordered-segment-runtime-ordered-parent-v228-v1/readelf/audit.json",
+    "sha256": "7898554af59fe60a55b94654a432f780122481c43bc6966f48b3b05d4d559880"
+  },
+  "notes": "Root reviewed the actual successful CPU V2 ordered-parent executable and its fresh MI350 readelf/ldd outputs, complete resolved library closure, naturally exited/reaped process records, and unchanged before/after topology. The four-library closure has no missing dependency or RPATH/RUNPATH override. This review binds only the exact new-generation executable at its original qualified path; historical executable reviews are not reused. Root locally rehashed the completion and all internally pinned raw files and joined inputs.json to the completion source/library map. Fresh process/device audits, library rechecks, Close/EOF/reap and pinned kernel provenance remain required at native execution. This is runtime compatibility review only, not GPU execution, numerical acceptance or production authority.",
+  "production_authority": false,
+  "gpu_execution": false
+}
