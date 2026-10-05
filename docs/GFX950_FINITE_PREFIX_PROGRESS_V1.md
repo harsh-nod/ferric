@@ -6,7 +6,14 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Latest: [the explicit shared-full projection AR4 route passed Rust qualification on ASROCK](../qualification/projection-ar4-shared-host-v1/README.md).
+Latest: [the shared-full comparison harness passed 122 policy tests on MI350](../qualification/projection-ar4-shared-host-gpu-preparation-v1/README.md).
+Fourteen deployment-selector and eleven input-assembler tests also passed.
+The paired supervisor checks same-build inputs, honest payload-byte comparison,
+separate configuration timing and rank/group/publication currentness accounting.
+This is CPU-only harness qualification, not a completed GPU comparison, numerical
+acceptance or performance result. All milestones and the 700 tokens/s target remain open.
+
+Previously, [the explicit shared-full projection AR4 route passed Rust qualification on ASROCK](../qualification/projection-ar4-shared-host-v1/README.md).
 All 883 selected Rust tests passed, with four historical ignores; all 63 bounded
 phases exited naturally, four executables were built and integrity postchecks
 passed. Fifteen controller policy tests also passed. Fourteen exact tested source

@@ -1,0 +1,35 @@
+{
+  "schema": "ferric-shared-host-mi350-adapter-tests-primary-v1",
+  "scope": "Root-observed CPU-only policy tests on MI350; not executable runtime audits, GPU qualification, numerical acceptance or performance evidence.",
+  "host": "smci350-rck-g03-b19-03",
+  "tests": [
+    {
+      "command": "timeout --signal=TERM --kill-after=15s 150s env -u PYTHONPATH -u PYTHONHOME -u PYTHONOPTIMIZE PYTHONDONTWRITEBYTECODE=1 HIP_VISIBLE_DEVICES= ROCR_VISIBLE_DEVICES= CUDA_VISIBLE_DEVICES= GPU_DEVICE_ORDINAL= taskset -c 8,9 nice -n 10 prlimit --as=2147483648 --cpu=120 --fsize=67108864 --core=0 /usr/bin/python3 -B /home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-projection-ar4-shared-host-deployment-v1/test_audit_projection_ar4_shared_host_runtime.py -v",
+      "session": 28383,
+      "result_chunk": "1ed10a",
+      "exit_code": 0,
+      "passed": 14,
+      "reported_seconds": 0.004,
+      "controller_sha256": "1ad88f7c12914cfa559f8cfcad7e9104a7056f887b31e2aee67bda0d4b8d8f51",
+      "test_sha256": "06180c47d0e1c70c52f3e50d6262dc716265b60ca73648b658c919660c5709d8",
+      "readme_sha256": "46a79b718ae7a689f49ead51543b2a649dc9956cc19e61d0ad7fefcc6cc71660"
+    },
+    {
+      "command": "timeout --signal=TERM --kill-after=15s 150s env -u PYTHONPATH -u PYTHONHOME -u PYTHONOPTIMIZE PYTHONDONTWRITEBYTECODE=1 HIP_VISIBLE_DEVICES= ROCR_VISIBLE_DEVICES= CUDA_VISIBLE_DEVICES= GPU_DEVICE_ORDINAL= taskset -c 8,9 nice -n 10 prlimit --as=2147483648 --cpu=120 --fsize=67108864 --core=0 /usr/bin/python3 -B /home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-projection-ar4-shared-host-inputs-v1/test_prepare.py",
+      "session": 24764,
+      "result_chunk": "50dfe7",
+      "exit_code": 0,
+      "passed": 11,
+      "reported_seconds": 0.004,
+      "controller_sha256": "f9af5b3e491d047d906c82f2f19adad4b9dec1a0dbe6d5c2e6d7fd3a0b736aec",
+      "test_sha256": "c5611cd534c6601661111e45f285d827d39938b79d225285b18c04f1d09f95c4",
+      "readme_sha256": "f0e0faf802f65bd57c88e1cf6daf6a27ec912bec23978ddcfdf07bf55b80ddbb"
+    }
+  ],
+  "body_hashes_before_chunk": "f75bc5",
+  "body_hashes_after_chunk": "f17026",
+  "body_hashes_unchanged": true,
+  "gpu_execution": false,
+  "numerical_acceptance": false,
+  "performance_claim": false
+}
