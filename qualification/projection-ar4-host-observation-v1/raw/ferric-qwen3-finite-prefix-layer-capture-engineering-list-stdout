@@ -1,0 +1,1 @@
+tests::capture_cli_is_exact_optin_and_rejects_old_or_additional_modes: test

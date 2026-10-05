@@ -6,7 +6,16 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Latest: the [projection AR4 host-observation supervisor passed 91 policy tests on MI350](../qualification/projection-ar4-host-supervisor-v1/README.md).
+Latest: the [opt-in projection AR4 host-observation route passed its Rust qualification on ASROCK](../qualification/projection-ar4-host-observation-v1/README.md).
+All 855 scoped Rust tests passed, with four historical ignores; thirteen controller
+policy tests also passed. All 61 phases completed naturally, three executables
+were built, and source/dependency/old-target postchecks passed. The seventeen
+tested source bodies are integrated without changing the plain decode route or
+runtime safety checks. The new counters separate inclusive host costs for diagnosis;
+they have not yet been measured on a GPU run. This is not numerical, throughput
+or sustained 2,048/256 acceptance, and all milestones remain open.
+
+Previously, the [projection AR4 host-observation supervisor passed 91 policy tests on MI350](../qualification/projection-ar4-host-supervisor-v1/README.md).
 There were no failures, errors or skips, and the tested source snapshots are
 unchanged. The new validator binds the stdout wrapper, native summary and
 host-counter sidecar while retaining the existing image, lifecycle and audit

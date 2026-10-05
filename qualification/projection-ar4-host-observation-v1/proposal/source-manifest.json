@@ -1,0 +1,272 @@
+{
+  "schema": "ferric-p228-projection-ar4-host-observation-source-proposal-v1",
+  "status": "authored-not-executed",
+  "base_commit": "8b78386209cd9713bf0c5b51cce2a9e4b09ad0f0",
+  "base_cpu": {
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-ar4-cpu-v228-v1/complete.json",
+    "bytes": 583779,
+    "sha256": "7a3c170ca6ffe6000517588280fcdb99cb58c0cbb22cc3f4be910232f7d51c54"
+  },
+  "files": [
+    {
+      "path": "adapters/m1-engineering-execution-v1/Cargo.toml",
+      "source": "draft/adapters/m1-engineering-execution-v1/Cargo.toml",
+      "before": {
+        "bytes": 12680,
+        "sha256": "46453782b8d78c665462ba0efbf602096462d60c28621301fb447150a68676bf"
+      },
+      "after": {
+        "bytes": 12891,
+        "sha256": "f00b716402125864025457fbb229908ed66571ef7f2d9ec10fa3a7b4289d83d0"
+      }
+    },
+    {
+      "path": "adapters/m1-engineering-execution-v1/src/bin/ferric-qwen3-finite-projection-residual-decode-host-engineering.rs",
+      "source": "draft/adapters/m1-engineering-execution-v1/src/bin/ferric-qwen3-finite-projection-residual-decode-host-engineering.rs",
+      "before": null,
+      "after": {
+        "bytes": 2982,
+        "sha256": "28dd50340ef85ee5a0d215e619194e97073b1504cbfea6e13b514c53cff72232"
+      }
+    },
+    {
+      "path": "adapters/m1-engineering-execution-v1/src/lib.rs",
+      "source": "draft/adapters/m1-engineering-execution-v1/src/lib.rs",
+      "before": {
+        "bytes": 88631,
+        "sha256": "a9bde33674580fd561c98286ab28fcf47eb5d73e6f3a680f7598640a6b5b0383"
+      },
+      "after": {
+        "bytes": 88837,
+        "sha256": "afb3f18cf820d043e590fd8eb77b8e8440c638a7b4fcd1c477dcad0469964097"
+      }
+    },
+    {
+      "path": "adapters/m1-engineering-execution-v1/src/tp_finite_client/prefix_decode.rs",
+      "source": "draft/adapters/m1-engineering-execution-v1/src/tp_finite_client/prefix_decode.rs",
+      "before": {
+        "bytes": 32052,
+        "sha256": "71ffedcff2ac56a5d809d7d505dc11aa77ccaa883056e1ed093f7b6c1fcdc3d3"
+      },
+      "after": {
+        "bytes": 32493,
+        "sha256": "320db44fad114a3b0a771ab5e0433c9bbf76a7b7e29fb9a09142fa6bca2e0461"
+      }
+    },
+    {
+      "path": "adapters/m1-engineering-execution-v1/src/tp_finite_client/prefix_decode/host_observation.rs",
+      "source": "draft/adapters/m1-engineering-execution-v1/src/tp_finite_client/prefix_decode/host_observation.rs",
+      "before": {
+        "bytes": 7191,
+        "sha256": "2484e6d772275335d4cb0d4a73f824f80db78805501050ae4066730be97efa04"
+      },
+      "after": {
+        "bytes": 7202,
+        "sha256": "221f9515087e8c9b16592ef9f2635b759057b91c5445e056608be33dd0673667"
+      }
+    },
+    {
+      "path": "adapters/m1-engineering-execution-v1/src/tp_finite_client/prefix_decode/projection.rs",
+      "source": "draft/adapters/m1-engineering-execution-v1/src/tp_finite_client/prefix_decode/projection.rs",
+      "before": {
+        "bytes": 8658,
+        "sha256": "7108ae3403a773251da3da566494ed8232bc66afadb980a82ae33c5c5074f276"
+      },
+      "after": {
+        "bytes": 8691,
+        "sha256": "637507ad53aa1b3088178070c672da03267b00cc002cbd76853f6a976aa2f7bf"
+      }
+    },
+    {
+      "path": "adapters/m1-engineering-execution-v1/src/tp_finite_client/prefix_decode/projection_host.rs",
+      "source": "draft/adapters/m1-engineering-execution-v1/src/tp_finite_client/prefix_decode/projection_host.rs",
+      "before": null,
+      "after": {
+        "bytes": 4900,
+        "sha256": "e29d4b55f75e6434bc68c8625c498af7aae0c356aa4a7a46af9f16a34e1fd6f7"
+      }
+    },
+    {
+      "path": "adapters/m1-engineering-execution-v1/src/tp_finite_client/prefix_decode/projection_tests.rs",
+      "source": "draft/adapters/m1-engineering-execution-v1/src/tp_finite_client/prefix_decode/projection_tests.rs",
+      "before": {
+        "bytes": 16155,
+        "sha256": "8edfd1421bb63d53f5c68694b5517fec0179742106f685a8293373b3c1764da1"
+      },
+      "after": {
+        "bytes": 19975,
+        "sha256": "d7a2669c190fc7ffa3006a24fee93f08f2029e7b3507dd08a0febe8115e0d6e4"
+      }
+    },
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/lib.rs",
+      "source": "draft/adapters/tp-peer-finite-engineering-worker-v1/src/lib.rs",
+      "before": {
+        "bytes": 2078,
+        "sha256": "8b97579944af882c53e2666c0e87849c6fbb959983a75a3e4301c1538cee6328"
+      },
+      "after": {
+        "bytes": 2185,
+        "sha256": "c244b2b4428738792f4b0c9adb44d22ecc57c53c9605b2c35873dfed67d74398"
+      }
+    },
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/main.rs",
+      "source": "draft/adapters/tp-peer-finite-engineering-worker-v1/src/main.rs",
+      "before": {
+        "bytes": 10531,
+        "sha256": "10def667caa3757a098863962fd8a692a4f2220dff421586f5ef186be146c47f"
+      },
+      "after": {
+        "bytes": 11162,
+        "sha256": "9da36b78892491ce4df2c2cb0ce4ee1aae135f16c936b852e187a7e2cd89fcc5"
+      }
+    },
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_decode_cli_v1.rs",
+      "source": "draft/adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_decode_cli_v1.rs",
+      "before": {
+        "bytes": 23647,
+        "sha256": "3255523661769c47ba309bf804705e1fb78f0343a49460aaae2bcd68079c1b18"
+      },
+      "after": {
+        "bytes": 25815,
+        "sha256": "10537e798a26064cb825b3fe89a3ea89839a58caf96d5dce286c6907e299e3dd"
+      }
+    },
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_decode_host_v1.rs",
+      "source": "draft/adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_decode_host_v1.rs",
+      "before": {
+        "bytes": 10373,
+        "sha256": "8690488e29c78cd441d212760791760e16c2d621977bb5ba2a3600772fbb43c6"
+      },
+      "after": {
+        "bytes": 10384,
+        "sha256": "71eab9beec2d239d45dde264645ddd3f80fd2a95316f855a4655f5a45546e3df"
+      }
+    },
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_projection_residual_decode_cli_v1.rs",
+      "source": "draft/adapters/tp-peer-finite-engineering-worker-v1/src/native_projection_residual_decode_cli_v1.rs",
+      "before": {
+        "bytes": 5284,
+        "sha256": "6c34f74f4adf451e9b127699c9fbf6f2fc1470139758d096eef45c930758b2ee"
+      },
+      "after": {
+        "bytes": 5306,
+        "sha256": "65ed708604f28d8df58602dec1f75d6f7a36cb9f3f6653b3408812910a356ad2"
+      }
+    },
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_projection_residual_decode_host_v1.rs",
+      "source": "draft/adapters/tp-peer-finite-engineering-worker-v1/src/native_projection_residual_decode_host_v1.rs",
+      "before": null,
+      "after": {
+        "bytes": 7596,
+        "sha256": "20d29b8637c29ba2006971e06b3f20af025a2c0ee17a16a5df16d1c43c235046"
+      }
+    },
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_projection_residual_decode_host_v1_tests.rs",
+      "source": "draft/adapters/tp-peer-finite-engineering-worker-v1/src/native_projection_residual_decode_host_v1_tests.rs",
+      "before": null,
+      "after": {
+        "bytes": 2625,
+        "sha256": "859b720c6b25da6e0374791e1e2410b4198fb9fb18f4ba3770cc5fcddefa1c09"
+      }
+    },
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/projection_residual_decode_host_observation_v1.rs",
+      "source": "draft/adapters/tp-peer-finite-engineering-worker-v1/src/projection_residual_decode_host_observation_v1.rs",
+      "before": null,
+      "after": {
+        "bytes": 5940,
+        "sha256": "6d2ba9bfe5028df045a7756709effd20910574fc31b249663432aa99e6ec0e11"
+      }
+    },
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/projection_residual_decode_host_observation_v1_tests.rs",
+      "source": "draft/adapters/tp-peer-finite-engineering-worker-v1/src/projection_residual_decode_host_observation_v1_tests.rs",
+      "before": null,
+      "after": {
+        "bytes": 5143,
+        "sha256": "b2c4e35f7729df3df5667dadc34b03e715c11b08367b47449d720fce160f49e5"
+      }
+    }
+  ],
+  "authored_tests": {
+    "names": [
+      "projection_host_bin_requires_distinct_optin_and_no_policy_options",
+      "projection_host_cli_is_distinct_and_ar_only",
+      "projection_host_cli_rejects_noncanonical_extent_and_duplicate_devices",
+      "projection_host_cli_rejects_optimized_policy_or_truncation",
+      "projection_host_parent_joins_actual_selected_frames_after_close",
+      "projection_host_parent_refuses_early_close_reap_and_non_ar",
+      "projection_host_parent_rejects_worker_image_profile_or_frame_substitution",
+      "projection_host_parent_selector_isolated_from_plain_and_legacy_modes",
+      "projection_host_recorder_records_each_serialization_and_close_after_four",
+      "projection_host_recorder_refuses_missing_snapshot_and_repeated_completion",
+      "projection_host_report_bounds_run_and_serialization_by_distinct_intervals",
+      "projection_host_report_rejects_counter_delta_drift",
+      "projection_host_report_rejects_trajectory_or_chain_mutation",
+      "projection_host_report_rejects_unknown_fields_and_missing_serialization",
+      "projection_host_report_requires_ar_and_selected_image_profile",
+      "projection_host_report_requires_close_roster_and_false_claims",
+      "projection_host_report_retains_full_currentness_and_rank_epoch_policy",
+      "projection_host_report_roundtrips_and_rejects_legacy_schema"
+    ],
+    "count": 18,
+    "executed": false
+  },
+  "added_tests": {
+    "worker": [
+      "native_projection_residual_decode_host_v1::tests::projection_host_cli_is_distinct_and_ar_only",
+      "native_projection_residual_decode_host_v1::tests::projection_host_cli_rejects_noncanonical_extent_and_duplicate_devices",
+      "native_projection_residual_decode_host_v1::tests::projection_host_cli_rejects_optimized_policy_or_truncation",
+      "native_projection_residual_decode_host_v1::tests::projection_host_recorder_records_each_serialization_and_close_after_four",
+      "native_projection_residual_decode_host_v1::tests::projection_host_recorder_refuses_missing_snapshot_and_repeated_completion",
+      "projection_residual_decode_host_observation_v1::tests::projection_host_report_bounds_run_and_serialization_by_distinct_intervals",
+      "projection_residual_decode_host_observation_v1::tests::projection_host_report_rejects_counter_delta_drift",
+      "projection_residual_decode_host_observation_v1::tests::projection_host_report_rejects_trajectory_or_chain_mutation",
+      "projection_residual_decode_host_observation_v1::tests::projection_host_report_rejects_unknown_fields_and_missing_serialization",
+      "projection_residual_decode_host_observation_v1::tests::projection_host_report_requires_ar_and_selected_image_profile",
+      "projection_residual_decode_host_observation_v1::tests::projection_host_report_requires_close_roster_and_false_claims",
+      "projection_residual_decode_host_observation_v1::tests::projection_host_report_retains_full_currentness_and_rank_epoch_policy",
+      "projection_residual_decode_host_observation_v1::tests::projection_host_report_roundtrips_and_rejects_legacy_schema"
+    ],
+    "parent_library": [
+      "projection_residual_decode_host_observation_v1::tests::projection_host_report_bounds_run_and_serialization_by_distinct_intervals",
+      "projection_residual_decode_host_observation_v1::tests::projection_host_report_rejects_counter_delta_drift",
+      "projection_residual_decode_host_observation_v1::tests::projection_host_report_rejects_trajectory_or_chain_mutation",
+      "projection_residual_decode_host_observation_v1::tests::projection_host_report_rejects_unknown_fields_and_missing_serialization",
+      "projection_residual_decode_host_observation_v1::tests::projection_host_report_requires_ar_and_selected_image_profile",
+      "projection_residual_decode_host_observation_v1::tests::projection_host_report_requires_close_roster_and_false_claims",
+      "projection_residual_decode_host_observation_v1::tests::projection_host_report_retains_full_currentness_and_rank_epoch_policy",
+      "projection_residual_decode_host_observation_v1::tests::projection_host_report_roundtrips_and_rejects_legacy_schema",
+      "tp_finite_client::prefix_decode::projection::tests::projection_host_parent_joins_actual_selected_frames_after_close",
+      "tp_finite_client::prefix_decode::projection::tests::projection_host_parent_refuses_early_close_reap_and_non_ar",
+      "tp_finite_client::prefix_decode::projection::tests::projection_host_parent_rejects_worker_image_profile_or_frame_substitution",
+      "tp_finite_client::prefix_decode::projection::tests::projection_host_parent_selector_isolated_from_plain_and_legacy_modes"
+    ],
+    "parent_binary": [
+      "tests::projection_host_bin_requires_distinct_optin_and_no_policy_options"
+    ]
+  },
+  "added_worker_test_executions": 13,
+  "added_parent_test_executions": 13,
+  "renamed_tests": [],
+  "old_test_names_removed": [],
+  "new_parent_binary": "ferric-qwen3-finite-projection-residual-decode-host-engineering",
+  "tests_executed": false,
+  "live_sources_modified": false,
+  "kfd_modified": false,
+  "compiler_modified": false,
+  "provider_modified": false,
+  "kernel_modified": false,
+  "policy_relaxation": false,
+  "gpu_execution": false,
+  "numerical_acceptance": false,
+  "performance_claim": false,
+  "production_authority": false
+}

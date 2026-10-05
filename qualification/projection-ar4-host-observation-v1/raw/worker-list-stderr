@@ -1,0 +1,71 @@
+   Compiling proc-macro2 v1.0.107
+   Compiling typenum v1.20.1
+   Compiling unicode-ident v1.0.26
+   Compiling quote v1.0.47
+   Compiling hybrid-array v0.4.15
+   Compiling serde_core v1.0.229
+   Compiling crypto-common v0.2.2
+   Compiling block-buffer v0.12.1
+   Compiling fe2o3-target-spec v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-ar4-host-observation-cpu-v228-v1/sources/fe2o3/crates/fe2o3-target-spec)
+   Compiling zmij v1.0.23
+   Compiling const-oid v0.10.2
+   Compiling digest v0.11.3
+   Compiling fe2o3-amd-target v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-ar4-host-observation-cpu-v228-v1/sources/fe2o3/crates/fe2o3-amd-target)
+   Compiling syn v3.0.6
+   Compiling cpufeatures v0.3.1
+   Compiling serde v1.0.229
+   Compiling serde_json v1.0.151
+   Compiling rustix v1.1.5
+   Compiling libc v0.2.189
+   Compiling cfg-if v1.0.5
+   Compiling sha2 v0.11.0
+   Compiling serde_derive v1.0.229
+   Compiling fe2o3-hsaco v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-ar4-host-observation-cpu-v228-v1/sources/fe2o3/crates/fe2o3-hsaco)
+   Compiling memchr v2.8.3
+   Compiling spin v0.12.3
+   Compiling itoa v1.0.18
+   Compiling bitflags v2.13.2
+   Compiling linux-raw-sys v0.12.1
+   Compiling fe2o3-runtime-model v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-ar4-host-observation-cpu-v228-v1/sources/fe2o3/crates/fe2o3-runtime-model)
+   Compiling fe2o3-amdhsa-loader v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-ar4-host-observation-cpu-v228-v1/sources/fe2o3/crates/fe2o3-amdhsa-loader)
+   Compiling zeroize v1.9.0
+   Compiling fe2o3-kfd-uapi v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-ar4-host-observation-cpu-v228-v1/sources/fe2o3/crates/fe2o3-kfd-uapi)
+   Compiling fe2o3-aql v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-ar4-host-observation-cpu-v228-v1/sources/fe2o3/crates/fe2o3-aql)
+   Compiling fe2o3-drm-uapi v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-ar4-host-observation-cpu-v228-v1/sources/fe2o3/crates/fe2o3-drm-uapi)
+   Compiling fe2o3-kfd v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-ar4-host-observation-cpu-v228-v1/sources/fe2o3/crates/fe2o3-kfd)
+warning: unused import: `prefix::Transaction`
+ --> /home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-ar4-host-observation-cpu-v228-v1/sources/fe2o3/crates/fe2o3-kfd/src/engineering_gfx950_resident_layer_tp2_v1.rs:7:5
+  |
+7 | use prefix::Transaction as _;
+  |     ^^^^^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: function `gfx942_cwsr_header_bytes` is never used
+   --> /home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-ar4-host-observation-cpu-v228-v1/sources/fe2o3/crates/fe2o3-kfd/src/queue_submit.rs:406:15
+    |
+406 | pub(crate) fn gfx942_cwsr_header_bytes(
+    |               ^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: function `initialize_gfx942_cwsr_headers` is never used
+   --> /home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-ar4-host-observation-cpu-v228-v1/sources/fe2o3/crates/fe2o3-kfd/src/queue_submit.rs:415:15
+    |
+415 | pub(crate) fn initialize_gfx942_cwsr_headers(
+    |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+   Compiling ferric-tp-peer-finite-engineering-worker-v1 v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-ar4-host-observation-cpu-v228-v1/sources/ferric/adapters/tp-peer-finite-engineering-worker-v1)
+warning: function `encode_closed` is never used
+   --> src/native_prefix_layer_cli_v1.rs:174:4
+    |
+174 | fn encode_closed(b: &Bootstrap, closed: ClosedRun) -> io::Result<(wire::Control, Vec<u8>)> {
+    |    ^^^^^^^^^^^^^
+    |
+    = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: `ferric-tp-peer-finite-engineering-worker-v1` (lib) generated 1 warning
+warning: `fe2o3-kfd` (lib) generated 3 warnings
+    Finished `test` profile [optimized] target(s) in 1m 12s
+     Running unittests src/lib.rs (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-ar4-host-observation-cpu-v228-v1/target/worker/debug/deps/ferric_tp_peer_finite_engineering_worker_v1-d441ecc6afcd2fee)
+     Running tests/shared_wire.rs (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-ar4-host-observation-cpu-v228-v1/target/worker/debug/deps/shared_wire-566f992a423d55d2)
