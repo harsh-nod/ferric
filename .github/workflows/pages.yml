@@ -70,17 +70,17 @@ jobs:
             test "$(stat -c %h "public/$file")" -eq 1
             total=$((total + $(stat -c %s "public/$file")))
           done
-          test "$total" -eq 883012
+          test "$total" -eq 884717
           test "$total" -le 2097152
 
-          # October 5 V13/V14 checkpoint: admitted artifact manifest SHA256: 0786b58f25cce863dea262fe1341bfa55c925359fc563b1c9d32c6730ed2537c.
+          # October 5 completed V14 a005: admitted artifact manifest SHA256: ea9bd56f060229fdb043a2c561f9c582588f149085e59e0baa9a6d440856220f.
           # Existing deploy-only protections retained; remote QA approval is recorded externally.
           sha256sum --check --strict <<'SHA256'
           e0eb7a3a9d34cc3e5ad660deb8cce3f218ef1e25bfc9070f44f96e563dc0753e  public/app.js
           07291c88f57be83ac12bccc73876fb67158ed96ca8efc2e5717d50d98ad9cb69  public/assets/architecture.svg
           5ddc6e2efcaa8eea3fd8f5607cae74813da636f180a34a5ba72cd879e1b6b809  public/assets/mark.svg
           05ad1f50575547c0b0c8244b2912e1d7518258772527f7ff236fdb8d2e42102f  public/data/performance.js
-          a0dfeeaa6e5afb1bb7309bf7369c0afe82b95c63e11b512479a752662bfb0f4e  public/data/project.js
+          2ffff3c84136047504a2e3cb5b2febd26243c28cb8e0b9bf14d79420e69ebbf5  public/data/project.js
           9a54f6060c0a204ad4826cf066dbf26a9d2f15868cdcbd00c334618f55835571  public/index.html
           41921ee0f120656ab2b13075077948324e6c56d124497886169dbd20d51fdc58  public/styles.css
           SHA256
