@@ -1,0 +1,45 @@
+{
+  "all_needed_resolved": true,
+  "interpreter": {
+    "pin": {
+      "bytes": 236616,
+      "path": "/usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2",
+      "sha256": "1cd555ac46b7887edeaf3c42aac5408c8135e52f6b37870da2cf82d5fe14e829"
+    },
+    "reported_path": "/lib64/ld-linux-x86-64.so.2"
+  },
+  "libraries": {
+    "ld-linux-x86-64.so.2": {
+      "pin": {
+        "bytes": 236616,
+        "path": "/usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2",
+        "sha256": "1cd555ac46b7887edeaf3c42aac5408c8135e52f6b37870da2cf82d5fe14e829"
+      },
+      "reported_path": "/lib64/ld-linux-x86-64.so.2"
+    },
+    "libc.so.6": {
+      "pin": {
+        "bytes": 2125328,
+        "path": "/usr/lib/x86_64-linux-gnu/libc.so.6",
+        "sha256": "d8db8739a1633c972cec6a4fe0566bdcec6fd088f98723492ab0361f66238f75"
+      },
+      "reported_path": "/lib/x86_64-linux-gnu/libc.so.6"
+    },
+    "libgcc_s.so.1": {
+      "pin": {
+        "bytes": 183024,
+        "path": "/usr/lib/x86_64-linux-gnu/libgcc_s.so.1",
+        "sha256": "d93224d2b0dab4247598be683adca02f5cf00586f99c187579cd7e92058fb7cb"
+      },
+      "reported_path": "/lib/x86_64-linux-gnu/libgcc_s.so.1"
+    }
+  },
+  "needed": [
+    "libgcc_s.so.1",
+    "libc.so.6",
+    "ld-linux-x86-64.so.2"
+  ],
+  "virtual_objects": [
+    "linux-vdso.so.1"
+  ]
+}

@@ -6,7 +6,19 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Latest: [ordered peer dependency packets passed CPU qualification on MI350](../qualification/peer-dependency-aql-cpu-v1/README.md).
+Latest: [the finite two-rank peer-dependency graph passed native GPU qualification on MI350](../qualification/peer-dependency-signal-completion-gpu-v1/README.md).
+The V3 runtime passed 1,064 Rust tests with three artifact-dependent ignores;
+45 controller tests then passed before one native attempt on GPUs 1 and 2.
+All sixteen signals completed, all ten guarded buffers matched, the delayed
+peer-publication witness passed, and queue-first Close completed. Actual
+completion-sample counters were (write, read) = (8, 3) on both queues: completed
+work does not fabricate ring capacity. The 94.083 ms aggregate host interval is
+not GPU time or model throughput. A previous busy-GPU preflight refusal is retained.
+Reusable arena reset, full MLP-state validators, guarded final residuals and a
+matched full-worker comparison are next. All milestones, numerical acceptance,
+sustained 2,048/256 and 700 tokens/s remain open.
+
+Previously, [ordered peer dependency packets passed CPU qualification on MI350](../qualification/peer-dependency-aql-cpu-v1/README.md).
 All 43 Rust tests passed, including ten new dependency/publication tests. A C
 oracle matched the 64-byte packet encoding and system-scoped `0x1503` header
 against the installed ROCm header. All seven bounded phases exited naturally.

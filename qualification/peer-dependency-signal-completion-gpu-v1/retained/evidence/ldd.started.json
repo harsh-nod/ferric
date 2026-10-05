@@ -1,0 +1,14 @@
+{
+  "argv": [
+    "/usr/bin/prlimit",
+    "--as=68719476736",
+    "--cpu=30",
+    "--fsize=4194304",
+    "--core=0",
+    "--",
+    "/usr/bin/ldd",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/peer-dependency-signal-completion-cpu-v228-v1/target/debug/examples/kfd-peer-dependency-signal-completion"
+  ],
+  "pgid": 2362572,
+  "pid": 2362572
+}

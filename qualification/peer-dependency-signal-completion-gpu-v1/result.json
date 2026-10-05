@@ -1,0 +1,330 @@
+{
+  "all_issue42_milestones_remain_open": true,
+  "archive": {
+    "bytes": 145466,
+    "files": 51,
+    "name": "peer-dependency-signal-completion-gpu-evidence-v228-v2.tar.gz",
+    "sha256": "19df3a8477bd24c5a5f6436b12822ba026dd2f0b344fa3e1b8627cfd7c761eb6"
+  },
+  "boot": "2dbbbc5a-d8b7-46ac-bd1f-236e5847e24a",
+  "controller_tests": 45,
+  "cpu_complete_sha256": "b4d6edccd6232fc925305d8053b844c3bf072a3f2aade9a774f44d3e67db059f",
+  "gpu_complete_sha256": "23bd08205575aa5999c6447399227c88a02db1e54bdf3eebd694911b62a616ef",
+  "host": "smci350-rck-g03-b19-03",
+  "model_acceptance": false,
+  "native_attempts": 1,
+  "observation": {
+    "all_data_and_guards_verified": true,
+    "artifact_bytes": 14624,
+    "artifact_path": "/home/harmenon/ferric-asrock-42/evidence/p223-runtime-v1/residual.hsaco",
+    "artifact_sha256": "8436c1861dcc14f0346aeecc136e4187c459ac1c0b31778265c88b3d8c63396d",
+    "barrier_packets": 8,
+    "buffers": [
+      {
+        "bytes": 8320,
+        "owner_rank": 0,
+        "role": "seed0",
+        "sha256": "9a2babbac1e08fb1ac1f39a635ed73a84ba6a7d324a72b1605b8638766735e42"
+      },
+      {
+        "bytes": 8320,
+        "owner_rank": 0,
+        "role": "seed1",
+        "sha256": "061864c60fc2dcd7eb29f1f4cc26379b7edf2b85f778e1fd644b709f1106fe27"
+      },
+      {
+        "bytes": 8320,
+        "owner_rank": 0,
+        "role": "intermediate",
+        "sha256": "061864c60fc2dcd7eb29f1f4cc26379b7edf2b85f778e1fd644b709f1106fe27"
+      },
+      {
+        "bytes": 8320,
+        "owner_rank": 0,
+        "role": "output0",
+        "sha256": "91467871fbcd2f4c87674e9438e44596d819002ef452f495d9ab2ae58b8d3e89"
+      },
+      {
+        "bytes": 8320,
+        "owner_rank": 0,
+        "role": "output1",
+        "sha256": "aadd68c3eb1e3b4de5030f765e0bce2e019bf52b8a64975b50950f4a74e48f7e"
+      },
+      {
+        "bytes": 8320,
+        "owner_rank": 1,
+        "role": "seed0",
+        "sha256": "91467871fbcd2f4c87674e9438e44596d819002ef452f495d9ab2ae58b8d3e89"
+      },
+      {
+        "bytes": 8320,
+        "owner_rank": 1,
+        "role": "seed1",
+        "sha256": "aadd68c3eb1e3b4de5030f765e0bce2e019bf52b8a64975b50950f4a74e48f7e"
+      },
+      {
+        "bytes": 8320,
+        "owner_rank": 1,
+        "role": "intermediate",
+        "sha256": "aadd68c3eb1e3b4de5030f765e0bce2e019bf52b8a64975b50950f4a74e48f7e"
+      },
+      {
+        "bytes": 8320,
+        "owner_rank": 1,
+        "role": "output0",
+        "sha256": "9a2babbac1e08fb1ac1f39a635ed73a84ba6a7d324a72b1605b8638766735e42"
+      },
+      {
+        "bytes": 8320,
+        "owner_rank": 1,
+        "role": "output1",
+        "sha256": "061864c60fc2dcd7eb29f1f4cc26379b7edf2b85f778e1fd644b709f1106fe27"
+      }
+    ],
+    "completion_contract": "all signals complete; actual read retained for ring capacity",
+    "completion_count": 16,
+    "completion_slots_reset_between_iterations": false,
+    "device_iterations": 2,
+    "device_unique_ids": [
+      10838076764495710945,
+      15340779317222226279
+    ],
+    "elapsed_ns": 94082928,
+    "elapsed_scope": "native aggregate host interval; not GPU duration or throughput",
+    "healthy_close": true,
+    "input_files_unchanged": true,
+    "intermediate_reused_between_iterations": true,
+    "kernel_packets": 8,
+    "kernel_symbol": "ferric_qwen3_tp_peer_copy_bf16_v4",
+    "observed_queue_frontiers": [
+      [
+        8,
+        3
+      ],
+      [
+        8,
+        3
+      ]
+    ],
+    "performance_claim": false,
+    "production_authority": false,
+    "repeated_host_calls_tested": false,
+    "request_sha256": "ee132b674aee1937d0dd54c3089890826fdddbb5699df36f7a514c6037de0239",
+    "schema": "ferric-peer-dependency-native-observation-v228-v3",
+    "timeout_ms": 60000,
+    "witness_observed": true,
+    "witness_requested": true
+  },
+  "passed": true,
+  "performance_claim": false,
+  "retained": {
+    "retained/controller-tests.json": {
+      "bytes": 8625,
+      "sha256": "d5b662c4025f7175e3f7d5d025b37e464fa0f0c48e6b646da094c24354e4cbdc"
+    },
+    "retained/evidence/after-audit.json": {
+      "bytes": 4671,
+      "sha256": "ba22d60a0e9752eb8d3df4c88d0a0b244b5867dd2b9e76ea64b8886921046ce3"
+    },
+    "retained/evidence/after-inventory.command.json": {
+      "bytes": 558,
+      "sha256": "e30d3f1c585d47918a5cdfaa9e9b3e81dc6959fcf0f35e7634b3464683799862"
+    },
+    "retained/evidence/after-inventory.result.json": {
+      "bytes": 1144,
+      "sha256": "1fcab2e2ce430d496e3ff0594041773c167343137ba0e38ff81fb0b19c7275f2"
+    },
+    "retained/evidence/after-inventory.started.json": {
+      "bytes": 224,
+      "sha256": "b1289cb5b75566dc1458d0d2ce5a8b84a3b1c52e788f1bffab002fe44303d85c"
+    },
+    "retained/evidence/after-inventory.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "retained/evidence/after-inventory.stdout": {
+      "bytes": 1530,
+      "sha256": "c45c308d1f65cce7e18cd288dd23266edbb8201b2095b876a2c146a3a877a57f"
+    },
+    "retained/evidence/after-process.command.json": {
+      "bytes": 561,
+      "sha256": "c3697db6b45d978baa72aae509e46fb5f04efd87c5523fd295e456657f3170ff"
+    },
+    "retained/evidence/after-process.result.json": {
+      "bytes": 1136,
+      "sha256": "7712e5176495e69059677fef5acb9a7f3eb92e40a5618224341b804d94986ced"
+    },
+    "retained/evidence/after-process.started.json": {
+      "bytes": 227,
+      "sha256": "0515c863f2a5e948d23832d1ce75bd225094a5d6aee3ad80eb0012d1c0ece086"
+    },
+    "retained/evidence/after-process.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "retained/evidence/after-process.stdout": {
+      "bytes": 1275,
+      "sha256": "e70f2d7235dbd50455554f2a277613971e2fcdf117ec1bdcdf47644bcf49c422"
+    },
+    "retained/evidence/after-sysfs.json": {
+      "bytes": 2782,
+      "sha256": "9539f1db9a6775558237f2f41b413d1bce3ce75f0753c540212d16cdd2e59024"
+    },
+    "retained/evidence/before-audit.json": {
+      "bytes": 4671,
+      "sha256": "ba22d60a0e9752eb8d3df4c88d0a0b244b5867dd2b9e76ea64b8886921046ce3"
+    },
+    "retained/evidence/before-inventory.command.json": {
+      "bytes": 558,
+      "sha256": "e30d3f1c585d47918a5cdfaa9e9b3e81dc6959fcf0f35e7634b3464683799862"
+    },
+    "retained/evidence/before-inventory.result.json": {
+      "bytes": 1148,
+      "sha256": "da27755e4fd8d4eff9f7a2ac90c45d97c39370014539338bae94c343c84f735a"
+    },
+    "retained/evidence/before-inventory.started.json": {
+      "bytes": 224,
+      "sha256": "fce402ab75d861d0db5073856292d717eb2b104aaf39ff210da190eea17b158d"
+    },
+    "retained/evidence/before-inventory.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "retained/evidence/before-inventory.stdout": {
+      "bytes": 1530,
+      "sha256": "c45c308d1f65cce7e18cd288dd23266edbb8201b2095b876a2c146a3a877a57f"
+    },
+    "retained/evidence/before-process.command.json": {
+      "bytes": 561,
+      "sha256": "c3697db6b45d978baa72aae509e46fb5f04efd87c5523fd295e456657f3170ff"
+    },
+    "retained/evidence/before-process.result.json": {
+      "bytes": 1140,
+      "sha256": "0cfcebb122dc29d65de9c2fe17d8c133301b201e1f448b17234ba9ae0d566ed1"
+    },
+    "retained/evidence/before-process.started.json": {
+      "bytes": 227,
+      "sha256": "6396a54d3f4bf380bb9f78b522f9412668afabbcf5e83afa0efd9fd87bf8c486"
+    },
+    "retained/evidence/before-process.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "retained/evidence/before-process.stdout": {
+      "bytes": 1275,
+      "sha256": "e70f2d7235dbd50455554f2a277613971e2fcdf117ec1bdcdf47644bcf49c422"
+    },
+    "retained/evidence/before-sysfs.json": {
+      "bytes": 2782,
+      "sha256": "9539f1db9a6775558237f2f41b413d1bce3ce75f0753c540212d16cdd2e59024"
+    },
+    "retained/evidence/complete.json": {
+      "bytes": 487334,
+      "sha256": "23bd08205575aa5999c6447399227c88a02db1e54bdf3eebd694911b62a616ef"
+    },
+    "retained/evidence/inputs-before.json": {
+      "bytes": 438292,
+      "sha256": "13626d54c39a9be6704f686904b2e1b6dd7c6bd3f4bf63cac04615094eb42796"
+    },
+    "retained/evidence/ldd.command.json": {
+      "bytes": 710,
+      "sha256": "6ff7170a3498fc5491ca6866fa0ef055a6d03fb76992c70bfcc70002327932eb"
+    },
+    "retained/evidence/ldd.result.json": {
+      "bytes": 1094,
+      "sha256": "65db499c3d714ede064fa4e1e69bf7e36d813a267650ca7d4b1e792076911c54"
+    },
+    "retained/evidence/ldd.started.json": {
+      "bytes": 376,
+      "sha256": "ff443d8691c7e9ba95e0a0c44de838aec7eeedbf01c0725f76df123673973db5"
+    },
+    "retained/evidence/ldd.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "retained/evidence/ldd.stdout": {
+      "bytes": 230,
+      "sha256": "decd8a16fe91dc7e7b699d893a35b658be2b250e73fffb385156c870e0bb1852"
+    },
+    "retained/evidence/native.command.json": {
+      "bytes": 893,
+      "sha256": "ba9f530180f3194e941766f423191353bcddf993fa6a01750faea09c99b2f455"
+    },
+    "retained/evidence/native.result.json": {
+      "bytes": 1109,
+      "sha256": "64ff5924fd6b4b543710910afa84baf25b4fe91c3733c88d6025fdf6d1843ddc"
+    },
+    "retained/evidence/native.started.json": {
+      "bytes": 558,
+      "sha256": "1e14d3a7febee9714bea8566e3c10e479d58bf27a03212566a1ecf3d68477e9f"
+    },
+    "retained/evidence/native.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "retained/evidence/native.stdout": {
+      "bytes": 2357,
+      "sha256": "20ddd831ab0c97e62e112e8eaee100060138b4a7955f0f7cf0961e9c662f0d5a"
+    },
+    "retained/evidence/observation.json": {
+      "bytes": 2953,
+      "sha256": "24efbdfcc9aac242272fd8362f9dd4db869a927d10fb3b375bb87ba56050fec3"
+    },
+    "retained/evidence/readelf.command.json": {
+      "bytes": 734,
+      "sha256": "4ae4eb124085cd8f4a18f7a2e3f1f297b75ffad8cdb2519e0d856d9e5ba258b9"
+    },
+    "retained/evidence/readelf.result.json": {
+      "bytes": 1110,
+      "sha256": "fba624b003aa02af4e3e9ff3fa900b68781af13057332983162f2c184b7d44a4"
+    },
+    "retained/evidence/readelf.started.json": {
+      "bytes": 400,
+      "sha256": "fd9fc4ffc4442367352c993ef89a610b9f49096311600c38a13278d00943d41a"
+    },
+    "retained/evidence/readelf.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "retained/evidence/readelf.stdout": {
+      "bytes": 4308,
+      "sha256": "458b3a1cd589e686bdd9692f84ca76d7805878f9b4beb6490759bc27b5dbf572"
+    },
+    "retained/evidence/runtime-libraries.json": {
+      "bytes": 1301,
+      "sha256": "84cc21ec5c21247f92e0ab559b59d04544024dd6877c2430b5744f54b28d67ba"
+    },
+    "retained/request.json": {
+      "bytes": 396,
+      "sha256": "ee132b674aee1937d0dd54c3089890826fdddbb5699df36f7a514c6037de0239"
+    },
+    "retained/run_cpu.py": {
+      "bytes": 27116,
+      "sha256": "d66b641752986b09952dc73b28ee7984796359e39d1373046dfa2229ffa68406"
+    },
+    "retained/run_gpu.py": {
+      "bytes": 36796,
+      "sha256": "76624d16bbd66a19cd4d40200f471e3d7f127bde4159652a3b77e9e3d75fc141"
+    },
+    "retained/test_parser.py": {
+      "bytes": 4702,
+      "sha256": "c5d40a390999b2a652b76d598df48099efba20d73e54fde11156c63b24b660b2"
+    },
+    "retained/test_runtime_libraries.py": {
+      "bytes": 6628,
+      "sha256": "2a01b9a86498a5f0327f6b267f1b61e6de20432890ac33813aa40d1480155438"
+    },
+    "retained/test_selected_pair.py": {
+      "bytes": 10104,
+      "sha256": "63cdcc2ccbf0efa8c372c8eb703d3e5e3d33442f7e5dfe85d6ba23a84e979e6a"
+    },
+    "retained/test_signal_admission.py": {
+      "bytes": 17691,
+      "sha256": "a0fbb9b3d3fffaccd00984039da93d7406f453cb1e9039e55c32032c29c78122"
+    }
+  },
+  "retries": 0,
+  "runtime_commit": "097b4f796a283f554339cc0c0ef5c2c8c3858d2a",
+  "schema": "ferric-peer-signal-completion-gpu-checkpoint-v1",
+  "scope": "one finite peer copy graph and healthy Close; not reusable arena or model qualification"
+}

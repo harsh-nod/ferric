@@ -1,0 +1,228 @@
+{
+  "foreign_process_rows": [
+    {
+      "gpu": 0,
+      "process_list": [
+        {
+          "process_info": "No running processes detected"
+        }
+      ]
+    },
+    {
+      "gpu": 3,
+      "process_list": [
+        {
+          "process_info": "No running processes detected"
+        }
+      ]
+    },
+    {
+      "gpu": 4,
+      "process_list": [
+        {
+          "process_info": "No running processes detected"
+        }
+      ]
+    },
+    {
+      "gpu": 5,
+      "process_list": [
+        {
+          "process_info": "No running processes detected"
+        }
+      ]
+    },
+    {
+      "gpu": 6,
+      "process_list": [
+        {
+          "process_info": "No running processes detected"
+        }
+      ]
+    },
+    {
+      "gpu": 7,
+      "process_list": [
+        {
+          "process_info": "No running processes detected"
+        }
+      ]
+    }
+  ],
+  "global_idle_required": false,
+  "inventory": [
+    {
+      "bdf": "0000:05:00.0",
+      "gpu": 0,
+      "kfd_id": 39903,
+      "node_id": 2,
+      "partition_id": 0,
+      "uuid": "e3ff75a0-0000-1000-8023-3d81d822f3eb"
+    },
+    {
+      "bdf": "0000:15:00.0",
+      "gpu": 1,
+      "kfd_id": 22482,
+      "node_id": 3,
+      "partition_id": 0,
+      "uuid": "96ff75a0-0000-1000-8068-95650c2e8ae1"
+    },
+    {
+      "bdf": "0000:65:00.0",
+      "gpu": 2,
+      "kfd_id": 46071,
+      "node_id": 4,
+      "partition_id": 0,
+      "uuid": "d4ff75a0-0000-1000-80e5-658294b0b967"
+    },
+    {
+      "bdf": "0000:75:00.0",
+      "gpu": 3,
+      "kfd_id": 32762,
+      "node_id": 5,
+      "partition_id": 0,
+      "uuid": "f6ff75a0-0000-1000-8095-011eb05a2497"
+    },
+    {
+      "bdf": "0000:85:00.0",
+      "gpu": 4,
+      "kfd_id": 15294,
+      "node_id": 6,
+      "partition_id": 0,
+      "uuid": "03ff75a0-0000-1000-8032-31df6bb92857"
+    },
+    {
+      "bdf": "0000:95:00.0",
+      "gpu": 5,
+      "kfd_id": 63411,
+      "node_id": 7,
+      "partition_id": 0,
+      "uuid": "80ff75a0-0000-1000-80a9-a2ba09978a65"
+    },
+    {
+      "bdf": "0000:e5:00.0",
+      "gpu": 6,
+      "kfd_id": 5014,
+      "node_id": 8,
+      "partition_id": 0,
+      "uuid": "92ff75a0-0000-1000-8005-0148915dd40c"
+    },
+    {
+      "bdf": "0000:f5:00.0",
+      "gpu": 7,
+      "kfd_id": 57243,
+      "node_id": 9,
+      "partition_id": 0,
+      "uuid": "6aff75a0-0000-1000-80d8-8437269ef781"
+    }
+  ],
+  "processes": [
+    {
+      "gpu": 0,
+      "process_list": [
+        {
+          "process_info": "No running processes detected"
+        }
+      ]
+    },
+    {
+      "gpu": 1,
+      "process_list": [
+        {
+          "process_info": "No running processes detected"
+        }
+      ]
+    },
+    {
+      "gpu": 2,
+      "process_list": [
+        {
+          "process_info": "No running processes detected"
+        }
+      ]
+    },
+    {
+      "gpu": 3,
+      "process_list": [
+        {
+          "process_info": "No running processes detected"
+        }
+      ]
+    },
+    {
+      "gpu": 4,
+      "process_list": [
+        {
+          "process_info": "No running processes detected"
+        }
+      ]
+    },
+    {
+      "gpu": 5,
+      "process_list": [
+        {
+          "process_info": "No running processes detected"
+        }
+      ]
+    },
+    {
+      "gpu": 6,
+      "process_list": [
+        {
+          "process_info": "No running processes detected"
+        }
+      ]
+    },
+    {
+      "gpu": 7,
+      "process_list": [
+        {
+          "process_info": "No running processes detected"
+        }
+      ]
+    }
+  ],
+  "selected_gpus": [
+    1,
+    2
+  ],
+  "selected_identity": [
+    {
+      "bdf": "0000:15:00.0",
+      "domain": 0,
+      "drm_render_minor": 136,
+      "gfx_target_version": 90500,
+      "gpu": 1,
+      "kfd_id": 22482,
+      "location_id": 5376,
+      "node_id": 3,
+      "partition_id": 0,
+      "simd_count": 1024,
+      "sysfs_paths": {
+        "gpu_id": "/sys/devices/virtual/kfd/kfd/topology/nodes/3/gpu_id",
+        "properties": "/sys/devices/virtual/kfd/kfd/topology/nodes/3/properties"
+      },
+      "unique_id": 10838076764495710945,
+      "uuid": "96ff75a0-0000-1000-8068-95650c2e8ae1"
+    },
+    {
+      "bdf": "0000:65:00.0",
+      "domain": 0,
+      "drm_render_minor": 144,
+      "gfx_target_version": 90500,
+      "gpu": 2,
+      "kfd_id": 46071,
+      "location_id": 25856,
+      "node_id": 4,
+      "partition_id": 0,
+      "simd_count": 1024,
+      "sysfs_paths": {
+        "gpu_id": "/sys/devices/virtual/kfd/kfd/topology/nodes/4/gpu_id",
+        "properties": "/sys/devices/virtual/kfd/kfd/topology/nodes/4/properties"
+      },
+      "unique_id": 15340779317222226279,
+      "uuid": "d4ff75a0-0000-1000-80e5-658294b0b967"
+    }
+  ],
+  "selected_idle": true
+}
