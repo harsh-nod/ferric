@@ -6,14 +6,25 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Latest: [the rejected core u32-to-u64 conversion's complete MIR is captured](../qualification/guarded-mlp-core-u32-widening-diagnostic-v1/README.md).
+Latest: [422 tests and matrix extraction pass; attention reaches a checked-add refusal](../qualification/guarded-mlp-core-u32-widening-qualification-v1/README.md).
+The exact widening recognizer and six new tests built and passed on MI350,
+including 49 real-MIR mutations and eight identity/signature refusals. All
+415 previously passing controls remained green. The unchanged matrix control
+now reaches gfx942 LLVM and checks MFMA and workgroup storage; this does not
+authorize an artifact or GPU launch. Attention still rejects the genuine core
+`usize::checked_add` helper. All 36 phases exited naturally and were reaped,
+with unchanged sources and clean integrity postchecks. The original run
+completed through a transient SSH disconnect; it was not restarted.
+Full qualification remains incomplete; Ferric's production dependency is unchanged.
+
+Previously, [the rejected core u32-to-u64 conversion's complete MIR was captured](../qualification/guarded-mlp-core-u32-widening-diagnostic-v1/README.md).
 A separate diagnostic compiler built on MI350, and all six bounded-renderer
 tests passed. The unchanged matrix control retained its original rejection;
 the observed helper contains one integer widening cast followed by return,
 with no calls, cleanup blocks or inline origins. All 19 phases exited naturally
 and were reaped, with unchanged sources and clean integrity postchecks.
-An exact body recognizer and mutation tests are next. The capture does not
-admit the conversion or qualify any provider, GPU, model or performance gate.
+The subsequent recognizer/test run is linked above. The capture itself does
+not admit the conversion or qualify any provider, GPU, model or performance gate.
 
 Previously, [415 compiler tests passed before the core conversion refusal](../qualification/guarded-mlp-core-result-qualification-v1/README.md).
 Both compiler and test binaries built on MI350. V7 supplies genuine AMD-target

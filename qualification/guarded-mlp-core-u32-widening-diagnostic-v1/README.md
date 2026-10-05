@@ -52,9 +52,14 @@ capture per process, 64 KiB, 128 locals/blocks/scopes and 1,024 statements.
 The hook is immediately before the original rejection and cannot authorize
 the helper. Partial output never counts as a complete observation.
 
+The subsequent [production-recognizer run](../guarded-mlp-core-u32-widening-qualification-v1/README.md)
+passed its six new tests and the matrix extraction control. Full qualification
+remains incomplete at an attention checked-add refusal; no result is attributed
+to this diagnostic itself.
+
 The retention manifest pins 105 original files and one separately derived
-observation. Next are an exact whole-body recognizer, genuine-core positives,
-wrong-conversion/lookalike negatives and actual-MIR mutation tests, followed
-by the unchanged qualification controls. No such production rule is qualified
-by this capture. Checked HSACO emission, GPU/model correctness, sustained
+observation. The recognizer requires genuine-core positives, wrong-conversion
+and lookalike negatives, actual-MIR mutations and the unchanged qualification
+controls. No production rule is qualified by this capture alone.
+Checked HSACO emission, GPU/model correctness, sustained
 single-request BF16 2,048/256 decode and 700 tokens/s remain open.

@@ -1,0 +1,41 @@
+{
+  "adopted_reaped": [],
+  "argv": [
+    "/usr/bin/prlimit",
+    "--as=12884901888",
+    "--cpu=1200",
+    "--fsize=1073741824",
+    "--core=0",
+    "--",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-u32-widening-qualification-cpu-v228-v1/target/debug/deps/device_api_ui-591eb88a7faad131",
+    "--test-threads=1"
+  ],
+  "command": {
+    "bytes": 2360,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-u32-widening-qualification-cpu-v228-v1/evidence/device-api-ui-tests.command.json",
+    "sha256": "87a54dd57a9146ee82880e6750e68a23cbf573ef96f28feb0c06c283cd53c18e"
+  },
+  "elapsed_ns": 22417504276,
+  "exception": null,
+  "exit_code": 0,
+  "forced_cleanup": false,
+  "label": "device-api-ui-tests",
+  "natural_exit": true,
+  "observed_signals": [],
+  "pgid": 3769271,
+  "pid": 3769271,
+  "process_group_absent": true,
+  "reaped": true,
+  "stderr": {
+    "bytes": 18905,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-u32-widening-qualification-cpu-v228-v1/evidence/device-api-ui-tests.stderr",
+    "sha256": "098ac16fec2a18c3a6928000230d26fa578442c7cc6610e7acce4ae01816f0cb"
+  },
+  "stdout": {
+    "bytes": 164,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-u32-widening-qualification-cpu-v228-v1/evidence/device-api-ui-tests.stdout",
+    "sha256": "700b2a6d07deae8f8c88ea0c0a7649ce7afc96bac84dcbbaee5aa2152c1e2b56"
+  },
+  "storage_failure": null,
+  "timed_out": false
+}

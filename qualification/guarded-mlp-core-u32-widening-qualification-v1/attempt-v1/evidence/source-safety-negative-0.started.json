@@ -1,0 +1,17 @@
+{
+  "argv": [
+    "/usr/bin/prlimit",
+    "--as=12884901888",
+    "--cpu=1200",
+    "--fsize=1073741824",
+    "--core=0",
+    "--",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-u32-widening-qualification-cpu-v228-v1/target/debug/deps/production_extraction_driver_v1-cb9b8b5de4191776",
+    "production_collector_rejects_reachable_unsafe_rust_with_rooted_diagnostics",
+    "--ignored",
+    "--exact",
+    "--test-threads=1"
+  ],
+  "pgid": 3815901,
+  "pid": 3815901
+}
