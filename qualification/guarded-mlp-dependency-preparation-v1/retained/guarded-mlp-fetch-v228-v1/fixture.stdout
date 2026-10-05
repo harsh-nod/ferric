@@ -1,0 +1,9 @@
+test_existing_source_and_archive_mutation_or_removal_is_refused (__main__.FetchCacheTests.test_existing_source_and_archive_mutation_or_removal_is_refused) ... ok
+test_index_mutations_are_recorded_without_relaxing_source_custody (__main__.FetchCacheTests.test_index_mutations_are_recorded_without_relaxing_source_custody) ... ok
+test_new_source_and_archive_bodies_are_explicit_additions (__main__.FetchCacheTests.test_new_source_and_archive_bodies_are_explicit_additions) ... ok
+test_unchanged_cache_has_empty_delta (__main__.FetchCacheTests.test_unchanged_cache_has_empty_delta) ... ok
+
+----------------------------------------------------------------------
+Ran 4 tests in 0.000s
+
+OK

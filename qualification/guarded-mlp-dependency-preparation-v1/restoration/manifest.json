@@ -1,0 +1,22 @@
+{
+  "guarded-mlp-registry-restore-fixtures-v228-v1/fixture.json": {
+    "bytes": 352,
+    "sha256": "76404589b4411d4319b8d3de4ac1609d9e247c87b2d4a08dcf09e302d1aaa1f2"
+  },
+  "guarded-mlp-registry-restore-fixtures-v228-v1/fixture.stdout": {
+    "bytes": 1260,
+    "sha256": "c244885b64d47c389df8f38747d10b54a7e2e878b8c4b06f846aadfdba202dbc"
+  },
+  "guarded-mlp-registry-restore-fixtures-v228-v1/restore_registry.py": {
+    "bytes": 16135,
+    "sha256": "b9b5c418510bc9b80c10e37bf834d8349847b0cd7d0f89a5a589217a5d02170c"
+  },
+  "guarded-mlp-registry-restore-fixtures-v228-v1/test_restore_registry.py": {
+    "bytes": 6237,
+    "sha256": "8355b808a6fa2fdb18464c3da2be12e995b7cf53a9e33e31e5bfde8c1a8df110"
+  },
+  "guarded-mlp-registry-restore-v228-v1/complete.json": {
+    "bytes": 55106,
+    "sha256": "de1ce8658d0325aac2c20fe0c86afc78eb65a68189a897a27ce7d62ad065d1bb"
+  }
+}

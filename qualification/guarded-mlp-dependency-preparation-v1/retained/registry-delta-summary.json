@@ -1,0 +1,885 @@
+{
+  "dependency_source_bodies_copied": false,
+  "original_fetch_controller_passed": false,
+  "schema": "ferric-guarded-mlp-registry-delta-summary-v1",
+  "scope": "Data-only map comparison; no cause attribution or restoration claim.",
+  "sections": {
+    "cache": {
+      "added": {
+        "by_package": {
+          "index.crates.io-1949cf8c6b5b557f/cc-1.2.0.crate": {
+            "after_bytes": 92640,
+            "before_bytes": 0,
+            "files": 1
+          },
+          "index.crates.io-1949cf8c6b5b557f/dlmalloc-0.2.11.crate": {
+            "after_bytes": 86742,
+            "before_bytes": 0,
+            "files": 1
+          },
+          "index.crates.io-1949cf8c6b5b557f/fortanix-sgx-abi-0.6.1.crate": {
+            "after_bytes": 13691,
+            "before_bytes": 0,
+            "files": 1
+          },
+          "index.crates.io-1949cf8c6b5b557f/hermit-abi-0.5.2.crate": {
+            "after_bytes": 17435,
+            "before_bytes": 0,
+            "files": 1
+          },
+          "index.crates.io-1949cf8c6b5b557f/moto-rt-0.16.0.crate": {
+            "after_bytes": 25412,
+            "before_bytes": 0,
+            "files": 1
+          },
+          "index.crates.io-1949cf8c6b5b557f/r-efi-alloc-2.1.0.crate": {
+            "after_bytes": 14475,
+            "before_bytes": 0,
+            "files": 1
+          },
+          "index.crates.io-1949cf8c6b5b557f/rand-0.9.2.crate": {
+            "after_bytes": 99930,
+            "before_bytes": 0,
+            "files": 1
+          },
+          "index.crates.io-1949cf8c6b5b557f/rand_core-0.9.3.crate": {
+            "after_bytes": 24543,
+            "before_bytes": 0,
+            "files": 1
+          },
+          "index.crates.io-1949cf8c6b5b557f/rand_xorshift-0.4.0.crate": {
+            "after_bytes": 10262,
+            "before_bytes": 0,
+            "files": 1
+          },
+          "index.crates.io-1949cf8c6b5b557f/shlex-1.3.0.crate": {
+            "after_bytes": 18713,
+            "before_bytes": 0,
+            "files": 1
+          },
+          "index.crates.io-1949cf8c6b5b557f/unwinding-0.2.8.crate": {
+            "after_bytes": 27968,
+            "before_bytes": 0,
+            "files": 1
+          },
+          "index.crates.io-1949cf8c6b5b557f/vex-sdk-0.27.1.crate": {
+            "after_bytes": 11762,
+            "before_bytes": 0,
+            "files": 1
+          },
+          "index.crates.io-1949cf8c6b5b557f/wasi-0.14.4+wasi-0.2.4.crate": {
+            "after_bytes": 145408,
+            "before_bytes": 0,
+            "files": 1
+          },
+          "index.crates.io-1949cf8c6b5b557f/wit-bindgen-0.45.1.crate": {
+            "after_bytes": 60395,
+            "before_bytes": 0,
+            "files": 1
+          }
+        },
+        "files": 14,
+        "names_sha256": "67787638774e9ce98155483358705a59741fa5ed793cbe8da2ca1042fc2e1f08"
+      },
+      "after_bytes": 64096926,
+      "after_files": 371,
+      "before_bytes": 63447550,
+      "before_files": 357,
+      "changed": {
+        "by_package": {},
+        "files": 0,
+        "names_sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
+      },
+      "removed": {
+        "by_package": {},
+        "files": 0,
+        "names_sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
+      }
+    },
+    "index": {
+      "added": {
+        "by_package": {
+          "index.crates.io-1949cf8c6b5b557f/.cache": {
+            "after_bytes": 5148,
+            "before_bytes": 0,
+            "files": 1
+          }
+        },
+        "files": 1,
+        "names_sha256": "61195e287521aa6bccfcd29978cb7b31455daf7dfe25d836b2a6df0bcb02446c"
+      },
+      "after_bytes": 26084753,
+      "after_files": 364,
+      "before_bytes": 26079605,
+      "before_files": 363,
+      "changed": {
+        "by_package": {},
+        "files": 0,
+        "names_sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
+      },
+      "removed": {
+        "by_package": {},
+        "files": 0,
+        "names_sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
+      }
+    },
+    "src": {
+      "added": {
+        "by_package": {
+          "index.crates.io-1949cf8c6b5b557f/cc-1.2.0": {
+            "after_bytes": 428595,
+            "before_bytes": 0,
+            "files": 35
+          },
+          "index.crates.io-1949cf8c6b5b557f/dlmalloc-0.2.11": {
+            "after_bytes": 334955,
+            "before_bytes": 0,
+            "files": 22
+          },
+          "index.crates.io-1949cf8c6b5b557f/fortanix-sgx-abi-0.6.1": {
+            "after_bytes": 46975,
+            "before_bytes": 0,
+            "files": 7
+          },
+          "index.crates.io-1949cf8c6b5b557f/hermit-abi-0.5.2": {
+            "after_bytes": 56536,
+            "before_bytes": 0,
+            "files": 10
+          },
+          "index.crates.io-1949cf8c6b5b557f/moto-rt-0.16.0": {
+            "after_bytes": 105296,
+            "before_bytes": 0,
+            "files": 23
+          },
+          "index.crates.io-1949cf8c6b5b557f/r-efi-alloc-2.1.0": {
+            "after_bytes": 44706,
+            "before_bytes": 0,
+            "files": 15
+          },
+          "index.crates.io-1949cf8c6b5b557f/rand-0.9.2": {
+            "after_bytes": 410824,
+            "before_bytes": 0,
+            "files": 41
+          },
+          "index.crates.io-1949cf8c6b5b557f/rand_core-0.9.3": {
+            "after_bytes": 85350,
+            "before_bytes": 0,
+            "files": 15
+          },
+          "index.crates.io-1949cf8c6b5b557f/rand_xorshift-0.4.0": {
+            "after_bytes": 27964,
+            "before_bytes": 0,
+            "files": 12
+          },
+          "index.crates.io-1949cf8c6b5b557f/shlex-1.3.0": {
+            "after_bytes": 58589,
+            "before_bytes": 0,
+            "files": 13
+          },
+          "index.crates.io-1949cf8c6b5b557f/unwinding-0.2.8": {
+            "after_bytes": 118468,
+            "before_bytes": 0,
+            "files": 38
+          },
+          "index.crates.io-1949cf8c6b5b557f/vex-sdk-0.27.1": {
+            "after_bytes": 53881,
+            "before_bytes": 0,
+            "files": 35
+          },
+          "index.crates.io-1949cf8c6b5b557f/wasi-0.14.4+wasi-0.2.4": {
+            "after_bytes": 1244921,
+            "before_bytes": 0,
+            "files": 65
+          },
+          "index.crates.io-1949cf8c6b5b557f/wit-bindgen-0.45.1": {
+            "after_bytes": 241182,
+            "before_bytes": 0,
+            "files": 36
+          }
+        },
+        "files": 367,
+        "names_sha256": "292ef49505d78fd05cd37261043f6808720bb4a44feed14b29e3c49fc4dec4a7"
+      },
+      "after_bytes": 185551924,
+      "after_files": 7630,
+      "before_bytes": 411378924,
+      "before_files": 16358,
+      "changed": {
+        "by_package": {},
+        "files": 0,
+        "names_sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
+      },
+      "removed": {
+        "by_package": {
+          "index.crates.io-1949cf8c6b5b557f/atomic-waker-1.1.2": {
+            "after_bytes": 0,
+            "before_bytes": 39106,
+            "files": 12
+          },
+          "index.crates.io-1949cf8c6b5b557f/aws-lc-rs-1.18.0": {
+            "after_bytes": 0,
+            "before_bytes": 1216880,
+            "files": 112
+          },
+          "index.crates.io-1949cf8c6b5b557f/aws-lc-sys-0.44.0": {
+            "after_bytes": 0,
+            "before_bytes": 66728739,
+            "files": 2013
+          },
+          "index.crates.io-1949cf8c6b5b557f/axum-0.8.4": {
+            "after_bytes": 0,
+            "before_bytes": 821898,
+            "files": 88
+          },
+          "index.crates.io-1949cf8c6b5b557f/axum-core-0.5.6": {
+            "after_bytes": 0,
+            "before_bytes": 118623,
+            "files": 26
+          },
+          "index.crates.io-1949cf8c6b5b557f/backtrace-0.3.76": {
+            "after_bytes": 0,
+            "before_bytes": 335728,
+            "files": 61
+          },
+          "index.crates.io-1949cf8c6b5b557f/base64-0.22.1": {
+            "after_bytes": 0,
+            "before_bytes": 341989,
+            "files": 39
+          },
+          "index.crates.io-1949cf8c6b5b557f/bumpalo-3.20.3": {
+            "after_bytes": 0,
+            "before_bytes": 424356,
+            "files": 21
+          },
+          "index.crates.io-1949cf8c6b5b557f/cfg_aliases-0.2.2": {
+            "after_bytes": 0,
+            "before_bytes": 22846,
+            "files": 11
+          },
+          "index.crates.io-1949cf8c6b5b557f/chacha20-0.10.2": {
+            "after_bytes": 0,
+            "before_bytes": 158512,
+            "files": 26
+          },
+          "index.crates.io-1949cf8c6b5b557f/cmake-0.1.58": {
+            "after_bytes": 0,
+            "before_bytes": 71514,
+            "files": 15
+          },
+          "index.crates.io-1949cf8c6b5b557f/const-oid-0.10.2": {
+            "after_bytes": 0,
+            "before_bytes": 372678,
+            "files": 23
+          },
+          "index.crates.io-1949cf8c6b5b557f/deranged-0.5.8": {
+            "after_bytes": 0,
+            "before_bytes": 149553,
+            "files": 11
+          },
+          "index.crates.io-1949cf8c6b5b557f/displaydoc-0.2.7": {
+            "after_bytes": 0,
+            "before_bytes": 75032,
+            "files": 26
+          },
+          "index.crates.io-1949cf8c6b5b557f/dunce-1.0.5": {
+            "after_bytes": 0,
+            "before_bytes": 23101,
+            "files": 10
+          },
+          "index.crates.io-1949cf8c6b5b557f/form_urlencoded-1.2.2": {
+            "after_bytes": 0,
+            "before_bytes": 27879,
+            "files": 8
+          },
+          "index.crates.io-1949cf8c6b5b557f/fs_extra-1.3.0": {
+            "after_bytes": 0,
+            "before_bytes": 436270,
+            "files": 13
+          },
+          "index.crates.io-1949cf8c6b5b557f/futures-channel-0.3.34": {
+            "after_bytes": 0,
+            "before_bytes": 141737,
+            "files": 20
+          },
+          "index.crates.io-1949cf8c6b5b557f/futures-core-0.3.34": {
+            "after_bytes": 0,
+            "before_bytes": 46884,
+            "files": 15
+          },
+          "index.crates.io-1949cf8c6b5b557f/futures-task-0.3.34": {
+            "after_bytes": 0,
+            "before_bytes": 40315,
+            "files": 15
+          },
+          "index.crates.io-1949cf8c6b5b557f/futures-util-0.3.34": {
+            "after_bytes": 0,
+            "before_bytes": 879400,
+            "files": 194
+          },
+          "index.crates.io-1949cf8c6b5b557f/getrandom-0.4.3": {
+            "after_bytes": 0,
+            "before_bytes": 184549,
+            "files": 49
+          },
+          "index.crates.io-1949cf8c6b5b557f/http-1.5.0": {
+            "after_bytes": 0,
+            "before_bytes": 520202,
+            "files": 36
+          },
+          "index.crates.io-1949cf8c6b5b557f/http-body-1.1.0": {
+            "after_bytes": 0,
+            "before_bytes": 24228,
+            "files": 12
+          },
+          "index.crates.io-1949cf8c6b5b557f/http-body-util-0.1.5": {
+            "after_bytes": 0,
+            "before_bytes": 85873,
+            "files": 27
+          },
+          "index.crates.io-1949cf8c6b5b557f/httparse-1.10.1": {
+            "after_bytes": 0,
+            "before_bytes": 303731,
+            "files": 26
+          },
+          "index.crates.io-1949cf8c6b5b557f/httpdate-1.0.3": {
+            "after_bytes": 0,
+            "before_bytes": 32930,
+            "files": 12
+          },
+          "index.crates.io-1949cf8c6b5b557f/hyper-1.11.0": {
+            "after_bytes": 0,
+            "before_bytes": 775713,
+            "files": 71
+          },
+          "index.crates.io-1949cf8c6b5b557f/hyper-rustls-0.27.9": {
+            "after_bytes": 0,
+            "before_bytes": 86309,
+            "files": 14
+          },
+          "index.crates.io-1949cf8c6b5b557f/hyper-util-0.1.20": {
+            "after_bytes": 0,
+            "before_bytes": 532476,
+            "files": 62
+          },
+          "index.crates.io-1949cf8c6b5b557f/icu_collections-2.3.0": {
+            "after_bytes": 0,
+            "before_bytes": 691398,
+            "files": 76
+          },
+          "index.crates.io-1949cf8c6b5b557f/icu_locale_core-2.3.0": {
+            "after_bytes": 0,
+            "before_bytes": 417369,
+            "files": 88
+          },
+          "index.crates.io-1949cf8c6b5b557f/icu_normalizer-2.3.0": {
+            "after_bytes": 0,
+            "before_bytes": 3227607,
+            "files": 39
+          },
+          "index.crates.io-1949cf8c6b5b557f/icu_normalizer_data-2.3.0": {
+            "after_bytes": 0,
+            "before_bytes": 418285,
+            "files": 17
+          },
+          "index.crates.io-1949cf8c6b5b557f/icu_properties-2.3.0": {
+            "after_bytes": 0,
+            "before_bytes": 602534,
+            "files": 24
+          },
+          "index.crates.io-1949cf8c6b5b557f/icu_properties_data-2.3.0": {
+            "after_bytes": 0,
+            "before_bytes": 1503245,
+            "files": 147
+          },
+          "index.crates.io-1949cf8c6b5b557f/icu_provider-2.3.1": {
+            "after_bytes": 0,
+            "before_bytes": 232509,
+            "files": 26
+          },
+          "index.crates.io-1949cf8c6b5b557f/idna-1.1.0": {
+            "after_bytes": 0,
+            "before_bytes": 965647,
+            "files": 22
+          },
+          "index.crates.io-1949cf8c6b5b557f/idna_adapter-1.2.2": {
+            "after_bytes": 0,
+            "before_bytes": 34730,
+            "files": 10
+          },
+          "index.crates.io-1949cf8c6b5b557f/io-uring-0.7.14": {
+            "after_bytes": 0,
+            "before_bytes": 866636,
+            "files": 30
+          },
+          "index.crates.io-1949cf8c6b5b557f/jobserver-0.1.35": {
+            "after_bytes": 0,
+            "before_bytes": 104334,
+            "files": 22
+          },
+          "index.crates.io-1949cf8c6b5b557f/js-sys-0.3.104": {
+            "after_bytes": 0,
+            "before_bytes": 854429,
+            "files": 18
+          },
+          "index.crates.io-1949cf8c6b5b557f/jsonwebtoken-10.3.0": {
+            "after_bytes": 0,
+            "before_bytes": 264989,
+            "files": 67
+          },
+          "index.crates.io-1949cf8c6b5b557f/litemap-0.8.3": {
+            "after_bytes": 0,
+            "before_bytes": 160425,
+            "files": 24
+          },
+          "index.crates.io-1949cf8c6b5b557f/lru-slab-0.1.2": {
+            "after_bytes": 0,
+            "before_bytes": 29317,
+            "files": 9
+          },
+          "index.crates.io-1949cf8c6b5b557f/matchit-0.8.4": {
+            "after_bytes": 0,
+            "before_bytes": 160439,
+            "files": 22
+          },
+          "index.crates.io-1949cf8c6b5b557f/mime-0.3.17": {
+            "after_bytes": 0,
+            "before_bytes": 57466,
+            "files": 15
+          },
+          "index.crates.io-1949cf8c6b5b557f/mio-1.2.2": {
+            "after_bytes": 0,
+            "before_bytes": 509402,
+            "files": 72
+          },
+          "index.crates.io-1949cf8c6b5b557f/num-bigint-0.4.8": {
+            "after_bytes": 0,
+            "before_bytes": 521806,
+            "files": 54
+          },
+          "index.crates.io-1949cf8c6b5b557f/num-conv-0.2.2": {
+            "after_bytes": 0,
+            "before_bytes": 24726,
+            "files": 9
+          },
+          "index.crates.io-1949cf8c6b5b557f/num-integer-0.1.47": {
+            "after_bytes": 0,
+            "before_bytes": 112739,
+            "files": 18
+          },
+          "index.crates.io-1949cf8c6b5b557f/pem-3.0.6": {
+            "after_bytes": 0,
+            "before_bytes": 74055,
+            "files": 14
+          },
+          "index.crates.io-1949cf8c6b5b557f/pem-rfc7468-0.7.0": {
+            "after_bytes": 0,
+            "before_bytes": 69988,
+            "files": 25
+          },
+          "index.crates.io-1949cf8c6b5b557f/percent-encoding-2.3.2": {
+            "after_bytes": 0,
+            "before_bytes": 35549,
+            "files": 9
+          },
+          "index.crates.io-1949cf8c6b5b557f/pin-project-lite-0.2.17": {
+            "after_bytes": 0,
+            "before_bytes": 238878,
+            "files": 82
+          },
+          "index.crates.io-1949cf8c6b5b557f/pkg-config-0.3.34": {
+            "after_bytes": 0,
+            "before_bytes": 77058,
+            "files": 17
+          },
+          "index.crates.io-1949cf8c6b5b557f/potential_utf-0.1.6": {
+            "after_bytes": 0,
+            "before_bytes": 36992,
+            "files": 11
+          },
+          "index.crates.io-1949cf8c6b5b557f/powerfmt-0.2.0": {
+            "after_bytes": 0,
+            "before_bytes": 57283,
+            "files": 12
+          },
+          "index.crates.io-1949cf8c6b5b557f/quinn-0.11.11": {
+            "after_bytes": 0,
+            "before_bytes": 337722,
+            "files": 31
+          },
+          "index.crates.io-1949cf8c6b5b557f/quinn-proto-0.11.17": {
+            "after_bytes": 0,
+            "before_bytes": 1100420,
+            "files": 59
+          },
+          "index.crates.io-1949cf8c6b5b557f/quinn-udp-0.5.15": {
+            "after_bytes": 0,
+            "before_bytes": 125982,
+            "files": 17
+          },
+          "index.crates.io-1949cf8c6b5b557f/r-efi-6.0.0": {
+            "after_bytes": 0,
+            "before_bytes": 293765,
+            "files": 70
+          },
+          "index.crates.io-1949cf8c6b5b557f/rand-0.10.2": {
+            "after_bytes": 0,
+            "before_bytes": 433089,
+            "files": 39
+          },
+          "index.crates.io-1949cf8c6b5b557f/rand_core-0.10.1": {
+            "after_bytes": 0,
+            "before_bytes": 74496,
+            "files": 20
+          },
+          "index.crates.io-1949cf8c6b5b557f/rand_pcg-0.10.2": {
+            "after_bytes": 0,
+            "before_bytes": 59582,
+            "files": 18
+          },
+          "index.crates.io-1949cf8c6b5b557f/reqwest-0.12.23": {
+            "after_bytes": 0,
+            "before_bytes": 752053,
+            "files": 49
+          },
+          "index.crates.io-1949cf8c6b5b557f/ring-0.17.14": {
+            "after_bytes": 0,
+            "before_bytes": 7757123,
+            "files": 392
+          },
+          "index.crates.io-1949cf8c6b5b557f/rustc-demangle-0.1.28": {
+            "after_bytes": 0,
+            "before_bytes": 157772,
+            "files": 17
+          },
+          "index.crates.io-1949cf8c6b5b557f/rustls-0.23.43": {
+            "after_bytes": 0,
+            "before_bytes": 1750182,
+            "files": 120
+          },
+          "index.crates.io-1949cf8c6b5b557f/rustls-pki-types-1.15.1": {
+            "after_bytes": 0,
+            "before_bytes": 166636,
+            "files": 33
+          },
+          "index.crates.io-1949cf8c6b5b557f/rustls-webpki-0.103.15": {
+            "after_bytes": 0,
+            "before_bytes": 414742,
+            "files": 29
+          },
+          "index.crates.io-1949cf8c6b5b557f/serde_path_to_error-0.1.20": {
+            "after_bytes": 0,
+            "before_bytes": 106364,
+            "files": 18
+          },
+          "index.crates.io-1949cf8c6b5b557f/serde_urlencoded-0.7.1": {
+            "after_bytes": 0,
+            "before_bytes": 60092,
+            "files": 19
+          },
+          "index.crates.io-1949cf8c6b5b557f/signal-hook-0.4.4": {
+            "after_bytes": 0,
+            "before_bytes": 151495,
+            "files": 27
+          },
+          "index.crates.io-1949cf8c6b5b557f/signal-hook-registry-1.4.8": {
+            "after_bytes": 0,
+            "before_bytes": 68458,
+            "files": 12
+          },
+          "index.crates.io-1949cf8c6b5b557f/simple_asn1-0.6.4": {
+            "after_bytes": 0,
+            "before_bytes": 69901,
+            "files": 13
+          },
+          "index.crates.io-1949cf8c6b5b557f/slab-0.4.12": {
+            "after_bytes": 0,
+            "before_bytes": 80407,
+            "files": 14
+          },
+          "index.crates.io-1949cf8c6b5b557f/socket2-0.6.5": {
+            "after_bytes": 0,
+            "before_bytes": 301038,
+            "files": 14
+          },
+          "index.crates.io-1949cf8c6b5b557f/stable_deref_trait-1.2.1": {
+            "after_bytes": 0,
+            "before_bytes": 24355,
+            "files": 10
+          },
+          "index.crates.io-1949cf8c6b5b557f/sync_wrapper-1.0.2": {
+            "after_bytes": 0,
+            "before_bytes": 20806,
+            "files": 8
+          },
+          "index.crates.io-1949cf8c6b5b557f/synstructure-0.13.2": {
+            "after_bytes": 0,
+            "before_bytes": 101430,
+            "files": 9
+          },
+          "index.crates.io-1949cf8c6b5b557f/time-0.3.55": {
+            "after_bytes": 0,
+            "before_bytes": 1864806,
+            "files": 179
+          },
+          "index.crates.io-1949cf8c6b5b557f/time-core-0.1.9": {
+            "after_bytes": 0,
+            "before_bytes": 33935,
+            "files": 11
+          },
+          "index.crates.io-1949cf8c6b5b557f/time-macros-0.2.32": {
+            "after_bytes": 0,
+            "before_bytes": 159922,
+            "files": 28
+          },
+          "index.crates.io-1949cf8c6b5b557f/tinystr-0.8.4": {
+            "after_bytes": 0,
+            "before_bytes": 115742,
+            "files": 23
+          },
+          "index.crates.io-1949cf8c6b5b557f/tinyvec-1.12.0": {
+            "after_bytes": 0,
+            "before_bytes": 251131,
+            "files": 27
+          },
+          "index.crates.io-1949cf8c6b5b557f/tinyvec_macros-0.1.1": {
+            "after_bytes": 0,
+            "before_bytes": 14987,
+            "files": 9
+          },
+          "index.crates.io-1949cf8c6b5b557f/tokio-1.47.1": {
+            "after_bytes": 0,
+            "before_bytes": 4285753,
+            "files": 517
+          },
+          "index.crates.io-1949cf8c6b5b557f/tokio-macros-2.5.0": {
+            "after_bytes": 0,
+            "before_bytes": 52931,
+            "files": 10
+          },
+          "index.crates.io-1949cf8c6b5b557f/tokio-rustls-0.26.4": {
+            "after_bytes": 0,
+            "before_bytes": 140354,
+            "files": 23
+          },
+          "index.crates.io-1949cf8c6b5b557f/tower-0.5.2": {
+            "after_bytes": 0,
+            "before_bytes": 492073,
+            "files": 128
+          },
+          "index.crates.io-1949cf8c6b5b557f/tower-http-0.6.11": {
+            "after_bytes": 0,
+            "before_bytes": 885869,
+            "files": 115
+          },
+          "index.crates.io-1949cf8c6b5b557f/tower-layer-0.3.3": {
+            "after_bytes": 0,
+            "before_bytes": 24147,
+            "files": 12
+          },
+          "index.crates.io-1949cf8c6b5b557f/tower-service-0.3.3": {
+            "after_bytes": 0,
+            "before_bytes": 20445,
+            "files": 8
+          },
+          "index.crates.io-1949cf8c6b5b557f/tracing-0.1.44": {
+            "after_bytes": 0,
+            "before_bytes": 9818210,
+            "files": 94
+          },
+          "index.crates.io-1949cf8c6b5b557f/tracing-core-0.1.36": {
+            "after_bytes": 0,
+            "before_bytes": 255345,
+            "files": 29
+          },
+          "index.crates.io-1949cf8c6b5b557f/try-lock-0.2.5": {
+            "after_bytes": 0,
+            "before_bytes": 12220,
+            "files": 9
+          },
+          "index.crates.io-1949cf8c6b5b557f/untrusted-0.7.1": {
+            "after_bytes": 0,
+            "before_bytes": 23728,
+            "files": 12
+          },
+          "index.crates.io-1949cf8c6b5b557f/untrusted-0.9.0": {
+            "after_bytes": 0,
+            "before_bytes": 43638,
+            "files": 20
+          },
+          "index.crates.io-1949cf8c6b5b557f/url-2.5.8": {
+            "after_bytes": 0,
+            "before_bytes": 591779,
+            "files": 20
+          },
+          "index.crates.io-1949cf8c6b5b557f/utf8_iter-1.0.4": {
+            "after_bytes": 0,
+            "before_bytes": 40424,
+            "files": 12
+          },
+          "index.crates.io-1949cf8c6b5b557f/want-0.3.1": {
+            "after_bytes": 0,
+            "before_bytes": 20462,
+            "files": 9
+          },
+          "index.crates.io-1949cf8c6b5b557f/wasip2-1.0.4+wasi-0.2.12": {
+            "after_bytes": 0,
+            "before_bytes": 1213760,
+            "files": 29
+          },
+          "index.crates.io-1949cf8c6b5b557f/wasm-bindgen-0.2.127": {
+            "after_bytes": 0,
+            "before_bytes": 286111,
+            "files": 27
+          },
+          "index.crates.io-1949cf8c6b5b557f/wasm-bindgen-futures-0.4.77": {
+            "after_bytes": 0,
+            "before_bytes": 22490,
+            "files": 9
+          },
+          "index.crates.io-1949cf8c6b5b557f/wasm-bindgen-macro-0.2.127": {
+            "after_bytes": 0,
+            "before_bytes": 26181,
+            "files": 10
+          },
+          "index.crates.io-1949cf8c6b5b557f/wasm-bindgen-macro-support-0.2.127": {
+            "after_bytes": 0,
+            "before_bytes": 389478,
+            "files": 15
+          },
+          "index.crates.io-1949cf8c6b5b557f/wasm-bindgen-shared-0.2.127": {
+            "after_bytes": 0,
+            "before_bytes": 33116,
+            "files": 12
+          },
+          "index.crates.io-1949cf8c6b5b557f/web-sys-0.3.104": {
+            "after_bytes": 0,
+            "before_bytes": 11227718,
+            "files": 1734
+          },
+          "index.crates.io-1949cf8c6b5b557f/web-time-1.1.0": {
+            "after_bytes": 0,
+            "before_bytes": 65597,
+            "files": 16
+          },
+          "index.crates.io-1949cf8c6b5b557f/webpki-roots-1.0.9": {
+            "after_bytes": 0,
+            "before_bytes": 447224,
+            "files": 13
+          },
+          "index.crates.io-1949cf8c6b5b557f/winapi-util-0.1.11": {
+            "after_bytes": 0,
+            "before_bytes": 45518,
+            "files": 18
+          },
+          "index.crates.io-1949cf8c6b5b557f/windows-sys-0.52.0": {
+            "after_bytes": 0,
+            "before_bytes": 21534193,
+            "files": 242
+          },
+          "index.crates.io-1949cf8c6b5b557f/windows-sys-0.59.0": {
+            "after_bytes": 0,
+            "before_bytes": 17151111,
+            "files": 253
+          },
+          "index.crates.io-1949cf8c6b5b557f/windows-targets-0.52.6": {
+            "after_bytes": 0,
+            "before_bytes": 18996,
+            "files": 8
+          },
+          "index.crates.io-1949cf8c6b5b557f/windows_aarch64_gnullvm-0.52.6": {
+            "after_bytes": 0,
+            "before_bytes": 3892199,
+            "files": 9
+          },
+          "index.crates.io-1949cf8c6b5b557f/windows_aarch64_msvc-0.52.6": {
+            "after_bytes": 0,
+            "before_bytes": 5225011,
+            "files": 9
+          },
+          "index.crates.io-1949cf8c6b5b557f/windows_i686_gnu-0.52.6": {
+            "after_bytes": 0,
+            "before_bytes": 13219093,
+            "files": 9
+          },
+          "index.crates.io-1949cf8c6b5b557f/windows_i686_gnullvm-0.52.6": {
+            "after_bytes": 0,
+            "before_bytes": 4099739,
+            "files": 9
+          },
+          "index.crates.io-1949cf8c6b5b557f/windows_i686_msvc-0.52.6": {
+            "after_bytes": 0,
+            "before_bytes": 5572861,
+            "files": 9
+          },
+          "index.crates.io-1949cf8c6b5b557f/windows_x86_64_gnu-0.52.6": {
+            "after_bytes": 0,
+            "before_bytes": 12709801,
+            "files": 9
+          },
+          "index.crates.io-1949cf8c6b5b557f/windows_x86_64_gnullvm-0.52.6": {
+            "after_bytes": 0,
+            "before_bytes": 3892195,
+            "files": 9
+          },
+          "index.crates.io-1949cf8c6b5b557f/windows_x86_64_msvc-0.52.6": {
+            "after_bytes": 0,
+            "before_bytes": 5225007,
+            "files": 9
+          },
+          "index.crates.io-1949cf8c6b5b557f/winx-0.36.4": {
+            "after_bytes": 0,
+            "before_bytes": 44849,
+            "files": 15
+          },
+          "index.crates.io-1949cf8c6b5b557f/wit-bindgen-0.57.1": {
+            "after_bytes": 0,
+            "before_bytes": 283188,
+            "files": 43
+          },
+          "index.crates.io-1949cf8c6b5b557f/writeable-0.6.4": {
+            "after_bytes": 0,
+            "before_bytes": 132898,
+            "files": 22
+          },
+          "index.crates.io-1949cf8c6b5b557f/yoke-0.8.3": {
+            "after_bytes": 0,
+            "before_bytes": 146378,
+            "files": 19
+          },
+          "index.crates.io-1949cf8c6b5b557f/yoke-derive-0.8.2": {
+            "after_bytes": 0,
+            "before_bytes": 61548,
+            "files": 11
+          },
+          "index.crates.io-1949cf8c6b5b557f/zerofrom-0.1.8": {
+            "after_bytes": 0,
+            "before_bytes": 17075,
+            "files": 10
+          },
+          "index.crates.io-1949cf8c6b5b557f/zerofrom-derive-0.1.7": {
+            "after_bytes": 0,
+            "before_bytes": 26841,
+            "files": 10
+          },
+          "index.crates.io-1949cf8c6b5b557f/zerotrie-0.2.5": {
+            "after_bytes": 0,
+            "before_bytes": 415479,
+            "files": 40
+          },
+          "index.crates.io-1949cf8c6b5b557f/zerovec-0.11.8": {
+            "after_bytes": 0,
+            "before_bytes": 634431,
+            "files": 68
+          },
+          "index.crates.io-1949cf8c6b5b557f/zerovec-derive-0.11.6": {
+            "after_bytes": 0,
+            "before_bytes": 100459,
+            "files": 19
+          }
+        },
+        "files": 9095,
+        "names_sha256": "22f7d27cf831e214375ee0eb0dfd66e75796574c14c8030f9701c64f04581a61"
+      }
+    }
+  }
+}

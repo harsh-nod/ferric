@@ -6,7 +6,16 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Latest: [all seven compiler tools passed their MI350 loader audit](../qualification/guarded-mlp-compiler-tools-v1/README.md).
+Latest: [locked offline dependencies are prepared for guarded MLP lowering](../qualification/guarded-mlp-dependency-preparation-v1/README.md).
+Vendoring passed for 145 packages with unchanged kernel sources and lockfiles.
+A separate fetch command downloaded missing crates but failed its preservation
+check after older extracted cache packages disappeared. All 133 affected
+packages were restored from unchanged archives with exact original content
+hashes and no overwrites; that failed attempt remains retained as failed.
+Four cache fixtures and eight restoration fixtures passed on MI350. This is
+preparation only, not compiler emission, GPU execution or model acceptance.
+
+Previously, [all seven compiler tools passed their MI350 loader audit](../qualification/guarded-mlp-compiler-tools-v1/README.md).
 All fourteen inspection commands completed naturally with clean integrity
 postchecks. The earlier loader-path failure is retained, and about 1.05 GB of
 owned failed-build caches was reclaimed without deleting sources or evidence.

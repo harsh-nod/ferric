@@ -1,0 +1,8 @@
+{
+  "controller_sha256": "b9b5c418510bc9b80c10e37bf834d8349847b0cd7d0f89a5a589217a5d02170c",
+  "elapsed_seconds": 0.05678688490297645,
+  "exit_code": 0,
+  "stdout_sha256": "c244885b64d47c389df8f38747d10b54a7e2e878b8c4b06f846aadfdba202dbc",
+  "test_count": 8,
+  "test_source_sha256": "8355b808a6fa2fdb18464c3da2be12e995b7cf53a9e33e31e5bfde8c1a8df110"
+}

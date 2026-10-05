@@ -1,0 +1,13 @@
+test_duplicate_extra_missing_and_wrong_body_refused (__main__.RestoreTests.test_duplicate_extra_missing_and_wrong_body_refused) ... ok
+test_exact_archive_and_independent_marker_stage_without_touching_destination (__main__.RestoreTests.test_exact_archive_and_independent_marker_stage_without_touching_destination) ... ok
+test_marker_and_archive_pin_mismatch_refused (__main__.RestoreTests.test_marker_and_archive_pin_mismatch_refused) ... ok
+test_no_replace_never_overwrites_existing_package (__main__.RestoreTests.test_no_replace_never_overwrites_existing_package) ... ok
+test_path_traversal_links_special_members_and_wrong_root_refused (__main__.RestoreTests.test_path_traversal_links_special_members_and_wrong_root_refused) ... ok
+test_relative_path_grammar_rejects_normalization_and_empty_paths (__main__.RestoreTests.test_relative_path_grammar_rejects_normalization_and_empty_paths) ... ok
+test_staged_extra_body_is_refused_before_commit (__main__.RestoreTests.test_staged_extra_body_is_refused_before_commit) ... ok
+test_whole_missing_package_only_and_unchanged_archives (__main__.RestoreTests.test_whole_missing_package_only_and_unchanged_archives) ... ok
+
+----------------------------------------------------------------------
+Ran 8 tests in 0.007s
+
+OK

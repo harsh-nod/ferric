@@ -1,0 +1,249 @@
+{
+  "compiler_invocation": false,
+  "fetch_cache_tests": 4,
+  "fetch_command_exit_code": 0,
+  "fetch_controller_passed": false,
+  "gpu_execution": false,
+  "host": "smci350-rck-g03-b19-03",
+  "numerical_acceptance": false,
+  "performance_claim": false,
+  "production_authority": false,
+  "registry_delta": {
+    "cache": {
+      "added": 14,
+      "changed": 0,
+      "removed": 0
+    },
+    "index": {
+      "added": 1,
+      "changed": 0,
+      "removed": 0
+    },
+    "src": {
+      "added": 367,
+      "changed": 0,
+      "removed": 9095
+    }
+  },
+  "restoration_passed": true,
+  "restoration_policy_tests": 8,
+  "restored_bytes": 229085242,
+  "restored_files": 9095,
+  "restored_packages": 133,
+  "retained": {
+    "restoration/guarded-mlp-registry-restore-fixtures-v228-v1/fixture.json": {
+      "bytes": 352,
+      "sha256": "76404589b4411d4319b8d3de4ac1609d9e247c87b2d4a08dcf09e302d1aaa1f2"
+    },
+    "restoration/guarded-mlp-registry-restore-fixtures-v228-v1/fixture.stdout": {
+      "bytes": 1260,
+      "sha256": "c244885b64d47c389df8f38747d10b54a7e2e878b8c4b06f846aadfdba202dbc"
+    },
+    "restoration/guarded-mlp-registry-restore-fixtures-v228-v1/restore_registry.py": {
+      "bytes": 16135,
+      "sha256": "b9b5c418510bc9b80c10e37bf834d8349847b0cd7d0f89a5a589217a5d02170c"
+    },
+    "restoration/guarded-mlp-registry-restore-fixtures-v228-v1/test_restore_registry.py": {
+      "bytes": 6237,
+      "sha256": "8355b808a6fa2fdb18464c3da2be12e995b7cf53a9e33e31e5bfde8c1a8df110"
+    },
+    "restoration/guarded-mlp-registry-restore-v228-v1/complete.json": {
+      "bytes": 55106,
+      "sha256": "de1ce8658d0325aac2c20fe0c86afc78eb65a68189a897a27ce7d62ad065d1bb"
+    },
+    "restoration/manifest.json": {
+      "bytes": 872,
+      "sha256": "2c8da2e57a72758609667738ec839595acce9aa08c2842a46f7ecff3c364dc62"
+    },
+    "retained/export-manifest.json": {
+      "bytes": 13900,
+      "sha256": "e389da19ed3e346f119d40996f1012d8feaa2872729c4c36c44632d8ac073c51"
+    },
+    "retained/export_guarded_mlp_preparation_v228_v1.py": {
+      "bytes": 13959,
+      "sha256": "a37670713eb9811543773e9fa401da14567a317b2e8cb10f3942e271da1914c2"
+    },
+    "retained/guarded-mlp-cache-restoration-preflight-v228-v1.json": {
+      "bytes": 425,
+      "sha256": "4e5b764dc89fa8241f8c8615f548ae190f32cc5486ae0f399ef74b11115ad855"
+    },
+    "retained/guarded-mlp-fetch-v228-v1/evidence/cpu-sources-after.json": {
+      "bytes": 1966896,
+      "sha256": "01704c7004659a008ae52f1768520f1ed2f0d619110d48ecde458ce5a7eebb78"
+    },
+    "retained/guarded-mlp-fetch-v228-v1/evidence/cpu-sources-before.json": {
+      "bytes": 1966896,
+      "sha256": "01704c7004659a008ae52f1768520f1ed2f0d619110d48ecde458ce5a7eebb78"
+    },
+    "retained/guarded-mlp-fetch-v228-v1/evidence/failed.json": {
+      "bytes": 16491,
+      "sha256": "350a1c8b8b347b5aec5008b1b567ce76585bef1cc15e7aba2b362ef973420419"
+    },
+    "retained/guarded-mlp-fetch-v228-v1/evidence/fetch.command.json": {
+      "bytes": 1600,
+      "sha256": "4e8659ec388417647e9677553a14da48befb5cfd486cc5c717c6df9d58a0f425"
+    },
+    "retained/guarded-mlp-fetch-v228-v1/evidence/fetch.result.json": {
+      "bytes": 1475,
+      "sha256": "05dc280fa485dd14eb1dc4c2c1e3144242eb23a1c900f4daaf2aceb9dcf2f669"
+    },
+    "retained/guarded-mlp-fetch-v228-v1/evidence/fetch.started.json": {
+      "bytes": 445,
+      "sha256": "dc266e65fd5c9c4747aa5371a82ac1823ad2652eb8b54c5a334000ba8e7a2036"
+    },
+    "retained/guarded-mlp-fetch-v228-v1/evidence/fetch.stderr": {
+      "bytes": 479,
+      "sha256": "6fe68a4123c4dc2e2da9f5660badc45811173df038aad5e4a9150f944b616f92"
+    },
+    "retained/guarded-mlp-fetch-v228-v1/evidence/fetch.stdout": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "retained/guarded-mlp-fetch-v228-v1/evidence/registry-after.json": {
+      "bytes": 2626519,
+      "sha256": "123186a62c7fa39957e19dda57f6c398bf41ea1572bd6a55e81423d32ecd071b"
+    },
+    "retained/guarded-mlp-fetch-v228-v1/evidence/registry-before.json": {
+      "bytes": 5614368,
+      "sha256": "633a42c75bdbb4a510a975da58c0f804390b2560bd734bb6ce65dc11da872eea"
+    },
+    "retained/guarded-mlp-fetch-v228-v1/evidence/rust-src-after.json": {
+      "bytes": 727700,
+      "sha256": "a594263b9120701b37fd587b045246339b3ee619599b240e274aad73bb1821f1"
+    },
+    "retained/guarded-mlp-fetch-v228-v1/evidence/rust-src-before.json": {
+      "bytes": 727700,
+      "sha256": "a594263b9120701b37fd587b045246339b3ee619599b240e274aad73bb1821f1"
+    },
+    "retained/guarded-mlp-fetch-v228-v1/fixture.json": {
+      "bytes": 256,
+      "sha256": "cfc64c70c8cfedb384e484a513b0e95b7602c147f5cc682b06fa7da2e4fd2e32"
+    },
+    "retained/guarded-mlp-fetch-v228-v1/fixture.stdout": {
+      "bytes": 684,
+      "sha256": "a701f80ed8e2902862385622b0d9a877cbe83bab71e2bf2afb95bde091adc388"
+    },
+    "retained/guarded-mlp-fetch-v228-v1/run_fetch.py": {
+      "bytes": 21125,
+      "sha256": "4a52b1e73055978dbc992227c69115e257f4c638bd5cc01dcfeafa1e505a9336"
+    },
+    "retained/guarded-mlp-fetch-v228-v1/test_fetch_cache.py": {
+      "bytes": 2636,
+      "sha256": "8c53196aefdcd9345b360200f64311eefb0eacbdc7c4dd4b0f883734375c317b"
+    },
+    "retained/guarded-mlp-vendor-v228-v1/evidence/cpu-sources-after.json": {
+      "bytes": 1966896,
+      "sha256": "01704c7004659a008ae52f1768520f1ed2f0d619110d48ecde458ce5a7eebb78"
+    },
+    "retained/guarded-mlp-vendor-v228-v1/evidence/cpu-sources-before.json": {
+      "bytes": 1966896,
+      "sha256": "01704c7004659a008ae52f1768520f1ed2f0d619110d48ecde458ce5a7eebb78"
+    },
+    "retained/guarded-mlp-vendor-v228-v1/evidence/failed.json": {
+      "bytes": 15070,
+      "sha256": "254428ec279074de41a85da4b2585b40177b435ec04a17a06a88a5de8544179d"
+    },
+    "retained/guarded-mlp-vendor-v228-v1/evidence/rust-src-after.json": {
+      "bytes": 727700,
+      "sha256": "a594263b9120701b37fd587b045246339b3ee619599b240e274aad73bb1821f1"
+    },
+    "retained/guarded-mlp-vendor-v228-v1/evidence/rust-src-before.json": {
+      "bytes": 727700,
+      "sha256": "a594263b9120701b37fd587b045246339b3ee619599b240e274aad73bb1821f1"
+    },
+    "retained/guarded-mlp-vendor-v228-v1/evidence/vendor.command.json": {
+      "bytes": 1847,
+      "sha256": "9780a3dc18f17d2fc48b3e41d79e2c6e01ded51cb24f884276db6189d58ef310"
+    },
+    "retained/guarded-mlp-vendor-v228-v1/evidence/vendor.result.json": {
+      "bytes": 1789,
+      "sha256": "fa21dbaf0c331d3ba90e21102a2b59974ba191c045d164564e5bd84c9be682dd"
+    },
+    "retained/guarded-mlp-vendor-v228-v1/evidence/vendor.started.json": {
+      "bytes": 750,
+      "sha256": "0e6996fdf2dd9d4ce6d74f5312e0dd112eb1d1b6d4de1b06120f49081dffce25"
+    },
+    "retained/guarded-mlp-vendor-v228-v1/evidence/vendor.stderr": {
+      "bytes": 601,
+      "sha256": "8d967afcf76d0f426fa837752750e54ae26a4e48d8d33c03760256f2305d92c7"
+    },
+    "retained/guarded-mlp-vendor-v228-v1/evidence/vendor.stdout": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "retained/guarded-mlp-vendor-v228-v1/run_vendor.py": {
+      "bytes": 18203,
+      "sha256": "ef6e27eb2597f1dbb1e7f5ee494f995bee92412dd1a91729fc49ab8f7bbe88f3"
+    },
+    "retained/guarded-mlp-vendor-v228-v2/evidence/complete.json": {
+      "bytes": 16064,
+      "sha256": "756118679d611c788235f3757d375b7564d09af3ec33ea0845f4bb34553fd7b6"
+    },
+    "retained/guarded-mlp-vendor-v228-v2/evidence/cpu-sources-after.json": {
+      "bytes": 1966896,
+      "sha256": "01704c7004659a008ae52f1768520f1ed2f0d619110d48ecde458ce5a7eebb78"
+    },
+    "retained/guarded-mlp-vendor-v228-v2/evidence/cpu-sources-before.json": {
+      "bytes": 1966896,
+      "sha256": "01704c7004659a008ae52f1768520f1ed2f0d619110d48ecde458ce5a7eebb78"
+    },
+    "retained/guarded-mlp-vendor-v228-v2/evidence/rust-src-after.json": {
+      "bytes": 727700,
+      "sha256": "a594263b9120701b37fd587b045246339b3ee619599b240e274aad73bb1821f1"
+    },
+    "retained/guarded-mlp-vendor-v228-v2/evidence/rust-src-before.json": {
+      "bytes": 727700,
+      "sha256": "a594263b9120701b37fd587b045246339b3ee619599b240e274aad73bb1821f1"
+    },
+    "retained/guarded-mlp-vendor-v228-v2/evidence/vendor-files.json": {
+      "bytes": 2002563,
+      "sha256": "ac3bf725aeb2997a65e7a5378d1c1eaba1e6eda0b140386493c32e9bf5163576"
+    },
+    "retained/guarded-mlp-vendor-v228-v2/evidence/vendor.command.json": {
+      "bytes": 1847,
+      "sha256": "2e0add320c1028df4cbc4eb0546df36c35f223951c0d4095613055b0c1613932"
+    },
+    "retained/guarded-mlp-vendor-v228-v2/evidence/vendor.result.json": {
+      "bytes": 1791,
+      "sha256": "9ce7df420ccb7eed620a882be77579f2bdf3f98501cb38ae35688b322470e02e"
+    },
+    "retained/guarded-mlp-vendor-v228-v2/evidence/vendor.started.json": {
+      "bytes": 750,
+      "sha256": "7a351ecd956ea3ee0b62f0bb23c9616d50d032832f2a6c88b1d34428164b61a3"
+    },
+    "retained/guarded-mlp-vendor-v228-v2/evidence/vendor.stderr": {
+      "bytes": 36407,
+      "sha256": "a99fd37c74fe13f80dbb2679fc88027af3b3170682026a32a126dc534e28b723"
+    },
+    "retained/guarded-mlp-vendor-v228-v2/evidence/vendor.stdout": {
+      "bytes": 434,
+      "sha256": "321cc9a1b3fed03e27859fbbe0cf0a8e9a71a06626dbfbc063e2bf0308b7d1a3"
+    },
+    "retained/guarded-mlp-vendor-v228-v2/run_vendor.py": {
+      "bytes": 18203,
+      "sha256": "2e99310a963700289e7690db36d57f0b07dd33cd0460a5255c104391db81453f"
+    },
+    "retained/registry-delta-summary.json": {
+      "bytes": 29573,
+      "sha256": "b6502e9fe404ac4b1d24c86c0217979c5f4de07e356554dc7b8e02adb7e07bbe"
+    }
+  },
+  "schema": "ferric-guarded-mlp-dependency-preparation-summary-v1",
+  "vendor_bytes": 173356107,
+  "vendor_files": 6352,
+  "vendor_git_sources": {
+    "crates-io": {
+      "replace-with": "vendored-sources"
+    },
+    "git+https://github.com/harsh-nod/pliron.git?rev=161c385576d45d4e634ba179fa93a545b91124e6": {
+      "git": "https://github.com/harsh-nod/pliron.git",
+      "replace-with": "vendored-sources",
+      "rev": "161c385576d45d4e634ba179fa93a545b91124e6"
+    },
+    "vendored-sources": {
+      "directory": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-vendor-v228-v2/vendor"
+    }
+  },
+  "vendor_packages": 145,
+  "vendor_passed": true
+}

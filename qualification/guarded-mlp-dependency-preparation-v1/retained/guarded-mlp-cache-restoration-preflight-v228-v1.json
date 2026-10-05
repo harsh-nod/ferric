@@ -1,0 +1,17 @@
+{
+  "cache_written": false,
+  "counts": {
+    "markers": 133,
+    "packages": 133,
+    "tar_bytes": 229084311,
+    "tar_files": 8962
+  },
+  "error_count": 0,
+  "errors": [],
+  "marker_donor": {
+    "bytes": 7,
+    "path": "/home/harmenon/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/addr2line-0.25.1/.cargo-ok",
+    "sha256": "afbf9d0f3560b0fd7795e81c42a0a79ee6b6fc67e064f77826aee642cad28d91"
+  },
+  "passed": true
+}
