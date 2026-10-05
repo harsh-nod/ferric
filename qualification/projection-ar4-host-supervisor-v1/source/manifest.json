@@ -1,0 +1,121 @@
+{
+  "schema": "ferric-p228-projection-ar4-host-observation-gpu-package-v1",
+  "pure_tests": 91,
+  "test_census": {
+    "test_decode_validation.py": 17,
+    "test_host_validation.py": 8,
+    "test_intake.py": 16,
+    "test_linked_admission.py": 15,
+    "test_observer_cpu.py": 8,
+    "test_rope_admission.py": 7,
+    "test_run.py": 12,
+    "test_silu_admission.py": 8
+  },
+  "files": [
+    {
+      "path": "INTAKE.md",
+      "bytes": 3318,
+      "sha256": "43725d40e7e4358964d43d1dc465dc06aef8bc2e3259a6d42e3a21c73f9d314c"
+    },
+    {
+      "path": "README.md",
+      "bytes": 8468,
+      "sha256": "a7d47801f9f6359691ef87dd75a573a60e6b0c01f988ca2a5c22e25d077cae7b"
+    },
+    {
+      "path": "decode_validation.py",
+      "bytes": 20422,
+      "sha256": "0eb96d4ac5e10e7f6ac10b018692c56f969286949681be336cb6040d56f01422"
+    },
+    {
+      "path": "host_validation.py",
+      "bytes": 9757,
+      "sha256": "7682933dda778258742914b84584562a2236fca34a128400cfc5bb6dfa9e3a11"
+    },
+    {
+      "path": "intake.py",
+      "bytes": 74230,
+      "sha256": "b88dc2cea51aaca1d22b428f6ca53bcb132ebde78c37b7ad4c9044e99fb5733a"
+    },
+    {
+      "path": "layer_validation.py",
+      "bytes": 16186,
+      "sha256": "757c077979b7ee02d4c0e7d222e75292cd9d417927f84ae9a8134344f8e217b9"
+    },
+    {
+      "path": "observer_cpu.py",
+      "bytes": 9772,
+      "sha256": "ac69404cec3d51d733daeb81dda3f51947c4c0a8065c7644946b8e4238ea4a72"
+    },
+    {
+      "path": "prefix_contracts.py",
+      "bytes": 13306,
+      "sha256": "694be9d199cd92b2d11ff4fe8401ad3728497bd8846b5d6924311330f3d9de1a"
+    },
+    {
+      "path": "run.py",
+      "bytes": 16155,
+      "sha256": "1e41d53ae0a1708d6207ff045b04e791a295534ef9be6948384a2c76473d04b5"
+    },
+    {
+      "path": "run_projection_ar4_host_observation_gpu_pure_p228_v1.py",
+      "bytes": 8504,
+      "sha256": "f9e38e0793bb4f2f5d285d29ef8df817d83cf67f66207153c353c161a2dfa6e2"
+    },
+    {
+      "path": "run_row_facts_v2.py",
+      "bytes": 12424,
+      "sha256": "244c12f62c8a439aa01b44380fc464008b94006bc919201c8d510c64177fc820"
+    },
+    {
+      "path": "smoke_validation.py",
+      "bytes": 14980,
+      "sha256": "9bf460451e722452da9c49168c730615d32e9b73b200c579f003e9e45238ea26"
+    },
+    {
+      "path": "stage_core.py",
+      "bytes": 12074,
+      "sha256": "7e3d64e80e66bacbbba05ac3236189249949bb95ea3f717150822cf45740eec2"
+    },
+    {
+      "path": "test_decode_validation.py",
+      "bytes": 18459,
+      "sha256": "f36d5a8cc321cb3df26049a5941ffd52e0ebe401213cce9e03cc7fd987c3c253"
+    },
+    {
+      "path": "test_host_validation.py",
+      "bytes": 8680,
+      "sha256": "10899d67581aa5efa94066a38b634b9437590e0d27b072451e089f4d098585e2"
+    },
+    {
+      "path": "test_intake.py",
+      "bytes": 16447,
+      "sha256": "f1524fc7afad0d96aa6e968fc43cd603cbf956e0de3bcc3a1f457c57bca19d5a"
+    },
+    {
+      "path": "test_linked_admission.py",
+      "bytes": 12334,
+      "sha256": "c6ab306043e6a333d807f8aced9994381be5a823790f367968e494a12866d98f"
+    },
+    {
+      "path": "test_observer_cpu.py",
+      "bytes": 7343,
+      "sha256": "cceefb3d440df4042218eafba2290acb0b9e8396a5ae77332ae5dce0d1cc3f2e"
+    },
+    {
+      "path": "test_rope_admission.py",
+      "bytes": 14278,
+      "sha256": "0abb9c4a03eec3f637d7a86e77bf16d6872bc86f00e80e135f0be4f75cf1c363"
+    },
+    {
+      "path": "test_run.py",
+      "bytes": 15502,
+      "sha256": "08a756d25d0082b452761260e79ffc6eee7f57039eb1f78e6a3f9bf5407e021b"
+    },
+    {
+      "path": "test_silu_admission.py",
+      "bytes": 7907,
+      "sha256": "224e3d83ab56d62c0fc69b6e0d07e2baaa5423596d6013604a8dd64c499f72be"
+    }
+  ]
+}

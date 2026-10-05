@@ -6,7 +6,14 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Latest: an [exact integer QKV audit completed on MI350](../qualification/layer0-exact-dot-v1/README.md).
+Latest: the [projection AR4 host-observation supervisor passed 91 policy tests on MI350](../qualification/projection-ar4-host-supervisor-v1/README.md).
+There were no failures, errors or skips, and the tested source snapshots are
+unchanged. The new validator binds the stdout wrapper, native summary and
+host-counter sidecar while retaining the existing image, lifecycle and audit
+checks. This is synthetic CPU qualification of the Python supervisor only;
+it is not a new Rust, GPU, numerical or performance result.
+
+Previously, an [exact integer QKV audit completed on MI350](../qualification/layer0-exact-dot-v1/README.md).
 All 6,144 retained layer-zero native QKV words match the once-rounded exact
 BF16 dot products; the genuine framework matches 6,143. The previously
 flagged Q row 168 is closer to the exact value in Ferric, so disagreement
