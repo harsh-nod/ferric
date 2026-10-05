@@ -73,7 +73,7 @@
   const resident = project.residentCheckpoint;
   const residentProgress = document.querySelector("[data-resident-progress]");
   residentProgress.append(element("p", "performance-scope", resident.scope),
-    element("h3", "", "Performance Swarm V4: native TP1 comparison"),
+    element("h3", "", "Current Performance: V13 Evidence and V14 Status"),
     ...resident.currentCpuOverview.split("\n\n").map((paragraph) => element("p", "", paragraph)),
     element("h3", "", "Historical a167 source and GPU2 host-residual pair"),
     element("p", "", resident.integration.currentA167HostResidualPair.detail),
