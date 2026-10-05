@@ -1,0 +1,95 @@
+{
+  "schema": "ferric-p228-projection-ordered-segment-cpu-inputs-v1",
+  "proposals": {
+    "fe2o3": {
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-projection-residual-mlp-ordered-runtime-v1/source-manifest.json",
+      "bytes": 17334,
+      "sha256": "0157f78f2104dfbbbe7531e7bf08d21ef001e6313c0b06676fb0d90ffbc62e19"
+    },
+    "ferric": {
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/p228-projection-residual-mlp-ordered-ferric-v2/source-manifest.json",
+      "bytes": 24790,
+      "sha256": "ca3245e948456d804f1f7624f8eb808324086068ac1b674013b4cb31b16e70b4"
+    }
+  },
+  "added_tests": {
+    "runtime": [
+      "engineering_gfx950::ordered_batch::tests::paired_ordered_packets_have_distinct_slots_wait_for_prior_and_one_final_doorbell",
+      "engineering_gfx950::ordered_batch::tests::paired_prepared_adapter_accepts_empty_transport_payload_only_at_exact_two_count",
+      "engineering_gfx950::peer::projection_residual_mlp_tiles_v1::tests::ordered_pair_82908_segments_keep_fixed_storage_and_retirement_metadata",
+      "engineering_gfx950::peer::projection_residual_mlp_tiles_v1::tests::ordered_pair_checks_every_cross_rank_write_and_backing_alias",
+      "engineering_gfx950::peer::projection_residual_mlp_tiles_v1::tests::ordered_pair_common_timeout_rejects_split_or_unbounded_values",
+      "engineering_gfx950::peer::projection_residual_mlp_tiles_v1::tests::ordered_pair_distinct_down_roots_accept_and_old_alias_rejects",
+      "engineering_gfx950::peer::projection_residual_mlp_tiles_v1::tests::ordered_pair_every_uncertain_stage_poisoned_without_completion",
+      "engineering_gfx950::peer::projection_residual_mlp_tiles_v1::tests::ordered_pair_genuine_typed_terminal_refusal_keeps_submitted",
+      "engineering_gfx950::peer::projection_residual_mlp_tiles_v1::tests::ordered_pair_missing_earlier_completion_rejects_final_signal_only",
+      "engineering_gfx950::peer::projection_residual_mlp_tiles_v1::tests::ordered_pair_one_deadline_covers_staging_and_both_publications",
+      "engineering_gfx950::peer::projection_residual_mlp_tiles_v1::tests::ordered_pair_partial_publication_is_terminal",
+      "engineering_gfx950::peer::projection_residual_mlp_tiles_v1::tests::ordered_pair_preflight_rejects_before_consumption_or_publication",
+      "engineering_gfx950::peer::projection_residual_mlp_tiles_v1::tests::ordered_pair_projection_fixups_have_only_two_live_partial_slots",
+      "engineering_gfx950::peer::projection_residual_mlp_tiles_v1::tests::ordered_pair_projection_kernarg_matches_existing_consumer_bytes",
+      "engineering_gfx950::peer::projection_residual_mlp_tiles_v1::tests::ordered_pair_projection_metadata_checks_all_twenty_two_roles",
+      "engineering_gfx950::peer::projection_residual_mlp_tiles_v1::tests::ordered_pair_projection_metadata_is_closed_and_digest_bound",
+      "engineering_gfx950::peer::projection_residual_mlp_tiles_v1::tests::ordered_pair_public_entry_failure_poison_blocks_legacy_group_reuse",
+      "engineering_gfx950::peer::projection_residual_mlp_tiles_v1::tests::ordered_pair_publishes_both_before_any_poll",
+      "engineering_gfx950::peer::projection_residual_mlp_tiles_v1::tests::ordered_pair_read_only_sharing_does_not_create_a_writer",
+      "engineering_gfx950::peer::projection_residual_mlp_tiles_v1::tests::ordered_pair_repeated_activation_is_rejected_before_stage",
+      "engineering_gfx950::peer::projection_residual_mlp_tiles_v1::tests::ordered_pair_scratch_accepts_intervening_legacy_frontier_advances",
+      "engineering_gfx950::peer::projection_residual_mlp_tiles_v1::tests::ordered_pair_scratch_rejects_busy_poisoned_and_identity_drift",
+      "engineering_gfx950::peer::projection_residual_mlp_tiles_v1::tests::ordered_pair_scratch_retirement_requires_busy_and_capacity_is_bounded",
+      "engineering_gfx950::peer::projection_residual_mlp_tiles_v1::tests::ordered_pair_timeout_after_retirement_poison_blocks_completed_state_reuse",
+      "engineering_gfx950::peer::projection_residual_mlp_tiles_v1::tests::ordered_pair_timeout_includes_terminal_readback_and_fences"
+    ],
+    "worker": [
+      "finite_projection_residual_mlp_ordered_wire_v1::tests::ordered_control_has_one_segment_and_rejects_legacy_extent",
+      "finite_projection_residual_mlp_ordered_wire_v1::tests::ordered_control_requires_both_rank_terminal_states",
+      "finite_projection_residual_mlp_ordered_wire_v1::tests::ordered_image_identity_and_stream_bounds_fail_closed",
+      "finite_projection_residual_mlp_ordered_wire_v1::tests::ordered_profile_separates_projection_and_mode_domains",
+      "native_catalog::forward::ordered_allocation_tests::ordered_allocation_profile_refuses_old_census_before_any_metadata_write",
+      "native_catalog::forward::prefix_tiles_decode_v6::ordered_tests::ordered_native_profile_matches_wire_and_rejects_tf_double_selection",
+      "native_prefix_decode_cli_v1::ordered_tests::ordered_ar4_protocol_eof_and_early_close_poison_without_successful_close",
+      "native_prefix_decode_cli_v1::ordered_tests::ordered_ar4_protocol_four_own_outputs_have_exact_payloads_and_close_chain",
+      "native_prefix_decode_cli_v1::ordered_tests::ordered_ar4_protocol_wrong_previous_token_or_profile_never_runs_that_forward",
+      "native_prefix_decode_cli_v1::ordered_tests::ordered_completion_cannot_be_serialized_by_legacy_control",
+      "native_prefix_decode_cli_v1::ordered_tests::ordered_decode_protocol_forward_close_and_writer_failures_poison",
+      "native_prefix_decode_cli_v1::ordered_tests::ordered_decode_protocol_keeps_four_payloads_controls_and_selected_close_chain",
+      "native_prefix_decode_cli_v1::ordered_tests::ordered_decode_protocol_old_request_profile_is_refused_before_run",
+      "native_prefix_decode_cli_v1::ordered_tests::ordered_decode_protocol_wrong_completion_after_run_is_terminal",
+      "native_projection_residual_mlp_ordered_v1::tests::ordered_cli_is_distinct_and_rejects_extra_policies",
+      "native_projection_residual_mlp_ordered_v1::tests::ordered_cli_retains_ar_device_and_path_bounds",
+      "native_projection_residual_mlp_ordered_v1::tests::ordered_recorder_retains_four_serializations_then_close",
+      "native_projection_residual_mlp_ordered_v1::tests::ordered_setup_configures_exact_policy_before_enable_once",
+      "native_projection_residual_mlp_ordered_v1::tests::ordered_setup_refusal_never_enables_after_failed_configuration",
+      "projection_residual_mlp_ordered_observation_v1::tests::ordered_configuration_is_outside_snapshot_intervals_and_no_accuracy_authority",
+      "projection_residual_mlp_ordered_observation_v1::tests::ordered_report_is_distinct_from_default_and_shared_legacy_decoders",
+      "projection_residual_mlp_ordered_observation_v1::tests::ordered_report_profile_control_extent_and_chain_are_bound",
+      "projection_residual_mlp_ordered_observation_v1::tests::ordered_report_requires_shared_policy_on_all_seven_snapshots",
+      "resident_layer::prefix_tiles_decode_v6::ordered::tests::ordered_any_boundary_failure_poison_prevents_later_or_repeated_work",
+      "resident_layer::prefix_tiles_decode_v6::ordered::tests::ordered_down_roots_keep_old_alias_contract_and_replace_only_output",
+      "resident_layer::prefix_tiles_decode_v6::ordered::tests::ordered_rejects_global_partial_fallback_and_every_old_root_alias",
+      "resident_layer::prefix_tiles_decode_v6::ordered::tests::ordered_setup_allocates_fixed_pair_once_and_refuses_census_drift",
+      "resident_layer::prefix_tiles_decode_v6::ordered::tests::ordered_trace_has_global_prefix_compound_final_boundaries_and_one_duration",
+      "state_roster::prefix_tiles_decode_v6::ordered_tests::ordered_phase_cannot_skip_prefix_or_run_separate_mlp",
+      "state_roster::prefix_tiles_decode_v6::ordered_tests::ordered_phase_requires_compound_terminal_before_final_and_next_layer"
+    ],
+    "parent_library": [
+      "finite_projection_residual_mlp_ordered_wire_v1::tests::ordered_control_has_one_segment_and_rejects_legacy_extent",
+      "finite_projection_residual_mlp_ordered_wire_v1::tests::ordered_control_requires_both_rank_terminal_states",
+      "finite_projection_residual_mlp_ordered_wire_v1::tests::ordered_image_identity_and_stream_bounds_fail_closed",
+      "finite_projection_residual_mlp_ordered_wire_v1::tests::ordered_profile_separates_projection_and_mode_domains",
+      "projection_residual_mlp_ordered_observation_v1::tests::ordered_configuration_is_outside_snapshot_intervals_and_no_accuracy_authority",
+      "projection_residual_mlp_ordered_observation_v1::tests::ordered_report_is_distinct_from_default_and_shared_legacy_decoders",
+      "projection_residual_mlp_ordered_observation_v1::tests::ordered_report_profile_control_extent_and_chain_are_bound",
+      "projection_residual_mlp_ordered_observation_v1::tests::ordered_report_requires_shared_policy_on_all_seven_snapshots",
+      "tp_finite_client::prefix_decode::projection_ordered::tests::ordered_parent_bootstrap_is_not_plain_projection_profile",
+      "tp_finite_client::prefix_decode::projection_ordered::tests::ordered_parent_checks_real_new_control_bytes_chain_and_old_reader_refusal",
+      "tp_finite_client::prefix_decode::projection_ordered::tests::ordered_parent_config_requires_distinct_schema_ar_and_projection_pin",
+      "tp_finite_client::prefix_decode::projection_ordered::tests::ordered_parent_worker_selector_has_no_legacy_fallback"
+    ],
+    "parent_binary": [
+      "tests::projection_ordered_bin_requires_distinct_optin_and_no_policy_options"
+    ]
+  },
+  "parent_binary": "ferric-qwen3-finite-projection-residual-decode-ordered-host-engineering",
+  "runtime_full_suite_cpu_reviewed": true
+}

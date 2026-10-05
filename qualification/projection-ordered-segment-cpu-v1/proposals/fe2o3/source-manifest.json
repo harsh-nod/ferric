@@ -1,0 +1,374 @@
+{
+  "schema": "fe2o3-p228-projection-residual-mlp-ordered-runtime-proposal-v1",
+  "base_commit": "27b53d2b74c1f239988a891a4aed39e089b05663",
+  "base_root": "/home/harsh/fe2o3-p228-runtime",
+  "files": [
+    {
+      "path": "crates/fe2o3-kfd/src/engineering_gfx950.rs",
+      "source": "candidate/crates/fe2o3-kfd/src/engineering_gfx950.rs",
+      "before": {
+        "bytes": 78182,
+        "sha256": "0830847527715828d6db0dcbff75866bb587a2ea1c0b3af83e90e36615e3dd2c"
+      },
+      "after": {
+        "bytes": 78305,
+        "sha256": "cb97c02f1d7b6ad24b9518524cbb9b5a78054699311045950b2031dc306db477"
+      }
+    },
+    {
+      "path": "crates/fe2o3-kfd/src/engineering_gfx950_ordered_batch.rs",
+      "source": "candidate/crates/fe2o3-kfd/src/engineering_gfx950_ordered_batch.rs",
+      "before": {
+        "bytes": 19036,
+        "sha256": "9500203a334a77a430dbff37cbf2470ed769d59be6016be9096ba941afc1c372"
+      },
+      "after": {
+        "bytes": 21361,
+        "sha256": "0d1c2ca9c63c358dc90971d8eefdc973415589718884d533b623c7d334d5ca6f"
+      }
+    },
+    {
+      "path": "crates/fe2o3-kfd/src/engineering_gfx950_ordered_batch_tests.rs",
+      "source": "candidate/crates/fe2o3-kfd/src/engineering_gfx950_ordered_batch_tests.rs",
+      "before": {
+        "bytes": 15142,
+        "sha256": "81d3694d58b36f991b47150bbabfc6c55bf23ed3652675d899384e8ce2726d1b"
+      },
+      "after": {
+        "bytes": 16723,
+        "sha256": "b8c882e7d33a96c2d9c1161d7efedd8108bbc114d341c1fb61147270cebbd982"
+      }
+    },
+    {
+      "path": "crates/fe2o3-kfd/src/engineering_gfx950_peer.rs",
+      "source": "candidate/crates/fe2o3-kfd/src/engineering_gfx950_peer.rs",
+      "before": {
+        "bytes": 29845,
+        "sha256": "ae311ebf8f563dc49fea1811d1f160b46e7ba3d6297235fa78c9ffb49ee18f3c"
+      },
+      "after": {
+        "bytes": 30246,
+        "sha256": "970e55348e867d02b168055fcad2e2e4bc9c5f02d09ca99a46d6655c1d354b7d"
+      }
+    },
+    {
+      "path": "crates/fe2o3-kfd/src/engineering_gfx950_peer_capacity_v1_tests.rs",
+      "source": "candidate/crates/fe2o3-kfd/src/engineering_gfx950_peer_capacity_v1_tests.rs",
+      "before": {
+        "bytes": 6271,
+        "sha256": "7969995b255d7eb6ecf63c8f1906d326ffbe2fb9050ef1062fb66c53581970dd"
+      },
+      "after": {
+        "bytes": 6309,
+        "sha256": "32be50f58cdb6693453c635ce9270c6e86f2f1952a6382585c812c4f28d54e9d"
+      }
+    },
+    {
+      "path": "crates/fe2o3-kfd/src/engineering_gfx950_peer_clock_correlation_tests.rs",
+      "source": "candidate/crates/fe2o3-kfd/src/engineering_gfx950_peer_clock_correlation_tests.rs",
+      "before": {
+        "bytes": 8037,
+        "sha256": "dd8183849e9c69e2f09de2828b34704c7fbe43387517127a608f2a31bc32d166"
+      },
+      "after": {
+        "bytes": 8075,
+        "sha256": "660fd40f3aaa9fd368580b8211902519abb9d84b4b15a3099d8ae87ff90a3115"
+      }
+    },
+    {
+      "path": "crates/fe2o3-kfd/src/engineering_gfx950_peer_host_observation_v1_tests.rs",
+      "source": "candidate/crates/fe2o3-kfd/src/engineering_gfx950_peer_host_observation_v1_tests.rs",
+      "before": {
+        "bytes": 11656,
+        "sha256": "abf8a6b89be25c4ca780d553be45e50a68d42f5cb8b095b6c76fd7b519bbf8a4"
+      },
+      "after": {
+        "bytes": 11694,
+        "sha256": "c86c25122dd4ffe3192335d0590d638a9029bf0be7a74e5b5d33d9dc7248f96a"
+      }
+    },
+    {
+      "path": "crates/fe2o3-kfd/src/engineering_gfx950_peer_projection_residual_mlp_tiles_v1.rs",
+      "source": "candidate/crates/fe2o3-kfd/src/engineering_gfx950_peer_projection_residual_mlp_tiles_v1.rs",
+      "before": null,
+      "after": {
+        "bytes": 20478,
+        "sha256": "52096b759999193a2702db7a13ed8b9c772a0ef7623fab67be5069baab3219bb"
+      }
+    },
+    {
+      "path": "crates/fe2o3-kfd/src/engineering_gfx950_peer_projection_residual_mlp_tiles_v1_tests.rs",
+      "source": "candidate/crates/fe2o3-kfd/src/engineering_gfx950_peer_projection_residual_mlp_tiles_v1_tests.rs",
+      "before": null,
+      "after": {
+        "bytes": 19088,
+        "sha256": "8d93092d83d8952219bd827f040b71be87c98c112b7b749f0f739a39a23e0a09"
+      }
+    },
+    {
+      "path": "crates/fe2o3-kfd/src/engineering_gfx950_peer_round.rs",
+      "source": "candidate/crates/fe2o3-kfd/src/engineering_gfx950_peer_round.rs",
+      "before": {
+        "bytes": 16566,
+        "sha256": "5fed126b93e6f4b87fa82897b9cfd6307eae4234e44b22dbfd83c5891849b0b7"
+      },
+      "after": {
+        "bytes": 16946,
+        "sha256": "27469df0e4b69f7f1d9131e5a72b312f38fd85a7d61ce3bac8920fb6fea73519"
+      }
+    },
+    {
+      "path": "crates/fe2o3-kfd/src/engineering_gfx950_peer_round_tests.rs",
+      "source": "candidate/crates/fe2o3-kfd/src/engineering_gfx950_peer_round_tests.rs",
+      "before": {
+        "bytes": 19693,
+        "sha256": "473a1e4481d0fc8c0ffb6751ffa975533518353839b28bf165fd7962f45074e9"
+      },
+      "after": {
+        "bytes": 19731,
+        "sha256": "9e642fa16428a58de9f7579b0b04763c55565171aebd612c76673ca8e24c6d46"
+      }
+    },
+    {
+      "path": "crates/fe2o3-kfd/src/engineering_gfx950_peer_state_bank_v1_tests.rs",
+      "source": "candidate/crates/fe2o3-kfd/src/engineering_gfx950_peer_state_bank_v1_tests.rs",
+      "before": {
+        "bytes": 15300,
+        "sha256": "d8ae79a5e05ee30fdfa9fd9f04f7c31cd66646c8e1fc8198d63be8f085eeb5f7"
+      },
+      "after": {
+        "bytes": 15338,
+        "sha256": "93742ec19ec21cc76be5107b5d4cf2a4645f63dfd1e9687b683e40e405e0497c"
+      }
+    },
+    {
+      "path": "crates/fe2o3-kfd/src/engineering_gfx950_peer_state_rearm_test_cases.rs",
+      "source": "candidate/crates/fe2o3-kfd/src/engineering_gfx950_peer_state_rearm_test_cases.rs",
+      "before": {
+        "bytes": 3663,
+        "sha256": "8b3d91950a299eae833e9edc1def728939f291515776e8c7d96bbdd531ccff49"
+      },
+      "after": {
+        "bytes": 3705,
+        "sha256": "350a2ca8d5f6c9fa67bb3d6206a061a7252dd8a51b237fe184da1e7ea04a8ce7"
+      }
+    },
+    {
+      "path": "crates/fe2o3-kfd/src/engineering_gfx950_peer_tests.rs",
+      "source": "candidate/crates/fe2o3-kfd/src/engineering_gfx950_peer_tests.rs",
+      "before": {
+        "bytes": 16521,
+        "sha256": "8f18a8a29fdc25542e473710cd3108bd3b06106c4d87c9680f9c926754350f44"
+      },
+      "after": {
+        "bytes": 16609,
+        "sha256": "6634669c3bd14cd1f5d37699a61eb932da6b62a63fc6a8c9a0d36b1d913597f7"
+      }
+    },
+    {
+      "path": "crates/fe2o3-kfd/src/engineering_gfx950_peer_wave_mlp_state_v1_tests.rs",
+      "source": "candidate/crates/fe2o3-kfd/src/engineering_gfx950_peer_wave_mlp_state_v1_tests.rs",
+      "before": {
+        "bytes": 6805,
+        "sha256": "9a423f3b2c78e9e611271998f8eb29cb6692eea964f7012e15678e3b94c6d995"
+      },
+      "after": {
+        "bytes": 6843,
+        "sha256": "3cae8f18e7939938273e4810ef7d47062da5ccf83bdcfb24b74026d342af900d"
+      }
+    },
+    {
+      "path": "crates/fe2o3-kfd/src/engineering_gfx950_peer_wave_mlp_tiles_state_v2_tests.rs",
+      "source": "candidate/crates/fe2o3-kfd/src/engineering_gfx950_peer_wave_mlp_tiles_state_v2_tests.rs",
+      "before": {
+        "bytes": 13794,
+        "sha256": "20c56532895792cdd34cadd55ae02f2c9050539e201185f7446aad7653ecf27b"
+      },
+      "after": {
+        "bytes": 13832,
+        "sha256": "91b6318383273f200e10cc746f470ef89c945d412174ad252ad9d0170ece3d93"
+      }
+    },
+    {
+      "path": "crates/fe2o3-kfd/src/engineering_gfx950_peer_wave_mlp_tiles_timestamp_tests.rs",
+      "source": "candidate/crates/fe2o3-kfd/src/engineering_gfx950_peer_wave_mlp_tiles_timestamp_tests.rs",
+      "before": {
+        "bytes": 3706,
+        "sha256": "a47bff647cb7080d325ccc0e275b2f51fdff4fcf8eafa266def469d12d9d081e"
+      },
+      "after": {
+        "bytes": 3744,
+        "sha256": "06877a607b83850c500d526c8fb9ba1ac765df45b71851088c73cd840da21fd3"
+      }
+    },
+    {
+      "path": "crates/fe2o3-kfd/src/engineering_gfx950_peer_wave_mlp_tiles_v2.rs",
+      "source": "candidate/crates/fe2o3-kfd/src/engineering_gfx950_peer_wave_mlp_tiles_v2.rs",
+      "before": {
+        "bytes": 13535,
+        "sha256": "62c2086dc2ff4ba6dc1cadf2ef5dd33418d399b4c5380c9ae9a5303b90ce3b83"
+      },
+      "after": {
+        "bytes": 13902,
+        "sha256": "58da2d01441755a24657301925a3e23674047a379a0fdc4bb48b608109a15214"
+      }
+    },
+    {
+      "path": "crates/fe2o3-kfd/src/engineering_gfx950_peer_wave_mlp_tiles_v2_tests.rs",
+      "source": "candidate/crates/fe2o3-kfd/src/engineering_gfx950_peer_wave_mlp_tiles_v2_tests.rs",
+      "before": {
+        "bytes": 16792,
+        "sha256": "0a6ec221ed7889f8e7fe88353266e65d5be3193429b536928d72d340906685ab"
+      },
+      "after": {
+        "bytes": 16830,
+        "sha256": "d4db8dc7325fcd4056efea7d3a3a72547a7adafb1446a48d189a2278897b98d2"
+      }
+    },
+    {
+      "path": "crates/fe2o3-kfd/src/engineering_gfx950_peer_wave_output_state_v5_tests.rs",
+      "source": "candidate/crates/fe2o3-kfd/src/engineering_gfx950_peer_wave_output_state_v5_tests.rs",
+      "before": {
+        "bytes": 6850,
+        "sha256": "f0ba6d64c79fc21ba5d058843486bffc05fa4118512f93077508153924c1243d"
+      },
+      "after": {
+        "bytes": 6888,
+        "sha256": "b855960e41c7f4b65d206aae033eccec181fdcda336621d34e66c73234f0f10a"
+      }
+    },
+    {
+      "path": "crates/fe2o3-kfd/src/engineering_gfx950_peer_wave_qkv_attention_output_tiles_state_v6_tests.rs",
+      "source": "candidate/crates/fe2o3-kfd/src/engineering_gfx950_peer_wave_qkv_attention_output_tiles_state_v6_tests.rs",
+      "before": {
+        "bytes": 14534,
+        "sha256": "c1c8db6987be6b416903b7f34ef36f9eec83d828f0feaadfd2c8a3f0012f4f21"
+      },
+      "after": {
+        "bytes": 14572,
+        "sha256": "2f54fc27b5c048648505698b77db82f784dba932e30f61ee852fb473af233680"
+      }
+    },
+    {
+      "path": "crates/fe2o3-kfd/src/engineering_gfx950_peer_wave_qkv_attention_output_tiles_timestamp_tests.rs",
+      "source": "candidate/crates/fe2o3-kfd/src/engineering_gfx950_peer_wave_qkv_attention_output_tiles_timestamp_tests.rs",
+      "before": {
+        "bytes": 3925,
+        "sha256": "6249f307470e3f66ad779e7677203cdc3d3878c76e8f46e71ca0def8c483804b"
+      },
+      "after": {
+        "bytes": 3963,
+        "sha256": "a5c7510bcff823e16cf86ba305fe8671cffc434a8be0db70de27a43cf919701f"
+      }
+    },
+    {
+      "path": "crates/fe2o3-kfd/src/engineering_gfx950_peer_wave_qkv_attention_output_tiles_v6_tests.rs",
+      "source": "candidate/crates/fe2o3-kfd/src/engineering_gfx950_peer_wave_qkv_attention_output_tiles_v6_tests.rs",
+      "before": {
+        "bytes": 20196,
+        "sha256": "f4c46662aa57d34cf23e0e8e4a59fddc5822710516eb466ed42e65c03b258272"
+      },
+      "after": {
+        "bytes": 20234,
+        "sha256": "add1697b75752060fb349499bf3bb9015874e2ba214fcf2f65e27f46cb84cd64"
+      }
+    },
+    {
+      "path": "crates/fe2o3-kfd/src/lib.rs",
+      "source": "candidate/crates/fe2o3-kfd/src/lib.rs",
+      "before": {
+        "bytes": 20403,
+        "sha256": "1d00191ce25b9915a8f0976701daf896e9d02cc384e56d0864fc43a7a88d7ec6"
+      },
+      "after": {
+        "bytes": 20526,
+        "sha256": "2b9e106013a97207a894bac0d7bb5b4b9455c9d6c7428bf9710a769f26bbf651"
+      }
+    }
+  ],
+  "authored_tests": {
+    "count": 25,
+    "names": [
+      "ordered_pair_82908_segments_keep_fixed_storage_and_retirement_metadata",
+      "ordered_pair_checks_every_cross_rank_write_and_backing_alias",
+      "ordered_pair_common_timeout_rejects_split_or_unbounded_values",
+      "ordered_pair_distinct_down_roots_accept_and_old_alias_rejects",
+      "ordered_pair_every_uncertain_stage_poisoned_without_completion",
+      "ordered_pair_genuine_typed_terminal_refusal_keeps_submitted",
+      "ordered_pair_missing_earlier_completion_rejects_final_signal_only",
+      "ordered_pair_one_deadline_covers_staging_and_both_publications",
+      "ordered_pair_partial_publication_is_terminal",
+      "ordered_pair_preflight_rejects_before_consumption_or_publication",
+      "ordered_pair_projection_fixups_have_only_two_live_partial_slots",
+      "ordered_pair_projection_kernarg_matches_existing_consumer_bytes",
+      "ordered_pair_projection_metadata_checks_all_twenty_two_roles",
+      "ordered_pair_projection_metadata_is_closed_and_digest_bound",
+      "ordered_pair_public_entry_failure_poison_blocks_legacy_group_reuse",
+      "ordered_pair_publishes_both_before_any_poll",
+      "ordered_pair_read_only_sharing_does_not_create_a_writer",
+      "ordered_pair_repeated_activation_is_rejected_before_stage",
+      "ordered_pair_scratch_accepts_intervening_legacy_frontier_advances",
+      "ordered_pair_scratch_rejects_busy_poisoned_and_identity_drift",
+      "ordered_pair_scratch_retirement_requires_busy_and_capacity_is_bounded",
+      "ordered_pair_timeout_after_retirement_poison_blocks_completed_state_reuse",
+      "ordered_pair_timeout_includes_terminal_readback_and_fences",
+      "paired_ordered_packets_have_distinct_slots_wait_for_prior_and_one_final_doorbell",
+      "paired_prepared_adapter_accepts_empty_transport_payload_only_at_exact_two_count"
+    ],
+    "executed": false
+  },
+  "added_tests": {
+    "runtime": [
+      "engineering_gfx950::ordered_batch::tests::paired_ordered_packets_have_distinct_slots_wait_for_prior_and_one_final_doorbell",
+      "engineering_gfx950::ordered_batch::tests::paired_prepared_adapter_accepts_empty_transport_payload_only_at_exact_two_count",
+      "engineering_gfx950::peer::projection_residual_mlp_tiles_v1::tests::ordered_pair_82908_segments_keep_fixed_storage_and_retirement_metadata",
+      "engineering_gfx950::peer::projection_residual_mlp_tiles_v1::tests::ordered_pair_checks_every_cross_rank_write_and_backing_alias",
+      "engineering_gfx950::peer::projection_residual_mlp_tiles_v1::tests::ordered_pair_common_timeout_rejects_split_or_unbounded_values",
+      "engineering_gfx950::peer::projection_residual_mlp_tiles_v1::tests::ordered_pair_distinct_down_roots_accept_and_old_alias_rejects",
+      "engineering_gfx950::peer::projection_residual_mlp_tiles_v1::tests::ordered_pair_every_uncertain_stage_poisoned_without_completion",
+      "engineering_gfx950::peer::projection_residual_mlp_tiles_v1::tests::ordered_pair_genuine_typed_terminal_refusal_keeps_submitted",
+      "engineering_gfx950::peer::projection_residual_mlp_tiles_v1::tests::ordered_pair_missing_earlier_completion_rejects_final_signal_only",
+      "engineering_gfx950::peer::projection_residual_mlp_tiles_v1::tests::ordered_pair_one_deadline_covers_staging_and_both_publications",
+      "engineering_gfx950::peer::projection_residual_mlp_tiles_v1::tests::ordered_pair_partial_publication_is_terminal",
+      "engineering_gfx950::peer::projection_residual_mlp_tiles_v1::tests::ordered_pair_preflight_rejects_before_consumption_or_publication",
+      "engineering_gfx950::peer::projection_residual_mlp_tiles_v1::tests::ordered_pair_projection_fixups_have_only_two_live_partial_slots",
+      "engineering_gfx950::peer::projection_residual_mlp_tiles_v1::tests::ordered_pair_projection_kernarg_matches_existing_consumer_bytes",
+      "engineering_gfx950::peer::projection_residual_mlp_tiles_v1::tests::ordered_pair_projection_metadata_checks_all_twenty_two_roles",
+      "engineering_gfx950::peer::projection_residual_mlp_tiles_v1::tests::ordered_pair_projection_metadata_is_closed_and_digest_bound",
+      "engineering_gfx950::peer::projection_residual_mlp_tiles_v1::tests::ordered_pair_public_entry_failure_poison_blocks_legacy_group_reuse",
+      "engineering_gfx950::peer::projection_residual_mlp_tiles_v1::tests::ordered_pair_publishes_both_before_any_poll",
+      "engineering_gfx950::peer::projection_residual_mlp_tiles_v1::tests::ordered_pair_read_only_sharing_does_not_create_a_writer",
+      "engineering_gfx950::peer::projection_residual_mlp_tiles_v1::tests::ordered_pair_repeated_activation_is_rejected_before_stage",
+      "engineering_gfx950::peer::projection_residual_mlp_tiles_v1::tests::ordered_pair_scratch_accepts_intervening_legacy_frontier_advances",
+      "engineering_gfx950::peer::projection_residual_mlp_tiles_v1::tests::ordered_pair_scratch_rejects_busy_poisoned_and_identity_drift",
+      "engineering_gfx950::peer::projection_residual_mlp_tiles_v1::tests::ordered_pair_scratch_retirement_requires_busy_and_capacity_is_bounded",
+      "engineering_gfx950::peer::projection_residual_mlp_tiles_v1::tests::ordered_pair_timeout_after_retirement_poison_blocks_completed_state_reuse",
+      "engineering_gfx950::peer::projection_residual_mlp_tiles_v1::tests::ordered_pair_timeout_includes_terminal_readback_and_fences"
+    ]
+  },
+  "runtime_api": {
+    "method": "dispatch_projection_residual_mlp_tiles_round_unchecked_v1",
+    "command": "Gfx950EngineeringPeerProjectionResidualMlpTilesDispatchV1",
+    "result": "Gfx950EngineeringPeerProjectionResidualMlpTilesRoundV1",
+    "rank_count": 2,
+    "ordered_packets_per_rank": 2,
+    "timeout_ms": {
+      "minimum": 1,
+      "maximum": 10000,
+      "embedded_values_must_match": true,
+      "aggregate": true
+    },
+    "scratch_bytes_per_rank": 1048576,
+    "caller_distinct_down_bytes_per_rank": 16384
+  },
+  "claims": {
+    "source_proposal_only": true,
+    "intermediate_host_fence_removed": true,
+    "policy_neutral": false,
+    "compiled": false,
+    "tests_executed": false,
+    "gpu_executed": false,
+    "numerical_acceptance": false,
+    "performance_claim": false
+  }
+}

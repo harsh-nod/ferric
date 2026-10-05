@@ -1,0 +1,3401 @@
+--- a/adapters/m1-engineering-execution-v1/Cargo.toml
++++ b/adapters/m1-engineering-execution-v1/Cargo.toml
+@@ -280,3 +280,8 @@
+ name = "ferric-qwen3-finite-projection-residual-decode-shared-host-engineering"
+ path = "src/bin/ferric-qwen3-finite-projection-residual-decode-shared-host-engineering.rs"
+ required-features = ["tp-batch-engineering"]
++
++[[bin]]
++name = "ferric-qwen3-finite-projection-residual-decode-ordered-host-engineering"
++path = "src/bin/ferric-qwen3-finite-projection-residual-decode-ordered-host-engineering.rs"
++required-features = ["tp-batch-engineering"]
+--- /dev/null
++++ b/adapters/m1-engineering-execution-v1/src/bin/ferric-qwen3-finite-projection-residual-decode-ordered-host-engineering.rs
+@@ -0,0 +1,124 @@
++//! Explicit ordered residual/MLP AR4 shared-full diagnostic; no performance acceptance.
++use ferric_m1_engineering_execution_v1::tp_finite_client::prefix_decode::{
++    projection_ordered::OrderedDecodeConfig, ordered_host,
++};
++use std::{
++    io::{Read, Write},
++    path::PathBuf,
++};
++fn options(args: impl Iterator<Item = String>) -> Result<PathBuf, String> {
++    let values = args.collect::<Vec<_>>();
++    if values.len() != 4
++        || values[0] != "--request"
++        || values[2] != "--allow-unauthenticated-machine-code"
++        || values[3] != "--observe-projection-residual-mlp-ordered"
++    {
++        return Err(
++            "exact --request FILE --allow-unauthenticated-machine-code --observe-projection-residual-mlp-ordered required"
++                .into(),
++        );
++    }
++    let path = PathBuf::from(&values[1]);
++    if !path.is_absolute() {
++        return Err("absolute request required".into());
++    }
++    Ok(path)
++}
++fn execute() -> Result<(), String> {
++    let path = options(std::env::args().skip(1))?;
++    if path.canonicalize().map_err(|e| e.to_string())? != path
++        || !std::fs::symlink_metadata(&path)
++            .map_err(|e| e.to_string())?
++            .is_file()
++    {
++        return Err("canonical regular request required".into());
++    }
++    let mut raw = Vec::new();
++    std::fs::File::open(path)
++        .map_err(|e| e.to_string())?
++        .take(65537)
++        .read_to_end(&mut raw)
++        .map_err(|e| e.to_string())?;
++    let value = ordered_host::run(OrderedDecodeConfig::parse(&raw)?, true)?;
++    let mut output = serde_json::to_vec(&value).map_err(|e| e.to_string())?;
++    output.push(b'\n');
++    if output.len() > 65536 {
++        return Err("host diagnostic stdout bound".into());
++    }
++    std::io::stdout()
++        .lock()
++        .write_all(&output)
++        .map_err(|e| e.to_string())
++}
++fn main() {
++    if let Err(error) = execute() {
++        eprintln!("finite projection decode host diagnostic failure: {error}");
++        std::process::exit(1);
++    }
++}
++#[cfg(test)]
++mod tests {
++    use super::*;
++    #[test]
++    fn projection_ordered_bin_requires_distinct_optin_and_no_policy_options() {
++        // The source contract complements the separate default-feature cargo check.
++        let source: String = include_str!("../lib.rs")
++            .chars()
++            .filter(|c| !c.is_whitespace())
++            .collect();
++        for name in [
++            "finite_projection_residual_mlp_ordered_wire_v1",
++            "projection_residual_mlp_ordered_observation_v1",
++        ] {
++            let declaration = format!("pubmod {name};").replace(' ', "");
++            let guarded = format!(
++                "#[cfg(feature=\"tp-batch-engineering\")]#[path=\"../../tp-peer-finite-engineering-worker-v1/src/{name}.rs\"]{declaration}"
++            );
++            assert_eq!(source.matches(&declaration).count(), 1);
++            assert!(source.contains(&guarded), "ungated ordered parent export: {name}");
++        }
++        let manifest: toml::Value = toml::from_str(include_str!("../../Cargo.toml")).unwrap();
++        let bins = manifest["bin"].as_array().unwrap();
++        let selected: Vec<_> = bins
++            .iter()
++            .filter(|bin| {
++                bin["name"].as_str()
++                    == Some("ferric-qwen3-finite-projection-residual-decode-ordered-host-engineering")
++            })
++            .collect();
++        assert_eq!(selected.len(), 1);
++        assert_eq!(
++            selected[0]["required-features"].as_array().unwrap(),
++            &vec![toml::Value::String("tp-batch-engineering".into())]
++        );
++        let good = [
++            "--request",
++            "/tmp/request.json",
++            "--allow-unauthenticated-machine-code",
++            "--observe-projection-residual-mlp-ordered",
++        ];
++        assert_eq!(
++            options(good.iter().map(|s| s.to_string())).unwrap(),
++            PathBuf::from(good[1])
++        );
++        for n in 0..4 {
++            assert!(options(good[..n].iter().map(|s| s.to_string())).is_err());
++        }
++        for extra in [
++            "--cache-kernel-admission",
++            "--profile",
++            "--shared-currentness",
++            "--observe-projection-residual-mlp-ordered",
++        ] {
++            let mut bad = good.to_vec();
++            bad.push(extra);
++            assert!(options(bad.iter().map(|s| s.to_string())).is_err());
++        }
++        let mut bad = good;
++        bad[3] = "--observe-projection-host";
++        assert!(options(bad.iter().map(|s| s.to_string())).is_err());
++        let mut bad = good;
++        bad[1] = "relative";
++        assert!(options(bad.iter().map(|s| s.to_string())).is_err());
++    }
++}
+--- a/adapters/m1-engineering-execution-v1/src/lib.rs
++++ b/adapters/m1-engineering-execution-v1/src/lib.rs
+@@ -2314,3 +2314,10 @@
+         bytes
+     }
+ }
++
++#[cfg(feature = "tp-batch-engineering")]
++#[path = "../../tp-peer-finite-engineering-worker-v1/src/finite_projection_residual_mlp_ordered_wire_v1.rs"]
++pub mod finite_projection_residual_mlp_ordered_wire_v1;
++#[cfg(feature = "tp-batch-engineering")]
++#[path = "../../tp-peer-finite-engineering-worker-v1/src/projection_residual_mlp_ordered_observation_v1.rs"]
++pub mod projection_residual_mlp_ordered_observation_v1;
+--- a/adapters/m1-engineering-execution-v1/src/tp_finite_client/prefix_decode/evidence.rs
++++ b/adapters/m1-engineering-execution-v1/src/tp_finite_client/prefix_decode/evidence.rs
+@@ -130,6 +130,10 @@
+         control: &wire::Control,
+         payload: &[u8],
+     ) -> Result<()> {
++        self.append_encoded(request, response, &control.encode(), payload)
++    }
++    pub(super) fn append_encoded(&mut self, request: &wire::Request,
++        response: &wire::Response, control: &[u8], payload: &[u8]) -> Result<()> {
+         let wire::Event::Completed(c) = &response.event else {
+             return Err("prefix decode evidence expects Completed".into());
+         };
+@@ -142,12 +146,12 @@
+                 && request.id == response.id
+                 && request.id == c.generation
+                 && old::part(payload) == c.observation
+-                && old::part(&control.encode()) == c.control,
++                && old::part(control) == c.control,
+             "prefix decode evidence order/extent",
+         )?;
+         let control = self.add(
+             &format!("control-{position}.bin"),
+-            &control.encode(),
++            control,
+             wire::CONTROL_BYTES as u64,
+         )?;
+         let observation = self.add(
+--- /dev/null
++++ b/adapters/m1-engineering-execution-v1/src/tp_finite_client/prefix_decode/ordered_host.rs
+@@ -0,0 +1,157 @@
++//! Ordered AR4 shared-full observation, published only after Close/EOF/reap.
++use super::projection_ordered::{OrderedDecodeConfig, OrderedDecodeObservation};
++use super::{FilePin, HostDiagnostic, Observation, Result, hash, require, wire};
++use crate::projection_residual_mlp_ordered_observation_v1 as data;
++use serde::Serialize;
++use std::path::{Path, PathBuf};
++
++fn sidecar_path(config: &OrderedDecodeConfig, policy: data::Policy) -> Result<PathBuf> {
++    let name = config
++        .decode
++        .evidence_directory
++        .file_name()
++        .and_then(|s| s.to_str())
++        .ok_or("projection host evidence filename")?;
++    let suffix = "projection-residual-mlp-ordered";
++    let _ = policy;
++    Ok(config
++        .decode
++        .evidence_directory
++        .with_file_name(format!("{name}-{suffix}-observation.json")))
++}
++pub(super) fn validate(path: &Path, actual: &Observation, image: &FilePin) -> Result<FilePin> {
++    validate_policy(path, actual, image, data::Policy::OrderedSharedFull)
++}
++fn validate_policy(
++    path: &Path,
++    actual: &Observation,
++    image: &FilePin,
++    policy: data::Policy,
++) -> Result<FilePin> {
++    require(
++        actual.child_exit_zero
++            && actual.process_group_absent
++            && actual.native_closed
++            && actual.completed_forwards == 4
++            && actual.files.frames.len() == 4,
++        "projection host report requires actual Close/EOF/reap",
++    )?;
++    let pin = super::host_observation::pin_file(path, data::MAX_BYTES as u64)?;
++    let raw = pin.read(data::MAX_BYTES as u64, true)?;
++    let report = data::SharedReport::decode(&raw).map_err(|e| e.to_string())?.observation;
++    validate_binding(&report, actual, image, policy)?;
++    for (completed, frame) in report.completions.iter().zip(&actual.files.frames) {
++        require(
++            matches!(&frame.response.event, wire::Event::Completed(value) if value == completed),
++            "projection host completion/control/payload differs",
++        )?;
++        frame.control.read(crate::finite_projection_residual_mlp_ordered_wire_v1::CONTROL_BYTES as u64, false)?;
++        frame
++            .observation
++            .read(super::old::OBSERVATION_BYTES as u64, false)?;
++    }
++    require(
++        actual
++            .files
++            .bytes_before_summary
++            .checked_add(pin.bytes)
++            .and_then(|n| n.checked_add(super::evidence::SUMMARY_LIMIT as u64))
++            .is_some_and(|n| n <= 8 << 20),
++        "projection host aggregate8MiB bound",
++    )?;
++    Ok(pin)
++}
++fn validate_binding(
++    report: &data::Report,
++    actual: &Observation,
++    image: &FilePin,
++    policy: data::Policy,
++) -> Result<()> {
++    report
++        .validate_for_policy(policy)
++        .map_err(|e| e.to_string())?;
++    require(
++        actual.request.mode == wire::InputMode::Autoregressive
++            && report.child_pid == actual.child_pid
++            && report.worker_sha256 == actual.request.worker.sha256
++            && report.profile_sha256 == actual.profile_sha256
++            && report.transcript_sha256 == actual.transcript_sha256
++            && report.bootstrap == super::projection_ordered::bootstrap(actual.bootstrap.clone(), image)?
++            && report.bootstrap.decode.registration == actual.registration_sha256
++            && report.bootstrap.decode.begin.source_program.sha256 == actual.source_program_sha256
++            && report.bootstrap.decode.begin.uploads.sha256 == actual.upload_manifest_sha256,
++        "projection host actual worker/bootstrap/profile/source mismatch",
++    )
++}
++#[derive(Serialize)]
++pub struct Diagnostic {
++    pub schema: &'static str,
++    pub parent_binary: FilePin,
++    pub request_projection_sha256: [u8; 32],
++    pub observation: OrderedDecodeObservation,
++    pub host_sidecar: FilePin,
++    pub inclusive_nested_host_scopes: bool,
++    pub gpu_time: bool,
++    pub performance_claim: bool,
++    pub numerical_acceptance: bool,
++    pub production_authority: bool,
++}
++pub fn run(config: OrderedDecodeConfig, allow: bool) -> Result<Diagnostic> {
++    run_policy(config, allow, data::Policy::OrderedSharedFull)
++}
++fn run_policy(
++    config: OrderedDecodeConfig,
++    allow: bool,
++    policy: data::Policy,
++) -> Result<Diagnostic> {
++    require(allow, "projection host explicit engineering opt-in")?;
++    config.validate()?;
++    require(
++        config.decode.mode == wire::InputMode::Autoregressive,
++        "projection host AR4 only",
++    )?;
++    let path = sidecar_path(&config, policy)?;
++    super::host_observation::preflight(&path)?;
++    let parent_path = std::env::current_exe()
++        .map_err(|e| e.to_string())?
++        .canonicalize()
++        .map_err(|e| e.to_string())?;
++    let parent = super::host_observation::pin_file(&parent_path, 512 << 20)?;
++    let request_sha = hash(&serde_json::to_vec(&config).map_err(|e| e.to_string())?);
++    let diagnostic = HostDiagnostic::Ordered(path, config.projection_residual_image.clone());
++    let (actual, sidecar, bootstrap) = super::run_selected(
++        config.decode.clone(),
++        true,
++        Some(diagnostic),
++        Some(&config.projection_residual_image),
++    )?;
++    parent.read(512 << 20, false)?;
++    let host_sidecar = sidecar.ok_or("projection host sidecar absent")?;
++    host_sidecar.read(data::MAX_BYTES as u64, false)?;
++    let mut observation = OrderedDecodeObservation::closed(
++        config,
++        actual,
++        super::projection_ordered::selected(&bootstrap.ok_or("ordered bootstrap absent")?),
++    )?;
++    observation.publish()?;
++    let result = Diagnostic {
++        schema: "FerricFiniteProjectionResidualMlpOrderedHostDiagnosticV1",
++        parent_binary: parent,
++        request_projection_sha256: request_sha,
++        observation,
++        host_sidecar,
++        inclusive_nested_host_scopes: true,
++        gpu_time: false,
++        performance_claim: false,
++        numerical_acceptance: false,
++        production_authority: false,
++    };
++    require(
++        serde_json::to_vec(&result)
++            .map_err(|e| e.to_string())?
++            .len()
++            < 65536,
++        "projection host stdout bound",
++    )?;
++    Ok(result)
++}
+--- /dev/null
++++ b/adapters/m1-engineering-execution-v1/src/tp_finite_client/prefix_decode/projection_ordered.rs
+@@ -0,0 +1,218 @@
++//! Distinct ordered AR4 projection/MLP request and observation, never legacy parity.
++use super::*;
++use crate::finite_projection_residual_mlp_ordered_wire_v1 as projection_wire;
++
++const REQUEST_SCHEMA: &str = "FerricFiniteProjectionResidualMlpOrderedRequestV1";
++
++#[derive(Clone, Debug, Serialize, Deserialize)]
++#[serde(deny_unknown_fields)]
++pub struct OrderedDecodeConfig {
++    pub schema: String,
++    pub decode: Config,
++    pub projection_residual_image: FilePin,
++}
++
++impl OrderedDecodeConfig {
++    pub fn parse(bytes: &[u8]) -> Result<Self> {
++        require(
++            !bytes.is_empty() && bytes.len() <= 65536,
++            "projection decode request bound",
++        )?;
++        let config: Self = serde_json::from_slice(bytes).map_err(|e| e.to_string())?;
++        config.validate()?;
++        Ok(config)
++    }
++
++    pub(super) fn validate(&self) -> Result<()> {
++        self.decode.validate()?;
++        let image = &self.projection_residual_image;
++        require(
++            self.schema == REQUEST_SCHEMA
++                && self.decode.mode == wire::InputMode::Autoregressive
++                && image.path.is_absolute()
++                && image.bytes > 0
++                && image.bytes <= wire::MAX_IMAGE_BYTES as u64
++                && image.sha256 != [0; 32]
++                && image.sha256 != self.decode.images.residual.sha256
++                && serde_json::to_vec(self).map_err(|e| e.to_string())?.len() <= 16384,
++            "projection decode distinct image and closed four-forward request",
++        )
++    }
++}
++
++fn pinned_part(image: &FilePin) -> Result<setup_wire::Part> {
++    Ok(setup_wire::Part {
++        bytes: u32::try_from(image.bytes).map_err(|_| "projection decode image extent overflow")?,
++        sha256: image.sha256,
++    })
++}
++
++pub(super) fn bootstrap(
++    decode: wire::Bootstrap,
++    image: &FilePin,
++) -> Result<projection_wire::Bootstrap> {
++    let value = projection_wire::Bootstrap {
++        schema: projection_wire::SCHEMA.into(),
++        decode,
++        projection_residual_image: pinned_part(image)?,
++    };
++    value
++        .validate(
++            value.decode.device_ids,
++            value.decode.timeout_ms,
++            value.decode.scope.child_identity,
++            value.decode.mode,
++        )
++        .map_err(|e| e.to_string())?;
++    Ok(value)
++}
++
++#[derive(Serialize)]
++pub struct OrderedDecodeObservation {
++    pub schema: &'static str,
++    pub request: OrderedDecodeConfig,
++    pub child_pid: u32,
++    pub registration_sha256: [u8; 32],
++    pub source_program_sha256: [u8; 32],
++    pub upload_manifest_sha256: [u8; 32],
++    pub bootstrap: projection_wire::Bootstrap,
++    pub profile_sha256: [u8; 32],
++    pub setup_commands: u64,
++    pub completed_forwards: u32,
++    pub input_tokens: Vec<u32>,
++    pub observed_output_tokens: Vec<u32>,
++    pub page_permutation: Vec<u32>,
++    pub transcript_sha256: [u8; 32],
++    pub request_stream_bytes: usize,
++    pub response_stream_bytes: usize,
++    pub files: evidence::Files,
++    pub close: wire::Response,
++    pub child_exit_zero: bool,
++    pub process_group_absent: bool,
++    pub native_closed: bool,
++    pub gpu_execution: bool,
++    pub numerical_acceptance: bool,
++    pub performance_claim: bool,
++    pub production_authority: bool,
++    pub full_long_workload: bool,
++    pub paired_comparison_performed: bool,
++    pub native_attempts: u32,
++    pub retries: u32,
++}
++
++impl OrderedDecodeObservation {
++    pub(super) fn closed(
++        config: OrderedDecodeConfig,
++        actual: Observation,
++        bootstrap: projection_wire::Bootstrap,
++    ) -> Result<Self> {
++        config.validate()?;
++        bootstrap
++            .validate(
++                config.decode.device_ids,
++                config.decode.dispatch_timeout_ms,
++                actual.child_pid,
++                config.decode.mode,
++            )
++            .map_err(|e| e.to_string())?;
++        require(
++            serde_json::to_value(&config.decode).map_err(|e| e.to_string())?
++                == serde_json::to_value(&actual.request).map_err(|e| e.to_string())?
++                && bootstrap.decode == actual.bootstrap
++                && bootstrap.projection_residual_image
++                    == pinned_part(&config.projection_residual_image)?
++                && actual.profile_sha256 == bootstrap.sha256().map_err(|e| e.to_string())?
++                && actual.registration_sha256 == bootstrap.decode.registration
++                && actual.source_program_sha256 == bootstrap.decode.begin.source_program.sha256
++                && actual.upload_manifest_sha256 == bootstrap.decode.begin.uploads.sha256
++                && actual.gpu_execution,
++            "projection decode actual request/bootstrap/profile/source joins",
++        )?;
++        let seed = match config.decode.mode {
++            wire::InputMode::TeacherForced => INPUT_TOKENS.as_slice(),
++            wire::InputMode::Autoregressive => &INPUT_TOKENS[..1],
++        };
++        require(
++            bootstrap.decode.input_tokens.as_slice() == seed
++                && actual.input_tokens.len() == 4
++                && actual.observed_output_tokens.len() == 4
++                && actual
++                    .observed_output_tokens
++                    .iter()
++                    .all(|token| *token < VOCABULARY),
++            "projection decode authentic seed and four recorded outputs",
++        )?;
++        let mut previous = None;
++        for (position, (&input, &output)) in actual
++            .input_tokens
++            .iter()
++            .zip(&actual.observed_output_tokens)
++            .enumerate()
++        {
++            require(
++                input
++                    == bootstrap
++                        .input(position as u32, previous)
++                        .map_err(|e| e.to_string())?,
++                "projection decode recorded TF/own-output trajectory",
++            )?;
++            previous = Some(output);
++        }
++        // This internal value is never published under the old schema. Its
++        // unchanged validators check the actual new-profile Control and Close.
++        evidence::validate_closed(&actual)?;
++        Ok(Self {
++            schema: "FerricFiniteProjectionResidualMlpOrderedObservationV1",
++            request: config,
++            child_pid: actual.child_pid,
++            registration_sha256: actual.registration_sha256,
++            source_program_sha256: actual.source_program_sha256,
++            upload_manifest_sha256: actual.upload_manifest_sha256,
++            bootstrap,
++            profile_sha256: actual.profile_sha256,
++            setup_commands: actual.setup_commands,
++            completed_forwards: actual.completed_forwards,
++            input_tokens: actual.input_tokens,
++            observed_output_tokens: actual.observed_output_tokens,
++            page_permutation: actual.page_permutation,
++            transcript_sha256: actual.transcript_sha256,
++            request_stream_bytes: actual.request_stream_bytes,
++            response_stream_bytes: actual.response_stream_bytes,
++            files: actual.files,
++            close: actual.close,
++            child_exit_zero: actual.child_exit_zero,
++            process_group_absent: actual.process_group_absent,
++            native_closed: actual.native_closed,
++            gpu_execution: actual.gpu_execution,
++            numerical_acceptance: false,
++            performance_claim: false,
++            production_authority: false,
++            full_long_workload: false,
++            paired_comparison_performed: false,
++            native_attempts: 1,
++            retries: 0,
++        })
++    }
++
++    pub(super) fn publish(&mut self) -> Result<()> {
++        let directory = self.request.decode.evidence_directory.clone();
++        evidence::publish_summary(
++            &directory,
++            self.files.bytes_before_summary,
++            |summary, total| {
++                self.files.summary_bytes = summary;
++                self.files.total_bytes = total;
++                serde_json::to_vec(&self).map_err(|e| e.to_string())
++            },
++        )
++    }
++}
++
++
++pub(super) fn selected(old: &super::projection_wire::Bootstrap) -> projection_wire::Bootstrap {
++    projection_wire::Bootstrap { schema: projection_wire::SCHEMA.into(),
++        decode: old.decode.clone(), projection_residual_image: old.projection_residual_image }
++}
++#[cfg(test)]
++#[path = "projection_ordered_tests.rs"]
++mod tests;
+--- /dev/null
++++ b/adapters/m1-engineering-execution-v1/src/tp_finite_client/prefix_decode/projection_ordered_tests.rs
+@@ -0,0 +1,53 @@
++use super::*;
++fn config()->OrderedDecodeConfig {
++    let mut decode=super::super::tests::config();
++    decode.mode=wire::InputMode::Autoregressive;
++    OrderedDecodeConfig { schema:REQUEST_SCHEMA.into(), decode,
++        projection_residual_image:FilePin{path:"/task/ordered-projection.hsaco".into(),bytes:1,sha256:hash(&[10])} }
++}
++#[test]
++fn ordered_parent_config_requires_distinct_schema_ar_and_projection_pin() {
++    let c=config();c.validate().unwrap();
++    OrderedDecodeConfig::parse(&serde_json::to_vec(&c).unwrap()).unwrap();
++    let mut bad=c.clone();bad.schema="FerricFiniteProjectionResidualDecodeRequestV1".into();assert!(bad.validate().is_err());
++    let mut bad=c.clone();bad.decode.mode=wire::InputMode::TeacherForced;assert!(bad.validate().is_err());
++    let mut bad=c.clone();bad.projection_residual_image=bad.decode.images.residual.clone();assert!(bad.validate().is_err());
++    let mut bad=c;bad.projection_residual_image.bytes=u64::MAX;assert!(bad.validate().is_err());
++}
++#[test]
++fn ordered_parent_bootstrap_is_not_plain_projection_profile() {
++    let c=config();let base=wire::tests::bootstrap(wire::InputMode::Autoregressive);
++    let old=super::super::projection::bootstrap(base.clone(),&c.projection_residual_image).unwrap();
++    let new=bootstrap(base,&c.projection_residual_image).unwrap();
++    assert_eq!(selected(&old),new);
++    assert_ne!(old.sha256().unwrap(),new.sha256().unwrap());
++}
++#[test]
++fn ordered_parent_worker_selector_has_no_legacy_fallback() {
++    let c=config();let d=HostDiagnostic::Ordered("/task/sidecar.json".into(),c.projection_residual_image.clone());
++    assert_eq!(worker_flag(Some(&d),true).unwrap(),"--engineering-native-projection-residual-mlp-ordered-v1");
++    assert!(worker_flag(Some(&d),false).is_err());
++    let old=HostDiagnostic::Device("/task/device.json".into());
++    assert!(worker_flag(Some(&old),true).is_err());
++    assert_eq!(worker_flag(None,true).unwrap(),"--engineering-native-projection-residual-decode-v1");
++}
++#[test]
++fn ordered_parent_checks_real_new_control_bytes_chain_and_old_reader_refusal() {
++    let b=crate::finite_projection_residual_mlp_ordered_wire_v1::tests::ar_bootstrap();
++    let mut request=wire::tests::request(&b.decode,0,None);
++    request.profile_sha256=b.sha256().unwrap();
++    let mut producer=wire::Chain::new(b.decode.registration,request.profile_sha256);
++    let (mut response,_,payload)=wire::tests::completed(&request,&mut producer,7);
++    let control=crate::finite_projection_residual_mlp_ordered_wire_v1::tests::control();
++    let mut producer=wire::Chain::new(b.decode.registration,request.profile_sha256);
++    let wire::Event::Completed(value)=&mut response.event else {panic!()};
++    value.control=old::part(&control.encode());value.chain=producer.advance(value);
++    let mut checked=wire::Chain::new(b.decode.registration,request.profile_sha256);
++    validate_completion_bytes(&request,&response,&control.encode(),&payload,&mut checked).unwrap();
++    let mut raw=Vec::new();
++    projection_wire::write_response(&mut raw,&mut wire::FrameBudget::new(),&response,Some(&control),&payload).unwrap();
++    assert!(wire::read_response(&mut &raw[..],&mut wire::FrameBudget::new()).is_err());
++    let mut bad=control.encode();bad[0]^=1;
++    let mut checked=wire::Chain::new(b.decode.registration,request.profile_sha256);
++    assert!(validate_completion_bytes(&request,&response,&bad,&payload,&mut checked).is_err());
++}
+--- a/adapters/m1-engineering-execution-v1/src/tp_finite_client/prefix_decode.rs
++++ b/adapters/m1-engineering-execution-v1/src/tp_finite_client/prefix_decode.rs
+@@ -4,6 +4,7 @@
+ use crate::finite_forward_wire_v1 as old;
+ use crate::finite_prefix_decode_wire_v1 as wire;
+ use crate::finite_projection_residual_decode_wire_v1 as projection_wire;
++use crate::finite_projection_residual_mlp_ordered_wire_v1 as ordered_wire;
+ use crate::finite_setup_wire_v1 as setup_wire;
+ use crate::tp_execution::batched::EngineeringTp2FiniteSourceRecorderV1;
+ use crate::tp_execution::{
+@@ -278,10 +279,15 @@
+     )
+ }
+ 
+-fn validate_completion<'a>(
++fn validate_completion<'a>(request: &wire::Request, response: &'a wire::Response,
++    control: &wire::Control, payload: &[u8], chain: &mut wire::Chain) -> Result<&'a wire::Completion> {
++    control.validate().map_err(|e| e.to_string())?;
++    validate_completion_bytes(request, response, &control.encode(), payload, chain)
++}
++fn validate_completion_bytes<'a>(
+     request: &wire::Request,
+     response: &'a wire::Response,
+-    control: &wire::Control,
++    control: &[u8],
+     payload: &[u8],
+     chain: &mut wire::Chain,
+ ) -> Result<&'a wire::Completion> {
+@@ -295,14 +301,13 @@
+     let wire::Event::Completed(c) = &response.event else {
+         return Err("prefix decode expected Completed".into());
+     };
+-    control.validate().map_err(|e| e.to_string())?;
+     require(
+         !response.native_closed
+             && c.generation == *generation
+             && c.position as u64 + 1 == *generation
+             && c.input_token == *token
+             && c.output_token < VOCABULARY
+-            && c.control == old::part(&control.encode())
++            && c.control == old::part(control)
+             && c.observation.bytes as usize == old::OBSERVATION_BYTES
+             && c.observation.sha256 != [0; 32],
+         "prefix decode completion token, state, payload or position",
+@@ -405,6 +410,7 @@
+ enum HostDiagnostic {
+     Projection(PathBuf, FilePin),
+     ProjectionShared(PathBuf, FilePin),
++    Ordered(PathBuf, FilePin),
+     Device(PathBuf),
+     DeviceClock(PathBuf),
+     V1(PathBuf),
+@@ -418,11 +424,13 @@
+             | Self::Device(path)
+             | Self::DeviceClock(path)
+             | Self::Projection(path, _)
+-            | Self::ProjectionShared(path, _) => path,
++            | Self::ProjectionShared(path, _)
++            | Self::Ordered(path, _) => path,
+         }
+     }
+     fn launch_flag(&self) -> &'static str {
+         match self {
++            Self::Ordered(_, _) => "--engineering-native-projection-residual-mlp-ordered-v1",
+             Self::Projection(_, _) => "--engineering-native-projection-residual-decode-host-v1",
+             Self::ProjectionShared(_, _) => {
+                 "--engineering-native-projection-residual-decode-shared-host-v1"
+@@ -447,6 +455,7 @@
+     }
+     fn validate(&self, observation: &Observation) -> Result<FilePin> {
+         match self {
++            Self::Ordered(path, image) => ordered_host::validate(path, observation, image),
+             Self::Projection(path, image) => projection_host::validate(path, observation, image),
+             Self::ProjectionShared(path, image) => {
+                 projection_host::validate_shared(path, observation, image)
+@@ -473,12 +482,12 @@
+         (
+             true,
+             Some(
+-                value @ (HostDiagnostic::Projection(_, _) | HostDiagnostic::ProjectionShared(_, _)),
++                value @ (HostDiagnostic::Projection(_, _) | HostDiagnostic::ProjectionShared(_, _) | HostDiagnostic::Ordered(_, _)),
+             ),
+         ) => Ok(value.launch_flag()),
+         (
+             false,
+-            Some(HostDiagnostic::Projection(_, _) | HostDiagnostic::ProjectionShared(_, _)),
++            Some(HostDiagnostic::Projection(_, _) | HostDiagnostic::ProjectionShared(_, _) | HostDiagnostic::Ordered(_, _)),
+         )
+         | (true, Some(_)) => Err("projection decode cannot mix legacy diagnostics".into()),
+         (false, diagnostic) => Ok(diagnostic
+@@ -503,6 +512,8 @@
+     )?;
+     config.validate()?;
+     let launch_flag = worker_flag(diagnostic.as_ref(), projection.is_some())?;
++    let ordered = matches!(&diagnostic, Some(HostDiagnostic::Ordered(_, _)));
++    require(!ordered || config.mode == wire::InputMode::Autoregressive, "ordered route is AR4 only")?;
+     if let Some(diagnostic) = &diagnostic {
+         host_observation::preflight(diagnostic.path())?;
+     }
+@@ -564,7 +575,8 @@
+     eprintln!("finite engineering owned child pid={pid} pgid={pid}; no native setup acknowledged");
+     eprintln!(
+         "finite explicit profile={} mode={:?}",
+-        if projection.is_some() {
++        if ordered { "projection-residual-mlp-ordered-ar4-shared-v1" }
++        else if projection.is_some() {
+             "projection-residual-prefix284-mlp548-four-forward-v1"
+         } else {
+             "prefix284-mlp548-four-forward-v1"
+@@ -642,6 +654,7 @@
+             .map(|pin| projection::bootstrap(bootstrap.clone(), pin))
+             .transpose()?;
+         let profile = match &projection_bootstrap {
++            Some(selected) if ordered => projection_ordered::selected(selected).sha256(),
+             Some(selected) => selected.sha256(),
+             None => bootstrap.sha256(),
+         }
+@@ -652,6 +665,9 @@
+             .as_mut()
+             .ok_or("prefix decode closed bootstrap stdin")?;
+         match &projection_bootstrap {
++            Some(selected) if ordered => ordered_wire::write_bootstrap(input, &mut sent,
++                &projection_ordered::selected(selected), &tiles_image, &prefix_image,
++                projection_image.as_deref().ok_or("ordered image missing")?),
+             Some(selected) => projection_wire::write_bootstrap(
+                 input,
+                 &mut sent,
+@@ -770,6 +786,18 @@
+                 &request,
+             )
+             .map_err(|e| e.to_string())?;
++            if ordered {
++                let (response, control, payload) = ordered_wire::read_response(
++                    child.output.as_mut().ok_or("ordered stdout closed")?, &mut received)
++                    .map_err(|e| e.to_string())?.ok_or("ordered EOF before completion")?;
++                let control = control.ok_or("ordered control absent")?;
++                control.validate().map_err(|e| e.to_string())?;
++                let raw = control.encode();
++                let completion = validate_completion_bytes(&request, &response, &raw, &payload, &mut chain)?;
++                child.check_deadline()?;
++                evidence.append_encoded(&request, &response, &raw, &payload)?;
++                return Ok(completion.output_token);
++            }
+             let (response, control, payload) = wire::read_response(
+                 child.output.as_mut().ok_or("prefix decode closed stdout")?,
+                 &mut received,
+@@ -811,6 +839,14 @@
+         &close_request,
+     )
+     .map_err(|e| e.to_string())?;
++    let close = if ordered {
++        let (close, control, payload) = ordered_wire::read_response(
++            child.output.as_mut().ok_or("ordered Close stdout absent")?, &mut received)
++            .map_err(|e| e.to_string())?.ok_or("ordered EOF before Close")?;
++        require(control.is_none(), "ordered Close control must be absent")?;
++        validate_close(&close_request, &close, None, &payload, chain.digest())?;
++        close
++    } else {
+     let (close, control, payload) = wire::read_response(
+         child
+             .output
+@@ -827,6 +863,8 @@
+         &payload,
+         chain.digest(),
+     )?;
++        close
++    };
+     let stderr = child.finish()?;
+     config.worker.read(512 << 20, false)?;
+     for pin in [
+@@ -892,3 +930,6 @@
+ mod tests;
+ 
+ pub mod projection_host;
++
++pub mod projection_ordered;
++pub mod ordered_host;
+--- /dev/null
++++ b/adapters/tp-peer-finite-engineering-worker-v1/src/finite_projection_residual_mlp_ordered_wire_v1.rs
+@@ -0,0 +1,409 @@
++//! Explicit shared-full ordered residual/MLP route; no legacy control layout.
++use crate::finite_long_wire_v1::{read_header, write_header};
++use crate::finite_prefix_decode_wire_v1 as base;
++use crate::finite_setup_wire_v1::{self as setup, Part};
++use serde::{Deserialize, Serialize};
++use sha2::{Digest, Sha256};
++use std::io::{self, Read, Write};
++
++pub use crate::finite_forward_wire_v1::part;
++pub use base::{FORWARDS, HEADER_BYTES, MAX_IMAGE_BYTES, PROTOCOL, STREAM_BYTES};
++pub use base::{
++    Chain, Command, Completion, Event, FrameBudget, InputMode, Profile,
++    Request, Response,
++};
++pub use base::{read_request, write_request};
++use crate::finite_forward_wire_v1::{OBSERVATION_BYTES, Payload};
++pub const CONTROL_BYTES: usize = 241_096;
++
++pub const SCHEMA: &str = "FerricProjectionResidualMlpOrderedBootstrapV1";
++pub const ARITHMETIC: &str = "ordered-fp32-tp2-bf16-projection-then-bf16-residual-v1";
++
++pub fn profile_sha256(base: [u8; 32]) -> io::Result<[u8; 32]> {
++    if base == [0; 32] { return Err(io::Error::other("ordered profile absent")); }
++    let mut h = Sha256::new();
++    h.update(b"ferric-projection-residual-mlp-ordered-ar4-shared-v1\0");
++    h.update(base);
++    Ok(h.finalize().into())
++}
++
++#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
++#[serde(deny_unknown_fields)]
++pub struct Bootstrap {
++    pub schema: String,
++    pub decode: base::Bootstrap,
++    pub projection_residual_image: Part,
++}
++impl Bootstrap {
++    pub fn validate(
++        &self,
++        devices: [u64; 2],
++        timeout: u32,
++        pid: u32,
++        mode: InputMode,
++    ) -> io::Result<()> {
++        self.decode.validate(devices, timeout, pid, mode)?;
++        let p = self.projection_residual_image;
++        if mode != InputMode::Autoregressive || self.schema != SCHEMA
++            || p.bytes == 0
++            || p.bytes as usize > MAX_IMAGE_BYTES
++            || p.sha256 == [0; 32]
++        {
++            return Err(io::Error::other(
++                "separate authenticated projection bootstrap",
++            ));
++        }
++        self.total_input_bytes().map(|_| ())
++    }
++    pub fn total_input_bytes(&self) -> io::Result<usize> {
++        self.decode
++            .total_input_bytes()?
++            .checked_add(self.projection_residual_image.bytes as usize)
++            .filter(|n| *n <= STREAM_BYTES - 7 * (HEADER_BYTES + 4))
++            .ok_or_else(|| io::Error::other("projection decode combined input bound"))
++    }
++    pub fn sha256(&self) -> io::Result<[u8; 32]> {
++        self.validate(
++            self.decode.device_ids,
++            self.decode.timeout_ms,
++            self.decode.scope.child_identity,
++            self.decode.mode,
++        )?;
++        profile_sha256(crate::finite_projection_residual_decode_wire_v1::profile_sha256(
++            self.decode.sha256()?, self.projection_residual_image.sha256)?)
++    }
++    pub fn input(&self, position: u32, previous: Option<u32>) -> io::Result<u32> {
++        self.decode.input(position, previous)
++    }
++}
++fn image(expected: Part, bytes: &[u8]) -> io::Result<()> {
++    if bytes.is_empty() || bytes.len() > MAX_IMAGE_BYTES || part(bytes) != expected {
++        return Err(io::Error::other("projection decode image body/hash"));
++    }
++    Ok(())
++}
++pub fn write_bootstrap(
++    w: &mut impl Write,
++    budget: &mut FrameBudget,
++    b: &Bootstrap,
++    mlp: &[u8],
++    prefix: &[u8],
++    projection: &[u8],
++) -> io::Result<()> {
++    b.validate(
++        b.decode.device_ids,
++        b.decode.timeout_ms,
++        b.decode.scope.child_identity,
++        b.decode.mode,
++    )?;
++    for (pin, body) in [
++        (b.decode.tiles_image, mlp),
++        (b.decode.prefix_image, prefix),
++        (b.projection_residual_image, projection),
++    ] {
++        image(pin, body)?;
++    }
++    budget.charge(mlp.len() + prefix.len() + projection.len())?;
++    write_header(w, budget, b)?;
++    w.write_all(mlp)?;
++    w.write_all(prefix)?;
++    w.write_all(projection)?;
++    w.flush()
++}
++pub fn read_bootstrap(
++    r: &mut impl Read,
++    budget: &mut FrameBudget,
++) -> io::Result<Option<(Bootstrap, Vec<u8>, Vec<u8>, Vec<u8>)>> {
++    let Some(b) = read_header::<Bootstrap>(r, budget)? else {
++        return Ok(None);
++    };
++    b.validate(
++        b.decode.device_ids,
++        b.decode.timeout_ms,
++        b.decode.scope.child_identity,
++        b.decode.mode,
++    )?;
++    let pins = [
++        b.decode.tiles_image,
++        b.decode.prefix_image,
++        b.projection_residual_image,
++    ];
++    budget.charge(pins.iter().map(|p| p.bytes as usize).sum())?;
++    let mut bodies = Vec::with_capacity(3);
++    for pin in pins {
++        let mut body = vec![0; pin.bytes as usize];
++        r.read_exact(&mut body)?;
++        image(pin, &body)?;
++        bodies.push(body);
++    }
++    let [mlp, prefix, projection]: [Vec<u8>; 3] = bodies
++        .try_into()
++        .map_err(|_| io::Error::other("projection image roster"))?;
++    Ok(Some((b, mlp, prefix, projection)))
++}
++pub fn account_begin(budget: &mut FrameBudget, b: &Bootstrap) -> io::Result<()> {
++    b.sha256()?;
++    base::account_begin(budget, &b.decode)
++}
++pub fn read_begin(
++    r: &mut impl Read,
++    budget: &mut FrameBudget,
++    b: &Bootstrap,
++) -> io::Result<(setup::Request, Vec<u8>)> {
++    b.sha256()?;
++    base::read_begin(r, budget, &b.decode)
++}
++
++
++fn check(ok: bool, message: &str) -> io::Result<()> {
++    if ok { Ok(()) } else { Err(io::Error::other(message.to_owned())) }
++}
++fn devices(ids: [u64; 2]) -> bool { ids[0] != 0 && ids[1] != 0 && ids[0] != ids[1] }
++fn envelope(
++    protocol: u32,
++    id: u64,
++    ids: [u64; 2],
++    session: [u8; 32],
++    registration: [u8; 32],
++    profile: [u8; 32],
++) -> io::Result<()> {
++    check(
++        protocol == PROTOCOL
++            && (1..=5).contains(&id)
++            && devices(ids)
++            && session != [0; 32]
++            && registration != [0; 32]
++            && profile != [0; 32],
++        "tiles envelope",
++    )
++}
++#[derive(Clone, Debug, Eq, PartialEq)]
++pub struct LayerObservation {
++    pub prefix_states: [[u32; 284]; 2],
++    pub tiles_states: [[u32; 548]; 2],
++    pub prefix_ns: [u64; 2],
++    pub segment_host_ns: u64,
++    pub final_residual_ns: [u64; 2],
++}
++#[derive(Clone, Debug, Eq, PartialEq)]
++pub struct Control {
++    pub embedding_ns: [u64; 2],
++    pub layers: [LayerObservation; 36],
++    pub tail_ns: [u64; 3],
++}
++impl Control {
++    pub fn validate(&self) -> io::Result<()> {
++        for layer in &self.layers {
++            for rank in 0..2 {
++                let p = &layer.prefix_states[rank];
++                check(
++                    p[..4] == [1, 0, 0, 31]
++                        && p[4..9] == [1, 48, 1, 16, 64]
++                        && p[9..14] == [1, 48, 1, 16, 64]
++                        && p[14..19] == [u32::MAX, u32::MAX, u32::MAX, u32::MAX, 3]
++                        && p[19..24] == [u32::MAX, u32::MAX, u32::MAX, u32::MAX, 3]
++                        && p[24..154].iter().all(|v| (1..=64).contains(v))
++                        && p[154..].iter().all(|v| *v == 64),
++                    "tiles prefix terminal",
++                )?;
++                crate::finite_mlp_tiles_comparison_wire_v1::validate_tiles_state(
++                    &layer.tiles_states[rank],
++                )?;
++            }
++        }
++        Ok(())
++    }
++    pub fn encode(&self) -> Vec<u8> {
++        let mut bytes = Vec::with_capacity(CONTROL_BYTES);
++        for v in self.embedding_ns {
++            bytes.extend_from_slice(&v.to_le_bytes());
++        }
++        for layer in &self.layers {
++            for words in &layer.prefix_states {
++                for v in words {
++                    bytes.extend_from_slice(&v.to_le_bytes());
++                }
++            }
++            for words in &layer.tiles_states {
++                for v in words {
++                    bytes.extend_from_slice(&v.to_le_bytes());
++                }
++            }
++            for v in layer.prefix_ns.into_iter().chain([layer.segment_host_ns]).chain(layer.final_residual_ns) {
++                bytes.extend_from_slice(&v.to_le_bytes());
++            }
++        }
++        for v in self.tail_ns {
++            bytes.extend_from_slice(&v.to_le_bytes());
++        }
++        bytes
++    }
++    pub fn decode(bytes: &[u8]) -> io::Result<Self> {
++        check(
++            bytes.len() == CONTROL_BYTES,
++            "tiles control exact548 extent",
++        )?;
++        fn word<const N: usize>(r: &mut io::Cursor<&[u8]>) -> io::Result<[u8; N]> {
++            let mut out = [0; N];
++            r.read_exact(&mut out)?;
++            Ok(out)
++        }
++        let mut r = io::Cursor::new(bytes);
++        let mut result = Self {
++            embedding_ns: [0; 2],
++            layers: core::array::from_fn(|_| LayerObservation {
++                prefix_states: [[0; 284]; 2],
++                tiles_states: [[0; 548]; 2],
++                prefix_ns: [0; 2], segment_host_ns: 0, final_residual_ns: [0; 2],
++            }),
++            tail_ns: [0; 3],
++        };
++        for v in &mut result.embedding_ns {
++            *v = u64::from_le_bytes(word(&mut r)?);
++        }
++        for layer in &mut result.layers {
++            for words in &mut layer.prefix_states {
++                for v in words {
++                    *v = u32::from_le_bytes(word(&mut r)?);
++                }
++            }
++            for words in &mut layer.tiles_states {
++                for v in words {
++                    *v = u32::from_le_bytes(word(&mut r)?);
++                }
++            }
++            for v in &mut layer.prefix_ns { *v = u64::from_le_bytes(word(&mut r)?); }
++            layer.segment_host_ns = u64::from_le_bytes(word(&mut r)?);
++            for v in &mut layer.final_residual_ns { *v = u64::from_le_bytes(word(&mut r)?); }
++        }
++        for v in &mut result.tail_ns {
++            *v = u64::from_le_bytes(word(&mut r)?);
++        }
++        result.validate()?;
++        Ok(result)
++    }
++}
++fn body_bytes(value: &Response) -> io::Result<usize> {
++        envelope(
++            value.protocol,
++            value.id,
++            value.device_ids,
++            value.session,
++            value.registration,
++            value.profile_sha256,
++        )?;
++        check(
++            value.gpu_execution
++                && !value.numerical_acceptance
++                && !value.performance_claim
++                && !value.production_authority,
++            "tiles diagnostic claim boundary",
++        )?;
++        match &value.event {
++            Event::Closed {
++                completed_forwards, ..
++            } => {
++                check(
++                    value.native_closed && value.id == 5 && *completed_forwards == 4,
++                    "tiles Close identity",
++                )?;
++                Ok(0)
++            }
++            Event::Completed(c) => {
++                check(
++                    !value.native_closed
++                        && value.id <= 4
++                        && c.generation == value.id
++                        && c.position == value.id as u32 - 1
++                        && c.input_token < 151936
++                        && c.output_token < 151936
++                        && c.control.bytes as usize == CONTROL_BYTES
++                        && c.observation.bytes as usize == OBSERVATION_BYTES
++                        && c.capture.total == c.observation,
++                    "tiles completion shape",
++                )?;
++                Ok(CONTROL_BYTES + OBSERVATION_BYTES)
++            }
++        }
++    }
++fn capture(c: &Completion, bytes: &[u8]) -> io::Result<()> {
++    check(
++        bytes.len() == OBSERVATION_BYTES
++            && part(bytes) == c.observation
++            && Payload::from_bytes(bytes)? == c.capture,
++        "tiles main payload shape/hash",
++    )?;
++    check(
++        bytes
++            .chunks_exact(2)
++            .all(|v| u16::from_le_bytes(v.try_into().unwrap()) & 0x7f80 != 0x7f80),
++        "tiles main nonfinite",
++    )?;
++    let mut best = f32::NEG_INFINITY;
++    let mut winner = 0;
++    for (i, v) in bytes[37 * 8192..].chunks_exact(2).enumerate() {
++        let value = f32::from_bits(u32::from(u16::from_le_bytes(v.try_into().unwrap())) << 16);
++        if value > best {
++            best = value;
++            winner = i as u32;
++        }
++    }
++    check(
++        winner == c.output_token,
++        "tiles checked lowest-index argmax",
++    )
++}
++pub fn write_response(
++    w: &mut impl Write,
++    b: &mut FrameBudget,
++    v: &Response,
++    c: Option<&Control>,
++    main: &[u8],
++) -> io::Result<()> {
++    let size = body_bytes(v)?;
++    match &v.event {
++        Event::Closed { .. } => check(c.is_none() && main.is_empty(), "tiles Close body")?,
++        Event::Completed(value) => {
++            let control = c.ok_or_else(|| io::Error::other("tiles control missing"))?;
++            control.validate()?;
++            check(
++                part(&control.encode()) == value.control,
++                "tiles control hash",
++            )?;
++            capture(value, main)?;
++        }
++    }
++    b.charge(size)?;
++    write_header(w, b, v)?;
++    if let Some(c) = c {
++        w.write_all(&c.encode())?;
++    }
++    w.write_all(main)?;
++    w.flush()
++}
++pub fn read_response(
++    r: &mut impl Read,
++    b: &mut FrameBudget,
++) -> io::Result<Option<(Response, Option<Control>, Vec<u8>)>> {
++    let Some(value) = read_header::<Response>(r, b)? else {
++        return Ok(None);
++    };
++    b.charge(body_bytes(&value)?)?;
++    if let Event::Completed(c) = &value.event {
++        let mut bytes = vec![0; CONTROL_BYTES];
++        r.read_exact(&mut bytes)?;
++        check(part(&bytes) == c.control, "tiles control hash")?;
++        let control = Control::decode(&bytes)?;
++        let mut main = vec![0; OBSERVATION_BYTES];
++        r.read_exact(&mut main)?;
++        capture(c, &main)?;
++        Ok(Some((value, Some(control), main)))
++    } else {
++        Ok(Some((value, None, Vec::new())))
++    }
++}
++
++
++#[cfg(test)]
++#[path = "finite_projection_residual_mlp_ordered_wire_v1_tests.rs"]
++pub(crate) mod tests;
+--- /dev/null
++++ b/adapters/tp-peer-finite-engineering-worker-v1/src/finite_projection_residual_mlp_ordered_wire_v1_tests.rs
+@@ -0,0 +1,49 @@
++use super::*;
++pub(crate) fn ar_bootstrap() -> Bootstrap {
++    let old = crate::finite_projection_residual_decode_wire_v1::tests::ar_bootstrap();
++    Bootstrap { schema: SCHEMA.into(), decode: old.decode,
++        projection_residual_image: old.projection_residual_image }
++}
++pub(crate) fn control() -> Control {
++    let old = base::tests::control();
++    Control { embedding_ns: old.embedding_ns, tail_ns: old.tail_ns,
++        layers: old.layers.map(|r| LayerObservation { prefix_states: r.prefix_states,
++            tiles_states: r.tiles_states, prefix_ns: [11,12],
++            segment_host_ns: 23, final_residual_ns: [31,32] }) }
++}
++#[test]
++fn ordered_profile_separates_projection_and_mode_domains() {
++    let b = ar_bootstrap();
++    let old = crate::finite_projection_residual_decode_wire_v1::tests::ar_bootstrap();
++    assert_ne!(b.sha256().unwrap(), old.sha256().unwrap());
++    let mut wrong = b.clone(); wrong.schema = old.schema; assert!(wrong.sha256().is_err());
++    let mut wrong = b; wrong.decode = base::tests::bootstrap(InputMode::TeacherForced);
++    assert!(wrong.sha256().is_err());
++}
++#[test]
++fn ordered_control_has_one_segment_and_rejects_legacy_extent() {
++    let c = control(); let raw = c.encode();
++    assert_eq!(raw.len(), CONTROL_BYTES);
++    assert_eq!(Control::decode(&raw).unwrap(), c);
++    assert!(base::Control::decode(&raw).is_err());
++    assert!(Control::decode(&base::tests::control().encode()).is_err());
++    assert_eq!(c.layers[0].segment_host_ns, 23);
++}
++#[test]
++fn ordered_image_identity_and_stream_bounds_fail_closed() {
++    let mut b = ar_bootstrap(); b.projection_residual_image.sha256 = [0;32];
++    assert!(b.sha256().is_err());
++    let mut b = ar_bootstrap(); b.projection_residual_image.bytes = u32::MAX;
++    assert!(b.sha256().is_err());
++    assert!(profile_sha256([0;32]).is_err());
++    assert!(read_bootstrap(&mut &[][..], &mut FrameBudget::new()).unwrap().is_none());
++}
++#[test]
++fn ordered_control_requires_both_rank_terminal_states() {
++    for rank in 0..2 {
++        let mut c = control(); c.layers[35].tiles_states[rank][0] = 0;
++        assert!(c.validate().is_err());
++        let mut c = control(); c.layers[0].prefix_states[rank][154] = 63;
++        assert!(c.validate().is_err());
++    }
++}
+--- a/adapters/tp-peer-finite-engineering-worker-v1/src/lib.rs
++++ b/adapters/tp-peer-finite-engineering-worker-v1/src/lib.rs
+@@ -59,3 +59,7 @@
+ mod tail_bindings;
+ #[allow(dead_code)]
+ mod tail_head;
++
++pub mod finite_projection_residual_mlp_ordered_wire_v1;
++pub mod projection_residual_mlp_ordered_observation_v1;
++pub mod native_projection_residual_mlp_ordered_v1;
+--- a/adapters/tp-peer-finite-engineering-worker-v1/src/main.rs
++++ b/adapters/tp-peer-finite-engineering-worker-v1/src/main.rs
+@@ -18,10 +18,14 @@
+ use ferric_tp_peer_finite_engineering_worker_v1::native_rearm_smoke_cli_v1 as smoke;
+ use ferric_tp_peer_finite_engineering_worker_v1::native_tiles_decode_cli_v1 as decode;
+ use std::io::{self, IsTerminal};
++use ferric_tp_peer_finite_engineering_worker_v1::native_projection_residual_mlp_ordered_v1 as ordered;
+ 
+ #[allow(unsafe_code)]
+ fn run() -> io::Result<i32> {
+     let args: Vec<_> = std::env::args_os().skip(1).collect();
++    let ordered_options = if args.first().is_some_and(|arg| arg == "--engineering-native-projection-residual-mlp-ordered-v1") {
++        Some(ordered::parse_args(&args)?)
++    } else { None };
+     let projection_shared_host_options = if args
+         .first()
+         .is_some_and(|arg| arg == "--engineering-native-projection-residual-decode-shared-host-v1")
+@@ -155,6 +159,7 @@
+         && projection_decode_options.is_none()
+         && projection_host_options.is_none()
+         && projection_shared_host_options.is_none()
++        && ordered_options.is_none()
+         && device_options.is_none()
+         && clock_options.is_none()
+         && host_policy_options.is_none()
+@@ -177,6 +182,11 @@
+         ));
+     }
+     let mut input = io::stdin().lock();
++    if let Some(options) = ordered_options {
++        // SAFETY: distinct opt-in authenticated ordered bootstrap; no fallback.
++        unsafe { ordered::run_native(options, &mut input, &mut io::stdout().lock()) }?;
++        return Ok(0);
++    }
+     if let Some(options) = projection_shared_host_options {
+         // SAFETY: explicit shared-full route, unchanged owned AR4 lifetime.
+         unsafe { projection_host::run_native(options, &mut input, &mut io::stdout().lock()) }?;
+--- a/adapters/tp-peer-finite-engineering-worker-v1/src/native_forward.rs
++++ b/adapters/tp-peer-finite-engineering-worker-v1/src/native_forward.rs
+@@ -378,6 +378,7 @@
+     TilesDecodeV1,
+     PrefixTilesLayerV6,
+     PrefixTilesDecodeV6,
++    ProjectionResidualMlpOrderedV1,
+ }
+ impl AllocationProfile {
+     fn counts(self) -> [usize; 2] {
+@@ -386,6 +387,7 @@
+             Self::TilesDecodeV1 => [714, 710],
+             Self::PrefixTilesLayerV6 => [714, 710],
+             Self::PrefixTilesDecodeV6 => [714, 710],
++            Self::ProjectionResidualMlpOrderedV1 => [715, 711],
+             Self::TilesComparisonV1 => [715, 711],
+         }
+     }
+@@ -476,3 +478,24 @@
+     }
+     Ok(())
+ }
++
++#[cfg(test)]
++mod ordered_allocation_tests {
++    use super::*;
++    struct Writer { counts:Vec<usize>, writes:usize }
++    impl MetadataWriter for Writer {
++        type Root=u8;
++        fn counts(&mut self)->Result<Vec<usize>> { Ok(self.counts.clone()) }
++        fn write_metadata_root(&mut self,_:u8,_:&[u8])->Result<()> { self.writes+=1;Ok(()) }
++    }
++    #[test]
++    fn ordered_allocation_profile_refuses_old_census_before_any_metadata_write() {
++        let mut w=Writer{counts:vec![714,710],writes:0};
++        assert!(write_metadata(&mut w,AllocationProfile::ProjectionResidualMlpOrderedV1,[0,1,2,3],&[],&[]).is_err());
++        assert_eq!(w.writes,0);
++        w.counts=vec![715,711];
++        write_metadata(&mut w,AllocationProfile::ProjectionResidualMlpOrderedV1,[0,1,2,3],&[],&[]).unwrap();
++        assert_eq!(w.writes,4);
++        assert!(AllocationProfile::PrefixTilesDecodeV6.validate(&w.counts).is_err());
++    }
++}
+--- a/adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_decode_cli_v1.rs
++++ b/adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_decode_cli_v1.rs
+@@ -327,7 +327,8 @@
+         },
+     )
+ }
+-trait Backend {
++pub(crate) trait Backend {
++    fn ordered(&self) -> bool { false }
+     fn run(&mut self, input: &ForwardInput) -> io::Result<Run>;
+     fn close(&mut self) -> io::Result<()>;
+     fn control(&mut self, _control: &Control) -> io::Result<()> {
+@@ -484,12 +485,12 @@
+         layers: c
+             .layers
+             .into_iter()
+-            .map(|l| LayerObservation {
++            .map(|l| Ok(LayerObservation {
+                 prefix_states: l.prefix_states,
+                 tiles_states: l.mlp_states,
+-                paired_ns: l.paired_ns,
+-            })
+-            .collect::<Vec<_>>()
++                paired_ns: l.timing.paired().map_err(io::Error::other)?,
++            }))
++            .collect::<io::Result<Vec<_>>>()?
+             .try_into()
+             .map_err(|_| io::Error::other("tiles control layer count"))?,
+     };
+@@ -517,6 +518,74 @@
+         bytes,
+     ))
+ }
++fn ordered_observation(
++    run: Run,
++    request: &wire::Request,
++    chain: &mut Chain,
++) -> io::Result<(Response, crate::finite_projection_residual_mlp_ordered_wire_v1::Control, Vec<u8>)> {
++    use crate::finite_projection_residual_mlp_ordered_wire_v1::{Control, LayerObservation};
++    use crate::resident_layer::prefix_tiles_decode_v6::Timing;
++    let c = run.completion;
++    let Command::Forward {
++        generation, token, ..
++    } = &request.command
++    else {
++        return Err(io::Error::other("tiles observation non-forward"));
++    };
++    if c.profile_sha256 != request.profile_sha256
++        || c.generation != *generation
++        || c.position != request.id as u32 - 1
++        || c.input_token != *token
++        || c.output_token >= 151936
++        || c.layers.len() != 36
++        || run.layer_hidden.len() != 36
++        || run.layer_hidden.iter().any(|r| r.len() != 8192)
++        || run.final_normalized.len() != 8192
++        || run.logits.len() != 303872
++    {
++        return Err(io::Error::other("tiles actual observation identity/extent"));
++    }
++    let control = Control {
++        embedding_ns: c.embedding_ns,
++        tail_ns: c.tail_ns,
++        layers: c
++            .layers
++            .into_iter()
++            .map(|l| {
++                let Timing::Ordered { prefix_ns, segment_host_ns, final_residual_ns } = l.timing
++                    else { return Err(io::Error::other("legacy timing on ordered route")); };
++                Ok(LayerObservation { prefix_states: l.prefix_states, tiles_states: l.mlp_states,
++                    prefix_ns, segment_host_ns, final_residual_ns })
++            })
++            .collect::<io::Result<Vec<_>>>()?
++            .try_into()
++            .map_err(|_| io::Error::other("tiles control layer count"))?,
++    };
++    control.validate()?;
++    let mut bytes = Vec::with_capacity(OBSERVATION_BYTES);
++    for row in run.layer_hidden {
++        bytes.extend_from_slice(&row);
++    }
++    bytes.extend_from_slice(&run.final_normalized);
++    bytes.extend_from_slice(&run.logits);
++    let mut completed = Completion {
++        generation: c.generation,
++        position: c.position,
++        input_token: c.input_token,
++        output_token: c.output_token,
++        control: part(&control.encode()),
++        observation: part(&bytes),
++        capture: Payload::from_bytes(&bytes)?,
++        chain: [0; 32],
++    };
++    completed.chain = chain.advance(&completed);
++    Ok((
++        response(request, Event::Completed(completed), false),
++        control,
++        bytes,
++    ))
++}
++
+ fn serve_and_finish<B: Backend>(
+     backend: &mut B,
+     r: &mut impl Read,
+@@ -540,7 +609,7 @@
+ ) -> io::Result<()> {
+     serve_profile(backend, r, w, b, incoming, b.sha256()?)
+ }
+-fn serve_profile(
++pub(crate) fn serve_profile(
+     backend: &mut impl Backend,
+     r: &mut impl Read,
+     w: &mut impl Write,
+@@ -587,9 +656,17 @@
+                 };
+                 let run = backend.run(&input)?;
+                 let output = run.completion.output_token;
+-                let (reply, control, bytes) = observation(run, &request, &mut chain)?;
+-                backend.control(&control)?;
+-                wire::write_response(w, &mut outgoing, &reply, Some(&control), &bytes)?;
++                let reply = if backend.ordered() {
++                    let (reply, control, bytes) = ordered_observation(run, &request, &mut chain)?;
++                    crate::finite_projection_residual_mlp_ordered_wire_v1::write_response(
++                        w, &mut outgoing, &reply, Some(&control), &bytes)?;
++                    reply
++                } else {
++                    let (reply, control, bytes) = observation(run, &request, &mut chain)?;
++                    backend.control(&control)?;
++                    wire::write_response(w, &mut outgoing, &reply, Some(&control), &bytes)?;
++                    reply
++                };
+                 if let Event::Completed(completion) = &reply.event {
+                     backend.completed(completion)?;
+                 }
+@@ -608,7 +685,9 @@
+                     },
+                     true,
+                 );
+-                wire::write_response(w, &mut outgoing, &reply, None, &[])?;
++                if backend.ordered() {
++                    crate::finite_projection_residual_mlp_ordered_wire_v1::write_response(w, &mut outgoing, &reply, None, &[])?;
++                } else { wire::write_response(w, &mut outgoing, &reply, None, &[])?; }
+                 return Ok(());
+             }
+         }
+@@ -755,3 +834,7 @@
+ #[cfg(test)]
+ #[path = "native_prefix_decode_projection_tests.rs"]
+ mod projection_tests;
++
++#[cfg(test)]
++#[path = "native_prefix_decode_ordered_tests.rs"]
++mod ordered_tests;
+--- a/adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_decode_cli_v1_tests.rs
++++ b/adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_decode_cli_v1_tests.rs
+@@ -39,7 +39,7 @@
+                 .map(|l| LayerCompletion {
+                     prefix_states: l.prefix_states,
+                     mlp_states: l.tiles_states,
+-                    paired_ns: l.paired_ns,
++                    timing: crate::resident_layer::prefix_tiles_decode_v6::Timing::Paired(l.paired_ns),
+                 })
+                 .collect(),
+         },
+--- a/adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_decode_device_cli_tests.rs
++++ b/adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_decode_device_cli_tests.rs
+@@ -48,7 +48,7 @@
+                         |l| crate::resident_layer::prefix_tiles_decode_v6::Completion {
+                             prefix_states: l.prefix_states,
+                             mlp_states: l.tiles_states,
+-                            paired_ns: l.paired_ns,
++                            timing: crate::resident_layer::prefix_tiles_decode_v6::Timing::Paired(l.paired_ns),
+                         },
+                     )
+                     .collect(),
+--- a/adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_decode_host_cli_tests.rs
++++ b/adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_decode_host_cli_tests.rs
+@@ -29,7 +29,7 @@
+                         |l| crate::resident_layer::prefix_tiles_decode_v6::Completion {
+                             prefix_states: l.prefix_states,
+                             mlp_states: l.tiles_states,
+-                            paired_ns: l.paired_ns,
++                            timing: crate::resident_layer::prefix_tiles_decode_v6::Timing::Paired(l.paired_ns),
+                         },
+                     )
+                     .collect(),
+--- /dev/null
++++ b/adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_decode_ordered_tests.rs
+@@ -0,0 +1,381 @@
++use super::*;
++use crate::finite_projection_residual_mlp_ordered_wire_v1 as selected;
++use crate::native_catalog::forward::prefix_tiles_decode_v6::Completion as NativeCompletion;
++use crate::resident_layer::prefix_tiles_decode_v6::Completion as LayerCompletion;
++
++struct Fake {
++    profile: [u8; 32],
++    calls: u64,
++    closes: u64,
++    fail: Option<u64>,
++    poisoned: bool,
++}
++impl Backend for Fake {
++    fn ordered(&self) -> bool { true }
++    fn run(&mut self, input: &ForwardInput) -> io::Result<Run> {
++        self.calls += 1;
++        if self.fail == Some(self.calls) {
++            return Err(io::Error::other("injected projection forward"));
++        }
++        let c = wire::tests::control();
++        let mut logits = vec![0; 303872];
++        let output = 6 + self.calls as u32;
++        let offset = output as usize * 2;
++        logits[offset..offset + 2].copy_from_slice(&0x3f80u16.to_le_bytes());
++        Ok(Run {
++            completion: NativeCompletion {
++                profile_sha256: self.profile,
++                generation: input.generation,
++                position: input.cache_metadata[0],
++                input_token: input.token,
++                output_token: output,
++                embedding_ns: c.embedding_ns,
++                tail_ns: c.tail_ns,
++                layers: c
++                    .layers
++                    .into_iter()
++                    .map(|r| LayerCompletion {
++                        prefix_states: r.prefix_states,
++                        mlp_states: r.tiles_states,
++                        timing: crate::resident_layer::prefix_tiles_decode_v6::Timing::Ordered {
++                            prefix_ns: [1,2], segment_host_ns: 3, final_residual_ns: [4,5] },
++                    })
++                    .collect(),
++            },
++            layer_hidden: vec![vec![0; 8192]; 36],
++            final_normalized: vec![0; 8192],
++            logits,
++        })
++    }
++    fn close(&mut self) -> io::Result<()> {
++        self.closes += 1;
++        if self.fail == Some(5) {
++            Err(io::Error::other("injected projection close"))
++        } else {
++            Ok(())
++        }
++    }
++    fn failed(&mut self) {
++        self.poisoned = true;
++    }
++}
++fn backend(b: &selected::Bootstrap) -> Fake {
++    Fake {
++        profile: b.sha256().unwrap(),
++        calls: 0,
++        closes: 0,
++        fail: None,
++        poisoned: false,
++    }
++}
++fn stream(b: &selected::Bootstrap, profile: [u8; 32]) -> Vec<u8> {
++    let mut bytes = Vec::new();
++    let mut budget = FrameBudget::new();
++    for position in 0..4 {
++        let previous = (position > 0).then_some(position + 6);
++        let mut request = wire::tests::request(&b.decode, position, previous);
++        request.profile_sha256 = profile;
++        wire::write_request(&mut bytes, &mut budget, &request).unwrap();
++    }
++    let mut close = wire::tests::close(&b.decode, [0; 32]).0;
++    close.profile_sha256 = profile;
++    wire::write_request(&mut bytes, &mut budget, &close).unwrap();
++    bytes
++}
++
++#[test]
++fn ordered_ar4_protocol_four_own_outputs_have_exact_payloads_and_close_chain() {
++    let b = selected::tests::ar_bootstrap();
++    let profile = b.sha256().unwrap();
++    let mut f = backend(&b);
++    let mut output = Vec::new();
++    serve_ordered(
++        &mut f,
++        &mut &stream(&b, profile)[..],
++        &mut output,
++        &b,
++        &mut FrameBudget::new(),
++    )
++    .unwrap();
++    assert_eq!((f.calls, f.closes, f.poisoned), (4, 1, false));
++    let mut bytes = &output[..];
++    let mut budget = FrameBudget::new();
++    let mut chain = Chain::new(b.decode.registration, profile);
++    let mut previous = None;
++    for position in 0..4 {
++        let (reply, control, payload) = selected::read_response(&mut bytes, &mut budget)
++            .unwrap()
++            .unwrap();
++        assert_eq!(reply.profile_sha256, profile);
++        let Event::Completed(completed) = reply.event else {
++            panic!("expected forward")
++        };
++        assert_eq!(completed.input_token, b.input(position, previous).unwrap());
++        assert_eq!(completed.output_token, position + 7);
++        assert_eq!(completed.chain, chain.advance(&completed));
++        assert_eq!(payload.len(), 606976);
++        control.unwrap().validate().unwrap();
++        previous = Some(completed.output_token);
++    }
++    let (reply, control, payload) = selected::read_response(&mut bytes, &mut budget)
++        .unwrap()
++        .unwrap();
++    assert_eq!(reply.id, 5);
++    assert!(reply.native_closed && control.is_none() && payload.is_empty());
++    assert!(
++        matches!(reply.event, Event::Closed { completed_forwards: 4, transcript_sha256 } if transcript_sha256 == chain.digest())
++    );
++    assert!(bytes.is_empty());
++}
++
++fn ar_requests(b: &selected::Bootstrap) -> Vec<wire::Request> {
++    let profile = b.sha256().unwrap();
++    (0..4)
++        .map(|position| {
++            let mut request =
++                wire::tests::request(&b.decode, position, (position > 0).then_some(position + 6));
++            request.profile_sha256 = profile;
++            request
++        })
++        .collect()
++}
++fn request_bytes(requests: &[wire::Request]) -> Vec<u8> {
++    let mut bytes = Vec::new();
++    let mut budget = FrameBudget::new();
++    for request in requests {
++        wire::write_request(&mut bytes, &mut budget, request).unwrap();
++    }
++    bytes
++}
++
++#[test]
++fn ordered_ar4_protocol_wrong_previous_token_or_profile_never_runs_that_forward() {
++    let b = selected::tests::ar_bootstrap();
++    for position in 0..4 {
++        for wrong_profile in [false, true] {
++            let mut requests = ar_requests(&b);
++            if wrong_profile {
++                requests[position].profile_sha256 = b.decode.sha256().unwrap();
++            } else if let Command::Forward { token, .. } = &mut requests[position].command {
++                *token ^= 1;
++            }
++            let mut f = backend(&b);
++            let mut output = Vec::new();
++            assert!(
++                serve_ordered(
++                    &mut f,
++                    &mut &request_bytes(&requests)[..],
++                    &mut output,
++                    &b,
++                    &mut FrameBudget::new()
++                )
++                .is_err()
++            );
++            assert_eq!((f.calls, f.closes), (position as u64, 0));
++            assert!(f.poisoned);
++        }
++    }
++}
++
++#[test]
++fn ordered_ar4_protocol_eof_and_early_close_poison_without_successful_close() {
++    let b = selected::tests::ar_bootstrap();
++    let requests = ar_requests(&b);
++    for completed in 0..=4 {
++        for early_close in [false, true] {
++            if early_close && completed == 4 {
++                continue;
++            }
++            let mut subset = requests[..completed].to_vec();
++            if early_close {
++                let mut close = wire::tests::close(&b.decode, [0; 32]).0;
++                close.profile_sha256 = b.sha256().unwrap();
++                subset.push(close);
++            }
++            let mut f = backend(&b);
++            let mut output = Vec::new();
++            assert!(
++                serve_ordered(
++                    &mut f,
++                    &mut &request_bytes(&subset)[..],
++                    &mut output,
++                    &b,
++                    &mut FrameBudget::new()
++                )
++                .is_err()
++            );
++            assert_eq!((f.calls, f.closes), (completed as u64, 0));
++            assert!(f.poisoned);
++            let mut bytes = &output[..];
++            let mut budget = FrameBudget::new();
++            while let Some((reply, _, _)) = selected::read_response(&mut bytes, &mut budget).unwrap() {
++                assert!(!reply.native_closed);
++            }
++        }
++    }
++    let mut f = backend(&b);
++    f.fail = Some(5);
++    assert!(
++        serve_ordered(
++            &mut f,
++            &mut &stream(&b, b.sha256().unwrap())[..],
++            &mut Vec::new(),
++            &b,
++            &mut FrameBudget::new()
++        )
++        .is_err()
++    );
++    assert_eq!((f.calls, f.closes, f.poisoned), (4, 1, true));
++}
++#[test]
++fn ordered_decode_protocol_keeps_four_payloads_controls_and_selected_close_chain() {
++    let b = selected::tests::ar_bootstrap();
++    let mut f = backend(&b);
++    let mut output = Vec::new();
++    serve_ordered(
++        &mut f,
++        &mut &stream(&b, b.sha256().unwrap())[..],
++        &mut output,
++        &b,
++        &mut FrameBudget::new(),
++    )
++    .unwrap();
++    assert_eq!((f.calls, f.closes, f.poisoned), (4, 1, false));
++    let mut bytes = &output[..];
++    let mut budget = FrameBudget::new();
++    let mut chain = Chain::new(b.decode.registration, b.sha256().unwrap());
++    for id in 1..=5 {
++        let (reply, control, capture) = selected::read_response(&mut bytes, &mut budget)
++            .unwrap()
++            .unwrap();
++        assert_eq!(reply.id, id);
++        assert_eq!(reply.profile_sha256, b.sha256().unwrap());
++        assert!(
++            !reply.numerical_acceptance && !reply.performance_claim && !reply.production_authority
++        );
++        match reply.event {
++            Event::Completed(c) => {
++                assert!(id <= 4);
++                assert_eq!(capture.len(), 606976);
++                control.unwrap().validate().unwrap();
++                assert_eq!(c.chain, chain.advance(&c));
++                assert!(!reply.native_closed);
++            }
++            Event::Closed {
++                completed_forwards,
++                transcript_sha256,
++            } => {
++                assert_eq!((id, completed_forwards), (5, 4));
++                assert_eq!(transcript_sha256, chain.digest());
++                assert!(reply.native_closed && control.is_none() && capture.is_empty());
++            }
++        }
++    }
++    assert!(bytes.is_empty());
++}
++#[test]
++fn ordered_decode_protocol_old_request_profile_is_refused_before_run() {
++    let b = selected::tests::ar_bootstrap();
++    let mut f = backend(&b);
++    let mut output = Vec::new();
++    assert!(
++        serve_ordered(
++            &mut f,
++            &mut &stream(&b, b.decode.sha256().unwrap())[..],
++            &mut output,
++            &b,
++            &mut FrameBudget::new()
++        )
++        .is_err()
++    );
++    assert_eq!((f.calls, f.closes), (0, 0));
++    assert!(f.poisoned && output.is_empty());
++}
++#[test]
++fn ordered_decode_protocol_wrong_completion_after_run_is_terminal() {
++    let b = selected::tests::ar_bootstrap();
++    let mut f = backend(&b);
++    f.profile = b.decode.sha256().unwrap();
++    let mut output = Vec::new();
++    assert!(
++        serve_ordered(
++            &mut f,
++            &mut &stream(&b, b.sha256().unwrap())[..],
++            &mut output,
++            &b,
++            &mut FrameBudget::new()
++        )
++        .is_err()
++    );
++    assert_eq!((f.calls, f.closes), (1, 0));
++    assert!(f.poisoned && output.is_empty());
++}
++#[test]
++fn ordered_decode_protocol_forward_close_and_writer_failures_poison() {
++    let b = selected::tests::ar_bootstrap();
++    let input = stream(&b, b.sha256().unwrap());
++    for fail in 1..=5 {
++        let mut f = backend(&b);
++        f.fail = Some(fail);
++        let mut output = Vec::new();
++        assert!(
++            serve_ordered(
++                &mut f,
++                &mut &input[..],
++                &mut output,
++                &b,
++                &mut FrameBudget::new()
++            )
++            .is_err()
++        );
++        assert!(f.poisoned);
++        assert_eq!(f.calls, fail.min(4));
++        assert_eq!(f.closes, u64::from(fail == 5));
++        let mut bytes = &output[..];
++        let mut budget = FrameBudget::new();
++        while let Some((reply, _, _)) = selected::read_response(&mut bytes, &mut budget).unwrap() {
++            assert!(!reply.native_closed);
++        }
++    }
++    struct Broken;
++    impl Write for Broken {
++        fn write(&mut self, _: &[u8]) -> io::Result<usize> {
++            Err(io::Error::other("injected write"))
++        }
++        fn flush(&mut self) -> io::Result<()> {
++            Ok(())
++        }
++    }
++    let mut f = backend(&b);
++    assert!(
++        serve_ordered(
++            &mut f,
++            &mut &input[..],
++            &mut Broken,
++            &b,
++            &mut FrameBudget::new()
++        )
++        .is_err()
++    );
++    assert!(f.poisoned);
++    assert_eq!((f.calls, f.closes), (1, 0));
++}
++
++fn serve_ordered(backend: &mut impl Backend, r: &mut impl Read, w: &mut impl Write,
++    b: &selected::Bootstrap, incoming: &mut FrameBudget) -> io::Result<()> {
++    let result = b.sha256().and_then(|profile| serve_profile(backend, r, w, &b.decode, incoming, profile));
++    if result.is_err() { backend.failed(); }
++    result
++}
++#[test]
++fn ordered_completion_cannot_be_serialized_by_legacy_control() {
++    let b = selected::tests::ar_bootstrap();
++    let mut f = backend(&b);
++    let request = ar_requests(&b).remove(0);
++    let Command::Forward { generation, token, cache_metadata, rotary_bits } = &request.command else { panic!() };
++    let input = ForwardInput { registration: b.decode.registration, generation: *generation, token: *token,
++        cache_metadata: cache_metadata.clone().try_into().unwrap(),
++        rotary_bits: rotary_bits.clone().try_into().unwrap() };
++    let run = f.run(&input).unwrap();
++    assert!(observation(run, &request, &mut Chain::new(b.decode.registration, b.sha256().unwrap())).is_err());
++}
+--- a/adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_decode_projection_tests.rs
++++ b/adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_decode_projection_tests.rs
+@@ -36,7 +36,7 @@
+                     .map(|r| LayerCompletion {
+                         prefix_states: r.prefix_states,
+                         mlp_states: r.tiles_states,
+-                        paired_ns: r.paired_ns,
++                        timing: crate::resident_layer::prefix_tiles_decode_v6::Timing::Paired(r.paired_ns),
+                     })
+                     .collect(),
+             },
+--- a/adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_tiles_decode_v6/projection_tests.rs
++++ b/adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_tiles_decode_v6/projection_tests.rs
+@@ -58,7 +58,7 @@
+         Ok(layer::Completion {
+             prefix_states: [[0; 284]; 2],
+             mlp_states: [[0; 548]; 2],
+-            paired_ns: [[1; 2]; 4],
++            timing: crate::resident_layer::prefix_tiles_decode_v6::Timing::Paired([[1; 2]; 4]),
+         })
+     }
+     fn tail(&mut self) -> Result<(u32, [u64; 3])> {
+--- a/adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_tiles_decode_v6/tests.rs
++++ b/adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_tiles_decode_v6/tests.rs
+@@ -88,7 +88,7 @@
+         Ok(layer::Completion {
+             prefix_states: [[284; 284]; 2],
+             mlp_states: [[548; 548]; 2],
+-            paired_ns: [[index as u64; 2]; 4],
++            timing: crate::resident_layer::prefix_tiles_decode_v6::Timing::Paired([[index as u64; 2]; 4]),
+         })
+     }
+     fn tail(&mut self) -> Result<(u32, [u64; 3])> {
+--- a/adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_tiles_decode_v6.rs
++++ b/adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_tiles_decode_v6.rs
+@@ -6,7 +6,7 @@
+ use crate::resident_artifacts::ResidentKind;
+ use crate::resident_layer::prefix_tiles_decode_v6 as layer;
+ use crate::resident_layer::prefix_tiles_v6::projection_residual;
+-use crate::state_roster::prefix_tiles_decode_v6::{COUNTS, Roster};
++use crate::state_roster::prefix_tiles_decode_v6::Roster;
+ use crate::tail_artifacts::TailKind;
+ use sha2::{Digest, Sha256};
+ 
+@@ -24,6 +24,7 @@
+     timeout_ms: u32,
+     sha256: [u8; 32],
+     projection: Option<[u8; 32]>,
++    ordered: bool,
+ }
+ impl Profile {
+     pub(crate) fn new(
+@@ -83,6 +84,7 @@
+             timeout_ms,
+             sha256: h.finalize().into(),
+             projection: None,
++            ordered: false,
+         })
+     }
+     pub(crate) fn with_projection(mut self, image: [u8; 32]) -> Result<Self> {
+@@ -93,6 +95,15 @@
+             crate::finite_projection_residual_decode_wire_v1::profile_sha256(self.sha256, image)
+                 .map_err(|error| error.to_string())?;
+         self.projection = Some(image);
++        Ok(self)
++    }
++    pub(crate) fn with_ordered(mut self) -> Result<Self> {
++        if self.projection.is_none() || self.ordered || !matches!(self.mode, Mode::Autoregressive { .. }) {
++            return Err("ordered profile requires fresh projection AR4".into());
++        }
++        self.sha256 = crate::finite_projection_residual_mlp_ordered_wire_v1::profile_sha256(self.sha256)
++            .map_err(|e| e.to_string())?;
++        self.ordered = true;
+         Ok(self)
+     }
+     pub(crate) fn sha256(&self) -> [u8; 32] {
+@@ -121,6 +132,7 @@
+     sequence: sequence::Sequence,
+     profile: Profile,
+     projection: Option<projection_residual::Loaded>,
++    down: Option<[fe2o3_kfd::Gfx950EngineeringPeerBufferV1; 2]>,
+ }
+ fn finish_projection_load<T>(
+     result: Result<T>,
+@@ -286,6 +298,15 @@
+             )?),
+             None => None,
+         };
++        let down = if profile.ordered {
++            let result = (|| {
++                let group = &mut owner.catalog.backend;
++                let down = layer::allocate_ordered_down(group, &owner.layer_bindings)?;
++                states.bind_ordered_buffers(group)?;
++                Ok(down)
++            })();
++            Some(finish_projection_load(result, &mut owner.catalog.phase, || states.poison())?)
++        } else { None };
+         let sequence = sequence::Sequence::new(&profile);
+         Ok(Self {
+             owner,
+@@ -293,6 +314,7 @@
+             sequence,
+             profile,
+             projection,
++            down,
+         })
+     }
+     pub(crate) fn run(&mut self, profile: [u8; 32], input: &ForwardInput) -> Result<Run> {
+@@ -329,6 +351,7 @@
+             },
+             states: &mut self.states,
+             projection: self.projection.as_ref(),
++            down: self.down,
+             generation: input.generation,
+             position: input.cache_metadata[0],
+             recorder,
+@@ -353,7 +376,7 @@
+                 .catalog
+                 .backend
+                 .preflight_additional_allocations_v1(&[0, 0])?
+-                != COUNTS
++                != self.states.counts()
+             {
+                 return Err("prefix decode Close allocation census".into());
+             }
+@@ -370,14 +393,19 @@
+     base: Active<'a>,
+     states: &'a mut Roster,
+     projection: Option<&'a projection_residual::Loaded>,
++    down: Option<[fe2o3_kfd::Gfx950EngineeringPeerBufferV1; 2]>,
+     generation: u64,
+     position: u32,
+     recorder: Option<&'a mut Recorder>,
+ }
++fn allocation_profile(ordered: bool) -> AllocationProfile {
++    if ordered { AllocationProfile::ProjectionResidualMlpOrderedV1 }
++    else { AllocationProfile::PrefixTilesDecodeV6 }
++}
+ impl sequence::Backend for Native<'_> {
+     fn metadata(&mut self, input: &ForwardInput) -> Result<()> {
+         self.base
+-            .upload_metadata_for(input, AllocationProfile::PrefixTilesDecodeV6)
++            .upload_metadata_for(input, allocation_profile(self.down.is_some()))
+     }
+     fn embedding(&mut self, token: u32) -> Result<[u64; 2]> {
+         if let Some(recorder) = self.recorder.as_deref_mut() {
+@@ -437,6 +465,15 @@
+                     self.generation,
+                     self.position,
+                 )
++            } else if let Some(down) = self.down {
++                layer::execute_ordered(
++                    &mut owner.catalog.backend, self.states,
++                    owner.artifacts.as_ref().ok_or("ordered residual image")?,
++                    owner.prefix_artifacts.as_ref().ok_or("ordered prefix image")?,
++                    owner.tiles_artifacts.as_ref().ok_or("ordered MLP image")?,
++                    roots, index, self.base.timeout_ms,
++                    self.projection.ok_or("ordered projection image absent")?, down,
++                )
+             } else {
+                 layer::execute_selected(
+                     &mut owner.catalog.backend,
+@@ -480,7 +517,7 @@
+     }
+     fn fence(&mut self) -> Result<()> {
+         self.base
+-            .idle_fence_for(AllocationProfile::PrefixTilesDecodeV6)
++            .idle_fence_for(allocation_profile(self.down.is_some()))
+     }
+     fn commit(&mut self) -> Result<()> {
+         self.states
+@@ -501,3 +538,19 @@
+ #[cfg(test)]
+ #[path = "native_prefix_tiles_decode_v6/projection_tests.rs"]
+ mod projection_tests;
++
++#[cfg(test)]
++mod ordered_tests {
++    use super::*;
++    #[test]
++    fn ordered_native_profile_matches_wire_and_rejects_tf_double_selection() {
++        let b=crate::finite_projection_residual_mlp_ordered_wire_v1::tests::ar_bootstrap();
++        let make=|mode| Profile::new(&b.decode.scope,b.decode.registration,
++            b.decode.prefix_image.sha256,b.decode.tiles_image.sha256,mode,b.decode.timeout_ms,b.decode.device_ids)
++            .unwrap().with_projection(b.projection_residual_image.sha256).unwrap();
++        let p=make(Mode::Autoregressive{first:b.decode.input_tokens[0]}).with_ordered().unwrap();
++        assert_eq!(p.sha256(),b.sha256().unwrap());
++        assert!(p.with_ordered().is_err());
++        assert!(make(Mode::TeacherForced([1,2,3,4])).with_ordered().is_err());
++    }
++}
+--- a/adapters/tp-peer-finite-engineering-worker-v1/src/native_projection_residual_decode_cli_v1.rs
++++ b/adapters/tp-peer-finite-engineering-worker-v1/src/native_projection_residual_decode_cli_v1.rs
+@@ -17,8 +17,8 @@
+ 
+ #[derive(Debug, Eq, PartialEq)]
+ pub struct NativeOptions {
+-    devices: [u64; 2],
+-    timeout_ms: u32,
++    pub(crate) devices: [u64; 2],
++    pub(crate) timeout_ms: u32,
+     pub(crate) mode: InputMode,
+ }
+ pub fn parse_args(args: &[OsString]) -> io::Result<NativeOptions> {
+--- /dev/null
++++ b/adapters/tp-peer-finite-engineering-worker-v1/src/native_projection_residual_mlp_ordered_v1.rs
+@@ -0,0 +1,383 @@
++//! Explicit ordered AR4 shared-full route with distinct bootstrap and Control.
++use crate::finite_projection_residual_mlp_ordered_wire_v1::{
++    Bootstrap, Completion, FrameBudget, InputMode,
++};
++use crate::native_prefix_decode_host_v1::{
++    executable_sha, ns, preflight_path, snapshot_shared_policy,
++};
++use crate::native_projection_residual_decode_cli_v1 as plain;
++use crate::projection_residual_mlp_ordered_observation_v1::{
++    self as data, Interval, Policy, Report, SharedReport, difference,
++};
++use fe2o3_kfd::{
++    Gfx950EngineeringPeerGroupV1 as Group, Gfx950EngineeringPeerHostObservationV1 as NativeSnapshot,
++};
++use std::{
++    ffi::OsString,
++    fs::OpenOptions,
++    io::{self, Read, Write},
++    os::unix::fs::OpenOptionsExt,
++    path::{Path, PathBuf},
++    time::{Duration, Instant},
++};
++
++pub struct Options {
++    native: plain::NativeOptions,
++    path: PathBuf,
++    policy: Policy,
++}
++pub fn parse_args(args: &[OsString]) -> io::Result<Options> {
++    parse_policy_args(args, Policy::OrderedSharedFull)
++}
++fn parse_policy_args(args: &[OsString], policy: Policy) -> io::Result<Options> {
++    if args.len() != 10 || args[0] != policy.worker_flag() || args[8] != "--host-sidecar" {
++        return Err(io::Error::other("exact projection host arguments required"));
++    }
++    let mut ordinary = args[..8].to_vec();
++    ordinary[0] = "--engineering-native-projection-residual-decode-v1".into();
++    let native = plain::parse_args(&ordinary)?;
++    let path = PathBuf::from(&args[9]);
++    if native.mode != InputMode::Autoregressive
++        || !path.is_absolute()
++        || path.file_name().is_none()
++        || path.as_os_str().len() > 512
++    {
++        return Err(io::Error::other(
++            "projection host requires AR4 and bounded absolute sidecar",
++        ));
++    }
++    Ok(Options {
++        native,
++        path,
++        policy,
++    })
++}
++
++trait ObservationSetup {
++    fn configure(&mut self, options: (bool, bool, bool)) -> io::Result<()>;
++    fn enable(&mut self) -> io::Result<()>;
++}
++impl ObservationSetup for Group {
++    fn configure(&mut self, (cache, operational, shared): (bool, bool, bool)) -> io::Result<()> {
++        self.configure_performance_v2(cache, operational, shared)
++            .map_err(io::Error::other)
++    }
++    fn enable(&mut self) -> io::Result<()> {
++        self.enable_host_observation_v1().map_err(io::Error::other)
++    }
++}
++fn configure_observer(setup: &mut impl ObservationSetup, policy: Policy) -> io::Result<u64> {
++    let configuration_host_ns = if policy.shared() {
++        let started = Instant::now();
++        setup.configure((false, false, true))?;
++        ns(started.elapsed())?
++    } else {
++        0
++    };
++    setup.enable()?;
++    Ok(configuration_host_ns)
++}
++
++pub(crate) struct Recorder {
++    previous: NativeSnapshot,
++    report: Report,
++    policy: Policy,
++    configuration_host_ns: u64,
++}
++impl Recorder {
++    pub(crate) fn enable(
++        group: &mut Group,
++        bootstrap: &Bootstrap,
++        worker: [u8; 32],
++    ) -> io::Result<Self> {
++        Self::enable_policy(group, bootstrap, worker, Policy::OrderedSharedFull)
++    }
++    fn enable_policy(
++        group: &mut Group,
++        bootstrap: &Bootstrap,
++        worker: [u8; 32],
++        policy: Policy,
++    ) -> io::Result<Self> {
++        bootstrap.validate(
++            bootstrap.decode.device_ids,
++            bootstrap.decode.timeout_ms,
++            std::process::id(),
++            InputMode::Autoregressive,
++        )?;
++        // Configure before observer enable; setup and all forwards use one fixed policy.
++        let configuration_host_ns = configure_observer(group, policy)?;
++        let fresh = group.host_observation_v1().map_err(io::Error::other)?;
++        let initial = snapshot_shared_policy(
++            &fresh,
++            data::PHASES[0],
++            bootstrap.decode.device_ids,
++            policy.shared(),
++        )?;
++        if initial.shared != [0; 4] || initial.ranks.iter().any(|r| r.counters != [0; 19]) {
++            return Err(io::Error::other("projection host baseline not fresh"));
++        }
++        Ok(Self {
++            previous: fresh,
++            policy,
++            configuration_host_ns,
++            report: Report {
++                schema: policy.schema().into(),
++                bootstrap: bootstrap.clone(),
++                worker_sha256: worker,
++                child_pid: std::process::id(),
++                profile_sha256: bootstrap.sha256()?,
++                snapshots: vec![initial],
++                intervals: Vec::with_capacity(6),
++                forward_host_ns: [0; 4],
++                serialization_host_ns: [0; 4],
++                close_host_ns: 0,
++                completions: Vec::with_capacity(4),
++                transcript_sha256: [0; 32],
++                native_closed: false,
++                inclusive_nested_host_scopes: true,
++                gpu_time: false,
++                numerical_acceptance: false,
++                performance_claim: false,
++                production_authority: false,
++            },
++        })
++    }
++    pub(crate) fn record(&mut self, raw: NativeSnapshot) -> io::Result<()> {
++        let phase = *data::PHASES
++            .get(self.report.snapshots.len())
++            .ok_or_else(|| io::Error::other("too many projection host snapshots"))?;
++        let delta = raw
++            .checked_delta(&self.previous)
++            .map_err(io::Error::other)?;
++        let current = snapshot_shared_policy(
++            &raw,
++            phase,
++            self.report.bootstrap.decode.device_ids,
++            self.policy.shared(),
++        )?;
++        let previous = self
++            .report
++            .snapshots
++            .last()
++            .ok_or_else(|| io::Error::other("host baseline absent"))?;
++        let interval = Interval {
++            host_elapsed_ns: delta.host_elapsed_ns(),
++            ranks: [
++                difference(&current.ranks[0].counters, &previous.ranks[0].counters)?,
++                difference(&current.ranks[1].counters, &previous.ranks[1].counters)?,
++            ],
++            shared: difference(&current.shared, &previous.shared)?,
++        };
++        self.report.intervals.push(interval);
++        self.report.snapshots.push(current);
++        self.previous = raw;
++        Ok(())
++    }
++    pub(crate) fn forward(&mut self, raw: NativeSnapshot, elapsed: Duration) -> io::Result<()> {
++        let position = self
++            .report
++            .snapshots
++            .len()
++            .checked_sub(2)
++            .ok_or_else(|| io::Error::other("projection host setup snapshot absent"))?;
++        if position >= 4 || self.report.completions.len() != position {
++            return Err(io::Error::other("projection host forward order"));
++        }
++        self.report.forward_host_ns[position] = ns(elapsed)?;
++        self.record(raw)
++    }
++    pub(crate) fn completed(
++        &mut self,
++        completion: &Completion,
++        elapsed: Duration,
++    ) -> io::Result<()> {
++        record_completion(&mut self.report, completion, ns(elapsed)?)
++    }
++    pub(crate) fn closed(&mut self, elapsed: Duration) -> io::Result<()> {
++        record_close(&mut self.report, ns(elapsed)?)
++    }
++    pub(crate) fn finish(self, path: &Path) -> io::Result<()> {
++        self.report.validate_for_policy(self.policy)?;
++        if executable_sha()? != self.report.worker_sha256 {
++            return Err(io::Error::other("projection host executable changed"));
++        }
++        let value = SharedReport {
++            schema: data::SHARED_ENVELOPE.into(), policy: self.policy,
++            configuration_host_ns: self.configuration_host_ns, observation: self.report,
++        };
++        value.validate()?;
++        let raw = serde_json::to_vec(&value).map_err(io::Error::other)?;
++        if raw.len() > data::MAX_BYTES {
++            return Err(io::Error::other("projection host report bound"));
++        }
++        preflight_path(path)?;
++        let mut output = OpenOptions::new()
++            .write(true)
++            .create_new(true)
++            .mode(0o600)
++            .open(path)?;
++        output.write_all(&raw)?;
++        output.sync_all()
++    }
++}
++fn record_completion(report: &mut Report, completion: &Completion, elapsed: u64) -> io::Result<()> {
++    let position = report.completions.len();
++    if position >= 4
++        || report.snapshots.len() != position + 3
++        || completion.position as usize != position
++        || report.native_closed
++    {
++        return Err(io::Error::other("projection host completion order"));
++    }
++    report.serialization_host_ns[position] = elapsed;
++    report.completions.push(completion.clone());
++    Ok(())
++}
++fn record_close(report: &mut Report, elapsed: u64) -> io::Result<()> {
++    if report.snapshots.len() != 7 || report.completions.len() != 4 || report.native_closed {
++        return Err(io::Error::other(
++            "projection host Close before four completions",
++        ));
++    }
++    report.close_host_ns = elapsed;
++    report.native_closed = true;
++    report.transcript_sha256 = report.completions[3].chain;
++    Ok(())
++}
++
++/// # Safety
++/// The plain projection route's owned-child and trusted-machine-code obligations
++/// remain unchanged. These counters confer neither timing nor arithmetic authority.
++#[allow(unsafe_code)]
++pub unsafe fn run_native(
++    options: Options,
++    r: &mut impl Read,
++    w: &mut impl Write,
++) -> io::Result<()> {
++    preflight_path(&options.path)?;
++    let worker = executable_sha()?;
++    let mut incoming = FrameBudget::new();
++    let (b, prepared) = prepare(&options.native, r, &mut incoming)?;
++    let mut group =
++        unsafe { Group::open_unchecked(&prepared.device_ids()) }.map_err(io::Error::other)?;
++    let mut recorder = Recorder::enable(&mut group, &b, worker)?;
++    let mut setup = prepared.into_processor(group).map_err(io::Error::other)?;
++    setup.serve(r, w).map_err(io::Error::other)?;
++    if setup.is_closed() {
++        return Err(io::Error::other(
++            "projection host setup closed before forwards",
++        ));
++    }
++    let mut owner = unsafe { setup.into_decode() }.map_err(io::Error::other)?;
++    recorder.record(owner.host_observation().map_err(io::Error::other)?)?;
++    serve_observed(
++        owner,
++        recorder,
++        &options.path,
++        r,
++        w,
++        &b,
++        &mut incoming,
++    )
++}
++
++
++fn prepare(options: &plain::NativeOptions, r: &mut impl Read, incoming: &mut FrameBudget)
++    -> io::Result<(Bootstrap, crate::native_setup::prefix_decode_v6::PreparedPrefixDecodeSetup)> {
++    use crate::finite_projection_residual_mlp_ordered_wire_v1 as wire;
++    use crate::native_setup::{PreparedSetup, prefix_decode_v6::PreparedPrefixDecodeSetup};
++    use crate::resident_layer::{mlp_tiles_v2::Image as MlpImage,
++        prefix_tiles_v6::{artifacts::Image as PrefixImage, projection_residual::Image}};
++    let (b, mlp, prefix, projection) = wire::read_bootstrap(r, incoming)?
++        .ok_or_else(|| io::Error::other("ordered bootstrap absent"))?;
++    b.validate(options.devices, options.timeout_ms, std::process::id(), options.mode)?;
++    let (request, payload) = wire::read_begin(r, incoming, &b)?;
++    let setup = PreparedSetup::prepare(request, payload, options.devices, &b.decode.scope).map_err(io::Error::other)?;
++    let prepared = PreparedPrefixDecodeSetup::new_projection(setup,
++        PrefixImage::new(prefix, &b.decode.prefix_image).map_err(io::Error::other)?,
++        MlpImage::new(mlp, &b.decode.tiles_image).map_err(io::Error::other)?,
++        Image::new(projection, &b.projection_residual_image).map_err(io::Error::other)?,
++        crate::native_catalog::forward::prefix_tiles_decode_v6::Mode::Autoregressive { first: b.decode.input_tokens[0] },
++        options.timeout_ms).and_then(PreparedPrefixDecodeSetup::ordered).map_err(io::Error::other)?;
++    if prepared.profile_sha256() != b.sha256()? { return Err(io::Error::other("ordered profile mismatch")); }
++    Ok((b, prepared))
++}
++
++use crate::native_catalog::forward::prefix_tiles_decode_v6::{Owner, Run};
++use crate::forward_sequence::ForwardInput;
++struct OrderedNative {
++    owner: Option<Owner>,
++    profile: [u8; 32],
++    observer: Option<Recorder>,
++    serialization_started: Option<std::time::Instant>,
++}
++impl crate::native_prefix_decode_cli_v1::Backend for OrderedNative {
++    fn ordered(&self) -> bool { true }
++    fn run(&mut self, input: &ForwardInput) -> io::Result<Run> {
++        let started = self.observer.as_ref().map(|_| std::time::Instant::now());
++        let owner = self
++            .owner
++            .as_mut()
++            .ok_or_else(|| io::Error::other("projection owner consumed"))?;
++        let run = owner.run(self.profile, input).map_err(io::Error::other)?;
++        if let Some(observer) = self.observer.as_mut() {
++            let elapsed = started
++                .ok_or_else(|| io::Error::other("projection host timer absent"))?
++                .elapsed();
++            observer.forward(owner.host_observation().map_err(io::Error::other)?, elapsed)?;
++            self.serialization_started = Some(std::time::Instant::now());
++        }
++        Ok(run)
++    }
++    fn completed(&mut self, completion: &Completion) -> io::Result<()> {
++        if let Some(observer) = self.observer.as_mut() {
++            let elapsed = self
++                .serialization_started
++                .take()
++                .ok_or_else(|| io::Error::other("projection serialization timer absent"))?
++                .elapsed();
++            observer.completed(completion, elapsed)?;
++        }
++        Ok(())
++    }
++    fn close(&mut self) -> io::Result<()> {
++        let mut owner = self
++            .owner
++            .take()
++            .ok_or_else(|| io::Error::other("projection owner consumed"))?;
++        if let Some(observer) = self.observer.as_mut() {
++            observer.record(owner.host_observation().map_err(io::Error::other)?)?;
++        }
++        let started = self.observer.as_ref().map(|_| std::time::Instant::now());
++        owner.close().map_err(io::Error::other)?;
++        if let Some(observer) = self.observer.as_mut() {
++            observer.closed(
++                started
++                    .ok_or_else(|| io::Error::other("projection Close timer absent"))?
++                    .elapsed(),
++            )?;
++        }
++        Ok(())
++    }
++    fn failed(&mut self) {
++        self.observer = None;
++        self.serialization_started = None;
++        if let Some(owner) = self.owner.as_mut() {
++            owner.poison_device_recording();
++        }
++    }
++}
++
++fn serve_observed(owner: Owner, observer: Recorder, path: &Path, r: &mut impl Read,
++    w: &mut impl Write, b: &Bootstrap, incoming: &mut FrameBudget) -> io::Result<()> {
++    use crate::native_prefix_decode_cli_v1::Backend;
++    let mut backend = OrderedNative { owner: Some(owner), profile: b.sha256()?,
++        observer: Some(observer), serialization_started: None };
++    let result = crate::native_prefix_decode_cli_v1::serve_profile(
++        &mut backend, r, w, &b.decode, incoming, b.sha256()?);
++    if let Err(error) = result { backend.failed(); return Err(error); }
++    backend.observer.take().ok_or_else(|| io::Error::other("ordered observer missing"))?.finish(path)
++}
++#[cfg(test)]
++#[path = "native_projection_residual_mlp_ordered_v1_tests.rs"]
++mod tests;
+--- /dev/null
++++ b/adapters/tp-peer-finite-engineering-worker-v1/src/native_projection_residual_mlp_ordered_v1_tests.rs
+@@ -0,0 +1,144 @@
++use super::*;
++
++fn args() -> Vec<OsString> {
++    [
++        Policy::OrderedSharedFull.worker_flag(),
++        "--allow-unauthenticated-machine-code",
++        "--devices",
++        "16366993098680759275,10838076764495710945",
++        "--timeout-ms",
++        "10000",
++        "--mode",
++        "autoregressive",
++        "--host-sidecar",
++        "/tmp/projection-shared-host.json",
++    ]
++    .iter()
++    .map(OsString::from)
++    .collect()
++}
++
++#[test]
++fn ordered_cli_is_distinct_and_rejects_extra_policies() {
++    assert_eq!(
++        parse_args(&args()).unwrap().policy,
++        Policy::OrderedSharedFull
++    );
++    for flag in ["--engineering-native-projection-residual-decode-host-v1",
++        "--engineering-native-projection-residual-decode-shared-host-v1",
++        "--engineering-native-projection-residual-decode-v1",
++        "--engineering-native-prefix-decode-device-clock-v2"] {
++        let mut old=args(); old[0]=flag.into(); assert!(parse_args(&old).is_err());
++    }
++    for n in 0..10 {
++        assert!(parse_args(&args()[..n]).is_err());
++    }
++    for extra in [
++        "--profile",
++        "--host-policy",
++        "--cache-kernel-admission",
++        "--operational-currentness",
++    ] {
++        let mut bad = args();
++        bad.push(extra.into());
++        assert!(parse_args(&bad).is_err());
++    }
++}
++
++#[test]
++fn ordered_cli_retains_ar_device_and_path_bounds() {
++    let good = parse_args(&args()).unwrap();
++    assert_eq!(good.native.mode, InputMode::Autoregressive);
++    assert_eq!(good.path, PathBuf::from("/tmp/projection-shared-host.json"));
++    for (index, value) in [
++        (7, "teacher-forced"),
++        (3, "1,1"),
++        (5, "10001"),
++        (9, "relative"),
++        (9, "/"),
++    ] {
++        let mut bad = args();
++        bad[index] = value.into();
++        assert!(parse_args(&bad).is_err());
++    }
++}
++
++#[derive(Default)]
++struct Setup {
++    events: Vec<&'static str>,
++    options: Vec<(bool, bool, bool)>,
++    fail_configure: bool,
++    fail_enable: bool,
++    configured: bool,
++    enabled: bool,
++}
++impl ObservationSetup for Setup {
++    fn configure(&mut self, options: (bool, bool, bool)) -> io::Result<()> {
++        self.events.push("configure");
++        self.options.push(options);
++        if self.fail_configure || self.configured || self.enabled {
++            return Err(io::Error::other("injected configuration refusal"));
++        }
++        self.configured = true;
++        Ok(())
++    }
++    fn enable(&mut self) -> io::Result<()> {
++        self.events.push("enable");
++        if self.fail_enable || self.enabled {
++            return Err(io::Error::other("injected observation refusal"));
++        }
++        self.enabled = true;
++        Ok(())
++    }
++}
++
++#[test]
++fn ordered_setup_configures_exact_policy_before_enable_once() {
++    let mut setup = Setup::default();
++    configure_observer(&mut setup, Policy::OrderedSharedFull).unwrap();
++    assert_eq!(setup.events, ["configure", "enable"]);
++    assert_eq!(setup.options, [(false, false, true)]);
++    assert!(configure_observer(&mut setup, Policy::OrderedSharedFull).is_err());
++    assert_eq!(setup.events, ["configure", "enable", "configure"]);
++}
++
++#[test]
++fn ordered_setup_refusal_never_enables_after_failed_configuration() {
++    let mut setup = Setup {
++        fail_configure: true,
++        ..Setup::default()
++    };
++    assert!(configure_observer(&mut setup, Policy::OrderedSharedFull).is_err());
++    assert_eq!(setup.events, ["configure"]);
++    assert!(!setup.enabled);
++    let mut setup = Setup {
++        fail_enable: true,
++        ..Setup::default()
++    };
++    assert!(configure_observer(&mut setup, Policy::OrderedSharedFull).is_err());
++    assert_eq!(setup.events, ["configure", "enable"]);
++    assert!(!setup.enabled);
++}
++
++#[test]
++fn ordered_recorder_retains_four_serializations_then_close() {
++    let mut v = data::tests::report().observation;
++    let completions = v.completions.clone();
++    let snapshots = v.snapshots.clone();
++    v.completions.clear();
++    v.native_closed = false;
++    v.serialization_host_ns = [0; 4];
++    assert!(record_close(&mut v, 1).is_err());
++    for (position, completion) in completions.iter().enumerate() {
++        v.snapshots = snapshots[..position + 3].to_vec();
++        record_completion(&mut v, completion, 20 + position as u64).unwrap();
++        assert!(record_completion(&mut v, completion, 1).is_err());
++    }
++    assert!(record_close(&mut v, 1).is_err());
++    v.snapshots = snapshots;
++    record_close(&mut v, 30).unwrap();
++    v.validate_for_policy(Policy::OrderedSharedFull).unwrap();
++    v.validate().unwrap();
++    assert!(record_close(&mut v, 30).is_err());
++    assert_eq!(v.serialization_host_ns, [20, 21, 22, 23]);
++}
+--- a/adapters/tp-peer-finite-engineering-worker-v1/src/native_setup/prefix_decode_v6.rs
++++ b/adapters/tp-peer-finite-engineering-worker-v1/src/native_setup/prefix_decode_v6.rs
+@@ -60,6 +60,10 @@
+     pub(crate) fn device_ids(&self) -> [u64; 2] {
+         self.setup.devices
+     }
++    pub(crate) fn ordered(mut self) -> Result<Self> {
++        self.profile = self.profile.with_ordered()?;
++        Ok(self)
++    }
+     pub(crate) fn profile_sha256(&self) -> [u8; 32] {
+         self.profile.sha256()
+     }
+--- /dev/null
++++ b/adapters/tp-peer-finite-engineering-worker-v1/src/projection_residual_mlp_ordered_observation_v1.rs
+@@ -0,0 +1,198 @@
++//! Explicit ordered AR4 shared-full report; legacy report decoders remain closed.
++use crate::finite_projection_residual_mlp_ordered_wire_v1::{Bootstrap, Completion, InputMode};
++pub use crate::prefix_decode_host_observation_v1::{
++    COUNTER_NAMES, Interval, MAX_BYTES, PHASES, Rank, SHARED_NAMES, Snapshot, difference,
++};
++use serde::{Deserialize, Serialize};
++use std::io;
++
++pub const SCHEMA: &str = "FerricProjectionResidualMlpOrderedHostObservationV1";
++pub const SHARED_SCHEMA: &str = "FerricProjectionResidualMlpOrderedHostObservationV1";
++pub const SHARED_ENVELOPE: &str = "FerricProjectionResidualMlpOrderedHostEnvelopeV1";
++
++#[derive(Clone, Copy, Debug, Eq, PartialEq, Serialize, Deserialize)]
++#[serde(rename_all = "kebab-case")]
++pub enum Policy { OrderedSharedFull }
++impl Policy {
++    pub const fn shared(self) -> bool { true }
++    pub const fn schema(self) -> &'static str { SCHEMA }
++    pub const fn worker_flag(self) -> &'static str {
++        "--engineering-native-projection-residual-mlp-ordered-v1"
++    }
++}
++
++/// Shared policy configuration runs before observer enable. Its duration is
++/// inclusive host wall time outside all zero-based snapshots, never GPU time.
++#[derive(Clone, Debug, Serialize, Deserialize)]
++#[serde(deny_unknown_fields)]
++pub struct SharedReport {
++    pub schema: String,
++    pub policy: Policy,
++    pub configuration_host_ns: u64,
++    pub observation: Report,
++}
++impl SharedReport {
++    pub fn decode(raw: &[u8]) -> io::Result<Self> {
++        require(
++            !raw.is_empty() && raw.len() <= MAX_BYTES,
++            "shared host byte bound",
++        )?;
++        let value: Self = serde_json::from_slice(raw).map_err(io::Error::other)?;
++        value.validate()?;
++        Ok(value)
++    }
++    pub fn validate(&self) -> io::Result<()> {
++        require(
++            self.schema == SHARED_ENVELOPE && self.policy == Policy::OrderedSharedFull,
++            "shared host schema/policy",
++        )?;
++        self.observation.validate_for_policy(Policy::OrderedSharedFull)
++    }
++}
++#[derive(Clone, Debug, Serialize, Deserialize)]
++#[serde(deny_unknown_fields)]
++pub struct Report {
++    pub schema: String,
++    pub bootstrap: Bootstrap,
++    pub worker_sha256: [u8; 32],
++    pub child_pid: u32,
++    pub profile_sha256: [u8; 32],
++    pub snapshots: Vec<Snapshot>,
++    pub intervals: Vec<Interval>,
++    /// Each interval brackets Owner.run only; it still includes host and GPU waits.
++    pub forward_host_ns: [u64; 4],
++    /// Host wall time for consuming Close, not a device teardown measurement.
++    pub close_host_ns: u64,
++    /// Encoding, hashing and response pipe writes after Owner.run; not GPU time.
++    pub serialization_host_ns: [u64; 4],
++    pub completions: Vec<Completion>,
++    pub transcript_sha256: [u8; 32],
++    pub native_closed: bool,
++    pub inclusive_nested_host_scopes: bool,
++    pub gpu_time: bool,
++    pub numerical_acceptance: bool,
++    pub performance_claim: bool,
++    pub production_authority: bool,
++}
++fn require(ok: bool, why: &'static str) -> io::Result<()> {
++    if ok {
++        Ok(())
++    } else {
++        Err(io::Error::other(why))
++    }
++}
++impl Report {
++    pub fn decode(raw: &[u8]) -> io::Result<Self> {
++        require(
++            !raw.is_empty() && raw.len() <= MAX_BYTES,
++            "host sidecar byte bound",
++        )?;
++        let value: Self = serde_json::from_slice(raw).map_err(io::Error::other)?;
++        value.validate()?;
++        Ok(value)
++    }
++    pub fn validate(&self) -> io::Result<()> {
++        self.validate_for_policy(Policy::OrderedSharedFull)
++    }
++    pub(crate) fn validate_for_policy(&self, policy: Policy) -> io::Result<()> {
++        require(
++            self.schema == policy.schema()
++                && self.child_pid != 0
++                && self.worker_sha256 != [0; 32]
++                && self.profile_sha256 == self.bootstrap.sha256()?
++                && self.bootstrap.decode.scope.child_identity == self.child_pid
++                && self.snapshots.len() == 7
++                && self.intervals.len() == 6
++                && self.completions.len() == 4
++                && self.native_closed
++                && self.inclusive_nested_host_scopes
++                && !self.gpu_time
++                && !self.numerical_acceptance
++                && !self.performance_claim
++                && !self.production_authority,
++            "host sidecar identity/completion/claims",
++        )?;
++        self.bootstrap.validate(
++            self.bootstrap.decode.device_ids,
++            self.bootstrap.decode.timeout_ms,
++            self.child_pid,
++            InputMode::Autoregressive,
++        )?;
++        let first = &self.snapshots[0];
++        require(
++            first.shared == [0; 4] && first.ranks.iter().all(|r| r.counters == [0; 19]),
++            "host observer baseline is not fresh",
++        )?;
++        for (i, current) in self.snapshots.iter().enumerate() {
++            current.validate_shared_policy(self.bootstrap.decode.device_ids, policy.shared())?;
++            require(
++                current.phase == PHASES[i] && current.group_incarnation == first.group_incarnation,
++                "host snapshot order/group",
++            )?;
++            for rank in 0..2 {
++                require(
++                    current.ranks[rank].queue_epoch == first.ranks[rank].queue_epoch,
++                    "host queue epoch changed",
++                )?;
++            }
++            if i > 0 {
++                let old = &self.snapshots[i - 1];
++                let delta = &self.intervals[i - 1];
++                require(
++                    delta.shared == difference(&current.shared, &old.shared)?,
++                    "host shared delta differs",
++                )?;
++                for rank in 0..2 {
++                    require(
++                        delta.ranks[rank]
++                            == difference(
++                                &current.ranks[rank].counters,
++                                &old.ranks[rank].counters,
++                            )?,
++                        "host rank delta differs",
++                    )?;
++                }
++                if (2..=5).contains(&i) {
++                    require(
++                        self.forward_host_ns[i - 2] <= delta.host_elapsed_ns,
++                        "host forward interval exceeds snapshot interval",
++                    )?;
++                }
++            }
++        }
++        let mut chain = crate::finite_prefix_decode_wire_v1::Chain::new(
++            self.bootstrap.decode.registration,
++            self.profile_sha256,
++        );
++        let mut previous = None;
++        for (i, c) in self.completions.iter().enumerate() {
++            require(
++                self.serialization_host_ns[i] <= self.intervals[i + 2].host_elapsed_ns,
++                "host serialization exceeds following snapshot interval",
++            )?;
++            require(
++                c.position == i as u32
++                    && c.generation == i as u64 + 1
++                    && c.input_token == self.bootstrap.input(i as u32, previous)?
++                    && c.output_token < 151936
++                    && c.control.bytes as usize == crate::finite_projection_residual_mlp_ordered_wire_v1::CONTROL_BYTES
++                    && c.observation.bytes == 606976
++                    && c.control.sha256 != [0; 32]
++                    && c.observation.sha256 != [0; 32]
++                    && c.capture.total == c.observation
++                    && chain.advance(c) == c.chain,
++                "host completion trajectory/bindings",
++            )?;
++            previous = Some(c.output_token);
++        }
++        require(
++            chain.digest() == self.transcript_sha256,
++            "host final transcript",
++        )
++    }
++}
++
++
++#[cfg(test)]
++#[path = "projection_residual_mlp_ordered_observation_v1_tests.rs"]
++pub(crate) mod tests;
+--- /dev/null
++++ b/adapters/tp-peer-finite-engineering-worker-v1/src/projection_residual_mlp_ordered_observation_v1_tests.rs
+@@ -0,0 +1,43 @@
++use super::*;
++pub(crate) fn report() -> SharedReport {
++    let old=crate::projection_residual_decode_host_observation_v1::tests::shared_report();
++    let mut v=serde_json::to_value(old).unwrap();
++    v["schema"]=SHARED_ENVELOPE.into(); v["policy"]="ordered-shared-full".into();
++    v["observation"]["schema"]=SCHEMA.into();
++    v["observation"]["bootstrap"]["schema"]=crate::finite_projection_residual_mlp_ordered_wire_v1::SCHEMA.into();
++    let mut r:SharedReport=serde_json::from_value(v).unwrap();
++    let o=&mut r.observation; o.profile_sha256=o.bootstrap.sha256().unwrap();
++    let mut chain=crate::finite_prefix_decode_wire_v1::Chain::new(o.bootstrap.decode.registration,o.profile_sha256);
++    for c in &mut o.completions {
++        c.control.bytes=crate::finite_projection_residual_mlp_ordered_wire_v1::CONTROL_BYTES as u32;
++        c.chain=chain.advance(c);
++    }
++    o.transcript_sha256=chain.digest(); r
++}
++#[test]
++fn ordered_report_is_distinct_from_default_and_shared_legacy_decoders() {
++    let r=report();r.validate().unwrap();let raw=serde_json::to_vec(&r).unwrap();
++    SharedReport::decode(&raw).unwrap();
++    assert!(crate::projection_residual_decode_host_observation_v1::SharedReport::decode(&raw).is_err());
++    assert!(crate::projection_residual_decode_host_observation_v1::Report::decode(&raw).is_err());
++}
++#[test]
++fn ordered_report_requires_shared_policy_on_all_seven_snapshots() {
++    for i in 0..7 {
++        let mut v=serde_json::to_value(report()).unwrap();
++        v["observation"]["snapshots"][i]["shared_full_currentness"]=false.into();
++        assert!(SharedReport::decode(&serde_json::to_vec(&v).unwrap()).is_err());
++    }
++}
++#[test]
++fn ordered_report_profile_control_extent_and_chain_are_bound() {
++    let mut r=report();r.observation.profile_sha256=[9;32];assert!(r.validate().is_err());
++    let mut r=report();r.observation.completions[0].control.bytes=241960;assert!(r.validate().is_err());
++    let mut r=report();r.observation.transcript_sha256=[9;32];assert!(r.validate().is_err());
++}
++#[test]
++fn ordered_configuration_is_outside_snapshot_intervals_and_no_accuracy_authority() {
++    let mut r=report();r.configuration_host_ns=u64::MAX;r.validate().unwrap();
++    let mut r=report();r.observation.performance_claim=true;assert!(r.validate().is_err());
++    let mut r=report();r.observation.gpu_time=true;assert!(r.validate().is_err());
++}
+--- /dev/null
++++ b/adapters/tp-peer-finite-engineering-worker-v1/src/resident_layer/prefix_tiles_decode_v6/ordered/tests.rs
+@@ -0,0 +1,94 @@
++use super::*;
++#[derive(Clone, Copy, Debug, Eq, PartialEq)]
++struct Token { id: usize, rank: usize, bytes: u64 }
++impl super::super::super::Allocation for Token {
++    fn owner(self) -> usize { self.rank }
++    fn bytes(self) -> u64 { self.bytes }
++}
++fn roots() -> LayerBindings<Token> {
++    let prefix = core::array::from_fn(|rank| core::array::from_fn(|i| Token {
++        id: rank*100+i, rank, bytes: super::super::super::PREFIX_BYTES[i] }));
++    let mut mlp = core::array::from_fn(|rank| core::array::from_fn(|i| Token {
++        id: rank*100+30+i, rank, bytes: super::super::super::MLP_BYTES[i] }));
++    for rank in 0..2 { mlp[rank][5] = prefix[rank][7]; mlp[rank][9] = prefix[rank][13]; }
++    LayerBindings { prefix, mlp, final_hidden: [prefix[0][0],prefix[1][0]] }
++}
++fn down() -> [Token; 2] { core::array::from_fn(|rank| Token { id: 300+rank, rank, bytes: 16384 }) }
++#[test]
++fn ordered_down_roots_keep_old_alias_contract_and_replace_only_output() {
++    let r=roots(); r.validate().unwrap();
++    let d=down(); let selected=selected_mlp(&r,d).unwrap();
++    for rank in 0..2 {
++        assert_eq!(&selected[rank][..9], &r.mlp[rank][..9]);
++        assert_eq!(selected[rank][9], d[rank]);
++        assert_eq!(r.mlp[rank][9], r.prefix[rank][13]);
++    }
++}
++#[test]
++fn ordered_rejects_global_partial_fallback_and_every_old_root_alias() {
++    let r=roots();
++    for root in r.prefix.iter().flatten().chain(r.mlp.iter().flatten()) {
++        let mut d=down(); d[root.rank]=*root;
++        assert!(validate_down(&r,d).is_err());
++    }
++    let mut d=down(); d.swap(0,1); assert!(validate_down(&r,d).is_err());
++    let mut d=down(); d[0].bytes=16383; assert!(validate_down(&r,d).is_err());
++}
++struct Alloc { calls: Vec<usize>, drift: bool }
++impl ScratchAllocator for Alloc {
++    type Buffer=Token;
++    fn preflight(&mut self, extra:&[usize])->Result<Vec<usize>> {
++        if self.drift { return Ok(vec![715,710]); }
++        match (extra,self.calls.len()) {
++            ([1,1],0)=>Ok(vec![714,710]),
++            ([0,0],2)=>Ok(vec![715,711]),
++            _=>Err("unexpected allocation/reuse".into()),
++        }
++    }
++    fn allocate(&mut self,rank:usize)->Result<Token> { self.calls.push(rank); Ok(down()[rank]) }
++}
++#[test]
++fn ordered_setup_allocates_fixed_pair_once_and_refuses_census_drift() {
++    let layers=(0..36).map(|_| roots()).collect::<Vec<_>>();
++    let mut a=Alloc { calls:vec![],drift:false };
++    let d=allocate(&mut a,&layers).unwrap();
++    for _ in 0..(36*2303) { selected_mlp(&layers[0],d).unwrap(); }
++    assert_eq!(a.calls,[0,1]);
++    assert!(allocate(&mut a,&layers).is_err());
++    let mut a=Alloc { calls:vec![],drift:true };
++    assert!(allocate(&mut a,&layers).is_err()); assert!(a.calls.is_empty());
++    let mut a=Alloc { calls:vec![],drift:false };
++    assert!(allocate(&mut a,&layers[..35]).is_err()); assert!(a.calls.is_empty());
++}
++struct Trace { calls: Vec<&'static str>, fail:Option<usize>, poison:bool }
++impl Trace { fn hit(&mut self,s:&'static str)->Result<()> {
++    if self.poison { return Err("terminal".into()); }
++    self.calls.push(s); if self.fail==Some(self.calls.len()) { Err("injected".into()) } else { Ok(()) }
++} }
++impl Backend for Trace {
++    fn validate(&mut self)->Result<()> { self.hit("validate") }
++    fn prefix(&mut self)->Result<([[u32;284];2],[u64;2])> { self.hit("prefix-both")?; Ok(([[1;284];2],[1,2])) }
++    fn residual(&mut self,first:bool)->Result<[u64;2]> { assert!(!first); self.hit("final-both")?; Ok([4,5]) }
++    fn mlp(&mut self)->Result<([[u32;548];2],[u64;2])> { panic!("separate MLP forbidden") }
++    fn poison(&mut self) { self.poison=true; }
++}
++impl CompoundBackend for Trace {
++    fn compound(&mut self)->Result<([[u32;548];2],u64)> { self.hit("compound-both")?; Ok(([[2;548];2],3)) }
++}
++#[test]
++fn ordered_trace_has_global_prefix_compound_final_boundaries_and_one_duration() {
++    let mut t=Trace{calls:vec![],fail:None,poison:false};
++    let value=coordinate_ordered(&mut t).unwrap();
++    assert_eq!(t.calls,["validate","prefix-both","compound-both","final-both"]);
++    assert_eq!(value.timing,Timing::Ordered { prefix_ns:[1,2],segment_host_ns:3,final_residual_ns:[4,5] });
++    assert!(value.timing.paired().is_err());
++}
++#[test]
++fn ordered_any_boundary_failure_poison_prevents_later_or_repeated_work() {
++    for fail in 1..=4 {
++        let mut t=Trace{calls:vec![],fail:Some(fail),poison:false};
++        assert!(coordinate_ordered(&mut t).is_err());
++        assert!(t.poison); assert_eq!(t.calls.len(),fail);
++        assert!(coordinate_ordered(&mut t).is_err()); assert_eq!(t.calls.len(),fail);
++    }
++}
+--- /dev/null
++++ b/adapters/tp-peer-finite-engineering-worker-v1/src/resident_layer/prefix_tiles_decode_v6/ordered.rs
+@@ -0,0 +1,131 @@
++//! Two rank-local ordered packets; distinct Down outputs preserve both O inputs.
++use super::*;
++use fe2o3_kfd::{Gfx950EngineeringPeerBufferV1 as Buffer,
++    Gfx950EngineeringPeerProjectionResidualMlpTilesDispatchV1 as Compound};
++
++pub(crate) fn validate_down<B: super::super::Allocation>(
++    roots: &LayerBindings<B>, down: [B; 2],
++) -> Result<()> {
++    roots.validate()?;
++    for rank in 0..2 {
++        if down[rank].owner() != rank || down[rank].bytes() != 16384
++            || down[0] == down[1]
++            || roots.prefix.iter().flatten().chain(roots.mlp.iter().flatten())
++                .chain(roots.final_hidden.iter()).any(|b| *b == down[rank]) {
++            return Err("ordered Down scratch owner/extent/alias".into());
++        }
++    }
++    Ok(())
++}
++trait ScratchAllocator {
++    type Buffer: super::super::Allocation;
++    fn preflight(&mut self, extra: &[usize]) -> Result<Vec<usize>>;
++    fn allocate(&mut self, rank: usize) -> Result<Self::Buffer>;
++}
++impl ScratchAllocator for Group {
++    type Buffer = Buffer;
++    fn preflight(&mut self, extra: &[usize]) -> Result<Vec<usize>> {
++        self.preflight_additional_allocations_v1(extra)
++    }
++    fn allocate(&mut self, rank: usize) -> Result<Buffer> {
++        Group::allocate(self, rank, &[1 - rank], 16384)
++    }
++}
++fn allocate<A: ScratchAllocator>(group: &mut A, layers: &[LayerBindings<A::Buffer>]) -> Result<[A::Buffer; 2]> {
++    if layers.len() != 36 || group.preflight(&[1,1])? != [714,710] {
++        return Err("ordered auxiliary scratch preflight".into());
++    }
++    for roots in layers { roots.validate()?; }
++    let down = [group.allocate(0)?, group.allocate(1)?];
++    for roots in layers { validate_down(roots, down)?; }
++    if group.preflight(&[0,0])? != [715,711] { return Err("ordered auxiliary scratch census".into()); }
++    Ok(down)
++}
++pub(crate) fn allocate_down(group: &mut Group, layers: &[LayerBindings]) -> Result<[Buffer; 2]> {
++    allocate(group, layers)
++}
++fn selected_mlp<B: super::super::Allocation>(roots: &LayerBindings<B>, down: [B; 2]) -> Result<[[B; 10]; 2]> {
++    validate_down(roots, down)?;
++    let mut selected = roots.mlp;
++    for rank in 0..2 { selected[rank][9] = down[rank]; }
++    Ok(selected)
++}
++trait CompoundBackend: Backend {
++    fn compound(&mut self) -> Result<([[u32; 548]; 2], u64)>;
++}
++fn coordinate_ordered(b: &mut impl CompoundBackend) -> Result<Completion> {
++    let result = (|| {
++        b.validate()?;
++        let (prefix_states, prefix_ns) = b.prefix()?;
++        let (mlp_states, segment_host_ns) = b.compound()?;
++        let final_residual_ns = b.residual(false)?;
++        Ok(Completion { prefix_states, mlp_states,
++            timing: Timing::Ordered { prefix_ns, segment_host_ns, final_residual_ns } })
++    })();
++    if result.is_err() { b.poison(); }
++    result
++}
++struct Ordered<'a>(Native<'a>);
++impl Backend for Ordered<'_> {
++    fn validate(&mut self) -> Result<()> {
++        self.0.validate()?;
++        if self.0.recording.is_some() || self.0.projection.is_none() {
++            return Err("ordered requires separate projection and no raw recording".into());
++        }
++        validate_down(self.0.roots, self.0.down.ok_or("ordered Down scratch absent")?)
++    }
++    fn prefix(&mut self) -> Result<([[u32; 284]; 2], [u64; 2])> { self.0.prefix() }
++    fn residual(&mut self, first: bool) -> Result<[u64; 2]> {
++        if first { return Err("ordered first residual must be compound".into()); }
++        self.0.residual(false)
++    }
++    fn mlp(&mut self) -> Result<([[u32; 548]; 2], [u64; 2])> {
++        Err("ordered MLP must be compound".into())
++    }
++    fn poison(&mut self) { self.0.poison(); }
++}
++impl CompoundBackend for Ordered<'_> {
++    fn compound(&mut self) -> Result<([[u32; 548]; 2], u64)> {
++        let native = &mut self.0;
++        let result = (|| {
++            let projection = native.projection.ok_or("ordered projection absent")?;
++            let down = native.down.ok_or("ordered Down absent")?;
++            let roots = selected_mlp(native.roots, down)?;
++            let partials = [native.roots.prefix[0][13], native.roots.prefix[1][13]];
++            let [left, right] = native.states.take_residual_mlp(native.layer)?;
++            let commands = [
++                Compound { projection_kernel: &projection.kernels[0],
++                    projection_object_sha256: projection.sha256,
++                    partials, residual_input: native.roots.prefix[0][0],
++                    mlp: MlpDispatch { kernel: &native.mlp.kernels[0],
++                        object_sha256: native.mlp.sha256, roots: roots[0],
++                        state: left, timeout_ms: native.timeout_ms } },
++                Compound { projection_kernel: &projection.kernels[1],
++                    projection_object_sha256: projection.sha256,
++                    partials, residual_input: native.roots.prefix[1][0],
++                    mlp: MlpDispatch { kernel: &native.mlp.kernels[1],
++                        object_sha256: native.mlp.sha256, roots: roots[1],
++                        state: right, timeout_ms: native.timeout_ms } },
++            ];
++            // SAFETY: both Prefix284 producers retired before this call. Both O
++            // partials remain read-only throughout the compound; Down uses the
++            // private retained pair. Runtime preflights all four packets and
++            // returns only after both queues, all signals and terminal states.
++            unsafe { native.group.dispatch_projection_residual_mlp_tiles_round_unchecked_v1(commands) }
++        })();
++        let words = native.states.finish_residual_mlp(native.group, native.layer,
++            result.as_ref().map(|v| v.final_states).map_err(Clone::clone))?;
++        Ok((words, result?.segment_host_ns))
++    }
++}
++/// # Safety
++/// Exact reviewed images, sealed model roots and private setup-owned Down buffers.
++pub(crate) unsafe fn execute(group: &mut Group, states: &mut Roster,
++    original: &LoadedResidentArtifacts, prefix: &LoadedPrefix, mlp: &LoadedKernels,
++    roots: &LayerBindings, layer: usize, timeout_ms: u32, projection: &LoadedProjection,
++    down: [Buffer; 2]) -> Result<Completion> {
++    coordinate_ordered(&mut Ordered(Native { group, states, original, projection: Some(projection),
++        down: Some(down), prefix, mlp, roots, layer, timeout_ms, recording: None }))
++}
++#[cfg(test)]
++mod tests;
+--- a/adapters/tp-peer-finite-engineering-worker-v1/src/resident_layer/prefix_tiles_decode_v6/tests.rs
++++ b/adapters/tp-peer-finite-engineering-worker-v1/src/resident_layer/prefix_tiles_decode_v6/tests.rs
+@@ -57,7 +57,7 @@
+             "last_residual_pair_complete"
+         ]
+     );
+-    assert_eq!(c.paired_ns, [[10, 11], [20, 21], [30, 31], [40, 41]]);
++    assert_eq!(c.timing.paired().unwrap(), [[10, 11], [20, 21], [30, 31], [40, 41]]);
+     assert_eq!(c.prefix_states, [[1; 284]; 2]);
+     assert_eq!(c.mlp_states, [[2; 548]; 2]);
+     assert!(!b.poisoned);
+--- a/adapters/tp-peer-finite-engineering-worker-v1/src/resident_layer/prefix_tiles_decode_v6.rs
++++ b/adapters/tp-peer-finite-engineering-worker-v1/src/resident_layer/prefix_tiles_decode_v6.rs
+@@ -17,10 +17,20 @@
+     Gfx950EngineeringRawTimestampObservationV1 as Raw,
+ };
+ 
++#[derive(Clone, Debug, Eq, PartialEq)]
++pub(crate) enum Timing {
++    Paired([[u64; 2]; 4]),
++    Ordered { prefix_ns: [u64; 2], segment_host_ns: u64, final_residual_ns: [u64; 2] },
++}
++impl Timing {
++    pub(crate) fn paired(self) -> Result<[[u64; 2]; 4]> {
++        match self { Self::Paired(v) => Ok(v), Self::Ordered { .. } => Err("ordered timing cannot enter legacy Control".into()) }
++    }
++}
+ pub(crate) struct Completion {
+     pub(crate) prefix_states: [[u32; 284]; 2],
+     pub(crate) mlp_states: [[u32; 548]; 2],
+-    pub(crate) paired_ns: [[u64; 2]; 4],
++    pub(crate) timing: Timing,
+ }
+ trait Backend {
+     fn validate(&mut self) -> Result<()>;
+@@ -39,7 +49,7 @@
+         Ok(Completion {
+             prefix_states,
+             mlp_states,
+-            paired_ns: [prefix, first, mlp, last],
++            timing: Timing::Paired([prefix, first, mlp, last]),
+         })
+     })();
+     if result.is_err() {
+@@ -52,6 +62,7 @@
+     states: &'a mut Roster,
+     original: &'a LoadedResidentArtifacts,
+     projection: Option<&'a LoadedProjection>,
++    down: Option<[super::Buffer; 2]>,
+     prefix: &'a LoadedPrefix,
+     mlp: &'a LoadedKernels,
+     roots: &'a LayerBindings,
+@@ -182,7 +193,9 @@
+             for rank in 0..2 {
+                 let mut pointers = (0..8)
+                     .map(|slot| {
+-                        self.roots.prefix[if slot < 2 { slot } else { 0 }][13].pointer(
++                        (if first { self.roots.prefix[if slot < 2 { slot } else { 0 }][13] }
++                        else { self.down.map(|d| d[if slot < 2 { slot } else { 0 }])
++                            .unwrap_or(self.roots.prefix[if slot < 2 { slot } else { 0 }][13]) }).pointer(
+                             slot as u32 * 16,
+                             0,
+                             if slot < 2 { 16384 } else { 0 },
+@@ -347,6 +360,7 @@
+         states,
+         original,
+         projection,
++        down: None,
+         prefix,
+         mlp,
+         roots,
+@@ -382,6 +396,7 @@
+         layer,
+         timeout_ms,
+         projection: None,
++        down: None,
+         recording: Some((recorder, generation, position)),
+     })
+ }
+@@ -392,3 +407,7 @@
+ #[cfg(test)]
+ #[path = "prefix_tiles_decode_v6/projection_tests.rs"]
+ mod projection_tests;
++
++mod ordered;
++pub(crate) use ordered::execute as execute_ordered;
++pub(crate) use ordered::allocate_down as allocate_ordered_down;
+--- a/adapters/tp-peer-finite-engineering-worker-v1/src/state_roster/prefix_tiles_decode_v6/reuse.rs
++++ b/adapters/tp-peer-finite-engineering-worker-v1/src/state_roster/prefix_tiles_decode_v6/reuse.rs
+@@ -154,6 +154,7 @@
+     }
+ }
+ pub(super) struct Native<'a> {
++    pub(super) counts: [usize; 2],
+     pub(super) group: &'a mut Group,
+     pub(super) states: &'a mut [Layer],
+ }
+@@ -202,7 +203,7 @@
+ 
+ impl Backend for Native<'_> {
+     fn fence(&mut self) -> Result<()> {
+-        idle(self.group)
++        idle(self.group, self.counts)
+     }
+     fn snapshot_bank(&mut self, bank: usize) -> Result<Vec<Snapshot>> {
+         let entries = gather_bank(
+--- a/adapters/tp-peer-finite-engineering-worker-v1/src/state_roster/prefix_tiles_decode_v6/tests.rs
++++ b/adapters/tp-peer-finite-engineering-worker-v1/src/state_roster/prefix_tiles_decode_v6/tests.rs
+@@ -306,6 +306,7 @@
+     // Invalid phase must reject before touching any native state or exposing a borrow.
+     for prefix in [false, true] {
+         let mut roster = Roster {
++            expected_counts: COUNTS,
+             states: Vec::new(),
+             gate: Gate::new(),
+             ledger: reuse::Ledger::new([1; 32], [2; 32]).unwrap(),
+--- a/adapters/tp-peer-finite-engineering-worker-v1/src/state_roster/prefix_tiles_decode_v6.rs
++++ b/adapters/tp-peer-finite-engineering-worker-v1/src/state_roster/prefix_tiles_decode_v6.rs
+@@ -6,6 +6,7 @@
+ };
+ 
+ pub(crate) const COUNTS: [usize; 2] = [714, 710];
++pub(crate) const ORDERED_COUNTS: [usize; 2] = [715, 711];
+ const BANKS: usize = 2;
+ const FORWARDS: u64 = 4;
+ struct Layer<P = Prefix, M = Mlp> {
+@@ -84,6 +85,7 @@
+         }
+         Ok(Roster {
+             states: self.states,
++            expected_counts: COUNTS,
+             gate: Gate::new(),
+             ledger: reuse::Ledger::new(registration, self.model)?,
+         })
+@@ -101,18 +103,57 @@
+ fn mlp_terminal(words: &[u32; 548]) -> bool {
+     super::tiles_decode_v1::terminal(words)
+ }
+-fn idle(group: &mut Group) -> Result<()> {
+-    if group.preflight_additional_allocations_v1(&[0, 0])? != COUNTS {
++fn idle(group: &mut Group, counts: [usize; 2]) -> Result<()> {
++    if group.preflight_additional_allocations_v1(&[0, 0])? != counts {
+         return Err("prefix decode allocation census changed".into());
+     }
+     Ok(())
+ }
+ pub(crate) struct Roster {
++    expected_counts: [usize; 2],
+     states: Vec<Layer>,
+     gate: Gate,
+     ledger: reuse::Ledger,
+ }
+ impl Roster {
++    pub(crate) fn bind_ordered_buffers(&mut self, group: &mut Group) -> Result<()> {
++        let result = (|| {
++            if self.expected_counts != COUNTS || self.gate.phase != Phase::BetweenForwards
++                || self.ledger.completed != 0 || !self.ledger.between() {
++                return Err("ordered scratch requires pristine roster".into());
++            }
++            idle(group, ORDERED_COUNTS)?;
++            self.expected_counts = ORDERED_COUNTS;
++            Ok(())
++        })();
++        self.outcome(result)
++    }
++    pub(crate) fn counts(&self) -> [usize; 2] { self.expected_counts }
++    pub(crate) fn take_residual_mlp(&mut self, layer: usize) -> Result<[&mut Mlp; 2]> {
++        let result = if self.expected_counts == ORDERED_COUNTS {
++            self.gate.advance(layer, Phase::FirstResidualReady, Phase::ResidualMlpInFlight)
++        } else { Err("compound route requires distinct Down scratch".into()) };
++        let slot = self.outcome(result)?;
++        let [left, right] = &mut self.states[slot].mlp;
++        Ok([left, right])
++    }
++    pub(crate) fn finish_residual_mlp(&mut self, group: &mut Group, layer: usize,
++        result: Result<[[u32; 548]; 2]>) -> Result<[[u32; 548]; 2]> {
++        let result = (|| {
++            let dispatched = result?;
++            let slot = self.gate.expect(layer, Phase::ResidualMlpInFlight)?;
++            let words = [
++                group.observe_wave_mlp_tiles_state_v2(&self.states[slot].mlp[0])?,
++                group.observe_wave_mlp_tiles_state_v2(&self.states[slot].mlp[1])?,
++            ];
++            if words != dispatched || !words.iter().all(mlp_terminal) {
++                return Err("ordered paired548 terminal mismatch".into());
++            }
++            self.gate.phase = Phase::FinalResidualReady;
++            Ok(words)
++        })();
++        self.outcome(result)
++    }
+     pub(crate) fn begin(
+         &mut self,
+         group: &mut Group,
+@@ -133,6 +174,7 @@
+             let bank = self.ledger.prepare(
+                 &mut reuse::Native {
+                     group,
++                    counts: self.expected_counts,
+                     states: &mut self.states,
+                 },
+                 registration,
+@@ -259,7 +301,7 @@
+     pub(crate) fn commit(&mut self, group: &mut Group, generation: u64) -> Result<()> {
+         let result = (|| {
+             self.gate.commit()?;
+-            self.ledger.commit(generation, idle(group))
++            self.ledger.commit(generation, idle(group, self.expected_counts))
+         })();
+         self.outcome(result)
+     }
+@@ -278,3 +320,34 @@
+ mod reuse;
+ #[cfg(test)]
+ mod tests;
++
++#[cfg(test)]
++mod ordered_tests {
++    use super::*;
++    #[test]
++    fn ordered_phase_cannot_skip_prefix_or_run_separate_mlp() {
++        let mut gate=Gate::new();
++        assert!(gate.advance(0,Phase::FirstResidualReady,Phase::ResidualMlpInFlight).is_err());
++        assert_eq!(gate.phase,Phase::Terminal);
++        let mut gate=Gate::new();
++        gate.begin(1,0).unwrap();
++        gate.advance(0,Phase::PrefixReady,Phase::PrefixInFlight).unwrap();
++        gate.phase=Phase::FirstResidualReady;
++        gate.advance(0,Phase::FirstResidualReady,Phase::ResidualMlpInFlight).unwrap();
++        assert!(gate.advance(0,Phase::MlpReady,Phase::MlpInFlight).is_err());
++        assert!(gate.advance(0,Phase::FinalResidualReady,Phase::FinalResidualInFlight).is_err());
++    }
++    #[test]
++    fn ordered_phase_requires_compound_terminal_before_final_and_next_layer() {
++        let mut gate=Gate::new();gate.begin(1,0).unwrap();
++        gate.phase=Phase::ResidualMlpInFlight;
++        assert!(gate.commit().is_err());
++        assert_eq!(gate.phase,Phase::Terminal);
++        let mut gate=Gate::new();gate.begin(1,0).unwrap();
++        gate.phase=Phase::FinalResidualReady;
++        gate.advance(0,Phase::FinalResidualReady,Phase::FinalResidualInFlight).unwrap();
++        assert!(gate.advance(1,Phase::PrefixReady,Phase::PrefixInFlight).is_err());
++        assert_ne!(COUNTS,ORDERED_COUNTS);
++        assert_eq!(ORDERED_COUNTS,[COUNTS[0]+1,COUNTS[1]+1]);
++    }
++}
+--- a/adapters/tp-peer-finite-engineering-worker-v1/src/state_roster.rs
++++ b/adapters/tp-peer-finite-engineering-worker-v1/src/state_roster.rs
+@@ -376,6 +376,7 @@
+     FirstResidualInFlight,
+     MlpReady,
+     MlpInFlight,
++    ResidualMlpInFlight,
+     FinalResidualReady,
+     FinalResidualInFlight,
+     Tail,

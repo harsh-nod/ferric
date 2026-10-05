@@ -6,7 +6,19 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Latest: [the matched default/shared-full GPU pair completed on MI350](../qualification/projection-ar4-shared-host-pair-v1/README.md).
+Latest: [the projection-residual / MLP ordered segment passed CPU qualification on ASROCK](../qualification/projection-ordered-segment-cpu-v1/README.md).
+All 75 phases passed, including the corrected default-feature check: 1,848
+Rust test executions passed with seven historical ignores, five executables
+were built, and all integrity postchecks passed. Seventeen controller policy
+tests passed separately. The exact 36 Ferric and 24 fe2o3 source bodies are
+integrated. The opt-in path combines two dispatch rounds and uses distinct
+per-rank Down-output scratch to avoid a cross-rank alias race, without changing
+kernel images or arithmetic. This is CPU qualification only; fresh MI350
+runtime audits and matched GPU comparison remain separate execution gates.
+All milestones, independent numerical acceptance, sustained 2,048/256 and
+700 tokens/s remain open.
+
+Previously, [the matched default/shared-full GPU pair completed on MI350](../qualification/projection-ar4-shared-host-pair-v1/README.md).
 Both one-attempt AR4 runs passed structural and lifecycle checks. All four
 606,976-byte payloads are identical across routes, covering 152 captured tensor
 slices. Forward host wall time changed from 10.56-12.49 seconds to 5.25-5.77

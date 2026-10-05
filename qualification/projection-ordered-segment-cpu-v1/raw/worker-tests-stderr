@@ -1,0 +1,44 @@
+warning: unused import: `prefix::Transaction`
+ --> /home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-ordered-segment-cpu-v228-v2/sources/fe2o3/crates/fe2o3-kfd/src/engineering_gfx950_resident_layer_tp2_v1.rs:7:5
+  |
+7 | use prefix::Transaction as _;
+  |     ^^^^^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: function `gfx942_cwsr_header_bytes` is never used
+   --> /home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-ordered-segment-cpu-v228-v2/sources/fe2o3/crates/fe2o3-kfd/src/queue_submit.rs:406:15
+    |
+406 | pub(crate) fn gfx942_cwsr_header_bytes(
+    |               ^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: function `initialize_gfx942_cwsr_headers` is never used
+   --> /home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-ordered-segment-cpu-v228-v2/sources/fe2o3/crates/fe2o3-kfd/src/queue_submit.rs:415:15
+    |
+415 | pub(crate) fn initialize_gfx942_cwsr_headers(
+    |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: `fe2o3-kfd` (lib) generated 3 warnings
+warning: function `encode_closed` is never used
+   --> src/native_prefix_layer_cli_v1.rs:174:4
+    |
+174 | fn encode_closed(b: &Bootstrap, closed: ClosedRun) -> io::Result<(wire::Control, Vec<u8>)> {
+    |    ^^^^^^^^^^^^^
+    |
+    = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: field `policy` is never read
+  --> src/native_projection_residual_mlp_ordered_v1.rs:27:5
+   |
+24 | pub struct Options {
+   |            ------- field in this struct
+...
+27 |     policy: Policy,
+   |     ^^^^^^
+
+warning: `ferric-tp-peer-finite-engineering-worker-v1` (lib) generated 2 warnings
+    Finished `test` profile [optimized] target(s) in 0.05s
+     Running unittests src/lib.rs (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-ordered-segment-cpu-v228-v2/target/worker/debug/deps/ferric_tp_peer_finite_engineering_worker_v1-37428ea1b1fd928a)
+     Running tests/shared_wire.rs (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-ordered-segment-cpu-v228-v2/target/worker/debug/deps/shared_wire-272a949773900a0f)

@@ -1,0 +1,519 @@
+{
+  "schema": "ferric-p228-projection-residual-mlp-ordered-ferric-source-v2",
+  "base_commit": "30a0613af2bca8901daa603e952b43379e073dc1",
+  "base_cpu": {
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-ar4-shared-host-cpu-v228-v1/complete.json",
+    "bytes": 466118,
+    "sha256": "deb2aeacded08c336d1fb5a1638cd2accc2b65ec65ffa3e90177bd5e61146d74"
+  },
+  "base_source_snapshot": {
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-ar4-shared-host-cpu-v228-v1/sources-after.json",
+    "bytes": 1270381,
+    "sha256": "ed98abb445b2dc3209fcd575bfb25e817b86b7bce0dbdb5f299984067149f3b4"
+  },
+  "source_only": true,
+  "compiled": false,
+  "tests_executed": false,
+  "native_executed": false,
+  "original_routes_preserved": true,
+  "original_group_fence_policy_unchanged": false,
+  "fresh_segment_boundary_currentness_preserved": true,
+  "intermediate_host_fence_replaced_by_ordered_gpu_sequence": true,
+  "parent_binary": "ferric-qwen3-finite-projection-residual-decode-ordered-host-engineering",
+  "parent_opt_in": "--observe-projection-residual-mlp-ordered",
+  "worker_selector": "--engineering-native-projection-residual-mlp-ordered-v1",
+  "mode": "autoregressive",
+  "configuration": [
+    false,
+    false,
+    true
+  ],
+  "configuration_fields": [
+    "cache_kernel_admission",
+    "operational_currentness",
+    "shared_full_currentness"
+  ],
+  "raw_device_timestamps": false,
+  "allocation_counts": {
+    "legacy": [
+      714,
+      710
+    ],
+    "ordered": [
+      715,
+      711
+    ]
+  },
+  "auxiliary_down_scratch": {
+    "buffers": 2,
+    "bytes_each": 16384,
+    "lifetime": "Owner setup through healthy Close; reused only after paired final residual",
+    "per_layer_allocations": 0,
+    "per_forward_allocations": 0
+  },
+  "control_bytes": 241096,
+  "runtime_method": "dispatch_projection_residual_mlp_tiles_round_unchecked_v1",
+  "files": [
+    {
+      "path": "adapters/m1-engineering-execution-v1/Cargo.toml",
+      "source": "candidate/adapters/m1-engineering-execution-v1/Cargo.toml",
+      "before": {
+        "bytes": 13116,
+        "sha256": "107ced9a81978566a443265edda73784a8167326be81da5baa66fb566b940e53"
+      },
+      "after": {
+        "bytes": 13343,
+        "sha256": "6ed628b3b517dda38905be675dbe7e2511180f9671d5c8f351099b7ac6afa925"
+      }
+    },
+    {
+      "path": "adapters/m1-engineering-execution-v1/src/bin/ferric-qwen3-finite-projection-residual-decode-ordered-host-engineering.rs",
+      "source": "candidate/adapters/m1-engineering-execution-v1/src/bin/ferric-qwen3-finite-projection-residual-decode-ordered-host-engineering.rs",
+      "before": null,
+      "after": {
+        "bytes": 4641,
+        "sha256": "bcdcfca6b1dfe182bbe873981a6dc6dca517b383ef1cc01f2aa7372ef5f1aa68"
+      }
+    },
+    {
+      "path": "adapters/m1-engineering-execution-v1/src/lib.rs",
+      "source": "candidate/adapters/m1-engineering-execution-v1/src/lib.rs",
+      "before": {
+        "bytes": 88837,
+        "sha256": "20aac367864696dac49db0e60d866ca3467f9fc7e46ee75a11f92229018ed661"
+      },
+      "after": {
+        "bytes": 89250,
+        "sha256": "7b542194d2a654b1d80b866b73a88bbe6665df75b2a9395af398652b89e433bd"
+      }
+    },
+    {
+      "path": "adapters/m1-engineering-execution-v1/src/tp_finite_client/prefix_decode/evidence.rs",
+      "source": "candidate/adapters/m1-engineering-execution-v1/src/tp_finite_client/prefix_decode/evidence.rs",
+      "before": {
+        "bytes": 10531,
+        "sha256": "b193ffd7245d3b1e1e11f7018713eb89b5eaefa9b98c8e3a0bb01330e4bd3197"
+      },
+      "after": {
+        "bytes": 10744,
+        "sha256": "e3fb7713e3027073b0f90595d24cacbd2d8fc78c0930e2f07ad747676457bb49"
+      }
+    },
+    {
+      "path": "adapters/m1-engineering-execution-v1/src/tp_finite_client/prefix_decode/ordered_host.rs",
+      "source": "candidate/adapters/m1-engineering-execution-v1/src/tp_finite_client/prefix_decode/ordered_host.rs",
+      "before": null,
+      "after": {
+        "bytes": 6079,
+        "sha256": "d491fd60a12df23393f677da4f1309a6bcfe27669884867dbb6a5b9271b7afe1"
+      }
+    },
+    {
+      "path": "adapters/m1-engineering-execution-v1/src/tp_finite_client/prefix_decode/projection_ordered.rs",
+      "source": "candidate/adapters/m1-engineering-execution-v1/src/tp_finite_client/prefix_decode/projection_ordered.rs",
+      "before": null,
+      "after": {
+        "bytes": 8291,
+        "sha256": "ceb5d3f1fe0a7f1824ab8f9fcb2258a02eab71af256d388794fdb7e94cc6d3b8"
+      }
+    },
+    {
+      "path": "adapters/m1-engineering-execution-v1/src/tp_finite_client/prefix_decode/projection_ordered_tests.rs",
+      "source": "candidate/adapters/m1-engineering-execution-v1/src/tp_finite_client/prefix_decode/projection_ordered_tests.rs",
+      "before": null,
+      "after": {
+        "bytes": 3411,
+        "sha256": "9437895173f3d3d53f33417ae81d236e71ab7a5b11ee276362040dcd68263626"
+      }
+    },
+    {
+      "path": "adapters/m1-engineering-execution-v1/src/tp_finite_client/prefix_decode.rs",
+      "source": "candidate/adapters/m1-engineering-execution-v1/src/tp_finite_client/prefix_decode.rs",
+      "before": {
+        "bytes": 33073,
+        "sha256": "2d3555bd15f774f4f9fdc2f1c7c7452809292212c993845f0dea2ceb14cb1673"
+      },
+      "after": {
+        "bytes": 35606,
+        "sha256": "132552ec327dc35984e0871d0c8bef353b8ca39a9b3ba560b1b0302d89a9db83"
+      }
+    },
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/finite_projection_residual_mlp_ordered_wire_v1.rs",
+      "source": "candidate/adapters/tp-peer-finite-engineering-worker-v1/src/finite_projection_residual_mlp_ordered_wire_v1.rs",
+      "before": null,
+      "after": {
+        "bytes": 13780,
+        "sha256": "b25f7cf491257e2c2c29a1213a92b97bc1513717e826be4897fc6b8e4f2d86c9"
+      }
+    },
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/finite_projection_residual_mlp_ordered_wire_v1_tests.rs",
+      "source": "candidate/adapters/tp-peer-finite-engineering-worker-v1/src/finite_projection_residual_mlp_ordered_wire_v1_tests.rs",
+      "before": null,
+      "after": {
+        "bytes": 2229,
+        "sha256": "f06245bf633be3e3c1082c854dc71959e26834059026f2a1cd83389049b55c0b"
+      }
+    },
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/lib.rs",
+      "source": "candidate/adapters/tp-peer-finite-engineering-worker-v1/src/lib.rs",
+      "before": {
+        "bytes": 2185,
+        "sha256": "4f3a93fcd49e697a45caf7b253ff3549c07df6d27b89495429bb79de3a07df08"
+      },
+      "after": {
+        "bytes": 2349,
+        "sha256": "497bc6fb5643f4adc4bf84d508715efddf21c75ed6b8c96e720c3363b6ed762e"
+      }
+    },
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/main.rs",
+      "source": "candidate/adapters/tp-peer-finite-engineering-worker-v1/src/main.rs",
+      "before": {
+        "bytes": 11759,
+        "sha256": "bf30178d85fc77c15d3cf69b37fe9cabd92bcad97f1ee6bf735f31e4087eaa12"
+      },
+      "after": {
+        "bytes": 12332,
+        "sha256": "ee0e8287f6ce5c3d6497acd0c4b9e36936ff57b86f35cf9f72621c03c3c8d606"
+      }
+    },
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_forward.rs",
+      "source": "candidate/adapters/tp-peer-finite-engineering-worker-v1/src/native_forward.rs",
+      "before": {
+        "bytes": 16108,
+        "sha256": "5e949aadcf65c9b62f5be2d150175b06f5b93ff7d720782c36a5aac0e1ffdcb2"
+      },
+      "after": {
+        "bytes": 17129,
+        "sha256": "d75c11c46904fd48ac474afeb933122ce0a17c524b0194476c4e8715dc12371c"
+      }
+    },
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_decode_cli_v1.rs",
+      "source": "candidate/adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_decode_cli_v1.rs",
+      "before": {
+        "bytes": 26087,
+        "sha256": "0bbb31f285f6953937eec031b4398e59b6ca7fc441cbe3a5f8ee3b272c9d0004"
+      },
+      "after": {
+        "bytes": 29404,
+        "sha256": "aa1bff5e8c42efc39bdd17727c76eb1c76aea24c0bc41da0d0e85835810ee0cd"
+      }
+    },
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_decode_cli_v1_tests.rs",
+      "source": "candidate/adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_decode_cli_v1_tests.rs",
+      "before": {
+        "bytes": 11392,
+        "sha256": "ee25b53b99cbc373b64a94dce52db63e795e962348ce01416c8551d46ebdd291"
+      },
+      "after": {
+        "bytes": 11452,
+        "sha256": "b36a97ee07521f39fa77d1a201d27ead55e515ca21ea38a13d56c6804576759f"
+      }
+    },
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_decode_device_cli_tests.rs",
+      "source": "candidate/adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_decode_device_cli_tests.rs",
+      "before": {
+        "bytes": 7269,
+        "sha256": "7dfeec3116e623fbeffd5ead94f8085bf6e836795840a1a9b38f2c2c71db2a78"
+      },
+      "after": {
+        "bytes": 7329,
+        "sha256": "16eab0bf263d73535f7af8931e93e4224761b31b5e6204579fefaa9df0be93dd"
+      }
+    },
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_decode_host_cli_tests.rs",
+      "source": "candidate/adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_decode_host_cli_tests.rs",
+      "before": {
+        "bytes": 4502,
+        "sha256": "ffcefda72321098f111da0077dfa9a849e125ca7255363a5d6bfcf97615f55ab"
+      },
+      "after": {
+        "bytes": 4562,
+        "sha256": "d399320d34a5194324ef1a377420b9f2404d10c9fcffe86fc46fa20f298280c5"
+      }
+    },
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_decode_ordered_tests.rs",
+      "source": "candidate/adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_decode_ordered_tests.rs",
+      "before": null,
+      "after": {
+        "bytes": 13204,
+        "sha256": "e038f356f7e535c93309b79eb6e01f37d05378e5c6b55805b63651bf1fbb2cd5"
+      }
+    },
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_decode_projection_tests.rs",
+      "source": "candidate/adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_decode_projection_tests.rs",
+      "before": {
+        "bytes": 12008,
+        "sha256": "a098ed337fc117427ac29280708aca242321ef177b7e504a62b21aa812e7a822"
+      },
+      "after": {
+        "bytes": 12068,
+        "sha256": "1041a7ab84598e9e84c028a582b75c2f2cae4f98f8b23e79bb0965ab7e0609b7"
+      }
+    },
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_tiles_decode_v6/projection_tests.rs",
+      "source": "candidate/adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_tiles_decode_v6/projection_tests.rs",
+      "before": {
+        "bytes": 8855,
+        "sha256": "2f1d555b85c05e1636c7a4b1a19b7884e1783ed7b80645680d92eca5d28e0051"
+      },
+      "after": {
+        "bytes": 8915,
+        "sha256": "1c83a5b5b0aad6724f7b0c8cccae24c88ba0fd24051a153aac26cd51939694bc"
+      }
+    },
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_tiles_decode_v6/tests.rs",
+      "source": "candidate/adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_tiles_decode_v6/tests.rs",
+      "before": {
+        "bytes": 11445,
+        "sha256": "ba39f9828fecd6d2e5962baeb75c6750670bb5986a26ff573cb6bdf497f341e4"
+      },
+      "after": {
+        "bytes": 11505,
+        "sha256": "bb13024cfa4652af0add230a7c6cc824871e4097762ca27468fd2d28fc8f63a8"
+      }
+    },
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_tiles_decode_v6.rs",
+      "source": "candidate/adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_tiles_decode_v6.rs",
+      "before": {
+        "bytes": 17904,
+        "sha256": "8a0e008acf935867f6b461cb9f127faa197712f931b8f86c0283748ed83632fb"
+      },
+      "after": {
+        "bytes": 20550,
+        "sha256": "cf47e957a15f1e4ffd18db38e4110b4ab2f7dc131cf84efffc6c3fc4f4892a1d"
+      }
+    },
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_projection_residual_decode_cli_v1.rs",
+      "source": "candidate/adapters/tp-peer-finite-engineering-worker-v1/src/native_projection_residual_decode_cli_v1.rs",
+      "before": {
+        "bytes": 5306,
+        "sha256": "65ed708604f28d8df58602dec1f75d6f7a36cb9f3f6653b3408812910a356ad2"
+      },
+      "after": {
+        "bytes": 5328,
+        "sha256": "94bc362c580764e9cccd80d489d3c1fb0adf8ff803f6f0a7f6edd9681523fd13"
+      }
+    },
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_projection_residual_mlp_ordered_v1.rs",
+      "source": "candidate/adapters/tp-peer-finite-engineering-worker-v1/src/native_projection_residual_mlp_ordered_v1.rs",
+      "before": null,
+      "after": {
+        "bytes": 15125,
+        "sha256": "24276c07c88aae6a4bcef1abbd9eeb1a4cf77ed1b520fc34cb944a9c97efbbab"
+      }
+    },
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_projection_residual_mlp_ordered_v1_tests.rs",
+      "source": "candidate/adapters/tp-peer-finite-engineering-worker-v1/src/native_projection_residual_mlp_ordered_v1_tests.rs",
+      "before": null,
+      "after": {
+        "bytes": 4644,
+        "sha256": "ea41b0657ca37fce04408b5f24ff50e80e66e235474c8fb7644c59f9425cae58"
+      }
+    },
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_setup/prefix_decode_v6.rs",
+      "source": "candidate/adapters/tp-peer-finite-engineering-worker-v1/src/native_setup/prefix_decode_v6.rs",
+      "before": {
+        "bytes": 3656,
+        "sha256": "84f0625bbb853ae7ffec38ac1d30d54a8f08d2337264f3df9e75356afa39aa17"
+      },
+      "after": {
+        "bytes": 3786,
+        "sha256": "a074780c9f1757f3b01285d8a70c6ddfb6cdc0e9e02a7917447ccfbf755a0b27"
+      }
+    },
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/projection_residual_mlp_ordered_observation_v1.rs",
+      "source": "candidate/adapters/tp-peer-finite-engineering-worker-v1/src/projection_residual_mlp_ordered_observation_v1.rs",
+      "before": null,
+      "after": {
+        "bytes": 7768,
+        "sha256": "7fb3051a030aed841571ff1dd484aa3ba6db159ec7e0b9b60d853a6b72d24417"
+      }
+    },
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/projection_residual_mlp_ordered_observation_v1_tests.rs",
+      "source": "candidate/adapters/tp-peer-finite-engineering-worker-v1/src/projection_residual_mlp_ordered_observation_v1_tests.rs",
+      "before": null,
+      "after": {
+        "bytes": 2367,
+        "sha256": "ab00e54e681b33e1b854e193ddce6a8d30b730f143ba6b038b29a1d9f03f4a0b"
+      }
+    },
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/resident_layer/prefix_tiles_decode_v6/ordered/tests.rs",
+      "source": "candidate/adapters/tp-peer-finite-engineering-worker-v1/src/resident_layer/prefix_tiles_decode_v6/ordered/tests.rs",
+      "before": null,
+      "after": {
+        "bytes": 4547,
+        "sha256": "582c3e9a78092649d1d9a6dc7ca55a7de174262d208cca5f9b9c1a2c0f98a5a5"
+      }
+    },
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/resident_layer/prefix_tiles_decode_v6/ordered.rs",
+      "source": "candidate/adapters/tp-peer-finite-engineering-worker-v1/src/resident_layer/prefix_tiles_decode_v6/ordered.rs",
+      "before": null,
+      "after": {
+        "bytes": 6293,
+        "sha256": "0ade28b0415e33a10e45ad108060957e2c2d1b0acbf546c1e8e238db1ba20914"
+      }
+    },
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/resident_layer/prefix_tiles_decode_v6/tests.rs",
+      "source": "candidate/adapters/tp-peer-finite-engineering-worker-v1/src/resident_layer/prefix_tiles_decode_v6/tests.rs",
+      "before": {
+        "bytes": 2126,
+        "sha256": "40866fe9c12a2e02839f37031a1560ac09c2d2a9c56a76db9ff95731326375a9"
+      },
+      "after": {
+        "bytes": 2141,
+        "sha256": "faf8735fba96932d3262389968ad28df2fe6caf4e82e2ed89228bcb81beb8119"
+      }
+    },
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/resident_layer/prefix_tiles_decode_v6.rs",
+      "source": "candidate/adapters/tp-peer-finite-engineering-worker-v1/src/resident_layer/prefix_tiles_decode_v6.rs",
+      "before": {
+        "bytes": 13582,
+        "sha256": "b9dd5b6f9a371006c16ed1939b8252ad5f59385bbfa0effa5d83b55b05a626c6"
+      },
+      "after": {
+        "bytes": 14381,
+        "sha256": "82e08425a92d5fc26800f13069a378869fcebd5a6ab6cded5b9460794bc7774b"
+      }
+    },
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/state_roster/prefix_tiles_decode_v6/reuse.rs",
+      "source": "candidate/adapters/tp-peer-finite-engineering-worker-v1/src/state_roster/prefix_tiles_decode_v6/reuse.rs",
+      "before": {
+        "bytes": 8571,
+        "sha256": "52a8229cb1aa98ae3e25ec5bdaf335badf7f01a1761d4d4de5ca5650ac932b90"
+      },
+      "after": {
+        "bytes": 8619,
+        "sha256": "7edad0297b78e71803760a1de8c68b7f7deabfdd79b189b1da181283b8d3a728"
+      }
+    },
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/state_roster/prefix_tiles_decode_v6/tests.rs",
+      "source": "candidate/adapters/tp-peer-finite-engineering-worker-v1/src/state_roster/prefix_tiles_decode_v6/tests.rs",
+      "before": {
+        "bytes": 11731,
+        "sha256": "aeb0230d17cd5315e9aae93aa29a3153cb6161e65b0d81a307378ce3d606ee83"
+      },
+      "after": {
+        "bytes": 11768,
+        "sha256": "0a76cb525455c34f80597945a7e9bf6b79e17cf4b5d32432df544f9bb4a4dfb1"
+      }
+    },
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/state_roster/prefix_tiles_decode_v6.rs",
+      "source": "candidate/adapters/tp-peer-finite-engineering-worker-v1/src/state_roster/prefix_tiles_decode_v6.rs",
+      "before": {
+        "bytes": 9312,
+        "sha256": "a014a361492d9eab2aacbfb7418dacf05aa49364c67738201978bdd594287fc3"
+      },
+      "after": {
+        "bytes": 12820,
+        "sha256": "6f116462dcb0d397dfa6af882779763d829ca6d917c3de47b40406228df1ea63"
+      }
+    },
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/state_roster.rs",
+      "source": "candidate/adapters/tp-peer-finite-engineering-worker-v1/src/state_roster.rs",
+      "before": {
+        "bytes": 15178,
+        "sha256": "9c96a26551413d54f3566425c0805dd8ff77937bb8dcf0e68d86eef203d53466"
+      },
+      "after": {
+        "bytes": 15203,
+        "sha256": "f62b9689ccf74f5e062c8b8f3aec9b2e9d342e0e63d7f3e0741bea3baccad8a6"
+      }
+    }
+  ],
+  "added_tests": {
+    "worker": [
+      "finite_projection_residual_mlp_ordered_wire_v1::tests::ordered_control_has_one_segment_and_rejects_legacy_extent",
+      "finite_projection_residual_mlp_ordered_wire_v1::tests::ordered_control_requires_both_rank_terminal_states",
+      "finite_projection_residual_mlp_ordered_wire_v1::tests::ordered_image_identity_and_stream_bounds_fail_closed",
+      "finite_projection_residual_mlp_ordered_wire_v1::tests::ordered_profile_separates_projection_and_mode_domains",
+      "native_catalog::forward::ordered_allocation_tests::ordered_allocation_profile_refuses_old_census_before_any_metadata_write",
+      "native_catalog::forward::prefix_tiles_decode_v6::ordered_tests::ordered_native_profile_matches_wire_and_rejects_tf_double_selection",
+      "native_prefix_decode_cli_v1::ordered_tests::ordered_ar4_protocol_eof_and_early_close_poison_without_successful_close",
+      "native_prefix_decode_cli_v1::ordered_tests::ordered_ar4_protocol_four_own_outputs_have_exact_payloads_and_close_chain",
+      "native_prefix_decode_cli_v1::ordered_tests::ordered_ar4_protocol_wrong_previous_token_or_profile_never_runs_that_forward",
+      "native_prefix_decode_cli_v1::ordered_tests::ordered_completion_cannot_be_serialized_by_legacy_control",
+      "native_prefix_decode_cli_v1::ordered_tests::ordered_decode_protocol_forward_close_and_writer_failures_poison",
+      "native_prefix_decode_cli_v1::ordered_tests::ordered_decode_protocol_keeps_four_payloads_controls_and_selected_close_chain",
+      "native_prefix_decode_cli_v1::ordered_tests::ordered_decode_protocol_old_request_profile_is_refused_before_run",
+      "native_prefix_decode_cli_v1::ordered_tests::ordered_decode_protocol_wrong_completion_after_run_is_terminal",
+      "native_projection_residual_mlp_ordered_v1::tests::ordered_cli_is_distinct_and_rejects_extra_policies",
+      "native_projection_residual_mlp_ordered_v1::tests::ordered_cli_retains_ar_device_and_path_bounds",
+      "native_projection_residual_mlp_ordered_v1::tests::ordered_recorder_retains_four_serializations_then_close",
+      "native_projection_residual_mlp_ordered_v1::tests::ordered_setup_configures_exact_policy_before_enable_once",
+      "native_projection_residual_mlp_ordered_v1::tests::ordered_setup_refusal_never_enables_after_failed_configuration",
+      "projection_residual_mlp_ordered_observation_v1::tests::ordered_configuration_is_outside_snapshot_intervals_and_no_accuracy_authority",
+      "projection_residual_mlp_ordered_observation_v1::tests::ordered_report_is_distinct_from_default_and_shared_legacy_decoders",
+      "projection_residual_mlp_ordered_observation_v1::tests::ordered_report_profile_control_extent_and_chain_are_bound",
+      "projection_residual_mlp_ordered_observation_v1::tests::ordered_report_requires_shared_policy_on_all_seven_snapshots",
+      "resident_layer::prefix_tiles_decode_v6::ordered::tests::ordered_any_boundary_failure_poison_prevents_later_or_repeated_work",
+      "resident_layer::prefix_tiles_decode_v6::ordered::tests::ordered_down_roots_keep_old_alias_contract_and_replace_only_output",
+      "resident_layer::prefix_tiles_decode_v6::ordered::tests::ordered_rejects_global_partial_fallback_and_every_old_root_alias",
+      "resident_layer::prefix_tiles_decode_v6::ordered::tests::ordered_setup_allocates_fixed_pair_once_and_refuses_census_drift",
+      "resident_layer::prefix_tiles_decode_v6::ordered::tests::ordered_trace_has_global_prefix_compound_final_boundaries_and_one_duration",
+      "state_roster::prefix_tiles_decode_v6::ordered_tests::ordered_phase_cannot_skip_prefix_or_run_separate_mlp",
+      "state_roster::prefix_tiles_decode_v6::ordered_tests::ordered_phase_requires_compound_terminal_before_final_and_next_layer"
+    ],
+    "parent_library": [
+      "finite_projection_residual_mlp_ordered_wire_v1::tests::ordered_control_has_one_segment_and_rejects_legacy_extent",
+      "finite_projection_residual_mlp_ordered_wire_v1::tests::ordered_control_requires_both_rank_terminal_states",
+      "finite_projection_residual_mlp_ordered_wire_v1::tests::ordered_image_identity_and_stream_bounds_fail_closed",
+      "finite_projection_residual_mlp_ordered_wire_v1::tests::ordered_profile_separates_projection_and_mode_domains",
+      "projection_residual_mlp_ordered_observation_v1::tests::ordered_configuration_is_outside_snapshot_intervals_and_no_accuracy_authority",
+      "projection_residual_mlp_ordered_observation_v1::tests::ordered_report_is_distinct_from_default_and_shared_legacy_decoders",
+      "projection_residual_mlp_ordered_observation_v1::tests::ordered_report_profile_control_extent_and_chain_are_bound",
+      "projection_residual_mlp_ordered_observation_v1::tests::ordered_report_requires_shared_policy_on_all_seven_snapshots",
+      "tp_finite_client::prefix_decode::projection_ordered::tests::ordered_parent_bootstrap_is_not_plain_projection_profile",
+      "tp_finite_client::prefix_decode::projection_ordered::tests::ordered_parent_checks_real_new_control_bytes_chain_and_old_reader_refusal",
+      "tp_finite_client::prefix_decode::projection_ordered::tests::ordered_parent_config_requires_distinct_schema_ar_and_projection_pin",
+      "tp_finite_client::prefix_decode::projection_ordered::tests::ordered_parent_worker_selector_has_no_legacy_fallback"
+    ],
+    "parent_binary": [
+      "tests::projection_ordered_bin_requires_distinct_optin_and_no_policy_options"
+    ]
+  },
+  "authored_unique_tests": 35,
+  "added_compiled_test_executions": 43,
+  "expected_ferric_tests": {
+    "passed": 926,
+    "ignored": 4,
+    "status": "prediction only, requires root CPU qualification"
+  },
+  "removed_tests": [],
+  "renamed_tests": [],
+  "numerical_acceptance": false,
+  "performance_acceptance": false,
+  "supersedes": {
+    "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/p228-projection-residual-mlp-ordered-ferric-v1/source-manifest.json",
+    "bytes": 24370,
+    "sha256": "d3e36f373fc8cdee5c715bdea532697288d139bbd77197947d9c8da508ee8599"
+  },
+  "repair": "Feature-gate both ordered parent exports; extend existing binary test; retain mandatory default-feature compilation."
+}
