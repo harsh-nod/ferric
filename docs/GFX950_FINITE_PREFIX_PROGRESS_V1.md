@@ -6,7 +6,17 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Latest: [both ordered-comparison parents and the common worker passed fresh MI350 runtime audits](../qualification/projection-ordered-segment-runtime-v1/README.md).
+Latest: [the shared-full / ordered-segment GPU comparison completed on MI350](../qualification/projection-ordered-segment-pair-v1/README.md).
+Both one-attempt four-forward runs passed structural and lifecycle checks;
+all four payloads, covering 152 captured tensor slices per arm, are byte-identical.
+The four-forward host-time sum was 21.908947 seconds shared versus 21.000850
+seconds ordered, a ratio of 1.043 and 4.145% less observed wall time. Plots,
+tables and all 144 combined-segment timing rows are published. This single
+fixed-order pair is subject to cache warming and cold ordered arena costs;
+it is not GPU timing, independent numerical acceptance or sustained 2,048/256
+throughput. All milestones and the 700 tokens/s target remain open.
+
+Previously, [both ordered-comparison parents and the common worker passed fresh MI350 runtime audits](../qualification/projection-ordered-segment-runtime-v1/README.md).
 All six bounded readelf/ldd commands exited naturally, with complete library
 closures and unchanged topology. Both matched input assemblies completed,
 each checking 1,847 recorded identities. They retain the same model, images,

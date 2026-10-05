@@ -1,0 +1,14 @@
+{
+  "schema": "ferric-p228-projection-ordered-segment-pair-inputs-v1",
+  "output_label": "prefix-projection-ordered-segment-pair-v228-v1",
+  "shared": {
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ordered-segment-shared-inputs-v228-v1/plan.json",
+    "bytes": 6712,
+    "sha256": "d765fd63b5b5242fd376c5198bbef069068027eddc1eef870fda5586fb0d6d3a"
+  },
+  "ordered": {
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ordered-segment-ordered-inputs-v228-v1/plan.json",
+    "bytes": 6718,
+    "sha256": "e4c81c6836c8354f61a8ada55989b4268a94d9c1dba24980a96b94d49a0c614b"
+  }
+}

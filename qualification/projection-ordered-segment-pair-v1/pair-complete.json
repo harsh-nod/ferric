@@ -1,0 +1,328 @@
+{
+  "arms": {
+    "ordered": {
+      "bytes": 1211580,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ordered-segment-ordered-gpu-v228-v1/complete.json",
+      "sha256": "461101d519d66c7fd7932be4d3b616efe0475feed26908badc310ba9d1249bf0"
+    },
+    "shared": {
+      "bytes": 1178091,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ordered-segment-shared-gpu-v228-v1/complete.json",
+      "sha256": "30e4ded9561a055d25391cc42e214b8eafdc1790544fb3b4ade60703cc56ca85"
+    }
+  },
+  "comparison": {
+    "actual_input_histories": [
+      [
+        0,
+        1,
+        9112
+      ],
+      [
+        1,
+        2,
+        67
+      ],
+      [
+        2,
+        3,
+        25
+      ],
+      [
+        3,
+        4,
+        576
+      ]
+    ],
+    "all_payloads_byte_equal": true,
+    "close_host_ns": {
+      "ordered": 12407150981,
+      "shared": 12403946439
+    },
+    "components_are_disjoint_latency": false,
+    "configuration_host_ns": {
+      "ordered": 21688333,
+      "shared": 21880544
+    },
+    "configuration_time_in_snapshots": false,
+    "controls_byte_comparison_performed": false,
+    "first_ordered_segment_includes_arena_initialization": true,
+    "forward_host_ns": {
+      "ordered": [
+        5018642791,
+        4998252478,
+        5499115269,
+        5484839650
+      ],
+      "shared": [
+        5226694440,
+        5245507412,
+        5718664065,
+        5718080655
+      ]
+    },
+    "gpu_time": false,
+    "inclusive_host_scopes": true,
+    "intermediate_host_fence_removed": true,
+    "intervals": [
+      {
+        "component_sum_delta_ns": 241440656,
+        "from_phase": "fresh_enabled",
+        "ordered": {
+          "component_sum_ns": 51648447368,
+          "group_full_ns": 26555498857,
+          "publication_full_ns": 0,
+          "rank_full_ns": 25092948511
+        },
+        "ordered_interval_host_ns": 90020702503,
+        "shared": {
+          "component_sum_ns": 51407006712,
+          "group_full_ns": 26416947119,
+          "publication_full_ns": 0,
+          "rank_full_ns": 24990059593
+        },
+        "shared_interval_host_ns": 89717172614,
+        "to_phase": "setup_sealed"
+      },
+      {
+        "component_sum_delta_ns": -390165332,
+        "from_phase": "setup_sealed",
+        "ordered": {
+          "component_sum_ns": 4134941276,
+          "group_full_ns": 1617416261,
+          "publication_full_ns": 372439867,
+          "rank_full_ns": 2145085148
+        },
+        "ordered_interval_host_ns": 5018764861,
+        "shared": {
+          "component_sum_ns": 4525106608,
+          "group_full_ns": 1789851509,
+          "publication_full_ns": 493652119,
+          "rank_full_ns": 2241602980
+        },
+        "shared_interval_host_ns": 5226816810,
+        "to_phase": "forward_0"
+      },
+      {
+        "component_sum_delta_ns": -416282939,
+        "from_phase": "forward_0",
+        "ordered": {
+          "component_sum_ns": 4114607834,
+          "group_full_ns": 1613692187,
+          "publication_full_ns": 371454014,
+          "rank_full_ns": 2129461633
+        },
+        "ordered_interval_host_ns": 5004652872,
+        "shared": {
+          "component_sum_ns": 4530890773,
+          "group_full_ns": 1791799562,
+          "publication_full_ns": 494764385,
+          "rank_full_ns": 2244326826
+        },
+        "shared_interval_host_ns": 5252214256,
+        "to_phase": "forward_1"
+      },
+      {
+        "component_sum_delta_ns": -400881344,
+        "from_phase": "forward_1",
+        "ordered": {
+          "component_sum_ns": 4605472014,
+          "group_full_ns": 2104657031,
+          "publication_full_ns": 371709454,
+          "rank_full_ns": 2129105529
+        },
+        "ordered_interval_host_ns": 5505436353,
+        "shared": {
+          "component_sum_ns": 5006353358,
+          "group_full_ns": 2275910318,
+          "publication_full_ns": 493205870,
+          "rank_full_ns": 2237237170
+        },
+        "shared_interval_host_ns": 5725266959,
+        "to_phase": "forward_2"
+      },
+      {
+        "component_sum_delta_ns": -416778034,
+        "from_phase": "forward_2",
+        "ordered": {
+          "component_sum_ns": 4589466239,
+          "group_full_ns": 2096826835,
+          "publication_full_ns": 370336574,
+          "rank_full_ns": 2122302830
+        },
+        "ordered_interval_host_ns": 5491126114,
+        "shared": {
+          "component_sum_ns": 5006244273,
+          "group_full_ns": 2274634272,
+          "publication_full_ns": 493489193,
+          "rank_full_ns": 2238120808
+        },
+        "shared_interval_host_ns": 5724682529,
+        "to_phase": "forward_3"
+      },
+      {
+        "component_sum_delta_ns": 0,
+        "from_phase": "forward_3",
+        "ordered": {
+          "component_sum_ns": 0,
+          "group_full_ns": 0,
+          "publication_full_ns": 0,
+          "rank_full_ns": 0
+        },
+        "ordered_interval_host_ns": 6300964,
+        "shared": {
+          "component_sum_ns": 0,
+          "group_full_ns": 0,
+          "publication_full_ns": 0,
+          "rank_full_ns": 0
+        },
+        "shared_interval_host_ns": 6493714,
+        "to_phase": "before_close"
+      }
+    ],
+    "numerator": "rank_full_ns + group_full_ns + publication_full_ns",
+    "numerical_acceptance": false,
+    "ordered_wait_spans_overlap": true,
+    "output_tokens": [
+      [
+        67,
+        25,
+        576,
+        2701
+      ],
+      [
+        67,
+        25,
+        576,
+        2701
+      ]
+    ],
+    "payload_equality_scope": "same-generation repeatability, not independent numerical accuracy",
+    "payloads_byte_equal": [
+      true,
+      true,
+      true,
+      true
+    ],
+    "per_kernel_publish_wait_poll_comparable": false,
+    "performance_claim": false,
+    "primary_latency_scope": "same-generation enclosing forward host wall, fixed shared-first order",
+    "production_authority": false,
+    "same_generation": true,
+    "same_images": true,
+    "serialization_host_ns": {
+      "ordered": [
+        2563891,
+        2492932,
+        2487121,
+        2495561
+      ],
+      "shared": [
+        2552882,
+        2485192,
+        2465082,
+        2457741
+      ]
+    }
+  },
+  "each_arm_max_attempts": 1,
+  "each_arm_max_seconds": 4300,
+  "elapsed_seconds": 555.1835659609642,
+  "failures": [],
+  "fixed_order": [
+    "shared",
+    "ordered"
+  ],
+  "fixed_order_warm_cache_and_single_pair_limitations": true,
+  "gpu_time": false,
+  "independent_numerical_acceptance": false,
+  "input_pins": {
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/ordered-segment-pair-plan-v228-v1.json": {
+      "bytes": 690,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/ordered-segment-pair-plan-v228-v1.json",
+      "sha256": "67f3933c847d146c662c0f55f269eaca47312e4b3b8c32729c9f73bbccf05be6"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ordered-segment-ordered-gpu-v228-v1/complete.json": {
+      "bytes": 1211580,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ordered-segment-ordered-gpu-v228-v1/complete.json",
+      "sha256": "461101d519d66c7fd7932be4d3b616efe0475feed26908badc310ba9d1249bf0"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ordered-segment-ordered-gpu-v228-v1/native/complete.json": {
+      "bytes": 40240,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ordered-segment-ordered-gpu-v228-v1/native/complete.json",
+      "sha256": "d8560f39e7f7876f18e111d4983e8bba1325e39d8ab51d39e2f2d684c36d740a"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ordered-segment-ordered-gpu-v228-v1/native/observation-0.bin": {
+      "bytes": 606976,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ordered-segment-ordered-gpu-v228-v1/native/observation-0.bin",
+      "sha256": "1324a6056ea6c0308e912c63ed1b6a6d27e103c915c6dde11ff600d97cf9b1b0"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ordered-segment-ordered-gpu-v228-v1/native/observation-1.bin": {
+      "bytes": 606976,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ordered-segment-ordered-gpu-v228-v1/native/observation-1.bin",
+      "sha256": "61f56a5b97e4f35922bf7733a74b36b8dec9544a15d66980757bf9ef5aefc6e4"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ordered-segment-ordered-gpu-v228-v1/native/observation-2.bin": {
+      "bytes": 606976,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ordered-segment-ordered-gpu-v228-v1/native/observation-2.bin",
+      "sha256": "87d3799724693386909e97fd3ea31fab065de021824dea276218614f2a0fc85a"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ordered-segment-ordered-gpu-v228-v1/native/observation-3.bin": {
+      "bytes": 606976,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ordered-segment-ordered-gpu-v228-v1/native/observation-3.bin",
+      "sha256": "7c40126b76a7eeb7a64ef67950636359ba951cafcdce2ddc42636388de3c5588"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ordered-segment-ordered-inputs-v228-v1/plan.json": {
+      "bytes": 6718,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ordered-segment-ordered-inputs-v228-v1/plan.json",
+      "sha256": "e4c81c6836c8354f61a8ada55989b4268a94d9c1dba24980a96b94d49a0c614b"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ordered-segment-shared-gpu-v228-v1/complete.json": {
+      "bytes": 1178091,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ordered-segment-shared-gpu-v228-v1/complete.json",
+      "sha256": "30e4ded9561a055d25391cc42e214b8eafdc1790544fb3b4ade60703cc56ca85"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ordered-segment-shared-gpu-v228-v1/native/complete.json": {
+      "bytes": 40182,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ordered-segment-shared-gpu-v228-v1/native/complete.json",
+      "sha256": "84c9cdacbd50ae784d61670257c0a3bb6f86bab892b628135415c37ba2f77ef1"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ordered-segment-shared-gpu-v228-v1/native/observation-0.bin": {
+      "bytes": 606976,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ordered-segment-shared-gpu-v228-v1/native/observation-0.bin",
+      "sha256": "1324a6056ea6c0308e912c63ed1b6a6d27e103c915c6dde11ff600d97cf9b1b0"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ordered-segment-shared-gpu-v228-v1/native/observation-1.bin": {
+      "bytes": 606976,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ordered-segment-shared-gpu-v228-v1/native/observation-1.bin",
+      "sha256": "61f56a5b97e4f35922bf7733a74b36b8dec9544a15d66980757bf9ef5aefc6e4"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ordered-segment-shared-gpu-v228-v1/native/observation-2.bin": {
+      "bytes": 606976,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ordered-segment-shared-gpu-v228-v1/native/observation-2.bin",
+      "sha256": "87d3799724693386909e97fd3ea31fab065de021824dea276218614f2a0fc85a"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ordered-segment-shared-gpu-v228-v1/native/observation-3.bin": {
+      "bytes": 606976,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ordered-segment-shared-gpu-v228-v1/native/observation-3.bin",
+      "sha256": "7c40126b76a7eeb7a64ef67950636359ba951cafcdce2ddc42636388de3c5588"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ordered-segment-shared-inputs-v228-v1/plan.json": {
+      "bytes": 6712,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ordered-segment-shared-inputs-v228-v1/plan.json",
+      "sha256": "d765fd63b5b5242fd376c5198bbef069068027eddc1eef870fda5586fb0d6d3a"
+    }
+  },
+  "pair_max_seconds": 8720,
+  "paired_comparison_performed": true,
+  "passed": true,
+  "performance_claim": false,
+  "plan": {
+    "bytes": 690,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/ordered-segment-pair-plan-v228-v1.json",
+    "sha256": "67f3933c847d146c662c0f55f269eaca47312e4b3b8c32729c9f73bbccf05be6"
+  },
+  "production_authority": false,
+  "retries": 0,
+  "schema": "ferric-p228-projection-ordered-segment-pair-v1"
+}

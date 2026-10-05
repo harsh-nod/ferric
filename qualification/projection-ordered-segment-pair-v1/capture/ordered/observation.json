@@ -1,0 +1,1728 @@
+{
+  "bank_reuse_order_independently_observed": false,
+  "captured_payloads": 4,
+  "captured_tensor_rows": 152,
+  "child_pid": 2920065,
+  "closed_child_pids": [
+    2920065
+  ],
+  "expected_banks": [
+    0,
+    1,
+    0,
+    1
+  ],
+  "external_supervisor_lifecycle_verified": false,
+  "full_long_workload": false,
+  "input_tokens": [
+    9112,
+    67,
+    25,
+    576
+  ],
+  "logical_generations": [
+    1,
+    2,
+    3,
+    4
+  ],
+  "mode": "autoregressive",
+  "numerical_acceptance": false,
+  "old_native_equality_required": false,
+  "ordered_layer_timings": [
+    [
+      {
+        "final_residual_ns": [
+          6822374,
+          5061983
+        ],
+        "prefix_ns": [
+          16562150,
+          16761690
+        ],
+        "segment_host_ns": 65022250
+      },
+      {
+        "final_residual_ns": [
+          6786544,
+          5063463
+        ],
+        "prefix_ns": [
+          16148750,
+          15826870
+        ],
+        "segment_host_ns": 54036653
+      },
+      {
+        "final_residual_ns": [
+          6750054,
+          5037743
+        ],
+        "prefix_ns": [
+          16374600,
+          16362690
+        ],
+        "segment_host_ns": 53798193
+      },
+      {
+        "final_residual_ns": [
+          6781874,
+          5046163
+        ],
+        "prefix_ns": [
+          15829920,
+          15691380
+        ],
+        "segment_host_ns": 54253003
+      },
+      {
+        "final_residual_ns": [
+          6792575,
+          5069133
+        ],
+        "prefix_ns": [
+          17009851,
+          16484891
+        ],
+        "segment_host_ns": 54655804
+      },
+      {
+        "final_residual_ns": [
+          6781065,
+          5055723
+        ],
+        "prefix_ns": [
+          15806650,
+          16395740
+        ],
+        "segment_host_ns": 53428573
+      },
+      {
+        "final_residual_ns": [
+          6773984,
+          5073523
+        ],
+        "prefix_ns": [
+          16253410,
+          16032910
+        ],
+        "segment_host_ns": 54323183
+      },
+      {
+        "final_residual_ns": [
+          6824705,
+          5385884
+        ],
+        "prefix_ns": [
+          16457541,
+          16241670
+        ],
+        "segment_host_ns": 54338354
+      },
+      {
+        "final_residual_ns": [
+          6794814,
+          5099073
+        ],
+        "prefix_ns": [
+          16508470,
+          16290090
+        ],
+        "segment_host_ns": 53903743
+      },
+      {
+        "final_residual_ns": [
+          6791344,
+          5057893
+        ],
+        "prefix_ns": [
+          16616241,
+          16291200
+        ],
+        "segment_host_ns": 54875434
+      },
+      {
+        "final_residual_ns": [
+          6828284,
+          5082633
+        ],
+        "prefix_ns": [
+          15853790,
+          16363541
+        ],
+        "segment_host_ns": 54044154
+      },
+      {
+        "final_residual_ns": [
+          6814394,
+          5082843
+        ],
+        "prefix_ns": [
+          16092110,
+          16552740
+        ],
+        "segment_host_ns": 53806523
+      },
+      {
+        "final_residual_ns": [
+          6789674,
+          5069514
+        ],
+        "prefix_ns": [
+          16517861,
+          16520101
+        ],
+        "segment_host_ns": 54197994
+      },
+      {
+        "final_residual_ns": [
+          6789724,
+          5069053
+        ],
+        "prefix_ns": [
+          16616750,
+          16206040
+        ],
+        "segment_host_ns": 54565534
+      },
+      {
+        "final_residual_ns": [
+          6805165,
+          5088043
+        ],
+        "prefix_ns": [
+          16041470,
+          16124299
+        ],
+        "segment_host_ns": 54631794
+      },
+      {
+        "final_residual_ns": [
+          6777514,
+          5055693
+        ],
+        "prefix_ns": [
+          16348290,
+          16729471
+        ],
+        "segment_host_ns": 53839463
+      },
+      {
+        "final_residual_ns": [
+          6796254,
+          5070113
+        ],
+        "prefix_ns": [
+          16394240,
+          16177550
+        ],
+        "segment_host_ns": 54890454
+      },
+      {
+        "final_residual_ns": [
+          6813694,
+          5081494
+        ],
+        "prefix_ns": [
+          16727330,
+          15805839
+        ],
+        "segment_host_ns": 54554774
+      },
+      {
+        "final_residual_ns": [
+          6751344,
+          5037013
+        ],
+        "prefix_ns": [
+          15981290,
+          16380200
+        ],
+        "segment_host_ns": 54156964
+      },
+      {
+        "final_residual_ns": [
+          6754934,
+          5054163
+        ],
+        "prefix_ns": [
+          16272640,
+          16193180
+        ],
+        "segment_host_ns": 53998483
+      },
+      {
+        "final_residual_ns": [
+          6747924,
+          5040343
+        ],
+        "prefix_ns": [
+          16142150,
+          16427480
+        ],
+        "segment_host_ns": 54218203
+      },
+      {
+        "final_residual_ns": [
+          6868344,
+          5127303
+        ],
+        "prefix_ns": [
+          16087560,
+          16083100
+        ],
+        "segment_host_ns": 54174833
+      },
+      {
+        "final_residual_ns": [
+          6858915,
+          5116053
+        ],
+        "prefix_ns": [
+          16046350,
+          16498970
+        ],
+        "segment_host_ns": 55041634
+      },
+      {
+        "final_residual_ns": [
+          6878014,
+          5148563
+        ],
+        "prefix_ns": [
+          16098340,
+          16663191
+        ],
+        "segment_host_ns": 54591454
+      },
+      {
+        "final_residual_ns": [
+          6847114,
+          5128843
+        ],
+        "prefix_ns": [
+          16318650,
+          16291380
+        ],
+        "segment_host_ns": 54760274
+      },
+      {
+        "final_residual_ns": [
+          6858134,
+          5124133
+        ],
+        "prefix_ns": [
+          16098480,
+          16032600
+        ],
+        "segment_host_ns": 54684844
+      },
+      {
+        "final_residual_ns": [
+          6811675,
+          5078634
+        ],
+        "prefix_ns": [
+          16145590,
+          16260990
+        ],
+        "segment_host_ns": 54657904
+      },
+      {
+        "final_residual_ns": [
+          6813384,
+          5089173
+        ],
+        "prefix_ns": [
+          16024590,
+          15596040
+        ],
+        "segment_host_ns": 53684944
+      },
+      {
+        "final_residual_ns": [
+          6830994,
+          5104043
+        ],
+        "prefix_ns": [
+          16181470,
+          16363970
+        ],
+        "segment_host_ns": 54364934
+      },
+      {
+        "final_residual_ns": [
+          6749444,
+          5038033
+        ],
+        "prefix_ns": [
+          16217360,
+          16127050
+        ],
+        "segment_host_ns": 54307794
+      },
+      {
+        "final_residual_ns": [
+          6776775,
+          5062563
+        ],
+        "prefix_ns": [
+          16507730,
+          16399470
+        ],
+        "segment_host_ns": 54383634
+      },
+      {
+        "final_residual_ns": [
+          6839844,
+          5086393
+        ],
+        "prefix_ns": [
+          16496770,
+          16079590
+        ],
+        "segment_host_ns": 54112773
+      },
+      {
+        "final_residual_ns": [
+          6792425,
+          5073244
+        ],
+        "prefix_ns": [
+          16250360,
+          16522530
+        ],
+        "segment_host_ns": 54087914
+      },
+      {
+        "final_residual_ns": [
+          6822974,
+          5081313
+        ],
+        "prefix_ns": [
+          16429710,
+          16422760
+        ],
+        "segment_host_ns": 54012313
+      },
+      {
+        "final_residual_ns": [
+          6818184,
+          5082773
+        ],
+        "prefix_ns": [
+          15961470,
+          16043579
+        ],
+        "segment_host_ns": 54004643
+      },
+      {
+        "final_residual_ns": [
+          6800684,
+          5082433
+        ],
+        "prefix_ns": [
+          16305190,
+          16332690
+        ],
+        "segment_host_ns": 54683844
+      }
+    ],
+    [
+      {
+        "final_residual_ns": [
+          6777235,
+          5044333
+        ],
+        "prefix_ns": [
+          16690000,
+          16235390
+        ],
+        "segment_host_ns": 54105614
+      },
+      {
+        "final_residual_ns": [
+          6799594,
+          5079253
+        ],
+        "prefix_ns": [
+          16620580,
+          15998140
+        ],
+        "segment_host_ns": 54029183
+      },
+      {
+        "final_residual_ns": [
+          6774294,
+          5055203
+        ],
+        "prefix_ns": [
+          15865350,
+          15754750
+        ],
+        "segment_host_ns": 53501494
+      },
+      {
+        "final_residual_ns": [
+          6774924,
+          5064573
+        ],
+        "prefix_ns": [
+          16936070,
+          16424370
+        ],
+        "segment_host_ns": 54395934
+      },
+      {
+        "final_residual_ns": [
+          6801485,
+          5066454
+        ],
+        "prefix_ns": [
+          16124170,
+          16323821
+        ],
+        "segment_host_ns": 54354204
+      },
+      {
+        "final_residual_ns": [
+          6788084,
+          5064033
+        ],
+        "prefix_ns": [
+          16103770,
+          15998160
+        ],
+        "segment_host_ns": 54907084
+      },
+      {
+        "final_residual_ns": [
+          6818515,
+          5081944
+        ],
+        "prefix_ns": [
+          16524630,
+          16080560
+        ],
+        "segment_host_ns": 54210334
+      },
+      {
+        "final_residual_ns": [
+          6789074,
+          5067233
+        ],
+        "prefix_ns": [
+          15912610,
+          16094160
+        ],
+        "segment_host_ns": 54529603
+      },
+      {
+        "final_residual_ns": [
+          6839354,
+          5094573
+        ],
+        "prefix_ns": [
+          16391550,
+          16572280
+        ],
+        "segment_host_ns": 54867354
+      },
+      {
+        "final_residual_ns": [
+          6776554,
+          5053083
+        ],
+        "prefix_ns": [
+          16542250,
+          16204770
+        ],
+        "segment_host_ns": 54300124
+      },
+      {
+        "final_residual_ns": [
+          6812764,
+          5095203
+        ],
+        "prefix_ns": [
+          16381520,
+          16164210
+        ],
+        "segment_host_ns": 54308123
+      },
+      {
+        "final_residual_ns": [
+          6795334,
+          5065623
+        ],
+        "prefix_ns": [
+          16158870,
+          16246830
+        ],
+        "segment_host_ns": 54705554
+      },
+      {
+        "final_residual_ns": [
+          6814804,
+          5085294
+        ],
+        "prefix_ns": [
+          16628271,
+          16077740
+        ],
+        "segment_host_ns": 54503294
+      },
+      {
+        "final_residual_ns": [
+          6770254,
+          5050013
+        ],
+        "prefix_ns": [
+          16090400,
+          16293420
+        ],
+        "segment_host_ns": 54147003
+      },
+      {
+        "final_residual_ns": [
+          6793054,
+          5045783
+        ],
+        "prefix_ns": [
+          16412620,
+          16693941
+        ],
+        "segment_host_ns": 55600204
+      },
+      {
+        "final_residual_ns": [
+          6763064,
+          5058473
+        ],
+        "prefix_ns": [
+          15677310,
+          16682331
+        ],
+        "segment_host_ns": 53447993
+      },
+      {
+        "final_residual_ns": [
+          6789954,
+          5060753
+        ],
+        "prefix_ns": [
+          16460511,
+          16160310
+        ],
+        "segment_host_ns": 54268624
+      },
+      {
+        "final_residual_ns": [
+          6761105,
+          5065463
+        ],
+        "prefix_ns": [
+          16357340,
+          16156290
+        ],
+        "segment_host_ns": 54484404
+      },
+      {
+        "final_residual_ns": [
+          6766204,
+          5046683
+        ],
+        "prefix_ns": [
+          16678160,
+          16173770
+        ],
+        "segment_host_ns": 54514813
+      },
+      {
+        "final_residual_ns": [
+          6776574,
+          5067633
+        ],
+        "prefix_ns": [
+          16269231,
+          16269000
+        ],
+        "segment_host_ns": 53284533
+      },
+      {
+        "final_residual_ns": [
+          6748755,
+          5035924
+        ],
+        "prefix_ns": [
+          15715710,
+          16516231
+        ],
+        "segment_host_ns": 54620984
+      },
+      {
+        "final_residual_ns": [
+          6757304,
+          5043653
+        ],
+        "prefix_ns": [
+          16617480,
+          15723080
+        ],
+        "segment_host_ns": 53851333
+      },
+      {
+        "final_residual_ns": [
+          6770894,
+          5058923
+        ],
+        "prefix_ns": [
+          16849821,
+          16546720
+        ],
+        "segment_host_ns": 54550984
+      },
+      {
+        "final_residual_ns": [
+          6744685,
+          5031714
+        ],
+        "prefix_ns": [
+          16293580,
+          16004990
+        ],
+        "segment_host_ns": 53622873
+      },
+      {
+        "final_residual_ns": [
+          6759655,
+          5048194
+        ],
+        "prefix_ns": [
+          16447570,
+          15939110
+        ],
+        "segment_host_ns": 54170964
+      },
+      {
+        "final_residual_ns": [
+          6738125,
+          5034723
+        ],
+        "prefix_ns": [
+          16263450,
+          15854840
+        ],
+        "segment_host_ns": 54507294
+      },
+      {
+        "final_residual_ns": [
+          6741805,
+          5039954
+        ],
+        "prefix_ns": [
+          16293940,
+          15988680
+        ],
+        "segment_host_ns": 54187814
+      },
+      {
+        "final_residual_ns": [
+          6782254,
+          5065433
+        ],
+        "prefix_ns": [
+          15994380,
+          16218930
+        ],
+        "segment_host_ns": 54308113
+      },
+      {
+        "final_residual_ns": [
+          6780944,
+          5059813
+        ],
+        "prefix_ns": [
+          15748080,
+          16159060
+        ],
+        "segment_host_ns": 53869643
+      },
+      {
+        "final_residual_ns": [
+          6772084,
+          5087303
+        ],
+        "prefix_ns": [
+          16563241,
+          16081090
+        ],
+        "segment_host_ns": 53799113
+      },
+      {
+        "final_residual_ns": [
+          6789454,
+          5065223
+        ],
+        "prefix_ns": [
+          16544460,
+          16254560
+        ],
+        "segment_host_ns": 54490214
+      },
+      {
+        "final_residual_ns": [
+          6761484,
+          5039683
+        ],
+        "prefix_ns": [
+          16719080,
+          16106880
+        ],
+        "segment_host_ns": 53904654
+      },
+      {
+        "final_residual_ns": [
+          6763904,
+          5049783
+        ],
+        "prefix_ns": [
+          16571330,
+          15667219
+        ],
+        "segment_host_ns": 54515074
+      },
+      {
+        "final_residual_ns": [
+          6761995,
+          5051214
+        ],
+        "prefix_ns": [
+          16067800,
+          16576950
+        ],
+        "segment_host_ns": 53755894
+      },
+      {
+        "final_residual_ns": [
+          6801904,
+          5083303
+        ],
+        "prefix_ns": [
+          16265570,
+          16683250
+        ],
+        "segment_host_ns": 53918093
+      },
+      {
+        "final_residual_ns": [
+          6774634,
+          5057883
+        ],
+        "prefix_ns": [
+          16068260,
+          16537791
+        ],
+        "segment_host_ns": 54241094
+      }
+    ],
+    [
+      {
+        "final_residual_ns": [
+          6779034,
+          5062973
+        ],
+        "prefix_ns": [
+          16026980,
+          16533891
+        ],
+        "segment_host_ns": 54784844
+      },
+      {
+        "final_residual_ns": [
+          6801324,
+          5069323
+        ],
+        "prefix_ns": [
+          16462210,
+          16277800
+        ],
+        "segment_host_ns": 54246113
+      },
+      {
+        "final_residual_ns": [
+          6787814,
+          5069604
+        ],
+        "prefix_ns": [
+          16266541,
+          16170760
+        ],
+        "segment_host_ns": 54343774
+      },
+      {
+        "final_residual_ns": [
+          6807544,
+          5076243
+        ],
+        "prefix_ns": [
+          16002450,
+          15688420
+        ],
+        "segment_host_ns": 54030724
+      },
+      {
+        "final_residual_ns": [
+          6782765,
+          5065104
+        ],
+        "prefix_ns": [
+          16887400,
+          16186840
+        ],
+        "segment_host_ns": 53950734
+      },
+      {
+        "final_residual_ns": [
+          6780564,
+          5055193
+        ],
+        "prefix_ns": [
+          16046880,
+          16451650
+        ],
+        "segment_host_ns": 53885073
+      },
+      {
+        "final_residual_ns": [
+          6768835,
+          5055814
+        ],
+        "prefix_ns": [
+          16198010,
+          15705700
+        ],
+        "segment_host_ns": 54001454
+      },
+      {
+        "final_residual_ns": [
+          6778534,
+          5064303
+        ],
+        "prefix_ns": [
+          16045870,
+          16269870
+        ],
+        "segment_host_ns": 54476973
+      },
+      {
+        "final_residual_ns": [
+          6779834,
+          5073414
+        ],
+        "prefix_ns": [
+          16579811,
+          16076880
+        ],
+        "segment_host_ns": 54603464
+      },
+      {
+        "final_residual_ns": [
+          6755635,
+          5075643
+        ],
+        "prefix_ns": [
+          15914940,
+          16204950
+        ],
+        "segment_host_ns": 54243214
+      },
+      {
+        "final_residual_ns": [
+          6788685,
+          5048573
+        ],
+        "prefix_ns": [
+          16343250,
+          16254710
+        ],
+        "segment_host_ns": 53880213
+      },
+      {
+        "final_residual_ns": [
+          6752164,
+          5036673
+        ],
+        "prefix_ns": [
+          15956840,
+          16461940
+        ],
+        "segment_host_ns": 54394253
+      },
+      {
+        "final_residual_ns": [
+          6739125,
+          5022144
+        ],
+        "prefix_ns": [
+          16584711,
+          16299980
+        ],
+        "segment_host_ns": 54456214
+      },
+      {
+        "final_residual_ns": [
+          6808584,
+          5066993
+        ],
+        "prefix_ns": [
+          16812700,
+          16786600
+        ],
+        "segment_host_ns": 54566484
+      },
+      {
+        "final_residual_ns": [
+          6777394,
+          5055733
+        ],
+        "prefix_ns": [
+          16215030,
+          15905980
+        ],
+        "segment_host_ns": 53912883
+      },
+      {
+        "final_residual_ns": [
+          6763934,
+          5043714
+        ],
+        "prefix_ns": [
+          16566100,
+          16069320
+        ],
+        "segment_host_ns": 54510844
+      },
+      {
+        "final_residual_ns": [
+          6804034,
+          5068293
+        ],
+        "prefix_ns": [
+          16804950,
+          15999310
+        ],
+        "segment_host_ns": 54892864
+      },
+      {
+        "final_residual_ns": [
+          6763194,
+          5050373
+        ],
+        "prefix_ns": [
+          16268710,
+          15974770
+        ],
+        "segment_host_ns": 54163403
+      },
+      {
+        "final_residual_ns": [
+          6829594,
+          5070523
+        ],
+        "prefix_ns": [
+          15931700,
+          16523921
+        ],
+        "segment_host_ns": 54157024
+      },
+      {
+        "final_residual_ns": [
+          6772585,
+          5047953
+        ],
+        "prefix_ns": [
+          16380400,
+          16188800
+        ],
+        "segment_host_ns": 53950784
+      },
+      {
+        "final_residual_ns": [
+          6784994,
+          5063353
+        ],
+        "prefix_ns": [
+          16785150,
+          16492770
+        ],
+        "segment_host_ns": 54548804
+      },
+      {
+        "final_residual_ns": [
+          6786474,
+          5063133
+        ],
+        "prefix_ns": [
+          16251060,
+          16353240
+        ],
+        "segment_host_ns": 54452174
+      },
+      {
+        "final_residual_ns": [
+          6795854,
+          5067453
+        ],
+        "prefix_ns": [
+          16247790,
+          16312210
+        ],
+        "segment_host_ns": 54160273
+      },
+      {
+        "final_residual_ns": [
+          6848124,
+          5131713
+        ],
+        "prefix_ns": [
+          15857579,
+          16467950
+        ],
+        "segment_host_ns": 54534044
+      },
+      {
+        "final_residual_ns": [
+          6850424,
+          5107803
+        ],
+        "prefix_ns": [
+          16552120,
+          16011710
+        ],
+        "segment_host_ns": 54557844
+      },
+      {
+        "final_residual_ns": [
+          6794724,
+          5061143
+        ],
+        "prefix_ns": [
+          16155000,
+          16118790
+        ],
+        "segment_host_ns": 54147503
+      },
+      {
+        "final_residual_ns": [
+          6786404,
+          5070943
+        ],
+        "prefix_ns": [
+          16546900,
+          16538290
+        ],
+        "segment_host_ns": 54575853
+      },
+      {
+        "final_residual_ns": [
+          6825325,
+          5099463
+        ],
+        "prefix_ns": [
+          16419930,
+          16118930
+        ],
+        "segment_host_ns": 54419154
+      },
+      {
+        "final_residual_ns": [
+          6783315,
+          5064143
+        ],
+        "prefix_ns": [
+          16183690,
+          16510110
+        ],
+        "segment_host_ns": 54906724
+      },
+      {
+        "final_residual_ns": [
+          6780464,
+          5062373
+        ],
+        "prefix_ns": [
+          16413550,
+          16486520
+        ],
+        "segment_host_ns": 54017513
+      },
+      {
+        "final_residual_ns": [
+          6799184,
+          5076003
+        ],
+        "prefix_ns": [
+          16291031,
+          16396470
+        ],
+        "segment_host_ns": 54638674
+      },
+      {
+        "final_residual_ns": [
+          6823964,
+          5071863
+        ],
+        "prefix_ns": [
+          16450210,
+          15832310
+        ],
+        "segment_host_ns": 54665043
+      },
+      {
+        "final_residual_ns": [
+          6774484,
+          5057853
+        ],
+        "prefix_ns": [
+          16356720,
+          16571320
+        ],
+        "segment_host_ns": 54253704
+      },
+      {
+        "final_residual_ns": [
+          6755604,
+          5036853
+        ],
+        "prefix_ns": [
+          16021960,
+          16342230
+        ],
+        "segment_host_ns": 54313074
+      },
+      {
+        "final_residual_ns": [
+          6831654,
+          5073083
+        ],
+        "prefix_ns": [
+          16371570,
+          16548960
+        ],
+        "segment_host_ns": 53519254
+      },
+      {
+        "final_residual_ns": [
+          6745464,
+          5020993
+        ],
+        "prefix_ns": [
+          15877399,
+          16179870
+        ],
+        "segment_host_ns": 54032354
+      }
+    ],
+    [
+      {
+        "final_residual_ns": [
+          6752674,
+          5033543
+        ],
+        "prefix_ns": [
+          16582450,
+          16082520
+        ],
+        "segment_host_ns": 54970004
+      },
+      {
+        "final_residual_ns": [
+          6782034,
+          5068743
+        ],
+        "prefix_ns": [
+          16633191,
+          16253191
+        ],
+        "segment_host_ns": 53851843
+      },
+      {
+        "final_residual_ns": [
+          6776484,
+          5036403
+        ],
+        "prefix_ns": [
+          15933280,
+          15943619
+        ],
+        "segment_host_ns": 54233793
+      },
+      {
+        "final_residual_ns": [
+          6735514,
+          5026843
+        ],
+        "prefix_ns": [
+          16420960,
+          15807509
+        ],
+        "segment_host_ns": 54395654
+      },
+      {
+        "final_residual_ns": [
+          6769214,
+          5052903
+        ],
+        "prefix_ns": [
+          16374070,
+          16146640
+        ],
+        "segment_host_ns": 54095314
+      },
+      {
+        "final_residual_ns": [
+          6792144,
+          5076093
+        ],
+        "prefix_ns": [
+          15869400,
+          15990160
+        ],
+        "segment_host_ns": 53132453
+      },
+      {
+        "final_residual_ns": [
+          6720774,
+          5020413
+        ],
+        "prefix_ns": [
+          16661251,
+          16267970
+        ],
+        "segment_host_ns": 54306413
+      },
+      {
+        "final_residual_ns": [
+          6810234,
+          5090553
+        ],
+        "prefix_ns": [
+          15610700,
+          16358890
+        ],
+        "segment_host_ns": 56044145
+      },
+      {
+        "final_residual_ns": [
+          6797084,
+          5072873
+        ],
+        "prefix_ns": [
+          16361831,
+          16159531
+        ],
+        "segment_host_ns": 54124254
+      },
+      {
+        "final_residual_ns": [
+          6774805,
+          5038234
+        ],
+        "prefix_ns": [
+          16426820,
+          16344600
+        ],
+        "segment_host_ns": 54228224
+      },
+      {
+        "final_residual_ns": [
+          6713754,
+          5012083
+        ],
+        "prefix_ns": [
+          15969180,
+          16348870
+        ],
+        "segment_host_ns": 54483833
+      },
+      {
+        "final_residual_ns": [
+          6743764,
+          5039813
+        ],
+        "prefix_ns": [
+          15808610,
+          16317801
+        ],
+        "segment_host_ns": 54011963
+      },
+      {
+        "final_residual_ns": [
+          6793494,
+          5081293
+        ],
+        "prefix_ns": [
+          15982380,
+          15798899
+        ],
+        "segment_host_ns": 54142593
+      },
+      {
+        "final_residual_ns": [
+          6769074,
+          5109203
+        ],
+        "prefix_ns": [
+          16416420,
+          16098370
+        ],
+        "segment_host_ns": 54165654
+      },
+      {
+        "final_residual_ns": [
+          6753614,
+          5039223
+        ],
+        "prefix_ns": [
+          16286570,
+          16011790
+        ],
+        "segment_host_ns": 54032253
+      },
+      {
+        "final_residual_ns": [
+          6748674,
+          5040473
+        ],
+        "prefix_ns": [
+          16759001,
+          16588211
+        ],
+        "segment_host_ns": 54112554
+      },
+      {
+        "final_residual_ns": [
+          6803284,
+          5050633
+        ],
+        "prefix_ns": [
+          16928270,
+          16223590
+        ],
+        "segment_host_ns": 54492974
+      },
+      {
+        "final_residual_ns": [
+          6817275,
+          5042613
+        ],
+        "prefix_ns": [
+          16277610,
+          16583410
+        ],
+        "segment_host_ns": 54899024
+      },
+      {
+        "final_residual_ns": [
+          6740364,
+          5024323
+        ],
+        "prefix_ns": [
+          16757070,
+          16165320
+        ],
+        "segment_host_ns": 53564224
+      },
+      {
+        "final_residual_ns": [
+          6770514,
+          5045043
+        ],
+        "prefix_ns": [
+          15951469,
+          15747299
+        ],
+        "segment_host_ns": 53666163
+      },
+      {
+        "final_residual_ns": [
+          6766694,
+          5051793
+        ],
+        "prefix_ns": [
+          15897230,
+          15929660
+        ],
+        "segment_host_ns": 54984024
+      },
+      {
+        "final_residual_ns": [
+          6783234,
+          5066343
+        ],
+        "prefix_ns": [
+          15779269,
+          15853519
+        ],
+        "segment_host_ns": 53891083
+      },
+      {
+        "final_residual_ns": [
+          6776934,
+          5055273
+        ],
+        "prefix_ns": [
+          16307050,
+          16514261
+        ],
+        "segment_host_ns": 53886013
+      },
+      {
+        "final_residual_ns": [
+          6770084,
+          5030153
+        ],
+        "prefix_ns": [
+          16160390,
+          16211350
+        ],
+        "segment_host_ns": 54988084
+      },
+      {
+        "final_residual_ns": [
+          6798684,
+          5069753
+        ],
+        "prefix_ns": [
+          16345570,
+          16483670
+        ],
+        "segment_host_ns": 53973963
+      },
+      {
+        "final_residual_ns": [
+          6766974,
+          5042613
+        ],
+        "prefix_ns": [
+          16191860,
+          16312150
+        ],
+        "segment_host_ns": 54206463
+      },
+      {
+        "final_residual_ns": [
+          6761594,
+          5037303
+        ],
+        "prefix_ns": [
+          16460070,
+          16060040
+        ],
+        "segment_host_ns": 54175834
+      },
+      {
+        "final_residual_ns": [
+          6779464,
+          5059503
+        ],
+        "prefix_ns": [
+          16225530,
+          16153080
+        ],
+        "segment_host_ns": 53969614
+      },
+      {
+        "final_residual_ns": [
+          6750534,
+          5046233
+        ],
+        "prefix_ns": [
+          16057900,
+          16045950
+        ],
+        "segment_host_ns": 53803083
+      },
+      {
+        "final_residual_ns": [
+          6749114,
+          5041153
+        ],
+        "prefix_ns": [
+          16489541,
+          16569181
+        ],
+        "segment_host_ns": 54171414
+      },
+      {
+        "final_residual_ns": [
+          6752355,
+          5036054
+        ],
+        "prefix_ns": [
+          16362070,
+          16059900
+        ],
+        "segment_host_ns": 54322274
+      },
+      {
+        "final_residual_ns": [
+          6754344,
+          5035253
+        ],
+        "prefix_ns": [
+          16416980,
+          16024390
+        ],
+        "segment_host_ns": 55264124
+      },
+      {
+        "final_residual_ns": [
+          6738335,
+          5029923
+        ],
+        "prefix_ns": [
+          16278970,
+          16495671
+        ],
+        "segment_host_ns": 54528114
+      },
+      {
+        "final_residual_ns": [
+          6773535,
+          5030613
+        ],
+        "prefix_ns": [
+          15890870,
+          16194150
+        ],
+        "segment_host_ns": 54016664
+      },
+      {
+        "final_residual_ns": [
+          6740254,
+          5020783
+        ],
+        "prefix_ns": [
+          16825260,
+          16328330
+        ],
+        "segment_host_ns": 54495403
+      },
+      {
+        "final_residual_ns": [
+          6732784,
+          5028593
+        ],
+        "prefix_ns": [
+          16396440,
+          16342211
+        ],
+        "segment_host_ns": 54050773
+      }
+    ]
+  ],
+  "output_tokens": [
+    67,
+    25,
+    576,
+    2701
+  ],
+  "own_output_trajectory_checked": true,
+  "paired_comparison_performed": false,
+  "parent_close_and_exit_flags_checked": true,
+  "performance_claim": false,
+  "positions": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "prefix_terminal_state_count": 288,
+  "production_authority": false,
+  "profile_sha256": "70b027c44ea336399f6f2e7dbe2a07cf74a13caffe45b52ec1dcece481cfaa02",
+  "projection_residual_image": {
+    "bytes": 10864,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-residual-lowering-v228-v1/fe2o3-engineering-v1/3c3aec3598514f7f6c2b053ff0c6a8d489951ecb6cb8d95b1cae5ca31035b899/observation.hsaco",
+    "sha256": "25338beac39121cf81adfdc5c82c6f39bcfc82c0f7effaa2166bf8a2a9598a25"
+  },
+  "registration_sha256": "f5d1180187e584b8f537bb5d2ea9685eab1f4668b31cbcbb74d01acf1e86c627",
+  "retained_files": [
+    {
+      "bytes": 1864,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ordered-segment-ordered-gpu-v228-v1/native/request-0.json",
+      "sha256": "10c828b542a6f18b01d7b310f971b4ed6d97dbc84dd3c41b8393720cedb9fe36"
+    },
+    {
+      "bytes": 241096,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ordered-segment-ordered-gpu-v228-v1/native/control-0.bin",
+      "sha256": "03d3eabd16127e3c3200d0b6143cb0d8d1d999651360be43152fb9f0e7a16be7"
+    },
+    {
+      "bytes": 606976,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ordered-segment-ordered-gpu-v228-v1/native/observation-0.bin",
+      "sha256": "1324a6056ea6c0308e912c63ed1b6a6d27e103c915c6dde11ff600d97cf9b1b0"
+    },
+    {
+      "bytes": 2399,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ordered-segment-ordered-gpu-v228-v1/native/request-1.json",
+      "sha256": "23d23dc622289f29a6d119803c6b43fc71d5cf4a2812857434b9cb7a31e31ecb"
+    },
+    {
+      "bytes": 241096,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ordered-segment-ordered-gpu-v228-v1/native/control-1.bin",
+      "sha256": "ec3dfabb9b84befca4d526d9c72516caf0ceb6c3a508230290786a22bbecfb80"
+    },
+    {
+      "bytes": 606976,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ordered-segment-ordered-gpu-v228-v1/native/observation-1.bin",
+      "sha256": "61f56a5b97e4f35922bf7733a74b36b8dec9544a15d66980757bf9ef5aefc6e4"
+    },
+    {
+      "bytes": 2403,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ordered-segment-ordered-gpu-v228-v1/native/request-2.json",
+      "sha256": "4f13fd0aaf4fc195107db0c0e88cdaf6297a3a1c434a5a3290408c8fd2c6c98c"
+    },
+    {
+      "bytes": 241096,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ordered-segment-ordered-gpu-v228-v1/native/control-2.bin",
+      "sha256": "80477a097bea0430c9d43bb8c384112ebb5919bbc5f08f5e01838ef4ad7cc6f9"
+    },
+    {
+      "bytes": 606976,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ordered-segment-ordered-gpu-v228-v1/native/observation-2.bin",
+      "sha256": "87d3799724693386909e97fd3ea31fab065de021824dea276218614f2a0fc85a"
+    },
+    {
+      "bytes": 2404,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ordered-segment-ordered-gpu-v228-v1/native/request-3.json",
+      "sha256": "40fff98a3d6fc2047cda818d66740e9204877441ff80241d87b01e1a99ff5aa9"
+    },
+    {
+      "bytes": 241096,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ordered-segment-ordered-gpu-v228-v1/native/control-3.bin",
+      "sha256": "77993f4151e348806829275a15b76450e81569f8ed901ed207732b9a1a3d8513"
+    },
+    {
+      "bytes": 606976,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ordered-segment-ordered-gpu-v228-v1/native/observation-3.bin",
+      "sha256": "7c40126b76a7eeb7a64ef67950636359ba951cafcdce2ddc42636388de3c5588"
+    },
+    {
+      "bytes": 0,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/prefix-projection-ordered-segment-ordered-gpu-v228-v1/native/child-stderr.bin",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "rotary_nonzero_positions_independently_recomputed": false,
+  "schema": "ferric-p228-checked-projection-ordered-segment-structure-v1",
+  "segment_host_scope": "preflight, staging, first-use arenas, fences, waits and terminal checks",
+  "separate_residual_mlp_timings_available": false,
+  "source_image_payloads_rehashed": false,
+  "summary_sha256": "d8560f39e7f7876f18e111d4983e8bba1325e39d8ab51d39e2f2d684c36d740a",
+  "teacher_forced_token_parity_required": false,
+  "terminal_state_count": 576,
+  "tiles_terminal_state_count": 288,
+  "transcript_sha256": "1f9cd45e7842189554d017c411c5a832b1c55b6ee6e4aa4b60439e86f02878a1"
+}
