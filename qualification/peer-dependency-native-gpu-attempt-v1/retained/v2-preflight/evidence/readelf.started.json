@@ -1,0 +1,16 @@
+{
+  "argv": [
+    "/usr/bin/prlimit",
+    "--as=68719476736",
+    "--cpu=30",
+    "--fsize=4194304",
+    "--core=0",
+    "--",
+    "/usr/bin/readelf",
+    "-d",
+    "-l",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/peer-dependency-native-cpu-v228-v4/target/debug/examples/kfd-peer-dependency-sentinel"
+  ],
+  "pgid": 3259820,
+  "pid": 3259820
+}

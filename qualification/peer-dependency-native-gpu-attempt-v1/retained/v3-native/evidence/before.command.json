@@ -1,0 +1,24 @@
+{
+  "argv": [
+    "/usr/bin/prlimit",
+    "--as=68719476736",
+    "--cpu=60",
+    "--fsize=4194304",
+    "--core=0",
+    "--",
+    "/opt/rocm/bin/amd-smi",
+    "process",
+    "--json"
+  ],
+  "cwd": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/peer-dependency-native-gpu-v228-v3",
+  "env": {
+    "HOME": "/home/harmenon",
+    "LANG": "C",
+    "LC_ALL": "C",
+    "OMP_NUM_THREADS": "1",
+    "PATH": "/opt/rocm/bin:/usr/bin:/bin",
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "PYTHONNOUSERSITE": "1"
+  },
+  "wall_seconds": 60
+}
