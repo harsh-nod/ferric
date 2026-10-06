@@ -56,7 +56,11 @@ origins had no relative-base-offset proof. Its receipt is SHA-256
 `1943926bd4d138d79505f6d0a4d97722d7efa54af6323cccab319be9d53c9140`.
 It emitted no artifact. This candidate addresses the kernel allocation
 contract; the compiler's provenance, bounds, race, atomic and resource gates
-remain unchanged. A successful new compile is still required.
+remain unchanged. The
+[actual combined-state v3 compile](../../qualification/guarded-mlp-combined-state-lowering-v1/README.md)
+fails at descriptor ownership admission with a formal alias obligation not
+discharged by Rust ownership. It emits no artifact. A successful new compile
+is still required.
 
 ## Tests And Remaining Gates
 

@@ -1,7 +1,38 @@
 # Combined State Lowering Controller
 
-Status: **25 controller fixtures pass on MI350**. The new combined-state
-kernels have not yet passed an actual guarded compile or run on the GPU.
+Status: **the actual combined-state compile fails at descriptor ownership
+admission**. Its 25 controller fixtures pass on MI350, but the kernel crate
+has no successful HSACO or GPU result.
+
+## Actual Compile
+
+[Attempt v3](attempt-v3/evidence/failed.json) uses the passing 39-test CPU
+candidate, its passing offline vendor preparation and the independently
+qualified DAG compiler/tool closure. The
+[raw diagnostic](attempt-v3/evidence/compile.stderr) reports:
+
+```text
+production descriptor evidence has an internal formal alias obligation not discharged by Rust ownership mismatch
+```
+
+This is a compiler refusal, not an observed GPU race. The compile exits
+naturally with status one after 363.190239 seconds; whole-controller time is
+366.924882 seconds. The child is reaped, the process group is absent, sources
+remain unchanged and postchecks are clean. There is no timeout, forced cleanup
+or emitted artifact. These times are not kernel latency.
+
+The [closed capsule](attempt-v3/retention-manifest.json) retains 13 members,
+12 content pins and all ten raw records. The failed receipt is 19,077 bytes,
+SHA-256 `d072928318581d8f492d296dfa4cc4a1f42865fbd3a7d95fdac01dddac7e5ab0`.
+The archive is 679,889 bytes, SHA-256
+`b3c6b033c5a580bf39c9eef4b11286e93652e7ddd4d64dee1e98705139d6c466`.
+
+The diagnostic does not identify a root or parameter pair. A source-level
+investigation points to formal alias derivation treating every atomic access,
+including load-only accesses, as a writer. That is a diagnosis to test, not
+measured per-root evidence or permission to bypass descriptor ownership checks.
+
+## Controller Fixtures
 
 [Controller tests](controller-tests-v1/attempt-v1/evidence/complete.json)
 exercise the frozen lowering controller with synthetic inputs: 21 admission
@@ -23,6 +54,6 @@ seven raw records. The actual receipt is 14,592 bytes, SHA-256
 The transferred archive is 65,894 bytes, SHA-256
 `d461fbc254b801e7fd5febf3256dff1641125f900b058c5fe6ab10dfca2ce401`.
 
-These are controller tests only. There is no new compiler qualification,
-HSACO, GPU, model-numerical or performance result. All issue #42 milestones
-remain open.
+The fixtures establish controller behavior only. The actual compile remains
+failed; there is no successful HSACO, GPU, model-numerical or performance
+result. All issue #42 milestones and the 700 tokens/s target remain open.

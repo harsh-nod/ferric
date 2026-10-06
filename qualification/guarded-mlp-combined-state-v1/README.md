@@ -5,7 +5,7 @@ Status: experimental; [CPU attempt v3 passes all 39 tests](../guarded-mlp-combin
 is not connected to inference, and has not passed guarded lowering or GPU
 execution. All issue #42 milestones remain open.
 
-The [latest actual guarded compile](../guarded-mlp-memory-bounds-dag-lowering-v1/README.md)
+The [previous v1 guarded compile](../guarded-mlp-memory-bounds-dag-lowering-v1/README.md)
 fails because its two potentially aliasing allocation origins lack relative
 base-offset information. This additive candidate accepts a single genuine
 552-word atomic allocation, retaining the 548-word state predicate and using
@@ -13,6 +13,12 @@ the four-word suffix for guard publication. Writes at 548, 549 and 551 remain
 Relaxed; the verdict at 550 is published last with Release. State reads retain
 Acquire ordering. The existing v1 crate, 2,192-byte token and profiles are
 unchanged, and no compiler proof predicate is relaxed.
+
+The [actual combined-state v3 compile](../guarded-mlp-combined-state-lowering-v1/README.md)
+now reaches a descriptor admission refusal: a formal alias obligation is not
+discharged by Rust ownership. It exits naturally with status one, leaves clean
+postchecks and emits no artifact. This failed compile is retained separately
+from the passing CPU qualification.
 
 The [source manifest](proposal-v1/source-manifest.json) and
 [patch](proposal-v1/integration.patch) contain eight additions. The manifest
