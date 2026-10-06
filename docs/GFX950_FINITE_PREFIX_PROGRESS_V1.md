@@ -19,6 +19,14 @@ unchanged sources and clean postchecks. All four attempts are retained.
 Full compiler qualification remains incomplete; no production dependency,
 gfx950 GPU or performance gate has changed.
 
+The [remaining `KernelError` conversion now has a complete diagnostic capture](../qualification/guarded-mlp-core-kernel-error-identity-diagnostic-v1/README.md).
+An isolated compiler on MI350 passed both builds and six renderer tests,
+then preserved the original attention rejection. The captured core body has
+two normalized `KernelError` locals and one move followed by return. All 19
+phases exited naturally and were reaped; source/dependency postchecks were
+clean. This is evidence for a narrow follow-up check, not a new admission
+rule, additional production qualification or GPU result.
+
 Previously, [ten checked-arithmetic and Option helper bodies were captured from attention](../qualification/guarded-mlp-core-checked-attention-diagnostic-v1/README.md).
 The second isolated diagnostic compiler built on MI350 and all six renderer
 tests passed. It adds the standalone `u32::overflowing_mul` body to the nine

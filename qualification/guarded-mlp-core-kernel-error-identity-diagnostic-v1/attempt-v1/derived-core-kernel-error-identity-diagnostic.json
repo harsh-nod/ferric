@@ -1,0 +1,17 @@
+{
+  "admission_authority": false,
+  "body_bytes": 1635,
+  "byte_offset": 5381,
+  "bytes": 1724,
+  "diagnostic_only": true,
+  "qualification_passed": false,
+  "schema": "ferric-core-kernel-error-identity-diagnostic-marker-extraction-v1",
+  "sha256": "16c283e8c917dc6f88d0208c493ad5db3b770352fda65c765ec3c671deac295b",
+  "source": {
+    "bytes": 11786,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-kernel-error-identity-diagnostic-cpu-v228-v1/evidence/attention-extraction-0.stdout",
+    "sha256": "7570a844b849db1b69aa46f35012416c647a0ca64219b9b726f5fd35bad8248c"
+  },
+  "status": "complete",
+  "text": "FE2O3_CORE_KERNEL_ERROR_IDENTITY_MIR_BEGIN version=1 authority=none byte_cap=65536\ninstance=Instance { def: Item(DefId(1:3710 ~ core[7021]::convert::{impl#4}::from)), args: [fe2o3_device::KernelError] }\ndefinition=DefId(1:3710 ~ core[7021]::convert::{impl#4}::from)\nstructural_path=::convert::{impl#4}::from\ntrait_method=Some(DefId(1:3683 ~ core[7021]::convert::From::from))\nfrom_trait=Some(DefId(1:3681 ~ core[7021]::convert::From))\narguments=[fe2o3_device::KernelError]\nnormalized_signature=Ok(fn(fe2o3_device::KernelError) -> fe2o3_device::KernelError)\nargument_nominal[0]=Some(DefId(2:4667 ~ fe2o3_device[ef64]::kernel_result::KernelError))\ninput_nominal[0]=Some(DefId(2:4667 ~ fe2o3_device[ef64]::kernel_result::KernelError))\noutput_nominal=Some(DefId(2:4667 ~ fe2o3_device[ef64]::kernel_result::KernelError))\nbody arg_count=1 locals=2 blocks=1 scopes=1\nstatements=1 item_cap=128 statement_cap=1024\nlocal[_0] raw=T/#0 normalized=Ok(fe2o3_device::KernelError) nominal=Some(DefId(2:4667 ~ fe2o3_device[ef64]::kernel_result::KernelError)) scope=scope[0]\nlocal[_1] raw=T/#0 normalized=Ok(fe2o3_device::KernelError) nominal=Some(DefId(2:4667 ~ fe2o3_device[ef64]::kernel_result::KernelError)) scope=scope[0]\nscope[scope[0]] data=SourceScopeData { span: /home/harmenon/.rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/convert/mod.rs:788:5: 790:6 (#0), parent_scope: None, inlined: None, inlined_parent_scope: None, local_data: Clear } normalized_inline=None\nblock[bb0] cleanup=false statements=1\n  statement[0] scope=scope[0] kind=_0 = move _1\n  terminator scope=scope[0] kind=return\n\nFE2O3_CORE_KERNEL_ERROR_IDENTITY_MIR_END status=complete body_bytes=1635 authority=none\n"
+}
