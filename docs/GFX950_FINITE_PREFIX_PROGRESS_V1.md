@@ -6,16 +6,18 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Latest: [417 tests pass; the repaired Option fixture reaches a closure-signature rejection](../qualification/guarded-mlp-core-checked-attention-qualification-v1/README.md).
-Both builds pass on MI350. All six integer tests pass, including 458 real-MIR
-mutations and fourteen identity refusals. The third attempt supplies metadata
-context bound to the fixture's actual rustc session, with no production
-authentication change. All three `ok_or` cases now authenticate before the
-first `and_then` closure signature is rejected. The Option cohort still has
-zero passing tests; those three preceding assertions are not passing test
-cases. All 26 phases exited naturally and were reaped, with unchanged sources
-and clean postchecks. Extraction controls were not reached. All three attempts
-are retained; no production dependency, GPU or performance gate has changed.
+Latest: [438 tests pass, including all checked-integer and Option wrappers](../qualification/guarded-mlp-core-checked-attention-qualification-v1/README.md).
+Both builds pass on MI350. The fourth attempt corrects the observed FnOnce
+kind and exact direct closure resolution. All six integer and ten Option
+tests pass, including 458 and 198 MIR mutations respectively, plus two actual
+closure resolutions and twelve new refusal assertions. All earlier 422
+passing controls remain green, including eight atomic controls, both
+unsafe-source checks and matrix extraction. Attention now reaches an
+independent rejection of core's identity `From<KernelError>` conversion;
+it still does not pass. All 38 phases exited naturally and were reaped, with
+unchanged sources and clean postchecks. All four attempts are retained.
+Full compiler qualification remains incomplete; no production dependency,
+gfx950 GPU or performance gate has changed.
 
 Previously, [ten checked-arithmetic and Option helper bodies were captured from attention](../qualification/guarded-mlp-core-checked-attention-diagnostic-v1/README.md).
 The second isolated diagnostic compiler built on MI350 and all six renderer

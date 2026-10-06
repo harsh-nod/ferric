@@ -17,7 +17,7 @@ checks are unchanged.
 | --- | --- | --- |
 | Integer | `usize::checked_add`, `usize::checked_div`, `u32::checked_mul`, `u32::overflowing_mul`, `u32::is_multiple_of` | Genuine core identity, exact signatures and full MIR operations, locals, scopes, branches, constants and assertions |
 | Option `ok_or` | `usize`, `u32`, or the observed provider tile with genuine `KernelError` | Genuine Option/Result and provider identities, exact payload movement and construction, no-drop error and complete control flow |
-| Option `and_then` | `usize` to `usize`, local Fn closure capturing one shared `u32` reference | Exact wrapper body, capture/signature shape and genuine call-once resolution; independent callback and shim checks remain required |
+| Option `and_then` | `usize` to `usize`, local FnOnce closure capturing one shared `u32` reference | Exact wrapper body, capture/signature shape and direct resolution to that closure's identity and arguments; independent callback checks remain required |
 
 Integer `None` constants use the compiler's actual target layout and an
 initialized tag; inactive payload bytes are not read. Recognizing a wrapper
@@ -26,9 +26,11 @@ lowering checks.
 
 The six integer tests check five real positives, fourteen identity/signature
 refusals and 458 cloned-MIR mutations; all pass in the second attempt below.
-The ten Option tests author five real
-positives, fifteen refusals and 198 mutations. These are authored assertions,
-not passing Option results. The first attempt ran no tests.
+The ten Option tests check five real positives, fifteen refusals and 198
+mutations; all pass in the fourth attempt below. That attempt also checks two
+actual closure resolutions and twelve kind/argument/identity/shim refusals
+inside the same ten tests. These assertion counts are not additional libtest
+cases. The first attempt ran no tests.
 
 ## First MI350 Attempt
 
@@ -105,8 +107,50 @@ All 26 phases exited naturally and were reaped, with no remaining process
 groups. Source and dependency checks were unchanged, and integrity postchecks
 were clean. The [third retention manifest](attempt-v3/retention-manifest.json)
 pins 147 original files, including ten source bodies and 134 raw evidence
-records. The remaining closure-signature mismatch requires diagnosis and
-fresh qualification; no production dependency or GPU gate is advanced.
+records. This attempt still fails at the closure-signature mismatch. Its
+correction is tested below; no production dependency or GPU gate is advanced.
+
+## Fourth MI350 Attempt
+
+Generation `3016e979b0d52663067f7a878d47ca775a58df36` corrects two predicates:
+the observed closure is `FnOnce`, and rustc resolves its call directly to that
+closure's `Item` and exact arguments, not to an adapter shim. The tupled
+signature, capture, complete MIR checks and independent callback traversal
+remain unchanged. Both builds pass in 40.498 and 47.083 seconds.
+
+The [actual receipt](attempt-v4/evidence/failed.json) records 438 passing tests:
+
+| Scope | Passing Tests |
+| --- | ---: |
+| Device library and two UI targets | 358 |
+| Trusted provider and scalar pipeline | 32 |
+| Result and widening wrappers | 21 |
+| Checked-integer wrappers | 6 |
+| Option wrappers | 10 |
+| Atomic extraction controls | 8 |
+| Unsafe-source and inline-origin refusals | 2 |
+| Matrix extraction | 1 |
+| Total | 438 |
+
+All [ten Option tests pass](attempt-v4/evidence/core-attention-option.stdout),
+including the full mutation and new resolution assertions. All earlier 422
+passing controls remain green, with sixteen new wrapper tests added. Matrix
+extraction passes in 21.810 seconds; it remains a gfx942 LLVM control, not a
+gfx950 artifact or GPU execution result.
+
+The final [attention control](attempt-v4/evidence/matrix-extraction-1.stdout)
+gets past the earlier helpers but rejects the genuine core identity conversion
+`<T as From<T>>::from` instantiated with the provider's `KernelError`.
+That independent external-helper source check remains enforced; it is not an
+expected-failure exemption or a passing attention result.
+
+All 38 phases exited naturally and were reaped, with no remaining process
+groups. The first 37 exited zero; attention exited 101 after 15.218 seconds.
+Sources and dependencies were unchanged, and integrity postchecks were clean.
+The [fourth retention manifest](attempt-v4/retention-manifest.json) pins 207
+original files, including ten compiler source bodies and 194 raw records.
+Full compiler qualification remains incomplete, and Ferric's production
+dependency is unchanged.
 
 ## Qualification Contract
 

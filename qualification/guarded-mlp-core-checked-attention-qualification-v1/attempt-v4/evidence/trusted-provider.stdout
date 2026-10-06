@@ -1,0 +1,33 @@
+
+running 28 tests
+test trusted_device_items::tests::checked_view_capabilities_reject_type_constructor_and_load_lookalikes ... ok
+test trusted_device_items::tests::compiled_source_hash_rejects_stale_rlib_after_source_restore ... ok
+test trusted_device_items::tests::complete_source_closure_binds_manifest_build_script_and_nested_sources ... ok
+test trusted_device_items::tests::every_production_safety_terminal_has_an_exact_structural_path ... ok
+test trusted_device_items::tests::exact_device_provider_rejects_previous_source_generation ... ok
+test trusted_device_items::tests::exact_device_provider_rejects_same_name_path_and_source_substitution ... ok
+test trusted_device_items::tests::exact_source_closure_authentication_is_location_independent ... ok
+test trusted_device_items::tests::generative_provider_items_require_exact_reviewed_identity ... ok
+test trusted_device_items::tests::neutral_workgroup_terminals_reject_legacy_and_stale_provider_identities ... ok
+test trusted_device_items::tests::pinned_core_terminal_identity_excludes_volatile_crate_disambiguators ... ok
+test trusted_device_items::tests::provider_semantic_identity_excludes_volatile_compilation_disambiguators ... ok
+test trusted_device_items::tests::reviewed_bf16_conversion_terminals_remain_out_of_line ... ok
+test trusted_device_items::tests::reviewed_blocked_access_terminals_remain_out_of_line ... ok
+test trusted_device_items::tests::reviewed_device_source_excludes_retired_exact_profile_allocators ... ok
+test trusted_device_items::tests::reviewed_static_publication_facade_remains_force_inlined ... ok
+test trusted_device_items::tests::safe_core_f32_is_finite_contract_is_exact_and_closed ... ok
+test trusted_device_items::tests::safe_core_f32_is_finite_route_body_contract_is_exact_and_closed ... ok
+test trusted_device_items::tests::safe_core_wrapping_integer_contract_admits_each_primitive_and_operation ... ok
+test trusted_device_items::tests::safe_core_wrapping_integer_contract_rejects_forged_paths_and_noninteger_types ... ok
+test trusted_device_items::tests::safe_core_wrapping_integer_contract_rejects_incomplete_authority_and_signature ... ok
+test trusted_device_items::tests::safe_execution_items_have_exact_structural_provider_paths ... ok
+test trusted_device_items::tests::safe_execution_provider_validation_rejects_source_substitution ... ok
+test trusted_device_items::tests::safe_execution_source_closure_matches_the_reviewed_pin ... ok
+test trusted_device_items::tests::semantic_registry_is_complete_and_unique ... ok
+test trusted_device_items::tests::source_closure_rejects_missing_inputs_and_out_of_root_definitions ... ok
+test trusted_device_items::tests::source_closure_rejects_symlinks_and_nonregular_files ... ok
+test trusted_device_items::tests::source_closure_uses_canonical_relative_order_for_component_prefixes ... ok
+test trusted_device_items::tests::structural_definition_paths_are_canonical_and_crate_qualified ... ok
+
+test result: ok. 28 passed; 0 failed; 0 ignored; 0 measured; 733 filtered out; finished in 0.12s
+
