@@ -65,6 +65,11 @@ This result closes the previously skipped observation checks without rerunning
 native code or changing the failed original receipt. Its SHA-256 is
 `d0551f310a57f63dfe98af8c887b5996752e3b62128a3087c4a03849082e6a3f`.
 
+The [retained AR4 host-counter breakdown](host-timing-v1/README.md) records
+6.25-6.31 seconds per forward inside the 36 guarded MLP segment spans. These
+include CPU admission and currentness checks, not just GPU work. The rank
+prefix spans remain separate because their overlap is not measured.
+
 The original whole-controller duration of 412.754826 seconds includes setup
 and audits and is not a decode-throughput measurement.
 

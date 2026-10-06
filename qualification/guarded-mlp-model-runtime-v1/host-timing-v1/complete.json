@@ -1,0 +1,3457 @@
+{
+  "cpu_analysis_seconds": 0.10437381407245994,
+  "error": null,
+  "gpu_execution": false,
+  "inputs": [
+    {
+      "bytes": 6331,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-host-timing-input-v228-v1/run.py",
+      "sha256": "37ca8e4fdf18d7409353aa80d65ffdd557e7e6796ff59ec8915dbe363c3dd633"
+    },
+    {
+      "bytes": 1415,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-host-timing-input-v228-v1/timing.py",
+      "sha256": "b8dcf6ddb7e2e42f3b1c427a726d3b7e42e48667373b7472c11fc79881b5e5f7"
+    },
+    {
+      "bytes": 1862,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-host-timing-input-v228-v1/test_timing.py",
+      "sha256": "6cd550c2763ce30d66638dc15013a194991ae5c6db80a8bc7d6918140d5d5f81"
+    },
+    {
+      "bytes": 13779,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-numerical-comparison-input-v228-v1/validate_observation.py",
+      "sha256": "367d1904f15741138db708c1f10e5a777905b62d9440a961e952a6cc9125b055"
+    },
+    {
+      "bytes": 93497,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-gpu-v228-v3/ar4/complete.json",
+      "sha256": "edf05cf2dd19a9934dab9762b328ea3e6160cf01c15606a3df3299ce967e4991"
+    },
+    {
+      "bytes": 40661,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-gpu-v228-v3/ar4/native/complete.json",
+      "sha256": "5ebc12a40f6e1fff7b8b05510af0b94ca8c3fd15ac96ba119a372af1ff3c046a"
+    },
+    {
+      "bytes": 242824,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-gpu-v228-v3/ar4/native/control-0.bin",
+      "sha256": "2ae7be78d7c3ad0c089805ad0e5291435d845f17be2766a13ca2a367961a12e2"
+    },
+    {
+      "bytes": 606976,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-gpu-v228-v3/ar4/native/observation-0.bin",
+      "sha256": "1324a6056ea6c0308e912c63ed1b6a6d27e103c915c6dde11ff600d97cf9b1b0"
+    },
+    {
+      "bytes": 1853,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-gpu-v228-v3/ar4/native/request-0.json",
+      "sha256": "34c9007a0746b39c32a354bea8b5d3ce952c6f8c0ee2fba9a9be0eace38434db"
+    },
+    {
+      "bytes": 242824,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-gpu-v228-v3/ar4/native/control-1.bin",
+      "sha256": "fab98b3930bd4bb4c4eb5022802ce86b7e4313960f68c44ca9749eff9647b271"
+    },
+    {
+      "bytes": 606976,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-gpu-v228-v3/ar4/native/observation-1.bin",
+      "sha256": "61f56a5b97e4f35922bf7733a74b36b8dec9544a15d66980757bf9ef5aefc6e4"
+    },
+    {
+      "bytes": 2388,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-gpu-v228-v3/ar4/native/request-1.json",
+      "sha256": "fdaa7b2f28f160be94bbde1359433de666197bb83665b9b9d34943dde8edec6c"
+    },
+    {
+      "bytes": 242824,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-gpu-v228-v3/ar4/native/control-2.bin",
+      "sha256": "bf5ddcd8881b1cbcae631ab2dfcf2185620626e392fa10a16be75f86b9eb323d"
+    },
+    {
+      "bytes": 606976,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-gpu-v228-v3/ar4/native/observation-2.bin",
+      "sha256": "87d3799724693386909e97fd3ea31fab065de021824dea276218614f2a0fc85a"
+    },
+    {
+      "bytes": 2392,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-gpu-v228-v3/ar4/native/request-2.json",
+      "sha256": "1c5f4d363bdbfdae2830db24c10497de1826be4d9f1addad86ac6ec90572753a"
+    },
+    {
+      "bytes": 242824,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-gpu-v228-v3/ar4/native/control-3.bin",
+      "sha256": "5e4dbbbb3427cf96d03c3534ed5551bb3c16f4bdfb78d2539d694575973b924d"
+    },
+    {
+      "bytes": 606976,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-gpu-v228-v3/ar4/native/observation-3.bin",
+      "sha256": "7c40126b76a7eeb7a64ef67950636359ba951cafcdce2ddc42636388de3c5588"
+    },
+    {
+      "bytes": 2393,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-gpu-v228-v3/ar4/native/request-3.json",
+      "sha256": "7ab68532fff88f060443086779e9a4e39d6352326a8b85a68076ae16bdb21cfb"
+    },
+    {
+      "bytes": 0,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-gpu-v228-v3/ar4/native/child-stderr.bin",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "numerical_acceptance": false,
+  "observation": {
+    "actual_lowest_index_argmax_checked": true,
+    "captured_bf16_words": 1213952,
+    "child_pid": 2926022,
+    "final_queue_frontiers": [
+      [
+        [
+          217,
+          215
+        ],
+        [
+          217,
+          215
+        ]
+      ],
+      [
+        [
+          437,
+          435
+        ],
+        [
+          434,
+          431
+        ]
+      ],
+      [
+        [
+          657,
+          655
+        ],
+        [
+          651,
+          647
+        ]
+      ],
+      [
+        [
+          877,
+          875
+        ],
+        [
+          868,
+          863
+        ]
+      ]
+    ],
+    "full_model_acceptance": false,
+    "guards": [
+      [
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ]
+      ],
+      [
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ]
+      ],
+      [
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ]
+      ],
+      [
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ]
+      ]
+    ],
+    "independent_full_model_reference": false,
+    "input_tokens": [
+      9112,
+      67,
+      25,
+      576
+    ],
+    "layer_observations": 144,
+    "local_bank_generations": [
+      1,
+      1,
+      2,
+      2
+    ],
+    "mode": "autoregressive",
+    "numerical_acceptance": false,
+    "output_tokens": [
+      67,
+      25,
+      576,
+      2701
+    ],
+    "performance_claim": false,
+    "production_authority": false,
+    "rank_guard_observations": 288,
+    "retained_parent_files": 14
+  },
+  "overlap_measured": false,
+  "passed": true,
+  "positions": [
+    {
+      "embedding_host_ns": [
+        5388363,
+        5434343
+      ],
+      "gpu_duration_measured": false,
+      "guarded_segments_host_ns": 6263102003,
+      "layers": [
+        {
+          "guarded_segment_host_ns": 175171588,
+          "layer": 0,
+          "prefix_rank_host_ns": [
+            16287330,
+            15963900
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 174785178,
+          "layer": 1,
+          "prefix_rank_host_ns": [
+            16385590,
+            16125060
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 173111467,
+          "layer": 2,
+          "prefix_rank_host_ns": [
+            16441861,
+            16355880
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 173412048,
+          "layer": 3,
+          "prefix_rank_host_ns": [
+            16048080,
+            16818741
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 174421718,
+          "layer": 4,
+          "prefix_rank_host_ns": [
+            16642200,
+            16219100
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 173926188,
+          "layer": 5,
+          "prefix_rank_host_ns": [
+            16495200,
+            16628500
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 173251997,
+          "layer": 6,
+          "prefix_rank_host_ns": [
+            16719890,
+            15908480
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 174516519,
+          "layer": 7,
+          "prefix_rank_host_ns": [
+            16618860,
+            16294670
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 174026638,
+          "layer": 8,
+          "prefix_rank_host_ns": [
+            16537351,
+            15857509
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 174591358,
+          "layer": 9,
+          "prefix_rank_host_ns": [
+            16459970,
+            16353190
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 173746047,
+          "layer": 10,
+          "prefix_rank_host_ns": [
+            16422770,
+            16428610
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 174450018,
+          "layer": 11,
+          "prefix_rank_host_ns": [
+            16481570,
+            16758961
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 173080548,
+          "layer": 12,
+          "prefix_rank_host_ns": [
+            16183960,
+            16188620
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 173584518,
+          "layer": 13,
+          "prefix_rank_host_ns": [
+            15968690,
+            15976169
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 174616959,
+          "layer": 14,
+          "prefix_rank_host_ns": [
+            16740540,
+            15976570
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 174767649,
+          "layer": 15,
+          "prefix_rank_host_ns": [
+            16684620,
+            15767930
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 173083397,
+          "layer": 16,
+          "prefix_rank_host_ns": [
+            16191040,
+            16391470
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 176067169,
+          "layer": 17,
+          "prefix_rank_host_ns": [
+            16677100,
+            16581840
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 175127869,
+          "layer": 18,
+          "prefix_rank_host_ns": [
+            16392751,
+            15972369
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 173267158,
+          "layer": 19,
+          "prefix_rank_host_ns": [
+            16378600,
+            16148850
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 176973540,
+          "layer": 20,
+          "prefix_rank_host_ns": [
+            16375570,
+            16061790
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 174703218,
+          "layer": 21,
+          "prefix_rank_host_ns": [
+            16021430,
+            15906090
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 172770247,
+          "layer": 22,
+          "prefix_rank_host_ns": [
+            16107070,
+            16414670
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 172860487,
+          "layer": 23,
+          "prefix_rank_host_ns": [
+            16305910,
+            16207360
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 174560788,
+          "layer": 24,
+          "prefix_rank_host_ns": [
+            15866500,
+            16180510
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 172596197,
+          "layer": 25,
+          "prefix_rank_host_ns": [
+            16749850,
+            16405070
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 174409549,
+          "layer": 26,
+          "prefix_rank_host_ns": [
+            16297411,
+            16408790
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 173924407,
+          "layer": 27,
+          "prefix_rank_host_ns": [
+            16117030,
+            16003050
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 172719077,
+          "layer": 28,
+          "prefix_rank_host_ns": [
+            16231500,
+            16333800
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 174077038,
+          "layer": 29,
+          "prefix_rank_host_ns": [
+            16814741,
+            15901670
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 173004477,
+          "layer": 30,
+          "prefix_rank_host_ns": [
+            16281950,
+            16301750
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 172616887,
+          "layer": 31,
+          "prefix_rank_host_ns": [
+            15925579,
+            16147350
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 173087157,
+          "layer": 32,
+          "prefix_rank_host_ns": [
+            16592560,
+            16464640
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 174547998,
+          "layer": 33,
+          "prefix_rank_host_ns": [
+            16282380,
+            15868530
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 172570717,
+          "layer": 34,
+          "prefix_rank_host_ns": [
+            16499550,
+            16282330
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 174674188,
+          "layer": 35,
+          "prefix_rank_host_ns": [
+            16740420,
+            16426380
+          ]
+        }
+      ],
+      "overlap_measured": false,
+      "position": 0,
+      "prefix_rank_host_ns": [
+        589967424,
+        584030199
+      ],
+      "tail_host_ns": [
+        5209894,
+        5216344,
+        24166415
+      ],
+      "throughput_measured": false
+    },
+    {
+      "embedding_host_ns": [
+        5240653,
+        5206983
+      ],
+      "gpu_duration_measured": false,
+      "guarded_segments_host_ns": 6249552985,
+      "layers": [
+        {
+          "guarded_segment_host_ns": 172402537,
+          "layer": 0,
+          "prefix_rank_host_ns": [
+            16501221,
+            16269640
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 173913557,
+          "layer": 1,
+          "prefix_rank_host_ns": [
+            16602130,
+            16297040
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 174788438,
+          "layer": 2,
+          "prefix_rank_host_ns": [
+            16240460,
+            16028660
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 171980916,
+          "layer": 3,
+          "prefix_rank_host_ns": [
+            16335420,
+            16321640
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 174819458,
+          "layer": 4,
+          "prefix_rank_host_ns": [
+            16418760,
+            16210130
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 174431278,
+          "layer": 5,
+          "prefix_rank_host_ns": [
+            16644591,
+            16134170
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 172387997,
+          "layer": 6,
+          "prefix_rank_host_ns": [
+            16253181,
+            15981900
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 174638199,
+          "layer": 7,
+          "prefix_rank_host_ns": [
+            16103330,
+            16187270
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 174408279,
+          "layer": 8,
+          "prefix_rank_host_ns": [
+            15994989,
+            16378010
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 172639187,
+          "layer": 9,
+          "prefix_rank_host_ns": [
+            16648521,
+            16533460
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 173076488,
+          "layer": 10,
+          "prefix_rank_host_ns": [
+            15594850,
+            16311830
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 174880298,
+          "layer": 11,
+          "prefix_rank_host_ns": [
+            16398690,
+            16304850
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 173326497,
+          "layer": 12,
+          "prefix_rank_host_ns": [
+            16703701,
+            16148760
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 173277908,
+          "layer": 13,
+          "prefix_rank_host_ns": [
+            16566641,
+            16179870
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 174993748,
+          "layer": 14,
+          "prefix_rank_host_ns": [
+            16395220,
+            16197840
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 177897890,
+          "layer": 15,
+          "prefix_rank_host_ns": [
+            16173290,
+            16445681
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 174883858,
+          "layer": 16,
+          "prefix_rank_host_ns": [
+            16246540,
+            16721950
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 174801508,
+          "layer": 17,
+          "prefix_rank_host_ns": [
+            16496370,
+            16230770
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 172995708,
+          "layer": 18,
+          "prefix_rank_host_ns": [
+            16356680,
+            16988020
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 172041247,
+          "layer": 19,
+          "prefix_rank_host_ns": [
+            16292240,
+            16100530
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 172470197,
+          "layer": 20,
+          "prefix_rank_host_ns": [
+            16404880,
+            16015150
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 172041006,
+          "layer": 21,
+          "prefix_rank_host_ns": [
+            16727020,
+            16052730
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 175332829,
+          "layer": 22,
+          "prefix_rank_host_ns": [
+            16563661,
+            16571741
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 173277617,
+          "layer": 23,
+          "prefix_rank_host_ns": [
+            16515090,
+            16215970
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 172602247,
+          "layer": 24,
+          "prefix_rank_host_ns": [
+            16094409,
+            16568530
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 172123987,
+          "layer": 25,
+          "prefix_rank_host_ns": [
+            16315040,
+            16772511
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 173783408,
+          "layer": 26,
+          "prefix_rank_host_ns": [
+            16217470,
+            16117370
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 172606517,
+          "layer": 27,
+          "prefix_rank_host_ns": [
+            16066660,
+            16472550
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 172216567,
+          "layer": 28,
+          "prefix_rank_host_ns": [
+            16300390,
+            15877800
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 173508528,
+          "layer": 29,
+          "prefix_rank_host_ns": [
+            16651740,
+            15672700
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 172948257,
+          "layer": 30,
+          "prefix_rank_host_ns": [
+            16541550,
+            15782000
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 174207548,
+          "layer": 31,
+          "prefix_rank_host_ns": [
+            16466650,
+            16266770
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 173064718,
+          "layer": 32,
+          "prefix_rank_host_ns": [
+            16479771,
+            16067390
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 172506997,
+          "layer": 33,
+          "prefix_rank_host_ns": [
+            16448170,
+            16202350
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 174425508,
+          "layer": 34,
+          "prefix_rank_host_ns": [
+            16168100,
+            16353600
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 173852058,
+          "layer": 35,
+          "prefix_rank_host_ns": [
+            16039690,
+            16164590
+          ]
+        }
+      ],
+      "overlap_measured": false,
+      "position": 1,
+      "prefix_rank_host_ns": [
+        588967116,
+        585145773
+      ],
+      "tail_host_ns": [
+        5402423,
+        5427724,
+        24821635
+      ],
+      "throughput_measured": false
+    },
+    {
+      "embedding_host_ns": [
+        5386273,
+        5208963
+      ],
+      "gpu_duration_measured": false,
+      "guarded_segments_host_ns": 6256530819,
+      "layers": [
+        {
+          "guarded_segment_host_ns": 172603387,
+          "layer": 0,
+          "prefix_rank_host_ns": [
+            17039400,
+            16231390
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 172936777,
+          "layer": 1,
+          "prefix_rank_host_ns": [
+            16554231,
+            16244031
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 173487587,
+          "layer": 2,
+          "prefix_rank_host_ns": [
+            16535060,
+            16146450
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 173386038,
+          "layer": 3,
+          "prefix_rank_host_ns": [
+            16002340,
+            16401600
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 173153947,
+          "layer": 4,
+          "prefix_rank_host_ns": [
+            16356820,
+            16298110
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 172218747,
+          "layer": 5,
+          "prefix_rank_host_ns": [
+            16187180,
+            16385291
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 173092527,
+          "layer": 6,
+          "prefix_rank_host_ns": [
+            16241780,
+            16538450
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 174173848,
+          "layer": 7,
+          "prefix_rank_host_ns": [
+            16372201,
+            16237640
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 174246178,
+          "layer": 8,
+          "prefix_rank_host_ns": [
+            16405981,
+            16383961
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 173745178,
+          "layer": 9,
+          "prefix_rank_host_ns": [
+            16290040,
+            16514340
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 173473097,
+          "layer": 10,
+          "prefix_rank_host_ns": [
+            16694300,
+            16466430
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 174191238,
+          "layer": 11,
+          "prefix_rank_host_ns": [
+            16262170,
+            16509970
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 172155447,
+          "layer": 12,
+          "prefix_rank_host_ns": [
+            16135260,
+            16424740
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 172458727,
+          "layer": 13,
+          "prefix_rank_host_ns": [
+            16240330,
+            15965240
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 173612418,
+          "layer": 14,
+          "prefix_rank_host_ns": [
+            16291100,
+            16015230
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 172728177,
+          "layer": 15,
+          "prefix_rank_host_ns": [
+            16425241,
+            16041499
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 172925297,
+          "layer": 16,
+          "prefix_rank_host_ns": [
+            16179920,
+            16196660
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 174266008,
+          "layer": 17,
+          "prefix_rank_host_ns": [
+            16439150,
+            16674330
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 172950957,
+          "layer": 18,
+          "prefix_rank_host_ns": [
+            16187890,
+            16304730
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 174162008,
+          "layer": 19,
+          "prefix_rank_host_ns": [
+            16515620,
+            16403150
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 174425138,
+          "layer": 20,
+          "prefix_rank_host_ns": [
+            16249240,
+            16115610
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 172104437,
+          "layer": 21,
+          "prefix_rank_host_ns": [
+            16386080,
+            16296380
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 177834080,
+          "layer": 22,
+          "prefix_rank_host_ns": [
+            16101360,
+            16263320
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 173988828,
+          "layer": 23,
+          "prefix_rank_host_ns": [
+            16760330,
+            15963070
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 172377707,
+          "layer": 24,
+          "prefix_rank_host_ns": [
+            16161250,
+            16044230
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 176087069,
+          "layer": 25,
+          "prefix_rank_host_ns": [
+            16496090,
+            16522280
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 173370087,
+          "layer": 26,
+          "prefix_rank_host_ns": [
+            15888060,
+            16387420
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 172439887,
+          "layer": 27,
+          "prefix_rank_host_ns": [
+            16023700,
+            16329370
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 174037558,
+          "layer": 28,
+          "prefix_rank_host_ns": [
+            16123230,
+            16422750
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 174745688,
+          "layer": 29,
+          "prefix_rank_host_ns": [
+            16589041,
+            16457551
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 173265088,
+          "layer": 30,
+          "prefix_rank_host_ns": [
+            16285550,
+            16356530
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 174197908,
+          "layer": 31,
+          "prefix_rank_host_ns": [
+            16232650,
+            16431031
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 174043058,
+          "layer": 32,
+          "prefix_rank_host_ns": [
+            16015920,
+            16435530
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 180160122,
+          "layer": 33,
+          "prefix_rank_host_ns": [
+            16765090,
+            16519060
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 174098158,
+          "layer": 34,
+          "prefix_rank_host_ns": [
+            16171240,
+            16506201
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 173388418,
+          "layer": 35,
+          "prefix_rank_host_ns": [
+            16619910,
+            15788969
+          ]
+        }
+      ],
+      "overlap_measured": false,
+      "position": 2,
+      "prefix_rank_host_ns": [
+        588224755,
+        587222544
+      ],
+      "tail_host_ns": [
+        5430523,
+        5408864,
+        24452075
+      ],
+      "throughput_measured": false
+    },
+    {
+      "embedding_host_ns": [
+        5319043,
+        5282573
+      ],
+      "gpu_duration_measured": false,
+      "guarded_segments_host_ns": 6307226986,
+      "layers": [
+        {
+          "guarded_segment_host_ns": 172813887,
+          "layer": 0,
+          "prefix_rank_host_ns": [
+            15947690,
+            16542531
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 174045858,
+          "layer": 1,
+          "prefix_rank_host_ns": [
+            16125580,
+            16371811
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 173855708,
+          "layer": 2,
+          "prefix_rank_host_ns": [
+            16500010,
+            16609290
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 175701209,
+          "layer": 3,
+          "prefix_rank_host_ns": [
+            16367660,
+            16177910
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 174469088,
+          "layer": 4,
+          "prefix_rank_host_ns": [
+            16310340,
+            16125440
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 177154419,
+          "layer": 5,
+          "prefix_rank_host_ns": [
+            16594660,
+            16476670
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 174412438,
+          "layer": 6,
+          "prefix_rank_host_ns": [
+            16503660,
+            15662820
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 177267400,
+          "layer": 7,
+          "prefix_rank_host_ns": [
+            16927161,
+            16473281
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 176697370,
+          "layer": 8,
+          "prefix_rank_host_ns": [
+            16027130,
+            16117440
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 173784568,
+          "layer": 9,
+          "prefix_rank_host_ns": [
+            16719250,
+            16456710
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 177196010,
+          "layer": 10,
+          "prefix_rank_host_ns": [
+            16487460,
+            16837801
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 175592779,
+          "layer": 11,
+          "prefix_rank_host_ns": [
+            16386110,
+            16312490
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 174751198,
+          "layer": 12,
+          "prefix_rank_host_ns": [
+            16085040,
+            16023630
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 175378129,
+          "layer": 13,
+          "prefix_rank_host_ns": [
+            16429081,
+            16345470
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 175381788,
+          "layer": 14,
+          "prefix_rank_host_ns": [
+            16220110,
+            16306490
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 175261918,
+          "layer": 15,
+          "prefix_rank_host_ns": [
+            16427430,
+            16521590
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 176104119,
+          "layer": 16,
+          "prefix_rank_host_ns": [
+            16691510,
+            16371460
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 173587047,
+          "layer": 17,
+          "prefix_rank_host_ns": [
+            15814340,
+            16009910
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 174267658,
+          "layer": 18,
+          "prefix_rank_host_ns": [
+            16649830,
+            16622951
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 176612220,
+          "layer": 19,
+          "prefix_rank_host_ns": [
+            16250411,
+            16018529
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 175323928,
+          "layer": 20,
+          "prefix_rank_host_ns": [
+            16116160,
+            16097470
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 174821068,
+          "layer": 21,
+          "prefix_rank_host_ns": [
+            16208460,
+            16949570
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 176794439,
+          "layer": 22,
+          "prefix_rank_host_ns": [
+            16268190,
+            16055530
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 175082778,
+          "layer": 23,
+          "prefix_rank_host_ns": [
+            16659000,
+            16412160
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 177636160,
+          "layer": 24,
+          "prefix_rank_host_ns": [
+            16248680,
+            16546530
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 177742750,
+          "layer": 25,
+          "prefix_rank_host_ns": [
+            16665610,
+            16445860
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 174575258,
+          "layer": 26,
+          "prefix_rank_host_ns": [
+            16252060,
+            16474860
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 175417009,
+          "layer": 27,
+          "prefix_rank_host_ns": [
+            16627131,
+            16587030
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 175678759,
+          "layer": 28,
+          "prefix_rank_host_ns": [
+            16399750,
+            15683710
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 175246029,
+          "layer": 29,
+          "prefix_rank_host_ns": [
+            16425400,
+            16598750
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 176885020,
+          "layer": 30,
+          "prefix_rank_host_ns": [
+            16429000,
+            16120200
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 174760868,
+          "layer": 31,
+          "prefix_rank_host_ns": [
+            16544300,
+            16304020
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 173144588,
+          "layer": 32,
+          "prefix_rank_host_ns": [
+            16616551,
+            16341541
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 172550787,
+          "layer": 33,
+          "prefix_rank_host_ns": [
+            15910660,
+            16130210
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 173732037,
+          "layer": 34,
+          "prefix_rank_host_ns": [
+            16167250,
+            16353301
+          ]
+        },
+        {
+          "guarded_segment_host_ns": 173500697,
+          "layer": 35,
+          "prefix_rank_host_ns": [
+            16455960,
+            16252450
+          ]
+        }
+      ],
+      "overlap_measured": false,
+      "position": 3,
+      "prefix_rank_host_ns": [
+        589458625,
+        587737416
+      ],
+      "tail_host_ns": [
+        5209754,
+        5180503,
+        25057606
+      ],
+      "throughput_measured": false
+    }
+  ],
+  "postcheck_errors": [],
+  "scope": "host dispatch spans from retained controls; not GPU timestamps or complete forward latency",
+  "tests": {
+    "errors": 0,
+    "failures": 0,
+    "log": "test_no_invented_overlap_or_throughput (test_timing.TimingTests.test_no_invented_overlap_or_throughput) ... ok\ntest_offsets_do_not_decode_states_as_timing (test_timing.TimingTests.test_offsets_do_not_decode_states_as_timing) ... ok\ntest_u64_counters_remain_integers (test_timing.TimingTests.test_u64_counters_remain_integers) ... ok\ntest_wire_extent (test_timing.TimingTests.test_wire_extent) ... ok\n\n----------------------------------------------------------------------\nRan 4 tests in 0.001s\n\nOK\n",
+    "run": 4,
+    "skipped": 0
+  },
+  "throughput_measured": false
+}

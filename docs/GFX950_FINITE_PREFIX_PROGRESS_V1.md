@@ -31,6 +31,13 @@ in at least one BF16 word. Logit relative-L2 errors range from 0.30% to 1.17%.
 Five adapter regressions pass and all 250 input rehashes/postchecks are clean.
 This is a numerical diagnostic, not full-model acceptance or a speedup.
 
+The [AR4 host-counter analysis](../qualification/guarded-mlp-model-runtime-v1/host-timing-v1/README.md)
+now isolates 6.25-6.31 seconds per forward inside guarded MLP dispatch spans,
+including host preparation and currentness checks. Four parser regressions and
+all 19 input posthashes pass on MI350. These are not GPU kernel timings or
+complete-forward latency; existing host-observer counters are the next
+attribution step before changing runtime checks.
+
 Current integration: [the guarded parent passes 375 selected tests and all 54 CPU phases on MI350](../qualification/guarded-mlp-parent-cpu-v1/README.md).
 All five selected parent binaries build, with clean source, dependency, cache
 and process postchecks. This does not execute the entire parent library suite
