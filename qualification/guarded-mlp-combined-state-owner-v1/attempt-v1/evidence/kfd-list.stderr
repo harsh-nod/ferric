@@ -1,0 +1,211 @@
+warning: unused import: `prefix::Transaction`
+ --> crates/fe2o3-kfd/src/engineering_gfx950_resident_layer_tp2_v1.rs:7:5
+  |
+7 | use prefix::Transaction as _;
+  |     ^^^^^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: constant `PREFIX_WORDS` is never used
+ --> crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_state_v1.rs:5:18
+  |
+5 | pub(super) const PREFIX_WORDS: usize = 548;
+  |                  ^^^^^^^^^^^^
+  |
+  = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: enum `Activation` is never used
+  --> crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_state_v1.rs:12:6
+   |
+12 | enum Activation {
+   |      ^^^^^^^^^^
+
+warning: struct `CombinedMlpStateV1` is never constructed
+  --> crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_state_v1.rs:25:19
+   |
+25 | pub(super) struct CombinedMlpStateV1 {
+   |                   ^^^^^^^^^^^^^^^^^^
+
+warning: struct `CombinedMlpSnapshotV1` is never constructed
+  --> crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_state_v1.rs:33:19
+   |
+33 | pub(super) struct CombinedMlpSnapshotV1 {
+   |                   ^^^^^^^^^^^^^^^^^^^^^
+
+warning: struct `CombinedMlpRegionsV1` is never constructed
+  --> crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_state_v1.rs:39:19
+   |
+39 | pub(super) struct CombinedMlpRegionsV1<'a> {
+   |                   ^^^^^^^^^^^^^^^^^^^^
+
+warning: methods `mlp_prefix`, `validator`, and `r2_guard` are never used
+  --> crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_state_v1.rs:44:19
+   |
+43 | impl CombinedMlpRegionsV1<'_> {
+   | ----------------------------- methods in this implementation
+44 |     pub(super) fn mlp_prefix(&self, rank: usize) -> Result<Gfx950EngineeringPeerPointerV1> {
+   |                   ^^^^^^^^^^
+...
+54 |     pub(super) fn validator(&self, rank: usize) -> Result<Gfx950EngineeringPeerPointerV1> {
+   |                   ^^^^^^^^^
+...
+64 |     pub(super) fn r2_guard(
+   |                   ^^^^^^^^
+
+warning: function `guard_words` is never used
+   --> crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_state_v1.rs:106:4
+    |
+106 | fn guard_words(generation: u64, verdict: u32) -> [u32; 4] {
+    |    ^^^^^^^^^^^
+
+warning: function `require_activation` is never used
+   --> crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_state_v1.rs:110:4
+    |
+110 | fn require_activation(actual: Activation, expected: Activation) -> Result<()> {
+    |    ^^^^^^^^^^^^^^^^^^
+
+warning: function `require_initial` is never used
+   --> crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_state_v1.rs:117:4
+    |
+117 | fn require_initial(snapshot: &CombinedMlpSnapshotV1, generation: u64) -> Result<()> {
+    |    ^^^^^^^^^^^^^^^
+
+warning: function `require_terminal` is never used
+   --> crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_state_v1.rs:127:4
+    |
+127 | fn require_terminal(snapshot: &CombinedMlpSnapshotV1, generation: u64) -> Result<()> {
+    |    ^^^^^^^^^^^^^^^^
+
+warning: function `require_rearm` is never used
+   --> crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_state_v1.rs:135:4
+    |
+135 | fn require_rearm(activation: Activation, previous: u64, next: u64) -> Result<()> {
+    |    ^^^^^^^^^^^^^
+
+warning: multiple methods are never used
+   --> crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_state_v1.rs:144:19
+    |
+143 | impl CombinedMlpStateV1 {
+    | ----------------------- methods in this implementation
+144 |     pub(super) fn owner_rank(&self) -> usize {
+    |                   ^^^^^^^^^^
+...
+148 |     pub(super) fn generation(&self) -> u64 {
+    |                   ^^^^^^^^^^
+...
+152 |     fn local_id(&self, group: &Gfx950EngineeringPeerGroupV1) -> Result<u64> {
+    |        ^^^^^^^^
+...
+177 |     pub(super) fn regions<'a>(
+    |                   ^^^^^^^
+...
+186 |     fn observe(&self, group: &mut Gfx950EngineeringPeerGroupV1) -> Result<CombinedMlpSnapshotV1> {
+    |        ^^^^^^^
+...
+206 |     pub(super) fn poison(&mut self, group: &mut Gfx950EngineeringPeerGroupV1) {
+    |                   ^^^^^^
+...
+211 |     fn outcome<T>(
+    |        ^^^^^^^
+...
+225 |     pub(super) fn submit(&mut self, group: &mut Gfx950EngineeringPeerGroupV1) -> Result<()> {
+    |                   ^^^^^^
+...
+242 |     pub(super) unsafe fn complete_quiescent(
+    |                          ^^^^^^^^^^^^^^^^^^
+...
+263 |     pub(super) unsafe fn rearm_quiescent(
+    |                          ^^^^^^^^^^^^^^^
+
+warning: function `allocate` is never used
+   --> crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_state_v1.rs:304:15
+    |
+304 | pub(super) fn allocate(
+    |               ^^^^^^^^
+
+warning: function `gfx942_cwsr_header_bytes` is never used
+   --> crates/fe2o3-kfd/src/queue_submit.rs:406:15
+    |
+406 | pub(crate) fn gfx942_cwsr_header_bytes(
+    |               ^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `initialize_gfx942_cwsr_headers` is never used
+   --> crates/fe2o3-kfd/src/queue_submit.rs:415:15
+    |
+415 | pub(crate) fn initialize_gfx942_cwsr_headers(
+    |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: constant `PREFIX_WORDS` is never used
+ --> crates/fe2o3-kfd/src/memory_linux_combined_mlp_state_v1.rs:4:7
+  |
+4 | const PREFIX_WORDS: usize = 548;
+  |       ^^^^^^^^^^^^
+
+warning: constant `WORDS` is never used
+ --> crates/fe2o3-kfd/src/memory_linux_combined_mlp_state_v1.rs:5:7
+  |
+5 | const WORDS: usize = PREFIX_WORDS + 4;
+  |       ^^^^^
+
+warning: constant `BYTES` is never used
+ --> crates/fe2o3-kfd/src/memory_linux_combined_mlp_state_v1.rs:6:7
+  |
+6 | const BYTES: usize = WORDS * core::mem::size_of::<AtomicU32>();
+  |       ^^^^^
+
+warning: function `combined_pointer` is never used
+ --> crates/fe2o3-kfd/src/memory_linux_combined_mlp_state_v1.rs:8:4
+  |
+8 | fn combined_pointer(
+  |    ^^^^^^^^^^^^^^^^
+
+warning: associated functions `initialize_combined_mlp_state_v1`, `observe_combined_mlp_state_v1`, and `rearm_combined_mlp_state_v1` are never used
+  --> crates/fe2o3-kfd/src/memory_linux_combined_mlp_state_v1.rs:34:26
+   |
+29 | impl LinuxGfx950MemoryBackend {
+   | ----------------------------- associated functions in this implementation
+...
+34 |     pub(crate) unsafe fn initialize_combined_mlp_state_v1(
+   |                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+...
+56 |     pub(crate) unsafe fn observe_combined_mlp_state_v1(
+   |                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+...
+80 |     pub(crate) unsafe fn rearm_combined_mlp_state_v1(
+   |                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: methods `regions`, `complete_quiescent`, and `rearm_quiescent` are never used
+   --> crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_state_v1.rs:177:19
+    |
+143 | impl CombinedMlpStateV1 {
+    | ----------------------- methods in this implementation
+...
+177 |     pub(super) fn regions<'a>(
+    |                   ^^^^^^^
+...
+242 |     pub(super) unsafe fn complete_quiescent(
+    |                          ^^^^^^^^^^^^^^^^^^
+...
+263 |     pub(super) unsafe fn rearm_quiescent(
+    |                          ^^^^^^^^^^^^^^^
+    |
+    = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: field `0` is never read
+ --> crates/fe2o3-kfd/src/memory_linux_combined_mlp_state_v1_tests.rs:4:16
+  |
+4 | struct Storage([u8; 4096]);
+  |        ------- ^^^^^^^^^^
+  |        |
+  |        field in this struct
+  |
+  = help: consider removing this field
+
+warning: `fe2o3-kfd` (lib) generated 21 warnings
+warning: `fe2o3-kfd` (lib test) generated 4 warnings (2 duplicates)
+    Finished `test` profile [optimized] target(s) in 0.01s
+     Running unittests src/lib.rs (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-combined-state-owner-cpu-v228-v1/target/debug/deps/fe2o3_kfd-11448a9880d552d9)
+     Running unittests src/bin/gfx950_engineering_worker.rs (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-combined-state-owner-cpu-v228-v1/target/debug/deps/fe2o3_gfx950_engineering_worker-798dcc99f7ec8797)
+     Running tests/kfd_debug_trap_live.rs (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-combined-state-owner-cpu-v228-v1/target/debug/deps/kfd_debug_trap_live-bae73a537360105c)
+     Running tests/target_debug_telemetry_env_v1.rs (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-combined-state-owner-cpu-v228-v1/target/debug/deps/target_debug_telemetry_env_v1-9e3f10bafd572490)
+     Running tests/target_debug_telemetry_v1.rs (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-combined-state-owner-cpu-v228-v1/target/debug/deps/target_debug_telemetry_v1-e8d864b2f1065cd0)

@@ -30,7 +30,8 @@ tests run in the second attempt. This proposal is retained separately and
 has not replaced the canonical device crate.
 
 The [typed 2,208-byte owner and suffix-only peer-read capability](../guarded-mlp-combined-state-owner-v1/README.md)
-have a separately reviewed source proposal and 14 unexecuted focused tests.
-Runtime CPU qualification, the coordinator, artifact ABI admission and GPU
-tests remain separate work. Predicted ABI
+pass isolated runtime CPU qualification: 1,008 full-suite passes with three
+unchanged ignores, plus all 14 focused repeats. The owner is not installed in
+the canonical runtime. The coordinator, artifact ABI admission and GPU tests
+remain separate work. Predicted ABI
 sizes are not emitted-metadata evidence and grant no load or launch authority.

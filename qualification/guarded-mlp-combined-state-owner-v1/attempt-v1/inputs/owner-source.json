@@ -1,0 +1,155 @@
+{
+  "actual_failure": {
+    "bytes": 19105,
+    "sha256": "1943926bd4d138d79505f6d0a4d97722d7efa54af6323cccab319be9d53c9140"
+  },
+  "actual_failure_stderr": {
+    "bytes": 123593,
+    "sha256": "b7c4435210a46414e49ed798624eff224c0436935a51d6715eccd8ee61c72f0a"
+  },
+  "additive_private_owner": true,
+  "base_dependency_commit": "5a500d63c29b78f8788356b20dfcbb5c41ec20c9",
+  "base_input": {
+    "bytes": 1012525,
+    "sha256": "9c3cf80f76658c778bc708997858860f8089355a693fab7fad3a4ad706aa1c87"
+  },
+  "changed_existing_test_names": [
+    "engineering_gfx950::peer::tests::only_dependency_arena_presence_selects_queue_first_close"
+  ],
+  "compiler_admission_changed": false,
+  "coordinator_implemented": false,
+  "expected_new_focused_tests": 14,
+  "files": {
+    "crates/fe2o3-kfd/src/engineering_gfx950_peer.rs": {
+      "after": {
+        "bytes": 33576,
+        "sha256": "ef4c7357d86b54251b3851d9502fd235bb874d7df88f55c738f1e46c098e61c8"
+      },
+      "before": {
+        "bytes": 33247,
+        "sha256": "aee035ef00a66ef8e777deb6639c5d68f6ec8b64a4fce91b7ee65dff5eb6f99f"
+      }
+    },
+    "crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_state_v1.rs": {
+      "after": {
+        "bytes": 15314,
+        "sha256": "9b7715e59f2f6cf501c34a638ef52e6fbdd2157a76648061da91f46ece79daba"
+      },
+      "before": null
+    },
+    "crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_state_v1_tests.rs": {
+      "after": {
+        "bytes": 10400,
+        "sha256": "c3dfe98d0776ce1bc03510f96d383bbcd75709f12a4d5f891a87ff56fe5dba4c"
+      },
+      "before": null
+    },
+    "crates/fe2o3-kfd/src/engineering_gfx950_peer_tests.rs": {
+      "after": {
+        "bytes": 26068,
+        "sha256": "f4127c7c7bfe37a2fe04cf73036a74084b791d54305762eb8ee835587f1f9d54"
+      },
+      "before": {
+        "bytes": 25941,
+        "sha256": "220215668816359d2cf67be19a1fd6795d2fa315a82b9eaa12cd3b8618120ca5"
+      }
+    },
+    "crates/fe2o3-kfd/src/memory_linux.rs": {
+      "after": {
+        "bytes": 81271,
+        "sha256": "e4adf9a38df31ec1cce6e7be6eb998a0655fc5b85e3754ac860db16ef836d4f4"
+      },
+      "before": {
+        "bytes": 81155,
+        "sha256": "29021f3c81a593704ca4b9f7b589813f5807656fcf83e1a61d9300a3bf59985e"
+      }
+    },
+    "crates/fe2o3-kfd/src/memory_linux_combined_mlp_state_v1.rs": {
+      "after": {
+        "bytes": 4258,
+        "sha256": "fe2bfa04f31f516bc835f5d538d45829a7bbc2f80b73641e3e4d2c7d077fa181"
+      },
+      "before": null
+    },
+    "crates/fe2o3-kfd/src/memory_linux_combined_mlp_state_v1_tests.rs": {
+      "after": {
+        "bytes": 9249,
+        "sha256": "f75647fd273ab6b1aac695a918edace1b96933dbe59b92081d5da5ec2387729c"
+      },
+      "before": null
+    }
+  },
+  "first_generation": 1,
+  "guard_bytes": 16,
+  "guard_offset_bytes": 2192,
+  "guard_words": 4,
+  "integration_patch": {
+    "bytes": 43704,
+    "sha256": "c7d678fbc03e517bfe85fe912651314cdb90b06cb4074f2a9ce8ab1df4efbf87"
+  },
+  "legacy_profiles_changed": false,
+  "legacy_state_v2_changed": false,
+  "new_focused_tests_authored": true,
+  "peer_count": 1,
+  "prefix_bytes": 2192,
+  "prefix_words": 548,
+  "public_api_added": false,
+  "qualification_pending": true,
+  "ranks": 2,
+  "requested_bytes": 2208,
+  "schema": "ferric-guarded-mlp-combined-state-owner-source-v1",
+  "status": "source-only-unqualified",
+  "test_cohorts": {
+    "engineering_gfx950::peer::combined_mlp_state_v1::tests::": {
+      "filter": "engineering_gfx950::peer::combined_mlp_state_v1::tests::",
+      "names": [
+        "engineering_gfx950::peer::combined_mlp_state_v1::tests::combined_binding_matrix_admits_only_exact_owner_and_suffix_regions",
+        "engineering_gfx950::peer::combined_mlp_state_v1::tests::combined_borrowed_regions_preserve_one_real_allocation_identity",
+        "engineering_gfx950::peer::combined_mlp_state_v1::tests::combined_cleanup_selects_queue_first_and_keeps_existing_kinds_unchanged",
+        "engineering_gfx950::peer::combined_mlp_state_v1::tests::combined_generation_and_activation_rules_refuse_replay_skip_and_overflow",
+        "engineering_gfx950::peer::combined_mlp_state_v1::tests::combined_native_submit_refuses_bad_phase_before_any_context_operation",
+        "engineering_gfx950::peer::combined_mlp_state_v1::tests::combined_owner_does_not_change_legacy_token_or_public_byte_policy",
+        "engineering_gfx950::peer::combined_mlp_state_v1::tests::combined_snapshot_predicates_check_every_prefix_word_and_guard_component",
+        "engineering_gfx950::peer::combined_mlp_state_v1::tests::combined_terminal_failures_poison_without_publishing_generation_or_losing_custody"
+      ]
+    },
+    "memory_linux::combined_mlp_state_v1::tests::": {
+      "filter": "memory_linux::combined_mlp_state_v1::tests::",
+      "names": [
+        "memory_linux::combined_mlp_state_v1::tests::combined_memory_bad_mapping_and_alignment_refuse_before_any_atomic_access",
+        "memory_linux::combined_mlp_state_v1::tests::combined_memory_cannot_be_observed_or_rearmed_as_legacy_2192_owner",
+        "memory_linux::combined_mlp_state_v1::tests::combined_memory_constructs_exact_552_genuine_atomics_and_preserves_tail",
+        "memory_linux::combined_mlp_state_v1::tests::combined_memory_quiescent_rearm_preserves_objects_and_replaces_every_word",
+        "memory_linux::combined_mlp_state_v1::tests::combined_memory_wrong_request_refuses_before_construction_or_stores",
+        "memory_linux::combined_mlp_state_v1::tests::combined_memory_zero_generation_does_not_publish_or_mutate"
+      ]
+    }
+  },
+  "unchanged_dependencies": {
+    "crates/fe2o3-kfd/src/engineering_gfx950.rs": {
+      "bytes": 80676,
+      "sha256": "146c8e1f255b6d3d02df0fafe512f0ccda19effe62933f1162f8c90ef93a73db"
+    },
+    "crates/fe2o3-kfd/src/engineering_gfx950_peer_projection_residual_mlp_tiles_v1.rs": {
+      "bytes": 22529,
+      "sha256": "18ed90078a094d61ae2735984ae01733d886c4b82b2ac8b2ee4dd15e8db50ca0"
+    },
+    "crates/fe2o3-kfd/src/engineering_gfx950_peer_wave_mlp_tiles_state_v2.rs": {
+      "bytes": 14676,
+      "sha256": "33fec03089e8685bd27d42799ef70c86d3610372c1601397f6cb18e2f339a9c2"
+    },
+    "crates/fe2o3-kfd/src/engineering_gfx950_peer_wave_mlp_tiles_v2.rs": {
+      "bytes": 13902,
+      "sha256": "58da2d01441755a24657301925a3e23674047a379a0fdc4bb48b608109a15214"
+    },
+    "crates/fe2o3-kfd/src/engineering_gfx950_wave_mlp_tiles_v2.rs": {
+      "bytes": 21217,
+      "sha256": "978a4c29a60912cd884081f904e796d4d63c83d212d783b56f41a1bdd10581b5"
+    },
+    "crates/fe2o3-kfd/src/memory_linux_wave_mlp_tiles_v2.rs": {
+      "bytes": 8662,
+      "sha256": "d95488729123f968fdc66464710fca0ce608811275a027b5cf69bd4cc85e0bf2"
+    }
+  },
+  "worker_integrated": false
+}
