@@ -1,0 +1,21 @@
+test_checked_raw_cross_joins (test_analysis.AnalysisTests.test_checked_raw_cross_joins) ... ok
+test_close_and_no_authority_upgrade (test_analysis.AnalysisTests.test_close_and_no_authority_upgrade) ... ok
+test_closed_phase_schedule_and_census (test_analysis.AnalysisTests.test_closed_phase_schedule_and_census) ... ok
+test_counter_decrease_and_wrong_delta (test_analysis.AnalysisTests.test_counter_decrease_and_wrong_delta) ... ok
+test_exact_disjoint_wall_partition_and_total (test_analysis.AnalysisTests.test_exact_disjoint_wall_partition_and_total) ... ok
+test_forward_and_whole_sum_overflow_refuse (test_analysis.AnalysisTests.test_forward_and_whole_sum_overflow_refuse) ... ok
+test_inclusive_counters_telescope_without_wall_addition (test_analysis.AnalysisTests.test_inclusive_counters_telescope_without_wall_addition) ... ok
+test_markdown_exact_integer_seconds_and_scope (test_analysis.AnalysisTests.test_markdown_exact_integer_seconds_and_scope) ... ok
+test_policy_identity_and_fresh_baseline (test_analysis.AnalysisTests.test_policy_identity_and_fresh_baseline) ... ok
+test_strict_u64_not_bool_float_or_overflow (test_analysis.AnalysisTests.test_strict_u64_not_bool_float_or_overflow) ... ok
+test_exact_ratios_large_values_zero_and_decimal_ties (test_compare.CompareTests.test_exact_ratios_large_values_zero_and_decimal_ties) ... ok
+test_payload_or_genuine_history_mismatch_precedes_accounting (test_compare.CompareTests.test_payload_or_genuine_history_mismatch_precedes_accounting) ... ok
+test_policy_mapping_preserves_original_reports_and_partition (test_compare.CompareTests.test_policy_mapping_preserves_original_reports_and_partition) ... ok
+test_slower_candidate_is_reported_without_performance_claim (test_compare.CompareTests.test_slower_candidate_is_reported_without_performance_claim) ... ok
+test_structured_svg_has_exact_eight_disjoint_stacks (test_compare.CompareTests.test_structured_svg_has_exact_eight_disjoint_stacks) ... ok
+test_wrong_mode_mixed_policy_and_checked_policy_refuse (test_compare.CompareTests.test_wrong_mode_mixed_policy_and_checked_policy_refuse) ... ok
+
+----------------------------------------------------------------------
+Ran 16 tests in 1.308s
+
+OK

@@ -54,8 +54,14 @@ It shares one fresh topology read within a group fence, retaining device and
 queue checks and the conservative default. The parent also passes all 55
 qualification phases and 391 selected tests across 47 scopes. Its two tested
 changes are integrated; all 1,222 composed Ferric sources join the actual CPU
-maps. Native GPU validation remains pending; this is not yet an observed
-performance improvement.
+maps. The native shared-mode run now passes in one attempt with healthy Close
+and all four complete payloads byte-identical to conservative and ordinary
+AR4. The [plot and attribution](../qualification/guarded-mlp-model-host-shared-currentness-v1/comparison-v1/README.md)
+show observed forward host brackets falling from 12.808-15.384 seconds to
+5.598-6.271 seconds. Paired counters match the source prediction: 216 individual
+checks per rank plus 900 group checks, versus 2016 individual checks per rank.
+All 16 analysis tests and 27 input posthashes pass. This is one observation
+per mode, not a controlled repeated benchmark, GPU overlap or sustained decode.
 
 The [historical O-projection replay](../qualification/o-projection-exact-replay-v1/README.md)
 now completes on MI350 with 18 passing tests. All 8,192 captured FP32 partials

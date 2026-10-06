@@ -59,12 +59,35 @@ replace the separately qualified worker postimages.
   expanded bytes. All selected process groups exited naturally and were
   reaped; source, dependency, cache and tool postchecks are clean.
 
+## Actual GPU Execution And Comparison
+
+The [shared-mode GPU run](gpu-attempt-v1/ar4/complete.json) passed in one
+attempt with 11 clean process phases, six idle device snapshots and healthy
+Close. All 587 host snapshots and 586 intervals use the required shared
+policy. It executes all 36 layers on both ranks for four forwards, producing
+`67, 25, 576, 2701` from its own-output history beginning at token `9112`.
+All four complete payloads are byte-identical to ordinary guarded AR4 and
+to the conservative host-observation run.
+
+- Original terminal: 617,545 bytes, SHA-256
+  `d94fd19c98459b82750487467ded4bf0f289f90f8c0dd1140a623d21ac1dc8ce`.
+- Retention archive: 3,937,318 bytes, SHA-256
+  `0b693a8a792da88a40ec462c9993cf3aa4aca1c5fc454438422c88dfec11b232`.
+- Capsule: 97 members, 96 pins, 79 raw records and 7,924,412 expanded bytes.
+  The five ordinary-AR4 reference bodies are retained without changing their
+  original contents or embedded paths. External dependencies are not bundled.
+
+The [plot, tables and source-level attribution](comparison-v1/README.md)
+show observed forward host brackets falling from 12.808-15.384 seconds to
+5.598-6.271 seconds. The paired stage matches the predicted count change
+exactly: 2016 individual checks per rank become 216 per rank plus 900 group
+checks. All 16 comparison tests and 27 input rehashes pass on MI350.
+
 ## Remaining Gates
 
-A fresh four-forward GPU comparison is pending.
 The [conservative observation](../guarded-mlp-model-host-observation-v1/README.md)
-is the retained timing baseline. Any future comparison must first join all
-four complete payloads and genuine autoregressive histories. Inclusive host
-counters are not GPU duration, overlap or sustained tokens/s. Full-model
+is the retained timing baseline. This is one observation per mode, not a
+controlled repeated benchmark. Inclusive host counters are not GPU duration,
+overlap or sustained tokens/s. Full-model
 numerical acceptance, the 2,048/256 benchmark and all issue #42 milestones
 remain open.
