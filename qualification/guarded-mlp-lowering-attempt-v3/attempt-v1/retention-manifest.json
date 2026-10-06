@@ -1,0 +1,56 @@
+{
+  "artifact": null,
+  "files": {
+    "evidence/compile.command.json": {
+      "bytes": 7327,
+      "sha256": "a8a2f523846e689e26ff9200752d4e397ad069ea06de4687982212cd2dc63cdf"
+    },
+    "evidence/compile.result.json": {
+      "bytes": 1145,
+      "sha256": "f866bbe477578c4caa2daa9346cc32b1ce958958ff8c8e690cd819757f7f8ba9"
+    },
+    "evidence/compile.started.json": {
+      "bytes": 3467,
+      "sha256": "ae01f9bdb7d1abf59b12cf18a6a915142aec4e5e466f505f1026b15caf59afdc"
+    },
+    "evidence/compile.stderr": {
+      "bytes": 7825,
+      "sha256": "03f6a53f75adf652975406cd739f6c052d39b76684a3d48cdf9c1a8c2579ed33"
+    },
+    "evidence/compile.stdout": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "evidence/configurations.json": {
+      "bytes": 3140,
+      "sha256": "6f7002940eeb49fd6865bcf100c3bb397af43fbf5bf6e022e48b51e15a0e9b85"
+    },
+    "evidence/failed.json": {
+      "bytes": 6210,
+      "sha256": "ae4a8a3d60f3c65a53cb8e56f1409b0e1ee8287740bd2bcb7102d59cf08a5f83"
+    },
+    "evidence/inputs-after.json": {
+      "bytes": 77830,
+      "sha256": "b79eda5d0e91faa985a49ada8b2d75298ec3d0694338490785b959934c396f61"
+    },
+    "evidence/inputs-before.json": {
+      "bytes": 75846,
+      "sha256": "626f687a15e9197c16fdf48e7b11d1f0e4bdac3c3e14a1ead1085cfc2bc7efc9"
+    },
+    "evidence/source-after.json": {
+      "bytes": 1979859,
+      "sha256": "955e37e41e54df808221a7d3459f3f782ac7d0b6115ec35e48e14d5f834d4d78"
+    },
+    "evidence/source-before.json": {
+      "bytes": 1979859,
+      "sha256": "955e37e41e54df808221a7d3459f3f782ac7d0b6115ec35e48e14d5f834d4d78"
+    },
+    "lowering.py": {
+      "bytes": 37240,
+      "sha256": "f51fbf0c68bd76f89fca4ab145b5060dea1ff67f7a148062f9fecef7f5e9d308"
+    }
+  },
+  "gpu_execution": false,
+  "passed": false,
+  "schema": "ferric-guarded-mlp-lowering-retention-v3"
+}

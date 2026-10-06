@@ -6,7 +6,17 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Latest: [the refreshed driver deployment passes all fourteen loader checks on MI350](../qualification/guarded-mlp-s-rpo-tool-audit-v2/README.md).
+Latest: [optimized-inlining guarded lowering reaches the ranked CFG limit on MI350](../qualification/guarded-mlp-lowering-attempt-v3/README.md).
+The earlier atomic-ordering rejection is no longer observed. The new failure
+occurs during semantic-to-ranked projection before loop analysis; the message
+does not identify the function or actual block count. The compiler exited
+naturally after 117.371 seconds and was reaped, with unchanged sources and
+clean integrity checks. Fifteen synthetic controller fixtures passed
+separately. No HSACO was emitted, and the possible alias gate was not reached.
+Bounded diagnostics and a smaller equivalent CFG are the next investigation;
+no verifier limit or production authority is relaxed.
+
+Previously, [the refreshed driver deployment passes all fourteen loader checks on MI350](../qualification/guarded-mlp-s-rpo-tool-audit-v2/README.md).
 Only the driver changes; the other six tools and full combined compiler
 provenance remain intact. Eighteen synthetic loader-admission fixtures passed
 separately. All actual inspections exited naturally and were reaped, with

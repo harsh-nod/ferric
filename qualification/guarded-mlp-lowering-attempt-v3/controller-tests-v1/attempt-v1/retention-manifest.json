@@ -1,0 +1,70 @@
+{
+  "compiler_qualification": false,
+  "files": {
+    "evidence/complete.json": {
+      "bytes": 11159,
+      "sha256": "9ac4101234e79340353fb85648f671d80fe1255a7cb5c7f132e7e41d64f59498"
+    },
+    "evidence/guarded-lowering-tests.command.json": {
+      "bytes": 829,
+      "sha256": "cebd073aa0f99ec004916924865fba3ed1cc95602ecdb65faddbc9627337e395"
+    },
+    "evidence/guarded-lowering-tests.result.json": {
+      "bytes": 1525,
+      "sha256": "6fcd977312ada61634d51fec949f92595fa3d9a54a59df6e5f1c2d1cf6a10ac8"
+    },
+    "evidence/guarded-lowering-tests.started.json": {
+      "bytes": 370,
+      "sha256": "576ef97e91a3806ee85c7b96acdf94d6ed19ffe142accdc2c600efb7444505ee"
+    },
+    "evidence/guarded-lowering-tests.stderr": {
+      "bytes": 2276,
+      "sha256": "a691bf1f46101f516e3f462ebddfdb49248911e2f54728e880a4453e5aed2962"
+    },
+    "evidence/guarded-lowering-tests.stdout": {
+      "bytes": 3315,
+      "sha256": "b6f45f132106c074e6926f21bef6e038c4144017717ed554b085ef72a5254361"
+    },
+    "evidence/sources-after.json": {
+      "bytes": 1625,
+      "sha256": "199acfb6da4c56b3787a14d3f1f8b88ce6b9d7a1c9e652d384c85d97b96d47b9"
+    },
+    "evidence/sources-before.json": {
+      "bytes": 1625,
+      "sha256": "199acfb6da4c56b3787a14d3f1f8b88ce6b9d7a1c9e652d384c85d97b96d47b9"
+    },
+    "input-manifest.json": {
+      "bytes": 1249,
+      "sha256": "c62eeb455adec308f82613c849c87bab13dde69f6fb4c31c9ba1ecb279a8c5f6"
+    },
+    "lowering.py": {
+      "bytes": 37233,
+      "sha256": "904fbb6ed4331e68eede9a40c7fac3f5b9ecc97a6066188fe390774a20f36ba4"
+    },
+    "lowering_test_entry.py": {
+      "bytes": 5500,
+      "sha256": "1417548791f1dcf7566c825353e57ccdd115adb268d69179658504bdcff03a29"
+    },
+    "run_tests.py": {
+      "bytes": 13016,
+      "sha256": "4da4be20e9b6d37365e4ac5a7a12f5dc3e6bc0ddc6faef7dd35ab25261000cc9"
+    },
+    "supervisor.py": {
+      "bytes": 41485,
+      "sha256": "8824478a6415dee39d28ccefb0881fc0687ac724f5a9c5a4540310fb5196b9bc"
+    },
+    "test_lowering.py": {
+      "bytes": 13295,
+      "sha256": "a42d56bb3072e1051f0d29d704ad288b89caaf5cec5c4541c7bef5463accf538"
+    },
+    "test_normalization.py": {
+      "bytes": 6507,
+      "sha256": "6d4d91e24fa483e81d99ae1dd89a629eb3b7a17aaef94e8f46958123c292465f"
+    }
+  },
+  "gpu_execution": false,
+  "passed": true,
+  "schema": "ferric-guarded-lowering-tests-retention-v3",
+  "synthetic_lowering_only": true,
+  "tests_passed": 15
+}
