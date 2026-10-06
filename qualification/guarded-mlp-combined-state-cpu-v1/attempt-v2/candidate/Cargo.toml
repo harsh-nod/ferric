@@ -1,0 +1,22 @@
+[package]
+name = "ferric-qwen3-tp-guarded-mlp-segment-kernels-device-v2"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.94"
+publish = false
+
+[workspace]
+
+[features]
+default = ["gfx950"]
+gfx950 = []
+
+[dependencies]
+fe2o3-device = { path = "../fe2o3/crates/fe2o3-device", version = "=0.1.0" }
+
+[target.'cfg(not(target_arch = "amdgpu"))'.dependencies]
+fe2o3-host = { path = "../fe2o3/crates/fe2o3-host", version = "=0.1.0" }
+
+[lib]
+name = "ferric_qwen3_tp_guarded_mlp_segment_kernels_device_v2"
+path = "src/lib.rs"

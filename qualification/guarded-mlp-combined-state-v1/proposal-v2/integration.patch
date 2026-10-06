@@ -1,0 +1,166 @@
+--- a/device/qwen3-tp-guarded-mlp-segment-kernels-v2/src/combined_state_tests.rs
++++ b/device/qwen3-tp-guarded-mlp-segment-kernels-v2/src/combined_state_tests.rs
+@@ -127,7 +127,17 @@
+     assert!(combined_oracle(&original));
+     for index in 0..552 {
+         for value in [
+-            0, 1, 2, 3, 31, 63, 64, 65, 96, u32::MAX, original[index] ^ 1,
++            0,
++            1,
++            2,
++            3,
++            31,
++            63,
++            64,
++            65,
++            96,
++            u32::MAX,
++            original[index] ^ 1,
+         ] {
+             let mut words = original.clone();
+             words[index] = value;
+@@ -249,16 +259,20 @@
+     {
+         let events = words.events.borrow();
+         assert_eq!(events.len(), 552);
+-        assert!(events[..548].iter().all(|event| matches!(
+-            event,
+-            Event::Load(_, Ordering::Acquire)
+-        )));
+-        assert_eq!(&events[548..], &[
+-            Event::Store(548, 7, Ordering::Relaxed),
+-            Event::Store(549, 9, Ordering::Relaxed),
+-            Event::Store(551, 0, Ordering::Relaxed),
+-            Event::Store(550, 1, Ordering::Release),
+-        ]);
++        assert!(
++            events[..548]
++                .iter()
++                .all(|event| matches!(event, Event::Load(_, Ordering::Acquire)))
++        );
++        assert_eq!(
++            &events[548..],
++            &[
++                Event::Store(548, 7, Ordering::Relaxed),
++                Event::Store(549, 9, Ordering::Relaxed),
++                Event::Store(551, 0, Ordering::Relaxed),
++                Event::Store(550, 1, Ordering::Release),
++            ]
++        );
+     }
+     words.words.borrow_mut()[547] = 63;
+     words.events.borrow_mut().clear();
+@@ -285,8 +299,7 @@
+             original[bad] ^ 1
+         };
+         assert!(!combined_oracle(&values));
+-        let words: [AtomicU32; 552] =
+-            std::array::from_fn(|index| AtomicU32::new(values[index]));
++        let words: [AtomicU32; 552] = std::array::from_fn(|index| AtomicU32::new(values[index]));
+         let valid = mlp_combined_state_valid_v2!(&words, atomic_word);
+         publish_combined_guard_v2!(&words, 17, 19, valid, atomic_store);
+         assert!(!valid);
+@@ -333,8 +346,14 @@
+     type R2 = crate::kernels::ferric_qwen3_tp2_guarded_projection_residual_bf16_v2_gpu::Marker;
+     let _: fn(&[AtomicU32], u32, u32) = <Guard as KernelMarkerV1>::FUNCTION;
+     let _: fn(
+-        &[f32], &[f32], &[u16], WriteOnlyDisjointSlice<u16>,
+-        &[AtomicU32], &[AtomicU32], u32, u32,
++        &[f32],
++        &[f32],
++        &[u16],
++        WriteOnlyDisjointSlice<u16>,
++        &[AtomicU32],
++        &[AtomicU32],
++        u32,
++        u32,
+     ) = <R2 as KernelMarkerV1>::FUNCTION;
+     assert_eq!(<Guard as KernelMarkerV1>::LOGICAL_NAME, crate::ROOTS_V2[0]);
+     assert_eq!(<Guard as KernelMarkerV1>::EXPORT_NAME, crate::ROOTS_V2[0]);
+@@ -381,14 +400,62 @@
+     assert!(!guard.contains("as_ptr"));
+     assert!(!guard.contains("unsafe"));
+     let macros = include_str!("guard.rs");
+-    for expected in [
+-        "$store!(state_guard, 548, lo, core::sync::atomic::Ordering::Relaxed);",
+-        "$store!(state_guard, 549, hi, core::sync::atomic::Ordering::Relaxed);",
+-        "$store!(state_guard, 551, 0, core::sync::atomic::Ordering::Relaxed);",
+-        "$store!(state_guard, 550, verdict, core::sync::atomic::Ordering::Release);",
+-    ] {
+-        assert!(macros.contains(expected));
+-    }
++    let publication = macros
++        .split("macro_rules! publish_combined_guard_v2 {")
++        .nth(1)
++        .unwrap()
++        .split("macro_rules! publish_guard_v1 {")
++        .next()
++        .unwrap();
++    let expected_stores = [
++        "state_guard,548,lo,core::sync::atomic::Ordering::Relaxed",
++        "state_guard,549,hi,core::sync::atomic::Ordering::Relaxed",
++        "state_guard,551,0,core::sync::atomic::Ordering::Relaxed",
++        "state_guard,550,verdict,core::sync::atomic::Ordering::Release",
++    ];
++    // This supplementary source assertion is not a Rust parser or a proof gate.
++    // Ignore rustfmt whitespace, but require the exact four literal calls in order.
++    let has_expected_stores = |source: &str| {
++        let compact = source.split_whitespace().collect::<String>();
++        let actual = compact
++            .split("$store!(")
++            .skip(1)
++            .map(|suffix| suffix.split_once(");").map(|(arguments, _)| arguments))
++            .collect::<Vec<_>>();
++        actual == expected_stores.into_iter().map(Some).collect::<Vec<_>>()
++    };
++    assert!(has_expected_stores(publication));
++
++    // One-line and rustfmt-style multiline spellings must compare identically.
++    let one_line = expected_stores
++        .iter()
++        .map(|arguments| format!("$store!({arguments});"))
++        .collect::<Vec<_>>()
++        .join("\n");
++    let multiline = one_line
++        .replace("!(", "!(\n    ")
++        .replace(',', ",\n    ")
++        .replace(");", "\n);");
++    assert!(has_expected_stores(&one_line));
++    assert!(has_expected_stores(&multiline));
++    assert!(!has_expected_stores(
++        &one_line.replacen(",548,", ",549,", 1)
++    ));
++    assert!(!has_expected_stores(
++        &one_line.replacen("Ordering::Release", "Ordering::Relaxed", 1)
++    ));
++    let wrong_order = [
++        expected_stores[0],
++        expected_stores[1],
++        expected_stores[3],
++        expected_stores[2],
++    ]
++    .map(|arguments| format!("$store!({arguments});"))
++    .join("\n");
++    assert!(!has_expected_stores(&wrong_order));
++    assert!(!has_expected_stores(&format!(
++        "{one_line}\n$store!(state_guard,0,lo,core::sync::atomic::Ordering::Relaxed);"
++    )));
+     assert_eq!(kernels.matches("pub fn ").count(), 2);
+     assert!(!kernels.contains("ferric_qwen3_mlp_state_guard_v1"));
+     assert!(!kernels.contains("ferric_qwen3_tp2_guarded_projection_residual_bf16_v1"));
+--- a/device/qwen3-tp-guarded-mlp-segment-kernels-v2/src/guard.rs
++++ b/device/qwen3-tp-guarded-mlp-segment-kernels-v2/src/guard.rs
+@@ -111,7 +111,12 @@
+         $store!(state_guard, 549, hi, core::sync::atomic::Ordering::Relaxed);
+         $store!(state_guard, 551, 0, core::sync::atomic::Ordering::Relaxed);
+         let verdict = if valid { 1_u32 } else { 2_u32 };
+-        $store!(state_guard, 550, verdict, core::sync::atomic::Ordering::Release);
++        $store!(
++            state_guard,
++            550,
++            verdict,
++            core::sync::atomic::Ordering::Release
++        );
+     }};
+ }
+ 

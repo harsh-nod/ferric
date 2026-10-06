@@ -3,6 +3,31 @@
 Status: **failed** on MI350. This is a host-side qualification of the
 experimental v2 kernel crate, not a GPU compile or execution result.
 
+## Latest Attempt
+
+[Attempt v2](attempt-v2/evidence/failed.json) fails while building the test
+binary. The formatting-independent assertion introduced unqualified `format!`
+and `String` uses without their explicit `std` imports in this `no_std` crate.
+The [raw Cargo diagnostics](attempt-v2/evidence/build-tests.stdout) contain
+three missing-macro errors and one `E0425` missing-type error. No tests run in
+this attempt. Five phases pass before `build-tests` exits naturally with
+status 101; all children are reaped, process groups are absent, sources remain
+unchanged and postchecks are clean.
+
+This failed retry does not supersede the first run with a passing result.
+The [v2 source proposal](../guarded-mlp-combined-state-v1/proposal-v2/source-manifest.json)
+is retained, not installed in the canonical device crate. Its production
+bodies match the first attempt's formatted sources. A two-import test repair
+and a fresh complete qualification are required.
+
+The second closed capsule contains 50 members, 49 content pins and 36 raw
+records. Its failed receipt is 111,015 bytes, SHA-256
+`4d70e61800b8f82ae609583f5de08424ad79f099aad18fd9d8e400c1e67c8f47`.
+Its archive is 2,201,568 bytes, SHA-256
+`4674ae17f5e15f4334b8200f5ec9cfac4da390d0a5a2bb78d88b7f7c48b0f100`.
+
+## First Attempt
+
 [Attempt v1](attempt-v1/evidence/failed.json) completed eight phases before
 the ninth phase, `lib-tests`, exited naturally with status 101. The raw
 [test output](attempt-v1/evidence/lib-tests.stdout) reports 38 passing tests,

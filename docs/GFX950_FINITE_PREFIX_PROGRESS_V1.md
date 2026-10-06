@@ -30,6 +30,11 @@ the old 548-word API unchanged. Its
 rustfmt. Host checking and test compilation pass; all children exit naturally
 with clean source and process postchecks. The failed receipt is preserved.
 A test repair and fresh CPU qualification precede guarded lowering and GPU work.
+The second attempt's test binary fails to build because the new assertion
+needs explicit `std` imports in the `no_std` crate; no tests run in that
+attempt. Both failures are retained. Separately,
+[25 combined-state lowering-controller fixtures pass](../qualification/guarded-mlp-combined-state-lowering-v1/README.md).
+They are synthetic admission tests, not a new kernel compile or GPU result.
 
 Previous completed compiler qualification: [bounded chain fusion passes on MI350](../qualification/guarded-mlp-ranked-cfg-linear-fusion-v1/README.md).
 All 44 phases and 31 test scopes pass: 1,323 compiler and 1,507 Pliron tests,

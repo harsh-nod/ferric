@@ -1,6 +1,6 @@
 # Combined State Candidate
 
-Status: experimental; [first CPU qualification failed](../guarded-mlp-combined-state-cpu-v1/README.md). The new
+Status: experimental; [both CPU qualification attempts failed](../guarded-mlp-combined-state-cpu-v1/README.md). The new
 [experimental v2 crate](../../device/qwen3-tp-guarded-mlp-segment-kernels-v2/README.md)
 is not connected to inference, and has not passed CPU qualification, guarded
 lowering or GPU execution. All issue #42 milestones remain open.
@@ -22,6 +22,12 @@ There are 39 authored tests: the 27 inherited tests plus 12 combined-state
 tests. The first actual run passes 38 and fails one formatting-sensitive
 source-shape assertion after rustfmt. All inherited tests pass. The failure
 is retained unchanged; the complete CPU qualification has not passed.
+
+The [second source proposal](proposal-v2/source-manifest.json) makes the
+supplementary store assertion formatting-independent, but its test build
+fails due to missing explicit `std` imports for `format!` and `String`. No
+tests run in the second attempt. This proposal is retained separately and
+has not replaced the canonical device crate.
 
 The [typed 2,208-byte owner and suffix-only peer-read capability](../guarded-mlp-combined-state-owner-v1/README.md)
 have a separately reviewed source proposal and 14 unexecuted focused tests.
