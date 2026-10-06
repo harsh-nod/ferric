@@ -150,12 +150,14 @@ bodies are not exported.
 ## Remaining Work
 
 The follow-on [retained Session checkpoint](../guarded-mlp-paired-reuse-v1/README.md)
-now compiles and passes CPU tests. Consecutive-generation GPU reuse remains a
-separate pending gate.
+compiles and passes CPU tests. Consecutive-generation GPU reuse is now covered
+by the [two-generation GPU reuse diagnostic](../guarded-mlp-paired-reuse-native-v1/README.md).
+The one-generation evidence above is unchanged; worker/model/performance gates
+remain open.
 
-Retain explicit paired quiescence authority across calls, test exact-next
-generation rearm and owner/payload reuse, and keep fresh signal arenas until
-their reuse protocol is separately qualified. Integrate Ferric's distinct
+Preserve paired quiescence, exact-next rearm and owner/payload reuse guarantees
+during multi-layer integration. Keep fresh signal arenas until their reuse
+protocol is separately qualified. Integrate Ferric's distinct
 completion path without its old duplicate R2 callback. Then qualify state
 banks and the complete BF16 Qwen workload before collecting equal-work vLLM
 comparisons, overlap plots and performance ablations.

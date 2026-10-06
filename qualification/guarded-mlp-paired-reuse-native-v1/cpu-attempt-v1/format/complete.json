@@ -1,0 +1,64 @@
+{
+  "archive": {
+    "bytes": 27630,
+    "sha256": "ed678c9ddcbf563c5d94e94507b6cbe2e751319fa11e53197f5e1d5ae8c0bdef"
+  },
+  "baseline_unchanged": true,
+  "compiler_executed": false,
+  "failure": null,
+  "gpu_execution": false,
+  "input_manifest": {
+    "bytes": 162217,
+    "sha256": "1266cc98515be374e8f800258477ca960e80de5d139f7e886e0651df60ba93a7"
+  },
+  "passed": true,
+  "phases": [
+    {
+      "adopted_reaped": [],
+      "argv": [
+        "/usr/bin/prlimit",
+        "--as=12884901888",
+        "--cpu=1200",
+        "--fsize=1073741824",
+        "--core=0",
+        "--",
+        "/home/harmenon/.rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/bin/rustfmt",
+        "--edition",
+        "2024",
+        "--config",
+        "skip_children=true",
+        "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-paired-reuse-native-cpu-v228-v1/fe2o3/crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_native_v1_tests.rs",
+        "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-paired-reuse-native-cpu-v228-v1/fe2o3/crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_reuse_native_v1_tests.rs"
+      ],
+      "command": {
+        "bytes": 1138,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-paired-reuse-native-cpu-v228-v1/format/rustfmt.command.json",
+        "sha256": "600e102434f9d6bee980034b010287ca381c494b31340eda993633924858d4e9"
+      },
+      "elapsed_ns": 100812513,
+      "exception": null,
+      "exit_code": 0,
+      "forced_cleanup": false,
+      "label": "rustfmt",
+      "natural_exit": true,
+      "observed_signals": [],
+      "pgid": 895485,
+      "pid": 895485,
+      "process_group_absent": true,
+      "reaped": true,
+      "stderr": {
+        "bytes": 0,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-paired-reuse-native-cpu-v228-v1/format/rustfmt.stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "stdout": {
+        "bytes": 0,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-paired-reuse-native-cpu-v228-v1/format/rustfmt.stdout",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "storage_failure": null,
+      "timed_out": false
+    }
+  ],
+  "postchecks_passed": true
+}

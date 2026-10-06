@@ -5,6 +5,10 @@ The prior [nonzero paired GPU diagnostic](../guarded-mlp-paired-native-v1/README
 passed one generation. This checkpoint adds retained custody for consecutive
 generations; it does **not** claim that GPU rearm/reuse has been tested.
 
+Follow-on evidence: [two consecutive GPU generations now pass](../guarded-mlp-paired-reuse-native-v1/README.md)
+with the same owners and payload allocations. The receipt in this directory
+remains the original CPU-only checkpoint.
+
 Issue #42 milestones and the single-request Qwen3-8B BF16, 2048-token prompt,
 256-token decode, 700 tokens/s target remain open.
 
@@ -92,10 +96,12 @@ The 1,178,322-byte receipt SHA-256 is
 
 ## Next Gates
 
-Run generation 1, rearm exactly to 2, double only Up weights, poison all writable
-payloads, and independently check both generations on MI350. Every final output
-must differ; generation 2 also includes expected positive-zero cancellations.
-Then integrate a distinct Ferric completion path without the old duplicate R2
+The follow-on GPU diagnostic completed the first gate: generation 1 -> rearm
+exactly to 2 -> double Up weights and poison writable payloads -> independent
+checks of both generations. Every final output changed, including the expected
+generation-2 positive-zero cancellations.
+
+Next integrate a distinct Ferric completion path without the old duplicate R2
 callback, qualify model state banks and full-model numerics, and measure the
 specified sustained workload against the equivalent vLLM baseline. No throughput,
 overlap, model acceptance or production-authority claim follows from this CPU run.

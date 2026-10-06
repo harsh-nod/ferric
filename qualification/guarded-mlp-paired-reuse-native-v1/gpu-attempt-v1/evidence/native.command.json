@@ -1,0 +1,34 @@
+{
+  "argv": [
+    "/usr/bin/prlimit",
+    "--as=68719476736",
+    "--cpu=300",
+    "--fsize=4194304",
+    "--core=0",
+    "--",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-paired-reuse-native-cpu-v228-v1/target/debug/deps/fe2o3_kfd-11448a9880d552d9",
+    "--ignored",
+    "--exact",
+    "engineering_gfx950::peer::combined_mlp_state_v1::tests::native::paired::reuse::native_paired_guarded_mlp_reuse_v1",
+    "--show-output",
+    "--test-threads=1"
+  ],
+  "cwd": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-paired-reuse-native-gpu-v228-v1",
+  "env": {
+    "FE2O3_ALLOW_UNAUTHENTICATED_MACHINE_CODE_V1": "1",
+    "FE2O3_NATIVE_PAIRED_MLP_REQUEST_SHA256": "cdd3cf6d17419a3d5b8a909f072dff30de4b7e33f2f641defd6037bbc9aa5faa",
+    "FE2O3_NATIVE_PAIRED_MLP_REQUEST_V1": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-paired-reuse-native-gpu-v228-v1/request.json",
+    "HOME": "/home/harmenon",
+    "LANG": "C",
+    "LC_ALL": "C",
+    "LD_LIBRARY_PATH": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-paired-reuse-native-cpu-v228-v1/target/debug/deps:/home/harmenon/.rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/lib",
+    "MALLOC_ARENA_MAX": "2",
+    "OMP_NUM_THREADS": "1",
+    "PATH": "/opt/rocm/bin:/usr/bin:/bin",
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "PYTHONNOUSERSITE": "1",
+    "RUST_BACKTRACE": "1",
+    "TMPDIR": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-paired-reuse-native-gpu-v228-v1/tmp"
+  },
+  "wall_timeout_seconds": 600
+}
