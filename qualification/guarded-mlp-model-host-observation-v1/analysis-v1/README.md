@@ -18,7 +18,19 @@ The paired segments contain 2,016 full-currentness checks per rank per forward.
 The first two full forward brackets are 12.808 and 12.870 seconds, versus
 15.253 and 15.384 seconds for the next two. Most of that change is within
 the other category, not the prefix, paired or hidden-read categories. This is
-an observation to investigate, not evidence of slower GPU arithmetic.
+not evidence of slower GPU arithmetic.
+
+Source inspection localizes the additional work to the pre-layer bank reuse
+path. The [bank ledger](../../../adapters/tp-peer-finite-engineering-worker-v1/src/state_roster/guarded_mlp_decode_v1.rs)
+uses two banks; forwards 2 and 3 rearm an already completed 36-layer bank.
+The retained runtime's reset path adds ten context fences per entry and one
+final bank fence. Conservative fences perform two full checks per rank,
+giving `36 * 10 * 2 + 2 = 722` additional full checks per rank. This matches
+the raw forward-begin to layer-zero-begin count increase exactly: rank 0
+goes from 46 to 768, rank 1 from 44 to 766. That interval rises from
+0.154-0.155 seconds to 2.572-2.597 seconds; the post-layer tail remains about
+0.170 seconds. The source accounting identifies validation associated with
+bank rearm, not queue rollover, and does not justify removing its checks.
 
 These are host diagnostics with setup, process gaps and nested counters.
 Neither these tables nor their reciprocal establish tokens/s, device overlap,
