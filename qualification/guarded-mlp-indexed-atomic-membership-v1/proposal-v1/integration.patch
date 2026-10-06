@@ -1,0 +1,353 @@
+--- a/crates/rustc-codegen-fe2o3/src/production_ranked_projection_v1/indexed_atomic_v1.rs
++++ b/crates/rustc-codegen-fe2o3/src/production_ranked_projection_v1/indexed_atomic_v1.rs
+@@ -53,8 +53,22 @@
+         &self,
+         local: SemanticLocalIdV1,
+     ) -> Result<bool, ProductionRankedProjectionErrorV1> {
+-        self.charge(self.indexed_locals.len())?;
+-        Ok(self.indexed_locals.contains(&local))
++        // Construction sorts and deduplicates this private inventory before any query.
++        let len = self.indexed_locals.len();
++        // Each unsuccessful comparison leaves at most half the current interval.
++        let comparisons = len.checked_ilog2().map_or(0, |power| power as usize + 1);
++        self.charge(comparisons)?;
++        let mut start = 0;
++        let mut end = len;
++        while start < end {
++            let middle = start + (end - start) / 2;
++            match self.indexed_locals[middle].index().cmp(&local.index()) {
++                std::cmp::Ordering::Less => start = middle + 1,
++                std::cmp::Ordering::Greater => end = middle,
++                std::cmp::Ordering::Equal => return Ok(true),
++            }
++        }
++        Ok(false)
+     }
+ 
+     fn atomic_only(&self, allocation: u64) -> Result<bool, ProductionRankedProjectionErrorV1> {
+--- a/crates/rustc-codegen-fe2o3/src/production_ranked_projection_v1/indexed_atomic_v1_tests.rs
++++ b/crates/rustc-codegen-fe2o3/src/production_ranked_projection_v1/indexed_atomic_v1_tests.rs
+@@ -1,5 +1,6 @@
+ // These private component fixtures do not mint source admission authority.
+ include!("indexed_atomic_dead_cast_v1_tests.rs");
++include!("indexed_atomic_membership_v1_tests.rs");
+ fn indexed_atomic_fixture_v1(
+     marker: bool,
+     escape: bool,
+@@ -759,7 +760,12 @@
+             )
+             .is_err()
+     );
+-    let last = MAX_PROJECTED_LOOP_GRAPH_WORK_V1 - inventory.indexed_locals.len();
++    let comparisons = inventory
++        .indexed_locals
++        .len()
++        .checked_ilog2()
++        .map_or(0, |power| power as usize + 1);
++    let last = MAX_PROJECTED_LOOP_GRAPH_WORK_V1 - comparisons;
+     inventory.work.set(last);
+     assert!(
+         inventory
+--- /dev/null
++++ b/crates/rustc-codegen-fe2o3/src/production_ranked_projection_v1/indexed_atomic_membership_v1_tests.rs
+@@ -0,0 +1,300 @@
++// Private inventory fixtures test lookup semantics, not kernel source authority.
++fn indexed_atomic_membership_fixture_v1(ids: &[u32]) -> AuthenticatedAtomicAllocationsV1 {
++    assert!(ids.windows(2).all(|pair| pair[0] <= pair[1]));
++    AuthenticatedAtomicAllocationsV1 {
++        indexed_locals: ids
++            .iter()
++            .copied()
++            .map(SemanticLocalIdV1::from_index)
++            .collect(),
++        ..Default::default()
++    }
++}
++
++fn indexed_atomic_membership_bound_for_test_v1(mut len: usize) -> usize {
++    let mut comparisons = 0;
++    while len != 0 {
++        comparisons += 1;
++        len /= 2;
++    }
++    comparisons
++}
++
++fn indexed_atomic_membership_query_for_test_v1(
++    inventory: &AuthenticatedAtomicAllocationsV1,
++    query: u32,
++) {
++    let local = SemanticLocalIdV1::from_index(query);
++    let expected = inventory.indexed_locals.contains(&local);
++    let before = inventory.work.get();
++    assert_eq!(inventory.contains_local(local).unwrap(), expected);
++    assert_eq!(
++        inventory.work.get() - before,
++        indexed_atomic_membership_bound_for_test_v1(inventory.indexed_locals.len())
++    );
++}
++
++#[test]
++fn indexed_atomic_membership_matches_all_small_sorted_sets() {
++    let mut queries = 0;
++    for mask in 0_u32..256 {
++        let ids = (0_u32..8)
++            .filter(|bit| mask & (1 << bit) != 0)
++            .map(|bit| bit * 2)
++            .collect::<Vec<_>>();
++        let inventory = indexed_atomic_membership_fixture_v1(&ids);
++        for query in (0_u32..=16).chain(std::iter::once(u32::MAX)) {
++            indexed_atomic_membership_query_for_test_v1(&inventory, query);
++            queries += 1;
++        }
++        assert_eq!(
++            inventory.work.get(),
++            18 * indexed_atomic_membership_bound_for_test_v1(ids.len())
++        );
++    }
++    assert_eq!(queries, 4608);
++}
++
++#[test]
++fn indexed_atomic_membership_handles_boundary_lengths() {
++    for len in [
++        0, 1, 2, 3, 4, 7, 8, 15, 16, 31, 32, 63, 64, 127, 128, 1023, 1024, 1656,
++        2047, 2048, 65536, MAX_PROJECTED_CAPABILITY_STATE_ENTRIES_V1,
++    ] {
++        let ids = (0..len).map(|index| (index * 2) as u32).collect::<Vec<_>>();
++        let inventory = indexed_atomic_membership_fixture_v1(&ids);
++        for query in [
++            0,
++            1,
++            len as u32,
++            (len * 2).saturating_sub(2) as u32,
++            (len * 2).saturating_sub(1) as u32,
++            (len * 2) as u32,
++            u32::MAX,
++        ] {
++            indexed_atomic_membership_query_for_test_v1(&inventory, query);
++        }
++        assert_eq!(
++            inventory.work.get(),
++            7 * indexed_atomic_membership_bound_for_test_v1(len)
++        );
++        assert_eq!(inventory.indexed_locals.len(), len);
++    }
++}
++
++#[test]
++fn indexed_atomic_membership_preserves_duplicate_and_extreme_ids() {
++    for ids in [
++        vec![0],
++        vec![u32::MAX],
++        vec![0, 0, 0],
++        vec![0, 0, 1, 1, u32::MAX - 1, u32::MAX, u32::MAX],
++        vec![u32::MAX - 2, u32::MAX - 1, u32::MAX],
++    ] {
++        let inventory = indexed_atomic_membership_fixture_v1(&ids);
++        for query in [0, 1, 2, u32::MAX / 2, u32::MAX - 2, u32::MAX - 1, u32::MAX] {
++            indexed_atomic_membership_query_for_test_v1(&inventory, query);
++        }
++        assert_eq!(
++            inventory
++                .indexed_locals
++                .iter()
++                .map(|local| local.index())
++                .collect::<Vec<_>>(),
++            ids
++        );
++    }
++}
++
++#[test]
++fn indexed_atomic_membership_charges_exact_bound_before_query() {
++    for ids in [vec![0], vec![0, 2, 4], (0..1656).map(|id| id * 2).collect()] {
++        let inventory = indexed_atomic_membership_fixture_v1(&ids);
++        let amount = indexed_atomic_membership_bound_for_test_v1(ids.len());
++        for query in [0, 1, u32::MAX] {
++            inventory.work.set(MAX_PROJECTED_LOOP_GRAPH_WORK_V1 - amount);
++            indexed_atomic_membership_query_for_test_v1(&inventory, query);
++            assert_eq!(inventory.work.get(), MAX_PROJECTED_LOOP_GRAPH_WORK_V1);
++            let error = inventory
++                .contains_local(SemanticLocalIdV1::from_index(query))
++                .unwrap_err();
++            assert!(matches!(
++                error,
++                ProductionRankedProjectionErrorV1::GraphWorkLimit(ref diagnostic)
++                    if diagnostic.reason == GraphWorkFailureV1::AboveLimit
++                        && diagnostic.before == MAX_PROJECTED_LOOP_GRAPH_WORK_V1
++                        && diagnostic.amount == amount
++                        && diagnostic.sum == Some(MAX_PROJECTED_LOOP_GRAPH_WORK_V1 + amount)
++            ));
++            assert_eq!(inventory.work.get(), MAX_PROJECTED_LOOP_GRAPH_WORK_V1);
++
++            let before = MAX_PROJECTED_LOOP_GRAPH_WORK_V1 - amount + 1;
++            inventory.work.set(before);
++            assert!(
++                inventory
++                    .contains_local(SemanticLocalIdV1::from_index(query))
++                    .is_err()
++            );
++            assert_eq!(inventory.work.get(), before);
++        }
++    }
++    let empty = indexed_atomic_membership_fixture_v1(&[]);
++    empty.work.set(MAX_PROJECTED_LOOP_GRAPH_WORK_V1);
++    assert!(
++        !empty
++            .contains_local(SemanticLocalIdV1::from_index(0))
++            .unwrap()
++    );
++    assert_eq!(empty.work.get(), MAX_PROJECTED_LOOP_GRAPH_WORK_V1);
++}
++
++#[test]
++fn indexed_atomic_membership_failed_charges_do_not_commit_work() {
++    for (ids, reason, amount, sum) in [
++        (vec![0], GraphWorkFailureV1::Overflow, 1, None),
++        (vec![0, 2, 4], GraphWorkFailureV1::Overflow, 2, None),
++        (vec![], GraphWorkFailureV1::AboveLimit, 0, Some(usize::MAX)),
++    ] {
++        let inventory = indexed_atomic_membership_fixture_v1(&ids);
++        inventory.work.set(usize::MAX);
++        let error = inventory
++            .contains_local(SemanticLocalIdV1::from_index(0))
++            .unwrap_err();
++        assert!(matches!(
++            error,
++            ProductionRankedProjectionErrorV1::GraphWorkLimit(ref diagnostic)
++                if diagnostic.reason == reason
++                    && diagnostic.before == usize::MAX
++                    && diagnostic.amount == amount
++                    && diagnostic.sum == sum
++        ));
++        assert_eq!(inventory.work.get(), usize::MAX);
++        assert_eq!(inventory.indexed_locals.len(), ids.len());
++    }
++}
++
++#[test]
++fn indexed_atomic_membership_bounds_repeated_measured_size_queries() {
++    let ids = (0_u32..1656).map(|id| id * 2).collect::<Vec<_>>();
++    let inventory = indexed_atomic_membership_fixture_v1(&ids);
++    assert_eq!(indexed_atomic_membership_bound_for_test_v1(ids.len()), 11);
++    for query in 0..4096 {
++        indexed_atomic_membership_query_for_test_v1(&inventory, query);
++    }
++    assert_eq!(inventory.work.get(), 45056);
++    assert!(1656 * 4096 > MAX_PROJECTED_LOOP_GRAPH_WORK_V1);
++    assert_eq!(inventory.indexed_locals.len(), 1656);
++    assert!(inventory.indexed_uses.is_empty());
++    assert!(inventory.indexed_borrows.is_empty());
++    assert!(inventory.coherent.is_empty());
++    assert!(inventory.atomic_only_roots.is_empty());
++}
++
++#[test]
++fn indexed_atomic_membership_keeps_independent_inventories() {
++    let first = indexed_atomic_membership_fixture_v1(&[0, 2, 4]);
++    let second = indexed_atomic_membership_fixture_v1(&[1, 3, 5, u32::MAX]);
++    let cloned = first.clone();
++    indexed_atomic_membership_query_for_test_v1(&first, 2);
++    assert_eq!(first.work.get(), 2);
++    assert_eq!(second.work.get(), 0);
++    assert_eq!(cloned.work.get(), 0);
++    for query in [0, 1, 2, 5, u32::MAX] {
++        indexed_atomic_membership_query_for_test_v1(&second, query);
++        indexed_atomic_membership_query_for_test_v1(&cloned, query);
++    }
++    assert_eq!(first.work.get(), 2);
++    assert_eq!(second.work.get(), 15);
++    assert_eq!(cloned.work.get(), 10);
++}
++
++#[test]
++fn indexed_atomic_membership_real_inventory_keeps_statement_binding() {
++    let (types, function) = indexed_atomic_fixture_v1(true, false);
++    let (checks, allocations) = indexed_atomic_inventory_fixture_v1(&types, &function);
++    let inventory =
++        authenticated_atomic_allocations_v1(&types, &function, &checks, &allocations).unwrap();
++    assert_eq!(inventory.indexed_uses.len(), 2);
++    assert!(
++        inventory
++            .indexed_locals
++            .windows(2)
++            .all(|pair| pair[0].index() < pair[1].index())
++    );
++    for query in (0..function.locals().len() as u32).chain(std::iter::once(u32::MAX)) {
++        indexed_atomic_membership_query_for_test_v1(&inventory, query);
++    }
++    assert!(
++        inventory
++            .contains_local(SemanticLocalIdV1::from_index(7))
++            .unwrap()
++    );
++    let usage = &inventory.indexed_uses[0];
++    inventory
++        .validate_statement(
++            usage.block,
++            usage.statement,
++            &function.blocks()[usage.block].statements()[usage.statement],
++        )
++        .unwrap();
++    assert!(
++        inventory
++            .validate_statement(
++                usage.block,
++                usage.statement,
++                &statement(SemanticStatementKindV1::Nop),
++            )
++            .is_err()
++    );
++}
++
++#[test]
++fn indexed_atomic_membership_preserves_guard_marker_and_escape_refusals() {
++    for (marker, escape) in [(false, false), (true, true)] {
++        let (types, function) = indexed_atomic_fixture_v1(marker, escape);
++        let (checks, allocations) = indexed_atomic_inventory_fixture_v1(&types, &function);
++        let inventory =
++            authenticated_atomic_allocations_v1(&types, &function, &checks, &allocations).unwrap();
++        assert!(inventory.indexed_uses.iter().all(|usage| usage.block != 1));
++        for query in 0..function.locals().len() as u32 {
++            indexed_atomic_membership_query_for_test_v1(&inventory, query);
++        }
++    }
++    let (types, function) = indexed_atomic_fixture_v1(true, false);
++    let (checks, allocations) = indexed_atomic_inventory_fixture_v1(&types, &function);
++    let missing = authenticated_atomic_allocations_v1(&types, &function, &[], &allocations).unwrap();
++    assert!(missing.indexed_uses.iter().all(|usage| usage.block != 1));
++    let mut duplicate = checks.clone();
++    duplicate.push(checks[0]);
++    assert!(
++        authenticated_atomic_allocations_v1(&types, &function, &duplicate, &allocations).is_err()
++    );
++
++    let mut statements = function.blocks()[1].statements().to_vec();
++    statements.push(statement(SemanticStatementKindV1::Assign(
++        SemanticAssignmentV1::new(
++            SemanticPlaceV1::new(
++                SemanticLocalIdV1::from_index(11),
++                vec![],
++                SemanticTypeIdV1::from_index(6),
++            )
++            .unwrap(),
++            SemanticRvalueV1::new(
++                SemanticTypeIdV1::from_index(6),
++                SemanticRvalueKindV1::Cast {
++                    kind: SemanticCastKindV1::Pointer,
++                    operand: SemanticOperandV1::Copy(
++                        SemanticPlaceV1::new(
++                            SemanticLocalIdV1::from_index(7),
++                            vec![],
++                            SemanticTypeIdV1::from_index(7),
++                        )
++                        .unwrap(),
++                    ),
++                },
++            ),
++        ),
++    )));
++    let escaped = indexed_atomic_replace_block_v1(&function, 1, statements);
++    assert!(authenticated_atomic_allocations_v1(&types, &escaped, &checks, &allocations).is_err());
++}
