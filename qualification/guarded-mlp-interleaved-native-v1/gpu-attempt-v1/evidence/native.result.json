@@ -1,0 +1,45 @@
+{
+  "adopted_reaped": [],
+  "argv": [
+    "/usr/bin/prlimit",
+    "--as=68719476736",
+    "--cpu=300",
+    "--fsize=4194304",
+    "--core=0",
+    "--",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-interleaved-native-cpu-v228-v1/target/debug/deps/fe2o3_kfd-11448a9880d552d9",
+    "--ignored",
+    "--exact",
+    "engineering_gfx950::peer::combined_mlp_state_v1::tests::native::paired::interleaved::native_paired_guarded_mlp_interleaved_v1",
+    "--show-output",
+    "--test-threads=1"
+  ],
+  "command": {
+    "bytes": 1671,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-interleaved-native-gpu-v228-v1/evidence/native.command.json",
+    "sha256": "4a2db32b02e5bd840748fc110c396811e9ca404632bc7880e02003119316ebbe"
+  },
+  "elapsed_ns": 2703015586,
+  "exception": null,
+  "exit_code": 101,
+  "forced_cleanup": false,
+  "label": "native",
+  "natural_exit": true,
+  "observed_signals": [],
+  "pgid": 1159814,
+  "pid": 1159814,
+  "process_group_absent": true,
+  "reaped": true,
+  "stderr": {
+    "bytes": 0,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-interleaved-native-gpu-v228-v1/evidence/native.stderr",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "stdout": {
+    "bytes": 1477,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-interleaved-native-gpu-v228-v1/evidence/native.stdout",
+    "sha256": "92b257065bd40833f7b11ee1461fddf53cd7d3f4b1ec3695a97b38e16c19fda6"
+  },
+  "storage_failure": null,
+  "timed_out": false
+}

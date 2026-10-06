@@ -1,0 +1,48 @@
+{
+  "adopted_reaped": [],
+  "argv": [
+    "/usr/bin/prlimit",
+    "--as=12884901888",
+    "--cpu=1200",
+    "--fsize=1073741824",
+    "--core=0",
+    "--",
+    "/home/harmenon/.rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/bin/cargo",
+    "check",
+    "--offline",
+    "--locked",
+    "--jobs",
+    "2",
+    "-p",
+    "fe2o3-kfd",
+    "--no-default-features"
+  ],
+  "command": {
+    "bytes": 2113,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-interleaved-native-cpu-v228-v1/evidence/default-check.command.json",
+    "sha256": "610440b5a4ecc4f5b4fb610d778c7d5f8238a700f26c7b6b0876bbecf23a83eb"
+  },
+  "elapsed_ns": 4313559664,
+  "exception": null,
+  "exit_code": 0,
+  "forced_cleanup": false,
+  "label": "default-check",
+  "natural_exit": true,
+  "observed_signals": [],
+  "pgid": 1115719,
+  "pid": 1115719,
+  "process_group_absent": true,
+  "reaped": true,
+  "stderr": {
+    "bytes": 2680,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-interleaved-native-cpu-v228-v1/evidence/default-check.stderr",
+    "sha256": "01d6dcd62aa1e320de5de2ba0782db21c47f53ff18c4e990dc4660ad635ec782"
+  },
+  "stdout": {
+    "bytes": 0,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-interleaved-native-cpu-v228-v1/evidence/default-check.stdout",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "storage_failure": null,
+  "timed_out": false
+}
