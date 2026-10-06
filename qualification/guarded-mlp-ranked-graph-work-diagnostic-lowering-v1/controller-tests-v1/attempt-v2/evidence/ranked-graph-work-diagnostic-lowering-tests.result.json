@@ -1,0 +1,44 @@
+{
+  "adopted_reaped": [],
+  "argv": [
+    "/usr/bin/prlimit",
+    "--as=12884901888",
+    "--cpu=1200",
+    "--fsize=1073741824",
+    "--core=0",
+    "--",
+    "/usr/bin/python3.12",
+    "-I",
+    "-S",
+    "-B",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-graph-work-diagnostic-lowering-tests-v228-v2/lowering_test_entry.py"
+  ],
+  "command": {
+    "bytes": 916,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-graph-work-diagnostic-lowering-tests-v228-v2/evidence/ranked-graph-work-diagnostic-lowering-tests.command.json",
+    "sha256": "bd8b943e927073417ceee8fc4d2ad39bd53855ee7eb639385130f82ab47598c9"
+  },
+  "elapsed_ns": 4350977057,
+  "exception": null,
+  "exit_code": 0,
+  "forced_cleanup": false,
+  "label": "ranked-graph-work-diagnostic-lowering-tests",
+  "natural_exit": true,
+  "observed_signals": [],
+  "pgid": 1992399,
+  "pid": 1992399,
+  "process_group_absent": true,
+  "reaped": true,
+  "stderr": {
+    "bytes": 2852,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-graph-work-diagnostic-lowering-tests-v228-v2/evidence/ranked-graph-work-diagnostic-lowering-tests.stderr",
+    "sha256": "0359d39def34866003481b43da378631c6db24bad081d97b532bc01782e6ea41"
+  },
+  "stdout": {
+    "bytes": 4028,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-graph-work-diagnostic-lowering-tests-v228-v2/evidence/ranked-graph-work-diagnostic-lowering-tests.stdout",
+    "sha256": "a508df75477ec0630550b69f144a00060e5c394f7fb96ae267f8b0682effd9c7"
+  },
+  "storage_failure": null,
+  "timed_out": false
+}

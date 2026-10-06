@@ -1,0 +1,66 @@
+{
+  "compiler_qualification": false,
+  "files": {
+    "audit_tools.py": {
+      "bytes": 65849,
+      "sha256": "2cef70f4fd52b4baa5502d69e430d0c4f1cf5f4d434ce83c652c92d0f30bcf40"
+    },
+    "evidence/complete.json": {
+      "bytes": 14158,
+      "sha256": "1e1fe34a3a6ea48452032e74bd2d12229cb5368caaecf36e986f6fabd4bfdaa5"
+    },
+    "evidence/ranked-graph-work-diagnostic-loader-tests.command.json": {
+      "bytes": 908,
+      "sha256": "386769d4e9c896090853d59b431dfcd319e72e6d5bebac038cadd0c5c6d92400"
+    },
+    "evidence/ranked-graph-work-diagnostic-loader-tests.result.json": {
+      "bytes": 1709,
+      "sha256": "ccad1bfebbe01a923fe79c2790b5227d6396d01deade7067fabe1b88d6f10446"
+    },
+    "evidence/ranked-graph-work-diagnostic-loader-tests.started.json": {
+      "bytes": 395,
+      "sha256": "379ef59442df8649e0341ddae6df42273c69422433b2a1b3fc5a1b24e0f8388e"
+    },
+    "evidence/ranked-graph-work-diagnostic-loader-tests.stderr": {
+      "bytes": 4182,
+      "sha256": "55247c37396bec7f995b7d39105999d6bac6dab01c44d98f113b0dfeb62f8aa9"
+    },
+    "evidence/ranked-graph-work-diagnostic-loader-tests.stdout": {
+      "bytes": 5698,
+      "sha256": "9ea67c36820ae93545721bb4cfdfea99f3698973a71bd84bc485dc560c834baf"
+    },
+    "evidence/sources-after.json": {
+      "bytes": 1488,
+      "sha256": "908988f9860b906467f4de0a55fbf70a333c630a6eb6ecaba651dd37335dad2e"
+    },
+    "evidence/sources-before.json": {
+      "bytes": 1488,
+      "sha256": "908988f9860b906467f4de0a55fbf70a333c630a6eb6ecaba651dd37335dad2e"
+    },
+    "input-manifest.json": {
+      "bytes": 1130,
+      "sha256": "bd6302f9dce9a910cd0581c67c42b1f0f5cce06b63a1a780883b35ecff705a6a"
+    },
+    "loader_test_entry.py": {
+      "bytes": 6578,
+      "sha256": "aab82386ee0fb59c950013df816e7ea07c6ef916c6cf870f4795ffc39edb7fe2"
+    },
+    "run_tests.py": {
+      "bytes": 14280,
+      "sha256": "1444cc11577f206acaff7f414513263c7d0c4ad573e41d2fe8339c3fe5c2c390"
+    },
+    "supervisor.py": {
+      "bytes": 41485,
+      "sha256": "8824478a6415dee39d28ccefb0881fc0687ac724f5a9c5a4540310fb5196b9bc"
+    },
+    "test_audit_tools.py": {
+      "bytes": 41772,
+      "sha256": "d46bd78e350cdbd044f5b8864a2b82fb108de80498294eef3e65e3497d5aa4ad"
+    }
+  },
+  "gpu_execution": false,
+  "passed": true,
+  "schema": "ferric-ranked-graph-work-diagnostic-loader-tests-retention-v1",
+  "synthetic_loader_only": true,
+  "tests_passed": 26
+}

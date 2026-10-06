@@ -1,0 +1,27 @@
+{
+  "audit_tools.py": {
+    "bytes": 65849,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-graph-work-diagnostic-loader-tests-v228-v2/audit_tools.py",
+    "sha256": "2cef70f4fd52b4baa5502d69e430d0c4f1cf5f4d434ce83c652c92d0f30bcf40"
+  },
+  "loader_test_entry.py": {
+    "bytes": 6578,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-graph-work-diagnostic-loader-tests-v228-v2/loader_test_entry.py",
+    "sha256": "aab82386ee0fb59c950013df816e7ea07c6ef916c6cf870f4795ffc39edb7fe2"
+  },
+  "run_tests.py": {
+    "bytes": 14280,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-graph-work-diagnostic-loader-tests-v228-v2/run_tests.py",
+    "sha256": "1444cc11577f206acaff7f414513263c7d0c4ad573e41d2fe8339c3fe5c2c390"
+  },
+  "supervisor.py": {
+    "bytes": 41485,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-graph-work-diagnostic-loader-tests-v228-v2/supervisor.py",
+    "sha256": "8824478a6415dee39d28ccefb0881fc0687ac724f5a9c5a4540310fb5196b9bc"
+  },
+  "test_audit_tools.py": {
+    "bytes": 41772,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-graph-work-diagnostic-loader-tests-v228-v2/test_audit_tools.py",
+    "sha256": "d46bd78e350cdbd044f5b8864a2b82fb108de80498294eef3e65e3497d5aa4ad"
+  }
+}

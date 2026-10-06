@@ -6,7 +6,14 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Latest: [the graph-work diagnostic build exposes one incorrect test expectation](../qualification/guarded-mlp-ranked-graph-work-diagnostic-v1/README.md).
+Latest: the diagnostic generation's [26 loader-controller tests](../qualification/guarded-mlp-ranked-graph-work-diagnostic-tool-audit-v1/README.md)
+and [19 lowering-controller tests](../qualification/guarded-mlp-ranked-graph-work-diagnostic-lowering-v1/README.md)
+pass on MI350. Both bounded children exited naturally and were reaped with
+unchanged sources and clean postchecks. These synthetic tests do not establish
+actual loader inspection or guarded HSACO/GPU execution. The corrected
+compiler's full qualification is still running; no milestone is closed.
+
+Previously, [the graph-work diagnostic build exposes one incorrect test expectation](../qualification/guarded-mlp-ranked-graph-work-diagnostic-v1/README.md).
 The MI350 compiler suite reports 1,265 passed, one failed and 24 ignored;
 Pliron passes 1,507 tests with one ignore. The failing fixture expects a
 graph-budget error on a path that first encounters the unchanged alias-budget

@@ -1,0 +1,240 @@
+{
+  "child_observation": {
+    "compiler_qualification": false,
+    "errors": 0,
+    "expected_failures": 0,
+    "failures": 0,
+    "gpu_execution": false,
+    "names": [
+      "test_lowering.AuditBindingTests.test_actual_previous_driver_generation_is_immutable",
+      "test_lowering.AuditBindingTests.test_capacity_limits_and_cohorts_cannot_drift",
+      "test_lowering.AuditBindingTests.test_deployed_body_must_match_final_not_earlier_product",
+      "test_lowering.AuditBindingTests.test_diagnostic_lineage_and_census_are_required",
+      "test_lowering.AuditBindingTests.test_driver_failure_controller_phase_or_full_suite_claim_refused",
+      "test_lowering.AuditBindingTests.test_driver_readset_or_final_body_drift_refused",
+      "test_lowering.AuditBindingTests.test_each_of_six_other_tools_stays_exact",
+      "test_lowering.AuditBindingTests.test_earlier_generation_cannot_supply_diagnostic_provenance",
+      "test_lowering.AuditBindingTests.test_failed_or_earlier_producer_refused",
+      "test_lowering.AuditBindingTests.test_loader_input_readset_drift_refused",
+      "test_lowering.AuditBindingTests.test_new_driver_replay_and_metadata_only_scope_are_required",
+      "test_lowering.AuditBindingTests.test_new_filepin_and_final_producer_join",
+      "test_lowering.AuditBindingTests.test_old_audit_schema_or_missing_producer_replay_refused",
+      "test_lowering.AuditBindingTests.test_pending_bindings_refuse_before_any_helper_or_effect",
+      "test_lowering.AuditBindingTests.test_unreviewed_loader_or_producer_controller_refused",
+      "test_normalization.NormalizationTests.test_command_selects_exact_profile_before_cargo_delimiter",
+      "test_normalization.NormalizationTests.test_output_accepts_exact_seven_field_options",
+      "test_normalization.NormalizationTests.test_output_refuses_flags_or_worker_policy_drift",
+      "test_normalization.NormalizationTests.test_output_refuses_old_missing_extra_or_minimal_options"
+    ],
+    "passed": true,
+    "passing_names": [
+      "test_lowering.AuditBindingTests.test_actual_previous_driver_generation_is_immutable",
+      "test_lowering.AuditBindingTests.test_capacity_limits_and_cohorts_cannot_drift",
+      "test_lowering.AuditBindingTests.test_deployed_body_must_match_final_not_earlier_product",
+      "test_lowering.AuditBindingTests.test_diagnostic_lineage_and_census_are_required",
+      "test_lowering.AuditBindingTests.test_driver_failure_controller_phase_or_full_suite_claim_refused",
+      "test_lowering.AuditBindingTests.test_driver_readset_or_final_body_drift_refused",
+      "test_lowering.AuditBindingTests.test_each_of_six_other_tools_stays_exact",
+      "test_lowering.AuditBindingTests.test_earlier_generation_cannot_supply_diagnostic_provenance",
+      "test_lowering.AuditBindingTests.test_failed_or_earlier_producer_refused",
+      "test_lowering.AuditBindingTests.test_loader_input_readset_drift_refused",
+      "test_lowering.AuditBindingTests.test_new_driver_replay_and_metadata_only_scope_are_required",
+      "test_lowering.AuditBindingTests.test_new_filepin_and_final_producer_join",
+      "test_lowering.AuditBindingTests.test_old_audit_schema_or_missing_producer_replay_refused",
+      "test_lowering.AuditBindingTests.test_pending_bindings_refuse_before_any_helper_or_effect",
+      "test_lowering.AuditBindingTests.test_unreviewed_loader_or_producer_controller_refused",
+      "test_normalization.NormalizationTests.test_command_selects_exact_profile_before_cargo_delimiter",
+      "test_normalization.NormalizationTests.test_output_accepts_exact_seven_field_options",
+      "test_normalization.NormalizationTests.test_output_refuses_flags_or_worker_policy_drift",
+      "test_normalization.NormalizationTests.test_output_refuses_old_missing_extra_or_minimal_options"
+    ],
+    "schema": "ferric-ranked-graph-work-diagnostic-lowering-tests-v1",
+    "skipped": 0,
+    "source_unchanged": true,
+    "sources": {
+      "lowering.py": {
+        "bytes": 46061,
+        "sha256": "774b5d40f19f973a26a675832fa86a8e44c0bca6dc02de13d70b1b71d1f8b087"
+      },
+      "test_lowering.py": {
+        "bytes": 23833,
+        "sha256": "fb4d9cdb8db99a50d29b842cff5532fc59ff80207d1faadeb6ef90c398c0a45a"
+      },
+      "test_normalization.py": {
+        "bytes": 6507,
+        "sha256": "6d4d91e24fa483e81d99ae1dd89a629eb3b7a17aaef94e8f46958123c292465f"
+      }
+    },
+    "synthetic_lowering_only": true,
+    "tests_run": 19,
+    "unexpected_successes": 0
+  },
+  "compiler_qualification": false,
+  "controller": {
+    "bytes": 13512,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-graph-work-diagnostic-lowering-tests-v228-v2/run_tests.py",
+    "sha256": "804111305ea3d7e2aa1bba5c7493c4d913d57eed1be280492c36c3750aa92fe3"
+  },
+  "elapsed_seconds": 4.386260238941759,
+  "failure": null,
+  "gpu_execution": false,
+  "input_manifest": {
+    "bytes": 1270,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-graph-work-diagnostic-lowering-tests-v228-v2/input-manifest.json",
+    "sha256": "463132eea0dc3cc017c6f921903df4947cfba053d2deea945f6a31590d316de6"
+  },
+  "limits": {
+    "address_space_bytes": 12884901888,
+    "affinity": [
+      8,
+      9
+    ],
+    "cleanup_reserve_seconds": 50,
+    "cpu_seconds_per_leaf": 1200,
+    "file_bytes": 1073741824,
+    "initial_free_bytes": 42949672960,
+    "leaf_seconds": 120,
+    "live_free_bytes": 40802189312,
+    "nice": 10,
+    "scratch_bytes": 6442450944,
+    "stream_bytes": 67108864,
+    "whole_seconds": 180
+  },
+  "passed": true,
+  "phases": [
+    {
+      "adopted_reaped": [],
+      "argv": [
+        "/usr/bin/prlimit",
+        "--as=12884901888",
+        "--cpu=1200",
+        "--fsize=1073741824",
+        "--core=0",
+        "--",
+        "/usr/bin/python3.12",
+        "-I",
+        "-S",
+        "-B",
+        "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-graph-work-diagnostic-lowering-tests-v228-v2/lowering_test_entry.py"
+      ],
+      "command": {
+        "bytes": 916,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-graph-work-diagnostic-lowering-tests-v228-v2/evidence/ranked-graph-work-diagnostic-lowering-tests.command.json",
+        "sha256": "bd8b943e927073417ceee8fc4d2ad39bd53855ee7eb639385130f82ab47598c9"
+      },
+      "elapsed_ns": 4350977057,
+      "exception": null,
+      "exit_code": 0,
+      "forced_cleanup": false,
+      "label": "ranked-graph-work-diagnostic-lowering-tests",
+      "natural_exit": true,
+      "observed_signals": [],
+      "pgid": 1992399,
+      "pid": 1992399,
+      "process_group_absent": true,
+      "reaped": true,
+      "stderr": {
+        "bytes": 2852,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-graph-work-diagnostic-lowering-tests-v228-v2/evidence/ranked-graph-work-diagnostic-lowering-tests.stderr",
+        "sha256": "0359d39def34866003481b43da378631c6db24bad081d97b532bc01782e6ea41"
+      },
+      "stdout": {
+        "bytes": 4028,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-graph-work-diagnostic-lowering-tests-v228-v2/evidence/ranked-graph-work-diagnostic-lowering-tests.stdout",
+        "sha256": "a508df75477ec0630550b69f144a00060e5c394f7fb96ae267f8b0682effd9c7"
+      },
+      "storage_failure": null,
+      "timed_out": false
+    }
+  ],
+  "postcheck_errors": [],
+  "raw": {
+    "ranked-graph-work-diagnostic-lowering-tests.command.json": {
+      "bytes": 916,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-graph-work-diagnostic-lowering-tests-v228-v2/evidence/ranked-graph-work-diagnostic-lowering-tests.command.json",
+      "sha256": "bd8b943e927073417ceee8fc4d2ad39bd53855ee7eb639385130f82ab47598c9"
+    },
+    "ranked-graph-work-diagnostic-lowering-tests.result.json": {
+      "bytes": 1726,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-graph-work-diagnostic-lowering-tests-v228-v2/evidence/ranked-graph-work-diagnostic-lowering-tests.result.json",
+      "sha256": "f1a7a3393b086bce6b552f87a37c2baa4d71d60917578e0bbf2539d282592167"
+    },
+    "ranked-graph-work-diagnostic-lowering-tests.started.json": {
+      "bytes": 399,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-graph-work-diagnostic-lowering-tests-v228-v2/evidence/ranked-graph-work-diagnostic-lowering-tests.started.json",
+      "sha256": "0f482e00eca9e8f209473bc8d005ee2f5746b28e6d7179293a11bc352a1737d0"
+    },
+    "ranked-graph-work-diagnostic-lowering-tests.stderr": {
+      "bytes": 2852,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-graph-work-diagnostic-lowering-tests-v228-v2/evidence/ranked-graph-work-diagnostic-lowering-tests.stderr",
+      "sha256": "0359d39def34866003481b43da378631c6db24bad081d97b532bc01782e6ea41"
+    },
+    "ranked-graph-work-diagnostic-lowering-tests.stdout": {
+      "bytes": 4028,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-graph-work-diagnostic-lowering-tests-v228-v2/evidence/ranked-graph-work-diagnostic-lowering-tests.stdout",
+      "sha256": "a508df75477ec0630550b69f144a00060e5c394f7fb96ae267f8b0682effd9c7"
+    },
+    "sources-after.json": {
+      "bytes": 1799,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-graph-work-diagnostic-lowering-tests-v228-v2/evidence/sources-after.json",
+      "sha256": "2158a0e8c3a18dcf0ad48aa2ec6282f61ac1672231e796165e9f34585adb47f2"
+    },
+    "sources-before.json": {
+      "bytes": 1799,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-graph-work-diagnostic-lowering-tests-v228-v2/evidence/sources-before.json",
+      "sha256": "2158a0e8c3a18dcf0ad48aa2ec6282f61ac1672231e796165e9f34585adb47f2"
+    }
+  },
+  "schema": "ferric-ranked-graph-work-diagnostic-lowering-test-cpu-v1",
+  "source_inputs": {
+    "lowering.py": {
+      "bytes": 46061,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-graph-work-diagnostic-lowering-tests-v228-v2/lowering.py",
+      "sha256": "774b5d40f19f973a26a675832fa86a8e44c0bca6dc02de13d70b1b71d1f8b087"
+    },
+    "lowering_test_entry.py": {
+      "bytes": 5883,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-graph-work-diagnostic-lowering-tests-v228-v2/lowering_test_entry.py",
+      "sha256": "b07ff74fb3051fc2a301c20019f070748e40f30413762a6f908c0e386488f893"
+    },
+    "run_tests.py": {
+      "bytes": 13512,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-graph-work-diagnostic-lowering-tests-v228-v2/run_tests.py",
+      "sha256": "804111305ea3d7e2aa1bba5c7493c4d913d57eed1be280492c36c3750aa92fe3"
+    },
+    "supervisor.py": {
+      "bytes": 41485,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-graph-work-diagnostic-lowering-tests-v228-v2/supervisor.py",
+      "sha256": "8824478a6415dee39d28ccefb0881fc0687ac724f5a9c5a4540310fb5196b9bc"
+    },
+    "test_lowering.py": {
+      "bytes": 23833,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-graph-work-diagnostic-lowering-tests-v228-v2/test_lowering.py",
+      "sha256": "fb4d9cdb8db99a50d29b842cff5532fc59ff80207d1faadeb6ef90c398c0a45a"
+    },
+    "test_normalization.py": {
+      "bytes": 6507,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-graph-work-diagnostic-lowering-tests-v228-v2/test_normalization.py",
+      "sha256": "6d4d91e24fa483e81d99ae1dd89a629eb3b7a17aaef94e8f46958123c292465f"
+    }
+  },
+  "source_unchanged": true,
+  "supervisor": {
+    "bytes": 41485,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-graph-work-diagnostic-lowering-tests-v228-v2/supervisor.py",
+    "sha256": "8824478a6415dee39d28ccefb0881fc0687ac724f5a9c5a4540310fb5196b9bc"
+  },
+  "synthetic_lowering_only": true,
+  "tool_pins": {
+    "prlimit": {
+      "bytes": 27536,
+      "path": "/usr/bin/prlimit",
+      "sha256": "17064f67e650d6152a6902b013aab496b54c87587c8eea6f5023aafee6154069"
+    },
+    "python": {
+      "bytes": 8020928,
+      "path": "/usr/bin/python3.12",
+      "sha256": "e1efa562c2cc2e35521a5c9c9b9939921001ff8ca9708a13ef15ace68cc2ccd7"
+    }
+  }
+}

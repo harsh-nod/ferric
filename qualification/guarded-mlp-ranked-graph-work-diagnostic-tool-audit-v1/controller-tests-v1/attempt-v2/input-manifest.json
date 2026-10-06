@@ -1,0 +1,37 @@
+{
+  "files": {
+    "audit_tools.py": {
+      "bytes": 65849,
+      "sha256": "2cef70f4fd52b4baa5502d69e430d0c4f1cf5f4d434ce83c652c92d0f30bcf40"
+    },
+    "loader_test_entry.py": {
+      "bytes": 6578,
+      "sha256": "aab82386ee0fb59c950013df816e7ea07c6ef916c6cf870f4795ffc39edb7fe2"
+    },
+    "run_tests.py": {
+      "bytes": 14280,
+      "sha256": "1444cc11577f206acaff7f414513263c7d0c4ad573e41d2fe8339c3fe5c2c390"
+    },
+    "supervisor.py": {
+      "bytes": 41485,
+      "sha256": "8824478a6415dee39d28ccefb0881fc0687ac724f5a9c5a4540310fb5196b9bc"
+    },
+    "test_audit_tools.py": {
+      "bytes": 41772,
+      "sha256": "d46bd78e350cdbd044f5b8864a2b82fb108de80498294eef3e65e3497d5aa4ad"
+    }
+  },
+  "schema": "ferric-ranked-graph-work-diagnostic-loader-test-input-v1",
+  "tool_pins": {
+    "prlimit": {
+      "bytes": 27536,
+      "path": "/usr/bin/prlimit",
+      "sha256": "17064f67e650d6152a6902b013aab496b54c87587c8eea6f5023aafee6154069"
+    },
+    "python": {
+      "bytes": 8020928,
+      "path": "/usr/bin/python3.12",
+      "sha256": "e1efa562c2cc2e35521a5c9c9b9939921001ff8ca9708a13ef15ace68cc2ccd7"
+    }
+  }
+}
