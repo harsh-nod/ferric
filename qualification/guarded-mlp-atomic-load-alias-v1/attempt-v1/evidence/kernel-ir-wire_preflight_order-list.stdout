@@ -1,0 +1,3 @@
+metered_function_role_validation_keeps_exact_admission_boundary: test
+metered_module_function_count_limit_precedes_invalid_function_role: test
+metered_module_id_limit_precedes_invalid_function_role: test

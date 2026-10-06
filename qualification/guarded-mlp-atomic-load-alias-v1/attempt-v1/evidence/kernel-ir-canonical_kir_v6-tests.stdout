@@ -1,0 +1,13 @@
+
+running 8 tests
+test checked_i128_v6_wire_and_authoritative_identity_are_frozen ... ok
+test exact_v6_bytes_reject_noncanonical_truncation_trailing_and_unknown_versions ... ok
+test exact_v6_owner_covers_all_checked_integer_types_and_operators ... ok
+test exact_v6_owner_enforces_wire_and_in_memory_module_limits ... ok
+test exact_v6_owner_is_deterministic_revalidates_and_consumes_bytes ... ok
+test exact_v6_owner_rejects_every_v1_through_v5_encoding ... ok
+test exact_v6_owner_rejects_semantically_invalid_modules_and_bytes ... ok
+test exact_v6_owner_is_panic_total_and_identity_sensitive_under_mutation ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+

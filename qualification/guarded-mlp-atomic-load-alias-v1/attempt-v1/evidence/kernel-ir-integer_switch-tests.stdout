@@ -1,0 +1,17 @@
+
+running 12 tests
+test encoder_and_decoder_reject_noncanonical_case_order ... ok
+test enforces_integer_switch_resource_bounds_before_allocation ... ok
+test latest_decoder_preserves_the_legacy_v1_switch ... ok
+test rejects_truncation_trailing_bytes_and_unknown_tags ... ok
+test reports_operands_and_successors_in_canonical_edge_order ... ok
+test v1_decoder_rejects_a_forged_v2_integer_switch_tag ... ok
+test golden_fixture_is_canonical_v2 ... ok
+test v2_golden_roundtrip_is_deterministic_and_v1_remains_unsupported ... ok
+test verifier_checks_every_case_and_default_edge ... ok
+test verifier_rejects_duplicate_and_unsorted_cases_deterministically ... ok
+test verifies_a_typed_sorted_integer_switch ... ok
+test verifier_rejects_noninteger_and_mismatched_case_types ... ok
+
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

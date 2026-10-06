@@ -1,0 +1,12 @@
+
+running 7 tests
+test exact_diagnostic_contracts_verify_and_derive_capability ... ok
+test frozen_gfx942_diagnostic_declarations_remain_verifiable ... ok
+test frozen_wire_preserves_assert_fail_terminal_contract ... ok
+test frozen_wire_round_trips_canonical_diagnostic_calls ... ok
+test legacy_diagnostic_alias_rejects_mixed_or_lookalike_declarations ... ok
+test reserved_diagnostic_calls_reject_arity_type_and_declaration_mutation ... ok
+test terminating_diagnostics_reject_fallthrough_and_nonterminal_placement ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

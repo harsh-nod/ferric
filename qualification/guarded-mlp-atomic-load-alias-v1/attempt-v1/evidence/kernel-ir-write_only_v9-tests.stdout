@@ -1,0 +1,10 @@
+
+running 5 tests
+test frozen_v8_decoder_rejects_guarded_store_operation_tag_twenty_five ... ok
+test frozen_v8_decoder_rejects_write_only_access_tag_three ... ok
+test guarded_store_is_additive_v9_and_roundtrips_canonically ... ok
+test guarded_store_verifier_rejects_each_malformed_operand_and_result_shape ... ok
+test write_only_nested_type_is_additive_v9_even_without_a_store ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

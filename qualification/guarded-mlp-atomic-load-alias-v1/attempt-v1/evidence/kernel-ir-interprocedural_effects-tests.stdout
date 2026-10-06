@@ -1,0 +1,9 @@
+
+running 4 tests
+test acyclic_pure_helper_chain_is_complete ... ok
+test external_declaration_never_self_certifies_a_summary ... ok
+test memory_effect_mutation_propagates_to_every_caller ... ok
+test recursive_call_graph_is_explicitly_incomplete ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

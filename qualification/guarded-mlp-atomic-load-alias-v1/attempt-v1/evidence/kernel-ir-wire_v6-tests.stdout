@@ -1,0 +1,10 @@
+
+running 5 tests
+test hostile_operator_version_and_result_mutations_fail_closed ... ok
+test v6_encoder_checks_operation_result_bounds_before_publication ... ok
+test v6_is_additive_and_frozen_v5_rejects_checked_arithmetic ... ok
+test v6_is_deterministic_canonical_and_retains_every_checked_operator ... ok
+test v6_decoder_is_bounded_exact_and_panic_total_under_mutation ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

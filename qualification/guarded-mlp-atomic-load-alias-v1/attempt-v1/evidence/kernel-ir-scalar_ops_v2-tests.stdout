@@ -1,0 +1,25 @@
+
+running 20 tests
+test bitwise_compare_and_unary_contracts_are_typed ... ok
+test bool_char_and_float_cast_boundaries_follow_rust ... ok
+test boundary_table_roundtrips_all_widths_and_cast_families ... ok
+test canonical_encoding_is_frozen_and_is_the_identity ... ok
+test cast_matrix_enforces_width_validity_and_provenance ... ok
+test division_remainder_exception_table_covers_all_widths ... ok
+test every_width_signedness_operation_and_mode_has_distinct_identity ... ok
+test exceptional_mode_table_is_explicit ... ok
+test exhaustive_u8_arithmetic_matches_rust_reference ... ok
+test float_arithmetic_comparisons_and_nan_are_capability_gated ... ok
+test float_cast_thresholds_and_random_campaign_match_rust_as ... ok
+test float_comparison_policies_define_nan_and_result_surfaces ... ok
+test malformed_encoding_is_bounded_fail_closed_and_never_panics ... ok
+test public_carrier_is_canonical_bounded_and_multi_result_aware ... ok
+test exhaustive_i8_arithmetic_matches_rust_reference ... ok
+test reserved_carrier_identity_rejects_malformed_and_provenance_operations ... ok
+test reserved_unknown_and_semantically_invalid_encodings_are_distinct ... ok
+test shifts_preserve_rhs_type_and_full_value ... ok
+test v3_shift_and_float_comparison_encodings_are_frozen ... ok
+test randomized_shift_oracle_covers_all_rhs_widths ... ok
+
+test result: ok. 20 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.10s
+

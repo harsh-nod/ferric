@@ -1,0 +1,28 @@
+
+running 23 tests
+test byte_scaling_is_checked_and_zst_copy_is_zero_bytes ... ok
+test canonical_result_constraints_ignore_malformed_declared_types ... ok
+test existing_launch_intrinsic_exposes_a_full_target_neutral_contract ... ok
+test full_instance_identity_separates_every_launch_payload ... ok
+test instance_codec_has_canonical_payload_bytes ... ok
+test instance_decoder_rejects_unknown_and_malformed_payloads ... ok
+test memory_instance_byte_vectors_are_frozen_independently ... ok
+test memory_instance_decoder_rejects_noncanonical_element_layout_pairs ... ok
+test memory_instance_decoder_rejects_obligation_mutations ... ok
+test memory_instance_identity_binds_layout_address_space_and_preconditions ... ok
+test operation_operands_are_extracted_independently_of_the_contract ... ok
+test pointer_distance_identity_binds_the_equal_address_disjunction ... ok
+test pointer_distance_verifier_checks_layout_zst_contract_and_address_space ... ok
+test schema_codec_is_fixed_width_and_explicitly_payload_blind ... ok
+test schema_decoder_rejects_malformed_encodings ... ok
+test schema_decoder_rejects_unknown_dispatch_authority ... ok
+test semantic_decoders_never_panic_on_bounded_noise ... ok
+test semantic_memory_reads_reject_write_only_while_stores_accept_it ... ok
+test volatile_and_copy_contracts_retain_effects_and_overlap_obligation ... ok
+test volatile_origins_are_distinct_and_access_obligations_fail_closed ... ok
+test volatile_zst_is_an_aligned_no_access_profile ... ok
+test wide_memory_elements_use_additive_v2_identity ... ok
+test zst_copy_keeps_alignment_and_conditional_range_contracts ... ok
+
+test result: ok. 23 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

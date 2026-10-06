@@ -1,0 +1,34 @@
+
+running 29 tests
+test alignment_region_and_lds_bounds_are_exact ... ok
+test barriers_fences_and_participation_contracts_reject_divergence ... ok
+test canonical_ids_and_exact_lds_capacity_are_enforced ... ok
+test codec_rejects_every_truncation_count_bombs_and_noncanonical_fields ... ok
+test collective_shuffle_ballot_and_cooperative_group_matrix_is_explicit ... ok
+test compare_exchange_edges_require_outcome_and_read_from_preconditions ... ok
+test edge_kind_scope_domain_and_ordering_checks_are_exhaustive ... ok
+test empty_codec_golden_is_versioned_and_canonical ... ok
+test exhaustive_compare_exchange_success_failure_matrix_matches_rust ... ok
+test every_operation_dialect_and_type_matches_independent_platform_matrix ... ok
+test exhaustive_scope_address_space_cross_product_is_fail_closed ... ok
+test exhaustive_load_store_and_rmw_ordering_matrix_matches_reference ... ok
+test full_schema_round_trips_and_reports_only_dynamic_obligations ... ok
+test gfx942_hard_limits_cannot_be_widened_by_policy ... ok
+test lds_layout_accounts_for_padding_and_binds_effective_alignment ... ok
+test one_hundred_thousand_semantic_cases_match_independent_oracle ... ok
+test overlapping_atomics_must_name_the_same_exact_object ... ok
+test report_identity_binds_module_target_limits_and_obligation_set ... ok
+test resource_limits_preflight_before_quadratic_or_allocating_work ... ok
+test review_counterexamples_are_repaired_incrementally ... ok
+test schema_is_inert_and_makes_no_race_or_lowering_claim ... ok
+test synchronization_endpoint_witness_matrix_is_exhaustive ... ok
+test synchronization_witnesses_bind_endpoints_participants_and_operations ... ok
+test system_atomics_require_an_authenticated_coherence_obligation ... ok
+test one_hundred_twenty_thousand_repair_cases_match_independent_oracle ... ok
+test two_hundred_fifty_thousand_hostile_decodes_are_bounded_and_panic_free ... ok
+test unauthenticated_global_allocation_ids_never_establish_disjointness ... ok
+test unknown_invocation_pairs_use_conservative_address_space_scope ... ok
+test two_hundred_thousand_review_repairs_match_independent_oracles ... ok
+
+test result: ok. 29 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.68s
+

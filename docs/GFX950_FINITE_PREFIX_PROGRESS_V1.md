@@ -6,7 +6,19 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Current work: [the bounded memory-bounds DAG solver passes MI350 CPU qualification](../qualification/guarded-mlp-memory-bounds-dag-v1/README.md).
+Current work: [the atomic-load alias refinement passes MI350 CPU qualification](../qualification/guarded-mlp-atomic-load-alias-v1/README.md).
+All 176 phases and 77 scopes pass: 839 kernel-IR, 1,323 compiler and 1,516
+Pliron executions, plus 162 focused repeats and extraction controls, total
+3,840 passes and 26 ignores. The nine new alias tests and two existing
+descriptor rejection controls pass. Sources, dependencies, artifacts and
+process postchecks are clean. This is an explicit semantic alias-admission
+refinement: atomic loads are not writers, while stores and read-modify-write
+operations still require separation. Atomic identity, receipt encoding,
+bounds/race and descriptor ownership checks remain unchanged. Fresh binary
+auditing and actual guarded lowering with these products are still pending.
+No GPU, model-numerical or performance acceptance follows from the CPU run.
+
+Previous compiler qualification: [the bounded memory-bounds DAG solver passes MI350 CPU qualification](../qualification/guarded-mlp-memory-bounds-dag-v1/README.md).
 All 45 phases and 32 scopes pass: 1,323 compiler and 1,516 Pliron tests,
 with focused repeats and extraction controls totaling 2,990 passing executions
 and 25 unchanged ignores. The nine new tests pass full and focused suites.
@@ -20,7 +32,7 @@ origins are unavailable. This is a missing-proof refusal, not an observed GPU
 race. No guarded HSACO or GPU acceptance is established. Existing admitted inputs keep their
 exact old bound and solver;
 the new route requires a runtime-validated DAG and zero ownership contracts.
-No work limit, access predicate or atomic ordering is relaxed.
+That generation changed no work limit, access predicate or atomic ordering.
 
 The [combined-state candidate passes MI350 CPU qualification](../qualification/guarded-mlp-combined-state-cpu-v1/README.md):
 all ten phases and 39 tests pass, with clean source, dependency and process
@@ -33,6 +45,9 @@ The owner remains isolated from the canonical runtime and inference path.
 Guarded gfx950 compilation and GPU execution remain unqualified. Separately,
 [25 combined-state lowering-controller fixtures pass](../qualification/guarded-mlp-combined-state-lowering-v1/README.md).
 They are synthetic admission tests, not a new kernel compile or GPU result.
+The [offline vendor preparation also passes](../qualification/guarded-mlp-combined-state-vendor-v1/README.md).
+The subsequent real combined-state compile failed at descriptor admission,
+as recorded below; a passing candidate CPU suite is not successful lowering.
 
 Previous completed compiler qualification: [bounded chain fusion passes on MI350](../qualification/guarded-mlp-ranked-cfg-linear-fusion-v1/README.md).
 All 44 phases and 31 test scopes pass: 1,323 compiler and 1,507 Pliron tests,
@@ -42,11 +57,19 @@ The [parser correction passes 17 separate MI350 checks](../qualification/guarded
 V3 controller fixtures pass 26 loader and 19 lowering tests. Both earlier failed
 CPU attempts remain retained unchanged. All
 [14 fresh binary-loader checks pass](../qualification/guarded-mlp-ranked-cfg-linear-fusion-tool-audit-v1/README.md),
-and the fresh guarded compile now reports a memory-bounds preflight refusal.
+and the fresh guarded compile reported a memory-bounds preflight refusal.
 No guarded HSACO, GPU, model or performance acceptance is established by this
 compiler qualification.
 
-Latest guarded lowering: the DAG-qualified compiler exits naturally with
+Latest retained guarded lowering: [the combined-state attempt](../qualification/guarded-mlp-combined-state-lowering-v1/README.md)
+exits naturally with status 1 after 363.190239 seconds (366.924882 seconds
+for the whole controller). It reports an internal formal-alias obligation
+not discharged by Rust ownership at descriptor construction. Raw output
+identifies no root, caller or parameter pair. Source/input and process
+postchecks are clean; no artifact is produced. The newly CPU-qualified alias
+refinement has not yet been used in a retained guarded lowering attempt.
+
+Earlier guarded lowering: the DAG-qualified compiler exits naturally with
 status 1 after 132.322763 seconds at `FE2O3-RACE-002`, with clean source/input
 and process postchecks. The rendered guard graph is byte-identical to the
 prior memory-bounds refusal: 567 blocks, 1,122 edges, 2,240 operations and 552
@@ -63,7 +86,7 @@ are preserved. The child exits naturally with status 1 after 127.021051 seconds
 and is reaped, with 214 unchanged input pins, unchanged sources and clean
 postchecks. No HSACO is produced.
 
-The new refusal is a static upper-bound estimate, not runtime-counter
+That earlier memory-bounds refusal is a static upper-bound estimate, not runtime-counter
 exhaustion. One intersection-work term alone is 9,340,170, above the unchanged
 8,388,608 cap. The graph is a DAG with 552 distinct bounds facts. The CPU-qualified
 candidate is an authenticated topological schedule with matching one-pass
@@ -95,8 +118,8 @@ blocks against the unchanged 2,048 limit; its declared semantic body has
 seconds, is reaped and leaves no process group. Sources and postchecks are
 clean; no HSACO is produced. This attribution comes from pinned raw stderr,
 not the controller's unchanged predeclared diagnostic-identification flags.
-The next investigation is compacting generated trapping-control blocks,
-preserving every bounds check and atomic effect, not raising the limit.
+The subsequent compaction work targeted generated trapping-control blocks,
+preserving every bounds check and atomic effect without raising that limit.
 
 The [bounded projected-CFG diagnostic passes full MI350 qualification](../qualification/guarded-mlp-ranked-cfg-expansion-diagnostic-v1/README.md).
 All 42 phases pass across 29 scopes: 1,305 compiler and 1,507 Pliron tests,

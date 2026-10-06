@@ -1,0 +1,42 @@
+{
+  "adopted_reaped": [],
+  "argv": [
+    "/usr/bin/prlimit",
+    "--as=12884901888",
+    "--cpu=1200",
+    "--fsize=1073741824",
+    "--core=0",
+    "--",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-atomic-load-alias-cpu-v228-v1/target/debug/deps/fe2o3_pliron-bfbb58262805e3df",
+    "--list",
+    "--format=terse"
+  ],
+  "command": {
+    "bytes": 2286,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-atomic-load-alias-cpu-v228-v1/evidence/pliron-lib-list.command.json",
+    "sha256": "78aba4ff44a5b67fa6bdccc5b5f6549ef04ca9755c08967032f666223f23fa5c"
+  },
+  "elapsed_ns": 114455481,
+  "exception": null,
+  "exit_code": 0,
+  "forced_cleanup": false,
+  "label": "pliron-lib-list",
+  "natural_exit": true,
+  "observed_signals": [],
+  "pgid": 96136,
+  "pid": 96136,
+  "process_group_absent": true,
+  "reaped": true,
+  "stderr": {
+    "bytes": 0,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-atomic-load-alias-cpu-v228-v1/evidence/pliron-lib-list.stderr",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "stdout": {
+    "bytes": 189409,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-atomic-load-alias-cpu-v228-v1/evidence/pliron-lib-list.stdout",
+    "sha256": "ff4e6d28471e00e4da53a961804903c140516b267069c2b28434fc3f24db15c1"
+  },
+  "storage_failure": null,
+  "timed_out": false
+}

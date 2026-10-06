@@ -1,0 +1,14 @@
+
+running 9 tests
+test atomic_load_alias_bounds_conflicts_and_receipt_kind_are_preserved ... ok
+test atomic_load_alias_every_atomic_writer_retains_alias_requirements ... ok
+test atomic_load_alias_load_only_allocations_have_no_alias_requirements ... ok
+test atomic_load_alias_malformed_atomics_and_unknown_extents_fail_closed ... ok
+test atomic_load_alias_ordinary_ranges_and_empty_accesses_are_unchanged ... ok
+test atomic_load_alias_r2_readers_only_require_output_separation ... ok
+test atomic_load_alias_opcode_and_metadata_remain_separate_from_receipt_authority ... ok
+test atomic_load_alias_unreachable_writers_do_not_pollute_readers ... ok
+test atomic_load_alias_writes_dominate_loads_in_both_orders ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

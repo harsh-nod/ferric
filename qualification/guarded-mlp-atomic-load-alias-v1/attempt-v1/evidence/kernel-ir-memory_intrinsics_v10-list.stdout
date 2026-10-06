@@ -1,0 +1,3 @@
+memory_intrinsics_are_additive_v10_and_round_trip_exactly: test
+v10_reader_preserves_older_canonical_modules: test
+v10_reader_rejects_mutated_or_oversized_semantic_instances: test

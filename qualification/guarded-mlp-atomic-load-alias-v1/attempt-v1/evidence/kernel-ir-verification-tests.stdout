@@ -1,0 +1,18 @@
+
+running 13 tests
+test accepts_mixed_width_integer_shift_operands ... ok
+test diagnostics_are_deterministic_and_sorted ... ok
+test function_roles_are_explicit_and_conflicts_fail_closed ... ok
+test rejects_declared_capabilities_unsupported_by_the_target ... ok
+test rejects_invalid_branch_targets_and_malformed_terminators ... ok
+test rejects_malformed_intrinsic_types_dimensions_and_arity ... ok
+test rejects_non_integer_shift_rhs ... ok
+test rejects_obviously_invalid_barrier_and_atomic_metadata ... ok
+test rejects_out_of_domain_intrinsics_in_recursive_kernel_helpers ... ok
+test rejects_type_invalid_memory_operations ... ok
+test rejects_undefined_and_non_dominating_ssa_uses ... ok
+test verifies_a_typed_ssa_kernel ... ok
+test verifies_typed_1d_intrinsics_and_derives_baseline_metadata ... ok
+
+test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

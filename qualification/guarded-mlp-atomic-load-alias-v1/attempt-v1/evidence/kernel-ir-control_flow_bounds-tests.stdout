@@ -1,0 +1,20 @@
+
+running 15 tests
+test block_lookup_leaves_exact_construction_work_and_one_under_limits_unchanged ... ok
+test block_lookup_matches_a_linear_oracle_for_every_small_physical_permutation ... ok
+test dense_block_lookup_preserves_all_cfg_accessors ... ok
+test duplicate_switch_edges_are_indexed_once_per_edge_and_once_per_predecessor ... ok
+test exact_block_edge_argument_and_phi_boundaries_are_stable ... ok
+test missing_and_unreachable_block_queries_remain_distinct ... ok
+test one_block_has_exact_work_count ... ok
+test reordered_block_lookup_preserves_physical_positions_and_nonzero_entry ... ok
+test reverse_chain_1024_has_exact_linear_work_count ... ok
+test reverse_chain_2048_has_exact_linear_work_count ... ok
+test sparse_block_lookup_checks_identity_before_using_an_in_range_id ... ok
+test sparse_wire_maximum_block_count_is_bounded_and_admitted ... ignored, exercises the full V1 block-count boundary
+test verifier_rejects_phi_amplification_before_ssa_indexing ... ok
+test work_limit_reports_the_first_unit_beyond_the_boundary ... ok
+test reverse_chain_4096_has_exact_linear_work_count ... ok
+
+test result: ok. 14 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 0.01s
+

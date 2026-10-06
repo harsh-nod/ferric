@@ -1,0 +1,12 @@
+
+running 7 tests
+test exact_float_contracts_verify ... ok
+test fabs_call_identity_reconstructs_the_ieee_semantic_contract ... ok
+test float_capabilities_are_derived ... ok
+test frozen_wire_round_trips_canonical_float_intrinsic_calls ... ok
+test invalid_types_arity_and_implementation_fail_closed ... ok
+test reserved_float_declarations_reject_mutation ... ok
+test sqrt_call_identity_reconstructs_the_ieee_semantic_contract ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

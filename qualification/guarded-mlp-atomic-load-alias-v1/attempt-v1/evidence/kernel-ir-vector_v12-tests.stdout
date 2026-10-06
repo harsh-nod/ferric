@@ -1,0 +1,12 @@
+
+running 7 tests
+test every_older_encoder_rejects_the_v12_type_without_reinterpretation ... ok
+test exact_v12_owner_rejects_older_and_semantically_hostile_bytes ... ok
+test hostile_provenance_and_value_types_fail_closed ... ok
+test hostile_vector_types_layouts_and_accesses_fail_verification ... ok
+test v12_vector_wire_is_frozen_and_deterministic ... ok
+test vector_lane_and_wire_tag_budgets_are_terminal ... ok
+test vector_v12_round_trips_with_an_exact_canonical_owner ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

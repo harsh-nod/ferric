@@ -1,0 +1,8 @@
+
+running 3 tests
+test memory_intrinsics_are_additive_v10_and_round_trip_exactly ... ok
+test v10_reader_preserves_older_canonical_modules ... ok
+test v10_reader_rejects_mutated_or_oversized_semantic_instances ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

@@ -1,0 +1,42 @@
+{
+  "adopted_reaped": [],
+  "argv": [
+    "/usr/bin/prlimit",
+    "--as=12884901888",
+    "--cpu=1200",
+    "--fsize=1073741824",
+    "--core=0",
+    "--",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-atomic-load-alias-cpu-v228-v1/target/debug/deps/float_operations-2019664815e77726",
+    "--list",
+    "--format=terse"
+  ],
+  "command": {
+    "bytes": 2296,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-atomic-load-alias-cpu-v228-v1/evidence/kernel-ir-float_operations-list.command.json",
+    "sha256": "0aff3990f46b780180de2b3e3fd0537d76279e1296fccf5de066e696e2889fac"
+  },
+  "elapsed_ns": 103987244,
+  "exception": null,
+  "exit_code": 0,
+  "forced_cleanup": false,
+  "label": "kernel-ir-float_operations-list",
+  "natural_exit": true,
+  "observed_signals": [],
+  "pgid": 60435,
+  "pid": 60435,
+  "process_group_absent": true,
+  "reaped": true,
+  "stderr": {
+    "bytes": 0,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-atomic-load-alias-cpu-v228-v1/evidence/kernel-ir-float_operations-list.stderr",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "stdout": {
+    "bytes": 371,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-atomic-load-alias-cpu-v228-v1/evidence/kernel-ir-float_operations-list.stdout",
+    "sha256": "32062e42ff1ad0b4bbdc0490534f7c1375eb4437e6b840c98e2d2c71aacb5534"
+  },
+  "storage_failure": null,
+  "timed_out": false
+}

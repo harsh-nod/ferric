@@ -1,0 +1,10 @@
+
+running 5 tests
+test branches_preserve_condition_and_each_edge_operand_including_duplicates ... ok
+test returns_and_unreachable_have_no_implicit_operands ... ok
+test switches_keep_source_order_without_visiting_case_constants_or_targets ... ok
+test verifier_preserves_duplicate_undefined_return_diagnostics ... ok
+test wide_switch_rejection_stops_at_the_selector_before_any_edge_callback ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

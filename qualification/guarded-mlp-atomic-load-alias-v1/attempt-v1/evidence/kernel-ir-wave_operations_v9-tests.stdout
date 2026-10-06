@@ -1,0 +1,9 @@
+
+running 4 tests
+test broadcast_accepts_direct_mask63_and_rejects_mask64_or_nonconstant_mask ... ok
+test broadcast_rejects_an_out_of_tile_or_dynamic_source_lane ... ok
+test generic_wave_operation_surface_round_trips_only_as_v9 ... ok
+test transpose_rejects_wrong_workgroup_and_bypassed_publish ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

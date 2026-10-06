@@ -1,0 +1,11 @@
+
+running 6 tests
+test every_compatible_decoder_rejects_reordered_v2_integer_switch_payloads ... ok
+test every_compatible_decoder_rejects_reordered_v3_inline_assembly_options ... ok
+test every_frozen_wire_version_has_exact_golden_and_byte_roundtrip_guards ... ok
+test every_version_rejects_reordered_and_duplicate_canonical_sets ... ok
+test kernel_ir_wire_crate_remains_pliron_independent ... ok
+test v3_and_v4_feature_fixtures_are_stable_at_the_encoder_boundary ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

@@ -1,0 +1,32 @@
+
+running 27 tests
+test alignment_limit_reports_observed_and_limit ... ok
+test allocation_identity_and_policy_are_canonical ... ok
+test allocation_policy_matrix_is_conservative ... ok
+test canonical_decoder_binds_allocation_alignment_to_relocations ... ok
+test canonical_graph_validates_and_round_trips ... ok
+test codec_rejects_unknown_tags_versions_and_reserved_bits ... ok
+test codec_v2_relocation_golden_is_stable ... ok
+test cycles_are_rejected_until_an_ownership_model_exists ... ok
+test decoder_preflights_hostile_counts_before_reserving ... ok
+test decoder_rejects_structural_corruption_and_truncation ... ok
+test duplicate_and_noncanonical_records_are_rejected ... ok
+test empty_graph_has_a_versioned_header_golden ... ok
+test fifty_thousand_case_graph_oracle_matches_validator ... ok
+test graph_resource_and_depth_boundaries_are_exact ... ok
+test hostile_decoder_mutation_campaign_remains_canonical_and_bounded ... ok
+test limitations_do_not_claim_unimplemented_trust_boundaries ... ok
+test limits_are_checked_before_codec_allocation ... ok
+test multi_relocation_alignment_uses_the_widest_record ... ok
+test mutable_and_global_targets_have_unique_ingress ... ok
+test pointers_exist_only_as_relocations ... ok
+test relocation_width_alignment_and_policy_fields_are_bound ... ok
+test relocation_width_requires_matching_allocation_base_alignment ... ok
+test semantic_type_commitment_round_trips_without_raw_type_bytes ... ok
+test sixty_five_thousand_case_independent_alignment_oracle ... ok
+test targets_and_capabilities_are_checked ... ok
+test validity_regions_reject_gaps_overlap_padding_and_bad_bits ... ok
+test exhaustive_alignment_width_and_offset_congruence_matrix ... ok
+
+test result: ok. 27 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.91s
+

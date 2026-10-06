@@ -1,0 +1,8 @@
+
+running 3 tests
+test production_analysis::pliron_ranked_bounds::resource_upper_bound_tests::memory_bounds_block_cap_accepts_legacy_measured_and_2048 ... ok
+test production_analysis::pliron_ranked_bounds::resource_upper_bound_tests::memory_bounds_block_cap_does_not_expand_other_limits ... ok
+test production_analysis::pliron_ranked_bounds::resource_upper_bound_tests::memory_bounds_block_cap_preserves_independent_work_storage_refusals ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 1514 filtered out; finished in 0.00s
+

@@ -1,0 +1,16 @@
+
+running 11 tests
+test arithmetic_overflow_is_an_explicit_analysis_error ... ok
+test atomic_compatibility_requires_scope_coverage_for_the_analysis_domain ... ok
+test compatible_atomics_are_allowed_and_mismatches_fail_conservatively ... ok
+test detects_overlapping_writes_and_read_write_conflicts ... ok
+test different_epochs_do_not_imply_ordering ... ok
+test distinct_allocations_are_disjoint ... ok
+test effect_analysis_rejects_affine_regions_narrower_than_the_access ... ok
+test finds_partial_byte_range_overlap_and_separated_ranges ... ok
+test permits_overlapping_shared_reads ... ok
+test proves_vecadd_writes_disjoint_between_invocations ... ok
+test unknown_and_unbounded_regions_never_report_disjoint ... ok
+
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

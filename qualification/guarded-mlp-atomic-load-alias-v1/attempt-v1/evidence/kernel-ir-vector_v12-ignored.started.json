@@ -1,0 +1,16 @@
+{
+  "argv": [
+    "/usr/bin/prlimit",
+    "--as=12884901888",
+    "--cpu=1200",
+    "--fsize=1073741824",
+    "--core=0",
+    "--",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-atomic-load-alias-cpu-v228-v1/target/debug/deps/vector_v12-9cbe4457be9f7642",
+    "--ignored",
+    "--list",
+    "--format=terse"
+  ],
+  "pgid": 83220,
+  "pid": 83220
+}

@@ -1,0 +1,12 @@
+
+running 7 tests
+test compiler_order_propagation_preserves_one_multispace_sync_event_and_distinct_fence ... ok
+test direct_and_indirect_marker_reports_do_not_silently_claim_complete_region_extraction ... ok
+test direct_and_indirect_markers_remain_incomplete_for_formal_memory ... ok
+test partial_marker_summaries_retain_existing_declaration_and_cycle_reasons ... ok
+test vector_regions_do_not_turn_short_or_missing_bindings_into_bounds_proofs ... ok
+test vector_regions_use_full_descriptor_width_and_layout_conversion_has_no_memory_effect ... ok
+test marker_only_helpers_are_memory_pure_but_not_compiler_pure_through_two_calls ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

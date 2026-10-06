@@ -1,0 +1,24 @@
+warning: /home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-atomic-load-alias-cpu-v228-v1/fe2o3/crates/rustc-codegen-fe2o3/tests/fixtures/local-marker/Cargo.toml: file `/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-atomic-load-alias-cpu-v228-v1/fe2o3/crates/rustc-codegen-fe2o3/tests/fixtures/local-marker/src/main.rs` found to be present in multiple build targets:
+  * `lib` target `fe2o3_trusted_item_local_marker`
+  * `bin` target `fe2o3-trusted-item-local-marker`
+   Compiling proc-macro2 v1.0.107
+   Compiling quote v1.0.47
+   Compiling unicode-ident v1.0.24
+   Compiling typenum v1.20.1
+   Compiling serde_core v1.0.229
+   Compiling hybrid-array v0.4.14
+   Compiling zmij v1.0.23
+   Compiling crypto-common v0.2.2
+   Compiling block-buffer v0.12.1
+   Compiling syn v3.0.4
+   Compiling serde v1.0.229
+   Compiling serde_json v1.0.151
+   Compiling serde_derive v1.0.229
+   Compiling digest v0.11.3
+   Compiling cpufeatures v0.3.1
+   Compiling memchr v2.8.3
+   Compiling cfg-if v1.0.4
+   Compiling itoa v1.0.18
+   Compiling sha2 v0.11.0
+   Compiling fe2o3-kernel-ir v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-atomic-load-alias-cpu-v228-v1/fe2o3/crates/fe2o3-kernel-ir)
+    Finished `test` profile [unoptimized] target(s) in 12.93s

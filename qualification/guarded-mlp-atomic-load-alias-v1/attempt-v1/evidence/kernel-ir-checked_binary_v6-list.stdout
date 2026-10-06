@@ -1,0 +1,4 @@
+every_signed_unsigned_and_index_width_verifies_for_all_operators: test
+operand_and_result_traversal_retains_both_sides_and_both_results: test
+rejects_float_and_mismatched_operands: test
+rejects_value_overflow_and_arity_result_mutations: test

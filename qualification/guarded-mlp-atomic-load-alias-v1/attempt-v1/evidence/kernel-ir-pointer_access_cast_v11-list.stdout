@@ -1,0 +1,3 @@
+frozen_v10_reader_rejects_a_forged_pointer_access_cast_tag: test
+mixed_pointer_restriction_shapes_preserve_invalid_cast_diagnostics: test
+pointer_access_cast_requires_v11_and_round_trips_canonically: test

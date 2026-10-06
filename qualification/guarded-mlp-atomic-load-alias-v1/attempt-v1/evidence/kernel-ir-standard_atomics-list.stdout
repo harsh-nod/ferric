@@ -1,0 +1,3 @@
+admits_only_reviewed_address_space_and_scope_pairs: test
+maps_every_ordering_at_explicit_device_scope: test
+rejects_illegal_rust_ordering_combinations: test

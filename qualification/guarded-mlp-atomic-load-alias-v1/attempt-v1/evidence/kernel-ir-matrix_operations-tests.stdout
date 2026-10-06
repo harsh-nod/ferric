@@ -1,0 +1,27 @@
+
+running 22 tests
+test bare_matrix_multiply_never_invents_layout_or_tail_provenance ... ok
+test exact_matrix_and_lds_profiles_verify_with_explicit_effects ... ok
+test frozen_module_wire_versions_reject_matrix_authority ... ok
+test gfx950_fp4_scaled_mfma_rejects_wrong_layout_and_operand_type ... ok
+test gfx950_fp4_scaled_mfma_verifies_and_round_trips_v8 ... ok
+test gfx950_fp8_scaled_mfma_rejects_wrong_profile_and_operand_type ... ok
+test gfx950_fp8_scaled_mfma_verifies_and_round_trips_v8 ... ok
+test gfx950_mixed_fp4_by_fp8_scaled_mfma_verifies_and_round_trips_v8 ... ok
+test matrix_lds_load_rejects_write_only_while_store_accepts_it ... ok
+test matrix_lds_requires_authenticated_extent_alignment_and_provenance ... ok
+test matrix_operation_and_canonical_owner_reject_incomplete_tensor_contracts ... ok
+test gfx950_mixed_scaled_mfma_rejects_reversed_formats_and_capability_mismatch ... ok
+test matrix_operation_rejects_mutated_tensor_layout_and_frozen_wire_refuses_it ... ok
+test pointer_value_and_result_type_mutations_fail_closed ... ok
+test profile_shape_wave_and_convergence_mutations_fail_closed ... ok
+test regular_mfma_rejects_scaled_low_precision_profiles ... ok
+test structured_source_record_and_projected_policy_are_integrity_checked_in_kernel_ir ... ok
+test tensor_instruction_semantic_data_is_target_owned_and_workload_neutral ... ok
+test tensor_layout_accepts_independent_storage_transforms_and_rejects_invalid_contracts ... ok
+test tensor_layout_contract_matches_exact_mfma_lane_coordinates ... ok
+test target_capability_admission_requires_both_matrix_extensions ... ok
+test tensor_layout_rejects_transpose_permutation_width_role_profile_and_packing ... ok
+
+test result: ok. 22 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+

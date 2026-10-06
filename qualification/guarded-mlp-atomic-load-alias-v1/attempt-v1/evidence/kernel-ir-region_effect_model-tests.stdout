@@ -1,0 +1,12 @@
+
+running 7 tests
+test affine_expressions_evaluate_with_checked_arithmetic ... ok
+test atomic_value_width_must_match_the_byte_access ... ok
+test effect_validation_checks_affine_lengths_at_the_domain_endpoints ... ok
+test effect_validation_checks_width_alignment_and_affine_offsets ... ok
+test invocation_ranges_are_non_empty_and_half_open ... ok
+test region_validation_rejects_zero_length_and_end_overflow ... ok
+test unknown_allocation_provenance_is_explicit ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

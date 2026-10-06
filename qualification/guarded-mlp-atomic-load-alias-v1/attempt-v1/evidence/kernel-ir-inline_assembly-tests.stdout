@@ -1,0 +1,12 @@
+
+running 7 tests
+test generic_memory_analyses_fail_closed_for_inline_assembly ... ok
+test rejects_missing_source_authority_and_textual_injection ... ok
+test rejects_options_that_hide_declared_effects ... ok
+test rejects_result_and_constraint_mismatches ... ok
+test v3_round_trips_and_frozen_versions_reject_inline_assembly ... ok
+test verifies_source_bound_assembly_and_derives_target_capability ... ok
+test v3_single_bit_mutations_never_bypass_canonical_decoding ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+

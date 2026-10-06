@@ -1,0 +1,12 @@
+
+running 7 tests
+test atomic_options_and_assembly_non_operands_keep_exact_prefixes ... ok
+test matrix_and_lds_transpose_families_preserve_fragment_and_state_order ... ok
+test memory_intrinsic_families_preserve_all_operand_roles ... ok
+test operand_free_families_never_invoke_the_callback ... ok
+test scalar_and_memory_access_families_preserve_exact_order_and_duplicates ... ok
+test verifier_keeps_duplicate_use_diagnostics_after_visitation ... ok
+test wave_families_preserve_predicate_value_and_lane_order ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

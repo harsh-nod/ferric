@@ -1,0 +1,57 @@
+
+running 52 tests
+test address_overflow_fails_closed ... ok
+test address_space_alias_requirements_follow_the_explicit_matrix ... ok
+test analysis_basis_discloses_caller_supplied_launch_inputs ... ok
+test atomic_effect_retains_bounds_and_atomic_race_semantics ... ok
+test bounds_requirement_exposes_an_out_of_bounds_runtime_extent ... ok
+test calls_and_unknown_launches_fail_closed ... ok
+test conflicting_private_pointer_join_fails_closed ... ok
+test constant_index_store_is_reported_as_an_inter_invocation_conflict ... ok
+test defined_pure_helper_does_not_make_formal_memory_incomplete ... ok
+test derives_complete_formal_fill_obligations ... ok
+test entry_block_parameters_always_fail_formal_extraction_closed ... ok
+test exact_unsigned_literal_transports_preserve_byte_and_alias_obligations ... ok
+test fixed_width_wrapping_arithmetic_fails_closed ... ok
+test formal_extraction_is_deterministic ... ok
+test guarded_load_requires_a_distinct_ranked_proof_reason ... ok
+test guarded_ranked_read_retains_a_conservative_alias_effect ... ok
+test index_phi_operation_recurrence_fails_closed_without_recursion ... ok
+test index_ssa_phi_accepts_equal_inputs_and_rejects_different_inputs ... ok
+test invariant_slice_and_pointer_ssa_carriers_preserve_allocations ... ok
+test malformed_modules_and_missing_kernels_are_typed_errors ... ok
+test many_accesses_reuse_one_deep_pointer_chain ... ok
+test deeply_nested_affine_ssa_is_evaluated_iteratively ... ok
+test nonlinear_gep_index_fails_closed ... ok
+test parallel_ssa_edges_require_one_allocation_origin ... ok
+test pointer_phi_operation_recurrence_fails_closed_without_recursion ... ok
+test pointer_ssa_carrier_preserves_its_exact_offset ... ok
+test private_pointer_join_normalizes_equivalent_ssa_carriers ... ok
+test private_pointer_not_rooted_in_a_kernel_parameter_is_invocation_local ... ok
+test private_pointer_round_trip_retains_exact_parameter_identity ... ok
+test private_pointer_round_trip_uses_the_last_reaching_store ... ok
+test private_slot_store_through_block_parameter_replaces_the_direct_load_source ... ok
+test rank_mismatch_and_static_extent_mismatch_fail_closed ... ok
+test ranked_launch_shape_rank_overflow_and_static_axes_fail_closed ... ok
+test ranked_launches_have_injective_row_major_invocation_ranges ... ok
+test read_only_pointer_restriction_preserves_formal_allocation_provenance ... ok
+test read_only_private_slot_view_remains_an_internal_tracked_alias ... ok
+test registered_diagnostic_intrinsics_do_not_make_formal_memory_incomplete ... ok
+test selected_private_slot_pointer_is_an_incomplete_escape ... ok
+test shared_unsigned_literal_cast_remains_iterative_and_width64_only ... ok
+test shifted_formal_ranges_still_require_runtime_alias_discharge ... ok
+test static_ranked_launches_admit_their_exact_shape ... ok
+test terminating_assert_fail_is_formally_closed_and_has_no_memory_obligations ... ok
+test two_writable_formal_parameters_require_runtime_alias_discharge ... ok
+test unknown_and_32_bit_index_widths_never_complete ... ok
+test unmodeled_barrier_effect_fails_closed ... ok
+test unreachable_phi_operation_cycles_do_not_affect_obligations ... ok
+test unsigned_literal_cast_does_not_admit_other_ancestry ... ok
+test unsigned_literal_cast_forwards_only_one_exact_ssa_origin ... ok
+test unsigned_literal_cast_keeps_conflicts_and_both_overflow_stages ... ok
+test unsigned_literal_transport_rejects_malformed_ir_before_extraction ... ok
+test vecadd_derives_output_alias_requirements_but_allows_input_aliasing ... ok
+test many_guarded_accesses_reuse_one_deep_unsupported_pointer_chain ... ok
+
+test result: ok. 52 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.07s
+

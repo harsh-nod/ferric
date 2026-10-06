@@ -1,0 +1,21 @@
+
+running 16 tests
+test decoding_does_not_claim_semantic_verification ... ok
+test enforces_encode_and_decode_resource_bounds_before_allocation ... ok
+test exact_gfx942_xnack_minus_binding_round_trips_in_every_kernel_ir_wire_version ... ok
+test exhaustive_module_matches_golden_and_round_trips ... ok
+test frozen_wire_versions_reject_semantic_memory_intrinsics ... ok
+test frozen_wire_versions_reject_unrepresentable_export_roles ... ok
+test matrix_source_observation_and_projection_digests_round_trip_in_every_wire_version ... ok
+test rejects_every_truncation_and_trailing_bytes ... ok
+test rejects_header_errors_and_invalid_utf8 ... ok
+test rejects_non_boolean_and_non_option_tags ... ok
+test rejects_noncanonical_set_order_and_duplicates ... ok
+test rejects_unknown_capability_type_operation_and_terminator_tags ... ok
+test set_insertion_order_does_not_change_bytes ... ok
+test vector_order_is_preserved ... ok
+test wide_scalar_types_are_additive_v4_only ... ok
+test decoder_never_panics_on_mutations_or_bounded_noise ... ok
+
+test result: ok. 16 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.37s
+

@@ -1,0 +1,7 @@
+exact_float_contracts_verify: test
+fabs_call_identity_reconstructs_the_ieee_semantic_contract: test
+float_capabilities_are_derived: test
+frozen_wire_round_trips_canonical_float_intrinsic_calls: test
+invalid_types_arity_and_implementation_fail_closed: test
+reserved_float_declarations_reject_mutation: test
+sqrt_call_identity_reconstructs_the_ieee_semantic_contract: test

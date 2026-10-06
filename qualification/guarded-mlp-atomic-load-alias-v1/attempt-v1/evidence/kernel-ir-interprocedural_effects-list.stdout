@@ -1,0 +1,4 @@
+acyclic_pure_helper_chain_is_complete: test
+external_declaration_never_self_certifies_a_summary: test
+memory_effect_mutation_propagates_to_every_caller: test
+recursive_call_graph_is_explicitly_incomplete: test

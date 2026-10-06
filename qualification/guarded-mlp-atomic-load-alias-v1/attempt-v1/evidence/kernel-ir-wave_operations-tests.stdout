@@ -1,0 +1,12 @@
+
+running 7 tests
+test operands_and_memory_effects_are_explicit_and_pure ... ok
+test rejects_partial_lanes_and_non_subgroup_convergence_deterministically ... ok
+test rejects_unsupported_static_tiles_and_has_no_dynamic_tile_form ... ok
+test rejects_wrong_predicate_mask_lane_and_shuffle_types ... ok
+test v2_decoder_rejects_unknown_width_convergence_and_wave_tags ... ok
+test v2_wire_is_golden_bounded_and_v1_stays_frozen ... ok
+test verifies_wave32_and_wave64_and_derives_exact_capabilities ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
