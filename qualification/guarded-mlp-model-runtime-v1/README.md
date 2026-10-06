@@ -2,10 +2,35 @@
 
 The [parent CPU gate](../guarded-mlp-parent-cpu-v1/README.md) and
 [worker CPU gate](../guarded-mlp-worker-cpu-v1/README.md) pass independently.
-The guarded model now completes four teacher-forced forwards on MI350.
-The first native run's outer controller remains failed; its log-parser error
-and the separate corrective checks are recorded below. Model numerical
-acceptance remains open.
+The guarded model now completes both four-forward teacher-forced and genuine
+autoregressive runs on MI350. The first native run's outer controller remains
+failed; its log-parser error and the separate corrective checks are recorded
+below. Model numerical acceptance remains open. The
+[independent numerical diagnostic](numerical-v1/README.md) matches all eight
+selected tokens but finds differences in every complete tensor slice;
+logit relative-L2 errors range from 0.30% to 1.17%.
+
+## Autoregressive Execution
+
+The [fresh V3 AR4 run](attempt-v3-ar4/ar4/complete.json) passes its complete
+outer controller in one native attempt, with no retry. Starting from token
+`9112`, it produces `67, 25, 576, 2701`, feeding each output into the next
+forward. Both ranks traverse all 36 layers at each position, exercise local
+bank generations `1, 1, 2, 2`, and finish with a healthy Close.
+
+All 1,213,952 captured BF16 words are finite and all four argmax selections
+are independently recomputed from the full retained logits. Eleven supervised
+leaves exit naturally; both parent and worker groups are reaped without forced
+cleanup. Three before and three after snapshots show all eight GPUs idle.
+The [retained capsule](attempt-v3-ar4/manifest.json) includes the exact nine input files
+and 77 raw case files. Terminal SHA-256:
+`edf05cf2dd19a9934dab9762b328ea3e6160cf01c15606a3df3299ce967e4991`.
+
+The parent, worker, model, prompt and kernel images are unchanged from TF4.
+Only the mode, fresh session/output path and corrected outer parser differ.
+The whole-controller duration of 411.563075 seconds is not a GPU timing or
+throughput result. The [separate framework comparison](numerical-v1/README.md)
+reports all tensor differences without introducing an acceptance tolerance.
 
 ## Teacher-Forced Execution
 

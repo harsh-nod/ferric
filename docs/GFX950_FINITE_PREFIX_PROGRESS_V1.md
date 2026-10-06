@@ -6,17 +6,30 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Current GPU bring-up: the guarded parent and worker completed four
-teacher-forced forwards on MI350, through all 36 layers and both ranks.
-The outer controller still records failure: its worker-announcement parser
+Current GPU bring-up: the guarded parent and worker completed both four-step
+teacher-forced and autoregressive runs on MI350, through all 36 layers and
+both ranks. The fresh autoregressive outer controller passes in one attempt,
+producing the own-output chain `9112 -> 67 -> 25 -> 576 -> 2701`, with healthy
+Close and clean process/device postchecks. This is a four-step diagnostic,
+not sustained 2,048/256 decode or a throughput claim.
+
+The original teacher-forced outer controller still records failure: its worker-announcement parser
 expected `finite engineering`, while the qualified parent prints
 `finite guarded`. Independent examination of the retained process ancestry
 and all 76 raw files confirms the worker identity and clean shutdown.
 The failed receipt is not being rewritten as a pass. Six parser tests and
 [separate data-only revalidation](../qualification/guarded-mlp-model-runtime-v1/README.md)
-now pass on MI350, including three JSON round-trip regressions. A fresh
-autoregressive case follows; independent model numerical acceptance and
+now pass on MI350, including three JSON round-trip regressions. The
+[fresh autoregressive evidence](../qualification/guarded-mlp-model-runtime-v1/README.md)
+uses the corrected parser. Independent model numerical acceptance and
 sustained throughput remain open.
+
+The [independent guarded-model comparison](../qualification/guarded-mlp-model-runtime-v1/numerical-v1/README.md)
+now completes on MI350: all eight selected TF4/AR4 tokens match the existing
+two-pass framework references, while all 304 complete tensor slices differ
+in at least one BF16 word. Logit relative-L2 errors range from 0.30% to 1.17%.
+Five adapter regressions pass and all 250 input rehashes/postchecks are clean.
+This is a numerical diagnostic, not full-model acceptance or a speedup.
 
 Current integration: [the guarded parent passes 375 selected tests and all 54 CPU phases on MI350](../qualification/guarded-mlp-parent-cpu-v1/README.md).
 All five selected parent binaries build, with clean source, dependency, cache
@@ -28,8 +41,9 @@ the lockfile or minimum-version requirement.
 The [guarded model observation validator passes all nine synthetic tests on MI350](../qualification/guarded-mlp-model-validator-cpu-v1/README.md).
 This is a data-checker result, not model numerical acceptance. The
 [parent build record](../qualification/guarded-mlp-parent-cpu-v1/README.md)
-retains the private Git-cache and toolchain failures. Native TF4/AR4 execution
-and independent numerical acceptance remain open.
+retains the private Git-cache and toolchain failures. Subsequent native
+TF4/AR4 execution is recorded above; independent numerical acceptance remains
+open.
 
 Earlier integration: [the guarded model worker passes MI350 CPU qualification](../qualification/guarded-mlp-worker-cpu-v1/README.md).
 All 586 tests pass with four deliberate ignores, including the 24 new tests,
@@ -37,8 +51,9 @@ and the final worker executable builds. The 19 tested worker source files and
 their 29 cumulative runtime prerequisites are now integrated on engineering
 branches. A real stack-overflow found during qualification is fixed by keeping
 the large control payload on the heap; the wire format and default stack limit
-are unchanged. The parent entry point, real-model mixed-bank execution,
-independent numerical acceptance and sustained throughput remain open.
+are unchanged. Subsequent parent integration and real-model mixed-bank
+execution are recorded above; independent numerical acceptance and sustained
+throughput remain open.
 
 Current runtime work: [the guarded model interface passes CPU and native component tests](../qualification/guarded-mlp-model-interface-v1/README.md).
 MI350 qualification records 1,088 ordinary test passes, eight deliberate ignores,

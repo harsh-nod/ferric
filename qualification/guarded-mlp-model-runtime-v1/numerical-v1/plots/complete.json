@@ -1,0 +1,51 @@
+{
+  "acceptance_threshold": null,
+  "comparable_tensor_rows": 304,
+  "completely_bit_equal_tensor_rows": 0,
+  "full_long_workload": false,
+  "full_model_acceptance": false,
+  "full_model_correctness": false,
+  "gpu_execution": false,
+  "independent_tensor_acceptance": false,
+  "meaning": "rendered the exact retained diagnostic; not numerical acceptance",
+  "native_rerun": false,
+  "numerical_acceptance": false,
+  "output_tokens_equal": 8,
+  "outputs": {
+    "logits-relative-l2.svg": {
+      "bytes": 6202,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-numerical-plots-v228-v1/logits-relative-l2.svg",
+      "sha256": "35fbe70cf80e4967605393c1c619d04ec83bbc7fda17e40d0cc883b77b62b130"
+    },
+    "logits.csv": {
+      "bytes": 2143,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-numerical-plots-v228-v1/logits.csv",
+      "sha256": "b6a6871d9c53694c0734671881165a77efb185af26273ccb0ed07507dcb76f89"
+    },
+    "summary.md": {
+      "bytes": 2020,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-numerical-plots-v228-v1/summary.md",
+      "sha256": "54f25a60675d7db2f7603be9ce7bb633e0c8a0961761e82d36fa043e1f50ce68"
+    }
+  },
+  "passed": true,
+  "performance_claim": false,
+  "production_authority": false,
+  "renderer": {
+    "bytes": 15175,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/render_guarded_model_numerical_v1.py",
+    "sha256": "2f81c10eb677f11d696ce5c0cdc94b99ea7f6a288df905599746d64bbe338e3d"
+  },
+  "report": {
+    "bytes": 389586,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-numerical-comparison-v228-v1/complete.json",
+    "sha256": "55b550cf19e3deae73384db0895407b7d16cd9c75d6e677aa3159eed922da482"
+  },
+  "report_posthash_unchanged": true,
+  "rows": 8,
+  "schema": "ferric-guarded-mlp-model-numerical-plots-v1",
+  "subprocess_execution": false,
+  "sustained_2048_256": false,
+  "tensor_metrics_recomputed": false,
+  "upstream_inputs_rehashed": false
+}
