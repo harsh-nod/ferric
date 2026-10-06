@@ -27,6 +27,25 @@ not changes made by this diagnostic patch.
 
 ## Qualification
 
+The corrected second attempt passed on `mi350` in 655.527585 seconds.
+All 37 phases exited naturally with status zero, were reaped and left no
+process groups. Sources and dependencies remained unchanged, with clean
+postchecks and no timeout or forced cleanup.
+
+The compiler library passed 1,266 tests with 24 historical ignores; Pliron
+passed 1,507 with one ignore. Focused repeats and extraction controls bring
+the total to 2,858 passing executions across 24 scopes. Repeated executions
+are not unique tests. All nine new diagnostic tests passed both in the full
+compiler suite and in their focused repeat.
+
+The retry changes one fixture only, as described below. Its production
+diagnostic implementation is identical to the first attempt. CPU success
+does not identify the guarded kernel's failing charge site: actual loader
+inspection and guarded gfx950 compilation remain separate checks, followed
+by GPU and independent numerical validation.
+
+## First Attempt And Correction
+
 The first qualification attempt on `mi350` failed one compiler test. The
 compiler library reported 1,265 passed, one failed and 24 ignored; Pliron
 passed 1,507 tests with one ignore. All fifteen executed phases exited
@@ -40,7 +59,7 @@ counter with the existing `Unsupported` alias-overflow error. The correction
 matches that exact message and verifies that the counter remains `usize::MAX`.
 It changes only the fixture; the diagnostic implementation is unchanged.
 
-The retry retains the complete compiler and Pliron suites, all earlier focused
+The retry retained the complete compiler and Pliron suites, all earlier focused
 and extraction controls, and nine diagnostic tests plus their focused repeat.
 
 The new tests exercise exact and exceeded limits, overflow, distinct call
@@ -49,14 +68,19 @@ actual body attribution, missing body context, first-context preservation,
 bounded escaping and unchanged unrelated errors. Existing negative tests keep
 their inputs and refusal conditions while recognizing the new typed error.
 
-Successful completion would mean 37 phases, 24 scopes, 2,858 passing test
-executions and 25 historical ignores. Repeated executions are not unique tests.
-CPU qualification alone cannot identify the guarded kernel's actual failing
-charge site. A fresh loader inspection and guarded gfx950 compile remain
-required, followed separately by GPU and independent numerical validation.
-
 This is not production admission, a GPU result or a decode performance claim.
 All issue #42 milestones and the 700 tokens/s target remain open.
+
+## Successful Attempt Evidence
+
+[attempt-v2](attempt-v2) retains the successful receipt, executed harness,
+complete source and dependency maps, twelve-file overlay, baseline lineage,
+seven-product build metadata and all 189 raw records. The archive contains
+220 members and 219 pinned bodies, totaling 34,166,464 body bytes.
+Receipt SHA-256:
+`501a61fcfc7d660ab7d2c396a7050d04274553cf29e1688e81b0e168d0001e3c`.
+The 5,586,956-byte archive SHA-256 is
+`205f1927aa9325391733f75ebf17dff8b9f04485ff5d705453d9efd2c0075263`.
 
 ## Failed Attempt Evidence
 

@@ -1,0 +1,14 @@
+
+running 9 tests
+test production_ranked_projection_v1::tests::graph_work_diagnostic_atomic_forwarder_preserves_cell_on_failure ... ok
+test production_ranked_projection_v1::tests::graph_work_diagnostic_body_context_uses_actual_body_not_root ... ok
+test production_ranked_projection_v1::tests::graph_work_diagnostic_bounded_paths_names_and_exports_are_escaped ... ok
+test production_ranked_projection_v1::tests::graph_work_diagnostic_context_preserves_other_errors ... ok
+test production_ranked_projection_v1::tests::graph_work_diagnostic_direct_callers_are_distinct ... ok
+test production_ranked_projection_v1::tests::graph_work_diagnostic_exact_limit_and_over_limit_preserve_counter ... ok
+test production_ranked_projection_v1::tests::graph_work_diagnostic_first_function_context_is_retained ... ok
+test production_ranked_projection_v1::tests::graph_work_diagnostic_overflow_preserves_counter ... ok
+test production_ranked_projection_v1::tests::graph_work_diagnostic_proof_forwarder_keeps_caller_and_counter ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 1281 filtered out; finished in 0.00s
+
