@@ -1,0 +1,70 @@
+{
+  "compiler_qualification": false,
+  "files": {
+    "evidence/complete.json": {
+      "bytes": 12445,
+      "sha256": "0871c7d6ee9df2f0f7351a0c964d7a78a02b7ad8ad60d6a4ab8154ccaacfa0ea"
+    },
+    "evidence/indexed-atomic-dag-lowering-tests.command.json": {
+      "bytes": 886,
+      "sha256": "17410cb16e6ada5a06b8e5ef6ab1f544cd16d5d75b964401383f66f090d71d58"
+    },
+    "evidence/indexed-atomic-dag-lowering-tests.result.json": {
+      "bytes": 1646,
+      "sha256": "febd2cf28364b7d10a9f191fcb03ba3d964ec07c3bfb5c58bdf2ed5e2bdeba5a"
+    },
+    "evidence/indexed-atomic-dag-lowering-tests.started.json": {
+      "bytes": 389,
+      "sha256": "8fd806675e1cf45f9da037ab76d3cda8c921f67106505aff362309e8deee13a0"
+    },
+    "evidence/indexed-atomic-dag-lowering-tests.stderr": {
+      "bytes": 2842,
+      "sha256": "86ccc10c0db6c01acd6c06f3b1c91c5ee580e5ea1b9ed0743dc3af8775358d44"
+    },
+    "evidence/indexed-atomic-dag-lowering-tests.stdout": {
+      "bytes": 4008,
+      "sha256": "38a951f4abcd9af005353e8dbeb89793ff2b937fa9c375cf5b6056e1ba312a95"
+    },
+    "evidence/sources-after.json": {
+      "bytes": 1739,
+      "sha256": "ec9ecceaa9be199b46c8afcb4c50b0c9e3112091c5d6d86bee3437290adc8eb9"
+    },
+    "evidence/sources-before.json": {
+      "bytes": 1739,
+      "sha256": "ec9ecceaa9be199b46c8afcb4c50b0c9e3112091c5d6d86bee3437290adc8eb9"
+    },
+    "input-manifest.json": {
+      "bytes": 1260,
+      "sha256": "a5b231a0f85207e667b4ca171a34033e6edbb5803b32738610489affc8d6beed"
+    },
+    "lowering.py": {
+      "bytes": 43847,
+      "sha256": "3c9cbe0ebe37a29284f3f4728798ace5881610344949b9652b309849d47f7788"
+    },
+    "lowering_test_entry.py": {
+      "bytes": 5868,
+      "sha256": "7de6870538fa5c69aad5935760a12de4c78ae70e7fb629ee73c817fd6c25e0aa"
+    },
+    "run_tests.py": {
+      "bytes": 13447,
+      "sha256": "4d28639a1c053009db419f810c15d5a7372c5c1b0b8f28456a5b990e9df6f031"
+    },
+    "supervisor.py": {
+      "bytes": 41485,
+      "sha256": "8824478a6415dee39d28ccefb0881fc0687ac724f5a9c5a4540310fb5196b9bc"
+    },
+    "test_lowering.py": {
+      "bytes": 20801,
+      "sha256": "de26383df357387fd9b10aa4ba9d54b50b33b533c0add2427970d6a62aad97a8"
+    },
+    "test_normalization.py": {
+      "bytes": 6507,
+      "sha256": "6d4d91e24fa483e81d99ae1dd89a629eb3b7a17aaef94e8f46958123c292465f"
+    }
+  },
+  "gpu_execution": false,
+  "passed": true,
+  "schema": "ferric-indexed-atomic-dag-lowering-tests-retention-v1",
+  "synthetic_lowering_only": true,
+  "tests_passed": 19
+}

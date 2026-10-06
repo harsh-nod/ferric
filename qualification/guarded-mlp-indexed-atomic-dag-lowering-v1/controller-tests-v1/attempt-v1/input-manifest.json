@@ -1,0 +1,41 @@
+{
+  "files": {
+    "lowering.py": {
+      "bytes": 43847,
+      "sha256": "3c9cbe0ebe37a29284f3f4728798ace5881610344949b9652b309849d47f7788"
+    },
+    "lowering_test_entry.py": {
+      "bytes": 5868,
+      "sha256": "7de6870538fa5c69aad5935760a12de4c78ae70e7fb629ee73c817fd6c25e0aa"
+    },
+    "run_tests.py": {
+      "bytes": 13447,
+      "sha256": "4d28639a1c053009db419f810c15d5a7372c5c1b0b8f28456a5b990e9df6f031"
+    },
+    "supervisor.py": {
+      "bytes": 41485,
+      "sha256": "8824478a6415dee39d28ccefb0881fc0687ac724f5a9c5a4540310fb5196b9bc"
+    },
+    "test_lowering.py": {
+      "bytes": 20801,
+      "sha256": "de26383df357387fd9b10aa4ba9d54b50b33b533c0add2427970d6a62aad97a8"
+    },
+    "test_normalization.py": {
+      "bytes": 6507,
+      "sha256": "6d4d91e24fa483e81d99ae1dd89a629eb3b7a17aaef94e8f46958123c292465f"
+    }
+  },
+  "schema": "ferric-indexed-atomic-dag-lowering-test-input-v1",
+  "tool_pins": {
+    "prlimit": {
+      "bytes": 27536,
+      "path": "/usr/bin/prlimit",
+      "sha256": "17064f67e650d6152a6902b013aab496b54c87587c8eea6f5023aafee6154069"
+    },
+    "python": {
+      "bytes": 8020928,
+      "path": "/usr/bin/python3.12",
+      "sha256": "e1efa562c2cc2e35521a5c9c9b9939921001ff8ca9708a13ef15ace68cc2ccd7"
+    }
+  }
+}

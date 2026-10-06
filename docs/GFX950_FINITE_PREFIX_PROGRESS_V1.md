@@ -6,7 +6,14 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Latest: [guarded gfx950 lowering reaches the independent CFG-analysis work limit](../qualification/guarded-mlp-ranked-cfg-cap-lowering-v2/README.md).
+Latest: the DAG generation's [26 loader-controller fixtures](../qualification/guarded-mlp-indexed-atomic-dag-tool-audit-v1/README.md)
+and [19 lowering-controller fixtures](../qualification/guarded-mlp-indexed-atomic-dag-lowering-v1/README.md)
+pass on MI350. Both bounded children exited naturally and were reaped with
+unchanged sources and clean postchecks. These are synthetic admission tests,
+not actual loader, HSACO or GPU results. Full compiler qualification is
+still finishing extraction controls; no milestone is closed.
+
+Previously, [guarded gfx950 lowering reaches the independent CFG-analysis work limit](../qualification/guarded-mlp-ranked-cfg-cap-lowering-v2/README.md).
 The earlier block-count rejection is no longer reported. The new diagnostic
 does not identify the function or charge site, and does not establish whether
 alias checks pass or fail. The compiler exited naturally after 117.958347

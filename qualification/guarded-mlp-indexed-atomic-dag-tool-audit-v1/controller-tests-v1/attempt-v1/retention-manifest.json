@@ -1,0 +1,66 @@
+{
+  "compiler_qualification": false,
+  "files": {
+    "audit_tools.py": {
+      "bytes": 60958,
+      "sha256": "00eeddc6b52c7fcb36dcf10354234acca8eba6c106dcb73a5d93b5c7995a0c80"
+    },
+    "evidence/complete.json": {
+      "bytes": 13516,
+      "sha256": "18eea15f50260639f92f4cd9e6e065b49c1159557a4c39fb13a7da0ac9cade86"
+    },
+    "evidence/indexed-atomic-dag-loader-tests.command.json": {
+      "bytes": 878,
+      "sha256": "a8437901e9a047956bcee33f8bdf130187bade64c34d5ba4a9ed9fa9e86754ef"
+    },
+    "evidence/indexed-atomic-dag-loader-tests.result.json": {
+      "bytes": 1629,
+      "sha256": "01e6238e4f6b298d0a6bdeeada77ee9d884f2c439a21bcaa1a88bbd3b62cff66"
+    },
+    "evidence/indexed-atomic-dag-loader-tests.started.json": {
+      "bytes": 385,
+      "sha256": "9134768ccdb88f821d6b618847d29ece5ba9a5dbc79ab13663ad5253db55a5db"
+    },
+    "evidence/indexed-atomic-dag-loader-tests.stderr": {
+      "bytes": 4018,
+      "sha256": "91318ca5476e9347a70a5119cdd41512fc0fd507413f04edd92ac5f5d14c9f28"
+    },
+    "evidence/indexed-atomic-dag-loader-tests.stdout": {
+      "bytes": 5396,
+      "sha256": "b0a58dfb6c401e3ad008197b1abe9c3eb9aff437d2bdbab07a0fc8d7bcbc5437"
+    },
+    "evidence/sources-after.json": {
+      "bytes": 1438,
+      "sha256": "c472108f7706b3ac4fbf36886a07560e0611cb57093840b475b3d49b0ab8dd8f"
+    },
+    "evidence/sources-before.json": {
+      "bytes": 1438,
+      "sha256": "c472108f7706b3ac4fbf36886a07560e0611cb57093840b475b3d49b0ab8dd8f"
+    },
+    "input-manifest.json": {
+      "bytes": 1120,
+      "sha256": "6e16190083ae9b23ecdd12eb34e5ac414a1418badb203c7f674e9c1a90dd65ba"
+    },
+    "loader_test_entry.py": {
+      "bytes": 6422,
+      "sha256": "14ac019075de8126ecb8fbc4c5492d2c95d0071d15916d41b7ba71088d49bf98"
+    },
+    "run_tests.py": {
+      "bytes": 14074,
+      "sha256": "e119bc947fab54de0d872a8944a4092723611a76d51c6d339cd9ae86273da71a"
+    },
+    "supervisor.py": {
+      "bytes": 41485,
+      "sha256": "8824478a6415dee39d28ccefb0881fc0687ac724f5a9c5a4540310fb5196b9bc"
+    },
+    "test_audit_tools.py": {
+      "bytes": 36400,
+      "sha256": "374e8a2a235c2e08055261977776342084d35294aeb83d50ddc4402943eb25bc"
+    }
+  },
+  "gpu_execution": false,
+  "passed": true,
+  "schema": "ferric-indexed-atomic-dag-loader-tests-retention-v1",
+  "synthetic_loader_only": true,
+  "tests_passed": 26
+}

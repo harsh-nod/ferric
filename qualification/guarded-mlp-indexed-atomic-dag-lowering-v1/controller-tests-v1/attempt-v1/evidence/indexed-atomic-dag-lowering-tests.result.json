@@ -1,0 +1,44 @@
+{
+  "adopted_reaped": [],
+  "argv": [
+    "/usr/bin/prlimit",
+    "--as=12884901888",
+    "--cpu=1200",
+    "--fsize=1073741824",
+    "--core=0",
+    "--",
+    "/usr/bin/python3.12",
+    "-I",
+    "-S",
+    "-B",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-indexed-atomic-dag-lowering-tests-v228-v1/lowering_test_entry.py"
+  ],
+  "command": {
+    "bytes": 886,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-indexed-atomic-dag-lowering-tests-v228-v1/evidence/indexed-atomic-dag-lowering-tests.command.json",
+    "sha256": "17410cb16e6ada5a06b8e5ef6ab1f544cd16d5d75b964401383f66f090d71d58"
+  },
+  "elapsed_ns": 2306806540,
+  "exception": null,
+  "exit_code": 0,
+  "forced_cleanup": false,
+  "label": "indexed-atomic-dag-lowering-tests",
+  "natural_exit": true,
+  "observed_signals": [],
+  "pgid": 1818024,
+  "pid": 1818024,
+  "process_group_absent": true,
+  "reaped": true,
+  "stderr": {
+    "bytes": 2842,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-indexed-atomic-dag-lowering-tests-v228-v1/evidence/indexed-atomic-dag-lowering-tests.stderr",
+    "sha256": "86ccc10c0db6c01acd6c06f3b1c91c5ee580e5ea1b9ed0743dc3af8775358d44"
+  },
+  "stdout": {
+    "bytes": 4008,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-indexed-atomic-dag-lowering-tests-v228-v1/evidence/indexed-atomic-dag-lowering-tests.stdout",
+    "sha256": "38a951f4abcd9af005353e8dbeb89793ff2b937fa9c375cf5b6056e1ba312a95"
+  },
+  "storage_failure": null,
+  "timed_out": false
+}
