@@ -79,6 +79,11 @@ checks are recorded separately and must not be added indiscriminately to
 nested counters. This motivates a separately qualified shared-full-currentness
 experiment; it does not measure GPU kernel duration or an optimization gain.
 
+The [integer host-accounting analysis](analysis-v1/README.md) also passes on
+MI350: ten synthetic tests, eight clean input posthashes, and exact disjoint
+wall reconciliation. [Measured tables](analysis-v1/summary.md) keep nested
+rank/shared counters separate from the prefix/paired/hidden/other wall totals.
+
 The original terminal is 614,572 bytes, SHA-256
 `91a20d628644eb784d651e4d4d87571cb55cdb367971092fcea40d259ee38ec2`.
 Its controller elapsed time is 410.540 seconds, including setup and audits,
