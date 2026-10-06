@@ -1,0 +1,44 @@
+{
+  "adopted_reaped": [],
+  "argv": [
+    "/usr/bin/prlimit",
+    "--as=12884901888",
+    "--cpu=1200",
+    "--fsize=1073741824",
+    "--core=0",
+    "--",
+    "/usr/bin/python3.12",
+    "-I",
+    "-S",
+    "-B",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-cfg-lowering-tests-v228-v1/lowering_test_entry.py"
+  ],
+  "command": {
+    "bytes": 862,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-cfg-lowering-tests-v228-v1/evidence/ranked-cfg-lowering-tests.command.json",
+    "sha256": "6f927452dc81cbc3cdf268c13c1a19a5bb194ad2d6e5edb99bdf1587a11d441b"
+  },
+  "elapsed_ns": 1526983426,
+  "exception": null,
+  "exit_code": 0,
+  "forced_cleanup": false,
+  "label": "ranked-cfg-lowering-tests",
+  "natural_exit": true,
+  "observed_signals": [],
+  "pgid": 1400648,
+  "pid": 1400648,
+  "process_group_absent": true,
+  "reaped": true,
+  "stderr": {
+    "bytes": 2584,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-cfg-lowering-tests-v228-v1/evidence/ranked-cfg-lowering-tests.stderr",
+    "sha256": "9361a2ac9d9ec84677c85e0b8a8864e3db3aedc269661c76dda68e1dd2499566"
+  },
+  "stdout": {
+    "bytes": 3684,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-cfg-lowering-tests-v228-v1/evidence/ranked-cfg-lowering-tests.stdout",
+    "sha256": "fa4141b94c8e5ca0db73a97ce7c6b811b587a1381ec324de8ac99005edb3354e"
+  },
+  "storage_failure": null,
+  "timed_out": false
+}

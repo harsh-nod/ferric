@@ -1,0 +1,37 @@
+{
+  "files": {
+    "audit_tools.py": {
+      "bytes": 54331,
+      "sha256": "a5f6275469760a927ab1e29589fbbf1aecdbcfe4f2259acc0138e573251ecf4a"
+    },
+    "loader_test_entry.py": {
+      "bytes": 6276,
+      "sha256": "9f22659bbeba629e87fdd5fd9a7a44fa7855bff65a5903c4fc33d6ccad3f9ea5"
+    },
+    "run_tests.py": {
+      "bytes": 13888,
+      "sha256": "c0548e2c1546f2c6d4622d6a7e5f3bc5b826d165bb5bf3f4a29be87707f39e5f"
+    },
+    "supervisor.py": {
+      "bytes": 41485,
+      "sha256": "8824478a6415dee39d28ccefb0881fc0687ac724f5a9c5a4540310fb5196b9bc"
+    },
+    "test_audit_tools.py": {
+      "bytes": 27221,
+      "sha256": "2729fc46829acd1442ba36194a6c7e94a1eb53cc23f204c617d9c29bace8ab11"
+    }
+  },
+  "schema": "ferric-ranked-cfg-loader-test-input-v1",
+  "tool_pins": {
+    "prlimit": {
+      "bytes": 27536,
+      "path": "/usr/bin/prlimit",
+      "sha256": "17064f67e650d6152a6902b013aab496b54c87587c8eea6f5023aafee6154069"
+    },
+    "python": {
+      "bytes": 8020928,
+      "path": "/usr/bin/python3.12",
+      "sha256": "e1efa562c2cc2e35521a5c9c9b9939921001ff8ca9708a13ef15ace68cc2ccd7"
+    }
+  }
+}

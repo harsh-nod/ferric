@@ -6,15 +6,24 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Latest: [the corrected ranked CFG diagnostic passes full CPU qualification on MI350](../qualification/guarded-mlp-ranked-cfg-diagnostic-v1/README.md).
+Latest: [the diagnostic identifies 1,121 blocks in the MLP state-guard kernel](../qualification/guarded-mlp-ranked-cfg-lowering-v1/README.md).
+The actual gfx950 lowering retry rejects `ferric_qwen3_mlp_state_guard_v1`
+against the unchanged 1,024-block cap before loop analysis. The compiler
+exited naturally and was reaped with clean integrity checks; no HSACO or GPU
+execution occurred. The refreshed deployment passed fourteen loader checks.
+Separate synthetic runs passed 24 loader and 17 lowering fixtures. A bounded
+block-cap experiment with independent edge, fact and work limits is next;
+it has not yet run and changes no current production authority.
+
+Previously, [the corrected ranked CFG diagnostic passes full CPU qualification on MI350](../qualification/guarded-mlp-ranked-cfg-diagnostic-v1/README.md).
 All 33 phases exited naturally and were reaped, with unchanged sources and
 clean integrity checks. The compiler passed 1,247 tests and pliron passed
 1,504; focused repeats and extraction controls bring the total to 2,814
 passing executions, not unique tests. All 25 historical ignores remain
 explicit. The first attempt's compile failure is retained alongside the fix.
 The CFG limit and atomic rules remain unchanged. The actual rejected
-function/count still needs a guarded lowering retry; no HSACO/GPU, numerical
-or performance milestone is closed.
+function/count is now recorded above; no HSACO/GPU, numerical or performance
+milestone is closed.
 
 Previously, [optimized-inlining guarded lowering reaches the ranked CFG limit on MI350](../qualification/guarded-mlp-lowering-attempt-v3/README.md).
 The earlier atomic-ordering rejection is no longer observed. The new failure

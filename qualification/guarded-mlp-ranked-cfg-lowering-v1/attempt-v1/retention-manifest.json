@@ -1,0 +1,56 @@
+{
+  "artifact": null,
+  "files": {
+    "evidence/compile.command.json": {
+      "bytes": 7441,
+      "sha256": "345ab2e27d242f1e748205c7d4ae15b74fa8715d4fd363a96137179d413f996a"
+    },
+    "evidence/compile.result.json": {
+      "bytes": 1178,
+      "sha256": "c81ab36364afdc64c8395528a27da76d3e9967cba40dc2bc9c1a76b12efe4957"
+    },
+    "evidence/compile.started.json": {
+      "bytes": 3513,
+      "sha256": "e64fe4212895d2f0aba4cc13f842d00417f4bfb175a4418ad44d943b3ae1096b"
+    },
+    "evidence/compile.stderr": {
+      "bytes": 8264,
+      "sha256": "4584404f5ccb3b56c88bed4f54dd404087c1477bc34af6a6a73023dc063fe52a"
+    },
+    "evidence/compile.stdout": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "evidence/configurations.json": {
+      "bytes": 3162,
+      "sha256": "c6c84ca2778c203639e9802564d17ecec7548608cfd558d83d61f8fbaaea605a"
+    },
+    "evidence/failed.json": {
+      "bytes": 6381,
+      "sha256": "e4547a1269e419952bba67914e76e69266261036ef8b4ae273180a0f08ffafc7"
+    },
+    "evidence/inputs-after.json": {
+      "bytes": 82083,
+      "sha256": "cb431eacc51a7b3954ddaa283ebe10441d911b19ded4c9ba9fcba5f84d5997e7"
+    },
+    "evidence/inputs-before.json": {
+      "bytes": 80019,
+      "sha256": "53b57d3d22b20f58054bf873b6f8bb5b707ee54fe57a76d8417beda012c482df"
+    },
+    "evidence/source-after.json": {
+      "bytes": 1979859,
+      "sha256": "955e37e41e54df808221a7d3459f3f782ac7d0b6115ec35e48e14d5f834d4d78"
+    },
+    "evidence/source-before.json": {
+      "bytes": 1979859,
+      "sha256": "955e37e41e54df808221a7d3459f3f782ac7d0b6115ec35e48e14d5f834d4d78"
+    },
+    "lowering.py": {
+      "bytes": 39282,
+      "sha256": "cf29a932d5475654709b82a13625ba3c55e54c76dd4022ca873819933a603f8a"
+    }
+  },
+  "gpu_execution": false,
+  "passed": false,
+  "schema": "ferric-guarded-mlp-ranked-cfg-lowering-retention-v1"
+}

@@ -71,6 +71,8 @@ work-budget precedence, callable/root context and bounded rendering. The
 failed attempt did not reach these tests; the corrected retry passes them.
 
 The qualified pre-diagnostic compiler remains untouched. The diagnostic
-producer now passes full CPU qualification; an actual guarded lowering retry
-is still needed to capture the rejected function/count. All issue #42 milestones,
-independent model numerics and the 700 tokens/s benchmark remain open.
+producer passes full CPU qualification. The subsequent
+[guarded lowering retry](../guarded-mlp-ranked-cfg-lowering-v1/README.md)
+identifies 1,121 blocks in `ferric_qwen3_mlp_state_guard_v1`, exceeding the
+unchanged 1,024-block limit. All issue #42 milestones, independent model
+numerics and the 700 tokens/s benchmark remain open.
