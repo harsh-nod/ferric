@@ -6,7 +6,14 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Latest: [the updated engineering driver builds and passes its 18 focused tests on MI350](../qualification/guarded-mlp-driver-cpu-v1/README.md).
+Latest: [the refreshed driver deployment passes all fourteen loader checks on MI350](../qualification/guarded-mlp-s-rpo-tool-audit-v2/README.md).
+Only the driver changes; the other six tools and full combined compiler
+provenance remain intact. Eighteen synthetic loader-admission fixtures passed
+separately. All actual inspections exited naturally and were reaped, with
+clean integrity checks. The optimized-inlining guarded lowering retry is
+next; this is not an HSACO, GPU, model-correctness or performance result.
+
+Previously, [the updated engineering driver builds and passes its 18 focused tests on MI350](../qualification/guarded-mlp-driver-cpu-v1/README.md).
 All seven phases exited naturally and were reaped, with unchanged sources and
 clean postchecks. The complete 402-name compiled inventory and five ignored
 names are retained, but the full driver suite was not executed. The final

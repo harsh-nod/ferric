@@ -1,0 +1,66 @@
+{
+  "compiler_qualification": false,
+  "files": {
+    "audit_tools.py": {
+      "bytes": 40004,
+      "sha256": "38d242e4ef1f57ef5c980ce724d837be3f535bc49169196edb5bea8e2b9c175f"
+    },
+    "evidence/complete.json": {
+      "bytes": 11479,
+      "sha256": "fa01a5a7316ca30176946d4fc477d6a6c194b0267300ec153dd776caa66f0937"
+    },
+    "evidence/s-rpo-loader-tests.command.json": {
+      "bytes": 839,
+      "sha256": "e6a5e9094753c94997c5f902ae808e0c3a3f055cd6457ebba1f0316f0e5832f7"
+    },
+    "evidence/s-rpo-loader-tests.result.json": {
+      "bytes": 1524,
+      "sha256": "037bc1576a6641f749ec2a7c9abd2f348aca4fec821d5dc33e14ba5dbba8fe41"
+    },
+    "evidence/s-rpo-loader-tests.started.json": {
+      "bytes": 372,
+      "sha256": "e5a63e0e5bdbaf716f071537b13dbd36f9d84e342251adb46ffbe635e305ba94"
+    },
+    "evidence/s-rpo-loader-tests.stderr": {
+      "bytes": 2789,
+      "sha256": "7cab7df311ce4faa44ccccca021c200cea31c46f937d11e2aef0b90ea588eb6d"
+    },
+    "evidence/s-rpo-loader-tests.stdout": {
+      "bytes": 3899,
+      "sha256": "8512b504aefea24f5e689e22b437de1f20b7003892c4bf628d8c192f7d4e3690"
+    },
+    "evidence/sources-after.json": {
+      "bytes": 1373,
+      "sha256": "c9980a4a0e7478f4f5d71043281bdc293cc336d3bc5f8aa5bf533956d7c5d22a"
+    },
+    "evidence/sources-before.json": {
+      "bytes": 1373,
+      "sha256": "c9980a4a0e7478f4f5d71043281bdc293cc336d3bc5f8aa5bf533956d7c5d22a"
+    },
+    "input-manifest.json": {
+      "bytes": 1107,
+      "sha256": "8cd3a66c43ccbaa3eca148cfb065f74a8686a407b353cd50ea3309663c218b19"
+    },
+    "loader_test_entry.py": {
+      "bytes": 5635,
+      "sha256": "27e0cc81763aa711142cce16035fb419025833d1b635ee5bbb775ed45a1af16f"
+    },
+    "run_tests.py": {
+      "bytes": 13222,
+      "sha256": "4be03eb045f5e5077699c57efed2f58a41318956a4a8874d1abd2493e4604423"
+    },
+    "supervisor.py": {
+      "bytes": 41485,
+      "sha256": "8824478a6415dee39d28ccefb0881fc0687ac724f5a9c5a4540310fb5196b9bc"
+    },
+    "test_audit_tools.py": {
+      "bytes": 17806,
+      "sha256": "735cdcd0f4e507732675658092ff30ae66bb2c6e68ae6ec0a35665c362a922c6"
+    }
+  },
+  "gpu_execution": false,
+  "passed": true,
+  "schema": "ferric-s-rpo-loader-tests-retention-v2",
+  "synthetic_loader_only": true,
+  "tests_passed": 18
+}

@@ -1,0 +1,30 @@
+{
+  "adopted_reaped": [],
+  "command": {
+    "bytes": 902,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-s-rpo-compiler-tools-audit-v228-v2/fe2o3-rustc-extract-ldd.command.json",
+    "sha256": "0a8bc11343c07cf52ba54b7431a0bcb43cafbdd81fd7f7e75f90afb0929c8442"
+  },
+  "elapsed_ns": 50428722,
+  "exception": null,
+  "exit_code": 0,
+  "forced_cleanup": false,
+  "label": "fe2o3-rustc-extract-ldd",
+  "natural_exit": true,
+  "observed_signals": [],
+  "pgid": 1177658,
+  "pid": 1177658,
+  "process_group_absent": true,
+  "reaped": true,
+  "stderr": {
+    "bytes": 0,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-s-rpo-compiler-tools-audit-v228-v2/fe2o3-rustc-extract-ldd.stderr",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "stdout": {
+    "bytes": 1135,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-s-rpo-compiler-tools-audit-v228-v2/fe2o3-rustc-extract-ldd.stdout",
+    "sha256": "f24d535806f9a21ecb1067d77f2cfee3b7d2bb8f5c5c6f9593c274896a82df0c"
+  },
+  "timed_out": false
+}
