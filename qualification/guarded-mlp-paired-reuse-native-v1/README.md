@@ -157,3 +157,8 @@ custody while scheduling prefix/tail work. Ferric must use a distinct guarded
 completion path without its legacy duplicate R2 callback or fake 2192-byte
 state tokens. Then qualify model state banks and the complete BF16 Qwen
 workload before equivalent vLLM comparisons, overlap plots and ablations.
+
+The next [CPU-qualified retained-pair checkpoint](../guarded-mlp-retained-pair-v1/README.md)
+adds borrow-free owner custody and sealed completed-batch revalidation after
+intervening queue work. Its new executable still needs native interleaving
+validation; this page's GPU receipt applies only to the Session run above.
