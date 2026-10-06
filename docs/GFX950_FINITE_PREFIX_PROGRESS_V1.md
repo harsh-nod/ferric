@@ -6,7 +6,17 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Latest: the capacity generation's [26 loader-controller fixtures](../qualification/guarded-mlp-ranked-cfg-cap-tool-audit-v2/README.md)
+Latest: [the bounded CFG capacity experiment passes full CPU qualification](../qualification/guarded-mlp-ranked-cfg-capacity-v1/README.md).
+The corrected second attempt passes all 35 phases on MI350: 1,248 compiler
+and 1,507 Pliron tests, with focused repeats and extraction controls bringing
+the total to 2,822 passing executions. All 25 historical ignores remain
+explicit. Every child exited naturally and was reaped, with unchanged
+sources and clean postchecks. Only the block cap expands; independent edge,
+fact, work and storage limits remain unchanged. The failed first attempt is
+retained. Fresh loader inspection and actual guarded gfx950 lowering are
+separate gates; this is not a GPU, model-numerics or performance result.
+
+Previously, the capacity generation's [26 loader-controller fixtures](../qualification/guarded-mlp-ranked-cfg-cap-tool-audit-v2/README.md)
 and [19 lowering-controller fixtures](../qualification/guarded-mlp-ranked-cfg-cap-lowering-v2/README.md)
 pass on MI350. Each bounded child exited naturally and was reaped with clean
 source and tool postchecks. These are synthetic admission tests, not an

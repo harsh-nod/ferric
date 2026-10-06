@@ -1,0 +1,235 @@
+{
+  "admission_changed": true,
+  "base_complete": {
+    "bytes": 1255543,
+    "sha256": "e30712ef17c7094efce9bd13bee2bb172823e94f4817c812cfb8b1b20cefb847"
+  },
+  "base_sources": {
+    "bytes": 2253188,
+    "sha256": "fa4722605d557e1236809f610bc7af5ebb6e7f15a643ba736392be5b2177bb8a"
+  },
+  "base_tree": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/guarded-mlp-s-rpo-qualification-input-v228-v1/fe2o3",
+  "block_limit": {
+    "after": 2048,
+    "before": 1024
+  },
+  "capacity_files": {
+    "crates/fe2o3-pliron/src/production_analysis/pliron_ranked_bounds.rs": {
+      "after": {
+        "bytes": 23920,
+        "sha256": "fb859914f0079bbea14c50e92e2a4eb545f68c65f2009b4cf93348466b6816b9"
+      },
+      "before": {
+        "bytes": 23900,
+        "sha256": "14bc922798ef8dee823da27d9fa553d57e945e0b6c3f9d87c5290ea859413fde"
+      }
+    },
+    "crates/fe2o3-pliron/src/production_analysis/pliron_ranked_bounds/resource_tests.rs": {
+      "after": {
+        "bytes": 13478,
+        "sha256": "4047bd26e6d1194296639465f59fc617363d3f485ed9798f5d70b274236e2df4"
+      },
+      "before": {
+        "bytes": 9412,
+        "sha256": "7d759bd8d90419c9bb76def8aa546cc372fd8bdb7c572d6c115a3dfdd2b91c9b"
+      }
+    },
+    "crates/rustc-codegen-fe2o3/src/production_ranked_projection_v1.rs": {
+      "after": {
+        "bytes": 1650811,
+        "sha256": "8e470fd56bebb0f5bf94d714d3c4555659cea9626dfb6403003dd4ed4811d9d3"
+      },
+      "before": {
+        "bytes": 1650803,
+        "sha256": "89f4b315ceb45ea55db0394fb55ef378fbf12482c2b389cd0c80e41730b71f32"
+      }
+    },
+    "crates/rustc-codegen-fe2o3/src/production_ranked_projection_v1/analysis_multi_split_v1_tests.rs": {
+      "after": {
+        "bytes": 3914,
+        "sha256": "8199756a05110c15a3669ca501a75e2a9e76c5e6185c7c4e5fb7019797292a1e"
+      },
+      "before": {
+        "bytes": 3920,
+        "sha256": "6e6abd8d94119d38fec40fda6e7c2fa4cdf75a2b5f2a9ef6335c55c61ff55c5f"
+      }
+    },
+    "crates/rustc-codegen-fe2o3/src/production_ranked_projection_v1/cfg_block_limit_diagnostic_v1_tests.rs": {
+      "after": {
+        "bytes": 11531,
+        "sha256": "66a5be3431b516dec1fa4564ef37030a272aba1a4fcdaf86ce6a9e3282fb79a2"
+      },
+      "before": {
+        "bytes": 10964,
+        "sha256": "570482212eea46393d6057977246196464b7f16838062859e8de52ecc0d85965"
+      }
+    },
+    "crates/rustc-codegen-fe2o3/src/production_ranked_projection_v1/projection_08_tests.rs": {
+      "after": {
+        "bytes": 44650,
+        "sha256": "f36ef583725aded588e573ce4a18b380b04cace5b95b75f6486d4a3faa21fd86"
+      },
+      "before": {
+        "bytes": 44577,
+        "sha256": "65e4b833697a804897123ea4917aa4dae256a43627043e2c3c2331d0411bc6f6"
+      }
+    }
+  },
+  "capacity_patch": {
+    "bytes": 11083,
+    "sha256": "00d975d332caf696914264b0005076e2460b7f9c920dd75f9f8d71b4f230c64e"
+  },
+  "cfg_diagnostics_retained": true,
+  "cohorts": {
+    "cfg-block-cap-compiler": {
+      "filter": "production_ranked_projection_v1::tests::cfg_block_cap_",
+      "names": [
+        "production_ranked_projection_v1::tests::cfg_block_cap_preserves_fixed_graph_work_and_edge_caps"
+      ]
+    },
+    "cfg-block-cap-pliron": {
+      "filter": "production_analysis::pliron_ranked_bounds::resource_upper_bound_tests::memory_bounds_block_cap_",
+      "names": [
+        "production_analysis::pliron_ranked_bounds::resource_upper_bound_tests::memory_bounds_block_cap_accepts_legacy_measured_and_2048",
+        "production_analysis::pliron_ranked_bounds::resource_upper_bound_tests::memory_bounds_block_cap_does_not_expand_other_limits",
+        "production_analysis::pliron_ranked_bounds::resource_upper_bound_tests::memory_bounds_block_cap_preserves_independent_work_storage_refusals"
+      ]
+    },
+    "cfg-block-limit-diagnostic": {
+      "filter": "production_ranked_projection_v1::tests::cfg_block_limit_diagnostic_",
+      "names": [
+        "production_ranked_projection_v1::tests::cfg_block_limit_diagnostic_callable_summary_has_no_fabricated_root",
+        "production_ranked_projection_v1::tests::cfg_block_limit_diagnostic_context_leaves_other_errors_unchanged",
+        "production_ranked_projection_v1::tests::cfg_block_limit_diagnostic_counts_unreachable_declared_blocks",
+        "production_ranked_projection_v1::tests::cfg_block_limit_diagnostic_exact_limit_preserves_graph_acceptance",
+        "production_ranked_projection_v1::tests::cfg_block_limit_diagnostic_over_limit_preserves_both_refusals",
+        "production_ranked_projection_v1::tests::cfg_block_limit_diagnostic_precedes_work_without_changing_budget",
+        "production_ranked_projection_v1::tests::cfg_block_limit_diagnostic_root_is_bounded_and_escaped",
+        "production_ranked_projection_v1::tests::cfg_block_limit_diagnostic_zero_preserves_both_refusals"
+      ]
+    }
+  },
+  "files": {
+    "crates/fe2o3-pliron/src/production_analysis/pliron_ranked_bounds.rs": {
+      "after": {
+        "bytes": 23920,
+        "sha256": "fb859914f0079bbea14c50e92e2a4eb545f68c65f2009b4cf93348466b6816b9"
+      },
+      "before": {
+        "bytes": 23900,
+        "sha256": "14bc922798ef8dee823da27d9fa553d57e945e0b6c3f9d87c5290ea859413fde"
+      }
+    },
+    "crates/fe2o3-pliron/src/production_analysis/pliron_ranked_bounds/resource_tests.rs": {
+      "after": {
+        "bytes": 13478,
+        "sha256": "4047bd26e6d1194296639465f59fc617363d3f485ed9798f5d70b274236e2df4"
+      },
+      "before": {
+        "bytes": 9412,
+        "sha256": "7d759bd8d90419c9bb76def8aa546cc372fd8bdb7c572d6c115a3dfdd2b91c9b"
+      }
+    },
+    "crates/rustc-codegen-fe2o3/src/production_ranked_projection_v1.rs": {
+      "after": {
+        "bytes": 1650811,
+        "sha256": "8e470fd56bebb0f5bf94d714d3c4555659cea9626dfb6403003dd4ed4811d9d3"
+      },
+      "before": {
+        "bytes": 1650118,
+        "sha256": "bd67b31add2ed0a6c8d1719f57e59821a13a3848c0f07f8135ad4dc144261b1f"
+      }
+    },
+    "crates/rustc-codegen-fe2o3/src/production_ranked_projection_v1/analysis_multi_split_v1_tests.rs": {
+      "after": {
+        "bytes": 3914,
+        "sha256": "8199756a05110c15a3669ca501a75e2a9e76c5e6185c7c4e5fb7019797292a1e"
+      },
+      "before": {
+        "bytes": 3920,
+        "sha256": "6e6abd8d94119d38fec40fda6e7c2fa4cdf75a2b5f2a9ef6335c55c61ff55c5f"
+      }
+    },
+    "crates/rustc-codegen-fe2o3/src/production_ranked_projection_v1/cfg_block_limit_diagnostic_v1.rs": {
+      "after": {
+        "bytes": 4080,
+        "sha256": "c7b8f30f3de7d4ea25e7f5e0345ca057c8352413d232675a4d9f0cf8cac7ff1f"
+      },
+      "before": null
+    },
+    "crates/rustc-codegen-fe2o3/src/production_ranked_projection_v1/cfg_block_limit_diagnostic_v1_tests.rs": {
+      "after": {
+        "bytes": 11531,
+        "sha256": "66a5be3431b516dec1fa4564ef37030a272aba1a4fcdaf86ce6a9e3282fb79a2"
+      },
+      "before": null
+    },
+    "crates/rustc-codegen-fe2o3/src/production_ranked_projection_v1/loop_switch_domain_v1.rs": {
+      "after": {
+        "bytes": 5673,
+        "sha256": "7b60affab3db21a94ee81e42eb181a3bcbc7d84434851e4b633a85a60ac68b07"
+      },
+      "before": {
+        "bytes": 5670,
+        "sha256": "98ced9801951f12003349ccc1cbd9d5ba94bbb702b0ea3bf5ab928ea78b52e7c"
+      }
+    },
+    "crates/rustc-codegen-fe2o3/src/production_ranked_projection_v1/projection_08_tests.rs": {
+      "after": {
+        "bytes": 44650,
+        "sha256": "f36ef583725aded588e573ce4a18b380b04cace5b95b75f6486d4a3faa21fd86"
+      },
+      "before": {
+        "bytes": 44577,
+        "sha256": "65e4b833697a804897123ea4917aa4dae256a43627043e2c3c2331d0411bc6f6"
+      }
+    }
+  },
+  "integration_patch": {
+    "bytes": 28204,
+    "sha256": "32b0f5c86a98642607600b1c454c3caac4781fc944c18e7661a8e69c73f6284f"
+  },
+  "observed_rejection": {
+    "blocks": 1121,
+    "function_sha256": "72f186b0c49aafc62f29a7b77a5bbca4fc458c507019297c8bea173b272fe70c",
+    "kernel_export": "ferric_qwen3_mlp_state_guard_v1",
+    "limit": 1024,
+    "local_path": "/home/harsh/ferric-p227-integration/qualification/guarded-mlp-ranked-cfg-lowering-v1/attempt-v1/evidence/compile.stderr",
+    "phase": "root-projection",
+    "pin": {
+      "bytes": 8264,
+      "sha256": "4584404f5ccb3b56c88bed4f54dd404087c1477bc34af6a6a73023dc063fe52a"
+    },
+    "site": "loop-switch-inventory"
+  },
+  "preserved_limits": {
+    "bounds_storage_items": 131072,
+    "bounds_work": 8388608,
+    "edges": 2048,
+    "facts": 1024,
+    "findings": 4096,
+    "operations": 65536,
+    "projector_graph_work": 3145728
+  },
+  "previous_capacity_failure": {
+    "bytes": 877177,
+    "sha256": "7f075680fbae052dccf01daac563c615079cc148355f0c91e7e1290521dc3dc9"
+  },
+  "previous_capacity_proposal": {
+    "bytes": 8188,
+    "sha256": "cc1c5419f8349fa8f3eb937fdaf7ba4f76d3407439d53fabbdcca7acac0b0ff6"
+  },
+  "previous_diagnostic_complete": {
+    "bytes": 1262646,
+    "sha256": "21fa53c3bd73e13dbb8f14aa85d1f8f60237becf230722b4046060f8462838f8"
+  },
+  "previous_diagnostic_sources": {
+    "bytes": 2265693,
+    "sha256": "1bde79b4ea152e2b35735089d319381973fcfa2c2498569d5526778c4c813cdb"
+  },
+  "runtime_or_kernel_source_changes": false,
+  "schema": "ferric-guarded-mlp-ranked-cfg-cap-source-v1",
+  "source_only": true,
+  "structural_capacity_expansion": true,
+  "successor_change": "Only the inherited parallel-switch positive fixture uses the fixed raw-edge ceiling minus its fallback; production and added test names are unchanged."
+}

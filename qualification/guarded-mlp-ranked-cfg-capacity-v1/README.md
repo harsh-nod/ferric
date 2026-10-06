@@ -47,7 +47,33 @@ fallback edge. After separating the limits, this exceeded the unchanged
 2,048-edge cap, and the compiler correctly rejected it. The corrected retry
 uses `MAX_RANKED_BOUNDS_EDGES - 1` arms plus the fallback for exactly 2,048
 edges. The existing negative still has 2,049 edges. No production edge gate
-is changed to make this test pass. The retry is not yet qualified.
+is changed to make this test pass.
+
+## Corrected Qualification
+
+The second MI350 attempt passed all 35 phases in 652.683298 seconds. Every
+child exited naturally with status zero, was reaped and left no process
+group. Source/dependency checks passed without timeout or forced cleanup.
+
+| Executed Scope | Passed | Ignored |
+| --- | ---: | ---: |
+| Complete compiler library | 1,248 | 24 |
+| Complete Pliron library | 1,507 | 1 |
+| Earlier focused controls, repeated | 43 | 0 |
+| CFG diagnostic controls, repeated | 8 | 0 |
+| Independent-cap controls, repeated | 4 | 0 |
+| Atomic, source-safety, matrix and attention controls | 12 | 0 |
+| Total test executions | 2,822 | 25 |
+
+These totals count repeated executions, not unique tests. The old test names
+and historical ignore identities are preserved. The only V1-to-V2 source
+change repairs the edge-boundary fixture described above; it does not alter
+production behavior. The qualified final build products are separately
+identified for the next loader inspection and guarded lowering attempt.
+
+This qualifies the isolated compiler experiment, not Ferric's production
+execution path. Actual guarded gfx950 HSACO/GPU and model-level correctness
+remain separate checks.
 
 ## Evidence
 
@@ -59,6 +85,15 @@ and 33,142,457 body bytes were verified after transfer. Receipt SHA-256:
 The 5,477,306-byte archive SHA-256 is
 `766413016beb0e9c1b46be2c0c40a6baf699da87bcaeed7e16e759bc52afc1d1`.
 
-Full compiler qualification, fresh binary-loader inspection, guarded gfx950
-HSACO/GPU execution, independent model numerics and sustained BF16 2,048/256
+[attempt-v2](attempt-v2) retains the successful controller, helper, input,
+eight source postimages, baseline lineage, receipt and all 179 raw records.
+Its retention manifest pins 205 bodies in 206 archive members totaling
+33,719,561 bytes. Receipt SHA-256:
+`bd31abddedd2f7585d56e1e1807add8454e1047c914d1b9e6a9e63c036989e9c`.
+The 5,551,410-byte archive SHA-256 is
+`e03945853a03cec366348705fe225aab4c5246db02d64a8d8d5f9f320db17b39`.
+
+The [fresh binary-loader inspection](../guarded-mlp-ranked-cfg-cap-tool-audit-v2/README.md)
+is recorded separately. Guarded gfx950 HSACO/GPU execution, independent model
+numerics and sustained BF16 2,048/256
 decode remain open. No issue #42 milestone or 700 tokens/s result is claimed.
