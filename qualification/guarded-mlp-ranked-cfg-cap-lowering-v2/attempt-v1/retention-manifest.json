@@ -1,0 +1,59 @@
+{
+  "artifact": null,
+  "artifact_bodies_retained": false,
+  "failure": "RuntimeError('natural successful/reaped leaf required')",
+  "files": {
+    "evidence/compile.command.json": {
+      "bytes": 7513,
+      "sha256": "3c124708a5dcddc11dc7cd4641d2f22983f4ee09b24e5078358dca2750341cb7"
+    },
+    "evidence/compile.result.json": {
+      "bytes": 1190,
+      "sha256": "70ecd724cb92310b144e01564d97bce10a96e2963e3cb48220ce138cbfab0584"
+    },
+    "evidence/compile.started.json": {
+      "bytes": 3545,
+      "sha256": "e491e2627b16188f7a9d5fa2f812d2afb96ae33d9ed9013573b15940cebd623a"
+    },
+    "evidence/compile.stderr": {
+      "bytes": 7919,
+      "sha256": "6636c7be6071ed6e09029880395d16edd99e698e594dabb17681e8e840c13e20"
+    },
+    "evidence/compile.stdout": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "evidence/configurations.json": {
+      "bytes": 3170,
+      "sha256": "a9a8b878d30c766474a40f00ee169b878f5f3d590899058449267e965e6265b9"
+    },
+    "evidence/failed.json": {
+      "bytes": 6808,
+      "sha256": "6761af874bf6040a8a2e5056aea66e4a9586867c5b196f1cb1bc452f4461edf0"
+    },
+    "evidence/inputs-after.json": {
+      "bytes": 82667,
+      "sha256": "4cf19465a1d352fd778291ba5b816391defedb9266b41c65c326a3ab16eb53e0"
+    },
+    "evidence/inputs-before.json": {
+      "bytes": 80603,
+      "sha256": "dc365e0a4e8b26f36bfb243c2574984a2251c6ae3287fdedfa03df247e28c938"
+    },
+    "evidence/source-after.json": {
+      "bytes": 1979859,
+      "sha256": "955e37e41e54df808221a7d3459f3f782ac7d0b6115ec35e48e14d5f834d4d78"
+    },
+    "evidence/source-before.json": {
+      "bytes": 1979859,
+      "sha256": "955e37e41e54df808221a7d3459f3f782ac7d0b6115ec35e48e14d5f834d4d78"
+    },
+    "lowering.py": {
+      "bytes": 41166,
+      "sha256": "fe6396d2842f159ec79bc067eaea8fb08496a76b6950bb4437eab26c04d9eb58"
+    }
+  },
+  "gpu_execution": false,
+  "passed": false,
+  "postcheck_errors": [],
+  "schema": "ferric-guarded-mlp-ranked-cfg-cap-lowering-retention-v2"
+}

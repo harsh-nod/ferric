@@ -1,0 +1,32 @@
+{
+  "adopted_reaped": [],
+  "command": {
+    "bytes": 7513,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-cfg-cap-lowering-v228-v2/compile.command.json",
+    "sha256": "3c124708a5dcddc11dc7cd4641d2f22983f4ee09b24e5078358dca2750341cb7"
+  },
+  "elapsed_ns": 117958346951,
+  "exception": null,
+  "exit_code": 1,
+  "forced_cleanup": false,
+  "label": "compile",
+  "minimum_free_bytes": 69369249792,
+  "natural_exit": true,
+  "observed_signals": [],
+  "peak_private_scratch_bytes": 1027837414,
+  "pgid": 1655617,
+  "pid": 1655617,
+  "process_group_absent": true,
+  "reaped": true,
+  "stderr": {
+    "bytes": 7919,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-cfg-cap-lowering-v228-v2/compile.stderr",
+    "sha256": "6636c7be6071ed6e09029880395d16edd99e698e594dabb17681e8e840c13e20"
+  },
+  "stdout": {
+    "bytes": 0,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-cfg-cap-lowering-v228-v2/compile.stdout",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "timed_out": false
+}

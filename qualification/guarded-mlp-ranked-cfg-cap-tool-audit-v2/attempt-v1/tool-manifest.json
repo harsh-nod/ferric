@@ -1,0 +1,37 @@
+{
+  "bin/cargo-fe2o3": {
+    "bytes": 81290624,
+    "sha256": "3513cb03e8a8fc2ec54f5d65c5d8a620ca614fadfed3d65a991e5b4a5243db0a",
+    "source": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-driver-cpu-v228-v1/target/debug/cargo-fe2o3"
+  },
+  "bin/clang-22": {
+    "bytes": 181660456,
+    "sha256": "7d604c310945507cba3eb716b35a4cd3652815f409b0a322095b72996d7b8c3c",
+    "source": "/home/harmenon/ferric-asrock-42/evidence/native-draft-v10-prep/rocm-7.2.1-extracted/opt/rocm-7.2.1/lib/llvm/bin/clang-22"
+  },
+  "bin/fe2o3-engineering-lld-proxy": {
+    "bytes": 507848,
+    "sha256": "4c3c98524367e6604c6373141f56a2b7f4dbc9386fac091e95f005d7c928d00f",
+    "source": "/home/harmenon/ferric-asrock-42/evidence/compiler-fe406-lld-proxy-bin/fe2o3-engineering-lld-proxy"
+  },
+  "bin/fe2o3-llvm-link-worker": {
+    "bytes": 107572400,
+    "sha256": "a5cab306a6676a069134ecc30232c69d0a28855f08c67bd437377c5ef65340d9",
+    "source": "/home/harmenon/ferric-asrock-42/evidence/native-draft-v10-prep/worker-build-v2/fe2o3-llvm-link-worker"
+  },
+  "bin/fe2o3-rustc-extract": {
+    "bytes": 205280,
+    "sha256": "13d20c7f4372f873a871b640316cdfa7e720345d3a841d0ac13cfb2a120931a2",
+    "source": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-cfg-cap-cpu-v228-v2/target/debug/fe2o3-rustc-extract"
+  },
+  "bin/librustc_codegen_fe2o3.so": {
+    "bytes": 206222520,
+    "sha256": "21761370b10e99163c7d2f4d92e997944afa0b7dcd690686ef9208b35c32eb00",
+    "source": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-cfg-cap-cpu-v228-v2/target/debug/librustc_codegen_fe2o3.so"
+  },
+  "bin/lld": {
+    "bytes": 114453432,
+    "sha256": "1acc06a3f8b12bc310919be73b79952279993fa82a984140e4e623df36487da7",
+    "source": "/home/harmenon/ferric-asrock-42/evidence/native-draft-v10-prep/rocm-7.2.1-extracted/opt/rocm-7.2.1/lib/llvm/bin/lld"
+  }
+}

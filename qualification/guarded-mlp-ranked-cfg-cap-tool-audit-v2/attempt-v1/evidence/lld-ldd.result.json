@@ -1,0 +1,30 @@
+{
+  "adopted_reaped": [],
+  "command": {
+    "bytes": 913,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-cfg-cap-compiler-tools-audit-v228-v2/lld-ldd.command.json",
+    "sha256": "04ff7a834271a46f0939aef748d7374a07e1362871f3c2c25be5ad2891cc03d0"
+  },
+  "elapsed_ns": 50494962,
+  "exception": null,
+  "exit_code": 0,
+  "forced_cleanup": false,
+  "label": "lld-ldd",
+  "natural_exit": true,
+  "observed_signals": [],
+  "pgid": 1643783,
+  "pid": 1643783,
+  "process_group_absent": true,
+  "reaped": true,
+  "stderr": {
+    "bytes": 0,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-cfg-cap-compiler-tools-audit-v228-v2/lld-ldd.stderr",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "stdout": {
+    "bytes": 818,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-cfg-cap-compiler-tools-audit-v228-v2/lld-ldd.stdout",
+    "sha256": "07075282570a8c770ff0172da549215fe141b59ecee9eca8ffd347e07931d207"
+  },
+  "timed_out": false
+}

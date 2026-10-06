@@ -1,0 +1,25 @@
+{
+  "argv": [
+    "/usr/bin/prlimit",
+    "--as=12884901888",
+    "--cpu=30",
+    "--fsize=1048576",
+    "--core=0",
+    "--",
+    "/usr/bin/ldd",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-cfg-cap-compiler-tools-v228-v2/bin/fe2o3-engineering-lld-proxy"
+  ],
+  "cwd": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-cfg-cap-compiler-tools-audit-v228-v2",
+  "env": {
+    "CUDA_VISIBLE_DEVICES": "",
+    "HIP_VISIBLE_DEVICES": "",
+    "HOME": "/home/harmenon",
+    "LANG": "C",
+    "LC_ALL": "C",
+    "LD_LIBRARY_PATH": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-cfg-cap-compiler-tools-v228-v2/bin:/home/harmenon/.rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/lib",
+    "PATH": "/usr/bin:/bin",
+    "ROCR_VISIBLE_DEVICES": "",
+    "TZ": "UTC"
+  },
+  "wall_seconds": 30
+}

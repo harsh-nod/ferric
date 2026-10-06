@@ -6,7 +6,17 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Latest: [the bounded CFG capacity experiment passes full CPU qualification](../qualification/guarded-mlp-ranked-cfg-capacity-v1/README.md).
+Latest: [guarded gfx950 lowering reaches the independent CFG-analysis work limit](../qualification/guarded-mlp-ranked-cfg-cap-lowering-v2/README.md).
+The earlier block-count rejection is no longer reported. The new diagnostic
+does not identify the function or charge site, and does not establish whether
+alias checks pass or fail. The compiler exited naturally after 117.958347
+seconds and was reaped with clean integrity checks. The refreshed deployment
+passed [all 14 loader inspections](../qualification/guarded-mlp-ranked-cfg-cap-tool-audit-v2/README.md).
+No HSACO or GPU result is claimed. The next work is to identify and reduce
+repeated graph analysis under the unchanged work ceiling; all milestones
+remain open.
+
+Previously, [the bounded CFG capacity experiment passes full CPU qualification](../qualification/guarded-mlp-ranked-cfg-capacity-v1/README.md).
 The corrected second attempt passes all 35 phases on MI350: 1,248 compiler
 and 1,507 Pliron tests, with focused repeats and extraction controls bringing
 the total to 2,822 passing executions. All 25 historical ignores remain
