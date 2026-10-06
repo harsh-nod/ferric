@@ -2,7 +2,46 @@
 
 The [parent CPU gate](../guarded-mlp-parent-cpu-v1/README.md) and
 [worker CPU gate](../guarded-mlp-worker-cpu-v1/README.md) pass independently.
-Native model execution is not yet accepted.
+The guarded model now completes four teacher-forced forwards on MI350.
+The first native run's outer controller remains failed; its log-parser error
+and the separate corrective checks are recorded below. Model numerical
+acceptance remains open.
+
+## Teacher-Forced Execution
+
+The [original V2 receipt](attempt-v2-tf4/tf4/failed.json) records one native
+attempt with all four forwards completed. The retained captures contain
+144 layer observations, 288 rank guard records and 1,213,952 finite BF16
+values. Inputs `9112, 2190, 3772, 220` produce checked lowest-index argmax
+tokens `67, 198, 25, 16`; both banks reach local generations `1, 1, 2, 2`.
+All eleven supervised phases exit naturally, owned processes are reaped,
+and all six surrounding process snapshots show idle GPUs.
+
+The outer controller rejects the worker announcement because its old parser
+recognizes `finite engineering`, but this parent emits `finite guarded`.
+The independently recorded parent/worker ancestry contains the matching
+worker PID. The [complete original inputs and capture](attempt-v2-tf4/README.md)
+preserve the failed result, not an edited passing receipt.
+
+The [six corrective CPU tests](announcement-cpu-v1/evidence/complete.json)
+pass on MI350 with unchanged sources and clean process postchecks.
+They require the exact guarded marker, matching PID/PGID, and two authentic
+owned-process records, rejecting missing, duplicate, malformed or conflicting
+announcements and ancestry. This is a parser test, not another GPU run.
+Receipt SHA-256:
+`170ba440cdf33cd88fc55c2ddff709624fd819d3d461d54daad239a719efdf5a`.
+
+Separate data-only revalidation must check the previously skipped gates.
+The original whole-controller duration of 412.754826 seconds includes setup
+and audits and is not a decode-throughput measurement.
+
+Two data-only revalidation failures are retained separately. The
+[first reader](revalidation-v1/failed.json) incorrectly required a single
+hard link for every input, rejecting Cargo's ordinary hard-linked executable
+products. The [second reader](revalidation-v2/failed.json) completed payload
+validation but compared Python frontier tuples with JSON arrays directly.
+The serialized observations are identical. Neither failure launched native
+code, changed the original GPU evidence, or established numerical acceptance.
 
 ## First Preflight
 

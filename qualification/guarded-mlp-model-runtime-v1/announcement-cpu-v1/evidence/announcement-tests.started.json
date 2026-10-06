@@ -1,0 +1,17 @@
+{
+  "argv": [
+    "/usr/bin/prlimit",
+    "--as=536870912",
+    "--cpu=120",
+    "--fsize=16777216",
+    "--core=0",
+    "--",
+    "/usr/bin/python3.12",
+    "-I",
+    "-B",
+    "-c",
+    "import sys,unittest;sys.path.insert(0,'/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-announcement-cpu-v228-v1');unittest.main(module=\"test_guarded_announcement\",argv=[\"announcement-tests\"],verbosity=2)"
+  ],
+  "pgid": 2876155,
+  "pid": 2876155
+}

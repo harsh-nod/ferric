@@ -1,0 +1,11 @@
+test_exact_guarded_message (test_guarded_announcement.GuardedAnnouncementTests.test_exact_guarded_message) ... ok
+test_exact_two_owned_process_join (test_guarded_announcement.GuardedAnnouncementTests.test_exact_two_owned_process_join) ... ok
+test_missing_duplicate_legacy_and_malformed_refuse (test_guarded_announcement.GuardedAnnouncementTests.test_missing_duplicate_legacy_and_malformed_refuse) ... ok
+test_missing_duplicate_or_extra_owned_process_refuses (test_guarded_announcement.GuardedAnnouncementTests.test_missing_duplicate_or_extra_owned_process_refuses) ... ok
+test_nonnatural_or_started_drift_refuses (test_guarded_announcement.GuardedAnnouncementTests.test_nonnatural_or_started_drift_refuses) ... ok
+test_wrong_worker_ancestry_identity_and_reason_refuse (test_guarded_announcement.GuardedAnnouncementTests.test_wrong_worker_ancestry_identity_and_reason_refuse) ... ok
+
+----------------------------------------------------------------------
+Ran 6 tests in 0.002s
+
+OK
