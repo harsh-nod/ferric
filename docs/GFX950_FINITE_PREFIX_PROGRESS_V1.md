@@ -17,6 +17,10 @@ operations still require separation. Atomic identity, receipt encoding,
 bounds/race and descriptor ownership checks remain unchanged. Fresh binary
 auditing and actual guarded lowering with these products are still pending.
 No GPU, model-numerical or performance acceptance follows from the CPU run.
+[34 tool-audit controller tests](../qualification/guarded-mlp-atomic-load-alias-tool-audit-v1/README.md)
+and [31 lowering-controller tests](../qualification/guarded-mlp-atomic-load-alias-lowering-v1/README.md)
+also pass on MI350 with clean source and process postchecks. These are
+synthetic admission tests, not the pending actual binary audit or compile.
 
 Previous compiler qualification: [the bounded memory-bounds DAG solver passes MI350 CPU qualification](../qualification/guarded-mlp-memory-bounds-dag-v1/README.md).
 All 45 phases and 32 scopes pass: 1,323 compiler and 1,516 Pliron tests,

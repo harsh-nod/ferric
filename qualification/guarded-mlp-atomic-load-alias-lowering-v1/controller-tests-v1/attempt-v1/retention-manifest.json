@@ -1,0 +1,94 @@
+{
+  "compiler_qualification": false,
+  "files": {
+    "alias-baseline-compile.stderr": {
+      "bytes": 8480,
+      "sha256": "5d3adcd162d465f76cca68e5590494692be075905070ae9a9795d11e60fe9b75"
+    },
+    "alias-baseline-failed.json": {
+      "bytes": 19077,
+      "sha256": "d072928318581d8f492d296dfa4cc4a1f42865fbd3a7d95fdac01dddac7e5ab0"
+    },
+    "audit_tools.py": {
+      "bytes": 126370,
+      "sha256": "fb4b87ede38d1948a60ba55db1f214ed377b2d8ecf266751e57d69d993909477"
+    },
+    "baseline-compile.stderr": {
+      "bytes": 123245,
+      "sha256": "c60dc2edc62bfe11ba7a8f79ce1465322d2c887aeb3fa5661dae8002a33c5095"
+    },
+    "baseline-failed.json": {
+      "bytes": 17737,
+      "sha256": "8d4cc1a0cfe0c9104282c3d20349638a616bd98e7e28f92598dcaf0110057ca2"
+    },
+    "evidence/atomic-load-alias-lowering-tests.command.json": {
+      "bytes": 883,
+      "sha256": "c1505521f1335deb01d71723f0201c6af58c85bcd0eb8bf9f703e18117d242ff"
+    },
+    "evidence/atomic-load-alias-lowering-tests.result.json": {
+      "bytes": 1637,
+      "sha256": "be956eb685a94b9032c2384ea37e274b5088d5d13752e21296989e3bb8fa76d9"
+    },
+    "evidence/atomic-load-alias-lowering-tests.started.json": {
+      "bytes": 386,
+      "sha256": "af5c00566200f47b607bffb635f513031853e41ef32139c48dc3e39e6a59a3bc"
+    },
+    "evidence/atomic-load-alias-lowering-tests.stderr": {
+      "bytes": 4873,
+      "sha256": "48d001cd6cb00075a82f81003e951d8144dfdf5d03f8d38757f0de3572b2eff4"
+    },
+    "evidence/atomic-load-alias-lowering-tests.stdout": {
+      "bytes": 7250,
+      "sha256": "192388a0254f04950b29458fe441296db3d3a23a089a4350936e15cd5f236615"
+    },
+    "evidence/complete.json": {
+      "bytes": 17841,
+      "sha256": "7aedc64cbcbdce5f58062cfe18d7cea0389f03c4401fc659e2b1be1a0be7e87b"
+    },
+    "evidence/sources-after.json": {
+      "bytes": 3539,
+      "sha256": "8ef77429658fd65fd7d339a66387afdea5070e2b3982203d959bdffd1b2d62cd"
+    },
+    "evidence/sources-before.json": {
+      "bytes": 3539,
+      "sha256": "8ef77429658fd65fd7d339a66387afdea5070e2b3982203d959bdffd1b2d62cd"
+    },
+    "input-manifest.json": {
+      "bytes": 2124,
+      "sha256": "961a00035ac0170fef863e526337cd912f495437f86fe20ba5c6d042286d369a"
+    },
+    "lowering.py": {
+      "bytes": 97777,
+      "sha256": "d5d5a1aadea82ae1116e36d9fde7793c26becc437218d39be45ec743552b4d63"
+    },
+    "lowering_test_entry.py": {
+      "bytes": 7935,
+      "sha256": "2054ad55f7468cf283b0b70614143dd8f5571477b81a68bc2f536fcae00b88b0"
+    },
+    "run_tests.py": {
+      "bytes": 15671,
+      "sha256": "0d1387d7f0d7b6be45a9802f32c7579c1f26100780fcefe78f84fd637d1e3284"
+    },
+    "supervisor.py": {
+      "bytes": 41485,
+      "sha256": "8824478a6415dee39d28ccefb0881fc0687ac724f5a9c5a4540310fb5196b9bc"
+    },
+    "test_audit_tools.py": {
+      "bytes": 122594,
+      "sha256": "cc926c0e4cf460e1873fa8627aaf5d82a0c1f5c6c8b30d694452d8cf0fb26464"
+    },
+    "test_lowering.py": {
+      "bytes": 68068,
+      "sha256": "de1b8676c3e1c63acefbd22adf68dccab01fca19f1e7f046e04beb9afc423f4e"
+    },
+    "test_normalization.py": {
+      "bytes": 6507,
+      "sha256": "6d4d91e24fa483e81d99ae1dd89a629eb3b7a17aaef94e8f46958123c292465f"
+    }
+  },
+  "gpu_execution": false,
+  "passed": true,
+  "schema": "ferric-atomic-load-alias-lowering-tests-retention-v1",
+  "synthetic_lowering_only": true,
+  "tests_passed": 31
+}
