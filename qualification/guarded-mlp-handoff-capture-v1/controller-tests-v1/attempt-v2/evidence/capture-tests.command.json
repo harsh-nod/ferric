@@ -1,0 +1,29 @@
+{
+  "argv": [
+    "/usr/bin/prlimit",
+    "--as=12884901888",
+    "--cpu=1200",
+    "--fsize=1073741824",
+    "--core=0",
+    "--",
+    "/usr/bin/python3.12",
+    "-I",
+    "-S",
+    "-B",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-handoff-capture-tests-v228-v2/test_capture.py",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-handoff-capture-tests-v228-v2/lowering.py",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-handoff-capture-tests-v228-v2/previous_lowering.py"
+  ],
+  "cwd": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-handoff-capture-tests-v228-v2/tmp",
+  "env": {
+    "CUDA_VISIBLE_DEVICES": "",
+    "HIP_VISIBLE_DEVICES": "",
+    "HOME": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-handoff-capture-tests-v228-v2/tmp",
+    "LANG": "C",
+    "LC_ALL": "C",
+    "PATH": "/usr/bin:/bin",
+    "ROCR_VISIBLE_DEVICES": "",
+    "TMPDIR": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-handoff-capture-tests-v228-v2/tmp"
+  },
+  "wall_timeout_seconds": 120
+}

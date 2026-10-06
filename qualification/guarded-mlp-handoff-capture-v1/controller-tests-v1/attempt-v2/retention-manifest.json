@@ -1,0 +1,61 @@
+{
+  "files": {
+    "evidence/capture-tests.command.json": {
+      "bytes": 1222,
+      "sha256": "207290f970f8986d4fd76f9439b673040afbb7ab66ed4bc64053d127f46b1d84"
+    },
+    "evidence/capture-tests.result.json": {
+      "bytes": 1788,
+      "sha256": "38601c92f0261a96476b5a3cc0f97ad26f4c438fe5c844e24137b01d9dfa29a2"
+    },
+    "evidence/capture-tests.started.json": {
+      "bytes": 647,
+      "sha256": "8ab2f7caf265f6280802913c30ac1ac29d00523fb26bf81d1d592315a657c210"
+    },
+    "evidence/capture-tests.stderr": {
+      "bytes": 3314,
+      "sha256": "fd2d0ed0a2091eb2d288eb20709e51d0bd305475962c2a9a91fc078428769d6e"
+    },
+    "evidence/capture-tests.stdout": {
+      "bytes": 4107,
+      "sha256": "17a7529332dd446ddfd259def0e95ea2c325a6296e16cc8e9243252005086973"
+    },
+    "evidence/complete.json": {
+      "bytes": 10973,
+      "sha256": "73a50e83a9188ed203e2c4b0b9f24db94547c2877f3b181ebf6ab982f9992ac1"
+    },
+    "evidence/sources-after.json": {
+      "bytes": 644,
+      "sha256": "c996cdd046b6e1d0d5f70d0ea0d5457713624c0639245e3704c4e58da6c1c51c"
+    },
+    "evidence/sources-before.json": {
+      "bytes": 644,
+      "sha256": "c996cdd046b6e1d0d5f70d0ea0d5457713624c0639245e3704c4e58da6c1c51c"
+    },
+    "input-manifest.json": {
+      "bytes": 1101,
+      "sha256": "9ac35af193001cc650a3507da082b3af6c714e76c8664e637095ca9a269c053a"
+    },
+    "lowering.py": {
+      "bytes": 107393,
+      "sha256": "b6b931243c4da3cc5302567a957ba4a96c476b9cc71dec74758846a09e09bd57"
+    },
+    "previous_lowering.py": {
+      "bytes": 97963,
+      "sha256": "637857bc4a5178bae425135271a3c537f14269f368d62d3dc82107fe5c13f33e"
+    },
+    "run_tests.py": {
+      "bytes": 8409,
+      "sha256": "ff339f03bcea71a842c7283339dfa27f1accbd2a471500fe4e95ea6f95391dc5"
+    },
+    "supervisor.py": {
+      "bytes": 41485,
+      "sha256": "8824478a6415dee39d28ccefb0881fc0687ac724f5a9c5a4540310fb5196b9bc"
+    },
+    "test_capture.py": {
+      "bytes": 15953,
+      "sha256": "b78fc6cf44b041b5c5ef7af158eebb28f30798b635ed28f952dba2dcf3c4973a"
+    }
+  },
+  "schema": "ferric-handoff-capture-tests-retention-v1"
+}

@@ -1,0 +1,42 @@
+test_absent_then_complete (__main__.CaptureTests.test_absent_then_complete) ... ok
+test_attempt_outside_producer_bound_is_rejected (__main__.CaptureTests.test_attempt_outside_producer_bound_is_rejected) ... ok
+test_capture_survives_producer_cleanup (__main__.CaptureTests.test_capture_survives_producer_cleanup) ... ok
+test_directory_in_place_of_file_is_rejected (__main__.CaptureTests.test_directory_in_place_of_file_is_rejected) ... ok
+test_disappearance_during_read_is_pending (__main__.CaptureTests.test_disappearance_during_read_is_pending) ... ok
+test_duplicate_matching_child_is_rejected (__main__.CaptureTests.test_duplicate_matching_child_is_rejected) ... ok
+test_empty_stable_read_is_not_success (__main__.CaptureTests.test_empty_stable_read_is_not_success) ... ok
+test_fifo_is_nonblocking_and_rejected (__main__.CaptureTests.test_fifo_is_nonblocking_and_rejected) ... ok
+test_hard_link_is_rejected (__main__.CaptureTests.test_hard_link_is_rejected) ... ok
+test_inode_replacement_is_rejected (__main__.CaptureTests.test_inode_replacement_is_rejected) ... ok
+test_leaf_symlink_is_rejected (__main__.CaptureTests.test_leaf_symlink_is_rejected) ... ok
+test_missing_capture_and_changed_joins_are_independent (__main__.CaptureTests.test_missing_capture_and_changed_joins_are_independent) ... ok
+test_noncanonical_ancestor_is_rejected (__main__.CaptureTests.test_noncanonical_ancestor_is_rejected) ... ok
+test_nonprivate_parent_is_rejected (__main__.CaptureTests.test_nonprivate_parent_is_rejected) ... ok
+test_oversize_file_is_rejected (__main__.CaptureTests.test_oversize_file_is_rejected) ... ok
+test_parent_replacement_is_rejected (__main__.CaptureTests.test_parent_replacement_is_rejected) ... ok
+test_parent_symlink_is_rejected (__main__.CaptureTests.test_parent_symlink_is_rejected) ... ok
+test_partial_stable_read_does_not_stop_polling (__main__.CaptureTests.test_partial_stable_read_does_not_stop_polling) ... ok
+test_poll_bound_and_closed_reader_are_rejected (__main__.CaptureTests.test_poll_bound_and_closed_reader_are_rejected) ... ok
+test_read_error_closes_transient_descriptors (__main__.CaptureTests.test_read_error_closes_transient_descriptors) ... ok
+test_root_replacement_is_rejected (__main__.CaptureTests.test_root_replacement_is_rejected) ... ok
+test_root_symlink_is_rejected (__main__.CaptureTests.test_root_symlink_is_rejected) ... ok
+test_same_size_mutation_during_read_is_pending (__main__.CaptureTests.test_same_size_mutation_during_read_is_pending) ... FAIL
+test_scan_bound_is_enforced (__main__.CaptureTests.test_scan_bound_is_enforced) ... ok
+test_signal_exception_closes_transient_descriptors (__main__.CaptureTests.test_signal_exception_closes_transient_descriptors) ... ok
+test_wrong_pid_is_rejected (__main__.CaptureTests.test_wrong_pid_is_rejected) ... ok
+test_old_functions_except_owned_and_main_are_ast_identical (__main__.ControllerShapeTests.test_old_functions_except_owned_and_main_are_ast_identical) ... ok
+test_owned_only_adds_capture_parameter_and_poll (__main__.ControllerShapeTests.test_owned_only_adds_capture_parameter_and_poll) ... ok
+test_prior_pins_and_resource_limits_are_exact (__main__.ControllerShapeTests.test_prior_pins_and_resource_limits_are_exact) ... ok
+
+======================================================================
+FAIL: test_same_size_mutation_during_read_is_pending (__main__.CaptureTests.test_same_size_mutation_during_read_is_pending)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-handoff-capture-tests-v228-v1/test_capture.py", line 108, in test_same_size_mutation_during_read_is_pending
+    self.assertIsNone(self.capture.snapshot)
+AssertionError: b'complete synthetic handoff bytes for fixture only' is not None
+
+----------------------------------------------------------------------
+Ran 29 tests in 0.023s
+
+FAILED (failures=1)

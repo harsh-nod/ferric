@@ -1,0 +1,46 @@
+{
+  "adopted_reaped": [],
+  "argv": [
+    "/usr/bin/prlimit",
+    "--as=12884901888",
+    "--cpu=1200",
+    "--fsize=1073741824",
+    "--core=0",
+    "--",
+    "/usr/bin/python3.12",
+    "-I",
+    "-S",
+    "-B",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-handoff-capture-tests-v228-v2/test_capture.py",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-handoff-capture-tests-v228-v2/lowering.py",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-handoff-capture-tests-v228-v2/previous_lowering.py"
+  ],
+  "command": {
+    "bytes": 1222,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-handoff-capture-tests-v228-v2/evidence/capture-tests.command.json",
+    "sha256": "207290f970f8986d4fd76f9439b673040afbb7ab66ed4bc64053d127f46b1d84"
+  },
+  "elapsed_ns": 100668793,
+  "exception": null,
+  "exit_code": 0,
+  "forced_cleanup": false,
+  "label": "capture-tests",
+  "natural_exit": true,
+  "observed_signals": [],
+  "pgid": 380625,
+  "pid": 380625,
+  "process_group_absent": true,
+  "reaped": true,
+  "stderr": {
+    "bytes": 3314,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-handoff-capture-tests-v228-v2/evidence/capture-tests.stderr",
+    "sha256": "fd2d0ed0a2091eb2d288eb20709e51d0bd305475962c2a9a91fc078428769d6e"
+  },
+  "stdout": {
+    "bytes": 4107,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-handoff-capture-tests-v228-v2/evidence/capture-tests.stdout",
+    "sha256": "17a7529332dd446ddfd259def0e95ea2c325a6296e16cc8e9243252005086973"
+  },
+  "storage_failure": null,
+  "timed_out": false
+}

@@ -1,0 +1,19 @@
+{
+  "argv": [
+    "/usr/bin/prlimit",
+    "--as=12884901888",
+    "--cpu=1200",
+    "--fsize=1073741824",
+    "--core=0",
+    "--",
+    "/usr/bin/python3.12",
+    "-I",
+    "-S",
+    "-B",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-handoff-capture-tests-v228-v2/test_capture.py",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-handoff-capture-tests-v228-v2/lowering.py",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-handoff-capture-tests-v228-v2/previous_lowering.py"
+  ],
+  "pgid": 380625,
+  "pid": 380625
+}

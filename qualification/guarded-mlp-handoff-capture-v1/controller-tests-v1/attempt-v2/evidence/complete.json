@@ -1,0 +1,235 @@
+{
+  "child_observation": {
+    "compiler_qualification": false,
+    "errors": 0,
+    "expected_failures": 0,
+    "failures": 0,
+    "gpu_execution": false,
+    "names": [
+      "__main__.CaptureTests.test_absent_then_complete",
+      "__main__.CaptureTests.test_attempt_outside_producer_bound_is_rejected",
+      "__main__.CaptureTests.test_capture_survives_producer_cleanup",
+      "__main__.CaptureTests.test_directory_in_place_of_file_is_rejected",
+      "__main__.CaptureTests.test_disappearance_during_read_is_pending",
+      "__main__.CaptureTests.test_duplicate_matching_child_is_rejected",
+      "__main__.CaptureTests.test_empty_stable_read_is_not_success",
+      "__main__.CaptureTests.test_fifo_is_nonblocking_and_rejected",
+      "__main__.CaptureTests.test_hard_link_is_rejected",
+      "__main__.CaptureTests.test_inode_replacement_is_rejected",
+      "__main__.CaptureTests.test_leaf_symlink_is_rejected",
+      "__main__.CaptureTests.test_missing_capture_and_changed_joins_are_independent",
+      "__main__.CaptureTests.test_noncanonical_ancestor_is_rejected",
+      "__main__.CaptureTests.test_nonprivate_parent_is_rejected",
+      "__main__.CaptureTests.test_oversize_file_is_rejected",
+      "__main__.CaptureTests.test_parent_replacement_is_rejected",
+      "__main__.CaptureTests.test_parent_symlink_is_rejected",
+      "__main__.CaptureTests.test_partial_stable_read_does_not_stop_polling",
+      "__main__.CaptureTests.test_poll_bound_and_closed_reader_are_rejected",
+      "__main__.CaptureTests.test_read_error_closes_transient_descriptors",
+      "__main__.CaptureTests.test_root_replacement_is_rejected",
+      "__main__.CaptureTests.test_root_symlink_is_rejected",
+      "__main__.CaptureTests.test_same_size_mutation_during_read_is_pending",
+      "__main__.CaptureTests.test_scan_bound_is_enforced",
+      "__main__.CaptureTests.test_signal_exception_closes_transient_descriptors",
+      "__main__.CaptureTests.test_wrong_pid_is_rejected",
+      "__main__.ControllerShapeTests.test_old_functions_except_owned_and_main_are_ast_identical",
+      "__main__.ControllerShapeTests.test_owned_only_adds_capture_parameter_and_poll",
+      "__main__.ControllerShapeTests.test_prior_pins_and_resource_limits_are_exact"
+    ],
+    "passed": true,
+    "passing_names": [
+      "__main__.CaptureTests.test_absent_then_complete",
+      "__main__.CaptureTests.test_attempt_outside_producer_bound_is_rejected",
+      "__main__.CaptureTests.test_capture_survives_producer_cleanup",
+      "__main__.CaptureTests.test_directory_in_place_of_file_is_rejected",
+      "__main__.CaptureTests.test_disappearance_during_read_is_pending",
+      "__main__.CaptureTests.test_duplicate_matching_child_is_rejected",
+      "__main__.CaptureTests.test_empty_stable_read_is_not_success",
+      "__main__.CaptureTests.test_fifo_is_nonblocking_and_rejected",
+      "__main__.CaptureTests.test_hard_link_is_rejected",
+      "__main__.CaptureTests.test_inode_replacement_is_rejected",
+      "__main__.CaptureTests.test_leaf_symlink_is_rejected",
+      "__main__.CaptureTests.test_missing_capture_and_changed_joins_are_independent",
+      "__main__.CaptureTests.test_noncanonical_ancestor_is_rejected",
+      "__main__.CaptureTests.test_nonprivate_parent_is_rejected",
+      "__main__.CaptureTests.test_oversize_file_is_rejected",
+      "__main__.CaptureTests.test_parent_replacement_is_rejected",
+      "__main__.CaptureTests.test_parent_symlink_is_rejected",
+      "__main__.CaptureTests.test_partial_stable_read_does_not_stop_polling",
+      "__main__.CaptureTests.test_poll_bound_and_closed_reader_are_rejected",
+      "__main__.CaptureTests.test_read_error_closes_transient_descriptors",
+      "__main__.CaptureTests.test_root_replacement_is_rejected",
+      "__main__.CaptureTests.test_root_symlink_is_rejected",
+      "__main__.CaptureTests.test_same_size_mutation_during_read_is_pending",
+      "__main__.CaptureTests.test_scan_bound_is_enforced",
+      "__main__.CaptureTests.test_signal_exception_closes_transient_descriptors",
+      "__main__.CaptureTests.test_wrong_pid_is_rejected",
+      "__main__.ControllerShapeTests.test_old_functions_except_owned_and_main_are_ast_identical",
+      "__main__.ControllerShapeTests.test_owned_only_adds_capture_parameter_and_poll",
+      "__main__.ControllerShapeTests.test_prior_pins_and_resource_limits_are_exact"
+    ],
+    "schema": "ferric-handoff-capture-tests-v1",
+    "skipped": 0,
+    "source_unchanged": true,
+    "synthetic_capture_only": true,
+    "tests_run": 29,
+    "unexpected_successes": 0
+  },
+  "compiler_qualification": false,
+  "elapsed_seconds": 0.12231165601406246,
+  "failure": null,
+  "gpu_execution": false,
+  "input_manifest": {
+    "bytes": 1101,
+    "sha256": "9ac35af193001cc650a3507da082b3af6c714e76c8664e637095ca9a269c053a"
+  },
+  "launch_authority": false,
+  "load_authority": false,
+  "numerical_acceptance": false,
+  "passed": true,
+  "phases": [
+    {
+      "adopted_reaped": [],
+      "argv": [
+        "/usr/bin/prlimit",
+        "--as=12884901888",
+        "--cpu=1200",
+        "--fsize=1073741824",
+        "--core=0",
+        "--",
+        "/usr/bin/python3.12",
+        "-I",
+        "-S",
+        "-B",
+        "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-handoff-capture-tests-v228-v2/test_capture.py",
+        "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-handoff-capture-tests-v228-v2/lowering.py",
+        "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-handoff-capture-tests-v228-v2/previous_lowering.py"
+      ],
+      "command": {
+        "bytes": 1222,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-handoff-capture-tests-v228-v2/evidence/capture-tests.command.json",
+        "sha256": "207290f970f8986d4fd76f9439b673040afbb7ab66ed4bc64053d127f46b1d84"
+      },
+      "elapsed_ns": 100668793,
+      "exception": null,
+      "exit_code": 0,
+      "forced_cleanup": false,
+      "label": "capture-tests",
+      "natural_exit": true,
+      "observed_signals": [],
+      "pgid": 380625,
+      "pid": 380625,
+      "process_group_absent": true,
+      "reaped": true,
+      "stderr": {
+        "bytes": 3314,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-handoff-capture-tests-v228-v2/evidence/capture-tests.stderr",
+        "sha256": "fd2d0ed0a2091eb2d288eb20709e51d0bd305475962c2a9a91fc078428769d6e"
+      },
+      "stdout": {
+        "bytes": 4107,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-handoff-capture-tests-v228-v2/evidence/capture-tests.stdout",
+        "sha256": "17a7529332dd446ddfd259def0e95ea2c325a6296e16cc8e9243252005086973"
+      },
+      "storage_failure": null,
+      "timed_out": false
+    }
+  ],
+  "postcheck_errors": [],
+  "production_authority": false,
+  "raw": {
+    "capture-tests.command.json": {
+      "bytes": 1222,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-handoff-capture-tests-v228-v2/evidence/capture-tests.command.json",
+      "sha256": "207290f970f8986d4fd76f9439b673040afbb7ab66ed4bc64053d127f46b1d84"
+    },
+    "capture-tests.result.json": {
+      "bytes": 1788,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-handoff-capture-tests-v228-v2/evidence/capture-tests.result.json",
+      "sha256": "38601c92f0261a96476b5a3cc0f97ad26f4c438fe5c844e24137b01d9dfa29a2"
+    },
+    "capture-tests.started.json": {
+      "bytes": 647,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-handoff-capture-tests-v228-v2/evidence/capture-tests.started.json",
+      "sha256": "8ab2f7caf265f6280802913c30ac1ac29d00523fb26bf81d1d592315a657c210"
+    },
+    "capture-tests.stderr": {
+      "bytes": 3314,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-handoff-capture-tests-v228-v2/evidence/capture-tests.stderr",
+      "sha256": "fd2d0ed0a2091eb2d288eb20709e51d0bd305475962c2a9a91fc078428769d6e"
+    },
+    "capture-tests.stdout": {
+      "bytes": 4107,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-handoff-capture-tests-v228-v2/evidence/capture-tests.stdout",
+      "sha256": "17a7529332dd446ddfd259def0e95ea2c325a6296e16cc8e9243252005086973"
+    },
+    "sources-after.json": {
+      "bytes": 644,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-handoff-capture-tests-v228-v2/evidence/sources-after.json",
+      "sha256": "c996cdd046b6e1d0d5f70d0ea0d5457713624c0639245e3704c4e58da6c1c51c"
+    },
+    "sources-before.json": {
+      "bytes": 644,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-handoff-capture-tests-v228-v2/evidence/sources-before.json",
+      "sha256": "c996cdd046b6e1d0d5f70d0ea0d5457713624c0639245e3704c4e58da6c1c51c"
+    }
+  },
+  "schema": "ferric-handoff-capture-tests-cpu-v1",
+  "sources_after": {
+    "lowering.py": {
+      "bytes": 107393,
+      "sha256": "b6b931243c4da3cc5302567a957ba4a96c476b9cc71dec74758846a09e09bd57"
+    },
+    "previous_lowering.py": {
+      "bytes": 97963,
+      "sha256": "637857bc4a5178bae425135271a3c537f14269f368d62d3dc82107fe5c13f33e"
+    },
+    "run_tests.py": {
+      "bytes": 8409,
+      "sha256": "ff339f03bcea71a842c7283339dfa27f1accbd2a471500fe4e95ea6f95391dc5"
+    },
+    "supervisor.py": {
+      "bytes": 41485,
+      "sha256": "8824478a6415dee39d28ccefb0881fc0687ac724f5a9c5a4540310fb5196b9bc"
+    },
+    "test_capture.py": {
+      "bytes": 15953,
+      "sha256": "b78fc6cf44b041b5c5ef7af158eebb28f30798b635ed28f952dba2dcf3c4973a"
+    }
+  },
+  "sources_before": {
+    "lowering.py": {
+      "bytes": 107393,
+      "sha256": "b6b931243c4da3cc5302567a957ba4a96c476b9cc71dec74758846a09e09bd57"
+    },
+    "previous_lowering.py": {
+      "bytes": 97963,
+      "sha256": "637857bc4a5178bae425135271a3c537f14269f368d62d3dc82107fe5c13f33e"
+    },
+    "run_tests.py": {
+      "bytes": 8409,
+      "sha256": "ff339f03bcea71a842c7283339dfa27f1accbd2a471500fe4e95ea6f95391dc5"
+    },
+    "supervisor.py": {
+      "bytes": 41485,
+      "sha256": "8824478a6415dee39d28ccefb0881fc0687ac724f5a9c5a4540310fb5196b9bc"
+    },
+    "test_capture.py": {
+      "bytes": 15953,
+      "sha256": "b78fc6cf44b041b5c5ef7af158eebb28f30798b635ed28f952dba2dcf3c4973a"
+    }
+  },
+  "synthetic_capture_only": true,
+  "tools": {
+    "prlimit": {
+      "bytes": 27536,
+      "path": "/usr/bin/prlimit",
+      "sha256": "17064f67e650d6152a6902b013aab496b54c87587c8eea6f5023aafee6154069"
+    },
+    "python": {
+      "bytes": 8020928,
+      "path": "/usr/bin/python3.12",
+      "sha256": "e1efa562c2cc2e35521a5c9c9b9939921001ff8ca9708a13ef15ace68cc2ccd7"
+    }
+  }
+}
