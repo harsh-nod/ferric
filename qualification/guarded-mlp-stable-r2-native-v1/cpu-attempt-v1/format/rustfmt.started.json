@@ -1,0 +1,21 @@
+{
+  "argv": [
+    "/usr/bin/prlimit",
+    "--as=12884901888",
+    "--cpu=1200",
+    "--fsize=1073741824",
+    "--core=0",
+    "--",
+    "/home/harmenon/.rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/bin/rustfmt",
+    "--edition",
+    "2024",
+    "--config",
+    "skip_children=true",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-stable-r2-native-cpu-v228-v1/fe2o3/crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_state_v1_tests.rs",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-stable-r2-native-cpu-v228-v1/fe2o3/crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_native_v1_tests.rs",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-stable-r2-native-cpu-v228-v1/fe2o3/crates/fe2o3-kfd/src/memory_linux_combined_mlp_state_v1.rs",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-stable-r2-native-cpu-v228-v1/fe2o3/crates/fe2o3-kfd/src/memory_linux_combined_mlp_state_v1_tests.rs"
+  ],
+  "pgid": 501250,
+  "pid": 501250
+}
