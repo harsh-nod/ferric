@@ -1,0 +1,105 @@
+{
+  "schema": "ferric-guarded-mlp-model-parent-source-v1",
+  "base_ferric_commit_abbreviated": "a2d91f31",
+  "proposal_only": true,
+  "build_qualified": false,
+  "native_gpu_qualified": false,
+  "full_model_acceptance": false,
+  "performance_claim": false,
+  "production_authority": false,
+  "files": {
+    "adapters/m1-engineering-execution-v1/Cargo.toml": {
+      "before": {
+        "bytes": 13343,
+        "sha256": "6ed628b3b517dda38905be675dbe7e2511180f9671d5c8f351099b7ac6afa925"
+      },
+      "after": {
+        "bytes": 13594,
+        "sha256": "711e9ab46a9a2c276fccf1f372b8ab6e85b4bcd0b1d886bcdecd45245a85aa74"
+      }
+    },
+    "adapters/m1-engineering-execution-v1/src/bin/ferric-qwen3-finite-guarded-mlp-decode-engineering.rs": {
+      "before": null,
+      "after": {
+        "bytes": 2903,
+        "sha256": "2a7ff0a9eb6e9335a40d9c1e3049db32e125d4c73931184216579aa0f0d0ec73"
+      }
+    },
+    "adapters/m1-engineering-execution-v1/src/lib.rs": {
+      "before": {
+        "bytes": 89250,
+        "sha256": "7b542194d2a654b1d80b866b73a88bbe6665df75b2a9395af398652b89e433bd"
+      },
+      "after": {
+        "bytes": 89431,
+        "sha256": "2456aa3648f1da10b92b6959f36bb2d2da1b5f8f0a962f29869d1b09743f5eb8"
+      }
+    },
+    "adapters/m1-engineering-execution-v1/src/tp_finite_client/prefix_decode/guarded.rs": {
+      "before": null,
+      "after": {
+        "bytes": 20829,
+        "sha256": "1ff2969c8a5f11389e817e866853e5deb1f3b1b200ade5061a92ccd891aab1af"
+      }
+    },
+    "adapters/m1-engineering-execution-v1/src/tp_finite_client/prefix_decode/guarded_evidence.rs": {
+      "before": null,
+      "after": {
+        "bytes": 12649,
+        "sha256": "1624437e20b6bbc3274bbeedd38ee2ab04023f6fb83beea90156bef975fe5218"
+      }
+    },
+    "adapters/m1-engineering-execution-v1/src/tp_finite_client/prefix_decode/guarded_tests.rs": {
+      "before": null,
+      "after": {
+        "bytes": 9901,
+        "sha256": "e93e77d752d77db5f34fde9701aa4b659ccd6dc5f16ed78cfc507a9611e21851"
+      }
+    },
+    "adapters/m1-engineering-execution-v1/src/tp_finite_client/prefix_decode.rs": {
+      "before": {
+        "bytes": 35996,
+        "sha256": "4dd0cbaf44d055b6ba4436c33a31e5b0af037051d75858356753cda81d598133"
+      },
+      "after": {
+        "bytes": 36013,
+        "sha256": "2227f8906c45bd577756806774bd781d071c80df00295e30838dce11936a2c78"
+      }
+    }
+  },
+  "integration_patch": {
+    "bytes": 49404,
+    "sha256": "9139d7fd24c7b8b282318c99e81c7fa7f73ad7fd17eed173c90d0e4d1cadf495"
+  },
+  "worker_source_manifest": {
+    "bytes": 9562,
+    "sha256": "d088f3f076d7d0f6e717c72870b5352f7abde6ce6b840a291b4eed47a96cccf4"
+  },
+  "direct_new_lib_tests": [
+    "tp_finite_client::prefix_decode::guarded::tests::guarded_parent_completion_refuses_wrong_root_profile_guard_argmax_and_chain",
+    "tp_finite_client::prefix_decode::guarded::tests::guarded_parent_evidence_never_publishes_partial_or_extra_file_captures",
+    "tp_finite_client::prefix_decode::guarded::tests::guarded_parent_publication_requires_healthy_close_scope_and_unchanged_retained_frames",
+    "tp_finite_client::prefix_decode::guarded::tests::guarded_parent_request_is_closed_image_bound_and_requires_explicit_opt_in",
+    "tp_finite_client::prefix_decode::guarded::tests::guarded_parent_retains_tf4_and_own_output_ar4_without_model_or_performance_claims"
+  ],
+  "shared_new_lib_tests": [
+    "finite_guarded_mlp_decode_wire_v1::tests::guarded_wire_authenticates_four_image_bodies_and_exact_begin_before_use",
+    "finite_guarded_mlp_decode_wire_v1::tests::guarded_wire_preserves_all_control_words_u64_timings_and_local_generations",
+    "finite_guarded_mlp_decode_wire_v1::tests::guarded_wire_profile_is_closed_and_separate_from_every_legacy_recipe",
+    "finite_guarded_mlp_decode_wire_v1::tests::guarded_wire_request_scope_and_transcript_cannot_relabel_old_execution",
+    "finite_guarded_mlp_decode_wire_v1::tests::guarded_wire_response_refuses_legacy_schema_claims_nonfinite_and_wrong_argmax"
+  ],
+  "new_binary_tests": [
+    "tests::guarded_decode_parent_cli_refuses_legacy_fallback_or_extra_modes"
+  ],
+  "binary": "ferric-qwen3-finite-guarded-mlp-decode-engineering",
+  "feature": "guarded-mlp-model-engineering",
+  "parent_flag": "--observe-guarded-mlp-decode",
+  "worker_flag": "--engineering-native-guarded-mlp-decode-v1",
+  "forwards": 4,
+  "native_attempts": 1,
+  "retries": 0,
+  "replacement_count": 3,
+  "addition_count": 4,
+  "structural_limits_changed": false
+}

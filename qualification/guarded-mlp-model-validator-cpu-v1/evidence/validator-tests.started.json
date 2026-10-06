@@ -1,0 +1,17 @@
+{
+  "argv": [
+    "/usr/bin/prlimit",
+    "--as=536870912",
+    "--cpu=120",
+    "--fsize=16777216",
+    "--core=0",
+    "--",
+    "/usr/bin/python3.12",
+    "-I",
+    "-B",
+    "-c",
+    "import sys,unittest;sys.path.insert(0,'/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-validator-cpu-v228-v1');unittest.main(module=\"test_validate_observation\",argv=[\"validator-tests\"],verbosity=2)"
+  ],
+  "pgid": 2707753,
+  "pid": 2707753
+}

@@ -1,0 +1,12 @@
+error: rustc 1.96.0-nightly is not supported by the following packages:
+  ferric-build@0.1.0 requires rustc 1.97.1
+  ferric-engine@0.1.0 requires rustc 1.97.1
+  ferric-generated-runner@0.1.0 requires rustc 1.97.1
+  ferric-kernels@0.1.0 requires rustc 1.97.1
+  ferric-m1-engineering-execution-v1@0.1.0 requires rustc 1.97.1
+  ferric-non-authoritative-program-source-v1@0.1.0 requires rustc 1.97.1
+  ferric-qwen-kernels@0.1.0 requires rustc 1.97.1
+  ferric-qwen3-all-kernels-worker-v3-source-pin-v1@0.1.0 requires rustc 1.97.1
+  ferric-qwen3-all-kernels-worker-v3-verifier-v1@0.1.0 requires rustc 1.97.1
+  ferric-spec@0.1.0 requires rustc 1.97.1
+

@@ -1,0 +1,663 @@
+{
+  "cache_manifest": {
+    "bytes": 96016,
+    "sha256": "e8c533b038db432d45a31d461651a50998d0b94f42ecfc678c5823d00ffa8c81"
+  },
+  "cache_package_bodies_retained": false,
+  "current_tests": 0,
+  "failure": "RuntimeError('metadata did not finish naturally/reaped/successfully')",
+  "files": {
+    "cargo-cache-manifest.json": {
+      "bytes": 96016,
+      "sha256": "e8c533b038db432d45a31d461651a50998d0b94f42ecfc678c5823d00ffa8c81"
+    },
+    "cargo-cache-stage-complete.json": {
+      "bytes": 50872,
+      "sha256": "a91713e4f30a176ab406230401db326bd5a48f560833fc3426036be83e004221"
+    },
+    "evidence/failed.json": {
+      "bytes": 1584613,
+      "sha256": "5d2c84938fb488f821c8b6a24b2f2689dcac0a4edf833b7c1675ac5eeb1c17a0"
+    },
+    "evidence/metadata.command.json": {
+      "bytes": 2450,
+      "sha256": "ed8927da1ca261ec15543b5983d787ee04036ca85528b83a5fe0898c1d671370"
+    },
+    "evidence/metadata.result.json": {
+      "bytes": 1685,
+      "sha256": "74f15e5b97e44c0714d5b58302cf27fdd0b1cd73fcbe0040f7bf8eb4ced2f95c"
+    },
+    "evidence/metadata.started.json": {
+      "bytes": 596,
+      "sha256": "f05dfd88a3b20ceae9b1ba9c2dd3eb7fa826e3d84cf4295629408ae9c6c6ed95"
+    },
+    "evidence/metadata.stderr": {
+      "bytes": 1268,
+      "sha256": "f8c4aa562370668a9eec07db5c946ae11846b841572b302708b725b3804e8c4e"
+    },
+    "evidence/metadata.stdout": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "evidence/rustc-version.command.json": {
+      "bytes": 2156,
+      "sha256": "8b60a90105b8891f1cb73026362cc713e7a5e68cdb1be5659d1ba7be5751a7cd"
+    },
+    "evidence/rustc-version.result.json": {
+      "bytes": 1407,
+      "sha256": "13bef522878fbc49540ab5bfbfe673e2fad4648a5e1b7db885ac326bc9c48f4e"
+    },
+    "evidence/rustc-version.started.json": {
+      "bytes": 303,
+      "sha256": "6156fbcb2ebda231cc43084b76d07bc3f0183caae4dc39bcea271d42ed29fe51"
+    },
+    "evidence/rustc-version.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "evidence/rustc-version.stdout": {
+      "bytes": 212,
+      "sha256": "580dbecb7627e4e8ad67fd0b1d539727ba8d2651d04035c907b406d83200b4e2"
+    },
+    "evidence/rustfmt-check.command.json": {
+      "bytes": 3411,
+      "sha256": "2f4632afdb67701d270c7a7741751ce9a2441c4a4e4e5bce285ef5e49ad8ce49"
+    },
+    "evidence/rustfmt-check.result.json": {
+      "bytes": 2659,
+      "sha256": "4bb4430931f2a3ece4b5a6d0ea7f57398cc7baea7b961f439ee8fc06b4b6a75f"
+    },
+    "evidence/rustfmt-check.started.json": {
+      "bytes": 1557,
+      "sha256": "c3b0a5302f75c774207236531f7289e30b44fe3403e4831f38bb76d4916fc61f"
+    },
+    "evidence/rustfmt-check.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "evidence/rustfmt-check.stdout": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "evidence/rustfmt.command.json": {
+      "bytes": 3396,
+      "sha256": "dd128522a67f4c4652f2abdfc7dd5c186ce136b81b4889f55cf7f12cb1b69598"
+    },
+    "evidence/rustfmt.result.json": {
+      "bytes": 2620,
+      "sha256": "e79d3bb352601335038f47bac6305e520f7cd54800cd17a019bf6ff1774af423"
+    },
+    "evidence/rustfmt.started.json": {
+      "bytes": 1542,
+      "sha256": "77f0ccbfa2bc1024e30fc8445088a9b35334ebc4744fcd3625d079a1542ee17b"
+    },
+    "evidence/rustfmt.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "evidence/rustfmt.stdout": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "evidence/sources-after.json": {
+      "bytes": 460170,
+      "sha256": "6efb54048363f4c47c758565f8d6948ff078e12df0dc34c0fb7b1901254f58df"
+    },
+    "evidence/sources-before.json": {
+      "bytes": 460170,
+      "sha256": "6efb54048363f4c47c758565f8d6948ff078e12df0dc34c0fb7b1901254f58df"
+    },
+    "evidence/sources-preformat.json": {
+      "bytes": 460169,
+      "sha256": "ed611e0aa21820cc6c5e3204a9eb84e93837148b2a5c3abfbc0dccae190ba5c5"
+    },
+    "export_parent_cpu_failed_v1b.py": {
+      "bytes": 16838,
+      "sha256": "73fc481a8f8e5586428c812290bf3684967b42e970d47918a17604dc2e36bfc6"
+    },
+    "ferric/adapters/m1-engineering-execution-v1/Cargo.toml": {
+      "bytes": 13594,
+      "sha256": "711e9ab46a9a2c276fccf1f372b8ab6e85b4bcd0b1d886bcdecd45245a85aa74"
+    },
+    "ferric/adapters/m1-engineering-execution-v1/src/bin/ferric-qwen3-finite-guarded-mlp-decode-engineering.rs": {
+      "bytes": 2903,
+      "sha256": "2a7ff0a9eb6e9335a40d9c1e3049db32e125d4c73931184216579aa0f0d0ec73"
+    },
+    "ferric/adapters/m1-engineering-execution-v1/src/lib.rs": {
+      "bytes": 89431,
+      "sha256": "2456aa3648f1da10b92b6959f36bb2d2da1b5f8f0a962f29869d1b09743f5eb8"
+    },
+    "ferric/adapters/m1-engineering-execution-v1/src/tp_finite_client/prefix_decode.rs": {
+      "bytes": 36013,
+      "sha256": "a08a591ebf1964dd3f70540964e3541ac622d53e3fffdf5a3e680c973d66d8a1"
+    },
+    "ferric/adapters/m1-engineering-execution-v1/src/tp_finite_client/prefix_decode/guarded.rs": {
+      "bytes": 23973,
+      "sha256": "1e7c966286dfbc59d143625641f7f94c8fb540fa6900374f26ff6bfb5b873274"
+    },
+    "ferric/adapters/m1-engineering-execution-v1/src/tp_finite_client/prefix_decode/guarded_evidence.rs": {
+      "bytes": 12912,
+      "sha256": "ac7443a05a7794cb06c7b1b7d96b6813fe74d61b547403074a51b023d5f0a89b"
+    },
+    "ferric/adapters/m1-engineering-execution-v1/src/tp_finite_client/prefix_decode/guarded_tests.rs": {
+      "bytes": 12168,
+      "sha256": "d3b73efd882cdc2ded0a5bdca19db890606ca215fc80381d272f9a56ad7b1d00"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/finite_guarded_mlp_decode_wire_v1.rs": {
+      "bytes": 17323,
+      "sha256": "ec9d3b4f6bfa85688250a3b390acd3ae2fe9958f0a99f1bf2165745e4772fb2e"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/finite_guarded_mlp_decode_wire_v1_tests.rs": {
+      "bytes": 9057,
+      "sha256": "ca24ac6ecafe7a6e59d1ddb9e8509c0608bd13a6fe31e382b73cfbd7d7274217"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/lib.rs": {
+      "bytes": 2435,
+      "sha256": "ea034c7906f9bef80360c292f9f41c71d0f894c01ca3917899d9bdd10e578467"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/main.rs": {
+      "bytes": 12875,
+      "sha256": "3c402712528124fe1dea7c41e1ae369c1536c41435899919a8630d01c6f1c2de"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/native_catalog.rs": {
+      "bytes": 54852,
+      "sha256": "6402248b3f70a2f3fdb88c13f329b15905afc455a6bfb9041718d96afcc46476"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/native_catalog_tests.rs": {
+      "bytes": 34778,
+      "sha256": "33904486384c75a1549e2ec50bce103378b280d9550e6a60e8080efd95d1ba66"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/native_forward.rs": {
+      "bytes": 17718,
+      "sha256": "541f32679fcda07e5491f987f130cb2c3ecbcf4608f93d81b1a18951abe4cac7"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/native_guarded_mlp_decode_cli_v1.rs": {
+      "bytes": 9952,
+      "sha256": "3ef54390ae59fb0adfe73b6f433aeed12913a2d8e06716640c4357ed00665add"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/native_guarded_mlp_decode_cli_v1_tests.rs": {
+      "bytes": 9050,
+      "sha256": "ba1e21506dd51128100c9d1439a872380d21ad1e44fea1cca52dff2c51e6ef32"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/native_guarded_mlp_decode_v1.rs": {
+      "bytes": 9465,
+      "sha256": "1f7082e057d3d598775dc4fda01a0e65f72c4909e23725938649c8fcfe7a590c"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/native_guarded_mlp_decode_v1/tests.rs": {
+      "bytes": 7348,
+      "sha256": "e2ddeeccc4276687bd9b09d97c423a2f49b2ed4b593b04c317ea6624a43c82e5"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/native_setup.rs": {
+      "bytes": 27351,
+      "sha256": "1b4ca320ce865aaa37b85c6f22b1f9e6d863bbc6a25f6472a63c8da42fc487a7"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/native_setup/guarded_mlp_decode_v1.rs": {
+      "bytes": 2714,
+      "sha256": "469c6dddf0e816793aaf0e15274273fb107e46785799d9f76b77891895f69af8"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/resident_layer.rs": {
+      "bytes": 21937,
+      "sha256": "ffcc6a75d6da395f4300f20f2bcf02d6bfac36f5ab6d7c284bf002be9b86110f"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/resident_layer/guarded_mlp_decode_v1.rs": {
+      "bytes": 9387,
+      "sha256": "a5b09b85691d3d464a6625652968fbca8f256edeb91056c49adf5e82eaffd8e3"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/resident_layer/guarded_mlp_decode_v1/tests.rs": {
+      "bytes": 6503,
+      "sha256": "63cc495b5f7e1c285901b2bef44bcdda43897d25cc27a8fdbb33548e7b8d5cbd"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/state_roster.rs": {
+      "bytes": 15289,
+      "sha256": "a9afaa49224facbe85171fa52dd74fe55d0c7f99c49716af82a6ce199a99cc57"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/state_roster/guarded_mlp_decode_v1.rs": {
+      "bytes": 12820,
+      "sha256": "af00ed5cd51aae29b057cc4b84c3497a446aea8a2afb00d5450e1e6ef7b43d86"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/state_roster/guarded_mlp_decode_v1/tests.rs": {
+      "bytes": 6602,
+      "sha256": "f0a7709d821a6532ebd5ae06c21ae4e19038239653d7fe257b6b9221255d2cbb"
+    },
+    "input-manifest.json": {
+      "bytes": 251879,
+      "sha256": "63558dda298d84bc10ff85cebb8f30b5320c4f092098af6789499126247e0088"
+    },
+    "inputs/base-complete.json": {
+      "bytes": 624332,
+      "sha256": "6ac67053d9b7d5d15772b5e4071a09933f013b6efa27394c31eb2b8279af884f"
+    },
+    "inputs/committed-source.json": {
+      "bytes": 389189,
+      "sha256": "2eb1ff7166e2e466beedd90a5f95e456c6721c9cc8d82f939b1600edbc13a6ba"
+    },
+    "inputs/ferric-qwen3-finite-long-engineering-tests-command.json": {
+      "bytes": 2399,
+      "sha256": "a23d5a7f21f2cf05b9214ecdfb1898927f7ac0b3014f4d9d5514cfc721642cf1"
+    },
+    "inputs/ferric-qwen3-finite-long-engineering-tests-stdout": {
+      "bytes": 194,
+      "sha256": "077c873c577668d233282771bc539b61564a9586e42cc2c0ed73e16b000426a6"
+    },
+    "inputs/ferric-qwen3-finite-mlp-tiles-comparison-engineering-tests-command.json": {
+      "bytes": 2415,
+      "sha256": "f569424485caf92fb22294d4e18f8347548655347d8afd5c234cb829c534f99a"
+    },
+    "inputs/ferric-qwen3-finite-mlp-tiles-comparison-engineering-tests-stdout": {
+      "bytes": 192,
+      "sha256": "e33dc02a8968beb2ec4487eaf6853c20fc499090c9ac2c598fc839ba392727a5"
+    },
+    "inputs/ferric-qwen3-finite-prefix-decode-device-clock-engineering-tests-command.json": {
+      "bytes": 2421,
+      "sha256": "5cdcd991fb2aa2649d0500f3bc2988a0d444b4d0d1ea678bf2ad5a10a5f0585e"
+    },
+    "inputs/ferric-qwen3-finite-prefix-decode-device-clock-engineering-tests-stdout": {
+      "bytes": 203,
+      "sha256": "eb373173fed2e0f5d3f48973a70b9019b6844a1e94df36231d0ac97416440cde"
+    },
+    "inputs/ferric-qwen3-finite-prefix-decode-device-engineering-tests-command.json": {
+      "bytes": 2415,
+      "sha256": "886ff2d30079a68070a285e3b09983adc41392ccf310d244f6c015a9dc3ebbac"
+    },
+    "inputs/ferric-qwen3-finite-prefix-decode-device-engineering-tests-stdout": {
+      "bytes": 197,
+      "sha256": "2b48eb4ee8544e4c9d1cb32293fa7a2d879450daaf31c689876e28a4bd73b0ed"
+    },
+    "inputs/ferric-qwen3-finite-prefix-decode-engineering-tests-command.json": {
+      "bytes": 2408,
+      "sha256": "eea5f0fe34fb4ad0d26c7fa1b57fe2290c6e7a827029860bd530f28d9676f18a"
+    },
+    "inputs/ferric-qwen3-finite-prefix-decode-engineering-tests-stdout": {
+      "bytes": 176,
+      "sha256": "9900e9976bb1fae70026cdd129438348dcdc18f91591159569db4bc4773c9325"
+    },
+    "inputs/ferric-qwen3-finite-prefix-decode-host-engineering-tests-command.json": {
+      "bytes": 2413,
+      "sha256": "5c24bb2baff79e88b35bfc8d011162ff43b378805e9332162cc15033bce70b6c"
+    },
+    "inputs/ferric-qwen3-finite-prefix-decode-host-engineering-tests-stdout": {
+      "bytes": 193,
+      "sha256": "53926a919d3bc35b5b904b12e32aa6189a55bde1e48ac0bf531c28f1aa3faf89"
+    },
+    "inputs/ferric-qwen3-finite-prefix-decode-host-policy-engineering-tests-command.json": {
+      "bytes": 2420,
+      "sha256": "098c9245ac6f81688646c6a786780208410371f1f92382a189e2569c0da52e0d"
+    },
+    "inputs/ferric-qwen3-finite-prefix-decode-host-policy-engineering-tests-stdout": {
+      "bytes": 197,
+      "sha256": "cf8ebfd61fa202231439c8d9e1bcb6244a69fcd5e6cbf0e84fb81270a44c3a8b"
+    },
+    "inputs/ferric-qwen3-finite-prefix-layer-capture-engineering-tests-command.json": {
+      "bytes": 2415,
+      "sha256": "5fecdf537516a18119a85eb71d41e02499d0b710fd0148b7cf94ea4e99c19068"
+    },
+    "inputs/ferric-qwen3-finite-prefix-layer-capture-engineering-tests-stdout": {
+      "bytes": 194,
+      "sha256": "443e3d1bc63cdaec1c3def8635d18cdd235eb514bd7ea8395dd7b4d0a1db2f90"
+    },
+    "inputs/ferric-qwen3-finite-prefix-layer-engineering-tests-command.json": {
+      "bytes": 2407,
+      "sha256": "7b976e23023257d2d8820962b8fc45014660a33c47099ced89d4e06a3d5d8d4d"
+    },
+    "inputs/ferric-qwen3-finite-prefix-layer-engineering-tests-stdout": {
+      "bytes": 162,
+      "sha256": "89785b89e67db5d7efea5109a4d78ca3e5b6b25e8ded40014be61eade9cd76e3"
+    },
+    "inputs/ferric-qwen3-finite-projection-residual-decode-engineering-tests-command.json": {
+      "bytes": 2421,
+      "sha256": "f5ffa5a009a3d818f2389e36cdfa7add6202543d48e4253d84a83cf1e64c10e5"
+    },
+    "inputs/ferric-qwen3-finite-projection-residual-decode-engineering-tests-stdout": {
+      "bytes": 192,
+      "sha256": "6f37444983c0b1efc331b978e0108cb479eafcefcc8c00377b3c2cf64c99cc1d"
+    },
+    "inputs/ferric-qwen3-finite-projection-residual-decode-host-engineering-tests-command.json": {
+      "bytes": 2426,
+      "sha256": "efcfb833a77cc5c2f4185fd8763d772753fa201bb07746be46b1fd221fc8c61f"
+    },
+    "inputs/ferric-qwen3-finite-projection-residual-decode-host-engineering-tests-stdout": {
+      "bytes": 197,
+      "sha256": "c07fcccadb129b4bc33d32176d59583956f3a071d00f256bb5934a21de5fa777"
+    },
+    "inputs/ferric-qwen3-finite-projection-residual-decode-ordered-host-engineering-tests-command.json": {
+      "bytes": 2434,
+      "sha256": "479fdf4f4ec2d086894dce55e8114c050e77d46e97dfd0a813581f31decbe043"
+    },
+    "inputs/ferric-qwen3-finite-projection-residual-decode-ordered-host-engineering-tests-stdout": {
+      "bytes": 200,
+      "sha256": "279c62fb1c4ae80937288d976acb07ad1d3f2bbebddff94aa06ed661595a375c"
+    },
+    "inputs/ferric-qwen3-finite-projection-residual-decode-shared-host-engineering-tests-command.json": {
+      "bytes": 2433,
+      "sha256": "8f4d517a2107810c6baf72d480b6bb2ea02751e9c1ca3af1b5234abe822f209b"
+    },
+    "inputs/ferric-qwen3-finite-projection-residual-decode-shared-host-engineering-tests-stdout": {
+      "bytes": 204,
+      "sha256": "92565bcf6696a81ff0f06b63334c2f17e018af7a1d502f8ea5fbc829cec3dd86"
+    },
+    "inputs/ferric-qwen3-finite-projection-residual-layer-capture-engineering-tests-command.json": {
+      "bytes": 2428,
+      "sha256": "966c0a35af97d13abe7b47ef78cf6cc4abcb2de1156217cf2c5c495b63907916"
+    },
+    "inputs/ferric-qwen3-finite-projection-residual-layer-capture-engineering-tests-stdout": {
+      "bytes": 193,
+      "sha256": "00371c96fea1303cd223279e27c94123480174682b15d2e074e211579dc45e81"
+    },
+    "inputs/ferric-qwen3-finite-queued-mlp-comparison-engineering-tests-command.json": {
+      "bytes": 2416,
+      "sha256": "dea2a21b6ad3ebc974665e2b70dac59872760e4ae1130456c41aff9aa16804ae"
+    },
+    "inputs/ferric-qwen3-finite-queued-mlp-comparison-engineering-tests-stdout": {
+      "bytes": 192,
+      "sha256": "e33dc02a8968beb2ec4487eaf6853c20fc499090c9ac2c598fc839ba392727a5"
+    },
+    "inputs/ferric-qwen3-finite-queued-projection-comparison-engineering-tests-command.json": {
+      "bytes": 2423,
+      "sha256": "27f18fd803a84520323c24599e4e35d32e4ff4f34a98ac07bba9c8b4de68a945"
+    },
+    "inputs/ferric-qwen3-finite-queued-projection-comparison-engineering-tests-stdout": {
+      "bytes": 192,
+      "sha256": "e33dc02a8968beb2ec4487eaf6853c20fc499090c9ac2c598fc839ba392727a5"
+    },
+    "inputs/ferric-qwen3-finite-rearm-smoke-engineering-tests-command.json": {
+      "bytes": 2406,
+      "sha256": "00e606d27525a3956ed64d388ff758c1500a055147f89aaa887cb84772682d80"
+    },
+    "inputs/ferric-qwen3-finite-rearm-smoke-engineering-tests-stdout": {
+      "bytes": 194,
+      "sha256": "077c873c577668d233282771bc539b61564a9586e42cc2c0ed73e16b000426a6"
+    },
+    "inputs/ferric-qwen3-finite-tiles-decode-engineering-tests-command.json": {
+      "bytes": 2407,
+      "sha256": "3dcc9b454579f38ee4ffa28b4875ecbe6c45249dd2bc2e0f050c57a9f93e303c"
+    },
+    "inputs/ferric-qwen3-finite-tiles-decode-engineering-tests-stdout": {
+      "bytes": 172,
+      "sha256": "c51805bda9355923cc4371f9cf4a0adf9f6ecf0e887d27c34c8e2457eb556a1a"
+    },
+    "inputs/ferric-qwen3-finite-two-forward-engineering-tests-command.json": {
+      "bytes": 2406,
+      "sha256": "407fff0a5471cd0aaabb846f50df1e741426890ba3137c3096d17ceaa44367f9"
+    },
+    "inputs/ferric-qwen3-finite-two-forward-engineering-tests-stdout": {
+      "bytes": 191,
+      "sha256": "6c9439098fc26222c642ebde9f3b528a1bc205c80088061e8c8d9526cda853f8"
+    },
+    "inputs/parent-added-0-command.json": {
+      "bytes": 2490,
+      "sha256": "5e907d081cbcb030c1226a2fd936c18951d23639743e142687bc59aaa95c2ca7"
+    },
+    "inputs/parent-added-0-stdout": {
+      "bytes": 239,
+      "sha256": "603261b997d846dccbf869d7a61fc4295ecb54f84a1135d28c42b803f8159078"
+    },
+    "inputs/parent-added-1-command.json": {
+      "bytes": 2483,
+      "sha256": "bbf53f1d2049c44e5961a271862b859a0a9fe5b1ac0d36ac5b0aeb4119bd7825"
+    },
+    "inputs/parent-added-1-stdout": {
+      "bytes": 232,
+      "sha256": "8ac59689b9c9440c9898112dca2c2f0ab5c487b9af084a98e1ab672415b3c4e6"
+    },
+    "inputs/parent-added-2-command.json": {
+      "bytes": 2485,
+      "sha256": "7de3fed6dcf9d5e2c0f0d0cb6983e587e70e0ea5933cb4f29923afe8ce4ba2ff"
+    },
+    "inputs/parent-added-2-stdout": {
+      "bytes": 234,
+      "sha256": "8a82d646dda1194321928f3099dca868a1e90f0d901c2caf5ea8cf509d8e5576"
+    },
+    "inputs/parent-added-3-command.json": {
+      "bytes": 2486,
+      "sha256": "364f56e2cae1ec3fefc3cf0b3e2a9db197674b6b3dc6ecfb187b66e03058334b"
+    },
+    "inputs/parent-added-3-stdout": {
+      "bytes": 235,
+      "sha256": "3770333df3f772d7420f924f7e30cc511d8dc896eb2e09640e5bb1cbeafef0fa"
+    },
+    "inputs/parent-added-4-command.json": {
+      "bytes": 2510,
+      "sha256": "a040962bee4ba3422586c41624bd6d7e38f823ee113f11959ee17257160bffcc"
+    },
+    "inputs/parent-added-4-stdout": {
+      "bytes": 259,
+      "sha256": "cd5a9fe6348a9c70ad9e45c3b67893dde094fa4d038bf9b05c92513c54706b86"
+    },
+    "inputs/parent-added-5-command.json": {
+      "bytes": 2499,
+      "sha256": "92c1d12920c172256f92b2de1292ff95d5f3a21ccfc15bf3fba172ce9dd3705e"
+    },
+    "inputs/parent-added-5-stdout": {
+      "bytes": 248,
+      "sha256": "9ba3d8a74ad60c64460b77c1636558203b92d7ab4fc9dd1d80cd721279081113"
+    },
+    "inputs/parent-added-6-command.json": {
+      "bytes": 2490,
+      "sha256": "4e8c09bed5bffcdcdb2b689be3fe02a54dce6234c4a5b4d2506f702927ef5fca"
+    },
+    "inputs/parent-added-6-stdout": {
+      "bytes": 239,
+      "sha256": "bb5becee5c0b9aa32933c323531888a52a82765c44dd6e50d1d85ef132fc1a19"
+    },
+    "inputs/parent-added-7-command.json": {
+      "bytes": 2493,
+      "sha256": "25fa88b9252fc73fd31c006fd9043aae52d169676ee8548e521dd50155864790"
+    },
+    "inputs/parent-added-7-stdout": {
+      "bytes": 242,
+      "sha256": "e8f3f8c42d16c1eefb2880fb081a9f11f214c5376f425a9d27081c60f8c34492"
+    },
+    "inputs/parent-client-command.json": {
+      "bytes": 2381,
+      "sha256": "309e7c2728e887b60a0a6e96b82a578a12560a5485e6470d25bf70ba78790c11"
+    },
+    "inputs/parent-client-stdout": {
+      "bytes": 26066,
+      "sha256": "69f8598314ff5c4b6ddaac6fa36265298fb39bc3d056c9eef0e38b1b52926319"
+    },
+    "inputs/parent-clock-data-command.json": {
+      "bytes": 2413,
+      "sha256": "9f0cf4370b29d1e880a258ea5a07dc6d25237633f58ca4414a3ca3f587db185d"
+    },
+    "inputs/parent-clock-data-stdout": {
+      "bytes": 987,
+      "sha256": "31363fb3c719acfee940b113ce8308d469d232dab8439d33d73f59eb40a11400"
+    },
+    "inputs/parent-decode-wire-command.json": {
+      "bytes": 2392,
+      "sha256": "9ac901525e430ac517fc5758f669bc7129e14353f593dd9ab27fa14310a959f7"
+    },
+    "inputs/parent-decode-wire-stdout": {
+      "bytes": 1214,
+      "sha256": "82b91005d18cbca094eafba2c6015cd231e660bbc2b3f8a708bbcb58f1a60d48"
+    },
+    "inputs/parent-device-data-command.json": {
+      "bytes": 2407,
+      "sha256": "b62dbf9f2e7d44be7ba356ca24dfbdf4e2fcec784db514ae28f84dc976d5057d"
+    },
+    "inputs/parent-device-data-stdout": {
+      "bytes": 1544,
+      "sha256": "ecb48c6d26a68734c76bfe325cacedf8d4c5ee0a1564fd587e1ebf6cd3fb9b5b"
+    },
+    "inputs/parent-host-data-v1-command.json": {
+      "bytes": 2398,
+      "sha256": "71ec63e0dcac54690a7093e0534ce4f1fb331d3fea9f0b933c05aa6558c6b438"
+    },
+    "inputs/parent-host-data-v1-stdout": {
+      "bytes": 949,
+      "sha256": "87a46e74802368055ad31a32398408f0eda31f640048bd042b2ccef66fd5b633"
+    },
+    "inputs/parent-host-data-v2-command.json": {
+      "bytes": 2398,
+      "sha256": "c3316072ddeb4baf6842c3ca3cd34422981bacc185df136bec81a9f33dfcef16"
+    },
+    "inputs/parent-host-data-v2-stdout": {
+      "bytes": 1189,
+      "sha256": "6863c3b73c2f0394df0557a0f039074662d8e4243450e6d884df22d7a8482033"
+    },
+    "inputs/parent-lib-list-stdout": {
+      "bytes": 93566,
+      "sha256": "a8ecac80b78464ded89c0dc75da009c7597c79c4493b8f4dc037abadc3e754be"
+    },
+    "inputs/parent-long-wire-command.json": {
+      "bytes": 2384,
+      "sha256": "d2edc14b5507baf21f64118452b5dedbd46011b5513e3d061cb0c8d1f9444d02"
+    },
+    "inputs/parent-long-wire-stdout": {
+      "bytes": 980,
+      "sha256": "2d1508f4e655d73e80b5aacb2fcb237e96bf174bbc135d45f5ed0373ea33ccec"
+    },
+    "inputs/parent-metadata-stdout": {
+      "bytes": 1015774,
+      "sha256": "df58ff1015b8c4928001c07c1dcda7d6a66eb9935d39bcca9b79c67ed3c303fe"
+    },
+    "inputs/parent-old-wire-command.json": {
+      "bytes": 2387,
+      "sha256": "43dc0ee061efa8d3d162cca26ad3f7962fb85e203ac82659ffd0e1270afda96f"
+    },
+    "inputs/parent-old-wire-stdout": {
+      "bytes": 625,
+      "sha256": "d61f301567cf0cde75c8dcd73f60f8c4c14bd70e2fa1d18da4681f03f85c2e85"
+    },
+    "inputs/parent-prefix-decode-wire-command.json": {
+      "bytes": 2393,
+      "sha256": "45e6a2ecdc1fde70c5c237be0a8b16f9233cb0bd71300973ad725854ac09c1a5"
+    },
+    "inputs/parent-prefix-decode-wire-stdout": {
+      "bytes": 1112,
+      "sha256": "e69d790107cfaea2aaf105e65089565f625fe7aa39a87c97bf13a9f1fa331c20"
+    },
+    "inputs/parent-prefix-layer-wire-command.json": {
+      "bytes": 2392,
+      "sha256": "fc7fde95d968b11f4888570ccaeb3bfc8a73a20a496fb07e6bdbfec22ec006a3"
+    },
+    "inputs/parent-prefix-layer-wire-stdout": {
+      "bytes": 849,
+      "sha256": "03f724f4e461e70b67be445636afd364fbf2cfa3713e711594dea79af5508781"
+    },
+    "inputs/parent-projection-host-report-command.json": {
+      "bytes": 2418,
+      "sha256": "88e320b2b6113d212a29ea2b8c30a0ae8261be1e66aca2ccdb45bc205d4fe06f"
+    },
+    "inputs/parent-projection-host-report-stdout": {
+      "bytes": 2247,
+      "sha256": "38c55096afae3feea7dc9b6161b2819745cb824fff70823a433124004fc6346b"
+    },
+    "inputs/parent-projection-residual-decode-wire-command.json": {
+      "bytes": 2413,
+      "sha256": "32ef3f905b5bb8704ef8c3f8c92f59884a0c5e80bba80dedff1f2a94e541f1fa"
+    },
+    "inputs/parent-projection-residual-decode-wire-stdout": {
+      "bytes": 1063,
+      "sha256": "f90d993d228debdce9f74e389fdd93f4e01d0cf6c090de7be65919fbd9a9f77b"
+    },
+    "inputs/parent-projection-residual-wire-command.json": {
+      "bytes": 2412,
+      "sha256": "6f8f6d8e2481be328d4615965af82488efe633d5e76adc5542cf2fd8eacb206d"
+    },
+    "inputs/parent-projection-residual-wire-stdout": {
+      "bytes": 616,
+      "sha256": "d8b7a5f5a14e8fc7a8ddd51254fc00ecce29c6e08e2e9201c16e051f683be308"
+    },
+    "inputs/parent-projection-wire-command.json": {
+      "bytes": 2408,
+      "sha256": "ed4ddb11d2dbfd3ff48c69bcf5563195f1ae3337064b1d2277a43b559d05f9db"
+    },
+    "inputs/parent-projection-wire-stdout": {
+      "bytes": 1036,
+      "sha256": "ef01d74ecfbda36038d40a4269c35e42fc50042632ddaa068ddf52f56985d1f3"
+    },
+    "inputs/parent-queued-mlp-wire-command.json": {
+      "bytes": 2401,
+      "sha256": "88b8337bad761e37be9de60f2d88bcbfee077cc01000789a9864b52aa259ffaa"
+    },
+    "inputs/parent-queued-mlp-wire-stdout": {
+      "bytes": 863,
+      "sha256": "217246ba7e076775cf85359bbfdbdc2ed546fd62cd87a65d0e66045cbf2101c2"
+    },
+    "inputs/parent-smoke-wire-command.json": {
+      "bytes": 2391,
+      "sha256": "cd464bebe411d8972d165fae309d0e25e645902b6024f9eab354dc3118be6857"
+    },
+    "inputs/parent-smoke-wire-stdout": {
+      "bytes": 967,
+      "sha256": "e36dd62895f18d430f735672f80bbfc4889f0eaae356235af30ee963f1c55643"
+    },
+    "inputs/parent-source-manifest.json": {
+      "bytes": 4470,
+      "sha256": "79af6715adfde3d4a977587119d9c652136d4b15fca109a3a8e21a882e74d330"
+    },
+    "inputs/parent-tiles-wire-command.json": {
+      "bytes": 2400,
+      "sha256": "690a8524f90bd2c3b99bf18a51608d82b8635cb351e4fecfabe7e6e32ae74f63"
+    },
+    "inputs/parent-tiles-wire-stdout": {
+      "bytes": 1202,
+      "sha256": "e88d3635bef9b2c8d2a860d659ae8c5dc587e4a4830ca43faa6243d8b95d9baa"
+    },
+    "inputs/tool-complete.json": {
+      "bytes": 1287578,
+      "sha256": "4a682798a23ac4c8accb0721f332a7b4e7484729bd692209d20f2883b501cee1"
+    },
+    "inputs/worker-proposal.json": {
+      "bytes": 12308,
+      "sha256": "f4ba9be03bfdf0e75670bcb88cee277c1ef7a24db073c313644ccecbb58523fb"
+    },
+    "inputs/worker-source.json": {
+      "bytes": 42245,
+      "sha256": "d2ed92454ec777292123f0e05ae11a00c504011662d2b00e769e5a74e9868386"
+    },
+    "qualification_support.py": {
+      "bytes": 34328,
+      "sha256": "71c71673a2de445d386b91a488268ca6e4b9a4815abfd3150160d2c545a31c13"
+    },
+    "run_cpu.py": {
+      "bytes": 28934,
+      "sha256": "c01d6093aac85c8f05874d8d419be1e9906dfd9acd56828e3801cce38f50ba15"
+    },
+    "stage.json": {
+      "bytes": 612,
+      "sha256": "23f197aa6f7547b3e19c8d85f480cfe107e663d726536b34b04b190518d86431"
+    },
+    "stage_parent_cache.py": {
+      "bytes": 13955,
+      "sha256": "f2fbf9463b00498bd99419043faf05fd46ef45b2710283e433a57e86059b98b3"
+    },
+    "stage_parent_cpu.py": {
+      "bytes": 3814,
+      "sha256": "51e34b394a1888bd01539efc946758c0d1eda8b784abbdfe8985b9e1ccf1787e"
+    },
+    "supervisor.py": {
+      "bytes": 41485,
+      "sha256": "8824478a6415dee39d28ccefb0881fc0687ac724f5a9c5a4540310fb5196b9bc"
+    }
+  },
+  "full_model_acceptance": false,
+  "full_source_bodies_retained": false,
+  "gpu_execution": false,
+  "host_executable_bodies_retained": false,
+  "immutable_cache_rows": 247,
+  "input": {
+    "bytes": 251879,
+    "sha256": "63558dda298d84bc10ff85cebb8f30b5320c4f092098af6789499126247e0088"
+  },
+  "lineage_bodies": 96,
+  "numerical_acceptance": false,
+  "overlay_bodies": 26,
+  "parent_cpu_qualified": false,
+  "passed": false,
+  "performance_claim": false,
+  "phases": 4,
+  "production_authority": false,
+  "raw_count": 23,
+  "schema": "ferric-guarded-mlp-parent-cpu-failed-retention-v1",
+  "source_archive": {
+    "bytes": 6949509,
+    "sha256": "bc640cf70fb13e57f2ad5af7858bff4492e30e7d94833cf03728e0e17e739e65"
+  },
+  "source_rows": 1220,
+  "terminal": {
+    "bytes": 1584613,
+    "sha256": "5d2c84938fb488f821c8b6a24b2f2689dcac0a4edf833b7c1675ac5eeb1c17a0"
+  }
+}

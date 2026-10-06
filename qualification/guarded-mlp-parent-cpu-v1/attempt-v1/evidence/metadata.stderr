@@ -1,0 +1,18 @@
+warning: spurious network error (3 tries remaining): the remote's default branch does not fit the refspec configuration; class=Net (12); code=InvalidSpec (-12)
+warning: spurious network error (2 tries remaining): the remote's default branch does not fit the refspec configuration; class=Net (12); code=InvalidSpec (-12)
+warning: spurious network error (1 try remaining): the remote's default branch does not fit the refspec configuration; class=Net (12); code=InvalidSpec (-12)
+error: failed to get `fe2o3-amdhsa-loader` as a dependency of package `ferric-m1-engineering-execution-v1 v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-parent-cpu-v228-v1/ferric/adapters/m1-engineering-execution-v1)`
+
+Caused by:
+  failed to load source for dependency `fe2o3-amdhsa-loader`
+
+Caused by:
+  unable to update https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d
+
+Caused by:
+  network failure seems to have happened
+  if a proxy or similar is necessary `net.git-fetch-with-cli` may help here
+  https://doc.rust-lang.org/cargo/reference/config.html#netgit-fetch-with-cli
+
+Caused by:
+  the remote's default branch does not fit the refspec configuration; class=Net (12); code=InvalidSpec (-12)

@@ -1,0 +1,14 @@
+test_bf16_lowest_argmax_and_signed_zero (test_validate_observation.GuardedObservationTests.test_bf16_lowest_argmax_and_signed_zero) ... ok
+test_closed_claims_counters_and_metadata_refuse (test_validate_observation.GuardedObservationTests.test_closed_claims_counters_and_metadata_refuse) ... ok
+test_complete_own_output_ar4 (test_validate_observation.GuardedObservationTests.test_complete_own_output_ar4) ... ok
+test_complete_tf4 (test_validate_observation.GuardedObservationTests.test_complete_tf4) ... ok
+test_control_generation_and_extent_refusals (test_validate_observation.GuardedObservationTests.test_control_generation_and_extent_refusals) ... ok
+test_each_terminal_region_and_frontier_refuses (test_validate_observation.GuardedObservationTests.test_each_terminal_region_and_frontier_refuses) ... ok
+test_json_and_integer_types_refuse (test_validate_observation.GuardedObservationTests.test_json_and_integer_types_refuse) ... ok
+test_nonfinite_every_payload_partition_refuses (test_validate_observation.GuardedObservationTests.test_nonfinite_every_payload_partition_refuses) ... ok
+test_raw_pin_and_close_chain_refuse (test_validate_observation.GuardedObservationTests.test_raw_pin_and_close_chain_refuse) ... ok
+
+----------------------------------------------------------------------
+Ran 9 tests in 2.701s
+
+OK

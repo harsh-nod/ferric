@@ -1,0 +1,22 @@
+{
+  "run_cpu.py": {
+    "bytes": 10500,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-validator-cpu-v228-v1/run_cpu.py",
+    "sha256": "6ad38d5d2044b1f8676b666ef7a5a059f888fcbb5d369b5511e2c07589c25488"
+  },
+  "supervisor.py": {
+    "bytes": 41485,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-validator-cpu-v228-v1/supervisor.py",
+    "sha256": "8824478a6415dee39d28ccefb0881fc0687ac724f5a9c5a4540310fb5196b9bc"
+  },
+  "test_validate_observation.py": {
+    "bytes": 10419,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-validator-cpu-v228-v1/test_validate_observation.py",
+    "sha256": "2551ce11a76d02a50cc4ea4f1ea382a8d4cdaca7fa259ab392e138e967cac78a"
+  },
+  "validate_observation.py": {
+    "bytes": 13779,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-validator-cpu-v228-v1/validate_observation.py",
+    "sha256": "367d1904f15741138db708c1f10e5a777905b62d9440a961e952a6cc9125b055"
+  }
+}

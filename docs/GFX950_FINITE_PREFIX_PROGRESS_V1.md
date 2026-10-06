@@ -6,7 +6,14 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Current integration: [the guarded model worker passes MI350 CPU qualification](../qualification/guarded-mlp-worker-cpu-v1/README.md).
+Current integration: [the guarded model observation validator passes all nine synthetic tests on MI350](../qualification/guarded-mlp-model-validator-cpu-v1/README.md).
+This is a data-checker result, not model numerical acceptance. The
+[parent build record](../qualification/guarded-mlp-parent-cpu-v1/README.md)
+retains the private Git-cache and toolchain failures. A fresh parent build
+uses the observed Rust 1.97.1 toolchain; the new parent and native model route
+are not yet qualified.
+
+Earlier integration: [the guarded model worker passes MI350 CPU qualification](../qualification/guarded-mlp-worker-cpu-v1/README.md).
 All 586 tests pass with four deliberate ignores, including the 24 new tests,
 and the final worker executable builds. The 19 tested worker source files and
 their 29 cumulative runtime prerequisites are now integrated on engineering
