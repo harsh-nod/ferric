@@ -1,0 +1,6 @@
+
+running 1 test
+test production_ranked_projection_v1::tests::cfg_block_cap_preserves_fixed_graph_work_and_edge_caps ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 1307 filtered out; finished in 0.00s
+

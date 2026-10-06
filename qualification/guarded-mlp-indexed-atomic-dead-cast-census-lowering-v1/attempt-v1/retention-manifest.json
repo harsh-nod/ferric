@@ -1,0 +1,59 @@
+{
+  "artifact": null,
+  "artifact_bodies_retained": false,
+  "failure": "RuntimeError('natural successful/reaped leaf required')",
+  "files": {
+    "evidence/compile.command.json": {
+      "bytes": 7819,
+      "sha256": "906419a696d7120b92c4cd68e00211df377c6b692b93362c2287e89d943fd4a9"
+    },
+    "evidence/compile.result.json": {
+      "bytes": 1241,
+      "sha256": "11d315660676eebbb2279568d787114e782e4753a46a6eeacd445b50e44e0673"
+    },
+    "evidence/compile.started.json": {
+      "bytes": 3681,
+      "sha256": "9e9b57855fa2aed090747fd8cb8a63172095b1bda599d9c257897ca485e3faa1"
+    },
+    "evidence/compile.stderr": {
+      "bytes": 8554,
+      "sha256": "ba24844fd07b9b9a7bc3d5934ff29b297a85ed965a3871a21b917fda5da0c044"
+    },
+    "evidence/compile.stdout": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "evidence/configurations.json": {
+      "bytes": 3204,
+      "sha256": "aef6a0bb0066e40ea5813cd5b22107835ba46e65079aba32cdde33a2332506c6"
+    },
+    "evidence/failed.json": {
+      "bytes": 12321,
+      "sha256": "34699054a75a7300bd308d99e22635c25237c3d85ecb8f15a1ca9de00c5831fd"
+    },
+    "evidence/inputs-after.json": {
+      "bytes": 87873,
+      "sha256": "4a9a5f6908c1e7af1ab13407d6708fd5ce331188b33d137ac52406ae15a94a14"
+    },
+    "evidence/inputs-before.json": {
+      "bytes": 85759,
+      "sha256": "91daeea15d31919a8b5fd18eb47359eb75a733349bff75119794adafa09c4f0d"
+    },
+    "evidence/source-after.json": {
+      "bytes": 1979859,
+      "sha256": "955e37e41e54df808221a7d3459f3f782ac7d0b6115ec35e48e14d5f834d4d78"
+    },
+    "evidence/source-before.json": {
+      "bytes": 1979859,
+      "sha256": "955e37e41e54df808221a7d3459f3f782ac7d0b6115ec35e48e14d5f834d4d78"
+    },
+    "lowering.py": {
+      "bytes": 49669,
+      "sha256": "23a3d777dc3b889b7169fd4fdd5bdbbc365ea4f56b11f4db0409e1510a28f28b"
+    }
+  },
+  "gpu_execution": false,
+  "passed": false,
+  "postcheck_errors": [],
+  "schema": "ferric-guarded-mlp-indexed-atomic-dead-cast-census-lowering-retention-v1"
+}

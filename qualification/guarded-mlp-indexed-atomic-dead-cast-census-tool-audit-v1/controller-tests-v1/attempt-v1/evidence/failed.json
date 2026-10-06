@@ -1,0 +1,166 @@
+{
+  "child_observation": null,
+  "compiler_qualification": false,
+  "controller": {
+    "bytes": 14182,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-indexed-atomic-dead-cast-census-loader-tests-v228-v1/run_tests.py",
+    "sha256": "9f95e44bd96d9d37bc36d34ba8d388643716dfe6360e6d86883cf0f14c3c8881"
+  },
+  "elapsed_seconds": 26.26321890100371,
+  "failure": "RuntimeError('indexed-atomic-dead-cast-census-loader-tests did not finish naturally/reaped/successfully')",
+  "gpu_execution": false,
+  "input_manifest": {
+    "bytes": 1133,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-indexed-atomic-dead-cast-census-loader-tests-v228-v1/input-manifest.json",
+    "sha256": "b73cdaad6373a4e065b15a4998d7d180950000f871c87e26484b7af18d796c77"
+  },
+  "limits": {
+    "address_space_bytes": 12884901888,
+    "affinity": [
+      8,
+      9
+    ],
+    "cleanup_reserve_seconds": 50,
+    "cpu_seconds_per_leaf": 1200,
+    "file_bytes": 1073741824,
+    "initial_free_bytes": 42949672960,
+    "leaf_seconds": 120,
+    "live_free_bytes": 40802189312,
+    "nice": 10,
+    "scratch_bytes": 6442450944,
+    "stream_bytes": 67108864,
+    "whole_seconds": 180
+  },
+  "passed": false,
+  "phases": [
+    {
+      "adopted_reaped": [],
+      "argv": [
+        "/usr/bin/prlimit",
+        "--as=12884901888",
+        "--cpu=1200",
+        "--fsize=1073741824",
+        "--core=0",
+        "--",
+        "/usr/bin/python3.12",
+        "-I",
+        "-S",
+        "-B",
+        "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-indexed-atomic-dead-cast-census-loader-tests-v228-v1/loader_test_entry.py"
+      ],
+      "command": {
+        "bytes": 917,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-indexed-atomic-dead-cast-census-loader-tests-v228-v1/evidence/indexed-atomic-dead-cast-census-loader-tests.command.json",
+        "sha256": "ce387f0c05b5fac88cf41038f92bf1490bb989e88c1324e4639f07209c2fcfce"
+      },
+      "elapsed_ns": 26233997722,
+      "exception": null,
+      "exit_code": 1,
+      "forced_cleanup": false,
+      "label": "indexed-atomic-dead-cast-census-loader-tests",
+      "natural_exit": true,
+      "observed_signals": [],
+      "pgid": 2324109,
+      "pid": 2324109,
+      "process_group_absent": true,
+      "reaped": true,
+      "stderr": {
+        "bytes": 5241,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-indexed-atomic-dead-cast-census-loader-tests-v228-v1/evidence/indexed-atomic-dead-cast-census-loader-tests.stderr",
+        "sha256": "d0af7dfdbb88dcb2a4770c73559838158e7deeb16588feccb496e01af005c37e"
+      },
+      "stdout": {
+        "bytes": 5366,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-indexed-atomic-dead-cast-census-loader-tests-v228-v1/evidence/indexed-atomic-dead-cast-census-loader-tests.stdout",
+        "sha256": "0f476cf578caf7d35e129bac699128b5ed9f6bb9da4e28c5b09a20318cdc4bde"
+      },
+      "storage_failure": null,
+      "timed_out": false
+    }
+  ],
+  "postcheck_errors": [],
+  "raw": {
+    "indexed-atomic-dead-cast-census-loader-tests.command.json": {
+      "bytes": 917,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-indexed-atomic-dead-cast-census-loader-tests-v228-v1/evidence/indexed-atomic-dead-cast-census-loader-tests.command.json",
+      "sha256": "ce387f0c05b5fac88cf41038f92bf1490bb989e88c1324e4639f07209c2fcfce"
+    },
+    "indexed-atomic-dead-cast-census-loader-tests.result.json": {
+      "bytes": 1733,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-indexed-atomic-dead-cast-census-loader-tests-v228-v1/evidence/indexed-atomic-dead-cast-census-loader-tests.result.json",
+      "sha256": "4992f33f464bbc28d17df36931bcf86369ef17bb66756e72e94fb16c995d7801"
+    },
+    "indexed-atomic-dead-cast-census-loader-tests.started.json": {
+      "bytes": 398,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-indexed-atomic-dead-cast-census-loader-tests-v228-v1/evidence/indexed-atomic-dead-cast-census-loader-tests.started.json",
+      "sha256": "af3a6a10a639c6d042199ee2f5cd833b04698f3a967b7c60ca67768056f4114b"
+    },
+    "indexed-atomic-dead-cast-census-loader-tests.stderr": {
+      "bytes": 5241,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-indexed-atomic-dead-cast-census-loader-tests-v228-v1/evidence/indexed-atomic-dead-cast-census-loader-tests.stderr",
+      "sha256": "d0af7dfdbb88dcb2a4770c73559838158e7deeb16588feccb496e01af005c37e"
+    },
+    "indexed-atomic-dead-cast-census-loader-tests.stdout": {
+      "bytes": 5366,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-indexed-atomic-dead-cast-census-loader-tests-v228-v1/evidence/indexed-atomic-dead-cast-census-loader-tests.stdout",
+      "sha256": "0f476cf578caf7d35e129bac699128b5ed9f6bb9da4e28c5b09a20318cdc4bde"
+    },
+    "sources-after.json": {
+      "bytes": 1503,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-indexed-atomic-dead-cast-census-loader-tests-v228-v1/evidence/sources-after.json",
+      "sha256": "b1e5e279317dc2152126c458101e6c48f73536dc9922698425bca706aa140837"
+    },
+    "sources-before.json": {
+      "bytes": 1503,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-indexed-atomic-dead-cast-census-loader-tests-v228-v1/evidence/sources-before.json",
+      "sha256": "b1e5e279317dc2152126c458101e6c48f73536dc9922698425bca706aa140837"
+    }
+  },
+  "schema": "ferric-indexed-atomic-dead-cast-census-loader-test-cpu-v1",
+  "source_inputs": {
+    "audit_tools.py": {
+      "bytes": 72963,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-indexed-atomic-dead-cast-census-loader-tests-v228-v1/audit_tools.py",
+      "sha256": "23b6f4d77c568dd5008ac02dafe85433fd49f7e642255b8ca6311458c65c651b"
+    },
+    "loader_test_entry.py": {
+      "bytes": 6465,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-indexed-atomic-dead-cast-census-loader-tests-v228-v1/loader_test_entry.py",
+      "sha256": "7cf9f02f8e3c463c170da06d11d3b9e28e2ffb3bd3d7a1bd6a8ab891cacc17c2"
+    },
+    "run_tests.py": {
+      "bytes": 14182,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-indexed-atomic-dead-cast-census-loader-tests-v228-v1/run_tests.py",
+      "sha256": "9f95e44bd96d9d37bc36d34ba8d388643716dfe6360e6d86883cf0f14c3c8881"
+    },
+    "supervisor.py": {
+      "bytes": 41485,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-indexed-atomic-dead-cast-census-loader-tests-v228-v1/supervisor.py",
+      "sha256": "8824478a6415dee39d28ccefb0881fc0687ac724f5a9c5a4540310fb5196b9bc"
+    },
+    "test_audit_tools.py": {
+      "bytes": 53893,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-indexed-atomic-dead-cast-census-loader-tests-v228-v1/test_audit_tools.py",
+      "sha256": "57c8bba6fc651eec2597baefaacdb0c919fc69ad0a76caee8c7771e9e616b2b8"
+    }
+  },
+  "source_unchanged": true,
+  "supervisor": {
+    "bytes": 41485,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-indexed-atomic-dead-cast-census-loader-tests-v228-v1/supervisor.py",
+    "sha256": "8824478a6415dee39d28ccefb0881fc0687ac724f5a9c5a4540310fb5196b9bc"
+  },
+  "synthetic_loader_only": true,
+  "tool_pins": {
+    "prlimit": {
+      "bytes": 27536,
+      "path": "/usr/bin/prlimit",
+      "sha256": "17064f67e650d6152a6902b013aab496b54c87587c8eea6f5023aafee6154069"
+    },
+    "python": {
+      "bytes": 8020928,
+      "path": "/usr/bin/python3.12",
+      "sha256": "e1efa562c2cc2e35521a5c9c9b9939921001ff8ca9708a13ef15ace68cc2ccd7"
+    }
+  }
+}

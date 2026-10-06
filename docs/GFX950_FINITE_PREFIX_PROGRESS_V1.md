@@ -6,7 +6,24 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Latest: [the membership-qualified guarded compile reaches a new work-limit charge site](../qualification/guarded-mlp-indexed-atomic-membership-lowering-v1/README.md).
+Latest: [the census-qualified guarded compile reaches the atomic-use lookup work charge](../qualification/guarded-mlp-indexed-atomic-dead-cast-census-lowering-v1/README.md).
+The compiler now reports `validate_statement` at `indexed_atomic_v1.rs:101:14`:
+a 552-entry scan requests work at 3,145,488, exceeding the unchanged 3,145,728
+ceiling. The compile exits naturally after 117.357422 seconds, is reaped, and
+leaves no process group; sources and postchecks are clean. No HSACO or GPU
+result is produced. A bounded lookup over the existing ordered use inventory
+is the next candidate, not a work-limit increase.
+
+The [bounded dead-cast census](../qualification/guarded-mlp-indexed-atomic-dead-cast-census-v1/README.md)
+passed full MI350 qualification: 39 phases, 26 scopes, 2,894 passing executions
+and 25 unchanged ignores. Compiler and Pliron suites pass 1,284 and 1,507 tests.
+The [fresh tools](../qualification/guarded-mlp-indexed-atomic-dead-cast-census-tool-audit-v1/README.md)
+pass 14 loader checks. Controller fixtures pass 26 and 19 tests after a
+test-data-only repair to the loader's positive fixture; that failed first
+attempt remains retained. These are compiler and admission results, not
+model numerics or performance. All milestones remain open.
+
+Previously, [the membership-qualified guarded compile reaches a new work-limit charge site](../qualification/guarded-mlp-indexed-atomic-membership-lowering-v1/README.md).
 The actual rejection is now in `indexed_atomic_temporary_unused_v1`, at
 `indexed_atomic_dead_cast_v1.rs:99:23`: a statement scan requests one work unit
 with the counter already at the unchanged 3,145,728 limit. The child exits

@@ -1,0 +1,30 @@
+{
+  "adopted_reaped": [],
+  "command": {
+    "bytes": 969,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-indexed-atomic-dead-cast-census-compiler-tools-audit-v228-v1/clang-22-ldd.command.json",
+    "sha256": "22c650acba094fb08e84457a7dc67beacb524596a29b0d675a2c9222fa2f3989"
+  },
+  "elapsed_ns": 50436732,
+  "exception": null,
+  "exit_code": 0,
+  "forced_cleanup": false,
+  "label": "clang-22-ldd",
+  "natural_exit": true,
+  "observed_signals": [],
+  "pgid": 2364292,
+  "pid": 2364292,
+  "process_group_absent": true,
+  "reaped": true,
+  "stderr": {
+    "bytes": 0,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-indexed-atomic-dead-cast-census-compiler-tools-audit-v228-v1/clang-22-ldd.stderr",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "stdout": {
+    "bytes": 514,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-indexed-atomic-dead-cast-census-compiler-tools-audit-v228-v1/clang-22-ldd.stdout",
+    "sha256": "f70ecd7a3ce50571f760f9f708bb2129b042e6567e22d49eac328beab388bb6b"
+  },
+  "timed_out": false
+}

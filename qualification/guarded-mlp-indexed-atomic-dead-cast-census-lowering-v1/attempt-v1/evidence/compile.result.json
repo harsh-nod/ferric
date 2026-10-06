@@ -1,0 +1,32 @@
+{
+  "adopted_reaped": [],
+  "command": {
+    "bytes": 7819,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-indexed-atomic-dead-cast-census-lowering-v228-v1/compile.command.json",
+    "sha256": "906419a696d7120b92c4cd68e00211df377c6b692b93362c2287e89d943fd4a9"
+  },
+  "elapsed_ns": 117357421909,
+  "exception": null,
+  "exit_code": 1,
+  "forced_cleanup": false,
+  "label": "compile",
+  "minimum_free_bytes": 43196768256,
+  "natural_exit": true,
+  "observed_signals": [],
+  "peak_private_scratch_bytes": 1027948613,
+  "pgid": 2375498,
+  "pid": 2375498,
+  "process_group_absent": true,
+  "reaped": true,
+  "stderr": {
+    "bytes": 8554,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-indexed-atomic-dead-cast-census-lowering-v228-v1/compile.stderr",
+    "sha256": "ba24844fd07b9b9a7bc3d5934ff29b297a85ed965a3871a21b917fda5da0c044"
+  },
+  "stdout": {
+    "bytes": 0,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-indexed-atomic-dead-cast-census-lowering-v228-v1/compile.stdout",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "timed_out": false
+}

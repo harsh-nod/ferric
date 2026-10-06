@@ -1,0 +1,69 @@
+{
+  "compiler_qualification": false,
+  "errors": 1,
+  "failure": "RuntimeError('indexed-atomic-dead-cast-census-loader-tests did not finish naturally/reaped/successfully')",
+  "files": {
+    "audit_tools.py": {
+      "bytes": 72963,
+      "sha256": "23b6f4d77c568dd5008ac02dafe85433fd49f7e642255b8ca6311458c65c651b"
+    },
+    "evidence/failed.json": {
+      "bytes": 8216,
+      "sha256": "eeae4646bc683f08306892e92b38e30145ebfc73558bfb0140328b22fb706263"
+    },
+    "evidence/indexed-atomic-dead-cast-census-loader-tests.command.json": {
+      "bytes": 917,
+      "sha256": "ce387f0c05b5fac88cf41038f92bf1490bb989e88c1324e4639f07209c2fcfce"
+    },
+    "evidence/indexed-atomic-dead-cast-census-loader-tests.result.json": {
+      "bytes": 1733,
+      "sha256": "4992f33f464bbc28d17df36931bcf86369ef17bb66756e72e94fb16c995d7801"
+    },
+    "evidence/indexed-atomic-dead-cast-census-loader-tests.started.json": {
+      "bytes": 398,
+      "sha256": "af3a6a10a639c6d042199ee2f5cd833b04698f3a967b7c60ca67768056f4114b"
+    },
+    "evidence/indexed-atomic-dead-cast-census-loader-tests.stderr": {
+      "bytes": 5241,
+      "sha256": "d0af7dfdbb88dcb2a4770c73559838158e7deeb16588feccb496e01af005c37e"
+    },
+    "evidence/indexed-atomic-dead-cast-census-loader-tests.stdout": {
+      "bytes": 5366,
+      "sha256": "0f476cf578caf7d35e129bac699128b5ed9f6bb9da4e28c5b09a20318cdc4bde"
+    },
+    "evidence/sources-after.json": {
+      "bytes": 1503,
+      "sha256": "b1e5e279317dc2152126c458101e6c48f73536dc9922698425bca706aa140837"
+    },
+    "evidence/sources-before.json": {
+      "bytes": 1503,
+      "sha256": "b1e5e279317dc2152126c458101e6c48f73536dc9922698425bca706aa140837"
+    },
+    "input-manifest.json": {
+      "bytes": 1133,
+      "sha256": "b73cdaad6373a4e065b15a4998d7d180950000f871c87e26484b7af18d796c77"
+    },
+    "loader_test_entry.py": {
+      "bytes": 6465,
+      "sha256": "7cf9f02f8e3c463c170da06d11d3b9e28e2ffb3bd3d7a1bd6a8ab891cacc17c2"
+    },
+    "run_tests.py": {
+      "bytes": 14182,
+      "sha256": "9f95e44bd96d9d37bc36d34ba8d388643716dfe6360e6d86883cf0f14c3c8881"
+    },
+    "supervisor.py": {
+      "bytes": 41485,
+      "sha256": "8824478a6415dee39d28ccefb0881fc0687ac724f5a9c5a4540310fb5196b9bc"
+    },
+    "test_audit_tools.py": {
+      "bytes": 53893,
+      "sha256": "57c8bba6fc651eec2597baefaacdb0c919fc69ad0a76caee8c7771e9e616b2b8"
+    }
+  },
+  "gpu_execution": false,
+  "passed": false,
+  "schema": "ferric-indexed-atomic-dead-cast-census-loader-tests-retention-v1",
+  "synthetic_loader_only": true,
+  "tests_passed": 25,
+  "tests_run": 26
+}

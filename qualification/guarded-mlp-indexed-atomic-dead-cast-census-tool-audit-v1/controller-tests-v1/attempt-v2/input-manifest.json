@@ -1,0 +1,37 @@
+{
+  "files": {
+    "audit_tools.py": {
+      "bytes": 72963,
+      "sha256": "23b6f4d77c568dd5008ac02dafe85433fd49f7e642255b8ca6311458c65c651b"
+    },
+    "loader_test_entry.py": {
+      "bytes": 6465,
+      "sha256": "14d714a1b42214c40ceb70c58e131e433ca1680b329464ea1bc5e402761a63c3"
+    },
+    "run_tests.py": {
+      "bytes": 14182,
+      "sha256": "1214e5924695b8b7235b4cc9855ffb7c801f43b63c1692868aeb5dd49c4b794c"
+    },
+    "supervisor.py": {
+      "bytes": 41485,
+      "sha256": "8824478a6415dee39d28ccefb0881fc0687ac724f5a9c5a4540310fb5196b9bc"
+    },
+    "test_audit_tools.py": {
+      "bytes": 53967,
+      "sha256": "bd2f9dce9fd9bb195303f3598919b48fc9a4addd167745ce5bfd3d9091532557"
+    }
+  },
+  "schema": "ferric-indexed-atomic-dead-cast-census-loader-test-input-v1",
+  "tool_pins": {
+    "prlimit": {
+      "bytes": 27536,
+      "path": "/usr/bin/prlimit",
+      "sha256": "17064f67e650d6152a6902b013aab496b54c87587c8eea6f5023aafee6154069"
+    },
+    "python": {
+      "bytes": 8020928,
+      "path": "/usr/bin/python3.12",
+      "sha256": "e1efa562c2cc2e35521a5c9c9b9939921001ff8ca9708a13ef15ace68cc2ccd7"
+    }
+  }
+}

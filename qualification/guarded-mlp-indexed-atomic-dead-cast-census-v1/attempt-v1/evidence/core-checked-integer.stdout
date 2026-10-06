@@ -1,0 +1,11 @@
+
+running 6 tests
+test trusted_device_items::core_checked_integer_v1::tests::checked_integer_real_body_rejects_control_flow_and_unwind ... ok
+test trusted_device_items::core_checked_integer_v1::tests::checked_integer_real_body_rejects_extra_operations ... ok
+test trusted_device_items::core_checked_integer_v1::tests::checked_integer_real_body_rejects_operands_constants_and_variants ... ok
+test trusted_device_items::core_checked_integer_v1::tests::checked_integer_real_body_rejects_shape_and_local_mutations ... ok
+test trusted_device_items::core_checked_integer_v1::tests::checked_integer_real_body_rejects_source_scope_and_inline_mutations ... ok
+test trusted_device_items::core_checked_integer_v1::tests::checked_integer_real_core_identity_and_signature_refusals ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 1302 filtered out; finished in 7.80s
+

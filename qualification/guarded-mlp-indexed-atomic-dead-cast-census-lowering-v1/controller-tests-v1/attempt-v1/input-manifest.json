@@ -1,0 +1,41 @@
+{
+  "files": {
+    "lowering.py": {
+      "bytes": 49545,
+      "sha256": "8748302163bf68ec42cd83e6a0e041c225a635da8fd481d842d3902b0c2091d3"
+    },
+    "lowering_test_entry.py": {
+      "bytes": 5882,
+      "sha256": "810a96c4a67269241364c38cd9c9a30dd6161199363e4c8ff93abe5576b5a40f"
+    },
+    "run_tests.py": {
+      "bytes": 13526,
+      "sha256": "17f5065a820bf3dbcf47a8a2f37509b3ec8d0211c81bdcc925dd50f4f6337f07"
+    },
+    "supervisor.py": {
+      "bytes": 41485,
+      "sha256": "8824478a6415dee39d28ccefb0881fc0687ac724f5a9c5a4540310fb5196b9bc"
+    },
+    "test_lowering.py": {
+      "bytes": 26873,
+      "sha256": "5d32c31fe27e36744d31ea035d42b26d7cda6a368cfdfc94b6d35711b8dc3e7c"
+    },
+    "test_normalization.py": {
+      "bytes": 6507,
+      "sha256": "6d4d91e24fa483e81d99ae1dd89a629eb3b7a17aaef94e8f46958123c292465f"
+    }
+  },
+  "schema": "ferric-indexed-atomic-dead-cast-census-lowering-test-input-v1",
+  "tool_pins": {
+    "prlimit": {
+      "bytes": 27536,
+      "path": "/usr/bin/prlimit",
+      "sha256": "17064f67e650d6152a6902b013aab496b54c87587c8eea6f5023aafee6154069"
+    },
+    "python": {
+      "bytes": 8020928,
+      "path": "/usr/bin/python3.12",
+      "sha256": "e1efa562c2cc2e35521a5c9c9b9939921001ff8ca9708a13ef15ace68cc2ccd7"
+    }
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "audit_tools.py": {
+    "bytes": 72963,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-indexed-atomic-dead-cast-census-loader-tests-v228-v1/audit_tools.py",
+    "sha256": "23b6f4d77c568dd5008ac02dafe85433fd49f7e642255b8ca6311458c65c651b"
+  },
+  "loader_test_entry.py": {
+    "bytes": 6465,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-indexed-atomic-dead-cast-census-loader-tests-v228-v1/loader_test_entry.py",
+    "sha256": "7cf9f02f8e3c463c170da06d11d3b9e28e2ffb3bd3d7a1bd6a8ab891cacc17c2"
+  },
+  "run_tests.py": {
+    "bytes": 14182,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-indexed-atomic-dead-cast-census-loader-tests-v228-v1/run_tests.py",
+    "sha256": "9f95e44bd96d9d37bc36d34ba8d388643716dfe6360e6d86883cf0f14c3c8881"
+  },
+  "supervisor.py": {
+    "bytes": 41485,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-indexed-atomic-dead-cast-census-loader-tests-v228-v1/supervisor.py",
+    "sha256": "8824478a6415dee39d28ccefb0881fc0687ac724f5a9c5a4540310fb5196b9bc"
+  },
+  "test_audit_tools.py": {
+    "bytes": 53893,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-indexed-atomic-dead-cast-census-loader-tests-v228-v1/test_audit_tools.py",
+    "sha256": "57c8bba6fc651eec2597baefaacdb0c919fc69ad0a76caee8c7771e9e616b2b8"
+  }
+}

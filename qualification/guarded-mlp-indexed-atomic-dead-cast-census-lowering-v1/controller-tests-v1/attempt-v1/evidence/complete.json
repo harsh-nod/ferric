@@ -1,0 +1,240 @@
+{
+  "child_observation": {
+    "compiler_qualification": false,
+    "errors": 0,
+    "expected_failures": 0,
+    "failures": 0,
+    "gpu_execution": false,
+    "names": [
+      "test_lowering.AuditBindingTests.test_actual_previous_driver_generation_is_immutable",
+      "test_lowering.AuditBindingTests.test_capacity_limits_and_cohorts_cannot_drift",
+      "test_lowering.AuditBindingTests.test_deployed_body_must_match_final_not_earlier_product",
+      "test_lowering.AuditBindingTests.test_driver_failure_controller_phase_or_full_suite_claim_refused",
+      "test_lowering.AuditBindingTests.test_driver_readset_or_final_body_drift_refused",
+      "test_lowering.AuditBindingTests.test_each_of_six_other_tools_stays_exact",
+      "test_lowering.AuditBindingTests.test_earlier_generation_cannot_supply_census_provenance",
+      "test_lowering.AuditBindingTests.test_failed_or_earlier_producer_refused",
+      "test_lowering.AuditBindingTests.test_loader_input_readset_drift_refused",
+      "test_lowering.AuditBindingTests.test_membership_lineage_and_census_are_required",
+      "test_lowering.AuditBindingTests.test_new_driver_replay_and_metadata_only_scope_are_required",
+      "test_lowering.AuditBindingTests.test_new_filepin_and_final_producer_join",
+      "test_lowering.AuditBindingTests.test_old_audit_schema_or_missing_producer_replay_refused",
+      "test_lowering.AuditBindingTests.test_pending_bindings_refuse_before_any_helper_or_effect",
+      "test_lowering.AuditBindingTests.test_unreviewed_loader_or_producer_controller_refused",
+      "test_normalization.NormalizationTests.test_command_selects_exact_profile_before_cargo_delimiter",
+      "test_normalization.NormalizationTests.test_output_accepts_exact_seven_field_options",
+      "test_normalization.NormalizationTests.test_output_refuses_flags_or_worker_policy_drift",
+      "test_normalization.NormalizationTests.test_output_refuses_old_missing_extra_or_minimal_options"
+    ],
+    "passed": true,
+    "passing_names": [
+      "test_lowering.AuditBindingTests.test_actual_previous_driver_generation_is_immutable",
+      "test_lowering.AuditBindingTests.test_capacity_limits_and_cohorts_cannot_drift",
+      "test_lowering.AuditBindingTests.test_deployed_body_must_match_final_not_earlier_product",
+      "test_lowering.AuditBindingTests.test_driver_failure_controller_phase_or_full_suite_claim_refused",
+      "test_lowering.AuditBindingTests.test_driver_readset_or_final_body_drift_refused",
+      "test_lowering.AuditBindingTests.test_each_of_six_other_tools_stays_exact",
+      "test_lowering.AuditBindingTests.test_earlier_generation_cannot_supply_census_provenance",
+      "test_lowering.AuditBindingTests.test_failed_or_earlier_producer_refused",
+      "test_lowering.AuditBindingTests.test_loader_input_readset_drift_refused",
+      "test_lowering.AuditBindingTests.test_membership_lineage_and_census_are_required",
+      "test_lowering.AuditBindingTests.test_new_driver_replay_and_metadata_only_scope_are_required",
+      "test_lowering.AuditBindingTests.test_new_filepin_and_final_producer_join",
+      "test_lowering.AuditBindingTests.test_old_audit_schema_or_missing_producer_replay_refused",
+      "test_lowering.AuditBindingTests.test_pending_bindings_refuse_before_any_helper_or_effect",
+      "test_lowering.AuditBindingTests.test_unreviewed_loader_or_producer_controller_refused",
+      "test_normalization.NormalizationTests.test_command_selects_exact_profile_before_cargo_delimiter",
+      "test_normalization.NormalizationTests.test_output_accepts_exact_seven_field_options",
+      "test_normalization.NormalizationTests.test_output_refuses_flags_or_worker_policy_drift",
+      "test_normalization.NormalizationTests.test_output_refuses_old_missing_extra_or_minimal_options"
+    ],
+    "schema": "ferric-indexed-atomic-dead-cast-census-lowering-tests-v1",
+    "skipped": 0,
+    "source_unchanged": true,
+    "sources": {
+      "lowering.py": {
+        "bytes": 49545,
+        "sha256": "8748302163bf68ec42cd83e6a0e041c225a635da8fd481d842d3902b0c2091d3"
+      },
+      "test_lowering.py": {
+        "bytes": 26873,
+        "sha256": "5d32c31fe27e36744d31ea035d42b26d7cda6a368cfdfc94b6d35711b8dc3e7c"
+      },
+      "test_normalization.py": {
+        "bytes": 6507,
+        "sha256": "6d4d91e24fa483e81d99ae1dd89a629eb3b7a17aaef94e8f46958123c292465f"
+      }
+    },
+    "synthetic_lowering_only": true,
+    "tests_run": 19,
+    "unexpected_successes": 0
+  },
+  "compiler_qualification": false,
+  "controller": {
+    "bytes": 13526,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-indexed-atomic-dead-cast-census-lowering-tests-v228-v1/run_tests.py",
+    "sha256": "17f5065a820bf3dbcf47a8a2f37509b3ec8d0211c81bdcc925dd50f4f6337f07"
+  },
+  "elapsed_seconds": 4.972207382088527,
+  "failure": null,
+  "gpu_execution": false,
+  "input_manifest": {
+    "bytes": 1273,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-indexed-atomic-dead-cast-census-lowering-tests-v228-v1/input-manifest.json",
+    "sha256": "44fa457ff3e3327a70cbddb7a852bcbd5e58111e4f7c8e74fdc750928e73638c"
+  },
+  "limits": {
+    "address_space_bytes": 12884901888,
+    "affinity": [
+      8,
+      9
+    ],
+    "cleanup_reserve_seconds": 50,
+    "cpu_seconds_per_leaf": 1200,
+    "file_bytes": 1073741824,
+    "initial_free_bytes": 42949672960,
+    "leaf_seconds": 120,
+    "live_free_bytes": 40802189312,
+    "nice": 10,
+    "scratch_bytes": 6442450944,
+    "stream_bytes": 67108864,
+    "whole_seconds": 180
+  },
+  "passed": true,
+  "phases": [
+    {
+      "adopted_reaped": [],
+      "argv": [
+        "/usr/bin/prlimit",
+        "--as=12884901888",
+        "--cpu=1200",
+        "--fsize=1073741824",
+        "--core=0",
+        "--",
+        "/usr/bin/python3.12",
+        "-I",
+        "-S",
+        "-B",
+        "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-indexed-atomic-dead-cast-census-lowering-tests-v228-v1/lowering_test_entry.py"
+      ],
+      "command": {
+        "bytes": 925,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-indexed-atomic-dead-cast-census-lowering-tests-v228-v1/evidence/indexed-atomic-dead-cast-census-lowering-tests.command.json",
+        "sha256": "73fa58796cbba611373b65b5eb125e0b591cc16c60a80b59641f4552e3c6fed5"
+      },
+      "elapsed_ns": 4944228814,
+      "exception": null,
+      "exit_code": 0,
+      "forced_cleanup": false,
+      "label": "indexed-atomic-dead-cast-census-lowering-tests",
+      "natural_exit": true,
+      "observed_signals": [],
+      "pgid": 2324112,
+      "pid": 2324112,
+      "process_group_absent": true,
+      "reaped": true,
+      "stderr": {
+        "bytes": 2844,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-indexed-atomic-dead-cast-census-lowering-tests-v228-v1/evidence/indexed-atomic-dead-cast-census-lowering-tests.stderr",
+        "sha256": "a6c42489ec50499a3e0d7ad9342af678668667ad09211bccf1bb5a7790f6ce92"
+      },
+      "stdout": {
+        "bytes": 4023,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-indexed-atomic-dead-cast-census-lowering-tests-v228-v1/evidence/indexed-atomic-dead-cast-census-lowering-tests.stdout",
+        "sha256": "071783e7037dbbcf00a13beb818133515ae7b2d51a4bbdc5b1b64742f0d71960"
+      },
+      "storage_failure": null,
+      "timed_out": false
+    }
+  ],
+  "postcheck_errors": [],
+  "raw": {
+    "indexed-atomic-dead-cast-census-lowering-tests.command.json": {
+      "bytes": 925,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-indexed-atomic-dead-cast-census-lowering-tests-v228-v1/evidence/indexed-atomic-dead-cast-census-lowering-tests.command.json",
+      "sha256": "73fa58796cbba611373b65b5eb125e0b591cc16c60a80b59641f4552e3c6fed5"
+    },
+    "indexed-atomic-dead-cast-census-lowering-tests.result.json": {
+      "bytes": 1750,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-indexed-atomic-dead-cast-census-lowering-tests-v228-v1/evidence/indexed-atomic-dead-cast-census-lowering-tests.result.json",
+      "sha256": "4aa94e48bb468101439d28739f68d2a15c7d03e8a759e94fb5f0aeff1af05236"
+    },
+    "indexed-atomic-dead-cast-census-lowering-tests.started.json": {
+      "bytes": 402,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-indexed-atomic-dead-cast-census-lowering-tests-v228-v1/evidence/indexed-atomic-dead-cast-census-lowering-tests.started.json",
+      "sha256": "6a795d02b0d301393eb7933cb5cc63255223498332d87a8c665a35def3792521"
+    },
+    "indexed-atomic-dead-cast-census-lowering-tests.stderr": {
+      "bytes": 2844,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-indexed-atomic-dead-cast-census-lowering-tests-v228-v1/evidence/indexed-atomic-dead-cast-census-lowering-tests.stderr",
+      "sha256": "a6c42489ec50499a3e0d7ad9342af678668667ad09211bccf1bb5a7790f6ce92"
+    },
+    "indexed-atomic-dead-cast-census-lowering-tests.stdout": {
+      "bytes": 4023,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-indexed-atomic-dead-cast-census-lowering-tests-v228-v1/evidence/indexed-atomic-dead-cast-census-lowering-tests.stdout",
+      "sha256": "071783e7037dbbcf00a13beb818133515ae7b2d51a4bbdc5b1b64742f0d71960"
+    },
+    "sources-after.json": {
+      "bytes": 1817,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-indexed-atomic-dead-cast-census-lowering-tests-v228-v1/evidence/sources-after.json",
+      "sha256": "018ab00242f4d1c69496da34a59294ad7335d938c1e8716691732e8262e43b47"
+    },
+    "sources-before.json": {
+      "bytes": 1817,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-indexed-atomic-dead-cast-census-lowering-tests-v228-v1/evidence/sources-before.json",
+      "sha256": "018ab00242f4d1c69496da34a59294ad7335d938c1e8716691732e8262e43b47"
+    }
+  },
+  "schema": "ferric-indexed-atomic-dead-cast-census-lowering-test-cpu-v1",
+  "source_inputs": {
+    "lowering.py": {
+      "bytes": 49545,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-indexed-atomic-dead-cast-census-lowering-tests-v228-v1/lowering.py",
+      "sha256": "8748302163bf68ec42cd83e6a0e041c225a635da8fd481d842d3902b0c2091d3"
+    },
+    "lowering_test_entry.py": {
+      "bytes": 5882,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-indexed-atomic-dead-cast-census-lowering-tests-v228-v1/lowering_test_entry.py",
+      "sha256": "810a96c4a67269241364c38cd9c9a30dd6161199363e4c8ff93abe5576b5a40f"
+    },
+    "run_tests.py": {
+      "bytes": 13526,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-indexed-atomic-dead-cast-census-lowering-tests-v228-v1/run_tests.py",
+      "sha256": "17f5065a820bf3dbcf47a8a2f37509b3ec8d0211c81bdcc925dd50f4f6337f07"
+    },
+    "supervisor.py": {
+      "bytes": 41485,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-indexed-atomic-dead-cast-census-lowering-tests-v228-v1/supervisor.py",
+      "sha256": "8824478a6415dee39d28ccefb0881fc0687ac724f5a9c5a4540310fb5196b9bc"
+    },
+    "test_lowering.py": {
+      "bytes": 26873,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-indexed-atomic-dead-cast-census-lowering-tests-v228-v1/test_lowering.py",
+      "sha256": "5d32c31fe27e36744d31ea035d42b26d7cda6a368cfdfc94b6d35711b8dc3e7c"
+    },
+    "test_normalization.py": {
+      "bytes": 6507,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-indexed-atomic-dead-cast-census-lowering-tests-v228-v1/test_normalization.py",
+      "sha256": "6d4d91e24fa483e81d99ae1dd89a629eb3b7a17aaef94e8f46958123c292465f"
+    }
+  },
+  "source_unchanged": true,
+  "supervisor": {
+    "bytes": 41485,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-indexed-atomic-dead-cast-census-lowering-tests-v228-v1/supervisor.py",
+    "sha256": "8824478a6415dee39d28ccefb0881fc0687ac724f5a9c5a4540310fb5196b9bc"
+  },
+  "synthetic_lowering_only": true,
+  "tool_pins": {
+    "prlimit": {
+      "bytes": 27536,
+      "path": "/usr/bin/prlimit",
+      "sha256": "17064f67e650d6152a6902b013aab496b54c87587c8eea6f5023aafee6154069"
+    },
+    "python": {
+      "bytes": 8020928,
+      "path": "/usr/bin/python3.12",
+      "sha256": "e1efa562c2cc2e35521a5c9c9b9939921001ff8ca9708a13ef15ace68cc2ccd7"
+    }
+  }
+}

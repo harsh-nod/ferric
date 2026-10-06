@@ -41,12 +41,36 @@ test file over the qualified membership generation. The source manifest is
 the patch is
 `c9b25b89933bf5651fdea6d898eb07a2f553c76155148ee15350afd4b581577a`.
 
-MI350 qualification is pending. Its planned 39 phases retain all 38 parent
-recipes and add one focused repeat. With nine new full-suite tests and nine
-repeated executions, success would require 2,894 passing executions and the
-same 25 ignored tests. These are planned counts, not results.
+Full qualification on `mi350` passed in 663.612525 seconds. All 38 parent
+recipes remain, with one focused census repeat added.
 
-The actual guarded compile must then be retried using separately audited
-tools. No HSACO, GPU execution, independent model numerical result, or
-performance result is established here. All issue #42 milestones and the
-700 tokens/s target remain open.
+| Check | Result |
+| --- | ---: |
+| Compiler suite | 1,284 passed, 24 ignored |
+| Pliron suite | 1,507 passed, 1 ignored |
+| Total, including repeats and extraction controls | 2,894 passed, 25 ignored |
+| Ordered phases / test scopes | 39 / 26 |
+
+Every child exited naturally with status zero, was reaped, and left no process
+group. Source and dependency postchecks were clean. Historical test and ignore
+identities were preserved. These are CPU compiler results, not GPU results.
+
+[attempt-v1](attempt-v1) retains the actual receipt, 199 raw files, controller,
+helper, direct baseline evidence and four source bodies. Its archive contains
+222 members and 221 pinned bodies, without exporting compiled binaries.
+The receipt is
+`3a5ae5b18b497282a05895b8beca033f316a261c5632f4fbecf02832cd552e3f`;
+the archive is
+`bc367c1cc464a7f3f87357dcacff5814309589367ce7f8be186130832bd710b6`.
+
+The separate [loader audit](../guarded-mlp-indexed-atomic-dead-cast-census-tool-audit-v1/README.md)
+passed all 14 binary/library checks. Its corrected synthetic controller
+fixtures passed 26 tests; the [lowering fixtures](../guarded-mlp-indexed-atomic-dead-cast-census-lowering-v1/README.md)
+passed 19. The original failed loader fixture is retained, not replaced.
+
+The [actual guarded compile](../guarded-mlp-indexed-atomic-dead-cast-census-lowering-v1/README.md)
+using those audited tools still failed at the unchanged graph-work ceiling.
+The measured charge moved from dead-cast analysis to `validate_statement`'s
+552-entry atomic-use lookup. No HSACO, GPU execution, independent model
+numerical result, or performance result is established here. All issue #42
+milestones and the 700 tokens/s target remain open.
