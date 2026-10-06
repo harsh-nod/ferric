@@ -6,7 +6,16 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Latest: [the final runtime compiler binaries pass all fourteen loader checks](../qualification/guarded-mlp-s-rpo-tool-audit-v1/README.md).
+Latest: [the refreshed guarded gfx950 lowering reaches an atomic-ordering rejection](../qualification/guarded-mlp-lowering-attempt-v2/README.md).
+The previous provider-source mismatch is no longer the observed failure.
+Source collection now rejects a core atomic load without a concrete ordering
+argument. The compiler exited naturally after 117.259 seconds and was reaped;
+integrity postchecks passed, with no timeout, forced cleanup or HSACO.
+Seven synthetic controller tests passed separately. The expected alias gate
+was not reached. An atomic-wrapper fix with matching extraction controls is
+next; no GPU, model-correctness or performance milestone is closed.
+
+Previously, [the final runtime compiler binaries passed all fourteen loader checks](../qualification/guarded-mlp-s-rpo-tool-audit-v1/README.md).
 The extractor resolves the exact new backend; the other five deployed tools
 are unchanged. All inspection leaves exited naturally and were reaped, with
 clean postchecks. Ten synthetic loader-admission tests passed separately.
