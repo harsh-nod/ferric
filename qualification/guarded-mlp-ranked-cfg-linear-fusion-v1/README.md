@@ -1,9 +1,54 @@
 # Ranked CFG Linear Fusion
 
-Status: [source implementation independently reviewed](proposal-v1/README.md),
-with nine authored regression tests. No new compiler qualification, artifact,
-GPU execution, numerical acceptance or performance result is established.
+Status: the first MI350 qualification failed in a new test fixture before
+fusion. The [fixture-only correction](proposal-v2/README.md) is independently
+reviewed and a fresh full qualification is running. No new compiler
+qualification, artifact, GPU execution, numerical acceptance or performance
+result is established.
 All issue #42 milestones and the 700 tokens/s target remain open.
+
+## First Qualification
+
+The [original attempt](attempt-v1/evidence/failed.json) is retained unchanged.
+Its 15 phases completed naturally, with the compiler suite exiting 101;
+all child processes were reaped and their groups were absent. Sources,
+dependencies and postchecks are clean. The whole attempt took 255.104317 seconds.
+
+| Check | Passed | Failed | Ignored |
+| --- | ---: | ---: | ---: |
+| Pliron full suite | 1507 | 0 | 1 |
+| Compiler full suite, raw result | 1322 | 1 | 24 |
+| Loader controller fixtures | 25 | 1 | 0 |
+| Lowering controller fixtures | 19 | 0 | 0 |
+
+All 1,314 previous compiler passes and 24 ignored identities are preserved.
+Eight new tests passed. The ninth, `cfg_linear_fusion_production_projection_route`,
+failed while admitting the synthetic semantic owner, before running fusion:
+`NonDeterministicOrder { entity: Block }`. The fixture encoded ascending block
+ordinals as little-endian byte prefixes, which cease to sort at 255 to 256.
+The correction uses big-endian encoding. Production code and all nine test
+names are unchanged; the real-owner test is neither removed nor bypassed.
+
+The CPU receipt's 1,507 passes and one ignore describe only the admitted Pliron
+suite. The compiler's 1,322 passes, one failure and 24 ignores come from its
+[raw stdout](attempt-v1/evidence/compiler-tests.stdout). Its failed exit stopped
+qualification before focused repeats and the later extraction controls.
+
+The separate [loader fixture failure](../guarded-mlp-ranked-cfg-linear-fusion-tool-audit-v1/controller-tests-v1/attempt-v1/evidence/failed.json)
+patched the previous generation's completion constant, so the new pending
+binding check correctly refused before the intended pending-driver check.
+The correction changes only that test-local patch target. The original failed
+receipt retains a null child observation; its raw stdout records 25 passes
+and one failure. The [lowering fixtures](../guarded-mlp-ranked-cfg-linear-fusion-lowering-v1/controller-tests-v1/attempt-v1/evidence/complete.json)
+passed all 19 checks. Both fixture cohorts will be rerun against the corrected
+compiler generation. No actual new binary-loader audit or guarded compile
+has been admitted from the failed CPU attempt.
+
+The failed CPU capsule has 104 members, 103 pinned bodies and 79 raw files:
+5,571,470 compressed bytes, SHA-256
+`318b80b83505843c1034604fc3e21e756d7ddeb9c74c1529400ac2b74b48a70a`.
+The failed loader and passing lowering capsules have 17 and 18 members,
+respectively. These are compiler/controller results, not GPU measurements.
 
 ## Measured Baseline
 

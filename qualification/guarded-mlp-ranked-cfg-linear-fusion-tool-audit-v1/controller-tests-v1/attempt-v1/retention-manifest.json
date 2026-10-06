@@ -1,0 +1,167 @@
+{
+  "compiler_qualification": false,
+  "controller_child_observation": null,
+  "failed_names": [
+    "test_audit_tools.DriverAdmissionTests.test_pending_driver_binding_refuses_before_host_or_output_effects"
+  ],
+  "files": {
+    "audit_tools.py": {
+      "bytes": 96798,
+      "sha256": "7a1323ef8e14a474b4387b0438cae5eb00713c710947a657588c0a0c67e1dd96"
+    },
+    "baseline-compile.stderr": {
+      "bytes": 164209,
+      "sha256": "9a309b8f23c66ad29e98a464bcb3ed8480766e2c7fd807415616dc99d6121a05"
+    },
+    "baseline-failed.json": {
+      "bytes": 16503,
+      "sha256": "1bf26b28162414dfb4afbf6dc5ba5a70a60d1c1fe1fd55624c251733840c560b"
+    },
+    "evidence/failed.json": {
+      "bytes": 8601,
+      "sha256": "462d21d6005a3de7385d8cb73daf9e646dfb109e2881ae5948ec98397674f332"
+    },
+    "evidence/ranked-cfg-linear-fusion-loader-tests.command.json": {
+      "bytes": 896,
+      "sha256": "495dd608d1f6c81a8c973747640eea0295f5092863ad6cf868c11ebfbf8691bc"
+    },
+    "evidence/ranked-cfg-linear-fusion-loader-tests.result.json": {
+      "bytes": 1677,
+      "sha256": "e6db60a8d5e4696c5c2bb3932d0258ea26f40ada243e400cf7a2e43753b94236"
+    },
+    "evidence/ranked-cfg-linear-fusion-loader-tests.started.json": {
+      "bytes": 391,
+      "sha256": "b5cf0131e08b134fdfe6f923611c1a54215218ae424c0375d3254db4738b94fe"
+    },
+    "evidence/ranked-cfg-linear-fusion-loader-tests.stderr": {
+      "bytes": 5185,
+      "sha256": "aff671bfbf21c150035ddf6a432f16f5951b96b96fb73d9927f715241279eee3"
+    },
+    "evidence/ranked-cfg-linear-fusion-loader-tests.stdout": {
+      "bytes": 5810,
+      "sha256": "d74cd2cb41b77aa9e1cfa248aa4da93804e1b9d7431d1c94ffdda3c77507f093"
+    },
+    "evidence/sources-after.json": {
+      "bytes": 2079,
+      "sha256": "4a37f80d9704b7ffb8fee7771b130fd4b7608bfcea4ec388f69164b547a9c58d"
+    },
+    "evidence/sources-before.json": {
+      "bytes": 2079,
+      "sha256": "4a37f80d9704b7ffb8fee7771b130fd4b7608bfcea4ec388f69164b547a9c58d"
+    },
+    "input-manifest.json": {
+      "bytes": 1414,
+      "sha256": "09b1160744d7acb22fc345fc1664d74e47c78e44fc8336c420f9ac460df22bf1"
+    },
+    "loader_test_entry.py": {
+      "bytes": 6777,
+      "sha256": "d4c8f43a0d39f5a169ef8f8e49d418c3cd34587cbb43dcf85392bccb2271a4a1"
+    },
+    "run_tests.py": {
+      "bytes": 14510,
+      "sha256": "b10e1adb6b8c0634e8eb71a5b19a8f12fc432c134a990da9292bdffd0ebfce17"
+    },
+    "supervisor.py": {
+      "bytes": 41485,
+      "sha256": "8824478a6415dee39d28ccefb0881fc0687ac724f5a9c5a4540310fb5196b9bc"
+    },
+    "test_audit_tools.py": {
+      "bytes": 96433,
+      "sha256": "c0afb4f640d3d8efd1889b4e027708250243186966cd90dd4765e38f258f3a34"
+    }
+  },
+  "gpu_execution": false,
+  "passed": false,
+  "raw_child_observation": {
+    "compiler_qualification": false,
+    "errors": 0,
+    "expected_failures": 0,
+    "failures": 1,
+    "gpu_execution": false,
+    "names": [
+      "test_audit_tools.CfgLinearFusionAdmissionTests.test_exact_cfg_linear_fusion_generation_preserves_non_deployed_provenance",
+      "test_audit_tools.CfgLinearFusionAdmissionTests.test_pending_cfg_linear_fusion_receipt_refuses_before_effects",
+      "test_audit_tools.CfgLinearFusionAdmissionTests.test_refuses_changed_independent_limit_or_inherited_cohort",
+      "test_audit_tools.CfgLinearFusionAdmissionTests.test_refuses_changed_non_overlay_body_or_preimage",
+      "test_audit_tools.CfgLinearFusionAdmissionTests.test_refuses_failed_admitting_or_wrong_generation",
+      "test_audit_tools.CfgLinearFusionAdmissionTests.test_refuses_lost_old_name_changed_ignore_or_cfg_linear_fusion_status",
+      "test_audit_tools.CfgLinearFusionAdmissionTests.test_refuses_old_product_and_any_unchanged_tool_substitution",
+      "test_audit_tools.CfgLinearFusionAdmissionTests.test_refuses_phase_omission_reordering_and_cleanup",
+      "test_audit_tools.DriverAdmissionTests.test_each_unchanged_tool_and_old_driver_are_refused",
+      "test_audit_tools.DriverAdmissionTests.test_exact_focused_census_and_no_full_suite_claim",
+      "test_audit_tools.DriverAdmissionTests.test_failed_unreviewed_or_wrong_source_generation_refused",
+      "test_audit_tools.DriverAdmissionTests.test_missing_changed_or_relocated_source_map_refused",
+      "test_audit_tools.DriverAdmissionTests.test_only_new_driver_and_test_metadata_are_admitted",
+      "test_audit_tools.DriverAdmissionTests.test_pending_driver_binding_refuses_before_host_or_output_effects",
+      "test_audit_tools.DriverAdmissionTests.test_phase_cleanup_and_wrong_final_build_refused",
+      "test_audit_tools.DriverAdmissionTests.test_wrong_driver_or_test_cargo_role_refused",
+      "test_audit_tools.ProducerAdmissionTests.test_final_two_products_only_and_rlib_metadata",
+      "test_audit_tools.ProducerAdmissionTests.test_rejects_any_of_five_legacy_tool_changes",
+      "test_audit_tools.ProducerAdmissionTests.test_rejects_controller_helper_or_proposal_generation_drift",
+      "test_audit_tools.ProducerAdmissionTests.test_rejects_extra_tools_or_old_backend_replacement",
+      "test_audit_tools.ProducerAdmissionTests.test_rejects_failed_incomplete_or_diagnostic_producer",
+      "test_audit_tools.ProducerAdmissionTests.test_rejects_missing_or_changed_source_map",
+      "test_audit_tools.ProducerAdmissionTests.test_rejects_missing_rlib_or_test_product",
+      "test_audit_tools.ProducerAdmissionTests.test_rejects_old_or_failed_final_cargo_observation",
+      "test_audit_tools.ProducerAdmissionTests.test_rejects_phase_or_test_census_failure",
+      "test_audit_tools.ProducerAdmissionTests.test_rejects_product_outside_target_and_wrong_role"
+    ],
+    "passed": false,
+    "passing_names": [
+      "test_audit_tools.CfgLinearFusionAdmissionTests.test_exact_cfg_linear_fusion_generation_preserves_non_deployed_provenance",
+      "test_audit_tools.CfgLinearFusionAdmissionTests.test_pending_cfg_linear_fusion_receipt_refuses_before_effects",
+      "test_audit_tools.CfgLinearFusionAdmissionTests.test_refuses_changed_independent_limit_or_inherited_cohort",
+      "test_audit_tools.CfgLinearFusionAdmissionTests.test_refuses_changed_non_overlay_body_or_preimage",
+      "test_audit_tools.CfgLinearFusionAdmissionTests.test_refuses_failed_admitting_or_wrong_generation",
+      "test_audit_tools.CfgLinearFusionAdmissionTests.test_refuses_lost_old_name_changed_ignore_or_cfg_linear_fusion_status",
+      "test_audit_tools.CfgLinearFusionAdmissionTests.test_refuses_old_product_and_any_unchanged_tool_substitution",
+      "test_audit_tools.CfgLinearFusionAdmissionTests.test_refuses_phase_omission_reordering_and_cleanup",
+      "test_audit_tools.DriverAdmissionTests.test_each_unchanged_tool_and_old_driver_are_refused",
+      "test_audit_tools.DriverAdmissionTests.test_exact_focused_census_and_no_full_suite_claim",
+      "test_audit_tools.DriverAdmissionTests.test_failed_unreviewed_or_wrong_source_generation_refused",
+      "test_audit_tools.DriverAdmissionTests.test_missing_changed_or_relocated_source_map_refused",
+      "test_audit_tools.DriverAdmissionTests.test_only_new_driver_and_test_metadata_are_admitted",
+      "test_audit_tools.DriverAdmissionTests.test_phase_cleanup_and_wrong_final_build_refused",
+      "test_audit_tools.DriverAdmissionTests.test_wrong_driver_or_test_cargo_role_refused",
+      "test_audit_tools.ProducerAdmissionTests.test_final_two_products_only_and_rlib_metadata",
+      "test_audit_tools.ProducerAdmissionTests.test_rejects_any_of_five_legacy_tool_changes",
+      "test_audit_tools.ProducerAdmissionTests.test_rejects_controller_helper_or_proposal_generation_drift",
+      "test_audit_tools.ProducerAdmissionTests.test_rejects_extra_tools_or_old_backend_replacement",
+      "test_audit_tools.ProducerAdmissionTests.test_rejects_failed_incomplete_or_diagnostic_producer",
+      "test_audit_tools.ProducerAdmissionTests.test_rejects_missing_or_changed_source_map",
+      "test_audit_tools.ProducerAdmissionTests.test_rejects_missing_rlib_or_test_product",
+      "test_audit_tools.ProducerAdmissionTests.test_rejects_old_or_failed_final_cargo_observation",
+      "test_audit_tools.ProducerAdmissionTests.test_rejects_phase_or_test_census_failure",
+      "test_audit_tools.ProducerAdmissionTests.test_rejects_product_outside_target_and_wrong_role"
+    ],
+    "schema": "ferric-ranked-cfg-linear-fusion-loader-tests-v1",
+    "skipped": 0,
+    "source_unchanged": true,
+    "sources": {
+      "audit_tools.py": {
+        "bytes": 96798,
+        "sha256": "7a1323ef8e14a474b4387b0438cae5eb00713c710947a657588c0a0c67e1dd96"
+      },
+      "baseline-compile.stderr": {
+        "bytes": 164209,
+        "sha256": "9a309b8f23c66ad29e98a464bcb3ed8480766e2c7fd807415616dc99d6121a05"
+      },
+      "baseline-failed.json": {
+        "bytes": 16503,
+        "sha256": "1bf26b28162414dfb4afbf6dc5ba5a70a60d1c1fe1fd55624c251733840c560b"
+      },
+      "test_audit_tools.py": {
+        "bytes": 96433,
+        "sha256": "c0afb4f640d3d8efd1889b4e027708250243186966cd90dd4765e38f258f3a34"
+      }
+    },
+    "synthetic_loader_only": true,
+    "tests_run": 26,
+    "unexpected_successes": 0
+  },
+  "schema": "ferric-ranked-cfg-linear-fusion-loader-tests-failure-retention-v1",
+  "synthetic_loader_only": true,
+  "tests_failed": 1,
+  "tests_passed": 25,
+  "tests_run": 26
+}

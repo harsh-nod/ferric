@@ -1,0 +1,11 @@
+--- a/crates/rustc-codegen-fe2o3/src/production_ranked_projection_v1/cfg_linear_fusion_v1_tests.rs
++++ b/crates/rustc-codegen-fe2o3/src/production_ranked_projection_v1/cfg_linear_fusion_v1_tests.rs
+@@ -469,7 +469,7 @@
+             let blocks = (0..count)
+                 .map(|index| {
+                     let mut identity = [0; 32];
+-                    identity[..8].copy_from_slice(&(index as u64 + 1).to_le_bytes());
++                    identity[..8].copy_from_slice(&(index as u64 + 1).to_be_bytes());
+                     let terminator = if index + 1 == count {
+                         SemanticTerminatorKindV1::Return
+                     } else {

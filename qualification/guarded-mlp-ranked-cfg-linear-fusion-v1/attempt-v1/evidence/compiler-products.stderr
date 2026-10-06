@@ -1,0 +1,47 @@
+warning: /home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-cfg-linear-fusion-cpu-v228-v1/fe2o3/crates/rustc-codegen-fe2o3/tests/fixtures/local-marker/Cargo.toml: file `/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-cfg-linear-fusion-cpu-v228-v1/fe2o3/crates/rustc-codegen-fe2o3/tests/fixtures/local-marker/src/main.rs` found to be present in multiple build targets:
+  * `lib` target `fe2o3_trusted_item_local_marker`
+  * `bin` target `fe2o3-trusted-item-local-marker`
+   Compiling libc v0.2.189
+   Compiling bitflags v2.13.1
+   Compiling fe2o3-build-authority v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-cfg-linear-fusion-cpu-v228-v1/fe2o3/crates/fe2o3-build-authority)
+   Compiling rustix v1.1.4
+   Compiling fe2o3-kernel-descriptor v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-cfg-linear-fusion-cpu-v228-v1/fe2o3/crates/fe2o3-kernel-descriptor)
+   Compiling fe2o3-rustc-invocation v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-cfg-linear-fusion-cpu-v228-v1/fe2o3/crates/fe2o3-rustc-invocation)
+   Compiling linux-raw-sys v0.12.1
+   Compiling rustc_apfloat v0.2.3+llvm-462a31f5a5ab
+   Compiling fe2o3-compiler-lineage v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-cfg-linear-fusion-cpu-v228-v1/fe2o3/crates/fe2o3-compiler-lineage)
+   Compiling getrandom v0.2.17
+   Compiling reserved-fe2o3-symbols v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-cfg-linear-fusion-cpu-v228-v1/fe2o3/crates/reserved-fe2o3-symbols)
+   Compiling zeroize v1.9.0
+   Compiling curve25519-dalek v4.1.3
+   Compiling fe2o3-compiler-ffi v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-cfg-linear-fusion-cpu-v228-v1/fe2o3/crates/fe2o3-compiler-ffi)
+   Compiling rand_core v0.6.4
+   Compiling pliron v0.17.0 (https://github.com/harsh-nod/pliron.git?rev=161c385576d45d4e634ba179fa93a545b91124e6#161c3855)
+   Compiling ed25519-dalek v2.2.0
+   Compiling fe2o3-artifact-transaction v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-cfg-linear-fusion-cpu-v228-v1/fe2o3/crates/fe2o3-artifact-transaction)
+   Compiling fe2o3-functional-proof v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-cfg-linear-fusion-cpu-v228-v1/fe2o3/crates/fe2o3-functional-proof)
+   Compiling fe2o3-kernel-analysis v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-cfg-linear-fusion-cpu-v228-v1/fe2o3/crates/fe2o3-kernel-analysis)
+   Compiling fe2o3-pliron-owner-core v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-cfg-linear-fusion-cpu-v228-v1/fe2o3/crates/fe2o3-pliron-owner-core)
+   Compiling dialect-kernel v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-cfg-linear-fusion-cpu-v228-v1/fe2o3/crates/dialect-kernel)
+   Compiling dialect-mir v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-cfg-linear-fusion-cpu-v228-v1/fe2o3/crates/dialect-mir)
+   Compiling dialect-gpu v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-cfg-linear-fusion-cpu-v228-v1/fe2o3/crates/dialect-gpu)
+   Compiling dialect-proof v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-cfg-linear-fusion-cpu-v228-v1/fe2o3/crates/dialect-proof)
+   Compiling fe2o3-pliron v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-cfg-linear-fusion-cpu-v228-v1/fe2o3/crates/fe2o3-pliron)
+   Compiling fe2o3-external-anchor-protocol v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-cfg-linear-fusion-cpu-v228-v1/fe2o3/crates/fe2o3-external-anchor-protocol)
+   Compiling fe2o3-llvm-handoff v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-cfg-linear-fusion-cpu-v228-v1/fe2o3/crates/fe2o3-llvm-handoff)
+   Compiling fe2o3-compiler-execution-protocol v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-cfg-linear-fusion-cpu-v228-v1/fe2o3/crates/fe2o3-compiler-execution-protocol)
+   Compiling syn v2.0.119
+   Compiling fe2o3-compiler-closure-capability v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-cfg-linear-fusion-cpu-v228-v1/fe2o3/crates/fe2o3-compiler-closure-capability)
+   Compiling fe2o3-artifacts v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-cfg-linear-fusion-cpu-v228-v1/fe2o3/crates/fe2o3-artifacts)
+   Compiling fe2o3-rustc-front v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-cfg-linear-fusion-cpu-v228-v1/fe2o3/crates/fe2o3-rustc-front)
+   Compiling rustc-codegen-fe2o3 v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-cfg-linear-fusion-cpu-v228-v1/fe2o3/crates/rustc-codegen-fe2o3)
+   Compiling fe2o3-contracts v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-cfg-linear-fusion-cpu-v228-v1/fe2o3/crates/fe2o3-contracts)
+   Compiling fe2o3-compiler-execution-client v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-cfg-linear-fusion-cpu-v228-v1/fe2o3/crates/fe2o3-compiler-execution-client)
+   Compiling fe2o3-process-identity v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-cfg-linear-fusion-cpu-v228-v1/fe2o3/crates/fe2o3-process-identity)
+   Compiling fe2o3-kernel-opt v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-cfg-linear-fusion-cpu-v228-v1/fe2o3/crates/fe2o3-kernel-opt)
+   Compiling fe2o3-amdgcn-model v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-cfg-linear-fusion-cpu-v228-v1/fe2o3/crates/fe2o3-amdgcn-model)
+   Compiling dialect-amdgcn v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-cfg-linear-fusion-cpu-v228-v1/fe2o3/crates/dialect-amdgcn)
+   Compiling fe2o3-lower-mir-kernel v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-cfg-linear-fusion-cpu-v228-v1/fe2o3/crates/fe2o3-lower-mir-kernel)
+   Compiling fe2o3-compiler-api v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-cfg-linear-fusion-cpu-v228-v1/fe2o3/crates/fe2o3-compiler-api)
+   Compiling fe2o3-verifier v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-cfg-linear-fusion-cpu-v228-v1/fe2o3/crates/fe2o3-verifier)
+    Finished `dev` profile [unoptimized] target(s) in 32.60s
