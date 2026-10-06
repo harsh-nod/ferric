@@ -40,8 +40,11 @@ complete-forward latency. The new
 passes fresh MI350 CPU qualification: 601 worker passes with four unchanged
 ignores, 387 selected parent passes, and all 14 report/topology checker tests.
 Its 587-snapshot schema separates layer boundaries while preserving the
-existing runtime policy and GPU images. Native attribution is in progress;
-inclusive host counters cannot establish GPU overlap or throughput.
+existing runtime policy and GPU images. The native run now passes in one
+attempt: 11 clean phases, healthy Close, and all four full observation payloads
+byte-identical to ordinary AR4. Paired segments record 2,016 full-currentness
+checks per rank per forward, motivating a separate shared-full-observation
+experiment. Inclusive host counters cannot establish GPU overlap or throughput.
 
 The [historical O-projection replay](../qualification/o-projection-exact-replay-v1/README.md)
 now completes on MI350 with 18 passing tests. All 8,192 captured FP32 partials

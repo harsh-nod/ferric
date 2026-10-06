@@ -1,0 +1,29 @@
+{
+  "mode": "ar4",
+  "parent": {
+    "bytes": 13836368,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-host-observation-parent-cpu-v228-v1/target/debug/ferric-qwen3-finite-guarded-mlp-decode-engineering",
+    "sha256": "abf358b7fdcce0e2c432aa906d06c8790a3727d5471993ee01879d74a851f5c9"
+  },
+  "parent_cpu": {
+    "bytes": 3815416,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-host-observation-parent-cpu-v228-v1/evidence/complete.json",
+    "sha256": "ab72e2316315ec6b0766284e0b4c26e834b2502cd4a6fc29c304a875950e3c8f"
+  },
+  "request": {
+    "bytes": 9339,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-host-observation-gpu-v228-v1/ar4-request.json",
+    "sha256": "dd4ee75e6a8f09cd65846a55542248b6f7cdba96813a00f38af4c30fcd827f21"
+  },
+  "schema": "ferric-guarded-mlp-model-host-observation-gpu-input-v1",
+  "worker": {
+    "bytes": 5873056,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-host-observation-worker-cpu-v228-v1/target/debug/ferric-tp-peer-finite-engineering-worker-v1",
+    "sha256": "9221a902a52a07b96b6855c8b802d4e634cbc0970e3f1e252d4130cf6bc1753d"
+  },
+  "worker_cpu": {
+    "bytes": 1625743,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-host-observation-worker-cpu-v228-v1/evidence/complete.json",
+    "sha256": "fd4b55f53e2a61aafb49bb901796ca6c5d72a2e34d725aabc16cd4d14cef082e"
+  }
+}

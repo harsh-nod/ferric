@@ -58,7 +58,39 @@ publication after healthy close. Counter scopes can nest and overlap; adding
 them does not yield elapsed GPU time. The paired route does not populate every
 generic dispatch timer. No GPU overlap graph can be inferred from these counters.
 
-This checkpoint qualifies source and selected CPU behavior only. Native host-mode
-execution, numerical acceptance, throughput, and production qualification are
-not established here. The four-forward diagnostic is not the requested
-2,048-token prompt / 256-token decode benchmark. Ferric #42 M0-M7 remain open.
+## Actual MI350 Execution
+
+The [native host-mode run](gpu-attempt-v1/ar4/complete.json) passed in one
+attempt with 11 clean process phases, six idle snapshots, healthy Close, and
+all 587 snapshots / 586 intervals verified. It completed four forwards through
+all 36 layers on both ranks, producing `67, 25, 576, 2701` from the own-output
+history starting at token `9112`.
+
+The [instrumentation comparison](gpu-attempt-v1/ar4/instrumentation-comparison.json)
+finds all four 606,976-byte payloads and input histories equal to the earlier
+ordinary guarded AR4 run. The capsule retains both sets of payloads so this
+comparison can be checked offline. This establishes observed byte equality,
+not an independent numerical-accuracy claim.
+
+The paired segments account for 7.924-8.004 seconds of host wall time per
+forward. They record 2,016 full-currentness checks per rank per forward,
+with 3.403-3.441 seconds per rank in those inclusive counters. Publication
+checks are recorded separately and must not be added indiscriminately to
+nested counters. This motivates a separately qualified shared-full-currentness
+experiment; it does not measure GPU kernel duration or an optimization gain.
+
+The original terminal is 614,572 bytes, SHA-256
+`91a20d628644eb784d651e4d4d87571cb55cdb367971092fcea40d259ee38ec2`.
+Its controller elapsed time is 410.540 seconds, including setup and audits,
+not a throughput denominator. The raw host report is 510,613 bytes, SHA-256
+`ed930946ce1402171cdfb3a830f883dfda7fc6f7bd76763af238de54872c90c4`.
+The 3,929,492-byte archive has SHA-256
+`1bebcaec4eb2dd74600193981173d25b2da39ac0df861c48d36b04e3ca001d31`.
+The retained capsule contains 97 files, 96 pins and 79 current raw records,
+with 7,907,742 expanded bytes. Five files are the original ordinary-AR4
+reference terminal and four payloads. External executable/library/readset
+bodies are not bundled. The exporter and retainer perform data checks only.
+
+Numerical acceptance, sustained throughput, and production qualification remain
+open. This four-forward diagnostic is not the requested 2,048-token prompt /
+256-token decode benchmark. Ferric #42 M0-M7 remain open.
