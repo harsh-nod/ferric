@@ -1,0 +1,95 @@
+{
+  "actual_failure": {
+    "bytes": 15422,
+    "sha256": "ba277bc9fbf3593b0b797a6bba3e7f8ee4fd073b8e28dc33d245b465d0c09a59"
+  },
+  "actual_failure_block_count_observed": false,
+  "actual_failure_caller_identified": false,
+  "actual_failure_stderr": {
+    "bytes": 8424,
+    "sha256": "f806e763a124eb460d47de32531749744f9d24a03cd240115d9f744326ee374a"
+  },
+  "admission_changed": true,
+  "base_complete": {
+    "bytes": 1340683,
+    "sha256": "bcf85b67b2b2d2a80f9b2e4a0fa990b038d848eafc0d8117d321dbb059efdf81"
+  },
+  "base_controller": {
+    "bytes": 75233,
+    "sha256": "69686f865ca9b7d54842889546779a033d47b11cddf262e76137cbcb9f2dcff8"
+  },
+  "base_input": {
+    "bytes": 1122741,
+    "sha256": "09e2c31f7a045df0591ba42747d4cb345e21109fd697a497b238f7fa7f78c281"
+  },
+  "base_source_count": 5803,
+  "base_sources": {
+    "bytes": 2327388,
+    "sha256": "fd7b5ceab4fc2941437863cc03b8a857ab290e826e0e279757125095aeaf1472"
+  },
+  "baseline_block_limit": 2048,
+  "baseline_failure_block_count_observed": true,
+  "baseline_failure_caller_identified": true,
+  "baseline_projected_blocks": 2778,
+  "baseline_semantic_blocks": 1121,
+  "block_limit": 2048,
+  "cfg_compaction_optimization": true,
+  "compiler_scratch_added": false,
+  "edge_limit": 2048,
+  "files": {
+    "crates/rustc-codegen-fe2o3/src/production_ranked_projection_v1.rs": {
+      "after": {
+        "bytes": 1656573,
+        "sha256": "7b722615198ef30ac7fab60229d5c36672763a1f7f64c25bc5cab3f51c2b600e"
+      },
+      "before": {
+        "bytes": 1652819,
+        "sha256": "b48bc009418c476a46796a04c4e14ce1c24761656ff1e00ac846b6f35724d5df"
+      }
+    },
+    "crates/rustc-codegen-fe2o3/src/production_ranked_projection_v1/cfg_compaction_v1_tests.rs": {
+      "after": {
+        "bytes": 20428,
+        "sha256": "b06dfa3a1b1c50bb90bf1a23ee568b29482b05cb24a037e3bada65deb5925c67"
+      },
+      "before": null
+    },
+    "crates/rustc-codegen-fe2o3/src/production_ranked_projection_v1/projection_04_tests.rs": {
+      "after": {
+        "bytes": 45530,
+        "sha256": "867cf2e1433bfcb3e6554c6614c6914adc72f9fd0a5c56ccdcb7774bad48b97a"
+      },
+      "before": {
+        "bytes": 45365,
+        "sha256": "9653ac17297a12d67cd96e9337be57a39a597d71335bce5233ac4e3fe25aaa86"
+      }
+    }
+  },
+  "filter": "production_ranked_projection_v1::tests::cfg_compaction_",
+  "graph_analysis_optimization": false,
+  "graph_work_limit": 3145728,
+  "integration_patch": {
+    "bytes": 31878,
+    "sha256": "c00bedb6983ed9fca9565ffd3ee1bb7be330b936d851806ffb174f73322517c7"
+  },
+  "new_test_count": 9,
+  "resource_admission_may_change": true,
+  "schema": "ferric-guarded-mlp-ranked-cfg-compaction-source-v1",
+  "semantic_predicates_changed": false,
+  "source_count": 5804,
+  "source_file_additions": 1,
+  "source_only": true,
+  "static_failure_site_identified": true,
+  "structural_limits_changed": false,
+  "test_names": [
+    "production_ranked_projection_v1::tests::cfg_compaction_atomic_and_predicate_refusals_unchanged",
+    "production_ranked_projection_v1::tests::cfg_compaction_differential_checks_effects_and_traps",
+    "production_ranked_projection_v1::tests::cfg_compaction_edge_budget_remains_independent",
+    "production_ranked_projection_v1::tests::cfg_compaction_exact_block_boundary_and_next_refusal",
+    "production_ranked_projection_v1::tests::cfg_compaction_live_induction_layout_unchanged",
+    "production_ranked_projection_v1::tests::cfg_compaction_mixed_failure_layout",
+    "production_ranked_projection_v1::tests::cfg_compaction_multiple_semantic_blocks_preserve_traces",
+    "production_ranked_projection_v1::tests::cfg_compaction_source_wave_and_generated_identity",
+    "production_ranked_projection_v1::tests::cfg_compaction_unreachable_and_zero_eligible_unchanged"
+  ]
+}

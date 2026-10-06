@@ -6,7 +6,15 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Latest: [the guarded compile identifies the exact CFG expansion blocker](../qualification/guarded-mlp-ranked-cfg-expansion-diagnostic-lowering-v1/README.md).
+Latest: [a reviewed CFG compaction patch is in MI350 CPU qualification](../qualification/guarded-mlp-ranked-cfg-compaction-v1/README.md).
+It shares eligible empty trap blocks and fuses successful accesses with their
+continuations, preserving predicates, atomic effects, source/wave identities,
+and all resource limits. Nine new regression tests cover differential traces,
+layout identities, refusals, and block/edge boundaries. Source review and patch
+reconstruction passed; CPU results and actual guarded lowering are pending.
+This is not GPU, numerical, or performance acceptance.
+
+Previously, [the guarded compile identifies the exact CFG expansion blocker](../qualification/guarded-mlp-ranked-cfg-expansion-diagnostic-lowering-v1/README.md).
 The state-guard kernel `ferric_qwen3_mlp_state_guard_v1` projects to 2,778
 blocks against the unchanged 2,048 limit; its declared semantic body has
 1,121 blocks. The child exits naturally with status 1 after 117.460291
