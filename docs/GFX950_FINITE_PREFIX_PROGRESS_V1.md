@@ -38,6 +38,15 @@ all 19 input posthashes pass on MI350. These are not GPU kernel timings or
 complete-forward latency; existing host-observer counters are the next
 attribution step before changing runtime checks.
 
+The [historical O-projection replay](../qualification/o-projection-exact-replay-v1/README.md)
+now completes on MI350 with 18 passing tests. All 8,192 captured FP32 partials
+match the pinned kernel's modeled accumulation order. The derived native BF16
+projection matches the once-rounded exact dot in 4,095 of 4,096 rows, versus
+4,093 for the framework. The three differing projection rows and conditional
+residual replay are fully retained. This explains isolated reduction-order
+differences; it does not replace current guarded-stage capture, full-model
+numerical acceptance, or a sustained performance measurement.
+
 Current integration: [the guarded parent passes 375 selected tests and all 54 CPU phases on MI350](../qualification/guarded-mlp-parent-cpu-v1/README.md).
 All five selected parent binaries build, with clean source, dependency, cache
 and process postchecks. This does not execute the entire parent library suite

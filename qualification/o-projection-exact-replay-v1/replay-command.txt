@@ -1,0 +1,6 @@
+env HIP_VISIBLE_DEVICES= ROCR_VISIBLE_DEVICES= CUDA_VISIBLE_DEVICES= /usr/bin/timeout --signal=TERM --kill-after=5s 900s /usr/bin/taskset -c 8,9 /usr/bin/nice -n 10 /usr/bin/python3 -I -S -B -c 'import hashlib,sys,runpy
+p="/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/o-projection-source-input-v228-v1/replay.py"
+assert hashlib.sha256(open(p,"rb").read()).hexdigest()=="c8113b2000e95b76e266ca4add29208dc0292655a3f8b3ed13ab359b246b16ad"
+sys.argv=[p,"o-projection-exact-replay-v228-v1","c8113b2000e95b76e266ca4add29208dc0292655a3f8b3ed13ab359b246b16ad","--reference-directory","/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/o-projection-reference-input-v228-v1","--kernel-directory","/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/o-projection-kernel-input-v228-v1"]
+runpy.run_path(p,run_name="__main__")
+'

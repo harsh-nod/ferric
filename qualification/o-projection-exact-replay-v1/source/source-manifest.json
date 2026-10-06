@@ -1,0 +1,101 @@
+{
+  "conditional_framework_embedding": true,
+  "current_guarded_internal_stages_observed": false,
+  "files": {
+    "README.md": {
+      "bytes": 6441,
+      "sha256": "53155b41a5dd8e0c2e7b86dec01ba91ab5ab35dc0f7c5ac286a2e0154fe7551b"
+    },
+    "capture_inputs.py": {
+      "bytes": 21145,
+      "sha256": "67b3982c7e1f3f8f64429ee4ee98b45ef266c15da1752b1c2f209a327e20ec40"
+    },
+    "exact_bf16.py": {
+      "bytes": 2554,
+      "sha256": "b9e53a3afa4fb851a8e7231c020e5ed19fb55deb7ce4d9f0bff1454e472acddf"
+    },
+    "fp32_replay.py": {
+      "bytes": 4657,
+      "sha256": "9a7eb5e4f5c503c83b126c21f6cf880b46dda58881eb22a62f71ca2e4a74cb13"
+    },
+    "replay.py": {
+      "bytes": 21100,
+      "sha256": "c8113b2000e95b76e266ca4add29208dc0292655a3f8b3ed13ab359b246b16ad"
+    },
+    "test_fp32_replay.py": {
+      "bytes": 9013,
+      "sha256": "87a358807c4f76fbd7b0fc7603dc08de7e34c66871b06aa6d8ac89f165798adb"
+    },
+    "test_replay.py": {
+      "bytes": 6718,
+      "sha256": "4600504366c145957e7d3b906b7d1918f7b40541264664a8f154c711e7342453"
+    }
+  },
+  "gpu_execution": false,
+  "historical_kernel_inputs": {
+    "complete.json": {
+      "bytes": 25107,
+      "sha256": "6ba25826b71e30f5106e1efc9e786c021c56f5bab397add20b365373685081a9"
+    },
+    "disassembly-command.json": {
+      "bytes": 2225,
+      "sha256": "3bbfee0a717d630de1cd5dbe895b8ec619e6ef5a8ed49f39b427b0fa805a2666"
+    },
+    "disassembly-result.json": {
+      "bytes": 305,
+      "sha256": "5ba3f85a8bca749846d1d60b8dddb19dfedca5da3e111ac82aad7a095514fafb"
+    },
+    "disassembly-stdout": {
+      "bytes": 438594,
+      "sha256": "ff67d340bb61e2b7b22f202cbfd23ca56ab7dfe9a152b9bf581241a81dbac7b5"
+    },
+    "emitted/artifact.hsaco": {
+      "bytes": 53560,
+      "sha256": "4885204c8d510122588549107f42d2bc6f180f48fbc4eddd3bb1260e8d6629c5"
+    },
+    "extracted/module.ll": {
+      "bytes": 442931,
+      "sha256": "df75a6fd370774e05568031fffdbfeca026059542c9cddb6db79b4b881b1e94a"
+    },
+    "fixture/src/output_projection_numerics_v5.rs": {
+      "bytes": 2033,
+      "sha256": "ef397ea5bfe59d6284172e0b2dda6c0f37eef69b48c1392274941d5b521cffd5"
+    },
+    "fixture/src/prefix_tiles_numerics_v6.rs": {
+      "bytes": 6092,
+      "sha256": "3f729b83bc50d4e252a73911ac69bb4e4e1829e1cb05ca3f0bcffa36f09475ad"
+    }
+  },
+  "kernel_semantics_changed": false,
+  "native_materialized_projection_directly_captured": false,
+  "native_residual_input_directly_captured": false,
+  "numerical_acceptance": false,
+  "rank_partials": 8192,
+  "replay_executed": false,
+  "rows": 4096,
+  "schema": "ferric-p228-o-projection-exact-replay-source-v1",
+  "source_only": true,
+  "terms_per_rank": 2048,
+  "test_count": 18,
+  "test_names": [
+    "test_fp32_replay.Fp32ReplayTests.test_addition_matches_fraction_not_host_float",
+    "test_fp32_replay.Fp32ReplayTests.test_all_lanes_all_steps_and_xor_tree_fraction_reference",
+    "test_fp32_replay.Fp32ReplayTests.test_bf16_boundary_materializes_before_residual",
+    "test_fp32_replay.Fp32ReplayTests.test_encoding_decoding_matches_independent_fraction",
+    "test_fp32_replay.Fp32ReplayTests.test_fraction_nearest_neighbor_midpoints_and_neighbors",
+    "test_fp32_replay.Fp32ReplayTests.test_gradual_underflow_and_signed_zero",
+    "test_fp32_replay.Fp32ReplayTests.test_lane_cancellation_preserves_actual_association",
+    "test_fp32_replay.Fp32ReplayTests.test_midpoint_distance_has_explicit_exact_scale",
+    "test_fp32_replay.Fp32ReplayTests.test_nonfinite_shape_and_overflow_refusals",
+    "test_fp32_replay.Fp32ReplayTests.test_overflow_threshold_both_signs",
+    "test_fp32_replay.Fp32ReplayTests.test_partials_are_not_individually_narrowed",
+    "test_fp32_replay.Fp32ReplayTests.test_product_underflow_and_subnormal_counters",
+    "test_replay.ReplayInputsTests.test_duplicate_missing_wrong_rank_and_wrong_extent_upload_refuse",
+    "test_replay.ReplayInputsTests.test_full_o_geometry_and_exact_source_offset",
+    "test_replay.ReplayInputsTests.test_one_row_retains_partial_projection_and_residual_separately",
+    "test_replay.ReplayInputsTests.test_rank_columns_join_exact_registered_upload_keys",
+    "test_replay.ReplayInputsTests.test_row_refuses_wrong_columns_truncation_and_residual_control",
+    "test_replay.ReplayInputsTests.test_wrong_o_shard_dtype_shape_bias_and_bounds_refuse"
+  ],
+  "tests_executed": false
+}

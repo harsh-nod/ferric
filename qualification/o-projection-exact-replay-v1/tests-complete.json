@@ -1,0 +1,32 @@
+{
+  "cpu_seconds": 0.1899756179191172,
+  "errors": 0,
+  "failures": 0,
+  "gpu_execution": false,
+  "log": "test_addition_matches_fraction_not_host_float (test_fp32_replay.Fp32ReplayTests.test_addition_matches_fraction_not_host_float) ... ok\ntest_all_lanes_all_steps_and_xor_tree_fraction_reference (test_fp32_replay.Fp32ReplayTests.test_all_lanes_all_steps_and_xor_tree_fraction_reference) ... ok\ntest_bf16_boundary_materializes_before_residual (test_fp32_replay.Fp32ReplayTests.test_bf16_boundary_materializes_before_residual) ... ok\ntest_encoding_decoding_matches_independent_fraction (test_fp32_replay.Fp32ReplayTests.test_encoding_decoding_matches_independent_fraction) ... ok\ntest_fraction_nearest_neighbor_midpoints_and_neighbors (test_fp32_replay.Fp32ReplayTests.test_fraction_nearest_neighbor_midpoints_and_neighbors) ... ok\ntest_gradual_underflow_and_signed_zero (test_fp32_replay.Fp32ReplayTests.test_gradual_underflow_and_signed_zero) ... ok\ntest_lane_cancellation_preserves_actual_association (test_fp32_replay.Fp32ReplayTests.test_lane_cancellation_preserves_actual_association) ... ok\ntest_midpoint_distance_has_explicit_exact_scale (test_fp32_replay.Fp32ReplayTests.test_midpoint_distance_has_explicit_exact_scale) ... ok\ntest_nonfinite_shape_and_overflow_refusals (test_fp32_replay.Fp32ReplayTests.test_nonfinite_shape_and_overflow_refusals) ... ok\ntest_overflow_threshold_both_signs (test_fp32_replay.Fp32ReplayTests.test_overflow_threshold_both_signs) ... ok\ntest_partials_are_not_individually_narrowed (test_fp32_replay.Fp32ReplayTests.test_partials_are_not_individually_narrowed) ... ok\ntest_product_underflow_and_subnormal_counters (test_fp32_replay.Fp32ReplayTests.test_product_underflow_and_subnormal_counters) ... ok\ntest_duplicate_missing_wrong_rank_and_wrong_extent_upload_refuse (test_replay.ReplayInputsTests.test_duplicate_missing_wrong_rank_and_wrong_extent_upload_refuse) ... ok\ntest_full_o_geometry_and_exact_source_offset (test_replay.ReplayInputsTests.test_full_o_geometry_and_exact_source_offset) ... ok\ntest_one_row_retains_partial_projection_and_residual_separately (test_replay.ReplayInputsTests.test_one_row_retains_partial_projection_and_residual_separately) ... ok\ntest_rank_columns_join_exact_registered_upload_keys (test_replay.ReplayInputsTests.test_rank_columns_join_exact_registered_upload_keys) ... ok\ntest_row_refuses_wrong_columns_truncation_and_residual_control (test_replay.ReplayInputsTests.test_row_refuses_wrong_columns_truncation_and_residual_control) ... ok\ntest_wrong_o_shard_dtype_shape_bias_and_bounds_refuse (test_replay.ReplayInputsTests.test_wrong_o_shard_dtype_shape_bias_and_bounds_refuse) ... ok\n\n----------------------------------------------------------------------\nRan 18 tests in 0.190s\n\nOK\n",
+  "names": [
+    "test_fp32_replay.Fp32ReplayTests.test_addition_matches_fraction_not_host_float",
+    "test_fp32_replay.Fp32ReplayTests.test_all_lanes_all_steps_and_xor_tree_fraction_reference",
+    "test_fp32_replay.Fp32ReplayTests.test_bf16_boundary_materializes_before_residual",
+    "test_fp32_replay.Fp32ReplayTests.test_encoding_decoding_matches_independent_fraction",
+    "test_fp32_replay.Fp32ReplayTests.test_fraction_nearest_neighbor_midpoints_and_neighbors",
+    "test_fp32_replay.Fp32ReplayTests.test_gradual_underflow_and_signed_zero",
+    "test_fp32_replay.Fp32ReplayTests.test_lane_cancellation_preserves_actual_association",
+    "test_fp32_replay.Fp32ReplayTests.test_midpoint_distance_has_explicit_exact_scale",
+    "test_fp32_replay.Fp32ReplayTests.test_nonfinite_shape_and_overflow_refusals",
+    "test_fp32_replay.Fp32ReplayTests.test_overflow_threshold_both_signs",
+    "test_fp32_replay.Fp32ReplayTests.test_partials_are_not_individually_narrowed",
+    "test_fp32_replay.Fp32ReplayTests.test_product_underflow_and_subnormal_counters",
+    "test_replay.ReplayInputsTests.test_duplicate_missing_wrong_rank_and_wrong_extent_upload_refuse",
+    "test_replay.ReplayInputsTests.test_full_o_geometry_and_exact_source_offset",
+    "test_replay.ReplayInputsTests.test_one_row_retains_partial_projection_and_residual_separately",
+    "test_replay.ReplayInputsTests.test_rank_columns_join_exact_registered_upload_keys",
+    "test_replay.ReplayInputsTests.test_row_refuses_wrong_columns_truncation_and_residual_control",
+    "test_replay.ReplayInputsTests.test_wrong_o_shard_dtype_shape_bias_and_bounds_refuse"
+  ],
+  "passed": true,
+  "skipped": 0,
+  "source_and_input_postchecks_passed": true,
+  "source_manifest_sha256": "6655e7b7bd7a7f9b6f2e10aae1b4a5e854a0cf2b39481b237f420366f69a6827",
+  "tests": 18
+}
