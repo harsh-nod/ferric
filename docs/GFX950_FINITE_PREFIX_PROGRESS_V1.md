@@ -13,8 +13,11 @@ and 25 unchanged ignores. The nine new tests pass full and focused suites.
 All children exit naturally, are reaped and leave no process groups; source,
 dependency and process postchecks are clean. The
 [14 actual binary-loader checks pass](../qualification/guarded-mlp-memory-bounds-dag-tool-audit-v1/README.md),
-as do 26 loader and 19 lowering controller fixtures. A new guarded compile is
-running; no guarded HSACO or GPU acceptance is established. Existing admitted inputs keep their
+as do 26 loader and 19 lowering controller fixtures. The
+[new guarded compile reaches allocation alias analysis](../qualification/guarded-mlp-memory-bounds-dag-lowering-v1/README.md)
+and fails because relative base offsets between two potentially aliasing
+origins are unavailable. This is a missing-proof refusal, not an observed GPU
+race. No guarded HSACO or GPU acceptance is established. Existing admitted inputs keep their
 exact old bound and solver;
 the new route requires a runtime-validated DAG and zero ownership contracts.
 No work limit, access predicate or atomic ordering is relaxed.
@@ -31,7 +34,15 @@ and the fresh guarded compile now reports a memory-bounds preflight refusal.
 No guarded HSACO, GPU, model or performance acceptance is established by this
 compiler qualification.
 
-Latest guarded lowering: [chain fusion reaches the memory-bounds preflight](../qualification/guarded-mlp-ranked-cfg-linear-fusion-lowering-v1/README.md).
+Latest guarded lowering: the DAG-qualified compiler exits naturally with
+status 1 after 132.322763 seconds at `FE2O3-RACE-002`, with clean source/input
+and process postchecks. The rendered guard graph is byte-identical to the
+prior memory-bounds refusal: 567 blocks, 1,122 edges, 2,240 operations and 552
+bounds guards. No artifact is produced. Compiler alias proofs and an explicit
+state/guard allocation contract are being investigated without inventing
+relative offsets or relaxing safety checks.
+
+Previous guarded lowering: [chain fusion reaches the memory-bounds preflight](../qualification/guarded-mlp-ranked-cfg-linear-fusion-lowering-v1/README.md).
 The actual MI350 compile renders 567 blocks, 1,122 edges and 2,240 operations,
 down from the prior 1,675 / 2,230 / 3,348. Independent reconstruction reproduces
 all 1,108 chain merges and each resulting block's ordered operations, predicates

@@ -1,0 +1,59 @@
+{
+  "artifact": null,
+  "artifact_bodies_retained": false,
+  "failure": "RuntimeError('natural successful/reaped leaf required')",
+  "files": {
+    "evidence/compile.command.json": {
+      "bytes": 7567,
+      "sha256": "9488ece7a30056534f29dfae7ef5f2c8c7b5b4e53f0ddb5805ec09330a44b092"
+    },
+    "evidence/compile.result.json": {
+      "bytes": 1201,
+      "sha256": "545aad72385be10a307d6cb83346e5b4baa92e29a64f73a59d8a08ad79eaa680"
+    },
+    "evidence/compile.started.json": {
+      "bytes": 3569,
+      "sha256": "6885e31af14b574ded3ef9abf747f820d25dcd09756e7ece4a80d3c9aa29c663"
+    },
+    "evidence/compile.stderr": {
+      "bytes": 123593,
+      "sha256": "b7c4435210a46414e49ed798624eff224c0436935a51d6715eccd8ee61c72f0a"
+    },
+    "evidence/compile.stdout": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "evidence/configurations.json": {
+      "bytes": 3176,
+      "sha256": "9d413754803eff734df76f10c9830794909a5a5cb0dfde7467f4e3eb2bc2b007"
+    },
+    "evidence/failed.json": {
+      "bytes": 19105,
+      "sha256": "1943926bd4d138d79505f6d0a4d97722d7efa54af6323cccab319be9d53c9140"
+    },
+    "evidence/inputs-after.json": {
+      "bytes": 88835,
+      "sha256": "06de3309d12214204ba7dede1dfc7c72eaf061e06968ad66925ce796afa036ac"
+    },
+    "evidence/inputs-before.json": {
+      "bytes": 86641,
+      "sha256": "68324a17d3f004fa8a654af146ff5d0769fbd14967ed9cf2a52da1d9c7d3e551"
+    },
+    "evidence/source-after.json": {
+      "bytes": 1979859,
+      "sha256": "955e37e41e54df808221a7d3459f3f782ac7d0b6115ec35e48e14d5f834d4d78"
+    },
+    "evidence/source-before.json": {
+      "bytes": 1979859,
+      "sha256": "955e37e41e54df808221a7d3459f3f782ac7d0b6115ec35e48e14d5f834d4d78"
+    },
+    "lowering.py": {
+      "bytes": 69967,
+      "sha256": "99f366d32728cece32a220f0994962acd82022ce05e85c8031edc8b2fab15a57"
+    }
+  },
+  "gpu_execution": false,
+  "passed": false,
+  "postcheck_errors": [],
+  "schema": "ferric-guarded-mlp-memory-bounds-dag-lowering-retention-v1"
+}
