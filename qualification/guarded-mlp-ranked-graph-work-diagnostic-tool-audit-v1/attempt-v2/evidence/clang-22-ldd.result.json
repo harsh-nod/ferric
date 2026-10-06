@@ -1,0 +1,30 @@
+{
+  "adopted_reaped": [],
+  "command": {
+    "bytes": 960,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-graph-work-diagnostic-compiler-tools-audit-v228-v2/clang-22-ldd.command.json",
+    "sha256": "385945239caa0edf0bcba995c2393de611f488a4502a0e8a05aab42408a1548f"
+  },
+  "elapsed_ns": 50403951,
+  "exception": null,
+  "exit_code": 0,
+  "forced_cleanup": false,
+  "label": "clang-22-ldd",
+  "natural_exit": true,
+  "observed_signals": [],
+  "pgid": 2041028,
+  "pid": 2041028,
+  "process_group_absent": true,
+  "reaped": true,
+  "stderr": {
+    "bytes": 0,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-graph-work-diagnostic-compiler-tools-audit-v228-v2/clang-22-ldd.stderr",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "stdout": {
+    "bytes": 514,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-graph-work-diagnostic-compiler-tools-audit-v228-v2/clang-22-ldd.stdout",
+    "sha256": "b855f95b5368b963ed83c4ceb280af34f47721f72bce140efb210320ca3686da"
+  },
+  "timed_out": false
+}

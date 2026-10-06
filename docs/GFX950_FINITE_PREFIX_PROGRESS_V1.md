@@ -6,7 +6,17 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Latest: [the corrected graph-work diagnostic passes full CPU qualification](../qualification/guarded-mlp-ranked-graph-work-diagnostic-v1/README.md).
+Latest: [the guarded compile identifies the exact work-limit charge site](../qualification/guarded-mlp-ranked-graph-work-diagnostic-lowering-v1/README.md).
+The MLP state-guard kernel fails in `AuthenticatedAtomicAllocationsV1::contains_local`:
+a 1,656-entry membership scan attempts to move the work counter from 3,144,193
+to 3,145,849, exceeding the unchanged 3,145,728 limit. The new deployment passes
+[all 14 loader inspections](../qualification/guarded-mlp-ranked-graph-work-diagnostic-tool-audit-v1/README.md).
+The compile exits naturally with clean source, input and process postchecks;
+no HSACO or GPU result is produced. A bounded lookup over the already sorted
+membership list is the next optimization, not a limit increase. No milestone
+or model-performance target is closed.
+
+Previously, [the corrected graph-work diagnostic passes full CPU qualification](../qualification/guarded-mlp-ranked-graph-work-diagnostic-v1/README.md).
 All 37 phases pass on MI350: 1,266 compiler tests and 1,507 Pliron tests,
 with focused repeats and extraction controls totaling 2,858 passing executions
 across 24 scopes. All 25 historical ignores remain explicit. Sources,

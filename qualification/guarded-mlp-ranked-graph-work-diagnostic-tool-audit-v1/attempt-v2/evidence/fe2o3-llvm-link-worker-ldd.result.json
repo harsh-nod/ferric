@@ -1,0 +1,30 @@
+{
+  "adopted_reaped": [],
+  "command": {
+    "bytes": 974,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-graph-work-diagnostic-compiler-tools-audit-v228-v2/fe2o3-llvm-link-worker-ldd.command.json",
+    "sha256": "6527e05a224c61086cdc46f40aa55cebb875ab69d453e6345e3a93d3d2c56fb0"
+  },
+  "elapsed_ns": 50455201,
+  "exception": null,
+  "exit_code": 0,
+  "forced_cleanup": false,
+  "label": "fe2o3-llvm-link-worker-ldd",
+  "natural_exit": true,
+  "observed_signals": [],
+  "pgid": 2041057,
+  "pid": 2041057,
+  "process_group_absent": true,
+  "reaped": true,
+  "stderr": {
+    "bytes": 0,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-graph-work-diagnostic-compiler-tools-audit-v228-v2/fe2o3-llvm-link-worker-ldd.stderr",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "stdout": {
+    "bytes": 514,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-graph-work-diagnostic-compiler-tools-audit-v228-v2/fe2o3-llvm-link-worker-ldd.stdout",
+    "sha256": "b59712567b84e8e29bd37fb8a810108a3708e5a3c4f7b5429df68005033f6f7f"
+  },
+  "timed_out": false
+}

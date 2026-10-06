@@ -1,0 +1,32 @@
+{
+  "adopted_reaped": [],
+  "command": {
+    "bytes": 7765,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-graph-work-diagnostic-lowering-v228-v2/compile.command.json",
+    "sha256": "612a9adc145d7092a522f62fe235eb408ce1e5eadbcd7235a5df160f992cee05"
+  },
+  "elapsed_ns": 117449253295,
+  "exception": null,
+  "exit_code": 1,
+  "forced_cleanup": false,
+  "label": "compile",
+  "minimum_free_bytes": 51265896448,
+  "natural_exit": true,
+  "observed_signals": [],
+  "peak_private_scratch_bytes": 1027911192,
+  "pgid": 2046517,
+  "pid": 2046517,
+  "process_group_absent": true,
+  "reaped": true,
+  "stderr": {
+    "bytes": 8533,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-graph-work-diagnostic-lowering-v228-v2/compile.stderr",
+    "sha256": "a52d57b5b340b8b7223d35bfaa441dcf88c0febc74bc3924925647cf1d91e99c"
+  },
+  "stdout": {
+    "bytes": 0,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-graph-work-diagnostic-lowering-v228-v2/compile.stdout",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "timed_out": false
+}

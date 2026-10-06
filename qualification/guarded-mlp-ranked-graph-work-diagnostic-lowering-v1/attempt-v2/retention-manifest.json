@@ -1,0 +1,59 @@
+{
+  "artifact": null,
+  "artifact_bodies_retained": false,
+  "failure": "RuntimeError('natural successful/reaped leaf required')",
+  "files": {
+    "evidence/compile.command.json": {
+      "bytes": 7765,
+      "sha256": "612a9adc145d7092a522f62fe235eb408ce1e5eadbcd7235a5df160f992cee05"
+    },
+    "evidence/compile.result.json": {
+      "bytes": 1232,
+      "sha256": "973abec21de2d01d7bb2ce993586f1e1461aeadf9477a7d445cb54ada2939576"
+    },
+    "evidence/compile.started.json": {
+      "bytes": 3657,
+      "sha256": "6f6acc510fd340d06952a2009f814077bdb7c2160ea1bdfb7e599cb33bbfb9ea"
+    },
+    "evidence/compile.stderr": {
+      "bytes": 8533,
+      "sha256": "a52d57b5b340b8b7223d35bfaa441dcf88c0febc74bc3924925647cf1d91e99c"
+    },
+    "evidence/compile.stdout": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "evidence/configurations.json": {
+      "bytes": 3198,
+      "sha256": "81def99be046e1d6cb95a59f77f0dd4199f738446a0334f22f269be34cacf9bb"
+    },
+    "evidence/failed.json": {
+      "bytes": 9723,
+      "sha256": "7727462e3e8f3744e22926546da24ec9eec2e55a6f7b9c3fcf6036168ae0a52e"
+    },
+    "evidence/inputs-after.json": {
+      "bytes": 86437,
+      "sha256": "b50c8fd3859e71b44ad342b73a50d8572de91bfa461b6b2a758b4a27dfa78444"
+    },
+    "evidence/inputs-before.json": {
+      "bytes": 84343,
+      "sha256": "2b2064f9f0c4b21f7d0b7b5199f932cbd42cd6863ff7855f93b102115e653b81"
+    },
+    "evidence/source-after.json": {
+      "bytes": 1979859,
+      "sha256": "955e37e41e54df808221a7d3459f3f782ac7d0b6115ec35e48e14d5f834d4d78"
+    },
+    "evidence/source-before.json": {
+      "bytes": 1979859,
+      "sha256": "955e37e41e54df808221a7d3459f3f782ac7d0b6115ec35e48e14d5f834d4d78"
+    },
+    "lowering.py": {
+      "bytes": 46185,
+      "sha256": "3590427ee666f8511197e5b1c2b44fb4c9ade47a239cbebe978e9e8c95894392"
+    }
+  },
+  "gpu_execution": false,
+  "passed": false,
+  "postcheck_errors": [],
+  "schema": "ferric-guarded-mlp-ranked-graph-work-diagnostic-lowering-retention-v1"
+}
