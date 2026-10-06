@@ -1,0 +1,11 @@
+
+Program stopped.
+0x0000788e7e2b9540 in ?? () from /lib64/ld-linux-x86-64.so.2
+
+FERRIC_DEBUGGER_START_V1={"debugger_pid": 1763236, "elf_sha256": "dbf5ea87824b4ab2be1e481cf21595f5809fb95bd309552e888a32f8089a8425", "inferior_pgid": 1763267, "inferior_pid": 1763267, "inferior_sid": 1763236, "inferior_start_ticks": 70480641, "mode": "inventory"}
+[Thread debugging using libthread_db enabled]
+Using host libthread_db library "/lib/x86_64-linux-gnu/libthread_db.so.1".
+engineering_gfx950::peer::combined_mlp_state_v1::tests::native::paired::interleaved::native_paired_guarded_mlp_interleaved_v1: test
+[Inferior 1 (process 1763267) exited normally]
+
+FERRIC_DEBUGGER_EXIT_V1={"exit_codes": [0], "hits": 0, "mode": "inventory"}

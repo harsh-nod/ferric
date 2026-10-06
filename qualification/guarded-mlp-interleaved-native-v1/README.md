@@ -4,7 +4,8 @@ This checkpoint extends the [borrow-free retained pair](../guarded-mlp-retained-
 with a native two-layer, two-bank, four-forward diagnostic. Both CPU suites pass.
 The original executable fails an allocation-role check in both of its attempts;
 the diagnostic-only rebuild passes the synthetic GPU case in both of its attempts.
-The discrepancy is **not root-caused**. This is not a production route or model benchmark.
+The original refusal is now localized to a wrong-rank RMS-weight token, but the
+binary discrepancy is **not root-caused**. This is not a production route or model benchmark.
 
 ## What Changed
 
@@ -211,8 +212,79 @@ check the same token owner/size and record kind/mapping offsets.
 The original passes token addresses directly; the diagnostic build copies
 each token into a stack slot first. This is an observed code-generation
 difference, not an established miscompilation or lifetime defect.
-The next diagnostic should observe the actual failing predicate in the
-original executable. No allocation-role predicate has been relaxed.
+The debugger observation below captures the failing predicate in the original
+executable. No allocation-role predicate has been relaxed.
+
+## Original Executable Predicate Capture
+
+Two fresh debugger-assisted attempts ran on `ssh mi350`, without rebuilding
+the original executable or changing any of the three GPU images. These are
+debugging observations, not additional bare-executable qualification runs.
+
+The [first attempt](debugger-attempt-v1/evidence/failed.json) fails inside
+ROCgdb's AMD debugger API with
+`process_t::read_global_memory failed: Cannot access memory at global#0`.
+The debugger exits with status 1 before a predicate capture or native-test
+terminal result. Its eight CPU cleanup tests and exact-test inventory pass.
+The [raw error](debugger-attempt-v1/evidence/native.stderr) is retained rather
+than attributed to the allocation-role failure.
+
+The [second attempt](debugger-attempt-v2/evidence/complete.json) uses
+`maintenance set target-async off` before starting the inferior. ROCgdb's
+[attachment guard](https://github.com/ROCm/ROCgdb/blob/rocm-7.2.0/gdb/amd-dbgapi-target.c#L2174-L2211)
+skips per-inferior AMD GPU debugging in this mode. The actual recorded target
+stack contains only native/exec/None, with asynchronous control off. This does
+not disable the program's ordinary KFD work or ROCgdb's startup library initialization.
+
+The [capture](debugger-attempt-v2/evidence/observation.json) stops once at
+`region+0x136`, before error formatting, reads host state without inferior
+function calls, disables the breakpoint and continues to the original libtest
+failure. The native test exits naturally with status 101 after 2.66 seconds;
+the supervised phase takes 2.80 seconds. A successful *capture* does not mean
+that the native test passes.
+
+| Observed Operand | Actual Value |
+| --- | --- |
+| Caller role | Rank 1, root index 1: RMS weights |
+| Expected owner / extent | 1 / 8,192 bytes |
+| Source token `[group, id, owner, bytes]` | `[1, 1, 0, 8192]` |
+| Validated copy / registry record | Both exactly equal to the source token |
+| Record kind / mapping | Public VRAM / mapped; both predicates pass |
+| Source address / caller loop | Match the expected input role and valid rank/index |
+| First false predicate | Owner: actual rank 0, expected rank 1 |
+
+This rules out an extent, kind or mapping failure at the observed refusal, and
+does not show disagreement between the token, its validated copy and its record.
+It does not yet establish where rank 0's token enters rank 1's inputs or why
+the diagnostic-only rebuild passes. The next gate traces the shared-root table,
+payload construction and `Inputs` copy before choosing a source fix. The
+owner check must remain strict.
+
+Two independent disassembly reviews also identify a matching upstream address
+calculation. The original shared-root selector at `0x556491` reads
+`common_base + 32 * (root_index - 1)`, omitting the 128-byte rank-row offset.
+The diagnostic executable explicitly includes `128 * rank`. The original
+common-vector construction uses the correct 128-byte row stride, and its base
+pointer is not advanced between ranks. This differs from the qualified source's
+`common[rank][index - 1]` expression and predicts the observed wrong-rank token.
+It is a concrete machine-code addressing difference, not identification of the
+responsible compiler pass or proof that arbitrary source rewrites fix it.
+The next capture should read both common rows and the actual selected address,
+then follow that value into the payload and `Inputs`.
+
+Both attempts complete nine supervised phases with reaped leaders, absent
+process groups, no forced cleanup, no postcheck errors, and all eight GPUs idle
+afterward. A serial-subreaper cleanup helper also checks for adopted children
+outside the debugger's process group; eight actual CPU-only fixtures exercise
+that path. Neither attempt leaves an owned child behind.
+
+The [data-only retainer](retain_debugger.py) verifies every archived body,
+CPU/ELF ancestry, raw phase/cleanup joins and actual captured operands. It
+retains 74 members / 2,922,375 expanded bytes for the debugger failure and
+75 / 2,924,460 for the predicate capture. Receipt SHA-256 values:
+
+- Failed debugger: `589f184c68643298d1d34f30c1f0505502f9fe68fac42d64a093e7572579492a`.
+- Host predicate capture: `3ea6a047a4f91407d904763af59761f52ca3122c7c8f96e12653ac82a94938cb`.
 
 ## Scope and Next Gate
 

@@ -1,0 +1,17 @@
+{
+  "argv": [
+    "/usr/bin/prlimit",
+    "--as=68719476736",
+    "--cpu=300",
+    "--fsize=4194304",
+    "--core=0",
+    "--",
+    "/usr/bin/python3",
+    "-I",
+    "-S",
+    "-B",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-interleaved-debugger-gpu-v228-v1/owned_children.py"
+  ],
+  "pgid": 1758656,
+  "pid": 1758656
+}

@@ -1,0 +1,11 @@
+
+Program stopped.
+0x00007a4ee2df3540 in ?? () from /lib64/ld-linux-x86-64.so.2
+
+FERRIC_DEBUGGER_START_V1={"debugger_pid": 1779321, "elf_sha256": "dbf5ea87824b4ab2be1e481cf21595f5809fb95bd309552e888a32f8089a8425", "host_only_debugger": true, "inferior_pgid": 1779346, "inferior_pid": 1779346, "inferior_sid": 1779321, "inferior_start_ticks": 70503839, "mode": "inventory", "target_async_setting": "Controlling the inferior in asynchronous mode is off.\n", "target_stack": "The current target stack is:\n  - native (Native process)\n  - exec (Local exec file)\n  - None (None)\n"}
+[Thread debugging using libthread_db enabled]
+Using host libthread_db library "/lib/x86_64-linux-gnu/libthread_db.so.1".
+engineering_gfx950::peer::combined_mlp_state_v1::tests::native::paired::interleaved::native_paired_guarded_mlp_interleaved_v1: test
+[Inferior 1 (process 1779346) exited normally]
+
+FERRIC_DEBUGGER_EXIT_V1={"exit_codes": [0], "hits": 0, "mode": "inventory"}

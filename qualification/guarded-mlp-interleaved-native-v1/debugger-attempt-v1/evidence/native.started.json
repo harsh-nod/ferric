@@ -1,0 +1,30 @@
+{
+  "argv": [
+    "/usr/bin/prlimit",
+    "--as=68719476736",
+    "--cpu=300",
+    "--fsize=4194304",
+    "--core=0",
+    "--",
+    "/opt/rocm/bin/rocgdb",
+    "-nx",
+    "-nh",
+    "--batch",
+    "--return-child-result",
+    "-iex",
+    "set auto-load off",
+    "-iex",
+    "set debuginfod enabled off",
+    "-x",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-interleaved-debugger-gpu-v228-v1/capture.gdb",
+    "--args",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-interleaved-native-cpu-v228-v1/target/debug/deps/fe2o3_kfd-11448a9880d552d9",
+    "--ignored",
+    "--exact",
+    "engineering_gfx950::peer::combined_mlp_state_v1::tests::native::paired::interleaved::native_paired_guarded_mlp_interleaved_v1",
+    "--show-output",
+    "--test-threads=1"
+  ],
+  "pgid": 1763285,
+  "pid": 1763285
+}

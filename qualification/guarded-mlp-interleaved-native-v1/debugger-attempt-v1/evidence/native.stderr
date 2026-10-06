@@ -1,0 +1,44 @@
+fatal error: process_t::read_global_memory failed: Cannot access memory at global#0
+Backtrace:
+    #0 0x000077b8b559ca80
+    #1 0x000077b8b5592f43
+    #2 0x000077b8b559594e
+    #3 0x000077b8b5553d71
+    #4 0x000077b8b5553342 amd_dbgapi_process_next_pending_event
+    #5 0x00005c217290c40c dbgapi_notifier_handler in /longer_pathname_so_that_rpms_can_support_packaging_the_debug_info_for_all_os_profiles/src/ROCgdb/gdb/amd-dbgapi-target.c:1682
+    #6 0x00005c2172f02e55 gdb_wait_for_event in /longer_pathname_so_that_rpms_can_support_packaging_the_debug_info_for_all_os_profiles/src/ROCgdb/gdbsupport/event-loop.cc:694
+    #7 0x00005c2172f03657 gdb_do_one_event(int) in /longer_pathname_so_that_rpms_can_support_packaging_the_debug_info_for_all_os_profiles/src/ROCgdb/gdbsupport/event-loop.cc:263
+    #8 0x00005c2172d60b63 wait_sync_command_done() in /longer_pathname_so_that_rpms_can_support_packaging_the_debug_info_for_all_os_profiles/src/ROCgdb/gdb/top.c:422
+    #9 0x00005c2172d64081 maybe_wait_sync_command_done(int) in /longer_pathname_so_that_rpms_can_support_packaging_the_debug_info_for_all_os_profiles/src/ROCgdb/gdb/top.c:439
+    #10 0x00005c2172d64081 execute_command(char const*, int) in /longer_pathname_so_that_rpms_can_support_packaging_the_debug_info_for_all_os_profiles/src/ROCgdb/gdb/top.c:572
+    #11 0x00005c21729cfc62 execute_control_command_1 in /longer_pathname_so_that_rpms_can_support_packaging_the_debug_info_for_all_os_profiles/src/ROCgdb/gdb/cli/cli-script.c:528
+    #12 0x00005c21729d00c1 execute_control_commands(command_line*, int) in /longer_pathname_so_that_rpms_can_support_packaging_the_debug_info_for_all_os_profiles/src/ROCgdb/gdb/cli/cli-script.c:410
+    #13 0x00005c2172c5929e execute_gdb_command in /longer_pathname_so_that_rpms_can_support_packaging_the_debug_info_for_all_os_profiles/src/ROCgdb/gdb/python/python.c:750
+    #14 0x000077b8b57df4b7
+    #15 0x000077b8b57827de _PyObject_MakeTpCall
+    #16 0x000077b8b571d5ed _PyEval_EvalFrameDefault
+    #17 0x000077b8b58a091e PyEval_EvalCode
+    #18 0x00005c2172c59717 eval_python_command in /longer_pathname_so_that_rpms_can_support_packaging_the_debug_info_for_all_os_profiles/src/ROCgdb/gdb/python/python.c:353
+    #19 0x00005c2172c5a330 gdbpy_eval_from_control_command in /longer_pathname_so_that_rpms_can_support_packaging_the_debug_info_for_all_os_profiles/src/ROCgdb/gdb/python/python.c:460
+    #20 0x00005c21729cfbac execute_control_command_1 in /longer_pathname_so_that_rpms_can_support_packaging_the_debug_info_for_all_os_profiles/src/ROCgdb/gdb/cli/cli-script.c:683
+    #21 0x00005c2172c5a546 python_command in /longer_pathname_so_that_rpms_can_support_packaging_the_debug_info_for_all_os_profiles/src/ROCgdb/gdb/python/python.c:485
+    #22 0x00005c21729c45d4 cmd_func(cmd_list_element*, char const*, int) in /longer_pathname_so_that_rpms_can_support_packaging_the_debug_info_for_all_os_profiles/src/ROCgdb/gdb/cli/cli-decode.c:2748
+    #23 0x00005c2172d640b3 execute_command(char const*, int) in /longer_pathname_so_that_rpms_can_support_packaging_the_debug_info_for_all_os_profiles/src/ROCgdb/gdb/top.c:570
+    #24 0x00005c2172ac3847 command_handler(char const*) in /longer_pathname_so_that_rpms_can_support_packaging_the_debug_info_for_all_os_profiles/src/ROCgdb/gdb/event-top.c:613
+    #25 0x00005c2172d61c80 read_command_file(_IO_FILE*) in /longer_pathname_so_that_rpms_can_support_packaging_the_debug_info_for_all_os_profiles/src/ROCgdb/gdb/top.c:337
+    #26 0x00005c21729cdc1e script_from_file(_IO_FILE*, char const*) in /longer_pathname_so_that_rpms_can_support_packaging_the_debug_info_for_all_os_profiles/src/ROCgdb/gdb/cli/cli-script.c:1643
+    #27 0x00005c21729c0a7b source_script_from_stream in /longer_pathname_so_that_rpms_can_support_packaging_the_debug_info_for_all_os_profiles/src/ROCgdb/gdb/cli/cli-cmds.c:693
+    #28 0x00005c21729c0a7b source_script_with_search in /longer_pathname_so_that_rpms_can_support_packaging_the_debug_info_for_all_os_profiles/src/ROCgdb/gdb/cli/cli-cmds.c:751
+    #29 0x00005c2172ba20a4 catch_command_errors in /longer_pathname_so_that_rpms_can_support_packaging_the_debug_info_for_all_os_profiles/src/ROCgdb/gdb/main.c:508
+    #30 0x00005c2172ba2136 execute_cmdargs in /longer_pathname_so_that_rpms_can_support_packaging_the_debug_info_for_all_os_profiles/src/ROCgdb/gdb/main.c:604
+    #31 0x00005c2172ba45a2 captured_main_1 in /longer_pathname_so_that_rpms_can_support_packaging_the_debug_info_for_all_os_profiles/src/ROCgdb/gdb/main.c:1308
+    #32 0x00005c2172ba52de captured_main in /longer_pathname_so_that_rpms_can_support_packaging_the_debug_info_for_all_os_profiles/src/ROCgdb/gdb/main.c:1333
+    #33 0x00005c2172ba52de gdb_main(captured_main_args*) in /longer_pathname_so_that_rpms_can_support_packaging_the_debug_info_for_all_os_profiles/src/ROCgdb/gdb/main.c:1362
+    #34 0x00005c21728aebab main in /longer_pathname_so_that_rpms_can_support_packaging_the_debug_info_for_all_os_profiles/src/ROCgdb/gdb/gdb.c:38
+    #35 0x000077b8b4c2a1c9
+    #36 0x000077b8b4c2a28a __libc_start_main
+    #37 0x00005c21728bcca4 _start
+    #38 0xffffffffffffffff
+Python Exception <class 'gdb.error'>: next_pending_event failed (A fatal error has occurred)
+/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-interleaved-debugger-gpu-v228-v1/capture.gdb:97: Error in sourced command file:
+Error occurred in Python: next_pending_event failed (A fatal error has occurred)
