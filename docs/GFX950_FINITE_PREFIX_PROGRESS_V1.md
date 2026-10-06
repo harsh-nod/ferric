@@ -6,7 +6,16 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Current runtime work: [fresh-process repeats reproduce the guarded MLP binary discrepancy](../qualification/guarded-mlp-interleaved-native-v1/README.md#fresh-process-repeats).
+Current runtime work: [the guarded model interface now passes CPU and native component tests](../qualification/guarded-mlp-model-interface-v1/README.md).
+MI350 qualification records 1,088 ordinary test passes, eight deliberate ignores,
+nine compile-fail API tests, and a single successful GPU attempt through the
+public allocation/binding/dispatch facade. The independent reference checks
+557,056 computed values bit-for-bit. A new mixed Prefix284/Combined552 bank
+transaction has 12 passing CPU tests; native whole-bank and real-model
+qualification remain next. This does not establish sustained decode or a
+performance-demo date. The linked checkpoint lists the next demo gates.
+
+Earlier runtime diagnosis: [fresh-process repeats reproduce the guarded MLP binary discrepancy](../qualification/guarded-mlp-interleaved-native-v1/README.md#fresh-process-repeats).
 The unchanged original host executable fails twice at the typed allocation-role
 check; the diagnostic-only executable passes twice, each with 557,056 bit-exact
 computed values and the complete delayed two-bank reuse ledger. Both fresh

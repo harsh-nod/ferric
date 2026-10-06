@@ -1,0 +1,975 @@
+{
+  "actual_artifact_metadata": {
+    "debug-trap-test": {
+      "cargo_artifact": {
+        "executable": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/target/debug/deps/kfd_debug_trap_live-bae73a537360105c",
+        "features": [
+          "default",
+          "engineering-gfx950"
+        ],
+        "filenames": [
+          "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/target/debug/deps/kfd_debug_trap_live-bae73a537360105c"
+        ],
+        "fresh": false,
+        "manifest_path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/fe2o3/crates/fe2o3-kfd/Cargo.toml",
+        "package_id": "path+file:///home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/fe2o3/crates/fe2o3-kfd#0.1.0",
+        "profile": {
+          "debug_assertions": true,
+          "debuginfo": 0,
+          "opt_level": "2",
+          "overflow_checks": true,
+          "test": true
+        },
+        "reason": "compiler-artifact",
+        "target": {
+          "crate_types": [
+            "bin"
+          ],
+          "doc": false,
+          "doctest": false,
+          "edition": "2024",
+          "kind": [
+            "test"
+          ],
+          "name": "kfd_debug_trap_live",
+          "src_path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/fe2o3/crates/fe2o3-kfd/tests/kfd_debug_trap_live.rs",
+          "test": true
+        }
+      },
+      "pin": {
+        "bytes": 1051520,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/target/debug/deps/kfd_debug_trap_live-bae73a537360105c",
+        "sha256": "90ef2466ced611e276fc27a89ee35f1e4901bba6055b159a38b243606bbb79d0"
+      }
+    },
+    "engineering-worker-test": {
+      "cargo_artifact": {
+        "executable": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/target/debug/deps/fe2o3_gfx950_engineering_worker-798dcc99f7ec8797",
+        "features": [
+          "default",
+          "engineering-gfx950"
+        ],
+        "filenames": [
+          "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/target/debug/deps/fe2o3_gfx950_engineering_worker-798dcc99f7ec8797"
+        ],
+        "fresh": false,
+        "manifest_path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/fe2o3/crates/fe2o3-kfd/Cargo.toml",
+        "package_id": "path+file:///home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/fe2o3/crates/fe2o3-kfd#0.1.0",
+        "profile": {
+          "debug_assertions": true,
+          "debuginfo": 0,
+          "opt_level": "2",
+          "overflow_checks": true,
+          "test": true
+        },
+        "reason": "compiler-artifact",
+        "target": {
+          "crate_types": [
+            "bin"
+          ],
+          "doc": true,
+          "doctest": false,
+          "edition": "2024",
+          "kind": [
+            "bin"
+          ],
+          "name": "fe2o3-gfx950-engineering-worker",
+          "required-features": [
+            "engineering-gfx950"
+          ],
+          "src_path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/fe2o3/crates/fe2o3-kfd/src/bin/gfx950_engineering_worker.rs",
+          "test": true
+        }
+      },
+      "pin": {
+        "bytes": 1051584,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/target/debug/deps/fe2o3_gfx950_engineering_worker-798dcc99f7ec8797",
+        "sha256": "d9028e7766beb5c3ca8e3de5848360ea5b0613d100428d01afc6e89dbb559846"
+      }
+    },
+    "guarded-facade-test": {
+      "cargo_artifact": {
+        "executable": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/target/debug/deps/guarded_mlp_facade_v1-e9e263317025a672",
+        "features": [
+          "default",
+          "engineering-gfx950"
+        ],
+        "filenames": [
+          "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/target/debug/deps/guarded_mlp_facade_v1-e9e263317025a672"
+        ],
+        "fresh": false,
+        "manifest_path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/fe2o3/crates/fe2o3-kfd/Cargo.toml",
+        "package_id": "path+file:///home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/fe2o3/crates/fe2o3-kfd#0.1.0",
+        "profile": {
+          "debug_assertions": true,
+          "debuginfo": 0,
+          "opt_level": "2",
+          "overflow_checks": true,
+          "test": true
+        },
+        "reason": "compiler-artifact",
+        "target": {
+          "crate_types": [
+            "bin"
+          ],
+          "doc": false,
+          "doctest": false,
+          "edition": "2024",
+          "kind": [
+            "test"
+          ],
+          "name": "guarded_mlp_facade_v1",
+          "src_path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/fe2o3/crates/fe2o3-kfd/tests/guarded_mlp_facade_v1.rs",
+          "test": true
+        }
+      },
+      "pin": {
+        "bytes": 1052768,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/target/debug/deps/guarded_mlp_facade_v1-e9e263317025a672",
+        "sha256": "0a67e4b8a473b81b53db5c69c2f76face76a17081b8ce92cdca75e6359059797"
+      }
+    },
+    "kfd-lib": {
+      "cargo_artifact": {
+        "executable": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/target/debug/deps/fe2o3_kfd-11448a9880d552d9",
+        "features": [
+          "default",
+          "engineering-gfx950"
+        ],
+        "filenames": [
+          "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/target/debug/deps/fe2o3_kfd-11448a9880d552d9"
+        ],
+        "fresh": false,
+        "manifest_path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/fe2o3/crates/fe2o3-kfd/Cargo.toml",
+        "package_id": "path+file:///home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/fe2o3/crates/fe2o3-kfd#0.1.0",
+        "profile": {
+          "debug_assertions": true,
+          "debuginfo": 0,
+          "opt_level": "2",
+          "overflow_checks": true,
+          "test": true
+        },
+        "reason": "compiler-artifact",
+        "target": {
+          "crate_types": [
+            "lib"
+          ],
+          "doc": true,
+          "doctest": true,
+          "edition": "2024",
+          "kind": [
+            "lib"
+          ],
+          "name": "fe2o3_kfd",
+          "src_path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/fe2o3/crates/fe2o3-kfd/src/lib.rs",
+          "test": true
+        }
+      },
+      "pin": {
+        "bytes": 11435960,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/target/debug/deps/fe2o3_kfd-11448a9880d552d9",
+        "sha256": "c607a1fb102d05cd56fa97e2e781c2e1718d90f24c57e7fb016b12f47138c772"
+      }
+    },
+    "telemetry-env-test": {
+      "cargo_artifact": {
+        "executable": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/target/debug/deps/target_debug_telemetry_env_v1-9e3f10bafd572490",
+        "features": [
+          "default",
+          "engineering-gfx950"
+        ],
+        "filenames": [
+          "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/target/debug/deps/target_debug_telemetry_env_v1-9e3f10bafd572490"
+        ],
+        "fresh": false,
+        "manifest_path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/fe2o3/crates/fe2o3-kfd/Cargo.toml",
+        "package_id": "path+file:///home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/fe2o3/crates/fe2o3-kfd#0.1.0",
+        "profile": {
+          "debug_assertions": true,
+          "debuginfo": 0,
+          "opt_level": "2",
+          "overflow_checks": true,
+          "test": true
+        },
+        "reason": "compiler-artifact",
+        "target": {
+          "crate_types": [
+            "bin"
+          ],
+          "doc": false,
+          "doctest": false,
+          "edition": "2024",
+          "kind": [
+            "test"
+          ],
+          "name": "target_debug_telemetry_env_v1",
+          "src_path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/fe2o3/crates/fe2o3-kfd/tests/target_debug_telemetry_env_v1.rs",
+          "test": true
+        }
+      },
+      "pin": {
+        "bytes": 1424776,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/target/debug/deps/target_debug_telemetry_env_v1-9e3f10bafd572490",
+        "sha256": "e1995f6ac5d6c998b0120ef9edf0d206eb72f0c9a2ff487e9146d119b22cc621"
+      }
+    },
+    "telemetry-test": {
+      "cargo_artifact": {
+        "executable": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/target/debug/deps/target_debug_telemetry_v1-e8d864b2f1065cd0",
+        "features": [
+          "default",
+          "engineering-gfx950"
+        ],
+        "filenames": [
+          "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/target/debug/deps/target_debug_telemetry_v1-e8d864b2f1065cd0"
+        ],
+        "fresh": false,
+        "manifest_path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/fe2o3/crates/fe2o3-kfd/Cargo.toml",
+        "package_id": "path+file:///home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/fe2o3/crates/fe2o3-kfd#0.1.0",
+        "profile": {
+          "debug_assertions": true,
+          "debuginfo": 0,
+          "opt_level": "2",
+          "overflow_checks": true,
+          "test": true
+        },
+        "reason": "compiler-artifact",
+        "target": {
+          "crate_types": [
+            "bin"
+          ],
+          "doc": false,
+          "doctest": false,
+          "edition": "2024",
+          "kind": [
+            "test"
+          ],
+          "name": "target_debug_telemetry_v1",
+          "src_path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/fe2o3/crates/fe2o3-kfd/tests/target_debug_telemetry_v1.rs",
+          "test": true
+        }
+      },
+      "pin": {
+        "bytes": 1416800,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/target/debug/deps/target_debug_telemetry_v1-e8d864b2f1065cd0",
+        "sha256": "64d4b8ad323e6cfb1589048362e3254878af42c1a165cf64cf4dfb29e8b38eaf"
+      }
+    }
+  },
+  "exported_binary_bodies": false,
+  "files": {
+    "evidence/combined-memory-tests.command.json": {
+      "bytes": 2214,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/evidence/combined-memory-tests.command.json",
+      "sha256": "899d570380d34c429ba6a41f899fa60d0551a5883191330754844e8feb664672"
+    },
+    "evidence/combined-memory-tests.result.json": {
+      "bytes": 1673,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/evidence/combined-memory-tests.result.json",
+      "sha256": "1d2a120f0ddcd67a41c2818d071f58150f9f076e375e51cf1a2e265fd3bdcacb"
+    },
+    "evidence/combined-memory-tests.started.json": {
+      "bytes": 507,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/evidence/combined-memory-tests.started.json",
+      "sha256": "5e1734888e0439ab4cc6c28290935a66573a1fb3ab9cd886a697977d9513b12a"
+    },
+    "evidence/combined-memory-tests.stderr": {
+      "bytes": 1301,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/evidence/combined-memory-tests.stderr",
+      "sha256": "e07b98e9d17b6596752f154efb504d0862d6dacb378b867582d4a69bb20e4e9b"
+    },
+    "evidence/combined-memory-tests.stdout": {
+      "bytes": 997,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/evidence/combined-memory-tests.stdout",
+      "sha256": "5ec8bcf3b1199c8d6e2d28c2b2c90f071695137d79d0ab3d458cfd12d4fba723"
+    },
+    "evidence/combined-owner-tests.command.json": {
+      "bytes": 2226,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/evidence/combined-owner-tests.command.json",
+      "sha256": "d4acf3677f5b900cf9bc74d58c0645be6afd5c82bdf4916d831a93d500267ddf"
+    },
+    "evidence/combined-owner-tests.result.json": {
+      "bytes": 1682,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/evidence/combined-owner-tests.result.json",
+      "sha256": "98c2cfd3ea967e3804dd9660c4713df6382653b3188ca7c1b1651a0ac4fd482b"
+    },
+    "evidence/combined-owner-tests.started.json": {
+      "bytes": 519,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/evidence/combined-owner-tests.started.json",
+      "sha256": "ed6aa3c0f8267c1eaf9d11fdd48b81abd37b6f60281f8bae1e99cb20a0a06d9c"
+    },
+    "evidence/combined-owner-tests.stderr": {
+      "bytes": 1301,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/evidence/combined-owner-tests.stderr",
+      "sha256": "e07b98e9d17b6596752f154efb504d0862d6dacb378b867582d4a69bb20e4e9b"
+    },
+    "evidence/combined-owner-tests.stdout": {
+      "bytes": 4750,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/evidence/combined-owner-tests.stdout",
+      "sha256": "9d9e53cc0dcb094125547abc6da8f8feb2a566d6a6d0195104b3ecdd750fad70"
+    },
+    "evidence/complete.json": {
+      "bytes": 1287578,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/evidence/complete.json",
+      "sha256": "4a682798a23ac4c8accb0721f332a7b4e7484729bd692209d20f2883b501cee1"
+    },
+    "evidence/default-check.command.json": {
+      "bytes": 2101,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/evidence/default-check.command.json",
+      "sha256": "e4cb076fe7cae8efe745c6878d971cb652a8d2ee6405a807ed60f1f96f1c8370"
+    },
+    "evidence/default-check.result.json": {
+      "bytes": 1527,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/evidence/default-check.result.json",
+      "sha256": "c9ad0ce01889c186b68a53453e428e633c4fead762039a50ce6112a53f71c98f"
+    },
+    "evidence/default-check.started.json": {
+      "bytes": 394,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/evidence/default-check.started.json",
+      "sha256": "67d98a60f37c4f3c056426fb71253ba53ad6048ae71b66cde3307e86b77f8e7d"
+    },
+    "evidence/default-check.stderr": {
+      "bytes": 2653,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/evidence/default-check.stderr",
+      "sha256": "e2f5a4b9fdbe962eb04ef771331c61d3a20777a983e2dd9ae47076c015cc1e3f"
+    },
+    "evidence/default-check.stdout": {
+      "bytes": 0,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/evidence/default-check.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "evidence/dependencies-after.json": {
+      "bytes": 529874,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/evidence/dependencies-after.json",
+      "sha256": "88f31b71d39fe6260e8a01b1ffcfa2fd78bb7d8195e81a8cc36c9583fa787ae8"
+    },
+    "evidence/dependencies-before.json": {
+      "bytes": 529874,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/evidence/dependencies-before.json",
+      "sha256": "88f31b71d39fe6260e8a01b1ffcfa2fd78bb7d8195e81a8cc36c9583fa787ae8"
+    },
+    "evidence/facade-tests.command.json": {
+      "bytes": 2242,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/evidence/facade-tests.command.json",
+      "sha256": "b5a68af6e6c583135c965155f4212eaceba4cd97375789dad3e5c6260dd2aa26"
+    },
+    "evidence/facade-tests.result.json": {
+      "bytes": 1665,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/evidence/facade-tests.result.json",
+      "sha256": "292ead9b3a46c5e28d9d0b4ecb9cf9dcccd5384fbc133d0c7f9cdaaab4ee9f0e"
+    },
+    "evidence/facade-tests.started.json": {
+      "bytes": 535,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/evidence/facade-tests.started.json",
+      "sha256": "3682c7733d08f97f26774ce641802ade6f9f47fa6f07d4063d96fe2136c24884"
+    },
+    "evidence/facade-tests.stderr": {
+      "bytes": 1301,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/evidence/facade-tests.stderr",
+      "sha256": "e07b98e9d17b6596752f154efb504d0862d6dacb378b867582d4a69bb20e4e9b"
+    },
+    "evidence/facade-tests.stdout": {
+      "bytes": 405,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/evidence/facade-tests.stdout",
+      "sha256": "fbe63d2c7921838007f3eceb8cc753f93bfdfec2cfb000bd951f6e3b888e6b03"
+    },
+    "evidence/interface-doc-list.command.json": {
+      "bytes": 2237,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/evidence/interface-doc-list.command.json",
+      "sha256": "7f65e0580020448487834f79659246cf071b58374ea1eb0665218d596baa5e59"
+    },
+    "evidence/interface-doc-list.result.json": {
+      "bytes": 1686,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/evidence/interface-doc-list.result.json",
+      "sha256": "ac0b3051abc3fb8be3fbc7b155170e95f4ac96a8dfc9b51efc55bec459c9f284"
+    },
+    "evidence/interface-doc-list.started.json": {
+      "bytes": 531,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/evidence/interface-doc-list.started.json",
+      "sha256": "4e71908e0d0901a656e22079109b70cd3be363c1ee4dce90ffce354c158226cf"
+    },
+    "evidence/interface-doc-list.stderr": {
+      "bytes": 6666,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/evidence/interface-doc-list.stderr",
+      "sha256": "93c96fe8b5981a1605808de261429e0c14308701b5e33460570f889a45249a1a"
+    },
+    "evidence/interface-doc-list.stdout": {
+      "bytes": 1858,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/evidence/interface-doc-list.stdout",
+      "sha256": "b8ec114d634aa98bc1c08784453dd8d4f226e2889a6f5e38db16ee63530bdf79"
+    },
+    "evidence/interface-doc-tests.command.json": {
+      "bytes": 2225,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/evidence/interface-doc-tests.command.json",
+      "sha256": "906e2cf5557bdea7793d3e784e2759d72ac9922687bba8b99e6089b5298de8ab"
+    },
+    "evidence/interface-doc-tests.result.json": {
+      "bytes": 1678,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/evidence/interface-doc-tests.result.json",
+      "sha256": "acfe22f5f38d0a5bf2ee4334e067655fa1a712459425c79b284c50f3202dc15b"
+    },
+    "evidence/interface-doc-tests.started.json": {
+      "bytes": 519,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/evidence/interface-doc-tests.started.json",
+      "sha256": "a6777970525a1a3a3b898edb5a12e38bb9c47af8e9edb6703ce7f392eb948586"
+    },
+    "evidence/interface-doc-tests.stderr": {
+      "bytes": 6666,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/evidence/interface-doc-tests.stderr",
+      "sha256": "93c96fe8b5981a1605808de261429e0c14308701b5e33460570f889a45249a1a"
+    },
+    "evidence/interface-doc-tests.stdout": {
+      "bytes": 2161,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/evidence/interface-doc-tests.stdout",
+      "sha256": "95b8958d401e6e40ab05df7310915287a68270d301e7164826349c1c068c52d5"
+    },
+    "evidence/interleaved-native-tests.command.json": {
+      "bytes": 2255,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/evidence/interleaved-native-tests.command.json",
+      "sha256": "0fc6af654a23f1eb401001e435fe5a7048bfe76090f2110a2ec1facf217d33f2"
+    },
+    "evidence/interleaved-native-tests.result.json": {
+      "bytes": 1727,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/evidence/interleaved-native-tests.result.json",
+      "sha256": "da67c3d64e6725a07c40325239599136e936395d6af0aaf44f95110948995e98"
+    },
+    "evidence/interleaved-native-tests.started.json": {
+      "bytes": 548,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/evidence/interleaved-native-tests.started.json",
+      "sha256": "57d954264b31eb950547b6ebd81257e563982e28ac5b83ab167fee28b052236e"
+    },
+    "evidence/interleaved-native-tests.stderr": {
+      "bytes": 1301,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/evidence/interleaved-native-tests.stderr",
+      "sha256": "e07b98e9d17b6596752f154efb504d0862d6dacb378b867582d4a69bb20e4e9b"
+    },
+    "evidence/interleaved-native-tests.stdout": {
+      "bytes": 1861,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/evidence/interleaved-native-tests.stdout",
+      "sha256": "afd40e6b7f353127801f13fa9866f4335966ef5d3c8f77322a1554e8e8f4d608"
+    },
+    "evidence/kfd-ignored.command.json": {
+      "bytes": 2205,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/evidence/kfd-ignored.command.json",
+      "sha256": "c11b29ee4bb278518be7fc57d3771fd309be46557525a11f4ef95ecdb1790c66"
+    },
+    "evidence/kfd-ignored.result.json": {
+      "bytes": 1625,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/evidence/kfd-ignored.result.json",
+      "sha256": "736bb161c8618090744c500f2b13792b46c4decca9d713854a0f5cd941a76d8a"
+    },
+    "evidence/kfd-ignored.started.json": {
+      "bytes": 499,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/evidence/kfd-ignored.started.json",
+      "sha256": "84fa6094dede62a923d6180f531aa8cd36466c1de96a7d058144d2133ee735cc"
+    },
+    "evidence/kfd-ignored.stderr": {
+      "bytes": 9016,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/evidence/kfd-ignored.stderr",
+      "sha256": "12438813e6cde885514df614eed16a0ec037b70eb20f5700659c476bb1fc99e6"
+    },
+    "evidence/kfd-ignored.stdout": {
+      "bytes": 934,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/evidence/kfd-ignored.stdout",
+      "sha256": "7547b9866fb33fbf2988d4b38ef14881559b94374c7d31c331475597fb352ea1"
+    },
+    "evidence/kfd-list.command.json": {
+      "bytes": 2188,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/evidence/kfd-list.command.json",
+      "sha256": "33d3cc7442d3cbe35b741dfb5da2c105f1dea2506510bd9ac910ba9e1a41afad"
+    },
+    "evidence/kfd-list.result.json": {
+      "bytes": 1599,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/evidence/kfd-list.result.json",
+      "sha256": "27222731e382d3ac11613306b021944b513a47568ff0f8e867c6aa9e7bab662b"
+    },
+    "evidence/kfd-list.started.json": {
+      "bytes": 482,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/evidence/kfd-list.started.json",
+      "sha256": "24a56db6b8c73792f8c689121f9366a3a904616bfa5e8cb1d347c3ffc8a439a6"
+    },
+    "evidence/kfd-list.stderr": {
+      "bytes": 9016,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/evidence/kfd-list.stderr",
+      "sha256": "12438813e6cde885514df614eed16a0ec037b70eb20f5700659c476bb1fc99e6"
+    },
+    "evidence/kfd-list.stdout": {
+      "bytes": 117031,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/evidence/kfd-list.stdout",
+      "sha256": "dc41750ccd1a8d6020681d5b76700359c469ce3621006482aa8cedb1fa411386"
+    },
+    "evidence/kfd-tests-build.command.json": {
+      "bytes": 2188,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/evidence/kfd-tests-build.command.json",
+      "sha256": "178da47757017ef6a3b02c0c7041b2cfa9ff22479ecd776c93a362fb36ca6ab7"
+    },
+    "evidence/kfd-tests-build.result.json": {
+      "bytes": 1628,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/evidence/kfd-tests-build.result.json",
+      "sha256": "9df2907403388b54412a50d1cb856eb6249f1e420769328ee0933c0a35ba6dd9"
+    },
+    "evidence/kfd-tests-build.started.json": {
+      "bytes": 481,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/evidence/kfd-tests-build.started.json",
+      "sha256": "a0a7f48d7551ec98a70eb58ade648c673994ed7501fdaf7cb46f740bf803aa97"
+    },
+    "evidence/kfd-tests-build.stderr": {
+      "bytes": 2420,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/evidence/kfd-tests-build.stderr",
+      "sha256": "309f8032bfe427268d3a95878d7b13f5a6af5fc4aa9f253e68b545763b13474e"
+    },
+    "evidence/kfd-tests-build.stdout": {
+      "bytes": 101284,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/evidence/kfd-tests-build.stdout",
+      "sha256": "56a81fe895fa7ab36e5f3b8e477b6831ec8b260adc893596bca1472bc374abc9"
+    },
+    "evidence/kfd-tests.command.json": {
+      "bytes": 2177,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/evidence/kfd-tests.command.json",
+      "sha256": "57c2d3c6fafabd5a99481a2f5eec42e46f4286cbe446ca623a862d6f153e98c5"
+    },
+    "evidence/kfd-tests.result.json": {
+      "bytes": 1593,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/evidence/kfd-tests.result.json",
+      "sha256": "c9cacb503da38215aee0bb33ac9fa42dddba553deb3b8f3b83ee025de2ae792b"
+    },
+    "evidence/kfd-tests.started.json": {
+      "bytes": 470,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/evidence/kfd-tests.started.json",
+      "sha256": "cea44c909bc74dccd838f34261334c37908f441cdc07e14eb07c4433bbdd2d47"
+    },
+    "evidence/kfd-tests.stderr": {
+      "bytes": 9016,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/evidence/kfd-tests.stderr",
+      "sha256": "12438813e6cde885514df614eed16a0ec037b70eb20f5700659c476bb1fc99e6"
+    },
+    "evidence/kfd-tests.stdout": {
+      "bytes": 124966,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/evidence/kfd-tests.stdout",
+      "sha256": "9fb279dab04758fcab95ba52e8f4ab3a8a5bdcc87b0b73f3d2758ab27e7912f7"
+    },
+    "evidence/metadata.command.json": {
+      "bytes": 2057,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/evidence/metadata.command.json",
+      "sha256": "0b007706ff28d7ef5ebb155a4ea40b488a067e7727ebff2159f338e1866bac3e"
+    },
+    "evidence/metadata.result.json": {
+      "bytes": 1465,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/evidence/metadata.result.json",
+      "sha256": "87acee0b4eefe85884fb33493c42cd90e663fd6da9cf47d6e6b1c8eee4d5c8ba"
+    },
+    "evidence/metadata.started.json": {
+      "bytes": 351,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/evidence/metadata.started.json",
+      "sha256": "14541804a3a01babc1189c3575625eea15d394126c8a06cbb4f3f7b25ed1ae5e"
+    },
+    "evidence/metadata.stderr": {
+      "bytes": 0,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/evidence/metadata.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "evidence/metadata.stdout": {
+      "bytes": 128613,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/evidence/metadata.stdout",
+      "sha256": "a7083c5f0333eb5fc777c85c2dcf7a6ee45d53766554adf4b076ff11d5e1a406"
+    },
+    "evidence/mixed-bank-tests.command.json": {
+      "bytes": 2256,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/evidence/mixed-bank-tests.command.json",
+      "sha256": "f749654a2c3f9cee1ae6f2fedb065220606aa9a991dbde4b75d0b88b33619875"
+    },
+    "evidence/mixed-bank-tests.result.json": {
+      "bytes": 1696,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/evidence/mixed-bank-tests.result.json",
+      "sha256": "8c2c188b446541aa78bb03b19ca7d998cc56d418c16462441989c2410396356b"
+    },
+    "evidence/mixed-bank-tests.started.json": {
+      "bytes": 549,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/evidence/mixed-bank-tests.started.json",
+      "sha256": "91374ea64c84104a3cfebca36d290a19e46b23fe0f5b0f798553ac34f7a58655"
+    },
+    "evidence/mixed-bank-tests.stderr": {
+      "bytes": 1301,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/evidence/mixed-bank-tests.stderr",
+      "sha256": "e07b98e9d17b6596752f154efb504d0862d6dacb378b867582d4a69bb20e4e9b"
+    },
+    "evidence/mixed-bank-tests.stdout": {
+      "bytes": 2087,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/evidence/mixed-bank-tests.stdout",
+      "sha256": "8f9523234e4b0ce5c23933f69aca2f3939f32e5b76a8d7691d3acb04961ce807"
+    },
+    "evidence/paired-native-tests.command.json": {
+      "bytes": 2242,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/evidence/paired-native-tests.command.json",
+      "sha256": "f010e9f12dd4dfc0a880b09f09b9ab2264102faa805dd8dc77e71091650c5f66"
+    },
+    "evidence/paired-native-tests.result.json": {
+      "bytes": 1694,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/evidence/paired-native-tests.result.json",
+      "sha256": "afb3fe96e0331b2b9987701e0dae117444142da9f4140bfa08d433e18df75237"
+    },
+    "evidence/paired-native-tests.started.json": {
+      "bytes": 535,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/evidence/paired-native-tests.started.json",
+      "sha256": "ed1779d6d9d7e2208fb3dd46602d0c4caab52abb03b9e3b63478bec182cc949b"
+    },
+    "evidence/paired-native-tests.stderr": {
+      "bytes": 1301,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/evidence/paired-native-tests.stderr",
+      "sha256": "e07b98e9d17b6596752f154efb504d0862d6dacb378b867582d4a69bb20e4e9b"
+    },
+    "evidence/paired-native-tests.stdout": {
+      "bytes": 3036,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/evidence/paired-native-tests.stdout",
+      "sha256": "898f91741f94e764a0f8ea4b74eb0b0c72d4f7362de4c8825ab7b1e5b67560ea"
+    },
+    "evidence/paired-tests.command.json": {
+      "bytes": 2234,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/evidence/paired-tests.command.json",
+      "sha256": "77fd7d2b7bb0996b7b4fedacfb9176049d26534b45c6bde0e017c79a55fe8562"
+    },
+    "evidence/paired-tests.result.json": {
+      "bytes": 1658,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/evidence/paired-tests.result.json",
+      "sha256": "25917c1505a98fea9388fc74aca927976d7935597b84a26cd5b601cf65212c28"
+    },
+    "evidence/paired-tests.started.json": {
+      "bytes": 527,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/evidence/paired-tests.started.json",
+      "sha256": "f1655b561f83afefa9d82ceee4d9d725b3a96d70cd82af430b372be532aa9e4d"
+    },
+    "evidence/paired-tests.stderr": {
+      "bytes": 1301,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/evidence/paired-tests.stderr",
+      "sha256": "e07b98e9d17b6596752f154efb504d0862d6dacb378b867582d4a69bb20e4e9b"
+    },
+    "evidence/paired-tests.stdout": {
+      "bytes": 2602,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/evidence/paired-tests.stdout",
+      "sha256": "0ed0a7335c5a0a18b9e6cafeca85d64167aa8dddb41eb7d36bff6d43a528a43a"
+    },
+    "evidence/retained-tests.command.json": {
+      "bytes": 2244,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/evidence/retained-tests.command.json",
+      "sha256": "b826464b91c20f174db408d0457cd19c8b113fae783258b77c474783a10b80e2"
+    },
+    "evidence/retained-tests.result.json": {
+      "bytes": 1676,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/evidence/retained-tests.result.json",
+      "sha256": "ea0025593cf9f3691ff4fdc77a97652328b8f6bd185a4162d1d87b9fa161d561"
+    },
+    "evidence/retained-tests.started.json": {
+      "bytes": 537,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/evidence/retained-tests.started.json",
+      "sha256": "19799ab627a636abdf24c0da835ff41e32d0b0cf029099fa2eb652ac7bf37a74"
+    },
+    "evidence/retained-tests.stderr": {
+      "bytes": 1301,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/evidence/retained-tests.stderr",
+      "sha256": "e07b98e9d17b6596752f154efb504d0862d6dacb378b867582d4a69bb20e4e9b"
+    },
+    "evidence/retained-tests.stdout": {
+      "bytes": 2281,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/evidence/retained-tests.stdout",
+      "sha256": "d964eb3392c333fb6ab76cedba4c34fcf9827ff95267d3cbb83814ef0010664f"
+    },
+    "evidence/retired-tests.command.json": {
+      "bytes": 2250,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/evidence/retired-tests.command.json",
+      "sha256": "cca0224d5a68a0837c25805cbd22caa60e9e96908d5c87e54512279b87fc446f"
+    },
+    "evidence/retired-tests.result.json": {
+      "bytes": 1677,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/evidence/retired-tests.result.json",
+      "sha256": "81099f8851323a64755565927bbcf6bfbacf3102aa5d47f77ea3f87f5b34dd8e"
+    },
+    "evidence/retired-tests.started.json": {
+      "bytes": 543,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/evidence/retired-tests.started.json",
+      "sha256": "5e5723a7c06cc5051cf91ebfe68364b6be83a49e4e833f343387aa02873d3969"
+    },
+    "evidence/retired-tests.stderr": {
+      "bytes": 1301,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/evidence/retired-tests.stderr",
+      "sha256": "e07b98e9d17b6596752f154efb504d0862d6dacb378b867582d4a69bb20e4e9b"
+    },
+    "evidence/retired-tests.stdout": {
+      "bytes": 577,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/evidence/retired-tests.stdout",
+      "sha256": "019b4a0ea7f8148125f0577467a9dbebf9e1e10596463bcf6d886410d60dc329"
+    },
+    "evidence/reuse-native-tests.command.json": {
+      "bytes": 2249,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/evidence/reuse-native-tests.command.json",
+      "sha256": "22372499a622d3b262c273ed15a3156204487dfc0b65aa20f2883c6e9db71f07"
+    },
+    "evidence/reuse-native-tests.result.json": {
+      "bytes": 1696,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/evidence/reuse-native-tests.result.json",
+      "sha256": "e12364191b0414e23a26cc8af8a6b29e0e9861dda3d985f02a201c14406d2f92"
+    },
+    "evidence/reuse-native-tests.started.json": {
+      "bytes": 542,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/evidence/reuse-native-tests.started.json",
+      "sha256": "56c472d357b76604dcfa0fc3687baac766b8cdd565e97ebbf9f28de31f41a3cc"
+    },
+    "evidence/reuse-native-tests.stderr": {
+      "bytes": 1301,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/evidence/reuse-native-tests.stderr",
+      "sha256": "e07b98e9d17b6596752f154efb504d0862d6dacb378b867582d4a69bb20e4e9b"
+    },
+    "evidence/reuse-native-tests.stdout": {
+      "bytes": 648,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/evidence/reuse-native-tests.stdout",
+      "sha256": "28a76f3489cefdfb2de53c4495abd29ad0d249c9fb68382e33b83663b0559152"
+    },
+    "evidence/rustc-version.command.json": {
+      "bytes": 2008,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/evidence/rustc-version.command.json",
+      "sha256": "39538fed42ec128b1ea3deb26f1195b83cc491a1b6d43e03a14aded9005dcf95"
+    },
+    "evidence/rustc-version.result.json": {
+      "bytes": 1434,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/evidence/rustc-version.result.json",
+      "sha256": "6d4d2f6e6255aa3bdfb00052b415ce3897cd804ca778e725ade46500c9e60bec"
+    },
+    "evidence/rustc-version.started.json": {
+      "bytes": 303,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/evidence/rustc-version.started.json",
+      "sha256": "2f16bff61d010f84f7f1b431aa6a0608e2cb12655c80e7faa46d332048ade9d4"
+    },
+    "evidence/rustc-version.stderr": {
+      "bytes": 0,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/evidence/rustc-version.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "evidence/rustc-version.stdout": {
+      "bytes": 212,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/evidence/rustc-version.stdout",
+      "sha256": "580dbecb7627e4e8ad67fd0b1d539727ba8d2651d04035c907b406d83200b4e2"
+    },
+    "evidence/session-tests.command.json": {
+      "bytes": 2243,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/evidence/session-tests.command.json",
+      "sha256": "924ff1a5742d1ef6bce73206f0dc5d54000bc2aa8188d48b122a0c7332916a09"
+    },
+    "evidence/session-tests.result.json": {
+      "bytes": 1671,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/evidence/session-tests.result.json",
+      "sha256": "2bd884722e7498fcab2f9c6e5030f8d20c0da596f3a67642e5f663e70acfb657"
+    },
+    "evidence/session-tests.started.json": {
+      "bytes": 536,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/evidence/session-tests.started.json",
+      "sha256": "8cbc0ee2c9b573b825268cffcbd3d6d0fbd080f278cd603998f13a96f9eb5024"
+    },
+    "evidence/session-tests.stderr": {
+      "bytes": 1301,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/evidence/session-tests.stderr",
+      "sha256": "e07b98e9d17b6596752f154efb504d0862d6dacb378b867582d4a69bb20e4e9b"
+    },
+    "evidence/session-tests.stdout": {
+      "bytes": 1594,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/evidence/session-tests.stdout",
+      "sha256": "e2d806765a54f6b2b61938a14cf7f1c2bb84af5716e2fc92e691866a025d022b"
+    },
+    "evidence/sources-after.json": {
+      "bytes": 321886,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/evidence/sources-after.json",
+      "sha256": "569f5cdb89338ac9a8c8f0e759e455d876471be1e8f75989600cf0d1af185161"
+    },
+    "evidence/sources-before.json": {
+      "bytes": 321886,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/evidence/sources-before.json",
+      "sha256": "569f5cdb89338ac9a8c8f0e759e455d876471be1e8f75989600cf0d1af185161"
+    },
+    "export_cpu.py": {
+      "bytes": 11256,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/export_model_interface_cpu_v228_v1.py",
+      "sha256": "a3ac395e039627d62cb90d96f5e56e2f289f0cb3ee000cc5c2b02c6064000571"
+    },
+    "fe2o3/Cargo.lock": {
+      "bytes": 8058,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/fe2o3/Cargo.lock",
+      "sha256": "b605fb665bbd9b6ba266c0b6f74f4b9cab50bd1845e136dc6ac6cb6b2dadd252"
+    },
+    "fe2o3/Cargo.lock.input": {
+      "bytes": 94611,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/fe2o3/Cargo.lock.input",
+      "sha256": "f0950d120a5decc8e52cd1160c31820f7703e72448d70061852d044fa925bcfc"
+    },
+    "fe2o3/Cargo.toml": {
+      "bytes": 1191,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/fe2o3/Cargo.toml",
+      "sha256": "6335afec26ccb89944892ce8349f4b6681070fb0b7f467cede39538cfc88a743"
+    },
+    "fe2o3/Cargo.toml.original": {
+      "bytes": 9409,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/fe2o3/Cargo.toml.original",
+      "sha256": "cb3099e0ebf7c6b04c21349d27569e7fcb7a2ec6199d6b9868421748263aa183"
+    },
+    "fe2o3/crates/fe2o3-kfd/src/engineering_gfx950.rs": {
+      "bytes": 80961,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/fe2o3/crates/fe2o3-kfd/src/engineering_gfx950.rs",
+      "sha256": "4ebb285acb763831fea2dfa381289d3f921f34287c3e0379324d6ae36d6d2284"
+    },
+    "fe2o3/crates/fe2o3-kfd/src/engineering_gfx950_peer.rs": {
+      "bytes": 33855,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/fe2o3/crates/fe2o3-kfd/src/engineering_gfx950_peer.rs",
+      "sha256": "75ec693c709b458c6ab145453dd3398199bc10b0861d0f7b334093393a38e68a"
+    },
+    "fe2o3/crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_facade_v1.rs": {
+      "bytes": 10551,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/fe2o3/crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_facade_v1.rs",
+      "sha256": "549dbb7559b04074d6355b3d37903b400dfbbe04c3db8c718d01b78e287166c2"
+    },
+    "fe2o3/crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_facade_v1_tests.rs": {
+      "bytes": 3721,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/fe2o3/crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_facade_v1_tests.rs",
+      "sha256": "7cd248f6808f599583d9d9635537875136676b271b4ad60f41bd6bef3e855cb0"
+    },
+    "fe2o3/crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_interleaved_native_v1_tests.rs": {
+      "bytes": 39145,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/fe2o3/crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_interleaved_native_v1_tests.rs",
+      "sha256": "96026ff91bd30f1d3e649ac1846ddaf4957f6d4485ccef43cb9f7e24bbb76344"
+    },
+    "fe2o3/crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_mixed_bank_v1.rs": {
+      "bytes": 15340,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/fe2o3/crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_mixed_bank_v1.rs",
+      "sha256": "d15239d4d1b57517e9a227967a38f58534dd933c76699bb37d426e7bd69d6199"
+    },
+    "fe2o3/crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_mixed_bank_v1_tests.rs": {
+      "bytes": 20404,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/fe2o3/crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_mixed_bank_v1_tests.rs",
+      "sha256": "af2b80b65e2c610e053b5fb9173d3a2d21030072e73952f68d09179902e4058d"
+    },
+    "fe2o3/crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_retained_v1.rs": {
+      "bytes": 24957,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/fe2o3/crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_retained_v1.rs",
+      "sha256": "ca8191a82d7c70f653f80c5bb7743aa5366c2f54c45066581b50f3dd5049defc"
+    },
+    "fe2o3/crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_v1.rs": {
+      "bytes": 12995,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/fe2o3/crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_v1.rs",
+      "sha256": "7f87a0509472250cfdb050f793dedaff3181074e484704cb4cc225c4fb35264d"
+    },
+    "fe2o3/crates/fe2o3-kfd/src/lib.rs": {
+      "bytes": 20902,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/fe2o3/crates/fe2o3-kfd/src/lib.rs",
+      "sha256": "e66a1699a5784d0578ceef5bfbafd5cbf42a6f7d71ba3a087f02c4e44be9817b"
+    },
+    "fe2o3/crates/fe2o3-kfd/tests/guarded_mlp_facade_v1.rs": {
+      "bytes": 2335,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/fe2o3/crates/fe2o3-kfd/tests/guarded_mlp_facade_v1.rs",
+      "sha256": "fd5cf593cabe0cb0168e7de6ee6819b68fdd3d62de590e686ab57e407c6bdaf8"
+    },
+    "fe2o3/rust-toolchain.toml": {
+      "bytes": 160,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/fe2o3/rust-toolchain.toml",
+      "sha256": "49eeb550dd57841add3be3442177e78f6f0668ffc4f31739ce78d75f8129b154"
+    },
+    "format/complete.json": {
+      "bytes": 4228,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/format/complete.json",
+      "sha256": "3bbf3c1ff117dc151ac2e77d2fa026475dce668bb595ef798a5a4fa0ba9e213e"
+    },
+    "format/format-outcome.json": {
+      "bytes": 4091,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/format/format-outcome.json",
+      "sha256": "fbbae6e4312d535116513ec62e6469bf0b21c7aa1288c2a19fdcca5052624cb6"
+    },
+    "format/rustfmt.command.json": {
+      "bytes": 2837,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/format/rustfmt.command.json",
+      "sha256": "f3bb2e448ca81529eaa64b1e5cba6cf6d6207d503f62badf116c2937e917bdb6"
+    },
+    "format/rustfmt.result.json": {
+      "bytes": 3584,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/format/rustfmt.result.json",
+      "sha256": "711bca67fe68b75b642ef66b9fb68589e8723f847677ca99edaa847efdb34b04"
+    },
+    "format/rustfmt.started.json": {
+      "bytes": 2485,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/format/rustfmt.started.json",
+      "sha256": "fcee7444048763d171a1e3190e6512d5dab4e4ee4e6b1c02cb4a3914d841bf78"
+    },
+    "format/rustfmt.stderr": {
+      "bytes": 0,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/format/rustfmt.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "format/rustfmt.stdout": {
+      "bytes": 0,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/format/rustfmt.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "input-manifest.json": {
+      "bytes": 167148,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/input-manifest.json",
+      "sha256": "6596fb56c8e0436e742e0b16ffbc7beed4d6fcf2d63b1a127c93b24bbf75c37d"
+    },
+    "lineage/base_complete.json": {
+      "bytes": 1249931,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-deferred-binding-cpu-v228-v1/evidence/complete.json",
+      "sha256": "76c7d14beaecec2f63fff67828ff40cbe5ac439c77f27b0e621da7659ab42ca1"
+    },
+    "lineage/base_controller.py": {
+      "bytes": 33240,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-deferred-binding-cpu-v228-v1/run_cpu.py",
+      "sha256": "5fb5766ccbd6c0001b6bdc9ec957dee5adfe3d13b2db46846c10b01fad1313e2"
+    },
+    "lineage/base_sources.json": {
+      "bytes": 320662,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-deferred-binding-cpu-v228-v1/evidence/sources-after.json",
+      "sha256": "4b7ef5c6bc235dcd307927aaff30608758005cb323dfa8a6e1a2aa48f8efe013"
+    },
+    "lineage/base_stdout.stdout": {
+      "bytes": 122389,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-deferred-binding-cpu-v228-v1/evidence/kfd-tests.stdout",
+      "sha256": "ae006359e3b77edc5ab769329bdc1f67f87314681c7aa8be1a199846273616b8"
+    },
+    "run_cpu.py": {
+      "bytes": 37674,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/run_cpu.py",
+      "sha256": "3595563795816b291f494dd90d063bc62acf6e4f8752793f2395a5fab4b25f8d"
+    },
+    "stage_cpu.py": {
+      "bytes": 9761,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/stage_model_interface_cpu_v228_v1.py",
+      "sha256": "c8bc7b80fb343c414860324a305fdd5c8a1b524f769756b9135323e9d7e98220"
+    },
+    "supervisor.py": {
+      "bytes": 41485,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/supervisor.py",
+      "sha256": "8824478a6415dee39d28ccefb0881fc0687ac724f5a9c5a4540310fb5196b9bc"
+    }
+  },
+  "full_source_tree_retained": false,
+  "gpu_execution": false,
+  "passed": true,
+  "performance_claim": false,
+  "receipt": {
+    "bytes": 1287578,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/evidence/complete.json",
+    "sha256": "4a682798a23ac4c8accb0721f332a7b4e7484729bd692209d20f2883b501cee1"
+  },
+  "schema": "ferric-interleaved-native-mlp-cpu-retention-v1",
+  "selected_sources": [
+    "fe2o3/Cargo.lock",
+    "fe2o3/Cargo.lock.input",
+    "fe2o3/Cargo.toml",
+    "fe2o3/Cargo.toml.original",
+    "fe2o3/crates/fe2o3-kfd/src/engineering_gfx950.rs",
+    "fe2o3/crates/fe2o3-kfd/src/engineering_gfx950_peer.rs",
+    "fe2o3/crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_facade_v1.rs",
+    "fe2o3/crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_facade_v1_tests.rs",
+    "fe2o3/crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_interleaved_native_v1_tests.rs",
+    "fe2o3/crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_mixed_bank_v1.rs",
+    "fe2o3/crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_mixed_bank_v1_tests.rs",
+    "fe2o3/crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_retained_v1.rs",
+    "fe2o3/crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_v1.rs",
+    "fe2o3/crates/fe2o3-kfd/src/lib.rs",
+    "fe2o3/crates/fe2o3-kfd/tests/guarded_mlp_facade_v1.rs",
+    "fe2o3/rust-toolchain.toml"
+  ]
+}

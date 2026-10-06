@@ -1,0 +1,37 @@
+{
+  "files": {
+    "guarded.hsaco": {
+      "bytes": 28440,
+      "sha256": "de880dcebf79425ccb555c1a2bdca3ff78b926f7b2062d06b918763da4de0f66"
+    },
+    "library_audit.py": {
+      "bytes": 25872,
+      "sha256": "b26d60ef6dbe24f2182b52b2e0eb44632848061b7a4a1735fc4e1d26b8ee638d"
+    },
+    "mlp.hsaco": {
+      "bytes": 33320,
+      "sha256": "b0d1766fdb0fda17ab09496d1120ba3cee29100692b48fcc5b05cf0db0a8d589"
+    },
+    "r1.hsaco": {
+      "bytes": 10864,
+      "sha256": "25338beac39121cf81adfdc5c82c6f39bcfc82c0f7effaa2166bf8a2a9598a25"
+    },
+    "request.json": {
+      "bytes": 807,
+      "sha256": "c856e59963390cbc6f718b5922a7e718838817a49623cdc85ed8d884f7fc7f6f"
+    },
+    "run_gpu.py": {
+      "bytes": 16211,
+      "sha256": "cff2b3f47c080ffd9ebbfc5b1fe2b0f06ffea8ac706b3b1584c7b0a1c6537f6c"
+    },
+    "supervisor.py": {
+      "bytes": 41485,
+      "sha256": "8824478a6415dee39d28ccefb0881fc0687ac724f5a9c5a4540310fb5196b9bc"
+    },
+    "verify_native.py": {
+      "bytes": 33158,
+      "sha256": "68b81c44c94e86e46c4516c4be88cfde6bca7c823a288319824ee4a01ae824cb"
+    }
+  },
+  "schema": "ferric-native-interleaved-mlp-gpu-input-v1"
+}

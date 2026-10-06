@@ -1,0 +1,15 @@
+{
+  "argv": [
+    "/usr/bin/prlimit",
+    "--as=68719476736",
+    "--cpu=300",
+    "--fsize=4194304",
+    "--core=0",
+    "--",
+    "/opt/rocm/bin/amd-smi",
+    "process",
+    "--json"
+  ],
+  "pgid": 2276574,
+  "pid": 2276574
+}

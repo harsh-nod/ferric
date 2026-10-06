@@ -1,0 +1,7 @@
+
+running 2 tests
+test engineering_gfx950::peer::combined_mlp_state_v1::paired::facade::tests::facade_inputs_preserve_every_role_and_kernel_reference ... ok
+test engineering_gfx950::peer::combined_mlp_state_v1::paired::facade::tests::facade_observations_preserve_all_words_and_lagging_read_frontiers ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 1071 filtered out; finished in 0.00s
+
