@@ -1,0 +1,73 @@
+{
+  "canonical_descriptor_sha256": "8cce86c5641366ab51cd4eabb466f91683d791d2e36a9c258fdd2b549a08ff07",
+  "compiler_executed": false,
+  "files": {
+    "decoder.py": {
+      "bytes": 5709,
+      "sha256": "6c7b9381c6fa458ee0ef515eaee1653ca120395b7c26251e48b51c8c576801d9"
+    },
+    "envelope.bin": {
+      "bytes": 53,
+      "sha256": "493e67c3eeef2855691fa4bff461e25253e5de51bb6e4406c5c153c2f8744108"
+    },
+    "module.ll": {
+      "bytes": 288217,
+      "sha256": "60ca7e17854b4b6ef1184e352f590110890617fbfbd1664a20b11709d3127b56"
+    },
+    "symbol-manifest.bin": {
+      "bytes": 336,
+      "sha256": "2af69809a9a9b93a08e369788e2afd784ca648a68eb97945e08caf5dc966b215"
+    }
+  },
+  "gpu_execution": false,
+  "handoff": {
+    "bytes": 288742,
+    "sha256": "5f52c141f577162cbc3eda8704b173df7035e8c336b8b436c23558f101fe844c"
+  },
+  "host": "smci350-rck-g03-b19-03",
+  "image": {
+    "bytes": 28440,
+    "sha256": "de880dcebf79425ccb555c1a2bdca3ff78b926f7b2062d06b918763da4de0f66"
+  },
+  "inputs": {
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/decode_guarded_mlp_handoff_v228_v1.py": {
+      "bytes": 5709,
+      "sha256": "6c7b9381c6fa458ee0ef515eaee1653ca120395b7c26251e48b51c8c576801d9"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-handoff-capture-v228-v1/compiler-handoff-v2": {
+      "bytes": 288742,
+      "sha256": "5f52c141f577162cbc3eda8704b173df7035e8c336b8b436c23558f101fe844c"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-handoff-capture-v228-v1/complete.json": {
+      "bytes": 26129,
+      "sha256": "6795b6383e4434ad190af753b757a6f74edfeb3e0b3cf8ae0a8f8404887a03d6"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-handoff-capture-v228-v1/fe2o3-engineering-v1/d98a12d35a2f0ecea506a9384213c22dbf692c03347efb91a009fc24e0982e1b/observation.hsaco": {
+      "bytes": 28440,
+      "sha256": "de880dcebf79425ccb555c1a2bdca3ff78b926f7b2062d06b918763da4de0f66"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-handoff-capture-v228-v1/fe2o3-engineering-v1/d98a12d35a2f0ecea506a9384213c22dbf692c03347efb91a009fc24e0982e1b/observation.json": {
+      "bytes": 3047,
+      "sha256": "100f43d87bfb3547b8bf9687e4e2a095d1819ffb5a8c9e4bff945acf07c3f950"
+    }
+  },
+  "launch_authority": false,
+  "load_authority": false,
+  "nested_envelope_semantics_revalidated": false,
+  "nested_symbol_manifest_semantics_revalidated": false,
+  "numerical_acceptance": false,
+  "offsets": {
+    "envelope.bin": 136,
+    "module.ll": 525,
+    "symbol-manifest.bin": 189
+  },
+  "outer_wire_validated": true,
+  "passed": true,
+  "performance_claim": false,
+  "production_authority": false,
+  "schema": "ferric-pinned-compiler-handoff-decode-v1",
+  "source_receipt": {
+    "bytes": 26129,
+    "sha256": "6795b6383e4434ad190af753b757a6f74edfeb3e0b3cf8ae0a8f8404887a03d6"
+  }
+}

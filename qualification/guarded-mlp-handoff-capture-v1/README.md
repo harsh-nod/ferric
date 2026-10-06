@@ -91,6 +91,9 @@ and 69,731 bytes /
 The [v2 retention manifest](controller-tests-v1/attempt-v2/retention-manifest.json)
 binds the reviewed controller and test source to that actual run.
 
-Inspection of the captured LLVM is the next diagnostic gate. Private runtime
-admission, paired GPU lifecycle, independent numerics, all issue #42 milestones
-and the 700 tokens/s target remain open.
+The [captured LLVM review](LLVM-REVIEW.md) retains the exact decoded module and
+its actual MI350 decode receipt. It identifies eight acquire guard loads and
+a normal LLVM conditional branch before the payload, without an explicit
+uniform-branch annotation. Private runtime admission, paired GPU lifecycle,
+independent numerics, all issue #42 milestones and the 700 tokens/s target
+remain open.

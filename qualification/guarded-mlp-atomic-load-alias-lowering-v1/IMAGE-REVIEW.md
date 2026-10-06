@@ -87,6 +87,12 @@ paired lifecycle therefore need examination before GPU admission. This
 review does not claim a proven general compiler miscompile or a completed
 guard-before-payload proof.
 
+The subsequent [exact handoff capture and LLVM review](../guarded-mlp-handoff-capture-v1/LLVM-REVIEW.md)
+retains the checked worker's input, byte-bound to this same image. It shows
+eight acquire loads and a normal conditional branch without an explicit
+uniform-branch annotation. The paired runtime premise above still requires
+GPU validation; the capture does not remove this caveat.
+
 ## Runtime Boundary
 
 The proposed private combined owner exposes only bytes 2192..2208 as Read
