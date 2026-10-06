@@ -6,12 +6,17 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Latest: [a bounded membership lookup addresses the measured charge site](../qualification/guarded-mlp-indexed-atomic-membership-v1/README.md).
-The reviewed patch searches the existing sorted inventory without new storage.
-For its measured 1,656 entries, the worst-case charge becomes 11 comparisons,
-with unchanged limits and semantic predicates. Full MI350 qualification is
-running; this is an analytical bound and unqualified source checkpoint, not
-a measured speedup or proof that the guarded kernel now compiles.
+Latest: [the bounded membership lookup passes full MI350 CPU qualification](../qualification/guarded-mlp-indexed-atomic-membership-v1/README.md).
+All 38 phases pass: 1,275 compiler tests and 1,507 Pliron tests, with focused
+repeats and extraction controls totaling 2,876 passing executions across 25
+scopes. The same 25 historical ignores remain explicit. Sources, dependencies
+and cleanup checks are clean. The updated [loader controller](../qualification/guarded-mlp-indexed-atomic-membership-tool-audit-v1/README.md)
+and [lowering controller](../qualification/guarded-mlp-indexed-atomic-membership-lowering-v1/README.md)
+also pass 26 and 19 synthetic fixtures. This compiler-analysis optimization
+reduces the measured 1,656-entry query's bound to 11 comparisons without new
+storage, changed semantic predicates or higher limits. Actual guarded
+compilation and GPU/model evaluation remain separate, uncompleted gates;
+no speedup or milestone closure is claimed.
 
 Previously, [the guarded compile identifies the exact work-limit charge site](../qualification/guarded-mlp-ranked-graph-work-diagnostic-lowering-v1/README.md).
 The MLP state-guard kernel fails in `AuthenticatedAtomicAllocationsV1::contains_local`:

@@ -1,0 +1,37 @@
+{
+  "files": {
+    "audit_tools.py": {
+      "bytes": 69862,
+      "sha256": "776aa9dce050e9b24f393b93bb96f863a58238854ad579a90ea68462c402bb37"
+    },
+    "loader_test_entry.py": {
+      "bytes": 6503,
+      "sha256": "41a7130c0d1a255d346fb449bb93fe9c27c3913bf8766e86c77ced5c842e9996"
+    },
+    "run_tests.py": {
+      "bytes": 14190,
+      "sha256": "07a93a04827ec7dfca4519d4e5032fc556ac057929871089d68c698b273742e4"
+    },
+    "supervisor.py": {
+      "bytes": 41485,
+      "sha256": "8824478a6415dee39d28ccefb0881fc0687ac724f5a9c5a4540310fb5196b9bc"
+    },
+    "test_audit_tools.py": {
+      "bytes": 47715,
+      "sha256": "59b75783b1b279c83d96c9738df5f4d3c4d0db972b32fb7afb9dfaa24d3143b8"
+    }
+  },
+  "schema": "ferric-indexed-atomic-membership-loader-test-input-v1",
+  "tool_pins": {
+    "prlimit": {
+      "bytes": 27536,
+      "path": "/usr/bin/prlimit",
+      "sha256": "17064f67e650d6152a6902b013aab496b54c87587c8eea6f5023aafee6154069"
+    },
+    "python": {
+      "bytes": 8020928,
+      "path": "/usr/bin/python3.12",
+      "sha256": "e1efa562c2cc2e35521a5c9c9b9939921001ff8ca9708a13ef15ace68cc2ccd7"
+    }
+  }
+}

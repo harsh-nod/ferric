@@ -1,0 +1,70 @@
+{
+  "compiler_qualification": false,
+  "files": {
+    "evidence/complete.json": {
+      "bytes": 12708,
+      "sha256": "775742900d6bb0b7b0fb41b0d091939515467be37de0aebd478874cca9df60ac"
+    },
+    "evidence/indexed-atomic-membership-lowering-tests.command.json": {
+      "bytes": 907,
+      "sha256": "416bce9c28b56d735214b056f0b43fc506546723eb672ff2a736f86edd380a08"
+    },
+    "evidence/indexed-atomic-membership-lowering-tests.result.json": {
+      "bytes": 1702,
+      "sha256": "3eb2b45dc8bb63117187d9786f35913886f9cd250c60cfc086f5f8d0178adc82"
+    },
+    "evidence/indexed-atomic-membership-lowering-tests.started.json": {
+      "bytes": 396,
+      "sha256": "17bac5fd7578572445750bc1afb709a57d18c8d4bdd319cd37f5331a58d54a07"
+    },
+    "evidence/indexed-atomic-membership-lowering-tests.stderr": {
+      "bytes": 2852,
+      "sha256": "4e52b651fc3f9dbac97b7bafb5927fdb367fb54d58e406b2ff983b97f17ce1ad"
+    },
+    "evidence/indexed-atomic-membership-lowering-tests.stdout": {
+      "bytes": 4025,
+      "sha256": "f49824b6c12100fae8f589035f5b07ab85ba10e42462a15439f32c12d6cc5d8d"
+    },
+    "evidence/sources-after.json": {
+      "bytes": 1781,
+      "sha256": "07658369ab5e5b96069f1d4a34bf01b0906b6e49d699c9f1cb63a9eb68310d4f"
+    },
+    "evidence/sources-before.json": {
+      "bytes": 1781,
+      "sha256": "07658369ab5e5b96069f1d4a34bf01b0906b6e49d699c9f1cb63a9eb68310d4f"
+    },
+    "input-manifest.json": {
+      "bytes": 1267,
+      "sha256": "134216fa4fbfcc9faae61abc309eec1f56e9abbca249e1f22dc61655b510797d"
+    },
+    "lowering.py": {
+      "bytes": 47771,
+      "sha256": "e939650a288e8b07571822b392fb15c9610d401c85197eb4312672aca8416fb5"
+    },
+    "lowering_test_entry.py": {
+      "bytes": 5880,
+      "sha256": "3ed8e3a66827e3f1ab7e2020bff6eba02370a15bcebbf14ace8bf5f741858dd3"
+    },
+    "run_tests.py": {
+      "bytes": 13494,
+      "sha256": "fccbd6e83730540176905f1ecf0ba932f0c5d8a1ce924af9f180577b0308a6b7"
+    },
+    "supervisor.py": {
+      "bytes": 41485,
+      "sha256": "8824478a6415dee39d28ccefb0881fc0687ac724f5a9c5a4540310fb5196b9bc"
+    },
+    "test_lowering.py": {
+      "bytes": 25283,
+      "sha256": "44da61aa288fb2dda945bd6adbb057145887b08f4763bb88099ea8eba1d1af11"
+    },
+    "test_normalization.py": {
+      "bytes": 6507,
+      "sha256": "6d4d91e24fa483e81d99ae1dd89a629eb3b7a17aaef94e8f46958123c292465f"
+    }
+  },
+  "gpu_execution": false,
+  "passed": true,
+  "schema": "ferric-indexed-atomic-membership-lowering-tests-retention-v1",
+  "synthetic_lowering_only": true,
+  "tests_passed": 19
+}

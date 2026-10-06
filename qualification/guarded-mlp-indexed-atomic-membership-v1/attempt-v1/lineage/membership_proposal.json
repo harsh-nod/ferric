@@ -1,0 +1,84 @@
+{
+  "actual_failure": {
+    "bytes": 9723,
+    "sha256": "7727462e3e8f3744e22926546da24ec9eec2e55a6f7b9c3fcf6036168ae0a52e"
+  },
+  "actual_failure_caller_identified": true,
+  "actual_failure_stderr": {
+    "bytes": 8533,
+    "sha256": "a52d57b5b340b8b7223d35bfaa441dcf88c0febc74bc3924925647cf1d91e99c"
+  },
+  "base_complete": {
+    "bytes": 1298817,
+    "sha256": "501a61fcfc7d660ab7d2c396a7050d04274553cf29e1688e81b0e168d0001e3c"
+  },
+  "base_controller": {
+    "bytes": 62859,
+    "sha256": "f5179526b41d338f61f84d855b4c2bd301a6710d736c8c0e15ac73406d20652d"
+  },
+  "base_input": {
+    "bytes": 1124709,
+    "sha256": "70d87dc213ff298317c6195a4e70d1f66a12d7f846ba4c1e5436007bdd73e90d"
+  },
+  "base_sources": {
+    "bytes": 2308078,
+    "sha256": "31363efaa27ae8879705d76496dbfc74f4f0ece8ea296707932b018fa2008949"
+  },
+  "base_tree": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/guarded-mlp-ranked-graph-work-diagnostic-input-v228-v2/fe2o3",
+  "block_limit": 2048,
+  "edge_limit": 2048,
+  "files": {
+    "crates/rustc-codegen-fe2o3/src/production_ranked_projection_v1/indexed_atomic_membership_v1_tests.rs": {
+      "after": {
+        "bytes": 11457,
+        "sha256": "6d0ad5676dcfcb43decaa90bd7eef281458fe7d8b74ec7a7077ebeae1a3cd627"
+      },
+      "before": null
+    },
+    "crates/rustc-codegen-fe2o3/src/production_ranked_projection_v1/indexed_atomic_v1.rs": {
+      "after": {
+        "bytes": 30363,
+        "sha256": "c45a6b4fae6fed1f0d13e948c157a2b0684cb56d33143908fe8fd0807e521c62"
+      },
+      "before": {
+        "bytes": 29687,
+        "sha256": "a55226e6b72ac1e489c1f152d08595e3ae297ce4c9d10ffab5d2914677f4ba7a"
+      }
+    },
+    "crates/rustc-codegen-fe2o3/src/production_ranked_projection_v1/indexed_atomic_v1_tests.rs": {
+      "after": {
+        "bytes": 35708,
+        "sha256": "1a3c1b788f5f65afac4e22f418d2031c696d8ec0337c4a1ab556f1ce8382eac5"
+      },
+      "before": {
+        "bytes": 35532,
+        "sha256": "e6548a9b96d30144aa6eff84ce4a21c32a00b7ba9af35921baf092778c07f5cb"
+      }
+    }
+  },
+  "filter": "production_ranked_projection_v1::tests::indexed_atomic_membership_",
+  "graph_analysis_optimization": true,
+  "graph_work_limit": 3145728,
+  "inherited_graph_work_diagnostics": true,
+  "integration_patch": {
+    "bytes": 14086,
+    "sha256": "95705322ff130f676e4d462876e77427d1dc110ae1b466fc3f13471d0c675a88"
+  },
+  "membership_lookup_optimization": true,
+  "resource_admission_may_change": true,
+  "schema": "ferric-guarded-mlp-indexed-atomic-membership-source-v1",
+  "semantic_predicates_changed": false,
+  "source_only": true,
+  "structural_limits_changed": false,
+  "test_names": [
+    "production_ranked_projection_v1::tests::indexed_atomic_membership_bounds_repeated_measured_size_queries",
+    "production_ranked_projection_v1::tests::indexed_atomic_membership_charges_exact_bound_before_query",
+    "production_ranked_projection_v1::tests::indexed_atomic_membership_failed_charges_do_not_commit_work",
+    "production_ranked_projection_v1::tests::indexed_atomic_membership_handles_boundary_lengths",
+    "production_ranked_projection_v1::tests::indexed_atomic_membership_keeps_independent_inventories",
+    "production_ranked_projection_v1::tests::indexed_atomic_membership_matches_all_small_sorted_sets",
+    "production_ranked_projection_v1::tests::indexed_atomic_membership_preserves_duplicate_and_extreme_ids",
+    "production_ranked_projection_v1::tests::indexed_atomic_membership_preserves_guard_marker_and_escape_refusals",
+    "production_ranked_projection_v1::tests::indexed_atomic_membership_real_inventory_keeps_statement_binding"
+  ]
+}

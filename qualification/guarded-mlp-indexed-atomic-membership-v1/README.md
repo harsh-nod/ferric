@@ -42,12 +42,30 @@ marker and pointer-escape cases. The measured-size fixture makes 4,096 queries
 and expects 45,056 work units. The existing exact-budget test is adjusted to
 the new comparison bound without removing its rejection assertions.
 
-Full qualification on `mi350` is pending. It preserves all 37 predecessor
-phases and adds a focused repeat of the nine membership tests. Successful
-completion would require 38 phases, 25 scopes, 2,876 passing executions and
-the same 25 historical ignores. No such result is claimed by this source
-checkpoint. Fresh binary-loader checks and actual guarded compilation must
-follow successful qualification.
+Full qualification on `mi350` passed in 648.611635 seconds. All 37 predecessor
+phases remain, with a focused repeat of the nine membership tests added.
+
+| Check | Result |
+| --- | ---: |
+| Compiler suite | 1,275 passed, 24 ignored |
+| Pliron suite | 1,507 passed, 1 ignored |
+| Total, including focused repeats and extraction controls | 2,876 passed, 25 ignored |
+| Ordered phases / test scopes | 38 / 25 |
+
+Every child exited naturally with status zero, was reaped, and left no process
+group. Sources and dependencies stayed unchanged, and postchecks were clean.
+The exact historical test and ignore identities were preserved. These are CPU
+compiler results, not GPU or model results. Fresh binary-loader checks and actual
+guarded compilation remain separate gates.
+
+[attempt-v1](attempt-v1) retains the actual receipt, 194 raw files, controller,
+helper, direct baseline evidence and three source bodies. Its archive has 216
+members and 215 pinned bodies, without exporting tool or test binaries.
+The receipt is `d13a558cc990c4ebc0fe528362ecbf3c61877e21e3f7f239de69cf8d43a2e1cd`;
+the archive is `f2f74cf2cadc8900330d1f8dd5a5cf01ce8608cc6731e29b8ebed9921cbcbec5`.
+The separately tested [loader](../guarded-mlp-indexed-atomic-membership-tool-audit-v1/README.md)
+and [lowering](../guarded-mlp-indexed-atomic-membership-lowering-v1/README.md)
+controllers pass 26 and 19 synthetic fixtures, respectively.
 
 [proposal-v1](proposal-v1) contains the reviewed patch and source manifest.
 The manifest is

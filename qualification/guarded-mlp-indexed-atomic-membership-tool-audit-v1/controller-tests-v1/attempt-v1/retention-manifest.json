@@ -1,0 +1,66 @@
+{
+  "compiler_qualification": false,
+  "files": {
+    "audit_tools.py": {
+      "bytes": 69862,
+      "sha256": "776aa9dce050e9b24f393b93bb96f863a58238854ad579a90ea68462c402bb37"
+    },
+    "evidence/complete.json": {
+      "bytes": 13908,
+      "sha256": "b39a6cf8f96f73b22b493b92e0ed194691e0dca73aef899322d977f42a931a75"
+    },
+    "evidence/indexed-atomic-membership-loader-tests.command.json": {
+      "bytes": 899,
+      "sha256": "9f90efbc2e9f3490af374688df6c4f7c6e27fb42544ea0c6f6b20a2dd618505c"
+    },
+    "evidence/indexed-atomic-membership-loader-tests.result.json": {
+      "bytes": 1685,
+      "sha256": "aed43b4397fa663361feb2626ad205e95e2a765acdd429466303ef8c69654a18"
+    },
+    "evidence/indexed-atomic-membership-loader-tests.started.json": {
+      "bytes": 392,
+      "sha256": "6a8883fb8e90b2f2ff4e1e828de1a0e0cb72dfdd06a9f5387983a1a151148d28"
+    },
+    "evidence/indexed-atomic-membership-loader-tests.stderr": {
+      "bytes": 4110,
+      "sha256": "f3a8ef9c982828163ded8c805924179d8d0293b08cf591f5698f1d398fa23329"
+    },
+    "evidence/indexed-atomic-membership-loader-tests.stdout": {
+      "bytes": 5551,
+      "sha256": "3bba168c4857e22175d16d95f918a6b2a68966a7006a749f4d498807453648e5"
+    },
+    "evidence/sources-after.json": {
+      "bytes": 1473,
+      "sha256": "7fe6b4e5559e397fd2d6ca9173840bc7354d0655f9ca63627bfa22d50917e328"
+    },
+    "evidence/sources-before.json": {
+      "bytes": 1473,
+      "sha256": "7fe6b4e5559e397fd2d6ca9173840bc7354d0655f9ca63627bfa22d50917e328"
+    },
+    "input-manifest.json": {
+      "bytes": 1127,
+      "sha256": "b0800b2c304d27735a8edc47ddf6071a06c4302180242ea4c9ec7de7db33c6d8"
+    },
+    "loader_test_entry.py": {
+      "bytes": 6503,
+      "sha256": "41a7130c0d1a255d346fb449bb93fe9c27c3913bf8766e86c77ced5c842e9996"
+    },
+    "run_tests.py": {
+      "bytes": 14190,
+      "sha256": "07a93a04827ec7dfca4519d4e5032fc556ac057929871089d68c698b273742e4"
+    },
+    "supervisor.py": {
+      "bytes": 41485,
+      "sha256": "8824478a6415dee39d28ccefb0881fc0687ac724f5a9c5a4540310fb5196b9bc"
+    },
+    "test_audit_tools.py": {
+      "bytes": 47715,
+      "sha256": "59b75783b1b279c83d96c9738df5f4d3c4d0db972b32fb7afb9dfaa24d3143b8"
+    }
+  },
+  "gpu_execution": false,
+  "passed": true,
+  "schema": "ferric-indexed-atomic-membership-loader-tests-retention-v1",
+  "synthetic_loader_only": true,
+  "tests_passed": 26
+}

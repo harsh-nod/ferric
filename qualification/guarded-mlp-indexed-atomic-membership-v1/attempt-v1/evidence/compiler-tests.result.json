@@ -1,0 +1,41 @@
+{
+  "adopted_reaped": [],
+  "argv": [
+    "/usr/bin/prlimit",
+    "--as=12884901888",
+    "--cpu=1200",
+    "--fsize=1073741824",
+    "--core=0",
+    "--",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-indexed-atomic-membership-cpu-v228-v1/target/debug/deps/rustc_codegen_fe2o3-5db184f14eef1d1c",
+    "--test-threads=2"
+  ],
+  "command": {
+    "bytes": 2461,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-indexed-atomic-membership-cpu-v228-v1/evidence/compiler-tests.command.json",
+    "sha256": "495df8ac8b70063f3ad8995d24f5ba34e7be31b787a3fbd5ee4c00b1d3c50bc2"
+  },
+  "elapsed_ns": 68786881970,
+  "exception": null,
+  "exit_code": 0,
+  "forced_cleanup": false,
+  "label": "compiler-tests",
+  "natural_exit": true,
+  "observed_signals": [],
+  "pgid": 2137868,
+  "pid": 2137868,
+  "process_group_absent": true,
+  "reaped": true,
+  "stderr": {
+    "bytes": 7347,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-indexed-atomic-membership-cpu-v228-v1/evidence/compiler-tests.stderr",
+    "sha256": "0e53ede37db0cf6ceddb90d6b6ee7ab1f971114f4f5f020d20b939d6ac56db47"
+  },
+  "stdout": {
+    "bytes": 158498,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-indexed-atomic-membership-cpu-v228-v1/evidence/compiler-tests.stdout",
+    "sha256": "2e2de8902d074d73d78549574a97cbcbf4ea79245ef38dee7a8777f43271c97d"
+  },
+  "storage_failure": null,
+  "timed_out": false
+}
