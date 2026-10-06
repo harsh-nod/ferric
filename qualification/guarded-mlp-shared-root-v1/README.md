@@ -91,3 +91,7 @@ local guard generations separate from global forward order, and a narrowly
 validated residual/output lifetime policy. Arena reclamation and sustained
 full-model execution remain separate gates. Qwen3-8B BF16 target-only 2,048/256,
 the 700 tokens/s target and issue #42 milestones M0-M7 remain open.
+
+Follow-up: the [private exact-residual policy](../guarded-mlp-exact-residual-v1/README.md)
+now passes CPU qualification. Its native reuse test and model integration remain
+pending; this earlier GPU receipt does not qualify that later executable.
