@@ -1,0 +1,64 @@
+{
+  "base_complete": {
+    "bytes": 1255543,
+    "sha256": "e30712ef17c7094efce9bd13bee2bb172823e94f4817c812cfb8b1b20cefb847"
+  },
+  "base_sources": {
+    "bytes": 2253188,
+    "sha256": "fa4722605d557e1236809f610bc7af5ebb6e7f15a643ba736392be5b2177bb8a"
+  },
+  "base_tree": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/guarded-mlp-s-rpo-qualification-input-v228-v1/fe2o3",
+  "files": {
+    "crates/rustc-codegen-fe2o3/src/production_ranked_projection_v1.rs": {
+      "after": {
+        "bytes": 1650803,
+        "sha256": "89f4b315ceb45ea55db0394fb55ef378fbf12482c2b389cd0c80e41730b71f32"
+      },
+      "before": {
+        "bytes": 1650118,
+        "sha256": "bd67b31add2ed0a6c8d1719f57e59821a13a3848c0f07f8135ad4dc144261b1f"
+      }
+    },
+    "crates/rustc-codegen-fe2o3/src/production_ranked_projection_v1/cfg_block_limit_diagnostic_v1.rs": {
+      "after": {
+        "bytes": 4080,
+        "sha256": "c7b8f30f3de7d4ea25e7f5e0345ca057c8352413d232675a4d9f0cf8cac7ff1f"
+      },
+      "before": null
+    },
+    "crates/rustc-codegen-fe2o3/src/production_ranked_projection_v1/cfg_block_limit_diagnostic_v1_tests.rs": {
+      "after": {
+        "bytes": 10964,
+        "sha256": "570482212eea46393d6057977246196464b7f16838062859e8de52ecc0d85965"
+      },
+      "before": null
+    },
+    "crates/rustc-codegen-fe2o3/src/production_ranked_projection_v1/loop_switch_domain_v1.rs": {
+      "after": {
+        "bytes": 5673,
+        "sha256": "7b60affab3db21a94ee81e42eb181a3bcbc7d84434851e4b633a85a60ac68b07"
+      },
+      "before": {
+        "bytes": 5670,
+        "sha256": "98ced9801951f12003349ccc1cbd9d5ba94bbb702b0ea3bf5ab928ea78b52e7c"
+      }
+    }
+  },
+  "integration_patch": {
+    "bytes": 4584,
+    "sha256": "272fffb99f51d377a79c0d08f2bb5ddb6bfb6c985a4dd50af172a8d99e0244e4"
+  },
+  "schema": "ferric-guarded-mlp-ranked-cfg-diagnostic-source-v1",
+  "source_only": true,
+  "test_filter": "production_ranked_projection_v1::tests::cfg_block_limit_diagnostic_",
+  "test_names": [
+    "production_ranked_projection_v1::tests::cfg_block_limit_diagnostic_zero_preserves_both_refusals",
+    "production_ranked_projection_v1::tests::cfg_block_limit_diagnostic_exact_limit_preserves_graph_acceptance",
+    "production_ranked_projection_v1::tests::cfg_block_limit_diagnostic_over_limit_preserves_both_refusals",
+    "production_ranked_projection_v1::tests::cfg_block_limit_diagnostic_counts_unreachable_declared_blocks",
+    "production_ranked_projection_v1::tests::cfg_block_limit_diagnostic_precedes_work_without_changing_budget",
+    "production_ranked_projection_v1::tests::cfg_block_limit_diagnostic_callable_summary_has_no_fabricated_root",
+    "production_ranked_projection_v1::tests::cfg_block_limit_diagnostic_root_is_bounded_and_escaped",
+    "production_ranked_projection_v1::tests::cfg_block_limit_diagnostic_context_leaves_other_errors_unchanged"
+  ]
+}

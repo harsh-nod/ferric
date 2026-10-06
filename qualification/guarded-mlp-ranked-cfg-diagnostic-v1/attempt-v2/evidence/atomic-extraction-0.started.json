@@ -1,0 +1,17 @@
+{
+  "argv": [
+    "/usr/bin/prlimit",
+    "--as=12884901888",
+    "--cpu=1200",
+    "--fsize=1073741824",
+    "--core=0",
+    "--",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-cfg-diagnostic-cpu-v228-v2/target/debug/deps/production_extraction_driver_v1-cb9b8b5de4191776",
+    "shared_atomic_u32_source_admission_has_a_scalar_positive_control",
+    "--ignored",
+    "--exact",
+    "--test-threads=1"
+  ],
+  "pgid": 1352668,
+  "pid": 1352668
+}

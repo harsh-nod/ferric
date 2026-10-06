@@ -6,12 +6,15 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Latest: [the ranked CFG diagnostic's first build and correction are recorded](../qualification/guarded-mlp-ranked-cfg-diagnostic-v1/README.md).
-The first diagnostic build failed with a missing exhaustive error-match arm;
-it ran no tests. All four phases exited naturally and were reaped, with clean
-integrity checks. A fresh corrected build is pending. The qualified compiler
-and CFG limit remain unchanged; the actual rejected function/count is still
-unknown. No guarded gfx950 executable or GPU result is claimed.
+Latest: [the corrected ranked CFG diagnostic passes full CPU qualification on MI350](../qualification/guarded-mlp-ranked-cfg-diagnostic-v1/README.md).
+All 33 phases exited naturally and were reaped, with unchanged sources and
+clean integrity checks. The compiler passed 1,247 tests and pliron passed
+1,504; focused repeats and extraction controls bring the total to 2,814
+passing executions, not unique tests. All 25 historical ignores remain
+explicit. The first attempt's compile failure is retained alongside the fix.
+The CFG limit and atomic rules remain unchanged. The actual rejected
+function/count still needs a guarded lowering retry; no HSACO/GPU, numerical
+or performance milestone is closed.
 
 Previously, [optimized-inlining guarded lowering reaches the ranked CFG limit on MI350](../qualification/guarded-mlp-lowering-attempt-v3/README.md).
 The earlier atomic-ordering rejection is no longer observed. The new failure

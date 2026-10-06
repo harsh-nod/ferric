@@ -1,0 +1,41 @@
+{
+  "adopted_reaped": [],
+  "argv": [
+    "/usr/bin/prlimit",
+    "--as=12884901888",
+    "--cpu=1200",
+    "--fsize=1073741824",
+    "--core=0",
+    "--",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-cfg-diagnostic-cpu-v228-v2/target/debug/deps/rustc_codegen_fe2o3-5db184f14eef1d1c",
+    "--test-threads=2"
+  ],
+  "command": {
+    "bytes": 2437,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-cfg-diagnostic-cpu-v228-v2/evidence/compiler-tests.command.json",
+    "sha256": "85e1c30bf10a531a58e8752f53bb3b20eb964f0ab2142cf6f645a6047ae88da7"
+  },
+  "elapsed_ns": 69052098685,
+  "exception": null,
+  "exit_code": 0,
+  "forced_cleanup": false,
+  "label": "compiler-tests",
+  "natural_exit": true,
+  "observed_signals": [],
+  "pgid": 1337892,
+  "pid": 1337892,
+  "process_group_absent": true,
+  "reaped": true,
+  "stderr": {
+    "bytes": 7339,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-cfg-diagnostic-cpu-v228-v2/evidence/compiler-tests.stderr",
+    "sha256": "007d4fdd5e2fd098b81ea86f9bda1d11ff022c98155fc930d64cf1e9df78d39a"
+  },
+  "stdout": {
+    "bytes": 155263,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-cfg-diagnostic-cpu-v228-v2/evidence/compiler-tests.stdout",
+    "sha256": "cf472ce8ab149ba877a4e9fad7f741201839b217abf977dd8825dd93c62956b0"
+  },
+  "storage_failure": null,
+  "timed_out": false
+}

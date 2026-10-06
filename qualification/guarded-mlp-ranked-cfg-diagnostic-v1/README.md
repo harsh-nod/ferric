@@ -1,9 +1,43 @@
 # Ranked CFG Diagnostic
 
-This diagnostic identifies the function and declared-block count behind the
-[guarded lowering rejection](../guarded-mlp-lowering-attempt-v3/README.md).
+This diagnostic is intended to identify the function and declared-block count
+behind the [guarded lowering rejection](../guarded-mlp-lowering-attempt-v3/README.md).
 It preserves the 1,024-block limit, both rejection predicates, work charges
 and atomic rules. It does not qualify a GPU executable or model performance.
+
+## Qualified Retry
+
+The [second receipt](attempt-v2/evidence/complete.json) records all 33 phases
+passing naturally on MI350 in 651.464 seconds. All processes were reaped and
+their groups were absent. Sources and dependencies remained unchanged, with
+no timeouts, forced cleanup or integrity postcheck errors.
+
+| Scope | Passing Executions | Historical Ignores |
+| --- | ---: | ---: |
+| Full compiler library | 1,247 | 24 |
+| Full pliron library | 1,504 | 1 |
+| Five inherited focused cohorts, repeated | 43 | 0 |
+| New CFG diagnostic cohort, repeated | 8 | 0 |
+| Atomic extraction controls | 8 | 0 |
+| Unsafe-source rejection controls | 2 | 0 |
+| Matrix and attention extraction | 2 | 0 |
+| Total | 2,814 | 25 |
+
+These are executions, not unique tests; the 51 focused checks repeat library
+tests. Historical names and ignored identities are preserved. The eight new
+tests pass in both the full suite and their explicit focused invocation.
+Matrix/attention controls target gfx942 LLVM; selected atomic controls check
+gfx950 LLVM. This is not a guarded gfx950 HSACO or GPU launch result.
+
+The corrected source explicitly handles the diagnostic in `Error::source()`
+and checks its `None` result at both rejection sites. No cap was raised.
+The [retention manifest](attempt-v2/retention-manifest.json) pins 191 original
+files, including all 169 raw records and the four source postimages. Receipt
+SHA-256: `21fa53c3bd73e13dbb8f14aa85d1f8f60237becf230722b4046060f8462838f8`.
+Seven final products are selected from the actual Cargo records and posthashed;
+earlier compiler-build observations are not substituted for final products.
+The new backend differs; the extractor body is byte-identical to its qualified
+predecessor. Binary bodies are not included in the archive.
 
 ## First Attempt
 
@@ -34,11 +68,9 @@ distinct from oversized CFGs, and unreachable declared blocks still count.
 
 Eight regression tests cover both boundaries, unreachable blocks, unchanged
 work-budget precedence, callable/root context and bounded rendering. The
-failed attempt did not reach these tests. The follow-up source adds the
-missing explicit `None` error-source arm and an assertion for that behavior
-at both rejection sites. Its fresh MI350 qualification is still pending.
+failed attempt did not reach these tests; the corrected retry passes them.
 
-The qualified pre-diagnostic compiler remains untouched. The next accepted
-producer needs full CPU tests, final binary inspection and an actual guarded
-lowering retry. No CFG limit has been raised. All issue #42 milestones,
+The qualified pre-diagnostic compiler remains untouched. The diagnostic
+producer now passes full CPU qualification; an actual guarded lowering retry
+is still needed to capture the rejected function/count. All issue #42 milestones,
 independent model numerics and the 700 tokens/s benchmark remain open.

@@ -1,0 +1,13 @@
+
+running 8 tests
+test production_ranked_projection_v1::tests::cfg_block_limit_diagnostic_callable_summary_has_no_fabricated_root ... ok
+test production_ranked_projection_v1::tests::cfg_block_limit_diagnostic_context_leaves_other_errors_unchanged ... ok
+test production_ranked_projection_v1::tests::cfg_block_limit_diagnostic_counts_unreachable_declared_blocks ... ok
+test production_ranked_projection_v1::tests::cfg_block_limit_diagnostic_exact_limit_preserves_graph_acceptance ... ok
+test production_ranked_projection_v1::tests::cfg_block_limit_diagnostic_over_limit_preserves_both_refusals ... ok
+test production_ranked_projection_v1::tests::cfg_block_limit_diagnostic_precedes_work_without_changing_budget ... ok
+test production_ranked_projection_v1::tests::cfg_block_limit_diagnostic_root_is_bounded_and_escaped ... ok
+test production_ranked_projection_v1::tests::cfg_block_limit_diagnostic_zero_preserves_both_refusals ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 1263 filtered out; finished in 0.00s
+
