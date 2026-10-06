@@ -1,0 +1,425 @@
+// Synthetic inventories prove lookup equivalence, not source authority.
+fn indexed_atomic_borrow_lookup_seed_v1() -> IndexedAtomicBorrowOriginV1 {
+    let (types, function) = indexed_atomic_fixture_v1(true, false);
+    let (checks, allocations) = indexed_atomic_inventory_fixture_v1(&types, &function);
+    authenticated_atomic_allocations_v1(&types, &function, &checks, &allocations)
+        .unwrap()
+        .indexed_borrows[0]
+        .clone()
+}
+
+fn indexed_atomic_borrow_lookup_place_v1(local: u32) -> SemanticPlaceV1 {
+    SemanticPlaceV1::new(
+        SemanticLocalIdV1::from_index(local),
+        vec![],
+        SemanticTypeIdV1::from_index(0),
+    )
+    .unwrap()
+}
+
+fn indexed_atomic_borrow_lookup_fixture_v1(
+    seed: &IndexedAtomicBorrowOriginV1,
+    blocks: &[usize],
+) -> AuthenticatedAtomicAllocationsV1 {
+    AuthenticatedAtomicAllocationsV1 {
+        indexed_borrows: blocks
+            .iter()
+            .enumerate()
+            .map(|(statement, &block)| IndexedAtomicBorrowOriginV1 {
+                borrow: ScalarAssignmentSiteV1 { block, statement },
+                place: indexed_atomic_borrow_lookup_place_v1((statement % 3 + 1) as u32),
+                ..seed.clone()
+            })
+            .collect(),
+        ..Default::default()
+    }
+}
+
+fn indexed_atomic_borrow_lookup_height_v1(mut len: usize) -> usize {
+    let mut height = 0;
+    while len != 0 {
+        height += 1;
+        len /= 2;
+    }
+    height
+}
+
+fn indexed_atomic_borrow_lookup_sort_bound_v1(len: usize) -> usize {
+    if len < 2 {
+        return 0;
+    }
+    let sifts = len / 2 + len - 1;
+    sifts * (1 + 4 * (indexed_atomic_borrow_lookup_height_v1(len) - 1))
+}
+
+fn indexed_atomic_borrow_lookup_assert_query_v1(
+    inventory: &AuthenticatedAtomicAllocationsV1,
+    original: &[IndexedAtomicBorrowOriginV1],
+    block: usize,
+    place: &SemanticPlaceV1,
+) {
+    let expected = original
+        .iter()
+        .any(|origin| origin.borrow.block == block && origin.place == *place);
+    let bucket = original
+        .iter()
+        .filter(|origin| origin.borrow.block == block)
+        .count();
+    let amount = 2 * indexed_atomic_borrow_lookup_height_v1(original.len())
+        + bucket * (place.projections().len() + 1);
+    let before = inventory.work.get();
+    assert_eq!(inventory.permits_address(block, place).unwrap(), expected);
+    assert_eq!(inventory.work.get() - before, amount);
+}
+
+fn indexed_atomic_borrow_lookup_assert_rows_v1(
+    inventory: &AuthenticatedAtomicAllocationsV1,
+    original: &[IndexedAtomicBorrowOriginV1],
+) {
+    assert_eq!(inventory.indexed_borrows.len(), original.len());
+    assert!(inventory
+        .indexed_borrows
+        .windows(2)
+        .all(|pair| pair[0].borrow.block <= pair[1].borrow.block));
+    for row in original {
+        let matching = inventory
+            .indexed_borrows
+            .iter()
+            .filter(|sorted| sorted.borrow.statement == row.borrow.statement)
+            .collect::<Vec<_>>();
+        assert_eq!(matching.len(), 1);
+        assert_eq!(matching[0].borrow.block, row.borrow.block);
+        assert_eq!(matching[0].place, row.place);
+        assert_eq!(matching[0].guard, row.guard);
+    }
+}
+
+#[test]
+fn indexed_atomic_borrow_lookup_sorts_all_small_shuffled_inventories() {
+    let seed = indexed_atomic_borrow_lookup_seed_v1();
+    let mut inventories = 0;
+    let mut queries = 0;
+    for len in 0_u32..=5 {
+        for mut code in 0..3_usize.pow(len) {
+            let blocks = (0..len)
+                .map(|_| {
+                    let block = code % 3;
+                    code /= 3;
+                    block
+                })
+                .collect::<Vec<_>>();
+            let mut inventory = indexed_atomic_borrow_lookup_fixture_v1(&seed, &blocks);
+            let original = inventory.indexed_borrows.clone();
+            inventory.order_borrows_by_block().unwrap();
+            assert!(
+                inventory.work.get() <= indexed_atomic_borrow_lookup_sort_bound_v1(blocks.len())
+            );
+            indexed_atomic_borrow_lookup_assert_rows_v1(&inventory, &original);
+            for block in [0, 1, 2, 3, usize::MAX] {
+                for local in 1..=3 {
+                    indexed_atomic_borrow_lookup_assert_query_v1(
+                        &inventory,
+                        &original,
+                        block,
+                        &indexed_atomic_borrow_lookup_place_v1(local),
+                    );
+                    queries += 1;
+                }
+            }
+            inventories += 1;
+        }
+    }
+    assert_eq!(inventories, 364);
+    assert_eq!(queries, 5460);
+}
+
+#[test]
+fn indexed_atomic_borrow_lookup_preserves_all_exact_place_components() {
+    let seed = indexed_atomic_borrow_lookup_seed_v1();
+    let ty = SemanticTypeIdV1::from_index(0);
+    let other_ty = SemanticTypeIdV1::from_index(1);
+    let kinds = [
+        SemanticProjectionKindV1::Dereference,
+        SemanticProjectionKindV1::Field(0),
+        SemanticProjectionKindV1::Field(u32::MAX),
+        SemanticProjectionKindV1::Index(SemanticLocalIdV1::from_index(0)),
+        SemanticProjectionKindV1::Index(SemanticLocalIdV1::from_index(u32::MAX)),
+        SemanticProjectionKindV1::ConstantIndex { offset: 0, minimum_length: 2, from_end: false },
+        SemanticProjectionKindV1::ConstantIndex { offset: 1, minimum_length: 2, from_end: false },
+        SemanticProjectionKindV1::ConstantIndex { offset: 0, minimum_length: 3, from_end: false },
+        SemanticProjectionKindV1::ConstantIndex { offset: 0, minimum_length: 2, from_end: true },
+        SemanticProjectionKindV1::Subslice { from: 0, to: 2, from_end: false },
+        SemanticProjectionKindV1::Subslice { from: 1, to: 2, from_end: false },
+        SemanticProjectionKindV1::Subslice { from: 0, to: 3, from_end: false },
+        SemanticProjectionKindV1::Subslice { from: 0, to: 2, from_end: true },
+        SemanticProjectionKindV1::Downcast(0),
+        SemanticProjectionKindV1::Downcast(u32::MAX),
+        SemanticProjectionKindV1::OpaqueCast,
+        SemanticProjectionKindV1::Subtype,
+    ];
+    let local = SemanticLocalIdV1::from_index(1);
+    let projection = |kind, result| SemanticProjectionV1::new(kind, result).unwrap();
+    let mut places = kinds
+        .iter()
+        .map(|&kind| SemanticPlaceV1::new(local, vec![projection(kind, ty)], ty).unwrap())
+        .collect::<Vec<_>>();
+    places.extend([
+        indexed_atomic_borrow_lookup_place_v1(1),
+        indexed_atomic_borrow_lookup_place_v1(u32::MAX),
+        SemanticPlaceV1::new(local, vec![], other_ty).unwrap(),
+        SemanticPlaceV1::new(local, vec![projection(kinds[0], other_ty)], other_ty).unwrap(),
+        SemanticPlaceV1::new(
+            local, vec![projection(kinds[0], ty), projection(kinds[1], ty)], ty,
+        ).unwrap(),
+        SemanticPlaceV1::new(
+            local, vec![projection(kinds[1], ty), projection(kinds[0], ty)], ty,
+        ).unwrap(),
+        SemanticPlaceV1::new(
+            local, vec![projection(kinds[0], other_ty), projection(kinds[1], ty)], ty,
+        ).unwrap(),
+    ]);
+    assert_eq!(places.len(), 24);
+    for (index, place) in places.iter().enumerate() {
+        assert!(!places[..index].contains(place));
+        let mut inventory = indexed_atomic_borrow_lookup_fixture_v1(&seed, &[7, 1, 7]);
+        for row in &mut inventory.indexed_borrows {
+            row.place = place.clone();
+        }
+        let original = inventory.indexed_borrows.clone();
+        inventory.order_borrows_by_block().unwrap();
+        for query in &places {
+            indexed_atomic_borrow_lookup_assert_query_v1(&inventory, &original, 7, query);
+            assert_eq!(inventory.permits_address(7, query).unwrap(), query == place);
+        }
+        assert!(!inventory.permits_address(6, place).unwrap());
+    }
+}
+
+#[test]
+fn indexed_atomic_borrow_lookup_handles_block_and_length_boundaries() {
+    let seed = indexed_atomic_borrow_lookup_seed_v1();
+    for len in [0, 1, 2, 3, 4, 7, 8, 15, 16, 31, 32, 511, 512, 552, 1023, 1024] {
+        let blocks = (0..len).rev().map(|index| index / 3).collect::<Vec<_>>();
+        let mut inventory = indexed_atomic_borrow_lookup_fixture_v1(&seed, &blocks);
+        let original = inventory.indexed_borrows.clone();
+        inventory.order_borrows_by_block().unwrap();
+        assert!(inventory.work.get() <= indexed_atomic_borrow_lookup_sort_bound_v1(len));
+        indexed_atomic_borrow_lookup_assert_rows_v1(&inventory, &original);
+        for block in [0, 1, len / 3, len, usize::MAX] {
+            for local in [1, 3, u32::MAX] {
+                indexed_atomic_borrow_lookup_assert_query_v1(
+                    &inventory, &original, block, &indexed_atomic_borrow_lookup_place_v1(local),
+                );
+            }
+        }
+    }
+    let mut inventory = indexed_atomic_borrow_lookup_fixture_v1(
+        &seed, &[usize::MAX, 0, usize::MAX - 1, usize::MAX, 0],
+    );
+    let original = inventory.indexed_borrows.clone();
+    inventory.order_borrows_by_block().unwrap();
+    for block in [0, 1, usize::MAX - 1, usize::MAX] {
+        for local in [1, 2, 3] {
+            indexed_atomic_borrow_lookup_assert_query_v1(
+                &inventory, &original, block, &indexed_atomic_borrow_lookup_place_v1(local),
+            );
+        }
+    }
+}
+
+#[test]
+fn indexed_atomic_borrow_lookup_charges_queries_transactionally() {
+    let seed = indexed_atomic_borrow_lookup_seed_v1();
+    let mut inventory = indexed_atomic_borrow_lookup_fixture_v1(&seed, &[7, 1, 7, 0]);
+    inventory.order_borrows_by_block().unwrap();
+    let place = indexed_atomic_borrow_lookup_place_v1(1);
+    let searches = 2 * indexed_atomic_borrow_lookup_height_v1(4);
+    let amount = searches + 2;
+    inventory.work.set(MAX_PROJECTED_LOOP_GRAPH_WORK_V1 - amount);
+    assert!(inventory.permits_address(7, &place).unwrap());
+    assert_eq!(inventory.work.get(), MAX_PROJECTED_LOOP_GRAPH_WORK_V1);
+    for remaining in [0, searches - 1, searches, amount - 1] {
+        let before = MAX_PROJECTED_LOOP_GRAPH_WORK_V1 - remaining;
+        inventory.work.set(before);
+        let failed_before = before + if remaining < searches { 0 } else { searches };
+        let failed_amount = if remaining < searches { searches } else { 2 };
+        assert!(matches!(
+            inventory.permits_address(7, &place),
+            Err(ProductionRankedProjectionErrorV1::GraphWorkLimit(ref diagnostic))
+                if diagnostic.reason == GraphWorkFailureV1::AboveLimit
+                    && diagnostic.before == failed_before
+                    && diagnostic.amount == failed_amount
+        ));
+        assert_eq!(inventory.work.get(), before);
+    }
+    inventory.work.set(usize::MAX);
+    assert!(matches!(
+        inventory.permits_address(7, &place),
+        Err(ProductionRankedProjectionErrorV1::GraphWorkLimit(ref diagnostic))
+            if diagnostic.reason == GraphWorkFailureV1::Overflow
+                && diagnostic.before == usize::MAX && diagnostic.amount == searches
+    ));
+    assert_eq!(inventory.work.get(), usize::MAX);
+    let empty = AuthenticatedAtomicAllocationsV1::default();
+    empty.work.set(MAX_PROJECTED_LOOP_GRAPH_WORK_V1);
+    assert!(!empty.permits_address(usize::MAX, &place).unwrap());
+    assert_eq!(empty.work.get(), MAX_PROJECTED_LOOP_GRAPH_WORK_V1);
+    empty.work.set(usize::MAX);
+    assert!(matches!(
+        empty.permits_address(0, &place),
+        Err(ProductionRankedProjectionErrorV1::GraphWorkLimit(ref diagnostic))
+            if diagnostic.reason == GraphWorkFailureV1::AboveLimit
+                && diagnostic.amount == 0 && diagnostic.before == usize::MAX
+    ));
+    assert_eq!(empty.work.get(), usize::MAX);
+}
+
+#[test]
+fn indexed_atomic_borrow_lookup_sort_work_is_charged_and_failure_is_local() {
+    let seed = indexed_atomic_borrow_lookup_seed_v1();
+    for (blocks, expected) in [([1, 0], 4), ([0, 1], 5), ([0, 0], 4)] {
+        let mut pair = indexed_atomic_borrow_lookup_fixture_v1(&seed, &blocks);
+        pair.order_borrows_by_block().unwrap();
+        assert_eq!(pair.work.get(), expected);
+    }
+    let blocks = [3, 0, 2, 1, 3, 0, 1];
+    let initial = indexed_atomic_borrow_lookup_fixture_v1(&seed, &blocks);
+    let mut completed = initial.clone();
+    completed.order_borrows_by_block().unwrap();
+    let required = completed.work.get();
+    assert!(required > 0 && required <= indexed_atomic_borrow_lookup_sort_bound_v1(blocks.len()));
+    let mut exact = initial.clone();
+    exact.work.set(MAX_PROJECTED_LOOP_GRAPH_WORK_V1 - required);
+    exact.order_borrows_by_block().unwrap();
+    assert_eq!(exact.work.get(), MAX_PROJECTED_LOOP_GRAPH_WORK_V1);
+    indexed_atomic_borrow_lookup_assert_rows_v1(&exact, &initial.indexed_borrows);
+    for remaining in 0..required {
+        let mut local = initial.clone();
+        local.work.set(MAX_PROJECTED_LOOP_GRAPH_WORK_V1 - remaining);
+        assert!(matches!(
+            local.order_borrows_by_block(),
+            Err(ProductionRankedProjectionErrorV1::GraphWorkLimit(ref diagnostic))
+                if diagnostic.reason == GraphWorkFailureV1::AboveLimit
+                    && diagnostic.before == MAX_PROJECTED_LOOP_GRAPH_WORK_V1
+                    && diagnostic.amount == 1
+        ));
+        assert_eq!(local.work.get(), MAX_PROJECTED_LOOP_GRAPH_WORK_V1);
+        // The partially reordered constructor-local value is discarded on error.
+        assert_eq!(initial.indexed_borrows[0].borrow.block, 3);
+        assert_eq!(initial.work.get(), 0);
+    }
+    let mut overflow = initial.clone();
+    overflow.work.set(usize::MAX);
+    assert!(matches!(
+        overflow.order_borrows_by_block(),
+        Err(ProductionRankedProjectionErrorV1::GraphWorkLimit(ref diagnostic))
+            if diagnostic.reason == GraphWorkFailureV1::Overflow
+    ));
+    assert_eq!(overflow.work.get(), usize::MAX);
+    assert_eq!(overflow.indexed_borrows[0].borrow.block, 3);
+}
+
+#[test]
+fn indexed_atomic_borrow_lookup_bounds_repeated_bucket_queries() {
+    let seed = indexed_atomic_borrow_lookup_seed_v1();
+    let blocks = (0..552).rev().collect::<Vec<_>>();
+    let mut inventory = indexed_atomic_borrow_lookup_fixture_v1(&seed, &blocks);
+    for row in &mut inventory.indexed_borrows {
+        row.place = seed.place.clone();
+    }
+    inventory.order_borrows_by_block().unwrap();
+    let construction = inventory.work.get();
+    assert!(construction <= indexed_atomic_borrow_lookup_sort_bound_v1(552));
+    let query_work = 2 * indexed_atomic_borrow_lookup_height_v1(552)
+        + seed.place.projections().len() + 1;
+    for query in 0..8192 {
+        assert!(inventory.permits_address(query % 552, &seed.place).unwrap());
+    }
+    assert_eq!(inventory.work.get(), construction + 8192 * query_work);
+    assert!(inventory.work.get() < MAX_PROJECTED_LOOP_GRAPH_WORK_V1);
+    assert!(inventory.indexed_uses.is_empty());
+    assert!(inventory.indexed_locals.is_empty());
+    assert!(inventory.coherent.is_empty());
+    assert!(inventory.atomic_only_roots.is_empty());
+}
+
+#[test]
+fn indexed_atomic_borrow_lookup_keeps_independent_inventories() {
+    let seed = indexed_atomic_borrow_lookup_seed_v1();
+    let mut first = indexed_atomic_borrow_lookup_fixture_v1(&seed, &[8, 0, 8]);
+    let mut second = indexed_atomic_borrow_lookup_fixture_v1(&seed, &[4, 1]);
+    first.order_borrows_by_block().unwrap();
+    second.order_borrows_by_block().unwrap();
+    let second_work = second.work.get();
+    let place = indexed_atomic_borrow_lookup_place_v1(1);
+    assert!(first.permits_address(8, &place).unwrap());
+    assert_eq!(second.work.get(), second_work);
+    assert!(!second.permits_address(8, &place).unwrap());
+    let cloned = first.clone();
+    let first_work = first.work.get();
+    assert!(cloned.permits_address(8, &place).unwrap());
+    assert_eq!(first.work.get(), first_work);
+    assert!(cloned.work.get() > first_work);
+}
+
+#[test]
+fn indexed_atomic_borrow_lookup_real_inventory_preserves_provenance_sites() {
+    let (types, function) = indexed_atomic_fixture_v1(true, false);
+    let (checks, allocations) = indexed_atomic_inventory_fixture_v1(&types, &function);
+    let inventory =
+        authenticated_atomic_allocations_v1(&types, &function, &checks, &allocations).unwrap();
+    assert!(!inventory.indexed_borrows.is_empty());
+    assert!(inventory
+        .indexed_borrows
+        .windows(2)
+        .all(|pair| pair[0].borrow.block <= pair[1].borrow.block));
+    assert!(inventory.indexed_uses.windows(2).all(|pair| {
+        (pair[0].block, pair[0].statement) < (pair[1].block, pair[1].statement)
+    }));
+    for row in &inventory.indexed_borrows {
+        assert!(inventory.permits_address(row.borrow.block, &row.place).unwrap());
+        let record = &function.blocks()[row.borrow.block].statements()[row.borrow.statement];
+        let SemanticStatementKindV1::Assign(assignment) = record.kind() else {
+            panic!("retained borrow is not its exact source assignment");
+        };
+        let SemanticRvalueKindV1::Borrow { kind, place } = assignment.value().kind() else {
+            panic!("retained borrow is not its exact source rvalue");
+        };
+        assert_eq!(*kind, SemanticBorrowKindV1::Shared);
+        assert_eq!(place, &row.place);
+        assert!(!inventory.permits_address(usize::MAX, &row.place).unwrap());
+    }
+    for usage in &inventory.indexed_uses {
+        inventory
+            .validate_statement(
+                usage.block,
+                usage.statement,
+                &function.blocks()[usage.block].statements()[usage.statement],
+            )
+            .unwrap();
+    }
+}
+
+#[test]
+fn indexed_atomic_borrow_lookup_real_inventory_keeps_atomic_refusals() {
+    for (marker, escape) in [(false, false), (true, true)] {
+        let (types, function) = indexed_atomic_fixture_v1(marker, escape);
+        let (checks, allocations) = indexed_atomic_inventory_fixture_v1(&types, &function);
+        let inventory =
+            authenticated_atomic_allocations_v1(&types, &function, &checks, &allocations).unwrap();
+        assert!(inventory.indexed_borrows.iter().all(|row| row.borrow.block != 1));
+        assert!(!inventory
+            .permits_address(1, &indexed_atomic_borrow_lookup_seed_v1().place)
+            .unwrap());
+    }
+    let (types, function) = indexed_atomic_fixture_v1(true, false);
+    let (checks, allocations) = indexed_atomic_inventory_fixture_v1(&types, &function);
+    let missing =
+        authenticated_atomic_allocations_v1(&types, &function, &[], &allocations).unwrap();
+    assert!(missing.indexed_borrows.is_empty());
+    let mut duplicate = checks.clone();
+    duplicate.push(checks[0]);
+    assert!(
+        authenticated_atomic_allocations_v1(&types, &function, &duplicate, &allocations).is_err()
+    );
+}

@@ -1,0 +1,30 @@
+{
+  "adopted_reaped": [],
+  "command": {
+    "bytes": 979,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-indexed-atomic-borrow-lookup-compiler-tools-audit-v228-v1/fe2o3-engineering-lld-proxy-ldd.command.json",
+    "sha256": "772ac43a761a0294c3993f1f2bc5b5740cb132f5432d472e07d1c05a9ffba968"
+  },
+  "elapsed_ns": 50443142,
+  "exception": null,
+  "exit_code": 0,
+  "forced_cleanup": false,
+  "label": "fe2o3-engineering-lld-proxy-ldd",
+  "natural_exit": true,
+  "observed_signals": [],
+  "pgid": 2726212,
+  "pid": 2726212,
+  "process_group_absent": true,
+  "reaped": true,
+  "stderr": {
+    "bytes": 0,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-indexed-atomic-borrow-lookup-compiler-tools-audit-v228-v1/fe2o3-engineering-lld-proxy-ldd.stderr",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "stdout": {
+    "bytes": 230,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-indexed-atomic-borrow-lookup-compiler-tools-audit-v228-v1/fe2o3-engineering-lld-proxy-ldd.stdout",
+    "sha256": "a755327d9807b0e15e924a99e5b86a14d971c09fcf531af1ca561518cd7d3586"
+  },
+  "timed_out": false
+}

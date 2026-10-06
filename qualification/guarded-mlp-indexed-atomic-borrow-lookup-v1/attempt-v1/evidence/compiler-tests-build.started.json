@@ -1,0 +1,29 @@
+{
+  "argv": [
+    "/usr/bin/prlimit",
+    "--as=12884901888",
+    "--cpu=1200",
+    "--fsize=1073741824",
+    "--core=0",
+    "--",
+    "/home/harmenon/.rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/bin/cargo",
+    "test",
+    "--offline",
+    "--locked",
+    "--manifest-path",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-indexed-atomic-borrow-lookup-cpu-v228-v1/fe2o3/Cargo.toml",
+    "--jobs",
+    "2",
+    "-p",
+    "rustc-codegen-fe2o3",
+    "--lib",
+    "--test",
+    "production_extraction_driver_v1",
+    "--test",
+    "production_general_matrix_driver_v1",
+    "--no-run",
+    "--message-format=json"
+  ],
+  "pgid": 2659119,
+  "pid": 2659119
+}

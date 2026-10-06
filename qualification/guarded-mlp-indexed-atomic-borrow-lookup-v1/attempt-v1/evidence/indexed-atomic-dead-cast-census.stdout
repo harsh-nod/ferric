@@ -1,0 +1,14 @@
+
+running 9 tests
+test production_ranked_projection_v1::tests::indexed_atomic_dead_cast_census_bounds_scratch_before_allocation ... ok
+test production_ranked_projection_v1::tests::indexed_atomic_dead_cast_census_charges_exact_build_and_cached_query_bounds ... ok
+test production_ranked_projection_v1::tests::indexed_atomic_dead_cast_census_excludes_whole_definition_and_distinguishes_sites ... ok
+test production_ranked_projection_v1::tests::indexed_atomic_dead_cast_census_failed_build_never_publishes_partial_state ... ok
+test production_ranked_projection_v1::tests::indexed_atomic_dead_cast_census_ignores_storage_and_checks_roles_and_unreachable_blocks ... ok
+test production_ranked_projection_v1::tests::indexed_atomic_dead_cast_census_isolates_immutable_functions_and_retains_cast_gates ... ok
+test production_ranked_projection_v1::tests::indexed_atomic_dead_cast_census_many_candidates_share_one_complete_scan ... ok
+test production_ranked_projection_v1::tests::indexed_atomic_dead_cast_census_matches_legacy_for_all_statement_positions ... ok
+test production_ranked_projection_v1::tests::indexed_atomic_dead_cast_census_matches_legacy_for_all_terminator_positions ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 1317 filtered out; finished in 0.01s
+

@@ -1,0 +1,44 @@
+{
+  "adopted_reaped": [],
+  "argv": [
+    "/usr/bin/prlimit",
+    "--as=12884901888",
+    "--cpu=1200",
+    "--fsize=1073741824",
+    "--core=0",
+    "--",
+    "/usr/bin/python3.12",
+    "-I",
+    "-S",
+    "-B",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-indexed-atomic-borrow-lookup-loader-tests-v228-v1/loader_test_entry.py"
+  ],
+  "command": {
+    "bytes": 908,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-indexed-atomic-borrow-lookup-loader-tests-v228-v1/evidence/indexed-atomic-borrow-lookup-loader-tests.command.json",
+    "sha256": "4d88df144228dc6f8dbafb362def91b9f7a59e9f5111b1b7554f71b7ed5b19d3"
+  },
+  "elapsed_ns": 35649389009,
+  "exception": null,
+  "exit_code": 0,
+  "forced_cleanup": false,
+  "label": "indexed-atomic-borrow-lookup-loader-tests",
+  "natural_exit": true,
+  "observed_signals": [],
+  "pgid": 2715867,
+  "pid": 2715867,
+  "process_group_absent": true,
+  "reaped": true,
+  "stderr": {
+    "bytes": 4144,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-indexed-atomic-borrow-lookup-loader-tests-v228-v1/evidence/indexed-atomic-borrow-lookup-loader-tests.stderr",
+    "sha256": "dda2e16120b5edda73a38c767d9ffa744e715a4e0dc89b3f1c2d43b7e07c1419"
+  },
+  "stdout": {
+    "bytes": 5604,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-indexed-atomic-borrow-lookup-loader-tests-v228-v1/evidence/indexed-atomic-borrow-lookup-loader-tests.stdout",
+    "sha256": "42a12f58d285c9f65515e8b30f20c0f0e7a8dc4b5eabfa32538bf1f745b8117a"
+  },
+  "storage_failure": null,
+  "timed_out": false
+}

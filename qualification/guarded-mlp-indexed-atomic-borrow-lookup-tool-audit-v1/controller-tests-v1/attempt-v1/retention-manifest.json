@@ -1,0 +1,66 @@
+{
+  "compiler_qualification": false,
+  "files": {
+    "audit_tools.py": {
+      "bytes": 79270,
+      "sha256": "70e8e3c711f9a6e4a32b6ddedb51f076d80b4c6272e3f4e0fee5040685d5f0ad"
+    },
+    "evidence/complete.json": {
+      "bytes": 14064,
+      "sha256": "ab5c802a331e8c4ef1fdebca46c072a3617e87aafb55b14f3b15a14b63f2b59b"
+    },
+    "evidence/indexed-atomic-borrow-lookup-loader-tests.command.json": {
+      "bytes": 908,
+      "sha256": "4d88df144228dc6f8dbafb362def91b9f7a59e9f5111b1b7554f71b7ed5b19d3"
+    },
+    "evidence/indexed-atomic-borrow-lookup-loader-tests.result.json": {
+      "bytes": 1709,
+      "sha256": "1585d0ef0ecf9f1ca0546c1b844f2a51e1972c7bf0a24a9067043b9b1677f87e"
+    },
+    "evidence/indexed-atomic-borrow-lookup-loader-tests.started.json": {
+      "bytes": 395,
+      "sha256": "fd43c5dda08fe7eb9d5609b413165596c9a6bad91f4769453eb033a3080ccd8c"
+    },
+    "evidence/indexed-atomic-borrow-lookup-loader-tests.stderr": {
+      "bytes": 4144,
+      "sha256": "dda2e16120b5edda73a38c767d9ffa744e715a4e0dc89b3f1c2d43b7e07c1419"
+    },
+    "evidence/indexed-atomic-borrow-lookup-loader-tests.stdout": {
+      "bytes": 5604,
+      "sha256": "42a12f58d285c9f65515e8b30f20c0f0e7a8dc4b5eabfa32538bf1f745b8117a"
+    },
+    "evidence/sources-after.json": {
+      "bytes": 1488,
+      "sha256": "a9e12be80f9bf02ca2e0cb389744c429a521f9b5665280ce2ba3691b1ce03503"
+    },
+    "evidence/sources-before.json": {
+      "bytes": 1488,
+      "sha256": "a9e12be80f9bf02ca2e0cb389744c429a521f9b5665280ce2ba3691b1ce03503"
+    },
+    "input-manifest.json": {
+      "bytes": 1130,
+      "sha256": "fee5f37d84ea46c0d7cd0118f62d2f2a1369b4c41847ce6b641f115e7222c3e4"
+    },
+    "loader_test_entry.py": {
+      "bytes": 6531,
+      "sha256": "2605f080393702f041b30113d5d11c081eddef8369622ca79b1aa505509aca6a"
+    },
+    "run_tests.py": {
+      "bytes": 14233,
+      "sha256": "df587ecd79b365910faba92e850a83869103bbd1e0e86528a656ad254e5b4c13"
+    },
+    "supervisor.py": {
+      "bytes": 41485,
+      "sha256": "8824478a6415dee39d28ccefb0881fc0687ac724f5a9c5a4540310fb5196b9bc"
+    },
+    "test_audit_tools.py": {
+      "bytes": 67523,
+      "sha256": "55d52aa79bb02c1feb07c7f18cdd83605d367a0c34c565c9f7627263bdc978e0"
+    }
+  },
+  "gpu_execution": false,
+  "passed": true,
+  "schema": "ferric-indexed-atomic-borrow-lookup-loader-tests-retention-v1",
+  "synthetic_loader_only": true,
+  "tests_passed": 26
+}

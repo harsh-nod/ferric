@@ -1,0 +1,37 @@
+{
+  "files": {
+    "audit_tools.py": {
+      "bytes": 79270,
+      "sha256": "70e8e3c711f9a6e4a32b6ddedb51f076d80b4c6272e3f4e0fee5040685d5f0ad"
+    },
+    "loader_test_entry.py": {
+      "bytes": 6531,
+      "sha256": "2605f080393702f041b30113d5d11c081eddef8369622ca79b1aa505509aca6a"
+    },
+    "run_tests.py": {
+      "bytes": 14233,
+      "sha256": "df587ecd79b365910faba92e850a83869103bbd1e0e86528a656ad254e5b4c13"
+    },
+    "supervisor.py": {
+      "bytes": 41485,
+      "sha256": "8824478a6415dee39d28ccefb0881fc0687ac724f5a9c5a4540310fb5196b9bc"
+    },
+    "test_audit_tools.py": {
+      "bytes": 67523,
+      "sha256": "55d52aa79bb02c1feb07c7f18cdd83605d367a0c34c565c9f7627263bdc978e0"
+    }
+  },
+  "schema": "ferric-indexed-atomic-borrow-lookup-loader-test-input-v1",
+  "tool_pins": {
+    "prlimit": {
+      "bytes": 27536,
+      "path": "/usr/bin/prlimit",
+      "sha256": "17064f67e650d6152a6902b013aab496b54c87587c8eea6f5023aafee6154069"
+    },
+    "python": {
+      "bytes": 8020928,
+      "path": "/usr/bin/python3.12",
+      "sha256": "e1efa562c2cc2e35521a5c9c9b9939921001ff8ca9708a13ef15ace68cc2ccd7"
+    }
+  }
+}

@@ -1,0 +1,70 @@
+{
+  "compiler_qualification": false,
+  "files": {
+    "evidence/complete.json": {
+      "bytes": 12836,
+      "sha256": "1efe8a746ec7e269575ed74138aaca2eaa422c5bfbf5fa8a107eed6ddbd1bf49"
+    },
+    "evidence/indexed-atomic-borrow-lookup-lowering-tests.command.json": {
+      "bytes": 916,
+      "sha256": "43475c51d094161b73a48b7d485b582d804ffb1a06c79fef2c793491b36c7fbd"
+    },
+    "evidence/indexed-atomic-borrow-lookup-lowering-tests.result.json": {
+      "bytes": 1726,
+      "sha256": "15ef7b4c0cce9ea54321bc319b4cd277012fb255887b838a1a4fda4095bc6d84"
+    },
+    "evidence/indexed-atomic-borrow-lookup-lowering-tests.started.json": {
+      "bytes": 399,
+      "sha256": "9da93fe16f2fa7e56f333bf9b85c2326cd4b0851c919db19f3e0c2c3a7f5d912"
+    },
+    "evidence/indexed-atomic-borrow-lookup-lowering-tests.stderr": {
+      "bytes": 2872,
+      "sha256": "39ed62d4a7bddfbf7bb0009ae27b40ea7645aaa677af10e4d509a0352e32f991"
+    },
+    "evidence/indexed-atomic-borrow-lookup-lowering-tests.stdout": {
+      "bytes": 4048,
+      "sha256": "879ffeb87d8e4a99fa470cc978405a91db00863b6188b09fe79a491c75262bc4"
+    },
+    "evidence/sources-after.json": {
+      "bytes": 1799,
+      "sha256": "46b35405c24f88859a6fba27779a94df2f05fc4ec5e729c410d69a94d331936e"
+    },
+    "evidence/sources-before.json": {
+      "bytes": 1799,
+      "sha256": "46b35405c24f88859a6fba27779a94df2f05fc4ec5e729c410d69a94d331936e"
+    },
+    "input-manifest.json": {
+      "bytes": 1270,
+      "sha256": "d6c34f7989c213e8ad54711be083cbe69a99c02993194bd9f4dadb760cd1f7f3"
+    },
+    "lowering.py": {
+      "bytes": 52761,
+      "sha256": "b12f845b12ef6b6a8674708008e1bb24813211f04aeeae40f5d5268b84f2430a"
+    },
+    "lowering_test_entry.py": {
+      "bytes": 5893,
+      "sha256": "52ee35cd41ad836170cafc5a4ad48df2fae7b6c43a9e74191790d0f2cc34946a"
+    },
+    "run_tests.py": {
+      "bytes": 13522,
+      "sha256": "14ca0bf7e5d1def0b00fd117d6c9d70afbfe6b8643dd3c855b2621b81d277f96"
+    },
+    "supervisor.py": {
+      "bytes": 41485,
+      "sha256": "8824478a6415dee39d28ccefb0881fc0687ac724f5a9c5a4540310fb5196b9bc"
+    },
+    "test_lowering.py": {
+      "bytes": 30167,
+      "sha256": "43eb62bedf535ba7d8528843117d76090036f02e6397e4628146e4c02e3112c7"
+    },
+    "test_normalization.py": {
+      "bytes": 6507,
+      "sha256": "6d4d91e24fa483e81d99ae1dd89a629eb3b7a17aaef94e8f46958123c292465f"
+    }
+  },
+  "gpu_execution": false,
+  "passed": true,
+  "schema": "ferric-indexed-atomic-borrow-lookup-lowering-tests-retention-v1",
+  "synthetic_lowering_only": true,
+  "tests_passed": 19
+}

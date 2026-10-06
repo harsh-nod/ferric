@@ -1,0 +1,15 @@
+
+running 10 tests
+test trusted_device_items::core_attention_option_v1::tests::attention_option_real_callback_call_mutations ... ok
+test trusted_device_items::core_attention_option_v1::tests::attention_option_real_drop_mutations ... ok
+test trusted_device_items::core_attention_option_v1::tests::attention_option_real_identity_payload_and_callback_refusals ... ok
+test trusted_device_items::core_attention_option_v1::tests::attention_option_real_local_type_and_scope_mutations ... ok
+test trusted_device_items::core_attention_option_v1::tests::attention_option_real_operations_and_cleanup_mutations ... ok
+test trusted_device_items::core_attention_option_v1::tests::attention_option_real_payload_and_aggregate_mutations ... ok
+test trusted_device_items::core_attention_option_v1::tests::attention_option_real_provider_and_closure_positives ... ok
+test trusted_device_items::core_attention_option_v1::tests::attention_option_real_shape_mutations ... ok
+test trusted_device_items::core_attention_option_v1::tests::attention_option_real_source_scope_mutations ... ok
+test trusted_device_items::core_attention_option_v1::tests::attention_option_real_switch_and_return_mutations ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 1316 filtered out; finished in 14.72s
+

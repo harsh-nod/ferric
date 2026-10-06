@@ -1,0 +1,42 @@
+{
+  "adopted_reaped": [],
+  "argv": [
+    "/usr/bin/prlimit",
+    "--as=12884901888",
+    "--cpu=1200",
+    "--fsize=1073741824",
+    "--core=0",
+    "--",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-indexed-atomic-borrow-lookup-cpu-v228-v1/target/debug/deps/production_extraction_driver_v1-cb9b8b5de4191776",
+    "--list",
+    "--format=terse"
+  ],
+  "command": {
+    "bytes": 2385,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-indexed-atomic-borrow-lookup-cpu-v228-v1/evidence/atomic-extraction-list.command.json",
+    "sha256": "651dc1abe7e8115c9d33183139d1fcdb62817984005ecf53f75b7c641be7b58d"
+  },
+  "elapsed_ns": 113240740,
+  "exception": null,
+  "exit_code": 0,
+  "forced_cleanup": false,
+  "label": "atomic-extraction-list",
+  "natural_exit": true,
+  "observed_signals": [],
+  "pgid": 2667868,
+  "pid": 2667868,
+  "process_group_absent": true,
+  "reaped": true,
+  "stderr": {
+    "bytes": 0,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-indexed-atomic-borrow-lookup-cpu-v228-v1/evidence/atomic-extraction-list.stderr",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "stdout": {
+    "bytes": 3364,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-indexed-atomic-borrow-lookup-cpu-v228-v1/evidence/atomic-extraction-list.stdout",
+    "sha256": "2989c7c6a72a80c3fe43c9e68e7438fde2b32eddefbe192740e5c7d99d48ccd5"
+  },
+  "storage_failure": null,
+  "timed_out": false
+}

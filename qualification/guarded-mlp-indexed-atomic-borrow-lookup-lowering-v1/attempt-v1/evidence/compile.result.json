@@ -1,0 +1,32 @@
+{
+  "adopted_reaped": [],
+  "command": {
+    "bytes": 7765,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-indexed-atomic-borrow-lookup-lowering-v228-v1/compile.command.json",
+    "sha256": "0fa1a63b2aa10b62bb4082b8479ad2012113a7d35cef50bd6fad86b1f75b922a"
+  },
+  "elapsed_ns": 117666543010,
+  "exception": null,
+  "exit_code": 1,
+  "forced_cleanup": false,
+  "label": "compile",
+  "minimum_free_bytes": 45430562816,
+  "natural_exit": true,
+  "observed_signals": [],
+  "peak_private_scratch_bytes": 1027960191,
+  "pgid": 2730203,
+  "pid": 2730203,
+  "process_group_absent": true,
+  "reaped": true,
+  "stderr": {
+    "bytes": 8018,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-indexed-atomic-borrow-lookup-lowering-v228-v1/compile.stderr",
+    "sha256": "646b7e35b6dbf8cd8b00e43f52008824ccc06634d636238fbc23fc33d9ccdb83"
+  },
+  "stdout": {
+    "bytes": 0,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-indexed-atomic-borrow-lookup-lowering-v228-v1/compile.stdout",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "timed_out": false
+}

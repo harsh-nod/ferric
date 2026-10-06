@@ -1,0 +1,14 @@
+
+running 9 tests
+test production_ranked_projection_v1::tests::indexed_atomic_borrow_lookup_bounds_repeated_bucket_queries ... ok
+test production_ranked_projection_v1::tests::indexed_atomic_borrow_lookup_charges_queries_transactionally ... ok
+test production_ranked_projection_v1::tests::indexed_atomic_borrow_lookup_handles_block_and_length_boundaries ... ok
+test production_ranked_projection_v1::tests::indexed_atomic_borrow_lookup_keeps_independent_inventories ... ok
+test production_ranked_projection_v1::tests::indexed_atomic_borrow_lookup_preserves_all_exact_place_components ... ok
+test production_ranked_projection_v1::tests::indexed_atomic_borrow_lookup_real_inventory_keeps_atomic_refusals ... ok
+test production_ranked_projection_v1::tests::indexed_atomic_borrow_lookup_real_inventory_preserves_provenance_sites ... ok
+test production_ranked_projection_v1::tests::indexed_atomic_borrow_lookup_sort_work_is_charged_and_failure_is_local ... ok
+test production_ranked_projection_v1::tests::indexed_atomic_borrow_lookup_sorts_all_small_shuffled_inventories ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 1317 filtered out; finished in 0.02s
+

@@ -1,0 +1,15 @@
+{
+  "argv": [
+    "/usr/bin/prlimit",
+    "--as=12884901888",
+    "--cpu=1200",
+    "--fsize=1073741824",
+    "--core=0",
+    "--",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-indexed-atomic-borrow-lookup-cpu-v228-v1/target/debug/deps/fe2o3_pliron-bfbb58262805e3df",
+    "production_analysis::pliron_ranked_bounds::resource_upper_bound_tests::memory_bounds_block_cap_",
+    "--test-threads=1"
+  ],
+  "pgid": 2686508,
+  "pid": 2686508
+}

@@ -6,7 +6,22 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Latest: [the use-lookup-qualified guarded compile reaches the address-permission scan](../qualification/guarded-mlp-indexed-atomic-use-lookup-lowering-v1/README.md).
+Latest: [the borrow-lookup-qualified guarded compile reaches a ranked block-limit refusal](../qualification/guarded-mlp-indexed-atomic-borrow-lookup-lowering-v1/README.md).
+The [new compiler qualification](../qualification/guarded-mlp-indexed-atomic-borrow-lookup-v1/README.md)
+passes all 41 phases across 28 scopes: 1,302 compiler and 1,507 Pliron tests,
+with focused repeats and extraction controls totaling 2,930 passing
+executions and 25 unchanged ignores. The loader/lowering fixtures pass 26/19
+tests, and all 14 real binary-loader inspections pass. The guarded compiler
+then exits naturally with status 1 after 117.666543 seconds; it is reaped,
+leaves no process group, and preserves source/input checks with no posterrors.
+Its raw diagnostic is `semantic CFG projection exceeds the ranked block limit`.
+Qualified-source inspection ties that message to projected CFG expansion,
+but the failing root and expanded count are not yet recorded. No HSACO,
+GPU, alias verdict, model numerical or performance result is produced.
+The next step is a bounded diagnostic, not an unmeasured limit increase.
+All milestones and the 700 tokens/s target remain open.
+
+Previously, [the use-lookup-qualified guarded compile reaches the address-permission scan](../qualification/guarded-mlp-indexed-atomic-use-lookup-lowering-v1/README.md).
 The actual rejection is now `permits_address` at `indexed_atomic_v1.rs:84:14`:
 a 1,656-unit scan would raise graph work from 3,145,230 to 3,146,886, above
 the unchanged 3,145,728 limit. The compiler exits naturally after 117.361738

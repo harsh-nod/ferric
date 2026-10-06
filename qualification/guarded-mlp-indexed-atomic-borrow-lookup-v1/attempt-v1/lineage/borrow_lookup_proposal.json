@@ -1,0 +1,118 @@
+{
+  "actual_failure": {
+    "bytes": 13412,
+    "sha256": "5a9b97db2af7e9e6f152aa84f632112abb587a27f3ffb6dca14920b0657a53df"
+  },
+  "actual_failure_caller_identified": true,
+  "actual_failure_stderr": {
+    "bytes": 8512,
+    "sha256": "f47c6cd5b7bbd4d9238212cd6b570dfd6e7b2898d9518e5af435f110f4db1160"
+  },
+  "base_complete": {
+    "bytes": 1321758,
+    "sha256": "e6d2f3d59d8dff63520be146a8e74cc79ead0baec29ea655e2c369232fa1dea9"
+  },
+  "base_controller": {
+    "bytes": 70243,
+    "sha256": "2051a7e5821979a52d89c3716fef2920e0b1c34f4c091fbd7ed427c2b2ea8bd8"
+  },
+  "base_input": {
+    "bytes": 1121999,
+    "sha256": "4ae19d4bcb05eee71ba51ef7712a9c5cd70fbebd161f25604b9d1cd596eaad0f"
+  },
+  "base_sources": {
+    "bytes": 2292086,
+    "sha256": "4070da1f4c8ae61c34354b20092c5c1a26b080e43be52c3121551f3cccdbf083"
+  },
+  "base_tree": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/guarded-mlp-ranked-graph-work-diagnostic-input-v228-v2/fe2o3",
+  "base_tree_overrides": {
+    "crates/rustc-codegen-fe2o3/src/production_ranked_projection_v1/indexed_atomic_dead_cast_census_v1_tests.rs": {
+      "bytes": 30663,
+      "sha256": "1e99fc6ac4b278aba57e710ac5d3a4bef49cfdb8b2c98c8f201408531192a1e5"
+    },
+    "crates/rustc-codegen-fe2o3/src/production_ranked_projection_v1/indexed_atomic_dead_cast_v1.rs": {
+      "bytes": 15995,
+      "sha256": "d07d00bdf193d3815b5785355d05a3f5c0d286dfe8a62872a0aa918c2bc3f1fa"
+    },
+    "crates/rustc-codegen-fe2o3/src/production_ranked_projection_v1/indexed_atomic_dead_cast_v1_tests.rs": {
+      "bytes": 13976,
+      "sha256": "9d998bee879b0817330e9ff85876cbb85e94059e8382e10c3ac2c93d0ad61354"
+    },
+    "crates/rustc-codegen-fe2o3/src/production_ranked_projection_v1/indexed_atomic_membership_v1_tests.rs": {
+      "bytes": 11457,
+      "sha256": "6d0ad5676dcfcb43decaa90bd7eef281458fe7d8b74ec7a7077ebeae1a3cd627"
+    },
+    "crates/rustc-codegen-fe2o3/src/production_ranked_projection_v1/indexed_atomic_use_lookup_v1_tests.rs": {
+      "bytes": 15247,
+      "sha256": "fc8c41c2644320140ce5ef8c3ed32f338fc65042c6adc5aa667580782d6590ef"
+    },
+    "crates/rustc-codegen-fe2o3/src/production_ranked_projection_v1/indexed_atomic_v1.rs": {
+      "bytes": 31432,
+      "sha256": "cdb2ace53ae49eebfa84fc867a0c773b06e132c3f974f7d8afd7c28633e358fa"
+    },
+    "crates/rustc-codegen-fe2o3/src/production_ranked_projection_v1/indexed_atomic_v1_tests.rs": {
+      "bytes": 35760,
+      "sha256": "2c6f803e072b46fd0d830eae4d8f6990f401d053d027bf407cd0909cf567015b"
+    }
+  },
+  "block_limit": 2048,
+  "borrow_lookup_optimization": true,
+  "compiler_scratch_added": false,
+  "edge_limit": 2048,
+  "files": {
+    "crates/rustc-codegen-fe2o3/src/production_ranked_projection_v1/indexed_atomic_borrow_lookup_v1_tests.rs": {
+      "after": {
+        "bytes": 18700,
+        "sha256": "8eb13c4a174b6768a229414c9bd27b8c5724e0048f820d2a29a24d2531653b40"
+      },
+      "before": null
+    },
+    "crates/rustc-codegen-fe2o3/src/production_ranked_projection_v1/indexed_atomic_v1.rs": {
+      "after": {
+        "bytes": 34081,
+        "sha256": "858aba7eec2bfc76a4c3b45d0a2ddd7d5ec37971da96a460ac867a7640b92503"
+      },
+      "before": {
+        "bytes": 31432,
+        "sha256": "cdb2ace53ae49eebfa84fc867a0c773b06e132c3f974f7d8afd7c28633e358fa"
+      }
+    },
+    "crates/rustc-codegen-fe2o3/src/production_ranked_projection_v1/indexed_atomic_v1_tests.rs": {
+      "after": {
+        "bytes": 35815,
+        "sha256": "04a1cf0206948315b74026c2e0ba9b83ead89e5c272e18c26329e86098df0db9"
+      },
+      "before": {
+        "bytes": 35760,
+        "sha256": "2c6f803e072b46fd0d830eae4d8f6990f401d053d027bf407cd0909cf567015b"
+      }
+    }
+  },
+  "filter": "production_ranked_projection_v1::tests::indexed_atomic_borrow_lookup_",
+  "graph_analysis_optimization": true,
+  "graph_work_limit": 3145728,
+  "inherited_dead_cast_census_optimization": true,
+  "inherited_graph_work_diagnostics": true,
+  "inherited_membership_lookup_optimization": true,
+  "inherited_use_lookup_optimization": true,
+  "integration_patch": {
+    "bytes": 23468,
+    "sha256": "3bffd4e8fa956ae4051457cfd5053e1b4c3e8bba0f0cf465fe236267139b3dd2"
+  },
+  "resource_admission_may_change": true,
+  "schema": "ferric-guarded-mlp-indexed-atomic-borrow-lookup-source-v1",
+  "semantic_predicates_changed": false,
+  "source_only": true,
+  "structural_limits_changed": false,
+  "test_names": [
+    "production_ranked_projection_v1::tests::indexed_atomic_borrow_lookup_bounds_repeated_bucket_queries",
+    "production_ranked_projection_v1::tests::indexed_atomic_borrow_lookup_charges_queries_transactionally",
+    "production_ranked_projection_v1::tests::indexed_atomic_borrow_lookup_handles_block_and_length_boundaries",
+    "production_ranked_projection_v1::tests::indexed_atomic_borrow_lookup_keeps_independent_inventories",
+    "production_ranked_projection_v1::tests::indexed_atomic_borrow_lookup_preserves_all_exact_place_components",
+    "production_ranked_projection_v1::tests::indexed_atomic_borrow_lookup_real_inventory_keeps_atomic_refusals",
+    "production_ranked_projection_v1::tests::indexed_atomic_borrow_lookup_real_inventory_preserves_provenance_sites",
+    "production_ranked_projection_v1::tests::indexed_atomic_borrow_lookup_sort_work_is_charged_and_failure_is_local",
+    "production_ranked_projection_v1::tests::indexed_atomic_borrow_lookup_sorts_all_small_shuffled_inventories"
+  ]
+}
