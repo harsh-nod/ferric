@@ -1,0 +1,94 @@
+{
+  "actual_data_inputs": 14,
+  "files": {
+    "README.md": {
+      "bytes": 6128,
+      "sha256": "be1db3b277469d3be6ed8db1c8b7a4ec0e573ba5fbb3c5bf86c1d74d3f4d0791"
+    },
+    "capture.py": {
+      "bytes": 6716,
+      "sha256": "ab101bd82fad89c889880c77c6c7fdaf2bfcf0ac97322fb6c937ddc600ef38b1"
+    },
+    "contract/arithmetic.rs": {
+      "bytes": 7432,
+      "sha256": "e221d035dc7f0c70c1dc362cf754a4928dc76f69eb4e66465b811057d0bacd6a"
+    },
+    "contract/kernels.rs": {
+      "bytes": 2520,
+      "sha256": "3293184a9b00aa5b33a735a16d9d0665b4b88614e1e61a3f624e11b080eae8cb"
+    },
+    "exact_bf16.py": {
+      "bytes": 2554,
+      "sha256": "b9e53a3afa4fb851a8e7231c020e5ed19fb55deb7ce4d9f0bff1454e472acddf"
+    },
+    "fp32_replay.py": {
+      "bytes": 4657,
+      "sha256": "9a7eb5e4f5c503c83b126c21f6cf880b46dda58881eb22a62f71ca2e4a74cb13"
+    },
+    "inputs.json": {
+      "bytes": 6093,
+      "sha256": "ff489d01f1ded2f7d84f0d98f0f7291a28776a328d3d749ebcffc091a82c8fd6"
+    },
+    "r2.py": {
+      "bytes": 8835,
+      "sha256": "c9e2d565a5bfa384bf15330653f83422089ad47d245a9bcee159e88caa3dadfd"
+    },
+    "run.py": {
+      "bytes": 14483,
+      "sha256": "b4cdd5b3d5c9f15bf4b5bce7852774f869fe262f1fbd9a839ea8f7114bdfc467"
+    },
+    "test_fp32_replay.py": {
+      "bytes": 9013,
+      "sha256": "87a358807c4f76fbd7b0fc7603dc08de7e34c66871b06aa6d8ac89f165798adb"
+    },
+    "test_r2.py": {
+      "bytes": 10617,
+      "sha256": "41b9f1055f3fa97a4c804b9c9ab85ee6e0d9fd533f8d5641f981f96f1fc179dc"
+    }
+  },
+  "future_terminal": null,
+  "gpu_execution": false,
+  "inherited_tests": 12,
+  "native_execution": false,
+  "new_tests": 8,
+  "numerical_acceptance": false,
+  "performance_claim": false,
+  "planned_framework_control_words": 4096,
+  "planned_native_output_encodings": 8192,
+  "planned_native_rows_per_rank": 4096,
+  "planned_tests": 20,
+  "production_authority": false,
+  "qualified_arithmetic_source_bodies_unchanged": true,
+  "qualified_capture_function_ast_unchanged": true,
+  "replay_executed_by_author": false,
+  "schema": "ferric-guarded-mlp-current-r2-source-v1",
+  "source_only": true,
+  "test_names": [
+    "test_fp32_replay.Fp32ReplayTests.test_addition_matches_fraction_not_host_float",
+    "test_fp32_replay.Fp32ReplayTests.test_all_lanes_all_steps_and_xor_tree_fraction_reference",
+    "test_fp32_replay.Fp32ReplayTests.test_bf16_boundary_materializes_before_residual",
+    "test_fp32_replay.Fp32ReplayTests.test_encoding_decoding_matches_independent_fraction",
+    "test_fp32_replay.Fp32ReplayTests.test_fraction_nearest_neighbor_midpoints_and_neighbors",
+    "test_fp32_replay.Fp32ReplayTests.test_gradual_underflow_and_signed_zero",
+    "test_fp32_replay.Fp32ReplayTests.test_lane_cancellation_preserves_actual_association",
+    "test_fp32_replay.Fp32ReplayTests.test_midpoint_distance_has_explicit_exact_scale",
+    "test_fp32_replay.Fp32ReplayTests.test_nonfinite_shape_and_overflow_refusals",
+    "test_fp32_replay.Fp32ReplayTests.test_overflow_threshold_both_signs",
+    "test_fp32_replay.Fp32ReplayTests.test_partials_are_not_individually_narrowed",
+    "test_fp32_replay.Fp32ReplayTests.test_product_underflow_and_subnormal_counters",
+    "test_r2.R2Tests.test_all_rows_and_independent_rank_residuals",
+    "test_r2.R2Tests.test_capture_closes_all_parts_and_actual_output_join",
+    "test_r2.R2Tests.test_failed_admission_identity_and_saved_observations_refuse",
+    "test_r2.R2Tests.test_framework_control_is_separate_and_reports_mismatch",
+    "test_r2.R2Tests.test_materialization_zero_and_overflow_boundaries",
+    "test_r2.R2Tests.test_nonfinite_all_operand_and_output_roles_refuse",
+    "test_r2.R2Tests.test_one_mutated_output_remains_an_exact_mismatch",
+    "test_r2.R2Tests.test_role_extent_and_bytes_type_are_closed"
+  ],
+  "tests_executed_by_author": false,
+  "unchanged_helpers": [
+    "exact_bf16.py",
+    "fp32_replay.py",
+    "test_fp32_replay.py"
+  ]
+}

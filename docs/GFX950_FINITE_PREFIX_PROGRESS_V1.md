@@ -63,6 +63,16 @@ checks per rank plus 900 group checks, versus 2016 individual checks per rank.
 All 16 analysis tests and 27 input posthashes pass. This is one observation
 per mode, not a controlled repeated benchmark, GPU overlap or sustained decode.
 
+The [current captured R2 boundary replay](../qualification/guarded-mlp-model-current-r2-replay-v1/README.md)
+also passes on MI350: 20 tests, all 8,192 native final-hidden encodings and
+all 4,096 separate framework residual-control encodings match exactly. It
+uses actual layer-zero, position-zero Down partials and first residuals,
+with 24 clean input posthashes and no GPU/model rerun. An initial malformed
+test-fixture failure remains retained; only that fixture and the fresh output
+namespace changed for the successful attempt. This does not replay the Down
+dot products or establish full-model numerical acceptance. Matched-input MLP
+comparison is the next diagnostic.
+
 The [historical O-projection replay](../qualification/o-projection-exact-replay-v1/README.md)
 now completes on MI350 with 18 passing tests. All 8,192 captured FP32 partials
 match the pinned kernel's modeled accumulation order. The derived native BF16

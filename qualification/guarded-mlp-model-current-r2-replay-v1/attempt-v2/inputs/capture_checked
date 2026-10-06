@@ -1,0 +1,21 @@
+{
+  "generation": 1,
+  "independent_framework_comparison": false,
+  "layer": 0,
+  "native_close_confirmed": true,
+  "numerical_acceptance": false,
+  "parts": 34,
+  "payload_bytes": 256136,
+  "payload_sha256": "d0dce4f4632717fbf1fefbcca85e2d0f83ff4728951559accd1de232c35c938f",
+  "performance_claim": false,
+  "position": 0,
+  "production_authority": false,
+  "same_run_request_and_layer_output_joined": true,
+  "sampling": "prefix-boundaries-and-post-paired-retained",
+  "schema": "ferric-guarded-mlp-model-stage-capture-checked-v1",
+  "source": {
+    "bytes": 911296,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/ar4/native/child-stderr.bin",
+    "sha256": "f28715ef219057de6d425f4de7f090d7f5f79e6867be4b8197bf3c80f7b8ded4"
+  }
+}
