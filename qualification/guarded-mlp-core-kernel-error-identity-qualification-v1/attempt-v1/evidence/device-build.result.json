@@ -1,0 +1,56 @@
+{
+  "adopted_reaped": [],
+  "argv": [
+    "/usr/bin/prlimit",
+    "--as=12884901888",
+    "--cpu=1200",
+    "--fsize=1073741824",
+    "--core=0",
+    "--",
+    "/home/harmenon/.rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/bin/cargo",
+    "test",
+    "--offline",
+    "--locked",
+    "--manifest-path",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-kernel-error-identity-qualification-cpu-v228-v1/fe2o3/Cargo.toml",
+    "--jobs",
+    "2",
+    "-p",
+    "fe2o3-device",
+    "--lib",
+    "--test",
+    "device_api_ui",
+    "--test",
+    "device_ffi_ui",
+    "--no-run",
+    "--message-format=json"
+  ],
+  "command": {
+    "bytes": 2482,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-kernel-error-identity-qualification-cpu-v228-v1/evidence/device-build.command.json",
+    "sha256": "31c3cf0e839c494e03cdebb98632a55cf91b9a5399d5c6a301d7d768555dd5fb"
+  },
+  "elapsed_ns": 12160406678,
+  "exception": null,
+  "exit_code": 0,
+  "forced_cleanup": false,
+  "label": "device-build",
+  "natural_exit": true,
+  "observed_signals": [],
+  "pgid": 746834,
+  "pid": 746834,
+  "process_group_absent": true,
+  "reaped": true,
+  "stderr": {
+    "bytes": 4662,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-kernel-error-identity-qualification-cpu-v228-v1/evidence/device-build.stderr",
+    "sha256": "28a983dcd21cc6f7b4b58cd51be118d49d32255b955a49c5d37429e24aeb3568"
+  },
+  "stdout": {
+    "bytes": 75637,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-kernel-error-identity-qualification-cpu-v228-v1/evidence/device-build.stdout",
+    "sha256": "e8f34b79dd8da1f3ef072dd553fbc3d3bbb9c0937344863bcf022e5fc01bdd5f"
+  },
+  "storage_failure": null,
+  "timed_out": false
+}

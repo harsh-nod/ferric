@@ -1,0 +1,15 @@
+   Compiling fe2o3-device-tests v0.0.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-core-kernel-error-identity-qualification-cpu-v228-v1/target/tests/trybuild/fe2o3-device)
+    Finished `dev` profile [unoptimized] target(s) in 0.05s
+
+
+test tests/device_ffi_ui/pass/reviewed_contract.rs [should pass] ... ok
+test tests/device_ffi_ui/fail/device_ffi_effect_abi_mismatch.rs [should fail to compile] ... ok
+test tests/device_ffi_ui/fail/device_ffi_export_call_requires_unsafe.rs [should fail to compile] ... ok
+test tests/device_ffi_ui/fail/device_ffi_export_must_be_unsafe.rs [should fail to compile] ... ok
+test tests/device_ffi_ui/fail/device_ffi_generic_root.rs [should fail to compile] ... ok
+test tests/device_ffi_ui/fail/device_ffi_import_call_requires_unsafe.rs [should fail to compile] ... ok
+test tests/device_ffi_ui/fail/device_ffi_import_needs_foreign_block.rs [should fail to compile] ... ok
+test tests/device_ffi_ui/fail/device_ffi_invalid_symbol.rs [should fail to compile] ... ok
+test tests/device_ffi_ui/fail/device_ffi_reference_type.rs [should fail to compile] ... ok
+
+

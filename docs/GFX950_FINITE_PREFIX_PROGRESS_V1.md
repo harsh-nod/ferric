@@ -6,7 +6,18 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Latest: [438 tests pass, including all checked-integer and Option wrappers](../qualification/guarded-mlp-core-checked-attention-qualification-v1/README.md).
+Latest: [445 scoped compiler tests pass, including attention extraction](../qualification/guarded-mlp-core-kernel-error-identity-qualification-v1/README.md).
+The exact core `KernelError` identity check and six new tests passed on MI350,
+including eight identity/signature refusals and 38 MIR mutations. Every
+earlier 438 named passing test remains green, and the unchanged attention
+control now reaches gfx942 LLVM. All 39 phases returned zero naturally and
+were reaped, with unchanged source/dependency maps and clean postchecks.
+This completes the scoped control run, not the full runtime compiler/pliron
+qualification. No production dependency, gfx950 HSACO, GPU, numerical or
+performance gate has changed. Full compiler qualification and loader checks
+are next; all issue #42 milestones remain open.
+
+Previously, [438 tests passed, including all checked-integer and Option wrappers](../qualification/guarded-mlp-core-checked-attention-qualification-v1/README.md).
 Both builds pass on MI350. The fourth attempt corrects the observed FnOnce
 kind and exact direct closure resolution. All six integer and ten Option
 tests pass, including 458 and 198 MIR mutations respectively, plus two actual

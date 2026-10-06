@@ -1,0 +1,11 @@
+
+running 6 tests
+test trusted_device_items::core_u32_widening_v1::tests::u32_widening_real_body_rejects_cast_kind_type_and_operand_mutations ... ok
+test trusted_device_items::core_u32_widening_v1::tests::u32_widening_real_body_rejects_extra_operations_and_cleanup ... ok
+test trusted_device_items::core_u32_widening_v1::tests::u32_widening_real_body_rejects_places_and_terminators ... ok
+test trusted_device_items::core_u32_widening_v1::tests::u32_widening_real_body_rejects_shape_and_local_mutations ... ok
+test trusted_device_items::core_u32_widening_v1::tests::u32_widening_real_body_rejects_source_scope_mutations ... ok
+test trusted_device_items::core_u32_widening_v1::tests::u32_widening_real_core_identity_and_signature_refusals ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 761 filtered out; finished in 7.83s
+
