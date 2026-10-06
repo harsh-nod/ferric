@@ -1,6 +1,6 @@
 # Combined State Candidate
 
-Status: reviewed source only. The new
+Status: experimental; [first CPU qualification failed](../guarded-mlp-combined-state-cpu-v1/README.md). The new
 [experimental v2 crate](../../device/qwen3-tp-guarded-mlp-segment-kernels-v2/README.md)
 is not connected to inference, and has not passed CPU qualification, guarded
 lowering or GPU execution. All issue #42 milestones remain open.
@@ -19,7 +19,9 @@ The [source manifest](proposal-v1/source-manifest.json) and
 is 10,515 bytes, SHA-256
 `cf98f7028d3697e120193290beb5621b00482ee83f6c7c5c7ba45af007bd8eb6`.
 There are 39 authored tests: the 27 inherited tests plus 12 combined-state
-tests. These are planned qualification cases, not passing results.
+tests. The first actual run passes 38 and fails one formatting-sensitive
+source-shape assertion after rustfmt. All inherited tests pass. The failure
+is retained unchanged; the complete CPU qualification has not passed.
 
 The typed 2,208-byte owner, suffix-only peer-read capability, coordinator,
 artifact ABI admission and GPU tests remain separate work. Predicted ABI

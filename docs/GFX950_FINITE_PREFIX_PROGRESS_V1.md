@@ -22,10 +22,14 @@ exact old bound and solver;
 the new route requires a runtime-validated DAG and zero ownership contracts.
 No work limit, access predicate or atomic ordering is relaxed.
 
-The next [combined-state candidate is retained as reviewed source only](../qualification/guarded-mlp-combined-state-v1/README.md).
+The next [combined-state candidate is retained as experimental source](../qualification/guarded-mlp-combined-state-v1/README.md).
 Its versioned validator takes one genuine 552-word atomic allocation, keeping
-the old 548-word API unchanged. All 27 existing tests and 12 new tests are
-authored; CPU, guarded lowering and GPU qualification are still pending.
+the old 548-word API unchanged. Its
+[first MI350 CPU qualification fails](../qualification/guarded-mlp-combined-state-cpu-v1/README.md):
+38 tests pass and one formatting-sensitive source-shape assertion fails after
+rustfmt. Host checking and test compilation pass; all children exit naturally
+with clean source and process postchecks. The failed receipt is preserved.
+A test repair and fresh CPU qualification precede guarded lowering and GPU work.
 
 Previous completed compiler qualification: [bounded chain fusion passes on MI350](../qualification/guarded-mlp-ranked-cfg-linear-fusion-v1/README.md).
 All 44 phases and 31 test scopes pass: 1,323 compiler and 1,507 Pliron tests,
