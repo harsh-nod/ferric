@@ -12,10 +12,10 @@ default = ["gfx950"]
 gfx950 = []
 
 [dependencies]
-fe2o3-device = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "5a500d63c29b78f8788356b20dfcbb5c41ec20c9", version = "=0.1.0" }
+fe2o3-device = { path = "../fe2o3/crates/fe2o3-device", version = "=0.1.0" }
 
 [target.'cfg(not(target_arch = "amdgpu"))'.dependencies]
-fe2o3-host = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "5a500d63c29b78f8788356b20dfcbb5c41ec20c9", version = "=0.1.0" }
+fe2o3-host = { path = "../fe2o3/crates/fe2o3-host", version = "=0.1.0" }
 
 [lib]
 name = "ferric_qwen3_tp_guarded_mlp_segment_kernels_device_v1"

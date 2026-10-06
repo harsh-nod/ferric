@@ -32,12 +32,14 @@ The runtime must provide genuine atomic storage, distinct nonaliasing buffers,
 ordered producer/validator completion, unique generations and no concurrent
 reset. These kernels do not authorize arena reuse, ring overwrite or peer release.
 
-Dependencies select fe2o3 commit `097b4f796a283f554339cc0c0ef5c2c8c3858d2a`,
-which supports typed atomic slices. This is a new dependency generation, not a
-claim of identity with an older qualified compiler snapshot.
+Dependencies select fe2o3 commit `5a500d63c29b78f8788356b20dfcbb5c41ec20c9`.
+The [dependency refresh passed all 27 CPU tests on MI350](../../qualification/guarded-mlp-dependency-refresh-v1/README.md)
+without changing the five Rust source files. The published device generation
+aligns with the reviewed provider closure; it is not the separately assembled
+runtime compiler/RPO source tree. Fresh checked lowering remains a separate gate.
 
-The [MI350 CPU qualification](../../qualification/guarded-mlp-segment-cpu-v1/README.md)
-passed all 27 tests, plus seven harness regression tests. The kernel tests cover
+The [earlier MI350 CPU qualification](../../qualification/guarded-mlp-segment-cpu-v1/README.md)
+passed the same 27 tests, plus seven separate harness regression tests. The kernel tests cover
 staged arithmetic, every state word against an
 independent range-based oracle, all valid owner values, exact load coverage,
 guard publication order, both tag halves and no payload access on either invalid

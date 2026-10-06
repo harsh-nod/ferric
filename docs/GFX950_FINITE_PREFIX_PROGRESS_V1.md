@@ -6,7 +6,17 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Latest: [the full combined runtime compiler qualification passes on MI350](../qualification/guarded-mlp-s-rpo-qualification-v1/README.md).
+Latest: [the final runtime compiler binaries pass all fourteen loader checks](../qualification/guarded-mlp-s-rpo-tool-audit-v1/README.md).
+The extractor resolves the exact new backend; the other five deployed tools
+are unchanged. All inspection leaves exited naturally and were reaped, with
+clean postchecks. Ten synthetic loader-admission tests passed separately.
+The [guarded candidate dependency refresh also passes its 27 CPU tests](../qualification/guarded-mlp-dependency-refresh-v1/README.md).
+Its two dependency pins now select published fe2o3 `5a500d63`, with unchanged
+Rust kernels and guard protocol. These checks do not close guarded gfx950
+lowering/GPU, independent model numerics or performance. All milestones remain
+open; fresh offline dependencies and a new lowering attempt are next.
+
+Previously, [the full combined runtime compiler qualification passed on MI350](../qualification/guarded-mlp-s-rpo-qualification-v1/README.md).
 All 32 phases exited naturally and were reaped, with clean integrity checks.
 The full compiler library passed 1,239 tests and pliron passed 1,504; 43
 focused repeats and twelve extraction/rejection controls bring the total to
