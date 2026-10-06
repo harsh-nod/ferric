@@ -1,0 +1,59 @@
+{
+  "artifact": null,
+  "artifact_bodies_retained": false,
+  "failure": "RuntimeError('natural successful/reaped leaf required')",
+  "files": {
+    "evidence/compile.command.json": {
+      "bytes": 7639,
+      "sha256": "342eb714c212a6a04e21e6c6338c54242e1b8e086dea3110368c5ff7cc9f0f3c"
+    },
+    "evidence/compile.result.json": {
+      "bytes": 1213,
+      "sha256": "b70b8f7106243ca3238e35d71b0eeb10e177dc42b13fad7ac5bbc8367bb04100"
+    },
+    "evidence/compile.started.json": {
+      "bytes": 3601,
+      "sha256": "c4edc03e9c7dd6dc8af2fdc15c237ce4bdb1e2090b0bf8b68835a49330b05d4f"
+    },
+    "evidence/compile.stderr": {
+      "bytes": 164209,
+      "sha256": "9a309b8f23c66ad29e98a464bcb3ed8480766e2c7fd807415616dc99d6121a05"
+    },
+    "evidence/compile.stdout": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "evidence/configurations.json": {
+      "bytes": 3184,
+      "sha256": "9676355a25e9cea68a02cae41310df4326ea7da97e63e177cf13bc0f85cb81c7"
+    },
+    "evidence/failed.json": {
+      "bytes": 16503,
+      "sha256": "1bf26b28162414dfb4afbf6dc5ba5a70a60d1c1fe1fd55624c251733840c560b"
+    },
+    "evidence/inputs-after.json": {
+      "bytes": 88744,
+      "sha256": "f3c0038eb23185f8ab6cd8a1750b1751328f86b54e73817c04395e1e3aa94527"
+    },
+    "evidence/inputs-before.json": {
+      "bytes": 86570,
+      "sha256": "cc6488b6790a5bac878b1e3b7bbaa67f0ad076f9a2dca5eb83db8d0addb4d95c"
+    },
+    "evidence/source-after.json": {
+      "bytes": 1979859,
+      "sha256": "955e37e41e54df808221a7d3459f3f782ac7d0b6115ec35e48e14d5f834d4d78"
+    },
+    "evidence/source-before.json": {
+      "bytes": 1979859,
+      "sha256": "955e37e41e54df808221a7d3459f3f782ac7d0b6115ec35e48e14d5f834d4d78"
+    },
+    "lowering.py": {
+      "bytes": 62092,
+      "sha256": "db57f823055519fe278d1a85b52cc7d5ad871560397eca083dc40710d34bf14d"
+    }
+  },
+  "gpu_execution": false,
+  "passed": false,
+  "postcheck_errors": [],
+  "schema": "ferric-guarded-mlp-ranked-cfg-compaction-lowering-retention-v1"
+}

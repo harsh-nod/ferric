@@ -6,7 +6,17 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Latest: [CFG compaction passes full MI350 CPU qualification](../qualification/guarded-mlp-ranked-cfg-compaction-v1/README.md).
+Latest: [the compacted guard reaches the structural-identity limit](../qualification/guarded-mlp-ranked-cfg-compaction-lowering-v1/README.md).
+The actual MI350 compile renders 1,675 blocks, down from the prior 2,778,
+clearing the 2,048 projected-block ceiling. It then fails the independent
+1,024-block identity limit; the diagnostic's 1,025 is the first refused count,
+not the graph's total. The rendered graph has 2,230 raw edges, so the separate
+2,048-edge ceiling also remains an obligation, not a passed gate. The compiler
+exits naturally with status 1 after 130.542604 seconds and is reaped, with
+213 unchanged input pins, unchanged sources and clean postchecks. No HSACO,
+GPU, model numerical or performance acceptance is established.
+
+The [CFG compaction change passes full MI350 CPU qualification](../qualification/guarded-mlp-ranked-cfg-compaction-v1/README.md).
 It shares eligible empty trap blocks and fuses successful accesses with their
 continuations, preserving predicates, atomic effects, source/wave identities,
 and all resource limits. Nine new regression tests cover differential traces,
@@ -14,7 +24,8 @@ layout identities, refusals, and block/edge boundaries. All 43 phases passed
 across 30 scopes: 1,314 compiler tests and 1,507 Pliron tests, with focused
 repeats and extraction controls totaling 2,954 passing executions and 25
 unchanged ignores. Source/dependency and process cleanup checks are clean.
-Actual guarded lowering remains pending. This is not GPU, numerical, or
+All 26/19 controller fixtures and 14 actual loader checks also pass.
+Actual guarded lowering still fails as described above. This is not GPU, numerical, or
 performance acceptance; all milestones and the 700 tokens/s target remain open.
 
 Previously, [the guarded compile identifies the exact CFG expansion blocker](../qualification/guarded-mlp-ranked-cfg-expansion-diagnostic-lowering-v1/README.md).

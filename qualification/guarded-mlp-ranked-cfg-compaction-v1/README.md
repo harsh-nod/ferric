@@ -10,13 +10,16 @@ continuation. Eligibility requires trap-on-failure and no live induction
 variables. Bounds predicates, atomic effects and ordering, source identities,
 wave synchronization, and all structural and work limits remain unchanged.
 For `g > 0` eligible accesses this saves `2*g - 1` blocks and `g` raw edges.
-The actual kernel's post-compaction counts have not yet been measured.
+The [actual guarded attempt](../guarded-mlp-ranked-cfg-compaction-lowering-v1/README.md)
+now renders 1,675 blocks, down from 2,778, but fails the independent
+1,024-block structural-identity limit before emitting an artifact.
 
 The patch replaces two files and adds nine focused regression tests in one
 new module. Three inherited layout expectations change; their actual bounds
 and race checks remain. Source review and authenticated patch reconstruction
 passed. Full CPU qualification on `mi350` also passed, as recorded below.
-Fresh loader checks and guarded lowering remain separate gates.
+The 26/19 loader/lowering fixtures and 14 actual loader checks also pass.
+Guarded lowering remains a separate, currently failed gate.
 
 Manifest: `a996f2ecae0ce3a29e091ecc50f23ef081e57feba005b621856cd55ce6889428`.
 Patch: `c00bedb6983ed9fca9565ffd3ee1bb7be330b936d851806ffb174f73322517c7`.
@@ -45,8 +48,8 @@ The archive retains 243 members, 242 pinned bodies, and 219 raw files totaling
 The 5,587,557-byte archive SHA-256 is
 `576a2463ee1fbb67291c25b9dba1fddfe51675bdc889a57fa2f8cc581838028b`.
 The pinned prior failure and stderr are included and verified independently
-of their historical controller flags. They measure the old graph, not the
-compacted kernel's block or edge counts.
+of their historical controller flags. They measure the old graph. The linked
+guarded attempt separately retains the compacted graph and its new refusal.
 
 This compiler qualification does not establish guarded HSACO output,
 GPU execution, model numerics, or performance. Passing one resource gate does

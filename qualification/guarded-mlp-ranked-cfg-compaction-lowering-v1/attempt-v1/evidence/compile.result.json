@@ -1,0 +1,32 @@
+{
+  "adopted_reaped": [],
+  "command": {
+    "bytes": 7639,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-cfg-compaction-lowering-v228-v1/compile.command.json",
+    "sha256": "342eb714c212a6a04e21e6c6338c54242e1b8e086dea3110368c5ff7cc9f0f3c"
+  },
+  "elapsed_ns": 130542603612,
+  "exception": null,
+  "exit_code": 1,
+  "forced_cleanup": false,
+  "label": "compile",
+  "minimum_free_bytes": 67982962688,
+  "natural_exit": true,
+  "observed_signals": [],
+  "peak_private_scratch_bytes": 1029148005,
+  "pgid": 3077105,
+  "pid": 3077105,
+  "process_group_absent": true,
+  "reaped": true,
+  "stderr": {
+    "bytes": 164209,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-cfg-compaction-lowering-v228-v1/compile.stderr",
+    "sha256": "9a309b8f23c66ad29e98a464bcb3ed8480766e2c7fd807415616dc99d6121a05"
+  },
+  "stdout": {
+    "bytes": 0,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-cfg-compaction-lowering-v228-v1/compile.stdout",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "timed_out": false
+}
