@@ -25,7 +25,32 @@ The ten integrated source changes are the actual formatted postimages, and all
   expanded bytes. External runtime, dependency, cache and ELF bodies were
   rehashed remotely; this is not a self-contained toolchain or executable bundle.
 
-## Interpretation
+## Qualified Parent And Checker
+
+The [parent CPU result](parent-cpu-v1/evidence/complete.json) records 55 clean
+phases and 387 selected passing tests across 47 scopes. All five selected host
+binaries built. The 868-name library inventory was listed, not fully executed.
+The original SSH connection dropped after the run completed; the original
+receipt was recovered and authenticated, with no qualification rerun.
+
+The parent receipt is 3,815,416 bytes, SHA-256
+`ab72e2316315ec6b0766284e0b4c26e834b2502cd4a6fc29c304a875950e3c8f`.
+Its guarded parent ELF is 13,836,368 bytes, SHA-256
+`abf358b7fdcce0e2c432aa906d06c8790a3727d5471993ee01879d74a851f5c9`.
+The 2,873,734-byte export archive has SHA-256
+`66c0279008c04f16256539cd123019f01cbdf0b2a064898a411265442ee0f4a2`.
+The retained capsule contains 407 files, 406 pins and 279 original raw files,
+with 23,408,088 expanded bytes. Parent integration uses only the three tested
+parent postimages, not the authored worker overlay stored in this capsule.
+
+The [synthetic checker](checker-cpu-v1/evidence/complete.json) passed all 14
+tests: ten host-report cases and four topology cases. Its six unchanged inputs,
+seven original raw records and terminal are retained. The terminal is 11,136
+bytes, SHA-256
+`d31177e489652ced325a473577ca1114af44e0211e76c1db1203527f5abb59f1`.
+The sole child exited naturally and was reaped, with a clean source/tool check.
+
+## Reading The Counters
 
 The intended report has 587 snapshots and 586 checked intervals. Rank/group
 identity, queue epochs, actual worker and completion history are joined before
@@ -33,7 +58,7 @@ publication after healthy close. Counter scopes can nest and overlap; adding
 them does not yield elapsed GPU time. The paired route does not populate every
 generic dispatch timer. No GPU overlap graph can be inferred from these counters.
 
-This checkpoint qualifies worker source and CPU behavior only. Native host-mode
+This checkpoint qualifies source and selected CPU behavior only. Native host-mode
 execution, numerical acceptance, throughput, and production qualification are
 not established here. The four-forward diagnostic is not the requested
 2,048-token prompt / 256-token decode benchmark. Ferric #42 M0-M7 remain open.

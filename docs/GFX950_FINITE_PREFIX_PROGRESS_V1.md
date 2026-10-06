@@ -35,8 +35,13 @@ The [AR4 host-counter analysis](../qualification/guarded-mlp-model-runtime-v1/ho
 now isolates 6.25-6.31 seconds per forward inside guarded MLP dispatch spans,
 including host preparation and currentness checks. Four parser regressions and
 all 19 input posthashes pass on MI350. These are not GPU kernel timings or
-complete-forward latency; existing host-observer counters are the next
-attribution step before changing runtime checks.
+complete-forward latency. The new
+[guarded host-observation mode](../qualification/guarded-mlp-model-host-observation-v1/README.md)
+passes fresh MI350 CPU qualification: 601 worker passes with four unchanged
+ignores, 387 selected parent passes, and all 14 report/topology checker tests.
+Its 587-snapshot schema separates layer boundaries while preserving the
+existing runtime policy and GPU images. Native attribution is in progress;
+inclusive host counters cannot establish GPU overlap or throughput.
 
 The [historical O-projection replay](../qualification/o-projection-exact-replay-v1/README.md)
 now completes on MI350 with 18 passing tests. All 8,192 captured FP32 partials

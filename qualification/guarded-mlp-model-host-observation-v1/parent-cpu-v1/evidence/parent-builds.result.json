@@ -1,0 +1,62 @@
+{
+  "adopted_reaped": [],
+  "argv": [
+    "/usr/bin/prlimit",
+    "--as=12884901888",
+    "--cpu=1200",
+    "--fsize=1073741824",
+    "--core=0",
+    "--",
+    "/home/harmenon/.rustup/toolchains/1.97.1-x86_64-unknown-linux-gnu/bin/cargo",
+    "build",
+    "--profile",
+    "test",
+    "--offline",
+    "--locked",
+    "--jobs",
+    "2",
+    "--manifest-path",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-host-observation-parent-cpu-v228-v1/ferric/adapters/m1-engineering-execution-v1/Cargo.toml",
+    "--features",
+    "guarded-mlp-model-engineering",
+    "--bin",
+    "ferric-qwen3-finite-projection-residual-decode-engineering",
+    "--bin",
+    "ferric-qwen3-finite-projection-residual-decode-host-engineering",
+    "--bin",
+    "ferric-qwen3-finite-projection-residual-decode-ordered-host-engineering",
+    "--bin",
+    "ferric-qwen3-finite-projection-residual-decode-shared-host-engineering",
+    "--bin",
+    "ferric-qwen3-finite-guarded-mlp-decode-engineering",
+    "--message-format=json"
+  ],
+  "command": {
+    "bytes": 2955,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-host-observation-parent-cpu-v228-v1/evidence/parent-builds.command.json",
+    "sha256": "da2363e400f5b9e0e6bb5d8a98a07ae672c115972658e37aabd4b1a6d89235f5"
+  },
+  "elapsed_ns": 1930008956,
+  "exception": null,
+  "exit_code": 0,
+  "forced_cleanup": false,
+  "label": "parent-builds",
+  "natural_exit": true,
+  "observed_signals": [],
+  "pgid": 3419526,
+  "pid": 3419526,
+  "process_group_absent": true,
+  "reaped": true,
+  "stderr": {
+    "bytes": 282,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-host-observation-parent-cpu-v228-v1/evidence/parent-builds.stderr",
+    "sha256": "6de17a2da2540a956196ec847ffe3139ede62332c23aa0d91d0ab467a03b821d"
+  },
+  "stdout": {
+    "bytes": 382708,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-host-observation-parent-cpu-v228-v1/evidence/parent-builds.stdout",
+    "sha256": "fb5497189c32dc05377858f8e18c821efa51f8b3d6c0ca8d1de098a92fabf143"
+  },
+  "storage_failure": null,
+  "timed_out": false
+}

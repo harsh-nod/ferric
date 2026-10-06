@@ -1,0 +1,14 @@
+
+running 9 tests
+test finite_prefix_decode_wire_v1::tests::prefix_decode_bootstrap_closed_profile_mode_and_caps ... ok
+test finite_prefix_decode_wire_v1::tests::prefix_decode_bootstrap_two_images_and_exact_begin_before_body ... ok
+test finite_prefix_decode_wire_v1::tests::prefix_decode_close_and_claims_refuse_extra_body_or_wrong_count ... ok
+test finite_prefix_decode_wire_v1::tests::prefix_decode_control_roundtrip_and_every_word_contract ... ok
+test finite_prefix_decode_wire_v1::tests::prefix_decode_every_layer_and_rank_requires_physical_epoch_one ... ok
+test finite_prefix_decode_wire_v1::tests::prefix_decode_mode_history_requires_own_checked_previous_output ... ok
+test finite_prefix_decode_wire_v1::tests::prefix_decode_partial_eof_header_and_cumulative_budget_fail_closed ... ok
+test finite_prefix_decode_wire_v1::tests::prefix_decode_request_generation_bank_pages_and_rotary_are_closed ... ok
+test finite_prefix_decode_wire_v1::tests::prefix_decode_response_full_payload_and_lowest_index_argmax ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 859 filtered out; finished in 0.02s
+

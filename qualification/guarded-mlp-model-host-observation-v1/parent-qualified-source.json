@@ -1,0 +1,85 @@
+{
+  "schema": "ferric-guarded-mlp-host-observation-parent-qualified-overlay-v1",
+  "canonical_source_revision": "7f0d73ce594ee721576dc10e9d95dad973646bb0",
+  "source_proposal": {
+    "bytes": 11067,
+    "sha256": "8c36b978a705f6ce126ac0d3cd7f892f15e52aab752e020d84bd3e1f722021d7"
+  },
+  "complete": {
+    "bytes": 3815416,
+    "sha256": "ab72e2316315ec6b0766284e0b4c26e834b2502cd4a6fc29c304a875950e3c8f"
+  },
+  "source_map": {
+    "bytes": 483118,
+    "sha256": "9c003fe1f9b79498e9cf9843351f1699e2cb406b6b8517efd0ec27a87a0333c7"
+  },
+  "files": [
+    {
+      "path": "adapters/m1-engineering-execution-v1/src/bin/ferric-qwen3-finite-guarded-mlp-decode-engineering.rs",
+      "before": {
+        "bytes": 3766,
+        "sha256": "e677febde4ef0c625a147f176efc25b187d003bf5bd4aa4634958e9a50ca6ff7"
+      },
+      "authored": {
+        "bytes": 4551,
+        "sha256": "bf3bfb279e2018afe3e0ba1780b94b0dac12edba428775411439c63a197f0ff2"
+      },
+      "after": {
+        "bytes": 4863,
+        "sha256": "3010a7660ed7d69d5b4120e67c55d346317df1c555f811b5f49c4ff663fe02e4"
+      },
+      "formatted": true
+    },
+    {
+      "path": "adapters/m1-engineering-execution-v1/src/lib.rs",
+      "before": {
+        "bytes": 89431,
+        "sha256": "2456aa3648f1da10b92b6959f36bb2d2da1b5f8f0a962f29869d1b09743f5eb8"
+      },
+      "authored": {
+        "bytes": 89616,
+        "sha256": "e973bb0b812d5abe46b894375293f5526baa9fe2576ea691411092dce557e370"
+      },
+      "after": {
+        "bytes": 89616,
+        "sha256": "99d29baf566069b806de3847a57db2e11f27405b7591a8b74c0ff44d08cd568b"
+      },
+      "formatted": true
+    },
+    {
+      "path": "adapters/m1-engineering-execution-v1/src/tp_finite_client/prefix_decode/guarded.rs",
+      "before": {
+        "bytes": 25064,
+        "sha256": "6eef18690c49ba88a4af6841130ec1424ecb8df4cbed6d20cb993745ca305632"
+      },
+      "authored": {
+        "bytes": 26124,
+        "sha256": "5128a5371a3d833e667d5291ba2edcabd89009f0f982be42c57c3cab1c1041ff"
+      },
+      "after": {
+        "bytes": 26298,
+        "sha256": "f6259b19d365844c46db20e6f7b633222eadc9a749055f9e7aea481ea669c4cf"
+      },
+      "formatted": true
+    }
+  ],
+  "integration_patch": {
+    "bytes": 7607,
+    "sha256": "45914351e3213502221995141203274ddb692a7c6477bee918dbc1bad2e4f639"
+  },
+  "apply_patch": {
+    "bytes": 7360,
+    "sha256": "167bcca122f29db589fef5c275348f12529e00c23b716da061dd35be47df7353"
+  },
+  "cpu_qualified": true,
+  "selected_cpu_passed_tests": 387,
+  "selected_cpu_test_scopes": 47,
+  "listed_library_inventory": 868,
+  "full_parent_library_suite_executed": false,
+  "worker_rows_included": false,
+  "native_host_observation_qualified": false,
+  "gpu_execution": false,
+  "numerical_acceptance": false,
+  "performance_claim": false,
+  "production_authority": false
+}
