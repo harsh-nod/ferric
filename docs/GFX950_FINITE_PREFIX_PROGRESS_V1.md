@@ -22,6 +22,11 @@ exact old bound and solver;
 the new route requires a runtime-validated DAG and zero ownership contracts.
 No work limit, access predicate or atomic ordering is relaxed.
 
+The next [combined-state candidate is retained as reviewed source only](../qualification/guarded-mlp-combined-state-v1/README.md).
+Its versioned validator takes one genuine 552-word atomic allocation, keeping
+the old 548-word API unchanged. All 27 existing tests and 12 new tests are
+authored; CPU, guarded lowering and GPU qualification are still pending.
+
 Previous completed compiler qualification: [bounded chain fusion passes on MI350](../qualification/guarded-mlp-ranked-cfg-linear-fusion-v1/README.md).
 All 44 phases and 31 test scopes pass: 1,323 compiler and 1,507 Pliron tests,
 with focused repeats and extraction controls totaling 2,972 passing executions

@@ -1,0 +1,26 @@
+# Combined State Candidate
+
+Status: reviewed source only. The new
+[experimental v2 crate](../../device/qwen3-tp-guarded-mlp-segment-kernels-v2/README.md)
+is not connected to inference, and has not passed CPU qualification, guarded
+lowering or GPU execution. All issue #42 milestones remain open.
+
+The [latest actual guarded compile](../guarded-mlp-memory-bounds-dag-lowering-v1/README.md)
+fails because its two potentially aliasing allocation origins lack relative
+base-offset information. This additive candidate accepts a single genuine
+552-word atomic allocation, retaining the 548-word state predicate and using
+the four-word suffix for guard publication. Writes at 548, 549 and 551 remain
+Relaxed; the verdict at 550 is published last with Release. State reads retain
+Acquire ordering. The existing v1 crate, 2,192-byte token and profiles are
+unchanged, and no compiler proof predicate is relaxed.
+
+The [source manifest](proposal-v1/source-manifest.json) and
+[patch](proposal-v1/integration.patch) contain eight additions. The manifest
+is 10,515 bytes, SHA-256
+`cf98f7028d3697e120193290beb5621b00482ee83f6c7c5c7ba45af007bd8eb6`.
+There are 39 authored tests: the 27 inherited tests plus 12 combined-state
+tests. These are planned qualification cases, not passing results.
+
+The typed 2,208-byte owner, suffix-only peer-read capability, coordinator,
+artifact ABI admission and GPU tests remain separate work. Predicted ABI
+sizes are not emitted-metadata evidence and grant no load or launch authority.
