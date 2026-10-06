@@ -1,0 +1,897 @@
+--- a/crates/rustc-codegen-fe2o3/src/production_ranked_projection_v1.rs
++++ b/crates/rustc-codegen-fe2o3/src/production_ranked_projection_v1.rs
+@@ -1762,6 +1762,7 @@
+ }
+ 
+ include!("production_ranked_projection_v1/cfg_block_limit_diagnostic_v1.rs");
++include!("production_ranked_projection_v1/graph_work_diagnostic_v1.rs");
+ 
+ const MAX_DETERMINISTIC_DIAGNOSTIC_ROOT_BYTES_V1: usize = 128;
+ 
+@@ -1860,6 +1861,7 @@
+     FiniteJoinProtocol(fe2o3_kernel_ir::FiniteJoinProtocolErrorV1),
+     Incomplete(&'static str),
+     CfgBlockLimit(Box<CfgBlockLimitDiagnosticV1>),
++    GraphWorkLimit(Box<GraphWorkDiagnosticV1>),
+     IndexedAtomicEscape(IndexedAtomicEscapeV1),
+     UnprovenDeterministicDivisor(Box<DeterministicDivisorDiagnosticV1>),
+     UnresolvedCallableEffect {
+@@ -1921,6 +1923,12 @@
+             diagnostic.root = Some(DeterministicProjectionRootDiagnosticV1::new(
+                 root, body, name,
+             ));
++        } else if let Self::GraphWorkLimit(diagnostic) = &mut self
++            && diagnostic.root.is_none()
++        {
++            diagnostic.root = Some(DeterministicProjectionRootDiagnosticV1::new(
++                root, body, name,
++            ));
+         }
+         self
+     }
+@@ -1979,6 +1987,7 @@
+                 write!(formatter, "semantic-to-ranked projection rejected {detail}")
+             }
+             Self::CfgBlockLimit(diagnostic) => write!(formatter, "{diagnostic}"),
++            Self::GraphWorkLimit(diagnostic) => write!(formatter, "{diagnostic}"),
+             Self::Incomplete(detail) => {
+                 write!(
+                     formatter,
+@@ -2129,6 +2138,7 @@
+             Self::ReferenceEffectJoin(error) => Some(error),
+             Self::Incomplete(_)
+             | Self::CfgBlockLimit(_)
++            | Self::GraphWorkLimit(_)
+             | Self::UnprovenDeterministicDivisor(_)
+             | Self::IndexedAtomicEscape(_)
+             | Self::UnresolvedCallableEffect { .. }
+@@ -3084,7 +3094,15 @@
+             &mut call_edges,
+             &mut work,
+         )
+-        .map_err(|error| error.with_cfg_callable_context_v1(function_index))?;
++        .map_err(|error| {
++            error
++                .with_cfg_callable_context_v1(function_index)
++                .with_graph_work_function_v1(
++                    function_index,
++                    function,
++                    GraphWorkContextV1::DefinedCallableSummary,
++                )
++        })?;
+         direct.push(summary);
+     }
+     let mut callers = Vec::new();
+@@ -3343,11 +3361,13 @@
+                     .map_err(ranked_projection_source_v1::resource)
+             })?;
+             let root = root.map_err(|error| {
+-                error.with_deterministic_root_context(
+-                    semantic_root,
+-                    selection.body(),
+-                    input.logical_name.as_bytes(),
+-                )
++                error
++                    .with_graph_work_body_v1(semantic.functions(), selection.body())
++                    .with_deterministic_root_context(
++                        semantic_root,
++                        selection.body(),
++                        input.logical_name.as_bytes(),
++                    )
+             })?;
+             if root.kernel_binding != input.kernel_binding {
+                 return Err(ProductionRankedProjectionErrorV1::Unsupported(
+@@ -13131,15 +13151,22 @@
+     loop_blocks: Vec<usize>,
+ }
+ 
++#[track_caller]
+ fn project_loop_graph_charge_v1(
+     work: &mut usize,
+     amount: usize,
+ ) -> Result<(), ProductionRankedProjectionErrorV1> {
+-    *work = work
+-        .checked_add(amount)
+-        .ok_or(ProductionRankedProjectionErrorV1::Unsupported(
+-            "uniform induction CFG analysis work overflow",
+-        ))?;
++    let before = *work;
++    let Some(sum) = before.checked_add(amount) else {
++        return Err(ProductionRankedProjectionErrorV1::graph_work_v1(
++            GraphWorkFailureV1::Overflow,
++            before,
++            amount,
++            None,
++            std::panic::Location::caller(),
++        ));
++    };
++    *work = sum;
+     if *work > MAX_PROJECTED_LOOP_GRAPH_WORK_V1 {
+         #[cfg(test)]
+         if std::env::var_os("FE2O3_DIAGNOSTIC_LOOP_GRAPH_TEST_TRACE").is_some() {
+@@ -13151,8 +13178,12 @@
+                 std::backtrace::Backtrace::force_capture(),
+             );
+         }
+-        return Err(ProductionRankedProjectionErrorV1::Unsupported(
+-            "uniform induction CFG analysis exceeds its work limit",
++        return Err(ProductionRankedProjectionErrorV1::graph_work_v1(
++            GraphWorkFailureV1::AboveLimit,
++            before,
++            amount,
++            Some(sum),
++            std::panic::Location::caller(),
+         ));
+     }
+     Ok(())
+@@ -14063,6 +14094,7 @@
+         self.evaluate_assertion_range_operand_v1(operand, block, statement)
+     }
+ 
++    #[track_caller]
+     fn charge(&mut self, amount: usize) -> Result<(), ProductionRankedProjectionErrorV1> {
+         project_loop_graph_charge_v1(&mut self.work, amount)
+     }
+@@ -25444,6 +25476,7 @@
+     include!("production_ranked_projection_v1/constant_slice_index_v1_tests.rs");
+     include!("production_ranked_projection_v1/indexed_atomic_v1_tests.rs");
+     include!("production_ranked_projection_v1/indexed_atomic_dag_v1_tests.rs");
++    include!("production_ranked_projection_v1/graph_work_diagnostic_v1_tests.rs");
+     include!("production_ranked_projection_v1/consumed_read_only_v1_tests.rs");
+     include!("production_ranked_projection_v1/static_publication_v1_tests.rs");
+     include!("production_ranked_projection_v1/static_publication_deferred_v1_tests.rs");
+@@ -26641,9 +26674,8 @@
+                 ),
+                 site,
+             ),
+-            Err(ProductionRankedProjectionErrorV1::Unsupported(
+-                "uniform induction CFG analysis exceeds its work limit"
+-            ))
++            Err(ProductionRankedProjectionErrorV1::GraphWorkLimit(diagnostic))
++                if diagnostic.reason == GraphWorkFailureV1::AboveLimit
+         ));
+     }
+ 
+@@ -29798,9 +29830,8 @@
+         proof.work = MAX_PROJECTED_LOOP_GRAPH_WORK_V1;
+         assert!(matches!(
+             proof.range_at_operand(&typed_operand(3, U64_TYPE), 2, 1),
+-            Err(ProductionRankedProjectionErrorV1::Unsupported(
+-                "uniform induction CFG analysis exceeds its work limit"
+-            ))
++            Err(ProductionRankedProjectionErrorV1::GraphWorkLimit(diagnostic))
++                if diagnostic.reason == GraphWorkFailureV1::AboveLimit
+         ));
+     }
+ 
+@@ -37052,6 +37083,16 @@
+             Err(ProductionRankedProjectionErrorV1::Unsupported(actual)) => {
+                 assert_eq!(actual, expected);
+             }
++            Err(ProductionRankedProjectionErrorV1::GraphWorkLimit(diagnostic)) => {
++                assert_eq!(diagnostic.reason.detail(), expected);
++                assert_eq!(diagnostic.before.checked_add(diagnostic.amount), diagnostic.sum);
++                match diagnostic.reason {
++                    GraphWorkFailureV1::Overflow => assert!(diagnostic.sum.is_none()),
++                    GraphWorkFailureV1::AboveLimit => {
++                        assert!(diagnostic.sum.unwrap() > MAX_PROJECTED_LOOP_GRAPH_WORK_V1);
++                    }
++                }
++            }
+             Err(other) => panic!("expected unsupported projection, got {other}"),
+             Ok(_) => panic!("expected unsupported projection"),
+         }
+@@ -39585,9 +39626,8 @@
+         proof.work = MAX_PROJECTED_LOOP_GRAPH_WORK_V1;
+         assert!(matches!(
+             proof.range_at_operand(&typed_operand(4, U64_TYPE), 4, 0),
+-            Err(ProductionRankedProjectionErrorV1::Unsupported(
+-                "uniform induction CFG analysis exceeds its work limit",
+-            )),
++            Err(ProductionRankedProjectionErrorV1::GraphWorkLimit(diagnostic))
++                if diagnostic.reason == GraphWorkFailureV1::AboveLimit,
+         ));
+     }
+ 
+--- a/crates/rustc-codegen-fe2o3/src/production_ranked_projection_v1/assertion_projected_range_v1_tests.rs
++++ b/crates/rustc-codegen-fe2o3/src/production_ranked_projection_v1/assertion_projected_range_v1_tests.rs
+@@ -759,17 +759,15 @@
+     short.work = MAX_PROJECTED_LOOP_GRAPH_WORK_V1 - required + 1;
+     assert!(matches!(
+         short.range_at_operand(&operand, 8, 0),
+-        Err(ProductionRankedProjectionErrorV1::Unsupported(
+-            "uniform induction CFG analysis exceeds its work limit"
+-        ))
++        Err(ProductionRankedProjectionErrorV1::GraphWorkLimit(diagnostic))
++                if diagnostic.reason == GraphWorkFailureV1::AboveLimit
+     ));
+     let mut overflow = SemanticAssertProofsV1::new(&fixture.types, &function).unwrap();
+     overflow.work = usize::MAX;
+     assert!(matches!(
+         overflow.range_at_operand(&operand, 8, 0),
+-        Err(ProductionRankedProjectionErrorV1::Unsupported(
+-            "uniform induction CFG analysis work overflow"
+-        ))
++        Err(ProductionRankedProjectionErrorV1::GraphWorkLimit(diagnostic))
++                if diagnostic.reason == GraphWorkFailureV1::Overflow
+     ));
+ }
+ 
+@@ -851,9 +849,8 @@
+     short.work = MAX_PROJECTED_LOOP_GRAPH_WORK_V1 - required + 1;
+     assert!(matches!(
+         short.range_at_operand(&operand, 8, 0),
+-        Err(ProductionRankedProjectionErrorV1::Unsupported(
+-            "uniform induction CFG analysis exceeds its work limit"
+-        ))
++        Err(ProductionRankedProjectionErrorV1::GraphWorkLimit(diagnostic))
++                if diagnostic.reason == GraphWorkFailureV1::AboveLimit
+     ));
+ }
+ 
+--- a/crates/rustc-codegen-fe2o3/src/production_ranked_projection_v1/cfg_block_limit_diagnostic_v1_tests.rs
++++ b/crates/rustc-codegen-fe2o3/src/production_ranked_projection_v1/cfg_block_limit_diagnostic_v1_tests.rs
+@@ -144,7 +144,8 @@
+     let mut work = MAX_PROJECTED_LOOP_GRAPH_WORK_V1;
+     assert!(matches!(
+         charge_loop_switch_inventory_v1(&function, &mut work),
+-        Err(ProductionRankedProjectionErrorV1::Unsupported(_)),
++        Err(ProductionRankedProjectionErrorV1::GraphWorkLimit(diagnostic))
++            if diagnostic.reason == GraphWorkFailureV1::AboveLimit,
+     ));
+ }
+ 
+@@ -281,7 +282,8 @@
+     assert_eq!(work, 3_145_728);
+     assert!(matches!(
+         project_loop_graph_charge_v1(&mut work, 1),
+-        Err(ProductionRankedProjectionErrorV1::Unsupported(_)),
++        Err(ProductionRankedProjectionErrorV1::GraphWorkLimit(diagnostic))
++            if diagnostic.reason == GraphWorkFailureV1::AboveLimit,
+     ));
+     assert_eq!(work, 3_145_729);
+ }
+--- /dev/null
++++ b/crates/rustc-codegen-fe2o3/src/production_ranked_projection_v1/graph_work_diagnostic_v1.rs
+@@ -0,0 +1,189 @@
++// Failure-only metadata; charge order and counter ownership remain unchanged.
++const MAX_GRAPH_WORK_PATH_BYTES_V1: usize = 128;
++
++#[derive(Clone, Copy, Debug, Eq, PartialEq)]
++enum GraphWorkFailureV1 {
++    Overflow,
++    AboveLimit,
++}
++
++impl GraphWorkFailureV1 {
++    const fn detail(self) -> &'static str {
++        match self {
++            Self::Overflow => "uniform induction CFG analysis work overflow",
++            Self::AboveLimit => "uniform induction CFG analysis exceeds its work limit",
++        }
++    }
++}
++
++#[derive(Clone, Copy, Debug, Eq, PartialEq)]
++enum GraphWorkContextV1 {
++    DefinedCallableSummary,
++    RootProjection,
++}
++
++#[derive(Debug)]
++struct GraphWorkPathV1 {
++    bytes: [u8; MAX_GRAPH_WORK_PATH_BYTES_V1],
++    len: usize,
++    truncated: bool,
++}
++
++impl GraphWorkPathV1 {
++    fn new(path: &[u8]) -> Self {
++        let len = path.len().min(MAX_GRAPH_WORK_PATH_BYTES_V1);
++        let mut bytes = [0; MAX_GRAPH_WORK_PATH_BYTES_V1];
++        bytes[..len].copy_from_slice(&path[path.len() - len..]);
++        Self {
++            bytes,
++            len,
++            truncated: path.len() > len,
++        }
++    }
++}
++
++impl fmt::Display for GraphWorkPathV1 {
++    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
++        write!(formatter, "{}", self.bytes[..self.len].escape_ascii())
++    }
++}
++
++#[derive(Debug)]
++struct GraphWorkFunctionV1 {
++    index: usize,
++    identity: SemanticFunctionIdentityV1,
++    role: SemanticFunctionRoleV1,
++    source: SemanticSourceProvenanceV1,
++    kernel_export: Option<CfgExportSymbolV1>,
++    context: GraphWorkContextV1,
++}
++
++#[derive(Debug)]
++pub(crate) struct GraphWorkDiagnosticV1 {
++    reason: GraphWorkFailureV1,
++    before: usize,
++    amount: usize,
++    sum: Option<usize>,
++    path: GraphWorkPathV1,
++    line: u32,
++    column: u32,
++    function: Option<GraphWorkFunctionV1>,
++    root: Option<DeterministicProjectionRootDiagnosticV1>,
++}
++
++impl ProductionRankedProjectionErrorV1 {
++    fn graph_work_v1(
++        reason: GraphWorkFailureV1,
++        before: usize,
++        amount: usize,
++        sum: Option<usize>,
++        location: &'static std::panic::Location<'static>,
++    ) -> Self {
++        Self::GraphWorkLimit(Box::new(GraphWorkDiagnosticV1 {
++            reason,
++            before,
++            amount,
++            sum,
++            path: GraphWorkPathV1::new(location.file().as_bytes()),
++            line: location.line(),
++            column: location.column(),
++            function: None,
++            root: None,
++        }))
++    }
++
++    fn with_graph_work_function_v1(
++        mut self,
++        index: usize,
++        function: &SemanticFunctionDeclV1,
++        context: GraphWorkContextV1,
++    ) -> Self {
++        if let Self::GraphWorkLimit(diagnostic) = &mut self
++            && diagnostic.function.is_none()
++        {
++            diagnostic.function = Some(GraphWorkFunctionV1 {
++                index,
++                identity: function.identity(),
++                role: function.role(),
++                source: function.source(),
++                kernel_export: function
++                    .kernel_entry()
++                    .map(|entry| CfgExportSymbolV1::new(entry.export_symbol().as_bytes())),
++                context,
++            });
++        }
++        self
++    }
++
++    fn with_graph_work_body_v1(
++        self,
++        functions: &[SemanticFunctionDeclV1],
++        body: SemanticFunctionIdV1,
++    ) -> Self {
++        if matches!(&self, Self::GraphWorkLimit(_))
++            && let Some(function) = functions.get(body.index() as usize)
++        {
++            self.with_graph_work_function_v1(
++                body.index() as usize,
++                function,
++                GraphWorkContextV1::RootProjection,
++            )
++        } else {
++            self
++        }
++    }
++}
++
++impl fmt::Display for GraphWorkDiagnosticV1 {
++    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
++        write!(
++            formatter,
++            "semantic-to-ranked projection rejected {}; loop-graph-work-diagnostic-v1 reason={} before={} amount={} sum=",
++            self.reason.detail(),
++            match self.reason {
++                GraphWorkFailureV1::Overflow => "overflow",
++                GraphWorkFailureV1::AboveLimit => "above-limit",
++            },
++            self.before,
++            self.amount,
++        )?;
++        match self.sum {
++            Some(value) => write!(formatter, "{value}")?,
++            None => formatter.write_str("none")?,
++        }
++        write!(
++            formatter,
++            " limit={} caller={} line={} column={} path_truncated={}",
++            MAX_PROJECTED_LOOP_GRAPH_WORK_V1,
++            self.path,
++            self.line,
++            self.column,
++            self.path.truncated,
++        )?;
++        if let Some(function) = &self.function {
++            write!(formatter, " function_index={} function_sha256=", function.index)?;
++            for byte in function.identity.as_bytes() {
++                write!(formatter, "{byte:02x}")?;
++            }
++            write!(
++                formatter,
++                " role={:?} source={} phase={}",
++                function.role,
++                source_label(function.source),
++                match function.context {
++                    GraphWorkContextV1::DefinedCallableSummary => "defined-callable-summary",
++                    GraphWorkContextV1::RootProjection => "root-projection",
++                },
++            )?;
++            if let Some(symbol) = &function.kernel_export {
++                write!(formatter, " kernel_export={symbol}")?;
++            }
++        } else {
++            formatter.write_str(" phase=unattributed")?;
++        }
++        if let Some(root) = &self.root {
++            write!(formatter, "; root {root}")?;
++        }
++        Ok(())
++    }
++}
+--- /dev/null
++++ b/crates/rustc-codegen-fe2o3/src/production_ranked_projection_v1/graph_work_diagnostic_v1_tests.rs
+@@ -0,0 +1,260 @@
++// Component tests observe real charge paths; they do not qualify any kernel.
++fn graph_work_diagnostic_v1(
++    error: &ProductionRankedProjectionErrorV1,
++) -> &GraphWorkDiagnosticV1 {
++    let ProductionRankedProjectionErrorV1::GraphWorkLimit(diagnostic) = error else {
++        panic!("expected exact graph-work refusal: {error}");
++    };
++    assert!(std::error::Error::source(error).is_none());
++    diagnostic
++}
++
++fn graph_work_failure_v1() -> ProductionRankedProjectionErrorV1 {
++    let mut work = MAX_PROJECTED_LOOP_GRAPH_WORK_V1;
++    project_loop_graph_charge_v1(&mut work, 1).unwrap_err()
++}
++
++fn graph_work_source_function_v1(tag: u8) -> SemanticFunctionDeclV1 {
++    let base = scalar_summary_leaf(tag);
++    let origin = SemanticSourceOriginV1::new(
++        SemanticSourceFileIdentityV1::from_sha256(bytes(0xab)),
++        100,
++        120,
++        37,
++        11,
++        37,
++        31,
++    )
++    .unwrap();
++    SemanticFunctionDeclV1::new(
++        base.identity(),
++        base.role(),
++        base.item_definition_identity(),
++        base.monomorphization_identity(),
++        base.generic_type_arguments_identity(),
++        base.const_generic_arguments_identity(),
++        SemanticSourceProvenanceV1::new(Some(origin), Some(origin)),
++        base.abi().clone(),
++        base.locals().to_vec(),
++        base.entry(),
++        base.blocks().to_vec(),
++    )
++    .unwrap()
++}
++
++#[test]
++fn graph_work_diagnostic_exact_limit_and_over_limit_preserve_counter() {
++    let mut work = 0;
++    project_loop_graph_charge_v1(&mut work, 0).unwrap();
++    project_loop_graph_charge_v1(&mut work, MAX_PROJECTED_LOOP_GRAPH_WORK_V1).unwrap();
++    assert_eq!(work, MAX_PROJECTED_LOOP_GRAPH_WORK_V1);
++    project_loop_graph_charge_v1(&mut work, 0).unwrap();
++    let error = project_loop_graph_charge_v1(&mut work, 1).unwrap_err();
++    let diagnostic = graph_work_diagnostic_v1(&error);
++    assert_eq!(diagnostic.reason, GraphWorkFailureV1::AboveLimit);
++    assert_eq!(diagnostic.before, MAX_PROJECTED_LOOP_GRAPH_WORK_V1);
++    assert_eq!(diagnostic.amount, 1);
++    assert_eq!(diagnostic.sum, Some(MAX_PROJECTED_LOOP_GRAPH_WORK_V1 + 1));
++    assert_eq!(work, MAX_PROJECTED_LOOP_GRAPH_WORK_V1 + 1);
++    assert!(diagnostic.function.is_none());
++    assert!(diagnostic.root.is_none());
++    assert!(error.to_string().starts_with(
++        "semantic-to-ranked projection rejected uniform induction CFG analysis exceeds its work limit; loop-graph-work-diagnostic-v1 reason=above-limit",
++    ));
++    assert!(error.to_string().ends_with(" phase=unattributed"));
++}
++
++#[test]
++fn graph_work_diagnostic_overflow_preserves_counter() {
++    for (before, amount) in [(usize::MAX, 1), (usize::MAX - 1, 2)] {
++        let mut work = before;
++        let error = project_loop_graph_charge_v1(&mut work, amount).unwrap_err();
++        let diagnostic = graph_work_diagnostic_v1(&error);
++        assert_eq!(diagnostic.reason, GraphWorkFailureV1::Overflow);
++        assert_eq!(diagnostic.before, before);
++        assert_eq!(diagnostic.amount, amount);
++        assert_eq!(diagnostic.sum, None);
++        assert_eq!(work, before);
++        assert!(error.to_string().starts_with(
++            "semantic-to-ranked projection rejected uniform induction CFG analysis work overflow; loop-graph-work-diagnostic-v1 reason=overflow",
++        ));
++        assert!(error.to_string().contains(" sum=none limit=3145728 "));
++    }
++}
++
++#[test]
++fn graph_work_diagnostic_direct_callers_are_distinct() {
++    let mut first_work = MAX_PROJECTED_LOOP_GRAPH_WORK_V1;
++    let first_line = line!() + 1;
++    let first = project_loop_graph_charge_v1(&mut first_work, 1).unwrap_err();
++    let mut second_work = usize::MAX;
++    let second_line = line!() + 1;
++    let second = project_loop_graph_charge_v1(&mut second_work, 1).unwrap_err();
++    for (error, expected) in [(&first, first_line), (&second, second_line)] {
++        let diagnostic = graph_work_diagnostic_v1(error);
++        assert_eq!(diagnostic.line, expected);
++        assert!(diagnostic.column > 0);
++        assert_eq!(
++            &diagnostic.path.bytes[..diagnostic.path.len],
++            &file!().as_bytes()[file!().len().saturating_sub(MAX_GRAPH_WORK_PATH_BYTES_V1)..],
++        );
++    }
++    assert_ne!(first_line, second_line);
++}
++
++#[test]
++fn graph_work_diagnostic_proof_forwarder_keeps_caller_and_counter() {
++    let function = cfg_diagnostic_function_v1(2);
++    let mut proof = SemanticAssertProofsV1::new(&[], &function).unwrap();
++    proof.work = MAX_PROJECTED_LOOP_GRAPH_WORK_V1;
++    let expected_line = line!() + 1;
++    let error = proof.charge(1).unwrap_err();
++    let diagnostic = graph_work_diagnostic_v1(&error);
++    assert_eq!(diagnostic.line, expected_line);
++    assert_eq!(diagnostic.reason, GraphWorkFailureV1::AboveLimit);
++    assert_eq!(diagnostic.sum, Some(MAX_PROJECTED_LOOP_GRAPH_WORK_V1 + 1));
++    assert_eq!(proof.work, MAX_PROJECTED_LOOP_GRAPH_WORK_V1 + 1);
++    assert!(proof.indexed_atomic_cfg_acyclic.is_none());
++}
++
++#[test]
++fn graph_work_diagnostic_atomic_forwarder_preserves_cell_on_failure() {
++    let atomic = AuthenticatedAtomicAllocationsV1::default();
++    atomic.charge(3).unwrap();
++    assert_eq!(atomic.work.get(), 3);
++    for (before, reason, sum) in [
++        (
++            MAX_PROJECTED_LOOP_GRAPH_WORK_V1,
++            GraphWorkFailureV1::AboveLimit,
++            Some(MAX_PROJECTED_LOOP_GRAPH_WORK_V1 + 1),
++        ),
++        (usize::MAX, GraphWorkFailureV1::Overflow, None),
++    ] {
++        atomic.work.set(before);
++        let expected_line = line!() + 1;
++        let error = atomic.charge(1).unwrap_err();
++        let diagnostic = graph_work_diagnostic_v1(&error);
++        assert_eq!(diagnostic.line, expected_line);
++        assert_eq!(diagnostic.reason, reason);
++        assert_eq!(diagnostic.before, before);
++        assert_eq!(diagnostic.sum, sum);
++        assert_eq!(atomic.work.get(), before);
++    }
++}
++
++#[test]
++fn graph_work_diagnostic_body_context_uses_actual_body_not_root() {
++    let functions = [scalar_summary_leaf(61), graph_work_source_function_v1(71)];
++    assert_ne!(functions[0].identity(), functions[1].identity());
++    let error = graph_work_failure_v1()
++        .with_graph_work_body_v1(&functions, SemanticFunctionIdV1::from_index(1))
++        .with_deterministic_root_context(
++            SemanticFunctionIdV1::from_index(0),
++            SemanticFunctionIdV1::from_index(1),
++            b"separate_logical_root",
++        );
++    let diagnostic = graph_work_diagnostic_v1(&error);
++    let function = diagnostic.function.as_ref().unwrap();
++    assert_eq!(function.index, 1);
++    assert_eq!(function.identity, functions[1].identity());
++    assert_eq!(function.role, functions[1].role());
++    assert_eq!(function.source, functions[1].source());
++    assert_ne!(function.source, functions[0].source());
++    assert_eq!(function.context, GraphWorkContextV1::RootProjection);
++    let root = diagnostic.root.as_ref().unwrap();
++    assert_eq!(root.root, SemanticFunctionIdV1::from_index(0));
++    assert_eq!(root.body, SemanticFunctionIdV1::from_index(1));
++    let error = graph_work_failure_v1()
++        .with_graph_work_body_v1(&functions, SemanticFunctionIdV1::from_index(2));
++    assert!(graph_work_diagnostic_v1(&error).function.is_none());
++    assert!(graph_work_diagnostic_v1(&error).root.is_none());
++}
++
++#[test]
++fn graph_work_diagnostic_first_function_context_is_retained() {
++    let functions = [scalar_summary_leaf(61), scalar_summary_leaf(71)];
++    let error = graph_work_failure_v1().with_graph_work_function_v1(
++        0,
++        &functions[0],
++        GraphWorkContextV1::DefinedCallableSummary,
++    );
++    let diagnostic = graph_work_diagnostic_v1(&error);
++    assert!(diagnostic.root.is_none());
++    assert!(error.to_string().contains("phase=defined-callable-summary"));
++    let error = error
++        .with_graph_work_body_v1(&functions, SemanticFunctionIdV1::from_index(1))
++        .with_deterministic_root_context(
++            SemanticFunctionIdV1::from_index(0),
++            SemanticFunctionIdV1::from_index(1),
++            b"first_root",
++        )
++        .with_deterministic_root_context(
++            SemanticFunctionIdV1::from_index(1),
++            SemanticFunctionIdV1::from_index(0),
++            b"must_not_replace",
++        );
++    let diagnostic = graph_work_diagnostic_v1(&error);
++    let function = diagnostic.function.as_ref().unwrap();
++    assert_eq!(function.index, 0);
++    assert_eq!(function.identity, functions[0].identity());
++    assert_eq!(function.context, GraphWorkContextV1::DefinedCallableSummary);
++    assert_eq!(diagnostic.root.as_ref().unwrap().body, SemanticFunctionIdV1::from_index(1));
++    assert!(!error.to_string().contains("must_not_replace"));
++}
++
++#[test]
++fn graph_work_diagnostic_bounded_paths_names_and_exports_are_escaped() {
++    for raw in [vec![], vec![b'a'; 128], vec![0xff; 1024]] {
++        let path = GraphWorkPathV1::new(&raw);
++        assert_eq!(path.len, raw.len().min(128));
++        assert_eq!(path.truncated, raw.len() > 128);
++        assert_eq!(&path.bytes[..path.len], &raw[raw.len().saturating_sub(128)..]);
++        assert!(path.to_string().len() <= 512);
++    }
++    let mut name = vec![0xff; 1024];
++    name[3] = b'\n';
++    let function = cfg_diagnostic_function_v1(2).with_kernel_entry(SemanticKernelEntryV1::new(
++        SemanticLinkSymbolV1::new(name.clone()).unwrap(),
++        SemanticKernelBindingIdentityV1::from_sha256(bytes(247)),
++        SemanticKernelSourceContractV1::new(None, None, None).unwrap(),
++    ));
++    let mut error = graph_work_failure_v1()
++        .with_graph_work_function_v1(0, &function, GraphWorkContextV1::RootProjection)
++        .with_deterministic_root_context(
++            SemanticFunctionIdV1::from_index(0),
++            SemanticFunctionIdV1::from_index(0),
++            &name,
++        );
++    let ProductionRankedProjectionErrorV1::GraphWorkLimit(diagnostic) = &mut error else {
++        unreachable!();
++    };
++    diagnostic.path = GraphWorkPathV1::new(&vec![0xff; 1024]);
++    let rendered = error.to_string();
++    assert!(!rendered.contains('\n'));
++    assert!(!rendered.contains('\u{fffd}'));
++    assert!(rendered.contains("\\xff"));
++    assert!(rendered.contains("\\n"));
++    assert!(rendered.contains("path_truncated=true"));
++    assert!(rendered.len() < 3072);
++}
++
++#[test]
++fn graph_work_diagnostic_context_preserves_other_errors() {
++    let functions = [scalar_summary_leaf(61)];
++    for error in [
++        ProductionRankedProjectionErrorV1::Unsupported("other refusal"),
++        ProductionRankedProjectionErrorV1::Incomplete("other incomplete"),
++    ] {
++        let before = error.to_string();
++        let error = error
++            .with_graph_work_function_v1(0, &functions[0], GraphWorkContextV1::DefinedCallableSummary)
++            .with_graph_work_body_v1(&functions, SemanticFunctionIdV1::from_index(0))
++            .with_deterministic_root_context(
++                SemanticFunctionIdV1::from_index(0),
++                SemanticFunctionIdV1::from_index(0),
++                b"not_attached",
++            );
++        assert_eq!(error.to_string(), before);
++        assert!(std::error::Error::source(&error).is_none());
++    }
++}
+--- a/crates/rustc-codegen-fe2o3/src/production_ranked_projection_v1/index_singleton_invalid_query_v1_tests.rs
++++ b/crates/rustc-codegen-fe2o3/src/production_ranked_projection_v1/index_singleton_invalid_query_v1_tests.rs
+@@ -208,9 +208,8 @@
+         proof.work = MAX_PROJECTED_LOOP_GRAPH_WORK_V1;
+         assert!(matches!(
+             proof.index_singleton_switch_value_v1(&typed_operand(6, BOOL_TYPE), 3),
+-            Err(ProductionRankedProjectionErrorV1::Unsupported(
+-                "uniform induction CFG analysis exceeds its work limit"
+-            )),
++            Err(ProductionRankedProjectionErrorV1::GraphWorkLimit(diagnostic))
++                if diagnostic.reason == GraphWorkFailureV1::AboveLimit,
+         ));
+         assert!(!proof.index_singletons.as_ref().unwrap().invalid);
+     }
+@@ -232,9 +231,8 @@
+         if short {
+             assert!(matches!(
+                 result,
+-                Err(ProductionRankedProjectionErrorV1::Unsupported(
+-                    "uniform induction CFG analysis exceeds its work limit"
+-                ))
++                Err(ProductionRankedProjectionErrorV1::GraphWorkLimit(diagnostic))
++                if diagnostic.reason == GraphWorkFailureV1::AboveLimit
+             ));
+         } else {
+             assert_eq!(result.unwrap(), None);
+@@ -248,9 +246,8 @@
+     legacy.work = MAX_PROJECTED_LOOP_GRAPH_WORK_V1 - cost;
+     assert!(matches!(
+         legacy.index_singleton_switch_value_v1(&typed_operand(6, BOOL_TYPE), 3),
+-        Err(ProductionRankedProjectionErrorV1::Unsupported(
+-            "uniform induction CFG analysis exceeds its work limit"
+-        )),
++        Err(ProductionRankedProjectionErrorV1::GraphWorkLimit(diagnostic))
++                if diagnostic.reason == GraphWorkFailureV1::AboveLimit,
+     ));
+     assert!(legacy.index_singletons.as_ref().unwrap().invalid);
+ }
+--- a/crates/rustc-codegen-fe2o3/src/production_ranked_projection_v1/index_singleton_switch_v1_tests.rs
++++ b/crates/rustc-codegen-fe2o3/src/production_ranked_projection_v1/index_singleton_switch_v1_tests.rs
+@@ -503,9 +503,8 @@
+         if short {
+             assert!(matches!(
+                 result,
+-                Err(ProductionRankedProjectionErrorV1::Unsupported(
+-                    "uniform induction CFG analysis exceeds its work limit"
+-                ))
++                Err(ProductionRankedProjectionErrorV1::GraphWorkLimit(diagnostic))
++                if diagnostic.reason == GraphWorkFailureV1::AboveLimit
+             ));
+         } else {
+             assert_eq!(result.unwrap(), Some(0));
+@@ -732,9 +731,8 @@
+         if short {
+             assert!(matches!(
+                 result,
+-                Err(ProductionRankedProjectionErrorV1::Unsupported(
+-                    "uniform induction CFG analysis exceeds its work limit"
+-                ))
++                Err(ProductionRankedProjectionErrorV1::GraphWorkLimit(diagnostic))
++                if diagnostic.reason == GraphWorkFailureV1::AboveLimit
+             ));
+             let context = proofs.index_singletons.as_ref().unwrap();
+             assert!(context.local_decisions.is_empty());
+@@ -980,9 +978,8 @@
+         proofs.work = MAX_PROJECTED_LOOP_GRAPH_WORK_V1 - graph_precharge + 1;
+         assert!(matches!(
+             proofs.index_singleton_local_uncached_v1(local, site),
+-            Err(ProductionRankedProjectionErrorV1::Unsupported(
+-                "uniform induction CFG analysis exceeds its work limit"
+-            )),
++            Err(ProductionRankedProjectionErrorV1::GraphWorkLimit(diagnostic))
++                if diagnostic.reason == GraphWorkFailureV1::AboveLimit,
+         ));
+         assert_eq!(proofs.work, MAX_PROJECTED_LOOP_GRAPH_WORK_V1 + 1);
+         assert!(proofs.dominance.is_empty());
+@@ -1316,9 +1313,8 @@
+         if short {
+             assert!(matches!(
+                 result,
+-                Err(ProductionRankedProjectionErrorV1::Unsupported(
+-                    "uniform induction CFG analysis exceeds its work limit"
+-                )),
++                Err(ProductionRankedProjectionErrorV1::GraphWorkLimit(diagnostic))
++                if diagnostic.reason == GraphWorkFailureV1::AboveLimit,
+             ));
+             assert!(context.local_decisions.is_empty());
+             assert!(!context.invalid);
+--- a/crates/rustc-codegen-fe2o3/src/production_ranked_projection_v1/indexed_atomic_v1.rs
++++ b/crates/rustc-codegen-fe2o3/src/production_ranked_projection_v1/indexed_atomic_v1.rs
+@@ -30,6 +30,7 @@
+ }
+ 
+ impl AuthenticatedAtomicAllocationsV1 {
++    #[track_caller]
+     fn charge(&self, amount: usize) -> Result<(), ProductionRankedProjectionErrorV1> {
+         let mut work = self.work.get();
+         project_loop_graph_charge_v1(&mut work, amount)?;
+--- a/crates/rustc-codegen-fe2o3/src/production_ranked_projection_v1/induction_body_predicate_v1_tests.rs
++++ b/crates/rustc-codegen-fe2o3/src/production_ranked_projection_v1/induction_body_predicate_v1_tests.rs
+@@ -671,8 +671,11 @@
+             &inductions,
+             &mut exhausted_work,
+         ),
+-        Err(ProductionRankedProjectionErrorV1::Unsupported(_))
++        Err(ProductionRankedProjectionErrorV1::Unsupported(
++            "uniform induction alias work accounting overflowed"
++        ))
+     ));
++    assert_eq!(exhausted_work, usize::MAX);
+ }
+ 
+ fn nested_induction_body_predicate_function_v1(inner: bool) -> SemanticFunctionDeclV1 {
+--- a/crates/rustc-codegen-fe2o3/src/production_ranked_projection_v1/loop_switch_domain_v1_tests.rs
++++ b/crates/rustc-codegen-fe2o3/src/production_ranked_projection_v1/loop_switch_domain_v1_tests.rs
+@@ -251,16 +251,14 @@
+     let mut short = MAX_PROJECTED_LOOP_GRAPH_WORK_V1 - measured + 1;
+     assert!(matches!(
+         projected_loop_cfg_with_inventory_v1(&fixture.types, &function, &inventory, &mut short,),
+-        Err(ProductionRankedProjectionErrorV1::Unsupported(
+-            "uniform induction CFG analysis exceeds its work limit"
+-        ))
++        Err(ProductionRankedProjectionErrorV1::GraphWorkLimit(diagnostic))
++                if diagnostic.reason == GraphWorkFailureV1::AboveLimit
+     ));
+     let mut overflow = usize::MAX;
+     assert!(matches!(
+         projected_loop_cfg_with_inventory_v1(&fixture.types, &function, &inventory, &mut overflow,),
+-        Err(ProductionRankedProjectionErrorV1::Unsupported(
+-            "uniform induction CFG analysis work overflow"
+-        ))
++        Err(ProductionRankedProjectionErrorV1::GraphWorkLimit(diagnostic))
++                if diagnostic.reason == GraphWorkFailureV1::Overflow
+     ));
+ }
+ 
+@@ -541,9 +539,8 @@
+     let mut short = MAX_PROJECTED_LOOP_GRAPH_WORK_V1 - measured + 1;
+     assert!(matches!(
+         fixture.accepted_fallback(&mut short),
+-        Err(ProductionRankedProjectionErrorV1::Unsupported(
+-            "uniform induction CFG analysis exceeds its work limit"
+-        ))
++        Err(ProductionRankedProjectionErrorV1::GraphWorkLimit(diagnostic))
++                if diagnostic.reason == GraphWorkFailureV1::AboveLimit
+     ));
+     let mut shared = 17;
+     assert!(fixture.accepted_fallback(&mut shared).unwrap());
+@@ -552,8 +549,7 @@
+     let mut overflow = usize::MAX;
+     assert!(matches!(
+         fixture.accepted_fallback(&mut overflow),
+-        Err(ProductionRankedProjectionErrorV1::Unsupported(
+-            "uniform induction CFG analysis work overflow"
+-        ))
+-    ));
+-}
++        Err(ProductionRankedProjectionErrorV1::GraphWorkLimit(diagnostic))
++                if diagnostic.reason == GraphWorkFailureV1::Overflow
++    ));
++}
+--- a/crates/rustc-codegen-fe2o3/src/production_ranked_projection_v1/scalar_literal_range_v1_tests.rs
++++ b/crates/rustc-codegen-fe2o3/src/production_ranked_projection_v1/scalar_literal_range_v1_tests.rs
+@@ -232,9 +232,8 @@
+                 statement: 0
+             }
+         ),
+-        Err(ProductionRankedProjectionErrorV1::Unsupported(
+-            "uniform induction CFG analysis exceeds its work limit"
+-        ))
++        Err(ProductionRankedProjectionErrorV1::GraphWorkLimit(diagnostic))
++                if diagnostic.reason == GraphWorkFailureV1::AboveLimit
+     ));
+ }
+ 
+--- a/crates/rustc-codegen-fe2o3/src/production_ranked_projection_v1/zero_comparison_candidate_filter_v1_tests.rs
++++ b/crates/rustc-codegen-fe2o3/src/production_ranked_projection_v1/zero_comparison_candidate_filter_v1_tests.rs
+@@ -213,9 +213,8 @@
+         if short {
+             assert!(matches!(
+                 result,
+-                Err(ProductionRankedProjectionErrorV1::Unsupported(
+-                    "uniform induction CFG analysis exceeds its work limit"
+-                ))
++                Err(ProductionRankedProjectionErrorV1::GraphWorkLimit(diagnostic))
++                if diagnostic.reason == GraphWorkFailureV1::AboveLimit
+             ));
+         } else {
+             assert_eq!(result.unwrap(), Some(5));

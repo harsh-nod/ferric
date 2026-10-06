@@ -1,0 +1,16 @@
+--- a/crates/rustc-codegen-fe2o3/src/production_ranked_projection_v1/induction_body_predicate_v1_tests.rs
++++ b/crates/rustc-codegen-fe2o3/src/production_ranked_projection_v1/induction_body_predicate_v1_tests.rs
+@@ -671,9 +671,11 @@
+             &inductions,
+             &mut exhausted_work,
+         ),
+-        Err(ProductionRankedProjectionErrorV1::GraphWorkLimit(diagnostic))
+-            if diagnostic.reason == GraphWorkFailureV1::Overflow
++        Err(ProductionRankedProjectionErrorV1::Unsupported(
++            "uniform induction alias work accounting overflowed"
++        ))
+     ));
++    assert_eq!(exhausted_work, usize::MAX);
+ }
+ 
+ fn nested_induction_body_predicate_function_v1(inner: bool) -> SemanticFunctionDeclV1 {

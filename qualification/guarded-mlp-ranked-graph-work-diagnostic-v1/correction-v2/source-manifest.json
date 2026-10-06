@@ -1,0 +1,158 @@
+{
+  "base_tree": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/guarded-mlp-indexed-atomic-dag-input-v228-v1/fe2o3",
+  "dag_proposal": {
+    "bytes": 3266,
+    "sha256": "4889df85ff563f94549d7f767820a5065d82f9e53da593952a96a5def2ad6bb3"
+  },
+  "diagnostic_only": true,
+  "escaped_path_bytes": 512,
+  "existing_pattern_updates": {
+    "crates/rustc-codegen-fe2o3/src/production_ranked_projection_v1.rs": 3,
+    "crates/rustc-codegen-fe2o3/src/production_ranked_projection_v1/assertion_projected_range_v1_tests.rs": 3,
+    "crates/rustc-codegen-fe2o3/src/production_ranked_projection_v1/cfg_block_limit_diagnostic_v1_tests.rs": 2,
+    "crates/rustc-codegen-fe2o3/src/production_ranked_projection_v1/index_singleton_invalid_query_v1_tests.rs": 3,
+    "crates/rustc-codegen-fe2o3/src/production_ranked_projection_v1/index_singleton_switch_v1_tests.rs": 4,
+    "crates/rustc-codegen-fe2o3/src/production_ranked_projection_v1/induction_body_predicate_v1_tests.rs": 1,
+    "crates/rustc-codegen-fe2o3/src/production_ranked_projection_v1/loop_switch_domain_v1_tests.rs": 4,
+    "crates/rustc-codegen-fe2o3/src/production_ranked_projection_v1/scalar_literal_range_v1_tests.rs": 1,
+    "crates/rustc-codegen-fe2o3/src/production_ranked_projection_v1/zero_comparison_candidate_filter_v1_tests.rs": 1
+  },
+  "files": {
+    "crates/rustc-codegen-fe2o3/src/production_ranked_projection_v1.rs": {
+      "after": {
+        "bytes": 1652751,
+        "sha256": "a68eba52621e7dce2b11030b536e094584e0ea31a8241474bc5fda27a4390c61"
+      },
+      "before": {
+        "bytes": 1650983,
+        "sha256": "99a110aeae0315a6f380c0b96fca7b5719366cacb4ef6ed72254fdf87e46cde2"
+      }
+    },
+    "crates/rustc-codegen-fe2o3/src/production_ranked_projection_v1/assertion_projected_range_v1_tests.rs": {
+      "after": {
+        "bytes": 37667,
+        "sha256": "9fbf2766ad62d9f1ab34c10010c4cd90a8369050c4045810843dc53f8753ca53"
+      },
+      "before": {
+        "bytes": 37639,
+        "sha256": "addeb05e905e0fa2eb259e52c2a020ea1df8dcddf5a1b7b305078eb7178b7974"
+      }
+    },
+    "crates/rustc-codegen-fe2o3/src/production_ranked_projection_v1/cfg_block_limit_diagnostic_v1_tests.rs": {
+      "after": {
+        "bytes": 11689,
+        "sha256": "511cd2a673b7eb7a92eac117416fcdea1911e46ec30b1fbc7788a6c5decea0dd"
+      },
+      "before": {
+        "bytes": 11531,
+        "sha256": "66a5be3431b516dec1fa4564ef37030a272aba1a4fcdaf86ce6a9e3282fb79a2"
+      }
+    },
+    "crates/rustc-codegen-fe2o3/src/production_ranked_projection_v1/graph_work_diagnostic_v1.rs": {
+      "after": {
+        "bytes": 5716,
+        "sha256": "688a7d7915b51b3464001b5fce94beab6c5615313a07fe8ab3bd93f390e7742a"
+      },
+      "before": null
+    },
+    "crates/rustc-codegen-fe2o3/src/production_ranked_projection_v1/graph_work_diagnostic_v1_tests.rs": {
+      "after": {
+        "bytes": 11050,
+        "sha256": "62f77c252cbfa89a7333c89a81cf48ad6e518ca596f821b5a144fb0da67cbebb"
+      },
+      "before": null
+    },
+    "crates/rustc-codegen-fe2o3/src/production_ranked_projection_v1/index_singleton_invalid_query_v1_tests.rs": {
+      "after": {
+        "bytes": 10152,
+        "sha256": "be262627cafc2559ee55ff1286fe3dc4009d763f728408f85f370ae6a8ab762c"
+      },
+      "before": {
+        "bytes": 10155,
+        "sha256": "cfd7e6f57f6c7f84bdb058ab52f7513cdf9a8c0c61601b124d8d9e1459799537"
+      }
+    },
+    "crates/rustc-codegen-fe2o3/src/production_ranked_projection_v1/index_singleton_switch_v1_tests.rs": {
+      "after": {
+        "bytes": 49941,
+        "sha256": "bcb9b876a01e0edbdc8f7e1ec3dd5e43a8cb2d70945da3d0364d3c5c151f5fcd"
+      },
+      "before": {
+        "bytes": 49969,
+        "sha256": "cc29e4dc3dfc44d9c3f577327def5b1de60a85a8ce4a2bdce468247e43b86aaa"
+      }
+    },
+    "crates/rustc-codegen-fe2o3/src/production_ranked_projection_v1/indexed_atomic_v1.rs": {
+      "after": {
+        "bytes": 29687,
+        "sha256": "a55226e6b72ac1e489c1f152d08595e3ae297ce4c9d10ffab5d2914677f4ba7a"
+      },
+      "before": {
+        "bytes": 29667,
+        "sha256": "345ab2d56e5e256e091deb5d4727d0143b0f74dce060874af75ad1e636d74bc4"
+      }
+    },
+    "crates/rustc-codegen-fe2o3/src/production_ranked_projection_v1/induction_body_predicate_v1_tests.rs": {
+      "after": {
+        "bytes": 28675,
+        "sha256": "e45903ab46e349907bf5ae9660f3e796a2e63d405e72b376ff5ee7598dc55b7e"
+      },
+      "before": {
+        "bytes": 28558,
+        "sha256": "2e579f57ba0cd5a6d5b447c70ca0afc6bc214f9d2239e3b636c82c209b337db6"
+      }
+    },
+    "crates/rustc-codegen-fe2o3/src/production_ranked_projection_v1/loop_switch_domain_v1_tests.rs": {
+      "after": {
+        "bytes": 21549,
+        "sha256": "023c938fbfba3bf914b73fd1fca777e83d3b1c5c855436579e02f5b062feebf4"
+      },
+      "before": {
+        "bytes": 21507,
+        "sha256": "9c2deea1495a62c2e4826161dc71bd14d13ae5367c2e1b0b24b822565784a4c1"
+      }
+    },
+    "crates/rustc-codegen-fe2o3/src/production_ranked_projection_v1/scalar_literal_range_v1_tests.rs": {
+      "after": {
+        "bytes": 11805,
+        "sha256": "d8be5aa03ed5a9186b7ff7e90967046674fef8ca1a601ebeefa0783e4d45a62c"
+      },
+      "before": {
+        "bytes": 11798,
+        "sha256": "330fd3c68dc46cf2f3aedd179a0e12044e4f942b33056d7068e8a18b996b2f6d"
+      }
+    },
+    "crates/rustc-codegen-fe2o3/src/production_ranked_projection_v1/zero_comparison_candidate_filter_v1_tests.rs": {
+      "after": {
+        "bytes": 11418,
+        "sha256": "24abca3f8a4849c8ba0eb43892b10098fb2b7750ae952e75c290accbd2c81d9a"
+      },
+      "before": {
+        "bytes": 11427,
+        "sha256": "ca88d047125a996c26acb8f9aefa1145a0c5fb205c72f8d921929bd9d19e22bc"
+      }
+    }
+  },
+  "graph_work_limit": 3145728,
+  "integration_patch": {
+    "bytes": 36960,
+    "sha256": "10e0fdedc76da04a8b502efb66d63727386934023cff824cbd86b53a401931be"
+  },
+  "raw_path_bytes": 128,
+  "resource_admission_changed": false,
+  "schema": "ferric-guarded-mlp-graph-work-diagnostic-source-v1",
+  "semantic_predicates_changed": false,
+  "source_only": true,
+  "test_filter": "production_ranked_projection_v1::tests::graph_work_diagnostic_",
+  "test_names": [
+    "production_ranked_projection_v1::tests::graph_work_diagnostic_atomic_forwarder_preserves_cell_on_failure",
+    "production_ranked_projection_v1::tests::graph_work_diagnostic_body_context_uses_actual_body_not_root",
+    "production_ranked_projection_v1::tests::graph_work_diagnostic_bounded_paths_names_and_exports_are_escaped",
+    "production_ranked_projection_v1::tests::graph_work_diagnostic_context_preserves_other_errors",
+    "production_ranked_projection_v1::tests::graph_work_diagnostic_direct_callers_are_distinct",
+    "production_ranked_projection_v1::tests::graph_work_diagnostic_exact_limit_and_over_limit_preserve_counter",
+    "production_ranked_projection_v1::tests::graph_work_diagnostic_first_function_context_is_retained",
+    "production_ranked_projection_v1::tests::graph_work_diagnostic_overflow_preserves_counter",
+    "production_ranked_projection_v1::tests::graph_work_diagnostic_proof_forwarder_keeps_caller_and_counter"
+  ]
+}
