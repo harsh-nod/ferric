@@ -6,7 +6,13 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Current work: [bounded chain fusion passes full MI350 CPU qualification](../qualification/guarded-mlp-ranked-cfg-linear-fusion-v1/README.md).
+Current work: [a bounded memory-bounds DAG solver is proposed](../qualification/guarded-mlp-memory-bounds-dag-v1/README.md)
+for the new static work refusal. Its nine new tests and source are not yet
+qualified. Existing admitted inputs keep their exact old bound and solver;
+the new route requires a runtime-validated DAG and zero ownership contracts.
+No work limit, access predicate or atomic ordering is relaxed.
+
+Latest completed compiler qualification: [bounded chain fusion passes on MI350](../qualification/guarded-mlp-ranked-cfg-linear-fusion-v1/README.md).
 All 44 phases and 31 test scopes pass: 1,323 compiler and 1,507 Pliron tests,
 with focused repeats and extraction controls totaling 2,972 passing executions
 and 25 unchanged ignores. Sources, dependencies and process postchecks are clean.

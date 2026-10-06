@@ -1,0 +1,126 @@
+{
+  "schema": "ferric-guarded-mlp-memory-bounds-dag-source-v1",
+  "source_only": true,
+  "memory_bounds_dag_optimization": true,
+  "cfg_linear_fusion_optimization": true,
+  "inherited_cfg_linear_fusion_optimization": true,
+  "cfg_compaction_optimization": true,
+  "inherited_cfg_compaction_optimization": true,
+  "compiler_scratch_added": true,
+  "resource_admission_may_change": true,
+  "admission_changed": true,
+  "semantic_predicates_changed": false,
+  "structural_limits_changed": false,
+  "graph_analysis_optimization": true,
+  "inherited_graph_analysis_optimization": true,
+  "static_failure_site_identified": true,
+  "actual_failure_caller_identified": false,
+  "actual_failure_block_count_observed": false,
+  "baseline_failure_caller_identified": true,
+  "baseline_failure_block_count_observed": true,
+  "baseline_memory_bounds_preflight_refusal": true,
+  "baseline_runtime_work_exhaustion_observed": false,
+  "baseline_rendered_blocks": 567,
+  "baseline_rendered_edges": 1122,
+  "baseline_rendered_operations": 2240,
+  "baseline_guard_candidates": 552,
+  "baseline_intersection_work_upper_bound": 9340170,
+  "baseline_edge_verdict_observed": false,
+  "graph_work_limit": 3145728,
+  "block_limit": 2048,
+  "edge_limit": 2048,
+  "fact_limit": 1024,
+  "storage_limit": 131072,
+  "work_limit": 8388608,
+  "production_requires_zero_ownership_contracts": true,
+  "base_source_count": 5806,
+  "source_count": 5808,
+  "source_file_additions": 2,
+  "new_test_count": 9,
+  "filter": "production_analysis::pliron_ranked_bounds::dag_schedule_v1_tests::",
+  "test_names": [
+    "production_analysis::pliron_ranked_bounds::dag_schedule_v1_tests::dag_schedule_certificate_mismatch_fails_closed",
+    "production_analysis::pliron_ranked_bounds::dag_schedule_v1_tests::dag_schedule_cycles_and_unreachable_fallback",
+    "production_analysis::pliron_ranked_bounds::dag_schedule_v1_tests::dag_schedule_dense_guard_production_route",
+    "production_analysis::pliron_ranked_bounds::dag_schedule_v1_tests::dag_schedule_differential_dags_and_physical_orders",
+    "production_analysis::pliron_ranked_bounds::dag_schedule_v1_tests::dag_schedule_duplicate_edges_and_entry",
+    "production_analysis::pliron_ranked_bounds::dag_schedule_v1_tests::dag_schedule_forwarded_arguments_preserve_transport",
+    "production_analysis::pliron_ranked_bounds::dag_schedule_v1_tests::dag_schedule_preserves_bounds_refusals",
+    "production_analysis::pliron_ranked_bounds::dag_schedule_v1_tests::dag_schedule_preserves_previously_admitted_path",
+    "production_analysis::pliron_ranked_bounds::dag_schedule_v1_tests::dag_schedule_work_storage_boundaries"
+  ],
+  "base_complete": {
+    "bytes": 1354241,
+    "sha256": "7827d969f295a8a0ba709629b2679b71ecde9b93b1f0ad11c5b8be70f7259915"
+  },
+  "base_sources": {
+    "bytes": 2288082,
+    "sha256": "0c5a0dce518d1d469d0f7cb34618245aedb74d9279a4aa50473f2f3e20a1de23"
+  },
+  "base_input": {
+    "bytes": 1123577,
+    "sha256": "0bb52fac77acd6af93609e214a6117af4047c484547a9728a4f1f3f387da3981"
+  },
+  "base_controller": {
+    "bytes": 87096,
+    "sha256": "bdcd18f255a8c465adcb67e6831d62568535b6c4e7f83ad07c01a4f4339b6d9a"
+  },
+  "actual_failure": {
+    "bytes": 17737,
+    "sha256": "8d4cc1a0cfe0c9104282c3d20349638a616bd98e7e28f92598dcaf0110057ca2"
+  },
+  "actual_failure_stderr": {
+    "bytes": 123245,
+    "sha256": "c60dc2edc62bfe11ba7a8f79ce1465322d2c887aeb3fa5661dae8002a33c5095"
+  },
+  "integration_patch": {
+    "bytes": 45449,
+    "sha256": "30356afeb07cd9ed769b421c479a586bd7530dd54e1b45cb83623d14092332be"
+  },
+  "files": {
+    "crates/fe2o3-pliron/src/production_analysis/pliron_pipeline.rs": {
+      "before": {
+        "bytes": 48887,
+        "sha256": "43ac9c97be8eb09a08b2931e29272ea03526346b366bb3a33d8a159d39855a1f"
+      },
+      "after": {
+        "bytes": 49511,
+        "sha256": "830d2ba44b15f71e4cd38d5259c4ced9ddb20e3084c85f0ca55b82053b9e7248"
+      }
+    },
+    "crates/fe2o3-pliron/src/production_analysis/pliron_ranked_bounds/dag_schedule_v1.rs": {
+      "before": null,
+      "after": {
+        "bytes": 9808,
+        "sha256": "9aa0061c20a265949696024a3b94e45058de7c9fd540649cc339703c3ffed3bc"
+      }
+    },
+    "crates/fe2o3-pliron/src/production_analysis/pliron_ranked_bounds/dag_schedule_v1_tests.rs": {
+      "before": null,
+      "after": {
+        "bytes": 23574,
+        "sha256": "5f1130d23ab734f49708662151a873c64bdd648592e3bf7b7eef55774992a38c"
+      }
+    },
+    "crates/fe2o3-pliron/src/production_analysis/pliron_ranked_bounds/execution_v1.rs": {
+      "before": {
+        "bytes": 16101,
+        "sha256": "15e41c7d479c29767e8c20310b3cee48ac78279a533d362ee6e46cb2d06bb21f"
+      },
+      "after": {
+        "bytes": 18143,
+        "sha256": "b228e963117f06551fdd73cc2e8fa9b6111280ed8cb7a1414fab31e36615b938"
+      }
+    },
+    "crates/fe2o3-pliron/src/production_analysis/pliron_ranked_bounds.rs": {
+      "before": {
+        "bytes": 23920,
+        "sha256": "fb859914f0079bbea14c50e92e2a4eb545f68c65f2009b4cf93348466b6816b9"
+      },
+      "after": {
+        "bytes": 24625,
+        "sha256": "be6922447adef80dc7169eef3b76a2623affa04ff8fc1cd9a72c192ae6099e83"
+      }
+    }
+  }
+}
