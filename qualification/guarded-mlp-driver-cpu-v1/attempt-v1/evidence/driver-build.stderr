@@ -1,0 +1,54 @@
+warning: /home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-driver-cpu-v228-v1/fe2o3/crates/rustc-codegen-fe2o3/tests/fixtures/local-marker/Cargo.toml: file `/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-driver-cpu-v228-v1/fe2o3/crates/rustc-codegen-fe2o3/tests/fixtures/local-marker/src/main.rs` found to be present in multiple build targets:
+  * `lib` target `fe2o3_trusted_item_local_marker`
+  * `bin` target `fe2o3-trusted-item-local-marker`
+   Compiling quote v1.0.47
+   Compiling crypto-common v0.1.7
+   Compiling digest v0.10.7
+   Compiling syn v3.0.4
+   Compiling syn v2.0.119
+   Compiling curve25519-dalek v4.1.3
+   Compiling serde_derive v1.0.229
+   Compiling indexmap v2.14.1
+   Compiling linkme-impl v0.3.37
+   Compiling awint_macros v0.19.0
+   Compiling thiserror-impl v2.0.16
+   Compiling curve25519-dalek-derive v0.1.1
+   Compiling serde v1.0.229
+   Compiling signature v2.2.0
+   Compiling ed25519 v2.2.3
+   Compiling pliron-derive v0.17.0 (https://github.com/harsh-nod/pliron.git?rev=161c385576d45d4e634ba179fa93a545b91124e6#161c3855)
+   Compiling thiserror v2.0.16
+   Compiling awint v0.19.0
+   Compiling linkme v0.3.37
+   Compiling sha2 v0.10.9
+   Compiling ed25519-dalek v2.2.0
+   Compiling fe2o3-kernel-ir v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-driver-cpu-v228-v1/fe2o3/crates/fe2o3-kernel-ir)
+   Compiling pliron v0.17.0 (https://github.com/harsh-nod/pliron.git?rev=161c385576d45d4e634ba179fa93a545b91124e6#161c3855)
+   Compiling fe2o3-pliron-owner-core v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-driver-cpu-v228-v1/fe2o3/crates/fe2o3-pliron-owner-core)
+   Compiling dialect-kernel v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-driver-cpu-v228-v1/fe2o3/crates/dialect-kernel)
+   Compiling fe2o3-mir-model v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-driver-cpu-v228-v1/fe2o3/crates/fe2o3-mir-model)
+   Compiling fe2o3-functional-proof v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-driver-cpu-v228-v1/fe2o3/crates/fe2o3-functional-proof)
+   Compiling dialect-proof v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-driver-cpu-v228-v1/fe2o3/crates/dialect-proof)
+   Compiling dialect-gpu v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-driver-cpu-v228-v1/fe2o3/crates/dialect-gpu)
+   Compiling dialect-mir v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-driver-cpu-v228-v1/fe2o3/crates/dialect-mir)
+   Compiling fe2o3-kernel-analysis v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-driver-cpu-v228-v1/fe2o3/crates/fe2o3-kernel-analysis)
+   Compiling fe2o3-artifact-transaction v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-driver-cpu-v228-v1/fe2o3/crates/fe2o3-artifact-transaction)
+   Compiling fe2o3-pliron v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-driver-cpu-v228-v1/fe2o3/crates/fe2o3-pliron)
+   Compiling fe2o3-external-anchor-protocol v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-driver-cpu-v228-v1/fe2o3/crates/fe2o3-external-anchor-protocol)
+   Compiling fe2o3-compiler-execution-protocol v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-driver-cpu-v228-v1/fe2o3/crates/fe2o3-compiler-execution-protocol)
+   Compiling fe2o3-source-isa-observation v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-driver-cpu-v228-v1/fe2o3/crates/fe2o3-source-isa-observation)
+   Compiling fe2o3-profiler-protocol v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-driver-cpu-v228-v1/fe2o3/crates/fe2o3-profiler-protocol)
+   Compiling fe2o3-kernel-opt v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-driver-cpu-v228-v1/fe2o3/crates/fe2o3-kernel-opt)
+   Compiling fe2o3-amdgcn-model v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-driver-cpu-v228-v1/fe2o3/crates/fe2o3-amdgcn-model)
+   Compiling dialect-amdgcn v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-driver-cpu-v228-v1/fe2o3/crates/dialect-amdgcn)
+   Compiling fe2o3-lower-mir-kernel v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-driver-cpu-v228-v1/fe2o3/crates/fe2o3-lower-mir-kernel)
+   Compiling fe2o3-semantic-import v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-driver-cpu-v228-v1/fe2o3/crates/fe2o3-semantic-import)
+   Compiling fe2o3-hsaco-finalize v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-driver-cpu-v228-v1/fe2o3/crates/fe2o3-hsaco-finalize)
+   Compiling fe2o3-runtime v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-driver-cpu-v228-v1/fe2o3/crates/fe2o3-runtime)
+   Compiling fe2o3-compiler-closure-capability v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-driver-cpu-v228-v1/fe2o3/crates/fe2o3-compiler-closure-capability)
+   Compiling fe2o3-compiler-execution-client v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-driver-cpu-v228-v1/fe2o3/crates/fe2o3-compiler-execution-client)
+   Compiling fe2o3-semantic-query v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-driver-cpu-v228-v1/fe2o3/crates/fe2o3-semantic-query)
+   Compiling fe2o3-runtime-protocol v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-driver-cpu-v228-v1/fe2o3/crates/fe2o3-runtime-protocol)
+   Compiling fe2o3-artifacts v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-driver-cpu-v228-v1/fe2o3/crates/fe2o3-artifacts)
+   Compiling cargo-fe2o3 v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-driver-cpu-v228-v1/fe2o3/crates/cargo-fe2o3)
+    Finished `dev` profile [unoptimized] target(s) in 35.86s

@@ -6,14 +6,22 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Latest: [the refreshed guarded gfx950 lowering reaches an atomic-ordering rejection](../qualification/guarded-mlp-lowering-attempt-v2/README.md).
+Latest: [the updated engineering driver builds and passes its 18 focused tests on MI350](../qualification/guarded-mlp-driver-cpu-v1/README.md).
+All seven phases exited naturally and were reaped, with unchanged sources and
+clean postchecks. The complete 402-name compiled inventory and five ignored
+names are retained, but the full driver suite was not executed. The final
+driver now supports explicit optimized MIR inlining, matching the passing
+atomic extraction control. A fresh loader audit and guarded lowering retry
+are next; no GPU, model-correctness or performance milestone is closed.
+
+Previously, [the refreshed guarded gfx950 lowering reaches an atomic-ordering rejection](../qualification/guarded-mlp-lowering-attempt-v2/README.md).
 The previous provider-source mismatch is no longer the observed failure.
 Source collection now rejects a core atomic load without a concrete ordering
 argument. The compiler exited naturally after 117.259 seconds and was reaped;
 integrity postchecks passed, with no timeout, forced cleanup or HSACO.
 Seven synthetic controller tests passed separately. The expected alias gate
-was not reached. An atomic-wrapper fix with matching extraction controls is
-next; no GPU, model-correctness or performance milestone is closed.
+was not reached. The next attempt uses the qualified newer driver's explicit
+normalization mode; atomic admission rules remain unchanged.
 
 Previously, [the final runtime compiler binaries passed all fourteen loader checks](../qualification/guarded-mlp-s-rpo-tool-audit-v1/README.md).
 The extractor resolves the exact new backend; the other five deployed tools

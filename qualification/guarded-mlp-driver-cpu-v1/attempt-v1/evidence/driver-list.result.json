@@ -1,0 +1,42 @@
+{
+  "adopted_reaped": [],
+  "argv": [
+    "/usr/bin/prlimit",
+    "--as=12884901888",
+    "--cpu=1200",
+    "--fsize=1073741824",
+    "--core=0",
+    "--",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-driver-cpu-v228-v1/target/debug/deps/cargo_fe2o3-183aee39e8aecbb6",
+    "--list",
+    "--format=terse"
+  ],
+  "command": {
+    "bytes": 2217,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-driver-cpu-v228-v1/evidence/driver-list.command.json",
+    "sha256": "6474acde5aef7fc9866a52e548022adec0da9440188fa6095187dc66e0468a5f"
+  },
+  "elapsed_ns": 110463278,
+  "exception": null,
+  "exit_code": 0,
+  "forced_cleanup": false,
+  "label": "driver-list",
+  "natural_exit": true,
+  "observed_signals": [],
+  "pgid": 1155364,
+  "pid": 1155364,
+  "process_group_absent": true,
+  "reaped": true,
+  "stderr": {
+    "bytes": 0,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-driver-cpu-v228-v1/evidence/driver-list.stderr",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "stdout": {
+    "bytes": 36331,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-driver-cpu-v228-v1/evidence/driver-list.stdout",
+    "sha256": "a9109da3067b41bf3167bce06b2f8fe55cd7aafa53ccc6a51637808825fed501"
+  },
+  "storage_failure": null,
+  "timed_out": false
+}
