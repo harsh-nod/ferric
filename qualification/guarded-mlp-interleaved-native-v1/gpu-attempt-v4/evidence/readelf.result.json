@@ -1,0 +1,43 @@
+{
+  "adopted_reaped": [],
+  "argv": [
+    "/usr/bin/prlimit",
+    "--as=68719476736",
+    "--cpu=300",
+    "--fsize=4194304",
+    "--core=0",
+    "--",
+    "/usr/bin/readelf",
+    "-d",
+    "-l",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-interleaved-native-cpu-v228-v2/target/debug/deps/fe2o3_kfd-11448a9880d552d9"
+  ],
+  "command": {
+    "bytes": 1159,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-interleaved-native-gpu-v228-v4/evidence/readelf.command.json",
+    "sha256": "23ff4c646a50c92bebe304a360f39a933713901bff4558f94bfea1fa261004e4"
+  },
+  "elapsed_ns": 100735743,
+  "exception": null,
+  "exit_code": 0,
+  "forced_cleanup": false,
+  "label": "readelf",
+  "natural_exit": true,
+  "observed_signals": [],
+  "pgid": 1543149,
+  "pid": 1543149,
+  "process_group_absent": true,
+  "reaped": true,
+  "stderr": {
+    "bytes": 0,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-interleaved-native-gpu-v228-v4/evidence/readelf.stderr",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "stdout": {
+    "bytes": 4385,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-interleaved-native-gpu-v228-v4/evidence/readelf.stdout",
+    "sha256": "5cdef5d30a7ab5c1b41ef8120bbddbd76df22b95776e8d542984cdfa37d40835"
+  },
+  "storage_failure": null,
+  "timed_out": false
+}

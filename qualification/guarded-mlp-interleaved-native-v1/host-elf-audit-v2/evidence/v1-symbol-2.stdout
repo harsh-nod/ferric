@@ -1,0 +1,116 @@
+
+/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-interleaved-native-cpu-v228-v1/target/debug/deps/fe2o3_kfd-11448a9880d552d9:     file format elf64-x86-64
+
+
+Disassembly of section .text:
+
+000000000055aea0 <fe2o3_kfd::engineering_gfx950::peer::combined_mlp_state_v1::tests::native::paired::interleaved::inputs>:
+  55aea0:	55                   	push   %rbp
+  55aea1:	41 57                	push   %r15
+  55aea3:	41 56                	push   %r14
+  55aea5:	41 55                	push   %r13
+  55aea7:	41 54                	push   %r12
+  55aea9:	53                   	push   %rbx
+  55aeaa:	48 83 ec 38          	sub    $0x38,%rsp
+  55aeae:	48 83 fa 01          	cmp    $0x1,%rdx
+  55aeb2:	0f 84 c7 01 00 00    	je     55b07f <fe2o3_kfd::engineering_gfx950::peer::combined_mlp_state_v1::tests::native::paired::interleaved::inputs+0x1df>
+  55aeb8:	48 85 d2             	test   %rdx,%rdx
+  55aebb:	0f 84 d5 01 00 00    	je     55b096 <fe2o3_kfd::engineering_gfx950::peer::combined_mlp_state_v1::tests::native::paired::interleaved::inputs+0x1f6>
+  55aec1:	4d 89 cc             	mov    %r9,%r12
+  55aec4:	4d 89 c6             	mov    %r8,%r14
+  55aec7:	49 89 cf             	mov    %rcx,%r15
+  55aeca:	49 89 f5             	mov    %rsi,%r13
+  55aecd:	48 89 fb             	mov    %rdi,%rbx
+  55aed0:	48 8d 86 88 00 00 00 	lea    0x88(%rsi),%rax
+  55aed7:	48 89 04 24          	mov    %rax,(%rsp)
+  55aedb:	48 8d 86 10 01 00 00 	lea    0x110(%rsi),%rax
+  55aee2:	48 89 44 24 10       	mov    %rax,0x10(%rsp)
+  55aee7:	48 8d 86 98 01 00 00 	lea    0x198(%rsi),%rax
+  55aeee:	48 89 44 24 08       	mov    %rax,0x8(%rsp)
+  55aef3:	48 8d 86 20 02 00 00 	lea    0x220(%rsi),%rax
+  55aefa:	48 89 44 24 28       	mov    %rax,0x28(%rsp)
+  55aeff:	48 8d 86 b8 03 00 00 	lea    0x3b8(%rsi),%rax
+  55af06:	48 89 44 24 30       	mov    %rax,0x30(%rsp)
+  55af0b:	48 8d 86 30 03 00 00 	lea    0x330(%rsi),%rax
+  55af12:	48 89 44 24 20       	mov    %rax,0x20(%rsp)
+  55af17:	48 8d 86 a8 02 00 00 	lea    0x2a8(%rsi),%rax
+  55af1e:	48 89 44 24 18       	mov    %rax,0x18(%rsp)
+  55af23:	48 8d b1 40 01 00 00 	lea    0x140(%rcx),%rsi
+  55af2a:	48 81 c7 c0 01 00 00 	add    $0x1c0,%rdi
+  55af31:	48 8b 2d 30 09 35 00 	mov    0x350930(%rip),%rbp        # 8ab868 <memcpy@GLIBC_2.14>
+  55af38:	ba 40 01 00 00       	mov    $0x140,%edx
+  55af3d:	ff d5                	call   *%rbp
+  55af3f:	41 0f 10 44 24 20    	movups 0x20(%r12),%xmm0
+  55af45:	41 0f 10 4c 24 30    	movups 0x30(%r12),%xmm1
+  55af4b:	0f 11 8b 10 03 00 00 	movups %xmm1,0x310(%rbx)
+  55af52:	0f 11 83 00 03 00 00 	movups %xmm0,0x300(%rbx)
+  55af59:	41 0f 10 87 a0 02 00 	movups 0x2a0(%r15),%xmm0
+  55af60:	00 
+  55af61:	41 0f 10 8f b0 02 00 	movups 0x2b0(%r15),%xmm1
+  55af68:	00 
+  55af69:	0f 11 83 20 03 00 00 	movups %xmm0,0x320(%rbx)
+  55af70:	0f 11 8b 30 03 00 00 	movups %xmm1,0x330(%rbx)
+  55af77:	48 8b 44 24 70       	mov    0x70(%rsp),%rax
+  55af7c:	0f 10 40 20          	movups 0x20(%rax),%xmm0
+  55af80:	0f 10 48 30          	movups 0x30(%rax),%xmm1
+  55af84:	0f 11 83 a0 03 00 00 	movups %xmm0,0x3a0(%rbx)
+  55af8b:	0f 11 8b b0 03 00 00 	movups %xmm1,0x3b0(%rbx)
+  55af92:	4c 89 2b             	mov    %r13,(%rbx)
+  55af95:	48 8b 04 24          	mov    (%rsp),%rax
+  55af99:	48 89 43 08          	mov    %rax,0x8(%rbx)
+  55af9d:	48 8b 44 24 10       	mov    0x10(%rsp),%rax
+  55afa2:	48 89 43 10          	mov    %rax,0x10(%rbx)
+  55afa6:	48 8b 44 24 08       	mov    0x8(%rsp),%rax
+  55afab:	48 89 43 18          	mov    %rax,0x18(%rbx)
+  55afaf:	48 8d 7b 20          	lea    0x20(%rbx),%rdi
+  55afb3:	ba 40 01 00 00       	mov    $0x140,%edx
+  55afb8:	4c 89 fe             	mov    %r15,%rsi
+  55afbb:	ff d5                	call   *%rbp
+  55afbd:	41 0f 10 04 24       	movups (%r12),%xmm0
+  55afc2:	41 0f 10 4c 24 10    	movups 0x10(%r12),%xmm1
+  55afc8:	0f 11 8b 70 01 00 00 	movups %xmm1,0x170(%rbx)
+  55afcf:	0f 11 83 60 01 00 00 	movups %xmm0,0x160(%rbx)
+  55afd6:	41 0f 10 87 80 02 00 	movups 0x280(%r15),%xmm0
+  55afdd:	00 
+  55afde:	41 0f 10 8f 90 02 00 	movups 0x290(%r15),%xmm1
+  55afe5:	00 
+  55afe6:	0f 11 8b 90 01 00 00 	movups %xmm1,0x190(%rbx)
+  55afed:	0f 11 83 80 01 00 00 	movups %xmm0,0x180(%rbx)
+  55aff4:	48 8b 44 24 28       	mov    0x28(%rsp),%rax
+  55aff9:	48 89 83 a0 01 00 00 	mov    %rax,0x1a0(%rbx)
+  55b000:	48 8b 44 24 18       	mov    0x18(%rsp),%rax
+  55b005:	48 89 83 a8 01 00 00 	mov    %rax,0x1a8(%rbx)
+  55b00c:	48 8b 44 24 20       	mov    0x20(%rsp),%rax
+  55b011:	48 89 83 b0 01 00 00 	mov    %rax,0x1b0(%rbx)
+  55b018:	48 8b 44 24 30       	mov    0x30(%rsp),%rax
+  55b01d:	48 89 83 b8 01 00 00 	mov    %rax,0x1b8(%rbx)
+  55b024:	41 0f 10 06          	movups (%r14),%xmm0
+  55b028:	41 0f 10 4e 10       	movups 0x10(%r14),%xmm1
+  55b02d:	41 0f 10 56 20       	movups 0x20(%r14),%xmm2
+  55b032:	41 0f 10 5e 30       	movups 0x30(%r14),%xmm3
+  55b037:	0f 11 93 60 03 00 00 	movups %xmm2,0x360(%rbx)
+  55b03e:	0f 11 8b 50 03 00 00 	movups %xmm1,0x350(%rbx)
+  55b045:	0f 11 9b 70 03 00 00 	movups %xmm3,0x370(%rbx)
+  55b04c:	0f 11 83 40 03 00 00 	movups %xmm0,0x340(%rbx)
+  55b053:	48 8b 44 24 70       	mov    0x70(%rsp),%rax
+  55b058:	0f 10 00             	movups (%rax),%xmm0
+  55b05b:	0f 10 48 10          	movups 0x10(%rax),%xmm1
+  55b05f:	0f 11 83 80 03 00 00 	movups %xmm0,0x380(%rbx)
+  55b066:	0f 11 8b 90 03 00 00 	movups %xmm1,0x390(%rbx)
+  55b06d:	48 89 d8             	mov    %rbx,%rax
+  55b070:	48 83 c4 38          	add    $0x38,%rsp
+  55b074:	5b                   	pop    %rbx
+  55b075:	41 5c                	pop    %r12
+  55b077:	41 5d                	pop    %r13
+  55b079:	41 5e                	pop    %r14
+  55b07b:	41 5f                	pop    %r15
+  55b07d:	5d                   	pop    %rbp
+  55b07e:	c3                   	ret
+  55b07f:	48 8d 15 6a 6e 33 00 	lea    0x336e6a(%rip),%rdx        # 891ef0 <anon.2138fc9bcce1a4f2f64b8a6f31f58776.403.llvm.10124482041010183716>
+  55b086:	bf 01 00 00 00       	mov    $0x1,%edi
+  55b08b:	be 01 00 00 00       	mov    $0x1,%esi
+  55b090:	ff 15 aa 07 35 00    	call   *0x3507aa(%rip)        # 8ab840 <_DYNAMIC+0x270>
+  55b096:	48 8d 15 53 6e 33 00 	lea    0x336e53(%rip),%rdx        # 891ef0 <anon.2138fc9bcce1a4f2f64b8a6f31f58776.403.llvm.10124482041010183716>
+  55b09d:	31 ff                	xor    %edi,%edi
+  55b09f:	31 f6                	xor    %esi,%esi
+  55b0a1:	ff 15 99 07 35 00    	call   *0x350799(%rip)        # 8ab840 <_DYNAMIC+0x270>

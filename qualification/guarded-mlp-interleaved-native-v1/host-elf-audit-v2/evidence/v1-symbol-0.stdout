@@ -1,0 +1,800 @@
+
+/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-interleaved-native-cpu-v228-v1/target/debug/deps/fe2o3_kfd-11448a9880d552d9:     file format elf64-x86-64
+
+
+Disassembly of section .text:
+
+00000000004974d0 <<fe2o3_kfd::engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::RetainedPair>::allocate>:
+  4974d0:	55                   	push   %rbp
+  4974d1:	41 57                	push   %r15
+  4974d3:	41 56                	push   %r14
+  4974d5:	41 55                	push   %r13
+  4974d7:	41 54                	push   %r12
+  4974d9:	53                   	push   %rbx
+  4974da:	48 81 ec 00 10 00 00 	sub    $0x1000,%rsp
+  4974e1:	48 c7 04 24 00 00 00 	movq   $0x0,(%rsp)
+  4974e8:	00 
+  4974e9:	48 81 ec 58 0f 00 00 	sub    $0xf58,%rsp
+  4974f0:	41 89 cd             	mov    %ecx,%r13d
+  4974f3:	48 89 54 24 38       	mov    %rdx,0x38(%rsp)
+  4974f8:	49 89 f6             	mov    %rsi,%r14
+  4974fb:	48 89 fb             	mov    %rdi,%rbx
+  4974fe:	ff 15 6c 44 41 00    	call   *0x41446c(%rip)        # 8ab970 <_DYNAMIC+0x3a0>
+  497504:	bf 60 00 00 00       	mov    $0x60,%edi
+  497509:	be 08 00 00 00       	mov    $0x8,%esi
+  49750e:	ff 15 64 44 41 00    	call   *0x414464(%rip)        # 8ab978 <_DYNAMIC+0x3a8>
+  497514:	48 85 c0             	test   %rax,%rax
+  497517:	0f 84 93 0c 00 00    	je     4981b0 <<fe2o3_kfd::engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::RetainedPair>::allocate+0xce0>
+  49751d:	4c 89 74 24 20       	mov    %r14,0x20(%rsp)
+  497522:	48 c7 44 24 08 02 00 	movq   $0x2,0x8(%rsp)
+  497529:	00 00 
+  49752b:	48 89 44 24 10       	mov    %rax,0x10(%rsp)
+  497530:	48 c7 44 24 18 00 00 	movq   $0x0,0x18(%rsp)
+  497537:	00 00 
+  497539:	c6 44 24 28 00       	movb   $0x0,0x28(%rsp)
+  49753e:	ff 15 9c 44 41 00    	call   *0x41449c(%rip)        # 8ab9e0 <_DYNAMIC+0x410>
+  497544:	4c 8d b4 24 00 01 00 	lea    0x100(%rsp),%r14
+  49754b:	00 
+  49754c:	4c 89 f7             	mov    %r14,%rdi
+  49754f:	48 89 c6             	mov    %rax,%rsi
+  497552:	44 89 e9             	mov    %r13d,%ecx
+  497555:	e8 76 bb 01 00       	call   4b30d0 <fe2o3_kfd::engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::deadline>
+  49755a:	48 8b 84 24 00 01 00 	mov    0x100(%rsp),%rax
+  497561:	00 
+  497562:	48 8b 94 24 08 01 00 	mov    0x108(%rsp),%rdx
+  497569:	00 
+  49756a:	48 89 c1             	mov    %rax,%rcx
+  49756d:	48 f7 d9             	neg    %rcx
+  497570:	8b ac 24 10 01 00 00 	mov    0x110(%rsp),%ebp
+  497577:	0f 81 d2 00 00 00    	jno    49764f <<fe2o3_kfd::engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::RetainedPair>::allocate+0x17f>
+  49757d:	48 89 54 24 30       	mov    %rdx,0x30(%rsp)
+  497582:	48 8b 74 24 20       	mov    0x20(%rsp),%rsi
+  497587:	80 be 31 01 00 00 00 	cmpb   $0x0,0x131(%rsi)
+  49758e:	0f 85 d5 00 00 00    	jne    497669 <<fe2o3_kfd::engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::RetainedPair>::allocate+0x199>
+  497594:	80 be 30 01 00 00 00 	cmpb   $0x0,0x130(%rsi)
+  49759b:	0f 85 c8 00 00 00    	jne    497669 <<fe2o3_kfd::engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::RetainedPair>::allocate+0x199>
+  4975a1:	48 8d bc 24 00 01 00 	lea    0x100(%rsp),%rdi
+  4975a8:	00 
+  4975a9:	e8 92 22 f7 ff       	call   409840 <fe2o3_kfd::engineering_gfx950::peer::combined_mlp_state_v1::paired::profiles::validate_policy>
+  4975ae:	48 b8 00 00 00 00 00 	movabs $0x8000000000000000,%rax
+  4975b5:	00 00 80 
+  4975b8:	48 39 84 24 00 01 00 	cmp    %rax,0x100(%rsp)
+  4975bf:	00 
+  4975c0:	0f 85 f0 03 00 00    	jne    4979b6 <<fe2o3_kfd::engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::RetainedPair>::allocate+0x4e6>
+  4975c6:	48 8b 44 24 20       	mov    0x20(%rsp),%rax
+  4975cb:	48 8b b0 f8 00 00 00 	mov    0xf8(%rax),%rsi
+  4975d2:	48 8b 90 00 01 00 00 	mov    0x100(%rax),%rdx
+  4975d9:	0f b6 88 32 01 00 00 	movzbl 0x132(%rax),%ecx
+  4975e0:	48 8d bc 24 00 01 00 	lea    0x100(%rsp),%rdi
+  4975e7:	00 
+  4975e8:	e8 33 8c 00 00       	call   4a0220 <fe2o3_kfd::engineering_gfx950::peer::check_contexts>
+  4975ed:	48 b8 00 00 00 00 00 	movabs $0x8000000000000000,%rax
+  4975f4:	00 00 80 
+  4975f7:	48 39 84 24 00 01 00 	cmp    %rax,0x100(%rsp)
+  4975fe:	00 
+  4975ff:	0f 85 b1 03 00 00    	jne    4979b6 <<fe2o3_kfd::engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::RetainedPair>::allocate+0x4e6>
+  497605:	48 8b 74 24 20       	mov    0x20(%rsp),%rsi
+  49760a:	48 8d bc 24 00 01 00 	lea    0x100(%rsp),%rdi
+  497611:	00 
+  497612:	31 d2                	xor    %edx,%edx
+  497614:	e8 97 07 fb ff       	call   447db0 <fe2o3_kfd::engineering_gfx950::peer::combined_mlp_state_v1::allocate>
+  497619:	44 0f b6 a4 24 28 01 	movzbl 0x128(%rsp),%r12d
+  497620:	00 00 
+  497622:	41 80 fc 07          	cmp    $0x7,%r12b
+  497626:	0f 85 af 00 00 00    	jne    4976db <<fe2o3_kfd::engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::RetainedPair>::allocate+0x20b>
+  49762c:	48 8b 84 24 10 01 00 	mov    0x110(%rsp),%rax
+  497633:	00 
+  497634:	48 89 44 24 50       	mov    %rax,0x50(%rsp)
+  497639:	0f 10 84 24 00 01 00 	movups 0x100(%rsp),%xmm0
+  497640:	00 
+  497641:	0f 29 44 24 40       	movaps %xmm0,0x40(%rsp)
+  497646:	48 89 43 18          	mov    %rax,0x18(%rbx)
+  49764a:	e9 7b 03 00 00       	jmp    4979ca <<fe2o3_kfd::engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::RetainedPair>::allocate+0x4fa>
+  49764f:	8b 8c 24 14 01 00 00 	mov    0x114(%rsp),%ecx
+  497656:	48 89 43 08          	mov    %rax,0x8(%rbx)
+  49765a:	48 89 53 10          	mov    %rdx,0x10(%rbx)
+  49765e:	89 6b 18             	mov    %ebp,0x18(%rbx)
+  497661:	89 4b 1c             	mov    %ecx,0x1c(%rbx)
+  497664:	e9 65 03 00 00       	jmp    4979ce <<fe2o3_kfd::engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::RetainedPair>::allocate+0x4fe>
+  497669:	ff 15 01 43 41 00    	call   *0x414301(%rip)        # 8ab970 <_DYNAMIC+0x3a0>
+  49766f:	bf 23 00 00 00       	mov    $0x23,%edi
+  497674:	be 01 00 00 00       	mov    $0x1,%esi
+  497679:	ff 15 f9 42 41 00    	call   *0x4142f9(%rip)        # 8ab978 <_DYNAMIC+0x3a8>
+  49767f:	48 85 c0             	test   %rax,%rax
+  497682:	0f 84 38 0b 00 00    	je     4981c0 <<fe2o3_kfd::engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::RetainedPair>::allocate+0xcf0>
+  497688:	48 8d 0d a3 01 cf ff 	lea    -0x30fe5d(%rip),%rcx        # 187832 <anon.88cdbf323d6fc3e95ab5e2acb6efd52b.242.llvm.18181729430990501009>
+  49768f:	48 89 c2             	mov    %rax,%rdx
+  497692:	48 29 ca             	sub    %rcx,%rdx
+  497695:	48 29 c1             	sub    %rax,%rcx
+  497698:	48 0f 42 ca          	cmovb  %rdx,%rcx
+  49769c:	48 83 f9 22          	cmp    $0x22,%rcx
+  4976a0:	0f 86 b9 09 00 00    	jbe    49805f <<fe2o3_kfd::engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::RetainedPair>::allocate+0xb8f>
+  4976a6:	0f 10 05 95 01 cf ff 	movups -0x30fe6b(%rip),%xmm0        # 187842 <anon.88cdbf323d6fc3e95ab5e2acb6efd52b.242.llvm.18181729430990501009+0x10>
+  4976ad:	0f 11 40 10          	movups %xmm0,0x10(%rax)
+  4976b1:	0f 10 05 7a 01 cf ff 	movups -0x30fe86(%rip),%xmm0        # 187832 <anon.88cdbf323d6fc3e95ab5e2acb6efd52b.242.llvm.18181729430990501009>
+  4976b8:	0f 11 00             	movups %xmm0,(%rax)
+  4976bb:	c7 40 1f 69 6e 65 64 	movl   $0x64656e69,0x1f(%rax)
+  4976c2:	48 c7 43 08 23 00 00 	movq   $0x23,0x8(%rbx)
+  4976c9:	00 
+  4976ca:	48 89 43 10          	mov    %rax,0x10(%rbx)
+  4976ce:	48 c7 43 18 23 00 00 	movq   $0x23,0x18(%rbx)
+  4976d5:	00 
+  4976d6:	e9 f3 02 00 00       	jmp    4979ce <<fe2o3_kfd::engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::RetainedPair>::allocate+0x4fe>
+  4976db:	48 8d 8c 24 29 01 00 	lea    0x129(%rsp),%rcx
+  4976e2:	00 
+  4976e3:	48 8b 84 24 20 01 00 	mov    0x120(%rsp),%rax
+  4976ea:	00 
+  4976eb:	48 89 44 24 60       	mov    %rax,0x60(%rsp)
+  4976f0:	0f 10 84 24 00 01 00 	movups 0x100(%rsp),%xmm0
+  4976f7:	00 
+  4976f8:	0f 10 8c 24 10 01 00 	movups 0x110(%rsp),%xmm1
+  4976ff:	00 
+  497700:	0f 29 4c 24 50       	movaps %xmm1,0x50(%rsp)
+  497705:	0f 29 44 24 40       	movaps %xmm0,0x40(%rsp)
+  49770a:	8b 01                	mov    (%rcx),%eax
+  49770c:	8b 49 03             	mov    0x3(%rcx),%ecx
+  49770f:	89 04 24             	mov    %eax,(%rsp)
+  497712:	89 4c 24 03          	mov    %ecx,0x3(%rsp)
+  497716:	4c 8b 7c 24 18       	mov    0x18(%rsp),%r15
+  49771b:	4c 3b 7c 24 08       	cmp    0x8(%rsp),%r15
+  497720:	75 0a                	jne    49772c <<fe2o3_kfd::engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::RetainedPair>::allocate+0x25c>
+  497722:	48 8d 7c 24 08       	lea    0x8(%rsp),%rdi
+  497727:	e8 84 de 16 00       	call   6055b0 <<alloc::raw_vec::RawVec<[alloc::vec::Vec<u8>; 2]>>::grow_one>
+  49772c:	48 8b 44 24 10       	mov    0x10(%rsp),%rax
+  497731:	4b 8d 0c 7f          	lea    (%r15,%r15,2),%rcx
+  497735:	48 c1 e1 04          	shl    $0x4,%rcx
+  497739:	48 8b 54 24 60       	mov    0x60(%rsp),%rdx
+  49773e:	48 89 54 08 20       	mov    %rdx,0x20(%rax,%rcx,1)
+  497743:	0f 28 44 24 40       	movaps 0x40(%rsp),%xmm0
+  497748:	0f 28 4c 24 50       	movaps 0x50(%rsp),%xmm1
+  49774d:	0f 11 4c 08 10       	movups %xmm1,0x10(%rax,%rcx,1)
+  497752:	0f 11 04 08          	movups %xmm0,(%rax,%rcx,1)
+  497756:	44 88 64 08 28       	mov    %r12b,0x28(%rax,%rcx,1)
+  49775b:	8b 14 24             	mov    (%rsp),%edx
+  49775e:	8b 74 24 03          	mov    0x3(%rsp),%esi
+  497762:	89 54 08 29          	mov    %edx,0x29(%rax,%rcx,1)
+  497766:	89 74 08 2c          	mov    %esi,0x2c(%rax,%rcx,1)
+  49776a:	49 ff c7             	inc    %r15
+  49776d:	4c 89 7c 24 18       	mov    %r15,0x18(%rsp)
+  497772:	ff 15 68 42 41 00    	call   *0x414268(%rip)        # 8ab9e0 <_DYNAMIC+0x410>
+  497778:	31 c9                	xor    %ecx,%ecx
+  49777a:	39 ea                	cmp    %ebp,%edx
+  49777c:	0f 93 c1             	setae  %cl
+  49777f:	31 d2                	xor    %edx,%edx
+  497781:	48 3b 44 24 30       	cmp    0x30(%rsp),%rax
+  497786:	0f 9d c2             	setge  %dl
+  497789:	0f 45 ca             	cmovne %edx,%ecx
+  49778c:	80 f9 01             	cmp    $0x1,%cl
+  49778f:	0f 85 82 00 00 00    	jne    497817 <<fe2o3_kfd::engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::RetainedPair>::allocate+0x347>
+  497795:	ff 15 d5 41 41 00    	call   *0x4141d5(%rip)        # 8ab970 <_DYNAMIC+0x3a0>
+  49779b:	bf 2d 00 00 00       	mov    $0x2d,%edi
+  4977a0:	be 01 00 00 00       	mov    $0x1,%esi
+  4977a5:	ff 15 cd 41 41 00    	call   *0x4141cd(%rip)        # 8ab978 <_DYNAMIC+0x3a8>
+  4977ab:	48 85 c0             	test   %rax,%rax
+  4977ae:	0f 84 1e 0a 00 00    	je     4981d2 <<fe2o3_kfd::engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::RetainedPair>::allocate+0xd02>
+  4977b4:	48 8d 0d e4 45 cd ff 	lea    -0x32ba1c(%rip),%rcx        # 16bd9f <anon.a62d67e5784264e0ee337fa07e2573f2.921.llvm.15877268958077301470>
+  4977bb:	48 89 c2             	mov    %rax,%rdx
+  4977be:	48 29 ca             	sub    %rcx,%rdx
+  4977c1:	48 29 c1             	sub    %rax,%rcx
+  4977c4:	48 0f 42 ca          	cmovb  %rdx,%rcx
+  4977c8:	48 83 f9 2c          	cmp    $0x2c,%rcx
+  4977cc:	0f 86 cb 09 00 00    	jbe    49819d <<fe2o3_kfd::engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::RetainedPair>::allocate+0xccd>
+  4977d2:	0f 10 05 e3 45 cd ff 	movups -0x32ba1d(%rip),%xmm0        # 16bdbc <anon.a62d67e5784264e0ee337fa07e2573f2.921.llvm.15877268958077301470+0x1d>
+  4977d9:	0f 11 40 1d          	movups %xmm0,0x1d(%rax)
+  4977dd:	0f 10 05 cb 45 cd ff 	movups -0x32ba35(%rip),%xmm0        # 16bdaf <anon.a62d67e5784264e0ee337fa07e2573f2.921.llvm.15877268958077301470+0x10>
+  4977e4:	0f 11 40 10          	movups %xmm0,0x10(%rax)
+  4977e8:	0f 10 05 b0 45 cd ff 	movups -0x32ba50(%rip),%xmm0        # 16bd9f <anon.a62d67e5784264e0ee337fa07e2573f2.921.llvm.15877268958077301470>
+  4977ef:	0f 11 00             	movups %xmm0,(%rax)
+  4977f2:	48 c7 84 24 00 01 00 	movq   $0x2d,0x100(%rsp)
+  4977f9:	00 2d 00 00 00 
+  4977fe:	48 89 84 24 08 01 00 	mov    %rax,0x108(%rsp)
+  497805:	00 
+  497806:	48 c7 84 24 10 01 00 	movq   $0x2d,0x110(%rsp)
+  49780d:	00 2d 00 00 00 
+  497812:	e9 60 01 00 00       	jmp    497977 <<fe2o3_kfd::engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::RetainedPair>::allocate+0x4a7>
+  497817:	48 8b 74 24 20       	mov    0x20(%rsp),%rsi
+  49781c:	48 8d bc 24 00 01 00 	lea    0x100(%rsp),%rdi
+  497823:	00 
+  497824:	ba 01 00 00 00       	mov    $0x1,%edx
+  497829:	e8 82 05 fb ff       	call   447db0 <fe2o3_kfd::engineering_gfx950::peer::combined_mlp_state_v1::allocate>
+  49782e:	44 0f b6 a4 24 28 01 	movzbl 0x128(%rsp),%r12d
+  497835:	00 00 
+  497837:	41 80 fc 07          	cmp    $0x7,%r12b
+  49783b:	0f 84 eb fd ff ff    	je     49762c <<fe2o3_kfd::engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::RetainedPair>::allocate+0x15c>
+  497841:	48 8b 84 24 20 01 00 	mov    0x120(%rsp),%rax
+  497848:	00 
+  497849:	48 89 44 24 60       	mov    %rax,0x60(%rsp)
+  49784e:	0f 10 84 24 00 01 00 	movups 0x100(%rsp),%xmm0
+  497855:	00 
+  497856:	0f 10 8c 24 10 01 00 	movups 0x110(%rsp),%xmm1
+  49785d:	00 
+  49785e:	0f 29 4c 24 50       	movaps %xmm1,0x50(%rsp)
+  497863:	0f 29 44 24 40       	movaps %xmm0,0x40(%rsp)
+  497868:	48 8d 8c 24 29 01 00 	lea    0x129(%rsp),%rcx
+  49786f:	00 
+  497870:	8b 01                	mov    (%rcx),%eax
+  497872:	8b 49 03             	mov    0x3(%rcx),%ecx
+  497875:	89 04 24             	mov    %eax,(%rsp)
+  497878:	89 4c 24 03          	mov    %ecx,0x3(%rsp)
+  49787c:	4c 8b 7c 24 18       	mov    0x18(%rsp),%r15
+  497881:	4c 3b 7c 24 08       	cmp    0x8(%rsp),%r15
+  497886:	75 0a                	jne    497892 <<fe2o3_kfd::engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::RetainedPair>::allocate+0x3c2>
+  497888:	48 8d 7c 24 08       	lea    0x8(%rsp),%rdi
+  49788d:	e8 1e dd 16 00       	call   6055b0 <<alloc::raw_vec::RawVec<[alloc::vec::Vec<u8>; 2]>>::grow_one>
+  497892:	48 8b 44 24 10       	mov    0x10(%rsp),%rax
+  497897:	4b 8d 0c 7f          	lea    (%r15,%r15,2),%rcx
+  49789b:	48 c1 e1 04          	shl    $0x4,%rcx
+  49789f:	48 8b 54 24 60       	mov    0x60(%rsp),%rdx
+  4978a4:	48 89 54 08 20       	mov    %rdx,0x20(%rax,%rcx,1)
+  4978a9:	0f 28 44 24 40       	movaps 0x40(%rsp),%xmm0
+  4978ae:	0f 28 4c 24 50       	movaps 0x50(%rsp),%xmm1
+  4978b3:	0f 11 4c 08 10       	movups %xmm1,0x10(%rax,%rcx,1)
+  4978b8:	0f 11 04 08          	movups %xmm0,(%rax,%rcx,1)
+  4978bc:	44 88 64 08 28       	mov    %r12b,0x28(%rax,%rcx,1)
+  4978c1:	8b 14 24             	mov    (%rsp),%edx
+  4978c4:	8b 74 24 03          	mov    0x3(%rsp),%esi
+  4978c8:	89 54 08 29          	mov    %edx,0x29(%rax,%rcx,1)
+  4978cc:	89 74 08 2c          	mov    %esi,0x2c(%rax,%rcx,1)
+  4978d0:	49 ff c7             	inc    %r15
+  4978d3:	4c 89 7c 24 18       	mov    %r15,0x18(%rsp)
+  4978d8:	ff 15 02 41 41 00    	call   *0x414102(%rip)        # 8ab9e0 <_DYNAMIC+0x410>
+  4978de:	48 8d bc 24 00 01 00 	lea    0x100(%rsp),%rdi
+  4978e5:	00 
+  4978e6:	48 89 c6             	mov    %rax,%rsi
+  4978e9:	48 8b 4c 24 30       	mov    0x30(%rsp),%rcx
+  4978ee:	41 89 e8             	mov    %ebp,%r8d
+  4978f1:	e8 aa 07 f7 ff       	call   4080a0 <fe2o3_kfd::engineering_gfx950::peer::combined_mlp_state_v1::paired::deadline_check>
+  4978f6:	48 b8 00 00 00 00 00 	movabs $0x8000000000000000,%rax
+  4978fd:	00 00 80 
+  497900:	48 39 84 24 00 01 00 	cmp    %rax,0x100(%rsp)
+  497907:	00 
+  497908:	75 6d                	jne    497977 <<fe2o3_kfd::engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::RetainedPair>::allocate+0x4a7>
+  49790a:	48 83 7c 24 18 02    	cmpq   $0x2,0x18(%rsp)
+  497910:	0f 85 87 00 00 00    	jne    49799d <<fe2o3_kfd::engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::RetainedPair>::allocate+0x4cd>
+  497916:	48 8b 54 24 10       	mov    0x10(%rsp),%rdx
+  49791b:	48 8b 74 24 20       	mov    0x20(%rsp),%rsi
+  497920:	4c 8d bc 24 00 01 00 	lea    0x100(%rsp),%r15
+  497927:	00 
+  497928:	4c 89 ff             	mov    %r15,%rdi
+  49792b:	48 8b 4c 24 38       	mov    0x38(%rsp),%rcx
+  497930:	45 89 e8             	mov    %r13d,%r8d
+  497933:	e8 78 30 f7 ff       	call   40a9b0 <fe2o3_kfd::engineering_gfx950::peer::combined_mlp_state_v1::paired::profiles::prepare>
+  497938:	48 8b 84 24 00 01 00 	mov    0x100(%rsp),%rax
+  49793f:	00 
+  497940:	48 8b bc 24 08 01 00 	mov    0x108(%rsp),%rdi
+  497947:	00 
+  497948:	0f 10 84 24 10 01 00 	movups 0x110(%rsp),%xmm0
+  49794f:	00 
+  497950:	0f 29 44 24 40       	movaps %xmm0,0x40(%rsp)
+  497955:	48 b9 00 00 00 00 00 	movabs $0x8000000000000000,%rcx
+  49795c:	00 00 80 
+  49795f:	48 39 c8             	cmp    %rcx,%rax
+  497962:	0f 85 ae 02 00 00    	jne    497c16 <<fe2o3_kfd::engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::RetainedPair>::allocate+0x746>
+  497968:	48 89 7b 08          	mov    %rdi,0x8(%rbx)
+  49796c:	0f 28 44 24 40       	movaps 0x40(%rsp),%xmm0
+  497971:	0f 11 43 10          	movups %xmm0,0x10(%rbx)
+  497975:	eb 57                	jmp    4979ce <<fe2o3_kfd::engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::RetainedPair>::allocate+0x4fe>
+  497977:	48 8b 84 24 10 01 00 	mov    0x110(%rsp),%rax
+  49797e:	00 
+  49797f:	48 89 43 18          	mov    %rax,0x18(%rbx)
+  497983:	48 8b 84 24 00 01 00 	mov    0x100(%rsp),%rax
+  49798a:	00 
+  49798b:	48 89 43 08          	mov    %rax,0x8(%rbx)
+  49798f:	48 8b 84 24 08 01 00 	mov    0x108(%rsp),%rax
+  497996:	00 
+  497997:	48 89 43 10          	mov    %rax,0x10(%rbx)
+  49799b:	eb 31                	jmp    4979ce <<fe2o3_kfd::engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::RetainedPair>::allocate+0x4fe>
+  49799d:	48 8d 35 3c ee ce ff 	lea    -0x3111c4(%rip),%rsi        # 1867e0 <anon.88cdbf323d6fc3e95ab5e2acb6efd52b.122.llvm.18181729430990501009+0x52>
+  4979a4:	48 8d bc 24 00 01 00 	lea    0x100(%rsp),%rdi
+  4979ab:	00 
+  4979ac:	ba 1b 00 00 00       	mov    $0x1b,%edx
+  4979b1:	e8 4a 7e ff ff       	call   48f800 <<u8 as <[_]>::to_vec_in::ConvertVec>::to_vec::<alloc::alloc::Global>>
+  4979b6:	48 8b 84 24 10 01 00 	mov    0x110(%rsp),%rax
+  4979bd:	00 
+  4979be:	48 89 43 18          	mov    %rax,0x18(%rbx)
+  4979c2:	0f 10 84 24 00 01 00 	movups 0x100(%rsp),%xmm0
+  4979c9:	00 
+  4979ca:	0f 11 43 08          	movups %xmm0,0x8(%rbx)
+  4979ce:	48 c7 03 03 00 00 00 	movq   $0x3,(%rbx)
+  4979d5:	80 7c 24 28 00       	cmpb   $0x0,0x28(%rsp)
+  4979da:	0f 85 b3 01 00 00    	jne    497b93 <<fe2o3_kfd::engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::RetainedPair>::allocate+0x6c3>
+  4979e0:	48 8b 44 24 18       	mov    0x18(%rsp),%rax
+  4979e5:	48 8b 74 24 20       	mov    0x20(%rsp),%rsi
+  4979ea:	48 85 c0             	test   %rax,%rax
+  4979ed:	0f 84 e2 00 00 00    	je     497ad5 <<fe2o3_kfd::engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::RetainedPair>::allocate+0x605>
+  4979f3:	48 8b 7c 24 10       	mov    0x10(%rsp),%rdi
+  4979f8:	48 c1 e0 04          	shl    $0x4,%rax
+  4979fc:	4c 8d 04 40          	lea    (%rax,%rax,2),%r8
+  497a00:	49 8d 48 d0          	lea    -0x30(%r8),%rcx
+  497a04:	48 ba ab aa aa aa aa 	movabs $0xaaaaaaaaaaaaaaab,%rdx
+  497a0b:	aa aa aa 
+  497a0e:	48 89 c8             	mov    %rcx,%rax
+  497a11:	48 f7 e2             	mul    %rdx
+  497a14:	48 c1 ea 05          	shr    $0x5,%rdx
+  497a18:	41 89 d1             	mov    %edx,%r9d
+  497a1b:	41 f7 d1             	not    %r9d
+  497a1e:	48 89 f8             	mov    %rdi,%rax
+  497a21:	41 f6 c1 07          	test   $0x7,%r9b
+  497a25:	74 2d                	je     497a54 <<fe2o3_kfd::engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::RetainedPair>::allocate+0x584>
+  497a27:	ff c2                	inc    %edx
+  497a29:	83 e2 07             	and    $0x7,%edx
+  497a2c:	48 f7 da             	neg    %rdx
+  497a2f:	48 89 f8             	mov    %rdi,%rax
+  497a32:	66 66 66 66 66 2e 0f 	data16 data16 data16 data16 cs nopw 0x0(%rax,%rax,1)
+  497a39:	1f 84 00 00 00 00 00 
+  497a40:	c6 40 28 06          	movb   $0x6,0x28(%rax)
+  497a44:	48 83 c0 30          	add    $0x30,%rax
+  497a48:	c6 86 30 01 00 00 01 	movb   $0x1,0x130(%rsi)
+  497a4f:	48 ff c2             	inc    %rdx
+  497a52:	75 ec                	jne    497a40 <<fe2o3_kfd::engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::RetainedPair>::allocate+0x570>
+  497a54:	48 81 f9 50 01 00 00 	cmp    $0x150,%rcx
+  497a5b:	72 78                	jb     497ad5 <<fe2o3_kfd::engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::RetainedPair>::allocate+0x605>
+  497a5d:	4c 01 c7             	add    %r8,%rdi
+  497a60:	c6 40 28 06          	movb   $0x6,0x28(%rax)
+  497a64:	c6 86 30 01 00 00 01 	movb   $0x1,0x130(%rsi)
+  497a6b:	c6 40 58 06          	movb   $0x6,0x58(%rax)
+  497a6f:	c6 86 30 01 00 00 01 	movb   $0x1,0x130(%rsi)
+  497a76:	c6 80 88 00 00 00 06 	movb   $0x6,0x88(%rax)
+  497a7d:	c6 86 30 01 00 00 01 	movb   $0x1,0x130(%rsi)
+  497a84:	c6 80 b8 00 00 00 06 	movb   $0x6,0xb8(%rax)
+  497a8b:	c6 86 30 01 00 00 01 	movb   $0x1,0x130(%rsi)
+  497a92:	c6 80 e8 00 00 00 06 	movb   $0x6,0xe8(%rax)
+  497a99:	c6 86 30 01 00 00 01 	movb   $0x1,0x130(%rsi)
+  497aa0:	c6 80 18 01 00 00 06 	movb   $0x6,0x118(%rax)
+  497aa7:	c6 86 30 01 00 00 01 	movb   $0x1,0x130(%rsi)
+  497aae:	c6 80 48 01 00 00 06 	movb   $0x6,0x148(%rax)
+  497ab5:	c6 86 30 01 00 00 01 	movb   $0x1,0x130(%rsi)
+  497abc:	c6 80 78 01 00 00 06 	movb   $0x6,0x178(%rax)
+  497ac3:	48 05 80 01 00 00    	add    $0x180,%rax
+  497ac9:	c6 86 30 01 00 00 01 	movb   $0x1,0x130(%rsi)
+  497ad0:	48 39 f8             	cmp    %rdi,%rax
+  497ad3:	75 8b                	jne    497a60 <<fe2o3_kfd::engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::RetainedPair>::allocate+0x590>
+  497ad5:	c6 86 30 01 00 00 01 	movb   $0x1,0x130(%rsi)
+  497adc:	48 8b 86 00 01 00 00 	mov    0x100(%rsi),%rax
+  497ae3:	48 85 c0             	test   %rax,%rax
+  497ae6:	0f 84 a7 00 00 00    	je     497b93 <<fe2o3_kfd::engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::RetainedPair>::allocate+0x6c3>
+  497aec:	48 8b b6 f8 00 00 00 	mov    0xf8(%rsi),%rsi
+  497af3:	48 69 f8 30 04 00 00 	imul   $0x430,%rax,%rdi
+  497afa:	48 8d 8f d0 fb ff ff 	lea    -0x430(%rdi),%rcx
+  497b01:	48 ba 51 39 bb 85 5f 	movabs $0xf4898d5f85bb3951,%rdx
+  497b08:	8d 89 f4 
+  497b0b:	48 89 c8             	mov    %rcx,%rax
+  497b0e:	48 f7 e2             	mul    %rdx
+  497b11:	48 c1 ea 0a          	shr    $0xa,%rdx
+  497b15:	41 89 d0             	mov    %edx,%r8d
+  497b18:	41 f7 d0             	not    %r8d
+  497b1b:	48 89 f0             	mov    %rsi,%rax
+  497b1e:	41 f6 c0 07          	test   $0x7,%r8b
+  497b22:	74 1e                	je     497b42 <<fe2o3_kfd::engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::RetainedPair>::allocate+0x672>
+  497b24:	ff c2                	inc    %edx
+  497b26:	83 e2 07             	and    $0x7,%edx
+  497b29:	48 f7 da             	neg    %rdx
+  497b2c:	48 89 f0             	mov    %rsi,%rax
+  497b2f:	90                   	nop
+  497b30:	c6 80 24 04 00 00 01 	movb   $0x1,0x424(%rax)
+  497b37:	48 05 30 04 00 00    	add    $0x430,%rax
+  497b3d:	48 ff c2             	inc    %rdx
+  497b40:	75 ee                	jne    497b30 <<fe2o3_kfd::engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::RetainedPair>::allocate+0x660>
+  497b42:	48 81 f9 50 1d 00 00 	cmp    $0x1d50,%rcx
+  497b49:	72 48                	jb     497b93 <<fe2o3_kfd::engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::RetainedPair>::allocate+0x6c3>
+  497b4b:	48 01 fe             	add    %rdi,%rsi
+  497b4e:	66 90                	xchg   %ax,%ax
+  497b50:	c6 80 24 04 00 00 01 	movb   $0x1,0x424(%rax)
+  497b57:	c6 80 54 08 00 00 01 	movb   $0x1,0x854(%rax)
+  497b5e:	c6 80 84 0c 00 00 01 	movb   $0x1,0xc84(%rax)
+  497b65:	c6 80 b4 10 00 00 01 	movb   $0x1,0x10b4(%rax)
+  497b6c:	c6 80 e4 14 00 00 01 	movb   $0x1,0x14e4(%rax)
+  497b73:	c6 80 14 19 00 00 01 	movb   $0x1,0x1914(%rax)
+  497b7a:	c6 80 44 1d 00 00 01 	movb   $0x1,0x1d44(%rax)
+  497b81:	c6 80 74 21 00 00 01 	movb   $0x1,0x2174(%rax)
+  497b88:	48 05 80 21 00 00    	add    $0x2180,%rax
+  497b8e:	48 39 f0             	cmp    %rsi,%rax
+  497b91:	75 bd                	jne    497b50 <<fe2o3_kfd::engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::RetainedPair>::allocate+0x680>
+  497b93:	48 8b 44 24 08       	mov    0x8(%rsp),%rax
+  497b98:	48 85 c0             	test   %rax,%rax
+  497b9b:	74 42                	je     497bdf <<fe2o3_kfd::engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::RetainedPair>::allocate+0x70f>
+  497b9d:	48 b9 56 55 55 55 55 	movabs $0x555555555555556,%rcx
+  497ba4:	55 55 05 
+  497ba7:	48 39 c8             	cmp    %rcx,%rax
+  497baa:	0f 83 94 04 00 00    	jae    498044 <<fe2o3_kfd::engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::RetainedPair>::allocate+0xb74>
+  497bb0:	48 b9 ab aa aa aa aa 	movabs $0x2aaaaaaaaaaaaab,%rcx
+  497bb7:	aa aa 02 
+  497bba:	48 39 c8             	cmp    %rcx,%rax
+  497bbd:	73 6d                	jae    497c2c <<fe2o3_kfd::engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::RetainedPair>::allocate+0x75c>
+  497bbf:	48 c1 e0 04          	shl    $0x4,%rax
+  497bc3:	48 8d 04 40          	lea    (%rax,%rax,2),%rax
+  497bc7:	48 8b 7c 24 10       	mov    0x10(%rsp),%rdi
+  497bcc:	48 c7 84 24 00 01 00 	movq   $0x8,0x100(%rsp)
+  497bd3:	00 08 00 00 00 
+  497bd8:	4c 8d 74 24 40       	lea    0x40(%rsp),%r14
+  497bdd:	eb 02                	jmp    497be1 <<fe2o3_kfd::engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::RetainedPair>::allocate+0x711>
+  497bdf:	31 c0                	xor    %eax,%eax
+  497be1:	49 89 06             	mov    %rax,(%r14)
+  497be4:	48 8b 94 24 00 01 00 	mov    0x100(%rsp),%rdx
+  497beb:	00 
+  497bec:	48 85 d2             	test   %rdx,%rdx
+  497bef:	74 10                	je     497c01 <<fe2o3_kfd::engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::RetainedPair>::allocate+0x731>
+  497bf1:	48 8b 74 24 40       	mov    0x40(%rsp),%rsi
+  497bf6:	48 85 f6             	test   %rsi,%rsi
+  497bf9:	74 06                	je     497c01 <<fe2o3_kfd::engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::RetainedPair>::allocate+0x731>
+  497bfb:	ff 15 6f 3c 41 00    	call   *0x413c6f(%rip)        # 8ab870 <_DYNAMIC+0x2a0>
+  497c01:	48 89 d8             	mov    %rbx,%rax
+  497c04:	48 81 c4 58 1f 00 00 	add    $0x1f58,%rsp
+  497c0b:	5b                   	pop    %rbx
+  497c0c:	41 5c                	pop    %r12
+  497c0e:	41 5d                	pop    %r13
+  497c10:	41 5e                	pop    %r14
+  497c12:	41 5f                	pop    %r15
+  497c14:	5d                   	pop    %rbp
+  497c15:	c3                   	ret
+  497c16:	48 85 c0             	test   %rax,%rax
+  497c19:	74 2c                	je     497c47 <<fe2o3_kfd::engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::RetainedPair>::allocate+0x777>
+  497c1b:	48 c7 84 24 00 01 00 	movq   $0x1,0x100(%rsp)
+  497c22:	00 01 00 00 00 
+  497c27:	49 89 e7             	mov    %rsp,%r15
+  497c2a:	eb 1b                	jmp    497c47 <<fe2o3_kfd::engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::RetainedPair>::allocate+0x777>
+  497c2c:	48 8d 3d d4 13 d9 ff 	lea    -0x26ec2c(%rip),%rdi        # 229007 <anon.74df14c9366245fb7f8cc182c4c94256.161.llvm.13877769798289706683>
+  497c33:	48 8d 0d a6 41 3f 00 	lea    0x3f41a6(%rip),%rcx        # 88bde0 <anon.74df14c9366245fb7f8cc182c4c94256.84.llvm.13877769798289706683>
+  497c3a:	be 33 02 00 00       	mov    $0x233,%esi
+  497c3f:	31 d2                	xor    %edx,%edx
+  497c41:	ff 15 31 3c 41 00    	call   *0x413c31(%rip)        # 8ab878 <_DYNAMIC+0x2a8>
+  497c47:	4c 8b ac 24 40 01 00 	mov    0x140(%rsp),%r13
+  497c4e:	00 
+  497c4f:	4c 8b a4 24 48 01 00 	mov    0x148(%rsp),%r12
+  497c56:	00 
+  497c57:	4c 8b 84 24 80 01 00 	mov    0x180(%rsp),%r8
+  497c5e:	00 
+  497c5f:	48 8b 8c 24 88 01 00 	mov    0x188(%rsp),%rcx
+  497c66:	00 
+  497c67:	48 89 8c 24 a8 00 00 	mov    %rcx,0xa8(%rsp)
+  497c6e:	00 
+  497c6f:	48 8b 8c 24 c0 01 00 	mov    0x1c0(%rsp),%rcx
+  497c76:	00 
+  497c77:	48 89 8c 24 d8 00 00 	mov    %rcx,0xd8(%rsp)
+  497c7e:	00 
+  497c7f:	48 8b 8c 24 c8 01 00 	mov    0x1c8(%rsp),%rcx
+  497c86:	00 
+  497c87:	48 89 8c 24 b0 00 00 	mov    %rcx,0xb0(%rsp)
+  497c8e:	00 
+  497c8f:	48 8b 8c 24 00 02 00 	mov    0x200(%rsp),%rcx
+  497c96:	00 
+  497c97:	48 89 8c 24 e0 00 00 	mov    %rcx,0xe0(%rsp)
+  497c9e:	00 
+  497c9f:	48 8b 8c 24 08 02 00 	mov    0x208(%rsp),%rcx
+  497ca6:	00 
+  497ca7:	48 89 8c 24 b8 00 00 	mov    %rcx,0xb8(%rsp)
+  497cae:	00 
+  497caf:	48 8b 8c 24 40 02 00 	mov    0x240(%rsp),%rcx
+  497cb6:	00 
+  497cb7:	48 89 8c 24 e8 00 00 	mov    %rcx,0xe8(%rsp)
+  497cbe:	00 
+  497cbf:	48 8b 8c 24 48 02 00 	mov    0x248(%rsp),%rcx
+  497cc6:	00 
+  497cc7:	48 89 8c 24 c0 00 00 	mov    %rcx,0xc0(%rsp)
+  497cce:	00 
+  497ccf:	48 8b 8c 24 80 02 00 	mov    0x280(%rsp),%rcx
+  497cd6:	00 
+  497cd7:	48 89 8c 24 f8 00 00 	mov    %rcx,0xf8(%rsp)
+  497cde:	00 
+  497cdf:	48 8b 8c 24 88 02 00 	mov    0x288(%rsp),%rcx
+  497ce6:	00 
+  497ce7:	48 89 8c 24 d0 00 00 	mov    %rcx,0xd0(%rsp)
+  497cee:	00 
+  497cef:	48 8b 8c 24 c0 02 00 	mov    0x2c0(%rsp),%rcx
+  497cf6:	00 
+  497cf7:	48 89 8c 24 f0 00 00 	mov    %rcx,0xf0(%rsp)
+  497cfe:	00 
+  497cff:	48 8b 8c 24 c8 02 00 	mov    0x2c8(%rsp),%rcx
+  497d06:	00 
+  497d07:	48 89 8c 24 c8 00 00 	mov    %rcx,0xc8(%rsp)
+  497d0e:	00 
+  497d0f:	49 89 07             	mov    %rax,(%r15)
+  497d12:	48 8b 94 24 00 01 00 	mov    0x100(%rsp),%rdx
+  497d19:	00 
+  497d1a:	48 85 d2             	test   %rdx,%rdx
+  497d1d:	74 15                	je     497d34 <<fe2o3_kfd::engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::RetainedPair>::allocate+0x864>
+  497d1f:	48 8b 34 24          	mov    (%rsp),%rsi
+  497d23:	48 85 f6             	test   %rsi,%rsi
+  497d26:	74 0c                	je     497d34 <<fe2o3_kfd::engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::RetainedPair>::allocate+0x864>
+  497d28:	4d 89 c7             	mov    %r8,%r15
+  497d2b:	ff 15 3f 3b 41 00    	call   *0x413b3f(%rip)        # 8ab870 <_DYNAMIC+0x2a0>
+  497d31:	4d 89 f8             	mov    %r15,%r8
+  497d34:	4d 85 ed             	test   %r13,%r13
+  497d37:	74 11                	je     497d4a <<fe2o3_kfd::engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::RetainedPair>::allocate+0x87a>
+  497d39:	48 c7 84 24 00 01 00 	movq   $0x1,0x100(%rsp)
+  497d40:	00 01 00 00 00 
+  497d45:	48 89 e0             	mov    %rsp,%rax
+  497d48:	eb 08                	jmp    497d52 <<fe2o3_kfd::engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::RetainedPair>::allocate+0x882>
+  497d4a:	48 8d 84 24 00 01 00 	lea    0x100(%rsp),%rax
+  497d51:	00 
+  497d52:	4c 89 28             	mov    %r13,(%rax)
+  497d55:	48 8b 94 24 00 01 00 	mov    0x100(%rsp),%rdx
+  497d5c:	00 
+  497d5d:	48 85 d2             	test   %rdx,%rdx
+  497d60:	74 18                	je     497d7a <<fe2o3_kfd::engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::RetainedPair>::allocate+0x8aa>
+  497d62:	48 8b 34 24          	mov    (%rsp),%rsi
+  497d66:	48 85 f6             	test   %rsi,%rsi
+  497d69:	74 0f                	je     497d7a <<fe2o3_kfd::engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::RetainedPair>::allocate+0x8aa>
+  497d6b:	4c 89 e7             	mov    %r12,%rdi
+  497d6e:	4d 89 c4             	mov    %r8,%r12
+  497d71:	ff 15 f9 3a 41 00    	call   *0x413af9(%rip)        # 8ab870 <_DYNAMIC+0x2a0>
+  497d77:	4d 89 e0             	mov    %r12,%r8
+  497d7a:	4d 85 c0             	test   %r8,%r8
+  497d7d:	74 11                	je     497d90 <<fe2o3_kfd::engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::RetainedPair>::allocate+0x8c0>
+  497d7f:	48 c7 84 24 00 01 00 	movq   $0x1,0x100(%rsp)
+  497d86:	00 01 00 00 00 
+  497d8b:	48 89 e0             	mov    %rsp,%rax
+  497d8e:	eb 08                	jmp    497d98 <<fe2o3_kfd::engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::RetainedPair>::allocate+0x8c8>
+  497d90:	48 8d 84 24 00 01 00 	lea    0x100(%rsp),%rax
+  497d97:	00 
+  497d98:	4c 89 00             	mov    %r8,(%rax)
+  497d9b:	48 8b 94 24 00 01 00 	mov    0x100(%rsp),%rdx
+  497da2:	00 
+  497da3:	48 85 d2             	test   %rdx,%rdx
+  497da6:	74 17                	je     497dbf <<fe2o3_kfd::engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::RetainedPair>::allocate+0x8ef>
+  497da8:	48 8b 34 24          	mov    (%rsp),%rsi
+  497dac:	48 85 f6             	test   %rsi,%rsi
+  497daf:	74 0e                	je     497dbf <<fe2o3_kfd::engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::RetainedPair>::allocate+0x8ef>
+  497db1:	48 8b bc 24 a8 00 00 	mov    0xa8(%rsp),%rdi
+  497db8:	00 
+  497db9:	ff 15 b1 3a 41 00    	call   *0x413ab1(%rip)        # 8ab870 <_DYNAMIC+0x2a0>
+  497dbf:	4c 8b bc 24 d8 00 00 	mov    0xd8(%rsp),%r15
+  497dc6:	00 
+  497dc7:	4d 85 ff             	test   %r15,%r15
+  497dca:	74 11                	je     497ddd <<fe2o3_kfd::engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::RetainedPair>::allocate+0x90d>
+  497dcc:	48 c7 84 24 00 01 00 	movq   $0x1,0x100(%rsp)
+  497dd3:	00 01 00 00 00 
+  497dd8:	48 89 e0             	mov    %rsp,%rax
+  497ddb:	eb 08                	jmp    497de5 <<fe2o3_kfd::engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::RetainedPair>::allocate+0x915>
+  497ddd:	48 8d 84 24 00 01 00 	lea    0x100(%rsp),%rax
+  497de4:	00 
+  497de5:	4c 89 38             	mov    %r15,(%rax)
+  497de8:	48 8b 94 24 00 01 00 	mov    0x100(%rsp),%rdx
+  497def:	00 
+  497df0:	48 85 d2             	test   %rdx,%rdx
+  497df3:	74 17                	je     497e0c <<fe2o3_kfd::engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::RetainedPair>::allocate+0x93c>
+  497df5:	48 8b 34 24          	mov    (%rsp),%rsi
+  497df9:	48 85 f6             	test   %rsi,%rsi
+  497dfc:	74 0e                	je     497e0c <<fe2o3_kfd::engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::RetainedPair>::allocate+0x93c>
+  497dfe:	48 8b bc 24 b0 00 00 	mov    0xb0(%rsp),%rdi
+  497e05:	00 
+  497e06:	ff 15 64 3a 41 00    	call   *0x413a64(%rip)        # 8ab870 <_DYNAMIC+0x2a0>
+  497e0c:	4c 8b a4 24 e0 00 00 	mov    0xe0(%rsp),%r12
+  497e13:	00 
+  497e14:	4d 85 e4             	test   %r12,%r12
+  497e17:	74 11                	je     497e2a <<fe2o3_kfd::engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::RetainedPair>::allocate+0x95a>
+  497e19:	48 c7 84 24 00 01 00 	movq   $0x1,0x100(%rsp)
+  497e20:	00 01 00 00 00 
+  497e25:	48 89 e0             	mov    %rsp,%rax
+  497e28:	eb 08                	jmp    497e32 <<fe2o3_kfd::engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::RetainedPair>::allocate+0x962>
+  497e2a:	48 8d 84 24 00 01 00 	lea    0x100(%rsp),%rax
+  497e31:	00 
+  497e32:	4c 89 20             	mov    %r12,(%rax)
+  497e35:	48 8b 94 24 00 01 00 	mov    0x100(%rsp),%rdx
+  497e3c:	00 
+  497e3d:	48 85 d2             	test   %rdx,%rdx
+  497e40:	74 17                	je     497e59 <<fe2o3_kfd::engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::RetainedPair>::allocate+0x989>
+  497e42:	48 8b 34 24          	mov    (%rsp),%rsi
+  497e46:	48 85 f6             	test   %rsi,%rsi
+  497e49:	74 0e                	je     497e59 <<fe2o3_kfd::engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::RetainedPair>::allocate+0x989>
+  497e4b:	48 8b bc 24 b8 00 00 	mov    0xb8(%rsp),%rdi
+  497e52:	00 
+  497e53:	ff 15 17 3a 41 00    	call   *0x413a17(%rip)        # 8ab870 <_DYNAMIC+0x2a0>
+  497e59:	4c 8b bc 24 e8 00 00 	mov    0xe8(%rsp),%r15
+  497e60:	00 
+  497e61:	4d 85 ff             	test   %r15,%r15
+  497e64:	74 11                	je     497e77 <<fe2o3_kfd::engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::RetainedPair>::allocate+0x9a7>
+  497e66:	48 c7 84 24 00 01 00 	movq   $0x1,0x100(%rsp)
+  497e6d:	00 01 00 00 00 
+  497e72:	48 89 e0             	mov    %rsp,%rax
+  497e75:	eb 08                	jmp    497e7f <<fe2o3_kfd::engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::RetainedPair>::allocate+0x9af>
+  497e77:	48 8d 84 24 00 01 00 	lea    0x100(%rsp),%rax
+  497e7e:	00 
+  497e7f:	4c 89 38             	mov    %r15,(%rax)
+  497e82:	48 8b 94 24 00 01 00 	mov    0x100(%rsp),%rdx
+  497e89:	00 
+  497e8a:	48 85 d2             	test   %rdx,%rdx
+  497e8d:	74 17                	je     497ea6 <<fe2o3_kfd::engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::RetainedPair>::allocate+0x9d6>
+  497e8f:	48 8b 34 24          	mov    (%rsp),%rsi
+  497e93:	48 85 f6             	test   %rsi,%rsi
+  497e96:	74 0e                	je     497ea6 <<fe2o3_kfd::engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::RetainedPair>::allocate+0x9d6>
+  497e98:	48 8b bc 24 c0 00 00 	mov    0xc0(%rsp),%rdi
+  497e9f:	00 
+  497ea0:	ff 15 ca 39 41 00    	call   *0x4139ca(%rip)        # 8ab870 <_DYNAMIC+0x2a0>
+  497ea6:	4c 8b bc 24 f8 00 00 	mov    0xf8(%rsp),%r15
+  497ead:	00 
+  497eae:	4d 85 ff             	test   %r15,%r15
+  497eb1:	74 11                	je     497ec4 <<fe2o3_kfd::engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::RetainedPair>::allocate+0x9f4>
+  497eb3:	48 c7 84 24 00 01 00 	movq   $0x1,0x100(%rsp)
+  497eba:	00 01 00 00 00 
+  497ebf:	48 89 e0             	mov    %rsp,%rax
+  497ec2:	eb 08                	jmp    497ecc <<fe2o3_kfd::engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::RetainedPair>::allocate+0x9fc>
+  497ec4:	48 8d 84 24 00 01 00 	lea    0x100(%rsp),%rax
+  497ecb:	00 
+  497ecc:	4c 89 38             	mov    %r15,(%rax)
+  497ecf:	48 8b 94 24 00 01 00 	mov    0x100(%rsp),%rdx
+  497ed6:	00 
+  497ed7:	48 85 d2             	test   %rdx,%rdx
+  497eda:	74 17                	je     497ef3 <<fe2o3_kfd::engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::RetainedPair>::allocate+0xa23>
+  497edc:	48 8b 34 24          	mov    (%rsp),%rsi
+  497ee0:	48 85 f6             	test   %rsi,%rsi
+  497ee3:	74 0e                	je     497ef3 <<fe2o3_kfd::engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::RetainedPair>::allocate+0xa23>
+  497ee5:	48 8b bc 24 d0 00 00 	mov    0xd0(%rsp),%rdi
+  497eec:	00 
+  497eed:	ff 15 7d 39 41 00    	call   *0x41397d(%rip)        # 8ab870 <_DYNAMIC+0x2a0>
+  497ef3:	48 8b 94 24 f0 00 00 	mov    0xf0(%rsp),%rdx
+  497efa:	00 
+  497efb:	48 85 d2             	test   %rdx,%rdx
+  497efe:	74 11                	je     497f11 <<fe2o3_kfd::engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::RetainedPair>::allocate+0xa41>
+  497f00:	48 c7 84 24 00 01 00 	movq   $0x1,0x100(%rsp)
+  497f07:	00 01 00 00 00 
+  497f0c:	48 89 e0             	mov    %rsp,%rax
+  497f0f:	eb 08                	jmp    497f19 <<fe2o3_kfd::engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::RetainedPair>::allocate+0xa49>
+  497f11:	48 8d 84 24 00 01 00 	lea    0x100(%rsp),%rax
+  497f18:	00 
+  497f19:	48 89 10             	mov    %rdx,(%rax)
+  497f1c:	48 8b 94 24 00 01 00 	mov    0x100(%rsp),%rdx
+  497f23:	00 
+  497f24:	48 85 d2             	test   %rdx,%rdx
+  497f27:	74 17                	je     497f40 <<fe2o3_kfd::engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::RetainedPair>::allocate+0xa70>
+  497f29:	48 8b 34 24          	mov    (%rsp),%rsi
+  497f2d:	48 85 f6             	test   %rsi,%rsi
+  497f30:	74 0e                	je     497f40 <<fe2o3_kfd::engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::RetainedPair>::allocate+0xa70>
+  497f32:	48 8b bc 24 c8 00 00 	mov    0xc8(%rsp),%rdi
+  497f39:	00 
+  497f3a:	ff 15 30 39 41 00    	call   *0x413930(%rip)        # 8ab870 <_DYNAMIC+0x2a0>
+  497f40:	48 8b 44 24 20       	mov    0x20(%rsp),%rax
+  497f45:	48 8b b0 f8 00 00 00 	mov    0xf8(%rax),%rsi
+  497f4c:	48 8b 90 00 01 00 00 	mov    0x100(%rax),%rdx
+  497f53:	0f b6 88 32 01 00 00 	movzbl 0x132(%rax),%ecx
+  497f5a:	48 8d bc 24 00 01 00 	lea    0x100(%rsp),%rdi
+  497f61:	00 
+  497f62:	e8 b9 82 00 00       	call   4a0220 <fe2o3_kfd::engineering_gfx950::peer::check_contexts>
+  497f67:	48 b8 00 00 00 00 00 	movabs $0x8000000000000000,%rax
+  497f6e:	00 00 80 
+  497f71:	48 39 84 24 00 01 00 	cmp    %rax,0x100(%rsp)
+  497f78:	00 
+  497f79:	0f 85 37 fa ff ff    	jne    4979b6 <<fe2o3_kfd::engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::RetainedPair>::allocate+0x4e6>
+  497f7f:	ff 15 5b 3a 41 00    	call   *0x413a5b(%rip)        # 8ab9e0 <_DYNAMIC+0x410>
+  497f85:	48 8d bc 24 00 01 00 	lea    0x100(%rsp),%rdi
+  497f8c:	00 
+  497f8d:	48 89 c6             	mov    %rax,%rsi
+  497f90:	48 8b 4c 24 30       	mov    0x30(%rsp),%rcx
+  497f95:	41 89 e8             	mov    %ebp,%r8d
+  497f98:	e8 03 01 f7 ff       	call   4080a0 <fe2o3_kfd::engineering_gfx950::peer::combined_mlp_state_v1::paired::deadline_check>
+  497f9d:	48 b8 00 00 00 00 00 	movabs $0x8000000000000000,%rax
+  497fa4:	00 00 80 
+  497fa7:	48 39 84 24 00 01 00 	cmp    %rax,0x100(%rsp)
+  497fae:	00 
+  497faf:	0f 85 01 fa ff ff    	jne    4979b6 <<fe2o3_kfd::engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::RetainedPair>::allocate+0x4e6>
+  497fb5:	48 8b 74 24 20       	mov    0x20(%rsp),%rsi
+  497fba:	48 8d bc 24 10 1a 00 	lea    0x1a10(%rsp),%rdi
+  497fc1:	00 
+  497fc2:	48 8b 54 24 38       	mov    0x38(%rsp),%rdx
+  497fc7:	e8 54 a2 ff ff       	call   492220 <<fe2o3_kfd::engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::Binding>::capture>
+  497fcc:	48 8b 44 24 18       	mov    0x18(%rsp),%rax
+  497fd1:	48 89 84 24 10 01 00 	mov    %rax,0x110(%rsp)
+  497fd8:	00 
+  497fd9:	0f 10 44 24 08       	movups 0x8(%rsp),%xmm0
+  497fde:	0f 29 84 24 00 01 00 	movaps %xmm0,0x100(%rsp)
+  497fe5:	00 
+  497fe6:	48 c7 44 24 08 00 00 	movq   $0x0,0x8(%rsp)
+  497fed:	00 00 
+  497fef:	48 c7 44 24 10 08 00 	movq   $0x8,0x10(%rsp)
+  497ff6:	00 00 
+  497ff8:	48 c7 44 24 18 00 00 	movq   $0x0,0x18(%rsp)
+  497fff:	00 00 
+  498001:	48 8d 7c 24 40       	lea    0x40(%rsp),%rdi
+  498006:	48 8d b4 24 00 01 00 	lea    0x100(%rsp),%rsi
+  49800d:	00 
+  49800e:	e8 6d 0c fc ff       	call   458c80 <<[fe2o3_kfd::engineering_gfx950::peer::combined_mlp_state_v1::CombinedMlpStateV1; 2] as core::convert::TryFrom<alloc::vec::Vec<fe2o3_kfd::engineering_gfx950::peer::combined_mlp_state_v1::CombinedMlpStateV1>>>::try_from>
+  498013:	0f b6 44 24 68       	movzbl 0x68(%rsp),%eax
+  498018:	3c 07                	cmp    $0x7,%al
+  49801a:	75 5e                	jne    49807a <<fe2o3_kfd::engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::RetainedPair>::allocate+0xbaa>
+  49801c:	48 8d 7c 24 40       	lea    0x40(%rsp),%rdi
+  498021:	e8 7a 89 ff ff       	call   4909a0 <<fe2o3_kfd::engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::RetainedPair>::allocate::{closure#1}>
+  498026:	48 8d 35 ce e7 ce ff 	lea    -0x311832(%rip),%rsi        # 1867fb <anon.88cdbf323d6fc3e95ab5e2acb6efd52b.122.llvm.18181729430990501009+0x6d>
+  49802d:	48 8d bc 24 00 01 00 	lea    0x100(%rsp),%rdi
+  498034:	00 
+  498035:	ba 25 00 00 00       	mov    $0x25,%edx
+  49803a:	e8 c1 77 ff ff       	call   48f800 <<u8 as <[_]>::to_vec_in::ConvertVec>::to_vec::<alloc::alloc::Global>>
+  49803f:	e9 72 f9 ff ff       	jmp    4979b6 <<fe2o3_kfd::engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::RetainedPair>::allocate+0x4e6>
+  498044:	48 8d 3d aa 12 d9 ff 	lea    -0x26ed56(%rip),%rdi        # 2292f5 <anon.74df14c9366245fb7f8cc182c4c94256.164.llvm.13877769798289706683>
+  49804b:	48 8d 0d 76 3d 3f 00 	lea    0x3f3d76(%rip),%rcx        # 88bdc8 <anon.74df14c9366245fb7f8cc182c4c94256.83.llvm.13877769798289706683>
+  498052:	be 75 01 00 00       	mov    $0x175,%esi
+  498057:	31 d2                	xor    %edx,%edx
+  498059:	ff 15 19 38 41 00    	call   *0x413819(%rip)        # 8ab878 <_DYNAMIC+0x2a8>
+  49805f:	48 8d 3d 8d 40 cf ff 	lea    -0x30bf73(%rip),%rdi        # 18c0f3 <anon.88cdbf323d6fc3e95ab5e2acb6efd52b.796.llvm.18181729430990501009>
+  498066:	48 8d 0d fb 76 3b 00 	lea    0x3b76fb(%rip),%rcx        # 84f768 <anon.88cdbf323d6fc3e95ab5e2acb6efd52b.14.llvm.18181729430990501009>
+  49806d:	be 37 02 00 00       	mov    $0x237,%esi
+  498072:	31 d2                	xor    %edx,%edx
+  498074:	ff 15 fe 37 41 00    	call   *0x4137fe(%rip)        # 8ab878 <_DYNAMIC+0x2a8>
+  49807a:	0f 10 44 24 40       	movups 0x40(%rsp),%xmm0
+  49807f:	0f 10 4c 24 50       	movups 0x50(%rsp),%xmm1
+  498084:	48 8b 4c 24 60       	mov    0x60(%rsp),%rcx
+  498089:	48 89 8c 24 78 14 00 	mov    %rcx,0x1478(%rsp)
+  498090:	00 
+  498091:	0f 11 8c 24 68 14 00 	movups %xmm1,0x1468(%rsp)
+  498098:	00 
+  498099:	0f 10 4c 24 69       	movups 0x69(%rsp),%xmm1
+  49809e:	0f 11 8c 24 81 14 00 	movups %xmm1,0x1481(%rsp)
+  4980a5:	00 
+  4980a6:	0f 10 4c 24 79       	movups 0x79(%rsp),%xmm1
+  4980ab:	0f 11 8c 24 91 14 00 	movups %xmm1,0x1491(%rsp)
+  4980b2:	00 
+  4980b3:	0f 10 8c 24 89 00 00 	movups 0x89(%rsp),%xmm1
+  4980ba:	00 
+  4980bb:	0f 11 8c 24 a1 14 00 	movups %xmm1,0x14a1(%rsp)
+  4980c2:	00 
+  4980c3:	48 8b 8c 24 98 00 00 	mov    0x98(%rsp),%rcx
+  4980ca:	00 
+  4980cb:	48 89 8c 24 b0 14 00 	mov    %rcx,0x14b0(%rsp)
+  4980d2:	00 
+  4980d3:	0f 11 84 24 58 14 00 	movups %xmm0,0x1458(%rsp)
+  4980da:	00 
+  4980db:	88 84 24 80 14 00 00 	mov    %al,0x1480(%rsp)
+  4980e2:	48 8d bc 24 b8 14 00 	lea    0x14b8(%rsp),%rdi
+  4980e9:	00 
+  4980ea:	48 8d b4 24 10 1a 00 	lea    0x1a10(%rsp),%rsi
+  4980f1:	00 
+  4980f2:	ba 48 05 00 00       	mov    $0x548,%edx
+  4980f7:	ff 15 6b 37 41 00    	call   *0x41376b(%rip)        # 8ab868 <memcpy@GLIBC_2.14>
+  4980fd:	c6 84 24 00 1a 00 00 	movb   $0x0,0x1a00(%rsp)
+  498104:	00 
+  498105:	48 c7 84 24 00 01 00 	movq   $0x2,0x100(%rsp)
+  49810c:	00 02 00 00 00 
+  498111:	ff 15 c9 38 41 00    	call   *0x4138c9(%rip)        # 8ab9e0 <_DYNAMIC+0x410>
+  498117:	48 8d 7c 24 40       	lea    0x40(%rsp),%rdi
+  49811c:	48 89 c6             	mov    %rax,%rsi
+  49811f:	48 8b 4c 24 30       	mov    0x30(%rsp),%rcx
+  498124:	41 89 e8             	mov    %ebp,%r8d
+  498127:	e8 74 ff f6 ff       	call   4080a0 <fe2o3_kfd::engineering_gfx950::peer::combined_mlp_state_v1::paired::deadline_check>
+  49812c:	48 b8 00 00 00 00 00 	movabs $0x8000000000000000,%rax
+  498133:	00 00 80 
+  498136:	48 39 44 24 40       	cmp    %rax,0x40(%rsp)
+  49813b:	75 2a                	jne    498167 <<fe2o3_kfd::engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::RetainedPair>::allocate+0xc97>
+  49813d:	c6 44 24 28 01       	movb   $0x1,0x28(%rsp)
+  498142:	48 8d b4 24 00 01 00 	lea    0x100(%rsp),%rsi
+  498149:	00 
+  49814a:	ba 08 19 00 00       	mov    $0x1908,%edx
+  49814f:	48 89 df             	mov    %rbx,%rdi
+  498152:	ff 15 10 37 41 00    	call   *0x413710(%rip)        # 8ab868 <memcpy@GLIBC_2.14>
+  498158:	48 8d 7c 24 08       	lea    0x8(%rsp),%rdi
+  49815d:	e8 8e e2 fe ff       	call   4863f0 <core::ptr::drop_in_place::<fe2o3_kfd::engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::Allocation>>
+  498162:	e9 9a fa ff ff       	jmp    497c01 <<fe2o3_kfd::engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::RetainedPair>::allocate+0x731>
+  498167:	48 8b 44 24 50       	mov    0x50(%rsp),%rax
+  49816c:	48 89 43 18          	mov    %rax,0x18(%rbx)
+  498170:	0f 10 44 24 40       	movups 0x40(%rsp),%xmm0
+  498175:	0f 11 43 08          	movups %xmm0,0x8(%rbx)
+  498179:	48 c7 03 03 00 00 00 	movq   $0x3,(%rbx)
+  498180:	48 8d bc 24 00 01 00 	lea    0x100(%rsp),%rdi
+  498187:	00 
+  498188:	e8 93 e4 fe ff       	call   486620 <core::ptr::drop_in_place::<fe2o3_kfd::engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::RetainedPair>>
+  49818d:	80 7c 24 28 00       	cmpb   $0x0,0x28(%rsp)
+  498192:	0f 84 48 f8 ff ff    	je     4979e0 <<fe2o3_kfd::engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::RetainedPair>::allocate+0x510>
+  498198:	e9 f6 f9 ff ff       	jmp    497b93 <<fe2o3_kfd::engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::RetainedPair>::allocate+0x6c3>
+  49819d:	48 8d 3d 42 4a cd ff 	lea    -0x32b5be(%rip),%rdi        # 16cbe6 <anon.a62d67e5784264e0ee337fa07e2573f2.1088.llvm.15877268958077301470>
+  4981a4:	48 8d 0d ad ee 3a 00 	lea    0x3aeead(%rip),%rcx        # 847058 <anon.a62d67e5784264e0ee337fa07e2573f2.6.llvm.15877268958077301470>
+  4981ab:	e9 bd fe ff ff       	jmp    49806d <<fe2o3_kfd::engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::RetainedPair>::allocate+0xb9d>
+  4981b0:	bf 08 00 00 00       	mov    $0x8,%edi
+  4981b5:	be 60 00 00 00       	mov    $0x60,%esi
+  4981ba:	ff 15 c8 37 41 00    	call   *0x4137c8(%rip)        # 8ab988 <_DYNAMIC+0x3b8>
+  4981c0:	bf 01 00 00 00       	mov    $0x1,%edi
+  4981c5:	be 23 00 00 00       	mov    $0x23,%esi
+  4981ca:	ff 15 b8 37 41 00    	call   *0x4137b8(%rip)        # 8ab988 <_DYNAMIC+0x3b8>
+  4981d0:	eb 10                	jmp    4981e2 <<fe2o3_kfd::engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::RetainedPair>::allocate+0xd12>
+  4981d2:	bf 01 00 00 00       	mov    $0x1,%edi
+  4981d7:	be 2d 00 00 00       	mov    $0x2d,%esi
+  4981dc:	ff 15 a6 37 41 00    	call   *0x4137a6(%rip)        # 8ab988 <_DYNAMIC+0x3b8>
+  4981e2:	0f 0b                	ud2
+  4981e4:	48 89 c3             	mov    %rax,%rbx
+  4981e7:	48 8d bc 24 00 01 00 	lea    0x100(%rsp),%rdi
+  4981ee:	00 
+  4981ef:	e8 2c e4 fe ff       	call   486620 <core::ptr::drop_in_place::<fe2o3_kfd::engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::RetainedPair>>
+  4981f4:	eb 05                	jmp    4981fb <<fe2o3_kfd::engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::RetainedPair>::allocate+0xd2b>
+  4981f6:	eb 00                	jmp    4981f8 <<fe2o3_kfd::engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::RetainedPair>::allocate+0xd28>
+  4981f8:	48 89 c3             	mov    %rax,%rbx
+  4981fb:	48 8d 7c 24 08       	lea    0x8(%rsp),%rdi
+  498200:	e8 eb e1 fe ff       	call   4863f0 <core::ptr::drop_in_place::<fe2o3_kfd::engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::Allocation>>
+  498205:	48 89 df             	mov    %rbx,%rdi
+  498208:	e8 73 36 3a 00       	call   83b880 <_Unwind_Resume@plt>

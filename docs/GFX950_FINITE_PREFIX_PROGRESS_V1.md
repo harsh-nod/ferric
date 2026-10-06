@@ -6,7 +6,16 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Current work: [the atomic-load alias refinement passes MI350 CPU qualification](../qualification/guarded-mlp-atomic-load-alias-v1/README.md).
+Current runtime work: [fresh-process repeats reproduce the guarded MLP binary discrepancy](../qualification/guarded-mlp-interleaved-native-v1/README.md#fresh-process-repeats).
+The unchanged original host executable fails twice at the typed allocation-role
+check; the diagnostic-only executable passes twice, each with 557,056 bit-exact
+computed values and the complete delayed two-bank reuse ledger. Both fresh
+repeats ran on MI350 with clean process retirement and idle GPUs afterward.
+This is synthetic component evidence, not a model-layer chain or throughput.
+The cause of the host-binary difference remains open, ahead of full-model
+integration and any live community performance demo.
+
+Earlier compiler qualification: [the atomic-load alias refinement passes MI350 CPU qualification](../qualification/guarded-mlp-atomic-load-alias-v1/README.md).
 All 176 phases and 77 scopes pass: 839 kernel-IR, 1,323 compiler and 1,516
 Pliron executions, plus 162 focused repeats and extraction controls, total
 3,840 passes and 26 ignores. The nine new alias tests and two existing

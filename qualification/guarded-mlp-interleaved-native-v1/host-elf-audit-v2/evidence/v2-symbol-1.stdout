@@ -1,0 +1,105 @@
+
+/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-interleaved-native-cpu-v228-v2/target/debug/deps/fe2o3_kfd-11448a9880d552d9:     file format elf64-x86-64
+
+
+Disassembly of section .text:
+
+0000000000616060 <<fe2o3_kfd::engineering_gfx950::peer::Gfx950EngineeringPeerGroupV1>::validate_token>:
+  616060:	41 57                	push   %r15
+  616062:	41 56                	push   %r14
+  616064:	41 54                	push   %r12
+  616066:	53                   	push   %rbx
+  616067:	50                   	push   %rax
+  616068:	49 89 d6             	mov    %rdx,%r14
+  61606b:	49 89 f4             	mov    %rsi,%r12
+  61606e:	48 89 fb             	mov    %rdi,%rbx
+  616071:	48 8d be 10 01 00 00 	lea    0x110(%rsi),%rdi
+  616078:	4c 8d 7a 08          	lea    0x8(%rdx),%r15
+  61607c:	4c 89 fe             	mov    %r15,%rsi
+  61607f:	e8 7c bf f1 ff       	call   532000 <<alloc::collections::btree::map::BTreeMap<u64, fe2o3_kfd::engineering_gfx950::peer::BufferRecord>>::get::<u64>>
+  616084:	48 85 c0             	test   %rax,%rax
+  616087:	0f 84 ba 00 00 00    	je     616147 <<fe2o3_kfd::engineering_gfx950::peer::Gfx950EngineeringPeerGroupV1>::validate_token+0xe7>
+  61608d:	49 8b 0e             	mov    (%r14),%rcx
+  616090:	49 3b 8c 24 08 01 00 	cmp    0x108(%r12),%rcx
+  616097:	00 
+  616098:	75 3f                	jne    6160d9 <<fe2o3_kfd::engineering_gfx950::peer::Gfx950EngineeringPeerGroupV1>::validate_token+0x79>
+  61609a:	48 39 48 28          	cmp    %rcx,0x28(%rax)
+  61609e:	75 39                	jne    6160d9 <<fe2o3_kfd::engineering_gfx950::peer::Gfx950EngineeringPeerGroupV1>::validate_token+0x79>
+  6160a0:	48 8b 48 30          	mov    0x30(%rax),%rcx
+  6160a4:	49 3b 0f             	cmp    (%r15),%rcx
+  6160a7:	75 30                	jne    6160d9 <<fe2o3_kfd::engineering_gfx950::peer::Gfx950EngineeringPeerGroupV1>::validate_token+0x79>
+  6160a9:	48 8b 48 40          	mov    0x40(%rax),%rcx
+  6160ad:	49 3b 4e 18          	cmp    0x18(%r14),%rcx
+  6160b1:	75 26                	jne    6160d9 <<fe2o3_kfd::engineering_gfx950::peer::Gfx950EngineeringPeerGroupV1>::validate_token+0x79>
+  6160b3:	48 8b 48 38          	mov    0x38(%rax),%rcx
+  6160b7:	49 3b 4e 10          	cmp    0x10(%r14),%rcx
+  6160bb:	75 1c                	jne    6160d9 <<fe2o3_kfd::engineering_gfx950::peer::Gfx950EngineeringPeerGroupV1>::validate_token+0x79>
+  6160bd:	80 78 20 01          	cmpb   $0x1,0x20(%rax)
+  6160c1:	75 16                	jne    6160d9 <<fe2o3_kfd::engineering_gfx950::peer::Gfx950EngineeringPeerGroupV1>::validate_token+0x79>
+  6160c3:	48 89 43 08          	mov    %rax,0x8(%rbx)
+  6160c7:	48 b8 00 00 00 00 00 	movabs $0x8000000000000000,%rax
+  6160ce:	00 00 80 
+  6160d1:	48 89 03             	mov    %rax,(%rbx)
+  6160d4:	e9 cb 00 00 00       	jmp    6161a4 <<fe2o3_kfd::engineering_gfx950::peer::Gfx950EngineeringPeerGroupV1>::validate_token+0x144>
+  6160d9:	ff 15 d9 51 29 00    	call   *0x2951d9(%rip)        # 8ab2b8 <_DYNAMIC+0x270>
+  6160df:	bf 23 00 00 00       	mov    $0x23,%edi
+  6160e4:	be 01 00 00 00       	mov    $0x1,%esi
+  6160e9:	ff 15 d1 51 29 00    	call   *0x2951d1(%rip)        # 8ab2c0 <_DYNAMIC+0x278>
+  6160ef:	48 85 c0             	test   %rax,%rax
+  6160f2:	0f 84 d6 00 00 00    	je     6161ce <<fe2o3_kfd::engineering_gfx950::peer::Gfx950EngineeringPeerGroupV1>::validate_token+0x16e>
+  6160f8:	48 8d 0d 6b cc bc ff 	lea    -0x433395(%rip),%rcx        # 1e2d6a <anon.d17fe627e5d324ea66c61125bb898512.214.llvm.4602735538015308864+0x42>
+  6160ff:	48 89 c2             	mov    %rax,%rdx
+  616102:	48 29 ca             	sub    %rcx,%rdx
+  616105:	48 29 c1             	sub    %rax,%rcx
+  616108:	48 0f 42 ca          	cmovb  %rdx,%rcx
+  61610c:	48 83 f9 22          	cmp    $0x22,%rcx
+  616110:	0f 86 9d 00 00 00    	jbe    6161b3 <<fe2o3_kfd::engineering_gfx950::peer::Gfx950EngineeringPeerGroupV1>::validate_token+0x153>
+  616116:	0f 10 05 5d cc bc ff 	movups -0x4333a3(%rip),%xmm0        # 1e2d7a <anon.d17fe627e5d324ea66c61125bb898512.214.llvm.4602735538015308864+0x52>
+  61611d:	0f 11 40 10          	movups %xmm0,0x10(%rax)
+  616121:	0f 10 05 42 cc bc ff 	movups -0x4333be(%rip),%xmm0        # 1e2d6a <anon.d17fe627e5d324ea66c61125bb898512.214.llvm.4602735538015308864+0x42>
+  616128:	0f 11 00             	movups %xmm0,(%rax)
+  61612b:	c7 40 1f 66 66 65 72 	movl   $0x72656666,0x1f(%rax)
+  616132:	48 c7 03 23 00 00 00 	movq   $0x23,(%rbx)
+  616139:	48 89 43 08          	mov    %rax,0x8(%rbx)
+  61613d:	48 c7 43 10 23 00 00 	movq   $0x23,0x10(%rbx)
+  616144:	00 
+  616145:	eb 5d                	jmp    6161a4 <<fe2o3_kfd::engineering_gfx950::peer::Gfx950EngineeringPeerGroupV1>::validate_token+0x144>
+  616147:	ff 15 6b 51 29 00    	call   *0x29516b(%rip)        # 8ab2b8 <_DYNAMIC+0x270>
+  61614d:	bf 1f 00 00 00       	mov    $0x1f,%edi
+  616152:	be 01 00 00 00       	mov    $0x1,%esi
+  616157:	ff 15 63 51 29 00    	call   *0x295163(%rip)        # 8ab2c0 <_DYNAMIC+0x278>
+  61615d:	48 85 c0             	test   %rax,%rax
+  616160:	74 7c                	je     6161de <<fe2o3_kfd::engineering_gfx950::peer::Gfx950EngineeringPeerGroupV1>::validate_token+0x17e>
+  616162:	48 8d 0d e2 cb bc ff 	lea    -0x43341e(%rip),%rcx        # 1e2d4b <anon.d17fe627e5d324ea66c61125bb898512.214.llvm.4602735538015308864+0x23>
+  616169:	48 89 c2             	mov    %rax,%rdx
+  61616c:	48 29 ca             	sub    %rcx,%rdx
+  61616f:	48 29 c1             	sub    %rax,%rcx
+  616172:	48 0f 42 ca          	cmovb  %rdx,%rcx
+  616176:	48 83 f9 1e          	cmp    $0x1e,%rcx
+  61617a:	76 37                	jbe    6161b3 <<fe2o3_kfd::engineering_gfx950::peer::Gfx950EngineeringPeerGroupV1>::validate_token+0x153>
+  61617c:	0f 10 05 d7 cb bc ff 	movups -0x433429(%rip),%xmm0        # 1e2d5a <anon.d17fe627e5d324ea66c61125bb898512.214.llvm.4602735538015308864+0x32>
+  616183:	0f 11 40 0f          	movups %xmm0,0xf(%rax)
+  616187:	0f 10 05 bd cb bc ff 	movups -0x433443(%rip),%xmm0        # 1e2d4b <anon.d17fe627e5d324ea66c61125bb898512.214.llvm.4602735538015308864+0x23>
+  61618e:	0f 11 00             	movups %xmm0,(%rax)
+  616191:	48 c7 03 1f 00 00 00 	movq   $0x1f,(%rbx)
+  616198:	48 89 43 08          	mov    %rax,0x8(%rbx)
+  61619c:	48 c7 43 10 1f 00 00 	movq   $0x1f,0x10(%rbx)
+  6161a3:	00 
+  6161a4:	48 89 d8             	mov    %rbx,%rax
+  6161a7:	48 83 c4 08          	add    $0x8,%rsp
+  6161ab:	5b                   	pop    %rbx
+  6161ac:	41 5c                	pop    %r12
+  6161ae:	41 5e                	pop    %r14
+  6161b0:	41 5f                	pop    %r15
+  6161b2:	c3                   	ret
+  6161b3:	48 8d 3d fb 3e bd ff 	lea    -0x42c105(%rip),%rdi        # 1ea0b5 <anon.d17fe627e5d324ea66c61125bb898512.846.llvm.4602735538015308864>
+  6161ba:	48 8d 0d 3f e7 24 00 	lea    0x24e73f(%rip),%rcx        # 864900 <anon.d17fe627e5d324ea66c61125bb898512.1.llvm.4602735538015308864>
+  6161c1:	be 37 02 00 00       	mov    $0x237,%esi
+  6161c6:	31 d2                	xor    %edx,%edx
+  6161c8:	ff 15 c2 50 29 00    	call   *0x2950c2(%rip)        # 8ab290 <_DYNAMIC+0x248>
+  6161ce:	bf 01 00 00 00       	mov    $0x1,%edi
+  6161d3:	be 23 00 00 00       	mov    $0x23,%esi
+  6161d8:	ff 15 f2 50 29 00    	call   *0x2950f2(%rip)        # 8ab2d0 <_DYNAMIC+0x288>
+  6161de:	bf 01 00 00 00       	mov    $0x1,%edi
+  6161e3:	be 1f 00 00 00       	mov    $0x1f,%esi
+  6161e8:	ff 15 e2 50 29 00    	call   *0x2950e2(%rip)        # 8ab2d0 <_DYNAMIC+0x288>

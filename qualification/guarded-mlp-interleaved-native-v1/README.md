@@ -2,9 +2,9 @@
 
 This checkpoint extends the [borrow-free retained pair](../guarded-mlp-retained-pair-v1/README.md)
 with a native two-layer, two-bank, four-forward diagnostic. Both CPU suites pass.
-The first native attempt fails an allocation-role check; the diagnostic-only
-rebuild passes the synthetic GPU case. The first refusal is **not root-caused**,
-and repeatability remains open. This is not a production route or model benchmark.
+The original executable fails an allocation-role check in both of its attempts;
+the diagnostic-only rebuild passes the synthetic GPU case in both of its attempts.
+The discrepancy is **not root-caused**. This is not a production route or model benchmark.
 
 ## What Changed
 
@@ -136,8 +136,8 @@ repetition of the first binary.
 
 A successful diagnostic-only rebuild does not establish why the original binary
 refused its allocation role. Do not describe this as a functional fix or erase
-the failed attempt. Repeat both pinned host executables in separate fresh
-processes and investigate their differing behavior before broader admission.
+the failed attempt. The fresh-process repeats below reproduce the difference;
+its cause must still be investigated before broader admission.
 
 The [second CPU retainer](retain_cpu_v2.py) preserves 112 members / 111 pins
 (5,882,313 expanded bytes); [second GPU retainer](retain_gpu_v2.py) preserves
@@ -150,6 +150,69 @@ The [second CPU retainer](retain_cpu_v2.py) preserves 112 members / 111 pins
 | 936,408-byte CPU archive | `3871dbc64b7f557ab9b02d980fc83fa95a4c3a6f21baa7442486881e4df3abad` |
 | GPU receipt | `ab17388f411190bf0c738fdf8a7ed4b598606e3147ce98224573ea7ebb2c25d9` |
 | 569,836-byte GPU archive | `a26f86e93d7dee69a909701595ff187e910d100ff10a069dccb5277834a837e7` |
+
+## Fresh-Process Repeats
+
+Both original host executables were run again on `ssh mi350`, sequentially,
+without rebuilding either. Each attempt used a fresh GPU namespace and process.
+The CPU receipt, executable hash, three HSACOs, reference/verifier, physical GPU
+pair, limits and cleanup protocol were unchanged for that binary. Only the GPU
+paths and corresponding request/harness pins changed. Every attempt made one
+native call with zero internal retries.
+
+| Attempt | Pinned Host Executable | Actual Result |
+| --- | --- | --- |
+| [First original](gpu-attempt-v1/evidence/failed.json) | `dbf5ea87824b` | Typed allocation-role refusal |
+| [First diagnostic](gpu-attempt-v2/evidence/complete.json) | `5dfefcd2e228` | Independent numerical verification passed |
+| [Original repeat](gpu-attempt-v3/evidence/failed.json) | `dbf5ea87824b` | Same typed allocation-role refusal |
+| [Diagnostic repeat](gpu-attempt-v4/evidence/complete.json) | `5dfefcd2e228` | Independent numerical verification passed |
+
+The original repeat exited naturally with status 101 after 2.70 seconds in the
+native phase. It emitted no successful observation. The diagnostic repeat's
+native phase took 117.79 seconds; the whole diagnostic took 123.75 seconds.
+These durations include fixture construction and verification, not kernel latency.
+Both repeats left all eight GPUs idle, with reaped children, absent process
+groups and no timeout, forced cleanup, storage or postcheck errors.
+
+The [second successful verification](gpu-attempt-v4/evidence/verify.stdout)
+again checks all 557,056 computed values, including 65,536 final BF16 values,
+48 matrix hashes, 104 owner readbacks, 16 terminal states and 336 inactive
+payload hashes. The eight segments and two rearms match the first successful
+result, including stable owner identities and final observed queue frontiers
+`[write=40, read=35]` on both ranks. No unobserved hardware-read credit is assumed.
+
+The [data-only repeat retainer](retain_gpu_repeats.py) preserves both outcomes:
+v3 has 53 members / 2,861,367 expanded bytes; v4 has 59 / 13,792,855.
+Their receipt SHA-256 values are respectively
+`4c4712c614515f683c980d0eb330ada9accab3e88fc03f50bedf6c97a8c1a57d`
+and `eacd2fadb52d33f96361fd8f9d927a5989a8292da4fca876eeafa382e2f268a4`.
+Two failures versus two passes establishes the observed binary-dependent
+separation, not a root cause, functional fix or broad reliability guarantee.
+
+## Static Host Inspection
+
+Two bounded inspection runs on MI350 retained disassembly of selected host
+functions, without executing either project binary or any GPU work. Both have eight
+clean, supervised `nm`/`objdump` phases, with unchanged ELF/tool/helper hashes.
+The [first receipt](host-elf-audit-v1/evidence/complete.json) covers `region`,
+`prepare` and the native fixture caller. Its initial selector misses
+`RetainedPair::allocate` because the demangled name includes an angle bracket;
+that is not evidence of inlining. The
+[supplemental receipt](host-elf-audit-v2/evidence/complete.json) captures that
+allocation function, the fixture's `inputs` builder and `validate_token`.
+The [first](retain_host_elf_audit.py) and
+[second](retain_host_elf_audit_v2.py) retainers preserve both closed capsules.
+
+Both `prepare` bodies pass explicit 0/1 combined-state flags and matching
+owner indices and token/rank strides. Their immediate byte-size arguments
+for combined owners, partials, residuals and outputs agree; the ten-root
+constant tables have not been separately decoded. Both `region` bodies
+check the same token owner/size and record kind/mapping offsets.
+The original passes token addresses directly; the diagnostic build copies
+each token into a stack slot first. This is an observed code-generation
+difference, not an established miscompilation or lifetime defect.
+The next diagnostic should observe the actual failing predicate in the
+original executable. No allocation-role predicate has been relaxed.
 
 ## Scope and Next Gate
 

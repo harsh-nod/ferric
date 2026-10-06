@@ -1,0 +1,233 @@
+{
+  "files": {
+    "audit.py": {
+      "bytes": 7742,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/audit_guarded_mlp_host_elf_v228_v2.py",
+      "sha256": "c7015cce76747e3ef2a412620c4cbda24016c19fff298563796fbfb9e7ed57ed"
+    },
+    "evidence/complete.json": {
+      "bytes": 31460,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-host-elf-audit-v228-v2/evidence/complete.json",
+      "sha256": "0457febcc2629402b4c373c69cd71cdd360f2c1c487a2bcd9c0fe5ceb1dd4e38"
+    },
+    "evidence/v1-nm.command.json": {
+      "bytes": 817,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-host-elf-audit-v228-v2/evidence/v1-nm.command.json",
+      "sha256": "ea686f070c5e57cbb9e307bf0ddea83a865d0c40975a36eecb22e2b4dda236d2"
+    },
+    "evidence/v1-nm.result.json": {
+      "bytes": 1493,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-host-elf-audit-v228-v2/evidence/v1-nm.result.json",
+      "sha256": "42cda44fa2c60ba90232fdd36f453532aa85f94970071fcc9e9b6db4993ff3c3"
+    },
+    "evidence/v1-nm.started.json": {
+      "bytes": 406,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-host-elf-audit-v228-v2/evidence/v1-nm.started.json",
+      "sha256": "3c7dde7888edec961695483bed3dd3dab3dd3f4cb902cb7c7457f0dd9c0d5c8f"
+    },
+    "evidence/v1-nm.stderr": {
+      "bytes": 0,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-host-elf-audit-v228-v2/evidence/v1-nm.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "evidence/v1-nm.stdout": {
+      "bytes": 2037859,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-host-elf-audit-v228-v2/evidence/v1-nm.stdout",
+      "sha256": "2d38e0bbec2054ec0d99b0a3ecc8c0e3f7ea57609f44696a5304a73ac6047797"
+    },
+    "evidence/v1-symbol-0.command.json": {
+      "bytes": 855,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-host-elf-audit-v228-v2/evidence/v1-symbol-0.command.json",
+      "sha256": "15dc3cb59a4116b5dd35977e8c92601d6e91b2d4ac81533ab55d664c03d1c21b"
+    },
+    "evidence/v1-symbol-0.result.json": {
+      "bytes": 1553,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-host-elf-audit-v228-v2/evidence/v1-symbol-0.result.json",
+      "sha256": "d55bbc4d5b529a19b6107b0087d9f68e3ec51393afaf45c1ce2151615ff45090"
+    },
+    "evidence/v1-symbol-0.started.json": {
+      "bytes": 444,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-host-elf-audit-v228-v2/evidence/v1-symbol-0.started.json",
+      "sha256": "ea0f657da266ba509a13ce0a2b3856341b0e1aee1320dd03f477c0dde3f22ff5"
+    },
+    "evidence/v1-symbol-0.stderr": {
+      "bytes": 0,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-host-elf-audit-v228-v2/evidence/v1-symbol-0.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "evidence/v1-symbol-0.stdout": {
+      "bytes": 50454,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-host-elf-audit-v228-v2/evidence/v1-symbol-0.stdout",
+      "sha256": "ee7fc9c2aa70b23515e8d84df718a480e6bd7647f772b0cd4a72fe38ae3b9cf7"
+    },
+    "evidence/v1-symbol-1.command.json": {
+      "bytes": 855,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-host-elf-audit-v228-v2/evidence/v1-symbol-1.command.json",
+      "sha256": "81145c2c13a775fbd7b21e2bd353f80ce4f6e8996d4473cf02081cc6a8601877"
+    },
+    "evidence/v1-symbol-1.result.json": {
+      "bytes": 1552,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-host-elf-audit-v228-v2/evidence/v1-symbol-1.result.json",
+      "sha256": "86c9f4a024a267633b090130aef97dbe3ec8c68cf0e50743bed02d6cfb53d77e"
+    },
+    "evidence/v1-symbol-1.started.json": {
+      "bytes": 444,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-host-elf-audit-v228-v2/evidence/v1-symbol-1.started.json",
+      "sha256": "264a77cc381e1ff80cf4bd53eace1848ffba854aad0b6f87dedb0287f74d04e6"
+    },
+    "evidence/v1-symbol-1.stderr": {
+      "bytes": 0,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-host-elf-audit-v228-v2/evidence/v1-symbol-1.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "evidence/v1-symbol-1.stdout": {
+      "bytes": 7438,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-host-elf-audit-v228-v2/evidence/v1-symbol-1.stdout",
+      "sha256": "f2bc2d5239bbd5f06ede7017dfd689296c7325f1831cc077b49110bcdb4785d4"
+    },
+    "evidence/v1-symbol-2.command.json": {
+      "bytes": 855,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-host-elf-audit-v228-v2/evidence/v1-symbol-2.command.json",
+      "sha256": "e2d74b8eec265f3c05b3fbfa8fda0a1580adcb5d2ea2ab73376263a44107244f"
+    },
+    "evidence/v1-symbol-2.result.json": {
+      "bytes": 1552,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-host-elf-audit-v228-v2/evidence/v1-symbol-2.result.json",
+      "sha256": "5162e1f41b46ba1fa56bb71ca494682da3f49167ee386832b937b14625a24290"
+    },
+    "evidence/v1-symbol-2.started.json": {
+      "bytes": 444,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-host-elf-audit-v228-v2/evidence/v1-symbol-2.started.json",
+      "sha256": "ebe82a17fc59965bc95c4ad163ce3f733603c23ede3107aa846e111ca2e8f43e"
+    },
+    "evidence/v1-symbol-2.stderr": {
+      "bytes": 0,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-host-elf-audit-v228-v2/evidence/v1-symbol-2.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "evidence/v1-symbol-2.stdout": {
+      "bytes": 6433,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-host-elf-audit-v228-v2/evidence/v1-symbol-2.stdout",
+      "sha256": "2948712226b341d0412ba2f59c1c8edfa54e7bb21a9cfd923e6057963f37fc0b"
+    },
+    "evidence/v2-nm.command.json": {
+      "bytes": 817,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-host-elf-audit-v228-v2/evidence/v2-nm.command.json",
+      "sha256": "c091b13e98d7a57d93e8db00efd1577979615a63d4704cf5b15e98745ed6d6ab"
+    },
+    "evidence/v2-nm.result.json": {
+      "bytes": 1493,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-host-elf-audit-v228-v2/evidence/v2-nm.result.json",
+      "sha256": "71f9f51f5c8e9cb4253adf48925176b26bb571d969ea9442a432ae39bfb65650"
+    },
+    "evidence/v2-nm.started.json": {
+      "bytes": 406,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-host-elf-audit-v228-v2/evidence/v2-nm.started.json",
+      "sha256": "cb7bd96071840317415f269e8c210114151f3d9b7e6b1f5bd1a1549927030636"
+    },
+    "evidence/v2-nm.stderr": {
+      "bytes": 0,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-host-elf-audit-v228-v2/evidence/v2-nm.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "evidence/v2-nm.stdout": {
+      "bytes": 2038521,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-host-elf-audit-v228-v2/evidence/v2-nm.stdout",
+      "sha256": "7f62658222d78e580e80b65263b4e579998c59c44b76a6f7fc50817621abf4f5"
+    },
+    "evidence/v2-symbol-0.command.json": {
+      "bytes": 855,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-host-elf-audit-v228-v2/evidence/v2-symbol-0.command.json",
+      "sha256": "c211c9e632b26a05335cf2736405c7b07fd59c04e299c1881f68f443f9b283f4"
+    },
+    "evidence/v2-symbol-0.result.json": {
+      "bytes": 1553,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-host-elf-audit-v228-v2/evidence/v2-symbol-0.result.json",
+      "sha256": "8f1dd1d99f8c4838bbf8c22d67bb3347dfe2f7a6acc1909defc45c62412cc74a"
+    },
+    "evidence/v2-symbol-0.started.json": {
+      "bytes": 444,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-host-elf-audit-v228-v2/evidence/v2-symbol-0.started.json",
+      "sha256": "c4da7e83a3b409989d82bcf915e4ab894325789b4f687cbc023a35fcafe47b2d"
+    },
+    "evidence/v2-symbol-0.stderr": {
+      "bytes": 0,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-host-elf-audit-v228-v2/evidence/v2-symbol-0.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "evidence/v2-symbol-0.stdout": {
+      "bytes": 50117,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-host-elf-audit-v228-v2/evidence/v2-symbol-0.stdout",
+      "sha256": "302711e7f3ad007e88a24f2071affa30845e339e119625e531edd0a50b96d62c"
+    },
+    "evidence/v2-symbol-1.command.json": {
+      "bytes": 855,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-host-elf-audit-v228-v2/evidence/v2-symbol-1.command.json",
+      "sha256": "ed1c03be4e265121f81b8bc3e1d51168df4c709b73fbdbbbd5c126564e1cf0cb"
+    },
+    "evidence/v2-symbol-1.result.json": {
+      "bytes": 1552,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-host-elf-audit-v228-v2/evidence/v2-symbol-1.result.json",
+      "sha256": "7eda802347173a70be5878f378f474ea79019477069190f4ef9b44808afba36d"
+    },
+    "evidence/v2-symbol-1.started.json": {
+      "bytes": 444,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-host-elf-audit-v228-v2/evidence/v2-symbol-1.started.json",
+      "sha256": "8a264273e3061fe3776a120197b775fdb8452ec68df1ea5db349ba6140888bb5"
+    },
+    "evidence/v2-symbol-1.stderr": {
+      "bytes": 0,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-host-elf-audit-v228-v2/evidence/v2-symbol-1.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "evidence/v2-symbol-1.stdout": {
+      "bytes": 7429,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-host-elf-audit-v228-v2/evidence/v2-symbol-1.stdout",
+      "sha256": "1e50ed5f607ef08c6de1fcb4ee142c0b4b14964582046c2ccc360ae59492a305"
+    },
+    "evidence/v2-symbol-2.command.json": {
+      "bytes": 855,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-host-elf-audit-v228-v2/evidence/v2-symbol-2.command.json",
+      "sha256": "c1ccc1475713aa937b77ea5538b1588353baee8ad70214694b4af17bafd034cf"
+    },
+    "evidence/v2-symbol-2.result.json": {
+      "bytes": 1552,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-host-elf-audit-v228-v2/evidence/v2-symbol-2.result.json",
+      "sha256": "d8cd7aeeafcb2009e63cad14cf7f2dfe28336ef45139b7b1a88949acb1dc2888"
+    },
+    "evidence/v2-symbol-2.started.json": {
+      "bytes": 444,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-host-elf-audit-v228-v2/evidence/v2-symbol-2.started.json",
+      "sha256": "d92f56bc854be2bfd3c6e27dbdef8d0df3190341eae013abec2290d5853c7d6c"
+    },
+    "evidence/v2-symbol-2.stderr": {
+      "bytes": 0,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-host-elf-audit-v228-v2/evidence/v2-symbol-2.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "evidence/v2-symbol-2.stdout": {
+      "bytes": 6431,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-host-elf-audit-v228-v2/evidence/v2-symbol-2.stdout",
+      "sha256": "ba2aaa82d98eeed4efdb152ef2ff5ba3876ce5c0ae17b76ef6de16fceb153be3"
+    },
+    "library_audit.py": {
+      "bytes": 25872,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-interleaved-native-gpu-v228-v3/library_audit.py",
+      "sha256": "b26d60ef6dbe24f2182b52b2e0eb44632848061b7a4a1735fc4e1d26b8ee638d"
+    },
+    "supervisor.py": {
+      "bytes": 41485,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-interleaved-native-gpu-v228-v3/supervisor.py",
+      "sha256": "8824478a6415dee39d28ccefb0881fc0687ac724f5a9c5a4540310fb5196b9bc"
+    }
+  },
+  "gpu_execution": false,
+  "host_elf_bodies": false,
+  "project_execution": false,
+  "receipt": {
+    "bytes": 31460,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-host-elf-audit-v228-v2/evidence/complete.json",
+    "sha256": "0457febcc2629402b4c373c69cd71cdd360f2c1c487a2bcd9c0fe5ceb1dd4e38"
+  },
+  "schema": "ferric-static-host-elf-retention-v1"
+}

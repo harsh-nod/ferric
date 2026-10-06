@@ -1,0 +1,116 @@
+
+/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-interleaved-native-cpu-v228-v2/target/debug/deps/fe2o3_kfd-11448a9880d552d9:     file format elf64-x86-64
+
+
+Disassembly of section .text:
+
+0000000000637ac0 <fe2o3_kfd::engineering_gfx950::peer::combined_mlp_state_v1::tests::native::paired::interleaved::inputs>:
+  637ac0:	55                   	push   %rbp
+  637ac1:	41 57                	push   %r15
+  637ac3:	41 56                	push   %r14
+  637ac5:	41 55                	push   %r13
+  637ac7:	41 54                	push   %r12
+  637ac9:	53                   	push   %rbx
+  637aca:	48 83 ec 38          	sub    $0x38,%rsp
+  637ace:	48 83 fa 01          	cmp    $0x1,%rdx
+  637ad2:	0f 84 c7 01 00 00    	je     637c9f <fe2o3_kfd::engineering_gfx950::peer::combined_mlp_state_v1::tests::native::paired::interleaved::inputs+0x1df>
+  637ad8:	48 85 d2             	test   %rdx,%rdx
+  637adb:	0f 84 d5 01 00 00    	je     637cb6 <fe2o3_kfd::engineering_gfx950::peer::combined_mlp_state_v1::tests::native::paired::interleaved::inputs+0x1f6>
+  637ae1:	4d 89 cc             	mov    %r9,%r12
+  637ae4:	4d 89 c6             	mov    %r8,%r14
+  637ae7:	49 89 cf             	mov    %rcx,%r15
+  637aea:	49 89 f5             	mov    %rsi,%r13
+  637aed:	48 89 fb             	mov    %rdi,%rbx
+  637af0:	48 8d 86 88 00 00 00 	lea    0x88(%rsi),%rax
+  637af7:	48 89 04 24          	mov    %rax,(%rsp)
+  637afb:	48 8d 86 10 01 00 00 	lea    0x110(%rsi),%rax
+  637b02:	48 89 44 24 10       	mov    %rax,0x10(%rsp)
+  637b07:	48 8d 86 98 01 00 00 	lea    0x198(%rsi),%rax
+  637b0e:	48 89 44 24 08       	mov    %rax,0x8(%rsp)
+  637b13:	48 8d 86 20 02 00 00 	lea    0x220(%rsi),%rax
+  637b1a:	48 89 44 24 28       	mov    %rax,0x28(%rsp)
+  637b1f:	48 8d 86 b8 03 00 00 	lea    0x3b8(%rsi),%rax
+  637b26:	48 89 44 24 30       	mov    %rax,0x30(%rsp)
+  637b2b:	48 8d 86 30 03 00 00 	lea    0x330(%rsi),%rax
+  637b32:	48 89 44 24 20       	mov    %rax,0x20(%rsp)
+  637b37:	48 8d 86 a8 02 00 00 	lea    0x2a8(%rsi),%rax
+  637b3e:	48 89 44 24 18       	mov    %rax,0x18(%rsp)
+  637b43:	48 8d b1 40 01 00 00 	lea    0x140(%rcx),%rsi
+  637b4a:	48 81 c7 c0 01 00 00 	add    $0x1c0,%rdi
+  637b51:	48 8b 2d 48 37 27 00 	mov    0x273748(%rip),%rbp        # 8ab2a0 <memcpy@GLIBC_2.14>
+  637b58:	ba 40 01 00 00       	mov    $0x140,%edx
+  637b5d:	ff d5                	call   *%rbp
+  637b5f:	41 0f 10 44 24 20    	movups 0x20(%r12),%xmm0
+  637b65:	41 0f 10 4c 24 30    	movups 0x30(%r12),%xmm1
+  637b6b:	0f 11 8b 10 03 00 00 	movups %xmm1,0x310(%rbx)
+  637b72:	0f 11 83 00 03 00 00 	movups %xmm0,0x300(%rbx)
+  637b79:	41 0f 10 87 a0 02 00 	movups 0x2a0(%r15),%xmm0
+  637b80:	00 
+  637b81:	41 0f 10 8f b0 02 00 	movups 0x2b0(%r15),%xmm1
+  637b88:	00 
+  637b89:	0f 11 83 20 03 00 00 	movups %xmm0,0x320(%rbx)
+  637b90:	0f 11 8b 30 03 00 00 	movups %xmm1,0x330(%rbx)
+  637b97:	48 8b 44 24 70       	mov    0x70(%rsp),%rax
+  637b9c:	0f 10 40 20          	movups 0x20(%rax),%xmm0
+  637ba0:	0f 10 48 30          	movups 0x30(%rax),%xmm1
+  637ba4:	0f 11 83 a0 03 00 00 	movups %xmm0,0x3a0(%rbx)
+  637bab:	0f 11 8b b0 03 00 00 	movups %xmm1,0x3b0(%rbx)
+  637bb2:	4c 89 2b             	mov    %r13,(%rbx)
+  637bb5:	48 8b 04 24          	mov    (%rsp),%rax
+  637bb9:	48 89 43 08          	mov    %rax,0x8(%rbx)
+  637bbd:	48 8b 44 24 10       	mov    0x10(%rsp),%rax
+  637bc2:	48 89 43 10          	mov    %rax,0x10(%rbx)
+  637bc6:	48 8b 44 24 08       	mov    0x8(%rsp),%rax
+  637bcb:	48 89 43 18          	mov    %rax,0x18(%rbx)
+  637bcf:	48 8d 7b 20          	lea    0x20(%rbx),%rdi
+  637bd3:	ba 40 01 00 00       	mov    $0x140,%edx
+  637bd8:	4c 89 fe             	mov    %r15,%rsi
+  637bdb:	ff d5                	call   *%rbp
+  637bdd:	41 0f 10 04 24       	movups (%r12),%xmm0
+  637be2:	41 0f 10 4c 24 10    	movups 0x10(%r12),%xmm1
+  637be8:	0f 11 8b 70 01 00 00 	movups %xmm1,0x170(%rbx)
+  637bef:	0f 11 83 60 01 00 00 	movups %xmm0,0x160(%rbx)
+  637bf6:	41 0f 10 87 80 02 00 	movups 0x280(%r15),%xmm0
+  637bfd:	00 
+  637bfe:	41 0f 10 8f 90 02 00 	movups 0x290(%r15),%xmm1
+  637c05:	00 
+  637c06:	0f 11 8b 90 01 00 00 	movups %xmm1,0x190(%rbx)
+  637c0d:	0f 11 83 80 01 00 00 	movups %xmm0,0x180(%rbx)
+  637c14:	48 8b 44 24 28       	mov    0x28(%rsp),%rax
+  637c19:	48 89 83 a0 01 00 00 	mov    %rax,0x1a0(%rbx)
+  637c20:	48 8b 44 24 18       	mov    0x18(%rsp),%rax
+  637c25:	48 89 83 a8 01 00 00 	mov    %rax,0x1a8(%rbx)
+  637c2c:	48 8b 44 24 20       	mov    0x20(%rsp),%rax
+  637c31:	48 89 83 b0 01 00 00 	mov    %rax,0x1b0(%rbx)
+  637c38:	48 8b 44 24 30       	mov    0x30(%rsp),%rax
+  637c3d:	48 89 83 b8 01 00 00 	mov    %rax,0x1b8(%rbx)
+  637c44:	41 0f 10 06          	movups (%r14),%xmm0
+  637c48:	41 0f 10 4e 10       	movups 0x10(%r14),%xmm1
+  637c4d:	41 0f 10 56 20       	movups 0x20(%r14),%xmm2
+  637c52:	41 0f 10 5e 30       	movups 0x30(%r14),%xmm3
+  637c57:	0f 11 93 60 03 00 00 	movups %xmm2,0x360(%rbx)
+  637c5e:	0f 11 8b 50 03 00 00 	movups %xmm1,0x350(%rbx)
+  637c65:	0f 11 9b 70 03 00 00 	movups %xmm3,0x370(%rbx)
+  637c6c:	0f 11 83 40 03 00 00 	movups %xmm0,0x340(%rbx)
+  637c73:	48 8b 44 24 70       	mov    0x70(%rsp),%rax
+  637c78:	0f 10 00             	movups (%rax),%xmm0
+  637c7b:	0f 10 48 10          	movups 0x10(%rax),%xmm1
+  637c7f:	0f 11 83 80 03 00 00 	movups %xmm0,0x380(%rbx)
+  637c86:	0f 11 8b 90 03 00 00 	movups %xmm1,0x390(%rbx)
+  637c8d:	48 89 d8             	mov    %rbx,%rax
+  637c90:	48 83 c4 38          	add    $0x38,%rsp
+  637c94:	5b                   	pop    %rbx
+  637c95:	41 5c                	pop    %r12
+  637c97:	41 5d                	pop    %r13
+  637c99:	41 5e                	pop    %r14
+  637c9b:	41 5f                	pop    %r15
+  637c9d:	5d                   	pop    %rbp
+  637c9e:	c3                   	ret
+  637c9f:	48 8d 15 32 38 21 00 	lea    0x213832(%rip),%rdx        # 84b4d8 <anon.336897c4df43a4c99a59f42bc2ba48b3.431.llvm.9032448430607581206>
+  637ca6:	bf 01 00 00 00       	mov    $0x1,%edi
+  637cab:	be 01 00 00 00       	mov    $0x1,%esi
+  637cb0:	ff 15 4a 36 27 00    	call   *0x27364a(%rip)        # 8ab300 <_DYNAMIC+0x2b8>
+  637cb6:	48 8d 15 1b 38 21 00 	lea    0x21381b(%rip),%rdx        # 84b4d8 <anon.336897c4df43a4c99a59f42bc2ba48b3.431.llvm.9032448430607581206>
+  637cbd:	31 ff                	xor    %edi,%edi
+  637cbf:	31 f6                	xor    %esi,%esi
+  637cc1:	ff 15 39 36 27 00    	call   *0x273639(%rip)        # 8ab300 <_DYNAMIC+0x2b8>

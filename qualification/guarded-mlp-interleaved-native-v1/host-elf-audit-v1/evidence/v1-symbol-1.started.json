@@ -1,0 +1,18 @@
+{
+  "argv": [
+    "/usr/bin/prlimit",
+    "--as=2147483648",
+    "--cpu=20",
+    "--fsize=4194304",
+    "--core=0",
+    "--",
+    "/usr/bin/objdump",
+    "-d",
+    "-C",
+    "--start-address=0x40a9b0",
+    "--stop-address=0x40c33b",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-interleaved-native-cpu-v228-v1/target/debug/deps/fe2o3_kfd-11448a9880d552d9"
+  ],
+  "pgid": 1576916,
+  "pid": 1576916
+}

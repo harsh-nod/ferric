@@ -1,0 +1,187 @@
+
+/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-interleaved-native-cpu-v228-v2/target/debug/deps/fe2o3_kfd-11448a9880d552d9:     file format elf64-x86-64
+
+
+Disassembly of section .text:
+
+0000000000366cb0 <fe2o3_kfd::engineering_gfx950::peer::combined_mlp_state_v1::paired::profiles::region>:
+  366cb0:	55                   	push   %rbp
+  366cb1:	41 57                	push   %r15
+  366cb3:	41 56                	push   %r14
+  366cb5:	41 55                	push   %r13
+  366cb7:	41 54                	push   %r12
+  366cb9:	53                   	push   %rbx
+  366cba:	48 81 ec c8 00 00 00 	sub    $0xc8,%rsp
+  366cc1:	45 89 cc             	mov    %r9d,%r12d
+  366cc4:	4d 89 c7             	mov    %r8,%r15
+  366cc7:	49 89 cd             	mov    %rcx,%r13
+  366cca:	49 89 d6             	mov    %rdx,%r14
+  366ccd:	48 89 f5             	mov    %rsi,%rbp
+  366cd0:	48 89 fb             	mov    %rdi,%rbx
+  366cd3:	48 89 4c 24 20       	mov    %rcx,0x20(%rsp)
+  366cd8:	4c 89 44 24 28       	mov    %r8,0x28(%rsp)
+  366cdd:	44 88 64 24 05       	mov    %r12b,0x5(%rsp)
+  366ce2:	0f 10 02             	movups (%rdx),%xmm0
+  366ce5:	0f 10 4a 10          	movups 0x10(%rdx),%xmm1
+  366ce9:	0f 29 4c 24 40       	movaps %xmm1,0x40(%rsp)
+  366cee:	0f 29 44 24 30       	movaps %xmm0,0x30(%rsp)
+  366cf3:	48 8d 7c 24 08       	lea    0x8(%rsp),%rdi
+  366cf8:	48 8d 54 24 30       	lea    0x30(%rsp),%rdx
+  366cfd:	e8 5e f3 2a 00       	call   616060 <<fe2o3_kfd::engineering_gfx950::peer::Gfx950EngineeringPeerGroupV1>::validate_token>
+  366d02:	48 8b 44 24 08       	mov    0x8(%rsp),%rax
+  366d07:	48 8b 74 24 10       	mov    0x10(%rsp),%rsi
+  366d0c:	48 89 c1             	mov    %rax,%rcx
+  366d0f:	48 f7 d9             	neg    %rcx
+  366d12:	0f 81 ce 00 00 00    	jno    366de6 <fe2o3_kfd::engineering_gfx950::peer::combined_mlp_state_v1::paired::profiles::region+0x136>
+  366d18:	4d 39 6e 10          	cmp    %r13,0x10(%r14)
+  366d1c:	0f 85 da 00 00 00    	jne    366dfc <fe2o3_kfd::engineering_gfx950::peer::combined_mlp_state_v1::paired::profiles::region+0x14c>
+  366d22:	4d 39 7e 18          	cmp    %r15,0x18(%r14)
+  366d26:	0f 85 d0 00 00 00    	jne    366dfc <fe2o3_kfd::engineering_gfx950::peer::combined_mlp_state_v1::paired::profiles::region+0x14c>
+  366d2c:	45 00 e4             	add    %r12b,%r12b
+  366d2f:	0f b6 46 50          	movzbl 0x50(%rsi),%eax
+  366d33:	41 38 c4             	cmp    %al,%r12b
+  366d36:	0f 85 c4 00 00 00    	jne    366e00 <fe2o3_kfd::engineering_gfx950::peer::combined_mlp_state_v1::paired::profiles::region+0x150>
+  366d3c:	80 7e 20 01          	cmpb   $0x1,0x20(%rsi)
+  366d40:	44 89 e0             	mov    %r12d,%eax
+  366d43:	0f 85 b7 00 00 00    	jne    366e00 <fe2o3_kfd::engineering_gfx950::peer::combined_mlp_state_v1::paired::profiles::region+0x150>
+  366d49:	48 8b 85 00 01 00 00 	mov    0x100(%rbp),%rax
+  366d50:	49 39 c5             	cmp    %rax,%r13
+  366d53:	0f 83 49 02 00 00    	jae    366fa2 <fe2o3_kfd::engineering_gfx950::peer::combined_mlp_state_v1::paired::profiles::region+0x2f2>
+  366d59:	48 8b 85 f8 00 00 00 	mov    0xf8(%rbp),%rax
+  366d60:	49 69 cd 30 04 00 00 	imul   $0x430,%r13,%rcx
+  366d67:	48 8d 3c 08          	lea    (%rax,%rcx,1),%rdi
+  366d6b:	48 81 c7 d8 02 00 00 	add    $0x2d8,%rdi
+  366d72:	48 83 c6 48          	add    $0x48,%rsi
+  366d76:	e8 55 ae 1c 00       	call   531bd0 <<alloc::collections::btree::map::BTreeMap<u64, fe2o3_kfd::engineering_gfx950::Allocation>>::get::<u64>>
+  366d7b:	48 85 c0             	test   %rax,%rax
+  366d7e:	0f 84 77 01 00 00    	je     366efb <fe2o3_kfd::engineering_gfx950::peer::combined_mlp_state_v1::paired::profiles::region+0x24b>
+  366d84:	4d 8b 76 08          	mov    0x8(%r14),%r14
+  366d88:	4c 8b 60 50          	mov    0x50(%rax),%r12
+  366d8c:	4c 8b 68 58          	mov    0x58(%rax),%r13
+  366d90:	48 8b 68 60          	mov    0x60(%rax),%rbp
+  366d94:	4c 89 74 24 30       	mov    %r14,0x30(%rsp)
+  366d99:	4c 89 64 24 38       	mov    %r12,0x38(%rsp)
+  366d9e:	4c 89 6c 24 40       	mov    %r13,0x40(%rsp)
+  366da3:	48 89 6c 24 48       	mov    %rbp,0x48(%rsp)
+  366da8:	48 8d 7c 24 08       	lea    0x8(%rsp),%rdi
+  366dad:	48 8d 74 24 30       	lea    0x30(%rsp),%rsi
+  366db2:	4c 89 fa             	mov    %r15,%rdx
+  366db5:	e8 c6 f1 ff ff       	call   365f80 <fe2o3_kfd::engineering_gfx950::peer::combined_mlp_state_v1::paired::profiles::validate_region>
+  366dba:	48 b8 00 00 00 00 00 	movabs $0x8000000000000000,%rax
+  366dc1:	00 00 80 
+  366dc4:	48 39 44 24 08       	cmp    %rax,0x8(%rsp)
+  366dc9:	0f 85 a1 01 00 00    	jne    366f70 <fe2o3_kfd::engineering_gfx950::peer::combined_mlp_state_v1::paired::profiles::region+0x2c0>
+  366dcf:	4c 89 73 08          	mov    %r14,0x8(%rbx)
+  366dd3:	4c 89 63 10          	mov    %r12,0x10(%rbx)
+  366dd7:	4c 89 6b 18          	mov    %r13,0x18(%rbx)
+  366ddb:	48 89 6b 20          	mov    %rbp,0x20(%rbx)
+  366ddf:	31 c0                	xor    %eax,%eax
+  366de1:	e9 fd 00 00 00       	jmp    366ee3 <fe2o3_kfd::engineering_gfx950::peer::combined_mlp_state_v1::paired::profiles::region+0x233>
+  366de6:	48 8b 4c 24 18       	mov    0x18(%rsp),%rcx
+  366deb:	48 89 43 08          	mov    %rax,0x8(%rbx)
+  366def:	48 89 73 10          	mov    %rsi,0x10(%rbx)
+  366df3:	48 89 4b 18          	mov    %rcx,0x18(%rbx)
+  366df7:	e9 e2 00 00 00       	jmp    366ede <fe2o3_kfd::engineering_gfx950::peer::combined_mlp_state_v1::paired::profiles::region+0x22e>
+  366dfc:	0f b6 46 50          	movzbl 0x50(%rsi),%eax
+  366e00:	49 8d 4e 10          	lea    0x10(%r14),%rcx
+  366e04:	49 8d 56 18          	lea    0x18(%r14),%rdx
+  366e08:	49 83 c6 08          	add    $0x8,%r14
+  366e0c:	3c 02                	cmp    $0x2,%al
+  366e0e:	0f 94 44 24 06       	sete   0x6(%rsp)
+  366e13:	84 c0                	test   %al,%al
+  366e15:	0f 94 44 24 07       	sete   0x7(%rsp)
+  366e1a:	80 7e 20 01          	cmpb   $0x1,0x20(%rsi)
+  366e1e:	0f 94 44 24 08       	sete   0x8(%rsp)
+  366e23:	4c 89 74 24 30       	mov    %r14,0x30(%rsp)
+  366e28:	48 8b 05 c9 45 54 00 	mov    0x5445c9(%rip),%rax        # 8ab3f8 <_DYNAMIC+0x3b0>
+  366e2f:	48 89 44 24 38       	mov    %rax,0x38(%rsp)
+  366e34:	48 89 4c 24 40       	mov    %rcx,0x40(%rsp)
+  366e39:	48 8b 0d 28 45 54 00 	mov    0x544528(%rip),%rcx        # 8ab368 <_DYNAMIC+0x320>
+  366e40:	48 89 4c 24 48       	mov    %rcx,0x48(%rsp)
+  366e45:	48 8d 74 24 20       	lea    0x20(%rsp),%rsi
+  366e4a:	48 89 74 24 50       	mov    %rsi,0x50(%rsp)
+  366e4f:	48 89 4c 24 58       	mov    %rcx,0x58(%rsp)
+  366e54:	48 89 54 24 60       	mov    %rdx,0x60(%rsp)
+  366e59:	48 89 44 24 68       	mov    %rax,0x68(%rsp)
+  366e5e:	48 8d 44 24 28       	lea    0x28(%rsp),%rax
+  366e63:	48 89 44 24 70       	mov    %rax,0x70(%rsp)
+  366e68:	48 89 4c 24 78       	mov    %rcx,0x78(%rsp)
+  366e6d:	48 8d 44 24 06       	lea    0x6(%rsp),%rax
+  366e72:	48 89 84 24 80 00 00 	mov    %rax,0x80(%rsp)
+  366e79:	00 
+  366e7a:	48 8b 05 7f 45 54 00 	mov    0x54457f(%rip),%rax        # 8ab400 <_DYNAMIC+0x3b8>
+  366e81:	48 89 84 24 88 00 00 	mov    %rax,0x88(%rsp)
+  366e88:	00 
+  366e89:	48 8d 4c 24 05       	lea    0x5(%rsp),%rcx
+  366e8e:	48 89 8c 24 90 00 00 	mov    %rcx,0x90(%rsp)
+  366e95:	00 
+  366e96:	48 89 84 24 98 00 00 	mov    %rax,0x98(%rsp)
+  366e9d:	00 
+  366e9e:	48 8d 4c 24 07       	lea    0x7(%rsp),%rcx
+  366ea3:	48 89 8c 24 a0 00 00 	mov    %rcx,0xa0(%rsp)
+  366eaa:	00 
+  366eab:	48 89 84 24 a8 00 00 	mov    %rax,0xa8(%rsp)
+  366eb2:	00 
+  366eb3:	48 8d 4c 24 08       	lea    0x8(%rsp),%rcx
+  366eb8:	48 89 8c 24 b0 00 00 	mov    %rcx,0xb0(%rsp)
+  366ebf:	00 
+  366ec0:	48 89 84 24 b8 00 00 	mov    %rax,0xb8(%rsp)
+  366ec7:	00 
+  366ec8:	48 8d 7b 08          	lea    0x8(%rbx),%rdi
+  366ecc:	48 8d 35 d3 58 d3 ff 	lea    -0x2ca72d(%rip),%rsi        # 9c7a6 <anon.0bfa4fc0594bdd9ae3095b501875435f.222.llvm.13650234401854924442+0x8d>
+  366ed3:	48 8d 54 24 30       	lea    0x30(%rsp),%rdx
+  366ed8:	ff 15 1a 44 54 00    	call   *0x54441a(%rip)        # 8ab2f8 <_DYNAMIC+0x2b0>
+  366ede:	b8 01 00 00 00       	mov    $0x1,%eax
+  366ee3:	48 89 03             	mov    %rax,(%rbx)
+  366ee6:	48 89 d8             	mov    %rbx,%rax
+  366ee9:	48 81 c4 c8 00 00 00 	add    $0xc8,%rsp
+  366ef0:	5b                   	pop    %rbx
+  366ef1:	41 5c                	pop    %r12
+  366ef3:	41 5d                	pop    %r13
+  366ef5:	41 5e                	pop    %r14
+  366ef7:	41 5f                	pop    %r15
+  366ef9:	5d                   	pop    %rbp
+  366efa:	c3                   	ret
+  366efb:	ff 15 b7 43 54 00    	call   *0x5443b7(%rip)        # 8ab2b8 <_DYNAMIC+0x270>
+  366f01:	bf 25 00 00 00       	mov    $0x25,%edi
+  366f06:	be 01 00 00 00       	mov    $0x1,%esi
+  366f0b:	ff 15 af 43 54 00    	call   *0x5443af(%rip)        # 8ab2c0 <_DYNAMIC+0x278>
+  366f11:	48 85 c0             	test   %rax,%rax
+  366f14:	0f 84 9b 00 00 00    	je     366fb5 <fe2o3_kfd::engineering_gfx950::peer::combined_mlp_state_v1::paired::profiles::region+0x305>
+  366f1a:	48 c7 43 08 25 00 00 	movq   $0x25,0x8(%rbx)
+  366f21:	00 
+  366f22:	48 89 43 10          	mov    %rax,0x10(%rbx)
+  366f26:	48 8d 0d 43 52 d4 ff 	lea    -0x2badbd(%rip),%rcx        # ac170 <anon.4880decc9bdaa084ddaf8b1aa09ab17b.565.llvm.5032379477117370745+0x30>
+  366f2d:	48 89 c2             	mov    %rax,%rdx
+  366f30:	48 29 ca             	sub    %rcx,%rdx
+  366f33:	48 29 c1             	sub    %rax,%rcx
+  366f36:	48 0f 42 ca          	cmovb  %rdx,%rcx
+  366f3a:	48 83 f9 24          	cmp    $0x24,%rcx
+  366f3e:	76 47                	jbe    366f87 <fe2o3_kfd::engineering_gfx950::peer::combined_mlp_state_v1::paired::profiles::region+0x2d7>
+  366f40:	0f 10 05 39 52 d4 ff 	movups -0x2badc7(%rip),%xmm0        # ac180 <anon.4880decc9bdaa084ddaf8b1aa09ab17b.565.llvm.5032379477117370745+0x40>
+  366f47:	0f 11 40 10          	movups %xmm0,0x10(%rax)
+  366f4b:	0f 10 05 1e 52 d4 ff 	movups -0x2bade2(%rip),%xmm0        # ac170 <anon.4880decc9bdaa084ddaf8b1aa09ab17b.565.llvm.5032379477117370745+0x30>
+  366f52:	0f 11 00             	movups %xmm0,(%rax)
+  366f55:	48 b9 20 6d 69 73 73 	movabs $0x676e697373696d20,%rcx
+  366f5c:	69 6e 67 
+  366f5f:	48 89 48 1d          	mov    %rcx,0x1d(%rax)
+  366f63:	48 c7 43 18 25 00 00 	movq   $0x25,0x18(%rbx)
+  366f6a:	00 
+  366f6b:	e9 6e ff ff ff       	jmp    366ede <fe2o3_kfd::engineering_gfx950::peer::combined_mlp_state_v1::paired::profiles::region+0x22e>
+  366f70:	48 8b 44 24 18       	mov    0x18(%rsp),%rax
+  366f75:	48 89 43 18          	mov    %rax,0x18(%rbx)
+  366f79:	0f 10 44 24 08       	movups 0x8(%rsp),%xmm0
+  366f7e:	0f 11 43 08          	movups %xmm0,0x8(%rbx)
+  366f82:	e9 57 ff ff ff       	jmp    366ede <fe2o3_kfd::engineering_gfx950::peer::combined_mlp_state_v1::paired::profiles::region+0x22e>
+  366f87:	48 8d 3d fa 5b d4 ff 	lea    -0x2ba406(%rip),%rdi        # acb88 <anon.4880decc9bdaa084ddaf8b1aa09ab17b.681.llvm.5032379477117370745>
+  366f8e:	48 8d 0d 93 4e 4d 00 	lea    0x4d4e93(%rip),%rcx        # 83be28 <anon.4880decc9bdaa084ddaf8b1aa09ab17b.4.llvm.5032379477117370745>
+  366f95:	be 37 02 00 00       	mov    $0x237,%esi
+  366f9a:	31 d2                	xor    %edx,%edx
+  366f9c:	ff 15 ee 42 54 00    	call   *0x5442ee(%rip)        # 8ab290 <_DYNAMIC+0x248>
+  366fa2:	48 8d 15 cf 64 4d 00 	lea    0x4d64cf(%rip),%rdx        # 83d478 <anon.4880decc9bdaa084ddaf8b1aa09ab17b.490.llvm.5032379477117370745+0x2d0>
+  366fa9:	4c 89 ef             	mov    %r13,%rdi
+  366fac:	48 89 c6             	mov    %rax,%rsi
+  366faf:	ff 15 4b 43 54 00    	call   *0x54434b(%rip)        # 8ab300 <_DYNAMIC+0x2b8>
+  366fb5:	bf 01 00 00 00       	mov    $0x1,%edi
+  366fba:	be 25 00 00 00       	mov    $0x25,%esi
+  366fbf:	ff 15 0b 43 54 00    	call   *0x54430b(%rip)        # 8ab2d0 <_DYNAMIC+0x288>

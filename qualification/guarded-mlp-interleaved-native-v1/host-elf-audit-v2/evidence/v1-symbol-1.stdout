@@ -1,0 +1,105 @@
+
+/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-interleaved-native-cpu-v228-v1/target/debug/deps/fe2o3_kfd-11448a9880d552d9:     file format elf64-x86-64
+
+
+Disassembly of section .text:
+
+000000000049ab30 <<fe2o3_kfd::engineering_gfx950::peer::Gfx950EngineeringPeerGroupV1>::validate_token>:
+  49ab30:	41 57                	push   %r15
+  49ab32:	41 56                	push   %r14
+  49ab34:	41 54                	push   %r12
+  49ab36:	53                   	push   %rbx
+  49ab37:	50                   	push   %rax
+  49ab38:	49 89 d6             	mov    %rdx,%r14
+  49ab3b:	49 89 f4             	mov    %rsi,%r12
+  49ab3e:	48 89 fb             	mov    %rdi,%rbx
+  49ab41:	48 8d be 10 01 00 00 	lea    0x110(%rsi),%rdi
+  49ab48:	4c 8d 7a 08          	lea    0x8(%rdx),%r15
+  49ab4c:	4c 89 fe             	mov    %r15,%rsi
+  49ab4f:	e8 9c e6 02 00       	call   4c91f0 <<alloc::collections::btree::map::BTreeMap<u64, fe2o3_kfd::engineering_gfx950::peer::BufferRecord>>::get::<u64>>
+  49ab54:	48 85 c0             	test   %rax,%rax
+  49ab57:	0f 84 ba 00 00 00    	je     49ac17 <<fe2o3_kfd::engineering_gfx950::peer::Gfx950EngineeringPeerGroupV1>::validate_token+0xe7>
+  49ab5d:	49 8b 0e             	mov    (%r14),%rcx
+  49ab60:	49 3b 8c 24 08 01 00 	cmp    0x108(%r12),%rcx
+  49ab67:	00 
+  49ab68:	75 3f                	jne    49aba9 <<fe2o3_kfd::engineering_gfx950::peer::Gfx950EngineeringPeerGroupV1>::validate_token+0x79>
+  49ab6a:	48 39 48 28          	cmp    %rcx,0x28(%rax)
+  49ab6e:	75 39                	jne    49aba9 <<fe2o3_kfd::engineering_gfx950::peer::Gfx950EngineeringPeerGroupV1>::validate_token+0x79>
+  49ab70:	48 8b 48 30          	mov    0x30(%rax),%rcx
+  49ab74:	49 3b 0f             	cmp    (%r15),%rcx
+  49ab77:	75 30                	jne    49aba9 <<fe2o3_kfd::engineering_gfx950::peer::Gfx950EngineeringPeerGroupV1>::validate_token+0x79>
+  49ab79:	48 8b 48 40          	mov    0x40(%rax),%rcx
+  49ab7d:	49 3b 4e 18          	cmp    0x18(%r14),%rcx
+  49ab81:	75 26                	jne    49aba9 <<fe2o3_kfd::engineering_gfx950::peer::Gfx950EngineeringPeerGroupV1>::validate_token+0x79>
+  49ab83:	48 8b 48 38          	mov    0x38(%rax),%rcx
+  49ab87:	49 3b 4e 10          	cmp    0x10(%r14),%rcx
+  49ab8b:	75 1c                	jne    49aba9 <<fe2o3_kfd::engineering_gfx950::peer::Gfx950EngineeringPeerGroupV1>::validate_token+0x79>
+  49ab8d:	80 78 20 01          	cmpb   $0x1,0x20(%rax)
+  49ab91:	75 16                	jne    49aba9 <<fe2o3_kfd::engineering_gfx950::peer::Gfx950EngineeringPeerGroupV1>::validate_token+0x79>
+  49ab93:	48 89 43 08          	mov    %rax,0x8(%rbx)
+  49ab97:	48 b8 00 00 00 00 00 	movabs $0x8000000000000000,%rax
+  49ab9e:	00 00 80 
+  49aba1:	48 89 03             	mov    %rax,(%rbx)
+  49aba4:	e9 cb 00 00 00       	jmp    49ac74 <<fe2o3_kfd::engineering_gfx950::peer::Gfx950EngineeringPeerGroupV1>::validate_token+0x144>
+  49aba9:	ff 15 c1 0d 41 00    	call   *0x410dc1(%rip)        # 8ab970 <_DYNAMIC+0x3a0>
+  49abaf:	bf 23 00 00 00       	mov    $0x23,%edi
+  49abb4:	be 01 00 00 00       	mov    $0x1,%esi
+  49abb9:	ff 15 b9 0d 41 00    	call   *0x410db9(%rip)        # 8ab978 <_DYNAMIC+0x3a8>
+  49abbf:	48 85 c0             	test   %rax,%rax
+  49abc2:	0f 84 d6 00 00 00    	je     49ac9e <<fe2o3_kfd::engineering_gfx950::peer::Gfx950EngineeringPeerGroupV1>::validate_token+0x16e>
+  49abc8:	48 8d 0d a5 cc ce ff 	lea    -0x31335b(%rip),%rcx        # 187874 <anon.88cdbf323d6fc3e95ab5e2acb6efd52b.242.llvm.18181729430990501009+0x42>
+  49abcf:	48 89 c2             	mov    %rax,%rdx
+  49abd2:	48 29 ca             	sub    %rcx,%rdx
+  49abd5:	48 29 c1             	sub    %rax,%rcx
+  49abd8:	48 0f 42 ca          	cmovb  %rdx,%rcx
+  49abdc:	48 83 f9 22          	cmp    $0x22,%rcx
+  49abe0:	0f 86 9d 00 00 00    	jbe    49ac83 <<fe2o3_kfd::engineering_gfx950::peer::Gfx950EngineeringPeerGroupV1>::validate_token+0x153>
+  49abe6:	0f 10 05 97 cc ce ff 	movups -0x313369(%rip),%xmm0        # 187884 <anon.88cdbf323d6fc3e95ab5e2acb6efd52b.242.llvm.18181729430990501009+0x52>
+  49abed:	0f 11 40 10          	movups %xmm0,0x10(%rax)
+  49abf1:	0f 10 05 7c cc ce ff 	movups -0x313384(%rip),%xmm0        # 187874 <anon.88cdbf323d6fc3e95ab5e2acb6efd52b.242.llvm.18181729430990501009+0x42>
+  49abf8:	0f 11 00             	movups %xmm0,(%rax)
+  49abfb:	c7 40 1f 66 66 65 72 	movl   $0x72656666,0x1f(%rax)
+  49ac02:	48 c7 03 23 00 00 00 	movq   $0x23,(%rbx)
+  49ac09:	48 89 43 08          	mov    %rax,0x8(%rbx)
+  49ac0d:	48 c7 43 10 23 00 00 	movq   $0x23,0x10(%rbx)
+  49ac14:	00 
+  49ac15:	eb 5d                	jmp    49ac74 <<fe2o3_kfd::engineering_gfx950::peer::Gfx950EngineeringPeerGroupV1>::validate_token+0x144>
+  49ac17:	ff 15 53 0d 41 00    	call   *0x410d53(%rip)        # 8ab970 <_DYNAMIC+0x3a0>
+  49ac1d:	bf 1f 00 00 00       	mov    $0x1f,%edi
+  49ac22:	be 01 00 00 00       	mov    $0x1,%esi
+  49ac27:	ff 15 4b 0d 41 00    	call   *0x410d4b(%rip)        # 8ab978 <_DYNAMIC+0x3a8>
+  49ac2d:	48 85 c0             	test   %rax,%rax
+  49ac30:	74 7c                	je     49acae <<fe2o3_kfd::engineering_gfx950::peer::Gfx950EngineeringPeerGroupV1>::validate_token+0x17e>
+  49ac32:	48 8d 0d 1c cc ce ff 	lea    -0x3133e4(%rip),%rcx        # 187855 <anon.88cdbf323d6fc3e95ab5e2acb6efd52b.242.llvm.18181729430990501009+0x23>
+  49ac39:	48 89 c2             	mov    %rax,%rdx
+  49ac3c:	48 29 ca             	sub    %rcx,%rdx
+  49ac3f:	48 29 c1             	sub    %rax,%rcx
+  49ac42:	48 0f 42 ca          	cmovb  %rdx,%rcx
+  49ac46:	48 83 f9 1e          	cmp    $0x1e,%rcx
+  49ac4a:	76 37                	jbe    49ac83 <<fe2o3_kfd::engineering_gfx950::peer::Gfx950EngineeringPeerGroupV1>::validate_token+0x153>
+  49ac4c:	0f 10 05 11 cc ce ff 	movups -0x3133ef(%rip),%xmm0        # 187864 <anon.88cdbf323d6fc3e95ab5e2acb6efd52b.242.llvm.18181729430990501009+0x32>
+  49ac53:	0f 11 40 0f          	movups %xmm0,0xf(%rax)
+  49ac57:	0f 10 05 f7 cb ce ff 	movups -0x313409(%rip),%xmm0        # 187855 <anon.88cdbf323d6fc3e95ab5e2acb6efd52b.242.llvm.18181729430990501009+0x23>
+  49ac5e:	0f 11 00             	movups %xmm0,(%rax)
+  49ac61:	48 c7 03 1f 00 00 00 	movq   $0x1f,(%rbx)
+  49ac68:	48 89 43 08          	mov    %rax,0x8(%rbx)
+  49ac6c:	48 c7 43 10 1f 00 00 	movq   $0x1f,0x10(%rbx)
+  49ac73:	00 
+  49ac74:	48 89 d8             	mov    %rbx,%rax
+  49ac77:	48 83 c4 08          	add    $0x8,%rsp
+  49ac7b:	5b                   	pop    %rbx
+  49ac7c:	41 5c                	pop    %r12
+  49ac7e:	41 5e                	pop    %r14
+  49ac80:	41 5f                	pop    %r15
+  49ac82:	c3                   	ret
+  49ac83:	48 8d 3d 69 14 cf ff 	lea    -0x30eb97(%rip),%rdi        # 18c0f3 <anon.88cdbf323d6fc3e95ab5e2acb6efd52b.796.llvm.18181729430990501009>
+  49ac8a:	48 8d 0d d7 4a 3b 00 	lea    0x3b4ad7(%rip),%rcx        # 84f768 <anon.88cdbf323d6fc3e95ab5e2acb6efd52b.14.llvm.18181729430990501009>
+  49ac91:	be 37 02 00 00       	mov    $0x237,%esi
+  49ac96:	31 d2                	xor    %edx,%edx
+  49ac98:	ff 15 da 0b 41 00    	call   *0x410bda(%rip)        # 8ab878 <_DYNAMIC+0x2a8>
+  49ac9e:	bf 01 00 00 00       	mov    $0x1,%edi
+  49aca3:	be 23 00 00 00       	mov    $0x23,%esi
+  49aca8:	ff 15 da 0c 41 00    	call   *0x410cda(%rip)        # 8ab988 <_DYNAMIC+0x3b8>
+  49acae:	bf 01 00 00 00       	mov    $0x1,%edi
+  49acb3:	be 1f 00 00 00       	mov    $0x1f,%esi
+  49acb8:	ff 15 ca 0c 41 00    	call   *0x410cca(%rip)        # 8ab988 <_DYNAMIC+0x3b8>
