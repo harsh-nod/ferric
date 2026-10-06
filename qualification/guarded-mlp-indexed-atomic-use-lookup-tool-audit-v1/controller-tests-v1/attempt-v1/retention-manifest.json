@@ -1,0 +1,66 @@
+{
+  "compiler_qualification": false,
+  "files": {
+    "audit_tools.py": {
+      "bytes": 76050,
+      "sha256": "495035b08c820d8b560dc8f7fbec325adcf4b222ab3d68fb4eca53e685351206"
+    },
+    "evidence/complete.json": {
+      "bytes": 13892,
+      "sha256": "79fd0d19c211593d22961c01953967bf0fffeef61340689df6b0336794178dd0"
+    },
+    "evidence/indexed-atomic-use-lookup-loader-tests.command.json": {
+      "bytes": 899,
+      "sha256": "492c39485371689ff26b389a60357c4ba2156bd7e79ad59aaee99bb1377ae603"
+    },
+    "evidence/indexed-atomic-use-lookup-loader-tests.result.json": {
+      "bytes": 1685,
+      "sha256": "225cc47a14529090522c20291eac1e7c1c9f4305a9a00eccbacf3edfc3b57cb5"
+    },
+    "evidence/indexed-atomic-use-lookup-loader-tests.started.json": {
+      "bytes": 392,
+      "sha256": "6c983c540b3c1fd2fc914cdf2331cded63291c9a920a18fa2f9be33745cbece4"
+    },
+    "evidence/indexed-atomic-use-lookup-loader-tests.stderr": {
+      "bytes": 4102,
+      "sha256": "33f1fc457acb73b4428c4148701c2a47b8754457d4f04c5dabb512b2bad09838"
+    },
+    "evidence/indexed-atomic-use-lookup-loader-tests.stdout": {
+      "bytes": 5535,
+      "sha256": "af5f55236c23dfb1081507f095c6270b29a7ff64d615107b3785554c5a0c5c2b"
+    },
+    "evidence/sources-after.json": {
+      "bytes": 1473,
+      "sha256": "ec41ed8646bf4272e97c08e75e2f15b9b1f7a9d3475d0dafbcba64047b24a1ec"
+    },
+    "evidence/sources-before.json": {
+      "bytes": 1473,
+      "sha256": "ec41ed8646bf4272e97c08e75e2f15b9b1f7a9d3475d0dafbcba64047b24a1ec"
+    },
+    "input-manifest.json": {
+      "bytes": 1127,
+      "sha256": "987d26d8737f8263a58048f6bddba4eed660603c51f398a6b6ae9a5e5cc2c0be"
+    },
+    "loader_test_entry.py": {
+      "bytes": 6495,
+      "sha256": "2063dc9b6f84a189e1328f9a90bc00c518af5a2b5d16fe71b174d0f62858e28d"
+    },
+    "run_tests.py": {
+      "bytes": 14182,
+      "sha256": "261e89bdcbeb825d8297771be84a0a469223504e6957aa1b87c6eb24757d5d21"
+    },
+    "supervisor.py": {
+      "bytes": 41485,
+      "sha256": "8824478a6415dee39d28ccefb0881fc0687ac724f5a9c5a4540310fb5196b9bc"
+    },
+    "test_audit_tools.py": {
+      "bytes": 60608,
+      "sha256": "48f390c9f41b862ba435ca0e5dd9d780da73c2a151161142542360ada9be6558"
+    }
+  },
+  "gpu_execution": false,
+  "passed": true,
+  "schema": "ferric-indexed-atomic-use-lookup-loader-tests-retention-v1",
+  "synthetic_loader_only": true,
+  "tests_passed": 26
+}

@@ -1,0 +1,73 @@
+{
+  "compiler_qualification": false,
+  "errors": 1,
+  "failure": "RuntimeError('indexed-atomic-use-lookup-lowering-tests did not finish naturally/reaped/successfully')",
+  "files": {
+    "evidence/failed.json": {
+      "bytes": 8387,
+      "sha256": "8a51e98c60b7b009afd0563c5cccede86d28090fee86368a88861a46a8927298"
+    },
+    "evidence/indexed-atomic-use-lookup-lowering-tests.command.json": {
+      "bytes": 907,
+      "sha256": "ef384202b3c5037c487b107460bfb0fa6fe7486bbd2abfbc07fb6ea472cd46c3"
+    },
+    "evidence/indexed-atomic-use-lookup-lowering-tests.result.json": {
+      "bytes": 1702,
+      "sha256": "47e87b544de14a186a6954da0f2d022aed359f0dfa281c50689510be32ff5eee"
+    },
+    "evidence/indexed-atomic-use-lookup-lowering-tests.started.json": {
+      "bytes": 396,
+      "sha256": "5f3b3bd05388097113de136ecaec535aa164f3fa5785ed80cb55f81c76aa7eb6"
+    },
+    "evidence/indexed-atomic-use-lookup-lowering-tests.stderr": {
+      "bytes": 4296,
+      "sha256": "f7f84e079472220dce97d3527f9ca3ec40b64cc045ece6a18b0e9fd8c8d9956a"
+    },
+    "evidence/indexed-atomic-use-lookup-lowering-tests.stdout": {
+      "bytes": 3950,
+      "sha256": "25cb43936b51c408d5ce01e3ee8ee1dae6113cbbbe25f1cae02e4bcb845c06e5"
+    },
+    "evidence/sources-after.json": {
+      "bytes": 1781,
+      "sha256": "4b96537d7b4879bcbd1ce4aa738468434b9f183c8f83eb05a613527123babe7c"
+    },
+    "evidence/sources-before.json": {
+      "bytes": 1781,
+      "sha256": "4b96537d7b4879bcbd1ce4aa738468434b9f183c8f83eb05a613527123babe7c"
+    },
+    "input-manifest.json": {
+      "bytes": 1267,
+      "sha256": "3c0f3f9ad1f5a370cee1ba3b26b3f8cf730c91ec119be5e7f4d9acbc9609432e"
+    },
+    "lowering.py": {
+      "bytes": 51101,
+      "sha256": "d0f395ad44251fb1859f1ca724c460555cc22d7d553b7d3d3186e98da99ce3bd"
+    },
+    "lowering_test_entry.py": {
+      "bytes": 5880,
+      "sha256": "b323a718955f76f14294da0187335aabccf64335f07c2192a96577ad3caca6a1"
+    },
+    "run_tests.py": {
+      "bytes": 13494,
+      "sha256": "accc6225dd9abfd6e93539c96d26ee3b3c2a3869171e2d7f42c33a6983a23f75"
+    },
+    "supervisor.py": {
+      "bytes": 41485,
+      "sha256": "8824478a6415dee39d28ccefb0881fc0687ac724f5a9c5a4540310fb5196b9bc"
+    },
+    "test_lowering.py": {
+      "bytes": 28297,
+      "sha256": "38432c75e097fc422768346a286fb7a862e9592d807afdb57e8794cf2c0772a3"
+    },
+    "test_normalization.py": {
+      "bytes": 6507,
+      "sha256": "6d4d91e24fa483e81d99ae1dd89a629eb3b7a17aaef94e8f46958123c292465f"
+    }
+  },
+  "gpu_execution": false,
+  "passed": false,
+  "schema": "ferric-indexed-atomic-use-lookup-lowering-tests-retention-v1",
+  "synthetic_lowering_only": true,
+  "tests_passed": 18,
+  "tests_run": 19
+}

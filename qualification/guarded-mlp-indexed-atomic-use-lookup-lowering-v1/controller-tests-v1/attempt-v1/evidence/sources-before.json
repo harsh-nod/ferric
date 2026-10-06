@@ -1,0 +1,32 @@
+{
+  "lowering.py": {
+    "bytes": 51101,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-indexed-atomic-use-lookup-lowering-tests-v228-v1/lowering.py",
+    "sha256": "d0f395ad44251fb1859f1ca724c460555cc22d7d553b7d3d3186e98da99ce3bd"
+  },
+  "lowering_test_entry.py": {
+    "bytes": 5880,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-indexed-atomic-use-lookup-lowering-tests-v228-v1/lowering_test_entry.py",
+    "sha256": "b323a718955f76f14294da0187335aabccf64335f07c2192a96577ad3caca6a1"
+  },
+  "run_tests.py": {
+    "bytes": 13494,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-indexed-atomic-use-lookup-lowering-tests-v228-v1/run_tests.py",
+    "sha256": "accc6225dd9abfd6e93539c96d26ee3b3c2a3869171e2d7f42c33a6983a23f75"
+  },
+  "supervisor.py": {
+    "bytes": 41485,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-indexed-atomic-use-lookup-lowering-tests-v228-v1/supervisor.py",
+    "sha256": "8824478a6415dee39d28ccefb0881fc0687ac724f5a9c5a4540310fb5196b9bc"
+  },
+  "test_lowering.py": {
+    "bytes": 28297,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-indexed-atomic-use-lookup-lowering-tests-v228-v1/test_lowering.py",
+    "sha256": "38432c75e097fc422768346a286fb7a862e9592d807afdb57e8794cf2c0772a3"
+  },
+  "test_normalization.py": {
+    "bytes": 6507,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-indexed-atomic-use-lookup-lowering-tests-v228-v1/test_normalization.py",
+    "sha256": "6d4d91e24fa483e81d99ae1dd89a629eb3b7a17aaef94e8f46958123c292465f"
+  }
+}

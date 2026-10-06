@@ -34,7 +34,33 @@ uses 8,192 queries over 552 uses and asserts an 81,920-unit charge.
 Manifest: `aeac5c853c40ec768e1b5add4a2decf6338d4a8a15c44abe3bc9962eab000f0e`.
 Patch: `8f171dfdce9aea4ea039fe4a14286c152c0030e2db4e4a668dd7784a1b97068d`.
 
-This is source-only progress. Fresh MI350 compiler qualification, audited
-tools and actual guarded lowering are required before any GPU evaluation.
-No new compiler, HSACO, GPU, model numerical or performance result is claimed.
+## MI350 Qualification
+
+The [fresh qualification](attempt-v1) passed all 40 phases across 27 test
+scopes in 661.607834 seconds on `mi350`.
+
+| Executed Scope | Passed | Ignored |
+| --- | ---: | ---: |
+| Complete compiler library | 1,293 | 24 |
+| Complete Pliron library | 1,507 | 1 |
+| Focused repeats and extraction controls | 112 | 0 |
+| Total test executions | 2,912 | 25 |
+
+Totals include repeated executions, not just unique tests. All children
+exited naturally with status zero, were reaped and left no process group.
+Source and dependency checks stayed unchanged; postchecks were clean, with
+no timeout or forced cleanup. The historical ignores remain explicit.
+
+The retained archive contains 226 members, 225 pinned bodies and 204 raw
+files totaling 32,527,172 body bytes. Receipt SHA-256:
+`e6d2f3d59d8dff63520be146a8e74cc79ead0baec29ea655e2c369232fa1dea9`.
+The 5,359,779-byte archive SHA-256 is
+`4384e6c344cd7913f02e2ecb9dd1ff39ef2a51d5dca39b3d85005e300d43b9c0`.
+
+The [loader fixtures](../guarded-mlp-indexed-atomic-use-lookup-tool-audit-v1/README.md)
+pass 26 tests. The [lowering fixtures](../guarded-mlp-indexed-atomic-use-lookup-lowering-v1/README.md)
+pass 19 tests after repairing a production adapter's stale schema literal;
+the failed first attempt is retained. Actual tool inspection and guarded
+lowering remain separate gates. No HSACO, GPU, model numerical or performance
+result is claimed by this CPU qualification.
 All issue #42 milestones and the 700 tokens/s target remain open.

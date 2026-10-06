@@ -1,0 +1,113 @@
+{
+  "actual_failure": {
+    "bytes": 12321,
+    "sha256": "34699054a75a7300bd308d99e22635c25237c3d85ecb8f15a1ca9de00c5831fd"
+  },
+  "actual_failure_caller_identified": true,
+  "actual_failure_stderr": {
+    "bytes": 8554,
+    "sha256": "ba24844fd07b9b9a7bc3d5934ff29b297a85ed965a3871a21b917fda5da0c044"
+  },
+  "base_complete": {
+    "bytes": 1316388,
+    "sha256": "3a5ae5b18b497282a05895b8beca033f316a261c5632f4fbecf02832cd552e3f"
+  },
+  "base_controller": {
+    "bytes": 67844,
+    "sha256": "c027f1ee7a1837a6d8ba52872a4358fec0b90e963831eb013b16ddb6cba76117"
+  },
+  "base_input": {
+    "bytes": 1122126,
+    "sha256": "bdf7c0c7c10786a2ea222451817e4febf458d141f19937f30b6ae6812251dac2"
+  },
+  "base_sources": {
+    "bytes": 2326438,
+    "sha256": "94d7a9ffede6584dbd1403273bbb6312fb99c24a767c8b6156c10c37c3fbc1ae"
+  },
+  "base_tree": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/guarded-mlp-ranked-graph-work-diagnostic-input-v228-v2/fe2o3",
+  "base_tree_overrides": {
+    "crates/rustc-codegen-fe2o3/src/production_ranked_projection_v1/indexed_atomic_dead_cast_census_v1_tests.rs": {
+      "bytes": 30663,
+      "sha256": "1e99fc6ac4b278aba57e710ac5d3a4bef49cfdb8b2c98c8f201408531192a1e5"
+    },
+    "crates/rustc-codegen-fe2o3/src/production_ranked_projection_v1/indexed_atomic_dead_cast_v1.rs": {
+      "bytes": 15995,
+      "sha256": "d07d00bdf193d3815b5785355d05a3f5c0d286dfe8a62872a0aa918c2bc3f1fa"
+    },
+    "crates/rustc-codegen-fe2o3/src/production_ranked_projection_v1/indexed_atomic_dead_cast_v1_tests.rs": {
+      "bytes": 13976,
+      "sha256": "9d998bee879b0817330e9ff85876cbb85e94059e8382e10c3ac2c93d0ad61354"
+    },
+    "crates/rustc-codegen-fe2o3/src/production_ranked_projection_v1/indexed_atomic_membership_v1_tests.rs": {
+      "bytes": 11457,
+      "sha256": "6d0ad5676dcfcb43decaa90bd7eef281458fe7d8b74ec7a7077ebeae1a3cd627"
+    },
+    "crates/rustc-codegen-fe2o3/src/production_ranked_projection_v1/indexed_atomic_v1.rs": {
+      "bytes": 30453,
+      "sha256": "b9a6c44297195390560c037475c33b547c82a0dca05c90d5b646bd5833106d6f"
+    },
+    "crates/rustc-codegen-fe2o3/src/production_ranked_projection_v1/indexed_atomic_v1_tests.rs": {
+      "bytes": 35708,
+      "sha256": "1a3c1b788f5f65afac4e22f418d2031c696d8ec0337c4a1ab556f1ce8382eac5"
+    }
+  },
+  "block_limit": 2048,
+  "compiler_scratch_added": false,
+  "edge_limit": 2048,
+  "files": {
+    "crates/rustc-codegen-fe2o3/src/production_ranked_projection_v1/indexed_atomic_use_lookup_v1_tests.rs": {
+      "after": {
+        "bytes": 15247,
+        "sha256": "fc8c41c2644320140ce5ef8c3ed32f338fc65042c6adc5aa667580782d6590ef"
+      },
+      "before": null
+    },
+    "crates/rustc-codegen-fe2o3/src/production_ranked_projection_v1/indexed_atomic_v1.rs": {
+      "after": {
+        "bytes": 31432,
+        "sha256": "cdb2ace53ae49eebfa84fc867a0c773b06e132c3f974f7d8afd7c28633e358fa"
+      },
+      "before": {
+        "bytes": 30453,
+        "sha256": "b9a6c44297195390560c037475c33b547c82a0dca05c90d5b646bd5833106d6f"
+      }
+    },
+    "crates/rustc-codegen-fe2o3/src/production_ranked_projection_v1/indexed_atomic_v1_tests.rs": {
+      "after": {
+        "bytes": 35760,
+        "sha256": "2c6f803e072b46fd0d830eae4d8f6990f401d053d027bf407cd0909cf567015b"
+      },
+      "before": {
+        "bytes": 35708,
+        "sha256": "1a3c1b788f5f65afac4e22f418d2031c696d8ec0337c4a1ab556f1ce8382eac5"
+      }
+    }
+  },
+  "filter": "production_ranked_projection_v1::tests::indexed_atomic_use_lookup_",
+  "graph_analysis_optimization": true,
+  "graph_work_limit": 3145728,
+  "inherited_dead_cast_census_optimization": true,
+  "inherited_graph_work_diagnostics": true,
+  "inherited_membership_lookup_optimization": true,
+  "integration_patch": {
+    "bytes": 18160,
+    "sha256": "8f171dfdce9aea4ea039fe4a14286c152c0030e2db4e4a668dd7784a1b97068d"
+  },
+  "resource_admission_may_change": true,
+  "schema": "ferric-guarded-mlp-indexed-atomic-use-lookup-source-v1",
+  "semantic_predicates_changed": false,
+  "source_only": true,
+  "structural_limits_changed": false,
+  "test_names": [
+    "production_ranked_projection_v1::tests::indexed_atomic_use_lookup_bounds_repeated_measured_size_queries",
+    "production_ranked_projection_v1::tests::indexed_atomic_use_lookup_charges_exact_bound_before_query",
+    "production_ranked_projection_v1::tests::indexed_atomic_use_lookup_failed_charges_do_not_commit_work",
+    "production_ranked_projection_v1::tests::indexed_atomic_use_lookup_handles_boundary_lengths",
+    "production_ranked_projection_v1::tests::indexed_atomic_use_lookup_keeps_independent_inventories",
+    "production_ranked_projection_v1::tests::indexed_atomic_use_lookup_matches_all_small_sorted_sites",
+    "production_ranked_projection_v1::tests::indexed_atomic_use_lookup_preserves_first_duplicate_and_extreme_sites",
+    "production_ranked_projection_v1::tests::indexed_atomic_use_lookup_real_inventory_keeps_atomic_refusals",
+    "production_ranked_projection_v1::tests::indexed_atomic_use_lookup_real_inventory_keeps_exact_statement_binding"
+  ],
+  "use_lookup_optimization": true
+}

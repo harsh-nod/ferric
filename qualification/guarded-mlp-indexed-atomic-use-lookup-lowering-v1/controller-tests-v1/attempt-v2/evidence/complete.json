@@ -1,0 +1,240 @@
+{
+  "child_observation": {
+    "compiler_qualification": false,
+    "errors": 0,
+    "expected_failures": 0,
+    "failures": 0,
+    "gpu_execution": false,
+    "names": [
+      "test_lowering.AuditBindingTests.test_actual_previous_driver_generation_is_immutable",
+      "test_lowering.AuditBindingTests.test_capacity_limits_and_cohorts_cannot_drift",
+      "test_lowering.AuditBindingTests.test_census_lineage_and_use_lookup_are_required",
+      "test_lowering.AuditBindingTests.test_deployed_body_must_match_final_not_earlier_product",
+      "test_lowering.AuditBindingTests.test_driver_failure_controller_phase_or_full_suite_claim_refused",
+      "test_lowering.AuditBindingTests.test_driver_readset_or_final_body_drift_refused",
+      "test_lowering.AuditBindingTests.test_each_of_six_other_tools_stays_exact",
+      "test_lowering.AuditBindingTests.test_earlier_generation_cannot_supply_use_lookup_provenance",
+      "test_lowering.AuditBindingTests.test_failed_or_earlier_producer_refused",
+      "test_lowering.AuditBindingTests.test_loader_input_readset_drift_refused",
+      "test_lowering.AuditBindingTests.test_new_driver_replay_and_metadata_only_scope_are_required",
+      "test_lowering.AuditBindingTests.test_new_filepin_and_final_producer_join",
+      "test_lowering.AuditBindingTests.test_old_audit_schema_or_missing_producer_replay_refused",
+      "test_lowering.AuditBindingTests.test_pending_bindings_refuse_before_any_helper_or_effect",
+      "test_lowering.AuditBindingTests.test_unreviewed_loader_or_producer_controller_refused",
+      "test_normalization.NormalizationTests.test_command_selects_exact_profile_before_cargo_delimiter",
+      "test_normalization.NormalizationTests.test_output_accepts_exact_seven_field_options",
+      "test_normalization.NormalizationTests.test_output_refuses_flags_or_worker_policy_drift",
+      "test_normalization.NormalizationTests.test_output_refuses_old_missing_extra_or_minimal_options"
+    ],
+    "passed": true,
+    "passing_names": [
+      "test_lowering.AuditBindingTests.test_actual_previous_driver_generation_is_immutable",
+      "test_lowering.AuditBindingTests.test_capacity_limits_and_cohorts_cannot_drift",
+      "test_lowering.AuditBindingTests.test_census_lineage_and_use_lookup_are_required",
+      "test_lowering.AuditBindingTests.test_deployed_body_must_match_final_not_earlier_product",
+      "test_lowering.AuditBindingTests.test_driver_failure_controller_phase_or_full_suite_claim_refused",
+      "test_lowering.AuditBindingTests.test_driver_readset_or_final_body_drift_refused",
+      "test_lowering.AuditBindingTests.test_each_of_six_other_tools_stays_exact",
+      "test_lowering.AuditBindingTests.test_earlier_generation_cannot_supply_use_lookup_provenance",
+      "test_lowering.AuditBindingTests.test_failed_or_earlier_producer_refused",
+      "test_lowering.AuditBindingTests.test_loader_input_readset_drift_refused",
+      "test_lowering.AuditBindingTests.test_new_driver_replay_and_metadata_only_scope_are_required",
+      "test_lowering.AuditBindingTests.test_new_filepin_and_final_producer_join",
+      "test_lowering.AuditBindingTests.test_old_audit_schema_or_missing_producer_replay_refused",
+      "test_lowering.AuditBindingTests.test_pending_bindings_refuse_before_any_helper_or_effect",
+      "test_lowering.AuditBindingTests.test_unreviewed_loader_or_producer_controller_refused",
+      "test_normalization.NormalizationTests.test_command_selects_exact_profile_before_cargo_delimiter",
+      "test_normalization.NormalizationTests.test_output_accepts_exact_seven_field_options",
+      "test_normalization.NormalizationTests.test_output_refuses_flags_or_worker_policy_drift",
+      "test_normalization.NormalizationTests.test_output_refuses_old_missing_extra_or_minimal_options"
+    ],
+    "schema": "ferric-indexed-atomic-use-lookup-lowering-tests-v1",
+    "skipped": 0,
+    "source_unchanged": true,
+    "sources": {
+      "lowering.py": {
+        "bytes": 51095,
+        "sha256": "2e50fe3d7ec879f3b02ed3c8650ed38f022e219497be92b64ffe464af04dbbe6"
+      },
+      "test_lowering.py": {
+        "bytes": 28699,
+        "sha256": "032fa7d01037dae56d82711bda8aaed036c735954190ffdbf1fa7243953323eb"
+      },
+      "test_normalization.py": {
+        "bytes": 6507,
+        "sha256": "6d4d91e24fa483e81d99ae1dd89a629eb3b7a17aaef94e8f46958123c292465f"
+      }
+    },
+    "synthetic_lowering_only": true,
+    "tests_run": 19,
+    "unexpected_successes": 0
+  },
+  "compiler_qualification": false,
+  "controller": {
+    "bytes": 13494,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-indexed-atomic-use-lookup-lowering-tests-v228-v2/run_tests.py",
+    "sha256": "fd60453477479155558b409199f9cc5912c1a05912f71e17c14c746085015ab5"
+  },
+  "elapsed_seconds": 4.655672896071337,
+  "failure": null,
+  "gpu_execution": false,
+  "input_manifest": {
+    "bytes": 1267,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-indexed-atomic-use-lookup-lowering-tests-v228-v2/input-manifest.json",
+    "sha256": "4c4c3a053058cb6b2dff3bd5449b4affe8d778696e6b6476e83d1993dfcc6aa4"
+  },
+  "limits": {
+    "address_space_bytes": 12884901888,
+    "affinity": [
+      8,
+      9
+    ],
+    "cleanup_reserve_seconds": 50,
+    "cpu_seconds_per_leaf": 1200,
+    "file_bytes": 1073741824,
+    "initial_free_bytes": 42949672960,
+    "leaf_seconds": 120,
+    "live_free_bytes": 40802189312,
+    "nice": 10,
+    "scratch_bytes": 6442450944,
+    "stream_bytes": 67108864,
+    "whole_seconds": 180
+  },
+  "passed": true,
+  "phases": [
+    {
+      "adopted_reaped": [],
+      "argv": [
+        "/usr/bin/prlimit",
+        "--as=12884901888",
+        "--cpu=1200",
+        "--fsize=1073741824",
+        "--core=0",
+        "--",
+        "/usr/bin/python3.12",
+        "-I",
+        "-S",
+        "-B",
+        "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-indexed-atomic-use-lookup-lowering-tests-v228-v2/lowering_test_entry.py"
+      ],
+      "command": {
+        "bytes": 907,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-indexed-atomic-use-lookup-lowering-tests-v228-v2/evidence/indexed-atomic-use-lookup-lowering-tests.command.json",
+        "sha256": "27c880a407387f3810af73f1d594cd669a5251687af1e9f4f37b090b9336eeae"
+      },
+      "elapsed_ns": 4623108756,
+      "exception": null,
+      "exit_code": 0,
+      "forced_cleanup": false,
+      "label": "indexed-atomic-use-lookup-lowering-tests",
+      "natural_exit": true,
+      "observed_signals": [],
+      "pgid": 2512410,
+      "pid": 2512410,
+      "process_group_absent": true,
+      "reaped": true,
+      "stderr": {
+        "bytes": 2852,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-indexed-atomic-use-lookup-lowering-tests-v228-v2/evidence/indexed-atomic-use-lookup-lowering-tests.stderr",
+        "sha256": "c0db926dfe64abb4a926da6dd4e1fa807095cf9817e65e8e1b0b46f1bdc2eeec"
+      },
+      "stdout": {
+        "bytes": 4025,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-indexed-atomic-use-lookup-lowering-tests-v228-v2/evidence/indexed-atomic-use-lookup-lowering-tests.stdout",
+        "sha256": "cd1ea6053d85330f572017ad91d9e0c605c37345e21b3a5d1a236bfc540817f0"
+      },
+      "storage_failure": null,
+      "timed_out": false
+    }
+  ],
+  "postcheck_errors": [],
+  "raw": {
+    "indexed-atomic-use-lookup-lowering-tests.command.json": {
+      "bytes": 907,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-indexed-atomic-use-lookup-lowering-tests-v228-v2/evidence/indexed-atomic-use-lookup-lowering-tests.command.json",
+      "sha256": "27c880a407387f3810af73f1d594cd669a5251687af1e9f4f37b090b9336eeae"
+    },
+    "indexed-atomic-use-lookup-lowering-tests.result.json": {
+      "bytes": 1702,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-indexed-atomic-use-lookup-lowering-tests-v228-v2/evidence/indexed-atomic-use-lookup-lowering-tests.result.json",
+      "sha256": "3a065eb629935f5ad3abb6265565e19d2b79de1ca74c4c24a6facdaee47a0d09"
+    },
+    "indexed-atomic-use-lookup-lowering-tests.started.json": {
+      "bytes": 396,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-indexed-atomic-use-lookup-lowering-tests-v228-v2/evidence/indexed-atomic-use-lookup-lowering-tests.started.json",
+      "sha256": "20efdeecb044cdf8200a6cb45c84dd7bad38900e10d92ce93fc7a301eac6c440"
+    },
+    "indexed-atomic-use-lookup-lowering-tests.stderr": {
+      "bytes": 2852,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-indexed-atomic-use-lookup-lowering-tests-v228-v2/evidence/indexed-atomic-use-lookup-lowering-tests.stderr",
+      "sha256": "c0db926dfe64abb4a926da6dd4e1fa807095cf9817e65e8e1b0b46f1bdc2eeec"
+    },
+    "indexed-atomic-use-lookup-lowering-tests.stdout": {
+      "bytes": 4025,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-indexed-atomic-use-lookup-lowering-tests-v228-v2/evidence/indexed-atomic-use-lookup-lowering-tests.stdout",
+      "sha256": "cd1ea6053d85330f572017ad91d9e0c605c37345e21b3a5d1a236bfc540817f0"
+    },
+    "sources-after.json": {
+      "bytes": 1781,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-indexed-atomic-use-lookup-lowering-tests-v228-v2/evidence/sources-after.json",
+      "sha256": "38f67e967bcdbc1590f41e53eb71d09e7db407411a46424b53bce0e4a3eca200"
+    },
+    "sources-before.json": {
+      "bytes": 1781,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-indexed-atomic-use-lookup-lowering-tests-v228-v2/evidence/sources-before.json",
+      "sha256": "38f67e967bcdbc1590f41e53eb71d09e7db407411a46424b53bce0e4a3eca200"
+    }
+  },
+  "schema": "ferric-indexed-atomic-use-lookup-lowering-test-cpu-v1",
+  "source_inputs": {
+    "lowering.py": {
+      "bytes": 51095,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-indexed-atomic-use-lookup-lowering-tests-v228-v2/lowering.py",
+      "sha256": "2e50fe3d7ec879f3b02ed3c8650ed38f022e219497be92b64ffe464af04dbbe6"
+    },
+    "lowering_test_entry.py": {
+      "bytes": 5880,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-indexed-atomic-use-lookup-lowering-tests-v228-v2/lowering_test_entry.py",
+      "sha256": "b4d27618101e9b259ab8b6ca3ce1c5d42ba2dac14a6754389c0aeea17fe36951"
+    },
+    "run_tests.py": {
+      "bytes": 13494,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-indexed-atomic-use-lookup-lowering-tests-v228-v2/run_tests.py",
+      "sha256": "fd60453477479155558b409199f9cc5912c1a05912f71e17c14c746085015ab5"
+    },
+    "supervisor.py": {
+      "bytes": 41485,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-indexed-atomic-use-lookup-lowering-tests-v228-v2/supervisor.py",
+      "sha256": "8824478a6415dee39d28ccefb0881fc0687ac724f5a9c5a4540310fb5196b9bc"
+    },
+    "test_lowering.py": {
+      "bytes": 28699,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-indexed-atomic-use-lookup-lowering-tests-v228-v2/test_lowering.py",
+      "sha256": "032fa7d01037dae56d82711bda8aaed036c735954190ffdbf1fa7243953323eb"
+    },
+    "test_normalization.py": {
+      "bytes": 6507,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-indexed-atomic-use-lookup-lowering-tests-v228-v2/test_normalization.py",
+      "sha256": "6d4d91e24fa483e81d99ae1dd89a629eb3b7a17aaef94e8f46958123c292465f"
+    }
+  },
+  "source_unchanged": true,
+  "supervisor": {
+    "bytes": 41485,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-indexed-atomic-use-lookup-lowering-tests-v228-v2/supervisor.py",
+    "sha256": "8824478a6415dee39d28ccefb0881fc0687ac724f5a9c5a4540310fb5196b9bc"
+  },
+  "synthetic_lowering_only": true,
+  "tool_pins": {
+    "prlimit": {
+      "bytes": 27536,
+      "path": "/usr/bin/prlimit",
+      "sha256": "17064f67e650d6152a6902b013aab496b54c87587c8eea6f5023aafee6154069"
+    },
+    "python": {
+      "bytes": 8020928,
+      "path": "/usr/bin/python3.12",
+      "sha256": "e1efa562c2cc2e35521a5c9c9b9939921001ff8ca9708a13ef15ace68cc2ccd7"
+    }
+  }
+}

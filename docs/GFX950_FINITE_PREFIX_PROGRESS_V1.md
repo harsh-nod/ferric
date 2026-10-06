@@ -6,7 +6,18 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Latest: [the census-qualified guarded compile reaches the atomic-use lookup work charge](../qualification/guarded-mlp-indexed-atomic-dead-cast-census-lowering-v1/README.md).
+Latest: [the bounded atomic-use lookup passes full MI350 CPU qualification](../qualification/guarded-mlp-indexed-atomic-use-lookup-v1/README.md).
+All 40 phases pass across 27 scopes: 1,293 compiler tests and 1,507 Pliron
+tests, with focused repeats and extraction controls totaling 2,912 passing
+executions and 25 unchanged ignores. Every child exited naturally and was
+reaped, with unchanged inputs and clean postchecks. The lookup reduces the
+measured 552-entry query's analytical bound to ten comparisons without new
+storage or increased limits. Controller fixtures pass 26 loader and 19
+lowering tests after a production adapter schema repair; its failed first
+attempt is retained. Actual binary inspection, guarded compilation, GPU/model
+correctness and performance remain separate gates. All milestones remain open.
+
+Previously, [the census-qualified guarded compile reaches the atomic-use lookup work charge](../qualification/guarded-mlp-indexed-atomic-dead-cast-census-lowering-v1/README.md).
 The compiler now reports `validate_statement` at `indexed_atomic_v1.rs:101:14`:
 a 552-entry scan requests work at 3,145,488, exceeding the unchanged 3,145,728
 ceiling. The compile exits naturally after 117.357422 seconds, is reaped, and

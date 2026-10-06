@@ -1,0 +1,44 @@
+{
+  "adopted_reaped": [],
+  "argv": [
+    "/usr/bin/prlimit",
+    "--as=12884901888",
+    "--cpu=1200",
+    "--fsize=1073741824",
+    "--core=0",
+    "--",
+    "/usr/bin/python3.12",
+    "-I",
+    "-S",
+    "-B",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-indexed-atomic-use-lookup-lowering-tests-v228-v2/lowering_test_entry.py"
+  ],
+  "command": {
+    "bytes": 907,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-indexed-atomic-use-lookup-lowering-tests-v228-v2/evidence/indexed-atomic-use-lookup-lowering-tests.command.json",
+    "sha256": "27c880a407387f3810af73f1d594cd669a5251687af1e9f4f37b090b9336eeae"
+  },
+  "elapsed_ns": 4623108756,
+  "exception": null,
+  "exit_code": 0,
+  "forced_cleanup": false,
+  "label": "indexed-atomic-use-lookup-lowering-tests",
+  "natural_exit": true,
+  "observed_signals": [],
+  "pgid": 2512410,
+  "pid": 2512410,
+  "process_group_absent": true,
+  "reaped": true,
+  "stderr": {
+    "bytes": 2852,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-indexed-atomic-use-lookup-lowering-tests-v228-v2/evidence/indexed-atomic-use-lookup-lowering-tests.stderr",
+    "sha256": "c0db926dfe64abb4a926da6dd4e1fa807095cf9817e65e8e1b0b46f1bdc2eeec"
+  },
+  "stdout": {
+    "bytes": 4025,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-indexed-atomic-use-lookup-lowering-tests-v228-v2/evidence/indexed-atomic-use-lookup-lowering-tests.stdout",
+    "sha256": "cd1ea6053d85330f572017ad91d9e0c605c37345e21b3a5d1a236bfc540817f0"
+  },
+  "storage_failure": null,
+  "timed_out": false
+}

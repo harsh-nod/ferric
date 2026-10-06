@@ -1,0 +1,14 @@
+
+running 9 tests
+test production_ranked_projection_v1::tests::indexed_atomic_membership_bounds_repeated_measured_size_queries ... ok
+test production_ranked_projection_v1::tests::indexed_atomic_membership_charges_exact_bound_before_query ... ok
+test production_ranked_projection_v1::tests::indexed_atomic_membership_failed_charges_do_not_commit_work ... ok
+test production_ranked_projection_v1::tests::indexed_atomic_membership_handles_boundary_lengths ... ok
+test production_ranked_projection_v1::tests::indexed_atomic_membership_keeps_independent_inventories ... ok
+test production_ranked_projection_v1::tests::indexed_atomic_membership_matches_all_small_sorted_sets ... ok
+test production_ranked_projection_v1::tests::indexed_atomic_membership_preserves_duplicate_and_extreme_ids ... ok
+test production_ranked_projection_v1::tests::indexed_atomic_membership_preserves_guard_marker_and_escape_refusals ... ok
+test production_ranked_projection_v1::tests::indexed_atomic_membership_real_inventory_keeps_statement_binding ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 1308 filtered out; finished in 0.03s
+

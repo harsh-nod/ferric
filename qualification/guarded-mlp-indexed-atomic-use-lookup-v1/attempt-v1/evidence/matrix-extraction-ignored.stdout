@@ -1,0 +1,4 @@
+dynamic_attention_kernel_reaches_gfx942_llvm: test
+dynamic_matrix_kernel_reaches_gfx942_llvm: test
+scalar_gemm_kernel_reaches_gfx942_llvm: test
+write_only_disjoint_kernel_reaches_v9_guarded_store_llvm_and_descriptor: test

@@ -1,0 +1,20 @@
+
+running 15 tests
+test trusted_device_items::core_result_control_v1::tests::result_branch_real_body_rejects_changed_aggregate_identity_and_moves ... ok
+test trusted_device_items::core_result_control_v1::tests::result_branch_real_body_rejects_changed_edges_and_discriminants ... ok
+test trusted_device_items::core_result_control_v1::tests::result_branch_real_body_rejects_changed_payload_fields ... ok
+test trusted_device_items::core_result_control_v1::tests::result_branch_real_body_rejects_count_and_local_mutations ... ok
+test trusted_device_items::core_result_control_v1::tests::result_branch_real_body_rejects_extra_operations_and_cleanup ... ok
+test trusted_device_items::core_result_control_v1::tests::result_branch_real_body_rejects_scope_and_inline_origin_mutations ... ok
+test trusted_device_items::core_result_control_v1::tests::result_branch_real_core_bodies_and_nominal_refusals ... ok
+test trusted_device_items::core_result_control_v1::tests::result_family_table_keeps_exact_source_pairs ... ok
+test trusted_device_items::core_result_control_v1::tests::result_residual_real_body_rejects_changed_assume_and_discriminant ... ok
+test trusted_device_items::core_result_control_v1::tests::result_residual_real_body_rejects_changed_conversion_call ... ok
+test trusted_device_items::core_result_control_v1::tests::result_residual_real_body_rejects_changed_payload_and_output ... ok
+test trusted_device_items::core_result_control_v1::tests::result_residual_real_body_rejects_count_and_local_mutations ... ok
+test trusted_device_items::core_result_control_v1::tests::result_residual_real_body_rejects_extra_operations_and_cleanup ... ok
+test trusted_device_items::core_result_control_v1::tests::result_residual_real_body_rejects_scope_and_inline_origin_mutations ... ok
+test trusted_device_items::core_result_control_v1::tests::result_residual_real_core_bodies_and_nominal_refusals ... ok
+
+test result: ok. 15 passed; 0 failed; 0 ignored; 0 measured; 1302 filtered out; finished in 7.81s
+
