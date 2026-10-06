@@ -1,0 +1,44 @@
+{
+  "adopted_reaped": [],
+  "argv": [
+    "/usr/bin/prlimit",
+    "--as=12884901888",
+    "--cpu=1200",
+    "--fsize=1073741824",
+    "--core=0",
+    "--",
+    "/usr/bin/python3.12",
+    "-I",
+    "-S",
+    "-B",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-s-rpo-controller-tests-v228-v1/controller_test_entry.py"
+  ],
+  "command": {
+    "bytes": 855,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-s-rpo-controller-tests-v228-v1/evidence/s-rpo-controller-tests.command.json",
+    "sha256": "51c39853769065a6f596f6769994ea79f0675b3110bf688963668d2f732f0b67"
+  },
+  "elapsed_ns": 100800882,
+  "exception": null,
+  "exit_code": 0,
+  "forced_cleanup": false,
+  "label": "s-rpo-controller-tests",
+  "natural_exit": true,
+  "observed_signals": [],
+  "pgid": 897801,
+  "pid": 897801,
+  "process_group_absent": true,
+  "reaped": true,
+  "stderr": {
+    "bytes": 1689,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-s-rpo-controller-tests-v228-v1/evidence/s-rpo-controller-tests.stderr",
+    "sha256": "4d39be88578af8411323b7a2e0a7d8f19a433723fa091a67715d0f8babec0dc6"
+  },
+  "stdout": {
+    "bytes": 2553,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-s-rpo-controller-tests-v228-v1/evidence/s-rpo-controller-tests.stdout",
+    "sha256": "1886883ef630ab8868161c54814b77e0060939dc860984709cb723b94beae0fc"
+  },
+  "storage_failure": null,
+  "timed_out": false
+}

@@ -6,7 +6,17 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Latest: [445 scoped compiler tests pass, including attention extraction](../qualification/guarded-mlp-core-kernel-error-identity-qualification-v1/README.md).
+Latest: [the full combined runtime compiler qualification passes on MI350](../qualification/guarded-mlp-s-rpo-qualification-v1/README.md).
+All 32 phases exited naturally and were reaped, with clean integrity checks.
+The full compiler library passed 1,239 tests and pliron passed 1,504; 43
+focused repeats and twelve extraction/rejection controls bring the total to
+2,798 passing executions, not unique tests. All 25 historical ignores remain
+explicit. Eleven synthetic controller tests passed separately. Final build
+products and the exact derived source lineage are retained. Loader inspection,
+guarded gfx950 HSACO/GPU execution, model numerics and performance remain
+open; this is not production admission or a 700 tokens/s result.
+
+Previously, [445 scoped compiler tests passed, including attention extraction](../qualification/guarded-mlp-core-kernel-error-identity-qualification-v1/README.md).
 The exact core `KernelError` identity check and six new tests passed on MI350,
 including eight identity/signature refusals and 38 MIR mutations. Every
 earlier 438 named passing test remains green, and the unchanged attention

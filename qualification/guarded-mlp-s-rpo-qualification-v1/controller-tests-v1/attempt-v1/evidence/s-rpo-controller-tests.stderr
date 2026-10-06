@@ -1,0 +1,16 @@
+test_five_closed_cohorts_have_43_distinct_names (test_run.SourceContractTests.test_five_closed_cohorts_have_43_distinct_names) ... ok
+test_fixture_context_derivation_preserves_actual_session_literal (test_run.SourceContractTests.test_fixture_context_derivation_preserves_actual_session_literal) ... ok
+test_insertion_refuses_deletion (test_run.SourceContractTests.test_insertion_refuses_deletion) ... ok
+test_insertion_refuses_empty_and_missing_destination (test_run.SourceContractTests.test_insertion_refuses_empty_and_missing_destination) ... ok
+test_insertion_refuses_missing_or_duplicate_context (test_run.SourceContractTests.test_insertion_refuses_missing_or_duplicate_context) ... ok
+test_insertion_refuses_unknown_or_repeated_destination (test_run.SourceContractTests.test_insertion_refuses_unknown_or_repeated_destination) ... ok
+test_metadata_does_not_replace_embedded_text_or_prefix_sibling (test_run.SourceContractTests.test_metadata_does_not_replace_embedded_text_or_prefix_sibling) ... ok
+test_metadata_refuses_overlapping_or_duplicate_mapping (test_run.SourceContractTests.test_metadata_refuses_overlapping_or_duplicate_mapping) ... ok
+test_metadata_refuses_wrong_source_or_external_destination (test_run.SourceContractTests.test_metadata_refuses_wrong_source_or_external_destination) ... ok
+test_metadata_relocates_paths_and_structured_path_ids (test_run.SourceContractTests.test_metadata_relocates_paths_and_structured_path_ids) ... ok
+test_two_insertion_hunks_preserve_all_other_bytes (test_run.SourceContractTests.test_two_insertion_hunks_preserve_all_other_bytes) ... ok
+
+----------------------------------------------------------------------
+Ran 11 tests in 0.001s
+
+OK

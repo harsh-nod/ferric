@@ -1,0 +1,378 @@
+{
+  "schema": "ferric-p228-core-wrappers-s-rpo-producer-source-v5",
+  "source_only": true,
+  "donor_source_generation": "5a500d63c29b78f8788356b20dfcbb5c41ec20c9",
+  "donor_full_qualification_pending": true,
+  "producer_qualified": false,
+  "base": {
+    "s_complete_sha256": "c45aa83b01bf76fdfd9962b06884611658dab607b001ba67fecc66db9fd5ba97",
+    "s_sources_sha256": "5aad4c8ba6520c323310424ce343de2ae5088e7f8c1c0b1fd67853b5fd3bd9f9",
+    "rpo_complete_sha256": "56fc51fc326980e00156d550d0a7052f44bb481ded7b9948c06217653fb246c1",
+    "rpo_owner_sha256": "afca99d8799f910ce607873c320b8f244be66f9ffdb3df4dce4545eb1552ea66",
+    "rpo_sources_sha256": "77fbdd63c370665ea80bf70e8dd8f4a45533bcde8e5ba6ffd670ab497ebc6665",
+    "rpo_formatted_sources": {
+      "crates/fe2o3-pliron/src/production/semantic_ssa.rs": {
+        "bytes": 36053,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rpo-compiler-cpu-v228-v2/source/fe2o3/crates/fe2o3-pliron/src/production/semantic_ssa.rs",
+        "sha256": "8084ef912795c087c94c6ab01837e7bf7d09f4a84012fc31197a087de3b538b3"
+      },
+      "crates/fe2o3-pliron/src/production/semantic_ssa/partial_move_fifo_oracle_v1.rs": {
+        "bytes": 4538,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rpo-compiler-cpu-v228-v2/source/fe2o3/crates/fe2o3-pliron/src/production/semantic_ssa/partial_move_fifo_oracle_v1.rs",
+        "sha256": "6f0a1eea8b07748ef57174a3016e5a8b787efcdf1d78ace0b69d5469e57118f5"
+      },
+      "crates/fe2o3-pliron/src/production/semantic_ssa/partial_move_rpo_v1_tests.rs": {
+        "bytes": 23690,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rpo-compiler-cpu-v228-v2/source/fe2o3/crates/fe2o3-pliron/src/production/semantic_ssa/partial_move_rpo_v1_tests.rs",
+        "sha256": "24cbae0d26239e02f57d7c2d507f6c43b69f55a56032a6504131df2e31c205c4"
+      },
+      "crates/fe2o3-pliron/src/production/semantic_ssa/partial_moves.rs": {
+        "bytes": 42046,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rpo-compiler-cpu-v228-v2/source/fe2o3/crates/fe2o3-pliron/src/production/semantic_ssa/partial_moves.rs",
+        "sha256": "bd2f38282a094f9201e01b385dae06b100a01e34c3c9f3d72dfb79d8a49798b5"
+      }
+    },
+    "provider_closure_sha256": "037e472ea24d7337f88028ed65cb3d6ea6e0c0681538e6121ab78240c44ef675"
+  },
+  "existing_file_preimages": {
+    "crates/rustc-codegen-fe2o3/src/trusted_device_items.rs": {
+      "bytes": 181031,
+      "sha256": "08195efaf90e86bac69a48398c4c95dfb1c1596ded318f43a9e692aa349779ef"
+    },
+    "crates/rustc-codegen-fe2o3/src/collector.rs": {
+      "bytes": 171649,
+      "sha256": "d99fdf86c4100aa2764ee8099b17a6acd93554ae7ca738365a4241e084b9b02c"
+    }
+  },
+  "new_files": {
+    "crates/rustc-codegen-fe2o3/src/trusted_device_items/core_result_control_v1.rs": {
+      "candidate": "candidate/crates/rustc-codegen-fe2o3/src/trusted_device_items/core_result_control_v1.rs",
+      "donor_path": "/home/harsh/fe2o3-p228-runtime/crates/rustc-codegen-fe2o3/src/trusted_device_items/core_result_control_v1.rs",
+      "before": null,
+      "bytes": 24401,
+      "sha256": "465440ec7218d185ee25f9e936ac61676182064095d7e1021c369acf74e0ee32"
+    },
+    "crates/rustc-codegen-fe2o3/src/trusted_device_items/core_result_control_v1_tests.rs": {
+      "candidate": "candidate/crates/rustc-codegen-fe2o3/src/trusted_device_items/core_result_control_v1_tests.rs",
+      "donor_path": "/home/harsh/fe2o3-p228-runtime/crates/rustc-codegen-fe2o3/src/trusted_device_items/core_result_control_v1_tests.rs",
+      "before": null,
+      "bytes": 36858,
+      "sha256": "f92df3d1942e9bbe29b48a812ad8e11c7417d210d7a4dc2d7e79563f1ab1c681"
+    },
+    "crates/rustc-codegen-fe2o3/src/trusted_device_items/core_u32_widening_v1.rs": {
+      "candidate": "candidate/crates/rustc-codegen-fe2o3/src/trusted_device_items/core_u32_widening_v1.rs",
+      "donor_path": "/home/harsh/fe2o3-p228-runtime/crates/rustc-codegen-fe2o3/src/trusted_device_items/core_u32_widening_v1.rs",
+      "before": null,
+      "bytes": 4564,
+      "sha256": "6a628248c1fe3f8255103534e970c7f644cd99ed54ba90c20173315fde0ac92d"
+    },
+    "crates/rustc-codegen-fe2o3/src/trusted_device_items/core_u32_widening_v1_tests.rs": {
+      "candidate": "candidate/crates/rustc-codegen-fe2o3/src/trusted_device_items/core_u32_widening_v1_tests.rs",
+      "donor_path": "/home/harsh/fe2o3-p228-runtime/crates/rustc-codegen-fe2o3/src/trusted_device_items/core_u32_widening_v1_tests.rs",
+      "before": null,
+      "bytes": 22953,
+      "sha256": "6829c817f4109d589c9d8211fd7a047550a85d3b9ed68ee385db40e7db4c721a"
+    },
+    "crates/rustc-codegen-fe2o3/src/trusted_device_items/core_checked_integer_v1.rs": {
+      "candidate": "candidate/crates/rustc-codegen-fe2o3/src/trusted_device_items/core_checked_integer_v1.rs",
+      "donor_path": "/home/harsh/fe2o3-p228-runtime/crates/rustc-codegen-fe2o3/src/trusted_device_items/core_checked_integer_v1.rs",
+      "before": null,
+      "bytes": 17744,
+      "sha256": "bf076a1b5ebeab255a85b5cddf294937659858d2fe0f9de0cfde1532b4d00925"
+    },
+    "crates/rustc-codegen-fe2o3/src/trusted_device_items/core_checked_integer_v1_tests.rs": {
+      "candidate": "candidate/crates/rustc-codegen-fe2o3/src/trusted_device_items/core_checked_integer_v1_tests.rs",
+      "donor_path": "/home/harsh/fe2o3-p228-runtime/crates/rustc-codegen-fe2o3/src/trusted_device_items/core_checked_integer_v1_tests.rs",
+      "before": null,
+      "bytes": 27927,
+      "sha256": "b667faea60dc319e58ed705c0962ed864e47ca74a2efd6b023b7a72e7d6afb4d"
+    },
+    "crates/rustc-codegen-fe2o3/src/trusted_device_items/core_attention_option_v1.rs": {
+      "candidate": "candidate/crates/rustc-codegen-fe2o3/src/trusted_device_items/core_attention_option_v1.rs",
+      "donor_path": "/home/harsh/fe2o3-p228-runtime/crates/rustc-codegen-fe2o3/src/trusted_device_items/core_attention_option_v1.rs",
+      "before": null,
+      "bytes": 17838,
+      "sha256": "abcc53d89dde4f4e6307582044afd9a358216df4a32bbd998628c8969e8feac2"
+    },
+    "crates/rustc-codegen-fe2o3/src/trusted_device_items/core_attention_option_v1_tests.rs": {
+      "candidate": "candidate/crates/rustc-codegen-fe2o3/src/trusted_device_items/core_attention_option_v1_tests.rs",
+      "donor_path": "/home/harsh/fe2o3-p228-runtime/crates/rustc-codegen-fe2o3/src/trusted_device_items/core_attention_option_v1_tests.rs",
+      "before": null,
+      "bytes": 33107,
+      "sha256": "d88c6c24a6268e2ffa3a1843b8b8c494b6e1181377584801fe41f8ca03ee7df4"
+    },
+    "crates/rustc-codegen-fe2o3/src/trusted_device_items/core_kernel_error_identity_v1.rs": {
+      "candidate": "candidate/crates/rustc-codegen-fe2o3/src/trusted_device_items/core_kernel_error_identity_v1.rs",
+      "donor_path": "/home/harsh/fe2o3-p228-runtime/crates/rustc-codegen-fe2o3/src/trusted_device_items/core_kernel_error_identity_v1.rs",
+      "before": null,
+      "bytes": 4333,
+      "sha256": "54434b9dc82197987e81de0c4fb55df820bbf109308963274f48725979c51452"
+    },
+    "crates/rustc-codegen-fe2o3/src/trusted_device_items/core_kernel_error_identity_v1_tests.rs": {
+      "candidate": "candidate/crates/rustc-codegen-fe2o3/src/trusted_device_items/core_kernel_error_identity_v1_tests.rs",
+      "donor_path": "/home/harsh/fe2o3-p228-runtime/crates/rustc-codegen-fe2o3/src/trusted_device_items/core_kernel_error_identity_v1_tests.rs",
+      "before": null,
+      "bytes": 22230,
+      "sha256": "90ef6667aa91c3b16da33380e435d85df0be7f404b1b61b458760b0da5293383"
+    }
+  },
+  "integration_patch": {
+    "path": "integration.patch",
+    "bytes": 2839,
+    "sha256": "58a363e3c5c8ff13c81c9b32b7a945fb8dde3f08da91446791d33da835d8277c"
+  },
+  "readme": {
+    "path": "README.md",
+    "bytes": 11605,
+    "sha256": "b8d9aa400313c7230f4f05e673fc814e22879c3fb03ddbe12bcc86a4e43c4d42"
+  },
+  "unchanged_support_files": {
+    "crates/rustc-codegen-fe2o3/src/process_execution.rs": "e0f08bdfdcde43b0e51b5cc2ee8ab2eb295e9553dd05e09048a8ebd291b18bb3",
+    "crates/rustc-codegen-fe2o3/Cargo.toml": "237d73c261085890fae71a6d919885b754e4ab75045659725ad2a4f68551f801",
+    "rust-toolchain.toml": "49eeb550dd57841add3be3442177e78f6f0668ffc4f31739ce78d75f8129b154",
+    "crates/fe2o3-device/Cargo.toml": "da7bbcd2f3dac75b968f45137c920d94658b5600ff52bf9d843d494bcdd8afb7",
+    "crates/fe2o3-macros/Cargo.toml": "662e1c4baf8ea80e317e9968c30924121833003452093ecf407d71dd7b62cfe4"
+  },
+  "added_test_names": [
+    "trusted_device_items::core_attention_option_v1::tests::attention_option_real_callback_call_mutations",
+    "trusted_device_items::core_attention_option_v1::tests::attention_option_real_drop_mutations",
+    "trusted_device_items::core_attention_option_v1::tests::attention_option_real_identity_payload_and_callback_refusals",
+    "trusted_device_items::core_attention_option_v1::tests::attention_option_real_local_type_and_scope_mutations",
+    "trusted_device_items::core_attention_option_v1::tests::attention_option_real_operations_and_cleanup_mutations",
+    "trusted_device_items::core_attention_option_v1::tests::attention_option_real_payload_and_aggregate_mutations",
+    "trusted_device_items::core_attention_option_v1::tests::attention_option_real_provider_and_closure_positives",
+    "trusted_device_items::core_attention_option_v1::tests::attention_option_real_shape_mutations",
+    "trusted_device_items::core_attention_option_v1::tests::attention_option_real_source_scope_mutations",
+    "trusted_device_items::core_attention_option_v1::tests::attention_option_real_switch_and_return_mutations",
+    "trusted_device_items::core_checked_integer_v1::tests::checked_integer_real_body_rejects_control_flow_and_unwind",
+    "trusted_device_items::core_checked_integer_v1::tests::checked_integer_real_body_rejects_extra_operations",
+    "trusted_device_items::core_checked_integer_v1::tests::checked_integer_real_body_rejects_operands_constants_and_variants",
+    "trusted_device_items::core_checked_integer_v1::tests::checked_integer_real_body_rejects_shape_and_local_mutations",
+    "trusted_device_items::core_checked_integer_v1::tests::checked_integer_real_body_rejects_source_scope_and_inline_mutations",
+    "trusted_device_items::core_checked_integer_v1::tests::checked_integer_real_core_identity_and_signature_refusals",
+    "trusted_device_items::core_kernel_error_identity_v1::tests::kernel_error_identity_real_body_rejects_extra_operations_and_cleanup",
+    "trusted_device_items::core_kernel_error_identity_v1::tests::kernel_error_identity_real_body_rejects_local_type_and_scope_mutations",
+    "trusted_device_items::core_kernel_error_identity_v1::tests::kernel_error_identity_real_body_rejects_operands_places_and_returns",
+    "trusted_device_items::core_kernel_error_identity_v1::tests::kernel_error_identity_real_body_rejects_shape_mutations",
+    "trusted_device_items::core_kernel_error_identity_v1::tests::kernel_error_identity_real_body_rejects_source_scope_mutations",
+    "trusted_device_items::core_kernel_error_identity_v1::tests::kernel_error_identity_real_core_provider_identity_and_signature_refusals",
+    "trusted_device_items::core_result_control_v1::tests::result_branch_real_body_rejects_changed_aggregate_identity_and_moves",
+    "trusted_device_items::core_result_control_v1::tests::result_branch_real_body_rejects_changed_edges_and_discriminants",
+    "trusted_device_items::core_result_control_v1::tests::result_branch_real_body_rejects_changed_payload_fields",
+    "trusted_device_items::core_result_control_v1::tests::result_branch_real_body_rejects_count_and_local_mutations",
+    "trusted_device_items::core_result_control_v1::tests::result_branch_real_body_rejects_extra_operations_and_cleanup",
+    "trusted_device_items::core_result_control_v1::tests::result_branch_real_body_rejects_scope_and_inline_origin_mutations",
+    "trusted_device_items::core_result_control_v1::tests::result_branch_real_core_bodies_and_nominal_refusals",
+    "trusted_device_items::core_result_control_v1::tests::result_family_table_keeps_exact_source_pairs",
+    "trusted_device_items::core_result_control_v1::tests::result_residual_real_body_rejects_changed_assume_and_discriminant",
+    "trusted_device_items::core_result_control_v1::tests::result_residual_real_body_rejects_changed_conversion_call",
+    "trusted_device_items::core_result_control_v1::tests::result_residual_real_body_rejects_changed_payload_and_output",
+    "trusted_device_items::core_result_control_v1::tests::result_residual_real_body_rejects_count_and_local_mutations",
+    "trusted_device_items::core_result_control_v1::tests::result_residual_real_body_rejects_extra_operations_and_cleanup",
+    "trusted_device_items::core_result_control_v1::tests::result_residual_real_body_rejects_scope_and_inline_origin_mutations",
+    "trusted_device_items::core_result_control_v1::tests::result_residual_real_core_bodies_and_nominal_refusals",
+    "trusted_device_items::core_u32_widening_v1::tests::u32_widening_real_body_rejects_cast_kind_type_and_operand_mutations",
+    "trusted_device_items::core_u32_widening_v1::tests::u32_widening_real_body_rejects_extra_operations_and_cleanup",
+    "trusted_device_items::core_u32_widening_v1::tests::u32_widening_real_body_rejects_places_and_terminators",
+    "trusted_device_items::core_u32_widening_v1::tests::u32_widening_real_body_rejects_shape_and_local_mutations",
+    "trusted_device_items::core_u32_widening_v1::tests::u32_widening_real_body_rejects_source_scope_mutations",
+    "trusted_device_items::core_u32_widening_v1::tests::u32_widening_real_core_identity_and_signature_refusals"
+  ],
+  "required_rpo_test_names": [
+    "production::semantic_ssa::partial_moves::rpo_tests::call_destination_only_reinitializes_normal_edge_not_unwind",
+    "production::semantic_ssa::partial_moves::rpo_tests::diamond_maybe_moved_rejection_matches_fifo_exactly",
+    "production::semantic_ssa::partial_moves::rpo_tests::exact_storage_and_work_boundaries_still_reject_one_below",
+    "production::semantic_ssa::partial_moves::rpo_tests::initialization_enqueue_and_skipped_slots_are_metered",
+    "production::semantic_ssa::partial_moves::rpo_tests::loop_and_irreducible_fixed_points_match_fifo",
+    "production::semantic_ssa::partial_moves::rpo_tests::malformed_priority_maps_and_unreachable_pushes_refuse",
+    "production::semantic_ssa::partial_moves::rpo_tests::parallel_edges_and_unreachable_malformed_blocks_match_fifo",
+    "production::semantic_ssa::partial_moves::rpo_tests::pointer_carrier_write_keeps_move_rejection_across_join",
+    "production::semantic_ssa::partial_moves::rpo_tests::priority_storage_is_added_without_discounting_previous_reservations",
+    "production::semantic_ssa::partial_moves::rpo_tests::production_plan_reconstruction_is_deterministic_with_new_accounting",
+    "production::semantic_ssa::partial_moves::rpo_tests::rpo_backedge_requeues_an_earlier_rank",
+    "production::semantic_ssa::partial_moves::rpo_tests::rpo_priority_is_deterministic_and_deduplicates_pending_blocks",
+    "production::semantic_ssa::partial_moves::rpo_tests::scheduler_work_overflow_remains_fail_closed",
+    "production::semantic_ssa::partial_moves::rpo_tests::skewed_diamond_reduces_repeated_tombstone_charges",
+    "production::semantic_ssa::partial_moves::rpo_tests::union_missing_context_and_unsupported_moves_match_fifo",
+    "production::semantic_ssa::partial_moves::rpo_tests::whole_tombstone_widening_and_storage_live_do_not_refund",
+    "production::semantic_ssa::partial_moves::rpo_tests::zero_projected_moves_keep_the_empty_certificate_and_old_auxiliary_cost"
+  ],
+  "required_extraction_test_names": [
+    "shared_atomic_u32_source_admission_has_a_scalar_positive_control",
+    "shared_atomic_u32_source_admission_rejects_nominal_and_width_spoofs",
+    "indexed_atomic_slice_two_argument_control_reaches_exact_system_scope_llvm",
+    "indexed_atomic_slice_exclusive_input_reaches_exact_system_scope_llvm",
+    "indexed_atomic_slice_shared_input_remains_fail_closed_at_alias_analysis",
+    "ordinary_atomic_load_store_reaches_gfx950_llvm",
+    "atomic_load_store_wrapper_rejects_untrusted_or_nonconstant_contracts",
+    "wide_atomic_load_store_preserves_target_capability_rejection",
+    "production_collector_rejects_reachable_unsafe_rust_with_rooted_diagnostics",
+    "optimized_inlined_source_origins_retain_source_safety_checks",
+    "dynamic_matrix_kernel_reaches_gfx942_llvm",
+    "dynamic_attention_kernel_reaches_gfx942_llvm"
+  ],
+  "expected_source_files_before": 5783,
+  "expected_source_files_after": 5793,
+  "qualification_inventories": "Rebuild/list and require the full authenticated predecessor compiler and pliron name sets, plus all 43 added_test_names; counts alone are insufficient. No actual donor or producer success is supplied.",
+  "predecessor_proposal": {
+    "path": "../guarded-mlp-core-wrappers-producer-v228-v4/source-manifest.json",
+    "sha256": "29cc4e6e330e17e9b335d4b2d69f3a7399e0285ebcc44c2bace3d841ff68250e",
+    "unchanged_s_preimages": true,
+    "unchanged_prior_insertion_hooks": true,
+    "added_private_module_and_source_origin_alternative": true,
+    "changed_donor_bodies": 0,
+    "unchanged_donor_bodies": 8,
+    "added_donor_bodies": 2
+  },
+  "donor_prior_run": {
+    "source_generation": "d0253acecb63e8884e8727c84204cf2da1d0f00e",
+    "passed_tests": 422,
+    "matrix_passed": true,
+    "attention_passed": false,
+    "complete_qualification_passed": false,
+    "failed_receipt_sha256": "c6bc4ab68092e6bdac67bd80c779fccf0a956e674dd04614282ae981b1760530"
+  },
+  "test_cohorts": {
+    "core_result_control_v1": {
+      "tests": 15,
+      "clone_mutation_assertions": 172
+    },
+    "core_u32_widening_v1": {
+      "tests": 6,
+      "genuine_positive_instances": 1,
+      "genuine_refused_instances": 8,
+      "clone_mutation_assertions": 49
+    },
+    "core_checked_integer_v1": {
+      "tests": 6,
+      "genuine_positive_instances": 5,
+      "genuine_refused_instances": 14,
+      "clone_mutation_assertions": 458
+    },
+    "core_attention_option_v1": {
+      "tests": 10,
+      "genuine_positive_instances": 5,
+      "genuine_refused_instances": 15,
+      "clone_mutation_assertions": 198,
+      "actual_callback_resolution_assertions": 2,
+      "callback_contract_refusal_assertions": 12
+    },
+    "core_kernel_error_identity_v1": {
+      "tests": 6,
+      "genuine_positive_instances": 1,
+      "genuine_refused_instances": 8,
+      "clone_mutation_assertions": 38,
+      "clone_mutation_counts": [
+        8,
+        10,
+        6,
+        5,
+        9
+      ]
+    }
+  },
+  "unchanged_s_specific_support_files": {
+    "crates/rustc-codegen-fe2o3/src/production_rustc_intrinsic_v1.rs": "c1784bf1913dac11cc5f976ac29283be31c3aac338c8ad94113a3f8937a92815",
+    "crates/rustc-codegen-fe2o3/src/production_rustc_intrinsic_v1/branch_hint_origin_v1.rs": "4fd4bcadc0b13524c68eb978631a1b88b269d44a5c74500a42741ecde4f1525c"
+  },
+  "conditional_expected_compiler_inventory": {
+    "passed": 1239,
+    "ignored": 24,
+    "total": 1263,
+    "actual_outcome": false
+  },
+  "cpu_qualification_guide": {
+    "path": "CPU-QUALIFICATION.md",
+    "bytes": 17397,
+    "sha256": "b8af540b76082a678a2109d385ba84da1a8311ab923f388cd0c1d8ce47e7e8fb"
+  },
+  "donor_qualification": {
+    "required_before_producer_execution": true,
+    "complete_receipt": null,
+    "status_at_freeze": "Root integrated the exact four identity source/hook files at clean RT 5a500d63. The 39-phase qualification is preparing/running; no successful terminal receipt supplied. The donor and this S/RPO port remain unqualified.",
+    "controller_path": "../guarded-mlp-core-kernel-error-identity-qualification-v228-v1/run_cpu.py",
+    "controller_sha256": "8824478a6415dee39d28ccefb0881fc0687ac724f5a9c5a4540310fb5196b9bc"
+  },
+  "fixture_context": {
+    "environment_variable": "FE2O3_CARGO_METADATA_BUILD_OBSERVATION_V2",
+    "callback_codegen_metadata": [
+      "fe2o3_core_attention_option_fixture_v1"
+    ],
+    "metadata_utf8_bytes": 38,
+    "framing": "SHA256(domain including NUL || u64le(count) || repeated u64le(UTF8 byte length) || UTF8 bytes)",
+    "domain": "FE2O3/CARGO-METADATA-BUILD-OBSERVATION/V2\u0000",
+    "observation_sha256": "d7ad89dbcf1cd370f8237f25a21c5f2fd72d0d0ea63fa1cdc5179b14efe9d324",
+    "required_leaf_roles": [
+      "compiler-tests",
+      "core-attention-option",
+      "core-kernel-error-identity"
+    ],
+    "set_before_popen": true,
+    "common_environment_must_not_contain_variable": true,
+    "in_process_environment_mutation": false,
+    "asserts_actual_tcx_metadata_and_public_derivation": true,
+    "provider_authentication_unchanged": true,
+    "grants_managed_artifact_authority": false,
+    "historical_literal_reused_for_identity": true
+  },
+  "donor_previous_attempt_v3": {
+    "source_generation": "32fbf1a6c980f3a9ab92922755e32925a85eeacc",
+    "failed_receipt_sha256": "7b283e74b6c9dfab547f15fdeb1372fbae871f397563446ed3323f4c309c19c8",
+    "full_qualification_passed": false,
+    "completed_passed_tests": 417,
+    "option_cohort_passed": false,
+    "first_cached_failure": "signature of genuine core Option::and_then with synthetic i32 closure kind (FnOnce), after three ok_or full-auth assertions"
+  },
+  "option_callback_contract": {
+    "kind": "FnOnce",
+    "resolution": "Item of identical local closure DefId with identical closure generic arguments",
+    "accepts_fn_or_fnmut": false,
+    "accepts_closure_once_shim": false,
+    "tuple_signature_unchanged": true,
+    "structural_mir_unchanged": true,
+    "independent_callback_traversal_unchanged": true
+  },
+  "helper_prerequisites": {
+    "source_only": true,
+    "qualified": false,
+    "source": {
+      "path": "../guarded-mlp-s-producer-helpers-v228-v1/qualification_helpers.py",
+      "sha256": "a77cc7f82ebdd9518185b30b837e250abc68cc32e4858ab1ad3dc83a0ec8efe6"
+    },
+    "tests": {
+      "path": "../guarded-mlp-s-producer-helpers-v228-v1/test_qualification_helpers.py",
+      "sha256": "e0480bfe8e5278eea12551e7c950225a387c4d9b48f79cb2dbd146c93443b91a",
+      "authored_methods": 16
+    },
+    "required_before_controller_execution": [
+      "root-owned helper tests",
+      "closed full-suite ignored-name integration",
+      "closed final rlib selection integration"
+    ],
+    "changes_lifecycle": false
+  },
+  "donor_previous_attempt_v4": {
+    "source_generation": "3016e979b0d52663067f7a878d47ca775a58df36",
+    "failed_receipt_sha256": "7cc5ebbc61c0bb1002e4eb9170685c85616e60d963f29f9575d6bce51a53ce8d",
+    "full_qualification_passed": false,
+    "completed_passed_tests": 438,
+    "option_cohort_passed": true,
+    "matrix_passed": true,
+    "attention_passed": false,
+    "last_refusal": "genuine core From<provider KernelError> source origin"
+  },
+  "identity_source_proposal": {
+    "path": "../guarded-mlp-core-kernel-error-identity-production-v228-v1/source-manifest.json",
+    "sha256": "260d0783c8ca942964fd0f5d7acad7393d40757dbc38d17fbe4f5eefdeb67cbd",
+    "actual_diagnostic_marker_sha256": "16c283e8c917dc6f88d0208c493ad5db3b770352fda65c765ec3c671deac295b",
+    "diagnostic_grants_admission": false
+  },
+  "proposed_cpu_recipe": {
+    "leaves": 32,
+    "test_scopes": 19,
+    "full_suites": 2,
+    "focused_cohorts": 5,
+    "extraction_controls": 12,
+    "actual_outcome": false
+  }
+}

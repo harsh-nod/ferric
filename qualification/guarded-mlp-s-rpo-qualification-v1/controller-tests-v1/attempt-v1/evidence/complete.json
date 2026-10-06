@@ -1,0 +1,224 @@
+{
+  "child_observation": {
+    "compiler_qualification": false,
+    "errors": 0,
+    "expected_failures": 0,
+    "failures": 0,
+    "gpu_execution": false,
+    "names": [
+      "test_run.SourceContractTests.test_five_closed_cohorts_have_43_distinct_names",
+      "test_run.SourceContractTests.test_fixture_context_derivation_preserves_actual_session_literal",
+      "test_run.SourceContractTests.test_insertion_refuses_deletion",
+      "test_run.SourceContractTests.test_insertion_refuses_empty_and_missing_destination",
+      "test_run.SourceContractTests.test_insertion_refuses_missing_or_duplicate_context",
+      "test_run.SourceContractTests.test_insertion_refuses_unknown_or_repeated_destination",
+      "test_run.SourceContractTests.test_metadata_does_not_replace_embedded_text_or_prefix_sibling",
+      "test_run.SourceContractTests.test_metadata_refuses_overlapping_or_duplicate_mapping",
+      "test_run.SourceContractTests.test_metadata_refuses_wrong_source_or_external_destination",
+      "test_run.SourceContractTests.test_metadata_relocates_paths_and_structured_path_ids",
+      "test_run.SourceContractTests.test_two_insertion_hunks_preserve_all_other_bytes"
+    ],
+    "passed": true,
+    "passing_names": [
+      "test_run.SourceContractTests.test_five_closed_cohorts_have_43_distinct_names",
+      "test_run.SourceContractTests.test_fixture_context_derivation_preserves_actual_session_literal",
+      "test_run.SourceContractTests.test_insertion_refuses_deletion",
+      "test_run.SourceContractTests.test_insertion_refuses_empty_and_missing_destination",
+      "test_run.SourceContractTests.test_insertion_refuses_missing_or_duplicate_context",
+      "test_run.SourceContractTests.test_insertion_refuses_unknown_or_repeated_destination",
+      "test_run.SourceContractTests.test_metadata_does_not_replace_embedded_text_or_prefix_sibling",
+      "test_run.SourceContractTests.test_metadata_refuses_overlapping_or_duplicate_mapping",
+      "test_run.SourceContractTests.test_metadata_refuses_wrong_source_or_external_destination",
+      "test_run.SourceContractTests.test_metadata_relocates_paths_and_structured_path_ids",
+      "test_run.SourceContractTests.test_two_insertion_hunks_preserve_all_other_bytes"
+    ],
+    "schema": "ferric-s-rpo-controller-tests-v1",
+    "skipped": 0,
+    "source_unchanged": true,
+    "sources": {
+      "qualification_helpers.py": {
+        "bytes": 4103,
+        "sha256": "a77cc7f82ebdd9518185b30b837e250abc68cc32e4858ab1ad3dc83a0ec8efe6"
+      },
+      "run_cpu.py": {
+        "bytes": 53331,
+        "sha256": "083abf39c6a9d24ff379c238a7f41c56dfb71757a2678a08f65ca935fd2fc866"
+      },
+      "test_run.py": {
+        "bytes": 5500,
+        "sha256": "a20d03a985724c5f2e9c34210b5b76143633a84ff5b6a3967c4f1ae19bda9e9b"
+      }
+    },
+    "synthetic_controller_only": true,
+    "tests_run": 11,
+    "unexpected_successes": 0
+  },
+  "compiler_qualification": false,
+  "controller": {
+    "bytes": 12645,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-s-rpo-controller-tests-v228-v1/run_tests.py",
+    "sha256": "7974a0b252431ca78bd5f9ea9f555e2e4dd218056baf51e14b3121cfd3463131"
+  },
+  "elapsed_seconds": 0.11927540390752256,
+  "failure": null,
+  "gpu_execution": false,
+  "input_manifest": {
+    "bytes": 1247,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-s-rpo-controller-tests-v228-v1/input-manifest.json",
+    "sha256": "1768f9b6960ed27ae5d4f9c7872dfc272bfc2fbba618ca1a04b6a1825ef49cfb"
+  },
+  "limits": {
+    "address_space_bytes": 12884901888,
+    "affinity": [
+      8,
+      9
+    ],
+    "cleanup_reserve_seconds": 50,
+    "cpu_seconds_per_leaf": 1200,
+    "file_bytes": 1073741824,
+    "initial_free_bytes": 42949672960,
+    "leaf_seconds": 120,
+    "live_free_bytes": 40802189312,
+    "nice": 10,
+    "scratch_bytes": 6442450944,
+    "stream_bytes": 67108864,
+    "whole_seconds": 180
+  },
+  "passed": true,
+  "phases": [
+    {
+      "adopted_reaped": [],
+      "argv": [
+        "/usr/bin/prlimit",
+        "--as=12884901888",
+        "--cpu=1200",
+        "--fsize=1073741824",
+        "--core=0",
+        "--",
+        "/usr/bin/python3.12",
+        "-I",
+        "-S",
+        "-B",
+        "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-s-rpo-controller-tests-v228-v1/controller_test_entry.py"
+      ],
+      "command": {
+        "bytes": 855,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-s-rpo-controller-tests-v228-v1/evidence/s-rpo-controller-tests.command.json",
+        "sha256": "51c39853769065a6f596f6769994ea79f0675b3110bf688963668d2f732f0b67"
+      },
+      "elapsed_ns": 100800882,
+      "exception": null,
+      "exit_code": 0,
+      "forced_cleanup": false,
+      "label": "s-rpo-controller-tests",
+      "natural_exit": true,
+      "observed_signals": [],
+      "pgid": 897801,
+      "pid": 897801,
+      "process_group_absent": true,
+      "reaped": true,
+      "stderr": {
+        "bytes": 1689,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-s-rpo-controller-tests-v228-v1/evidence/s-rpo-controller-tests.stderr",
+        "sha256": "4d39be88578af8411323b7a2e0a7d8f19a433723fa091a67715d0f8babec0dc6"
+      },
+      "stdout": {
+        "bytes": 2553,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-s-rpo-controller-tests-v228-v1/evidence/s-rpo-controller-tests.stdout",
+        "sha256": "1886883ef630ab8868161c54814b77e0060939dc860984709cb723b94beae0fc"
+      },
+      "storage_failure": null,
+      "timed_out": false
+    }
+  ],
+  "postcheck_errors": [],
+  "raw": {
+    "s-rpo-controller-tests.command.json": {
+      "bytes": 855,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-s-rpo-controller-tests-v228-v1/evidence/s-rpo-controller-tests.command.json",
+      "sha256": "51c39853769065a6f596f6769994ea79f0675b3110bf688963668d2f732f0b67"
+    },
+    "s-rpo-controller-tests.result.json": {
+      "bytes": 1557,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-s-rpo-controller-tests-v228-v1/evidence/s-rpo-controller-tests.result.json",
+      "sha256": "8491c9b546cb1bd38a4de2d70e671c97c903d5b0b4650f98142d2386ef07d691"
+    },
+    "s-rpo-controller-tests.started.json": {
+      "bytes": 378,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-s-rpo-controller-tests-v228-v1/evidence/s-rpo-controller-tests.started.json",
+      "sha256": "4adc0b108597adf1101794efd451595a095226bc54b60695333f2c0bb5dd1f6d"
+    },
+    "s-rpo-controller-tests.stderr": {
+      "bytes": 1689,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-s-rpo-controller-tests-v228-v1/evidence/s-rpo-controller-tests.stderr",
+      "sha256": "4d39be88578af8411323b7a2e0a7d8f19a433723fa091a67715d0f8babec0dc6"
+    },
+    "s-rpo-controller-tests.stdout": {
+      "bytes": 2553,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-s-rpo-controller-tests-v228-v1/evidence/s-rpo-controller-tests.stdout",
+      "sha256": "1886883ef630ab8868161c54814b77e0060939dc860984709cb723b94beae0fc"
+    },
+    "sources-after.json": {
+      "bytes": 1670,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-s-rpo-controller-tests-v228-v1/evidence/sources-after.json",
+      "sha256": "40ebc6f7abef1a445d658599cb1436a96b0eca893bccc3d440b3f9179881c5a6"
+    },
+    "sources-before.json": {
+      "bytes": 1670,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-s-rpo-controller-tests-v228-v1/evidence/sources-before.json",
+      "sha256": "40ebc6f7abef1a445d658599cb1436a96b0eca893bccc3d440b3f9179881c5a6"
+    }
+  },
+  "schema": "ferric-s-rpo-controller-test-cpu-v1",
+  "source_inputs": {
+    "controller_test_entry.py": {
+      "bytes": 5050,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-s-rpo-controller-tests-v228-v1/controller_test_entry.py",
+      "sha256": "0abd889b873f964d35a44dfdee3599cbafa942658394dd054a7dbebc16881a87"
+    },
+    "qualification_helpers.py": {
+      "bytes": 4103,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-s-rpo-controller-tests-v228-v1/qualification_helpers.py",
+      "sha256": "a77cc7f82ebdd9518185b30b837e250abc68cc32e4858ab1ad3dc83a0ec8efe6"
+    },
+    "run_cpu.py": {
+      "bytes": 53331,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-s-rpo-controller-tests-v228-v1/run_cpu.py",
+      "sha256": "083abf39c6a9d24ff379c238a7f41c56dfb71757a2678a08f65ca935fd2fc866"
+    },
+    "run_tests.py": {
+      "bytes": 12645,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-s-rpo-controller-tests-v228-v1/run_tests.py",
+      "sha256": "7974a0b252431ca78bd5f9ea9f555e2e4dd218056baf51e14b3121cfd3463131"
+    },
+    "supervisor.py": {
+      "bytes": 41485,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-s-rpo-controller-tests-v228-v1/supervisor.py",
+      "sha256": "8824478a6415dee39d28ccefb0881fc0687ac724f5a9c5a4540310fb5196b9bc"
+    },
+    "test_run.py": {
+      "bytes": 5500,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-s-rpo-controller-tests-v228-v1/test_run.py",
+      "sha256": "a20d03a985724c5f2e9c34210b5b76143633a84ff5b6a3967c4f1ae19bda9e9b"
+    }
+  },
+  "source_unchanged": true,
+  "supervisor": {
+    "bytes": 41485,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-s-rpo-controller-tests-v228-v1/supervisor.py",
+    "sha256": "8824478a6415dee39d28ccefb0881fc0687ac724f5a9c5a4540310fb5196b9bc"
+  },
+  "synthetic_controller_only": true,
+  "tool_pins": {
+    "prlimit": {
+      "bytes": 27536,
+      "path": "/usr/bin/prlimit",
+      "sha256": "17064f67e650d6152a6902b013aab496b54c87587c8eea6f5023aafee6154069"
+    },
+    "python": {
+      "bytes": 8020928,
+      "path": "/usr/bin/python3.12",
+      "sha256": "e1efa562c2cc2e35521a5c9c9b9939921001ff8ca9708a13ef15ace68cc2ccd7"
+    }
+  }
+}

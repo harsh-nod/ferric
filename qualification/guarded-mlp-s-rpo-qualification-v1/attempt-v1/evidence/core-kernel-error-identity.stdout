@@ -1,0 +1,11 @@
+
+running 6 tests
+test trusted_device_items::core_kernel_error_identity_v1::tests::kernel_error_identity_real_body_rejects_extra_operations_and_cleanup ... ok
+test trusted_device_items::core_kernel_error_identity_v1::tests::kernel_error_identity_real_body_rejects_local_type_and_scope_mutations ... ok
+test trusted_device_items::core_kernel_error_identity_v1::tests::kernel_error_identity_real_body_rejects_operands_places_and_returns ... ok
+test trusted_device_items::core_kernel_error_identity_v1::tests::kernel_error_identity_real_body_rejects_shape_mutations ... ok
+test trusted_device_items::core_kernel_error_identity_v1::tests::kernel_error_identity_real_body_rejects_source_scope_mutations ... ok
+test trusted_device_items::core_kernel_error_identity_v1::tests::kernel_error_identity_real_core_provider_identity_and_signature_refusals ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 1257 filtered out; finished in 14.71s
+

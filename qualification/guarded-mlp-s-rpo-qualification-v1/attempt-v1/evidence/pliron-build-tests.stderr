@@ -1,0 +1,113 @@
+warning: /home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-s-rpo-qualification-cpu-v228-v1/fe2o3/crates/rustc-codegen-fe2o3/tests/fixtures/local-marker/Cargo.toml: file `/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-s-rpo-qualification-cpu-v228-v1/fe2o3/crates/rustc-codegen-fe2o3/tests/fixtures/local-marker/src/main.rs` found to be present in multiple build targets:
+  * `lib` target `fe2o3_trusted_item_local_marker`
+  * `bin` target `fe2o3-trusted-item-local-marker`
+   Compiling proc-macro2 v1.0.107
+   Compiling unicode-ident v1.0.24
+   Compiling quote v1.0.47
+   Compiling version_check v0.9.5
+   Compiling memchr v2.8.3
+   Compiling syn v3.0.4
+   Compiling typenum v1.20.1
+   Compiling const_fn v0.4.12
+   Compiling syn v2.0.119
+   Compiling awint_internals v0.19.0
+   Compiling awint_core v0.19.0
+   Compiling equivalent v1.0.2
+   Compiling serde_core v1.0.229
+   Compiling recasting v0.2.3
+   Compiling triple_arena v0.15.1
+   Compiling awint_ext v0.19.0
+   Compiling linkme-impl v0.3.37
+   Compiling bytemuck v1.25.2
+   Compiling awint_macro_internals v0.19.0
+   Compiling safe_arch v1.2.0
+   Compiling aho-corasick v1.1.5
+   Compiling slotmap v1.1.1
+   Compiling thiserror v2.0.16
+   Compiling unicode-segmentation v1.13.3
+   Compiling foldhash v0.2.0
+   Compiling rustc_apfloat v0.2.3+llvm-462a31f5a5ab
+   Compiling hashbrown v0.17.1
+   Compiling scopeguard v1.2.0
+   Compiling regex-syntax v0.8.11
+   Compiling allocator-api2 v0.2.21
+   Compiling bytes v1.12.1
+   Compiling linkme v0.3.37
+   Compiling combine v4.6.8
+   Compiling regex-automata v0.4.18
+   Compiling indexmap v2.14.1
+   Compiling lock_api v0.4.14
+   Compiling convert_case v0.11.0
+   Compiling awint_macros v0.19.0
+   Compiling wide v1.7.0
+   Compiling thiserror-impl v2.0.16
+   Compiling hybrid-array v0.4.14
+   Compiling cfg-if v1.0.4
+   Compiling rustc-hash v2.1.3
+   Compiling arrayvec v0.7.8
+   Compiling smallvec v1.15.2
+   Compiling bitflags v2.13.1
+   Compiling utf8-chars v3.0.7
+   Compiling pliron-derive v0.17.0 (https://github.com/harsh-nod/pliron.git?rev=161c385576d45d4e634ba179fa93a545b91124e6#161c3855)
+   Compiling awint v0.19.0
+   Compiling hi_sparse_bitset v0.9.0
+   Compiling spin v0.12.3
+   Compiling regex v1.13.1
+   Compiling zmij v1.0.23
+   Compiling downcast-rs v2.0.2
+   Compiling once_vec v0.4.0
+   Compiling dyn-clone v1.0.20
+   Compiling log v0.4.34
+   Compiling block-buffer v0.12.1
+   Compiling pliron v0.17.0 (https://github.com/harsh-nod/pliron.git?rev=161c385576d45d4e634ba179fa93a545b91124e6#161c3855)
+   Compiling crypto-common v0.2.2
+   Compiling generic-array v0.14.7
+   Compiling serde v1.0.229
+   Compiling serde_json v1.0.151
+   Compiling digest v0.11.3
+   Compiling serde_derive v1.0.229
+   Compiling itoa v1.0.18
+   Compiling cpufeatures v0.3.1
+   Compiling sha2 v0.11.0
+   Compiling semver v1.0.28
+   Compiling rustc_version v0.4.1
+   Compiling crypto-common v0.1.7
+   Compiling block-buffer v0.10.4
+   Compiling digest v0.10.7
+   Compiling curve25519-dalek v4.1.3
+   Compiling cpufeatures v0.2.17
+   Compiling fe2o3-kernel-ir v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-s-rpo-qualification-cpu-v228-v1/fe2o3/crates/fe2o3-kernel-ir)
+   Compiling fe2o3-pliron-owner-core v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-s-rpo-qualification-cpu-v228-v1/fe2o3/crates/fe2o3-pliron-owner-core)
+   Compiling curve25519-dalek-derive v0.1.1
+   Compiling target-triple v1.0.1
+   Compiling signature v2.2.0
+   Compiling fe2o3-target-spec v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-s-rpo-qualification-cpu-v228-v1/fe2o3/crates/fe2o3-target-spec)
+   Compiling subtle v2.6.1
+   Compiling winnow v1.0.4
+   Compiling zeroize v1.9.0
+   Compiling toml_parser v1.1.3+spec-1.1.0
+   Compiling fe2o3-amd-target v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-s-rpo-qualification-cpu-v228-v1/fe2o3/crates/fe2o3-amd-target)
+   Compiling ed25519 v2.2.3
+   Compiling sha2 v0.10.9
+   Compiling serde_spanned v1.1.1
+   Compiling toml_datetime v1.1.1+spec-1.1.0
+   Compiling toml_writer v1.1.2+spec-1.1.0
+   Compiling toml v1.1.4+spec-1.1.0
+   Compiling ed25519-dalek v2.2.0
+   Compiling fe2o3-mir-model v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-s-rpo-qualification-cpu-v228-v1/fe2o3/crates/fe2o3-mir-model)
+   Compiling dialect-kernel v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-s-rpo-qualification-cpu-v228-v1/fe2o3/crates/dialect-kernel)
+   Compiling glob v0.3.4
+   Compiling fe2o3-proof-contracts v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-s-rpo-qualification-cpu-v228-v1/fe2o3/crates/fe2o3-proof-contracts)
+   Compiling termcolor v1.4.1
+   Compiling trybuild v1.0.120
+   Compiling fe2o3-functional-proof v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-s-rpo-qualification-cpu-v228-v1/fe2o3/crates/fe2o3-functional-proof)
+   Compiling dialect-mir v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-s-rpo-qualification-cpu-v228-v1/fe2o3/crates/dialect-mir)
+   Compiling dialect-proof v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-s-rpo-qualification-cpu-v228-v1/fe2o3/crates/dialect-proof)
+   Compiling fe2o3-kernel-analysis v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-s-rpo-qualification-cpu-v228-v1/fe2o3/crates/fe2o3-kernel-analysis)
+   Compiling dialect-gpu v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-s-rpo-qualification-cpu-v228-v1/fe2o3/crates/dialect-gpu)
+   Compiling dialect-dispatch v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-s-rpo-qualification-cpu-v228-v1/fe2o3/crates/dialect-dispatch)
+   Compiling dialect-schedule v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-s-rpo-qualification-cpu-v228-v1/fe2o3/crates/dialect-schedule)
+   Compiling dialect-tile v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-s-rpo-qualification-cpu-v228-v1/fe2o3/crates/dialect-tile)
+   Compiling dialect-autotune v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-s-rpo-qualification-cpu-v228-v1/fe2o3/crates/dialect-autotune)
+   Compiling fe2o3-pliron v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-s-rpo-qualification-cpu-v228-v1/fe2o3/crates/fe2o3-pliron)
+    Finished `test` profile [unoptimized] target(s) in 35.16s
