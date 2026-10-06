@@ -86,6 +86,10 @@ Host executable metadata is retained, not its body.
 
 ## Next Gate
 
+Follow-up: [deferred paired-state binding](../guarded-mlp-deferred-binding-v1/README.md)
+now separates genuine storage reservation from consuming role binding, matching
+the missing interface between Ferric's initialization phases.
+
 Expose an opaque engineering-only paired interface, then integrate the model's
 allocation ordering and one mixed Prefix284/Combined bank transaction. All
 owners and private retirement proofs must validate before any reset. The new

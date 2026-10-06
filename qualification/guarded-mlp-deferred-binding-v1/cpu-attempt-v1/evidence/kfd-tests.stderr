@@ -1,0 +1,756 @@
+warning: unused import: `session::Session`
+  --> crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_v1.rs:10:16
+   |
+10 | pub(super) use session::Session;
+   |                ^^^^^^^^^^^^^^^^
+   |
+   = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused imports: `RetainedPair`, `UnboundPair`, and `rearm_pairs`
+  --> crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_v1.rs:14:27
+   |
+14 | pub(super) use retained::{RetainedPair, UnboundPair, rearm_pairs};
+   |                           ^^^^^^^^^^^^  ^^^^^^^^^^^  ^^^^^^^^^^^
+
+warning: unused import: `prefix::Transaction`
+ --> crates/fe2o3-kfd/src/engineering_gfx950_resident_layer_tp2_v1.rs:7:5
+  |
+7 | use prefix::Transaction as _;
+  |     ^^^^^^^^^^^^^^^^^^^
+
+warning: constant `PREFIX_WORDS` is never used
+ --> crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_state_v1.rs:8:18
+  |
+8 | pub(super) const PREFIX_WORDS: usize = 548;
+  |                  ^^^^^^^^^^^^
+  |
+  = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: enum `Activation` is never used
+  --> crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_state_v1.rs:15:6
+   |
+15 | enum Activation {
+   |      ^^^^^^^^^^
+
+warning: struct `CombinedMlpStateV1` is never constructed
+  --> crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_state_v1.rs:28:19
+   |
+28 | pub(super) struct CombinedMlpStateV1 {
+   |                   ^^^^^^^^^^^^^^^^^^
+
+warning: struct `CombinedMlpSnapshotV1` is never constructed
+  --> crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_state_v1.rs:36:19
+   |
+36 | pub(super) struct CombinedMlpSnapshotV1 {
+   |                   ^^^^^^^^^^^^^^^^^^^^^
+
+warning: struct `CombinedMlpRegionsV1` is never constructed
+  --> crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_state_v1.rs:42:19
+   |
+42 | pub(super) struct CombinedMlpRegionsV1<'a> {
+   |                   ^^^^^^^^^^^^^^^^^^^^
+
+warning: methods `mlp_prefix`, `validator`, and `r2_guard` are never used
+  --> crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_state_v1.rs:47:19
+   |
+46 | impl CombinedMlpRegionsV1<'_> {
+   | ----------------------------- methods in this implementation
+47 |     pub(super) fn mlp_prefix(&self, rank: usize) -> Result<Gfx950EngineeringPeerPointerV1> {
+   |                   ^^^^^^^^^^
+...
+57 |     pub(super) fn validator(&self, rank: usize) -> Result<Gfx950EngineeringPeerPointerV1> {
+   |                   ^^^^^^^^^
+...
+67 |     pub(super) fn r2_guard(
+   |                   ^^^^^^^^
+
+warning: function `guard_words` is never used
+   --> crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_state_v1.rs:109:4
+    |
+109 | fn guard_words(generation: u64, verdict: u32) -> [u32; 4] {
+    |    ^^^^^^^^^^^
+
+warning: function `require_activation` is never used
+   --> crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_state_v1.rs:113:4
+    |
+113 | fn require_activation(actual: Activation, expected: Activation) -> Result<()> {
+    |    ^^^^^^^^^^^^^^^^^^
+
+warning: function `require_initial` is never used
+   --> crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_state_v1.rs:120:4
+    |
+120 | fn require_initial(snapshot: &CombinedMlpSnapshotV1, generation: u64) -> Result<()> {
+    |    ^^^^^^^^^^^^^^^
+
+warning: function `require_terminal` is never used
+   --> crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_state_v1.rs:130:4
+    |
+130 | fn require_terminal(snapshot: &CombinedMlpSnapshotV1, generation: u64) -> Result<()> {
+    |    ^^^^^^^^^^^^^^^^
+
+warning: function `require_rearm` is never used
+   --> crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_state_v1.rs:138:4
+    |
+138 | fn require_rearm(activation: Activation, previous: u64, next: u64) -> Result<()> {
+    |    ^^^^^^^^^^^^^
+
+warning: multiple methods are never used
+   --> crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_state_v1.rs:147:19
+    |
+146 | impl CombinedMlpStateV1 {
+    | ----------------------- methods in this implementation
+147 |     pub(super) fn owner_rank(&self) -> usize {
+    |                   ^^^^^^^^^^
+...
+151 |     pub(super) fn generation(&self) -> u64 {
+    |                   ^^^^^^^^^^
+...
+155 |     fn local_id(&self, group: &Gfx950EngineeringPeerGroupV1) -> Result<u64> {
+    |        ^^^^^^^^
+...
+180 |     pub(super) fn regions<'a>(
+    |                   ^^^^^^^
+...
+189 |     fn observe(&self, group: &mut Gfx950EngineeringPeerGroupV1) -> Result<CombinedMlpSnapshotV1> {
+    |        ^^^^^^^
+...
+209 |     pub(super) fn poison(&mut self, group: &mut Gfx950EngineeringPeerGroupV1) {
+    |                   ^^^^^^
+...
+214 |     fn outcome<T>(
+    |        ^^^^^^^
+...
+228 |     pub(super) fn submit(&mut self, group: &mut Gfx950EngineeringPeerGroupV1) -> Result<()> {
+    |                   ^^^^^^
+...
+245 |     pub(super) unsafe fn complete_quiescent(
+    |                          ^^^^^^^^^^^^^^^^^^
+...
+266 |     pub(super) unsafe fn rearm_quiescent(
+    |                          ^^^^^^^^^^^^^^^
+
+warning: function `allocate` is never used
+   --> crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_state_v1.rs:307:15
+    |
+307 | pub(super) fn allocate(
+    |               ^^^^^^^^
+
+warning: struct `RankInputs` is never constructed
+  --> crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_v1.rs:16:19
+   |
+16 | pub(super) struct RankInputs<'a> {
+   |                   ^^^^^^^^^^
+
+warning: struct `Inputs` is never constructed
+  --> crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_v1.rs:23:19
+   |
+23 | pub(super) struct Inputs<'a> {
+   |                   ^^^^^^
+
+warning: struct `Completion` is never constructed
+  --> crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_v1.rs:32:19
+   |
+32 | pub(super) struct Completion {
+   |                   ^^^^^^^^^^
+
+warning: function `deadline_check` is never used
+  --> crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_v1.rs:38:4
+   |
+38 | fn deadline_check(now: Instant, deadline: Instant) -> Result<()> {
+   |    ^^^^^^^^^^^^^^
+
+warning: trait `CoordinatorBackend` is never used
+  --> crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_v1.rs:45:7
+   |
+45 | trait CoordinatorBackend {
+   |       ^^^^^^^^^^^^^^^^^^
+
+warning: function `coordinate` is never used
+  --> crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_v1.rs:65:4
+   |
+65 | fn coordinate(backend: &mut impl CoordinatorBackend, timeout_ms: u32) -> Result<Completion> {
+   |    ^^^^^^^^^^
+
+warning: function `coordinate_until` is never used
+  --> crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_v1.rs:69:4
+   |
+69 | fn coordinate_until(
+   |    ^^^^^^^^^^^^^^^^
+
+warning: struct `Native` is never constructed
+   --> crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_v1.rs:142:8
+    |
+142 | struct Native<'group, 'kernel> {
+    |        ^^^^^^
+
+warning: function `dispatch` is never used
+   --> crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_v1.rs:328:22
+    |
+328 | pub(super) unsafe fn dispatch(
+    |                      ^^^^^^^^
+
+warning: constant `PACKETS` is never used
+ --> crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_arena_v1.rs:9:18
+  |
+9 | pub(super) const PACKETS: usize = 5;
+  |                  ^^^^^^^
+
+warning: constant `KERNEL_SLOTS` is never used
+  --> crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_arena_v1.rs:10:18
+   |
+10 | pub(super) const KERNEL_SLOTS: [usize; 4] = [0, 1, 2, 4];
+   |                  ^^^^^^^^^^^^
+
+warning: constant `ARENA_BYTES` is never used
+  --> crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_arena_v1.rs:11:18
+   |
+11 | pub(super) const ARENA_BYTES: usize = PAGE_BYTES + 4 * MAX_KERNARG_BYTES_V1 as usize;
+   |                  ^^^^^^^^^^^
+
+warning: type alias `Batch` is never used
+  --> crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_arena_v1.rs:12:6
+   |
+12 | type Batch = AqlPreparedPeerPacketBatchV1<PACKETS>;
+   |      ^^^^^
+
+warning: type alias `Values` is never used
+  --> crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_arena_v1.rs:13:6
+   |
+13 | type Values = [[i64; PACKETS]; 2];
+   |      ^^^^^^
+
+warning: function `signal_value` is never used
+  --> crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_arena_v1.rs:19:15
+   |
+19 | pub(super) fn signal_value(kind: i64, value: i64) -> Result<i64> {
+   |               ^^^^^^^^^^^^
+
+warning: function `before_publication` is never used
+  --> crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_arena_v1.rs:26:15
+   |
+26 | pub(super) fn before_publication(values: Values, published: [bool; 2], rank: usize) -> Result<()> {
+   |               ^^^^^^^^^^^^^^^^^^
+
+warning: function `completion_gate` is never used
+  --> crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_arena_v1.rs:48:15
+   |
+48 | pub(super) fn completion_gate(
+   |               ^^^^^^^^^^^^^^^
+
+warning: struct `Arena` is never constructed
+  --> crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_arena_v1.rs:77:8
+   |
+77 | struct Arena {
+   |        ^^^^^
+
+warning: methods `check`, `signal`, and `kernarg` are never used
+   --> crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_arena_v1.rs:86:8
+    |
+ 85 | impl Arena {
+    | ---------- methods in this implementation
+ 86 |     fn check(&self, group: &Gfx950EngineeringPeerGroupV1) -> Result<()> {
+    |        ^^^^^
+...
+126 |     fn signal(&self, slot: usize) -> Result<ObservedGpuAddressV1> {
+    |        ^^^^^^
+...
+138 |     fn kernarg(&self, index: usize) -> Result<ObservedGpuAddressV1> {
+    |        ^^^^^^^
+
+warning: function `allocate` is never used
+   --> crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_arena_v1.rs:151:4
+    |
+151 | fn allocate(
+    |    ^^^^^^^^
+
+warning: function `make_batch` is never used
+   --> crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_arena_v1.rs:262:15
+    |
+262 | pub(super) fn make_batch(
+    |               ^^^^^^^^^^
+
+warning: struct `Staged` is never constructed
+   --> crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_arena_v1.rs:309:19
+    |
+309 | pub(super) struct Staged {
+    |                   ^^^^^^
+
+warning: multiple associated items are never used
+   --> crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_arena_v1.rs:320:19
+    |
+319 | impl Staged {
+    | ----------- associated items in this implementation
+320 |     pub(super) fn prepare(
+    |                   ^^^^^^^
+...
+362 |     pub(super) fn check(&self, group: &Gfx950EngineeringPeerGroupV1) -> Result<()> {
+    |                   ^^^^^
+...
+372 |     fn read_signals(&mut self, group: &mut Gfx950EngineeringPeerGroupV1) -> Result<Values> {
+    |        ^^^^^^^^^^^^
+...
+393 |     pub(super) fn reserve(
+    |                   ^^^^^^^
+...
+417 |     fn observe(
+    |        ^^^^^^^
+...
+457 |     pub(super) fn publish(
+    |                   ^^^^^^^
+...
+502 |     pub(super) fn complete(
+    |                   ^^^^^^^^
+...
+525 |     pub(super) fn retire(
+    |                   ^^^^^^
+...
+547 |     pub(super) fn require_retired(&self) -> Result<()> {
+    |                   ^^^^^^^^^^^^^^^
+
+warning: struct `PublicationTarget` is never constructed
+   --> crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_arena_v1.rs:555:8
+    |
+555 | struct PublicationTarget<'a> {
+    |        ^^^^^^^^^^^^^^^^^
+
+warning: method `write` is never used
+   --> crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_arena_v1.rs:562:8
+    |
+561 | impl PublicationTarget<'_> {
+    | -------------------------- method in this implementation
+562 |     fn write(&mut self, index: u32, bytes: [u8; 64]) -> Result<()> {
+    |        ^^^^^
+
+warning: function `retired_gate` is never used
+ --> crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_retired_v1.rs:5:4
+  |
+5 | fn retired_gate(
+  |    ^^^^^^^^^^^^
+
+warning: struct `Retired` is never constructed
+  --> crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_retired_v1.rs:35:29
+   |
+35 | pub(in super::super) struct Retired {
+   |                             ^^^^^^^
+
+warning: method `seal_retired` is never used
+  --> crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_retired_v1.rs:43:29
+   |
+41 | impl Staged {
+   | ----------- method in this implementation
+42 |     /// The caller has already completed both typed owners through Native::finish.
+43 |     pub(in super::super) fn seal_retired(
+   |                             ^^^^^^^^^^^^
+
+warning: methods `identities` and `recheck` are never used
+  --> crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_retired_v1.rs:71:29
+   |
+70 | impl Retired {
+   | ------------ methods in this implementation
+71 |     pub(in super::super) fn identities(&self) -> [(u64, u64); 2] {
+   |                             ^^^^^^^^^^
+...
+78 |     pub(in super::super) fn recheck(
+   |                             ^^^^^^^
+
+warning: constant `GUARDED_IMAGE` is never used
+ --> crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_profiles_v1.rs:5:18
+  |
+5 | pub(super) const GUARDED_IMAGE: [u8; 32] = [
+  |                  ^^^^^^^^^^^^^
+
+warning: constant `GUARD_SYMBOL` is never used
+ --> crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_profiles_v1.rs:9:18
+  |
+9 | pub(super) const GUARD_SYMBOL: &str = "ferric_qwen3_mlp_state_guard_v2";
+  |                  ^^^^^^^^^^^^
+
+warning: constant `R2_SYMBOL` is never used
+  --> crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_profiles_v1.rs:10:18
+   |
+10 | pub(super) const R2_SYMBOL: &str = "ferric_qwen3_tp2_guarded_projection_residual_bf16_v2";
+   |                  ^^^^^^^^^
+
+warning: enum `OutputPolicy` is never used
+  --> crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_profiles_v1.rs:13:17
+   |
+13 | pub(super) enum OutputPolicy {
+   |                 ^^^^^^^^^^^^
+
+warning: function `validate_policy` is never used
+  --> crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_profiles_v1.rs:18:15
+   |
+18 | pub(super) fn validate_policy(group: &Gfx950EngineeringPeerGroupV1) -> Result<()> {
+   |               ^^^^^^^^^^^^^^^
+
+warning: function `validate_owners` is never used
+  --> crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_profiles_v1.rs:35:15
+   |
+35 | pub(super) fn validate_owners(
+   |               ^^^^^^^^^^^^^^^
+
+warning: function `guarded_metadata` is never used
+  --> crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_profiles_v1.rs:57:15
+   |
+57 | pub(super) fn guarded_metadata(value: &KernelMetadataV1, validator: bool) -> Result<()> {
+   |               ^^^^^^^^^^^^^^^^
+
+warning: function `region` is never used
+  --> crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_profiles_v1.rs:89:4
+   |
+89 | fn region(
+   |    ^^^^^^
+
+warning: function `validate_region` is never used
+   --> crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_profiles_v1.rs:123:15
+    |
+123 | pub(super) fn validate_region(region: profile::OwnedRegion, requested: usize) -> Result<()> {
+    |               ^^^^^^^^^^^^^^^
+
+warning: function `overlap` is never used
+   --> crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_profiles_v1.rs:137:4
+    |
+137 | fn overlap(left: profile::OwnedRegion, right: profile::OwnedRegion) -> bool {
+    |    ^^^^^^^
+
+warning: function `validate_regions` is never used
+   --> crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_profiles_v1.rs:143:15
+    |
+143 | pub(super) fn validate_regions(
+    |               ^^^^^^^^^^^^^^^^
+
+warning: function `validate_regions_with_policy` is never used
+   --> crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_profiles_v1.rs:152:15
+    |
+152 | pub(super) fn validate_regions_with_policy(
+    |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `guarded_arguments` is never used
+   --> crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_profiles_v1.rs:220:15
+    |
+220 | pub(super) fn guarded_arguments(generation: u64, validator: bool) -> Vec<u8> {
+    |               ^^^^^^^^^^^^^^^^^
+
+warning: function `prepare` is never used
+   --> crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_profiles_v1.rs:236:15
+    |
+236 | pub(super) fn prepare(
+    |               ^^^^^^^
+
+warning: function `prepare_exact_own_residual` is never used
+   --> crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_profiles_v1.rs:245:15
+    |
+245 | pub(super) fn prepare_exact_own_residual(
+    |               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `prepare_with_policy` is never used
+   --> crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_profiles_v1.rs:260:4
+    |
+260 | fn prepare_with_policy(
+    |    ^^^^^^^^^^^^^^^^^^^
+
+warning: enum `Custody` is never used
+ --> crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_session_v1.rs:4:6
+  |
+4 | enum Custody {
+  |      ^^^^^^^
+
+warning: methods `begin_run`, `complete`, `begin_rearm`, and `transfer` are never used
+  --> crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_session_v1.rs:15:8
+   |
+14 | impl Custody {
+   | ------------ methods in this implementation
+15 |     fn begin_run(&mut self) -> Result<()> {
+   |        ^^^^^^^^^
+...
+22 |     fn complete(&mut self, generation: u64, result: &Completion) -> Result<()> {
+   |        ^^^^^^^^
+...
+36 |     fn begin_rearm(&mut self) -> Result<(u64, [CombinedMlpSnapshotV1; 2])> {
+   |        ^^^^^^^^^^^
+...
+43 |     fn transfer(&self, write: bool) -> Result<()> {
+   |        ^^^^^^^^
+
+warning: trait `RearmBackend` is never used
+  --> crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_session_v1.rs:52:7
+   |
+52 | trait RearmBackend {
+   |       ^^^^^^^^^^^^
+
+warning: function `rearm_pair` is never used
+  --> crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_session_v1.rs:65:4
+   |
+65 | fn rearm_pair(
+   |    ^^^^^^^^^^
+
+warning: struct `Session` is never constructed
+   --> crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_session_v1.rs:141:29
+    |
+141 | pub(in super::super) struct Session<'group, 'kernel> {
+    |                             ^^^^^^^
+
+warning: multiple associated items are never used
+   --> crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_session_v1.rs:152:36
+    |
+146 | impl<'group, 'kernel> Session<'group, 'kernel> {
+    | ---------------------------------------------- associated items in this implementation
+...
+152 |     pub(in super::super) unsafe fn new(
+    |                                    ^^^
+...
+172 |     fn outcome<T>(&mut self, result: Result<T>) -> Result<T> {
+    |        ^^^^^^^
+...
+180 |     pub(in super::super) fn run(&mut self, timeout_ms: u32) -> Result<Completion> {
+    |                             ^^^
+...
+191 |     pub(in super::super) fn rearm_next(&mut self, timeout_ms: u32) -> Result<u64> {
+    |                             ^^^^^^^^^^
+...
+207 |     fn bound_payload(&self, buffer: Gfx950EngineeringPeerBufferV1) -> Result<()> {
+    |        ^^^^^^^^^^^^^
+...
+221 |     pub(in super::super) fn read(
+    |                             ^^^^
+...
+238 |     pub(in super::super) fn write(
+    |                             ^^^^^
+
+warning: struct `Binding` is never constructed
+ --> crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_retained_v1.rs:5:8
+  |
+5 | struct Binding {
+  |        ^^^^^^^
+
+warning: associated functions `capture` and `capture_with_policy` are never used
+  --> crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_retained_v1.rs:17:8
+   |
+16 | impl Binding {
+   | ------------ associated functions in this implementation
+17 |     fn capture(group: &Gfx950EngineeringPeerGroupV1, inputs: &Inputs<'_>) -> Self {
+   |        ^^^^^^^
+...
+21 |     fn capture_with_policy(
+   |        ^^^^^^^^^^^^^^^^^^^
+
+warning: enum `Phase` is never used
+  --> crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_retained_v1.rs:49:6
+   |
+49 | enum Phase {
+   |      ^^^^^
+
+warning: struct `Completed` is never constructed
+  --> crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_retained_v1.rs:56:8
+   |
+56 | struct Completed {
+   |        ^^^^^^^^^
+
+warning: struct `RetainedPair` is never constructed
+  --> crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_retained_v1.rs:63:29
+   |
+63 | pub(in super::super) struct RetainedPair {
+   |                             ^^^^^^^^^^^^
+
+warning: struct `UnboundPair` is never constructed
+  --> crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_retained_v1.rs:72:29
+   |
+72 | pub(in super::super) struct UnboundPair {
+   |                             ^^^^^^^^^^^
+
+warning: function `poison_group` is never used
+  --> crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_retained_v1.rs:77:4
+   |
+77 | fn poison_group(group: &mut Gfx950EngineeringPeerGroupV1) {
+   |    ^^^^^^^^^^^^
+
+warning: struct `Allocation` is never constructed
+  --> crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_retained_v1.rs:84:8
+   |
+84 | struct Allocation<'a> {
+   |        ^^^^^^^^^^
+
+warning: methods `allocate_owners` and `bind` are never used
+   --> crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_retained_v1.rs:102:8
+    |
+101 | impl Allocation<'_> {
+    | ------------------- methods in this implementation
+102 |     fn allocate_owners(&mut self, until: Instant) -> Result<()> {
+    |        ^^^^^^^^^^^^^^^
+...
+113 |     fn bind(
+    |        ^^^^
+
+warning: function `unbound_identity` is never used
+   --> crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_retained_v1.rs:151:4
+    |
+151 | fn unbound_identity(
+    |    ^^^^^^^^^^^^^^^^
+
+warning: associated items `allocate`, `bind`, `bind_exact_own_residual`, and `bind_with_policy` are never used
+   --> crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_retained_v1.rs:178:29
+    |
+176 | impl UnboundPair {
+    | ---------------- associated items in this implementation
+177 |     /// No kernels or payload roles are needed to reserve genuine initial state.
+178 |     pub(in super::super) fn allocate(
+    |                             ^^^^^^^^
+...
+221 |     pub(in super::super) unsafe fn bind(
+    |                                    ^^^^
+...
+234 |     pub(in super::super) unsafe fn bind_exact_own_residual(
+    |                                    ^^^^^^^^^^^^^^^^^^^^^^^
+...
+251 |     unsafe fn bind_with_policy(
+    |               ^^^^^^^^^^^^^^^^
+
+warning: struct `Operation` is never constructed
+   --> crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_retained_v1.rs:285:8
+    |
+285 | struct Operation<'a> {
+    |        ^^^^^^^^^
+
+warning: associated items `new`, `begin`, and `quarantine` are never used
+   --> crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_retained_v1.rs:294:8
+    |
+293 | impl<'a> Operation<'a> {
+    | ---------------------- associated items in this implementation
+294 |     fn new(group: &'a mut Gfx950EngineeringPeerGroupV1, pairs: &'a mut [RetainedPair]) -> Self {
+    |        ^^^
+...
+304 |     fn begin(&mut self, expected: Phase) -> Result<()> {
+    |        ^^^^^
+...
+323 |     fn quarantine(&mut self) {
+    |        ^^^^^^^^^^
+
+warning: function `deadline` is never used
+   --> crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_retained_v1.rs:342:4
+    |
+342 | fn deadline(start: Instant, timeout_ms: u32) -> Result<Instant> {
+    |    ^^^^^^^^
+
+warning: associated items `allocate`, `allocate_exact_own_residual`, `allocate_with_policy`, and `run` are never used
+   --> crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_retained_v1.rs:358:36
+    |
+351 | impl RetainedPair {
+    | ----------------- associated items in this implementation
+...
+358 |     pub(in super::super) unsafe fn allocate(
+    |                                    ^^^^^^^^
+...
+375 |     pub(in super::super) unsafe fn allocate_exact_own_residual(
+    |                                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+...
+391 |     unsafe fn allocate_with_policy(
+    |               ^^^^^^^^^^^^^^^^^^^^
+...
+407 |     pub(in super::super) fn run(
+    |                             ^^^
+
+warning: trait `RearmBackend` is never used
+   --> crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_retained_v1.rs:454:7
+    |
+454 | trait RearmBackend {
+    |       ^^^^^^^^^^^^
+
+warning: function `rearm_all` is never used
+   --> crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_retained_v1.rs:463:4
+    |
+463 | fn rearm_all(
+    |    ^^^^^^^^^
+
+warning: function `rearm_pairs` is never used
+   --> crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_retained_v1.rs:582:25
+    |
+582 | pub(in super::super) fn rearm_pairs(
+    |                         ^^^^^^^^^^^
+
+warning: function `gfx942_cwsr_header_bytes` is never used
+   --> crates/fe2o3-kfd/src/queue_submit.rs:406:15
+    |
+406 | pub(crate) fn gfx942_cwsr_header_bytes(
+    |               ^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `initialize_gfx942_cwsr_headers` is never used
+   --> crates/fe2o3-kfd/src/queue_submit.rs:415:15
+    |
+415 | pub(crate) fn initialize_gfx942_cwsr_headers(
+    |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: constant `PREFIX_WORDS` is never used
+ --> crates/fe2o3-kfd/src/memory_linux_combined_mlp_state_v1.rs:4:7
+  |
+4 | const PREFIX_WORDS: usize = 548;
+  |       ^^^^^^^^^^^^
+
+warning: constant `WORDS` is never used
+ --> crates/fe2o3-kfd/src/memory_linux_combined_mlp_state_v1.rs:5:7
+  |
+5 | const WORDS: usize = PREFIX_WORDS + 4;
+  |       ^^^^^
+
+warning: constant `BYTES` is never used
+ --> crates/fe2o3-kfd/src/memory_linux_combined_mlp_state_v1.rs:6:7
+  |
+6 | const BYTES: usize = WORDS * core::mem::size_of::<AtomicU32>();
+  |       ^^^^^
+
+warning: function `combined_pointer` is never used
+ --> crates/fe2o3-kfd/src/memory_linux_combined_mlp_state_v1.rs:8:4
+  |
+8 | fn combined_pointer(
+  |    ^^^^^^^^^^^^^^^^
+
+warning: associated functions `initialize_combined_mlp_state_v1`, `observe_combined_mlp_state_v1`, and `rearm_combined_mlp_state_v1` are never used
+   --> crates/fe2o3-kfd/src/memory_linux_combined_mlp_state_v1.rs:60:26
+    |
+ 29 | impl LinuxGfx950MemoryBackend {
+    | ----------------------------- associated functions in this implementation
+...
+ 60 |     pub(crate) unsafe fn initialize_combined_mlp_state_v1(
+    |                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+...
+ 82 |     pub(crate) unsafe fn observe_combined_mlp_state_v1(
+    |                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+...
+106 |     pub(crate) unsafe fn rearm_combined_mlp_state_v1(
+    |                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `prefix::Transaction`
+ --> crates/fe2o3-kfd/src/engineering_gfx950_resident_layer_tp2_v1.rs:7:5
+  |
+7 | use prefix::Transaction as _;
+  |     ^^^^^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: value assigned to `reported` is never read
+   --> crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_session_v1_tests.rs:230:5
+    |
+230 |     reported.states[0].guard[0] = 99;
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = help: maybe it is overwritten before being read?
+    = note: `#[warn(unused_assignments)]` (part of `#[warn(unused)]`) on by default
+
+warning: field `0` is never read
+ --> crates/fe2o3-kfd/src/memory_linux_combined_mlp_state_v1_tests.rs:4:16
+  |
+4 | struct Storage([u8; 4096]);
+  |        ------- ^^^^^^^^^^
+  |        |
+  |        field in this struct
+  |
+  = help: consider removing this field
+  = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: `fe2o3-kfd` (lib) generated 92 warnings (run `cargo fix --lib -p fe2o3-kfd` to apply 2 suggestions)
+warning: `fe2o3-kfd` (lib test) generated 3 warnings
+    Finished `test` profile [optimized] target(s) in 0.01s
+     Running unittests src/lib.rs (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-deferred-binding-cpu-v228-v1/target/debug/deps/fe2o3_kfd-11448a9880d552d9)
+     Running unittests src/bin/gfx950_engineering_worker.rs (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-deferred-binding-cpu-v228-v1/target/debug/deps/fe2o3_gfx950_engineering_worker-798dcc99f7ec8797)
+     Running tests/kfd_debug_trap_live.rs (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-deferred-binding-cpu-v228-v1/target/debug/deps/kfd_debug_trap_live-bae73a537360105c)
+     Running tests/target_debug_telemetry_env_v1.rs (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-deferred-binding-cpu-v228-v1/target/debug/deps/target_debug_telemetry_env_v1-9e3f10bafd572490)
+     Running tests/target_debug_telemetry_v1.rs (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-deferred-binding-cpu-v228-v1/target/debug/deps/target_debug_telemetry_v1-e8d864b2f1065cd0)
