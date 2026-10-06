@@ -136,6 +136,7 @@ The [distinct private paired coordinator](../guarded-mlp-paired-v1/README.md)
 now compiles and passes CPU qualification on MI350. It prepares R1, MLP,
 validator, the both-validator barrier, and R2 on each rank, with separate
 tests for ten signals, queue frontiers, failure handling and owner lifecycle.
-Its actual paired GPU execution is still unqualified. Ferric must also consume
+Its follow-up [nonzero native diagnostic](../guarded-mlp-paired-native-v1/README.md)
+now passes the actual paired GPU chain. Ferric must also consume
 that combined completion without calling its existing final residual step a
 second time. No such paired execution is claimed by this serial diagnostic.

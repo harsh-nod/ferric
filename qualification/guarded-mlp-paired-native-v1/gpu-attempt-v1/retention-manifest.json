@@ -1,0 +1,312 @@
+{
+  "binary": {
+    "bytes": 10909496,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-paired-native-cpu-v228-v1/target/debug/deps/fe2o3_kfd-11448a9880d552d9",
+    "sha256": "978bb38dd909ea376934b3b395165f93199e128e360a360bacb4136c92890487"
+  },
+  "exported_host_executable_bodies": false,
+  "files": {
+    "evidence/after.command.json": {
+      "bytes": 989,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-paired-native-gpu-v228-v1/evidence/after.command.json",
+      "sha256": "da103bbea9f48a11afe453016da0ef868bb8afe4aeb0191a8da134c3d533a541"
+    },
+    "evidence/after.result.json": {
+      "bytes": 1319,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-paired-native-gpu-v228-v1/evidence/after.result.json",
+      "sha256": "a59c8fd867ff704a86f6ebee1633c29859687ef4fbe0eccf99cd946f7358aeb7"
+    },
+    "evidence/after.started.json": {
+      "bytes": 226,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-paired-native-gpu-v228-v1/evidence/after.started.json",
+      "sha256": "13d90148a3f54f00d491858108df8af94a1cc38aa32e7b550161f4272be7be15"
+    },
+    "evidence/after.stderr": {
+      "bytes": 0,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-paired-native-gpu-v228-v1/evidence/after.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "evidence/after.stdout": {
+      "bytes": 1275,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-paired-native-gpu-v228-v1/evidence/after.stdout",
+      "sha256": "e70f2d7235dbd50455554f2a277613971e2fcdf117ec1bdcdf47644bcf49c422"
+    },
+    "evidence/before.command.json": {
+      "bytes": 989,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-paired-native-gpu-v228-v1/evidence/before.command.json",
+      "sha256": "da103bbea9f48a11afe453016da0ef868bb8afe4aeb0191a8da134c3d533a541"
+    },
+    "evidence/before.result.json": {
+      "bytes": 1323,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-paired-native-gpu-v228-v1/evidence/before.result.json",
+      "sha256": "0d8c7118cc8f60185a84db1a9eb082efcb0db597a7bdfc1740e0123e6503896b"
+    },
+    "evidence/before.started.json": {
+      "bytes": 226,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-paired-native-gpu-v228-v1/evidence/before.started.json",
+      "sha256": "e34ab07cc15f5627d192157980d7988f07202f9f0ec6aa4671b9213175789cf8"
+    },
+    "evidence/before.stderr": {
+      "bytes": 0,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-paired-native-gpu-v228-v1/evidence/before.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "evidence/before.stdout": {
+      "bytes": 1275,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-paired-native-gpu-v228-v1/evidence/before.stdout",
+      "sha256": "e70f2d7235dbd50455554f2a277613971e2fcdf117ec1bdcdf47644bcf49c422"
+    },
+    "evidence/complete.json": {
+      "bytes": 944021,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-paired-native-gpu-v228-v1/evidence/complete.json",
+      "sha256": "43b07e7fab6470214ca52fac565bb2fc765b4e5352b5d485a1936553ed7b8987"
+    },
+    "evidence/inputs-after.json": {
+      "bytes": 435509,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-paired-native-gpu-v228-v1/evidence/inputs-after.json",
+      "sha256": "fc80fc081f1993a80439c471c3f2c84c72a62a4d44058470e32a9a5b12f5f105"
+    },
+    "evidence/inputs-before.json": {
+      "bytes": 435110,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-paired-native-gpu-v228-v1/evidence/inputs-before.json",
+      "sha256": "edb2e270fd45b51b89add6ed04c83e964e27d724322aa8e84aa2b5b7a2467663"
+    },
+    "evidence/ldd.command.json": {
+      "bytes": 1115,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-paired-native-gpu-v228-v1/evidence/ldd.command.json",
+      "sha256": "f4d21a4c72ff4ef3a9647d0f6035ed64d1dcd974d1df2bcc85ab531bc5045ffe"
+    },
+    "evidence/ldd.result.json": {
+      "bytes": 1437,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-paired-native-gpu-v228-v1/evidence/ldd.result.json",
+      "sha256": "20101799951b3a22af744c55803181e5ae66b20d54f15f3a19627e80fa0cb691"
+    },
+    "evidence/ldd.started.json": {
+      "bytes": 352,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-paired-native-gpu-v228-v1/evidence/ldd.started.json",
+      "sha256": "24b23fabd30d4511b50072e6cb9243722b1bcb3040c0cda0da377564b80d0730"
+    },
+    "evidence/ldd.stderr": {
+      "bytes": 0,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-paired-native-gpu-v228-v1/evidence/ldd.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "evidence/ldd.stdout": {
+      "bytes": 297,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-paired-native-gpu-v228-v1/evidence/ldd.stdout",
+      "sha256": "9d75d59091cbf3d2761b088cf2c71d030dbdae31a2dd7b2d856fea70299c5cd3"
+    },
+    "evidence/native-list.command.json": {
+      "bytes": 1271,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-paired-native-gpu-v228-v1/evidence/native-list.command.json",
+      "sha256": "e3330a2d020a7b9a1cc8904da3faf48205ef717802fe81486edc0f7406b04223"
+    },
+    "evidence/native-list.result.json": {
+      "bytes": 1625,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-paired-native-gpu-v228-v1/evidence/native-list.result.json",
+      "sha256": "fa3a67056139f0e220f323ba9728d06c88ec5e7d45e7d38ffb27c4a9c1e23bff"
+    },
+    "evidence/native-list.started.json": {
+      "bytes": 508,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-paired-native-gpu-v228-v1/evidence/native-list.started.json",
+      "sha256": "dfaea51019f0689ebc1f25e9144168129e8d977cbdf8c2e938f9d448f531c69b"
+    },
+    "evidence/native-list.stderr": {
+      "bytes": 0,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-paired-native-gpu-v228-v1/evidence/native-list.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "evidence/native-list.stdout": {
+      "bytes": 107,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-paired-native-gpu-v228-v1/evidence/native-list.stdout",
+      "sha256": "3514a4d4b5eb5ffa41d4238ddb88e4cf604b3958365ca3b0210132c5b795e6e3"
+    },
+    "evidence/native.command.json": {
+      "bytes": 1621,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-paired-native-gpu-v228-v1/evidence/native.command.json",
+      "sha256": "5de63aabb00234d32440c08264627d3ae7b91ff8c62ddba00f0172d899e90e5c"
+    },
+    "evidence/native.result.json": {
+      "bytes": 1619,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-paired-native-gpu-v228-v1/evidence/native.result.json",
+      "sha256": "eced945f198139e6ca536ef24935dd1326b6080ba9472fcffccaf61aa3a48d93"
+    },
+    "evidence/native.started.json": {
+      "bytes": 517,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-paired-native-gpu-v228-v1/evidence/native.started.json",
+      "sha256": "225fbe45e685952a3adf0947077d87986e51c1be1ea13320388038f7f5cd046a"
+    },
+    "evidence/native.stderr": {
+      "bytes": 0,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-paired-native-gpu-v228-v1/evidence/native.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "evidence/native.stdout": {
+      "bytes": 450194,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-paired-native-gpu-v228-v1/evidence/native.stdout",
+      "sha256": "9928f476e7927157924e7af726cf12fc2d4bde3527398d10fcde354a4ed2005c"
+    },
+    "evidence/observation.json": {
+      "bytes": 461336,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-paired-native-gpu-v228-v1/evidence/observation.json",
+      "sha256": "9f778111fae86711d47f876b37f3c7d40f3676d2d4752af353d60c0ef66e9a9d"
+    },
+    "evidence/readelf.command.json": {
+      "bytes": 1139,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-paired-native-gpu-v228-v1/evidence/readelf.command.json",
+      "sha256": "ed32e3a01e4f9da55831957c6cf72642677385504a7b9122ef302f29ae7201bf"
+    },
+    "evidence/readelf.result.json": {
+      "bytes": 1478,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-paired-native-gpu-v228-v1/evidence/readelf.result.json",
+      "sha256": "2919d4f9f8ffdeada13f6c6c5a623006ccd22a9ecc2038e88606be4690a29244"
+    },
+    "evidence/readelf.started.json": {
+      "bytes": 376,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-paired-native-gpu-v228-v1/evidence/readelf.started.json",
+      "sha256": "b4864d22c6e612f19f661d165d9e36904b42d4d63942d37c1143ea42445885ec"
+    },
+    "evidence/readelf.stderr": {
+      "bytes": 0,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-paired-native-gpu-v228-v1/evidence/readelf.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "evidence/readelf.stdout": {
+      "bytes": 4385,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-paired-native-gpu-v228-v1/evidence/readelf.stdout",
+      "sha256": "e11ac6c500518b82079a18abbf5f7356e2a73c0e10fd67f698f50a4aa016d317"
+    },
+    "evidence/reference-tests.command.json": {
+      "bytes": 1140,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-paired-native-gpu-v228-v1/evidence/reference-tests.command.json",
+      "sha256": "40440cf8b5af8679ea99fccf91bd144b33b343da268fd3fb0c4b4f95b55bb5e2"
+    },
+    "evidence/reference-tests.result.json": {
+      "bytes": 1510,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-paired-native-gpu-v228-v1/evidence/reference-tests.result.json",
+      "sha256": "5b57ae35fba20ddc1d58856cda6a687f1de443d0acc0cba32c336fdbcfec08fc"
+    },
+    "evidence/reference-tests.started.json": {
+      "bytes": 377,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-paired-native-gpu-v228-v1/evidence/reference-tests.started.json",
+      "sha256": "bea8f87a77fa9d6fd2721599269f483fdcff69631d1d1ad5e24305ae95134f92"
+    },
+    "evidence/reference-tests.stderr": {
+      "bytes": 0,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-paired-native-gpu-v228-v1/evidence/reference-tests.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "evidence/reference-tests.stdout": {
+      "bytes": 153,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-paired-native-gpu-v228-v1/evidence/reference-tests.stdout",
+      "sha256": "c89f2f407701d606d09d09a95a2570134f81d0288870b413bd2a02e0e668769d"
+    },
+    "evidence/runtime-libraries.json": {
+      "bytes": 1590,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-paired-native-gpu-v228-v1/evidence/runtime-libraries.json",
+      "sha256": "af2e991c938f67c0e3bbf2f116f0b89c31fdb738169a6df8b2a9b6fc4406f16c"
+    },
+    "evidence/topology-before.json": {
+      "bytes": 1757,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-paired-native-gpu-v228-v1/evidence/topology-before.json",
+      "sha256": "0be2a01cf75196ff7b76ab8d4af49f3b5138e0b7d391d0f733bca9abc49bcaf9"
+    },
+    "evidence/verify.command.json": {
+      "bytes": 1395,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-paired-native-gpu-v228-v1/evidence/verify.command.json",
+      "sha256": "3b9bfb6131e6dc72ea123e13a09c2051958fa4006146e8491560a50a0d1d437e"
+    },
+    "evidence/verify.result.json": {
+      "bytes": 1729,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-paired-native-gpu-v228-v1/evidence/verify.result.json",
+      "sha256": "3de3643364769d802207fe8f453740af1b318a79104e633027233a1bff54e43b"
+    },
+    "evidence/verify.started.json": {
+      "bytes": 632,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-paired-native-gpu-v228-v1/evidence/verify.started.json",
+      "sha256": "7df8315295ae04c47f7665371f9d5b6aa145fcadb5843da73d2b61ecaf8e700d"
+    },
+    "evidence/verify.stderr": {
+      "bytes": 0,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-paired-native-gpu-v228-v1/evidence/verify.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "evidence/verify.stdout": {
+      "bytes": 448,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-paired-native-gpu-v228-v1/evidence/verify.stdout",
+      "sha256": "9c100edb80e0fddad60a14f43e5044aa4fcebe20db59d9d9337846cc9b3f34c7"
+    },
+    "export_gpu.py": {
+      "bytes": 7539,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/export_native_paired_mlp_gpu_v228_v1.py",
+      "sha256": "f233aed512484886e1fafdb60d7d83be07de6faccef88ce7524fdc03212ad674"
+    },
+    "guarded.hsaco": {
+      "bytes": 28440,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-paired-native-gpu-v228-v1/guarded.hsaco",
+      "sha256": "de880dcebf79425ccb555c1a2bdca3ff78b926f7b2062d06b918763da4de0f66"
+    },
+    "input-manifest.json": {
+      "bytes": 1144,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-paired-native-gpu-v228-v1/input-manifest.json",
+      "sha256": "55ebb7dcdc546da91df2a10e0915bb26a8afc9fe383993b5abbddb8e2f6f52a7"
+    },
+    "library_audit.py": {
+      "bytes": 25872,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-paired-native-gpu-v228-v1/library_audit.py",
+      "sha256": "b26d60ef6dbe24f2182b52b2e0eb44632848061b7a4a1735fc4e1d26b8ee638d"
+    },
+    "lineage/cpu-complete.json": {
+      "bytes": 1166372,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-paired-native-cpu-v228-v1/evidence/complete.json",
+      "sha256": "9153dba525b757cbe9074574287e47eaa522afafd7dad54c13fa1efc814b50a2"
+    },
+    "mlp.hsaco": {
+      "bytes": 33320,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-paired-native-gpu-v228-v1/mlp.hsaco",
+      "sha256": "b0d1766fdb0fda17ab09496d1120ba3cee29100692b48fcc5b05cf0db0a8d589"
+    },
+    "r1.hsaco": {
+      "bytes": 10864,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-paired-native-gpu-v228-v1/r1.hsaco",
+      "sha256": "25338beac39121cf81adfdc5c82c6f39bcfc82c0f7effaa2166bf8a2a9598a25"
+    },
+    "request.json": {
+      "bytes": 801,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-paired-native-gpu-v228-v1/request.json",
+      "sha256": "a05072f854ea2859510ece82ed23755a170b96a9ce7c450a1bbf2be18511a136"
+    },
+    "run_gpu.py": {
+      "bytes": 14456,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-paired-native-gpu-v228-v1/run_gpu.py",
+      "sha256": "a89be37bc0f3e054dd6a3f9f53d0f40e4c1fd081b4235b7ed6a8c3aee1fecadb"
+    },
+    "stage_gpu.py": {
+      "bytes": 2133,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/stage_native_paired_mlp_gpu_v228_v1.py",
+      "sha256": "b58a76605fc671bdcb5f8b0d0d858f87ae9a9e1c21fa1ffa7a717c488bde3cd9"
+    },
+    "supervisor.py": {
+      "bytes": 41485,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-paired-native-gpu-v228-v1/supervisor.py",
+      "sha256": "8824478a6415dee39d28ccefb0881fc0687ac724f5a9c5a4540310fb5196b9bc"
+    },
+    "verify_native.py": {
+      "bytes": 14153,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-paired-native-gpu-v228-v1/verify_native.py",
+      "sha256": "9107e451b5f62b07cf6fa1c4a7f754ca7ac906e328d64bc1cc1365433f73be9c"
+    }
+  },
+  "full_model_acceptance": false,
+  "gpu_attempts": 1,
+  "paired_coordinator_tested": true,
+  "passed": true,
+  "performance_claim": false,
+  "receipt": {
+    "bytes": 944021,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-paired-native-gpu-v228-v1/evidence/complete.json",
+    "sha256": "43b07e7fab6470214ca52fac565bb2fc765b4e5352b5d485a1936553ed7b8987"
+  },
+  "retained_hsaco": true,
+  "schema": "ferric-native-paired-mlp-gpu-retention-v1"
+}

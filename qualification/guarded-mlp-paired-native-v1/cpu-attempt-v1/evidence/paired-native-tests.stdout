@@ -1,0 +1,9 @@
+
+running 4 tests
+test engineering_gfx950::peer::combined_mlp_state_v1::tests::native::paired::native_paired_guarded_mlp_v1 ... ignored, requires explicit two-device MI350 paired diagnostic and three checked images
+test engineering_gfx950::peer::combined_mlp_state_v1::tests::native::paired::paired_native_fixture_matches_independent_staged_arithmetic ... ok
+test engineering_gfx950::peer::combined_mlp_state_v1::tests::native::paired::paired_native_matrix_roles_are_distinct_with_every_row_nonzero ... ok
+test engineering_gfx950::peer::combined_mlp_state_v1::tests::native::paired::paired_native_request_refuses_wrong_images_devices_and_unknown_fields ... ok
+
+test result: ok. 3 passed; 0 failed; 1 ignored; 0 measured; 1010 filtered out; finished in 0.20s
+

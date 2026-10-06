@@ -1,0 +1,21 @@
+
+running 16 tests
+test engineering_gfx950::peer::combined_mlp_state_v1::tests::combined_binding_matrix_admits_only_exact_owner_and_suffix_regions ... ok
+test engineering_gfx950::peer::combined_mlp_state_v1::tests::combined_borrowed_regions_preserve_one_real_allocation_identity ... ok
+test engineering_gfx950::peer::combined_mlp_state_v1::tests::combined_cleanup_selects_queue_first_and_keeps_existing_kinds_unchanged ... ok
+test engineering_gfx950::peer::combined_mlp_state_v1::tests::combined_generation_and_activation_rules_refuse_replay_skip_and_overflow ... ok
+test engineering_gfx950::peer::combined_mlp_state_v1::tests::combined_native_submit_refuses_bad_phase_before_any_context_operation ... ok
+test engineering_gfx950::peer::combined_mlp_state_v1::tests::combined_owner_does_not_change_legacy_token_or_public_byte_policy ... ok
+test engineering_gfx950::peer::combined_mlp_state_v1::tests::combined_snapshot_predicates_check_every_prefix_word_and_guard_component ... ok
+test engineering_gfx950::peer::combined_mlp_state_v1::tests::combined_terminal_failures_poison_without_publishing_generation_or_losing_custody ... ok
+test engineering_gfx950::peer::combined_mlp_state_v1::tests::native::native_case_matrix_covers_each_guard_rank_and_validator_boundary ... ok
+test engineering_gfx950::peer::combined_mlp_state_v1::tests::native::native_reference_anchors_preserve_both_roundings_and_special_finite_values ... ok
+test engineering_gfx950::peer::combined_mlp_state_v1::tests::native::native_request_rejects_duplicate_devices_and_unknown_fields ... ok
+test engineering_gfx950::peer::combined_mlp_state_v1::tests::native::native_stable_guarded_r2_v1 ... ignored, requires explicit two-device MI350 diagnostic and retained image
+test engineering_gfx950::peer::combined_mlp_state_v1::tests::native::paired::native_paired_guarded_mlp_v1 ... ignored, requires explicit two-device MI350 paired diagnostic and three checked images
+test engineering_gfx950::peer::combined_mlp_state_v1::tests::native::paired::paired_native_fixture_matches_independent_staged_arithmetic ... ok
+test engineering_gfx950::peer::combined_mlp_state_v1::tests::native::paired::paired_native_matrix_roles_are_distinct_with_every_row_nonzero ... ok
+test engineering_gfx950::peer::combined_mlp_state_v1::tests::native::paired::paired_native_request_refuses_wrong_images_devices_and_unknown_fields ... ok
+
+test result: ok. 14 passed; 0 failed; 2 ignored; 0 measured; 998 filtered out; finished in 0.21s
+

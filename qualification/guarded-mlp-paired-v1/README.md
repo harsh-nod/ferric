@@ -1,8 +1,9 @@
 # Paired Guarded MLP Coordinator
 
 Status: **private coordinator compiles and CPU qualification passes on MI350.**
-Paired GPU execution, worker integration, reusable state banks, full-model
-numerics and performance qualification remain open. This does not establish
+The follow-up [nonzero native diagnostic](../guarded-mlp-paired-native-v1/README.md)
+now also passes the actual paired GPU chain. Worker integration, reusable state
+banks, full-model numerics and performance qualification remain open. This does not establish
 the 700 tokens/s target or close any issue #42 milestone.
 
 ## Implementation
@@ -96,9 +97,9 @@ paired execution path.
 
 ## Next Gates
 
-Exercise the actual paired entry on both MI350 GPUs using the checked R1,
-tiled-MLP, validator and R2 images, with independent output checks and healthy
-close. Then integrate a distinct Ferric completion path that skips the old
+The follow-up native diagnostic exercises the actual paired entry on both
+MI350 GPUs using the checked images, independent output checks and healthy
+close. Next integrate a distinct Ferric completion path that skips the old
 second residual call, qualify quiescent reuse across state banks, and run the
 2048-prompt/256-generated-token BF16 model workload. Only after correctness
 qualification should equal-work vLLM comparisons and overlap/ablation graphs
