@@ -149,6 +149,10 @@ bodies are not exported.
 
 ## Remaining Work
 
+The follow-on [retained Session checkpoint](../guarded-mlp-paired-reuse-v1/README.md)
+now compiles and passes CPU tests. Consecutive-generation GPU reuse remains a
+separate pending gate.
+
 Retain explicit paired quiescence authority across calls, test exact-next
 generation rearm and owner/payload reuse, and keep fresh signal arenas until
 their reuse protocol is separately qualified. Integrate Ferric's distinct

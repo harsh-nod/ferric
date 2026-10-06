@@ -1,0 +1,12 @@
+
+running 7 tests
+test memory_linux::combined_mlp_state_v1::tests::combined_memory_bad_mapping_and_alignment_refuse_before_any_atomic_access ... ok
+test memory_linux::combined_mlp_state_v1::tests::combined_memory_cannot_be_observed_or_rearmed_as_legacy_2192_owner ... ok
+test memory_linux::combined_mlp_state_v1::tests::combined_memory_constructs_exact_552_genuine_atomics_and_preserves_tail ... ok
+test memory_linux::combined_mlp_state_v1::tests::combined_memory_diagnostic_seed_preserves_objects_and_refuses_wrong_extent ... ok
+test memory_linux::combined_mlp_state_v1::tests::combined_memory_quiescent_rearm_preserves_objects_and_replaces_every_word ... ok
+test memory_linux::combined_mlp_state_v1::tests::combined_memory_wrong_request_refuses_before_construction_or_stores ... ok
+test memory_linux::combined_mlp_state_v1::tests::combined_memory_zero_generation_does_not_publish_or_mutate ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 1017 filtered out; finished in 0.00s
+

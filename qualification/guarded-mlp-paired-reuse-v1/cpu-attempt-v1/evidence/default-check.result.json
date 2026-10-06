@@ -1,0 +1,48 @@
+{
+  "adopted_reaped": [],
+  "argv": [
+    "/usr/bin/prlimit",
+    "--as=12884901888",
+    "--cpu=1200",
+    "--fsize=1073741824",
+    "--core=0",
+    "--",
+    "/home/harmenon/.rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/bin/cargo",
+    "check",
+    "--offline",
+    "--locked",
+    "--jobs",
+    "2",
+    "-p",
+    "fe2o3-kfd",
+    "--no-default-features"
+  ],
+  "command": {
+    "bytes": 2089,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-paired-reuse-cpu-v228-v1/evidence/default-check.command.json",
+    "sha256": "ded0282851b15383fdd0c729f477af3e819262ed547484968cc8db2f3839cc15"
+  },
+  "elapsed_ns": 4314986855,
+  "exception": null,
+  "exit_code": 0,
+  "forced_cleanup": false,
+  "label": "default-check",
+  "natural_exit": true,
+  "observed_signals": [],
+  "pgid": 848867,
+  "pid": 848867,
+  "process_group_absent": true,
+  "reaped": true,
+  "stderr": {
+    "bytes": 2626,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-paired-reuse-cpu-v228-v1/evidence/default-check.stderr",
+    "sha256": "5c3e5c4b122c81000c54fb846443cb4638e748dd927aa249975b90e3cff637cf"
+  },
+  "stdout": {
+    "bytes": 0,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-paired-reuse-cpu-v228-v1/evidence/default-check.stdout",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "storage_failure": null,
+  "timed_out": false
+}
