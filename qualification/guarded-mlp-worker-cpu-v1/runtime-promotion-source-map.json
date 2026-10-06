@@ -1,0 +1,281 @@
+{
+  "schema": "ferric-guarded-mlp-runtime-promotion-source-map-v1",
+  "runtime_base_revision": "5a500d63c29b78f8788356b20dfcbb5c41ec20c9",
+  "runtime_checkout": "/home/harsh/fe2o3-p228-runtime",
+  "qualified_cpu_receipt": {
+    "path": "/home/harsh/ferric-p227-integration/qualification/guarded-mlp-model-interface-v1/cpu-attempt-v1/evidence/complete.json",
+    "bytes": 1287578,
+    "sha256": "4a682798a23ac4c8accb0721f332a7b4e7484729bd692209d20f2883b501cee1"
+  },
+  "qualified_source_map": {
+    "path": "/home/harsh/ferric-p227-integration/qualification/guarded-mlp-model-interface-v1/cpu-attempt-v1/evidence/sources-after.json",
+    "bytes": 321886,
+    "sha256": "569f5cdb89338ac9a8c8f0e759e455d876471be1e8f75989600cf0d1af185161"
+  },
+  "files": {
+    "crates/fe2o3-kfd/src/engineering_gfx950.rs": {
+      "before": {
+        "bytes": 80676,
+        "sha256": "146c8e1f255b6d3d02df0fafe512f0ccda19effe62933f1162f8c90ef93a73db"
+      },
+      "after": {
+        "bytes": 80961,
+        "sha256": "4ebb285acb763831fea2dfa381289d3f921f34287c3e0379324d6ae36d6d2284"
+      },
+      "local_body": "/home/harsh/ferric-p227-integration/qualification/guarded-mlp-model-interface-v1/cpu-attempt-v1/fe2o3/crates/fe2o3-kfd/src/engineering_gfx950.rs"
+    },
+    "crates/fe2o3-kfd/src/engineering_gfx950_peer.rs": {
+      "before": {
+        "bytes": 33247,
+        "sha256": "aee035ef00a66ef8e777deb6639c5d68f6ec8b64a4fce91b7ee65dff5eb6f99f"
+      },
+      "after": {
+        "bytes": 33855,
+        "sha256": "75ec693c709b458c6ab145453dd3398199bc10b0861d0f7b334093393a38e68a"
+      },
+      "local_body": "/home/harsh/ferric-p227-integration/qualification/guarded-mlp-model-interface-v1/cpu-attempt-v1/fe2o3/crates/fe2o3-kfd/src/engineering_gfx950_peer.rs"
+    },
+    "crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_native_v1_tests.rs": {
+      "before": null,
+      "after": {
+        "bytes": 24129,
+        "sha256": "ddce66854de017a5b36703195a353ac60d16e2743e5d6de4182f68cce151fb4c"
+      },
+      "local_body": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/guarded-mlp-model-interface-v228-v1/baseline/fe2o3/crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_native_v1_tests.rs"
+    },
+    "crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_arena_v1.rs": {
+      "before": null,
+      "after": {
+        "bytes": 20655,
+        "sha256": "f673fff6de704f575eb4f9fc2727d553efbbad55dfcf0e68fa46f339de22c26e"
+      },
+      "local_body": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/guarded-mlp-model-interface-v228-v1/baseline/fe2o3/crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_arena_v1.rs"
+    },
+    "crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_facade_v1.rs": {
+      "before": null,
+      "after": {
+        "bytes": 10551,
+        "sha256": "549dbb7559b04074d6355b3d37903b400dfbbe04c3db8c718d01b78e287166c2"
+      },
+      "local_body": "/home/harsh/ferric-p227-integration/qualification/guarded-mlp-model-interface-v1/cpu-attempt-v1/fe2o3/crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_facade_v1.rs"
+    },
+    "crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_facade_v1_tests.rs": {
+      "before": null,
+      "after": {
+        "bytes": 3721,
+        "sha256": "7cd248f6808f599583d9d9635537875136676b271b4ad60f41bd6bef3e855cb0"
+      },
+      "local_body": "/home/harsh/ferric-p227-integration/qualification/guarded-mlp-model-interface-v1/cpu-attempt-v1/fe2o3/crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_facade_v1_tests.rs"
+    },
+    "crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_interleaved_native_v1_tests.rs": {
+      "before": null,
+      "after": {
+        "bytes": 39145,
+        "sha256": "96026ff91bd30f1d3e649ac1846ddaf4957f6d4485ccef43cb9f7e24bbb76344"
+      },
+      "local_body": "/home/harsh/ferric-p227-integration/qualification/guarded-mlp-model-interface-v1/cpu-attempt-v1/fe2o3/crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_interleaved_native_v1_tests.rs"
+    },
+    "crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_mixed_bank_v1.rs": {
+      "before": null,
+      "after": {
+        "bytes": 15340,
+        "sha256": "d15239d4d1b57517e9a227967a38f58534dd933c76699bb37d426e7bd69d6199"
+      },
+      "local_body": "/home/harsh/ferric-p227-integration/qualification/guarded-mlp-model-interface-v1/cpu-attempt-v1/fe2o3/crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_mixed_bank_v1.rs"
+    },
+    "crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_mixed_bank_v1_tests.rs": {
+      "before": null,
+      "after": {
+        "bytes": 20404,
+        "sha256": "af2b80b65e2c610e053b5fb9173d3a2d21030072e73952f68d09179902e4058d"
+      },
+      "local_body": "/home/harsh/ferric-p227-integration/qualification/guarded-mlp-model-interface-v1/cpu-attempt-v1/fe2o3/crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_mixed_bank_v1_tests.rs"
+    },
+    "crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_native_v1_tests.rs": {
+      "before": null,
+      "after": {
+        "bytes": 18736,
+        "sha256": "c0a692ad8862f8c02c82f2e7d49fca04b24732d97390a65b05106399c4ed694b"
+      },
+      "local_body": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/guarded-mlp-model-interface-v228-v1/baseline/fe2o3/crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_native_v1_tests.rs"
+    },
+    "crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_profiles_v1.rs": {
+      "before": null,
+      "after": {
+        "bytes": 14444,
+        "sha256": "01b4eb4064e148e3985455af7999b0796e55bcc18011ef99aa62f976db1b735d"
+      },
+      "local_body": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/guarded-mlp-model-interface-v228-v1/baseline/fe2o3/crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_profiles_v1.rs"
+    },
+    "crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_retained_v1.rs": {
+      "before": null,
+      "after": {
+        "bytes": 24957,
+        "sha256": "ca8191a82d7c70f653f80c5bb7743aa5366c2f54c45066581b50f3dd5049defc"
+      },
+      "local_body": "/home/harsh/ferric-p227-integration/qualification/guarded-mlp-model-interface-v1/cpu-attempt-v1/fe2o3/crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_retained_v1.rs"
+    },
+    "crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_retained_v1_tests.rs": {
+      "before": null,
+      "after": {
+        "bytes": 19338,
+        "sha256": "afec0abbf4531e1383ce8de60cf9eeefb365ca7cac04e7a2e55ec1a57b4f9e48"
+      },
+      "local_body": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/guarded-mlp-model-interface-v228-v1/baseline/fe2o3/crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_retained_v1_tests.rs"
+    },
+    "crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_retired_v1.rs": {
+      "before": null,
+      "after": {
+        "bytes": 4689,
+        "sha256": "9bd3821fe1f69b93e617a12630d7112047d537c0a6db3aea2ca8c7dea23a1fb1"
+      },
+      "local_body": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/guarded-mlp-model-interface-v228-v1/baseline/fe2o3/crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_retired_v1.rs"
+    },
+    "crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_retired_v1_tests.rs": {
+      "before": null,
+      "after": {
+        "bytes": 2985,
+        "sha256": "674b5014fbfcb0dc9a87ed4182f48a2447dfd9e5cfd50fd07656505426249c68"
+      },
+      "local_body": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/guarded-mlp-model-interface-v228-v1/baseline/fe2o3/crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_retired_v1_tests.rs"
+    },
+    "crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_reuse_native_v1_tests.rs": {
+      "before": null,
+      "after": {
+        "bytes": 11874,
+        "sha256": "ebe50ed331b6d7bef25533a7431f8cd65934f4d5fd323a4b80cfb43d26ef94e3"
+      },
+      "local_body": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/guarded-mlp-model-interface-v228-v1/baseline/fe2o3/crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_reuse_native_v1_tests.rs"
+    },
+    "crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_session_v1.rs": {
+      "before": null,
+      "after": {
+        "bytes": 9147,
+        "sha256": "7ba0a2b29f8e3155ad69c192bf90a5e641ea9a82bd27d5e99893142fd2cb76fd"
+      },
+      "local_body": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/guarded-mlp-model-interface-v228-v1/baseline/fe2o3/crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_session_v1.rs"
+    },
+    "crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_session_v1_tests.rs": {
+      "before": null,
+      "after": {
+        "bytes": 12701,
+        "sha256": "baedfe297607d966b825440f071a171997f7ddc84dbaa3a25dca82d0acb70d87"
+      },
+      "local_body": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/guarded-mlp-model-interface-v228-v1/baseline/fe2o3/crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_session_v1_tests.rs"
+    },
+    "crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_v1.rs": {
+      "before": null,
+      "after": {
+        "bytes": 12995,
+        "sha256": "7f87a0509472250cfdb050f793dedaff3181074e484704cb4cc225c4fb35264d"
+      },
+      "local_body": "/home/harsh/ferric-p227-integration/qualification/guarded-mlp-model-interface-v1/cpu-attempt-v1/fe2o3/crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_v1.rs"
+    },
+    "crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_v1_tests.rs": {
+      "before": null,
+      "after": {
+        "bytes": 35256,
+        "sha256": "bd05c6d9a51d1595a354548fddfb9f992b645a0dfb8abcc8f078e1fd745353ce"
+      },
+      "local_body": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/guarded-mlp-model-interface-v228-v1/baseline/fe2o3/crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_v1_tests.rs"
+    },
+    "crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_state_v1.rs": {
+      "before": null,
+      "after": {
+        "bytes": 15400,
+        "sha256": "c2282970db04d4bd6b8d27624a87fa3a86de723499b510c5232761f0e9027f29"
+      },
+      "local_body": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/guarded-mlp-model-interface-v228-v1/baseline/fe2o3/crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_state_v1.rs"
+    },
+    "crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_state_v1_tests.rs": {
+      "before": null,
+      "after": {
+        "bytes": 10481,
+        "sha256": "c9b3ff32427922b875e15765a55f311211afafac71be5fce8bc0f66f01d2b445"
+      },
+      "local_body": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/guarded-mlp-model-interface-v228-v1/baseline/fe2o3/crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_state_v1_tests.rs"
+    },
+    "crates/fe2o3-kfd/src/engineering_gfx950_peer_projection_residual_mlp_tiles_v1.rs": {
+      "before": {
+        "bytes": 22529,
+        "sha256": "18ed90078a094d61ae2735984ae01733d886c4b82b2ac8b2ee4dd15e8db50ca0"
+      },
+      "after": {
+        "bytes": 22551,
+        "sha256": "7547d944ebf887f1fa9b164214efd6fd5b4aefe7fe5d042dd1592bc3d688ca55"
+      },
+      "local_body": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/guarded-mlp-model-interface-v228-v1/baseline/fe2o3/crates/fe2o3-kfd/src/engineering_gfx950_peer_projection_residual_mlp_tiles_v1.rs"
+    },
+    "crates/fe2o3-kfd/src/engineering_gfx950_peer_tests.rs": {
+      "before": {
+        "bytes": 25941,
+        "sha256": "220215668816359d2cf67be19a1fd6795d2fa315a82b9eaa12cd3b8618120ca5"
+      },
+      "after": {
+        "bytes": 26068,
+        "sha256": "f4127c7c7bfe37a2fe04cf73036a74084b791d54305762eb8ee835587f1f9d54"
+      },
+      "local_body": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/guarded-mlp-model-interface-v228-v1/baseline/fe2o3/crates/fe2o3-kfd/src/engineering_gfx950_peer_tests.rs"
+    },
+    "crates/fe2o3-kfd/src/lib.rs": {
+      "before": {
+        "bytes": 20617,
+        "sha256": "428272783a9412dda442e96b7ed743cd1503357cd083f8391af8bc34aaf38f9e"
+      },
+      "after": {
+        "bytes": 20902,
+        "sha256": "e66a1699a5784d0578ceef5bfbafd5cbf42a6f7d71ba3a087f02c4e44be9817b"
+      },
+      "local_body": "/home/harsh/ferric-p227-integration/qualification/guarded-mlp-model-interface-v1/cpu-attempt-v1/fe2o3/crates/fe2o3-kfd/src/lib.rs"
+    },
+    "crates/fe2o3-kfd/src/memory_linux.rs": {
+      "before": {
+        "bytes": 81155,
+        "sha256": "29021f3c81a593704ca4b9f7b589813f5807656fcf83e1a61d9300a3bf59985e"
+      },
+      "after": {
+        "bytes": 81271,
+        "sha256": "e4adf9a38df31ec1cce6e7be6eb998a0655fc5b85e3754ac860db16ef836d4f4"
+      },
+      "local_body": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/guarded-mlp-model-interface-v228-v1/baseline/fe2o3/crates/fe2o3-kfd/src/memory_linux.rs"
+    },
+    "crates/fe2o3-kfd/src/memory_linux_combined_mlp_state_v1.rs": {
+      "before": null,
+      "after": {
+        "bytes": 5512,
+        "sha256": "05fcbf4324d63bb74e6cb904ee5eb5a47de2ffb370236bc5a8250969cf983e38"
+      },
+      "local_body": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/guarded-mlp-model-interface-v228-v1/baseline/fe2o3/crates/fe2o3-kfd/src/memory_linux_combined_mlp_state_v1.rs"
+    },
+    "crates/fe2o3-kfd/src/memory_linux_combined_mlp_state_v1_tests.rs": {
+      "before": null,
+      "after": {
+        "bytes": 10642,
+        "sha256": "8ff0e67a8197167eff12239d96205dc2e58a24ceaee36308abe61dce231762ff"
+      },
+      "local_body": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/guarded-mlp-model-interface-v228-v1/baseline/fe2o3/crates/fe2o3-kfd/src/memory_linux_combined_mlp_state_v1_tests.rs"
+    },
+    "crates/fe2o3-kfd/tests/guarded_mlp_facade_v1.rs": {
+      "before": null,
+      "after": {
+        "bytes": 2335,
+        "sha256": "fd5cf593cabe0cb0168e7de6ee6819b68fdd3d62de590e686ab57e407c6bdaf8"
+      },
+      "local_body": "/home/harsh/ferric-p227-integration/qualification/guarded-mlp-model-interface-v1/cpu-attempt-v1/fe2o3/crates/fe2o3-kfd/tests/guarded_mlp_facade_v1.rs"
+    }
+  },
+  "modified_files": 6,
+  "added_files": 23,
+  "total_files": 29,
+  "excluded_qualification_files": [
+    "Cargo.toml",
+    "Cargo.lock",
+    "Cargo.toml.original",
+    "Cargo.lock.input"
+  ],
+  "source_only_promotion_plan": true,
+  "promotion_executed": false,
+  "new_qualification_executed": false,
+  "whole_workspace_qualification": false,
+  "notes": "These cumulative fe2o3-kfd bodies, not merely the final 11-file interface overlay, are required over the runtime base. Local bodies match the actual passing interface CPU source map. Leave repository Cargo.toml and Cargo.lock unchanged; their source originals exactly match the qualification backups. Existing qualification covers the selected KFD library/integration, default-feature check and facade doctests, not the whole workspace."
+}

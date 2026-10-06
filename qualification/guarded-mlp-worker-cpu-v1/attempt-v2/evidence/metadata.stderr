@@ -1,0 +1,7 @@
+error: failed to select a version for the requirement `cfg-if = "^1"` (locked to 1.0.5)
+candidate versions found which didn't match: 1.0.4, 1.0.0
+location searched: crates.io index
+required by package `sha2 v0.11.0`
+    ... which satisfies dependency `sha2 = "=0.11.0"` (locked to 0.11.0) of package `ferric-tp-peer-finite-engineering-worker-v1 v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-worker-cpu-v228-v2/ferric/adapters/tp-peer-finite-engineering-worker-v1)`
+note: offline mode (via `--offline`) can sometimes cause surprising resolution failures
+help: if this error is too confusing you may wish to retry without `--offline`

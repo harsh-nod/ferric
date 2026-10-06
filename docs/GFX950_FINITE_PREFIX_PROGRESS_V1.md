@@ -6,7 +6,16 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Current runtime work: [the guarded model interface now passes CPU and native component tests](../qualification/guarded-mlp-model-interface-v1/README.md).
+Current integration: [the guarded model worker passes MI350 CPU qualification](../qualification/guarded-mlp-worker-cpu-v1/README.md).
+All 586 tests pass with four deliberate ignores, including the 24 new tests,
+and the final worker executable builds. The 19 tested worker source files and
+their 29 cumulative runtime prerequisites are now integrated on engineering
+branches. A real stack-overflow found during qualification is fixed by keeping
+the large control payload on the heap; the wire format and default stack limit
+are unchanged. The parent entry point, real-model mixed-bank execution,
+independent numerical acceptance and sustained throughput remain open.
+
+Current runtime work: [the guarded model interface passes CPU and native component tests](../qualification/guarded-mlp-model-interface-v1/README.md).
 MI350 qualification records 1,088 ordinary test passes, eight deliberate ignores,
 nine compile-fail API tests, and a single successful GPU attempt through the
 public allocation/binding/dispatch facade. The independent reference checks

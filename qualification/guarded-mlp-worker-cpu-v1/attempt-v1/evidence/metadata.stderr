@@ -1,0 +1,7 @@
+error: failed to load manifest for dependency `fe2o3-kfd`
+
+Caused by:
+  failed to read `/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-worker-cpu-v228-v1/fe2o3/crates/fe2o3-kfd/Cargo.toml`
+
+Caused by:
+  No such file or directory (os error 2)

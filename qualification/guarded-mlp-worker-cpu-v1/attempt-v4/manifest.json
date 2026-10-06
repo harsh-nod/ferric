@@ -1,0 +1,1590 @@
+{
+  "actual_artifact_metadata": {},
+  "actual_raw_worker_tests": null,
+  "artifact_bodies_present_at_export": {},
+  "cache_archive": {
+    "bytes": 8411032,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-worker-cache-v228-v3.tar.gz",
+    "sha256": "fc997f95853f1ea94d383ee5755bcc3dbc0c78a5c933ed21cafc3c8385bc3155"
+  },
+  "cache_cpu_admitted": true,
+  "cache_package_bodies_retained": false,
+  "cache_provenance": {
+    "cargo_home": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-worker-cpu-v228-v4/cargo-home",
+    "files": {
+      "registry/cache/index.crates.io-1949cf8c6b5b557f/bitflags-2.13.2.crate": {
+        "bytes": 51678,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-worker-cpu-v228-v4/cargo-home/registry/cache/index.crates.io-1949cf8c6b5b557f/bitflags-2.13.2.crate",
+        "sha256": "3ded4057c258ba199e2d26386d3af3780957ecaee6c4ef4041c6b4b8b97c0b06"
+      },
+      "registry/cache/index.crates.io-1949cf8c6b5b557f/block-buffer-0.12.1.crate": {
+        "bytes": 15902,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-worker-cpu-v228-v4/cargo-home/registry/cache/index.crates.io-1949cf8c6b5b557f/block-buffer-0.12.1.crate",
+        "sha256": "d2f6c7dbe95a6ed67ad9f18e57daf93a2f034c524b99fd2b76d18fdfeb6660aa"
+      },
+      "registry/cache/index.crates.io-1949cf8c6b5b557f/cfg-if-1.0.5.crate": {
+        "bytes": 9578,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-worker-cpu-v228-v4/cargo-home/registry/cache/index.crates.io-1949cf8c6b5b557f/cfg-if-1.0.5.crate",
+        "sha256": "4e7648175b45a9a48536d676f68d918270699102aa8dab5496df06904c914600"
+      },
+      "registry/cache/index.crates.io-1949cf8c6b5b557f/const-oid-0.10.2.crate": {
+        "bytes": 61449,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-worker-cpu-v228-v4/cargo-home/registry/cache/index.crates.io-1949cf8c6b5b557f/const-oid-0.10.2.crate",
+        "sha256": "a6ef517f0926dd24a1582492c791b6a4818a4d94e789a334894aa15b0d12f55c"
+      },
+      "registry/cache/index.crates.io-1949cf8c6b5b557f/cpufeatures-0.3.1.crate": {
+        "bytes": 14272,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-worker-cpu-v228-v4/cargo-home/registry/cache/index.crates.io-1949cf8c6b5b557f/cpufeatures-0.3.1.crate",
+        "sha256": "5ca28b0ae3115b884660db4118d803791fd6756b6e88f39c0f3f7859060d7566"
+      },
+      "registry/cache/index.crates.io-1949cf8c6b5b557f/crypto-common-0.2.2.crate": {
+        "bytes": 15449,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-worker-cpu-v228-v4/cargo-home/registry/cache/index.crates.io-1949cf8c6b5b557f/crypto-common-0.2.2.crate",
+        "sha256": "ce6e4c961d6cd6c9a86db418387425e8bdeaf05b3c8bc1411e6dca4c252f1453"
+      },
+      "registry/cache/index.crates.io-1949cf8c6b5b557f/digest-0.11.3.crate": {
+        "bytes": 28955,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-worker-cpu-v228-v4/cargo-home/registry/cache/index.crates.io-1949cf8c6b5b557f/digest-0.11.3.crate",
+        "sha256": "f1dd6dbb5841937940781866fa1281a1ff7bd3bf827091440879f9994983d5c2"
+      },
+      "registry/cache/index.crates.io-1949cf8c6b5b557f/errno-0.3.14.crate": {
+        "bytes": 12002,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-worker-cpu-v228-v4/cargo-home/registry/cache/index.crates.io-1949cf8c6b5b557f/errno-0.3.14.crate",
+        "sha256": "39cab71617ae0d63f51a36d69f866391735b51691dbda63cf6f96d042b63efeb"
+      },
+      "registry/cache/index.crates.io-1949cf8c6b5b557f/hybrid-array-0.4.15.crate": {
+        "bytes": 36801,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-worker-cpu-v228-v4/cargo-home/registry/cache/index.crates.io-1949cf8c6b5b557f/hybrid-array-0.4.15.crate",
+        "sha256": "27f864f10dfb56725ce5ce5472bc52252c8f93a4ab86327122cebf62c5f59a17"
+      },
+      "registry/cache/index.crates.io-1949cf8c6b5b557f/itoa-1.0.18.crate": {
+        "bytes": 15935,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-worker-cpu-v228-v4/cargo-home/registry/cache/index.crates.io-1949cf8c6b5b557f/itoa-1.0.18.crate",
+        "sha256": "8f42a60cbdf9a97f5d2305f08a87dc4e09308d1276d28c869c684d7777685682"
+      },
+      "registry/cache/index.crates.io-1949cf8c6b5b557f/libc-0.2.189.crate": {
+        "bytes": 851502,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-worker-cpu-v228-v4/cargo-home/registry/cache/index.crates.io-1949cf8c6b5b557f/libc-0.2.189.crate",
+        "sha256": "3eaf3ede3fee6db1a4c2ee091bf8a8b4dccdc6d17f656fb07896ee72867612f2"
+      },
+      "registry/cache/index.crates.io-1949cf8c6b5b557f/linux-raw-sys-0.12.1.crate": {
+        "bytes": 3006116,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-worker-cpu-v228-v4/cargo-home/registry/cache/index.crates.io-1949cf8c6b5b557f/linux-raw-sys-0.12.1.crate",
+        "sha256": "32a66949e030da00e8c7d4434b251670a91556f4144941d37452769c25d58a53"
+      },
+      "registry/cache/index.crates.io-1949cf8c6b5b557f/memchr-2.8.3.crate": {
+        "bytes": 99165,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-worker-cpu-v228-v4/cargo-home/registry/cache/index.crates.io-1949cf8c6b5b557f/memchr-2.8.3.crate",
+        "sha256": "cf8baf1c55e62ffcace7a9f06f4bd9cd3f0c4beb022d3b367256b91b87513d98"
+      },
+      "registry/cache/index.crates.io-1949cf8c6b5b557f/proc-macro2-1.0.107.crate": {
+        "bytes": 59588,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-worker-cpu-v228-v4/cargo-home/registry/cache/index.crates.io-1949cf8c6b5b557f/proc-macro2-1.0.107.crate",
+        "sha256": "985e7ec9bb745e6ce6535b544d84d6cd6f7ad8bd711c398938ae983b91a766d9"
+      },
+      "registry/cache/index.crates.io-1949cf8c6b5b557f/quote-1.0.47.crate": {
+        "bytes": 31622,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-worker-cpu-v228-v4/cargo-home/registry/cache/index.crates.io-1949cf8c6b5b557f/quote-1.0.47.crate",
+        "sha256": "1fbf4db142a473a8d80c26bbf18454ed458bf8d26c8219c331daecfdbd079001"
+      },
+      "registry/cache/index.crates.io-1949cf8c6b5b557f/rustix-1.1.5.crate": {
+        "bytes": 425681,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-worker-cpu-v228-v4/cargo-home/registry/cache/index.crates.io-1949cf8c6b5b557f/rustix-1.1.5.crate",
+        "sha256": "891efababe418670775f199f0d233d84843c227a0949a883ce15b37c78d6629d"
+      },
+      "registry/cache/index.crates.io-1949cf8c6b5b557f/serde-1.0.229.crate": {
+        "bytes": 83669,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-worker-cpu-v228-v4/cargo-home/registry/cache/index.crates.io-1949cf8c6b5b557f/serde-1.0.229.crate",
+        "sha256": "4148590afebada386688f18773da617792bf2ef03ffc1e4cbd2b1d45b023e0ba"
+      },
+      "registry/cache/index.crates.io-1949cf8c6b5b557f/serde_core-1.0.229.crate": {
+        "bytes": 63100,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-worker-cpu-v228-v4/cargo-home/registry/cache/index.crates.io-1949cf8c6b5b557f/serde_core-1.0.229.crate",
+        "sha256": "67dca2c9c51e58a4791a4b1ed58308b39c64224d349a935ab5039aa360942a48"
+      },
+      "registry/cache/index.crates.io-1949cf8c6b5b557f/serde_derive-1.0.229.crate": {
+        "bytes": 59864,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-worker-cpu-v228-v4/cargo-home/registry/cache/index.crates.io-1949cf8c6b5b557f/serde_derive-1.0.229.crate",
+        "sha256": "e7a5d71263a5a7d47b41f6b3f06ba276f10cc18b0931f1799f710578e2309348"
+      },
+      "registry/cache/index.crates.io-1949cf8c6b5b557f/serde_json-1.0.151.crate": {
+        "bytes": 156556,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-worker-cpu-v228-v4/cargo-home/registry/cache/index.crates.io-1949cf8c6b5b557f/serde_json-1.0.151.crate",
+        "sha256": "c841b55ecdae098c80dcae9cf767f6f8a0c2cdb3416bbef72181df4d0fe73f14"
+      },
+      "registry/cache/index.crates.io-1949cf8c6b5b557f/sha2-0.11.0.crate": {
+        "bytes": 33969,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-worker-cpu-v228-v4/cargo-home/registry/cache/index.crates.io-1949cf8c6b5b557f/sha2-0.11.0.crate",
+        "sha256": "446ba717509524cb3f22f17ecc096f10f4822d76ab5c0b9822c5f9c284e825f4"
+      },
+      "registry/cache/index.crates.io-1949cf8c6b5b557f/spin-0.12.3.crate": {
+        "bytes": 42918,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-worker-cpu-v228-v4/cargo-home/registry/cache/index.crates.io-1949cf8c6b5b557f/spin-0.12.3.crate",
+        "sha256": "0134f9043ed38b087ac4f7d4af44c79e2c9e5094421fe3164f435ce585953b10"
+      },
+      "registry/cache/index.crates.io-1949cf8c6b5b557f/syn-3.0.6.crate": {
+        "bytes": 313821,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-worker-cpu-v228-v4/cargo-home/registry/cache/index.crates.io-1949cf8c6b5b557f/syn-3.0.6.crate",
+        "sha256": "8593e8e72159ed2257d083c7a454a85cbf854f37a0966d8d483aff8c8a3ebcee"
+      },
+      "registry/cache/index.crates.io-1949cf8c6b5b557f/typenum-1.20.1.crate": {
+        "bytes": 105479,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-worker-cpu-v228-v4/cargo-home/registry/cache/index.crates.io-1949cf8c6b5b557f/typenum-1.20.1.crate",
+        "sha256": "b6f5e870be6c3b371b77fe0ee0bafb859fa4964b4404c27de1d380043c4dda20"
+      },
+      "registry/cache/index.crates.io-1949cf8c6b5b557f/unicode-ident-1.0.26.crate": {
+        "bytes": 48425,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-worker-cpu-v228-v4/cargo-home/registry/cache/index.crates.io-1949cf8c6b5b557f/unicode-ident-1.0.26.crate",
+        "sha256": "d245f478577f809a851594d02313b640fb437e0bb33866753cff937863096954"
+      },
+      "registry/cache/index.crates.io-1949cf8c6b5b557f/windows-link-0.2.1.crate": {
+        "bytes": 6133,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-worker-cpu-v228-v4/cargo-home/registry/cache/index.crates.io-1949cf8c6b5b557f/windows-link-0.2.1.crate",
+        "sha256": "f0805222e57f7521d6a62e36fa9163bc891acd422f971defe97d64e70d0a4fe5"
+      },
+      "registry/cache/index.crates.io-1949cf8c6b5b557f/windows-sys-0.61.2.crate": {
+        "bytes": 2517186,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-worker-cpu-v228-v4/cargo-home/registry/cache/index.crates.io-1949cf8c6b5b557f/windows-sys-0.61.2.crate",
+        "sha256": "ae137229bcbd6cdf0f7b80a31df61766145077ddf49416a728b02cb3921ff3fc"
+      },
+      "registry/cache/index.crates.io-1949cf8c6b5b557f/zeroize-1.9.0.crate": {
+        "bytes": 24480,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-worker-cpu-v228-v4/cargo-home/registry/cache/index.crates.io-1949cf8c6b5b557f/zeroize-1.9.0.crate",
+        "sha256": "e13c156562582aa81c60cb29407084cdb54c4164760106ab78e6c5b0858cf64e"
+      },
+      "registry/cache/index.crates.io-1949cf8c6b5b557f/zmij-1.0.23.crate": {
+        "bytes": 28612,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-worker-cpu-v228-v4/cargo-home/registry/cache/index.crates.io-1949cf8c6b5b557f/zmij-1.0.23.crate",
+        "sha256": "29666d0abbfad1e3dc4dcf6144730dd3a3ab225bbbdac83319345b1b44ccfc1b"
+      },
+      "registry/index/index.crates.io-1949cf8c6b5b557f/.cache/3/s/syn": {
+        "bytes": 653259,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-worker-cpu-v228-v4/cargo-home/registry/index/index.crates.io-1949cf8c6b5b557f/.cache/3/s/syn",
+        "sha256": "f35e574cec97617c7ad87aef5c0b1add6ad4407d12b0371a2f203c2fa79f6159"
+      },
+      "registry/index/index.crates.io-1949cf8c6b5b557f/.cache/bi/tf/bitflags": {
+        "bytes": 64166,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-worker-cpu-v228-v4/cargo-home/registry/index/index.crates.io-1949cf8c6b5b557f/.cache/bi/tf/bitflags",
+        "sha256": "6713b703da401faa62e3df0a4a42a7d14a9d777511ac010512a5dd7b3417faaa"
+      },
+      "registry/index/index.crates.io-1949cf8c6b5b557f/.cache/bl/oc/block-buffer": {
+        "bytes": 21310,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-worker-cpu-v228-v4/cargo-home/registry/index/index.crates.io-1949cf8c6b5b557f/.cache/bl/oc/block-buffer",
+        "sha256": "01c56856aa2b0252ce0d90752ec2c0106edff7db2c1bdf35d60244762fd18419"
+      },
+      "registry/index/index.crates.io-1949cf8c6b5b557f/.cache/cf/g-/cfg-if": {
+        "bytes": 5121,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-worker-cpu-v228-v4/cargo-home/registry/index/index.crates.io-1949cf8c6b5b557f/.cache/cf/g-/cfg-if",
+        "sha256": "8f6eaea0f7fc5f6848486cbdf55738698871d39e9120c4c1c68fe5c964696d7d"
+      },
+      "registry/index/index.crates.io-1949cf8c6b5b557f/.cache/co/ns/const-oid": {
+        "bytes": 14933,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-worker-cpu-v228-v4/cargo-home/registry/index/index.crates.io-1949cf8c6b5b557f/.cache/co/ns/const-oid",
+        "sha256": "937bbce56ac2f1b13c7ce0afc8c0469611505bd40e13e17c4f3918c860d90eed"
+      },
+      "registry/index/index.crates.io-1949cf8c6b5b557f/.cache/cp/uf/cpufeatures": {
+        "bytes": 17848,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-worker-cpu-v228-v4/cargo-home/registry/index/index.crates.io-1949cf8c6b5b557f/.cache/cp/uf/cpufeatures",
+        "sha256": "dd29f42e05ee3cf258f4ecf10c43c47625306fbb3f041106ac48cf33d02b1435"
+      },
+      "registry/index/index.crates.io-1949cf8c6b5b557f/.cache/cr/yp/crypto-common": {
+        "bytes": 22622,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-worker-cpu-v228-v4/cargo-home/registry/index/index.crates.io-1949cf8c6b5b557f/.cache/cr/yp/crypto-common",
+        "sha256": "888aa37a81634f87ae790d68b432c51f0c88a238fc08a760171958e263daef2f"
+      },
+      "registry/index/index.crates.io-1949cf8c6b5b557f/.cache/di/ge/digest": {
+        "bytes": 53601,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-worker-cpu-v228-v4/cargo-home/registry/index/index.crates.io-1949cf8c6b5b557f/.cache/di/ge/digest",
+        "sha256": "4a9f0a9b47df415003371f47ed05c5a48bab33e642a3476e8ad1d4124178cfa3"
+      },
+      "registry/index/index.crates.io-1949cf8c6b5b557f/.cache/er/rn/errno": {
+        "bytes": 25180,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-worker-cpu-v228-v4/cargo-home/registry/index/index.crates.io-1949cf8c6b5b557f/.cache/er/rn/errno",
+        "sha256": "609acf9108184ab8ca087991bf5d634262cea1dc157c6e31e4b7051c08d30fa6"
+      },
+      "registry/index/index.crates.io-1949cf8c6b5b557f/.cache/hy/br/hybrid-array": {
+        "bytes": 33490,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-worker-cpu-v228-v4/cargo-home/registry/index/index.crates.io-1949cf8c6b5b557f/.cache/hy/br/hybrid-array",
+        "sha256": "18ab086292b81d46cecbc6f86380cbe8cec91c5ccaf4158b8a5c0f0eabb0b801"
+      },
+      "registry/index/index.crates.io-1949cf8c6b5b557f/.cache/it/oa/itoa": {
+        "bytes": 9750,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-worker-cpu-v228-v4/cargo-home/registry/index/index.crates.io-1949cf8c6b5b557f/.cache/it/oa/itoa",
+        "sha256": "358ec410c0eb6e99d0bd115834b6f94aa92791f87d684c29f2dc7a62b7887b48"
+      },
+      "registry/index/index.crates.io-1949cf8c6b5b557f/.cache/li/bc/libc": {
+        "bytes": 82569,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-worker-cpu-v228-v4/cargo-home/registry/index/index.crates.io-1949cf8c6b5b557f/.cache/li/bc/libc",
+        "sha256": "24166d96fa629d76441640a11ed23f1c690b1d8223dec8bccf36603116f61faa"
+      },
+      "registry/index/index.crates.io-1949cf8c6b5b557f/.cache/li/nu/linux-raw-sys": {
+        "bytes": 81593,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-worker-cpu-v228-v4/cargo-home/registry/index/index.crates.io-1949cf8c6b5b557f/.cache/li/nu/linux-raw-sys",
+        "sha256": "e20d72e863f9d5a06f29138ba8505b919eb7127bedb6bee3b4e294328b8cfb5e"
+      },
+      "registry/index/index.crates.io-1949cf8c6b5b557f/.cache/me/mc/memchr": {
+        "bytes": 28753,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-worker-cpu-v228-v4/cargo-home/registry/index/index.crates.io-1949cf8c6b5b557f/.cache/me/mc/memchr",
+        "sha256": "fd6ae4fcce894bf67403c653f73a6fe48bfa1fac66a04e2caec70e1f36343d05"
+      },
+      "registry/index/index.crates.io-1949cf8c6b5b557f/.cache/pr/oc/proc-macro2": {
+        "bytes": 93770,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-worker-cpu-v228-v4/cargo-home/registry/index/index.crates.io-1949cf8c6b5b557f/.cache/pr/oc/proc-macro2",
+        "sha256": "95228f72462ea6fa119430877d1c7abb7a22346da05473c37ecc12e678174b69"
+      },
+      "registry/index/index.crates.io-1949cf8c6b5b557f/.cache/qu/ot/quote": {
+        "bytes": 42698,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-worker-cpu-v228-v4/cargo-home/registry/index/index.crates.io-1949cf8c6b5b557f/.cache/qu/ot/quote",
+        "sha256": "bf97b4d031ad9a1159e896720b9227fb39947f370b48cb8ded9abd27b1515feb"
+      },
+      "registry/index/index.crates.io-1949cf8c6b5b557f/.cache/ru/st/rustix": {
+        "bytes": 1137387,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-worker-cpu-v228-v4/cargo-home/registry/index/index.crates.io-1949cf8c6b5b557f/.cache/ru/st/rustix",
+        "sha256": "7ac5a490ff7d3339b90f9b3a01953921723f4c1a3152fb7c3d7cb2866e0edd91"
+      },
+      "registry/index/index.crates.io-1949cf8c6b5b557f/.cache/se/rd/serde": {
+        "bytes": 167236,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-worker-cpu-v228-v4/cargo-home/registry/index/index.crates.io-1949cf8c6b5b557f/.cache/se/rd/serde",
+        "sha256": "8fa7dcf631674523357d78dd82a9e8ec91e6822bf658e996962382d5b03a06f2"
+      },
+      "registry/index/index.crates.io-1949cf8c6b5b557f/.cache/se/rd/serde_core": {
+        "bytes": 6606,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-worker-cpu-v228-v4/cargo-home/registry/index/index.crates.io-1949cf8c6b5b557f/.cache/se/rd/serde_core",
+        "sha256": "00f5412df941bf2bb3aa7fe7e2456fabff8ce96f324060645cb84a1a0200647c"
+      },
+      "registry/index/index.crates.io-1949cf8c6b5b557f/.cache/se/rd/serde_derive": {
+        "bytes": 198632,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-worker-cpu-v228-v4/cargo-home/registry/index/index.crates.io-1949cf8c6b5b557f/.cache/se/rd/serde_derive",
+        "sha256": "04e32a953a39f321a61f4914b3b22025f8476f6d5f7140025e3766c28c6af06d"
+      },
+      "registry/index/index.crates.io-1949cf8c6b5b557f/.cache/se/rd/serde_json": {
+        "bytes": 278595,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-worker-cpu-v228-v4/cargo-home/registry/index/index.crates.io-1949cf8c6b5b557f/.cache/se/rd/serde_json",
+        "sha256": "a558e6db3da2d63e247ea734320ef3483b4538a97d4f650ba99af9d377037dc1"
+      },
+      "registry/index/index.crates.io-1949cf8c6b5b557f/.cache/sh/a2/sha2": {
+        "bytes": 54830,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-worker-cpu-v228-v4/cargo-home/registry/index/index.crates.io-1949cf8c6b5b557f/.cache/sh/a2/sha2",
+        "sha256": "267d7e974971d33790232ae905c481d424ab7ade021e631236bb5363f0849a7f"
+      },
+      "registry/index/index.crates.io-1949cf8c6b5b557f/.cache/sp/in/spin": {
+        "bytes": 24982,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-worker-cpu-v228-v4/cargo-home/registry/index/index.crates.io-1949cf8c6b5b557f/.cache/sp/in/spin",
+        "sha256": "8ab7823fa469836efe4bbe4c9517acf462cf038ffe427cc50cb7132fe7af68b4"
+      },
+      "registry/index/index.crates.io-1949cf8c6b5b557f/.cache/ty/pe/typenum": {
+        "bytes": 9437,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-worker-cpu-v228-v4/cargo-home/registry/index/index.crates.io-1949cf8c6b5b557f/.cache/ty/pe/typenum",
+        "sha256": "0aa39a82563fb4c1959ea3ce514ada50075c436f0ed5f6edcdabb90e995f7f18"
+      },
+      "registry/index/index.crates.io-1949cf8c6b5b557f/.cache/un/ic/unicode-ident": {
+        "bytes": 24866,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-worker-cpu-v228-v4/cargo-home/registry/index/index.crates.io-1949cf8c6b5b557f/.cache/un/ic/unicode-ident",
+        "sha256": "d7a3b34b99cae1bfc222b39b920b67ec93b1adb17d33880cb452a452bbfb314a"
+      },
+      "registry/index/index.crates.io-1949cf8c6b5b557f/.cache/wi/nd/windows-link": {
+        "bytes": 1761,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-worker-cpu-v228-v4/cargo-home/registry/index/index.crates.io-1949cf8c6b5b557f/.cache/wi/nd/windows-link",
+        "sha256": "d22f6b9ac1dea4587d049cfe5acaa4a769c18feb63dd29aa61bee99837a06546"
+      },
+      "registry/index/index.crates.io-1949cf8c6b5b557f/.cache/wi/nd/windows-sys": {
+        "bytes": 491504,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-worker-cpu-v228-v4/cargo-home/registry/index/index.crates.io-1949cf8c6b5b557f/.cache/wi/nd/windows-sys",
+        "sha256": "beab389ed4ab8a0aca87fde6a1195814c27d62aae5f6ffb39bb2207ad2f9ad66"
+      },
+      "registry/index/index.crates.io-1949cf8c6b5b557f/.cache/ze/ro/zeroize": {
+        "bytes": 18442,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-worker-cpu-v228-v4/cargo-home/registry/index/index.crates.io-1949cf8c6b5b557f/.cache/ze/ro/zeroize",
+        "sha256": "6f31df8d2ce8164077e7f3f849fe369182382722ab2eb492ef9580c2a1c3346c"
+      },
+      "registry/index/index.crates.io-1949cf8c6b5b557f/.cache/zm/ij/zmij": {
+        "bytes": 35499,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-worker-cpu-v228-v4/cargo-home/registry/index/index.crates.io-1949cf8c6b5b557f/.cache/zm/ij/zmij",
+        "sha256": "2292a52a2f4a8089d5327151f1d5e68496608311cfec6e1d564a6f5202a1931e"
+      },
+      "registry/index/index.crates.io-1949cf8c6b5b557f/config.json": {
+        "bytes": 76,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-worker-cpu-v228-v4/cargo-home/registry/index/index.crates.io-1949cf8c6b5b557f/config.json",
+        "sha256": "5b943a2c6f7eb743f7308aba07bdbb47d9ae44aafecd832d7f15df186afbafb3"
+      }
+    },
+    "inner_expanded_bytes": 50677903,
+    "inner_members": 2266,
+    "lock": {
+      "bytes": 7470,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-worker-cpu-v228-v4/ferric/adapters/tp-peer-finite-engineering-worker-v1/Cargo.lock",
+      "sha256": "df2a4e0b9cf96687328a5b1e41937eb940e62144314d7f903c8c961da947f7aa"
+    },
+    "manifest": {
+      "bytes": 22831,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-worker-cpu-v228-v4/cargo-cache-manifest.json",
+      "sha256": "6c8b4eb4a9cf407dc0909dde3c574145ede603bdbe9abe8d4ff5bbc56a196ba1"
+    },
+    "packages": [
+      {
+        "archive": "registry/cache/index.crates.io-1949cf8c6b5b557f/bitflags-2.13.2.crate",
+        "checksum": "3ded4057c258ba199e2d26386d3af3780957ecaee6c4ef4041c6b4b8b97c0b06",
+        "expanded_bytes": 246056,
+        "index": "registry/index/index.crates.io-1949cf8c6b5b557f/.cache/bi/tf/bitflags",
+        "members": 64,
+        "name": "bitflags",
+        "version": "2.13.2"
+      },
+      {
+        "archive": "registry/cache/index.crates.io-1949cf8c6b5b557f/block-buffer-0.12.1.crate",
+        "checksum": "d2f6c7dbe95a6ed67ad9f18e57daf93a2f034c524b99fd2b76d18fdfeb6660aa",
+        "expanded_bytes": 58174,
+        "index": "registry/index/index.crates.io-1949cf8c6b5b557f/.cache/bl/oc/block-buffer",
+        "members": 12,
+        "name": "block-buffer",
+        "version": "0.12.1"
+      },
+      {
+        "archive": "registry/cache/index.crates.io-1949cf8c6b5b557f/cfg-if-1.0.5.crate",
+        "checksum": "4e7648175b45a9a48536d676f68d918270699102aa8dab5496df06904c914600",
+        "expanded_bytes": 26434,
+        "index": "registry/index/index.crates.io-1949cf8c6b5b557f/.cache/cf/g-/cfg-if",
+        "members": 14,
+        "name": "cfg-if",
+        "version": "1.0.5"
+      },
+      {
+        "archive": "registry/cache/index.crates.io-1949cf8c6b5b557f/const-oid-0.10.2.crate",
+        "checksum": "a6ef517f0926dd24a1582492c791b6a4818a4d94e789a334894aa15b0d12f55c",
+        "expanded_bytes": 372671,
+        "index": "registry/index/index.crates.io-1949cf8c6b5b557f/.cache/co/ns/const-oid",
+        "members": 22,
+        "name": "const-oid",
+        "version": "0.10.2"
+      },
+      {
+        "archive": "registry/cache/index.crates.io-1949cf8c6b5b557f/cpufeatures-0.3.1.crate",
+        "checksum": "5ca28b0ae3115b884660db4118d803791fd6756b6e88f39c0f3f7859060d7566",
+        "expanded_bytes": 46882,
+        "index": "registry/index/index.crates.io-1949cf8c6b5b557f/.cache/cp/uf/cpufeatures",
+        "members": 16,
+        "name": "cpufeatures",
+        "version": "0.3.1"
+      },
+      {
+        "archive": "registry/cache/index.crates.io-1949cf8c6b5b557f/crypto-common-0.2.2.crate",
+        "checksum": "ce6e4c961d6cd6c9a86db418387425e8bdeaf05b3c8bc1411e6dca4c252f1453",
+        "expanded_bytes": 53131,
+        "index": "registry/index/index.crates.io-1949cf8c6b5b557f/.cache/cr/yp/crypto-common",
+        "members": 11,
+        "name": "crypto-common",
+        "version": "0.2.2"
+      },
+      {
+        "archive": "registry/cache/index.crates.io-1949cf8c6b5b557f/digest-0.11.3.crate",
+        "checksum": "f1dd6dbb5841937940781866fa1281a1ff7bd3bf827091440879f9994983d5c2",
+        "expanded_bytes": 137727,
+        "index": "registry/index/index.crates.io-1949cf8c6b5b557f/.cache/di/ge/digest",
+        "members": 26,
+        "name": "digest",
+        "version": "0.11.3"
+      },
+      {
+        "archive": "registry/cache/index.crates.io-1949cf8c6b5b557f/errno-0.3.14.crate",
+        "checksum": "39cab71617ae0d63f51a36d69f866391735b51691dbda63cf6f96d042b63efeb",
+        "expanded_bytes": 37652,
+        "index": "registry/index/index.crates.io-1949cf8c6b5b557f/.cache/er/rn/errno",
+        "members": 18,
+        "name": "errno",
+        "version": "0.3.14"
+      },
+      {
+        "archive": "registry/cache/index.crates.io-1949cf8c6b5b557f/hybrid-array-0.4.15.crate",
+        "checksum": "27f864f10dfb56725ce5ce5472bc52252c8f93a4ab86327122cebf62c5f59a17",
+        "expanded_bytes": 146059,
+        "index": "registry/index/index.crates.io-1949cf8c6b5b557f/.cache/hy/br/hybrid-array",
+        "members": 24,
+        "name": "hybrid-array",
+        "version": "0.4.15"
+      },
+      {
+        "archive": "registry/cache/index.crates.io-1949cf8c6b5b557f/itoa-1.0.18.crate",
+        "checksum": "8f42a60cbdf9a97f5d2305f08a87dc4e09308d1276d28c869c684d7777685682",
+        "expanded_bytes": 51096,
+        "index": "registry/index/index.crates.io-1949cf8c6b5b557f/.cache/it/oa/itoa",
+        "members": 14,
+        "name": "itoa",
+        "version": "1.0.18"
+      },
+      {
+        "archive": "registry/cache/index.crates.io-1949cf8c6b5b557f/libc-0.2.189.crate",
+        "checksum": "3eaf3ede3fee6db1a4c2ee091bf8a8b4dccdc6d17f656fb07896ee72867612f2",
+        "expanded_bytes": 4503684,
+        "index": "registry/index/index.crates.io-1949cf8c6b5b557f/.cache/li/bc/libc",
+        "members": 404,
+        "name": "libc",
+        "version": "0.2.189"
+      },
+      {
+        "archive": "registry/cache/index.crates.io-1949cf8c6b5b557f/linux-raw-sys-0.12.1.crate",
+        "checksum": "32a66949e030da00e8c7d4434b251670a91556f4144941d37452769c25d58a53",
+        "expanded_bytes": 16933579,
+        "index": "registry/index/index.crates.io-1949cf8c6b5b557f/.cache/li/nu/linux-raw-sys",
+        "members": 473,
+        "name": "linux-raw-sys",
+        "version": "0.12.1"
+      },
+      {
+        "archive": "registry/cache/index.crates.io-1949cf8c6b5b557f/memchr-2.8.3.crate",
+        "checksum": "cf8baf1c55e62ffcace7a9f06f4bd9cd3f0c4beb022d3b367256b91b87513d98",
+        "expanded_bytes": 588682,
+        "index": "registry/index/index.crates.io-1949cf8c6b5b557f/.cache/me/mc/memchr",
+        "members": 59,
+        "name": "memchr",
+        "version": "2.8.3"
+      },
+      {
+        "archive": "registry/cache/index.crates.io-1949cf8c6b5b557f/proc-macro2-1.0.107.crate",
+        "checksum": "985e7ec9bb745e6ce6535b544d84d6cd6f7ad8bd711c398938ae983b91a766d9",
+        "expanded_bytes": 270283,
+        "index": "registry/index/index.crates.io-1949cf8c6b5b557f/.cache/pr/oc/proc-macro2",
+        "members": 33,
+        "name": "proc-macro2",
+        "version": "1.0.107"
+      },
+      {
+        "archive": "registry/cache/index.crates.io-1949cf8c6b5b557f/quote-1.0.47.crate",
+        "checksum": "1fbf4db142a473a8d80c26bbf18454ed458bf8d26c8219c331daecfdbd079001",
+        "expanded_bytes": 136860,
+        "index": "registry/index/index.crates.io-1949cf8c6b5b557f/.cache/qu/ot/quote",
+        "members": 35,
+        "name": "quote",
+        "version": "1.0.47"
+      },
+      {
+        "archive": "registry/cache/index.crates.io-1949cf8c6b5b557f/rustix-1.1.5.crate",
+        "checksum": "891efababe418670775f199f0d233d84843c227a0949a883ce15b37c78d6629d",
+        "expanded_bytes": 2362699,
+        "index": "registry/index/index.crates.io-1949cf8c6b5b557f/.cache/ru/st/rustix",
+        "members": 331,
+        "name": "rustix",
+        "version": "1.1.5"
+      },
+      {
+        "archive": "registry/cache/index.crates.io-1949cf8c6b5b557f/serde-1.0.229.crate",
+        "checksum": "4148590afebada386688f18773da617792bf2ef03ffc1e4cbd2b1d45b023e0ba",
+        "expanded_bytes": 561555,
+        "index": "registry/index/index.crates.io-1949cf8c6b5b557f/.cache/se/rd/serde",
+        "members": 33,
+        "name": "serde",
+        "version": "1.0.229"
+      },
+      {
+        "archive": "registry/cache/index.crates.io-1949cf8c6b5b557f/serde_core-1.0.229.crate",
+        "checksum": "67dca2c9c51e58a4791a4b1ed58308b39c64224d349a935ab5039aa360942a48",
+        "expanded_bytes": 392878,
+        "index": "registry/index/index.crates.io-1949cf8c6b5b557f/.cache/se/rd/serde_core",
+        "members": 27,
+        "name": "serde_core",
+        "version": "1.0.229"
+      },
+      {
+        "archive": "registry/cache/index.crates.io-1949cf8c6b5b557f/serde_derive-1.0.229.crate",
+        "checksum": "e7a5d71263a5a7d47b41f6b3f06ba276f10cc18b0931f1799f710578e2309348",
+        "expanded_bytes": 333931,
+        "index": "registry/index/index.crates.io-1949cf8c6b5b557f/.cache/se/rd/serde_derive",
+        "members": 36,
+        "name": "serde_derive",
+        "version": "1.0.229"
+      },
+      {
+        "archive": "registry/cache/index.crates.io-1949cf8c6b5b557f/serde_json-1.0.151.crate",
+        "checksum": "c841b55ecdae098c80dcae9cf767f6f8a0c2cdb3416bbef72181df4d0fe73f14",
+        "expanded_bytes": 750028,
+        "index": "registry/index/index.crates.io-1949cf8c6b5b557f/.cache/se/rd/serde_json",
+        "members": 89,
+        "name": "serde_json",
+        "version": "1.0.151"
+      },
+      {
+        "archive": "registry/cache/index.crates.io-1949cf8c6b5b557f/sha2-0.11.0.crate",
+        "checksum": "446ba717509524cb3f22f17ecc096f10f4822d76ab5c0b9822c5f9c284e825f4",
+        "expanded_bytes": 143669,
+        "index": "registry/index/index.crates.io-1949cf8c6b5b557f/.cache/sh/a2/sha2",
+        "members": 49,
+        "name": "sha2",
+        "version": "0.11.0"
+      },
+      {
+        "archive": "registry/cache/index.crates.io-1949cf8c6b5b557f/spin-0.12.3.crate",
+        "checksum": "0134f9043ed38b087ac4f7d4af44c79e2c9e5094421fe3164f435ce585953b10",
+        "expanded_bytes": 200887,
+        "index": "registry/index/index.crates.io-1949cf8c6b5b557f/.cache/sp/in/spin",
+        "members": 22,
+        "name": "spin",
+        "version": "0.12.3"
+      },
+      {
+        "archive": "registry/cache/index.crates.io-1949cf8c6b5b557f/syn-3.0.6.crate",
+        "checksum": "8593e8e72159ed2257d083c7a454a85cbf854f37a0966d8d483aff8c8a3ebcee",
+        "expanded_bytes": 2364460,
+        "index": "registry/index/index.crates.io-1949cf8c6b5b557f/.cache/3/s/syn",
+        "members": 104,
+        "name": "syn",
+        "version": "3.0.6"
+      },
+      {
+        "archive": "registry/cache/index.crates.io-1949cf8c6b5b557f/typenum-1.20.1.crate",
+        "checksum": "b6f5e870be6c3b371b77fe0ee0bafb859fa4964b4404c27de1d380043c4dda20",
+        "expanded_bytes": 1231427,
+        "index": "registry/index/index.crates.io-1949cf8c6b5b557f/.cache/ty/pe/typenum",
+        "members": 26,
+        "name": "typenum",
+        "version": "1.20.1"
+      },
+      {
+        "archive": "registry/cache/index.crates.io-1949cf8c6b5b557f/unicode-ident-1.0.26.crate",
+        "checksum": "d245f478577f809a851594d02313b640fb437e0bb33866753cff937863096954",
+        "expanded_bytes": 339890,
+        "index": "registry/index/index.crates.io-1949cf8c6b5b557f/.cache/un/ic/unicode-ident",
+        "members": 26,
+        "name": "unicode-ident",
+        "version": "1.0.26"
+      },
+      {
+        "archive": "registry/cache/index.crates.io-1949cf8c6b5b557f/windows-link-0.2.1.crate",
+        "checksum": "f0805222e57f7521d6a62e36fa9163bc891acd422f971defe97d64e70d0a4fe5",
+        "expanded_bytes": 16196,
+        "index": "registry/index/index.crates.io-1949cf8c6b5b557f/.cache/wi/nd/windows-link",
+        "members": 8,
+        "name": "windows-link",
+        "version": "0.2.1"
+      },
+      {
+        "archive": "registry/cache/index.crates.io-1949cf8c6b5b557f/windows-sys-0.61.2.crate",
+        "checksum": "ae137229bcbd6cdf0f7b80a31df61766145077ddf49416a728b02cb3921ff3fc",
+        "expanded_bytes": 18183406,
+        "index": "registry/index/index.crates.io-1949cf8c6b5b557f/.cache/wi/nd/windows-sys",
+        "members": 257,
+        "name": "windows-sys",
+        "version": "0.61.2"
+      },
+      {
+        "archive": "registry/cache/index.crates.io-1949cf8c6b5b557f/zeroize-1.9.0.crate",
+        "checksum": "e13c156562582aa81c60cb29407084cdb54c4164760106ab78e6c5b0858cf64e",
+        "expanded_bytes": 81775,
+        "index": "registry/index/index.crates.io-1949cf8c6b5b557f/.cache/ze/ro/zeroize",
+        "members": 16,
+        "name": "zeroize",
+        "version": "1.9.0"
+      },
+      {
+        "archive": "registry/cache/index.crates.io-1949cf8c6b5b557f/zmij-1.0.23.crate",
+        "checksum": "29666d0abbfad1e3dc4dcf6144730dd3a3ab225bbbdac83319345b1b44ccfc1b",
+        "expanded_bytes": 106132,
+        "index": "registry/index/index.crates.io-1949cf8c6b5b557f/.cache/zm/ij/zmij",
+        "members": 17,
+        "name": "zmij",
+        "version": "1.0.23"
+      }
+    ],
+    "stage": {
+      "bytes": 12211,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-worker-cpu-v228-v4/cargo-cache-stage-complete.json",
+      "sha256": "8ce03e45ab76d1d2a576a67dd9507f225e48cf0964e29e0ac56b65e3a44405f5"
+    }
+  },
+  "failure": "RuntimeError('worker-tests-build did not finish naturally/reaped/successfully')",
+  "files": {
+    "cargo-cache-manifest.json": {
+      "bytes": 22831,
+      "sha256": "6c8b4eb4a9cf407dc0909dde3c574145ede603bdbe9abe8d4ff5bbc56a196ba1"
+    },
+    "cargo-cache-stage-complete.json": {
+      "bytes": 12211,
+      "sha256": "8ce03e45ab76d1d2a576a67dd9507f225e48cf0964e29e0ac56b65e3a44405f5"
+    },
+    "evidence/dependencies-after.json": {
+      "bytes": 845954,
+      "sha256": "2bdbb4205aafc0586c645d53d38b2bfad45216074c5f96db1253a72edb50a049"
+    },
+    "evidence/dependencies-before.json": {
+      "bytes": 845954,
+      "sha256": "2bdbb4205aafc0586c645d53d38b2bfad45216074c5f96db1253a72edb50a049"
+    },
+    "evidence/failed.json": {
+      "bytes": 1369041,
+      "sha256": "0f2dd34dc85d9f8fadd14fd2437fd9c8c8c70a36c8cc31bdeb9b22d72f0b53c4"
+    },
+    "evidence/metadata.command.json": {
+      "bytes": 2361,
+      "sha256": "f6d8c2641d9706be84d29502626083568d5911d8eb809d872f9295fdb5a48344"
+    },
+    "evidence/metadata.result.json": {
+      "bytes": 1637,
+      "sha256": "d5debef30879be0b22cd5310f64bf1cb10fc2ba5ec219427bc3ff3ef519cb787"
+    },
+    "evidence/metadata.started.json": {
+      "bytes": 550,
+      "sha256": "3ef85f1d14b77033c97e52db66203200140ad66e01d5285fc925ae23230c6d1f"
+    },
+    "evidence/metadata.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "evidence/metadata.stdout": {
+      "bytes": 185792,
+      "sha256": "369d48ca3ec120e0c8e07f0a4bf965aa0b10863cb81172f64d990e6758a14990"
+    },
+    "evidence/rustc-version.command.json": {
+      "bytes": 2113,
+      "sha256": "add3e99ce4ec05e7b5ced3d63524d71c7f46fc8fc5b3dec2941f86ad87e553ea"
+    },
+    "evidence/rustc-version.result.json": {
+      "bytes": 1407,
+      "sha256": "aef35732e29ed1dff7fbe614c285da2f394c5e06388508ed36d3f66d6deb3c9a"
+    },
+    "evidence/rustc-version.started.json": {
+      "bytes": 303,
+      "sha256": "e25df53a5a6061f116cc8b5c9efcf3b89cf42554724385681437676c57736eca"
+    },
+    "evidence/rustc-version.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "evidence/rustc-version.stdout": {
+      "bytes": 212,
+      "sha256": "580dbecb7627e4e8ad67fd0b1d539727ba8d2651d04035c907b406d83200b4e2"
+    },
+    "evidence/rustfmt-check.command.json": {
+      "bytes": 5938,
+      "sha256": "6bd3346ff6475a99c186c7cb65a9fb4b43682360dbda812b9cb0bdc9c6c51848"
+    },
+    "evidence/rustfmt-check.result.json": {
+      "bytes": 5229,
+      "sha256": "96aac8dcedaec1868d78500b7033ce232c0217965c691ff52e4cac5c7b060d95"
+    },
+    "evidence/rustfmt-check.started.json": {
+      "bytes": 4127,
+      "sha256": "b9f36d22f07871d085601473c6b0b5f53dd7b89e3616966fdc99f7e9cbd9c502"
+    },
+    "evidence/rustfmt-check.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "evidence/rustfmt-check.stdout": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "evidence/rustfmt.command.json": {
+      "bytes": 5923,
+      "sha256": "6c47744c70f7fd3ecc2f0eab5873428e66433b75d5b9e8c90201925a7989f3b6"
+    },
+    "evidence/rustfmt.result.json": {
+      "bytes": 5190,
+      "sha256": "df873a7776a2698813412377b7561df31a3c69195d986aaa7eff6a5796910d67"
+    },
+    "evidence/rustfmt.started.json": {
+      "bytes": 4112,
+      "sha256": "619efef346a9c182d89a505388a5ff048d3ed016c81c173c160f795e5c8cbe3d"
+    },
+    "evidence/rustfmt.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "evidence/rustfmt.stdout": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "evidence/sources-after.json": {
+      "bytes": 390422,
+      "sha256": "ed7b4b9e2820c68cc0fd00bb245e0b6e3b3e0a99e3aeff657648056df5f3f71c"
+    },
+    "evidence/sources-before.json": {
+      "bytes": 390422,
+      "sha256": "ed7b4b9e2820c68cc0fd00bb245e0b6e3b3e0a99e3aeff657648056df5f3f71c"
+    },
+    "evidence/sources-preformat.json": {
+      "bytes": 390420,
+      "sha256": "fab14772c9a82c08472bce3be3ebd752b019793a027369681c0fe915893830cd"
+    },
+    "evidence/worker-tests-build.command.json": {
+      "bytes": 2503,
+      "sha256": "ff2072a5b98fc0b76010c74056f21be7db156e2c6218b219829fa93a1b889e64"
+    },
+    "evidence/worker-tests-build.result.json": {
+      "bytes": 1825,
+      "sha256": "7300118a9809795c224a0a83034cc603abe5176a72a112ffd7f319d818e29da0"
+    },
+    "evidence/worker-tests-build.started.json": {
+      "bytes": 691,
+      "sha256": "aac8f9c29ebbcec2bca70a8bbddb3a56aec5f57832928e6e05c776ae54e12b61"
+    },
+    "evidence/worker-tests-build.stderr": {
+      "bytes": 2640,
+      "sha256": "13e18acf2774911cb7e533d6837679dfe92aac2c949513cc0c179a6a8997dc4a"
+    },
+    "evidence/worker-tests-build.stdout": {
+      "bytes": 112272,
+      "sha256": "8c312ce1d419063fe61811b87891f9238dfcd877d1bf4140e59eab31f4ec27b5"
+    },
+    "export_worker_cpu_v4.py": {
+      "bytes": 32561,
+      "sha256": "41c399bf67fb2d9b5e895a405b16651e2698221b2784bd2145d7bf7ac1246e7e"
+    },
+    "fe2o3/Cargo.lock": {
+      "bytes": 8058,
+      "sha256": "b605fb665bbd9b6ba266c0b6f74f4b9cab50bd1845e136dc6ac6cb6b2dadd252"
+    },
+    "fe2o3/Cargo.lock.input": {
+      "bytes": 94611,
+      "sha256": "f0950d120a5decc8e52cd1160c31820f7703e72448d70061852d044fa925bcfc"
+    },
+    "fe2o3/Cargo.toml": {
+      "bytes": 1191,
+      "sha256": "6335afec26ccb89944892ce8349f4b6681070fb0b7f467cede39538cfc88a743"
+    },
+    "fe2o3/Cargo.toml.original": {
+      "bytes": 9409,
+      "sha256": "cb3099e0ebf7c6b04c21349d27569e7fcb7a2ec6199d6b9868421748263aa183"
+    },
+    "fe2o3/rust-toolchain.toml": {
+      "bytes": 160,
+      "sha256": "49eeb550dd57841add3be3442177e78f6f0668ffc4f31739ce78d75f8129b154"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/Cargo.lock": {
+      "bytes": 7470,
+      "sha256": "df2a4e0b9cf96687328a5b1e41937eb940e62144314d7f903c8c961da947f7aa"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/Cargo.toml": {
+      "bytes": 581,
+      "sha256": "bca0026055d76e9178b867589e8c6573ce74d0ebfe7d5144265124ead23784e1"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/README.md": {
+      "bytes": 11895,
+      "sha256": "3930fe88030c560bc4d006ead55a3a6cfa383c9e1d0c8158b8be65f600bd4d34"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/finite_composition_wire.rs": {
+      "bytes": 21103,
+      "sha256": "3db06cb2d06edd63d36811be2d0bdfe8606d1987b95cfda0c7db4422ac6c332f"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/finite_forward_wire_v1.rs": {
+      "bytes": 11676,
+      "sha256": "7152e01e863636b66c17c684818aa87a1c48ef65d772f1ac61a7468167faeff1"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/finite_forward_wire_v1_tests.rs": {
+      "bytes": 7638,
+      "sha256": "4cb51220e6500cfb0259f6733f9215bd6727b3fcf674344b5d3397f7123274d9"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/finite_guarded_mlp_decode_wire_v1.rs": {
+      "bytes": 19085,
+      "sha256": "90a0868e1fa4df506d0a7c2f5c956691f844e818142306a0507ea961ddd7ded9"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/finite_guarded_mlp_decode_wire_v1_tests.rs": {
+      "bytes": 10408,
+      "sha256": "7e2cc10b8fbf84a0b752f41164b32f6967c4b5644fb5f5cd0ab0b3b00ebb5985"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/finite_long_wire_v1.rs": {
+      "bytes": 19254,
+      "sha256": "930cb7a2e29d2bee532473ea55b13d915b838472595795be4995748ce5233eca"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/finite_long_wire_v1_tests.rs": {
+      "bytes": 10906,
+      "sha256": "50c6074db295bc13d659c54572b354511830e94af3db487a0603f8ab91999cdc"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/finite_mlp_tiles_comparison_wire_v1.rs": {
+      "bytes": 17339,
+      "sha256": "d006a449e375970ddfd30544418ed9152f024de6032998ab3016049e199aea20"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/finite_mlp_tiles_comparison_wire_v1_tests.rs": {
+      "bytes": 14191,
+      "sha256": "fc7200f34308f76e4c71c1c257b48a48ae4ddaa336fe255565297097270b149a"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/finite_prefix_decode_wire_v1.rs": {
+      "bytes": 21984,
+      "sha256": "5dbc804123b577664702af88af84570e3a053b54a278f6508b1b9992e37727d5"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/finite_prefix_decode_wire_v1_tests.rs": {
+      "bytes": 15762,
+      "sha256": "f4f298504c7a399aab2eba09ba212b475096617fa1ecbab9ac7cb49925b205b0"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/finite_prefix_layer_wire_v1.rs": {
+      "bytes": 16012,
+      "sha256": "012c53df5f71e4bc2f7d93a97c359b3c14f819f12ebac293f0f7786a613c1da4"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/finite_prefix_layer_wire_v1_tests.rs": {
+      "bytes": 9287,
+      "sha256": "ea25876eea1243e903907eac4ad06d0b2cb8dcb19885e0545a83b388c6e5abb3"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/finite_projection_residual_decode_wire_v1.rs": {
+      "bytes": 5338,
+      "sha256": "c33ed015d4bec88b36a14e334bfad64044ffe0e707c989c4f07327975e2b90b3"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/finite_projection_residual_decode_wire_v1_tests.rs": {
+      "bytes": 6662,
+      "sha256": "4e213282e01493f1ce9cec53ca54ab007802f034c1a4d0e3454acf06647ed65c"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/finite_projection_residual_layer_wire_v1.rs": {
+      "bytes": 3744,
+      "sha256": "bc941c95fcdeaa253eaeb3cf096c6c4278388e2cd1b70140f3ccdf98d8cbd75a"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/finite_projection_residual_layer_wire_v1_tests.rs": {
+      "bytes": 3687,
+      "sha256": "90593b95c531c8eb55d13fe46da3744f9665ab43c1cb98edbdd1803edf099eb8"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/finite_projection_residual_mlp_ordered_wire_v1.rs": {
+      "bytes": 13883,
+      "sha256": "468d957c4f15e6c43de179dce5917604b1513c5abe9ec187c2cbedd5d5a13742"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/finite_projection_residual_mlp_ordered_wire_v1_tests.rs": {
+      "bytes": 2400,
+      "sha256": "a7e54b59597d145328a92d263048c17b2ce0b0865bd7584aac9a0d00e7a0809b"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/finite_queued_mlp_comparison_wire_v1.rs": {
+      "bytes": 16919,
+      "sha256": "92fb716a5118ec8451356f7b4ef0aefc60c36ba60069113cbc6a45468e1315ef"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/finite_queued_mlp_comparison_wire_v1_tests.rs": {
+      "bytes": 11592,
+      "sha256": "ac65a696900d3139225c705ebb1b3434ab03e003ea78422a959f1531f89dfd87"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/finite_queued_projection_comparison_wire_v1.rs": {
+      "bytes": 16009,
+      "sha256": "1624c445d8572d4f1e331fbd0e18ab710587ea773977b2b77acae41f14eeadad"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/finite_queued_projection_comparison_wire_v1_tests.rs": {
+      "bytes": 12535,
+      "sha256": "262c13cdb5498bcc113c80a9d1f9d3d46de0ca582ed3bc1263153793609c518d"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/finite_rearm_smoke_stage_v1.rs": {
+      "bytes": 8191,
+      "sha256": "f605b8a9abe82d333c6740106e9a14b4687390b19780515b9bc2bc2b52f32457"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/finite_rearm_smoke_wire_v1.rs": {
+      "bytes": 14065,
+      "sha256": "96cc26b76defcacb9ab67c1571e9682e5721fe081a4340ea828a7e0dfd750941"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/finite_rearm_smoke_wire_v1_tests.rs": {
+      "bytes": 9480,
+      "sha256": "7a6fde9f9e7d9392a064fd2b004735109f57d8cf926309236337723f93f37223"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/finite_setup_wire_v1.rs": {
+      "bytes": 10404,
+      "sha256": "7fc149a4e1014dc03ff3252075417e2cad578a24280db41d209010879c760294"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/finite_setup_wire_v1_tests.rs": {
+      "bytes": 5102,
+      "sha256": "c168dd098b53ed425df2e52fb3924e125a1c91e6784761f7a5475287b7697a16"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/finite_tiles_decode_wire_v1.rs": {
+      "bytes": 20334,
+      "sha256": "5441c410a66cccb7b3d90387f8dbb5eb9f84bd9ca42e56c1d69ee037c8db78b9"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/finite_tiles_decode_wire_v1_tests.rs": {
+      "bytes": 13468,
+      "sha256": "21443ffc79304791d5419e5d9ed444677d84606dad924ae82a082fbde605f19c"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/forward_sequence.rs": {
+      "bytes": 5462,
+      "sha256": "c70205794fa36a745c66ed5c2121a13ccc754cedc1f9639d309ff194538e38fe"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/forward_sequence_tests.rs": {
+      "bytes": 6967,
+      "sha256": "4c3617dee62009fab1eeb3bc3789e79aea517b37f7d9aeb3e4df1e2a9ebea157"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/lib.rs": {
+      "bytes": 2434,
+      "sha256": "b1f93473c7e24f471efc4069a8a0968b005bfd9c118511348ab035f9908dcd6a"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/long_forward_sequence_v1.rs": {
+      "bytes": 4149,
+      "sha256": "53b74bbc91c73ac7f83f8be7d44e77c323fc81d55062e91af95dec868572d70e"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/long_forward_sequence_v1_tests.rs": {
+      "bytes": 5973,
+      "sha256": "06b9a918f7491ab98cc8b0f8f26c2e23ed1e56ebdac9cd26f9346ea028ad77ac"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/main.rs": {
+      "bytes": 12898,
+      "sha256": "435eb8d21a5f0928219360964153327e030636e15cc12cb8634a0e2895de21a3"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/native_catalog.rs": {
+      "bytes": 54852,
+      "sha256": "6402248b3f70a2f3fdb88c13f329b15905afc455a6bfb9041718d96afcc46476"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/native_catalog_tests.rs": {
+      "bytes": 34778,
+      "sha256": "33904486384c75a1549e2ec50bce103378b280d9550e6a60e8080efd95d1ba66"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/native_cli_v1.rs": {
+      "bytes": 11412,
+      "sha256": "449db38b9c7c933ece2ff65a4c8ab5acb3859b4c025de5a675ab308deb7266d7"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/native_cli_v1_tests.rs": {
+      "bytes": 9561,
+      "sha256": "00089635ef97a3032b6644ee64aa43b8d424a74d7e2be7f377c42563f92964a9"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/native_forward.rs": {
+      "bytes": 17718,
+      "sha256": "541f32679fcda07e5491f987f130cb2c3ecbcf4608f93d81b1a18951abe4cac7"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/native_forward_tests.rs": {
+      "bytes": 1341,
+      "sha256": "26eb93d267b17a8c9231df94788d2bcc98391bc94f594ffebcdb09ac3bc834be"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/native_guarded_mlp_decode_cli_v1.rs": {
+      "bytes": 11758,
+      "sha256": "706d6903be71932b8c38c8f7e009b88802a37f1f00c43788d9dd3f3b84743bf6"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/native_guarded_mlp_decode_cli_v1_tests.rs": {
+      "bytes": 11593,
+      "sha256": "f236595acbe4f26301f1932e2236174b07cf5e7c14318d01bb19f96677f3e9b3"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/native_guarded_mlp_decode_v1.rs": {
+      "bytes": 9511,
+      "sha256": "5c91114d84ead95dff4187238858d990985310182e4462c276b6c2b2ac6cfe56"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/native_guarded_mlp_decode_v1/tests.rs": {
+      "bytes": 7537,
+      "sha256": "8c6cebe5a2f6432b8d30a9cd0589ffbbce68f63ceec6585da4a9c38254766bd5"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/native_long_cli_v1.rs": {
+      "bytes": 12312,
+      "sha256": "14d11dd4337b5071f5fce60abed14cd61f89189118f4d77b465696393e139ae6"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/native_long_cli_v1_tests.rs": {
+      "bytes": 6422,
+      "sha256": "d22bf3abe58c76dc7f238cbc1f7170609fdfc9fb711b0d57cd6e3290ffccd134"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/native_long_forward_v1.rs": {
+      "bytes": 3348,
+      "sha256": "3bf47fa8e351e76b350f32db4fa8df57e6feef5c89091ad80c46694d605402ae"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/native_mlp_tiles_comparison_cli_v1.rs": {
+      "bytes": 12756,
+      "sha256": "d1877f6bd3628ef5d45d66892ea65fe193a87aca377fc00b64451f083c0b6104"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/native_mlp_tiles_comparison_cli_v1_tests.rs": {
+      "bytes": 10071,
+      "sha256": "0de258bc01a2bed55e1649e7b49b63cb4e1e4bc64cd9e15660b31d3eae616275"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/native_mlp_tiles_comparison_v1.rs": {
+      "bytes": 8054,
+      "sha256": "8612911b532098bf1af08e69048d09d5e5c3001baff3c0e3eec96ae9100ab2ef"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/native_mlp_tiles_comparison_v1_tests.rs": {
+      "bytes": 5138,
+      "sha256": "83d5f814c094d644d1a8ed9ab968decaccd8221f72cf04f2e93e543304e5e019"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_decode_cli_v1.rs": {
+      "bytes": 29982,
+      "sha256": "a7cb23ea8ab07015ca79606a1dbd55d144a2a57ec430f1d31940c5df3d8159aa"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_decode_cli_v1_tests.rs": {
+      "bytes": 11499,
+      "sha256": "1cc884bfc963a2404397866b4dce2c2cb7e91a0bc564bcff4da3ec2fb9e867de"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_decode_clock_cli_tests.rs": {
+      "bytes": 3088,
+      "sha256": "a560ba2b22b245a2e530e58380ded18eaa75de02a4406297806168f6eb5eb256"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_decode_device_cli_tests.rs": {
+      "bytes": 7392,
+      "sha256": "dc31993d03b2df110d880c198053671f9f0219c8f71e7d320db0c8b88de28927"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_decode_device_clock_v2.rs": {
+      "bytes": 2493,
+      "sha256": "4aec273ed7e63ceae58a73734756b266ee0df848c472d4c4f121424cee66b5ef"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_decode_device_clock_v2_tests.rs": {
+      "bytes": 2909,
+      "sha256": "8ab94d5effa0db55c1cb40edc5e32c8cff6ec46e424fc710d993d08fae5e36b0"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_decode_device_v1.rs": {
+      "bytes": 2390,
+      "sha256": "dfb2f096963c5fbe4c44e6edaefb154c71ee50a18d3f5b72c72bd092ff9b091e"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_decode_device_v1_tests.rs": {
+      "bytes": 2758,
+      "sha256": "6be3baec874683feec5f2d1e96cd654537088e94fca51a7a16bb3e10e24492da"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_decode_host_cli_tests.rs": {
+      "bytes": 4625,
+      "sha256": "f4b926e0ea13af9da185719c3a3a75cccb90b335174078eaa25df73cb071de8d"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_decode_host_v1.rs": {
+      "bytes": 10662,
+      "sha256": "5944c85de4547243758fbfd14072052f77d79eca9ba1d6bd9367e9e7a8acd6ab"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_decode_host_v1_tests.rs": {
+      "bytes": 2317,
+      "sha256": "7c03e43432ac7fefcc58583a14dedf7636286fbfa5dff07f84974caa26f40e11"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_decode_host_v2.rs": {
+      "bytes": 9148,
+      "sha256": "7921daf8dd6cdce2f09c9773cd8cdadcdf59bb167fd58a428b32df67ae0ed5cf"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_decode_host_v2_tests.rs": {
+      "bytes": 2191,
+      "sha256": "7f4f24fa58205f460082b78087acdee8acec21786b874451aac1950cfa1543f4"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_decode_ordered_tests.rs": {
+      "bytes": 13527,
+      "sha256": "4111eeb6817d4c6fa51720e9d1711c57032c85ed7d81e9b2009693f3649a4f3e"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_decode_projection_tests.rs": {
+      "bytes": 12123,
+      "sha256": "12f501c20795f625f4ee5610e5da404b668bd16a7d35d7efb8e775ae6209417c"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_device_clock_recorder_v2.rs": {
+      "bytes": 9833,
+      "sha256": "9a43fd1fa2d2d6427f13055324e6b74690402174fe787ff66a9784aa0d6613fe"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_device_clock_recorder_v2_tests.rs": {
+      "bytes": 7567,
+      "sha256": "c6228c571f8af03bd19e41a6feec103df81a107b2cf8840ed99ed80362234c84"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_device_recorder_v1.rs": {
+      "bytes": 11444,
+      "sha256": "493b84f9360741ef1ebf321edaad11d59312ff56ca4aa3d789809813fbb5b2fa"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_device_recorder_v1_tests.rs": {
+      "bytes": 7384,
+      "sha256": "d1ad18b4f70a85e97cc373135a5462c11e3491a916490b657ee18a8a553cf82f"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_layer_cli_v1.rs": {
+      "bytes": 10034,
+      "sha256": "c687171ab77c32d7e789fab3b40ccb8b9fdebd6ebe4ca64a0ac0dc8c79625603"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_layer_cli_v1_tests.rs": {
+      "bytes": 14704,
+      "sha256": "f7b0fe2a0abddf23014d88c4b2f81ffcab0cf7ef492fba0dea197176cfe14542"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_tiles_decode_v6.rs": {
+      "bytes": 21135,
+      "sha256": "52f4dd3c35b67f73fe2cd29095c972a112de76fa85cff1e395be2b52dba45d44"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_tiles_decode_v6/projection_tests.rs": {
+      "bytes": 8915,
+      "sha256": "1c83a5b5b0aad6724f7b0c8cccae24c88ba0fd24051a153aac26cd51939694bc"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_tiles_decode_v6/sequence.rs": {
+      "bytes": 4421,
+      "sha256": "2d9bef2518ccb86409f95f1fbf1475ed9d43af8fd265c65186e583e3adcba96f"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_tiles_decode_v6/tests.rs": {
+      "bytes": 11536,
+      "sha256": "0e291d8b7aaafbce5a162012a39e0740ada86c53c7f3fc3f8937ceef301f2761"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_tiles_layer_v6.rs": {
+      "bytes": 15441,
+      "sha256": "149d679a05299d559bc48d34cd5f165610aa0b5a3050d661694f9061e8f5e028"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/native_prefix_tiles_layer_v6/tests.rs": {
+      "bytes": 10376,
+      "sha256": "003497e32d057bb60afa326492df05757999100cd43c57008bfcdac6923567c8"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/native_projection_residual_decode_cli_v1.rs": {
+      "bytes": 5328,
+      "sha256": "94bc362c580764e9cccd80d489d3c1fb0adf8ff803f6f0a7f6edd9681523fd13"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/native_projection_residual_decode_cli_v1_tests.rs": {
+      "bytes": 3496,
+      "sha256": "04122dd13ff18644b60687112d8493dae9cf9ac6ec21410926f2f02433c8e473"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/native_projection_residual_decode_host_v1.rs": {
+      "bytes": 11000,
+      "sha256": "c3c10363394aa58446138b141af6b9dc44501800b02207234972f432335a12d9"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/native_projection_residual_decode_host_v1_tests.rs": {
+      "bytes": 2854,
+      "sha256": "64c2d15b4e38c99a0a5c15c7483af5e760b1a9154eddd0a4526673eb209d25f9"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/native_projection_residual_decode_shared_host_v1_tests.rs": {
+      "bytes": 4875,
+      "sha256": "08920fa66b7b406e11d6113691871240a99029b92cc8ea9dc7fae58c67384e87"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/native_projection_residual_layer_cli_v1.rs": {
+      "bytes": 4612,
+      "sha256": "8fb484bc57ccd631aa886e98167a1ba1c6c355a5f85e32e6b050703bf6367f76"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/native_projection_residual_layer_cli_v1_tests.rs": {
+      "bytes": 2150,
+      "sha256": "b3b237e6c353d710e7cc999c0046f10224d3c782bae4521355c38e451abb8d2d"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/native_projection_residual_mlp_ordered_v1.rs": {
+      "bytes": 15398,
+      "sha256": "197fa7195ec7367561aac9b99458a43ac758f73839ff407b5eb431ca321bb675"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/native_projection_residual_mlp_ordered_v1_tests.rs": {
+      "bytes": 4679,
+      "sha256": "4051df668a5b64c288655c4aa521b701460158abab54965c7d65cea3578f719c"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/native_queued_mlp_comparison_cli_v1.rs": {
+      "bytes": 14034,
+      "sha256": "ba257db03426eae91aeb2067237d1bd15c3fff52fae7c606d08093d55df4c126"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/native_queued_mlp_comparison_cli_v1_tests.rs": {
+      "bytes": 11224,
+      "sha256": "5174c1435732d47c40c76a095de743e50f0c08efdf88e01c98a7af8d10fedc0f"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/native_queued_mlp_comparison_v1.rs": {
+      "bytes": 15560,
+      "sha256": "f1a0278866db1a9c7568193ecf82852632cfe86c08e0fa122a1afd36f09af447"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/native_queued_projection_comparison_cli_v1.rs": {
+      "bytes": 12957,
+      "sha256": "f0856034924fb27fcb5af18c0e5a4d2c56a38e41dfffc76c368793f431ac7a54"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/native_queued_projection_comparison_cli_v1_tests.rs": {
+      "bytes": 11921,
+      "sha256": "aa292a6b25aaad648886f4f2f1b4048f81a67a8ee6ad99f451a87f3ec7812ae7"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/native_rearm_smoke_cli_v1.rs": {
+      "bytes": 12626,
+      "sha256": "24c0ad860e40fd7f1410c81974e15c5a85f1779eb49c8de7f610ccd962c70ceb"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/native_rearm_smoke_cli_v1_tests.rs": {
+      "bytes": 8849,
+      "sha256": "9b2f0cadc16333b7f5a75d398c70083e37776b74e81f3bfd293c3b2c761e6677"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/native_rearm_smoke_v1.rs": {
+      "bytes": 4396,
+      "sha256": "36c2d05300cac98cf5fb7488d7d36b635e21724e83971c8c94ebfcfb45ad1579"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/native_setup.rs": {
+      "bytes": 27351,
+      "sha256": "1b4ca320ce865aaa37b85c6f22b1f9e6d863bbc6a25f6472a63c8da42fc487a7"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/native_setup/guarded_mlp_decode_v1.rs": {
+      "bytes": 2714,
+      "sha256": "469c6dddf0e816793aaf0e15274273fb107e46785799d9f76b77891895f69af8"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/native_setup/prefix_decode_v6.rs": {
+      "bytes": 3786,
+      "sha256": "a074780c9f1757f3b01285d8a70c6ddfb6cdc0e9e02a7917447ccfbf755a0b27"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/native_setup/prefix_decode_v6/tests.rs": {
+      "bytes": 1027,
+      "sha256": "bc781643ff5c8551c352327ec649c1db4d960a19c1f6a2d7f5ae378771cb52ce"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/native_setup/prefix_layer_v6.rs": {
+      "bytes": 3822,
+      "sha256": "428a605f97cb0cd2a8ccc7ad8069592f8b7364abb7f6ed100c0661aec02dc405"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/native_setup/prefix_layer_v6/tests.rs": {
+      "bytes": 265,
+      "sha256": "ff71f236c28f4f26c2b6cb9958b79aff8791a4ea9146ba83754a4bb16446b084"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/native_setup_tests.rs": {
+      "bytes": 22768,
+      "sha256": "e2a7db4bdfffb891bcb2a50503e63d74e1ab7baf1e511e8ee2cc1dbac5a4ef80"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/native_tiles_decode_cli_v1.rs": {
+      "bytes": 12965,
+      "sha256": "f1d1bcdae3f75406f2103844c19a942e2df8fed080540e8538d94dea1c6bef9a"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/native_tiles_decode_cli_v1_tests.rs": {
+      "bytes": 17761,
+      "sha256": "69e217df855347ed1d9191a2bb721e29c3b44b0e289aabff5047395c54a2d73a"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/native_tiles_decode_v1.rs": {
+      "bytes": 10699,
+      "sha256": "cf0f7814d6e298146df2d8ed1c95f2867c62105b0d3dd3d3fd531c3a79db1c06"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/native_tiles_decode_v1/sequence.rs": {
+      "bytes": 4193,
+      "sha256": "b76617cf55cd8acbd8b4a20ab717aa0349538742f6274a12d8897bfa0139311a"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/native_tiles_decode_v1/tests.rs": {
+      "bytes": 10783,
+      "sha256": "0013c5fc4095831ba4d42bdbb47dfdcb390af6e5bec5a304ee304bbb9e14e660"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/prefix_decode_device_clock_observation_v2.rs": {
+      "bytes": 5686,
+      "sha256": "9971942da081cccb5ceb1193b354ece259cce4f9e113452a0df1546b4156e3a8"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/prefix_decode_device_clock_observation_v2_tests.rs": {
+      "bytes": 6531,
+      "sha256": "8d50e40a209e3921aa7fce590a45fe9e70c71c54688be403ab5179a3c4bb3508"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/prefix_decode_device_observation_v1.rs": {
+      "bytes": 12103,
+      "sha256": "816709f0ffd78d88df9e06f2d920954df314c6bf786ea1227de0e4439c4330a3"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/prefix_decode_device_observation_v1_tests.rs": {
+      "bytes": 12495,
+      "sha256": "2fc5e49c857c07faa84528d879425ecc9852f8970b41e6af84b4976f6a9ab071"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/prefix_decode_host_observation_v1.rs": {
+      "bytes": 8390,
+      "sha256": "f7d47726fb8637045e533dcbdcd8a8e575c354e485b0718a30fc4bd8c51c04a5"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/prefix_decode_host_observation_v1_tests.rs": {
+      "bytes": 7712,
+      "sha256": "bd87333385701a90b9159301d4746a6aee26942a4f10739f0b97ef32b9b956b0"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/prefix_decode_host_observation_v2.rs": {
+      "bytes": 7954,
+      "sha256": "8d72d7e97bc54bb0295a06e252b878738aae5206c6e87af6763600ff5945020b"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/prefix_decode_host_observation_v2_tests.rs": {
+      "bytes": 10990,
+      "sha256": "cba028128ebf6ad5e2087dace779296e5acfa9adcf1c12d8671e4611a53eccd8"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/projection_residual_decode_host_observation_v1.rs": {
+      "bytes": 8004,
+      "sha256": "ff6e7fa9de7745ba29bfc8d4f77bedc01adfd244c559bed3d301fa7a280c4a52"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/projection_residual_decode_host_observation_v1_tests.rs": {
+      "bytes": 5901,
+      "sha256": "73d33aed5053fafd00563b312eb0dbf03dbb8b1c42d3a35deffb1b2c2001c52a"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/projection_residual_decode_shared_host_v1_tests.rs": {
+      "bytes": 6602,
+      "sha256": "4740b3f444bb166077d7219f78173684dabe31e8a9b213dde832a8c0eacac7a7"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/projection_residual_mlp_ordered_observation_v1.rs": {
+      "bytes": 7833,
+      "sha256": "4e0a94e4a9d56a5243ab8536619222c0829f0102c840e6a5b6c1f47020beef7f"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/projection_residual_mlp_ordered_observation_v1_tests.rs": {
+      "bytes": 2568,
+      "sha256": "f526dd2ade0d74aa91d03eeb9abafb4a1f57948e57dd1a7d375638dfd9863ce9"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/rearm_smoke_sequence_v1.rs": {
+      "bytes": 3707,
+      "sha256": "2ba10a71d5c61f662efb5c6643d7226eb2338af9459f78707b02c6ee2db632cc"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/rearm_smoke_sequence_v1_tests.rs": {
+      "bytes": 5300,
+      "sha256": "575462c199087c1811de3c52a1950f6ddf98e626916eddd3fd354606f9a3ff92"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/resident_artifacts.rs": {
+      "bytes": 8212,
+      "sha256": "04f3e82eb7b21abf8d6c820b9c598f659d1565ed5ecd15ad95fbf4e79c8bc8aa"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/resident_artifacts_tests.rs": {
+      "bytes": 5728,
+      "sha256": "57375b5f6ea2a8710d8266b851684853bc4ec72e1d5e5e7995089fc3208bf1b1"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/resident_layer.rs": {
+      "bytes": 21937,
+      "sha256": "ffcc6a75d6da395f4300f20f2bcf02d6bfac36f5ab6d7c284bf002be9b86110f"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/resident_layer/capture_v1.rs": {
+      "bytes": 10086,
+      "sha256": "40ba8577feb8224f0e8ccab41f8591b79765f615018b25567b3f3e9bcd16eafa"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/resident_layer/capture_v1/tests.rs": {
+      "bytes": 13535,
+      "sha256": "1752a39dc7d3d51db0afb572d9b2937ffd55f8b99c774a630e4b48f16c277ab7"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/resident_layer/guarded_mlp_decode_v1.rs": {
+      "bytes": 9387,
+      "sha256": "a5b09b85691d3d464a6625652968fbca8f256edeb91056c49adf5e82eaffd8e3"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/resident_layer/guarded_mlp_decode_v1/tests.rs": {
+      "bytes": 6503,
+      "sha256": "63cc495b5f7e1c285901b2bef44bcdda43897d25cc27a8fdbb33548e7b8d5cbd"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/resident_layer/mlp_tiles_v2.rs": {
+      "bytes": 9709,
+      "sha256": "90e078103ed0fdc26cf7552d771ec6ec0f4d233cf1346c75bb40d13b6cb097cd"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/resident_layer/mlp_tiles_v2/artifacts.rs": {
+      "bytes": 5756,
+      "sha256": "b0e4357f26e37603a2de0a1afbdf19f89af957623c4ea38bc78b08647762297e"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/resident_layer/mlp_tiles_v2/artifacts/tests.rs": {
+      "bytes": 5826,
+      "sha256": "b74eff90ee71eb2ca867d21e13feba5ab0f3907a8694ea8ab6f961837e1b9509"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/resident_layer/mlp_tiles_v2/tests.rs": {
+      "bytes": 7662,
+      "sha256": "554f41a48c727f0023af25d6e117f7662a5d1afd25d6f74e104641b358799ef5"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/resident_layer/prefix_tiles_decode_v6.rs": {
+      "bytes": 14585,
+      "sha256": "d185fa0b978ebeaa69af5f1de3c519a351c67217afb099318964e945da912a79"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/resident_layer/prefix_tiles_decode_v6/ordered.rs": {
+      "bytes": 7240,
+      "sha256": "2737cfceb043c3d324e596419616655ee027d1d72c9292e5723ce2467955171d"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/resident_layer/prefix_tiles_decode_v6/ordered/tests.rs": {
+      "bytes": 5480,
+      "sha256": "9e9c385b4eeb8726efb49766356b46c7d6c1267040e3fee05a54ff33ab88bf7a"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/resident_layer/prefix_tiles_decode_v6/projection_tests.rs": {
+      "bytes": 1118,
+      "sha256": "e44ed9830c312734269b98b00e4f8f10ca306b4c1a883024759d263cd1439149"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/resident_layer/prefix_tiles_decode_v6/tests.rs": {
+      "bytes": 2163,
+      "sha256": "7ceb8232baa0d0eae1629f42567d748ef437ce5efbbbcc0c0c00c010d938e3fc"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/resident_layer/prefix_tiles_v6.rs": {
+      "bytes": 15658,
+      "sha256": "b24a0a222a3cbad21ec6e8d61718a7140b4a9639eb74694caab55e9d5adfabae"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/resident_layer/prefix_tiles_v6/artifacts.rs": {
+      "bytes": 3196,
+      "sha256": "b750c7d31fc08636540e0381e65f4aaf606ce58b288fc7b70ad282c65405f751"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/resident_layer/prefix_tiles_v6/artifacts/tests.rs": {
+      "bytes": 2977,
+      "sha256": "2388ee8e3fb5c258c92da8161b458ea56cffa38d505bded0140969bdac0d2dc2"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/resident_layer/prefix_tiles_v6/projection_residual.rs": {
+      "bytes": 4183,
+      "sha256": "16ae66b8630f354d461f96f4f73bf090195d58737879cba2f1e78b364644f59a"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/resident_layer/prefix_tiles_v6/projection_residual/tests.rs": {
+      "bytes": 5907,
+      "sha256": "b7ea3da0ebde7af8f17b843e40a7560f683b966eaaecf774ec08803888adea78"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/resident_layer/prefix_tiles_v6/tests.rs": {
+      "bytes": 3976,
+      "sha256": "a3a8040a8b0585497a6619f8c10a8d659d2348d42ce0ed9f0373713e448d8a84"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/resident_layer/queued_mlp_v1.rs": {
+      "bytes": 12429,
+      "sha256": "5e5004e59827dcbdcd5535ee48bfd2e805725119aba6ddf23cccd8d5c810f0ec"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/resident_layer/queued_mlp_v1/artifacts.rs": {
+      "bytes": 13522,
+      "sha256": "154b10355135830abe1a58625dc7e76ad221f046e8fa383d18eb10753dd36561"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/resident_layer/queued_mlp_v1/tests.rs": {
+      "bytes": 11675,
+      "sha256": "542821f823e230a201d1c063b051c8081a7267bfc396ffa38a412857b1fb339d"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/resident_layer/queued_projection_v1.rs": {
+      "bytes": 12753,
+      "sha256": "f7d4e1592f85cb88eb125715bf27cf5a2228e26e97987162e650d781f6d0b091"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/resident_layer/queued_projection_v1/artifacts.rs": {
+      "bytes": 11135,
+      "sha256": "5e84cfa3e77e71619831c0568ae294704a7d946a3abe9f1761b75a5c3358b972"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/resident_layer/queued_projection_v1/tests.rs": {
+      "bytes": 13025,
+      "sha256": "a1df7540054b8ebe5a09a912c3c0790c92d6cab3718fdbfbad0a3cacd9f144c8"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/resident_layer/tiles_decode_v1.rs": {
+      "bytes": 8283,
+      "sha256": "23fc60e19d0e308c534718db0e6bf8b67bce564992b4546d697801cc83c1f90b"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/resident_layer/tiles_decode_v1/tests.rs": {
+      "bytes": 1860,
+      "sha256": "48b65d0cbe6ca23a4b4cd0ec075dd846e6ef642afc9c706f0d0dabaa9abef558"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/resident_layer_tests.rs": {
+      "bytes": 11673,
+      "sha256": "6f97b7e8f9652fc5a9db6f73efa96d09803fdc5bb1c7c642c4687c2b4b336d67"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/state_roster.rs": {
+      "bytes": 15289,
+      "sha256": "a9afaa49224facbe85171fa52dd74fe55d0c7f99c49716af82a6ce199a99cc57"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/state_roster/guarded_mlp_decode_v1.rs": {
+      "bytes": 12820,
+      "sha256": "af00ed5cd51aae29b057cc4b84c3497a446aea8a2afb00d5450e1e6ef7b43d86"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/state_roster/guarded_mlp_decode_v1/tests.rs": {
+      "bytes": 6602,
+      "sha256": "f0a7709d821a6532ebd5ae06c21ae4e19038239653d7fe257b6b9221255d2cbb"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/state_roster/prefix_tiles_decode_v6.rs": {
+      "bytes": 13214,
+      "sha256": "1bd1823c1a27547aa3d9a12aa3c485856326c62b61eec6d82d86dbd31532ecc8"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/state_roster/prefix_tiles_decode_v6/bank_batch_tests.rs": {
+      "bytes": 10845,
+      "sha256": "362d33aad4ac0e8c27f999330e8cd1176d36edda581d34137f22352cc554ab77"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/state_roster/prefix_tiles_decode_v6/reuse.rs": {
+      "bytes": 8619,
+      "sha256": "7edad0297b78e71803760a1de8c68b7f7deabfdd79b189b1da181283b8d3a728"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/state_roster/prefix_tiles_decode_v6/tests.rs": {
+      "bytes": 11768,
+      "sha256": "0a76cb525455c34f80597945a7e9bf6b79e17cf4b5d32432df544f9bb4a4dfb1"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/state_roster/prefix_tiles_v6.rs": {
+      "bytes": 7938,
+      "sha256": "19a9c76cc7289680bdf0ca54d8a4132b8830cb39632213b210726d57f4d7984a"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/state_roster/prefix_tiles_v6/tests.rs": {
+      "bytes": 3916,
+      "sha256": "11d171f7bda7cd356a22ee5b6fbfc8d50a18e19ebf7cd205dafc98fa3b058162"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/state_roster/state_reuse_v1.rs": {
+      "bytes": 11169,
+      "sha256": "f633f6b4aa2af5721cf39a7c504cfeb79893130f966da1893a8775c58d66afdf"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/state_roster/state_reuse_v1/tests.rs": {
+      "bytes": 10325,
+      "sha256": "d21eb75f9ff5b6723d5fd4d7f182c9de53b59cdef3164df4dccf39956cf10469"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/state_roster/tiles_decode_v1.rs": {
+      "bytes": 8934,
+      "sha256": "c0f66638a6697840f730a2f74dd788a7125749f1667e2a4544450795295d25f0"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/state_roster/tiles_decode_v1/reuse.rs": {
+      "bytes": 6441,
+      "sha256": "2cdecf5b9d2463c1db9863bdabe9ba9db7b3e86d1353de51a7e927e6eaee2990"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/state_roster/tiles_decode_v1/tests.rs": {
+      "bytes": 9578,
+      "sha256": "59a8cb1ba47287689de6f20161306b3bb6559feb9522ba4822de4d8ec730c794"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/state_roster_tests.rs": {
+      "bytes": 16693,
+      "sha256": "d09e459c1a29a62453fc682974d0c901617e58684c2ea15f959e7266d52d9d8a"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/tail_artifacts.rs": {
+      "bytes": 8003,
+      "sha256": "fd3eba21656a0178262a1a17a8b70e176d084081b94cbc29e07dbbf84dcece5a"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/tail_artifacts_tests.rs": {
+      "bytes": 4906,
+      "sha256": "f9d382b00a134e3afd502c6262c39ae637e19b4b6c7d37a2704679f2c5b1215d"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/tail_bindings.rs": {
+      "bytes": 13503,
+      "sha256": "7d28a3444db92354002f1bd7024ec129f4f44fe1458b78a001e9cbfaa188447c"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/tail_bindings_tests.rs": {
+      "bytes": 7109,
+      "sha256": "9416534fc0581732d0f57fab58c54d3f6499fdc1ba8e6bf6efc8d4658d41e611"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/tail_head.rs": {
+      "bytes": 5305,
+      "sha256": "a6c5bc632b4bccea7d12826666b773c644a863809d17e3f85015661308ddf3bb"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/tail_head_tests.rs": {
+      "bytes": 4250,
+      "sha256": "9dd794419047d5e9e9290f8fe44f090c9b293f2b80407fc7aa76148ad6230884"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/wire_golden_tests.rs": {
+      "bytes": 17813,
+      "sha256": "ef74681142cdc3d6f1470256626c654f942e6752350b3e210d31b80b0997e6eb"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/tests/shared_wire.rs": {
+      "bytes": 394,
+      "sha256": "f0e83d4d46ad8f926020f3bfc0e61db3904067381c316e79f9d6365fb704d30b"
+    },
+    "input-manifest.json": {
+      "bytes": 207739,
+      "sha256": "c3c95a77848be8f67e54f7b6727dcd5e8b4b1ecbaffe07f1871a1c4df88b2e05"
+    },
+    "inputs/worker-complete.json": {
+      "bytes": 624332,
+      "sha256": "6ac67053d9b7d5d15772b5e4071a09933f013b6efa27394c31eb2b8279af884f"
+    },
+    "inputs/worker-list.stdout": {
+      "bytes": 62453,
+      "sha256": "1df896119306dcd580d35184c26d3f4b802aa031f12c92dadb5c21c1f76f7576"
+    },
+    "inputs/worker-source.json": {
+      "bytes": 42246,
+      "sha256": "e0ea1fafb82be00663f89dd33b61d25718b46edc70969ee0ec1a333f3b2e78cd"
+    },
+    "inputs/worker-tests.stdout": {
+      "bytes": 66364,
+      "sha256": "c2248a930cb43027d787ed6a0017aafe4cce319469cbf6c82f3f6f1bc961e36d"
+    },
+    "lineage/interface-complete.json": {
+      "bytes": 1287578,
+      "sha256": "4a682798a23ac4c8accb0721f332a7b4e7484729bd692209d20f2883b501cee1"
+    },
+    "lineage/interface-sources.json": {
+      "bytes": 321886,
+      "sha256": "569f5cdb89338ac9a8c8f0e759e455d876471be1e8f75989600cf0d1af185161"
+    },
+    "pack_worker_cache.py": {
+      "bytes": 7100,
+      "sha256": "6ff15399b0f6200c8fe7bece46c8f5e8914488e9c78702e9fcc952b8e13a61cd"
+    },
+    "run_cpu.py": {
+      "bytes": 34328,
+      "sha256": "732cffeb9c04c8bda289c2c8026dd7c2514a6a4bc28e85eff4990731f31eea9b"
+    },
+    "stage-complete.json": {
+      "bytes": 847,
+      "sha256": "0eccce33781574b7bd7a0e3848f09e96d1452db5e33fb2eabb06f1f8ff89fa1e"
+    },
+    "stage_worker_cache.py": {
+      "bytes": 9546,
+      "sha256": "5aef23b2a22e5b59a25e4cb6d04ccd3cfd373131e43d53c8fc59b24791785b05"
+    },
+    "stage_worker_cpu.py": {
+      "bytes": 12059,
+      "sha256": "a2ddf36e5ecaf71bd36f60f28002b78713cd8eb102c5ed4cb92d005a04611f59"
+    },
+    "supervisor.py": {
+      "bytes": 41485,
+      "sha256": "8824478a6415dee39d28ccefb0881fc0687ac724f5a9c5a4540310fb5196b9bc"
+    }
+  },
+  "full_runtime_bodies_retained": false,
+  "full_source_pin_maps_retained": true,
+  "gpu_execution": false,
+  "host_executable_bodies_retained": false,
+  "input": {
+    "bytes": 207739,
+    "sha256": "c3c95a77848be8f67e54f7b6727dcd5e8b4b1ecbaffe07f1871a1c4df88b2e05"
+  },
+  "numerical_acceptance": false,
+  "passed": false,
+  "performance_claim": false,
+  "phases": 5,
+  "production_authority": false,
+  "raw_count": 30,
+  "raw_names": [
+    "dependencies-after.json",
+    "dependencies-before.json",
+    "metadata.command.json",
+    "metadata.result.json",
+    "metadata.started.json",
+    "metadata.stderr",
+    "metadata.stdout",
+    "rustc-version.command.json",
+    "rustc-version.result.json",
+    "rustc-version.started.json",
+    "rustc-version.stderr",
+    "rustc-version.stdout",
+    "rustfmt-check.command.json",
+    "rustfmt-check.result.json",
+    "rustfmt-check.started.json",
+    "rustfmt-check.stderr",
+    "rustfmt-check.stdout",
+    "rustfmt.command.json",
+    "rustfmt.result.json",
+    "rustfmt.started.json",
+    "rustfmt.stderr",
+    "rustfmt.stdout",
+    "sources-after.json",
+    "sources-before.json",
+    "sources-preformat.json",
+    "worker-tests-build.command.json",
+    "worker-tests-build.result.json",
+    "worker-tests-build.started.json",
+    "worker-tests-build.stderr",
+    "worker-tests-build.stdout"
+  ],
+  "retained_runtime_manifest_files": 5,
+  "retained_worker_source_files": 181,
+  "runtime_ancestry": {
+    "bytes": 1287578,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-cpu-v228-v1/evidence/complete.json",
+    "sha256": "4a682798a23ac4c8accb0721f332a7b4e7484729bd692209d20f2883b501cee1"
+  },
+  "schema": "ferric-guarded-mlp-worker-cpu-retained-v1",
+  "source_map_rows": 990,
+  "terminal": {
+    "bytes": 1369041,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-worker-cpu-v228-v4/evidence/failed.json",
+    "sha256": "0f2dd34dc85d9f8fadd14fd2437fd9c8c8c70a36c8cc31bdeb9b22d72f0b53c4"
+  },
+  "terminal_name": "failed.json",
+  "whole_model_guarded_execution": false,
+  "worker_cpu_qualified": false
+}
