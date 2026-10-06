@@ -1,0 +1,45 @@
+{
+  "files": {
+    "audit_tools.py": {
+      "bytes": 102941,
+      "sha256": "ca47ff69b5794c1dee12e01399a7de24664009295e60cf96ea898bc3166abec0"
+    },
+    "baseline-compile.stderr": {
+      "bytes": 123245,
+      "sha256": "c60dc2edc62bfe11ba7a8f79ce1465322d2c887aeb3fa5661dae8002a33c5095"
+    },
+    "baseline-failed.json": {
+      "bytes": 17737,
+      "sha256": "8d4cc1a0cfe0c9104282c3d20349638a616bd98e7e28f92598dcaf0110057ca2"
+    },
+    "loader_test_entry.py": {
+      "bytes": 6772,
+      "sha256": "e7c10088ab24eecc4cb6f554e335e0e970a0cb8fc0cd7d7b9a2c81672ec824d9"
+    },
+    "run_tests.py": {
+      "bytes": 14470,
+      "sha256": "bfaf5f0ae9cbc12749c9c7e763c3a9be195f115a737c6333eb3a5f5adccf0b2e"
+    },
+    "supervisor.py": {
+      "bytes": 41485,
+      "sha256": "8824478a6415dee39d28ccefb0881fc0687ac724f5a9c5a4540310fb5196b9bc"
+    },
+    "test_audit_tools.py": {
+      "bytes": 107499,
+      "sha256": "56d5ef4e151d6b96969569460fb59c404829eab16b176d6e72858368feb6ce2d"
+    }
+  },
+  "schema": "ferric-memory-bounds-dag-loader-test-input-v1",
+  "tool_pins": {
+    "prlimit": {
+      "bytes": 27536,
+      "path": "/usr/bin/prlimit",
+      "sha256": "17064f67e650d6152a6902b013aab496b54c87587c8eea6f5023aafee6154069"
+    },
+    "python": {
+      "bytes": 8020928,
+      "path": "/usr/bin/python3.12",
+      "sha256": "e1efa562c2cc2e35521a5c9c9b9939921001ff8ca9708a13ef15ace68cc2ccd7"
+    }
+  }
+}

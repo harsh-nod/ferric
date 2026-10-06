@@ -1,0 +1,14 @@
+{
+  "argv": [
+    "/usr/bin/prlimit",
+    "--as=12884901888",
+    "--cpu=30",
+    "--fsize=1048576",
+    "--core=0",
+    "--",
+    "/usr/bin/ldd",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-memory-bounds-dag-compiler-tools-v228-v1/bin/clang-22"
+  ],
+  "pgid": 3815723,
+  "pid": 3815723
+}

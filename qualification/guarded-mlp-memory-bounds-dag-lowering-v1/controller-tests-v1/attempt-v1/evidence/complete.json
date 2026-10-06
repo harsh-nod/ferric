@@ -1,0 +1,258 @@
+{
+  "child_observation": {
+    "compiler_qualification": false,
+    "errors": 0,
+    "expected_failures": 0,
+    "failures": 0,
+    "gpu_execution": false,
+    "names": [
+      "test_lowering.AuditBindingTests.test_actual_previous_driver_generation_is_immutable",
+      "test_lowering.AuditBindingTests.test_capacity_limits_and_cohorts_cannot_drift",
+      "test_lowering.AuditBindingTests.test_cfg_expansion_lineage_and_compaction_are_required",
+      "test_lowering.AuditBindingTests.test_deployed_body_must_match_final_not_earlier_product",
+      "test_lowering.AuditBindingTests.test_driver_failure_controller_phase_or_full_suite_claim_refused",
+      "test_lowering.AuditBindingTests.test_driver_readset_or_final_body_drift_refused",
+      "test_lowering.AuditBindingTests.test_each_of_six_other_tools_stays_exact",
+      "test_lowering.AuditBindingTests.test_earlier_generation_cannot_supply_memory_bounds_dag_provenance",
+      "test_lowering.AuditBindingTests.test_failed_or_earlier_producer_refused",
+      "test_lowering.AuditBindingTests.test_loader_input_readset_drift_refused",
+      "test_lowering.AuditBindingTests.test_new_driver_replay_and_metadata_only_scope_are_required",
+      "test_lowering.AuditBindingTests.test_new_filepin_and_final_producer_join",
+      "test_lowering.AuditBindingTests.test_old_audit_schema_or_missing_producer_replay_refused",
+      "test_lowering.AuditBindingTests.test_pending_bindings_refuse_before_any_helper_or_effect",
+      "test_lowering.AuditBindingTests.test_unreviewed_loader_or_producer_controller_refused",
+      "test_normalization.NormalizationTests.test_command_selects_exact_profile_before_cargo_delimiter",
+      "test_normalization.NormalizationTests.test_output_accepts_exact_seven_field_options",
+      "test_normalization.NormalizationTests.test_output_refuses_flags_or_worker_policy_drift",
+      "test_normalization.NormalizationTests.test_output_refuses_old_missing_extra_or_minimal_options"
+    ],
+    "passed": true,
+    "passing_names": [
+      "test_lowering.AuditBindingTests.test_actual_previous_driver_generation_is_immutable",
+      "test_lowering.AuditBindingTests.test_capacity_limits_and_cohorts_cannot_drift",
+      "test_lowering.AuditBindingTests.test_cfg_expansion_lineage_and_compaction_are_required",
+      "test_lowering.AuditBindingTests.test_deployed_body_must_match_final_not_earlier_product",
+      "test_lowering.AuditBindingTests.test_driver_failure_controller_phase_or_full_suite_claim_refused",
+      "test_lowering.AuditBindingTests.test_driver_readset_or_final_body_drift_refused",
+      "test_lowering.AuditBindingTests.test_each_of_six_other_tools_stays_exact",
+      "test_lowering.AuditBindingTests.test_earlier_generation_cannot_supply_memory_bounds_dag_provenance",
+      "test_lowering.AuditBindingTests.test_failed_or_earlier_producer_refused",
+      "test_lowering.AuditBindingTests.test_loader_input_readset_drift_refused",
+      "test_lowering.AuditBindingTests.test_new_driver_replay_and_metadata_only_scope_are_required",
+      "test_lowering.AuditBindingTests.test_new_filepin_and_final_producer_join",
+      "test_lowering.AuditBindingTests.test_old_audit_schema_or_missing_producer_replay_refused",
+      "test_lowering.AuditBindingTests.test_pending_bindings_refuse_before_any_helper_or_effect",
+      "test_lowering.AuditBindingTests.test_unreviewed_loader_or_producer_controller_refused",
+      "test_normalization.NormalizationTests.test_command_selects_exact_profile_before_cargo_delimiter",
+      "test_normalization.NormalizationTests.test_output_accepts_exact_seven_field_options",
+      "test_normalization.NormalizationTests.test_output_refuses_flags_or_worker_policy_drift",
+      "test_normalization.NormalizationTests.test_output_refuses_old_missing_extra_or_minimal_options"
+    ],
+    "schema": "ferric-memory-bounds-dag-lowering-tests-v1",
+    "skipped": 0,
+    "source_unchanged": true,
+    "sources": {
+      "baseline-compile.stderr": {
+        "bytes": 123245,
+        "sha256": "c60dc2edc62bfe11ba7a8f79ce1465322d2c887aeb3fa5661dae8002a33c5095"
+      },
+      "baseline-failed.json": {
+        "bytes": 17737,
+        "sha256": "8d4cc1a0cfe0c9104282c3d20349638a616bd98e7e28f92598dcaf0110057ca2"
+      },
+      "lowering.py": {
+        "bytes": 69843,
+        "sha256": "b902ec411495e008df648df4ca321eb7eb2367f52441622fd2ccd33266b25a17"
+      },
+      "test_lowering.py": {
+        "bytes": 45269,
+        "sha256": "91515c9c8c6d679658623334fc91b3dcb3caedf9be9266716659ef0cb291c36e"
+      },
+      "test_normalization.py": {
+        "bytes": 6507,
+        "sha256": "6d4d91e24fa483e81d99ae1dd89a629eb3b7a17aaef94e8f46958123c292465f"
+      }
+    },
+    "synthetic_lowering_only": true,
+    "tests_run": 19,
+    "unexpected_successes": 0
+  },
+  "compiler_qualification": false,
+  "controller": {
+    "bytes": 13725,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-memory-bounds-dag-lowering-tests-v228-v1/run_tests.py",
+    "sha256": "72ded86aae3064e3317b3f45c7ba4f22e7435bbd44553e4a9175458de4e8d419"
+  },
+  "elapsed_seconds": 6.325063491007313,
+  "failure": null,
+  "gpu_execution": false,
+  "input_manifest": {
+    "bytes": 1547,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-memory-bounds-dag-lowering-tests-v228-v1/input-manifest.json",
+    "sha256": "d2630a909fa8d2b39f70f8425dc4efeac53515c23782d1d6c8e673a822ca4383"
+  },
+  "limits": {
+    "address_space_bytes": 12884901888,
+    "affinity": [
+      8,
+      9
+    ],
+    "cleanup_reserve_seconds": 50,
+    "cpu_seconds_per_leaf": 1200,
+    "file_bytes": 1073741824,
+    "initial_free_bytes": 42949672960,
+    "leaf_seconds": 120,
+    "live_free_bytes": 40802189312,
+    "nice": 10,
+    "scratch_bytes": 6442450944,
+    "stream_bytes": 67108864,
+    "whole_seconds": 180
+  },
+  "passed": true,
+  "phases": [
+    {
+      "adopted_reaped": [],
+      "argv": [
+        "/usr/bin/prlimit",
+        "--as=12884901888",
+        "--cpu=1200",
+        "--fsize=1073741824",
+        "--core=0",
+        "--",
+        "/usr/bin/python3.12",
+        "-I",
+        "-S",
+        "-B",
+        "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-memory-bounds-dag-lowering-tests-v228-v1/lowering_test_entry.py"
+      ],
+      "command": {
+        "bytes": 883,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-memory-bounds-dag-lowering-tests-v228-v1/evidence/memory-bounds-dag-lowering-tests.command.json",
+        "sha256": "ad811cd1e0364365c7f812badb57708474daa7ba232d31f5ff897a5455611f00"
+      },
+      "elapsed_ns": 6305711539,
+      "exception": null,
+      "exit_code": 0,
+      "forced_cleanup": false,
+      "label": "memory-bounds-dag-lowering-tests",
+      "natural_exit": true,
+      "observed_signals": [],
+      "pgid": 3802520,
+      "pid": 3802520,
+      "process_group_absent": true,
+      "reaped": true,
+      "stderr": {
+        "bytes": 2880,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-memory-bounds-dag-lowering-tests-v228-v1/evidence/memory-bounds-dag-lowering-tests.stderr",
+        "sha256": "be597ac478241cb01d9eeac79e78289f325e37dfc41c47274fefcb7a3e747bdb"
+      },
+      "stdout": {
+        "bytes": 4289,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-memory-bounds-dag-lowering-tests-v228-v1/evidence/memory-bounds-dag-lowering-tests.stdout",
+        "sha256": "95f7aadeea60c1985fea1ece7751fbda868221bc0ed890a2831d9d01daf7eac5"
+      },
+      "storage_failure": null,
+      "timed_out": false
+    }
+  ],
+  "postcheck_errors": [],
+  "raw": {
+    "memory-bounds-dag-lowering-tests.command.json": {
+      "bytes": 883,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-memory-bounds-dag-lowering-tests-v228-v1/evidence/memory-bounds-dag-lowering-tests.command.json",
+      "sha256": "ad811cd1e0364365c7f812badb57708474daa7ba232d31f5ff897a5455611f00"
+    },
+    "memory-bounds-dag-lowering-tests.result.json": {
+      "bytes": 1638,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-memory-bounds-dag-lowering-tests-v228-v1/evidence/memory-bounds-dag-lowering-tests.result.json",
+      "sha256": "a89d6642a53395cac8cae036d3e14936f9c0bf00846f0ca201ddde31a3342575"
+    },
+    "memory-bounds-dag-lowering-tests.started.json": {
+      "bytes": 388,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-memory-bounds-dag-lowering-tests-v228-v1/evidence/memory-bounds-dag-lowering-tests.started.json",
+      "sha256": "5ef50a77c5a84bd3e3b3754eb7045b7c7e913f4de77928b4469f668eacd921d9"
+    },
+    "memory-bounds-dag-lowering-tests.stderr": {
+      "bytes": 2880,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-memory-bounds-dag-lowering-tests-v228-v1/evidence/memory-bounds-dag-lowering-tests.stderr",
+      "sha256": "be597ac478241cb01d9eeac79e78289f325e37dfc41c47274fefcb7a3e747bdb"
+    },
+    "memory-bounds-dag-lowering-tests.stdout": {
+      "bytes": 4289,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-memory-bounds-dag-lowering-tests-v228-v1/evidence/memory-bounds-dag-lowering-tests.stdout",
+      "sha256": "95f7aadeea60c1985fea1ece7751fbda868221bc0ed890a2831d9d01daf7eac5"
+    },
+    "sources-after.json": {
+      "bytes": 2334,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-memory-bounds-dag-lowering-tests-v228-v1/evidence/sources-after.json",
+      "sha256": "b64de67dbd5872aa973c6b54147e9ef9ae8dc3cea18e40428e0036f6c500c1ca"
+    },
+    "sources-before.json": {
+      "bytes": 2334,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-memory-bounds-dag-lowering-tests-v228-v1/evidence/sources-before.json",
+      "sha256": "b64de67dbd5872aa973c6b54147e9ef9ae8dc3cea18e40428e0036f6c500c1ca"
+    }
+  },
+  "schema": "ferric-memory-bounds-dag-lowering-test-cpu-v1",
+  "source_inputs": {
+    "baseline-compile.stderr": {
+      "bytes": 123245,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-memory-bounds-dag-lowering-tests-v228-v1/baseline-compile.stderr",
+      "sha256": "c60dc2edc62bfe11ba7a8f79ce1465322d2c887aeb3fa5661dae8002a33c5095"
+    },
+    "baseline-failed.json": {
+      "bytes": 17737,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-memory-bounds-dag-lowering-tests-v228-v1/baseline-failed.json",
+      "sha256": "8d4cc1a0cfe0c9104282c3d20349638a616bd98e7e28f92598dcaf0110057ca2"
+    },
+    "lowering.py": {
+      "bytes": 69843,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-memory-bounds-dag-lowering-tests-v228-v1/lowering.py",
+      "sha256": "b902ec411495e008df648df4ca321eb7eb2367f52441622fd2ccd33266b25a17"
+    },
+    "lowering_test_entry.py": {
+      "bytes": 6100,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-memory-bounds-dag-lowering-tests-v228-v1/lowering_test_entry.py",
+      "sha256": "162b9c7299c52b3b53ee35047fef41abee93eb6a470d93fbac410a41b9a5c2ca"
+    },
+    "run_tests.py": {
+      "bytes": 13725,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-memory-bounds-dag-lowering-tests-v228-v1/run_tests.py",
+      "sha256": "72ded86aae3064e3317b3f45c7ba4f22e7435bbd44553e4a9175458de4e8d419"
+    },
+    "supervisor.py": {
+      "bytes": 41485,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-memory-bounds-dag-lowering-tests-v228-v1/supervisor.py",
+      "sha256": "8824478a6415dee39d28ccefb0881fc0687ac724f5a9c5a4540310fb5196b9bc"
+    },
+    "test_lowering.py": {
+      "bytes": 45269,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-memory-bounds-dag-lowering-tests-v228-v1/test_lowering.py",
+      "sha256": "91515c9c8c6d679658623334fc91b3dcb3caedf9be9266716659ef0cb291c36e"
+    },
+    "test_normalization.py": {
+      "bytes": 6507,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-memory-bounds-dag-lowering-tests-v228-v1/test_normalization.py",
+      "sha256": "6d4d91e24fa483e81d99ae1dd89a629eb3b7a17aaef94e8f46958123c292465f"
+    }
+  },
+  "source_unchanged": true,
+  "supervisor": {
+    "bytes": 41485,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-memory-bounds-dag-lowering-tests-v228-v1/supervisor.py",
+    "sha256": "8824478a6415dee39d28ccefb0881fc0687ac724f5a9c5a4540310fb5196b9bc"
+  },
+  "synthetic_lowering_only": true,
+  "tool_pins": {
+    "prlimit": {
+      "bytes": 27536,
+      "path": "/usr/bin/prlimit",
+      "sha256": "17064f67e650d6152a6902b013aab496b54c87587c8eea6f5023aafee6154069"
+    },
+    "python": {
+      "bytes": 8020928,
+      "path": "/usr/bin/python3.12",
+      "sha256": "e1efa562c2cc2e35521a5c9c9b9939921001ff8ca9708a13ef15ace68cc2ccd7"
+    }
+  }
+}

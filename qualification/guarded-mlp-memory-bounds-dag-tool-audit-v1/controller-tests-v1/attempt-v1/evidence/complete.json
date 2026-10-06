@@ -1,0 +1,263 @@
+{
+  "child_observation": {
+    "compiler_qualification": false,
+    "errors": 0,
+    "expected_failures": 0,
+    "failures": 0,
+    "gpu_execution": false,
+    "names": [
+      "test_audit_tools.DriverAdmissionTests.test_each_unchanged_tool_and_old_driver_are_refused",
+      "test_audit_tools.DriverAdmissionTests.test_exact_focused_census_and_no_full_suite_claim",
+      "test_audit_tools.DriverAdmissionTests.test_failed_unreviewed_or_wrong_source_generation_refused",
+      "test_audit_tools.DriverAdmissionTests.test_missing_changed_or_relocated_source_map_refused",
+      "test_audit_tools.DriverAdmissionTests.test_only_new_driver_and_test_metadata_are_admitted",
+      "test_audit_tools.DriverAdmissionTests.test_pending_driver_binding_refuses_before_host_or_output_effects",
+      "test_audit_tools.DriverAdmissionTests.test_phase_cleanup_and_wrong_final_build_refused",
+      "test_audit_tools.DriverAdmissionTests.test_wrong_driver_or_test_cargo_role_refused",
+      "test_audit_tools.MemoryBoundsDagAdmissionTests.test_exact_memory_bounds_dag_generation_preserves_non_deployed_provenance",
+      "test_audit_tools.MemoryBoundsDagAdmissionTests.test_pending_memory_bounds_dag_receipt_refuses_before_effects",
+      "test_audit_tools.MemoryBoundsDagAdmissionTests.test_refuses_changed_independent_limit_or_inherited_cohort",
+      "test_audit_tools.MemoryBoundsDagAdmissionTests.test_refuses_changed_non_overlay_body_or_preimage",
+      "test_audit_tools.MemoryBoundsDagAdmissionTests.test_refuses_failed_admitting_or_wrong_generation",
+      "test_audit_tools.MemoryBoundsDagAdmissionTests.test_refuses_lost_old_name_changed_ignore_or_memory_bounds_dag_status",
+      "test_audit_tools.MemoryBoundsDagAdmissionTests.test_refuses_old_product_and_any_unchanged_tool_substitution",
+      "test_audit_tools.MemoryBoundsDagAdmissionTests.test_refuses_phase_omission_reordering_and_cleanup",
+      "test_audit_tools.ProducerAdmissionTests.test_final_two_products_only_and_rlib_metadata",
+      "test_audit_tools.ProducerAdmissionTests.test_rejects_any_of_five_legacy_tool_changes",
+      "test_audit_tools.ProducerAdmissionTests.test_rejects_controller_helper_or_proposal_generation_drift",
+      "test_audit_tools.ProducerAdmissionTests.test_rejects_extra_tools_or_old_backend_replacement",
+      "test_audit_tools.ProducerAdmissionTests.test_rejects_failed_incomplete_or_diagnostic_producer",
+      "test_audit_tools.ProducerAdmissionTests.test_rejects_missing_or_changed_source_map",
+      "test_audit_tools.ProducerAdmissionTests.test_rejects_missing_rlib_or_test_product",
+      "test_audit_tools.ProducerAdmissionTests.test_rejects_old_or_failed_final_cargo_observation",
+      "test_audit_tools.ProducerAdmissionTests.test_rejects_phase_or_test_census_failure",
+      "test_audit_tools.ProducerAdmissionTests.test_rejects_product_outside_target_and_wrong_role"
+    ],
+    "passed": true,
+    "passing_names": [
+      "test_audit_tools.DriverAdmissionTests.test_each_unchanged_tool_and_old_driver_are_refused",
+      "test_audit_tools.DriverAdmissionTests.test_exact_focused_census_and_no_full_suite_claim",
+      "test_audit_tools.DriverAdmissionTests.test_failed_unreviewed_or_wrong_source_generation_refused",
+      "test_audit_tools.DriverAdmissionTests.test_missing_changed_or_relocated_source_map_refused",
+      "test_audit_tools.DriverAdmissionTests.test_only_new_driver_and_test_metadata_are_admitted",
+      "test_audit_tools.DriverAdmissionTests.test_pending_driver_binding_refuses_before_host_or_output_effects",
+      "test_audit_tools.DriverAdmissionTests.test_phase_cleanup_and_wrong_final_build_refused",
+      "test_audit_tools.DriverAdmissionTests.test_wrong_driver_or_test_cargo_role_refused",
+      "test_audit_tools.MemoryBoundsDagAdmissionTests.test_exact_memory_bounds_dag_generation_preserves_non_deployed_provenance",
+      "test_audit_tools.MemoryBoundsDagAdmissionTests.test_pending_memory_bounds_dag_receipt_refuses_before_effects",
+      "test_audit_tools.MemoryBoundsDagAdmissionTests.test_refuses_changed_independent_limit_or_inherited_cohort",
+      "test_audit_tools.MemoryBoundsDagAdmissionTests.test_refuses_changed_non_overlay_body_or_preimage",
+      "test_audit_tools.MemoryBoundsDagAdmissionTests.test_refuses_failed_admitting_or_wrong_generation",
+      "test_audit_tools.MemoryBoundsDagAdmissionTests.test_refuses_lost_old_name_changed_ignore_or_memory_bounds_dag_status",
+      "test_audit_tools.MemoryBoundsDagAdmissionTests.test_refuses_old_product_and_any_unchanged_tool_substitution",
+      "test_audit_tools.MemoryBoundsDagAdmissionTests.test_refuses_phase_omission_reordering_and_cleanup",
+      "test_audit_tools.ProducerAdmissionTests.test_final_two_products_only_and_rlib_metadata",
+      "test_audit_tools.ProducerAdmissionTests.test_rejects_any_of_five_legacy_tool_changes",
+      "test_audit_tools.ProducerAdmissionTests.test_rejects_controller_helper_or_proposal_generation_drift",
+      "test_audit_tools.ProducerAdmissionTests.test_rejects_extra_tools_or_old_backend_replacement",
+      "test_audit_tools.ProducerAdmissionTests.test_rejects_failed_incomplete_or_diagnostic_producer",
+      "test_audit_tools.ProducerAdmissionTests.test_rejects_missing_or_changed_source_map",
+      "test_audit_tools.ProducerAdmissionTests.test_rejects_missing_rlib_or_test_product",
+      "test_audit_tools.ProducerAdmissionTests.test_rejects_old_or_failed_final_cargo_observation",
+      "test_audit_tools.ProducerAdmissionTests.test_rejects_phase_or_test_census_failure",
+      "test_audit_tools.ProducerAdmissionTests.test_rejects_product_outside_target_and_wrong_role"
+    ],
+    "schema": "ferric-memory-bounds-dag-loader-tests-v1",
+    "skipped": 0,
+    "source_unchanged": true,
+    "sources": {
+      "audit_tools.py": {
+        "bytes": 102941,
+        "sha256": "ca47ff69b5794c1dee12e01399a7de24664009295e60cf96ea898bc3166abec0"
+      },
+      "baseline-compile.stderr": {
+        "bytes": 123245,
+        "sha256": "c60dc2edc62bfe11ba7a8f79ce1465322d2c887aeb3fa5661dae8002a33c5095"
+      },
+      "baseline-failed.json": {
+        "bytes": 17737,
+        "sha256": "8d4cc1a0cfe0c9104282c3d20349638a616bd98e7e28f92598dcaf0110057ca2"
+      },
+      "test_audit_tools.py": {
+        "bytes": 107499,
+        "sha256": "56d5ef4e151d6b96969569460fb59c404829eab16b176d6e72858368feb6ce2d"
+      }
+    },
+    "synthetic_loader_only": true,
+    "tests_run": 26,
+    "unexpected_successes": 0
+  },
+  "compiler_qualification": false,
+  "controller": {
+    "bytes": 14470,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-memory-bounds-dag-loader-tests-v228-v1/run_tests.py",
+    "sha256": "bfaf5f0ae9cbc12749c9c7e763c3a9be195f115a737c6333eb3a5f5adccf0b2e"
+  },
+  "elapsed_seconds": 74.67782407195773,
+  "failure": null,
+  "gpu_execution": false,
+  "input_manifest": {
+    "bytes": 1409,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-memory-bounds-dag-loader-tests-v228-v1/input-manifest.json",
+    "sha256": "cd3ab124b092e12649c1e077ea88cce4c34a45619f69e3bcc1256ce531423706"
+  },
+  "limits": {
+    "address_space_bytes": 12884901888,
+    "affinity": [
+      8,
+      9
+    ],
+    "cleanup_reserve_seconds": 50,
+    "cpu_seconds_per_leaf": 1200,
+    "file_bytes": 1073741824,
+    "initial_free_bytes": 42949672960,
+    "leaf_seconds": 120,
+    "live_free_bytes": 40802189312,
+    "nice": 10,
+    "scratch_bytes": 6442450944,
+    "stream_bytes": 67108864,
+    "whole_seconds": 180
+  },
+  "passed": true,
+  "phases": [
+    {
+      "adopted_reaped": [],
+      "argv": [
+        "/usr/bin/prlimit",
+        "--as=12884901888",
+        "--cpu=1200",
+        "--fsize=1073741824",
+        "--core=0",
+        "--",
+        "/usr/bin/python3.12",
+        "-I",
+        "-S",
+        "-B",
+        "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-memory-bounds-dag-loader-tests-v228-v1/loader_test_entry.py"
+      ],
+      "command": {
+        "bytes": 875,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-memory-bounds-dag-loader-tests-v228-v1/evidence/memory-bounds-dag-loader-tests.command.json",
+        "sha256": "4d967c9d599ea83f7e08c7ab097d7b02f2f29f54486b7b095c8a35398c1bfe9a"
+      },
+      "elapsed_ns": 74658596160,
+      "exception": null,
+      "exit_code": 0,
+      "forced_cleanup": false,
+      "label": "memory-bounds-dag-loader-tests",
+      "natural_exit": true,
+      "observed_signals": [],
+      "pgid": 3785806,
+      "pid": 3785806,
+      "process_group_absent": true,
+      "reaped": true,
+      "stderr": {
+        "bytes": 4192,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-memory-bounds-dag-loader-tests-v228-v1/evidence/memory-bounds-dag-loader-tests.stderr",
+        "sha256": "000e5af269465fc23943f5e2a17dd26d395380b0491c6f15366b1fe21926230d"
+      },
+      "stdout": {
+        "bytes": 5911,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-memory-bounds-dag-loader-tests-v228-v1/evidence/memory-bounds-dag-loader-tests.stdout",
+        "sha256": "f65fad242c15d7a2df59ebf4e49af72dba08d2bfed5a7e44f092954786a91642"
+      },
+      "storage_failure": null,
+      "timed_out": false
+    }
+  ],
+  "postcheck_errors": [],
+  "raw": {
+    "memory-bounds-dag-loader-tests.command.json": {
+      "bytes": 875,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-memory-bounds-dag-loader-tests-v228-v1/evidence/memory-bounds-dag-loader-tests.command.json",
+      "sha256": "4d967c9d599ea83f7e08c7ab097d7b02f2f29f54486b7b095c8a35398c1bfe9a"
+    },
+    "memory-bounds-dag-loader-tests.result.json": {
+      "bytes": 1621,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-memory-bounds-dag-loader-tests-v228-v1/evidence/memory-bounds-dag-loader-tests.result.json",
+      "sha256": "234fc17e7506473db01ba23911fb87fa987ef6b86f9ecd8ca7aa52ee579973a6"
+    },
+    "memory-bounds-dag-loader-tests.started.json": {
+      "bytes": 384,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-memory-bounds-dag-loader-tests-v228-v1/evidence/memory-bounds-dag-loader-tests.started.json",
+      "sha256": "c505351798f9c5233dbba12e5bbecf6b5c01b37a07e41a7a3fe40ff8da1b08eb"
+    },
+    "memory-bounds-dag-loader-tests.stderr": {
+      "bytes": 4192,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-memory-bounds-dag-loader-tests-v228-v1/evidence/memory-bounds-dag-loader-tests.stderr",
+      "sha256": "000e5af269465fc23943f5e2a17dd26d395380b0491c6f15366b1fe21926230d"
+    },
+    "memory-bounds-dag-loader-tests.stdout": {
+      "bytes": 5911,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-memory-bounds-dag-loader-tests-v228-v1/evidence/memory-bounds-dag-loader-tests.stdout",
+      "sha256": "f65fad242c15d7a2df59ebf4e49af72dba08d2bfed5a7e44f092954786a91642"
+    },
+    "sources-after.json": {
+      "bytes": 2032,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-memory-bounds-dag-loader-tests-v228-v1/evidence/sources-after.json",
+      "sha256": "eb029421e104c66836948be06498f70a4669c43d3634644fbcb047e6362ef0b7"
+    },
+    "sources-before.json": {
+      "bytes": 2032,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-memory-bounds-dag-loader-tests-v228-v1/evidence/sources-before.json",
+      "sha256": "eb029421e104c66836948be06498f70a4669c43d3634644fbcb047e6362ef0b7"
+    }
+  },
+  "schema": "ferric-memory-bounds-dag-loader-test-cpu-v1",
+  "source_inputs": {
+    "audit_tools.py": {
+      "bytes": 102941,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-memory-bounds-dag-loader-tests-v228-v1/audit_tools.py",
+      "sha256": "ca47ff69b5794c1dee12e01399a7de24664009295e60cf96ea898bc3166abec0"
+    },
+    "baseline-compile.stderr": {
+      "bytes": 123245,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-memory-bounds-dag-loader-tests-v228-v1/baseline-compile.stderr",
+      "sha256": "c60dc2edc62bfe11ba7a8f79ce1465322d2c887aeb3fa5661dae8002a33c5095"
+    },
+    "baseline-failed.json": {
+      "bytes": 17737,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-memory-bounds-dag-loader-tests-v228-v1/baseline-failed.json",
+      "sha256": "8d4cc1a0cfe0c9104282c3d20349638a616bd98e7e28f92598dcaf0110057ca2"
+    },
+    "loader_test_entry.py": {
+      "bytes": 6772,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-memory-bounds-dag-loader-tests-v228-v1/loader_test_entry.py",
+      "sha256": "e7c10088ab24eecc4cb6f554e335e0e970a0cb8fc0cd7d7b9a2c81672ec824d9"
+    },
+    "run_tests.py": {
+      "bytes": 14470,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-memory-bounds-dag-loader-tests-v228-v1/run_tests.py",
+      "sha256": "bfaf5f0ae9cbc12749c9c7e763c3a9be195f115a737c6333eb3a5f5adccf0b2e"
+    },
+    "supervisor.py": {
+      "bytes": 41485,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-memory-bounds-dag-loader-tests-v228-v1/supervisor.py",
+      "sha256": "8824478a6415dee39d28ccefb0881fc0687ac724f5a9c5a4540310fb5196b9bc"
+    },
+    "test_audit_tools.py": {
+      "bytes": 107499,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-memory-bounds-dag-loader-tests-v228-v1/test_audit_tools.py",
+      "sha256": "56d5ef4e151d6b96969569460fb59c404829eab16b176d6e72858368feb6ce2d"
+    }
+  },
+  "source_unchanged": true,
+  "supervisor": {
+    "bytes": 41485,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-memory-bounds-dag-loader-tests-v228-v1/supervisor.py",
+    "sha256": "8824478a6415dee39d28ccefb0881fc0687ac724f5a9c5a4540310fb5196b9bc"
+  },
+  "synthetic_loader_only": true,
+  "tool_pins": {
+    "prlimit": {
+      "bytes": 27536,
+      "path": "/usr/bin/prlimit",
+      "sha256": "17064f67e650d6152a6902b013aab496b54c87587c8eea6f5023aafee6154069"
+    },
+    "python": {
+      "bytes": 8020928,
+      "path": "/usr/bin/python3.12",
+      "sha256": "e1efa562c2cc2e35521a5c9c9b9939921001ff8ca9708a13ef15ace68cc2ccd7"
+    }
+  }
+}

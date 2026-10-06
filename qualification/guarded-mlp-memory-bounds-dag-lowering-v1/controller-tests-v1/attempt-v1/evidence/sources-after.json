@@ -1,0 +1,42 @@
+{
+  "baseline-compile.stderr": {
+    "bytes": 123245,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-memory-bounds-dag-lowering-tests-v228-v1/baseline-compile.stderr",
+    "sha256": "c60dc2edc62bfe11ba7a8f79ce1465322d2c887aeb3fa5661dae8002a33c5095"
+  },
+  "baseline-failed.json": {
+    "bytes": 17737,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-memory-bounds-dag-lowering-tests-v228-v1/baseline-failed.json",
+    "sha256": "8d4cc1a0cfe0c9104282c3d20349638a616bd98e7e28f92598dcaf0110057ca2"
+  },
+  "lowering.py": {
+    "bytes": 69843,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-memory-bounds-dag-lowering-tests-v228-v1/lowering.py",
+    "sha256": "b902ec411495e008df648df4ca321eb7eb2367f52441622fd2ccd33266b25a17"
+  },
+  "lowering_test_entry.py": {
+    "bytes": 6100,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-memory-bounds-dag-lowering-tests-v228-v1/lowering_test_entry.py",
+    "sha256": "162b9c7299c52b3b53ee35047fef41abee93eb6a470d93fbac410a41b9a5c2ca"
+  },
+  "run_tests.py": {
+    "bytes": 13725,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-memory-bounds-dag-lowering-tests-v228-v1/run_tests.py",
+    "sha256": "72ded86aae3064e3317b3f45c7ba4f22e7435bbd44553e4a9175458de4e8d419"
+  },
+  "supervisor.py": {
+    "bytes": 41485,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-memory-bounds-dag-lowering-tests-v228-v1/supervisor.py",
+    "sha256": "8824478a6415dee39d28ccefb0881fc0687ac724f5a9c5a4540310fb5196b9bc"
+  },
+  "test_lowering.py": {
+    "bytes": 45269,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-memory-bounds-dag-lowering-tests-v228-v1/test_lowering.py",
+    "sha256": "91515c9c8c6d679658623334fc91b3dcb3caedf9be9266716659ef0cb291c36e"
+  },
+  "test_normalization.py": {
+    "bytes": 6507,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-memory-bounds-dag-lowering-tests-v228-v1/test_normalization.py",
+    "sha256": "6d4d91e24fa483e81d99ae1dd89a629eb3b7a17aaef94e8f46958123c292465f"
+  }
+}

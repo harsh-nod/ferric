@@ -11,8 +11,10 @@ All 45 phases and 32 scopes pass: 1,323 compiler and 1,516 Pliron tests,
 with focused repeats and extraction controls totaling 2,990 passing executions
 and 25 unchanged ignores. The nine new tests pass full and focused suites.
 All children exit naturally, are reaped and leave no process groups; source,
-dependency and process postchecks are clean. Actual binary admission and a new
-guarded compile are next, not yet accepted. Existing admitted inputs keep their
+dependency and process postchecks are clean. The
+[14 actual binary-loader checks pass](../qualification/guarded-mlp-memory-bounds-dag-tool-audit-v1/README.md),
+as do 26 loader and 19 lowering controller fixtures. A new guarded compile is
+running; no guarded HSACO or GPU acceptance is established. Existing admitted inputs keep their
 exact old bound and solver;
 the new route requires a runtime-validated DAG and zero ownership contracts.
 No work limit, access predicate or atomic ordering is relaxed.

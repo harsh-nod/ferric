@@ -1,0 +1,44 @@
+{
+  "adopted_reaped": [],
+  "argv": [
+    "/usr/bin/prlimit",
+    "--as=12884901888",
+    "--cpu=1200",
+    "--fsize=1073741824",
+    "--core=0",
+    "--",
+    "/usr/bin/python3.12",
+    "-I",
+    "-S",
+    "-B",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-memory-bounds-dag-loader-tests-v228-v1/loader_test_entry.py"
+  ],
+  "command": {
+    "bytes": 875,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-memory-bounds-dag-loader-tests-v228-v1/evidence/memory-bounds-dag-loader-tests.command.json",
+    "sha256": "4d967c9d599ea83f7e08c7ab097d7b02f2f29f54486b7b095c8a35398c1bfe9a"
+  },
+  "elapsed_ns": 74658596160,
+  "exception": null,
+  "exit_code": 0,
+  "forced_cleanup": false,
+  "label": "memory-bounds-dag-loader-tests",
+  "natural_exit": true,
+  "observed_signals": [],
+  "pgid": 3785806,
+  "pid": 3785806,
+  "process_group_absent": true,
+  "reaped": true,
+  "stderr": {
+    "bytes": 4192,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-memory-bounds-dag-loader-tests-v228-v1/evidence/memory-bounds-dag-loader-tests.stderr",
+    "sha256": "000e5af269465fc23943f5e2a17dd26d395380b0491c6f15366b1fe21926230d"
+  },
+  "stdout": {
+    "bytes": 5911,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-memory-bounds-dag-loader-tests-v228-v1/evidence/memory-bounds-dag-loader-tests.stdout",
+    "sha256": "f65fad242c15d7a2df59ebf4e49af72dba08d2bfed5a7e44f092954786a91642"
+  },
+  "storage_failure": null,
+  "timed_out": false
+}

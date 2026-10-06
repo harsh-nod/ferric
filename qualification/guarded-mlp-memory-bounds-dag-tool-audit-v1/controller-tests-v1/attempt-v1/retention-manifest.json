@@ -1,0 +1,74 @@
+{
+  "compiler_qualification": false,
+  "files": {
+    "audit_tools.py": {
+      "bytes": 102941,
+      "sha256": "ca47ff69b5794c1dee12e01399a7de24664009295e60cf96ea898bc3166abec0"
+    },
+    "baseline-compile.stderr": {
+      "bytes": 123245,
+      "sha256": "c60dc2edc62bfe11ba7a8f79ce1465322d2c887aeb3fa5661dae8002a33c5095"
+    },
+    "baseline-failed.json": {
+      "bytes": 17737,
+      "sha256": "8d4cc1a0cfe0c9104282c3d20349638a616bd98e7e28f92598dcaf0110057ca2"
+    },
+    "evidence/complete.json": {
+      "bytes": 14675,
+      "sha256": "941d69111fdd3819a1d3a83c3451b858f5bc582b349a731464818ff5063b0f6c"
+    },
+    "evidence/memory-bounds-dag-loader-tests.command.json": {
+      "bytes": 875,
+      "sha256": "4d967c9d599ea83f7e08c7ab097d7b02f2f29f54486b7b095c8a35398c1bfe9a"
+    },
+    "evidence/memory-bounds-dag-loader-tests.result.json": {
+      "bytes": 1621,
+      "sha256": "234fc17e7506473db01ba23911fb87fa987ef6b86f9ecd8ca7aa52ee579973a6"
+    },
+    "evidence/memory-bounds-dag-loader-tests.started.json": {
+      "bytes": 384,
+      "sha256": "c505351798f9c5233dbba12e5bbecf6b5c01b37a07e41a7a3fe40ff8da1b08eb"
+    },
+    "evidence/memory-bounds-dag-loader-tests.stderr": {
+      "bytes": 4192,
+      "sha256": "000e5af269465fc23943f5e2a17dd26d395380b0491c6f15366b1fe21926230d"
+    },
+    "evidence/memory-bounds-dag-loader-tests.stdout": {
+      "bytes": 5911,
+      "sha256": "f65fad242c15d7a2df59ebf4e49af72dba08d2bfed5a7e44f092954786a91642"
+    },
+    "evidence/sources-after.json": {
+      "bytes": 2032,
+      "sha256": "eb029421e104c66836948be06498f70a4669c43d3634644fbcb047e6362ef0b7"
+    },
+    "evidence/sources-before.json": {
+      "bytes": 2032,
+      "sha256": "eb029421e104c66836948be06498f70a4669c43d3634644fbcb047e6362ef0b7"
+    },
+    "input-manifest.json": {
+      "bytes": 1409,
+      "sha256": "cd3ab124b092e12649c1e077ea88cce4c34a45619f69e3bcc1256ce531423706"
+    },
+    "loader_test_entry.py": {
+      "bytes": 6772,
+      "sha256": "e7c10088ab24eecc4cb6f554e335e0e970a0cb8fc0cd7d7b9a2c81672ec824d9"
+    },
+    "run_tests.py": {
+      "bytes": 14470,
+      "sha256": "bfaf5f0ae9cbc12749c9c7e763c3a9be195f115a737c6333eb3a5f5adccf0b2e"
+    },
+    "supervisor.py": {
+      "bytes": 41485,
+      "sha256": "8824478a6415dee39d28ccefb0881fc0687ac724f5a9c5a4540310fb5196b9bc"
+    },
+    "test_audit_tools.py": {
+      "bytes": 107499,
+      "sha256": "56d5ef4e151d6b96969569460fb59c404829eab16b176d6e72858368feb6ce2d"
+    }
+  },
+  "gpu_execution": false,
+  "passed": true,
+  "schema": "ferric-memory-bounds-dag-loader-tests-retention-v1",
+  "synthetic_loader_only": true,
+  "tests_passed": 26
+}
