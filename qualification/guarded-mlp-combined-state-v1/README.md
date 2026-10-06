@@ -23,6 +23,8 @@ tests. The first actual run passes 38 and fails one formatting-sensitive
 source-shape assertion after rustfmt. All inherited tests pass. The failure
 is retained unchanged; the complete CPU qualification has not passed.
 
-The typed 2,208-byte owner, suffix-only peer-read capability, coordinator,
-artifact ABI admission and GPU tests remain separate work. Predicted ABI
+The [typed 2,208-byte owner and suffix-only peer-read capability](../guarded-mlp-combined-state-owner-v1/README.md)
+have a separately reviewed source proposal and 14 unexecuted focused tests.
+Runtime CPU qualification, the coordinator, artifact ABI admission and GPU
+tests remain separate work. Predicted ABI
 sizes are not emitted-metadata evidence and grant no load or launch authority.
