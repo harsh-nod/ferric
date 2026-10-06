@@ -60,8 +60,9 @@ MI350 qualification records 1,088 ordinary test passes, eight deliberate ignores
 nine compile-fail API tests, and a single successful GPU attempt through the
 public allocation/binding/dispatch facade. The independent reference checks
 557,056 computed values bit-for-bit. A new mixed Prefix284/Combined552 bank
-transaction has 12 passing CPU tests; native whole-bank and real-model
-qualification remain next. This does not establish sustained decode or a
+transaction has 12 passing CPU tests. Subsequent native mixed-bank and
+real-model TF4/AR4 execution are recorded above; independent numerical
+acceptance remains open. This does not establish sustained decode or a
 performance-demo date. The linked checkpoint lists the next demo gates.
 
 Earlier runtime diagnosis: [fresh-process repeats reproduce the guarded MLP binary discrepancy](../qualification/guarded-mlp-interleaved-native-v1/README.md#fresh-process-repeats).

@@ -75,8 +75,9 @@ products. The [second reader](revalidation-v2/failed.json) completed payload
 validation but compared Python frontier tuples with JSON arrays directly.
 The serialized observations are identical. Neither failure launched native
 code, changed the original GPU evidence, or established numerical acceptance.
-The passing V3 reader retains both prior failures and fixes only those reader
-assumptions; GPU images, model arithmetic and observation rules are unchanged.
+This checkpoint retains both prior failures. The passing V3 reader fixes only
+those reader assumptions; GPU images, model arithmetic and observation rules
+are unchanged.
 
 ## First Preflight
 
