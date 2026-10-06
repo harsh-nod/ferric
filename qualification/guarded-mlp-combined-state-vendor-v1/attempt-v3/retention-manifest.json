@@ -1,0 +1,87 @@
+{
+  "binary_bodies_exported": false,
+  "compiler_hsaco_reproduced": false,
+  "config_installed": false,
+  "dependency_bodies_exported": false,
+  "failure": null,
+  "files": {
+    "cpu/evidence/complete.json": {
+      "bytes": 131476,
+      "sha256": "ebdcb5f36dcdadd77614f85b91f0ed510d1ea6a44be407ab18d73a1aa56af696"
+    },
+    "cpu/evidence/sources-after.json": {
+      "bytes": 2017325,
+      "sha256": "bbe2b9e0e5c0941f0154ed7c622e0426ec4c676af22b42f5f747fd76bfa37d5e"
+    },
+    "cpu/input-manifest.json": {
+      "bytes": 1013800,
+      "sha256": "f69486ad54d5cb1c4b956444c1bac216d396b44d8ee73657c4096f800638ce0a"
+    },
+    "cpu/run_cpu.py": {
+      "bytes": 39059,
+      "sha256": "d59335b65cbde4b04ac003ad56e08c0f72fe58b3cf4bf4cfe65d88f8134970e3"
+    },
+    "evidence/complete.json": {
+      "bytes": 16533,
+      "sha256": "30b139d4d35084ab8ba37dd32bf07b2d63d4341ef449cf9da00b5d446ef8916d"
+    },
+    "evidence/cpu-sources-after.json": {
+      "bytes": 2017325,
+      "sha256": "bbe2b9e0e5c0941f0154ed7c622e0426ec4c676af22b42f5f747fd76bfa37d5e"
+    },
+    "evidence/cpu-sources-before.json": {
+      "bytes": 2017325,
+      "sha256": "bbe2b9e0e5c0941f0154ed7c622e0426ec4c676af22b42f5f747fd76bfa37d5e"
+    },
+    "evidence/rust-src-after.json": {
+      "bytes": 727700,
+      "sha256": "a594263b9120701b37fd587b045246339b3ee619599b240e274aad73bb1821f1"
+    },
+    "evidence/rust-src-before.json": {
+      "bytes": 727700,
+      "sha256": "a594263b9120701b37fd587b045246339b3ee619599b240e274aad73bb1821f1"
+    },
+    "evidence/vendor-files.json": {
+      "bytes": 2097843,
+      "sha256": "a6d4b3da7780305525a269626f48dd18f96d3db5794b9673274173eb30c0c40b"
+    },
+    "evidence/vendor.command.json": {
+      "bytes": 1914,
+      "sha256": "0d7fbe4946e54f78feee7a0c2997b4b2f2626a2d83d32c916e4646dfe73e08fb"
+    },
+    "evidence/vendor.result.json": {
+      "bytes": 1858,
+      "sha256": "51c3a0d209335bd8bb47d997c8cb79a16f77515166ea2dc53e6ab15572de998b"
+    },
+    "evidence/vendor.started.json": {
+      "bytes": 772,
+      "sha256": "af01b55e08e919f9927a6f93374f814a999c5415a08455b511792bd80b1040fc"
+    },
+    "evidence/vendor.stderr": {
+      "bytes": 38582,
+      "sha256": "9f857137392922a2c21bda7d0ec862bdd5402d75318b55210282c78d9d5adde0"
+    },
+    "evidence/vendor.stdout": {
+      "bytes": 449,
+      "sha256": "23e1ebb2e81326eaf8dda69a96d7f32dba428160d5de33ac0249fa8d1ac0ffeb"
+    },
+    "run_vendor.py": {
+      "bytes": 18855,
+      "sha256": "a8d77b106b89341f566af7b46a2d2dc2188b0fc537f9707e8bb812a229d38841"
+    }
+  },
+  "full_cpu_source_records": 5308,
+  "full_model_acceptance": false,
+  "gpu_execution": false,
+  "passed": true,
+  "performance_claim": false,
+  "postcheck_errors": [],
+  "qualified_cpu": {
+    "bytes": 131476,
+    "sha256": "ebdcb5f36dcdadd77614f85b91f0ed510d1ea6a44be407ab18d73a1aa56af696"
+  },
+  "raw_files": 10,
+  "schema": "ferric-guarded-mlp-combined-state-vendor-retention-v1",
+  "selected_cpu_parent_files": 4,
+  "vendor_bodies_exported": false
+}
