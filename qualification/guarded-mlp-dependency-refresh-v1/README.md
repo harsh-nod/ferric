@@ -27,9 +27,21 @@ files, including 56 raw records, the controller, full input/source maps and
 candidate source/lockfiles. Receipt SHA-256:
 `34df5002c9ca586b5c6dd7e6fc212341b857eedc7ce64bdd4ce0871ccfd3f34f`.
 
+## Offline Dependencies
+
+Fresh [vendor preparation](vendor-v3/evidence/complete.json) also passed on
+MI350 in 2.547 seconds. One offline, locked vendor command exited naturally
+and was reaped; 145 packages and 6,352 vendor files were recorded. Candidate
+sources/lock, nightly Rust sources/lock and input/tool/product postchecks
+were unchanged. No Cargo configuration was installed, and no synthetic
+host-only crate binding was passed. The retained metadata does not include
+the vendored package bodies. Receipt SHA-256:
+`187c8e82c98b6e8b43b0df4f692d8cc3eab5aa83e06db0a0d6c96d60047b3c0b`.
+
 This closes the candidate's dependency-update CPU gate, not the prior
 [lowering refusal](../guarded-mlp-lowering-attempt-v1/README.md). The
 [combined runtime compiler](../guarded-mlp-s-rpo-qualification-v1/README.md)
-is a separately derived source generation. Its loader audit, fresh offline
-vendoring and a new gfx950 lowering attempt must precede any GPU validation.
+is a separately derived source generation. Its
+[loader audit](../guarded-mlp-s-rpo-tool-audit-v1/README.md) and fresh offline
+vendoring passed; a new gfx950 lowering attempt must precede GPU validation.
 Independent model numerics and the 2,048/256 BF16 decode benchmark remain open.

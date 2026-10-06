@@ -1,0 +1,10 @@
+[source.crates-io]
+replace-with = "vendored-sources"
+
+[source."git+https://github.com/harsh-nod/pliron.git?rev=161c385576d45d4e634ba179fa93a545b91124e6"]
+git = "https://github.com/harsh-nod/pliron.git"
+rev = "161c385576d45d4e634ba179fa93a545b91124e6"
+replace-with = "vendored-sources"
+
+[source.vendored-sources]
+directory = "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-vendor-v228-v3/vendor"

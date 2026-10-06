@@ -14,7 +14,8 @@ The [guarded candidate dependency refresh also passes its 27 CPU tests](../quali
 Its two dependency pins now select published fe2o3 `5a500d63`, with unchanged
 Rust kernels and guard protocol. These checks do not close guarded gfx950
 lowering/GPU, independent model numerics or performance. All milestones remain
-open; fresh offline dependencies and a new lowering attempt are next.
+open. Fresh offline vendoring also passed for 145 packages with unchanged
+sources and lockfiles; the new guarded gfx950 lowering attempt is next.
 
 Previously, [the full combined runtime compiler qualification passed on MI350](../qualification/guarded-mlp-s-rpo-qualification-v1/README.md).
 All 32 phases exited naturally and were reaped, with clean integrity checks.

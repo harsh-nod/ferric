@@ -1,0 +1,37 @@
+{
+  "files": {
+    "lowering.py": {
+      "bytes": 32391,
+      "sha256": "554f2f16b9f2da280be237dddc8c51e95cc2f93416affe4c4fe27beeca0c9981"
+    },
+    "lowering_test_entry.py": {
+      "bytes": 4505,
+      "sha256": "b0f6fd3143c5350bc5d1ac0d4f915c39aced1bf632ce08d1e7232292d54bfd92"
+    },
+    "run_tests.py": {
+      "bytes": 12124,
+      "sha256": "3d0c0e909c3881b1d9a31bb23c266dd48c1165f704fa6d729e9a300ffe684103"
+    },
+    "supervisor.py": {
+      "bytes": 41485,
+      "sha256": "8824478a6415dee39d28ccefb0881fc0687ac724f5a9c5a4540310fb5196b9bc"
+    },
+    "test_lowering.py": {
+      "bytes": 7539,
+      "sha256": "4aedbd195aafba8bca5ceba956f3e1c9b201f244556d7973e56684ad18bc26cd"
+    }
+  },
+  "schema": "ferric-guarded-lowering-test-input-v1",
+  "tool_pins": {
+    "prlimit": {
+      "bytes": 27536,
+      "path": "/usr/bin/prlimit",
+      "sha256": "17064f67e650d6152a6902b013aab496b54c87587c8eea6f5023aafee6154069"
+    },
+    "python": {
+      "bytes": 8020928,
+      "path": "/usr/bin/python3.12",
+      "sha256": "e1efa562c2cc2e35521a5c9c9b9939921001ff8ca9708a13ef15ace68cc2ccd7"
+    }
+  }
+}

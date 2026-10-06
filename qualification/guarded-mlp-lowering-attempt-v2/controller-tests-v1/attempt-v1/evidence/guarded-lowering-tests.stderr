@@ -1,0 +1,12 @@
+test_deployed_body_must_match_final_not_earlier_product (test_lowering.AuditBindingTests.test_deployed_body_must_match_final_not_earlier_product) ... ok
+test_failed_or_earlier_producer_refused (test_lowering.AuditBindingTests.test_failed_or_earlier_producer_refused) ... ok
+test_loader_input_readset_drift_refused (test_lowering.AuditBindingTests.test_loader_input_readset_drift_refused) ... ok
+test_new_filepin_and_final_producer_join (test_lowering.AuditBindingTests.test_new_filepin_and_final_producer_join) ... ok
+test_old_audit_schema_or_missing_producer_replay_refused (test_lowering.AuditBindingTests.test_old_audit_schema_or_missing_producer_replay_refused) ... ok
+test_pending_bindings_refuse_before_any_helper_or_effect (test_lowering.AuditBindingTests.test_pending_bindings_refuse_before_any_helper_or_effect) ... ok
+test_unreviewed_loader_or_producer_controller_refused (test_lowering.AuditBindingTests.test_unreviewed_loader_or_producer_controller_refused) ... ok
+
+----------------------------------------------------------------------
+Ran 7 tests in 0.006s
+
+OK
