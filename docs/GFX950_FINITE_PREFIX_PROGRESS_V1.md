@@ -6,14 +6,24 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Latest: [the diagnostic identifies 1,121 blocks in the MLP state-guard kernel](../qualification/guarded-mlp-ranked-cfg-lowering-v1/README.md).
+Latest: [the bounded block-cap experiment reaches one inherited fixture failure](../qualification/guarded-mlp-ranked-cfg-capacity-v1/README.md).
+The Pliron library passed 1,507 tests with one historical ignore. The compiler
+library's raw output reports 1,247 passed, one failed and 24 ignored, so this
+generation is not qualified. The failing positive switch fixture still tied
+its raw-edge count to the block cap and exceeded the unchanged edge budget.
+The retry corrects that fixture to the exact edge boundary without changing
+the production edge check. All fifteen processes exited naturally and were
+reaped with clean integrity checks. No fresh loader, HSACO or GPU result is
+claimed; all milestones remain open.
+
+Previously, [the diagnostic identifies 1,121 blocks in the MLP state-guard kernel](../qualification/guarded-mlp-ranked-cfg-lowering-v1/README.md).
 The actual gfx950 lowering retry rejects `ferric_qwen3_mlp_state_guard_v1`
 against the unchanged 1,024-block cap before loop analysis. The compiler
 exited naturally and was reaped with clean integrity checks; no HSACO or GPU
 execution occurred. The refreshed deployment passed fourteen loader checks.
 Separate synthetic runs passed 24 loader and 17 lowering fixtures. A bounded
-block-cap experiment with independent edge, fact and work limits is next;
-it has not yet run and changes no current production authority.
+block-cap experiment with independent edge, fact and work limits is recorded
+above; it changes no current production authority.
 
 Previously, [the corrected ranked CFG diagnostic passes full CPU qualification on MI350](../qualification/guarded-mlp-ranked-cfg-diagnostic-v1/README.md).
 All 33 phases exited naturally and were reaped, with unchanged sources and
