@@ -6,7 +6,14 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Latest: [the bounded block-cap experiment reaches one inherited fixture failure](../qualification/guarded-mlp-ranked-cfg-capacity-v1/README.md).
+Latest: the capacity generation's [26 loader-controller fixtures](../qualification/guarded-mlp-ranked-cfg-cap-tool-audit-v2/README.md)
+and [19 lowering-controller fixtures](../qualification/guarded-mlp-ranked-cfg-cap-lowering-v2/README.md)
+pass on MI350. Each bounded child exited naturally and was reaped with clean
+source and tool postchecks. These are synthetic admission tests, not an
+actual binary-loader audit or guarded HSACO result. The corrected full
+compiler qualification remains pending; no milestone is closed.
+
+Previously, [the bounded block-cap experiment reaches one inherited fixture failure](../qualification/guarded-mlp-ranked-cfg-capacity-v1/README.md).
 The Pliron library passed 1,507 tests with one historical ignore. The compiler
 library's raw output reports 1,247 passed, one failed and 24 ignored, so this
 generation is not qualified. The failing positive switch fixture still tied

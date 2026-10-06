@@ -1,0 +1,32 @@
+{
+  "lowering.py": {
+    "bytes": 41042,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-cfg-cap-lowering-tests-v228-v2/lowering.py",
+    "sha256": "b805878bc34ce05f04fb7b10e886e04519aba7c114e28c9fb1aaeb73e3d26ac8"
+  },
+  "lowering_test_entry.py": {
+    "bytes": 5877,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-cfg-cap-lowering-tests-v228-v2/lowering_test_entry.py",
+    "sha256": "6c07a9a71b0092899683402968c7e8032f4a4eb0644a74dbe899ed51c815df4c"
+  },
+  "run_tests.py": {
+    "bytes": 13436,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-cfg-cap-lowering-tests-v228-v2/run_tests.py",
+    "sha256": "62402221257f43f40023e27ae454a56ae3c0ccd7bccefbf542f35b729ee14667"
+  },
+  "supervisor.py": {
+    "bytes": 41485,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-cfg-cap-lowering-tests-v228-v2/supervisor.py",
+    "sha256": "8824478a6415dee39d28ccefb0881fc0687ac724f5a9c5a4540310fb5196b9bc"
+  },
+  "test_lowering.py": {
+    "bytes": 18404,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-cfg-cap-lowering-tests-v228-v2/test_lowering.py",
+    "sha256": "562fb29a483ae7fb82ec2858b0a97a16967863bd97b3d795c33137b3a74f5670"
+  },
+  "test_normalization.py": {
+    "bytes": 6507,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-cfg-cap-lowering-tests-v228-v2/test_normalization.py",
+    "sha256": "6d4d91e24fa483e81d99ae1dd89a629eb3b7a17aaef94e8f46958123c292465f"
+  }
+}

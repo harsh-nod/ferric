@@ -1,0 +1,70 @@
+{
+  "compiler_qualification": false,
+  "files": {
+    "evidence/complete.json": {
+      "bytes": 12328,
+      "sha256": "bbbdfa71065d3f941e2f77e10d4b6b954465f116d99403d8733b05dfadf16654"
+    },
+    "evidence/ranked-cfg-cap-lowering-tests.command.json": {
+      "bytes": 874,
+      "sha256": "8ebd825b0b1b86ee8c0ea9dbdadd42cdb059ed7299c848b3402918bc52c5e2f4"
+    },
+    "evidence/ranked-cfg-cap-lowering-tests.result.json": {
+      "bytes": 1614,
+      "sha256": "1da0874f290aad5b095cfde5f542000f217b13d424709a6926bdda70d26fd1bb"
+    },
+    "evidence/ranked-cfg-cap-lowering-tests.started.json": {
+      "bytes": 385,
+      "sha256": "3aecbcf3df3386545f139caaef6b4359745126d98551d73e21973e3bd59830e2"
+    },
+    "evidence/ranked-cfg-cap-lowering-tests.stderr": {
+      "bytes": 2868,
+      "sha256": "a74c59ff60a9822234f8cbe2e3a625c85f672aba1e8711c7f2efa2d3ca39a4c2"
+    },
+    "evidence/ranked-cfg-cap-lowering-tests.stdout": {
+      "bytes": 4030,
+      "sha256": "40d7e26d6d09a26b18362e9b92c34dd78cfda4dfee8b5562d829782a1b9ae02f"
+    },
+    "evidence/sources-after.json": {
+      "bytes": 1715,
+      "sha256": "3410430b155f8a5c4039df41bb664dbd7ad7b75caac5056cb1fa4af2f4bfbc08"
+    },
+    "evidence/sources-before.json": {
+      "bytes": 1715,
+      "sha256": "3410430b155f8a5c4039df41bb664dbd7ad7b75caac5056cb1fa4af2f4bfbc08"
+    },
+    "input-manifest.json": {
+      "bytes": 1256,
+      "sha256": "ecac183cc7ebdd05a0b1740190dbfc92e17e0474965ff5ca53587323b187fe6a"
+    },
+    "lowering.py": {
+      "bytes": 41042,
+      "sha256": "b805878bc34ce05f04fb7b10e886e04519aba7c114e28c9fb1aaeb73e3d26ac8"
+    },
+    "lowering_test_entry.py": {
+      "bytes": 5877,
+      "sha256": "6c07a9a71b0092899683402968c7e8032f4a4eb0644a74dbe899ed51c815df4c"
+    },
+    "run_tests.py": {
+      "bytes": 13436,
+      "sha256": "62402221257f43f40023e27ae454a56ae3c0ccd7bccefbf542f35b729ee14667"
+    },
+    "supervisor.py": {
+      "bytes": 41485,
+      "sha256": "8824478a6415dee39d28ccefb0881fc0687ac724f5a9c5a4540310fb5196b9bc"
+    },
+    "test_lowering.py": {
+      "bytes": 18404,
+      "sha256": "562fb29a483ae7fb82ec2858b0a97a16967863bd97b3d795c33137b3a74f5670"
+    },
+    "test_normalization.py": {
+      "bytes": 6507,
+      "sha256": "6d4d91e24fa483e81d99ae1dd89a629eb3b7a17aaef94e8f46958123c292465f"
+    }
+  },
+  "gpu_execution": false,
+  "passed": true,
+  "schema": "ferric-ranked-cfg-cap-lowering-tests-retention-v2",
+  "synthetic_lowering_only": true,
+  "tests_passed": 19
+}

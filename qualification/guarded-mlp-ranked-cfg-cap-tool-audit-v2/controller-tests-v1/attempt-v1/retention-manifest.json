@@ -1,0 +1,66 @@
+{
+  "compiler_qualification": false,
+  "files": {
+    "audit_tools.py": {
+      "bytes": 57432,
+      "sha256": "8fd3859b8fb82e4aaf4d47df3bb3eb561571a98267b42151988134143e12307d"
+    },
+    "evidence/complete.json": {
+      "bytes": 13482,
+      "sha256": "daa80666a02fdc3be9a4d6417501ed459c5ce8cda4e23c58c76361b3993e2aa3"
+    },
+    "evidence/ranked-cfg-cap-loader-tests.command.json": {
+      "bytes": 866,
+      "sha256": "db841b811e2750cab7420848924ff71cd2463e961b9d14c546d353ed26da61ce"
+    },
+    "evidence/ranked-cfg-cap-loader-tests.result.json": {
+      "bytes": 1596,
+      "sha256": "bb01f8928926b5a5c99ce47acd34fb7b21463695824f86b8d7fcc20598735b83"
+    },
+    "evidence/ranked-cfg-cap-loader-tests.started.json": {
+      "bytes": 381,
+      "sha256": "ab65d1637ce3573e0df093438937fca8fc042e17086ae13856011cf5c0f21b4e"
+    },
+    "evidence/ranked-cfg-cap-loader-tests.stderr": {
+      "bytes": 4085,
+      "sha256": "822402a8f0156f977a8e6ad4fe9cd42b6cd679bb8b0b1f1e2225522d2f428757"
+    },
+    "evidence/ranked-cfg-cap-loader-tests.stdout": {
+      "bytes": 5500,
+      "sha256": "8c7e9dec2354c7f8f96ea2c80398dc6839787448bfbe8cf3a4acc836fb9e9dc0"
+    },
+    "evidence/sources-after.json": {
+      "bytes": 1418,
+      "sha256": "bdd4fd0b0e1d123a718803e75c612faeea6bc4211efc26a75bb59b733cec12e7"
+    },
+    "evidence/sources-before.json": {
+      "bytes": 1418,
+      "sha256": "bdd4fd0b0e1d123a718803e75c612faeea6bc4211efc26a75bb59b733cec12e7"
+    },
+    "input-manifest.json": {
+      "bytes": 1116,
+      "sha256": "273164cf61e321949c8c7fd0e5a07711f85ca9e9ead74bec7a9efcacc6e2485c"
+    },
+    "loader_test_entry.py": {
+      "bytes": 6472,
+      "sha256": "1324535ce33f81a6779954ba365cf65e05fb5b95e747a16b07b8d7f9448de8c8"
+    },
+    "run_tests.py": {
+      "bytes": 14104,
+      "sha256": "8a6df8e43bd5e0e3d365ad501fcf42bf5a1184e5e9073c3c4d8414a20bb96d86"
+    },
+    "supervisor.py": {
+      "bytes": 41485,
+      "sha256": "8824478a6415dee39d28ccefb0881fc0687ac724f5a9c5a4540310fb5196b9bc"
+    },
+    "test_audit_tools.py": {
+      "bytes": 30604,
+      "sha256": "d44bd6857ec488e2b285463495826c0e957d72d84b499d4066f845d6ba1be99d"
+    }
+  },
+  "gpu_execution": false,
+  "passed": true,
+  "schema": "ferric-ranked-cfg-cap-loader-tests-retention-v2",
+  "synthetic_loader_only": true,
+  "tests_passed": 26
+}
