@@ -1,0 +1,84 @@
+{
+  "build_execution": false,
+  "files": {
+    "complete.json": {
+      "bytes": 9289,
+      "sha256": "0f904948a9db4bbf82a94b8cb90411abed5316337ba873f9c58ec3dccfa98693"
+    },
+    "format-0.command.json": {
+      "bytes": 1292,
+      "sha256": "521297e4a49f2120bf96dde65db626600bb4144e7bbe573911398cbccee22be9"
+    },
+    "format-0.result.json": {
+      "bytes": 1441,
+      "sha256": "decbe5b878adc814e7f823bd91fd4802b6fe41f77f92a0709e2386c0e1982f2e"
+    },
+    "format-0.started.json": {
+      "bytes": 364,
+      "sha256": "9a0611244e0f8f2317fcce1217dc1dc230b8d5fa4096bc1d8cd6ba7e6f9f504f"
+    },
+    "format-0.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "format-0.stdout": {
+      "bytes": 19298,
+      "sha256": "d42d5e297f92a7594e8472cb112acca96cff987a67d40f0490e5869606dfeb99"
+    },
+    "format-1.command.json": {
+      "bytes": 1291,
+      "sha256": "369dd16764eb08e063b52170fa0594541b35f67487ef7abb0ac434b0d0e63d5f"
+    },
+    "format-1.result.json": {
+      "bytes": 1441,
+      "sha256": "1319dc22e29b11ae34d0408200703c260bce1867561efd58481ebadcdb3208f6"
+    },
+    "format-1.started.json": {
+      "bytes": 364,
+      "sha256": "8050e3f894ddbb65e9aa7a8d3e75342062b9534f2f9274a4c64fe5b0e7c1bcb8"
+    },
+    "format-1.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "format-1.stdout": {
+      "bytes": 10779,
+      "sha256": "a7c6d8d92640c1429f5f27c870ec36d0b969fb71298c620f3b339cf8f63a3e11"
+    },
+    "parent-complete.json": {
+      "bytes": 3697764,
+      "sha256": "cfe7adb9e0d375191f41c37e36c9712eeed72c1b7879cd6f96a69ba2359e1c2a"
+    },
+    "parent-finite_guarded_mlp_decode_wire_v1.rs": {
+      "bytes": 17323,
+      "sha256": "ec9d3b4f6bfa85688250a3b390acd3ae2fe9958f0a99f1bf2165745e4772fb2e"
+    },
+    "parent-finite_guarded_mlp_decode_wire_v1_tests.rs": {
+      "bytes": 9057,
+      "sha256": "ca24ac6ecafe7a6e59d1ddb9e8509c0608bd13a6fe31e382b73cfbd7d7274217"
+    },
+    "verify_parent_shared_format_v1.py": {
+      "bytes": 17507,
+      "sha256": "981eff2d7e811d23413094b7bf2f7f5db0e10652b794ebaa73b7bba2d258db8d"
+    },
+    "worker-complete.json": {
+      "bytes": 1559924,
+      "sha256": "927e6519923ab44aa5f5616886ce9b539ed5b5f77804a48fe5d42f6a37974cd2"
+    },
+    "worker-finite_guarded_mlp_decode_wire_v1.rs": {
+      "bytes": 19298,
+      "sha256": "d42d5e297f92a7594e8472cb112acca96cff987a67d40f0490e5869606dfeb99"
+    },
+    "worker-finite_guarded_mlp_decode_wire_v1_tests.rs": {
+      "bytes": 10779,
+      "sha256": "a7c6d8d92640c1429f5f27c870ec36d0b969fb71298c620f3b339cf8f63a3e11"
+    }
+  },
+  "formatter_equivalence_only": true,
+  "gpu_execution": false,
+  "passed": true,
+  "performance_claim": false,
+  "schema": "ferric-guarded-mlp-parent-shared-formatter-retained-v1",
+  "sources_edited": false,
+  "test_execution": false
+}

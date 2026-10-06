@@ -1,0 +1,53 @@
+{
+  "adopted_reaped": [],
+  "argv": [
+    "/usr/bin/prlimit",
+    "--as=12884901888",
+    "--cpu=1200",
+    "--fsize=1073741824",
+    "--core=0",
+    "--",
+    "/home/harmenon/.rustup/toolchains/1.97.1-x86_64-unknown-linux-gnu/bin/cargo",
+    "test",
+    "--offline",
+    "--locked",
+    "--jobs",
+    "2",
+    "--manifest-path",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-parent-cpu-v228-v3/ferric/adapters/m1-engineering-execution-v1/Cargo.toml",
+    "--features",
+    "guarded-mlp-model-engineering",
+    "--bin",
+    "ferric-qwen3-finite-projection-residual-decode-shared-host-engineering",
+    "--",
+    "--test-threads=2"
+  ],
+  "command": {
+    "bytes": 2502,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-parent-cpu-v228-v3/evidence/ferric-qwen3-finite-projection-residual-decode-shared-host-engineering-tests.command.json",
+    "sha256": "e074dc5c32cf5f971b9c2990a2adbbda02542fb803fb28227cb052dd59b67c50"
+  },
+  "elapsed_ns": 526617957,
+  "exception": null,
+  "exit_code": 0,
+  "forced_cleanup": false,
+  "label": "ferric-qwen3-finite-projection-residual-decode-shared-host-engineering-tests",
+  "natural_exit": true,
+  "observed_signals": [],
+  "pgid": 2725480,
+  "pid": 2725480,
+  "process_group_absent": true,
+  "reaped": true,
+  "stderr": {
+    "bytes": 1765,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-parent-cpu-v228-v3/evidence/ferric-qwen3-finite-projection-residual-decode-shared-host-engineering-tests.stderr",
+    "sha256": "4c9330b968e117194871f6fc4d1a595c080afb572ca89a9f0a9a07a35f7f3ee0"
+  },
+  "stdout": {
+    "bytes": 204,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-parent-cpu-v228-v3/evidence/ferric-qwen3-finite-projection-residual-decode-shared-host-engineering-tests.stdout",
+    "sha256": "92565bcf6696a81ff0f06b63334c2f17e018af7a1d502f8ea5fbc829cec3dd86"
+  },
+  "storage_failure": null,
+  "timed_out": false
+}

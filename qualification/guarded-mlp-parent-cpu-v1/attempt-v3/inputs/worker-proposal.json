@@ -1,0 +1,256 @@
+{
+  "schema": "ferric-guarded-mlp-model-worker-source-v1",
+  "base_ferric_commit_abbreviated": "a2d91f31",
+  "proposal_only": true,
+  "build_qualified": false,
+  "native_gpu_qualified": false,
+  "full_model_acceptance": false,
+  "performance_claim": false,
+  "production_authority": false,
+  "files": {
+    "adapters/tp-peer-finite-engineering-worker-v1/src/finite_guarded_mlp_decode_wire_v1.rs": {
+      "before": null,
+      "after": {
+        "bytes": 17323,
+        "sha256": "ec9d3b4f6bfa85688250a3b390acd3ae2fe9958f0a99f1bf2165745e4772fb2e"
+      }
+    },
+    "adapters/tp-peer-finite-engineering-worker-v1/src/finite_guarded_mlp_decode_wire_v1_tests.rs": {
+      "before": null,
+      "after": {
+        "bytes": 9057,
+        "sha256": "ca24ac6ecafe7a6e59d1ddb9e8509c0608bd13a6fe31e382b73cfbd7d7274217"
+      }
+    },
+    "adapters/tp-peer-finite-engineering-worker-v1/src/lib.rs": {
+      "before": {
+        "bytes": 2349,
+        "sha256": "bb62438768363860c07b32db0db47e9e9f1fd4a0b418f23e0829c476f815f721"
+      },
+      "after": {
+        "bytes": 2435,
+        "sha256": "ea034c7906f9bef80360c292f9f41c71d0f894c01ca3917899d9bdd10e578467"
+      }
+    },
+    "adapters/tp-peer-finite-engineering-worker-v1/src/main.rs": {
+      "before": {
+        "bytes": 12366,
+        "sha256": "5f93c77f1891cfc381bad53478867afb74840f116e3f1c93148738393ba6eb56"
+      },
+      "after": {
+        "bytes": 12875,
+        "sha256": "3c402712528124fe1dea7c41e1ae369c1536c41435899919a8630d01c6f1c2de"
+      }
+    },
+    "adapters/tp-peer-finite-engineering-worker-v1/src/native_catalog.rs": {
+      "before": {
+        "bytes": 50024,
+        "sha256": "324f2c08ebf5d2edf0335f6ffd7e88539546595977830d0bb4c1eceb722bed36"
+      },
+      "after": {
+        "bytes": 54852,
+        "sha256": "6402248b3f70a2f3fdb88c13f329b15905afc455a6bfb9041718d96afcc46476"
+      }
+    },
+    "adapters/tp-peer-finite-engineering-worker-v1/src/native_catalog_tests.rs": {
+      "before": {
+        "bytes": 32197,
+        "sha256": "3aba3787c67ab319396152d2d5974d9f283e909267d76e218ae7b58992765657"
+      },
+      "after": {
+        "bytes": 34778,
+        "sha256": "33904486384c75a1549e2ec50bce103378b280d9550e6a60e8080efd95d1ba66"
+      }
+    },
+    "adapters/tp-peer-finite-engineering-worker-v1/src/native_forward.rs": {
+      "before": {
+        "bytes": 17543,
+        "sha256": "cfb172f87d44828f16f88a7a2d72b711149a56703511dd8a9944e78e81ec75e7"
+      },
+      "after": {
+        "bytes": 17718,
+        "sha256": "541f32679fcda07e5491f987f130cb2c3ecbcf4608f93d81b1a18951abe4cac7"
+      }
+    },
+    "adapters/tp-peer-finite-engineering-worker-v1/src/native_guarded_mlp_decode_cli_v1.rs": {
+      "before": null,
+      "after": {
+        "bytes": 9952,
+        "sha256": "3ef54390ae59fb0adfe73b6f433aeed12913a2d8e06716640c4357ed00665add"
+      }
+    },
+    "adapters/tp-peer-finite-engineering-worker-v1/src/native_guarded_mlp_decode_cli_v1_tests.rs": {
+      "before": null,
+      "after": {
+        "bytes": 9050,
+        "sha256": "ba1e21506dd51128100c9d1439a872380d21ad1e44fea1cca52dff2c51e6ef32"
+      }
+    },
+    "adapters/tp-peer-finite-engineering-worker-v1/src/native_guarded_mlp_decode_v1/tests.rs": {
+      "before": null,
+      "after": {
+        "bytes": 7348,
+        "sha256": "e2ddeeccc4276687bd9b09d97c423a2f49b2ed4b593b04c317ea6624a43c82e5"
+      }
+    },
+    "adapters/tp-peer-finite-engineering-worker-v1/src/native_guarded_mlp_decode_v1.rs": {
+      "before": null,
+      "after": {
+        "bytes": 9465,
+        "sha256": "1f7082e057d3d598775dc4fda01a0e65f72c4909e23725938649c8fcfe7a590c"
+      }
+    },
+    "adapters/tp-peer-finite-engineering-worker-v1/src/native_setup/guarded_mlp_decode_v1.rs": {
+      "before": null,
+      "after": {
+        "bytes": 2714,
+        "sha256": "469c6dddf0e816793aaf0e15274273fb107e46785799d9f76b77891895f69af8"
+      }
+    },
+    "adapters/tp-peer-finite-engineering-worker-v1/src/native_setup.rs": {
+      "before": {
+        "bytes": 26358,
+        "sha256": "13f88ee2684c436f4c6f7124a8956a1212fdda7172b854b0af6d796c00f5d191"
+      },
+      "after": {
+        "bytes": 27351,
+        "sha256": "1b4ca320ce865aaa37b85c6f22b1f9e6d863bbc6a25f6472a63c8da42fc487a7"
+      }
+    },
+    "adapters/tp-peer-finite-engineering-worker-v1/src/resident_layer/guarded_mlp_decode_v1/tests.rs": {
+      "before": null,
+      "after": {
+        "bytes": 6503,
+        "sha256": "63cc495b5f7e1c285901b2bef44bcdda43897d25cc27a8fdbb33548e7b8d5cbd"
+      }
+    },
+    "adapters/tp-peer-finite-engineering-worker-v1/src/resident_layer/guarded_mlp_decode_v1.rs": {
+      "before": null,
+      "after": {
+        "bytes": 9387,
+        "sha256": "a5b09b85691d3d464a6625652968fbca8f256edeb91056c49adf5e82eaffd8e3"
+      }
+    },
+    "adapters/tp-peer-finite-engineering-worker-v1/src/resident_layer.rs": {
+      "before": {
+        "bytes": 21877,
+        "sha256": "41ac228cc8bd6857c040a82221bb58c715392fcf3afeab73f983d2c6636a0982"
+      },
+      "after": {
+        "bytes": 21937,
+        "sha256": "ffcc6a75d6da395f4300f20f2bcf02d6bfac36f5ab6d7c284bf002be9b86110f"
+      }
+    },
+    "adapters/tp-peer-finite-engineering-worker-v1/src/state_roster/guarded_mlp_decode_v1/tests.rs": {
+      "before": null,
+      "after": {
+        "bytes": 6602,
+        "sha256": "f0a7709d821a6532ebd5ae06c21ae4e19038239653d7fe257b6b9221255d2cbb"
+      }
+    },
+    "adapters/tp-peer-finite-engineering-worker-v1/src/state_roster/guarded_mlp_decode_v1.rs": {
+      "before": null,
+      "after": {
+        "bytes": 12820,
+        "sha256": "af00ed5cd51aae29b057cc4b84c3497a446aea8a2afb00d5450e1e6ef7b43d86"
+      }
+    },
+    "adapters/tp-peer-finite-engineering-worker-v1/src/state_roster.rs": {
+      "before": {
+        "bytes": 15203,
+        "sha256": "f62b9689ccf74f5e062c8b8f3aec9b2e9d342e0e63d7f3e0741bea3baccad8a6"
+      },
+      "after": {
+        "bytes": 15289,
+        "sha256": "a9afaa49224facbe85171fa52dd74fe55d0c7f99c49716af82a6ce199a99cc57"
+      }
+    }
+  },
+  "integration_patch": null,
+  "lib_tests": [
+    "finite_guarded_mlp_decode_wire_v1::tests::guarded_wire_authenticates_four_image_bodies_and_exact_begin_before_use",
+    "finite_guarded_mlp_decode_wire_v1::tests::guarded_wire_preserves_all_control_words_u64_timings_and_local_generations",
+    "finite_guarded_mlp_decode_wire_v1::tests::guarded_wire_profile_is_closed_and_separate_from_every_legacy_recipe",
+    "finite_guarded_mlp_decode_wire_v1::tests::guarded_wire_request_scope_and_transcript_cannot_relabel_old_execution",
+    "finite_guarded_mlp_decode_wire_v1::tests::guarded_wire_response_refuses_legacy_schema_claims_nonfinite_and_wrong_argmax",
+    "native_catalog::forward::guarded_mlp_decode_v1::tests::guarded_model_profile_is_distinct_and_binds_all_images_scope_and_modes",
+    "native_catalog::forward::guarded_mlp_decode_v1::tests::guarded_model_sequence_failure_at_each_stage_prevents_commit_and_retry",
+    "native_catalog::forward::guarded_mlp_decode_v1::tests::guarded_model_sequence_refuses_wrong_scope_token_pages_and_nonfinite_rotary_before_effects",
+    "native_catalog::forward::guarded_mlp_decode_v1::tests::guarded_model_sequence_runs_all_36_layers_without_a_duplicate_residual_step",
+    "native_catalog::tests::guarded_catalog_retains_distinct_combined_kind_without_mutating_legacy_source",
+    "native_catalog::tests::guarded_catalog_selector_refuses_all_late_or_cross_profile_transitions",
+    "native_guarded_mlp_decode_cli_v1::tests::guarded_cli_bad_request_and_eof_refuse_before_any_next_gpu_effect",
+    "native_guarded_mlp_decode_cli_v1::tests::guarded_cli_fake_image_and_wrong_invocation_cannot_reach_group_open",
+    "native_guarded_mlp_decode_cli_v1::tests::guarded_cli_forward_close_and_output_failures_are_terminal_without_extra_dispatch",
+    "native_guarded_mlp_decode_cli_v1::tests::guarded_cli_four_forwards_close_with_exact_observations_and_distinct_transcript",
+    "native_guarded_mlp_decode_cli_v1::tests::guarded_cli_is_explicit_plain_tf4_ar4_without_legacy_or_clock_fallback",
+    "resident_layer::guarded_mlp_decode_v1::tests::guarded_model_down_is_distinct_while_final_output_reuses_exact_own_residual",
+    "resident_layer::guarded_mlp_decode_v1::tests::guarded_model_images_reject_wrong_bytes_and_every_physical_argument_drift",
+    "resident_layer::guarded_mlp_decode_v1::tests::guarded_model_route_has_one_r2_and_stops_on_every_failed_stage",
+    "state_roster::guarded_mlp_decode_v1::tests::guarded_roster_allocates_72_opaque_pairs_and_144_prefixes",
+    "state_roster::guarded_mlp_decode_v1::tests::guarded_roster_consumes_all_bindings_and_never_publishes_a_partial_roster",
+    "state_roster::guarded_mlp_decode_v1::tests::guarded_roster_distinguishes_global_forwards_from_local_bank_generations",
+    "state_roster::guarded_mlp_decode_v1::tests::guarded_roster_invalid_order_or_mixed_bank_failure_is_terminal",
+    "state_roster::guarded_mlp_decode_v1::tests::guarded_roster_refuses_scope_census_and_each_partial_allocation"
+  ],
+  "bin_tests": [],
+  "new_test_count": 24,
+  "replacement_count": 8,
+  "addition_count": 11,
+  "cli_flag": "--engineering-native-guarded-mlp-decode-v1",
+  "forwards": 4,
+  "layers": 36,
+  "banks": 2,
+  "paired_slots": 72,
+  "prefix_owners": 144,
+  "combined_owners": 144,
+  "legacy_state_bytes": 2192,
+  "combined_state_bytes": 2208,
+  "initial_allocation_counts": [
+    715,
+    711
+  ],
+  "final_allocation_counts": [
+    859,
+    855
+  ],
+  "structural_limits_changed": false,
+  "fix_lineage": {
+    "original_source_manifest": {
+      "bytes": 9562,
+      "sha256": "d088f3f076d7d0f6e717c72870b5352f7abde6ce6b840a291b4eed47a96cccf4"
+    },
+    "original_integration_patch": {
+      "bytes": 124246,
+      "sha256": "0dfea12d31083c2f41a407a7c63fdbcef70abf8387e4f6efe60425d43ef268b4"
+    },
+    "original_proposal_directory": "ferric",
+    "current_proposal_directory": "ferric-v6",
+    "changed_files": [
+      "adapters/tp-peer-finite-engineering-worker-v1/src/finite_guarded_mlp_decode_wire_v1.rs",
+      "adapters/tp-peer-finite-engineering-worker-v1/src/finite_guarded_mlp_decode_wire_v1_tests.rs",
+      "adapters/tp-peer-finite-engineering-worker-v1/src/native_guarded_mlp_decode_cli_v1.rs",
+      "adapters/tp-peer-finite-engineering-worker-v1/src/native_guarded_mlp_decode_v1.rs",
+      "adapters/tp-peer-finite-engineering-worker-v1/src/native_setup.rs",
+      "adapters/tp-peer-finite-engineering-worker-v1/src/native_setup/guarded_mlp_decode_v1.rs"
+    ],
+    "correction": "Rename only the new five-argument into_processor_selected helper and its two callers to into_processor_with_guarded_images. Preserve the existing two-argument helper, all method bodies and the 24-test roster. Add an explicit cfg(test) path to native_guarded_mlp_decode_v1/tests.rs so the shared file module resolves its existing test body correctly; no production body or test roster changes. Move Control.layers from an inline 36-element array to a Vec with explicit exact-36 validation; decode and producer collect directly into that Vec. Extend an existing test with a small Control size assertion and short/long layer-count refusals. This is intended to address the observed V5 test-thread stack overflow; wire bytes, numerical precision and test names remain unchanged.",
+    "current_integration_patch_pending": true,
+    "previous_source_manifest": {
+      "bytes": 11320,
+      "sha256": "bb8e8c7836c1ca390a52163d91df967ede5342eab0824dbbf16831103d64f9c3"
+    },
+    "previous_proposal_directory": "ferric-v5",
+    "changes_since_previous": [
+      "adapters/tp-peer-finite-engineering-worker-v1/src/finite_guarded_mlp_decode_wire_v1.rs",
+      "adapters/tp-peer-finite-engineering-worker-v1/src/finite_guarded_mlp_decode_wire_v1_tests.rs",
+      "adapters/tp-peer-finite-engineering-worker-v1/src/native_guarded_mlp_decode_cli_v1.rs"
+    ]
+  },
+  "source_review": {
+    "status": "reviewed",
+    "scope": "Independent source-only review of the cumulative V4/V5 corrections and V6 heap-backed control representation. Exactly three V5 files changed; other 16 V5 bodies are byte-identical. All response-writing and decoding admission paths retain exact-36 validation and fixed wire extent. No compilation or project execution by the reviewer.",
+    "build_qualification": "pending",
+    "native_execution_qualification": "pending"
+  }
+}

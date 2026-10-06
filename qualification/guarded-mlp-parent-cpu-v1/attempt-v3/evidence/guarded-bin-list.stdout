@@ -1,0 +1,1 @@
+tests::guarded_decode_parent_cli_refuses_legacy_fallback_or_extra_modes: test

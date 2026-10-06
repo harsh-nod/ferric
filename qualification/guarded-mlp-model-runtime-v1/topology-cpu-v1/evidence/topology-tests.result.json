@@ -1,0 +1,44 @@
+{
+  "adopted_reaped": [],
+  "argv": [
+    "/usr/bin/prlimit",
+    "--as=536870912",
+    "--cpu=120",
+    "--fsize=16777216",
+    "--core=0",
+    "--",
+    "/usr/bin/python3.12",
+    "-I",
+    "-B",
+    "-c",
+    "import sys,unittest;sys.path.insert(0,'/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-topology-cpu-v228-v1');unittest.main(module=\"test_topology\",argv=[\"topology-tests\"],verbosity=2)"
+  ],
+  "command": {
+    "bytes": 994,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-topology-cpu-v228-v1/evidence/topology-tests.command.json",
+    "sha256": "8864a8af56a3be4ac9cc91af840b48f564c4e9eaf6ba05c69c252e289003f559"
+  },
+  "elapsed_ns": 100646503,
+  "exception": null,
+  "exit_code": 0,
+  "forced_cleanup": false,
+  "label": "topology-tests",
+  "natural_exit": true,
+  "observed_signals": [],
+  "pgid": 2785918,
+  "pid": 2785918,
+  "process_group_absent": true,
+  "reaped": true,
+  "stderr": {
+    "bytes": 586,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-topology-cpu-v228-v1/evidence/topology-tests.stderr",
+    "sha256": "ba4594634649f864bbeb23f1e89b1c1eb2234e40d9a2ec696cfd8e13e497dbf7"
+  },
+  "stdout": {
+    "bytes": 0,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-topology-cpu-v228-v1/evidence/topology-tests.stdout",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "storage_failure": null,
+  "timed_out": false
+}

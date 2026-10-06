@@ -1,0 +1,22 @@
+{
+  "run_cpu.py": {
+    "bytes": 10216,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-topology-cpu-v228-v1/run_cpu.py",
+    "sha256": "32100f23a4b4d2501b90a66c852b71224835007bf8d5015ba6e18b1d357378ca"
+  },
+  "run_model_gpu.py": {
+    "bytes": 25167,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-topology-cpu-v228-v1/run_model_gpu.py",
+    "sha256": "3ebad4e405d73e899e56f5ebc4a5eb19b54c21137dc7dc931d292e6bcded6536"
+  },
+  "supervisor.py": {
+    "bytes": 41485,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-topology-cpu-v228-v1/supervisor.py",
+    "sha256": "8824478a6415dee39d28ccefb0881fc0687ac724f5a9c5a4540310fb5196b9bc"
+  },
+  "test_topology.py": {
+    "bytes": 2484,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-topology-cpu-v228-v1/test_topology.py",
+    "sha256": "62e846dff5ba99592dbfc3e5bd4cf9f7d663ee8383c8c9b9a2a3666526f612a1"
+  }
+}
