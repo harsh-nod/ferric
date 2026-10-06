@@ -6,15 +6,16 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Current work: [the first chain-fusion qualification exposed a test-fixture ordering error](../qualification/guarded-mlp-ranked-cfg-linear-fusion-v1/README.md).
-Pliron passed 1,507 tests; raw compiler results are 1,322 passed, one failed,
-and 24 ignored. All prior compiler passes are preserved. The new real-owner
-fixture failed before fusion because its little-endian block IDs stop sorting
-at 256. A reviewed fixture-only correction is undergoing a fresh full MI350
-qualification. Original failure evidence remains intact. Controller fixtures
-record 25/26 loader passes and 19/19 lowering passes; the loader's stale
-test-local binding target is also corrected for the new run. No new guarded
-HSACO, GPU or model acceptance follows from these results.
+Current work: [all chain-fusion compiler tests now pass, but the harness rejects a progress notice](../qualification/guarded-mlp-ranked-cfg-linear-fusion-v1/README.md).
+After a fixture-only correction, raw compiler results are 1,323 passed, zero
+failed and 24 ignored. Pliron passes 1,507 with one ignored. The qualification
+controller mistakes a valid 60-second progress notice for a malformed final
+result and stops before focused repeats and extraction controls. A narrow
+parser correction and 17 regression checks are being validated before another
+full MI350 qualification. Both failed attempts remain retained unchanged.
+The separate controller fixtures now pass 26/26 loader and 19/19 lowering tests.
+No new compiler qualification, guarded HSACO, GPU or model acceptance follows
+from these results.
 
 Latest guarded lowering: [the compacted guard reaches the structural-identity limit](../qualification/guarded-mlp-ranked-cfg-compaction-lowering-v1/README.md).
 The actual MI350 compile renders 1,675 blocks, down from the prior 2,778,
@@ -30,7 +31,7 @@ Next, [single-predecessor chain fusion has passed source review](../qualificatio
 Independent analysis of the retained graph predicts 567 blocks and 1,122 raw
 edges while preserving the entry, every bounds predicate and all atomic
 effects. This is graph arithmetic, not a result from the new compiler pass.
-The implementation, nine tests and failed first qualification are retained.
+The implementation, nine tests and both failed qualifications are retained.
 Corrected full CPU qualification and guarded lowering remain pending; no
 structural or resource limit is being raised for this change.
 

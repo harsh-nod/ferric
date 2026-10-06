@@ -1,11 +1,52 @@
 # Ranked CFG Linear Fusion
 
-Status: the first MI350 qualification failed in a new test fixture before
-fusion. The [fixture-only correction](proposal-v2/README.md) is independently
-reviewed and a fresh full qualification is running. No new compiler
+Status: after the [fixture-only correction](proposal-v2/README.md), all 1,323
+compiler tests pass, with 24 unchanged ignores. The second MI350 qualification
+still fails because its harness rejects a legitimate long-running-test notice.
+A narrow parser correction and independent regression tests are being validated.
+No new compiler
 qualification, artifact, GPU execution, numerical acceptance or performance
 result is established.
 All issue #42 milestones and the 700 tokens/s target remain open.
+
+## Second Qualification
+
+The [second receipt](attempt-v2/evidence/failed.json) remains failed:
+`RuntimeError('malformed named libtest result')`. The full compiler suite
+exits naturally with code zero; its [raw stdout](attempt-v2/evidence/compiler-tests.stdout)
+records 1,323 passed, zero failed and 24 ignored. All prior 1,314 passes and
+24 ignored identities are preserved, and all nine new fusion tests pass.
+Pliron passes 1,507 tests with one ignored.
+
+The parser mistakes this progress notice for a malformed final test result:
+
+```text
+test production_ranked_projection_v1::tests::cfg_linear_fusion_production_projection_route has been running for over 60 seconds
+```
+
+The same test subsequently reports `ok`. The correction accepts only this exact
+notice format for a known, active, non-ignored test, at most once and before its
+final result and the suite summary. Every final name, status and count remains
+mandatory. The existing failed receipt is not rewritten or promoted to passing.
+The remaining focused repeats and extraction controls did not run, so full
+qualification must be repeated. Its partial aggregate of 1,507 passes and one
+ignore still describes only the admitted Pliron scope.
+
+All 15 child phases exit naturally with code zero, are reaped and leave no
+process group. Sources and postchecks are clean. The compiler phase takes
+111.075910 seconds; the complete attempt takes 276.552979 seconds. The retained
+capsule contains 104 members, 103 pins and 79 raw files: 5,570,717 compressed bytes,
+SHA-256 `0dee91ee1767be9c60fa3b717f662f446a55cc5e97da5a7cb2339c3632ece0a2`.
+
+Both separate controller-fixture reruns pass:
+
+| Check | Passed | Failed | Ignored |
+| --- | ---: | ---: | ---: |
+| [Loader fixtures](../guarded-mlp-ranked-cfg-linear-fusion-tool-audit-v1/controller-tests-v1/attempt-v2/evidence/complete.json) | 26 | 0 | 0 |
+| [Lowering fixtures](../guarded-mlp-ranked-cfg-linear-fusion-lowering-v1/controller-tests-v1/attempt-v2/evidence/complete.json) | 19 | 0 | 0 |
+
+These are synthetic controller checks, not admission of new compiler binaries
+or a successful guarded-kernel compile.
 
 ## First Qualification
 
@@ -40,8 +81,8 @@ binding check correctly refused before the intended pending-driver check.
 The correction changes only that test-local patch target. The original failed
 receipt retains a null child observation; its raw stdout records 25 passes
 and one failure. The [lowering fixtures](../guarded-mlp-ranked-cfg-linear-fusion-lowering-v1/controller-tests-v1/attempt-v1/evidence/complete.json)
-passed all 19 checks. Both fixture cohorts will be rerun against the corrected
-compiler generation. No actual new binary-loader audit or guarded compile
+passed all 19 checks. Both fixture cohorts subsequently passed as recorded above.
+No actual new binary-loader audit or guarded compile
 has been admitted from the failed CPU attempt.
 
 The failed CPU capsule has 104 members, 103 pinned bodies and 79 raw files:

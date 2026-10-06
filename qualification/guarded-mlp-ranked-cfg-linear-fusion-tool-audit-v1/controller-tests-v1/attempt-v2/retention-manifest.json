@@ -1,0 +1,74 @@
+{
+  "compiler_qualification": false,
+  "files": {
+    "audit_tools.py": {
+      "bytes": 96798,
+      "sha256": "f5c6a04387ef459af61181050671d823c8b5636da92c4f6976094db8c9edbe04"
+    },
+    "baseline-compile.stderr": {
+      "bytes": 164209,
+      "sha256": "9a309b8f23c66ad29e98a464bcb3ed8480766e2c7fd807415616dc99d6121a05"
+    },
+    "baseline-failed.json": {
+      "bytes": 16503,
+      "sha256": "1bf26b28162414dfb4afbf6dc5ba5a70a60d1c1fe1fd55624c251733840c560b"
+    },
+    "evidence/complete.json": {
+      "bytes": 14931,
+      "sha256": "b7838adef93b7bcefd14e90b0090e7fed8f533a4875d38d68f6d00ca602e9414"
+    },
+    "evidence/ranked-cfg-linear-fusion-loader-tests.command.json": {
+      "bytes": 896,
+      "sha256": "70c019859b80a68c49bcda71c0da60a18e62e94a7c60eb85ade500c4f8aec5f2"
+    },
+    "evidence/ranked-cfg-linear-fusion-loader-tests.result.json": {
+      "bytes": 1677,
+      "sha256": "c251dcbd6bfeda1a878febed1c2228bc6cfccca630518c616a5b4ab683d39c58"
+    },
+    "evidence/ranked-cfg-linear-fusion-loader-tests.started.json": {
+      "bytes": 391,
+      "sha256": "36db79b7d316c4fb5d9b8b024c003cd37f59b78decd0e1e70c7c29e396703bae"
+    },
+    "evidence/ranked-cfg-linear-fusion-loader-tests.stderr": {
+      "bytes": 4192,
+      "sha256": "e207f224b146d86e212c5730748140090cde661a7544ba196afd00983e8814e1"
+    },
+    "evidence/ranked-cfg-linear-fusion-loader-tests.stdout": {
+      "bytes": 5916,
+      "sha256": "a0773d42a9801089423368935bdec9cef4aab5c8c81cfd3682f051c0bc1bbed9"
+    },
+    "evidence/sources-after.json": {
+      "bytes": 2079,
+      "sha256": "14b2dc3549fe07c2833ae11802243837a5df23b2418d962164437be25155cb53"
+    },
+    "evidence/sources-before.json": {
+      "bytes": 2079,
+      "sha256": "14b2dc3549fe07c2833ae11802243837a5df23b2418d962164437be25155cb53"
+    },
+    "input-manifest.json": {
+      "bytes": 1414,
+      "sha256": "c15fcf391f94204e47eeabba83edc7a10c161ac98755bd6bc7e5b2dcfe9d31d8"
+    },
+    "loader_test_entry.py": {
+      "bytes": 6777,
+      "sha256": "5ad63998a49534e51f871e3aa0a3117c40a7ec59d15c7434811e3524b1b95e01"
+    },
+    "run_tests.py": {
+      "bytes": 14510,
+      "sha256": "0db5c6139b80cc4621741fd334a6e798c8d4a2cbe3170f4f3e54b047ff53d481"
+    },
+    "supervisor.py": {
+      "bytes": 41485,
+      "sha256": "8824478a6415dee39d28ccefb0881fc0687ac724f5a9c5a4540310fb5196b9bc"
+    },
+    "test_audit_tools.py": {
+      "bytes": 96436,
+      "sha256": "e61be06eba7f6b9915e4f672a3f15d29253c3fd1a6ae440647459de17d734fc1"
+    }
+  },
+  "gpu_execution": false,
+  "passed": true,
+  "schema": "ferric-ranked-cfg-linear-fusion-loader-tests-retention-v1",
+  "synthetic_loader_only": true,
+  "tests_passed": 26
+}
