@@ -1,0 +1,14 @@
+
+running 9 tests
+test production_ranked_projection_v1::tests::cfg_compaction_atomic_and_predicate_refusals_unchanged ... ok
+test production_ranked_projection_v1::tests::cfg_compaction_differential_checks_effects_and_traps ... ok
+test production_ranked_projection_v1::tests::cfg_compaction_edge_budget_remains_independent ... ok
+test production_ranked_projection_v1::tests::cfg_compaction_exact_block_boundary_and_next_refusal ... ok
+test production_ranked_projection_v1::tests::cfg_compaction_live_induction_layout_unchanged ... ok
+test production_ranked_projection_v1::tests::cfg_compaction_mixed_failure_layout ... ok
+test production_ranked_projection_v1::tests::cfg_compaction_multiple_semantic_blocks_preserve_traces ... ok
+test production_ranked_projection_v1::tests::cfg_compaction_source_wave_and_generated_identity ... ok
+test production_ranked_projection_v1::tests::cfg_compaction_unreachable_and_zero_eligible_unchanged ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 1338 filtered out; finished in 0.01s
+

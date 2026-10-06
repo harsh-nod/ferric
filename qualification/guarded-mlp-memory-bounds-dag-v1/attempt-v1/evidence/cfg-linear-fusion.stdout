@@ -1,0 +1,14 @@
+
+running 9 tests
+test production_ranked_projection_v1::tests::cfg_linear_fusion_chain_and_identity_boundaries ... ok
+test production_ranked_projection_v1::tests::cfg_linear_fusion_conditional_effect_traces ... ok
+test production_ranked_projection_v1::tests::cfg_linear_fusion_cycles_and_argument_fallback ... ok
+test production_ranked_projection_v1::tests::cfg_linear_fusion_duplicate_edges_and_entry_are_preserved ... ok
+test production_ranked_projection_v1::tests::cfg_linear_fusion_malformed_references_fail_closed ... ok
+test production_ranked_projection_v1::tests::cfg_linear_fusion_measured_guard_pattern ... ok
+test production_ranked_projection_v1::tests::cfg_linear_fusion_production_projection_route ... ok
+test production_ranked_projection_v1::tests::cfg_linear_fusion_source_wave_generated_coordinates ... ok
+test production_ranked_projection_v1::tests::cfg_linear_fusion_work_storage_and_failure_boundaries ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 1338 filtered out; finished in 80.48s
+

@@ -6,13 +6,18 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Current work: [a bounded memory-bounds DAG solver is proposed](../qualification/guarded-mlp-memory-bounds-dag-v1/README.md)
-for the new static work refusal. Its nine new tests and source are not yet
-qualified. Existing admitted inputs keep their exact old bound and solver;
+Current work: [the bounded memory-bounds DAG solver passes MI350 CPU qualification](../qualification/guarded-mlp-memory-bounds-dag-v1/README.md).
+All 45 phases and 32 scopes pass: 1,323 compiler and 1,516 Pliron tests,
+with focused repeats and extraction controls totaling 2,990 passing executions
+and 25 unchanged ignores. The nine new tests pass full and focused suites.
+All children exit naturally, are reaped and leave no process groups; source,
+dependency and process postchecks are clean. Actual binary admission and a new
+guarded compile are next, not yet accepted. Existing admitted inputs keep their
+exact old bound and solver;
 the new route requires a runtime-validated DAG and zero ownership contracts.
 No work limit, access predicate or atomic ordering is relaxed.
 
-Latest completed compiler qualification: [bounded chain fusion passes on MI350](../qualification/guarded-mlp-ranked-cfg-linear-fusion-v1/README.md).
+Previous completed compiler qualification: [bounded chain fusion passes on MI350](../qualification/guarded-mlp-ranked-cfg-linear-fusion-v1/README.md).
 All 44 phases and 31 test scopes pass: 1,323 compiler and 1,507 Pliron tests,
 with focused repeats and extraction controls totaling 2,972 passing executions
 and 25 unchanged ignores. Sources, dependencies and process postchecks are clean.
@@ -35,7 +40,7 @@ postchecks. No HSACO is produced.
 
 The new refusal is a static upper-bound estimate, not runtime-counter
 exhaustion. One intersection-work term alone is 9,340,170, above the unchanged
-8,388,608 cap. The graph is a DAG with 552 distinct bounds facts. The next
+8,388,608 cap. The graph is a DAG with 552 distinct bounds facts. The CPU-qualified
 candidate is an authenticated topological schedule with matching one-pass
 execution and admission accounting. No structural or resource limit is being
 raised, and all bounds predicates remain. The compiler source, nine tests,

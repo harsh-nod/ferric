@@ -1,0 +1,545 @@
+"""Bounded data-only retention of an actual terminal memory-bounds DAG CPU attempt."""
+import hashlib
+import io
+import json
+import os
+from pathlib import Path, PurePosixPath
+import re
+import signal
+import stat
+import sys
+import tarfile
+
+
+ROOT = Path('/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-memory-bounds-dag-cpu-v228-v1')
+ARCHIVE = ROOT.parent / 'guarded-mlp-memory-bounds-dag-cpu-evidence-v228-v1.tar.gz'
+CONTROLLER_SHA = '151f0a91534ddf5aa7cec746545dce7a3eda0aae1764b917907075bfeed9b119'
+HELPER_SHA = 'ba127f1057546c0ce6e57fb78832c3e774c1108a4f7c5a2421f4aad7f51108be'
+BASE_HELPER_SHA = 'ba127f1057546c0ce6e57fb78832c3e774c1108a4f7c5a2421f4aad7f51108be'
+PROPOSAL_SHA = '7ebe693afa0b672c8e80c0d6c08fe9f7c6a8b0d6bcd478c393b8408dd890eeb8'
+INPUT_SHA = '3c60b907c38c1b61d645ec303b6099843e28e8b46148920f7486a364f0faba12'
+TERMINAL_SHA = 'bd1fa4827483cdf6ca6a0470aacd6826ddab007e8f129611b9725d3e0cdf8445'
+BASE_COMPLETE_SHA = '7827d969f295a8a0ba709629b2679b71ecde9b93b1f0ad11c5b8be70f7259915'
+BASE_SOURCES_SHA = '0c5a0dce518d1d469d0f7cb34618245aedb74d9279a4aa50473f2f3e20a1de23'
+BASE_INPUT_SHA = '0bb52fac77acd6af93609e214a6117af4047c484547a9728a4f1f3f387da3981'
+BASE_FAILURE_ROOT = ROOT.parent / 'guarded-mlp-ranked-cfg-linear-fusion-lowering-v228-v3'
+BASE_FAILURE_SHA = '8d4cc1a0cfe0c9104282c3d20349638a616bd98e7e28f92598dcaf0110057ca2'
+BASE_FAILURE_STDERR_SHA = 'c60dc2edc62bfe11ba7a8f79ce1465322d2c887aeb3fa5661dae8002a33c5095'
+BASE_FAILURE_DIAGNOSTIC = (
+    b'fe2o3 rustc extraction: production compilation general kernel verification failed: '
+    b'production analysis resource limit exceeded [memory-bounds]: '
+    b'memory-bounds work hard limit')
+MAX_FILE, MAX_TOTAL, MAX_MEMBERS = 64 << 20, 128 << 20, 500
+
+
+def require(condition, message):
+    if not condition:
+        raise RuntimeError(message)
+
+
+def stamp(value):
+    return (value.st_dev, value.st_ino, value.st_mode, value.st_nlink,
+            value.st_uid, value.st_gid, value.st_size, value.st_mtime_ns, value.st_ctime_ns)
+
+
+def pin(path, limit=MAX_FILE):
+    path = Path(path)
+    require(path.is_absolute() and path.resolve(strict=True) == path, 'canonical input required')
+    before = path.lstat()
+    require(stat.S_ISREG(before.st_mode) and before.st_size <= limit, 'bounded ordinary file required')
+    with path.open('rb') as stream:
+        require(stamp(os.fstat(stream.fileno())) == stamp(before), 'file identity changed before read')
+        body = stream.read(limit + 1)
+        require(stamp(os.fstat(stream.fileno())) == stamp(before), 'file identity changed during read')
+    require(len(body) == before.st_size and stamp(path.lstat()) == stamp(before), 'file changed after read')
+    return body, dict(path=str(path), bytes=len(body), sha256=hashlib.sha256(body).hexdigest())
+
+
+def compact(row):
+    return {key: row[key] for key in ('bytes', 'sha256')}
+
+
+def main():
+    require(all(type(value) is str and re.fullmatch(r'[0-9a-f]{64}', value)
+                for value in (CONTROLLER_SHA, PROPOSAL_SHA, INPUT_SHA, TERMINAL_SHA)),
+            'reviewed source and actual input/terminal pins are not bound')
+    require(__debug__ and sys.dont_write_bytecode and len(sys.argv) == 2
+            and re.fullmatch(r'[0-9a-f]{64}', sys.argv[1]), 'python3 -B export_evidence.py ACTUAL_INPUT_SHA')
+    require(os.getuid() == os.geteuid() == 9661
+            and os.uname().nodename == 'smci350-rck-g03-b19-03', 'host/UID mismatch')
+    require(ROOT.resolve(strict=True) == ROOT and not os.path.lexists(ARCHIVE), 'fresh exact archive required')
+    signal.alarm(180)
+    evidence = ROOT / 'evidence'
+    terminals = [p for p in evidence.iterdir() if p.name in ('complete.json', 'failed.json')]
+    require(len(terminals) == 1, 'one actual terminal receipt required')
+    receipt_body, receipt_pin = pin(terminals[0])
+    require(receipt_pin['sha256'] == TERMINAL_SHA, 'actual terminal receipt pin mismatch')
+    receipt = json.loads(receipt_body)
+    require(receipt['schema'] == 'ferric-guarded-mlp-memory-bounds-dag-cpu-v1'
+            and type(receipt['passed']) is bool
+            and receipt['passed'] == (terminals[0].name == 'complete.json')
+            and receipt['diagnostic_build'] is False
+            and receipt['diagnostic_only'] is False
+            and receipt['memory_bounds_dag_optimization'] is True
+            and receipt['cfg_linear_fusion_optimization'] is True
+            and receipt['inherited_cfg_linear_fusion_optimization'] is True
+            and receipt['cfg_compaction_optimization'] is True
+            and receipt['inherited_cfg_compaction_optimization'] is True
+            and receipt['inherited_cfg_expansion_diagnostics'] is True
+            and receipt['cfg_expansion_diagnostics'] is True
+            and receipt['diagnostic_changes_admission'] is False
+            and receipt['static_failure_site_identified'] is True
+            and receipt['actual_failure_block_count_observed'] is False
+            and receipt['graph_work_diagnostics'] is True
+            and receipt['inherited_graph_work_diagnostics'] is True
+            and receipt['cfg_diagnostics_retained'] is True
+            and receipt['admission_changed'] is True
+            and receipt['structural_capacity_expansion'] is False
+            and receipt['inherited_capacity_expansion'] is True
+            and receipt['structural_limits_changed'] is False
+            and receipt['graph_analysis_optimization'] is True
+            and receipt['inherited_graph_analysis_optimization'] is True
+            and receipt['resource_admission_may_change'] is True
+            and receipt['membership_lookup_optimization'] is True
+            and receipt['inherited_membership_lookup_optimization'] is True
+            and receipt['dead_cast_census_optimization'] is True
+            and receipt['inherited_dead_cast_census_optimization'] is True
+            and receipt['use_lookup_optimization'] is True
+            and receipt['inherited_use_lookup_optimization'] is True
+            and receipt['borrow_lookup_optimization'] is True
+            and receipt['inherited_borrow_lookup_optimization'] is True
+            and receipt['compiler_scratch_added'] is True
+            and receipt['semantic_predicates_changed'] is False
+            and receipt['actual_failure_caller_identified'] is False
+            and receipt['baseline_runtime_work_exhaustion_observed'] is False
+            and receipt['baseline_edge_verdict_observed'] is False, 'terminal outcome/schema mismatch')
+    verified = receipt['baseline_failure_caller_identified']
+    require(type(verified) is bool
+            and type(receipt['baseline_failure_block_count_observed']) is bool
+            and type(receipt['baseline_memory_bounds_preflight_refusal']) is bool
+            and receipt['baseline_failure_block_count_observed'] == verified
+            and receipt['baseline_memory_bounds_preflight_refusal'] == verified
+            and (not receipt['passed'] or verified), 'truthful baseline validation state')
+    baseline_counts = dict(baseline_rendered_blocks=567, baseline_rendered_edges=1122,
+                           baseline_rendered_operations=2240, baseline_guard_candidates=552,
+                           baseline_intersection_work_upper_bound=9340170,
+                           baseline_memory_bounds_work_limit=8388608)
+    require(all(receipt[key] == (value if verified else None)
+                for key, value in baseline_counts.items()), 'conditional baseline counts')
+    for key in ('gpu_execution', 'guarded_candidate_hsaco_emitted', 'full_model_acceptance',
+                'numerical_acceptance', 'performance_claim'):
+        require(receipt[key] is False, 'CPU retention cannot grant additional authority')
+    input_body, input_pin = pin(ROOT / 'input-manifest.json')
+    inputs = json.loads(input_body)
+    require(input_pin['sha256'] == sys.argv[1] == INPUT_SHA and receipt['input_manifest'] == input_pin
+            and inputs['schema'] == 'ferric-guarded-mlp-memory-bounds-dag-cpu-input-v1'
+            and set(inputs) == {'schema', 'files', 'tool_pins', 'lineage',
+                                'metadata_relocations', 'rust_src'}
+            and receipt['source_lineage'] == inputs['lineage']
+            and receipt['metadata_relocations'] == inputs['metadata_relocations']
+            and receipt['tool_pins'] == inputs['tool_pins'], 'literal input/source-lineage join')
+    if receipt['passed']:
+        require(receipt['failure'] is None and receipt['postcheck_errors'] == []
+                and receipt['source_unchanged'] is True and len(receipt['phases']) == 45
+                and len(receipt['tests']) == 32
+                and receipt['tests_passed'] == 2990
+                and receipt['tests_ignored'] == 25 and len(receipt['artifacts']) == 7,
+                'complete receipt lacks closed successful qualification')
+    else:
+        require(receipt['failure'] is not None, 'failed receipt must retain failure reason')
+
+    files, bodies = {}, {}
+    def retain(name, path, expected=None):
+        relative = PurePosixPath(name)
+        require(not relative.is_absolute() and '..' not in relative.parts and str(relative) == name
+                and name not in files and len(files) < MAX_MEMBERS, 'closed unique archive member')
+        body, actual = pin(path)
+        require(expected is None or actual == expected, 'retained body pin differs: ' + name)
+        require(sum(map(len, bodies.values())) + len(body) <= MAX_TOTAL, 'retention total byte cap')
+        bodies[name], files[name] = body, actual
+        return body
+
+    retain(str(terminals[0].relative_to(ROOT)), terminals[0], receipt_pin)
+    retain('input-manifest.json', ROOT / 'input-manifest.json', input_pin)
+    for name, key, digest in (('run_cpu.py', 'controller', CONTROLLER_SHA),
+                              ('qualification_helpers.py', 'helper', HELPER_SHA)):
+        body = retain(name, ROOT / name, receipt[key])
+        require(files[name]['sha256'] == digest
+                and compact(files[name]) == inputs['files'][name], 'qualified controller/helper identity')
+    raw = receipt['raw']
+    require(type(raw) is dict and len(raw) <= 229
+            and (not receipt['passed'] or len(raw) == 229)
+            and {p.name for p in evidence.iterdir()} == set(raw) | {terminals[0].name},
+            'exact closed terminal evidence directory')
+    for name, row in sorted(raw.items()):
+        require(Path(name).name == name and row['path'] == str(evidence / name), 'original raw path')
+        retain('evidence/' + name, evidence / name, row)
+    require(len(receipt['phases']) == len({row['label'] for row in receipt['phases']}) <= 45,
+            'unique bounded actual phase roster')
+    for row in receipt['phases']:
+        label = row['label']
+        require(row['reaped'] is True and row['process_group_absent'] is True
+                and not os.path.exists('/proc/' + str(row['pid'])), 'owned leaf must be terminal/reaped')
+        require(json.loads(bodies['evidence/' + label + '.result.json']) == row
+                and raw[label + '.command.json'] == row['command']
+                and raw[label + '.stdout'] == row['stdout']
+                and raw[label + '.stderr'] == row['stderr'], 'actual phase/raw join')
+        command = json.loads(bodies['evidence/' + label + '.command.json'])
+        started = json.loads(bodies['evidence/' + label + '.started.json'])
+        require(command['argv'] == row['argv'] == started['argv']
+                and started['pid'] == row['pid'] and started['pgid'] == row['pgid'],
+                'actual command/started ownership join')
+        if receipt['passed']:
+            require(row['exit_code'] == 0 and row['natural_exit'] is True
+                    and row['forced_cleanup'] is False and row['timed_out'] is False
+                    and row['exception'] is None and row['storage_failure'] is None,
+                    'passing attempt contains unsuccessful leaf')
+
+    lineage = inputs['lineage']
+    direct = {'base_complete', 'base_sources', 'base_input', 'base_metadata',
+              'base_dependencies', 'memory_bounds_dag_proposal', 'baseline_failure',
+              'baseline_failure_stderr'}
+    require(set(lineage) == direct | {'base_streams', 'memory_bounds_dag_overlay'},
+            'closed retained memory-bounds DAG lineage fields')
+    selected_inputs = {input_pin['path']: input_pin, receipt['helper']['path']: receipt['helper']}
+    for key in sorted(direct):
+        row = lineage[key]
+        name = 'lineage/baseline_failure.stderr' if key == 'baseline_failure_stderr' else 'lineage/' + key + '.json'
+        retain(name, row['path'], row)
+        selected_inputs[row['path']] = row
+    require(set(lineage['base_streams']) == {short + '-' + suffix + '-stdout'
+            for short in ('compiler', 'pliron') for suffix in ('list', 'ignored-list', 'tests')},
+            'six qualified CFG-linear-fusion baseline full-suite streams required')
+    for name, row in sorted(lineage['base_streams'].items()):
+        retain('lineage/base-streams/' + name, row['path'], row)
+        selected_inputs[row['path']] = row
+    proposal = json.loads(bodies['lineage/memory_bounds_dag_proposal.json'])
+    baseline = json.loads(bodies['lineage/base_complete.json'])
+    limits = receipt['capacity_limits']
+    require(proposal['schema'] == 'ferric-guarded-mlp-memory-bounds-dag-source-v1'
+            and lineage['memory_bounds_dag_proposal']['sha256'] == PROPOSAL_SHA
+            and proposal['source_only'] is True
+            and proposal['production_requires_zero_ownership_contracts'] is True
+            and proposal['memory_bounds_dag_optimization'] is True
+            and proposal['cfg_linear_fusion_optimization'] is True
+            and proposal['inherited_cfg_linear_fusion_optimization'] is True
+            and proposal['cfg_compaction_optimization'] is True
+            and proposal['inherited_cfg_compaction_optimization'] is True
+            and proposal['admission_changed'] is True
+            and proposal['compiler_scratch_added'] is True
+            and proposal['graph_analysis_optimization'] is True
+            and proposal['semantic_predicates_changed'] is False
+            and proposal['structural_limits_changed'] is False
+            and proposal['resource_admission_may_change'] is True
+            and proposal['static_failure_site_identified'] is True
+            and proposal['actual_failure_caller_identified'] is False
+            and proposal['actual_failure_block_count_observed'] is False
+            and proposal['baseline_failure_caller_identified'] is True
+            and proposal['baseline_failure_block_count_observed'] is True
+            and proposal['baseline_memory_bounds_preflight_refusal'] is True
+            and proposal['baseline_rendered_blocks'] == 567
+            and proposal['baseline_rendered_edges'] == 1122
+            and proposal['baseline_rendered_operations'] == 2240
+            and proposal['baseline_guard_candidates'] == 552
+            and proposal['baseline_intersection_work_upper_bound'] == 9340170
+            and proposal['work_limit'] == limits['ranked_work']
+            and proposal['fact_limit'] == limits['facts']
+            and proposal['storage_limit'] == limits['ranked_storage']
+            and proposal['baseline_runtime_work_exhaustion_observed'] is False
+            and proposal['baseline_edge_verdict_observed'] is False
+            and proposal['graph_work_limit'] == limits['projection_graph_work']
+            and proposal['block_limit'] == limits['blocks']
+            and proposal['edge_limit'] == limits['edges']
+            and proposal['base_source_count'] == 5806
+            and proposal['source_count'] == 5808
+            and proposal['source_file_additions'] == 2
+            and proposal['new_test_count'] == 9
+            and proposal['actual_failure'] == compact(lineage['baseline_failure'])
+            and proposal['actual_failure_stderr'] == compact(lineage['baseline_failure_stderr'])
+            and proposal['base_complete'] == compact(lineage['base_complete'])
+            and proposal['base_sources'] == compact(lineage['base_sources'])
+            and proposal['base_input'] == compact(lineage['base_input'])
+            and proposal['base_controller'] == compact(baseline['controller'])
+            and len(proposal['files']) == 5
+            and sum(row['before'] is None for row in proposal['files'].values()) == 2
+            and {'fe2o3/' + name: row for name, row in proposal['files'].items()}
+                == lineage['memory_bounds_dag_overlay']
+            and receipt['memory_bounds_dag_test_filter'] == proposal['filter']
+            and receipt['memory_bounds_dag_tests'] == proposal['test_names']
+            and len(set(proposal['test_names'])) == len(proposal['test_names']) == 9,
+            'exact frozen five-file/nine-test memory-bounds DAG proposal')
+    require(limits == dict(previous_blocks=1024, blocks=2048, facts=1024, edges=2048,
+                           projection_graph_work=3145728, operations=65536,
+                           ranked_work=8388608, ranked_storage=131072, findings=4096)
+            and proposal['graph_work_limit'] == limits['projection_graph_work']
+            and proposal['block_limit'] == limits['blocks']
+            and proposal['edge_limit'] == limits['edges'],
+            'inherited structural expansion with unchanged independent limits')
+    require(lineage['baseline_failure'] == dict(path=str(BASE_FAILURE_ROOT / 'failed.json'),
+                bytes=17737, sha256=BASE_FAILURE_SHA)
+            and lineage['baseline_failure_stderr'] == dict(
+                path=str(BASE_FAILURE_ROOT / 'compile.stderr'), bytes=123245,
+                sha256=BASE_FAILURE_STDERR_SHA), 'exact measured baseline failure inputs')
+    baseline_failure = json.loads(bodies['lineage/baseline_failure.json'])
+    baseline_stderr = bodies['lineage/baseline_failure.stderr']
+    require(baseline_failure['schema'] == 'ferric-guarded-mlp-ranked-cfg-linear-fusion-lowering-result-v1'
+            and baseline_failure['passed'] is False
+            and baseline_failure['cfg_linear_fusion_optimization'] is True
+            and baseline_failure['cfg_compaction_optimization'] is True
+            and baseline_failure['diagnostic_build'] is False
+            and baseline_failure['diagnostic_only'] is False
+            and baseline_failure['compiler_scratch_added'] is True
+            and baseline_failure['actual_failure_caller_identified'] is False
+            and baseline_failure['actual_failure_block_count_observed'] is False
+            and baseline_failure['failure'] == "RuntimeError('natural successful/reaped leaf required')"
+            and baseline_failure['postcheck_errors'] == []
+            and baseline_failure['source_unchanged'] is True
+            and baseline_failure['input_byte_maps_rechecked'] is True
+            and baseline_failure['automatic_retries'] == 0
+            and baseline_failure['artifact'] is None
+            and baseline_failure['retained_handoff_or_llvm'] is False
+            and baseline_failure['capacity_limits'] == limits
+            and baseline_failure['raw']['compile.stderr'] == lineage['baseline_failure_stderr']
+            and compact(baseline_failure['raw']['source-before.json'])
+                == compact(baseline_failure['raw']['source-after.json'])
+            and len(baseline_failure['phases']) == 1,
+            'actual clean failed guarded baseline and immutable source joins')
+    baseline_phase = baseline_failure['phases'][0]
+    require(baseline_phase['label'] == 'compile' and baseline_phase['exit_code'] == 1
+            and baseline_phase['natural_exit'] is True and baseline_phase['reaped'] is True
+            and baseline_phase['process_group_absent'] is True
+            and baseline_phase['forced_cleanup'] is False and baseline_phase['timed_out'] is False
+            and baseline_phase['exception'] is None and baseline_phase['observed_signals'] == []
+            and baseline_phase['stderr'] == lineage['baseline_failure_stderr']
+            and baseline_phase['stdout']['bytes'] == 0
+            and baseline_phase['stdout'] == baseline_failure['raw']['compile.stdout'],
+            'baseline compiler exited naturally with code one and retained exact stderr')
+    require(all(baseline_failure[key] is False for key in (
+                'production_authority', 'load_authority', 'launch_authority', 'gpu_execution',
+                'numerical_acceptance', 'full_model_acceptance', 'performance_claim'))
+            and [line for line in baseline_stderr.splitlines()
+                 if line.startswith(b'fe2o3 rustc extraction:')] == [BASE_FAILURE_DIAGNOSTIC],
+            'one exact memory-bounds preflight diagnostic without additional authority')
+    # This is an inventory of the pinned rendered text, not an edge-admission verdict.
+    rendered_parts = baseline_stderr.split(b'  = ranked PLIRON before rejected lowering:\n')
+    require(len(rendered_parts) == 2, 'one retained ranked graph diagnostic required')
+    rendered_end = rendered_parts[1].split(b'  = lowering stopped before target IR or artifact emission\n')
+    require(len(rendered_end) == 2, 'one complete bounded ranked graph rendering required')
+    rendered_graph = rendered_end[0]
+    require(rendered_graph.startswith(b'    func @ferric_qwen3_mlp_state_guard_v1 {\n')
+            and rendered_graph.endswith(b'    }\n')
+            and rendered_graph.count(b'    func @') == 1,
+            'rendered failure graph belongs to the exact guarded root')
+    block_ids = re.findall(rb'^    \^bb([0-9]+):$', rendered_graph, re.MULTILINE)
+    block_references = re.findall(rb'\^bb([0-9]+)', rendered_graph)
+    operation_lines = [line for line in rendered_graph.splitlines() if line.startswith(b'      ')]
+    guard_lines = re.findall(
+        rb'^      kernel\.cond_br %[0-9]+ < %[0-9]+ \^bb[0-9]+, \^bb[0-9]+$',
+        rendered_graph, re.MULTILINE)
+    require(block_ids == [str(index).encode() for index in range(567)]
+            and len(block_references) - len(block_ids) == 1122
+            and set(block_references) == set(block_ids)
+            and len(operation_lines) == 2240 and len(guard_lines) == 552,
+            'exact rendered baseline census: 567 blocks, 1122 edges, 2240 operations, 552 guards')
+    require((567 + 1122) * ((552 + 63) // 64 + 1) * (552 + 1) == 9340170
+            and 9340170 > limits['ranked_work'],
+            'known preflight intersection term exceeds unchanged hard work cap')
+    require(lineage['base_complete']['sha256'] == BASE_COMPLETE_SHA
+            and lineage['base_sources']['sha256'] == BASE_SOURCES_SHA
+            and lineage['base_input']['sha256'] == BASE_INPUT_SHA,
+            'actual qualified baseline identity')
+    baseline = json.loads(bodies['lineage/base_complete.json'])
+    require(baseline['schema'] == 'ferric-guarded-mlp-ranked-cfg-linear-fusion-cpu-v1'
+            and baseline['passed'] is True and baseline['failure'] is None
+            and baseline['postcheck_errors'] == [] and baseline['source_unchanged'] is True
+            and baseline['tests_passed'] == 2972 and baseline['tests_ignored'] == 25
+            and len(baseline['phases']) == 44 and len(baseline['tests']) == 31
+            and baseline['admission_changed'] is True and baseline['structural_capacity_expansion'] is False
+            and baseline['inherited_capacity_expansion'] is True
+            and baseline['graph_analysis_optimization'] is False
+            and baseline['resource_admission_may_change'] is True
+            and baseline['semantic_predicates_changed'] is False
+            and baseline['diagnostic_build'] is False and baseline['diagnostic_only'] is False
+            and baseline['cfg_linear_fusion_optimization'] is True
+            and baseline['cfg_compaction_optimization'] is True
+            and baseline['inherited_cfg_compaction_optimization'] is True
+            and baseline['inherited_cfg_expansion_diagnostics'] is True
+            and baseline['cfg_expansion_diagnostics'] is True
+            and baseline['diagnostic_changes_admission'] is False
+            and baseline['static_failure_site_identified'] is True
+            and baseline['actual_failure_block_count_observed'] is False
+            and baseline['inherited_borrow_lookup_optimization'] is True
+            and baseline['graph_work_diagnostics'] is True
+            and baseline['membership_lookup_optimization'] is True
+            and baseline['dead_cast_census_optimization'] is True
+            and baseline['inherited_dead_cast_census_optimization'] is True
+            and baseline['use_lookup_optimization'] is True
+            and baseline['inherited_use_lookup_optimization'] is True
+            and baseline['borrow_lookup_optimization'] is True
+            and baseline['compiler_scratch_added'] is True
+            and baseline['inherited_graph_work_diagnostics'] is True
+            and baseline['baseline_failure_caller_identified'] is True
+            and baseline['baseline_failure_block_count_observed'] is True
+            and baseline['baseline_identity_first_refusal_blocks'] == 1025
+            and baseline['baseline_identity_block_limit'] == 1024
+            and baseline['baseline_rendered_blocks'] == 1675
+            and baseline['baseline_rendered_edges'] == 2230
+            and baseline['baseline_edge_verdict_observed'] is False
+            and baseline['actual_failure_caller_identified'] is False
+            and baseline['inherited_graph_analysis_optimization'] is True
+            and proposal['base_complete'] == compact(lineage['base_complete'])
+            and proposal['base_sources'] == compact(lineage['base_sources'])
+            and proposal['base_input'] == compact(lineage['base_input'])
+            and proposal['base_controller'] == compact(baseline['controller'])
+            and receipt['cfg_linear_fusion_test_filter'] == baseline['cfg_linear_fusion_test_filter']
+            and receipt['cfg_linear_fusion_tests'] == baseline['cfg_linear_fusion_tests']
+            and receipt['cfg_compaction_test_filter'] == baseline['cfg_compaction_test_filter']
+            and receipt['cfg_compaction_tests'] == baseline['cfg_compaction_tests']
+            and receipt['cfg_expansion_test_filter'] == baseline['cfg_expansion_test_filter']
+            and receipt['cfg_expansion_tests'] == baseline['cfg_expansion_tests']
+            and receipt['borrow_lookup_test_filter'] == baseline['borrow_lookup_test_filter']
+            and receipt['borrow_lookup_tests'] == baseline['borrow_lookup_tests']
+            and receipt['use_lookup_test_filter'] == baseline['use_lookup_test_filter']
+            and receipt['use_lookup_tests'] == baseline['use_lookup_tests']
+            and receipt['census_test_filter'] == baseline['census_test_filter']
+            and receipt['census_tests'] == baseline['census_tests']
+            and receipt['membership_test_filter'] == baseline['membership_test_filter']
+            and receipt['membership_tests'] == baseline['membership_tests']
+            and receipt['graph_work_test_filter'] == baseline['graph_work_test_filter']
+            and receipt['graph_work_tests'] == baseline['graph_work_tests']
+            and receipt['dag_test_filter'] == baseline['dag_test_filter']
+            and receipt['dag_tests'] == baseline['dag_tests']
+            and baseline['capacity_limits'] == limits
+            and receipt['capacity_cohorts'] == baseline['capacity_cohorts']
+            and receipt['cfg_diagnostic_tests'] == baseline['cfg_diagnostic_tests']
+            and receipt['compiler_cohorts'] == baseline['compiler_cohorts']
+            and compact(baseline['input_manifest']) == compact(lineage['base_input'])
+            and compact(baseline['input_sources']) == compact(lineage['base_sources'])
+            and compact(baseline['final_sources']) == compact(lineage['base_sources'])
+            and compact(baseline['raw']['metadata.stdout']) == compact(lineage['base_metadata']),
+            'qualified baseline receipt/readset joins')
+    for name in ('dependencies-before.json', 'dependencies-after.json'):
+        require(compact(baseline['raw'][name]) == compact(lineage['base_dependencies']),
+                'qualified dependency before/after map join')
+    for short in ('compiler', 'pliron'):
+        for suffix in ('list', 'ignored-list', 'tests'):
+            key = short + '-' + suffix + '-stdout'
+            raw_name = (short + '-tests.stdout' if suffix == 'tests' else
+                        short + '-lib' + ('-list.stdout' if suffix == 'list' else '-ignored.stdout'))
+            require(compact(lineage['base_streams'][key]) == compact(baseline['raw'][raw_name]),
+                    'qualified historical stream pin')
+    retain('lineage/rust-src.json', inputs['rust_src']['path'], inputs['rust_src'])
+    selected_inputs[inputs['rust_src']['path']] = inputs['rust_src']
+    require(selected_inputs == receipt['lineage_input_pins'], 'complete exact admission readset retained')
+
+    before = json.loads(bodies['evidence/sources-before.json'])
+    require(files['evidence/sources-before.json'] == receipt['input_sources']
+            and {name: compact(row) for name, row in before.items()} == inputs['files'],
+            'actual input source snapshot join')
+    final_pin = receipt['final_sources']
+    require(final_pin is not None and files['evidence/sources-after.json'] == final_pin,
+            'recorded final source snapshot required for source-body retention')
+    final = json.loads(bodies['evidence/sources-after.json'])
+    require(receipt['source_unchanged'] == (final == before), 'truthful source preservation flag')
+    baseline_sources = json.loads(bodies['lineage/base_sources.json'])
+    require(compact(before['qualification_helpers.py']) == dict(bytes=4777, sha256=HELPER_SHA)
+            and compact(receipt['helper']) == dict(bytes=4777, sha256=HELPER_SHA)
+            and compact(baseline_sources['qualification_helpers.py']) == dict(bytes=4777, sha256=BASE_HELPER_SHA)
+            and compact(baseline['helper']) == dict(bytes=4777, sha256=BASE_HELPER_SHA),
+            'current progress parser and immutable qualified baseline helper joins')
+    expected_sources = {name: compact(row) for name, row in baseline_sources.items()
+                        if name.startswith('fe2o3/')}
+    require(len(expected_sources) == 5806, 'exact qualified CFG-linear-fusion baseline source census')
+    source_names = set(lineage['memory_bounds_dag_overlay'])
+    require(len(source_names) == 5, 'exact five memory-bounds DAG source bodies')
+    for name, row in lineage['memory_bounds_dag_overlay'].items():
+        require(row['before'] == expected_sources.get(name)
+                and (name in expected_sources) == (row['before'] is not None),
+                'exact memory-bounds DAG preimage')
+        expected_sources[name] = row['after']
+    require(len(expected_sources) == 5808
+            and {name: compact(row) for name, row in before.items() if name.startswith('fe2o3/')}
+                == expected_sources, 'actual complete memory-bounds DAG overlay source join')
+    for name in sorted(source_names):
+        retain(name, ROOT / name, final[name])
+    retain('export_evidence.py', Path(__file__).resolve())
+    manifest = dict(schema='ferric-guarded-mlp-memory-bounds-dag-cpu-retention-v1',
+                    files=files, receipt=receipt_pin, input_manifest=input_pin,
+                    passed=receipt['passed'], failure=receipt['failure'],
+                    postcheck_errors=receipt['postcheck_errors'],
+                    source_unchanged=receipt['source_unchanged'], source_lineage=lineage,
+                    memory_bounds_dag_source_files=sorted(source_names), diagnostic_build=False, diagnostic_only=False,
+                    memory_bounds_dag_optimization=True,
+                    memory_bounds_dag_test_filter=receipt['memory_bounds_dag_test_filter'],
+                    memory_bounds_dag_tests=receipt['memory_bounds_dag_tests'],
+                    cfg_linear_fusion_optimization=True, inherited_cfg_linear_fusion_optimization=True,
+                    cfg_compaction_optimization=True, inherited_cfg_compaction_optimization=True,
+                    cfg_compaction_test_filter=receipt['cfg_compaction_test_filter'],
+                    cfg_compaction_tests=receipt['cfg_compaction_tests'],
+                    cfg_linear_fusion_test_filter=receipt['cfg_linear_fusion_test_filter'],
+                    cfg_linear_fusion_tests=receipt['cfg_linear_fusion_tests'],
+                    inherited_cfg_expansion_diagnostics=True,
+                    cfg_expansion_diagnostics=True, diagnostic_changes_admission=False,
+                    cfg_expansion_test_filter=receipt['cfg_expansion_test_filter'],
+                    cfg_expansion_tests=receipt['cfg_expansion_tests'],
+                    static_failure_site_identified=True,
+                    actual_failure_block_count_observed=False,
+                    graph_work_diagnostics=True, inherited_graph_work_diagnostics=True,
+                    cfg_diagnostics_retained=True, admission_changed=True,
+                    structural_capacity_expansion=False, inherited_capacity_expansion=True,
+                    structural_limits_changed=False, graph_analysis_optimization=True,
+                    inherited_graph_analysis_optimization=True, resource_admission_may_change=True,
+                    membership_lookup_optimization=True, inherited_membership_lookup_optimization=True,
+                    dead_cast_census_optimization=True, inherited_dead_cast_census_optimization=True,
+                    use_lookup_optimization=True, inherited_use_lookup_optimization=True,
+                    borrow_lookup_optimization=True, inherited_borrow_lookup_optimization=True,
+                    compiler_scratch_added=True,
+                    semantic_predicates_changed=False,
+                    actual_failure_caller_identified=False, baseline_failure_caller_identified=verified,
+                    baseline_failure_block_count_observed=verified,
+                    baseline_memory_bounds_preflight_refusal=verified,
+                    baseline_rendered_blocks=receipt['baseline_rendered_blocks'],
+                    baseline_rendered_edges=receipt['baseline_rendered_edges'],
+                    baseline_rendered_operations=receipt['baseline_rendered_operations'],
+                    baseline_guard_candidates=receipt['baseline_guard_candidates'],
+                    baseline_intersection_work_upper_bound=receipt['baseline_intersection_work_upper_bound'],
+                    baseline_memory_bounds_work_limit=receipt['baseline_memory_bounds_work_limit'],
+                    baseline_runtime_work_exhaustion_observed=False,
+                    baseline_edge_verdict_observed=False,
+                    capacity_limits=limits,
+                    capacity_cohorts=receipt['capacity_cohorts'],
+                    dag_test_filter=receipt['dag_test_filter'], dag_tests=receipt['dag_tests'],
+                    graph_work_test_filter=receipt['graph_work_test_filter'],
+                    graph_work_tests=receipt['graph_work_tests'],
+                    membership_test_filter=receipt['membership_test_filter'],
+                    membership_tests=receipt['membership_tests'],
+                    census_test_filter=receipt['census_test_filter'], census_tests=receipt['census_tests'],
+                    use_lookup_test_filter=receipt['use_lookup_test_filter'],
+                    use_lookup_tests=receipt['use_lookup_tests'],
+                    borrow_lookup_test_filter=receipt['borrow_lookup_test_filter'],
+                    borrow_lookup_tests=receipt['borrow_lookup_tests'],
+                    exported_binary_bodies=False, actual_artifact_metadata=receipt['artifacts'],
+                    gpu_execution=False, guarded_candidate_hsaco_emitted=False,
+                    numerical_acceptance=False, full_model_acceptance=False, performance_claim=False)
+    bodies['retention-manifest.json'] = (json.dumps(manifest, indent=2, sort_keys=True) + '\n').encode()
+    require(len(bodies) == len(raw) + 26
+            and (not receipt['passed'] or len(bodies) == 255),
+            'exact raw plus terminal/input/harness/lineage/five-source/export roster')
+    require(len(bodies) <= MAX_MEMBERS and sum(map(len, bodies.values())) <= MAX_TOTAL,
+            'final bounded retention roster')
+    with ARCHIVE.open('xb') as raw_archive:
+        with tarfile.open(fileobj=raw_archive, mode='w:gz') as archive:
+            for name, body in sorted(bodies.items()):
+                member = tarfile.TarInfo(name)
+                member.size, member.mode, member.mtime = len(body), 0o600, 0
+                archive.addfile(member, io.BytesIO(body))
+    require(all(pin(Path(row['path']))[1] == row for row in files.values()), 'source/readset drift after archive')
+    require({p.name for p in evidence.iterdir()} == set(receipt['raw']) | {terminals[0].name},
+            'evidence roster drift after archive')
+    print(json.dumps(dict(archive=pin(ARCHIVE, MAX_TOTAL)[1], files=len(bodies),
+                          source_body_bytes=sum(map(len, bodies.values())),
+                          passed=receipt['passed'], receipt=receipt_pin)))
+
+
+if __name__ == '__main__':
+    main()

@@ -1,0 +1,42 @@
+{
+  "adopted_reaped": [],
+  "argv": [
+    "/usr/bin/prlimit",
+    "--as=12884901888",
+    "--cpu=1200",
+    "--fsize=1073741824",
+    "--core=0",
+    "--",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-memory-bounds-dag-cpu-v228-v1/target/debug/deps/fe2o3_pliron-bfbb58262805e3df",
+    "production_analysis::pliron_ranked_bounds::resource_upper_bound_tests::memory_bounds_block_cap_",
+    "--test-threads=1"
+  ],
+  "command": {
+    "bytes": 2378,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-memory-bounds-dag-cpu-v228-v1/evidence/cfg-block-cap-pliron.command.json",
+    "sha256": "cfa652c2812b976318cfec357de7644c221414b28573f09e527636d737fd49ae"
+  },
+  "elapsed_ns": 113179990,
+  "exception": null,
+  "exit_code": 0,
+  "forced_cleanup": false,
+  "label": "cfg-block-cap-pliron",
+  "natural_exit": true,
+  "observed_signals": [],
+  "pgid": 3722734,
+  "pid": 3722734,
+  "process_group_absent": true,
+  "reaped": true,
+  "stderr": {
+    "bytes": 0,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-memory-bounds-dag-cpu-v228-v1/evidence/cfg-block-cap-pliron.stderr",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "stdout": {
+    "bytes": 543,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-memory-bounds-dag-cpu-v228-v1/evidence/cfg-block-cap-pliron.stdout",
+    "sha256": "d2eea1b10f3a5507a9737d0f2c1e7f30e5e6cd2dc6e7e74b3dbfc8a727a20945"
+  },
+  "storage_failure": null,
+  "timed_out": false
+}

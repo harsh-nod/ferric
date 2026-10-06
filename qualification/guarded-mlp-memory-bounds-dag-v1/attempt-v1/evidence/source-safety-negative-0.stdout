@@ -1,0 +1,6 @@
+
+running 1 test
+test production_collector_rejects_reachable_unsafe_rust_with_rooted_diagnostics ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 46 filtered out; finished in 58.22s
+
