@@ -1,0 +1,62 @@
+{
+  "adopted_reaped": [],
+  "argv": [
+    "/usr/bin/prlimit",
+    "--as=12884901888",
+    "--cpu=1200",
+    "--fsize=1073741824",
+    "--core=0",
+    "--",
+    "/home/harmenon/.rustup/toolchains/1.97.1-x86_64-unknown-linux-gnu/bin/cargo",
+    "build",
+    "--profile",
+    "test",
+    "--offline",
+    "--locked",
+    "--jobs",
+    "2",
+    "--manifest-path",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-host-shared-currentness-parent-cpu-v228-v1/ferric/adapters/m1-engineering-execution-v1/Cargo.toml",
+    "--features",
+    "guarded-mlp-model-engineering",
+    "--bin",
+    "ferric-qwen3-finite-projection-residual-decode-engineering",
+    "--bin",
+    "ferric-qwen3-finite-projection-residual-decode-host-engineering",
+    "--bin",
+    "ferric-qwen3-finite-projection-residual-decode-ordered-host-engineering",
+    "--bin",
+    "ferric-qwen3-finite-projection-residual-decode-shared-host-engineering",
+    "--bin",
+    "ferric-qwen3-finite-guarded-mlp-decode-engineering",
+    "--message-format=json"
+  ],
+  "command": {
+    "bytes": 2997,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-host-shared-currentness-parent-cpu-v228-v1/evidence/parent-builds.command.json",
+    "sha256": "a88a53213e2ac73fc63ae5d4f6f6055d9721c8b71731d80ed3479136a4592171"
+  },
+  "elapsed_ns": 1927467335,
+  "exception": null,
+  "exit_code": 0,
+  "forced_cleanup": false,
+  "label": "parent-builds",
+  "natural_exit": true,
+  "observed_signals": [],
+  "pgid": 4000814,
+  "pid": 4000814,
+  "process_group_absent": true,
+  "reaped": true,
+  "stderr": {
+    "bytes": 289,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-host-shared-currentness-parent-cpu-v228-v1/evidence/parent-builds.stderr",
+    "sha256": "7f7a2d4cb96c22aa7697aee810f33e1c78e10c269d127ede0d9ceaca7a72545a"
+  },
+  "stdout": {
+    "bytes": 391220,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-host-shared-currentness-parent-cpu-v228-v1/evidence/parent-builds.stdout",
+    "sha256": "f116796668e500266ee0b9e8ca27eddf62c98dc7a57dcdd0063b31ad8cf65ba3"
+  },
+  "storage_failure": null,
+  "timed_out": false
+}

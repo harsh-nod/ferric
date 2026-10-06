@@ -1,0 +1,4 @@
+tests::guarded_capture_parent_cli_is_separate_and_explicit: test
+tests::guarded_decode_parent_cli_refuses_legacy_fallback_or_extra_modes: test
+tests::guarded_host_parent_cli_is_explicit_and_exclusive: test
+tests::guarded_shared_host_parent_cli_cannot_select_or_combine_other_modes: test

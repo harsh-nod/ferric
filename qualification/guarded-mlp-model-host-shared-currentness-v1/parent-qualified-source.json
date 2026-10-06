@@ -1,0 +1,55 @@
+{
+  "schema": "ferric-guarded-mlp-host-shared-currentness-parent-qualified-overlay-v1",
+  "canonical_source_revision": "1371774221e0b271e4aac1381c3df6f6d4a4592d",
+  "source_proposal": {
+    "bytes": 9148,
+    "sha256": "5d0821afe584e59c145c05b0999f67ff24d090e094a3e0accc68c93601ae2456"
+  },
+  "complete": {
+    "bytes": 3858912,
+    "sha256": "96b7c52c2c5f14436d3a4d7aecfd7c864dba6c3c62321a3db60e41565c169c3d"
+  },
+  "source_map": {
+    "bytes": 491695,
+    "sha256": "5e8202f0b6274163a1059102cb0a645df3f5a9f0ecb23610cb58e18c048bd1b8"
+  },
+  "files": [
+    {
+      "path": "adapters/m1-engineering-execution-v1/src/bin/ferric-qwen3-finite-guarded-mlp-decode-engineering.rs",
+      "before": {
+        "bytes": 4863,
+        "sha256": "3010a7660ed7d69d5b4120e67c55d346317df1c555f811b5f49c4ff663fe02e4"
+      },
+      "authored": {
+        "bytes": 5968,
+        "sha256": "cfcc6f32a08782ff2ddaee42262c294af12b8b803b6695692f0d861a899544ba"
+      },
+      "after": {
+        "bytes": 6096,
+        "sha256": "e7440b5bbb0490a383f91523eb4be5133917c9511c4402a2c4afa1b48f36850b"
+      },
+      "formatted": true
+    },
+    {
+      "path": "adapters/m1-engineering-execution-v1/src/tp_finite_client/prefix_decode/guarded.rs",
+      "before": {
+        "bytes": 26298,
+        "sha256": "f6259b19d365844c46db20e6f7b633222eadc9a749055f9e7aea481ea669c4cf"
+      },
+      "authored": {
+        "bytes": 27074,
+        "sha256": "8eeec4c619712ae2588e0d9d87fa473c09ef1e20d3764e606423d945e60607ac"
+      },
+      "after": {
+        "bytes": 27216,
+        "sha256": "3a33be48b154922b8a23651d6dfd27ef229c03db4edbf5e53c44aa11a7a944db"
+      },
+      "formatted": true
+    }
+  ],
+  "composed_canonical_source_bodies_byte_joined": 1222,
+  "worker_postimages_from_separate_qualification": true,
+  "performance_policy_changed": true,
+  "default_policy_changed": false,
+  "native_shared_currentness_execution": false
+}

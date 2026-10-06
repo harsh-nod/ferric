@@ -1,0 +1,10 @@
+
+running 5 tests
+test finite_forward_wire_v1::tests::bootstrap_binds_actual_pid_devices_scope_mode_and_timeout ... ok
+test finite_forward_wire_v1::tests::requests_have_closed_exact_array_bounds_and_permutation ... ok
+test finite_forward_wire_v1::tests::response_rosters_and_close_are_exactly_bounded ... ok
+test finite_forward_wire_v1::tests::unknown_duplicate_fields_and_truncated_or_oversized_frames_reject ... ok
+test finite_forward_wire_v1::tests::response_roundtrip_binds_every_payload_and_forbids_authority_claims ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 866 filtered out; finished in 0.01s
+

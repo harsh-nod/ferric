@@ -39,9 +39,29 @@ process group. Six unchanged source inputs, seven raw files and the original
 terminal are retained. The terminal is 11,402 bytes, SHA-256
 `9e35d4b0631661fd7731353b7991c36c3bfb98172b69ab29d582f4a39e4dd717`.
 
+## Qualified Parent
+
+The [MI350 parent result](parent-cpu-v1/evidence/complete.json) passes all
+55 phases and 391 selected tests across 47 scopes, with five built host
+binaries. Its full 871-name library inventory was listed, not fully run.
+The two integrated parent changes are the actual qualified postimages.
+All 1,222 canonical Ferric source bodies join the composed parent and worker
+qualification maps; authored worker copies from the parent capsule did not
+replace the separately qualified worker postimages.
+
+- Original terminal: 3,858,912 bytes, SHA-256
+  `96b7c52c2c5f14436d3a4d7aecfd7c864dba6c3c62321a3db60e41565c169c3d`.
+- Parent ELF: 13,856,232 bytes, SHA-256
+  `d4730670f98140f30b3194c314ee515542f9886093561c9d19bc67979a58562d`.
+- Retention archive: 2,860,779 bytes, SHA-256
+  `03c68a6a374453dc5c03f49d9d0066d5157be769079c2e9b8e33db778ab1e782`.
+- Capsule: 403 members, 402 pins, 279 original raw bodies and 23,547,252
+  expanded bytes. All selected process groups exited naturally and were
+  reaped; source, dependency, cache and tool postchecks are clean.
+
 ## Remaining Gates
 
-Parent qualification and a fresh four-forward GPU comparison are pending.
+A fresh four-forward GPU comparison is pending.
 The [conservative observation](../guarded-mlp-model-host-observation-v1/README.md)
 is the retained timing baseline. Any future comparison must first join all
 four complete payloads and genuine autoregressive histories. Inclusive host

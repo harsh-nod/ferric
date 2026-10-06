@@ -1,0 +1,17 @@
+
+running 12 tests
+test prefix_decode_device_observation_v1::tests::device_raw_decoder_refuses_unknown_duplicate_legacy_and_oversize_input ... ok
+test prefix_decode_device_observation_v1::tests::device_raw_inventory_has_exact_stages_layers_and_rank_counts ... ok
+test prefix_decode_device_observation_v1::tests::device_raw_control_join_checks_all_intervals_digest_and_states ... ok
+test prefix_decode_device_observation_v1::tests::device_raw_rejects_completion_history_capture_and_chain_drift ... ok
+test prefix_decode_device_observation_v1::tests::device_raw_rejects_all_policy_and_authority_mutations ... ok
+test prefix_decode_device_observation_v1::tests::device_raw_rejects_missing_duplicate_extra_or_reordered_rows ... ok
+test prefix_decode_device_observation_v1::tests::device_raw_rejects_process_profile_image_group_or_final_count_drift ... ok
+test prefix_decode_device_observation_v1::tests::device_raw_rejects_queue_rollover_and_unrecorded_setup_packet ... ok
+test prefix_decode_device_observation_v1::tests::device_raw_rejects_zero_reversed_ticks_but_accepts_equal_nonzero ... ok
+test prefix_decode_device_observation_v1::tests::device_raw_schema_roundtrips_tf_and_ar_with_exact_bounded_census ... ok
+test prefix_decode_device_observation_v1::tests::device_raw_writer_refuses_overflow_before_retaining_more_bytes ... ok
+test prefix_decode_device_observation_v1::tests::device_raw_rejects_each_row_identity_and_label_substitution ... ok
+
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 859 filtered out; finished in 0.37s
+

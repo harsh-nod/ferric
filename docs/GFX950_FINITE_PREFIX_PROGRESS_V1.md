@@ -51,8 +51,11 @@ now passes MI350 worker qualification: 607 passes, four unchanged ignores,
 and all 15 report/topology checker tests. Six tested worker postimages are
 integrated; all 184 worker source bodies join the actual qualification map.
 It shares one fresh topology read within a group fence, retaining device and
-queue checks and the conservative default. Parent and native GPU validation
-remain pending; this is not yet an observed performance improvement.
+queue checks and the conservative default. The parent also passes all 55
+qualification phases and 391 selected tests across 47 scopes. Its two tested
+changes are integrated; all 1,222 composed Ferric sources join the actual CPU
+maps. Native GPU validation remains pending; this is not yet an observed
+performance improvement.
 
 The [historical O-projection replay](../qualification/o-projection-exact-replay-v1/README.md)
 now completes on MI350 with 18 passing tests. All 8,192 captured FP32 partials
