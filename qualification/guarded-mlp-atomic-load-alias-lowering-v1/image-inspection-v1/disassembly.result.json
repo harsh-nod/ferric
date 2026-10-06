@@ -1,0 +1,13 @@
+{
+  "elapsed_ns": 7570685,
+  "exception": null,
+  "exit_code": 0,
+  "forced_cleanup": false,
+  "label": "disassembly",
+  "natural_exit": true,
+  "pgid": 301569,
+  "pid": 301569,
+  "process_group_absent": true,
+  "reaped": true,
+  "timed_out": false
+}

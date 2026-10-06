@@ -1,0 +1,25 @@
+{
+  "argv": [
+    "/usr/bin/prlimit",
+    "--as=2147483648",
+    "--cpu=30",
+    "--fsize=8388608",
+    "--core=0",
+    "--",
+    "/opt/rocm-7.2.1/lib/llvm/bin/llvm-readobj",
+    "--file-headers",
+    "--notes",
+    "--symbols",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-atomic-load-alias-lowering-v228-v1/fe2o3-engineering-v1/d98a12d35a2f0ecea506a9384213c22dbf692c03347efb91a009fc24e0982e1b/observation.hsaco"
+  ],
+  "cwd": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-atomic-load-alias-image-inspection-v228-v1",
+  "env": {
+    "CUDA_VISIBLE_DEVICES": "",
+    "HIP_VISIBLE_DEVICES": "",
+    "HOME": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-atomic-load-alias-image-inspection-v228-v1",
+    "LANG": "C",
+    "LC_ALL": "C",
+    "PATH": "/usr/bin:/bin",
+    "ROCR_VISIBLE_DEVICES": ""
+  }
+}

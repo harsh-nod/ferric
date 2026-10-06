@@ -31,8 +31,11 @@ The 707,862-byte archive has SHA-256
 The earlier failed compile and its diagnostic remain unchanged.
 
 The observation explicitly grants no publication, load or launch authority.
-Image ABI/instruction inspection, private atomic-read runtime admission,
-paired GPU lifecycle and independent numerical tests are separate next gates.
+The [actual image inspection](IMAGE-REVIEW.md) retains metadata and ISA from
+two passing MI350 tool invocations. It identifies the observed ABI, absent
+pointer-access annotations and a wave-wide guard-masking caveat; it is not
+a completed effect/coherence proof. Private runtime admission, paired GPU
+lifecycle and independent numerical tests remain separate next gates.
 All issue #42 milestones and the 700 tokens/s target remain open.
 
 ## Controller Fixtures

@@ -1,0 +1,22 @@
+{
+  "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-atomic-load-alias-lowering-v228-v1/complete.json": {
+    "bytes": 25204,
+    "sha256": "1053d69036d94db89349b17584819a14f27a824691678730bb4204d283ea93da"
+  },
+  "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-atomic-load-alias-lowering-v228-v1/fe2o3-engineering-v1/d98a12d35a2f0ecea506a9384213c22dbf692c03347efb91a009fc24e0982e1b/observation.hsaco": {
+    "bytes": 28440,
+    "sha256": "de880dcebf79425ccb555c1a2bdca3ff78b926f7b2062d06b918763da4de0f66"
+  },
+  "/opt/rocm-7.2.1/lib/llvm/bin/llvm-objdump": {
+    "bytes": 26386928,
+    "sha256": "e5bf27bb6ba178b4de94ac0d5da760b628672cd00d2ffeb40a4372fa6ad25140"
+  },
+  "/opt/rocm-7.2.1/lib/llvm/bin/llvm-readobj": {
+    "bytes": 10441192,
+    "sha256": "706037a429eafdea75862c8c46624e64294bb3554357bc6f7b2fdba6e232fa02"
+  },
+  "/usr/bin/prlimit": {
+    "bytes": 27536,
+    "sha256": "17064f67e650d6152a6902b013aab496b54c87587c8eea6f5023aafee6154069"
+  }
+}

@@ -25,6 +25,12 @@ also pass on MI350 with clean source and process postchecks. These are
 synthetic admission tests, distinct from the passing actual binary audit and
 passing guarded compile. Runtime admission, GPU execution and independent
 numerical tests remain separate open gates.
+The [actual metadata and ISA review](../qualification/guarded-mlp-atomic-load-alias-lowering-v1/IMAGE-REVIEW.md)
+records the two successful inspection-tool runs. R2's guard branch is
+wave-wide any-valid without a visible per-lane execution mask. The intended
+stable-guard lifecycle may make that equivalent, but its premise is not
+established by the image; compiler uniformity and runtime custody remain
+under investigation before GPU admission.
 
 Previous compiler qualification: [the bounded memory-bounds DAG solver passes MI350 CPU qualification](../qualification/guarded-mlp-memory-bounds-dag-v1/README.md).
 All 45 phases and 32 scopes pass: 1,323 compiler and 1,516 Pliron tests,
@@ -76,7 +82,8 @@ The child exits naturally, is reaped and leaves no process group. The 5,308
 source rows and 308 input pins are unchanged, with clean postchecks. Both
 the exact-output-replay observation and its 28,440-byte code-object-6 HSACO
 are retained. All publication/load/launch grants remain false. Image
-inspection and the private atomic-read runtime join precede GPU tests.
+inspection is retained with the caveat above; the private atomic-read runtime
+join still precedes GPU tests.
 
 Previous retained guarded lowering: [the combined-state attempt](../qualification/guarded-mlp-combined-state-lowering-v1/README.md)
 exits naturally with status 1 after 363.190239 seconds (366.924882 seconds

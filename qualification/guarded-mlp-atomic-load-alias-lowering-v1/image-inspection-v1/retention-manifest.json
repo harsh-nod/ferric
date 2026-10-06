@@ -1,0 +1,61 @@
+{
+  "files": {
+    "complete.json": {
+      "bytes": 3072,
+      "sha256": "8c0e170b146d4a8bd85f70378793362a2dd40855ba7ed4b565886afebd386c2f"
+    },
+    "controller.py": {
+      "bytes": 9351,
+      "sha256": "17fc8120d4ebd75d869b88f2e2391765c39b254728f3bcc4a78a200781ead619"
+    },
+    "disassembly.command.json": {
+      "bytes": 914,
+      "sha256": "a87004ce5f6c2911c5890f6bd001b036346794d966f01800eab162ecf8578fff"
+    },
+    "disassembly.result.json": {
+      "bytes": 251,
+      "sha256": "cf2804d3ab8cb042ed46bbe5327cf0fed432c5bc11b9efb89f539a462f449f7e"
+    },
+    "disassembly.started.json": {
+      "bytes": 38,
+      "sha256": "043c4a6db8dcc727ad01f88d73a8d428da47ddde68f8add02b57ebe4ba5c1c9b"
+    },
+    "disassembly.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "disassembly.stdout": {
+      "bytes": 294161,
+      "sha256": "a1f7745b2dcf1e757a70f1ce6c1e9b795e0c34b7423593af867e5528fc2390be"
+    },
+    "inputs-after.json": {
+      "bytes": 1035,
+      "sha256": "4d372f78e1330fc07668ec07522f83c09cf03f0461214d9d1ebdb621caae838e"
+    },
+    "inputs-before.json": {
+      "bytes": 1035,
+      "sha256": "4d372f78e1330fc07668ec07522f83c09cf03f0461214d9d1ebdb621caae838e"
+    },
+    "metadata.command.json": {
+      "bytes": 926,
+      "sha256": "406038eea7a1e796b403430f94ec5b7db4baec18ddb802d56e7210ee9cd85a43"
+    },
+    "metadata.result.json": {
+      "bytes": 248,
+      "sha256": "5f066d5365575f6e344697bc21bbc3abaf88e78525c41413751533625c092888"
+    },
+    "metadata.started.json": {
+      "bytes": 38,
+      "sha256": "f159442816dc64a2008f7f679678794050262a84c0a7fd1819cee9a1ed56421f"
+    },
+    "metadata.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "metadata.stdout": {
+      "bytes": 11950,
+      "sha256": "cd4f1fddfb2c8a21f5ecab6da86548351340b11a83aca01140dfef2e5c063822"
+    }
+  },
+  "schema": "ferric-guarded-mlp-image-inspection-retention-v1"
+}

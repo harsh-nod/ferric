@@ -1,0 +1,13 @@
+{
+  "elapsed_ns": 3935662,
+  "exception": null,
+  "exit_code": 0,
+  "forced_cleanup": false,
+  "label": "metadata",
+  "natural_exit": true,
+  "pgid": 301568,
+  "pid": 301568,
+  "process_group_absent": true,
+  "reaped": true,
+  "timed_out": false
+}

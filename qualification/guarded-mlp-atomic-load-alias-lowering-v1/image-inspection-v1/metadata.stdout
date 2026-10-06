@@ -1,0 +1,457 @@
+
+File: /home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-atomic-load-alias-lowering-v228-v1/fe2o3-engineering-v1/d98a12d35a2f0ecea506a9384213c22dbf692c03347efb91a009fc24e0982e1b/observation.hsaco
+Format: elf64-amdgpu
+Arch: amdgcn
+AddressSize: 64bit
+LoadName: <Not found>
+ElfHeader {
+  Ident {
+    Magic: (7F 45 4C 46)
+    Class: 64-bit (0x2)
+    DataEncoding: LittleEndian (0x1)
+    FileVersion: 1
+    OS/ABI: AMDGPU_HSA (0x40)
+    ABIVersion: 4
+    Unused: (00 00 00 00 00 00 00)
+  }
+  Type: SharedObject (0x3)
+  Machine: EM_AMDGPU (0xE0)
+  Version: 1
+  Entry: 0x0
+  ProgramHeaderOffset: 0x40
+  SectionHeaderOffset: 0x6B18
+  Flags [ (0x64F)
+    EF_AMDGPU_FEATURE_SRAMECC_ANY_V4 (0x400)
+    EF_AMDGPU_FEATURE_XNACK_OFF_V4 (0x200)
+    EF_AMDGPU_MACH_AMDGCN_GFX950 (0x4F)
+  ]
+  HeaderSize: 64
+  ProgramHeaderEntrySize: 56
+  ProgramHeaderCount: 8
+  SectionHeaderEntrySize: 64
+  SectionHeaderCount: 16
+  StringTableSectionIndex: 14
+}
+Symbols [
+  Symbol {
+    Name:  (0)
+    Value: 0x0
+    Size: 0
+    Binding: Local (0x0)
+    Type: None (0x0)
+    Other: 0
+    Section: Undefined (0x0)
+  }
+  Symbol {
+    Name: ferric_qwen3_mlp_state_guard_v2.private_seg_size (1)
+    Value: 0x0
+    Size: 0
+    Binding: Local (0x0)
+    Type: None (0x0)
+    Other: 0
+    Section: Absolute (0xFFF1)
+  }
+  Symbol {
+    Name: ferric_qwen3_mlp_state_guard_v2.num_vgpr (50)
+    Value: 0x3C
+    Size: 0
+    Binding: Local (0x0)
+    Type: None (0x0)
+    Other: 0
+    Section: Absolute (0xFFF1)
+  }
+  Symbol {
+    Name: ferric_qwen3_mlp_state_guard_v2.num_agpr (91)
+    Value: 0x0
+    Size: 0
+    Binding: Local (0x0)
+    Type: None (0x0)
+    Other: 0
+    Section: Absolute (0xFFF1)
+  }
+  Symbol {
+    Name: ferric_qwen3_mlp_state_guard_v2.numbered_sgpr (132)
+    Value: 0x60
+    Size: 0
+    Binding: Local (0x0)
+    Type: None (0x0)
+    Other: 0
+    Section: Absolute (0xFFF1)
+  }
+  Symbol {
+    Name: ferric_qwen3_mlp_state_guard_v2.uses_vcc (178)
+    Value: 0x1
+    Size: 0
+    Binding: Local (0x0)
+    Type: None (0x0)
+    Other: 0
+    Section: Absolute (0xFFF1)
+  }
+  Symbol {
+    Name: ferric_qwen3_mlp_state_guard_v2.uses_flat_scratch (219)
+    Value: 0x0
+    Size: 0
+    Binding: Local (0x0)
+    Type: None (0x0)
+    Other: 0
+    Section: Absolute (0xFFF1)
+  }
+  Symbol {
+    Name: ferric_qwen3_mlp_state_guard_v2.has_dyn_sized_stack (269)
+    Value: 0x0
+    Size: 0
+    Binding: Local (0x0)
+    Type: None (0x0)
+    Other: 0
+    Section: Absolute (0xFFF1)
+  }
+  Symbol {
+    Name: ferric_qwen3_mlp_state_guard_v2.has_recursion (321)
+    Value: 0x0
+    Size: 0
+    Binding: Local (0x0)
+    Type: None (0x0)
+    Other: 0
+    Section: Absolute (0xFFF1)
+  }
+  Symbol {
+    Name: ferric_qwen3_tp2_guarded_projection_residual_bf16_v2.private_seg_size (367)
+    Value: 0x0
+    Size: 0
+    Binding: Local (0x0)
+    Type: None (0x0)
+    Other: 0
+    Section: Absolute (0xFFF1)
+  }
+  Symbol {
+    Name: ferric_qwen3_tp2_guarded_projection_residual_bf16_v2.num_vgpr (437)
+    Value: 0xA
+    Size: 0
+    Binding: Local (0x0)
+    Type: None (0x0)
+    Other: 0
+    Section: Absolute (0xFFF1)
+  }
+  Symbol {
+    Name: ferric_qwen3_tp2_guarded_projection_residual_bf16_v2.num_agpr (499)
+    Value: 0x0
+    Size: 0
+    Binding: Local (0x0)
+    Type: None (0x0)
+    Other: 0
+    Section: Absolute (0xFFF1)
+  }
+  Symbol {
+    Name: ferric_qwen3_tp2_guarded_projection_residual_bf16_v2.numbered_sgpr (561)
+    Value: 0x24
+    Size: 0
+    Binding: Local (0x0)
+    Type: None (0x0)
+    Other: 0
+    Section: Absolute (0xFFF1)
+  }
+  Symbol {
+    Name: ferric_qwen3_tp2_guarded_projection_residual_bf16_v2.uses_vcc (628)
+    Value: 0x1
+    Size: 0
+    Binding: Local (0x0)
+    Type: None (0x0)
+    Other: 0
+    Section: Absolute (0xFFF1)
+  }
+  Symbol {
+    Name: ferric_qwen3_tp2_guarded_projection_residual_bf16_v2.uses_flat_scratch (690)
+    Value: 0x0
+    Size: 0
+    Binding: Local (0x0)
+    Type: None (0x0)
+    Other: 0
+    Section: Absolute (0xFFF1)
+  }
+  Symbol {
+    Name: ferric_qwen3_tp2_guarded_projection_residual_bf16_v2.has_dyn_sized_stack (761)
+    Value: 0x0
+    Size: 0
+    Binding: Local (0x0)
+    Type: None (0x0)
+    Other: 0
+    Section: Absolute (0xFFF1)
+  }
+  Symbol {
+    Name: ferric_qwen3_tp2_guarded_projection_residual_bf16_v2.has_recursion (834)
+    Value: 0x0
+    Size: 0
+    Binding: Local (0x0)
+    Type: None (0x0)
+    Other: 0
+    Section: Absolute (0xFFF1)
+  }
+  Symbol {
+    Name: _DYNAMIC (1077)
+    Value: 0x7940
+    Size: 0
+    Binding: Local (0x0)
+    Type: None (0x0)
+    Other [ (0x2)
+      STV_HIDDEN (0x2)
+    ]
+    Section: .dynamic (0x8)
+  }
+  Symbol {
+    Name: ferric_qwen3_mlp_state_guard_v2 (901)
+    Value: 0x2100
+    Size: 16332
+    Binding: Global (0x1)
+    Type: Function (0x2)
+    Other [ (0x3)
+      STV_PROTECTED (0x3)
+    ]
+    Section: .text (0x7)
+  }
+  Symbol {
+    Name: ferric_qwen3_mlp_state_guard_v2.kd (933)
+    Value: 0x1080
+    Size: 64
+    Binding: Global (0x1)
+    Type: Object (0x1)
+    Other: 0
+    Section: .rodata (0x6)
+  }
+  Symbol {
+    Name: ferric_qwen3_tp2_guarded_projection_residual_bf16_v2 (968)
+    Value: 0x6100
+    Size: 1088
+    Binding: Global (0x1)
+    Type: Function (0x2)
+    Other [ (0x3)
+      STV_PROTECTED (0x3)
+    ]
+    Section: .text (0x7)
+  }
+  Symbol {
+    Name: ferric_qwen3_tp2_guarded_projection_residual_bf16_v2.kd (1021)
+    Value: 0x10C0
+    Size: 64
+    Binding: Global (0x1)
+    Type: Object (0x1)
+    Other: 0
+    Section: .rodata (0x6)
+  }
+]
+NoteSections [
+  NoteSection {
+    Name: .note
+    Offset: 0x200
+    Size: 0xCE4
+    Notes [
+      {
+        Owner: AMDGPU
+        Data size: 0xCD0
+        Type: NT_AMDGPU_METADATA (AMDGPU Metadata)
+        AMDGPU Metadata: ---
+amdhsa.kernels:
+  - .agpr_count:     0
+    .args:
+      - .address_space:  global
+        .name:           arg0.data
+        .offset:         0
+        .size:           8
+        .value_kind:     global_buffer
+      - .name:           arg0.len
+        .offset:         8
+        .size:           8
+        .value_kind:     by_value
+      - .name:           arg1
+        .offset:         16
+        .size:           4
+        .value_kind:     by_value
+      - .name:           arg2
+        .offset:         20
+        .size:           4
+        .value_kind:     by_value
+      - .offset:         24
+        .size:           4
+        .value_kind:     hidden_block_count_x
+      - .offset:         28
+        .size:           4
+        .value_kind:     hidden_block_count_y
+      - .offset:         32
+        .size:           4
+        .value_kind:     hidden_block_count_z
+      - .offset:         36
+        .size:           2
+        .value_kind:     hidden_group_size_x
+      - .offset:         38
+        .size:           2
+        .value_kind:     hidden_group_size_y
+      - .offset:         40
+        .size:           2
+        .value_kind:     hidden_group_size_z
+      - .offset:         42
+        .size:           2
+        .value_kind:     hidden_remainder_x
+      - .offset:         44
+        .size:           2
+        .value_kind:     hidden_remainder_y
+      - .offset:         46
+        .size:           2
+        .value_kind:     hidden_remainder_z
+      - .offset:         64
+        .size:           8
+        .value_kind:     hidden_global_offset_x
+      - .offset:         72
+        .size:           8
+        .value_kind:     hidden_global_offset_y
+      - .offset:         80
+        .size:           8
+        .value_kind:     hidden_global_offset_z
+      - .offset:         88
+        .size:           2
+        .value_kind:     hidden_grid_dims
+    .group_segment_fixed_size: 0
+    .kernarg_segment_align: 8
+    .kernarg_segment_size: 280
+    .max_flat_workgroup_size: 64
+    .name:           ferric_qwen3_mlp_state_guard_v2
+    .private_segment_fixed_size: 0
+    .reqd_workgroup_size:
+      - 64
+      - 1
+      - 1
+    .sgpr_count:     102
+    .sgpr_spill_count: 0
+    .symbol:         ferric_qwen3_mlp_state_guard_v2.kd
+    .uses_dynamic_stack: false
+    .vgpr_count:     60
+    .vgpr_spill_count: 0
+    .wavefront_size: 64
+  - .agpr_count:     0
+    .args:
+      - .address_space:  global
+        .name:           arg0.data
+        .offset:         0
+        .size:           8
+        .value_kind:     global_buffer
+      - .name:           arg0.len
+        .offset:         8
+        .size:           8
+        .value_kind:     by_value
+      - .address_space:  global
+        .name:           arg1.data
+        .offset:         16
+        .size:           8
+        .value_kind:     global_buffer
+      - .name:           arg1.len
+        .offset:         24
+        .size:           8
+        .value_kind:     by_value
+      - .address_space:  global
+        .name:           arg2.data
+        .offset:         32
+        .size:           8
+        .value_kind:     global_buffer
+      - .name:           arg2.len
+        .offset:         40
+        .size:           8
+        .value_kind:     by_value
+      - .address_space:  global
+        .name:           arg3.data
+        .offset:         48
+        .size:           8
+        .value_kind:     global_buffer
+      - .name:           arg3.len
+        .offset:         56
+        .size:           8
+        .value_kind:     by_value
+      - .address_space:  global
+        .name:           arg4.data
+        .offset:         64
+        .size:           8
+        .value_kind:     global_buffer
+      - .name:           arg4.len
+        .offset:         72
+        .size:           8
+        .value_kind:     by_value
+      - .address_space:  global
+        .name:           arg5.data
+        .offset:         80
+        .size:           8
+        .value_kind:     global_buffer
+      - .name:           arg5.len
+        .offset:         88
+        .size:           8
+        .value_kind:     by_value
+      - .name:           arg6
+        .offset:         96
+        .size:           4
+        .value_kind:     by_value
+      - .name:           arg7
+        .offset:         100
+        .size:           4
+        .value_kind:     by_value
+      - .offset:         104
+        .size:           4
+        .value_kind:     hidden_block_count_x
+      - .offset:         108
+        .size:           4
+        .value_kind:     hidden_block_count_y
+      - .offset:         112
+        .size:           4
+        .value_kind:     hidden_block_count_z
+      - .offset:         116
+        .size:           2
+        .value_kind:     hidden_group_size_x
+      - .offset:         118
+        .size:           2
+        .value_kind:     hidden_group_size_y
+      - .offset:         120
+        .size:           2
+        .value_kind:     hidden_group_size_z
+      - .offset:         122
+        .size:           2
+        .value_kind:     hidden_remainder_x
+      - .offset:         124
+        .size:           2
+        .value_kind:     hidden_remainder_y
+      - .offset:         126
+        .size:           2
+        .value_kind:     hidden_remainder_z
+      - .offset:         144
+        .size:           8
+        .value_kind:     hidden_global_offset_x
+      - .offset:         152
+        .size:           8
+        .value_kind:     hidden_global_offset_y
+      - .offset:         160
+        .size:           8
+        .value_kind:     hidden_global_offset_z
+      - .offset:         168
+        .size:           2
+        .value_kind:     hidden_grid_dims
+    .group_segment_fixed_size: 0
+    .kernarg_segment_align: 8
+    .kernarg_segment_size: 360
+    .max_flat_workgroup_size: 64
+    .name:           ferric_qwen3_tp2_guarded_projection_residual_bf16_v2
+    .private_segment_fixed_size: 0
+    .reqd_workgroup_size:
+      - 64
+      - 1
+      - 1
+    .sgpr_count:     42
+    .sgpr_spill_count: 0
+    .symbol:         ferric_qwen3_tp2_guarded_projection_residual_bf16_v2.kd
+    .uses_dynamic_stack: false
+    .vgpr_count:     10
+    .vgpr_spill_count: 0
+    .wavefront_size: 64
+amdhsa.target:   'amdgcn-amd-amdhsa--gfx950:xnack-'
+amdhsa.version:
+  - 1
+  - 2
+...
+
+      }
+    ]
+  }
+]
