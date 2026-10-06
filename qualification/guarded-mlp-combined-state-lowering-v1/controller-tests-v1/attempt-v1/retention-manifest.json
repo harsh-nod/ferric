@@ -1,0 +1,78 @@
+{
+  "compiler_qualification": false,
+  "files": {
+    "baseline-compile.stderr": {
+      "bytes": 123245,
+      "sha256": "c60dc2edc62bfe11ba7a8f79ce1465322d2c887aeb3fa5661dae8002a33c5095"
+    },
+    "baseline-failed.json": {
+      "bytes": 17737,
+      "sha256": "8d4cc1a0cfe0c9104282c3d20349638a616bd98e7e28f92598dcaf0110057ca2"
+    },
+    "evidence/combined-state-lowering-tests.command.json": {
+      "bytes": 874,
+      "sha256": "e4d256c5bc54874596ab39117b4cc182e47242343d6686bbba010cb278b538d3"
+    },
+    "evidence/combined-state-lowering-tests.result.json": {
+      "bytes": 1614,
+      "sha256": "18bbf09a73d92a787a146a7fe93de18b3d6d6cfbd2bc5167fda6bfeb64ec8804"
+    },
+    "evidence/combined-state-lowering-tests.started.json": {
+      "bytes": 385,
+      "sha256": "5fcd5703ea525bb739ae187b734b2eb29ea13bb86938fef69cce585232e3d50e"
+    },
+    "evidence/combined-state-lowering-tests.stderr": {
+      "bytes": 3884,
+      "sha256": "0191ff1e301fc6a8df215a2ba9f33d3d7ac87273448454193fad94506c6cc25d"
+    },
+    "evidence/combined-state-lowering-tests.stdout": {
+      "bytes": 5548,
+      "sha256": "f85b77b59220379edbbc779e931bc170fadcd42efa2c48d8a65f0a478e510e29"
+    },
+    "evidence/complete.json": {
+      "bytes": 14592,
+      "sha256": "bb0499a116f2ae5b88c778775a020ef6102b534d8a3711ca19aee0e394a8939e"
+    },
+    "evidence/sources-after.json": {
+      "bytes": 2310,
+      "sha256": "f6ebdad020ca8fce63892ea91374a1b410e7219a0bea81cbff7c48cdc5579127"
+    },
+    "evidence/sources-before.json": {
+      "bytes": 2310,
+      "sha256": "f6ebdad020ca8fce63892ea91374a1b410e7219a0bea81cbff7c48cdc5579127"
+    },
+    "input-manifest.json": {
+      "bytes": 1544,
+      "sha256": "9486c5ff7b69b732234da0e1eaa58c39051eefc42166ff9089c49bb94d053c98"
+    },
+    "lowering.py": {
+      "bytes": 70136,
+      "sha256": "50a22f6208076515b9a655c2a518b06d718241289c2894a10324bf12af396ad3"
+    },
+    "lowering_test_entry.py": {
+      "bytes": 6752,
+      "sha256": "727d26a3af510e8685fc620e8f02c03f1c40f313cdf3a67629eeca3baa195b0a"
+    },
+    "run_tests.py": {
+      "bytes": 14362,
+      "sha256": "5ae32605ed800e95b0f38960bc1d12cb3d104559bee3f3fb7140ac175b86458c"
+    },
+    "supervisor.py": {
+      "bytes": 41485,
+      "sha256": "8824478a6415dee39d28ccefb0881fc0687ac724f5a9c5a4540310fb5196b9bc"
+    },
+    "test_lowering.py": {
+      "bytes": 55134,
+      "sha256": "273f33ef734ea206567c05d135e9ee47ded6c53c4599ae5a30af4b59688062c4"
+    },
+    "test_normalization.py": {
+      "bytes": 6507,
+      "sha256": "6d4d91e24fa483e81d99ae1dd89a629eb3b7a17aaef94e8f46958123c292465f"
+    }
+  },
+  "gpu_execution": false,
+  "passed": true,
+  "schema": "ferric-combined-state-lowering-tests-retention-v1",
+  "synthetic_lowering_only": true,
+  "tests_passed": 25
+}

@@ -1,0 +1,44 @@
+{
+  "adopted_reaped": [],
+  "argv": [
+    "/usr/bin/prlimit",
+    "--as=12884901888",
+    "--cpu=1200",
+    "--fsize=1073741824",
+    "--core=0",
+    "--",
+    "/usr/bin/python3.12",
+    "-I",
+    "-S",
+    "-B",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-combined-state-lowering-tests-v228-v1/lowering_test_entry.py"
+  ],
+  "command": {
+    "bytes": 874,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-combined-state-lowering-tests-v228-v1/evidence/combined-state-lowering-tests.command.json",
+    "sha256": "e4d256c5bc54874596ab39117b4cc182e47242343d6686bbba010cb278b538d3"
+  },
+  "elapsed_ns": 6405416661,
+  "exception": null,
+  "exit_code": 0,
+  "forced_cleanup": false,
+  "label": "combined-state-lowering-tests",
+  "natural_exit": true,
+  "observed_signals": [],
+  "pgid": 3980617,
+  "pid": 3980617,
+  "process_group_absent": true,
+  "reaped": true,
+  "stderr": {
+    "bytes": 3884,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-combined-state-lowering-tests-v228-v1/evidence/combined-state-lowering-tests.stderr",
+    "sha256": "0191ff1e301fc6a8df215a2ba9f33d3d7ac87273448454193fad94506c6cc25d"
+  },
+  "stdout": {
+    "bytes": 5548,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-combined-state-lowering-tests-v228-v1/evidence/combined-state-lowering-tests.stdout",
+    "sha256": "f85b77b59220379edbbc779e931bc170fadcd42efa2c48d8a65f0a478e510e29"
+  },
+  "storage_failure": null,
+  "timed_out": false
+}
