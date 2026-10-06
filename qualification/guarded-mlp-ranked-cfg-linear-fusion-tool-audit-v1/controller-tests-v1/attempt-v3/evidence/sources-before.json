@@ -1,0 +1,37 @@
+{
+  "audit_tools.py": {
+    "bytes": 97115,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-cfg-linear-fusion-loader-tests-v228-v3/audit_tools.py",
+    "sha256": "e8659b904822464988c7bccc4894f6dfc3aa4948b705b886cc869d131623fe42"
+  },
+  "baseline-compile.stderr": {
+    "bytes": 164209,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-cfg-linear-fusion-loader-tests-v228-v3/baseline-compile.stderr",
+    "sha256": "9a309b8f23c66ad29e98a464bcb3ed8480766e2c7fd807415616dc99d6121a05"
+  },
+  "baseline-failed.json": {
+    "bytes": 16503,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-cfg-linear-fusion-loader-tests-v228-v3/baseline-failed.json",
+    "sha256": "1bf26b28162414dfb4afbf6dc5ba5a70a60d1c1fe1fd55624c251733840c560b"
+  },
+  "loader_test_entry.py": {
+    "bytes": 6777,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-cfg-linear-fusion-loader-tests-v228-v3/loader_test_entry.py",
+    "sha256": "6a00e25423689719bea58adc8b30ce99e7610396627a57b16756202bd0cbc413"
+  },
+  "run_tests.py": {
+    "bytes": 14510,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-cfg-linear-fusion-loader-tests-v228-v3/run_tests.py",
+    "sha256": "5de76525caa65bb87e5f5bc3a02096b131f2e0c94c3843c8c299aa38a62cfbc7"
+  },
+  "supervisor.py": {
+    "bytes": 41485,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-cfg-linear-fusion-loader-tests-v228-v3/supervisor.py",
+    "sha256": "8824478a6415dee39d28ccefb0881fc0687ac724f5a9c5a4540310fb5196b9bc"
+  },
+  "test_audit_tools.py": {
+    "bytes": 97792,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-cfg-linear-fusion-loader-tests-v228-v3/test_audit_tools.py",
+    "sha256": "b0e4545f3d3bb235eeac6da769553fb80ade46b744eb86f84272cdaf93fa91ea"
+  }
+}

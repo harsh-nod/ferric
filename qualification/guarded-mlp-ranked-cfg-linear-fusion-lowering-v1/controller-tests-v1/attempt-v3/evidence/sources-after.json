@@ -1,0 +1,42 @@
+{
+  "baseline-compile.stderr": {
+    "bytes": 164209,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-cfg-linear-fusion-lowering-tests-v228-v3/baseline-compile.stderr",
+    "sha256": "9a309b8f23c66ad29e98a464bcb3ed8480766e2c7fd807415616dc99d6121a05"
+  },
+  "baseline-failed.json": {
+    "bytes": 16503,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-cfg-linear-fusion-lowering-tests-v228-v3/baseline-failed.json",
+    "sha256": "1bf26b28162414dfb4afbf6dc5ba5a70a60d1c1fe1fd55624c251733840c560b"
+  },
+  "lowering.py": {
+    "bytes": 65944,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-cfg-linear-fusion-lowering-tests-v228-v3/lowering.py",
+    "sha256": "d50350d1c4e9a8ac3ab51a169583f1f4f94f96130cba582aa984b5873ade46ff"
+  },
+  "lowering_test_entry.py": {
+    "bytes": 6107,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-cfg-linear-fusion-lowering-tests-v228-v3/lowering_test_entry.py",
+    "sha256": "22d911b4fc35837c711ce67c3bfa0765cab1933499f197469f28beba528b0470"
+  },
+  "run_tests.py": {
+    "bytes": 13767,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-cfg-linear-fusion-lowering-tests-v228-v3/run_tests.py",
+    "sha256": "907d496e44ec0dd75644d4858189b674bf62c5055a31a2a382bb6608bbf93712"
+  },
+  "supervisor.py": {
+    "bytes": 41485,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-cfg-linear-fusion-lowering-tests-v228-v3/supervisor.py",
+    "sha256": "8824478a6415dee39d28ccefb0881fc0687ac724f5a9c5a4540310fb5196b9bc"
+  },
+  "test_lowering.py": {
+    "bytes": 42447,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-cfg-linear-fusion-lowering-tests-v228-v3/test_lowering.py",
+    "sha256": "3ac3b3d5a5c5627743c952dfc0a4725004597f573af38c8fe6ec528b92a63f1c"
+  },
+  "test_normalization.py": {
+    "bytes": 6507,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-cfg-linear-fusion-lowering-tests-v228-v3/test_normalization.py",
+    "sha256": "6d4d91e24fa483e81d99ae1dd89a629eb3b7a17aaef94e8f46958123c292465f"
+  }
+}

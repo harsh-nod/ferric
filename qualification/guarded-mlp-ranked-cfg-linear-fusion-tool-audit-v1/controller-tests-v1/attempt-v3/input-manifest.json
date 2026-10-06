@@ -1,0 +1,45 @@
+{
+  "files": {
+    "audit_tools.py": {
+      "bytes": 97115,
+      "sha256": "e8659b904822464988c7bccc4894f6dfc3aa4948b705b886cc869d131623fe42"
+    },
+    "baseline-compile.stderr": {
+      "bytes": 164209,
+      "sha256": "9a309b8f23c66ad29e98a464bcb3ed8480766e2c7fd807415616dc99d6121a05"
+    },
+    "baseline-failed.json": {
+      "bytes": 16503,
+      "sha256": "1bf26b28162414dfb4afbf6dc5ba5a70a60d1c1fe1fd55624c251733840c560b"
+    },
+    "loader_test_entry.py": {
+      "bytes": 6777,
+      "sha256": "6a00e25423689719bea58adc8b30ce99e7610396627a57b16756202bd0cbc413"
+    },
+    "run_tests.py": {
+      "bytes": 14510,
+      "sha256": "5de76525caa65bb87e5f5bc3a02096b131f2e0c94c3843c8c299aa38a62cfbc7"
+    },
+    "supervisor.py": {
+      "bytes": 41485,
+      "sha256": "8824478a6415dee39d28ccefb0881fc0687ac724f5a9c5a4540310fb5196b9bc"
+    },
+    "test_audit_tools.py": {
+      "bytes": 97792,
+      "sha256": "b0e4545f3d3bb235eeac6da769553fb80ade46b744eb86f84272cdaf93fa91ea"
+    }
+  },
+  "schema": "ferric-ranked-cfg-linear-fusion-loader-test-input-v1",
+  "tool_pins": {
+    "prlimit": {
+      "bytes": 27536,
+      "path": "/usr/bin/prlimit",
+      "sha256": "17064f67e650d6152a6902b013aab496b54c87587c8eea6f5023aafee6154069"
+    },
+    "python": {
+      "bytes": 8020928,
+      "path": "/usr/bin/python3.12",
+      "sha256": "e1efa562c2cc2e35521a5c9c9b9939921001ff8ca9708a13ef15ace68cc2ccd7"
+    }
+  }
+}

@@ -1,0 +1,24 @@
+test_actual_previous_driver_generation_is_immutable (test_lowering.AuditBindingTests.test_actual_previous_driver_generation_is_immutable) ... ok
+test_capacity_limits_and_cohorts_cannot_drift (test_lowering.AuditBindingTests.test_capacity_limits_and_cohorts_cannot_drift) ... ok
+test_cfg_expansion_lineage_and_compaction_are_required (test_lowering.AuditBindingTests.test_cfg_expansion_lineage_and_compaction_are_required) ... ok
+test_deployed_body_must_match_final_not_earlier_product (test_lowering.AuditBindingTests.test_deployed_body_must_match_final_not_earlier_product) ... ok
+test_driver_failure_controller_phase_or_full_suite_claim_refused (test_lowering.AuditBindingTests.test_driver_failure_controller_phase_or_full_suite_claim_refused) ... ok
+test_driver_readset_or_final_body_drift_refused (test_lowering.AuditBindingTests.test_driver_readset_or_final_body_drift_refused) ... ok
+test_each_of_six_other_tools_stays_exact (test_lowering.AuditBindingTests.test_each_of_six_other_tools_stays_exact) ... ok
+test_earlier_generation_cannot_supply_cfg_linear_fusion_provenance (test_lowering.AuditBindingTests.test_earlier_generation_cannot_supply_cfg_linear_fusion_provenance) ... ok
+test_failed_or_earlier_producer_refused (test_lowering.AuditBindingTests.test_failed_or_earlier_producer_refused) ... ok
+test_loader_input_readset_drift_refused (test_lowering.AuditBindingTests.test_loader_input_readset_drift_refused) ... ok
+test_new_driver_replay_and_metadata_only_scope_are_required (test_lowering.AuditBindingTests.test_new_driver_replay_and_metadata_only_scope_are_required) ... ok
+test_new_filepin_and_final_producer_join (test_lowering.AuditBindingTests.test_new_filepin_and_final_producer_join) ... ok
+test_old_audit_schema_or_missing_producer_replay_refused (test_lowering.AuditBindingTests.test_old_audit_schema_or_missing_producer_replay_refused) ... ok
+test_pending_bindings_refuse_before_any_helper_or_effect (test_lowering.AuditBindingTests.test_pending_bindings_refuse_before_any_helper_or_effect) ... ok
+test_unreviewed_loader_or_producer_controller_refused (test_lowering.AuditBindingTests.test_unreviewed_loader_or_producer_controller_refused) ... ok
+test_command_selects_exact_profile_before_cargo_delimiter (test_normalization.NormalizationTests.test_command_selects_exact_profile_before_cargo_delimiter) ... ok
+test_output_accepts_exact_seven_field_options (test_normalization.NormalizationTests.test_output_accepts_exact_seven_field_options) ... ok
+test_output_refuses_flags_or_worker_policy_drift (test_normalization.NormalizationTests.test_output_refuses_flags_or_worker_policy_drift) ... ok
+test_output_refuses_old_missing_extra_or_minimal_options (test_normalization.NormalizationTests.test_output_refuses_old_missing_extra_or_minimal_options) ... ok
+
+----------------------------------------------------------------------
+Ran 19 tests in 9.726s
+
+OK
