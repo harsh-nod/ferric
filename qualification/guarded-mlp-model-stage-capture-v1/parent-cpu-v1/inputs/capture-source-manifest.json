@@ -1,0 +1,196 @@
+{
+  "schema": "ferric-guarded-mlp-model-stage-capture-source-v1",
+  "canonical_revision": "90b17ca054631aea59b03d50169d114c4663468f",
+  "source_only": true,
+  "files": [
+    {
+      "path": "adapters/m1-engineering-execution-v1/src/bin/ferric-qwen3-finite-guarded-mlp-decode-engineering.rs",
+      "before": {
+        "bytes": 2903,
+        "sha256": "2a7ff0a9eb6e9335a40d9c1e3049db32e125d4c73931184216579aa0f0d0ec73"
+      },
+      "after": {
+        "bytes": 3615,
+        "sha256": "ca73049a629b1431d33e1c974d3b51f26d3fc40f8647914a40aaced6a3b86f97"
+      }
+    },
+    {
+      "path": "adapters/m1-engineering-execution-v1/src/tp_finite_client/prefix_decode/guarded.rs",
+      "before": {
+        "bytes": 23973,
+        "sha256": "1e7c966286dfbc59d143625641f7f94c8fb540fa6900374f26ff6bfb5b873274"
+      },
+      "after": {
+        "bytes": 24961,
+        "sha256": "35773514b793f7f622e41dafd54cc1e11a5de61e22c7819752685b1f16ce065f"
+      }
+    },
+    {
+      "path": "adapters/m1-engineering-execution-v1/src/tp_finite_client/prefix_decode/guarded_capture.rs",
+      "before": null,
+      "after": {
+        "bytes": 7289,
+        "sha256": "c970c7134a9292e653f97fd1016163d4d5c01ab62050a14b2b0c65f3eabecb34"
+      }
+    },
+    {
+      "path": "adapters/m1-engineering-execution-v1/src/tp_finite_client/prefix_decode/guarded_capture_tests.rs",
+      "before": null,
+      "after": {
+        "bytes": 7513,
+        "sha256": "d933eec6f99eedd9f58507af32056f9c52cb7fae6963ea41dd2ea2e88b04b291"
+      }
+    },
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/main.rs",
+      "before": {
+        "bytes": 12898,
+        "sha256": "435eb8d21a5f0928219360964153327e030636e15cc12cb8634a0e2895de21a3"
+      },
+      "after": {
+        "bytes": 13482,
+        "sha256": "f70eba78d9ac3d46b0327576adce581be28c86718beb87bf91044cd3fc452105"
+      }
+    },
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_guarded_mlp_decode_cli_v1.rs",
+      "before": {
+        "bytes": 11657,
+        "sha256": "fd16fc39c4f44f2419dbccbb55f3025dd6a3c48dd19fd8547f61ed91dfc47d07"
+      },
+      "after": {
+        "bytes": 14294,
+        "sha256": "18ec484e2ad8688d3b831326d4dc73fd4a5c267ce1136e7a8b25d8a7f39a3533"
+      }
+    },
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_guarded_mlp_decode_cli_v1_tests.rs",
+      "before": {
+        "bytes": 11593,
+        "sha256": "f236595acbe4f26301f1932e2236174b07cf5e7c14318d01bb19f96677f3e9b3"
+      },
+      "after": {
+        "bytes": 12291,
+        "sha256": "48d9ad6af0cd084904a3b56ab484dff73a05a09c8537803c85f653f10f432a5f"
+      }
+    },
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_guarded_mlp_decode_v1.rs",
+      "before": {
+        "bytes": 9561,
+        "sha256": "750e2299dda4bd8b591de0880d548a32a093768a47905ac9aec9941fe8d65348"
+      },
+      "after": {
+        "bytes": 11478,
+        "sha256": "5fe470c65287f8e627dcb69f68b7216ab01085a1eac6a341991c6763e229d1f8"
+      }
+    },
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/resident_layer/capture_v1/tests.rs",
+      "before": {
+        "bytes": 13535,
+        "sha256": "1752a39dc7d3d51db0afb572d9b2937ffd55f8b99c774a630e4b48f16c277ab7"
+      },
+      "after": {
+        "bytes": 16413,
+        "sha256": "c14cd73aa2a7c71915a1cd93746a560654775a999d34b416d88575c152283281"
+      }
+    },
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/resident_layer/capture_v1.rs",
+      "before": {
+        "bytes": 10086,
+        "sha256": "40ba8577feb8224f0e8ccab41f8591b79765f615018b25567b3f3e9bcd16eafa"
+      },
+      "after": {
+        "bytes": 11922,
+        "sha256": "40fe080e5125e14fb08f864f7e2b09e43ac21b26e653bb252c994a5e9d84d828"
+      }
+    },
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/resident_layer/guarded_mlp_decode_v1/tests.rs",
+      "before": {
+        "bytes": 6503,
+        "sha256": "63cc495b5f7e1c285901b2bef44bcdda43897d25cc27a8fdbb33548e7b8d5cbd"
+      },
+      "after": {
+        "bytes": 8026,
+        "sha256": "cbc02b931880e234771460131616616ba3fdd2a08918d9225efe15e00c786509"
+      }
+    },
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/resident_layer/guarded_mlp_decode_v1.rs",
+      "before": {
+        "bytes": 9387,
+        "sha256": "a5b09b85691d3d464a6625652968fbca8f256edeb91056c49adf5e82eaffd8e3"
+      },
+      "after": {
+        "bytes": 11108,
+        "sha256": "0329ee884c8364dec02fe6dc46c97429cdb1cd10d6420dc55680b25ade2dd9fd"
+      }
+    }
+  ],
+  "base": {
+    "worker_complete": {
+      "path": "/home/harsh/ferric-p227-integration/qualification/guarded-mlp-worker-cpu-v1/attempt-v6/evidence/complete.json",
+      "bytes": 1559924,
+      "sha256": "927e6519923ab44aa5f5616886ce9b539ed5b5f77804a48fe5d42f6a37974cd2"
+    },
+    "worker_sources": {
+      "path": "/home/harsh/ferric-p227-integration/qualification/guarded-mlp-worker-cpu-v1/attempt-v6/evidence/sources-after.json",
+      "bytes": 390422,
+      "sha256": "0f00c39f400beef23efaae0ba735168f1b4461033a0c743462079c3896d01472"
+    },
+    "parent_complete": {
+      "path": "/home/harsh/ferric-p227-integration/qualification/guarded-mlp-parent-cpu-v1/attempt-v3/evidence/complete.json",
+      "bytes": 3697764,
+      "sha256": "cfe7adb9e0d375191f41c37e36c9712eeed72c1b7879cd6f96a69ba2359e1c2a"
+    },
+    "parent_sources": {
+      "path": "/home/harsh/ferric-p227-integration/qualification/guarded-mlp-parent-cpu-v1/attempt-v3/evidence/sources-after.json",
+      "bytes": 460170,
+      "sha256": "a88284adfe53513f22f70fb1eb13e7d401a890f4afc9d25198f98251d4f842d0"
+    }
+  },
+  "new_tests": {
+    "worker_library": [
+      "native_guarded_mlp_decode_cli_v1::tests::guarded_capture_cli_is_distinct_and_never_selected_by_default",
+      "resident_layer::capture_v1::tests::guarded_capture_close_confirmation_requires_successful_close",
+      "resident_layer::capture_v1::tests::guarded_capture_reads_actual_down_without_replacing_prefix_partial",
+      "resident_layer::capture_v1::tests::guarded_capture_stale_down_and_read_failure_prevent_publication",
+      "resident_layer::guarded_mlp_decode_v1::tests::guarded_capture_boundaries_do_not_split_paired_segment_and_fail_closed"
+    ],
+    "parent_library": [
+      "tp_finite_client::prefix_decode::guarded::capture::tests::guarded_capture_parent_accepts_only_closed_same_run_layout_in_both_modes",
+      "tp_finite_client::prefix_decode::guarded::capture::tests::guarded_capture_parent_rejects_digest_nonfinite_and_same_run_content_mismatch",
+      "tp_finite_client::prefix_decode::guarded::capture::tests::guarded_capture_parent_rejects_namespace_scope_close_and_authority_drift",
+      "tp_finite_client::prefix_decode::guarded::capture::tests::guarded_capture_parent_rejects_reordered_parts_offsets_widths_and_extra_payload"
+    ],
+    "parent_guarded_binary": [
+      "tests::guarded_capture_parent_cli_is_separate_and_explicit"
+    ]
+  },
+  "parent_cli_flag": "--capture-guarded-layer-zero",
+  "worker_cli_flag": "--engineering-native-guarded-mlp-stage-capture-v1",
+  "capture": {
+    "generation": 1,
+    "position": 0,
+    "layer": 0,
+    "parts": 34,
+    "payload_bytes": 256136,
+    "encoded_byte_limit": 1100000,
+    "transport": "existing-child-stderr.bin",
+    "sampling": "prefix-boundaries-and-post-paired-retained",
+    "native_close_required": true
+  },
+  "default_wire_changed": false,
+  "kernel_images_changed": false,
+  "runtime_sources_changed": false,
+  "numerical_acceptance": false,
+  "performance_claim": false,
+  "production_authority": false,
+  "integration_patch": {
+    "bytes": 46732,
+    "sha256": "50d75d7f84b65d88a9e2e66ebe88a59ad22c9331e894b8efb4f8185b9fb899bc"
+  }
+}

@@ -1,0 +1,2 @@
+tests::guarded_capture_parent_cli_is_separate_and_explicit: test
+tests::guarded_decode_parent_cli_refuses_legacy_fallback_or_extra_modes: test

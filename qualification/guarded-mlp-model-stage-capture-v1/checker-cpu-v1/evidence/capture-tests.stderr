@@ -1,0 +1,17 @@
+test_device_profile_registration_and_session_refuse (test_capture.CaptureTests.test_device_profile_registration_and_session_refuse) ... ok
+test_final_hidden_observation_join_refuses (test_capture.CaptureTests.test_final_hidden_observation_join_refuses) ... ok
+test_metadata_and_rotary_request_joins_refuse (test_capture.CaptureTests.test_metadata_and_rotary_request_joins_refuse) ... ok
+test_nonfinite_bf16_and_f32_refuse (test_capture.CaptureTests.test_nonfinite_bf16_and_f32_refuse) ... ok
+test_stage_order_extent_and_source_offset_refuse (test_capture.CaptureTests.test_stage_order_extent_and_source_offset_refuse) ... ok
+test_unknown_claims_and_unclosed_scope_refuse (test_capture.CaptureTests.test_unknown_claims_and_unclosed_scope_refuse) ... ok
+test_valid_closed_envelope (test_capture.CaptureTests.test_valid_closed_envelope) ... ok
+test_whole_and_part_hashes_refuse (test_capture.CaptureTests.test_whole_and_part_hashes_refuse) ... ok
+test_actual_kfd_handles_are_not_unique_ids (test_topology.TopologyTests.test_actual_kfd_handles_are_not_unique_ids) ... ok
+test_malformed_or_duplicate_properties_refuse (test_topology.TopologyTests.test_malformed_or_duplicate_properties_refuse) ... ok
+test_swapped_or_small_unique_ids_refuse (test_topology.TopologyTests.test_swapped_or_small_unique_ids_refuse) ... ok
+test_wrong_gfx_and_invalid_handle_refuse (test_topology.TopologyTests.test_wrong_gfx_and_invalid_handle_refuse) ... ok
+
+----------------------------------------------------------------------
+Ran 12 tests in 1.347s
+
+OK

@@ -31,6 +31,45 @@ Use fe2o3 engineering revision `e9ccc629cf1d445bda4d792276a1defb2e386d88`
 for the canonical relative worker dependency. [CPU recipes](CPU.md) retain
 the source lineage, bounds, private caches and selected toolchains.
 
+## Parent Qualification
+
+The fresh MI350 parent qualification passes all 54 phases and 46 selected test
+scopes: **380 passed, zero failed or ignored**. It preserves every prior selected
+pass and adds exactly four capture-validation library tests and one guarded
+binary test. The complete 862-name library inventory is retained; the full
+parent library suite is not executed. All five required parent products are
+built, and source, dependency, private-cache and process postchecks are clean.
+
+- [Actual result](parent-cpu-v1/evidence/complete.json): 3,787,634 bytes, SHA256
+  `f1dd4cf50c704bc1f39472df3a8299872de5490fcf073160077888629192ee91`.
+- [Capture and inherited client tests](parent-cpu-v1/evidence/parent-client.stdout),
+  [guarded binary tests](parent-cpu-v1/evidence/guarded-bin-tests.stdout), and
+  [tested source map](parent-cpu-v1/evidence/sources-after.json).
+- Final guarded parent ELF: 13,673,168 bytes, SHA256
+  `f77b78a963d20fac64d4ce0c7ffd6f0d028d2d147aa4957dc47160abb4cfe25d`.
+  Its body remains on MI350 and is not committed.
+- [Retained manifest](parent-cpu-v1/manifest.json): 399 pinned bodies plus the
+  manifest, including 274 raw evidence files, 102 lineage bodies and 12 selected
+  source bodies. The transport archive is 2,851,054 bytes, SHA256
+  `4b07d6b424624fb8926cca56df242d6844d072a130e5b2ed0f7b16d8fff10be1`.
+
+Only the four formatted parent source rows from this capsule are integrated.
+Its eight worker overlay bodies are the authored parent-build inputs, not the
+separately formatted worker bodies qualified above, and are not copied over
+those canonical worker sources. This CPU result does not establish GPU capture
+or numerical acceptance.
+
+## Capture Checker Qualification
+
+The independent capture/parser gate passes all **12 tests** on MI350: eight
+capture cases and four device-identity cases. The owned test process exits
+naturally, is reaped, and leaves no process group; all input and tool postchecks
+are clean. [The original result](checker-cpu-v1/evidence/complete.json) is
+10,882 bytes, SHA256
+`642d4ee30d0ad42ae849e17c42b9cc10b69ce61f7cbcb581026595b8d83e324a`.
+The retained directory includes all six inputs and seven raw test files plus
+the terminal report. This gate tests synthetic data, not model numerics.
+
 ## Capture Boundaries
 
 The explicit worker flag is
@@ -49,16 +88,15 @@ The report is emitted only after four complete forwards and healthy native
 Close. It contains original bytes with explicit stage/role/type/offset/hash
 metadata, not substituted reference values. The matching parent mode validates
 the report after child retirement against the actual request and layer output.
-Parent CPU qualification and a fresh GPU capture are still pending at this
-checkpoint. Authored parent sources in the source manifest are not promoted
-by the worker test result.
+The parent CPU qualification above independently covers this validation path.
+Actual GPU capture evidence is a separate publication gate; the CPU capsules
+do not promote a native outcome or independent numerical acceptance.
 
 ## Remaining Gates
 
-1. Qualify the capture-enabled parent, including its new validation tests.
-2. Execute a fresh bounded GPU capture and verify shutdown and raw evidence.
-3. Compare the current stages with the genuine independent framework capture.
-4. Establish full-model numerical acceptance before sustained benchmarking.
+1. Publish the separately audited GPU capture, including shutdown and raw evidence.
+2. Compare the current stages with the genuine independent framework capture.
+3. Establish full-model numerical acceptance before sustained benchmarking.
 
 Capture overhead excludes this mode from timing comparisons. No GPU overlap,
 model speedup, sustained 2,048/256 result or 700 tokens/s claim follows. All

@@ -1,0 +1,32 @@
+{
+  "run_cpu.py": {
+    "bytes": 11460,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-checker-cpu-v228-v1/run_cpu.py",
+    "sha256": "c1347e0c73aa40280d981d0dba0c41d6adfaf9944dfe14f2121fd3c8e6e1080d"
+  },
+  "run_model_gpu.py": {
+    "bytes": 34288,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-checker-cpu-v228-v1/run_model_gpu.py",
+    "sha256": "09106da5b93193ef98d862c3504efd96aaabe6c9addd6af028d30942b5ce8d2b"
+  },
+  "supervisor.py": {
+    "bytes": 41485,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-checker-cpu-v228-v1/supervisor.py",
+    "sha256": "8824478a6415dee39d28ccefb0881fc0687ac724f5a9c5a4540310fb5196b9bc"
+  },
+  "test_capture.py": {
+    "bytes": 7567,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-checker-cpu-v228-v1/test_capture.py",
+    "sha256": "2989c70b3700324bf5e4d0c0cfddd94cba92832dfe6e65ba959fe02708811f01"
+  },
+  "test_topology.py": {
+    "bytes": 2484,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-checker-cpu-v228-v1/test_topology.py",
+    "sha256": "62e846dff5ba99592dbfc3e5bd4cf9f7d663ee8383c8c9b9a2a3666526f612a1"
+  },
+  "validate_observation.py": {
+    "bytes": 13779,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-checker-cpu-v228-v1/validate_observation.py",
+    "sha256": "367d1904f15741138db708c1f10e5a777905b62d9440a961e952a6cc9125b055"
+  }
+}

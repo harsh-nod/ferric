@@ -1,0 +1,94 @@
+{
+  "schema": "ferric-guarded-mlp-stage-capture-parent-qualified-overlay-v1",
+  "canonical_source_revision": "90b17ca054631aea59b03d50169d114c4663468f",
+  "source_proposal": {
+    "bytes": 7739,
+    "sha256": "2dc554b35f227180b1367f926d38e3332305f99666d9f9bd52b941240d1d899e"
+  },
+  "complete": {
+    "bytes": 3787634,
+    "sha256": "f1dd4cf50c704bc1f39472df3a8299872de5490fcf073160077888629192ee91"
+  },
+  "source_map": {
+    "bytes": 478151,
+    "sha256": "a2cfbb14261b712289c2486a8bea66f2f05e4b2c95cdac7634219153ce5c1c9e"
+  },
+  "files": [
+    {
+      "path": "adapters/m1-engineering-execution-v1/src/bin/ferric-qwen3-finite-guarded-mlp-decode-engineering.rs",
+      "before": {
+        "bytes": 2903,
+        "sha256": "2a7ff0a9eb6e9335a40d9c1e3049db32e125d4c73931184216579aa0f0d0ec73"
+      },
+      "authored": {
+        "bytes": 3615,
+        "sha256": "ca73049a629b1431d33e1c974d3b51f26d3fc40f8647914a40aaced6a3b86f97"
+      },
+      "after": {
+        "bytes": 3766,
+        "sha256": "e677febde4ef0c625a147f176efc25b187d003bf5bd4aa4634958e9a50ca6ff7"
+      },
+      "formatted": true
+    },
+    {
+      "path": "adapters/m1-engineering-execution-v1/src/tp_finite_client/prefix_decode/guarded.rs",
+      "before": {
+        "bytes": 23973,
+        "sha256": "1e7c966286dfbc59d143625641f7f94c8fb540fa6900374f26ff6bfb5b873274"
+      },
+      "authored": {
+        "bytes": 24961,
+        "sha256": "35773514b793f7f622e41dafd54cc1e11a5de61e22c7819752685b1f16ce065f"
+      },
+      "after": {
+        "bytes": 25064,
+        "sha256": "6eef18690c49ba88a4af6841130ec1424ecb8df4cbed6d20cb993745ca305632"
+      },
+      "formatted": true
+    },
+    {
+      "path": "adapters/m1-engineering-execution-v1/src/tp_finite_client/prefix_decode/guarded_capture.rs",
+      "before": null,
+      "authored": {
+        "bytes": 7289,
+        "sha256": "c970c7134a9292e653f97fd1016163d4d5c01ab62050a14b2b0c65f3eabecb34"
+      },
+      "after": {
+        "bytes": 8394,
+        "sha256": "00b54b0d8fb2767efa279e691a4dfb0c6dcf654ff4e9165f924e167b6375130a"
+      },
+      "formatted": true
+    },
+    {
+      "path": "adapters/m1-engineering-execution-v1/src/tp_finite_client/prefix_decode/guarded_capture_tests.rs",
+      "before": null,
+      "authored": {
+        "bytes": 7513,
+        "sha256": "d933eec6f99eedd9f58507af32056f9c52cb7fae6963ea41dd2ea2e88b04b291"
+      },
+      "after": {
+        "bytes": 8053,
+        "sha256": "44c5461d63b35770b257299767797e6ca05c320ab9a871d455a6562766b3f9ea"
+      },
+      "formatted": true
+    }
+  ],
+  "integration_patch": {
+    "bytes": 22685,
+    "sha256": "82ac4d492f228eccee9c070a46fd73492df7df57695b833cb3cea85f52e3f74c"
+  },
+  "apply_patch": {
+    "bytes": 22494,
+    "sha256": "5bdf6f6533c0e3cd99255a5bed7cee6bb6e755428d2bd7974ec6f6f973bba469"
+  },
+  "cpu_qualified": true,
+  "selected_test_scopes": 46,
+  "selected_passes": 380,
+  "library_inventory": 862,
+  "full_parent_library_suite_executed": false,
+  "worker_sources_untouched": true,
+  "native_capture_qualified": false,
+  "gpu_execution": false,
+  "numerical_acceptance": false,
+  "performance_claim": false
+}

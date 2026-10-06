@@ -47,13 +47,16 @@ residual replay are fully retained. This explains isolated reduction-order
 differences; it does not replace current guarded-stage capture, full-model
 numerical acceptance, or a sustained performance measurement.
 
-The [capture-enabled worker now passes fresh MI350 CPU qualification](../qualification/guarded-mlp-model-stage-capture-v1/README.md):
-591 passes, four unchanged ignores, and all nine phases including the final
-executable build. The eight tested worker changes are integrated with clean
-source/dependency/cache/process postchecks. This distinct opt-in mode retains
-34 layer-zero tensor parts only after healthy Close, without changing kernel
-images or splitting the guarded segment. Parent qualification and a fresh
-guarded GPU capture remain pending; the CPU result is not numerical acceptance.
+The [capture-enabled worker and parent pass fresh MI350 CPU qualification](../qualification/guarded-mlp-model-stage-capture-v1/README.md):
+591 worker passes, four unchanged ignores, and 380 selected parent passes.
+All nine worker and 54 parent phases pass, including the required executable
+builds; source/dependency/cache/process postchecks are clean. The eight worker
+and four parent changes are integrated from their tested, formatted bodies.
+The separate capture/parser gate passes all 12 tests. This distinct opt-in mode
+retains 34 layer-zero tensor parts only after healthy Close, without changing
+kernel images or splitting the guarded segment. GPU capture publication and
+independent stage comparison are separate gates; CPU results are not numerical
+acceptance.
 
 Current integration: [the guarded parent passes 375 selected tests and all 54 CPU phases on MI350](../qualification/guarded-mlp-parent-cpu-v1/README.md).
 All five selected parent binaries build, with clean source, dependency, cache

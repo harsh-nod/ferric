@@ -1,0 +1,7 @@
+
+running 2 tests
+test tests::guarded_capture_parent_cli_is_separate_and_explicit ... ok
+test tests::guarded_decode_parent_cli_refuses_legacy_fallback_or_extra_modes ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

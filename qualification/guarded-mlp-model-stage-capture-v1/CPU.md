@@ -103,3 +103,29 @@ manifest/body set before writing the fresh local capsule. No future archive pin
 or parent success is asserted by this proposal. All assembly, staging, CPU
 execution, binding, and canonical retention are primary-agent actions; the
 author performed source/AST/data review only.
+
+## Actual Parent Retention
+
+The fresh MI350 parent run completed all 54 phases naturally with clean
+postchecks. Its 46 selected scopes report 380 passes, zero failures and zero
+ignores; all 375 prior selected passes and exactly five new capture passes are
+preserved. The 862-name library inventory is complete, but no full parent
+library-suite execution is claimed. The [actual receipt](parent-cpu-v1/evidence/complete.json)
+is 3,787,634 bytes, SHA-256
+`f1dd4cf50c704bc1f39472df3a8299872de5490fcf073160077888629192ee91`.
+
+The [retained capsule](parent-cpu-v1/manifest.json) closes 400 ordinary bodies,
+399 pins, 274 raw files and 23,040,272 expanded bytes. Archive SHA-256 is
+`4b07d6b424624fb8926cca56df242d6844d072a130e5b2ed0f7b16d8fff10be1`
+for 2,851,054 bytes. It retains the 1,222-row source maps, 102 selected lineage
+bodies, all 12 capture overlay sources, commands, started records, original
+streams, result records and selected Cargo product metadata. Dependency/cache
+bodies and host ELF bodies are not in this capsule; their pin maps and the
+bounded execution/export postchecks remain explicit evidence boundaries.
+
+All four parent paths changed only through the pinned formatter before the
+qualification; their exact final bodies are the parent integration source.
+The eight worker bodies retained by the parent are unformatted proposal inputs,
+not a replacement for the separately qualified, formatted worker integration.
+The runtime/worker suites are not rerun by the parent controller, and neither
+CPU capsule establishes native capture or full-model numerical acceptance.
