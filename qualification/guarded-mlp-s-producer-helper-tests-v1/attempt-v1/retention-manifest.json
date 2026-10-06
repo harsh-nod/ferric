@@ -1,0 +1,66 @@
+{
+  "compiler_qualification": false,
+  "files": {
+    "evidence/complete.json": {
+      "bytes": 11263,
+      "sha256": "7be7a582c407c8e61a32107db633036bac8b0d450466ad6deee3a0c3cf707a9a"
+    },
+    "evidence/s-producer-helper-tests.command.json": {
+      "bytes": 854,
+      "sha256": "4780f89cb4ac16b404cdbe9dd3afd09b93418750641616418b0379c955a71a3d"
+    },
+    "evidence/s-producer-helper-tests.result.json": {
+      "bytes": 1561,
+      "sha256": "917c8804ab781dc84983f31108af9f3948a3335b2703a334e723136df61eca77"
+    },
+    "evidence/s-producer-helper-tests.started.json": {
+      "bytes": 375,
+      "sha256": "b4f5b637108dfc75776e15542553b69f3827af44eadd4c83394b56a1e476df0e"
+    },
+    "evidence/s-producer-helper-tests.stderr": {
+      "bytes": 2375,
+      "sha256": "b44796a67d9b3d282971dfc6ac549de8d98630256f00cb2159dcbf0ce17f8caf"
+    },
+    "evidence/s-producer-helper-tests.stdout": {
+      "bytes": 3499,
+      "sha256": "b7630cbf1520eaff10e919e776582c3c89c8d91d649222ed29298107c6e973a0"
+    },
+    "evidence/sources-after.json": {
+      "bytes": 1436,
+      "sha256": "e10ab56b61870666c721de944ff3a2f9b1cb864f5a7056f36cb16affdda139c3"
+    },
+    "evidence/sources-before.json": {
+      "bytes": 1436,
+      "sha256": "e10ab56b61870666c721de944ff3a2f9b1cb864f5a7056f36cb16affdda139c3"
+    },
+    "helper_test_entry.py": {
+      "bytes": 4998,
+      "sha256": "202120882d73fb1567492c863890f52ade25e9c5015605466765945401053626"
+    },
+    "input-manifest.json": {
+      "bytes": 1130,
+      "sha256": "4591497713a719fbcbb70413689bbcc033194973694a5ddd692391ba78a2d547"
+    },
+    "qualification_helpers.py": {
+      "bytes": 4103,
+      "sha256": "a77cc7f82ebdd9518185b30b837e250abc68cc32e4858ab1ad3dc83a0ec8efe6"
+    },
+    "run_tests.py": {
+      "bytes": 12607,
+      "sha256": "47019050547920e9618d2b37cb9c3b3097ea3a22a94c19808cc1aaf6702fa43d"
+    },
+    "supervisor.py": {
+      "bytes": 41485,
+      "sha256": "8824478a6415dee39d28ccefb0881fc0687ac724f5a9c5a4540310fb5196b9bc"
+    },
+    "test_qualification_helpers.py": {
+      "bytes": 8866,
+      "sha256": "e0480bfe8e5278eea12551e7c950225a387c4d9b48f79cb2dbd146c93443b91a"
+    }
+  },
+  "gpu_execution": false,
+  "passed": true,
+  "schema": "ferric-s-producer-helper-tests-retention-v1",
+  "synthetic_helpers_only": true,
+  "tests_passed": 16
+}

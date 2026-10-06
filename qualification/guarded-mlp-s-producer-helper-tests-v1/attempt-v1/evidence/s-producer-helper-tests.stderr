@@ -1,0 +1,21 @@
+test_duplicate_rows_and_archive_filenames_refuse (test_qualification_helpers.BackendRlibTests.test_duplicate_rows_and_archive_filenames_refuse) ... ok
+test_elf_thin_archive_and_short_magic_refuse (test_qualification_helpers.BackendRlibTests.test_elf_thin_archive_and_short_magic_refuse) ... ok
+test_exact_non_test_backend_archive_selects_and_pins (test_qualification_helpers.BackendRlibTests.test_exact_non_test_backend_archive_selects_and_pins) ... ok
+test_file_alias_refuses (test_qualification_helpers.BackendRlibTests.test_file_alias_refuses) ... ok
+test_missing_archive_and_wrong_basename_refuse (test_qualification_helpers.BackendRlibTests.test_missing_archive_and_wrong_basename_refuse) ... ok
+test_other_package_target_kind_source_and_profile_refuse (test_qualification_helpers.BackendRlibTests.test_other_package_target_kind_source_and_profile_refuse) ... ok
+test_outside_target_refuses_before_pin (test_qualification_helpers.BackendRlibTests.test_outside_target_refuses_before_pin) ... ok
+test_parent_alias_refuses (test_qualification_helpers.BackendRlibTests.test_parent_alias_refuses) ... ok
+test_duplicate_missing_and_unexpected_names_refuse (test_qualification_helpers.FullSuiteTests.test_duplicate_missing_and_unexpected_names_refuse) ... ok
+test_exact_ignored_names_and_should_panic_are_retained (test_qualification_helpers.FullSuiteTests.test_exact_ignored_names_and_should_panic_are_retained) ... ok
+test_failed_or_changed_ignored_status_refuses (test_qualification_helpers.FullSuiteTests.test_failed_or_changed_ignored_status_refuses) ... ok
+test_forged_multiple_and_missing_summary_refuse (test_qualification_helpers.FullSuiteTests.test_forged_multiple_and_missing_summary_refuse) ... ok
+test_invalid_expected_rosters_refuse (test_qualification_helpers.FullSuiteTests.test_invalid_expected_rosters_refuse) ... ok
+test_malformed_named_line_is_not_silently_ignored (test_qualification_helpers.FullSuiteTests.test_malformed_named_line_is_not_silently_ignored) ... ok
+test_no_ignored_suite_is_supported (test_qualification_helpers.FullSuiteTests.test_no_ignored_suite_is_supported) ... ok
+test_swapped_ignored_identity_refuses_even_with_same_counts (test_qualification_helpers.FullSuiteTests.test_swapped_ignored_identity_refuses_even_with_same_counts) ... ok
+
+----------------------------------------------------------------------
+Ran 16 tests in 0.004s
+
+OK

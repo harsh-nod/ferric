@@ -1,0 +1,225 @@
+{
+  "child_observation": {
+    "compiler_qualification": false,
+    "errors": 0,
+    "expected_failures": 0,
+    "failures": 0,
+    "gpu_execution": false,
+    "names": [
+      "test_qualification_helpers.BackendRlibTests.test_duplicate_rows_and_archive_filenames_refuse",
+      "test_qualification_helpers.BackendRlibTests.test_elf_thin_archive_and_short_magic_refuse",
+      "test_qualification_helpers.BackendRlibTests.test_exact_non_test_backend_archive_selects_and_pins",
+      "test_qualification_helpers.BackendRlibTests.test_file_alias_refuses",
+      "test_qualification_helpers.BackendRlibTests.test_missing_archive_and_wrong_basename_refuse",
+      "test_qualification_helpers.BackendRlibTests.test_other_package_target_kind_source_and_profile_refuse",
+      "test_qualification_helpers.BackendRlibTests.test_outside_target_refuses_before_pin",
+      "test_qualification_helpers.BackendRlibTests.test_parent_alias_refuses",
+      "test_qualification_helpers.FullSuiteTests.test_duplicate_missing_and_unexpected_names_refuse",
+      "test_qualification_helpers.FullSuiteTests.test_exact_ignored_names_and_should_panic_are_retained",
+      "test_qualification_helpers.FullSuiteTests.test_failed_or_changed_ignored_status_refuses",
+      "test_qualification_helpers.FullSuiteTests.test_forged_multiple_and_missing_summary_refuse",
+      "test_qualification_helpers.FullSuiteTests.test_invalid_expected_rosters_refuse",
+      "test_qualification_helpers.FullSuiteTests.test_malformed_named_line_is_not_silently_ignored",
+      "test_qualification_helpers.FullSuiteTests.test_no_ignored_suite_is_supported",
+      "test_qualification_helpers.FullSuiteTests.test_swapped_ignored_identity_refuses_even_with_same_counts"
+    ],
+    "passed": true,
+    "passing_names": [
+      "test_qualification_helpers.BackendRlibTests.test_duplicate_rows_and_archive_filenames_refuse",
+      "test_qualification_helpers.BackendRlibTests.test_elf_thin_archive_and_short_magic_refuse",
+      "test_qualification_helpers.BackendRlibTests.test_exact_non_test_backend_archive_selects_and_pins",
+      "test_qualification_helpers.BackendRlibTests.test_file_alias_refuses",
+      "test_qualification_helpers.BackendRlibTests.test_missing_archive_and_wrong_basename_refuse",
+      "test_qualification_helpers.BackendRlibTests.test_other_package_target_kind_source_and_profile_refuse",
+      "test_qualification_helpers.BackendRlibTests.test_outside_target_refuses_before_pin",
+      "test_qualification_helpers.BackendRlibTests.test_parent_alias_refuses",
+      "test_qualification_helpers.FullSuiteTests.test_duplicate_missing_and_unexpected_names_refuse",
+      "test_qualification_helpers.FullSuiteTests.test_exact_ignored_names_and_should_panic_are_retained",
+      "test_qualification_helpers.FullSuiteTests.test_failed_or_changed_ignored_status_refuses",
+      "test_qualification_helpers.FullSuiteTests.test_forged_multiple_and_missing_summary_refuse",
+      "test_qualification_helpers.FullSuiteTests.test_invalid_expected_rosters_refuse",
+      "test_qualification_helpers.FullSuiteTests.test_malformed_named_line_is_not_silently_ignored",
+      "test_qualification_helpers.FullSuiteTests.test_no_ignored_suite_is_supported",
+      "test_qualification_helpers.FullSuiteTests.test_swapped_ignored_identity_refuses_even_with_same_counts"
+    ],
+    "schema": "ferric-s-producer-helper-tests-v1",
+    "skipped": 0,
+    "source_unchanged": true,
+    "sources": {
+      "qualification_helpers.py": {
+        "bytes": 4103,
+        "sha256": "a77cc7f82ebdd9518185b30b837e250abc68cc32e4858ab1ad3dc83a0ec8efe6"
+      },
+      "test_qualification_helpers.py": {
+        "bytes": 8866,
+        "sha256": "e0480bfe8e5278eea12551e7c950225a387c4d9b48f79cb2dbd146c93443b91a"
+      }
+    },
+    "synthetic_helpers_only": true,
+    "tests_run": 16,
+    "unexpected_successes": 0
+  },
+  "compiler_qualification": false,
+  "controller": {
+    "bytes": 12607,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-s-producer-helper-tests-v228-v1/run_tests.py",
+    "sha256": "47019050547920e9618d2b37cb9c3b3097ea3a22a94c19808cc1aaf6702fa43d"
+  },
+  "elapsed_seconds": 0.11859379394445568,
+  "failure": null,
+  "gpu_execution": false,
+  "input_manifest": {
+    "bytes": 1130,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-s-producer-helper-tests-v228-v1/input-manifest.json",
+    "sha256": "4591497713a719fbcbb70413689bbcc033194973694a5ddd692391ba78a2d547"
+  },
+  "limits": {
+    "address_space_bytes": 12884901888,
+    "affinity": [
+      8,
+      9
+    ],
+    "cleanup_reserve_seconds": 50,
+    "cpu_seconds_per_leaf": 1200,
+    "file_bytes": 1073741824,
+    "initial_free_bytes": 42949672960,
+    "leaf_seconds": 120,
+    "live_free_bytes": 40802189312,
+    "nice": 10,
+    "scratch_bytes": 6442450944,
+    "stream_bytes": 67108864,
+    "whole_seconds": 180
+  },
+  "passed": true,
+  "phases": [
+    {
+      "adopted_reaped": [],
+      "argv": [
+        "/usr/bin/prlimit",
+        "--as=12884901888",
+        "--cpu=1200",
+        "--fsize=1073741824",
+        "--core=0",
+        "--",
+        "/usr/bin/python3.12",
+        "-I",
+        "-S",
+        "-B",
+        "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-s-producer-helper-tests-v228-v1/helper_test_entry.py"
+      ],
+      "command": {
+        "bytes": 854,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-s-producer-helper-tests-v228-v1/evidence/s-producer-helper-tests.command.json",
+        "sha256": "4780f89cb4ac16b404cdbe9dd3afd09b93418750641616418b0379c955a71a3d"
+      },
+      "elapsed_ns": 100744953,
+      "exception": null,
+      "exit_code": 0,
+      "forced_cleanup": false,
+      "label": "s-producer-helper-tests",
+      "natural_exit": true,
+      "observed_signals": [],
+      "pgid": 864046,
+      "pid": 864046,
+      "process_group_absent": true,
+      "reaped": true,
+      "stderr": {
+        "bytes": 2375,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-s-producer-helper-tests-v228-v1/evidence/s-producer-helper-tests.stderr",
+        "sha256": "b44796a67d9b3d282971dfc6ac549de8d98630256f00cb2159dcbf0ce17f8caf"
+      },
+      "stdout": {
+        "bytes": 3499,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-s-producer-helper-tests-v228-v1/evidence/s-producer-helper-tests.stdout",
+        "sha256": "b7630cbf1520eaff10e919e776582c3c89c8d91d649222ed29298107c6e973a0"
+      },
+      "storage_failure": null,
+      "timed_out": false
+    }
+  ],
+  "postcheck_errors": [],
+  "raw": {
+    "s-producer-helper-tests.command.json": {
+      "bytes": 854,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-s-producer-helper-tests-v228-v1/evidence/s-producer-helper-tests.command.json",
+      "sha256": "4780f89cb4ac16b404cdbe9dd3afd09b93418750641616418b0379c955a71a3d"
+    },
+    "s-producer-helper-tests.result.json": {
+      "bytes": 1561,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-s-producer-helper-tests-v228-v1/evidence/s-producer-helper-tests.result.json",
+      "sha256": "917c8804ab781dc84983f31108af9f3948a3335b2703a334e723136df61eca77"
+    },
+    "s-producer-helper-tests.started.json": {
+      "bytes": 375,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-s-producer-helper-tests-v228-v1/evidence/s-producer-helper-tests.started.json",
+      "sha256": "b4f5b637108dfc75776e15542553b69f3827af44eadd4c83394b56a1e476df0e"
+    },
+    "s-producer-helper-tests.stderr": {
+      "bytes": 2375,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-s-producer-helper-tests-v228-v1/evidence/s-producer-helper-tests.stderr",
+      "sha256": "b44796a67d9b3d282971dfc6ac549de8d98630256f00cb2159dcbf0ce17f8caf"
+    },
+    "s-producer-helper-tests.stdout": {
+      "bytes": 3499,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-s-producer-helper-tests-v228-v1/evidence/s-producer-helper-tests.stdout",
+      "sha256": "b7630cbf1520eaff10e919e776582c3c89c8d91d649222ed29298107c6e973a0"
+    },
+    "sources-after.json": {
+      "bytes": 1436,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-s-producer-helper-tests-v228-v1/evidence/sources-after.json",
+      "sha256": "e10ab56b61870666c721de944ff3a2f9b1cb864f5a7056f36cb16affdda139c3"
+    },
+    "sources-before.json": {
+      "bytes": 1436,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-s-producer-helper-tests-v228-v1/evidence/sources-before.json",
+      "sha256": "e10ab56b61870666c721de944ff3a2f9b1cb864f5a7056f36cb16affdda139c3"
+    }
+  },
+  "schema": "ferric-s-producer-helper-test-cpu-v1",
+  "source_inputs": {
+    "helper_test_entry.py": {
+      "bytes": 4998,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-s-producer-helper-tests-v228-v1/helper_test_entry.py",
+      "sha256": "202120882d73fb1567492c863890f52ade25e9c5015605466765945401053626"
+    },
+    "qualification_helpers.py": {
+      "bytes": 4103,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-s-producer-helper-tests-v228-v1/qualification_helpers.py",
+      "sha256": "a77cc7f82ebdd9518185b30b837e250abc68cc32e4858ab1ad3dc83a0ec8efe6"
+    },
+    "run_tests.py": {
+      "bytes": 12607,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-s-producer-helper-tests-v228-v1/run_tests.py",
+      "sha256": "47019050547920e9618d2b37cb9c3b3097ea3a22a94c19808cc1aaf6702fa43d"
+    },
+    "supervisor.py": {
+      "bytes": 41485,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-s-producer-helper-tests-v228-v1/supervisor.py",
+      "sha256": "8824478a6415dee39d28ccefb0881fc0687ac724f5a9c5a4540310fb5196b9bc"
+    },
+    "test_qualification_helpers.py": {
+      "bytes": 8866,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-s-producer-helper-tests-v228-v1/test_qualification_helpers.py",
+      "sha256": "e0480bfe8e5278eea12551e7c950225a387c4d9b48f79cb2dbd146c93443b91a"
+    }
+  },
+  "source_unchanged": true,
+  "supervisor": {
+    "bytes": 41485,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-s-producer-helper-tests-v228-v1/supervisor.py",
+    "sha256": "8824478a6415dee39d28ccefb0881fc0687ac724f5a9c5a4540310fb5196b9bc"
+  },
+  "synthetic_helpers_only": true,
+  "tool_pins": {
+    "prlimit": {
+      "bytes": 27536,
+      "path": "/usr/bin/prlimit",
+      "sha256": "17064f67e650d6152a6902b013aab496b54c87587c8eea6f5023aafee6154069"
+    },
+    "python": {
+      "bytes": 8020928,
+      "path": "/usr/bin/python3.12",
+      "sha256": "e1efa562c2cc2e35521a5c9c9b9939921001ff8ca9708a13ef15ace68cc2ccd7"
+    }
+  }
+}

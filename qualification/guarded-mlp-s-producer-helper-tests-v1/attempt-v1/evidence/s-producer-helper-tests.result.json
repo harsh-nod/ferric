@@ -1,0 +1,44 @@
+{
+  "adopted_reaped": [],
+  "argv": [
+    "/usr/bin/prlimit",
+    "--as=12884901888",
+    "--cpu=1200",
+    "--fsize=1073741824",
+    "--core=0",
+    "--",
+    "/usr/bin/python3.12",
+    "-I",
+    "-S",
+    "-B",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-s-producer-helper-tests-v228-v1/helper_test_entry.py"
+  ],
+  "command": {
+    "bytes": 854,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-s-producer-helper-tests-v228-v1/evidence/s-producer-helper-tests.command.json",
+    "sha256": "4780f89cb4ac16b404cdbe9dd3afd09b93418750641616418b0379c955a71a3d"
+  },
+  "elapsed_ns": 100744953,
+  "exception": null,
+  "exit_code": 0,
+  "forced_cleanup": false,
+  "label": "s-producer-helper-tests",
+  "natural_exit": true,
+  "observed_signals": [],
+  "pgid": 864046,
+  "pid": 864046,
+  "process_group_absent": true,
+  "reaped": true,
+  "stderr": {
+    "bytes": 2375,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-s-producer-helper-tests-v228-v1/evidence/s-producer-helper-tests.stderr",
+    "sha256": "b44796a67d9b3d282971dfc6ac549de8d98630256f00cb2159dcbf0ce17f8caf"
+  },
+  "stdout": {
+    "bytes": 3499,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-s-producer-helper-tests-v228-v1/evidence/s-producer-helper-tests.stdout",
+    "sha256": "b7630cbf1520eaff10e919e776582c3c89c8d91d649222ed29298107c6e973a0"
+  },
+  "storage_failure": null,
+  "timed_out": false
+}

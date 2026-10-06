@@ -17,6 +17,12 @@ qualification. No production dependency, gfx950 HSACO, GPU, numerical or
 performance gate has changed. Full compiler qualification and loader checks
 are next; all issue #42 milestones remain open.
 
+The [sixteen S/RPO harness helper tests also pass on MI350](../qualification/guarded-mlp-s-producer-helper-tests-v1/README.md).
+They validate exact full-suite outcomes/ignored identities and final backend
+rlib selection. One bounded child exited naturally and was reaped, with
+unchanged inputs and clean postchecks. These synthetic harness tests are
+separate from the 445 compiler tests and do not qualify the full S/RPO build.
+
 Previously, [438 tests passed, including all checked-integer and Option wrappers](../qualification/guarded-mlp-core-checked-attention-qualification-v1/README.md).
 Both builds pass on MI350. The fourth attempt corrects the observed FnOnce
 kind and exact direct closure resolution. All six integer and ten Option

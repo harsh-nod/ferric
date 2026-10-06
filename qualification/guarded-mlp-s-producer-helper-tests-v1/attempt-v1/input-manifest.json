@@ -1,0 +1,37 @@
+{
+  "files": {
+    "helper_test_entry.py": {
+      "bytes": 4998,
+      "sha256": "202120882d73fb1567492c863890f52ade25e9c5015605466765945401053626"
+    },
+    "qualification_helpers.py": {
+      "bytes": 4103,
+      "sha256": "a77cc7f82ebdd9518185b30b837e250abc68cc32e4858ab1ad3dc83a0ec8efe6"
+    },
+    "run_tests.py": {
+      "bytes": 12607,
+      "sha256": "47019050547920e9618d2b37cb9c3b3097ea3a22a94c19808cc1aaf6702fa43d"
+    },
+    "supervisor.py": {
+      "bytes": 41485,
+      "sha256": "8824478a6415dee39d28ccefb0881fc0687ac724f5a9c5a4540310fb5196b9bc"
+    },
+    "test_qualification_helpers.py": {
+      "bytes": 8866,
+      "sha256": "e0480bfe8e5278eea12551e7c950225a387c4d9b48f79cb2dbd146c93443b91a"
+    }
+  },
+  "schema": "ferric-s-producer-helper-test-input-v1",
+  "tool_pins": {
+    "prlimit": {
+      "bytes": 27536,
+      "path": "/usr/bin/prlimit",
+      "sha256": "17064f67e650d6152a6902b013aab496b54c87587c8eea6f5023aafee6154069"
+    },
+    "python": {
+      "bytes": 8020928,
+      "path": "/usr/bin/python3.12",
+      "sha256": "e1efa562c2cc2e35521a5c9c9b9939921001ff8ca9708a13ef15ace68cc2ccd7"
+    }
+  }
+}
