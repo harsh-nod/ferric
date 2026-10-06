@@ -15,13 +15,40 @@ The actual kernel's post-compaction counts have not yet been measured.
 The patch replaces two files and adds nine focused regression tests in one
 new module. Three inherited layout expectations change; their actual bounds
 and race checks remain. Source review and authenticated patch reconstruction
-passed. Full CPU qualification has started on `mi350`; no result is claimed
-yet. Fresh loader checks and guarded lowering must follow a passing suite.
+passed. Full CPU qualification on `mi350` also passed, as recorded below.
+Fresh loader checks and guarded lowering remain separate gates.
 
 Manifest: `a996f2ecae0ce3a29e091ecc50f23ef081e57feba005b621856cd55ce6889428`.
 Patch: `c00bedb6983ed9fca9565ffd3ee1bb7be330b936d851806ffb174f73322517c7`.
 
-This checkpoint is source-only. It does not establish guarded HSACO output,
+## MI350 Qualification
+
+The [fresh CPU attempt](attempt-v1) passed all 43 phases across 30 test scopes
+in 649.356388 seconds.
+
+| Executed Scope | Passed | Ignored |
+| --- | ---: | ---: |
+| Complete compiler library | 1,314 | 24 |
+| Complete Pliron library | 1,507 | 1 |
+| Focused repeats and extraction controls | 133 | 0 |
+| Total test executions | 2,954 | 25 |
+
+Totals include repeated executions, not only unique tests. All children exited
+naturally with status zero, were reaped, and left no process group. Source and
+dependency checks remained unchanged, with no postcheck errors, timeout, or
+forced cleanup. The full map contains 5,804 compiler sources and two harness
+files; only the reviewed three-row source overlay differs from the baseline.
+
+The archive retains 243 members, 242 pinned bodies, and 219 raw files totaling
+34,228,269 body bytes. CPU receipt SHA-256:
+`439d4b5bf10a1fe9f44d02fa1cbd28b03eec9601bb161806909b2f073beb9018`.
+The 5,587,557-byte archive SHA-256 is
+`576a2463ee1fbb67291c25b9dba1fddfe51675bdc889a57fa2f8cc581838028b`.
+The pinned prior failure and stderr are included and verified independently
+of their historical controller flags. They measure the old graph, not the
+compacted kernel's block or edge counts.
+
+This compiler qualification does not establish guarded HSACO output,
 GPU execution, model numerics, or performance. Passing one resource gate does
 not imply passing the independent edge, fact, alias, or other proof gates.
 All issue #42 milestones and the 700 tokens/s target remain open.

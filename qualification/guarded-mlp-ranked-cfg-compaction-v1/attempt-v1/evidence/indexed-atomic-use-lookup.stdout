@@ -1,0 +1,14 @@
+
+running 9 tests
+test production_ranked_projection_v1::tests::indexed_atomic_use_lookup_bounds_repeated_measured_size_queries ... ok
+test production_ranked_projection_v1::tests::indexed_atomic_use_lookup_charges_exact_bound_before_query ... ok
+test production_ranked_projection_v1::tests::indexed_atomic_use_lookup_failed_charges_do_not_commit_work ... ok
+test production_ranked_projection_v1::tests::indexed_atomic_use_lookup_handles_boundary_lengths ... ok
+test production_ranked_projection_v1::tests::indexed_atomic_use_lookup_keeps_independent_inventories ... ok
+test production_ranked_projection_v1::tests::indexed_atomic_use_lookup_matches_all_small_sorted_sites ... ok
+test production_ranked_projection_v1::tests::indexed_atomic_use_lookup_preserves_first_duplicate_and_extreme_sites ... ok
+test production_ranked_projection_v1::tests::indexed_atomic_use_lookup_real_inventory_keeps_atomic_refusals ... ok
+test production_ranked_projection_v1::tests::indexed_atomic_use_lookup_real_inventory_keeps_exact_statement_binding ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 1329 filtered out; finished in 0.04s
+
