@@ -54,9 +54,16 @@ builds; source/dependency/cache/process postchecks are clean. The eight worker
 and four parent changes are integrated from their tested, formatted bodies.
 The separate capture/parser gate passes all 12 tests. This distinct opt-in mode
 retains 34 layer-zero tensor parts only after healthy Close, without changing
-kernel images or splitting the guarded segment. GPU capture publication and
-independent stage comparison are separate gates; CPU results are not numerical
-acceptance.
+kernel images or splitting the guarded segment. The fresh GPU capture now
+passes in one attempt with healthy Close, 11 clean process phases and all
+34 parts verified. Its four complete observation payloads are byte-identical
+to the previous uncaptured guarded AR4 run. The
+[independent current-stage diagnostic](../qualification/guarded-mlp-model-stage-capture-v1/numerical-v2/README.md)
+also completes: eight tests, 200 clean input posthashes, and 12/26 complete
+BF16 rows bit-exact. The first Q-projection difference is one word/one BF16 step;
+layer-zero hidden relative L2 is 0.0591548%. All 32 primary/component metric rows
+are independently recomputed from the bytes. Full-model numerical acceptance
+remains open; this is not sustained decode or a throughput measurement.
 
 Current integration: [the guarded parent passes 375 selected tests and all 54 CPU phases on MI350](../qualification/guarded-mlp-parent-cpu-v1/README.md).
 All five selected parent binaries build, with clean source, dependency, cache

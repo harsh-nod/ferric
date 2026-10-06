@@ -70,6 +70,49 @@ are clean. [The original result](checker-cpu-v1/evidence/complete.json) is
 The retained directory includes all six inputs and seven raw test files plus
 the terminal report. This gate tests synthetic data, not model numerics.
 
+## Actual GPU Capture
+
+The fresh MI350 autoregressive capture passes in one attempt, through all 36
+layers on both ranks, producing `9112 -> 67 -> 25 -> 576 -> 2701`. Healthy Close,
+all 11 naturally exited/reaped process phases, and device-idle postchecks pass.
+The outer controller verifies all 34 layer-zero parts (256,136 bytes) against
+the same request and first layer output. Kernel images and runtime policy are
+unchanged.
+
+- [Actual controller result](gpu-attempt-v1/ar4/complete.json): 97,034 bytes,
+  SHA256 `324b40f7dcee931c856aec8b353bd35176e02570290aca5376c0075cfdf3be12`.
+- [Capture summary](gpu-attempt-v1/ar4/capture-observation.json) and
+  [original capture bytes](gpu-attempt-v1/ar4/native/child-stderr.bin).
+- [Retained manifest](gpu-attempt-v1/manifest.json): 90 pinned bodies plus the
+  manifest, including all 78 original raw files. The 2,264,250-byte transport
+  archive has SHA256
+  `a71a0b97fff4157fc6518a4e01bc5160d7972c6b991f9e9ec35fd67a73d62b36`.
+
+Each of the four 606,976-byte model observation payloads is byte-identical to
+the corresponding earlier uncaptured guarded AR4 payload. This checks the
+observed effect of enabling capture; agreement with another Ferric run is not
+an independent accuracy reference. The independent stage diagnostic below is
+a separate comparison, not an acceptance test.
+Only positions zero through three are consumed. This is not the requested
+2,048-token prompt / 256-token sustained workload, and capture overhead makes
+the diagnostic unsuitable for a throughput comparison.
+
+## Independent Stage Comparison
+
+The [current guarded-stage diagnostic](numerical-v2/README.md) completes on
+MI350 with eight passing tests and all 200 input posthashes clean. It compares
+26 complete BF16 stage/rank rows and six QKV subdivisions against two genuine
+framework passes. Twelve complete rows are byte-exact, including both input
+embeddings, input normalization, K/V, and first-position attention.
+
+The earliest observed difference is one Q-projection word on rank zero, one
+BF16 step apart. Both final-hidden ranks have 3,807/4,096 exact words, relative
+L2 0.0591548% and maximum absolute error 0.00390625. The linked tables preserve
+all stage metrics, including large ordered-step counts at near-zero sign
+crossings. Four FP32 projection partials are authenticated but not treated as
+full BF16 outputs. Independent byte-data recomputation agrees with all 32
+reported metric rows. No numerical acceptance threshold is introduced.
+
 ## Capture Boundaries
 
 The explicit worker flag is
@@ -89,14 +132,13 @@ Close. It contains original bytes with explicit stage/role/type/offset/hash
 metadata, not substituted reference values. The matching parent mode validates
 the report after child retirement against the actual request and layer output.
 The parent CPU qualification above independently covers this validation path.
-Actual GPU capture evidence is a separate publication gate; the CPU capsules
-do not promote a native outcome or independent numerical acceptance.
+The GPU evidence above separately establishes native capture. Neither result
+establishes independent numerical acceptance.
 
 ## Remaining Gates
 
-1. Publish the separately audited GPU capture, including shutdown and raw evidence.
-2. Compare the current stages with the genuine independent framework capture.
-3. Establish full-model numerical acceptance before sustained benchmarking.
+1. Isolate remaining arithmetic differences using matched intermediate inputs.
+2. Establish full-model numerical acceptance before sustained benchmarking.
 
 Capture overhead excludes this mode from timing comparisons. No GPU overlap,
 model speedup, sustained 2,048/256 result or 700 tokens/s claim follows. All

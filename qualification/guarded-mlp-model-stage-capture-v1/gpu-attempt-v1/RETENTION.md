@@ -1,0 +1,19 @@
+# Guarded Stage-Capture Evidence Retention
+
+These are bounded standard-library data tools. They launch no native process, import no project module, and do not rerun the ordinary model validator or numerical diagnostics. Root owns execution. The prior guarded AR4 retainer supplies the source/readset, raw, process, recurrence, Close, topology, idle, and nonclaim checks.
+
+The exporter uses only the exact fresh capture root and nine pinned root inputs. Current parent/worker CPU receipt and Cargo ELF metadata are separately pinned and joined to the admitted plan and controller readset. Existing external readset pins are retained as metadata; binaries, model weights, and dependency bodies are not copied. The separate actual CPU capsules remain the qualification evidence.
+
+The original actual terminal name and digest must be bound before either tool can proceed. The exporter refuses a nonfresh archive destination. The retainer additionally requires the actual archive and bound exporter pins, authenticates every member before creating the canonical destination, preserves the exported manifest verbatim, and rehashes every retained body afterward. An interrupted write may leave an incomplete fresh destination; it never prints a successful retention result.
+
+On success the source closure is nine root bodies, 78 original raw bodies, and one original terminal: 88 files. The archive adds this document, the actual exporter source, and its manifest: 91 ordinary members, 90 manifest pins. The fourteen-file native directory is unchanged. The sole new raw body is `capture-observation.json`.
+
+Successful retention requires all eleven original owned phases to have natural zero exits, reaped owned processes and absent groups; exact two-process parent/worker lineage; six stable all-eight-GPU idle observations; the four actual autoregressive frames and successful Close; and the recorded ordinary validator observation. The capture checker is copied byte-for-byte from the reviewed GPU controller and rerun over retained data through a small closed field parser. It requires the original ordinary-validation prerequisite and checks the 34-part/256,136-byte capture, all hashes and finite scalar widths, identities, physical cache-page offsets, request metadata/rotary bytes, and both final-hidden parts against the actual first observation. Its result must match both the terminal and the saved capture observation.
+
+Failed outcomes retain their original failed status, errors, raw prefix, and phase/body joins. They do not acquire successful lifecycle, complete-frame, or capture claims. A failure before the controller writes an authenticated terminal cannot be exported by these tools. Dirty or forced-cleanup evidence may be retained only as a failed original outcome, never as success.
+
+Both tools use a 120-second alarm and CPU ceiling, 256 MiB address-space ceiling, 8 MiB individual body bound, and 72 MiB total/archive bound, without raising existing limits. Tar output is USTAR with ordinary files only; retention rejects links, traversal, duplicate names, PAX metadata, special members, excess counts, and extent/pin mismatches. The maximum closed prefix is 269 files.
+
+Stage `export_evidence.py` and this exact `RETENTION.md` together outside the immutable GPU root. Invoke `python3 -B export_evidence.py`. It writes `E/guarded-mlp-model-stage-capture-gpu-evidence-v228-v1.tar.gz` and reports its actual pin. After root fetches that archive to the matching Windows evidence path and binds its pin plus the exporter pin, invoke `python3 -B retain_evidence.py` locally. The canonical destination is `qualification/guarded-mlp-model-stage-capture-v1/gpu-attempt-v1`.
+
+No numerical acceptance, full-model acceptance, performance result, or production authority follows from retaining a capture. The actual native outcome is preserved, not upgraded.

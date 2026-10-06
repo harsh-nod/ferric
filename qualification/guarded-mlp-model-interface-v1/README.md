@@ -106,11 +106,13 @@ joins. The archive retains host executable metadata, not executable bodies.
 
 ## Next Demo Gates
 
-The next full-model engineering demo requires a separately built Ferric route
-that reserves 72 unbound pairs, binds all model roles before Ready, and runs
-Prefix attention followed by exactly one guarded R1/MLP/validator/R2 segment per
-layer. Four forwards must exercise both banks at generations 1, 1, 2, 2 and
-finish with healthy Close. Numerical acceptance requires an independent model
+The separately built Ferric route now completes guarded TF4/AR4 through all
+36 layers and both ranks, using both banks at generations 1, 1, 2, 2 and healthy
+Close. A [fresh layer-zero capture](../guarded-mlp-model-stage-capture-v1/README.md)
+also passes and retains the current runtime's intermediate tensors. These
+bounded bring-up results satisfy the native four-forward gate, not full-model
+numerical acceptance. Before a correctness-qualified community demo, the
+remaining tensor differences need evaluation against an independent model
 reference, not only agreement with an older Ferric route.
 
 Sustained Qwen3-8B BF16 target-only 2,048/256, long-request arena reclamation,
