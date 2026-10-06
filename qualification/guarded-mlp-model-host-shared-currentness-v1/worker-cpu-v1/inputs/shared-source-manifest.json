@@ -1,0 +1,222 @@
+{
+  "schema": "ferric-guarded-mlp-model-host-shared-currentness-source-v1",
+  "canonical_revision": "1371774221e0b271e4aac1381c3df6f6d4a4592d",
+  "base_composition": "canonical qualified and formatted host-observation integration; explicit shared-full-currentness candidate",
+  "source_only": true,
+  "files": [
+    {
+      "path": "adapters/m1-engineering-execution-v1/src/bin/ferric-qwen3-finite-guarded-mlp-decode-engineering.rs",
+      "preimage_source": "canonical-qualified-host-observation",
+      "before": {
+        "bytes": 4863,
+        "sha256": "3010a7660ed7d69d5b4120e67c55d346317df1c555f811b5f49c4ff663fe02e4"
+      },
+      "after": {
+        "bytes": 5968,
+        "sha256": "cfcc6f32a08782ff2ddaee42262c294af12b8b803b6695692f0d861a899544ba"
+      }
+    },
+    {
+      "path": "adapters/m1-engineering-execution-v1/src/tp_finite_client/prefix_decode/guarded.rs",
+      "preimage_source": "canonical-qualified-host-observation",
+      "before": {
+        "bytes": 26298,
+        "sha256": "f6259b19d365844c46db20e6f7b633222eadc9a749055f9e7aea481ea669c4cf"
+      },
+      "after": {
+        "bytes": 27074,
+        "sha256": "8eeec4c619712ae2588e0d9d87fa473c09ef1e20d3764e606423d945e60607ac"
+      }
+    },
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/guarded_mlp_host_observation_v1.rs",
+      "preimage_source": "canonical-qualified-host-observation",
+      "before": {
+        "bytes": 7788,
+        "sha256": "b007732ae1208c5aa965a58117faadc649f9a122a8d72c3ca9c51dce42cf3f43"
+      },
+      "after": {
+        "bytes": 9609,
+        "sha256": "2a273d85dc6b724452136dfa54a7ef8ec78dfdb59f1645b3c6d2b651d43f90ce"
+      }
+    },
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/guarded_mlp_host_observation_v1_tests.rs",
+      "preimage_source": "canonical-qualified-host-observation",
+      "before": {
+        "bytes": 9498,
+        "sha256": "ac8d3d425b53f0ad448dd6539e7d18a62824e5c67a0b81b6d3e4a864b6d779a8"
+      },
+      "after": {
+        "bytes": 13121,
+        "sha256": "c6ee5432e6b4624c34d1c1e6f34790bee4ed56f0beed9c75c54e33e8f9f3afe1"
+      }
+    },
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/main.rs",
+      "preimage_source": "canonical-qualified-host-observation",
+      "before": {
+        "bytes": 14219,
+        "sha256": "0bc29e6bd0d5603b6cd1614493a571b8a31ece86df4d719aa00dd84ccf32bfe1"
+      },
+      "after": {
+        "bytes": 14905,
+        "sha256": "e64d30aa0290ac04a90539098ef04f884800f3e3dc7bdedbcb8e671424cb4312"
+      }
+    },
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_guarded_mlp_decode_cli_v1.rs",
+      "preimage_source": "canonical-qualified-host-observation",
+      "before": {
+        "bytes": 17174,
+        "sha256": "82647d8880c56de21429fca233797e6dad83126165170bc01b1c71745f345e2b"
+      },
+      "after": {
+        "bytes": 18396,
+        "sha256": "eb603101ab16c1a911c02fe4e37a0509c1698db818321a54f63d5a7a2bf1aee3"
+      }
+    },
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_guarded_mlp_decode_cli_v1_tests.rs",
+      "preimage_source": "canonical-qualified-host-observation",
+      "before": {
+        "bytes": 13261,
+        "sha256": "ec9c1f5a6c03ce44d191d9d58c2f041d6be52edd8d0bcf842fef57b03d33a74d"
+      },
+      "after": {
+        "bytes": 14661,
+        "sha256": "006d111f32e5d2811f6dab6ab31d2d7a50fb1128228f96b500ec005c38716b7a"
+      }
+    },
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_guarded_mlp_host_v1.rs",
+      "preimage_source": "canonical-qualified-host-observation",
+      "before": {
+        "bytes": 7505,
+        "sha256": "c0b8c9db95913d5fcd8b8faaf67ee7c8def96e68dc762cdfc34292ab870ce5c8"
+      },
+      "after": {
+        "bytes": 11332,
+        "sha256": "d888446ee52255d270807b06b553d5c56221218bded89a06ea4815a524a5a83f"
+      }
+    }
+  ],
+  "new_tests": {
+    "worker_library": [
+      "guarded_mlp_host_observation_v1::tests::guarded_shared_host_actual_parent_join_remains_mode_specific",
+      "guarded_mlp_host_observation_v1::tests::guarded_shared_host_parser_keeps_conservative_schema_and_policy_closed",
+      "guarded_mlp_host_observation_v1::tests::guarded_shared_host_preserves_identity_epoch_counters_and_closed_claims",
+      "native_guarded_mlp_decode_cli_v1::tests::guarded_shared_host_cli_is_distinct_and_preserves_closed_runtime_options",
+      "native_guarded_mlp_host_v1::tests::guarded_shared_host_configures_once_before_observer_and_stops_on_failure",
+      "native_guarded_mlp_host_v1::tests::guarded_shared_host_report_requires_close_and_never_enters_default_parser"
+    ],
+    "parent_library": [
+      "guarded_mlp_host_observation_v1::tests::guarded_shared_host_actual_parent_join_remains_mode_specific",
+      "guarded_mlp_host_observation_v1::tests::guarded_shared_host_parser_keeps_conservative_schema_and_policy_closed",
+      "guarded_mlp_host_observation_v1::tests::guarded_shared_host_preserves_identity_epoch_counters_and_closed_claims"
+    ],
+    "parent_guarded_binary": [
+      "tests::guarded_shared_host_parent_cli_cannot_select_or_combine_other_modes"
+    ]
+  },
+  "new_test_counts": {
+    "worker_library": 6,
+    "parent_library": 3,
+    "parent_guarded_binary": 1
+  },
+  "parent_cli_flag": "--observe-guarded-host-shared-currentness",
+  "worker_cli_flag": "--engineering-native-guarded-mlp-host-shared-currentness-v1",
+  "report": {
+    "schema": "FerricGuardedMlpSharedFullHostObservationV1",
+    "snapshots": 587,
+    "adjacent_intervals": 586,
+    "forwards": 4,
+    "layers_per_forward": 36,
+    "rank_counters": 19,
+    "shared_counters": 4,
+    "encoded_byte_limit": 2097152,
+    "transport": "existing-child-stderr.bin",
+    "native_close_required": true,
+    "inclusive_nested_host_scopes": true,
+    "paired_generic_dispatch_timers_complete": false,
+    "tensor_stage_capture": false,
+    "shared_full_currentness": true
+  },
+  "configuration": {
+    "api": "Group::configure_performance_v2",
+    "admission_cache": false,
+    "operational_currentness": false,
+    "shared_full_currentness": true,
+    "profile": false,
+    "before_host_observation_enable": true,
+    "before_user_allocation_or_kernel_loading": true
+  },
+  "shared_full_currentness_source_added": true,
+  "shared_full_currentness_native_execution": false,
+  "inherited_host_observation_source_added": true,
+  "inherited_capture_source_added": true,
+  "default_wire_changed": false,
+  "performance_policy_changed": true,
+  "default_policy_changed": false,
+  "kernel_images_changed": false,
+  "runtime_sources_changed": false,
+  "cpu_qualification_executed": false,
+  "gpu_execution": false,
+  "gpu_time": false,
+  "gpu_overlap": false,
+  "numerical_acceptance": false,
+  "full_model_acceptance": false,
+  "performance_claim": false,
+  "production_authority": false,
+  "integration_patch": {
+    "bytes": 32173,
+    "sha256": "374a708550fcad4568f721f3811d57bfee8f0cd141bc5eb3e80d81c99229e29b"
+  },
+  "base": {
+    "worker_complete": {
+      "path": "/home/harsh/ferric-p227-integration/qualification/guarded-mlp-model-host-observation-v1/worker-cpu-v1/evidence/complete.json",
+      "bytes": 1625743,
+      "sha256": "fd4b55f53e2a61aafb49bb901796ca6c5d72a2e34d725aabc16cd4d14cef082e"
+    },
+    "worker_sources": {
+      "path": "/home/harsh/ferric-p227-integration/qualification/guarded-mlp-model-host-observation-v1/worker-cpu-v1/evidence/sources-after.json",
+      "bytes": 408555,
+      "sha256": "7dfba5bd71c4baffe607b89145d00240dbc667c782da02d669b77ca090ba757b"
+    },
+    "parent_complete": {
+      "path": "/home/harsh/ferric-p227-integration/qualification/guarded-mlp-model-host-observation-v1/parent-cpu-v1/evidence/complete.json",
+      "bytes": 3815416,
+      "sha256": "ab72e2316315ec6b0766284e0b4c26e834b2502cd4a6fc29c304a875950e3c8f"
+    },
+    "parent_sources": {
+      "path": "/home/harsh/ferric-p227-integration/qualification/guarded-mlp-model-host-observation-v1/parent-cpu-v1/evidence/sources-after.json",
+      "bytes": 483118,
+      "sha256": "9c003fe1f9b79498e9cf9843351f1699e2cb406b6b8517efd0ec27a87a0333c7"
+    }
+  },
+  "base_host_manifest": {
+    "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/guarded-mlp-model-interface-v228-v1/model-host-observation-v2/source-manifest.json",
+    "bytes": 11067,
+    "sha256": "8c36b978a705f6ce126ac0d3cd7f892f15e52aab752e020d84bd3e1f722021d7"
+  },
+  "observed_conservative_host_report": {
+    "path": "/home/harsh/ferric-p227-integration/qualification/guarded-mlp-model-host-observation-v1/gpu-attempt-v1/ar4/complete.json",
+    "bytes": 614572,
+    "sha256": "91a20d628644eb784d651e4d4d87571cb55cdb367971092fcea40d259ee38ec2"
+  },
+  "expected_qualification": {
+    "conditional_only": true,
+    "worker_passed": 607,
+    "worker_ignored": 4,
+    "worker_inventory": 611,
+    "worker_phases": 9,
+    "worker_sources": 184,
+    "worker_source_map_rows": 993,
+    "parent_selected_passed": 391,
+    "parent_library_inventory": 871,
+    "parent_phases": 55,
+    "parent_scopes": 47,
+    "parent_source_map_rows": 1225,
+    "parent_full_library_suite": false
+  }
+}

@@ -1,0 +1,51 @@
+{
+  "adopted_reaped": [],
+  "argv": [
+    "/usr/bin/prlimit",
+    "--as=12884901888",
+    "--cpu=1200",
+    "--fsize=1073741824",
+    "--core=0",
+    "--",
+    "/home/harmenon/.rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/bin/rustfmt",
+    "--edition",
+    "2024",
+    "--config",
+    "skip_children=true",
+    "--check",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-host-shared-currentness-worker-cpu-v228-v1/ferric/adapters/tp-peer-finite-engineering-worker-v1/src/guarded_mlp_host_observation_v1.rs",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-host-shared-currentness-worker-cpu-v228-v1/ferric/adapters/tp-peer-finite-engineering-worker-v1/src/guarded_mlp_host_observation_v1_tests.rs",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-host-shared-currentness-worker-cpu-v228-v1/ferric/adapters/tp-peer-finite-engineering-worker-v1/src/main.rs",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-host-shared-currentness-worker-cpu-v228-v1/ferric/adapters/tp-peer-finite-engineering-worker-v1/src/native_guarded_mlp_decode_cli_v1.rs",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-host-shared-currentness-worker-cpu-v228-v1/ferric/adapters/tp-peer-finite-engineering-worker-v1/src/native_guarded_mlp_decode_cli_v1_tests.rs",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-host-shared-currentness-worker-cpu-v228-v1/ferric/adapters/tp-peer-finite-engineering-worker-v1/src/native_guarded_mlp_host_v1.rs"
+  ],
+  "command": {
+    "bytes": 3638,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-host-shared-currentness-worker-cpu-v228-v1/evidence/rustfmt-check.command.json",
+    "sha256": "76c41abe1392f0a58fec1e75297edfde1d224e387145aedaa11be425266154f4"
+  },
+  "elapsed_ns": 101448253,
+  "exception": null,
+  "exit_code": 0,
+  "forced_cleanup": false,
+  "label": "rustfmt-check",
+  "natural_exit": true,
+  "observed_signals": [],
+  "pgid": 3942738,
+  "pid": 3942738,
+  "process_group_absent": true,
+  "reaped": true,
+  "stderr": {
+    "bytes": 0,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-host-shared-currentness-worker-cpu-v228-v1/evidence/rustfmt-check.stderr",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "stdout": {
+    "bytes": 0,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-host-shared-currentness-worker-cpu-v228-v1/evidence/rustfmt-check.stdout",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "storage_failure": null,
+  "timed_out": false
+}

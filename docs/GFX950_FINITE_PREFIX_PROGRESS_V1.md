@@ -46,6 +46,14 @@ byte-identical to ordinary AR4. Paired segments record 2,016 full-currentness
 checks per rank per forward, motivating a separate shared-full-observation
 experiment. Inclusive host counters cannot establish GPU overlap or throughput.
 
+The opt-in [shared-full-currentness successor](../qualification/guarded-mlp-model-host-shared-currentness-v1/README.md)
+now passes MI350 worker qualification: 607 passes, four unchanged ignores,
+and all 15 report/topology checker tests. Six tested worker postimages are
+integrated; all 184 worker source bodies join the actual qualification map.
+It shares one fresh topology read within a group fence, retaining device and
+queue checks and the conservative default. Parent and native GPU validation
+remain pending; this is not yet an observed performance improvement.
+
 The [historical O-projection replay](../qualification/o-projection-exact-replay-v1/README.md)
 now completes on MI350 with 18 passing tests. All 8,192 captured FP32 partials
 match the pinned kernel's modeled accumulation order. The derived native BF16

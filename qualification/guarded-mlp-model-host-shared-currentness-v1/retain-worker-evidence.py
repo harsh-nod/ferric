@@ -1,0 +1,86 @@
+"""Verify and unpack a worker evidence capsule as data, never as code."""
+
+import hashlib
+import json
+import os
+from pathlib import Path
+import sys
+import tarfile
+
+
+TERMINAL_PIN = dict(bytes=1649375, sha256='0e7f73d69fd2d3efef901f62ee90fac54cfdddbae60661314d222f25aa2ae82a')
+
+
+def require(value, message):
+    if not value:
+        raise RuntimeError(message)
+
+
+def pin(body):
+    return dict(bytes=len(body), sha256=hashlib.sha256(body).hexdigest())
+
+
+def main():
+    require(len(sys.argv) == 5 and TERMINAL_PIN is not None, 'ARCHIVE SHA256 BYTES DESTINATION')
+    archive, digest, size, destination = sys.argv[1:]
+    archive, destination = Path(archive), Path(destination)
+    require(archive.resolve(strict=True) == archive and archive.is_file(), 'ordinary archive')
+    body = archive.read_bytes()
+    require(pin(body) == dict(bytes=int(size), sha256=digest) and len(body) <= 32 << 20,
+            'exact bounded archive')
+    with tarfile.open(archive, mode='r:gz') as stream:
+        members = stream.getmembers()
+        names = [member.name for member in members]
+        require(1 <= len(names) <= 512 and len(set(names)) == len(names), 'unique bounded members')
+        require(all(member.isfile() and not member.issym() and not member.islnk()
+                    and Path(member.name).as_posix() == member.name
+                    and not Path(member.name).is_absolute()
+                    and '..' not in Path(member.name).parts and member.name not in ('', '.')
+                    and 0 <= member.size <= 32 << 20 for member in members)
+                and sum(member.size for member in members) <= 96 << 20, 'regular bounded bodies')
+        bodies = {member.name: stream.extractfile(member).read() for member in members}
+    manifest = json.loads(bodies['manifest.json'])
+    require(manifest['schema'] == 'ferric-guarded-mlp-host-shared-currentness-worker-cpu-retained-v1', 'shared capsule schema')
+    require(manifest['files'] == {name: pin(value) for name, value in bodies.items()
+                                 if name != 'manifest.json'}, 'exact manifest/body joins')
+    terminal_body = bodies['evidence/' + manifest['terminal_name']]
+    require(pin(terminal_body) == TERMINAL_PIN, 'actual terminal pin')
+    terminal = json.loads(terminal_body)
+    require(terminal['schema'] == 'ferric-guarded-mlp-host-shared-currentness-worker-cpu-v1'
+            and terminal['shared_full_currentness_source_added'] is True and terminal['shared_full_currentness_native_execution'] is False
+            and terminal['inherited_host_observation_source_added'] is True
+            and terminal['inherited_capture_source_added'] is True and terminal['performance_policy_changed'] is True
+            and terminal['default_policy_changed'] is False
+            and terminal['postcheck_errors'] == [] and terminal['source_unchanged'] is True
+            and terminal['gpu_execution'] is False
+            and terminal['whole_model_guarded_execution'] is False
+            and terminal['performance_claim'] is False, 'clean CPU-only terminal')
+    require(manifest['passed'] == terminal['passed']
+            and manifest['failure'] == terminal['failure'], 'terminal result join')
+    require(manifest['host_executable_bodies_retained'] is False
+            and manifest['shared_full_currentness_source_added'] is True and manifest['shared_full_currentness_native_execution'] is False
+            and manifest['inherited_host_observation_source_added'] is True
+            and manifest['inherited_capture_source_added'] is True and manifest['performance_policy_changed'] is True
+            and manifest['default_policy_changed'] is False,
+            'bounded source/raw host qualification only')
+    if terminal['passed']:
+        require(len(bodies) == 259 and manifest['raw_count'] == 50 and manifest['phases'] == 9
+                and manifest['source_map_rows'] == 993
+                and (terminal['tests']['worker-tests']['passed'], terminal['tests']['worker-tests']['failed'],
+                     terminal['tests']['worker-tests']['ignored']) == (607, 0, 4),
+                'exact successful shared worker census')
+    require(not os.path.lexists(destination), 'fresh retention directory')
+    destination.mkdir(parents=True, mode=0o700)
+    require(destination.resolve(strict=True) == destination, 'ordinary destination')
+    for name, value in sorted(bodies.items()):
+        path = destination / name
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with path.open('xb') as output:
+            output.write(value)
+        require(path.read_bytes() == value, 'retained body differs')
+    print(json.dumps(dict(archive=pin(body), members=len(bodies), destination=str(destination),
+                          passed=terminal['passed'], failure=terminal['failure']), sort_keys=True))
+
+
+if __name__ == '__main__':
+    main()

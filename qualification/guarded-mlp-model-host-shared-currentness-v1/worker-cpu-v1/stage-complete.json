@@ -1,0 +1,23 @@
+{
+  "archive": {
+    "bytes": 744575,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-host-shared-currentness-worker-input-v228-v1.tar.gz",
+    "sha256": "ec63245322ae00c4bd40e081b3eee468403d1128f4e6568e8f74ae26c4abf038"
+  },
+  "archive_members": 193,
+  "compiler_executed": false,
+  "formatting_executed": false,
+  "gpu_execution": false,
+  "input_manifest": {
+    "bytes": 205650,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-host-shared-currentness-worker-cpu-v228-v1/input-manifest.json",
+    "sha256": "933d49728c32cd21708ff62242d42f21a2946cd9c4ed4a55da330f293e7b23d3"
+  },
+  "passed": true,
+  "project_code_executed": false,
+  "qualified_parent_unchanged": true,
+  "runtime_files": 807,
+  "schema": "ferric-guarded-mlp-host-shared-currentness-worker-stage-v1",
+  "source_files": 993,
+  "worker_files": 184
+}

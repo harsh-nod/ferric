@@ -1,0 +1,44 @@
+{
+  "adopted_reaped": [],
+  "argv": [
+    "/usr/bin/prlimit",
+    "--as=536870912",
+    "--cpu=120",
+    "--fsize=16777216",
+    "--core=0",
+    "--",
+    "/usr/bin/python3.12",
+    "-I",
+    "-B",
+    "-c",
+    "import sys,unittest;sys.path.insert(0,'/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-host-shared-currentness-checker-cpu-v228-v1');suite=unittest.TestSuite(unittest.defaultTestLoader.loadTestsFromName(name) for name in (\"test_host\",\"test_topology\"));result=unittest.TextTestRunner(verbosity=2).run(suite);sys.exit(not result.wasSuccessful())"
+  ],
+  "command": {
+    "bytes": 1177,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-host-shared-currentness-checker-cpu-v228-v1/evidence/host-tests.command.json",
+    "sha256": "41bb6dd66c3a22f8da35e2ec1434f18d8262aab73ef308bd6b37dacaffeb0611"
+  },
+  "elapsed_ns": 1312054654,
+  "exception": null,
+  "exit_code": 0,
+  "forced_cleanup": false,
+  "label": "host-tests",
+  "natural_exit": true,
+  "observed_signals": [],
+  "pgid": 3973120,
+  "pid": 3973120,
+  "process_group_absent": true,
+  "reaped": true,
+  "stderr": {
+    "bytes": 2124,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-host-shared-currentness-checker-cpu-v228-v1/evidence/host-tests.stderr",
+    "sha256": "140393d70e666522aa0b5b1b9c691eae523a13ace670383c1819186185182a27"
+  },
+  "stdout": {
+    "bytes": 0,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-host-shared-currentness-checker-cpu-v228-v1/evidence/host-tests.stdout",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "storage_failure": null,
+  "timed_out": false
+}

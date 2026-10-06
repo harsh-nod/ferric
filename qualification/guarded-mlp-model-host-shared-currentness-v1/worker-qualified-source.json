@@ -1,0 +1,118 @@
+{
+  "schema": "ferric-guarded-mlp-host-shared-currentness-worker-qualified-overlay-v1",
+  "canonical_source_revision": "1371774221e0b271e4aac1381c3df6f6d4a4592d",
+  "source_proposal": {
+    "bytes": 9148,
+    "sha256": "5d0821afe584e59c145c05b0999f67ff24d090e094a3e0accc68c93601ae2456"
+  },
+  "complete": {
+    "bytes": 1649375,
+    "sha256": "0e7f73d69fd2d3efef901f62ee90fac54cfdddbae60661314d222f25aa2ae82a"
+  },
+  "source_map": {
+    "bytes": 415508,
+    "sha256": "f898efd3843b2bb01625124514c9d5f437d7c3bbac5f5f61ec789bb455f04ad4"
+  },
+  "files": [
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/guarded_mlp_host_observation_v1.rs",
+      "before": {
+        "bytes": 7788,
+        "sha256": "b007732ae1208c5aa965a58117faadc649f9a122a8d72c3ca9c51dce42cf3f43"
+      },
+      "authored": {
+        "bytes": 9609,
+        "sha256": "2a273d85dc6b724452136dfa54a7ef8ec78dfdb59f1645b3c6d2b651d43f90ce"
+      },
+      "after": {
+        "bytes": 9609,
+        "sha256": "2a273d85dc6b724452136dfa54a7ef8ec78dfdb59f1645b3c6d2b651d43f90ce"
+      },
+      "formatted": false
+    },
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/guarded_mlp_host_observation_v1_tests.rs",
+      "before": {
+        "bytes": 9498,
+        "sha256": "ac8d3d425b53f0ad448dd6539e7d18a62824e5c67a0b81b6d3e4a864b6d779a8"
+      },
+      "authored": {
+        "bytes": 13121,
+        "sha256": "c6ee5432e6b4624c34d1c1e6f34790bee4ed56f0beed9c75c54e33e8f9f3afe1"
+      },
+      "after": {
+        "bytes": 13417,
+        "sha256": "44935825f467fb3a3f36986ecc230af617342b39db77be9d6a4db31081626b9c"
+      },
+      "formatted": true
+    },
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/main.rs",
+      "before": {
+        "bytes": 14219,
+        "sha256": "0bc29e6bd0d5603b6cd1614493a571b8a31ece86df4d719aa00dd84ccf32bfe1"
+      },
+      "authored": {
+        "bytes": 14905,
+        "sha256": "e64d30aa0290ac04a90539098ef04f884800f3e3dc7bdedbcb8e671424cb4312"
+      },
+      "after": {
+        "bytes": 14905,
+        "sha256": "e64d30aa0290ac04a90539098ef04f884800f3e3dc7bdedbcb8e671424cb4312"
+      },
+      "formatted": false
+    },
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_guarded_mlp_decode_cli_v1.rs",
+      "before": {
+        "bytes": 17174,
+        "sha256": "82647d8880c56de21429fca233797e6dad83126165170bc01b1c71745f345e2b"
+      },
+      "authored": {
+        "bytes": 18396,
+        "sha256": "eb603101ab16c1a911c02fe4e37a0509c1698db818321a54f63d5a7a2bf1aee3"
+      },
+      "after": {
+        "bytes": 18631,
+        "sha256": "da5339ac74ab34e23e827fd1d425398e4b8ff78ee511ddd33c612b13a512b346"
+      },
+      "formatted": true
+    },
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_guarded_mlp_decode_cli_v1_tests.rs",
+      "before": {
+        "bytes": 13261,
+        "sha256": "ec9c1f5a6c03ce44d191d9d58c2f041d6be52edd8d0bcf842fef57b03d33a74d"
+      },
+      "authored": {
+        "bytes": 14661,
+        "sha256": "006d111f32e5d2811f6dab6ab31d2d7a50fb1128228f96b500ec005c38716b7a"
+      },
+      "after": {
+        "bytes": 14732,
+        "sha256": "deda82bddfd6481510d158d209d78ffa3c5074d5a7a496701a621fd7bd2e1c83"
+      },
+      "formatted": true
+    },
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_guarded_mlp_host_v1.rs",
+      "before": {
+        "bytes": 7505,
+        "sha256": "c0b8c9db95913d5fcd8b8faaf67ee7c8def96e68dc762cdfc34292ab870ce5c8"
+      },
+      "authored": {
+        "bytes": 11332,
+        "sha256": "d888446ee52255d270807b06b553d5c56221218bded89a06ea4815a524a5a83f"
+      },
+      "after": {
+        "bytes": 12050,
+        "sha256": "13e1272a70b45f235852fed9628454b2f69e20b54be30a96c7237d3308e3fefb"
+      },
+      "formatted": true
+    }
+  ],
+  "all_canonical_worker_sources_byte_joined": 184,
+  "performance_policy_changed": true,
+  "default_policy_changed": false,
+  "native_shared_currentness_execution": false
+}
