@@ -1,8 +1,8 @@
 # Guarded MLP Compiler Handoff Capture
 
-Status: **29 capture-controller fixtures pass on MI350**. The earlier failed
-attempt is retained separately. These are synthetic controller tests, not
-compiler replay, GPU execution, numerical or performance acceptance.
+Status: **actual checked replay and 29 capture-controller fixtures pass on
+MI350**. The earlier failed fixture attempt is retained separately. This is
+compiler and diagnostic evidence, not GPU, numerical or performance acceptance.
 
 The [checked gfx950 image](../guarded-mlp-atomic-load-alias-lowering-v1/README.md)
 contains a [wave-wide guard branch](../guarded-mlp-atomic-load-alias-lowering-v1/IMAGE-REVIEW.md).
@@ -24,6 +24,35 @@ both the current compiler observation and the prior handoff identity, and
 join the new HSACO and canonical descriptor to their prior identities.
 Capture and compile success are reported separately. No runtime authority is
 granted by the diagnostic.
+
+## Actual Checked Replay
+
+The [actual receipt](attempt-v1/evidence/complete.json) reports both compile
+and capture success. The compiler exits naturally with status zero after
+392.792619 seconds; the whole controller takes 397.944645 seconds. The child
+is reaped, its process group is absent, and no timeout or forced cleanup
+occurs. All 5,308 source rows and 308 consumed input pins remain unchanged;
+postchecks are clean.
+
+The [capture record](attempt-v1/evidence/handoff-capture.json) reports 3,909
+polls and one completed double-read snapshot. All four identity joins pass:
+
+| Join | Actual identity |
+| --- | --- |
+| Captured handoff to prior observation | 288,742 bytes; `5f52c141f577162cbc3eda8704b173df7035e8c336b8b436c23558f101fe844c` |
+| Captured handoff to current observation | Same complete handoff identity |
+| Current HSACO to prior HSACO | 28,440 bytes; `de880dcebf79425ccb555c1a2bdca3ff78b926f7b2062d06b918763da4de0f66` |
+| Current canonical descriptor to prior descriptor | `8cce86c5641366ab51cd4eabb466f91683d791d2e36a9c258fdd2b549a08ff07` |
+
+The entire observation is also byte-identical to the previous compile. The
+retained [handoff](attempt-v1/evidence/compiler-handoff-v2) is descriptor-bound
+LLVM input to the checked worker, not an independently admitted executable.
+The [retention manifest](attempt-v1/retention-manifest.json) pins 16 bodies in
+a 17-member capsule, including 12 raw files, totaling 4,776,335 expanded bytes.
+The receipt is 26,129 bytes, SHA-256
+`6795b6383e4434ad190af753b757a6f74edfeb3e0b3cf8ae0a8f8404887a03d6`.
+The archive is 753,641 bytes, SHA-256
+`3f6108d9c7633436e8e18589c8e776cf03c220f3daeb4946c46e06d48d3ac2ec`.
 
 ## Actual Controller Tests
 
@@ -62,6 +91,6 @@ and 69,731 bytes /
 The [v2 retention manifest](controller-tests-v1/attempt-v2/retention-manifest.json)
 binds the reviewed controller and test source to that actual run.
 
-Actual compiler replay and inspection of its captured LLVM are the next
-diagnostic gates. Private runtime admission, paired GPU lifecycle, independent
-numerics, all issue #42 milestones and the 700 tokens/s target remain open.
+Inspection of the captured LLVM is the next diagnostic gate. Private runtime
+admission, paired GPU lifecycle, independent numerics, all issue #42 milestones
+and the 700 tokens/s target remain open.

@@ -1,0 +1,75 @@
+{
+  "capture_verified": true,
+  "compile_passed": true,
+  "failure": null,
+  "files": {
+    "artifact/observation.hsaco": {
+      "bytes": 28440,
+      "sha256": "de880dcebf79425ccb555c1a2bdca3ff78b926f7b2062d06b918763da4de0f66"
+    },
+    "artifact/observation.json": {
+      "bytes": 3047,
+      "sha256": "100f43d87bfb3547b8bf9687e4e2a095d1819ffb5a8c9e4bff945acf07c3f950"
+    },
+    "evidence/compile.command.json": {
+      "bytes": 7574,
+      "sha256": "bcb62f5b948750b61d3874d4f8764b3a3660af2a968fd384ea8448dcde5d5ea3"
+    },
+    "evidence/compile.result.json": {
+      "bytes": 1166,
+      "sha256": "55dc50e1b5b01b38c6429f694345ad7d1d7f11502162260e5fca255c25fa4175"
+    },
+    "evidence/compile.started.json": {
+      "bytes": 3578,
+      "sha256": "a8bb69a805d915c2e0b7b6c8546e4f65c7522327d9aa6ed152ff7c74b6a11b9f"
+    },
+    "evidence/compile.stderr": {
+      "bytes": 5950,
+      "sha256": "fa875b42fa28481e8a812752bf5a2ea679aef28c742fb6cb069e72acb17804b3"
+    },
+    "evidence/compile.stdout": {
+      "bytes": 196,
+      "sha256": "7e0838e113afb8f09f38ab903139a38784375e41f9a6ee7465e4606e39a4ea80"
+    },
+    "evidence/compiler-handoff-v2": {
+      "bytes": 288742,
+      "sha256": "5f52c141f577162cbc3eda8704b173df7035e8c336b8b436c23558f101fe844c"
+    },
+    "evidence/complete.json": {
+      "bytes": 26129,
+      "sha256": "6795b6383e4434ad190af753b757a6f74edfeb3e0b3cf8ae0a8f8404887a03d6"
+    },
+    "evidence/configurations.json": {
+      "bytes": 3182,
+      "sha256": "53d6302ac1b41c2d930d26ac52c9cbf93f4f4a924676f83daaa024b3bcc40c9b"
+    },
+    "evidence/handoff-capture.json": {
+      "bytes": 1356,
+      "sha256": "83e51e421a60d2019f127cef5437b5bfe9af666d784d8203f407eb1c3849e0e4"
+    },
+    "evidence/inputs-after.json": {
+      "bytes": 132742,
+      "sha256": "ca912ad3a4d237a798f851e02831351a4be03bf0f8e3a3a9998bf3eda62a82bd"
+    },
+    "evidence/inputs-before.json": {
+      "bytes": 129618,
+      "sha256": "8348bf68ac82979444dcb19b0905dadf8bd2a70d5068ec313d19aa4c806fa33e"
+    },
+    "evidence/source-after.json": {
+      "bytes": 2017325,
+      "sha256": "bbe2b9e0e5c0941f0154ed7c622e0426ec4c676af22b42f5f747fd76bfa37d5e"
+    },
+    "evidence/source-before.json": {
+      "bytes": 2017325,
+      "sha256": "bbe2b9e0e5c0941f0154ed7c622e0426ec4c676af22b42f5f747fd76bfa37d5e"
+    },
+    "lowering.py": {
+      "bytes": 107393,
+      "sha256": "b6b931243c4da3cc5302567a957ba4a96c476b9cc71dec74758846a09e09bd57"
+    }
+  },
+  "gpu_execution": false,
+  "passed": true,
+  "postcheck_errors": [],
+  "schema": "ferric-handoff-capture-retention-v1"
+}

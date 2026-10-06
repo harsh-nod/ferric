@@ -1,0 +1,46 @@
+{
+  "capture_expected": {
+    "byte_len": 288742,
+    "sha256": "5f52c141f577162cbc3eda8704b173df7035e8c336b8b436c23558f101fe844c"
+  },
+  "compiler_invocation_changed": false,
+  "descriptor_expected": "8cce86c5641366ab51cd4eabb466f91683d791d2e36a9c258fdd2b549a08ff07",
+  "image_expected": {
+    "byte_len": 28440,
+    "sha256": "de880dcebf79425ccb555c1a2bdca3ff78b926f7b2062d06b918763da4de0f66"
+  },
+  "joins": {
+    "descriptor_matches_prior": true,
+    "handoff_matches_current": true,
+    "handoff_matches_prior": true,
+    "image_matches_prior": true
+  },
+  "origin": {
+    "file": "compiler-handoff-v2",
+    "fingerprint": [
+      66307,
+      147507653,
+      33152,
+      9661,
+      9661,
+      1,
+      288742,
+      1791287956481514263,
+      1791287956481514263
+    ],
+    "observed": {
+      "byte_len": 288742,
+      "sha256": "5f52c141f577162cbc3eda8704b173df7035e8c336b8b436c23558f101fe844c"
+    },
+    "pid": 384146,
+    "scratch_child": "fe2o3-engineering-hsaco-384146-1791287596262730513-0"
+  },
+  "polls": 3909,
+  "read_only_producer_observation": true,
+  "reads": 1,
+  "snapshot": {
+    "bytes": 288742,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-handoff-capture-v228-v1/compiler-handoff-v2",
+    "sha256": "5f52c141f577162cbc3eda8704b173df7035e8c336b8b436c23558f101fe844c"
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "adopted_reaped": [],
+  "command": {
+    "bytes": 7574,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-handoff-capture-v228-v1/compile.command.json",
+    "sha256": "bcb62f5b948750b61d3874d4f8764b3a3660af2a968fd384ea8448dcde5d5ea3"
+  },
+  "elapsed_ns": 392792619047,
+  "exception": null,
+  "exit_code": 0,
+  "forced_cleanup": false,
+  "label": "compile",
+  "minimum_free_bytes": 67869605888,
+  "natural_exit": true,
+  "observed_signals": [],
+  "peak_private_scratch_bytes": 1029587976,
+  "pgid": 384146,
+  "pid": 384146,
+  "process_group_absent": true,
+  "reaped": true,
+  "stderr": {
+    "bytes": 5950,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-handoff-capture-v228-v1/compile.stderr",
+    "sha256": "fa875b42fa28481e8a812752bf5a2ea679aef28c742fb6cb069e72acb17804b3"
+  },
+  "stdout": {
+    "bytes": 196,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-handoff-capture-v228-v1/compile.stdout",
+    "sha256": "7e0838e113afb8f09f38ab903139a38784375e41f9a6ee7465e4606e39a4ea80"
+  },
+  "timed_out": false
+}
