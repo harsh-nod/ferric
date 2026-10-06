@@ -1,0 +1,20 @@
+
+running 15 tests
+test engineering_gfx950::peer::combined_mlp_state_v1::paired::tests::paired_actual_barriers_block_r2_until_both_validators_complete ... ok
+test engineering_gfx950::peer::combined_mlp_state_v1::paired::tests::paired_all_ten_signals_required_without_fabricated_read_credit ... ok
+test engineering_gfx950::peer::combined_mlp_state_v1::paired::tests::paired_both_terminal_guards_precede_either_completion ... ok
+test engineering_gfx950::peer::combined_mlp_state_v1::paired::tests::paired_coordinator_exposes_both_batches_before_waiting ... ok
+test engineering_gfx950::peer::combined_mlp_state_v1::paired::tests::paired_cross_stage_writer_aliases_and_output_aliases_are_refused ... ok
+test engineering_gfx950::peer::combined_mlp_state_v1::paired::tests::paired_every_deadline_boundary_and_invalid_timeout_are_terminal ... ok
+test engineering_gfx950::peer::combined_mlp_state_v1::paired::tests::paired_every_failure_boundary_poisoned_before_and_after_effect ... ok
+test engineering_gfx950::peer::combined_mlp_state_v1::paired::tests::paired_genuine_extents_and_allocation_backings_are_checked ... ok
+test engineering_gfx950::peer::combined_mlp_state_v1::paired::tests::paired_guard_arguments_preserve_generation_lengths_and_zero_padding ... ok
+test engineering_gfx950::peer::combined_mlp_state_v1::paired::tests::paired_guard_metadata_is_exact_not_an_annotation_wildcard ... ok
+test engineering_gfx950::peer::combined_mlp_state_v1::paired::tests::paired_native_entry_refuses_wrong_world_before_gpu_operations ... ok
+test engineering_gfx950::peer::combined_mlp_state_v1::paired::tests::paired_outer_deadline_is_shared_before_preflight_and_publication ... ok
+test engineering_gfx950::peer::combined_mlp_state_v1::paired::tests::paired_packet_constructor_refuses_duplicate_completion_addresses ... ok
+test engineering_gfx950::peer::combined_mlp_state_v1::paired::tests::paired_publication_accepts_early_rank_zero_producers_only ... ok
+test engineering_gfx950::peer::combined_mlp_state_v1::paired::tests::paired_real_packet_bytes_encode_five_packet_dependency_graph ... ok
+
+test result: ok. 15 passed; 0 failed; 0 ignored; 0 measured; 1029 filtered out; finished in 0.00s
+

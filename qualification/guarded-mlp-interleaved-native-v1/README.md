@@ -1,13 +1,14 @@
 # Delayed two-bank guarded MLP reuse
 
 This checkpoint extends the [borrow-free retained pair](../guarded-mlp-retained-pair-v1/README.md)
-with a native two-layer, two-bank, four-forward diagnostic. The CPU suite passes,
-but the first native attempt fails an allocation-role check. Native interleaving
-is **not qualified**. This is not a production worker route or model benchmark.
+with a native two-layer, two-bank, four-forward diagnostic. Both CPU suites pass.
+The first native attempt fails an allocation-role check; the diagnostic-only
+rebuild passes the synthetic GPU case. The first refusal is **not root-caused**,
+and repeatability remains open. This is not a production route or model benchmark.
 
 ## What Changed
 
-The [native fixture](cpu-attempt-v1/fe2o3/crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_interleaved_native_v1_tests.rs)
+The [native fixture](cpu-attempt-v2/fe2o3/crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_interleaved_native_v1_tests.rs)
 allocates four retained pairs, each owning two genuine 2,208-byte combined MLP
 states. It retains the same eight owner allocations and private payloads for
 the complete schedule. The shared dense Gate, Up and Down matrices are allocated
@@ -38,7 +39,7 @@ must retain their last numerical result, even after state-only rearm. All eight
 scale cases have different final values at every element. Dense zero padding
 remains positive zero when the nonzero coefficients are negative.
 
-## CPU Qualification
+## First CPU Qualification
 
 The actual build and tests ran on `ssh mi350`, with the retained nightly
 2026-04-03 compiler and offline locked dependencies. No local build was used.
@@ -66,7 +67,7 @@ The selected library executable is 11,245,904 bytes with SHA-256
 `dbf5ea87824b4ab2be1e481cf21595f5809fb95bd309552e888a32f8089a8425`.
 Executable metadata is retained, not the host executable body.
 
-## Native Attempt
+## First Native Attempt
 
 The [actual terminal](gpu-attempt-v1/evidence/failed.json) records one requested
 native call, no retries, and a natural exit code 101. The
@@ -89,7 +90,7 @@ The [independent integer verifier](gpu-attempt-v1/verify_native.py) checks the
 intended eight-segment/two-rearm ledger and every exported numerical bit. Its
 target counts are 557,056 computed values, including 65,536 final BF16 values,
 48 dense-matrix hashes, 104 owner readbacks and 336 inactive-payload hashes.
-These are **pending GPU checks**, not outcomes of the failed attempt. The
+These are **not outcomes of the failed first attempt**. The
 640-mutation selftest uses synthetic observations and passed in 3.50 seconds.
 
 Runtime library admission precedes the first ELF invocation. Child streams and
@@ -104,10 +105,51 @@ body and does not replay inputs. Archive: 409,192 bytes,
 `4c3f37eef38cc0ed43b5c6154a4b882cfb12da0c396de2217f49ddceaac31d46`.
 Failed receipt: `559b515035b9a4902c24375798b7c60b2274d4470f5651c91743f583573823e8`.
 
-The next diagnostic must name the rejected owner/root/extent/kind while retaining
-every existing admission predicate. Static inspection has not established the
-root cause; bypassing the check or treating CPU coverage as native acceptance
-would be incorrect. Any corrected source needs a fresh build and attempt namespace.
+## Instrumented Rebuild
+
+The second attempt changes only refusal diagnostics: the typed-role error now
+reports scalar buffer identity, actual/expected owner and extent, and kind/mapping
+booleans. Allocation, rearm and run errors carry pair/forward/bank/layer context.
+No acceptance predicate is relaxed and no address or reusable token is exposed.
+The [second CPU terminal](cpu-attempt-v2/evidence/complete.json) again passes
+1,057 tests with seven ignored, across 16 clean phases.
+
+The [second native terminal](gpu-attempt-v2/evidence/complete.json) passes.
+The [independent verification](gpu-attempt-v2/evidence/verify.stdout) checks
+actual exported bytes and the complete event ledger:
+
+| Actual GPU Check | Result |
+| --- | --- |
+| Schedule | Eight paired segments; two delayed whole-bank rearms |
+| Numerical values | 557,056 computed values, including 65,536 final BF16 values, bit-exact |
+| Dense matrices | 48 hashes checked; 20 distinct bodies |
+| Owner observations | 104 compact readbacks plus 16 full terminal snapshots |
+| Inactive payloads | 336 hashes unchanged or equal to their prior expected results |
+| Lifecycle | Eight natural zero-exit phases, reaped children, absent process groups |
+| Shutdown | Healthy queue-first Close; all eight GPUs idle before and after |
+
+The 112.49-second native phase includes fixture construction, dense writes and
+readback/hash checking. It is **not GPU kernel latency or model throughput**.
+The whole diagnostic took 118.44 seconds; there was one native call and no
+internal retry. This is a new attempt with a newly compiled executable, not a
+repetition of the first binary.
+
+A successful diagnostic-only rebuild does not establish why the original binary
+refused its allocation role. Do not describe this as a functional fix or erase
+the failed attempt. Repeat both pinned host executables in separate fresh
+processes and investigate their differing behavior before broader admission.
+
+The [second CPU retainer](retain_cpu_v2.py) preserves 112 members / 111 pins
+(5,882,313 expanded bytes); [second GPU retainer](retain_gpu_v2.py) preserves
+59 / 58 (13,792,717 expanded bytes). Neither replays the retained project.
+
+| Artifact | SHA-256 |
+| --- | --- |
+| CPU receipt | `3adc90f6f97584787386b2d150e61a05a6ac5ea50d819111530b07755b98d47f` |
+| 11,240,400-byte library ELF | `5dfefcd2e2280b6dc83e63a241c3f518ab3bfa38fa705a4cf070d886ac6d47f0` |
+| 936,408-byte CPU archive | `3871dbc64b7f557ab9b02d980fc83fa95a4c3a6f21baa7442486881e4df3abad` |
+| GPU receipt | `ab17388f411190bf0c738fdf8a7ed4b598606e3147ce98224573ea7ebb2c25d9` |
+| 569,836-byte GPU archive | `a26f86e93d7dee69a909701595ff187e910d100ff10a069dccb5277834a837e7` |
 
 ## Scope and Next Gate
 
