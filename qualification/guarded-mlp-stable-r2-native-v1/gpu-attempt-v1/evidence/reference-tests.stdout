@@ -1,0 +1,1 @@
+{"schema": "ferric-native-stable-r2-integer-selftest-v1", "passed": true, "fixed_arithmetic_anchors": 32, "arithmetic_refusals": 13, "signed_zero_checks": 2, "case_records": 116, "positive_observation_fixtures": 1, "observation_mutation_refusals": 14, "json_refusals": 2, "gpu_execution": false}

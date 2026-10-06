@@ -1,0 +1,45 @@
+{
+  "adopted_reaped": [],
+  "argv": [
+    "/usr/bin/prlimit",
+    "--as=68719476736",
+    "--cpu=300",
+    "--fsize=4194304",
+    "--core=0",
+    "--",
+    "/usr/bin/python3",
+    "-I",
+    "-S",
+    "-B",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-stable-r2-native-gpu-v228-v1/verify_native.py",
+    "--self-test"
+  ],
+  "command": {
+    "bytes": 1152,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-stable-r2-native-gpu-v228-v1/evidence/reference-tests.command.json",
+    "sha256": "732190c116ed500aac028c07df061fe583f726496726317d7a3a73efc09658a0"
+  },
+  "elapsed_ns": 601198593,
+  "exception": null,
+  "exit_code": 0,
+  "forced_cleanup": false,
+  "label": "reference-tests",
+  "natural_exit": true,
+  "observed_signals": [],
+  "pgid": 573182,
+  "pid": 573182,
+  "process_group_absent": true,
+  "reaped": true,
+  "stderr": {
+    "bytes": 0,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-stable-r2-native-gpu-v228-v1/evidence/reference-tests.stderr",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "stdout": {
+    "bytes": 296,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-stable-r2-native-gpu-v228-v1/evidence/reference-tests.stdout",
+    "sha256": "96128eadca36d5cb9dd33eecb2fe4362b2c58eb2cbef614efb2851afbfea917d"
+  },
+  "storage_failure": null,
+  "timed_out": false
+}

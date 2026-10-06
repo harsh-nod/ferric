@@ -94,6 +94,7 @@ binds the reviewed controller and test source to that actual run.
 The [captured LLVM review](LLVM-REVIEW.md) retains the exact decoded module and
 its actual MI350 decode receipt. It identifies eight acquire guard loads and
 a normal LLVM conditional branch before the payload, without an explicit
-uniform-branch annotation. Private runtime admission, paired GPU lifecycle,
-independent numerics, all issue #42 milestones and the 700 tokens/s target
-remain open.
+uniform-branch annotation. The follow-up [stable guarded R2 component test](../guarded-mlp-stable-r2-native-v1/README.md)
+now passes on both MI350 ranks with an independent bit-exact reference.
+Private runtime admission, paired GPU lifecycle, full-model numerics, all
+issue #42 milestones and the 700 tokens/s target remain open.

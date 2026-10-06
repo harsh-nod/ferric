@@ -1,0 +1,25 @@
+{
+  "files": {
+    "library_audit.py": {
+      "bytes": 25872,
+      "sha256": "b26d60ef6dbe24f2182b52b2e0eb44632848061b7a4a1735fc4e1d26b8ee638d"
+    },
+    "request.json": {
+      "bytes": 478,
+      "sha256": "c6337869457ae184fc2731827a262a9b43361f04c0f8b6e8dfa9e3d16d0025e3"
+    },
+    "run_gpu.py": {
+      "bytes": 13973,
+      "sha256": "9f957be6c83059e0686582b51cd6efb9a94b3b4bff5eb9442cfdacf0968b0986"
+    },
+    "supervisor.py": {
+      "bytes": 41485,
+      "sha256": "8824478a6415dee39d28ccefb0881fc0687ac724f5a9c5a4540310fb5196b9bc"
+    },
+    "verify_native.py": {
+      "bytes": 13064,
+      "sha256": "0f29b098aa51e97d3ec995d65c345d1c18c6d2ded49ac492e35b4127dfd30576"
+    }
+  },
+  "schema": "ferric-native-stable-r2-gpu-input-v1"
+}

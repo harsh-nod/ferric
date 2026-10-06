@@ -1,6 +1,6 @@
 # Stable Guarded R2 Native Diagnostic
 
-Status: **CPU qualification passes on MI350; native GPU execution is pending.**
+Status: **CPU qualification and native GPU component execution pass on MI350.**
 This is a private serial component diagnostic, not a paired scheduler, model
 correctness result, production capability, or performance claim.
 
@@ -25,7 +25,7 @@ Both guards remain stable during each synchronous R2 dispatch. That premise
 is explicit because the [actual image uses a wave-wide guard branch](../guarded-mlp-atomic-load-alias-lowering-v1/IMAGE-REVIEW.md).
 The test cannot establish mixed-lane safety under concurrent guard updates.
 
-## Planned Native Matrix
+## Actual Native Matrix
 
 | Coverage | Count |
 | --- | ---: |
@@ -48,8 +48,61 @@ expected bytes and canaries while the other output remains untouched. Inputs
 and all combined-state words are also checked after dispatches.
 
 The in-test reference independently performs staged FP32 and BF16 rounding.
-A separate integer-only verifier will reconstruct every input bit and compare
+A separate integer-only verifier reconstructs every input bit and compares
 all four valid outputs. Neither reference is a full-model numerical check.
+
+## Actual GPU Evidence
+
+The [native receipt](gpu-attempt-v1/evidence/complete.json) records one requested
+and observed native process, with no retries. Eight phases exit naturally
+with status zero; all children are reaped and their process groups are absent.
+The request, checked HSACO, CPU-built host ELF, source bodies and runtime
+libraries are bound to the run, with 859 final input pins and no postcheck
+errors. Read-only telemetry reports all eight GPUs idle before and after;
+the native process reports a healthy queue-first close.
+
+The [actual native output](gpu-attempt-v1/evidence/native.stdout) and
+[independent verification](gpu-attempt-v1/evidence/verify.stdout) establish:
+
+| Check | Actual result |
+| --- | --- |
+| Valid outputs | 4/4, all 16,384 BF16 elements bit-exact |
+| Rejected outputs | 112/112 preserve the full guarded sentinel buffer |
+| Rank isolation | Both outputs reset per call; non-target output unchanged |
+| Inputs and atomic state | Native full-buffer/atomic checks pass |
+| Cases and dispatches | Exact ordered 116-record roster; 192 dispatches |
+
+The [integer reference](gpu-attempt-v1/verify_native.py) represents FP32 values
+as signed integer multiples of `2^-149`. It rounds each FP32 addition and
+each BF16 narrowing separately with round-to-nearest, ties-to-even. It uses
+no host floating-point arithmetic and does not call the Rust/device reference.
+All emitted input bytes are independently reconstructed before comparing the
+outputs. Native stdout and request hashes explicitly join the verifier result
+to the supervised attempt.
+
+Before GPU execution, [reference self-tests](gpu-attempt-v1/evidence/reference-tests.stdout)
+pass 32 fixed arithmetic anchors, 13 nonfinite/overflow refusals, two signed-zero
+checks, one positive synthetic observation, 14 observation mutation refusals
+and two strict-JSON refusals. Synthetic fixtures are not GPU evidence.
+
+For rejected cases, the native test checks every output byte and emits its
+digest, not the raw output payload. The external verifier checks the expected
+sentinel digest and closed record; it does not independently reread GPU memory.
+Guard, input-canary and rank-isolation checks likewise rely on the pinned native
+test's observations. No concurrent guard mutation or paired publication occurs.
+
+The supervised native process takes 20.214936 seconds and the whole controller
+takes 21.548849 seconds. These are diagnostic host intervals, **not GPU kernel
+latency, model throughput, or evidence of progress toward a particular tokens/s
+rate**.
+
+The [GPU capsule](gpu-attempt-v1/retention-manifest.json) contains 57 members,
+56 pinned bodies and 4,047,491 expanded bytes, including the exact harness,
+request, HSACO, raw records and CPU receipt. It exports no host ELF body.
+The archive is 458,547 bytes, SHA-256
+`bfa35fb254ef5044ec533aa0fcb92f6eba771305fd3455511bbbddb669254ea0`.
+The native receipt is 949,008 bytes, SHA-256
+`a01bfed1b94ab8cfcb81c112b3c3bc5d41f2a317db239baee64acbf4222cb6a9`.
 
 ## Actual CPU Evidence
 
@@ -79,7 +132,7 @@ The actual CPU receipt is 1,143,535 bytes, SHA-256
 
 ## Remaining Integration
 
-After native component qualification, a distinct private coordinator must
+A distinct private coordinator must now
 publish R1, MLP, validator, the both-validator barrier, and R2 on each rank.
 Its ten signals, queue frontiers, failure custody and owner lifecycle need
 separate tests. Ferric must consume that combined completion without calling
