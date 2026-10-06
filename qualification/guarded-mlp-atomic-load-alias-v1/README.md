@@ -1,10 +1,11 @@
 # Atomic Load Alias Refinement
 
-Status: **MI350 CPU compiler qualification passes; checked lowering pending**.
+Status: **MI350 CPU compiler qualification and checked lowering pass**.
 The source refinement addresses the
 [combined-state descriptor refusal](../guarded-mlp-combined-state-lowering-v1/README.md).
-It is not installed in the canonical compiler and has no successful checked
-lowering, HSACO, GPU, model-numerical or performance result.
+It is not installed in the canonical compiler. The separately qualified
+backend now emits the guarded HSACO; GPU, model-numerical and performance
+acceptance remain open.
 
 The [proposal](proposal-v1/README.md) distinguishes atomic loads from actual
 writes while constructing formal alias requirements. Atomic access kinds,
@@ -70,8 +71,9 @@ checks the exact wrapper and executable recipe. Neither the completed CPU
 run nor its raw records was modified or repeated.
 
 The [fourteen actual compiler-tool checks pass](../guarded-mlp-atomic-load-alias-tool-audit-v1/README.md).
-Required next gates are actual checked lowering, followed by separate runtime,
-GPU and model-numerical validation.
+The [actual checked lowering passes](../guarded-mlp-atomic-load-alias-lowering-v1/README.md)
+and retains both the observation and gfx950 HSACO. Required next gates are
+image inspection and separate runtime, GPU and model-numerical validation.
 [34 tool-audit controller fixtures](../guarded-mlp-atomic-load-alias-tool-audit-v1/README.md)
 and [31 lowering-controller fixtures](../guarded-mlp-atomic-load-alias-lowering-v1/README.md)
 pass on MI350. These synthetic tests do not substitute for the actual binary

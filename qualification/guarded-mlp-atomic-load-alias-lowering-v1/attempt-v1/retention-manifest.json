@@ -1,0 +1,184 @@
+{
+  "artifact": {
+    "image": {
+      "bytes": 28440,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-atomic-load-alias-lowering-v228-v1/fe2o3-engineering-v1/d98a12d35a2f0ecea506a9384213c22dbf692c03347efb91a009fc24e0982e1b/observation.hsaco",
+      "sha256": "de880dcebf79425ccb555c1a2bdca3ff78b926f7b2062d06b918763da4de0f66"
+    },
+    "observation": {
+      "bytes": 3047,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-atomic-load-alias-lowering-v228-v1/fe2o3-engineering-v1/d98a12d35a2f0ecea506a9384213c22dbf692c03347efb91a009fc24e0982e1b/observation.json",
+      "sha256": "100f43d87bfb3547b8bf9687e4e2a095d1819ffb5a8c9e4bff945acf07c3f950"
+    },
+    "value": {
+      "artifact": "observation.hsaco",
+      "authority": "none",
+      "code_object_version": 6,
+      "compiler_handoff": {
+        "byte_len": 288742,
+        "sha256": "5f52c141f577162cbc3eda8704b173df7035e8c336b8b436c23558f101fe844c"
+      },
+      "crate_name": "ferric_qwen3_tp_guarded_mlp_segment_kernels_device_v2",
+      "execution": {
+        "bootstrap_request": {
+          "byte_len": 288898,
+          "sha256": "0cc4fc79d91ccf6eee60a5db058fd9afeb421035950a039bceba97997b4ff18f"
+        },
+        "bootstrap_response": {
+          "byte_len": 29987,
+          "sha256": "d7fcbc4e2f1994e95c2f2083b1e5840f6e46e08c7a85f6468b1002cac575ac64"
+        },
+        "exact_output_replay": true,
+        "replay_request": {
+          "byte_len": 288898,
+          "sha256": "bda2c95b1762691644b063c3a6060abb113acc064a84e40e0c79396ee85c7ad3"
+        },
+        "replay_response": {
+          "byte_len": 29987,
+          "sha256": "8d884c27f58961e8256e8b20d6138496c5e17f88cda9cfc1ccae40e7f96e61dc"
+        }
+      },
+      "grants": {
+        "launch": false,
+        "load": false,
+        "publication": false
+      },
+      "hsaco": {
+        "canonical_descriptor_sha256": "8cce86c5641366ab51cd4eabb466f91683d791d2e36a9c258fdd2b549a08ff07",
+        "identity": {
+          "byte_len": 28440,
+          "sha256": "de880dcebf79425ccb555c1a2bdca3ff78b926f7b2062d06b918763da4de0f66"
+        },
+        "kernel_names": [
+          "ferric_qwen3_mlp_state_guard_v2",
+          "ferric_qwen3_tp2_guarded_projection_residual_bf16_v2"
+        ]
+      },
+      "namespace": "fe2o3-engineering-v1",
+      "options": {
+        "extraction_rustflags": "-Zalways-encode-mir -Zinline-mir=yes -Zmir-enable-passes=-JumpThreading -Copt-level=3 -Ctarget-cpu=gfx950 -Ctarget-feature=-wavefrontsize32,+wavefrontsize64,-xnack",
+        "maximum_output_bytes": 67108864,
+        "mir_normalization": "optimized-inline-v1",
+        "optimization": "O2",
+        "strip_debug": true,
+        "timeout_seconds": 600,
+        "verify_each": true
+      },
+      "providers": [],
+      "schema": "EngineeringHsacoObservationV1",
+      "target": "gfx950:xnack-",
+      "tools": {
+        "cargo": {
+          "byte_len": 42375992,
+          "sha256": "c9ad606cb1dbb4a65aa27c80be88ed61eb2b811b6450eeec6794f60ed78b94a3"
+        },
+        "cargo_vendor": {
+          "git_sources": [
+            {
+              "rev": "161c385576d45d4e634ba179fa93a545b91124e6",
+              "url": "https://github.com/harsh-nod/pliron.git"
+            }
+          ],
+          "tree_sha256": "c26390ae2d0e6ebac429126502183d7c90eadc98783709b412858d49148c7af3"
+        },
+        "extractor": {
+          "byte_len": 205280,
+          "sha256": "13d20c7f4372f873a871b640316cdfa7e720345d3a841d0ac13cfb2a120931a2"
+        },
+        "extractor_backend": {
+          "byte_len": 206535952,
+          "sha256": "8487aca6d2c1f06454fe4c24e3e26c5f77c59cba2f601d91c3dbdcd950ffd261"
+        },
+        "host_linker": {
+          "byte_len": 181660456,
+          "sha256": "7d604c310945507cba3eb716b35a4cd3652815f409b0a322095b72996d7b8c3c"
+        },
+        "host_lld": {
+          "byte_len": 114453432,
+          "sha256": "1acc06a3f8b12bc310919be73b79952279993fa82a984140e4e623df36487da7"
+        },
+        "host_lld_proxy": {
+          "byte_len": 507848,
+          "sha256": "4c3c98524367e6604c6373141f56a2b7f4dbc9386fac091e95f005d7c928d00f"
+        },
+        "rustc": {
+          "byte_len": 645760,
+          "sha256": "08dfef109ad22d90556dbd2f964543cd93843dcd75a2e9792c173667392a1950"
+        },
+        "rustc_lib_tree_sha256": "7f6a8a02de96a9c26fdde741462d01369f24c06ff4f3863d1f40423620dd66cd",
+        "worker": {
+          "executable": {
+            "byte_len": 107572400,
+            "sha256": "a5cab306a6676a069134ecc30232c69d0a28855f08c67bd437377c5ef65340d9"
+          },
+          "llvm_build_identity": "rocm7.2.1-packages-sha256:eb02c62693d6697017195f0abf5ebcf7e58f60e4d2acf8356de2e944bceec540",
+          "worker_build_identity": "fe2o3-worker-v1-sha256-5e3a2d855dee71b322cb49e452e06a08f4603d866a8fdce246fb9ffa583dc2ed"
+        }
+      }
+    }
+  },
+  "artifact_bodies_retained": true,
+  "failure": null,
+  "files": {
+    "artifact/observation.hsaco": {
+      "bytes": 28440,
+      "sha256": "de880dcebf79425ccb555c1a2bdca3ff78b926f7b2062d06b918763da4de0f66"
+    },
+    "artifact/observation.json": {
+      "bytes": 3047,
+      "sha256": "100f43d87bfb3547b8bf9687e4e2a095d1819ffb5a8c9e4bff945acf07c3f950"
+    },
+    "evidence/compile.command.json": {
+      "bytes": 7618,
+      "sha256": "798358aea946bd80dcf17ed63212e417c2fe6fb20e1f60081bc80cdb56ba69de"
+    },
+    "evidence/compile.result.json": {
+      "bytes": 1199,
+      "sha256": "36674bc0ac7086c221fef9bf760c502bbe468faca8d25d42fdc19eb770da6e8c"
+    },
+    "evidence/compile.started.json": {
+      "bytes": 3589,
+      "sha256": "a0c6392b6b800cbcf4958cc7e14f8edae6cc955b002bc8bd687fea90004d5040"
+    },
+    "evidence/compile.stderr": {
+      "bytes": 5950,
+      "sha256": "6c8e35654ab55a1184be43a6f71b883ffc079c6644ce7e7182c5db7df03e5f70"
+    },
+    "evidence/compile.stdout": {
+      "bytes": 207,
+      "sha256": "af4f9e6f9d466a4eaa439fd6026036700bafd3930911fec1c7041af5f6d8c650"
+    },
+    "evidence/complete.json": {
+      "bytes": 25204,
+      "sha256": "1053d69036d94db89349b17584819a14f27a824691678730bb4204d283ea93da"
+    },
+    "evidence/configurations.json": {
+      "bytes": 3204,
+      "sha256": "bfbd0bb39d4ef1c863718ceed9f25853b13edbc40115fb1b3b51b577249ec685"
+    },
+    "evidence/inputs-after.json": {
+      "bytes": 132745,
+      "sha256": "cfb995f37638b776f411a08da25e856946f0f78c463772eaf1f8528bc00c3d2e"
+    },
+    "evidence/inputs-before.json": {
+      "bytes": 129621,
+      "sha256": "cd07844e2b326008a7a9b8ce450ec8c48c12fc548a1533dc240b8f365159b884"
+    },
+    "evidence/source-after.json": {
+      "bytes": 2017325,
+      "sha256": "bbe2b9e0e5c0941f0154ed7c622e0426ec4c676af22b42f5f747fd76bfa37d5e"
+    },
+    "evidence/source-before.json": {
+      "bytes": 2017325,
+      "sha256": "bbe2b9e0e5c0941f0154ed7c622e0426ec4c676af22b42f5f747fd76bfa37d5e"
+    },
+    "lowering.py": {
+      "bytes": 97963,
+      "sha256": "637857bc4a5178bae425135271a3c537f14269f368d62d3dc82107fe5c13f33e"
+    }
+  },
+  "gpu_execution": false,
+  "passed": true,
+  "postcheck_errors": [],
+  "schema": "ferric-guarded-mlp-atomic-load-alias-lowering-retention-v1"
+}

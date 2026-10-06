@@ -16,13 +16,15 @@ refinement: atomic loads are not writers, while stores and read-modify-write
 operations still require separation. Atomic identity, receipt encoding,
 bounds/race and descriptor ownership checks remain unchanged. The
 [fourteen actual binary-loader checks pass](../qualification/guarded-mlp-atomic-load-alias-tool-audit-v1/README.md)
-with clean postchecks. Actual guarded lowering with these products is still pending.
+with clean postchecks. [Actual guarded lowering now passes](../qualification/guarded-mlp-atomic-load-alias-lowering-v1/README.md)
+and retains a 28,440-byte gfx950 HSACO with both v2 kernel exports.
 No GPU, model-numerical or performance acceptance follows from the CPU run.
 [34 tool-audit controller tests](../qualification/guarded-mlp-atomic-load-alias-tool-audit-v1/README.md)
 and [31 lowering-controller tests](../qualification/guarded-mlp-atomic-load-alias-lowering-v1/README.md)
 also pass on MI350 with clean source and process postchecks. These are
 synthetic admission tests, distinct from the passing actual binary audit and
-pending guarded compile.
+passing guarded compile. Runtime admission, GPU execution and independent
+numerical tests remain separate open gates.
 
 Previous compiler qualification: [the bounded memory-bounds DAG solver passes MI350 CPU qualification](../qualification/guarded-mlp-memory-bounds-dag-v1/README.md).
 All 45 phases and 32 scopes pass: 1,323 compiler and 1,516 Pliron tests,
@@ -48,7 +50,8 @@ remain retained. The exact passing Rust sources are in the experimental v2 crate
 The [matching owner passes full runtime CPU qualification](../qualification/guarded-mlp-combined-state-owner-v1/README.md):
 1,008 KFD passes, three unchanged ignores and 14 focused passing repeats.
 The owner remains isolated from the canonical runtime and inference path.
-Guarded gfx950 compilation and GPU execution remain unqualified. Separately,
+The new alias-qualified backend now compiles the guarded gfx950 image;
+GPU execution remains unqualified. Separately,
 [25 combined-state lowering-controller fixtures pass](../qualification/guarded-mlp-combined-state-lowering-v1/README.md).
 They are synthetic admission tests, not a new kernel compile or GPU result.
 The [offline vendor preparation also passes](../qualification/guarded-mlp-combined-state-vendor-v1/README.md).
@@ -67,13 +70,20 @@ and the fresh guarded compile reported a memory-bounds preflight refusal.
 No guarded HSACO, GPU, model or performance acceptance is established by this
 compiler qualification.
 
-Latest retained guarded lowering: [the combined-state attempt](../qualification/guarded-mlp-combined-state-lowering-v1/README.md)
+Latest retained guarded lowering: [the atomic-load alias attempt passes](../qualification/guarded-mlp-atomic-load-alias-lowering-v1/README.md)
+after 394.288906 seconds (399.441433 seconds for the whole controller).
+The child exits naturally, is reaped and leaves no process group. The 5,308
+source rows and 308 input pins are unchanged, with clean postchecks. Both
+the exact-output-replay observation and its 28,440-byte code-object-6 HSACO
+are retained. All publication/load/launch grants remain false. Image
+inspection and the private atomic-read runtime join precede GPU tests.
+
+Previous retained guarded lowering: [the combined-state attempt](../qualification/guarded-mlp-combined-state-lowering-v1/README.md)
 exits naturally with status 1 after 363.190239 seconds (366.924882 seconds
 for the whole controller). It reports an internal formal-alias obligation
 not discharged by Rust ownership at descriptor construction. Raw output
 identifies no root, caller or parameter pair. Source/input and process
-postchecks are clean; no artifact is produced. The newly CPU-qualified alias
-refinement has not yet been used in a retained guarded lowering attempt.
+postchecks are clean; no artifact was produced by that earlier attempt.
 
 Earlier guarded lowering: the DAG-qualified compiler exits naturally with
 status 1 after 132.322763 seconds at `FE2O3-RACE-002`, with clean source/input

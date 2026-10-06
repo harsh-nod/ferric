@@ -50,6 +50,7 @@ The 5,334,768-byte archive has SHA-256
 No tool binary bodies are included. Current alias-generation evidence and the
 historical DAG producer and tool manifest remain separately authenticated.
 
-The next gate is actual checked guarded lowering. This audit invokes no
+The [subsequent checked guarded lowering passes](../guarded-mlp-atomic-load-alias-lowering-v1/README.md).
+This audit itself invokes no
 compiler or GPU and grants no production, load or launch authority. No
 model-numerical, performance or issue #42 milestone acceptance is claimed.

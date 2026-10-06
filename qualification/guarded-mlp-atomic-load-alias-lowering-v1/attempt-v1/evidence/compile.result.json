@@ -1,0 +1,32 @@
+{
+  "adopted_reaped": [],
+  "command": {
+    "bytes": 7618,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-atomic-load-alias-lowering-v228-v1/compile.command.json",
+    "sha256": "798358aea946bd80dcf17ed63212e417c2fe6fb20e1f60081bc80cdb56ba69de"
+  },
+  "elapsed_ns": 394288906415,
+  "exception": null,
+  "exit_code": 0,
+  "forced_cleanup": false,
+  "label": "compile",
+  "minimum_free_bytes": 67897511936,
+  "natural_exit": true,
+  "observed_signals": [],
+  "peak_private_scratch_bytes": 1029589437,
+  "pgid": 247958,
+  "pid": 247958,
+  "process_group_absent": true,
+  "reaped": true,
+  "stderr": {
+    "bytes": 5950,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-atomic-load-alias-lowering-v228-v1/compile.stderr",
+    "sha256": "6c8e35654ab55a1184be43a6f71b883ffc079c6644ce7e7182c5db7df03e5f70"
+  },
+  "stdout": {
+    "bytes": 207,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-atomic-load-alias-lowering-v228-v1/compile.stdout",
+    "sha256": "af4f9e6f9d466a4eaa439fd6026036700bafd3930911fec1c7041af5f6d8c650"
+  },
+  "timed_out": false
+}
