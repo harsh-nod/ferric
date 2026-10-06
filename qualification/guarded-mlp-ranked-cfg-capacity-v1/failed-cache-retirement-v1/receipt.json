@@ -1,0 +1,30 @@
+{
+  "archive": {
+    "bytes": 5477306,
+    "sha256": "766413016beb0e9c1b46be2c0c40a6baf699da87bcaeed7e16e759bc52afc1d1"
+  },
+  "deletion_uid": 9661,
+  "elevated_process_inspection": true,
+  "free_after": 43841245184,
+  "free_before": 41614012416,
+  "preserved_pin_count": 83,
+  "receipt": {
+    "bytes": 877177,
+    "sha256": "7f075680fbae052dccf01daac563c615079cc148355f0c91e7e1290521dc3dc9"
+  },
+  "removed": [
+    {
+      "files": 2028,
+      "logical_bytes": 2444630241,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-cfg-cap-cpu-v228-v1/target"
+    },
+    {
+      "files": 0,
+      "logical_bytes": 0,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-cfg-cap-cpu-v228-v1/tmp"
+    }
+  ],
+  "schema": "ferric-failed-cfg-cap-cache-retirement-v1",
+  "source_tree_retained": true,
+  "successful_generation_touched": false
+}
