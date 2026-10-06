@@ -12,7 +12,8 @@ occurs during semantic-to-ranked projection before loop analysis; the message
 does not identify the function or actual block count. The compiler exited
 naturally after 117.371 seconds and was reaped, with unchanged sources and
 clean integrity checks. Fifteen synthetic controller fixtures passed
-separately. No HSACO was emitted, and the possible alias gate was not reached.
+separately. No HSACO was emitted; this does not establish whether the possible
+alias issue passes or fails.
 Bounded diagnostics and a smaller equivalent CFG are the next investigation;
 no verifier limit or production authority is relaxed.
 
