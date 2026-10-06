@@ -41,9 +41,11 @@ compressed bytes, SHA-256
 `9432e8af1d2e019997173f27e1a69ea5cdbad70f1cdfb705193fc05af2f28ec1`.
 The receipt is 1,354,241 bytes, SHA-256
 `7827d969f295a8a0ba709629b2679b71ecde9b93b1f0ad11c5b8be70f7259915`.
-Seven final build products are identified. Fresh binary-loader checks and the
-actual guarded compile remain separate gates; no graph-count, HSACO or model
-result is inferred from these CPU tests.
+Seven final build products are identified. All
+[14 fresh binary-loader checks also pass](../guarded-mlp-ranked-cfg-linear-fusion-tool-audit-v1/README.md).
+The [actual guarded compile](../guarded-mlp-ranked-cfg-linear-fusion-lowering-v1/README.md)
+now renders 567 blocks and 1,122 edges, then fails closed at the memory-bounds
+preflight work estimate. No HSACO or model result is inferred from these CPU tests.
 
 ## Second Qualification
 
@@ -149,8 +151,10 @@ occurrences. The production hook runs only above the existing 1,024-block
 identity ceiling; smaller graphs keep their established layout. Independent
 data-only analysis of the retained graph identifies
 1,108 eligible branches: 556 empty sources and 552 atomic-effect sources.
-Removing these branches would produce 567 blocks and 1,122 raw edges. These
-are derived counts, not observed outputs from an implemented compiler pass.
+The actual MI350 guarded compile now observes the predicted 567 blocks and
+1,122 raw edges. Independent reconstruction reproduces all ordered operations,
+predicates and remapped targets, not just the counts. The next refusal is a
+static memory-bounds work estimate; it is not successful HSACO generation.
 
 Fusion concatenates operations without removing predicates or reordering
 atomic effects. It must remap ranked block/operation coordinates in access,
