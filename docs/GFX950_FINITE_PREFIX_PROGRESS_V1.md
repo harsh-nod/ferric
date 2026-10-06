@@ -1,20 +1,21 @@
 # Finite Qwen3 Prefix Progress
 
 This is an engineering checkpoint for [issue #42](https://github.com/harsh-nod/ferric/issues/42),
-updated on 2026-10-05 UTC. It is not a production admission, a sustained decode
+updated on 2026-10-06 UTC. It is not a production admission, a sustained decode
 benchmark, or a claim that the 700 tokens/s target has been reached. All issue #42 M0-M7
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Latest: [417 compiler tests pass, including the new checked-integer cohort](../qualification/guarded-mlp-core-checked-attention-qualification-v1/README.md).
-Both builds pass on MI350 after the test-only Statement clone repair. All six
-integer tests pass, including 458 real-MIR mutations and fourteen identity
-refusals. The Option suite stops at its first provider-authentication assertion;
-source inspection identifies missing fixture metadata context. A scoped,
-actual-session-bound fixture repair is reviewed but not yet qualified. All 26
-phases exited naturally and were reaped, with unchanged sources and clean
-postchecks. The extraction controls were not reached. Both attempts are
-retained; no production dependency, GPU or performance gate has changed.
+Latest: [417 tests pass; the repaired Option fixture reaches a closure-signature rejection](../qualification/guarded-mlp-core-checked-attention-qualification-v1/README.md).
+Both builds pass on MI350. All six integer tests pass, including 458 real-MIR
+mutations and fourteen identity refusals. The third attempt supplies metadata
+context bound to the fixture's actual rustc session, with no production
+authentication change. All three `ok_or` cases now authenticate before the
+first `and_then` closure signature is rejected. The Option cohort still has
+zero passing tests; those three preceding assertions are not passing test
+cases. All 26 phases exited naturally and were reaped, with unchanged sources
+and clean postchecks. Extraction controls were not reached. All three attempts
+are retained; no production dependency, GPU or performance gate has changed.
 
 Previously, [ten checked-arithmetic and Option helper bodies were captured from attention](../qualification/guarded-mlp-core-checked-attention-diagnostic-v1/README.md).
 The second isolated diagnostic compiler built on MI350 and all six renderer

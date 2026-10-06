@@ -83,7 +83,30 @@ The next fixture repair gives the callback an explicit codegen metadata value
 and checks the supplied observation against the public derivation from the
 actual rustc session. The test runner supplies it only to the Option process,
 before its threads start. It changes no production authentication rule and
-grants no artifact authority; fresh execution remains pending.
+grants no artifact authority. Its actual execution is recorded below.
+
+## Third MI350 Attempt
+
+Generation `32fbf1a6c980f3a9ab92922755e32925a85eeacc` includes that fixture-only
+metadata repair. Production authentication is unchanged. The compiler and
+test builds pass in 40.398 and 46.859 seconds. The [actual receipt](attempt-v3/evidence/failed.json)
+again records 417 passing tests, including all six integer tests.
+
+The Option fixture now passes its actual-session metadata assertions and
+authenticates all three preceding `ok_or` cases: `usize`, `u32` and the provider
+tile. It then rejects the signature of the real `then_add` closure used by
+`and_then`. The [original Option transcript](attempt-v3/evidence/core-attention-option.stdout)
+records that first failure and all ten cached test failures. Those three
+completed assertions are not three passing libtest cases; the Option cohort
+still has zero passing tests. Its mutation checks and the extraction controls
+were not reached.
+
+All 26 phases exited naturally and were reaped, with no remaining process
+groups. Source and dependency checks were unchanged, and integrity postchecks
+were clean. The [third retention manifest](attempt-v3/retention-manifest.json)
+pins 147 original files, including ten source bodies and 134 raw evidence
+records. The remaining closure-signature mismatch requires diagnosis and
+fresh qualification; no production dependency or GPU gate is advanced.
 
 ## Qualification Contract
 

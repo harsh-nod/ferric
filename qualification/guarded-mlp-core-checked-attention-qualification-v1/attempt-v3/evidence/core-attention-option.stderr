@@ -1,0 +1,17 @@
+warning: unknown and unstable feature specified for `-Ctarget-feature`: `xnack`
+  |
+  = note: it is still passed through to the codegen backend, but use of this feature might be unsound and the behavior of this feature can change in the future
+  = help: consider filing a feature request
+
+warning: unknown and unstable feature specified for `-Ctarget-feature`: `wavefrontsize64`
+  |
+  = note: it is still passed through to the codegen backend, but use of this feature might be unsound and the behavior of this feature can change in the future
+  = help: consider filing a feature request
+
+warning: unknown and unstable feature specified for `-Ctarget-feature`: `wavefrontsize32`
+  |
+  = note: it is still passed through to the codegen backend, but use of this feature might be unsound and the behavior of this feature can change in the future
+  = help: consider filing a feature request
+
+warning: 3 warnings emitted
+
