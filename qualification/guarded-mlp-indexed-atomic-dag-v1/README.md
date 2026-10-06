@@ -48,7 +48,22 @@ original traversal and may refuse earlier near the budget boundary.
 
 ## Qualification
 
-Full CPU qualification is running on `mi350`. The new nine-test cohort covers
+Full CPU qualification passed on `mi350` in 650.860950 seconds. All 36 phases
+exited naturally with status zero, were reaped and left no process groups.
+Source and dependency checks were clean, with no timeout or forced cleanup.
+
+| Executed Scope | Passed | Ignored |
+| --- | ---: | ---: |
+| Complete compiler library | 1,257 | 24 |
+| Complete Pliron library | 1,507 | 1 |
+| Earlier focused controls, repeated | 43 | 0 |
+| CFG diagnostic controls, repeated | 8 | 0 |
+| Independent-cap controls, repeated | 4 | 0 |
+| New DAG certificate controls, repeated | 9 | 0 |
+| Atomic, source-safety, matrix and attention controls | 12 | 0 |
+| Total test executions | 2,840 | 25 |
+
+Repeated executions are not unique tests. The new nine-test cohort covers
 chains, diamonds, duplicate edges, cycles, unreachable cycles, malformed
 graphs, exact budget boundaries, failed-cache publication and independent
 proof instances. An independent transitive-closure reference checks every
@@ -56,8 +71,20 @@ directed graph with one through three nodes, totaling 1,570 block queries.
 The large-chain cases cover 1,121 and 2,048 blocks.
 
 The controller retains every existing full-suite and focused recipe, and adds
-a focused repeat of the nine new tests. No completed result for this source
-generation is claimed here yet. Loader inspection, actual guarded gfx950
-lowering, GPU execution, independent model numerics and sustained BF16
-2,048/256 decode remain separate checks. All issue #42 milestones and the
-700 tokens/s target remain open.
+a focused repeat of the nine new tests. All historical test names and ignore
+identities remain present. This qualifies the isolated compiler experiment,
+not Ferric's production GPU path.
+
+## Evidence
+
+[attempt-v1](attempt-v1) retains the executed controller, helper, input,
+four source postimages, direct baseline lineage, receipt and all 184 raw
+records. Its retention manifest pins 206 bodies in 207 archive members,
+totaling 33,716,952 body bytes. Receipt SHA-256:
+`5441c57333baff468a787e83da5852bc74e3286501b25dabc0be8503b8a1f9cf`.
+The 5,546,057-byte archive SHA-256 is
+`1968bfb45c779e56236bd47d52fd7cb9cb47c56d7fe79da2595f69d13a0c7dc2`.
+
+Loader inspection, actual guarded gfx950 lowering, GPU execution, independent
+model numerics and sustained BF16 2,048/256 decode remain separate checks.
+All issue #42 milestones and the 700 tokens/s target remain open.

@@ -1,0 +1,71 @@
+{
+  "actual_failure_caller_identified": false,
+  "base_complete": {
+    "bytes": 1271097,
+    "sha256": "bd31abddedd2f7585d56e1e1807add8454e1047c914d1b9e6a9e63c036989e9c"
+  },
+  "base_sources": {
+    "bytes": 2225115,
+    "sha256": "130383014f517c1cd0754191361a2e28f52934de018f7b858100acac67ef9597"
+  },
+  "base_tree": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/guarded-mlp-ranked-cfg-cap-input-v228-v2/fe2o3",
+  "block_limit": 2048,
+  "edge_limit": 2048,
+  "files": {
+    "crates/rustc-codegen-fe2o3/src/production_ranked_projection_v1.rs": {
+      "after": {
+        "bytes": 1650983,
+        "sha256": "99a110aeae0315a6f380c0b96fca7b5719366cacb4ef6ed72254fdf87e46cde2"
+      },
+      "before": {
+        "bytes": 1650811,
+        "sha256": "8e470fd56bebb0f5bf94d714d3c4555659cea9626dfb6403003dd4ed4811d9d3"
+      }
+    },
+    "crates/rustc-codegen-fe2o3/src/production_ranked_projection_v1/indexed_atomic_dag_v1.rs": {
+      "after": {
+        "bytes": 5272,
+        "sha256": "bc9c5dfe4ad86c3055054efba58b9eb70ae8a41cc1f3f0ca1b767fe07ffe8030"
+      },
+      "before": null
+    },
+    "crates/rustc-codegen-fe2o3/src/production_ranked_projection_v1/indexed_atomic_dag_v1_tests.rs": {
+      "after": {
+        "bytes": 9532,
+        "sha256": "b4da56924631f3384f6396a9a62d7e6e97752069ba6bb333b00401aed976d2e3"
+      },
+      "before": null
+    },
+    "crates/rustc-codegen-fe2o3/src/production_ranked_projection_v1/indexed_atomic_v1.rs": {
+      "after": {
+        "bytes": 29667,
+        "sha256": "345ab2d56e5e256e091deb5d4727d0143b0f74dce060874af75ad1e636d74bc4"
+      },
+      "before": {
+        "bytes": 30277,
+        "sha256": "cc54d627bf0fce6e9986523d2e57effebab33a1e41c0d665ee6903ea93dd46fa"
+      }
+    }
+  },
+  "filter": "production_ranked_projection_v1::tests::indexed_atomic_dag_certificate_",
+  "graph_work_limit": 3145728,
+  "integration_patch": {
+    "bytes": 18606,
+    "sha256": "229452e508838e3a39b257ea922d00abefc1f17e70a249079270e03484611520"
+  },
+  "resource_admission_may_change": true,
+  "schema": "ferric-guarded-mlp-indexed-atomic-dag-source-v1",
+  "semantic_predicates_changed": false,
+  "source_only": true,
+  "test_names": [
+    "production_ranked_projection_v1::tests::indexed_atomic_dag_certificate_accepts_chains_and_diamonds",
+    "production_ranked_projection_v1::tests::indexed_atomic_dag_certificate_bounds_large_acyclic_query_work",
+    "production_ranked_projection_v1::tests::indexed_atomic_dag_certificate_charges_exact_budget_and_never_caches_failed_queries",
+    "production_ranked_projection_v1::tests::indexed_atomic_dag_certificate_cycles_keep_per_definition_fallback",
+    "production_ranked_projection_v1::tests::indexed_atomic_dag_certificate_matches_reference_on_all_small_graphs",
+    "production_ranked_projection_v1::tests::indexed_atomic_dag_certificate_refuses_malformed_graph_without_publishing_cache",
+    "production_ranked_projection_v1::tests::indexed_atomic_dag_certificate_rejects_invalid_query_before_cache_hit",
+    "production_ranked_projection_v1::tests::indexed_atomic_dag_certificate_reuses_only_within_independent_proof_instances",
+    "production_ranked_projection_v1::tests::indexed_atomic_dag_certificate_unreachable_cycles_do_not_grant_global_certificate"
+  ]
+}

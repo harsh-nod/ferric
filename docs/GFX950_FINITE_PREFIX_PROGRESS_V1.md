@@ -6,7 +6,15 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Latest: the DAG generation's [26 loader-controller fixtures](../qualification/guarded-mlp-indexed-atomic-dag-tool-audit-v1/README.md)
+Latest: [the cached indexed-atomic DAG experiment passes full CPU qualification](../qualification/guarded-mlp-indexed-atomic-dag-v1/README.md).
+All 36 phases pass on MI350, including 1,257 compiler and 1,507 Pliron tests.
+Focused repeats and extraction controls bring the total to 2,840 passing
+executions; the 25 historical ignores remain explicit. Sources, dependencies
+and process cleanup checks are clean. The graph-work ceiling stays unchanged.
+This result does not establish that the guarded kernel compiles; actual
+lowering, GPU execution, model numerics and performance remain separate gates.
+
+Previously, the DAG generation's [26 loader-controller fixtures](../qualification/guarded-mlp-indexed-atomic-dag-tool-audit-v1/README.md)
 and [19 lowering-controller fixtures](../qualification/guarded-mlp-indexed-atomic-dag-lowering-v1/README.md)
 pass on MI350. Both bounded children exited naturally and were reaped with
 unchanged sources and clean postchecks. These are synthetic admission tests,
