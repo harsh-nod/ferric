@@ -1,0 +1,32 @@
+{
+  "adopted_reaped": [],
+  "command": {
+    "bytes": 7711,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-indexed-atomic-use-lookup-lowering-v228-v1/compile.command.json",
+    "sha256": "083abfdb9bf5cc5320ec9b7d0e6893493e8e2eb6d35604e0394217fcc0b5d94b"
+  },
+  "elapsed_ns": 117361738441,
+  "exception": null,
+  "exit_code": 1,
+  "forced_cleanup": false,
+  "label": "compile",
+  "minimum_free_bytes": 42839859200,
+  "natural_exit": true,
+  "observed_signals": [],
+  "peak_private_scratch_bytes": 1027948952,
+  "pgid": 2572299,
+  "pid": 2572299,
+  "process_group_absent": true,
+  "reaped": true,
+  "stderr": {
+    "bytes": 8512,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-indexed-atomic-use-lookup-lowering-v228-v1/compile.stderr",
+    "sha256": "f47c6cd5b7bbd4d9238212cd6b570dfd6e7b2898d9518e5af435f110f4db1160"
+  },
+  "stdout": {
+    "bytes": 0,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-indexed-atomic-use-lookup-lowering-v228-v1/compile.stdout",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "timed_out": false
+}

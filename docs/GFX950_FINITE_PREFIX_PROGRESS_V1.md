@@ -6,7 +6,17 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Latest: [the bounded atomic-use lookup passes full MI350 CPU qualification](../qualification/guarded-mlp-indexed-atomic-use-lookup-v1/README.md).
+Latest: [the use-lookup-qualified guarded compile reaches the address-permission scan](../qualification/guarded-mlp-indexed-atomic-use-lookup-lowering-v1/README.md).
+The actual rejection is now `permits_address` at `indexed_atomic_v1.rs:84:14`:
+a 1,656-unit scan would raise graph work from 3,145,230 to 3,146,886, above
+the unchanged 3,145,728 limit. The compiler exits naturally after 117.361738
+seconds and is reaped, with unchanged sources and clean postchecks. All
+[14 fresh loader inspections](../qualification/guarded-mlp-indexed-atomic-use-lookup-tool-audit-v1/README.md)
+passed. No HSACO, GPU, alias verdict or model result is produced. A bounded
+address lookup is being investigated; no milestone or performance target is
+closed.
+
+Previously, [the bounded atomic-use lookup passes full MI350 CPU qualification](../qualification/guarded-mlp-indexed-atomic-use-lookup-v1/README.md).
 All 40 phases pass across 27 scopes: 1,293 compiler tests and 1,507 Pliron
 tests, with focused repeats and extraction controls totaling 2,912 passing
 executions and 25 unchanged ignores. Every child exited naturally and was
@@ -14,8 +24,8 @@ reaped, with unchanged inputs and clean postchecks. The lookup reduces the
 measured 552-entry query's analytical bound to ten comparisons without new
 storage or increased limits. Controller fixtures pass 26 loader and 19
 lowering tests after a production adapter schema repair; its failed first
-attempt is retained. Actual binary inspection, guarded compilation, GPU/model
-correctness and performance remain separate gates. All milestones remain open.
+attempt is retained. CPU qualification alone does not establish guarded
+compilation, GPU/model correctness or performance. All milestones remain open.
 
 Previously, [the census-qualified guarded compile reaches the atomic-use lookup work charge](../qualification/guarded-mlp-indexed-atomic-dead-cast-census-lowering-v1/README.md).
 The compiler now reports `validate_statement` at `indexed_atomic_v1.rs:101:14`:
