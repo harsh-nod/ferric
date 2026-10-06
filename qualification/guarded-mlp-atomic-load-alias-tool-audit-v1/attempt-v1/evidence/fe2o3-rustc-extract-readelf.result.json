@@ -1,0 +1,30 @@
+{
+  "adopted_reaped": [],
+  "command": {
+    "bytes": 962,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-atomic-load-alias-compiler-tools-audit-v228-v1/fe2o3-rustc-extract-readelf.command.json",
+    "sha256": "2a974709ada6bd3a50c0b85379d0a5c5214a0f57e19f50953967ef7a93f094c0"
+  },
+  "elapsed_ns": 50368611,
+  "exception": null,
+  "exit_code": 0,
+  "forced_cleanup": false,
+  "label": "fe2o3-rustc-extract-readelf",
+  "natural_exit": true,
+  "observed_signals": [],
+  "pgid": 232012,
+  "pid": 232012,
+  "process_group_absent": true,
+  "reaped": true,
+  "stderr": {
+    "bytes": 0,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-atomic-load-alias-compiler-tools-audit-v228-v1/fe2o3-rustc-extract-readelf.stderr",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "stdout": {
+    "bytes": 4224,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-atomic-load-alias-compiler-tools-audit-v228-v1/fe2o3-rustc-extract-readelf.stdout",
+    "sha256": "eda3f23c444e878cd428cccd0d53e87d11f87ef24405e29dffbe2f9ea8708746"
+  },
+  "timed_out": false
+}

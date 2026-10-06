@@ -1,0 +1,16 @@
+{
+  "argv": [
+    "/usr/bin/prlimit",
+    "--as=12884901888",
+    "--cpu=30",
+    "--fsize=1048576",
+    "--core=0",
+    "--",
+    "/usr/bin/readelf",
+    "-l",
+    "-d",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-atomic-load-alias-compiler-tools-v228-v1/bin/lld"
+  ],
+  "pgid": 232034,
+  "pid": 232034
+}

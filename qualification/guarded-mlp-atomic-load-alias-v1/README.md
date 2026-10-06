@@ -69,9 +69,11 @@ comparison omitted the recorded `prlimit` wrapper. The retained exporter
 checks the exact wrapper and executable recipe. Neither the completed CPU
 run nor its raw records was modified or repeated.
 
-Required next gates are fresh compiler-tool auditing and actual checked
-lowering, followed by separate runtime, GPU and model-numerical validation.
+The [fourteen actual compiler-tool checks pass](../guarded-mlp-atomic-load-alias-tool-audit-v1/README.md).
+Required next gates are actual checked lowering, followed by separate runtime,
+GPU and model-numerical validation.
 [34 tool-audit controller fixtures](../guarded-mlp-atomic-load-alias-tool-audit-v1/README.md)
 and [31 lowering-controller fixtures](../guarded-mlp-atomic-load-alias-lowering-v1/README.md)
-pass on MI350. They do not substitute for the actual binary audit or compile.
+pass on MI350. These synthetic tests do not substitute for the actual binary
+audit or compile.
 All issue #42 milestones and the 700 tokens/s target remain open.

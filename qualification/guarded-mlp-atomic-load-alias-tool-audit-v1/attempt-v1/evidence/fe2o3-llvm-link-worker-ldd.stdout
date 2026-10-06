@@ -1,0 +1,8 @@
+	linux-vdso.so.1 (0x00007ffe23d33000)
+	libz.so.1 => /lib/x86_64-linux-gnu/libz.so.1 (0x00007f196c954000)
+	libzstd.so.1 => /lib/x86_64-linux-gnu/libzstd.so.1 (0x00007f1966d46000)
+	libstdc++.so.6 => /lib/x86_64-linux-gnu/libstdc++.so.6 (0x00007f1966a00000)
+	libm.so.6 => /lib/x86_64-linux-gnu/libm.so.6 (0x00007f1966917000)
+	libgcc_s.so.1 => /lib/x86_64-linux-gnu/libgcc_s.so.1 (0x00007f196c926000)
+	libc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x00007f1966600000)
+	/lib64/ld-linux-x86-64.so.2 (0x00007f196c987000)
