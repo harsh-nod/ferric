@@ -1,0 +1,30 @@
+{
+  "archive": {
+    "bytes": 5513950,
+    "sha256": "6f3782741c51645ce2aba2e1fa79749bb6af324a58e51cbb6a72e399f9b30740"
+  },
+  "deletion_uid": 9661,
+  "elevated_process_inspection": true,
+  "free_after": 45797580800,
+  "free_before": 43569565696,
+  "preserved_pin_count": 83,
+  "receipt": {
+    "bytes": 888900,
+    "sha256": "cc75239a5b500eaf515ebe904e0710c2852864efabdaf466d7de4b10a82870eb"
+  },
+  "removed": [
+    {
+      "files": 2028,
+      "logical_bytes": 2445502744,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-graph-work-diagnostic-cpu-v228-v1/target"
+    },
+    {
+      "files": 0,
+      "logical_bytes": 0,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-graph-work-diagnostic-cpu-v228-v1/tmp"
+    }
+  ],
+  "schema": "ferric-failed-diagnostic-cache-retirement-v2",
+  "source_tree_retained": true,
+  "successful_generation_touched": false
+}
