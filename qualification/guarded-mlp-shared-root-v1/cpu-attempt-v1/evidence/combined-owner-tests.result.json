@@ -1,0 +1,53 @@
+{
+  "adopted_reaped": [],
+  "argv": [
+    "/usr/bin/prlimit",
+    "--as=12884901888",
+    "--cpu=1200",
+    "--fsize=1073741824",
+    "--core=0",
+    "--",
+    "/home/harmenon/.rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/bin/cargo",
+    "test",
+    "--offline",
+    "--locked",
+    "--jobs",
+    "2",
+    "-p",
+    "fe2o3-kfd",
+    "--features",
+    "engineering-gfx950",
+    "--lib",
+    "engineering_gfx950::peer::combined_mlp_state_v1::tests::",
+    "--",
+    "--test-threads=1"
+  ],
+  "command": {
+    "bytes": 2238,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-shared-root-native-cpu-v228-v1/evidence/combined-owner-tests.command.json",
+    "sha256": "c8570fec89de4bb298403e24c66182a4dd6920a475741d6dda76edb3611f442c"
+  },
+  "elapsed_ns": 904556411,
+  "exception": null,
+  "exit_code": 0,
+  "forced_cleanup": false,
+  "label": "combined-owner-tests",
+  "natural_exit": true,
+  "observed_signals": [],
+  "pgid": 1878609,
+  "pid": 1878609,
+  "process_group_absent": true,
+  "reaped": true,
+  "stderr": {
+    "bytes": 1304,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-shared-root-native-cpu-v228-v1/evidence/combined-owner-tests.stderr",
+    "sha256": "08240df2ab9fea9c50b3edb58b7b54aba8fcd5162ec325f40f808a3b38f7619b"
+  },
+  "stdout": {
+    "bytes": 4206,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-shared-root-native-cpu-v228-v1/evidence/combined-owner-tests.stdout",
+    "sha256": "8d719fbd2a7a4a6ebf450a08fdd330d6465c70edfbbeaaf8e9fb9a959f0088fa"
+  },
+  "storage_failure": null,
+  "timed_out": false
+}

@@ -1,0 +1,58 @@
+{
+  "archive": {
+    "bytes": 28894,
+    "sha256": "896dca01a7c53f7c141ea0b654d80b26de160ca4fca2fad948a13ced4347270b"
+  },
+  "compiler_executed": false,
+  "failure": null,
+  "gpu_execution": false,
+  "passed": true,
+  "phases": [
+    {
+      "adopted_reaped": [],
+      "argv": [
+        "/usr/bin/prlimit",
+        "--as=12884901888",
+        "--cpu=1200",
+        "--fsize=1073741824",
+        "--core=0",
+        "--",
+        "/home/harmenon/.rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/bin/rustfmt",
+        "--edition",
+        "2024",
+        "--config",
+        "skip_children=true",
+        "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-shared-root-native-cpu-v228-v1/fe2o3/crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_interleaved_native_v1_tests.rs"
+      ],
+      "command": {
+        "bytes": 926,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-shared-root-native-cpu-v228-v1/format/rustfmt.command.json",
+        "sha256": "91abc4d31914cc28ca537ca3fd6b2fc4dcdf9bf640548ea0da99547c7b94929e"
+      },
+      "elapsed_ns": 100687572,
+      "exception": null,
+      "exit_code": 0,
+      "forced_cleanup": false,
+      "label": "rustfmt",
+      "natural_exit": true,
+      "observed_signals": [],
+      "pgid": 1866018,
+      "pid": 1866018,
+      "process_group_absent": true,
+      "reaped": true,
+      "stderr": {
+        "bytes": 0,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-shared-root-native-cpu-v228-v1/format/rustfmt.stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "stdout": {
+        "bytes": 0,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-shared-root-native-cpu-v228-v1/format/rustfmt.stdout",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "storage_failure": null,
+      "timed_out": false
+    }
+  ],
+  "scope": "formatter-only, not stage acceptance"
+}

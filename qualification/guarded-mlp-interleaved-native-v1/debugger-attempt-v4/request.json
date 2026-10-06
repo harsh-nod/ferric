@@ -1,0 +1,15 @@
+{
+  "schema": "ferric-native-paired-guarded-mlp-request-v1",
+  "device_unique_ids": [16366993098680759275, 10838076764495710945],
+  "images": [
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-interleaved-debugger-gpu-v228-v4/r1.hsaco",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-interleaved-debugger-gpu-v228-v4/mlp.hsaco",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-interleaved-debugger-gpu-v228-v4/guarded.hsaco"
+  ],
+  "image_sha256": [
+    "25338beac39121cf81adfdc5c82c6f39bcfc82c0f7effaa2166bf8a2a9598a25",
+    "b0d1766fdb0fda17ab09496d1120ba3cee29100692b48fcc5b05cf0db0a8d589",
+    "de880dcebf79425ccb555c1a2bdca3ff78b926f7b2062d06b918763da4de0f66"
+  ],
+  "timeout_ms": 5000
+}

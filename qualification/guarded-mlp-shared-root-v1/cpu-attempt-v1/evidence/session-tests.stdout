@@ -1,0 +1,15 @@
+
+running 10 tests
+test engineering_gfx950::peer::combined_mlp_state_v1::paired::session::tests::session_busy_drop_and_native_generation_drift_are_terminal ... ok
+test engineering_gfx950::peer::combined_mlp_state_v1::paired::session::tests::session_custody_does_not_accept_replay_or_caller_mutated_completion ... ok
+test engineering_gfx950::peer::combined_mlp_state_v1::paired::session::tests::session_native_entry_replay_and_transfer_errors_quarantine_both_owners ... ok
+test engineering_gfx950::peer::combined_mlp_state_v1::paired::session::tests::session_rearm_checks_pair_before_any_reset ... ok
+test engineering_gfx950::peer::combined_mlp_state_v1::paired::session::tests::session_rearm_each_deadline_boundary_including_commit_is_terminal ... ok
+test engineering_gfx950::peer::combined_mlp_state_v1::paired::session::tests::session_rearm_each_failure_before_and_after_effect_is_terminal ... ok
+test engineering_gfx950::peer::combined_mlp_state_v1::paired::session::tests::session_rearm_invalid_timeout_zero_and_overflow_do_not_touch_state ... ok
+test engineering_gfx950::peer::combined_mlp_state_v1::paired::session::tests::session_rearm_peer_snapshot_or_generation_drift_refuses_before_stores ... ok
+test engineering_gfx950::peer::combined_mlp_state_v1::paired::session::tests::session_rearm_propagates_quiescence_and_final_readback_refusals ... ok
+test engineering_gfx950::peer::combined_mlp_state_v1::paired::session::tests::session_transfer_phase_policy_allows_writes_only_ready ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 1037 filtered out; finished in 0.00s
+

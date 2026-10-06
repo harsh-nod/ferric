@@ -1,0 +1,1 @@
+{"passed": true, "gpu_execution": false, "observation_mutation_refusals": 640, "fixed_output_hashes": 16, "fixed_up_matrix_hashes": 16, "strict_json_refusals": 2, "stdout_refusals": 2, "native_wire_upper_bytes": 3661174}

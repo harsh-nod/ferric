@@ -13,6 +13,12 @@ ATTEMPTS = {
     2: dict(archive_bytes=422345, archive_sha='092ece748e5f74476216d8b86da55b9b145fcae1096560bfb47a00f4250b85fc',
             receipt_sha='3ea6a047a4f91407d904763af59761f52ca3122c7c8f96e12653ac82a94938cb',
             members=75, expanded=2924460, passed=True, native_exit=101),
+    3: dict(archive_bytes=425770, archive_sha='864312231e2feba322033706dcc935747960dd142d32380a5c598dcff6448fb5',
+            receipt_sha='7c8827c8f906bb4b5b6e9e7bd92b4cf1ec9e06f23e848e0247269de8b107b049',
+            members=76, expanded=2937043, passed=True, native_exit=101),
+    4: dict(archive_bytes=425821, archive_sha='caed846e35a98348a2a8f5cce4970393684db26f1551a650d6dcf6b00863ae0f',
+            receipt_sha='b02b083fdb9ecd889074704b8b3791e209c616e62d39054b1429511dde732716',
+            members=76, expanded=2937173, passed=True, native_exit=101),
 }
 
 
@@ -99,6 +105,28 @@ def main():
             assert v['first_false_predicate'] == 'owner' and v['tokens_equal'] and v['root_loop_valid']
             assert v['predicates'] == dict(owner=False, extent=True, kind=True, mapping=True)
             assert v['start']['host_only_debugger'] and 'amd-dbgapi' not in v['start']['target_stack']
+            if version >= 3:
+                chain = result['token_chain']
+                assert chain == json.loads(bodies['evidence/token-chain.json'])
+                prefixes = (b'FERRIC_COMMON_SELECTION_V1=', b'FERRIC_PAYLOAD_TRANSFER_V1=', b'FERRIC_PREPARE_INPUT_V1=')
+                lines = bodies['evidence/native.stdout'].splitlines()
+                assert [json.loads(next(line for line in lines if line.startswith(prefix)).split(b'=', 1)[1])
+                        for prefix in prefixes] == chain
+                selected, transfer, prepare = chain
+                assert selected['common_rows'] == [
+                    [[1, 1, 0, 8192], [1, 2, 0, 50331648], [1, 3, 0, 50331648], [1, 4, 0, 50331648]],
+                    [[1, 5, 1, 8192], [1, 6, 1, 50331648], [1, 7, 1, 50331648], [1, 8, 1, 50331648]]]
+                assert selected['selected_token'] == transfer['payload_token'] == transfer['inputs_token']
+                assert transfer['inputs_token'] == prepare['inputs_token'] == o['source_token']
+                assert o['inputs_pointer_matches_transfer'] and transfer['common_unchanged']
+                assert selected['actual_delta'] == 0 and selected['root_index'] == 1
+                assert selected['rank'] == (0 if version == 3 else 1)
+                assert selected['expected_delta'] == (0 if version == 3 else 128)
+                checks = v['token_chain']
+                assert checks == dict(selector_site_matches=version == 4,
+                    source_rows_have_expected_owners_and_extents=True, source_ids_distinct=True,
+                    source_unchanged=True, selected_rank0_instead_of_rank1=version == 4,
+                    selected_token_preserved=True, transfer_and_prepare_pointer_joins=True)
         destination = Path(__file__).resolve().parent / f'debugger-attempt-v{version}'
         assert not destination.is_symlink()
         if destination.exists():

@@ -1,0 +1,19 @@
+
+running 14 tests
+test engineering_gfx950::peer::combined_mlp_state_v1::tests::native::paired::interleaved::interleaved_all_eight_final_witnesses_match_independent_hashes ... ok
+test engineering_gfx950::peer::combined_mlp_state_v1::tests::native::paired::interleaved::interleaved_rank_roots_preserve_shared_private_and_input_identities ... ok
+test engineering_gfx950::peer::combined_mlp_state_v1::tests::native::paired::interleaved::interleaved_rank_roots_refuse_private_roles_duplicates_and_errors ... ok
+test engineering_gfx950::peer::combined_mlp_state_v1::tests::native::paired::interleaved::interleaved_rank_roots_refuse_shared_roles_before_private_allocation ... ok
+test engineering_gfx950::peer::combined_mlp_state_v1::tests::native::paired::interleaved::interleaved_schedule_keeps_bank_generations_separate_from_forwards ... ok
+test engineering_gfx950::peer::combined_mlp_state_v1::tests::native::paired::interleaved::interleaved_signed_up_preserves_positive_zero_dense_padding ... ok
+test engineering_gfx950::peer::combined_mlp_state_v1::tests::native::paired::interleaved::native_paired_guarded_mlp_interleaved_v1 ... ignored, requires explicit MI350 two-layer two-bank interleaving and three checked images
+test engineering_gfx950::peer::combined_mlp_state_v1::tests::native::paired::native_paired_guarded_mlp_v1 ... ignored, requires explicit two-device MI350 paired diagnostic and three checked images
+test engineering_gfx950::peer::combined_mlp_state_v1::tests::native::paired::paired_native_fixture_matches_independent_staged_arithmetic ... ok
+test engineering_gfx950::peer::combined_mlp_state_v1::tests::native::paired::paired_native_matrix_roles_are_distinct_with_every_row_nonzero ... ok
+test engineering_gfx950::peer::combined_mlp_state_v1::tests::native::paired::paired_native_request_refuses_wrong_images_devices_and_unknown_fields ... ok
+test engineering_gfx950::peer::combined_mlp_state_v1::tests::native::paired::reuse::native_paired_guarded_mlp_reuse_v1 ... ignored, requires explicit two-device MI350 consecutive-generation diagnostic and three checked images
+test engineering_gfx950::peer::combined_mlp_state_v1::tests::native::paired::reuse::reuse_fixture_changes_every_final_word_and_preserves_exact_positive_zeros ... ok
+test engineering_gfx950::peer::combined_mlp_state_v1::tests::native::paired::reuse::reuse_fixture_doubles_only_up_matrix_coefficients ... ok
+
+test result: ok. 11 passed; 0 failed; 3 ignored; 0 measured; 1033 filtered out; finished in 0.85s
+

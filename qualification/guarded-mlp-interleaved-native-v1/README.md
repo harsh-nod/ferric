@@ -4,8 +4,10 @@ This checkpoint extends the [borrow-free retained pair](../guarded-mlp-retained-
 with a native two-layer, two-bank, four-forward diagnostic. Both CPU suites pass.
 The original executable fails an allocation-role check in both of its attempts;
 the diagnostic-only rebuild passes the synthetic GPU case in both of its attempts.
-The original refusal is now localized to a wrong-rank RMS-weight token, but the
-binary discrepancy is **not root-caused**. This is not a production route or model benchmark.
+The original refusal is now traced to a shared-root selector that omits the rank
+offset. The responsible compiler transformation or underlying source defect is
+**not root-caused**. A subsequent [checked-root fixture](../guarded-mlp-shared-root-v1/README.md)
+passes CPU and bare-GPU qualification. This is not a production route or model benchmark.
 
 ## What Changed
 
@@ -255,10 +257,9 @@ that the native test passes.
 
 This rules out an extent, kind or mapping failure at the observed refusal, and
 does not show disagreement between the token, its validated copy and its record.
-It does not yet establish where rank 0's token enters rank 1's inputs or why
-the diagnostic-only rebuild passes. The next gate traces the shared-root table,
-payload construction and `Inputs` copy before choosing a source fix. The
-owner check must remain strict.
+That initial capture alone does not establish where rank 0's token enters rank
+1's inputs. The later trace below follows shared-root selection through payload
+construction and the `Inputs` copy. The owner check remains strict.
 
 Two independent disassembly reviews also identify a matching upstream address
 calculation. The original shared-root selector at `0x556491` reads
@@ -269,8 +270,8 @@ pointer is not advanced between ranks. This differs from the qualified source's
 `common[rank][index - 1]` expression and predicts the observed wrong-rank token.
 It is a concrete machine-code addressing difference, not identification of the
 responsible compiler pass or proof that arbitrary source rewrites fix it.
-The next capture should read both common rows and the actual selected address,
-then follow that value into the payload and `Inputs`.
+The later capture reads both common rows and the actual selected address, then
+follows that value into the payload and `Inputs`.
 
 Both attempts complete nine supervised phases with reaped leaders, absent
 process groups, no forced cleanup, no postcheck errors, and all eight GPUs idle
@@ -285,6 +286,43 @@ retains 74 members / 2,922,375 expanded bytes for the debugger failure and
 
 - Failed debugger: `589f184c68643298d1d34f30c1f0505502f9fe68fac42d64a093e7572579492a`.
 - Host predicate capture: `3ea6a047a4f91407d904763af59761f52ca3122c7c8f96e12653ac82a94938cb`.
+
+## Shared-Root Dataflow Capture
+
+Two additional debugger attempts retain the unchanged original ELF and images.
+The [third capture](debugger-attempt-v3/evidence/complete.json) has a filtering
+mistake: GDB evaluates the Python breakpoint callback before the CLI condition,
+so it records rank 0. Its selector-site and wrong-rank-selection flags remain
+false. It is preserved as a limited observation, not evidence of rank 1 selection.
+
+The [fourth capture](debugger-attempt-v4/evidence/complete.json) applies rank/index
+filtering inside the Python callback before recording anything. Breakpoints stay
+enabled; stage guards select the four observations without modifying inferior
+memory or calling inferior functions. All seven dataflow checks pass.
+
+| Original ELF Observation | Actual Value |
+| --- | --- |
+| Common rank-0 IDs / owners | IDs 1, 2, 3, 4; owner 0 |
+| Common rank-1 IDs / owners | IDs 5, 6, 7, 8; owner 1 |
+| Selected role | Rank 1, root index 1, RMS weights |
+| Actual / required row offset | 0 / 128 bytes |
+| Selected token | `[1, 1, 0, 8192]` instead of `[1, 5, 1, 8192]` |
+| Payload, `Inputs`, preparation and refusal | Same wrong-rank token throughout |
+| Common table and pointer joins | Unchanged table; all joins match |
+| First false allocation predicate | Owner 0 instead of owner 1 |
+
+This establishes the observed host addressing failure before allocation-role
+validation. It does not identify the responsible compiler pass or prove a
+general toolchain repair. Both debugger runs naturally reach the original
+status-101 native failure and complete nine clean supervised phases. No debugger
+observation is counted as numerical GPU acceptance.
+
+The [retainer](retain_debugger.py) checks all raw joins and explicitly preserves
+v3's two false flags versus v4's seven true flags. Each archive has 76 members;
+expanded sizes are 2,937,043 and 2,937,173 bytes. Receipt SHA-256 values:
+
+- Third capture: `7c8827c8f906bb4b5b6e9e7bd92b4cf1ec9e06f23e848e0247269de8b107b049`.
+- Fourth capture: `b02b083fdb9ecd889074704b8b3791e209c616e62d39054b1429511dde732716`.
 
 ## Scope and Next Gate
 

@@ -1,0 +1,52 @@
+
+Program stopped.
+0x00007f79421d5540 in ?? () from /lib64/ld-linux-x86-64.so.2
+
+FERRIC_DEBUGGER_START_V1={"debugger_pid": 1838822, "elf_sha256": "dbf5ea87824b4ab2be1e481cf21595f5809fb95bd309552e888a32f8089a8425", "host_only_debugger": true, "inferior_pgid": 1838847, "inferior_pid": 1838847, "inferior_sid": 1838822, "inferior_start_ticks": 70564748, "mode": "native", "target_async_setting": "Controlling the inferior in asynchronous mode is off.\n", "target_stack": "The current target stack is:\n  - native (Native process)\n  - exec (Local exec file)\n  - None (None)\n"}
+[Thread debugging using libthread_db enabled]
+Using host libthread_db library "/lib/x86_64-linux-gnu/libthread_db.so.1".
+
+running 1 test
+test engineering_gfx950::peer::combined_mlp_state_v1::tests::native::paired::interleaved::native_paired_guarded_mlp_interleaved_v1 ... 
+FERRIC_COMMON_SELECTION_V1={"actual_delta": 0, "common_len": 2, "common_rows": [[[1, 1, 0, 8192], [1, 2, 0, 50331648], [1, 3, 0, 50331648], [1, 4, 0, 50331648]], [[1, 5, 1, 8192], [1, 6, 1, 50331648], [1, 7, 1, 50331648], [1, 8, 1, 50331648]]], "elf_sha256": "dbf5ea87824b4ab2be1e481cf21595f5809fb95bd309552e888a32f8089a8425", "expected_delta": 0, "hit": 1, "ordinal": 0, "rank": 0, "root_index": 1, "schema": "ferric-original-common-root-chain-observation-v1", "selected_token": [1, 1, 0, 8192], "site_offset": 5009, "stage": "selection", "stride_counter": 8}
+
+FERRIC_PAYLOAD_TRANSFER_V1={"common_unchanged": true, "elf_sha256": "dbf5ea87824b4ab2be1e481cf21595f5809fb95bd309552e888a32f8089a8425", "hit": 1, "inputs_token": [1, 1, 0, 8192], "ordinal": 1, "payload_token": [1, 1, 0, 8192], "return_matches_inputs": true, "same_stack": true, "same_thread": true, "schema": "ferric-original-common-root-chain-observation-v1", "site_offset": 6127, "stage": "transfer"}
+
+FERRIC_PREPARE_INPUT_V1={"elf_sha256": "dbf5ea87824b4ab2be1e481cf21595f5809fb95bd309552e888a32f8089a8425", "hit": 1, "inputs_pointer_matches": true, "inputs_token": [1, 1, 0, 8192], "ordinal": 2, "same_thread": true, "schema": "ferric-original-common-root-chain-observation-v1", "site_offset": 1123, "stage": "prepare"}
+
+FERRIC_ROLE_PREDICATE_V1={"combined_u32": 0, "copied_token": [1, 1, 0, 8192], "eax_u32": 0, "ecx_u32": 0, "eflags_u64": 663, "elf_sha256": "dbf5ea87824b4ab2be1e481cf21595f5809fb95bd309552e888a32f8089a8425", "expected_bytes": 8192, "expected_owner": 1, "group_id": 1, "hit": 1, "inputs_pointer_matches_transfer": true, "mapping_u8": 1, "prepare_return_offset": 266, "record_kind_u8": 0, "record_pointer_matches_return": true, "record_token": [1, 1, 0, 8192], "region_pc_offset": 310, "role": "root", "root_index": 1, "saved_byte_index": 32, "saved_rank": 1, "schema": "ferric-original-mlp-role-predicate-observation-v1", "source_address_matches_role": true, "source_token": [1, 1, 0, 8192], "validation_tag_u64": 9223372036854775808}
+#0  0x0000648235fef7f6 in fe2o3_kfd::engineering_gfx950::peer::combined_mlp_state_v1::paired::profiles::region ()
+#1  0x0000648235fefaba in fe2o3_kfd::engineering_gfx950::peer::combined_mlp_state_v1::paired::profiles::prepare ()
+#2  0x000064823607c938 in <fe2o3_kfd::engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::RetainedPair>::allocate ()
+#3  0x000064823613b90b in fe2o3_kfd::engineering_gfx950::peer::combined_mlp_state_v1::tests::native::paired::interleaved::interleaved_exercise ()
+#4  0x000064823609d5bd in fe2o3_kfd::engineering_gfx950::peer::combined_mlp_state_v1::tests::native::paired::paired_run_with ()
+#5  0x00006482361401b2 in fe2o3_kfd::engineering_gfx950::peer::combined_mlp_state_v1::tests::native::paired::interleaved::native_paired_guarded_mlp_interleaved_v1 ()
+FAILED
+
+successes:
+
+successes:
+
+failures:
+
+---- engineering_gfx950::peer::combined_mlp_state_v1::tests::native::paired::interleaved::native_paired_guarded_mlp_interleaved_v1 stdout ----
+
+thread 'engineering_gfx950::peer::combined_mlp_state_v1::tests::native::paired::interleaved::native_paired_guarded_mlp_interleaved_v1' (1838850) panicked at crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_interleaved_native_v1_tests.rs:405:6:
+native interleaved guarded MLP failed: "paired guarded MLP typed allocation role"
+stack backtrace:
+   0: __rustc::rust_begin_unwind
+   1: core::panicking::panic_fmt
+   2: core::result::unwrap_failed
+   3: fe2o3_kfd::engineering_gfx950::peer::combined_mlp_state_v1::tests::native::paired::interleaved::native_paired_guarded_mlp_interleaved_v1
+   4: <fe2o3_kfd::engineering_gfx950::peer::combined_mlp_state_v1::tests::native::paired::interleaved::native_paired_guarded_mlp_interleaved_v1::{closure#0} as core::ops::function::FnOnce<()>>::call_once
+note: Some details are omitted, run with `RUST_BACKTRACE=full` for a verbose backtrace.
+
+
+failures:
+    engineering_gfx950::peer::combined_mlp_state_v1::tests::native::paired::interleaved::native_paired_guarded_mlp_interleaved_v1
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 1043 filtered out; finished in 2.65s
+
+[Inferior 1 (process 1838847) exited with code 0145]
+
+FERRIC_DEBUGGER_EXIT_V1={"exit_codes": [101], "hits": 1, "mode": "native"}
