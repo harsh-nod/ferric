@@ -1,9 +1,9 @@
 # Combined State Candidate
 
-Status: experimental; [both CPU qualification attempts failed](../guarded-mlp-combined-state-cpu-v1/README.md). The new
+Status: experimental; [CPU attempt v3 passes all 39 tests](../guarded-mlp-combined-state-cpu-v1/README.md). The new
 [experimental v2 crate](../../device/qwen3-tp-guarded-mlp-segment-kernels-v2/README.md)
-is not connected to inference, and has not passed CPU qualification, guarded
-lowering or GPU execution. All issue #42 milestones remain open.
+is not connected to inference, and has not passed guarded lowering or GPU
+execution. All issue #42 milestones remain open.
 
 The [latest actual guarded compile](../guarded-mlp-memory-bounds-dag-lowering-v1/README.md)
 fails because its two potentially aliasing allocation origins lack relative
@@ -21,13 +21,21 @@ is 10,515 bytes, SHA-256
 There are 39 authored tests: the 27 inherited tests plus 12 combined-state
 tests. The first actual run passes 38 and fails one formatting-sensitive
 source-shape assertion after rustfmt. All inherited tests pass. The failure
-is retained unchanged; the complete CPU qualification has not passed.
+is retained unchanged.
 
 The [second source proposal](proposal-v2/source-manifest.json) makes the
 supplementary store assertion formatting-independent, but its test build
 fails due to missing explicit `std` imports for `format!` and `String`. No
 tests run in the second attempt. This proposal is retained separately and
 has not replaced the canonical device crate.
+
+The [third source proposal](proposal-v3/source-manifest.json) adds the two
+explicit imports. Attempt v3 passes all ten phases and 39 tests; its six Rust
+bodies are the current experimental crate sources. Relative to the original
+candidate, only `guard.rs` formatting and the supplementary source test change.
+No runtime store offset, ordering or arithmetic changes. The v3 manifest is
+13,517 bytes, SHA-256
+`6ec4016f9e8cbed68c9c8abd6fb22edc901bc88cd4a5fb1eccc6c2bbaf187fa5`.
 
 The [typed 2,208-byte owner and suffix-only peer-read capability](../guarded-mlp-combined-state-owner-v1/README.md)
 pass isolated runtime CPU qualification: 1,008 full-suite passes with three

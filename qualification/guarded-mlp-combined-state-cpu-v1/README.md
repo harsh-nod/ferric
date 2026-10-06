@@ -1,9 +1,31 @@
 # Combined State CPU Qualification
 
-Status: **failed** on MI350. This is a host-side qualification of the
+Status: **attempt v3 passes** on MI350. This is a host-side qualification of the
 experimental v2 kernel crate, not a GPU compile or execution result.
 
 ## Latest Attempt
+
+[Attempt v3](attempt-v3/evidence/complete.json) passes all ten phases and all
+39 tests, with zero failures or ignores. The supplementary source assertion
+now tolerates rustfmt whitespace while checking the exact four literal stores
+in order; its two required `std` imports are explicit. Production kernel
+behavior is unchanged by these test repairs.
+
+All children exit naturally with status zero, are reaped and leave no process
+groups. Sources and dependencies remain unchanged, with no postcheck errors.
+The final host-library build passes. Whole qualification time is 75.840396
+seconds, not GPU or model latency.
+
+The passing capsule contains 70 members, 69 content pins and 56 raw records.
+Its receipt is 131,476 bytes, SHA-256
+`ebdcb5f36dcdadd77614f85b91f0ed510d1ea6a44be407ab18d73a1aa56af696`.
+Its archive is 2,218,349 bytes, SHA-256
+`822cba63721bb5e475107b13ebc7441fdb4ecef03cd769799fb2e0aac4aee836`.
+The [v3 source proposal](../guarded-mlp-combined-state-v1/proposal-v3/source-manifest.json)
+and the tested Rust bodies are retained. Guarded gfx950 lowering, GPU execution,
+independent model numerics and performance remain separate gates.
+
+## Second Attempt
 
 [Attempt v2](attempt-v2/evidence/failed.json) fails while building the test
 binary. The formatting-independent assertion introduced unqualified `format!`
@@ -18,7 +40,8 @@ This failed retry does not supersede the first run with a passing result.
 The [v2 source proposal](../guarded-mlp-combined-state-v1/proposal-v2/source-manifest.json)
 is retained, not installed in the canonical device crate. Its production
 bodies match the first attempt's formatted sources. A two-import test repair
-and a fresh complete qualification are required.
+and a fresh complete qualification were required; attempt v3 above supplies
+that CPU result. Both failed attempts remain unchanged.
 
 The second closed capsule contains 50 members, 49 content pins and 36 raw
 records. Its failed receipt is 111,015 bytes, SHA-256
@@ -40,7 +63,8 @@ It searches for a single-line Release-store spelling in `guard.rs`, but the
 required formatting phase splits that invocation across lines. Host checking,
 test compilation and both inventories pass. All 27 inherited tests and 11 of
 the 12 new tests pass; the source-shape assertion fails. A formatting-independent
-test repair and fresh qualification are required before accepting this crate.
+test repair and fresh qualification were required; attempt v3 supplies that
+CPU result without changing this failed attempt.
 
 All nine children exit naturally, are reaped and leave no process groups.
 There are no timeouts, forced cleanup or postcheck errors. Tested sources and

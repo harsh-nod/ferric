@@ -1,0 +1,319 @@
+{
+  "schema": "ferric-guarded-mlp-combined-state-candidate-source-v1",
+  "base_crate": "device/qwen3-tp-guarded-mlp-segment-kernels-v1",
+  "crate_path": "device/qwen3-tp-guarded-mlp-segment-kernels-v2",
+  "base_files": {
+    "device/qwen3-tp-guarded-mlp-segment-kernels-v1/Cargo.toml": {
+      "bytes": 638,
+      "sha256": "77666d47f5824a8e650723cbd9f2f259e76e2c497a8c756851314a0c14243c75"
+    },
+    "device/qwen3-tp-guarded-mlp-segment-kernels-v1/README.md": {
+      "bytes": 2702,
+      "sha256": "c8801ff79f80c29795de9a7d5e38edd1aa27053c2c34778c1187fed25d3affd6"
+    },
+    "device/qwen3-tp-guarded-mlp-segment-kernels-v1/src/arithmetic.rs": {
+      "bytes": 7432,
+      "sha256": "e221d035dc7f0c70c1dc362cf754a4928dc76f69eb4e66465b811057d0bacd6a"
+    },
+    "device/qwen3-tp-guarded-mlp-segment-kernels-v1/src/guard.rs": {
+      "bytes": 6349,
+      "sha256": "5719adbf7ceb0bb043a8a64750ac61d9a790f8bb821e673dd0f9181a17b59cf9"
+    },
+    "device/qwen3-tp-guarded-mlp-segment-kernels-v1/src/guard_tests.rs": {
+      "bytes": 11240,
+      "sha256": "350fb9d392f2f02e79f8a64c20877edb7b8ff8cc9dc45b0af30a434398efd517"
+    },
+    "device/qwen3-tp-guarded-mlp-segment-kernels-v1/src/kernels.rs": {
+      "bytes": 2452,
+      "sha256": "fab272fdb4187790921eb3ff833dab54f3f79025d54ff6affae4c5c363bb1ad0"
+    },
+    "device/qwen3-tp-guarded-mlp-segment-kernels-v1/src/lib.rs": {
+      "bytes": 1073,
+      "sha256": "1252273179de4d95a304741cc893cb7be47b9493463697c853d6dee46f3dba82"
+    }
+  },
+  "base_rust_files_joined_to_qualified_candidate": 5,
+  "base_source_map": {
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-memory-bounds-dag-lowering-v228-v1/source-before.json",
+    "bytes": 1979859,
+    "sha256": "955e37e41e54df808221a7d3459f3f782ac7d0b6115ec35e48e14d5f834d4d78"
+  },
+  "baseline_failure": {
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-memory-bounds-dag-lowering-v228-v1/failed.json",
+    "bytes": 19105,
+    "sha256": "1943926bd4d138d79505f6d0a4d97722d7efa54af6323cccab319be9d53c9140"
+  },
+  "baseline_failure_stderr": {
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-memory-bounds-dag-lowering-v228-v1/compile.stderr",
+    "bytes": 123593,
+    "sha256": "b7c4435210a46414e49ed798624eff224c0436935a51d6715eccd8ee61c72f0a"
+  },
+  "files": [
+    {
+      "path": "device/qwen3-tp-guarded-mlp-segment-kernels-v2/Cargo.toml",
+      "before": {
+        "bytes": 638,
+        "sha256": "a3459cd961911d0edf23717553776ba4b9daf80a2a7722e360d4c6efba3959ca"
+      },
+      "after": {
+        "bytes": 638,
+        "sha256": "a3459cd961911d0edf23717553776ba4b9daf80a2a7722e360d4c6efba3959ca"
+      },
+      "proposal_source": "source/device/qwen3-tp-guarded-mlp-segment-kernels-v2/Cargo.toml"
+    },
+    {
+      "path": "device/qwen3-tp-guarded-mlp-segment-kernels-v2/README.md",
+      "before": {
+        "bytes": 4643,
+        "sha256": "a4816250bc657298cfb2bbd022b248d89b9ab53f6bcec40f3c41c627179abac5"
+      },
+      "after": {
+        "bytes": 4643,
+        "sha256": "a4816250bc657298cfb2bbd022b248d89b9ab53f6bcec40f3c41c627179abac5"
+      },
+      "proposal_source": "source/device/qwen3-tp-guarded-mlp-segment-kernels-v2/README.md"
+    },
+    {
+      "path": "device/qwen3-tp-guarded-mlp-segment-kernels-v2/src/arithmetic.rs",
+      "before": {
+        "bytes": 7432,
+        "sha256": "e221d035dc7f0c70c1dc362cf754a4928dc76f69eb4e66465b811057d0bacd6a"
+      },
+      "after": {
+        "bytes": 7432,
+        "sha256": "e221d035dc7f0c70c1dc362cf754a4928dc76f69eb4e66465b811057d0bacd6a"
+      },
+      "proposal_source": "source/device/qwen3-tp-guarded-mlp-segment-kernels-v2/src/arithmetic.rs"
+    },
+    {
+      "path": "device/qwen3-tp-guarded-mlp-segment-kernels-v2/src/combined_state_tests.rs",
+      "before": {
+        "bytes": 14000,
+        "sha256": "6d75b330ac798ac59e48ed915f7fed8bb1362bb1eae93ecfe5212fec198177b2"
+      },
+      "after": {
+        "bytes": 16077,
+        "sha256": "9f0befe33e23aed9b689f777b2b0306a3eef88eb6e1c223184fc4ec2b5f6c99e"
+      },
+      "proposal_source": "source/device/qwen3-tp-guarded-mlp-segment-kernels-v2/src/combined_state_tests.rs"
+    },
+    {
+      "path": "device/qwen3-tp-guarded-mlp-segment-kernels-v2/src/guard.rs",
+      "before": {
+        "bytes": 7790,
+        "sha256": "b84ce770866944650dee4439a5ded39cbb5c4345d94a54303363448a71bc24f2"
+      },
+      "after": {
+        "bytes": 7848,
+        "sha256": "ec5004d34bcf6921908dbf32cec459f5308360c294b2a9355d394de0c02946f8"
+      },
+      "proposal_source": "source/device/qwen3-tp-guarded-mlp-segment-kernels-v2/src/guard.rs"
+    },
+    {
+      "path": "device/qwen3-tp-guarded-mlp-segment-kernels-v2/src/guard_tests.rs",
+      "before": {
+        "bytes": 11240,
+        "sha256": "350fb9d392f2f02e79f8a64c20877edb7b8ff8cc9dc45b0af30a434398efd517"
+      },
+      "after": {
+        "bytes": 11240,
+        "sha256": "350fb9d392f2f02e79f8a64c20877edb7b8ff8cc9dc45b0af30a434398efd517"
+      },
+      "proposal_source": "source/device/qwen3-tp-guarded-mlp-segment-kernels-v2/src/guard_tests.rs"
+    },
+    {
+      "path": "device/qwen3-tp-guarded-mlp-segment-kernels-v2/src/kernels.rs",
+      "before": {
+        "bytes": 2520,
+        "sha256": "3293184a9b00aa5b33a735a16d9d0665b4b88614e1e61a3f624e11b080eae8cb"
+      },
+      "after": {
+        "bytes": 2520,
+        "sha256": "3293184a9b00aa5b33a735a16d9d0665b4b88614e1e61a3f624e11b080eae8cb"
+      },
+      "proposal_source": "source/device/qwen3-tp-guarded-mlp-segment-kernels-v2/src/kernels.rs"
+    },
+    {
+      "path": "device/qwen3-tp-guarded-mlp-segment-kernels-v2/src/lib.rs",
+      "before": {
+        "bytes": 1298,
+        "sha256": "4ffec7750554d0822bed66c1e9b54a8e01bc2a5ef832f9135cf701e6aa9af2f3"
+      },
+      "after": {
+        "bytes": 1298,
+        "sha256": "4ffec7750554d0822bed66c1e9b54a8e01bc2a5ef832f9135cf701e6aa9af2f3"
+      },
+      "proposal_source": "source/device/qwen3-tp-guarded-mlp-segment-kernels-v2/src/lib.rs"
+    }
+  ],
+  "integration_patch": {
+    "path": "integration.patch",
+    "bytes": 6842,
+    "sha256": "074dcf72bccef08a632440151bc2c37e88a2a7f41999b49c85d03051fedcdbc9"
+  },
+  "dependency_revision": "5a500d63c29b78f8788356b20dfcbb5c41ec20c9",
+  "roots": [
+    "ferric_qwen3_mlp_state_guard_v2",
+    "ferric_qwen3_tp2_guarded_projection_residual_bf16_v2"
+  ],
+  "tests": [
+    "arithmetic::tests::active_nonfinite_inputs_trap",
+    "arithmetic::tests::all_finite_bf16_residuals_match_zero_projection_reference",
+    "arithmetic::tests::analytical_pairs_match_independent_staged_reference",
+    "arithmetic::tests::expressions_are_evaluated_once_in_rank_then_residual_order",
+    "arithmetic::tests::fp32_rank_sum_rounds_before_residual",
+    "arithmetic::tests::leading_positive_zero_and_exact_cancellation_stay_positive",
+    "arithmetic::tests::materialization_overflow_traps_before_cancelling_residual_is_evaluated",
+    "arithmetic::tests::neither_rank_partial_is_narrowed",
+    "arithmetic::tests::projection_ties_round_before_residual_addition",
+    "arithmetic::tests::rank_sum_and_final_output_overflows_trap",
+    "arithmetic::tests::tiny_projection_uses_bf16_rne_without_flushing_subnormals",
+    "arithmetic::tests::two_generations_cover_all_4096_active_elements",
+    "combined_state_tests::combined_generated_markers_keep_one_atomic_root_and_readonly_r2_guards",
+    "combined_state_tests::combined_generation_halves_and_stale_suffix_tags_remain_exact",
+    "combined_state_tests::combined_invalid_generation_or_extent_publishes_nothing",
+    "combined_state_tests::combined_layout_has_exact_prefix_suffix_and_atomic_storage",
+    "combined_state_tests::combined_predicate_matches_independent_oracle_for_every_word",
+    "combined_state_tests::combined_predicate_reads_only_all_548_state_words_even_on_failure",
+    "combined_state_tests::combined_publication_preserves_prefix_and_releases_verdict_last",
+    "combined_state_tests::combined_real_atomics_reject_each_corrupted_prefix_word",
+    "combined_state_tests::combined_revalidation_replaces_every_suffix_word_after_all_loads",
+    "combined_state_tests::combined_source_contract_has_one_unsplit_argument_and_literal_store_offsets",
+    "combined_state_tests::combined_suffix_guards_gate_both_r2_payloads_without_changing_arithmetic",
+    "combined_state_tests::combined_wrong_extents_refuse_before_any_state_load",
+    "guard_tests::all_four_guard_words_are_checked_including_invalid_nonboolean_verdicts",
+    "guard_tests::all_owner_values_one_through_sixty_four_are_valid",
+    "guard_tests::both_guards_finish_before_rank_ordered_payload_evaluation",
+    "guard_tests::either_bad_guard_prevents_all_payload_reads_and_output_writes",
+    "guard_tests::every_state_word_mutation_matches_independent_host_oracle",
+    "guard_tests::full_state_predicate_matches_independent_host_ranges",
+    "guard_tests::generation_zero_cannot_publish_any_guard_word",
+    "guard_tests::guard_tags_preserve_both_full_u32_halves_and_refuse_generation_zero",
+    "guard_tests::guard_wrong_extent_reads_nothing_and_valid_shape_acquires_verdict_first",
+    "guard_tests::invalid_state_publishes_current_generation_with_invalid_verdict",
+    "guard_tests::matching_guards_preserve_original_r2_arithmetic",
+    "guard_tests::predicate_loads_all_548_distinct_words_even_after_an_early_failure",
+    "guard_tests::real_atomic_state_and_guard_storage_follow_the_same_predicate",
+    "guard_tests::valid_guard_publishes_tag_and_reserved_before_release_verdict",
+    "guard_tests::zero_state_and_wrong_extents_are_invalid_without_out_of_bounds_reads"
+  ],
+  "expected_cpu_tests": 39,
+  "inherited_cpu_tests": 27,
+  "new_cpu_tests": 12,
+  "layout": {
+    "atomic_primitive": "core::sync::atomic::AtomicU32",
+    "state_words": 548,
+    "state_bytes": 2192,
+    "guard_words": 4,
+    "guard_offset_words": 548,
+    "guard_offset_bytes": 2192,
+    "combined_words": 552,
+    "combined_bytes": 2208,
+    "guard_argument_count": 3,
+    "guard_shared_atomic_slice_arguments": 1,
+    "guard_state_loads": 548,
+    "guard_load_ordering": "Acquire",
+    "publication_indices": [
+      548,
+      549,
+      551,
+      550
+    ],
+    "publication_orderings": [
+      "Relaxed",
+      "Relaxed",
+      "Relaxed",
+      "Release"
+    ],
+    "guard_required_workgroup": [
+      64,
+      1,
+      1
+    ],
+    "guard_max_grid": [
+      1,
+      1,
+      1
+    ],
+    "projection_required_workgroup": [
+      64,
+      1,
+      1
+    ],
+    "projection_max_grid": [
+      64,
+      1,
+      1
+    ],
+    "projection_elements": 4096,
+    "projection_readonly_guard_arguments": 2,
+    "projection_guard_argument_words": 4
+  },
+  "abi_prediction": {
+    "observed": false,
+    "guard_physical_operands": 4,
+    "guard_explicit_bytes": 24,
+    "assumed_implicit_bytes": 256,
+    "predicted_guard_total_bytes": 280
+  },
+  "source_only": true,
+  "old_crate_changed": false,
+  "compiler_changed": false,
+  "compiler_limits_changed": false,
+  "compiler_proof_predicates_changed": false,
+  "state_predicate_changed": false,
+  "guard_publication_order_changed": false,
+  "projection_body_changed_except_symbol": false,
+  "candidate_abi_changed": true,
+  "cpu_qualified": false,
+  "hsaco_qualified": false,
+  "gpu_execution": false,
+  "numerical_acceptance": false,
+  "performance_claim": false,
+  "production_authority": false,
+  "revision_kind": "no-std-test-import-repair",
+  "preimage_crate": "device/qwen3-tp-guarded-mlp-segment-kernels-v2",
+  "previous_candidate_manifest": {
+    "bytes": 13139,
+    "sha256": "d70de4a3a142c93959c05601dabe524a29b3da90a21955ec1ccf6360190bfcca"
+  },
+  "previous_cpu_failure": {
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-combined-state-cpu-v228-v2/evidence/failed.json",
+    "bytes": 111015,
+    "sha256": "4d70e61800b8f82ae609583f5de08424ad79f099aad18fd9d8e400c1e67c8f47"
+  },
+  "previous_cpu_failure_stdout": {
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-combined-state-cpu-v228-v2/evidence/build-tests.stdout",
+    "bytes": 209795,
+    "sha256": "f9ec5eb8273c9e0d3235eb684601bd6d151f195eada9425e937c3322857c0300"
+  },
+  "previous_cpu_final_sources": {
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-combined-state-cpu-v228-v2/evidence/sources-after.json",
+    "bytes": 2017325,
+    "sha256": "736ccbee1a48406bbbe730cd5c9efb6a3409de1e54a891a4325dab8635ba227c"
+  },
+  "previous_cpu_observation": {
+    "passed": false,
+    "phases": 6,
+    "tests_passed": null,
+    "tests_failed": null,
+    "tests_ignored": null,
+    "final_phase": "build-tests",
+    "final_exit_code": 101,
+    "rust_test_execution_started": false,
+    "missing_format_macro_diagnostics": 3,
+    "missing_string_type_diagnostics": 1,
+    "source_unchanged": true,
+    "postcheck_errors": []
+  },
+  "repair_production_bodies_match_previous_formatted": true,
+  "repair_test_roster_changed": false,
+  "repair_candidate_abi_changed": false,
+  "repair_test_source_assertion_only": true,
+  "previous_cpu_failure_stderr": {
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-combined-state-cpu-v228-v2/evidence/build-tests.stderr",
+    "bytes": 10270,
+    "sha256": "b74afb3fdc55168e85274e6e468c629c1caff325e195da79f091ada09348efcf"
+  },
+  "repair_adds_only_required_std_imports_to_previous_formatted_test": true
+}

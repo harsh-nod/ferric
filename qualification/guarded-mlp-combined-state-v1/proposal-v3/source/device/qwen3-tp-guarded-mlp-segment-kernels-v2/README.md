@@ -1,10 +1,9 @@
 # Combined-State Guarded MLP Kernels
 
-Experimental additive gfx950 candidate. Its [MI350 CPU qualification](../../qualification/guarded-mlp-combined-state-cpu-v1/README.md)
-passes all ten phases and 39 tests. This crate is not connected to Ferric's
-inference path and has no successful HSACO compile, GPU execution, model
-numerical acceptance or performance result. The v1 crate and its 548-word
-state contract are unchanged.
+Source-only additive gfx950 candidate. This crate is not connected to Ferric's
+inference path and has no current CPU qualification, successful HSACO compile,
+GPU execution, numerical acceptance or performance result. The v1 crate and
+its 548-word state contract are unchanged.
 
 ## One Real Atomic Allocation
 
@@ -62,11 +61,11 @@ remain unchanged. A successful new compile is still required.
 
 The existing 27 CPU test sources are retained, including the independent
 range-based state oracle and staged BF16 arithmetic oracle. Twelve additional
-tests cover combined layout, every state/suffix
+tests are authored, for 39 expected tests: combined layout, every state/suffix
 mutation, exact load coverage, wrong extents, release-last publication, generation
 halves, stale guards, real atomic corruption checks, payload suppression,
 generated marker function signatures, and literal source/ABI contracts.
-All 39 tests pass in the retained MI350 CPU qualification.
+No test in this new generation has been executed by the proposal author.
 
 Source-signature tests establish one Rust slice plus two scalar arguments,
 not a measured GPU ABI. The predicted guard layout is four physical operands
@@ -79,10 +78,8 @@ The host needs an additive 2208-byte atomic owner with a typed 2192-byte prefix
 borrow and a 16-byte suffix range, completion-scoped leases, unique generations,
 and ordered producer/validator/consumer dispatches. It must prohibit concurrent
 reset or prefix mutation during validation and guard consumption. Existing
-548-word owner types are not resized. The
-[private owner passes isolated CPU qualification](../../qualification/guarded-mlp-combined-state-owner-v1/README.md),
-but canonical runtime integration, the paired coordinator, protected admission,
-GPU negative controls and full-model benchmarking remain separate.
+548-word owner types are not resized. Runtime implementation, protected
+admission, GPU negative controls and full-model benchmarking remain separate.
 
 Dependencies remain pinned to fe2o3 revision
 `5a500d63c29b78f8788356b20dfcbb5c41ec20c9`. This source dependency pin is

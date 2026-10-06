@@ -22,17 +22,15 @@ exact old bound and solver;
 the new route requires a runtime-validated DAG and zero ownership contracts.
 No work limit, access predicate or atomic ordering is relaxed.
 
-The next [combined-state candidate is retained as experimental source](../qualification/guarded-mlp-combined-state-v1/README.md).
-Its versioned validator takes one genuine 552-word atomic allocation, keeping
-the old 548-word API unchanged. Its
-[first MI350 CPU qualification fails](../qualification/guarded-mlp-combined-state-cpu-v1/README.md):
-38 tests pass and one formatting-sensitive source-shape assertion fails after
-rustfmt. Host checking and test compilation pass; all children exit naturally
-with clean source and process postchecks. The failed receipt is preserved.
-A test repair and fresh CPU qualification precede guarded lowering and GPU work.
-The second attempt's test binary fails to build because the new assertion
-needs explicit `std` imports in the `no_std` crate; no tests run in that
-attempt. Both failures are retained. Separately,
+The [combined-state candidate passes MI350 CPU qualification](../qualification/guarded-mlp-combined-state-cpu-v1/README.md):
+all ten phases and 39 tests pass, with clean source, dependency and process
+postchecks. Its versioned validator takes one genuine 552-word atomic allocation,
+keeping the old 548-word API unchanged. Both earlier test-related failures
+remain retained. The exact passing Rust sources are in the experimental v2 crate.
+The [matching owner passes full runtime CPU qualification](../qualification/guarded-mlp-combined-state-owner-v1/README.md):
+1,008 KFD passes, three unchanged ignores and 14 focused passing repeats.
+The owner remains isolated from the canonical runtime and inference path.
+Guarded gfx950 compilation and GPU execution remain unqualified. Separately,
 [25 combined-state lowering-controller fixtures pass](../qualification/guarded-mlp-combined-state-lowering-v1/README.md).
 They are synthetic admission tests, not a new kernel compile or GPU result.
 

@@ -1,0 +1,44 @@
+
+running 39 tests
+test arithmetic::tests::active_nonfinite_inputs_trap ... ok
+test arithmetic::tests::all_finite_bf16_residuals_match_zero_projection_reference ... ok
+test arithmetic::tests::analytical_pairs_match_independent_staged_reference ... ok
+test arithmetic::tests::expressions_are_evaluated_once_in_rank_then_residual_order ... ok
+test arithmetic::tests::fp32_rank_sum_rounds_before_residual ... ok
+test arithmetic::tests::leading_positive_zero_and_exact_cancellation_stay_positive ... ok
+test arithmetic::tests::materialization_overflow_traps_before_cancelling_residual_is_evaluated ... ok
+test arithmetic::tests::neither_rank_partial_is_narrowed ... ok
+test arithmetic::tests::projection_ties_round_before_residual_addition ... ok
+test arithmetic::tests::rank_sum_and_final_output_overflows_trap ... ok
+test arithmetic::tests::tiny_projection_uses_bf16_rne_without_flushing_subnormals ... ok
+test arithmetic::tests::two_generations_cover_all_4096_active_elements ... ok
+test combined_state_tests::combined_generated_markers_keep_one_atomic_root_and_readonly_r2_guards ... ok
+test combined_state_tests::combined_generation_halves_and_stale_suffix_tags_remain_exact ... ok
+test combined_state_tests::combined_invalid_generation_or_extent_publishes_nothing ... ok
+test combined_state_tests::combined_layout_has_exact_prefix_suffix_and_atomic_storage ... ok
+test combined_state_tests::combined_predicate_matches_independent_oracle_for_every_word ... ok
+test combined_state_tests::combined_predicate_reads_only_all_548_state_words_even_on_failure ... ok
+test combined_state_tests::combined_publication_preserves_prefix_and_releases_verdict_last ... ok
+test combined_state_tests::combined_real_atomics_reject_each_corrupted_prefix_word ... ok
+test combined_state_tests::combined_revalidation_replaces_every_suffix_word_after_all_loads ... ok
+test combined_state_tests::combined_source_contract_has_one_unsplit_argument_and_literal_store_offsets ... ok
+test combined_state_tests::combined_suffix_guards_gate_both_r2_payloads_without_changing_arithmetic ... ok
+test combined_state_tests::combined_wrong_extents_refuse_before_any_state_load ... ok
+test guard_tests::all_four_guard_words_are_checked_including_invalid_nonboolean_verdicts ... ok
+test guard_tests::all_owner_values_one_through_sixty_four_are_valid ... ok
+test guard_tests::both_guards_finish_before_rank_ordered_payload_evaluation ... ok
+test guard_tests::either_bad_guard_prevents_all_payload_reads_and_output_writes ... ok
+test guard_tests::every_state_word_mutation_matches_independent_host_oracle ... ok
+test guard_tests::full_state_predicate_matches_independent_host_ranges ... ok
+test guard_tests::generation_zero_cannot_publish_any_guard_word ... ok
+test guard_tests::guard_tags_preserve_both_full_u32_halves_and_refuse_generation_zero ... ok
+test guard_tests::guard_wrong_extent_reads_nothing_and_valid_shape_acquires_verdict_first ... ok
+test guard_tests::invalid_state_publishes_current_generation_with_invalid_verdict ... ok
+test guard_tests::matching_guards_preserve_original_r2_arithmetic ... ok
+test guard_tests::predicate_loads_all_548_distinct_words_even_after_an_early_failure ... ok
+test guard_tests::real_atomic_state_and_guard_storage_follow_the_same_predicate ... ok
+test guard_tests::valid_guard_publishes_tag_and_reserved_before_release_verdict ... ok
+test guard_tests::zero_state_and_wrong_extents_are_invalid_without_out_of_bounds_reads ... ok
+
+test result: ok. 39 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.04s
+
