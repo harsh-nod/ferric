@@ -1,0 +1,186 @@
+{
+  "schema": "ferric-guarded-mlp-host-observation-worker-qualified-overlay-v1",
+  "canonical_source_revision": "7f0d73ce594ee721576dc10e9d95dad973646bb0",
+  "source_proposal": {
+    "bytes": 11067,
+    "sha256": "8c36b978a705f6ce126ac0d3cd7f892f15e52aab752e020d84bd3e1f722021d7"
+  },
+  "complete": {
+    "bytes": 1625743,
+    "sha256": "fd4b55f53e2a61aafb49bb901796ca6c5d72a2e34d725aabc16cd4d14cef082e"
+  },
+  "source_map": {
+    "bytes": 408555,
+    "sha256": "7dfba5bd71c4baffe607b89145d00240dbc667c782da02d669b77ca090ba757b"
+  },
+  "files": [
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/guarded_mlp_host_observation_v1.rs",
+      "before": null,
+      "authored": {
+        "bytes": 6773,
+        "sha256": "162a85099d3ee43ac30f944fb5bd33be15baef8d7e66b7e0440bd259114e4859"
+      },
+      "after": {
+        "bytes": 7788,
+        "sha256": "b007732ae1208c5aa965a58117faadc649f9a122a8d72c3ca9c51dce42cf3f43"
+      },
+      "formatted": true
+    },
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/guarded_mlp_host_observation_v1_tests.rs",
+      "before": null,
+      "authored": {
+        "bytes": 8282,
+        "sha256": "28f220efec07099129b41f2987d361307cc687dc9c47469ec86667c170a7d929"
+      },
+      "after": {
+        "bytes": 9498,
+        "sha256": "ac8d3d425b53f0ad448dd6539e7d18a62824e5c67a0b81b6d3e4a864b6d779a8"
+      },
+      "formatted": true
+    },
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/lib.rs",
+      "before": {
+        "bytes": 2434,
+        "sha256": "b1f93473c7e24f471efc4069a8a0968b005bfd9c118511348ab035f9908dcd6a"
+      },
+      "authored": {
+        "bytes": 2507,
+        "sha256": "42be3364373ea6efcdc4d8f3540bc20952b2e70c3cdc73e9665094806e133a44"
+      },
+      "after": {
+        "bytes": 2507,
+        "sha256": "de016f8d3d618c50c0cc622ae379e5b0db254c2d8cc7bb4280714644342ddfe7"
+      },
+      "formatted": true
+    },
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/main.rs",
+      "before": {
+        "bytes": 13569,
+        "sha256": "751a344415c46407ed17fe730b6e5a5ba40755a13454dc3e7c10f0b91e2eee87"
+      },
+      "authored": {
+        "bytes": 14112,
+        "sha256": "8d67086e94ba864e6d13b004e76064bdc22f86765869eb8db448948fb3608bf8"
+      },
+      "after": {
+        "bytes": 14219,
+        "sha256": "0bc29e6bd0d5603b6cd1614493a571b8a31ece86df4d719aa00dd84ccf32bfe1"
+      },
+      "formatted": true
+    },
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_guarded_mlp_decode_cli_v1.rs",
+      "before": {
+        "bytes": 14356,
+        "sha256": "782ade38b186177127c52d09600da084586e3503ac56ddaf72f07dbbf895b40c"
+      },
+      "authored": {
+        "bytes": 16833,
+        "sha256": "c162d6c9343b5779360c4ab468fa82d37f71f3537c8ac676ea0a52ae125a6ac7"
+      },
+      "after": {
+        "bytes": 17174,
+        "sha256": "82647d8880c56de21429fca233797e6dad83126165170bc01b1c71745f345e2b"
+      },
+      "formatted": true
+    },
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_guarded_mlp_decode_cli_v1_tests.rs",
+      "before": {
+        "bytes": 12312,
+        "sha256": "6dcc72868de41e61f1495df5f2f71b565390ebcc080037cf7a42cda06c0772de"
+      },
+      "authored": {
+        "bytes": 13144,
+        "sha256": "248eec3126c0564e89172f157dd5556e1765a285e2bb5702f109acccbedee720"
+      },
+      "after": {
+        "bytes": 13261,
+        "sha256": "ec9c1f5a6c03ce44d191d9d58c2f041d6be52edd8d0bcf842fef57b03d33a74d"
+      },
+      "formatted": true
+    },
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_guarded_mlp_decode_v1.rs",
+      "before": {
+        "bytes": 12014,
+        "sha256": "8f0d8f578d23bb083f56209389763e883520eb13c283af58a964192010fbbead"
+      },
+      "authored": {
+        "bytes": 15254,
+        "sha256": "447c72e8233c4322d77bfb1c19ccfb3cd340500295c0912bf4a3b04833363fad"
+      },
+      "after": {
+        "bytes": 16420,
+        "sha256": "adc844bb2c6414c8583c9dbb4ad4cee621e3b519cb15cab07692bf543c2b1b74"
+      },
+      "formatted": true
+    },
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_guarded_mlp_host_v1.rs",
+      "before": null,
+      "authored": {
+        "bytes": 6511,
+        "sha256": "7d1abf1c13e14319ba7f7de102fb17d0289e9f66df63931237a857eb0f91eef9"
+      },
+      "after": {
+        "bytes": 7505,
+        "sha256": "c0b8c9db95913d5fcd8b8faaf67ee7c8def96e68dc762cdfc34292ab870ce5c8"
+      },
+      "formatted": true
+    },
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/resident_layer/guarded_mlp_decode_v1.rs",
+      "before": {
+        "bytes": 11172,
+        "sha256": "cbb1a995b06a7390c9bff30702a69ffc638a95ad177123ac58630747b27cb0dc"
+      },
+      "authored": {
+        "bytes": 12405,
+        "sha256": "4df5b28a6d4db452877878cc54579e41bf4ad14997d8b5b9f9d1e500380d3e22"
+      },
+      "after": {
+        "bytes": 12593,
+        "sha256": "149696ff2dc1e4f158838d8fcd0a9137f0555e1aaab92cd0845cbb981850a0c1"
+      },
+      "formatted": true
+    },
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/resident_layer/guarded_mlp_decode_v1/tests.rs",
+      "before": {
+        "bytes": 8251,
+        "sha256": "8ef671f691c4fe30788bbc8add7b5590c097b7f467c47e9cf80155943704c9da"
+      },
+      "authored": {
+        "bytes": 9403,
+        "sha256": "422126c09635b3fb7e33a847a707d063f98ddb2c1a26dc467fdf03f55347aa98"
+      },
+      "after": {
+        "bytes": 9691,
+        "sha256": "8d5b0427ba1915e20cb16f1785aae512d2fdd1d0d0719fced8760368ad0f91bf"
+      },
+      "formatted": true
+    }
+  ],
+  "integration_patch": {
+    "bytes": 48457,
+    "sha256": "527e5f2e69442967ec83be597e31fae4b3b78baa3d173d5f2e358e7c13706c60"
+  },
+  "apply_patch": {
+    "bytes": 47709,
+    "sha256": "bfad1f14661743488c11cb8bc04a7d9d65a0aff96a9e8ec97346707e919043b5"
+  },
+  "cpu_qualified": true,
+  "cpu_passed_tests": 601,
+  "cpu_ignored_tests": 4,
+  "cpu_inventory": 605,
+  "native_host_observation_qualified": false,
+  "gpu_execution": false,
+  "numerical_acceptance": false,
+  "performance_claim": false,
+  "production_authority": false
+}

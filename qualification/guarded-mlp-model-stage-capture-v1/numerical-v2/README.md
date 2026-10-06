@@ -103,6 +103,13 @@ to full BF16 framework outputs. No rank-partial sum, cast, or reduction order is
 silently substituted. Isolating O/residual or MLP arithmetic requires a separate
 same-intermediate-input replay or an explicitly matched reduction analysis.
 
+The [current-to-historical O byte audit](CURRENT-O-JOIN.md) now joins both
+attention shards, all 8,192 FP32 O partials and all 8,192 first-residual words
+to the previously executed exact replay. Both directly captured embeddings
+also match its operands. This supplies the formerly unobserved embedding for
+the current boundary; it does not add a historical observation or perform a
+new model-dot computation. MLP differences still require matched-input analysis.
+
 ## Evidence and Independent Audit
 
 The [numerical runner](source/run.py), eight helper/test sources, original report, alias map,

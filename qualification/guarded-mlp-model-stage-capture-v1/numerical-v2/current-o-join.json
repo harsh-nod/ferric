@@ -1,0 +1,111 @@
+{
+  "schema": "ferric-guarded-mlp-current-historical-o-byte-join-v1",
+  "completed": true,
+  "method": "Independent standard-library data parsing, hashing and exact byte/encoding equality; no project-module imports",
+  "scope": {"generation": 1, "position": 0, "layer": 0, "input_token": 9112, "ranks": [0, 1]},
+  "inputs": {
+    "current_terminal": {
+      "path": "/home/harsh/ferric-p227-integration/qualification/guarded-mlp-model-stage-capture-v1/gpu-attempt-v1/ar4/complete.json",
+      "bytes": 97034,
+      "sha256": "324b40f7dcee931c856aec8b353bd35176e02570290aca5376c0075cfdf3be12"
+    },
+    "current_stderr": {
+      "path": "/home/harsh/ferric-p227-integration/qualification/guarded-mlp-model-stage-capture-v1/gpu-attempt-v1/ar4/native/child-stderr.bin",
+      "bytes": 911296,
+      "sha256": "f28715ef219057de6d425f4de7f090d7f5f79e6867be4b8197bf3c80f7b8ded4"
+    },
+    "current_capsule_manifest": {
+      "path": "/home/harsh/ferric-p227-integration/qualification/guarded-mlp-model-stage-capture-v1/gpu-attempt-v1/manifest.json",
+      "bytes": 14058,
+      "sha256": "390e2623c28e65ed97d27c5ce40c91a46ee88bcd983d4088a81a44aa97290512"
+    },
+    "current_numerical_report": {
+      "path": "/home/harsh/ferric-p227-integration/qualification/guarded-mlp-model-stage-capture-v1/numerical-v2/complete.json",
+      "bytes": 176352,
+      "sha256": "0a8905b7bf2990cff03a8113b17a70c53d08fd1a80f00cfcdc2e1360d98c0b0c"
+    },
+    "historical_replay_gzip": {
+      "path": "/home/harsh/ferric-p227-integration/qualification/o-projection-exact-replay-v1/complete.json.gz",
+      "bytes": 1946667,
+      "sha256": "ffb00e00d8783d694a4f0379e23a9d96252944371696304c4807638c716dddbf"
+    },
+    "historical_capture_archive": {
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-silu-materialized-capture-gpu-v228-v1-retained.tar.gz",
+      "bytes": 427580,
+      "sha256": "1403889c2fc9bf87c5ebe8cb7fa89e66bbc58af1d07991c78862adf4edad6ef4"
+    },
+    "framework_embedding_pass1": {
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/layer0-framework-capture-v228-v1/pass1-embedding.bf16",
+      "bytes": 8192,
+      "sha256": "68b2cf48a968e475175c36edb4b0fb94836fcb2afcdedcb4403b208cf98f6b1c"
+    },
+    "framework_embedding_pass2": {
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/layer0-framework-capture-v228-v1/pass2-embedding.bf16",
+      "bytes": 8192,
+      "sha256": "68b2cf48a968e475175c36edb4b0fb94836fcb2afcdedcb4403b208cf98f6b1c"
+    }
+  },
+  "contained_bodies": {
+    "historical_replay_decompressed": {
+      "bytes": 10946336,
+      "sha256": "869541d4852c6cc1af45164f2a2521b075db30c62ed0487309cf0dd16abaa515"
+    },
+    "historical_summary": {
+      "archive_member": "prefix-silu-materialized-capture-gpu-v228-v1/native/summary.json",
+      "bytes": 22072,
+      "sha256": "be57933855687f4e442a941e95545347fde5952a0346b2911d68565d2f1f28de"
+    },
+    "historical_capture": {
+      "archive_member": "prefix-silu-materialized-capture-gpu-v228-v1/native/candidate-capture.bin",
+      "bytes": 9670656,
+      "sha256": "3967969ade0b4e3ca8eda117b2f28659a419d05d9f34537613dd42fdeec1946e"
+    },
+    "current_capture_payload": {
+      "bytes": 256136,
+      "sha256": "d0dce4f4632717fbf1fefbcca85e2d0f83ff4728951559accd1de232c35c938f"
+    }
+  },
+  "byte_joins": [
+    {"rank": 0, "role": "attention", "current_offset": 39048, "historical_offset": 4737024, "bytes": 4096, "sha256": "2e3d129d209db99e0b2d3d30fd3a144777ed2eac1dd129069c19aff356c50310", "equal": true},
+    {"rank": 1, "role": "attention", "current_offset": 80008, "historical_offset": 9572352, "bytes": 4096, "sha256": "d4609f6429ee3a4bde1516dc449d2ed491ee90d5f88767028ecb3e1252965365", "equal": true},
+    {"rank": 0, "role": "output_partial", "current_offset": 43144, "historical_offset": 4741120, "bytes": 16384, "sha256": "ead5ec3fc0954f2eccfdb94a3c775d41bb6672bdeb6056fd774ab6402279b56c", "equal": true},
+    {"rank": 1, "role": "output_partial", "current_offset": 84104, "historical_offset": 9576448, "bytes": 16384, "sha256": "ca5bb8ef89d40fb4cee172b2978d9358d15e8e8c08f27547c01bb9bddf1de883", "equal": true},
+    {"rank": 0, "role": "first_residual", "current_offset": 100488, "historical_offset": 4757504, "bytes": 8192, "sha256": "2502e44efc99e7ff44bd5e00f92f7c18e46e46ad143ca618a72a4addb88bfdd2", "equal": true},
+    {"rank": 1, "role": "first_residual", "current_offset": 108680, "historical_offset": 9592832, "bytes": 8192, "sha256": "2502e44efc99e7ff44bd5e00f92f7c18e46e46ad143ca618a72a4addb88bfdd2", "equal": true}
+  ],
+  "direct_embedding": {
+    "current_offsets": [0, 9284],
+    "bytes_per_rank": 8192,
+    "sha256": "68b2cf48a968e475175c36edb4b0fb94836fcb2afcdedcb4403b208cf98f6b1c",
+    "both_ranks_equal_framework_both_passes": true,
+    "both_ranks_equal_all_4096_replay_embedding_operands": true,
+    "historical_capture_contained_embedding": false,
+    "missing_embedding_assumption_resolved_for_current_boundary": true
+  },
+  "counts": {
+    "current_capsule_pins_authenticated": 90,
+    "current_capture_parts_authenticated": 34,
+    "historical_capture_parts_authenticated": 28,
+    "attention_bf16_words_joined": 4096,
+    "o_partial_f32_words_equal_historical_capture_and_fixed_order_report": 8192,
+    "first_residual_bf16_words_equal_historical_capture_and_conditional_replay": 8192,
+    "current_embedding_words_equal_report_operands_across_two_ranks": 8192
+  },
+  "report_field_joins": {
+    "o_partial": ["rows[i].ranks[rank].native_f32", "rows[i].ranks[rank].replay_f32"],
+    "first_residual": ["rows[i].native_residual_bf16[rank]", "rows[i].conditional_residual_bf16", "rows[i].replay_residual_bf16"],
+    "embedding": ["rows[i].embedding_bf16"]
+  },
+  "current_projection_directly_captured": false,
+  "fresh_model_dot_computation": false,
+  "model_weight_bodies_reread_by_this_join": false,
+  "new_fixed_order_replay_execution": false,
+  "framework_accumulator_tree_inferred": false,
+  "gpu_execution": false,
+  "native_rerun": false,
+  "numerical_acceptance": false,
+  "acceptance_threshold": null,
+  "full_model_acceptance": false,
+  "performance_claim": false,
+  "production_authority": false
+}

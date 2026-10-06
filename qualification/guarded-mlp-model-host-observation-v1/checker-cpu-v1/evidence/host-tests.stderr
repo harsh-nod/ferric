@@ -1,0 +1,19 @@
+test_actual_worker_bootstrap_profile_pid_and_completion_joins_refuse (test_host.HostTests.test_actual_worker_bootstrap_profile_pid_and_completion_joins_refuse) ... ok
+test_exact_report_hash_and_extent_refuse (test_host.HostTests.test_exact_report_hash_and_extent_refuse) ... ok
+test_forward_wall_bound_and_sum_overflow_refuse (test_host.HostTests.test_forward_wall_bound_and_sum_overflow_refuse) ... ok
+test_fresh_baseline_counter_monotonicity_and_exact_deltas_refuse (test_host.HostTests.test_fresh_baseline_counter_monotonicity_and_exact_deltas_refuse) ... ok
+test_group_epoch_device_and_policy_drift_refuse (test_host.HostTests.test_group_epoch_device_and_policy_drift_refuse) ... ok
+test_healthy_close_and_all_nonclaims_required (test_host.HostTests.test_healthy_close_and_all_nonclaims_required) ... ok
+test_output_comparison_reports_differences_and_history_without_acceptance (test_host.HostTests.test_output_comparison_reports_differences_and_history_without_acceptance) ... ok
+test_snapshot_and_interval_rosters_refuse (test_host.HostTests.test_snapshot_and_interval_rosters_refuse) ... ok
+test_strict_u64_vectors_and_closed_nested_fields_refuse (test_host.HostTests.test_strict_u64_vectors_and_closed_nested_fields_refuse) ... ok
+test_valid_closed_report_preserves_u64_and_layer_interval_indices (test_host.HostTests.test_valid_closed_report_preserves_u64_and_layer_interval_indices) ... ok
+test_actual_kfd_handles_are_not_unique_ids (test_topology.TopologyTests.test_actual_kfd_handles_are_not_unique_ids) ... ok
+test_malformed_or_duplicate_properties_refuse (test_topology.TopologyTests.test_malformed_or_duplicate_properties_refuse) ... ok
+test_swapped_or_small_unique_ids_refuse (test_topology.TopologyTests.test_swapped_or_small_unique_ids_refuse) ... ok
+test_wrong_gfx_and_invalid_handle_refuse (test_topology.TopologyTests.test_wrong_gfx_and_invalid_handle_refuse) ... ok
+
+----------------------------------------------------------------------
+Ran 14 tests in 1.047s
+
+OK

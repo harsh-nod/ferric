@@ -1,0 +1,23 @@
+[package]
+name = "ferric-tp-peer-finite-engineering-worker-v1"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.94"
+publish = false
+
+# Keep both the legacy worker and its locked git dependency graph unchanged.
+[workspace]
+
+[dependencies]
+fe2o3-kfd = { path = "../../../fe2o3/crates/fe2o3-kfd", features = ["engineering-gfx950"] }
+serde = { version = "=1.0.229", features = ["derive"] }
+serde_json = "=1.0.151"
+sha2 = "=0.11.0"
+
+[lints.rust]
+unsafe_code = "deny"
+unsafe_op_in_unsafe_fn = "deny"
+
+[[bin]]
+name = "ferric-tp-peer-finite-engineering-worker-v1"
+path = "src/main.rs"

@@ -1,0 +1,32 @@
+{
+  "run_cpu.py": {
+    "bytes": 11675,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-host-observation-checker-cpu-v228-v1/run_cpu.py",
+    "sha256": "8af9e3616a98141e271bc817cd529f9b6060b5985e8fd334bf993508b3162454"
+  },
+  "run_model_gpu.py": {
+    "bytes": 38030,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-host-observation-checker-cpu-v228-v1/run_model_gpu.py",
+    "sha256": "1ce867ba608b1a6912f77a93fcc4bb298f74496ba3ee8b682a8ea96ff4224461"
+  },
+  "supervisor.py": {
+    "bytes": 41485,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-host-observation-checker-cpu-v228-v1/supervisor.py",
+    "sha256": "8824478a6415dee39d28ccefb0881fc0687ac724f5a9c5a4540310fb5196b9bc"
+  },
+  "test_host.py": {
+    "bytes": 9697,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-host-observation-checker-cpu-v228-v1/test_host.py",
+    "sha256": "4404c3dde500f0f4ea09612f3951b02acd45a4bba8d61ba8af40b46fee41b6f0"
+  },
+  "test_topology.py": {
+    "bytes": 2484,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-host-observation-checker-cpu-v228-v1/test_topology.py",
+    "sha256": "62e846dff5ba99592dbfc3e5bd4cf9f7d663ee8383c8c9b9a2a3666526f612a1"
+  },
+  "validate_observation.py": {
+    "bytes": 13779,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-host-observation-checker-cpu-v228-v1/validate_observation.py",
+    "sha256": "367d1904f15741138db708c1f10e5a777905b62d9440a961e952a6cc9125b055"
+  }
+}

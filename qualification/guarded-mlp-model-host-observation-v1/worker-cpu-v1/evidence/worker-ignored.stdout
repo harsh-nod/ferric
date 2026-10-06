@@ -1,0 +1,4 @@
+resident_artifacts::tests::retained_object_bytes_match_the_positive_intake_gate: test
+resident_layer::queued_mlp_v1::artifacts::tests::actual_retained_norm_and_wave_objects_pass_closed_intake: test
+resident_layer::queued_projection_v1::artifacts::tests::actual_retained_wave_object_passes_closed_intake: test
+tail_artifacts::tests::retained_tail_image_bytes_pass_exact_intake: test
