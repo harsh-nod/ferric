@@ -1,0 +1,97 @@
+{
+  "schema": "ferric-guarded-mlp-atomic-load-alias-source-v1",
+  "source_only": true,
+  "atomic_load_alias_refinement": true,
+  "alias_predicates_changed": true,
+  "semantic_predicates_changed": true,
+  "admission_changed": true,
+  "resource_admission_may_change": true,
+  "structural_limits_changed": false,
+  "compiler_scratch_added": false,
+  "compiler_scratch_lifetime_changed": true,
+  "receipt_serialization_changed": false,
+  "graph_analysis_optimization": false,
+  "inherited_graph_analysis_optimization": true,
+  "memory_bounds_dag_optimization": true,
+  "inherited_memory_bounds_dag_optimization": true,
+  "cfg_linear_fusion_optimization": true,
+  "inherited_cfg_linear_fusion_optimization": true,
+  "cfg_compaction_optimization": true,
+  "inherited_cfg_compaction_optimization": true,
+  "static_failure_site_identified": true,
+  "actual_failure_caller_identified": false,
+  "actual_failure_block_count_observed": false,
+  "baseline_failure_caller_identified": false,
+  "baseline_failure_block_count_observed": false,
+  "baseline_descriptor_alias_refusal_observed": true,
+  "baseline_failure_root_observed": false,
+  "baseline_alias_pair_observed": false,
+  "base_source_count": 5808,
+  "source_count": 5809,
+  "source_file_additions": 1,
+  "new_test_count": 9,
+  "test_target": "formal_atomic_load_alias_v1",
+  "filter": "atomic_load_alias_",
+  "test_names": [
+    "atomic_load_alias_bounds_conflicts_and_receipt_kind_are_preserved",
+    "atomic_load_alias_every_atomic_writer_retains_alias_requirements",
+    "atomic_load_alias_load_only_allocations_have_no_alias_requirements",
+    "atomic_load_alias_malformed_atomics_and_unknown_extents_fail_closed",
+    "atomic_load_alias_opcode_and_metadata_remain_separate_from_receipt_authority",
+    "atomic_load_alias_ordinary_ranges_and_empty_accesses_are_unchanged",
+    "atomic_load_alias_r2_readers_only_require_output_separation",
+    "atomic_load_alias_unreachable_writers_do_not_pollute_readers",
+    "atomic_load_alias_writes_dominate_loads_in_both_orders"
+  ],
+  "descriptor_regression_test_names": [
+    "compiler_descriptor::tests::atomic_slice_descriptor_does_not_discharge_aliases_from_shared_rust_ownership",
+    "compiler_descriptor::tests::atomic_slice_descriptor_requires_exact_readwrite_u32_global_slice"
+  ],
+  "base_complete": {
+    "bytes": 1359871,
+    "sha256": "bd1fa4827483cdf6ca6a0470aacd6826ddab007e8f129611b9725d3e0cdf8445"
+  },
+  "base_sources": {
+    "bytes": 2248285,
+    "sha256": "37355332ab519512f28ebe58f5d9f55f7c9774f8d14796db2519a5b5168f25ba"
+  },
+  "base_input": {
+    "bytes": 1124421,
+    "sha256": "3c60b907c38c1b61d645ec303b6099843e28e8b46148920f7486a364f0faba12"
+  },
+  "base_controller": {
+    "bytes": 91163,
+    "sha256": "151f0a91534ddf5aa7cec746545dce7a3eda0aae1764b917907075bfeed9b119"
+  },
+  "actual_failure": {
+    "bytes": 19077,
+    "sha256": "d072928318581d8f492d296dfa4cc4a1f42865fbd3a7d95fdac01dddac7e5ab0"
+  },
+  "actual_failure_stderr": {
+    "bytes": 8480,
+    "sha256": "5d3adcd162d465f76cca68e5590494692be075905070ae9a9795d11e60fe9b75"
+  },
+  "integration_patch": {
+    "bytes": 26440,
+    "sha256": "74d3e27f6fadb1fbe1a8bae751da88fc31e2efe78d0a6cc81e140ee64e7925e9"
+  },
+  "files": {
+    "crates/fe2o3-kernel-ir/src/formal_memory_obligations.rs": {
+      "before": {
+        "bytes": 59752,
+        "sha256": "f709682310db6cfa5704a19514995ef472becbb8645f9baade367eaf0a6ab728"
+      },
+      "after": {
+        "bytes": 60327,
+        "sha256": "62649e413e184201416c3cf7140a4807e9322ac7480b0c9230779c3aab9df07d"
+      }
+    },
+    "crates/fe2o3-kernel-ir/tests/formal_atomic_load_alias_v1.rs": {
+      "before": null,
+      "after": {
+        "bytes": 18360,
+        "sha256": "c4b1b3b42c37ef3067238ac1bf1abe234cc31e5b4aaf3cc4f0f54df5be7c7d60"
+      }
+    }
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "argv": [
+    "/usr/bin/prlimit",
+    "--as=2147483648",
+    "--cpu=120",
+    "--fsize=16777216",
+    "--core=0",
+    "--",
+    "/home/harmenon/.rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/bin/rustfmt",
+    "--edition",
+    "2024",
+    "--config",
+    "skip_children=true",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-atomic-load-alias-format-v228-v1/formal_memory_obligations.rs"
+  ],
+  "cwd": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-atomic-load-alias-format-v228-v1",
+  "env": {
+    "CUDA_VISIBLE_DEVICES": "",
+    "HIP_VISIBLE_DEVICES": "",
+    "HOME": "/home/harmenon",
+    "LANG": "C",
+    "LC_ALL": "C",
+    "PATH": "/home/harmenon/.rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/bin:/usr/bin:/bin",
+    "ROCR_VISIBLE_DEVICES": "",
+    "RUST_BACKTRACE": "0",
+    "TMPDIR": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-atomic-load-alias-format-v228-v1/tmp"
+  },
+  "wall_timeout_seconds": 60
+}

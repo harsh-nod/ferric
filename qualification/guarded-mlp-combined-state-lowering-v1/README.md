@@ -32,6 +32,10 @@ investigation points to formal alias derivation treating every atomic access,
 including load-only accesses, as a writer. That is a diagnosis to test, not
 measured per-root evidence or permission to bypass descriptor ownership checks.
 
+The [atomic-load alias proposal](../guarded-mlp-atomic-load-alias-v1/README.md)
+addresses that classification without relaxing the descriptor gate. Its source
+is reviewed and formatted; fresh compiler qualification is still required.
+
 ## Controller Fixtures
 
 [Controller tests](controller-tests-v1/attempt-v1/evidence/complete.json)
