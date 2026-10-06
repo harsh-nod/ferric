@@ -1,0 +1,155 @@
+{
+  "schema": "ferric-guarded-mlp-stage-capture-worker-qualified-overlay-v1",
+  "canonical_source_revision": "90b17ca054631aea59b03d50169d114c4663468f",
+  "source_proposal": {
+    "bytes": 7739,
+    "sha256": "2dc554b35f227180b1367f926d38e3332305f99666d9f9bd52b941240d1d899e"
+  },
+  "complete": {
+    "bytes": 1607204,
+    "sha256": "64855967eb15f5b5b5fadb98cbc30e8e382968099ec439090562cacc174eec47"
+  },
+  "files": [
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/main.rs",
+      "before": {
+        "bytes": 12898,
+        "sha256": "435eb8d21a5f0928219360964153327e030636e15cc12cb8634a0e2895de21a3"
+      },
+      "authored": {
+        "bytes": 13482,
+        "sha256": "f70eba78d9ac3d46b0327576adce581be28c86718beb87bf91044cd3fc452105"
+      },
+      "after": {
+        "bytes": 13569,
+        "sha256": "751a344415c46407ed17fe730b6e5a5ba40755a13454dc3e7c10f0b91e2eee87"
+      },
+      "formatted": true
+    },
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_guarded_mlp_decode_cli_v1.rs",
+      "before": {
+        "bytes": 11657,
+        "sha256": "fd16fc39c4f44f2419dbccbb55f3025dd6a3c48dd19fd8547f61ed91dfc47d07"
+      },
+      "authored": {
+        "bytes": 14294,
+        "sha256": "18ec484e2ad8688d3b831326d4dc73fd4a5c267ce1136e7a8b25d8a7f39a3533"
+      },
+      "after": {
+        "bytes": 14356,
+        "sha256": "782ade38b186177127c52d09600da084586e3503ac56ddaf72f07dbbf895b40c"
+      },
+      "formatted": true
+    },
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_guarded_mlp_decode_cli_v1_tests.rs",
+      "before": {
+        "bytes": 11593,
+        "sha256": "f236595acbe4f26301f1932e2236174b07cf5e7c14318d01bb19f96677f3e9b3"
+      },
+      "authored": {
+        "bytes": 12291,
+        "sha256": "48d9ad6af0cd084904a3b56ab484dff73a05a09c8537803c85f653f10f432a5f"
+      },
+      "after": {
+        "bytes": 12312,
+        "sha256": "6dcc72868de41e61f1495df5f2f71b565390ebcc080037cf7a42cda06c0772de"
+      },
+      "formatted": true
+    },
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_guarded_mlp_decode_v1.rs",
+      "before": {
+        "bytes": 9561,
+        "sha256": "750e2299dda4bd8b591de0880d548a32a093768a47905ac9aec9941fe8d65348"
+      },
+      "authored": {
+        "bytes": 11478,
+        "sha256": "5fe470c65287f8e627dcb69f68b7216ab01085a1eac6a341991c6763e229d1f8"
+      },
+      "after": {
+        "bytes": 12014,
+        "sha256": "8f0d8f578d23bb083f56209389763e883520eb13c283af58a964192010fbbead"
+      },
+      "formatted": true
+    },
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/resident_layer/capture_v1.rs",
+      "before": {
+        "bytes": 10086,
+        "sha256": "40ba8577feb8224f0e8ccab41f8591b79765f615018b25567b3f3e9bcd16eafa"
+      },
+      "authored": {
+        "bytes": 11922,
+        "sha256": "40fe080e5125e14fb08f864f7e2b09e43ac21b26e653bb252c994a5e9d84d828"
+      },
+      "after": {
+        "bytes": 11922,
+        "sha256": "40fe080e5125e14fb08f864f7e2b09e43ac21b26e653bb252c994a5e9d84d828"
+      },
+      "formatted": false
+    },
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/resident_layer/capture_v1/tests.rs",
+      "before": {
+        "bytes": 13535,
+        "sha256": "1752a39dc7d3d51db0afb572d9b2937ffd55f8b99c774a630e4b48f16c277ab7"
+      },
+      "authored": {
+        "bytes": 16413,
+        "sha256": "c14cd73aa2a7c71915a1cd93746a560654775a999d34b416d88575c152283281"
+      },
+      "after": {
+        "bytes": 16759,
+        "sha256": "8f15ed6de1782f3e74aca9338ddec642d0b07fd47de042668e0f35463236c3bb"
+      },
+      "formatted": true
+    },
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/resident_layer/guarded_mlp_decode_v1.rs",
+      "before": {
+        "bytes": 9387,
+        "sha256": "a5b09b85691d3d464a6625652968fbca8f256edeb91056c49adf5e82eaffd8e3"
+      },
+      "authored": {
+        "bytes": 11108,
+        "sha256": "0329ee884c8364dec02fe6dc46c97429cdb1cd10d6420dc55680b25ade2dd9fd"
+      },
+      "after": {
+        "bytes": 11172,
+        "sha256": "cbb1a995b06a7390c9bff30702a69ffc638a95ad177123ac58630747b27cb0dc"
+      },
+      "formatted": true
+    },
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/resident_layer/guarded_mlp_decode_v1/tests.rs",
+      "before": {
+        "bytes": 6503,
+        "sha256": "63cc495b5f7e1c285901b2bef44bcdda43897d25cc27a8fdbb33548e7b8d5cbd"
+      },
+      "authored": {
+        "bytes": 8026,
+        "sha256": "cbc02b931880e234771460131616616ba3fdd2a08918d9225efe15e00c786509"
+      },
+      "after": {
+        "bytes": 8251,
+        "sha256": "8ef671f691c4fe30788bbc8add7b5590c097b7f467c47e9cf80155943704c9da"
+      },
+      "formatted": true
+    }
+  ],
+  "integration_patch": {
+    "bytes": 25268,
+    "sha256": "f3a9e2565b14f5ecb3429f33ff6ee192c3c79db3b2b4b041c2e6369157b6ecfc"
+  },
+  "apply_patch": {
+    "bytes": 24524,
+    "sha256": "ad5c9f50ba18f526e2f97b2bd75fe1103570af4041b06084813cc26f5282a4ed"
+  },
+  "cpu_qualified": true,
+  "native_capture_qualified": false,
+  "gpu_execution": false,
+  "numerical_acceptance": false,
+  "performance_claim": false
+}
