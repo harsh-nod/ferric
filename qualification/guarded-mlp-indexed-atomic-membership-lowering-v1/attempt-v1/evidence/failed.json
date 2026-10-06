@@ -1,0 +1,206 @@
+{
+  "actual_failure_caller_identified": false,
+  "admission_changed": true,
+  "artifact": null,
+  "automatic_retries": 0,
+  "baseline_failure_caller_identified": true,
+  "capacity_limits": {
+    "blocks": 2048,
+    "edges": 2048,
+    "facts": 1024,
+    "findings": 4096,
+    "operations": 65536,
+    "previous_blocks": 1024,
+    "projection_graph_work": 3145728,
+    "ranked_storage": 131072,
+    "ranked_work": 8388608
+  },
+  "cfg_diagnostics_retained": true,
+  "compiler_internal_tree_digest_encoding_replayed": false,
+  "controller": {
+    "bytes": 47895,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/lower_guarded_mlp_indexed_atomic_membership_v228_v1.py",
+    "sha256": "fbd88e16acde7e885c48ea49a3cb530f9865e40a83d943b20e5f9bfa994d42b8"
+  },
+  "cpu_complete": {
+    "bytes": 128843,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v5/evidence/complete.json",
+    "sha256": "34df5002c9ca586b5c6dd7e6fc212341b857eedc7ce64bdd4ce0871ccfd3f34f"
+  },
+  "dag_test_filter": "production_ranked_projection_v1::tests::indexed_atomic_dag_certificate_",
+  "dag_tests": [
+    "production_ranked_projection_v1::tests::indexed_atomic_dag_certificate_accepts_chains_and_diamonds",
+    "production_ranked_projection_v1::tests::indexed_atomic_dag_certificate_bounds_large_acyclic_query_work",
+    "production_ranked_projection_v1::tests::indexed_atomic_dag_certificate_charges_exact_budget_and_never_caches_failed_queries",
+    "production_ranked_projection_v1::tests::indexed_atomic_dag_certificate_cycles_keep_per_definition_fallback",
+    "production_ranked_projection_v1::tests::indexed_atomic_dag_certificate_matches_reference_on_all_small_graphs",
+    "production_ranked_projection_v1::tests::indexed_atomic_dag_certificate_refuses_malformed_graph_without_publishing_cache",
+    "production_ranked_projection_v1::tests::indexed_atomic_dag_certificate_rejects_invalid_query_before_cache_hit",
+    "production_ranked_projection_v1::tests::indexed_atomic_dag_certificate_reuses_only_within_independent_proof_instances",
+    "production_ranked_projection_v1::tests::indexed_atomic_dag_certificate_unreachable_cycles_do_not_grant_global_certificate"
+  ],
+  "diagnostic_build": false,
+  "diagnostic_only": false,
+  "elapsed_seconds": 120.926200899994,
+  "failure": "RuntimeError('natural successful/reaped leaf required')",
+  "full_model_acceptance": false,
+  "gpu_execution": false,
+  "graph_analysis_optimization": true,
+  "graph_work_diagnostics": true,
+  "graph_work_test_filter": "production_ranked_projection_v1::tests::graph_work_diagnostic_",
+  "graph_work_tests": [
+    "production_ranked_projection_v1::tests::graph_work_diagnostic_atomic_forwarder_preserves_cell_on_failure",
+    "production_ranked_projection_v1::tests::graph_work_diagnostic_body_context_uses_actual_body_not_root",
+    "production_ranked_projection_v1::tests::graph_work_diagnostic_bounded_paths_names_and_exports_are_escaped",
+    "production_ranked_projection_v1::tests::graph_work_diagnostic_context_preserves_other_errors",
+    "production_ranked_projection_v1::tests::graph_work_diagnostic_direct_callers_are_distinct",
+    "production_ranked_projection_v1::tests::graph_work_diagnostic_exact_limit_and_over_limit_preserve_counter",
+    "production_ranked_projection_v1::tests::graph_work_diagnostic_first_function_context_is_retained",
+    "production_ranked_projection_v1::tests::graph_work_diagnostic_overflow_preserves_counter",
+    "production_ranked_projection_v1::tests::graph_work_diagnostic_proof_forwarder_keeps_caller_and_counter"
+  ],
+  "host_fixture_crate_binding_used": false,
+  "inherited_capacity_expansion": true,
+  "inherited_graph_analysis_optimization": true,
+  "inherited_graph_work_diagnostics": true,
+  "input_byte_maps_rechecked": true,
+  "launch_authority": false,
+  "limits": {
+    "address_space_bytes": 12884901888,
+    "affinity": [
+      8,
+      9
+    ],
+    "cleanup_reserve_seconds": 50,
+    "compiler_seconds": 600,
+    "file_bytes": 1073741824,
+    "initial_free_bytes": 42949672960,
+    "live_free_bytes": 40802189312,
+    "nice": 10,
+    "private_scratch_bytes": 6442450944,
+    "stream_and_output_bytes": 67108864,
+    "whole_seconds": 720
+  },
+  "load_authority": false,
+  "membership_lookup_optimization": true,
+  "membership_test_filter": "production_ranked_projection_v1::tests::indexed_atomic_membership_",
+  "membership_tests": [
+    "production_ranked_projection_v1::tests::indexed_atomic_membership_bounds_repeated_measured_size_queries",
+    "production_ranked_projection_v1::tests::indexed_atomic_membership_charges_exact_bound_before_query",
+    "production_ranked_projection_v1::tests::indexed_atomic_membership_failed_charges_do_not_commit_work",
+    "production_ranked_projection_v1::tests::indexed_atomic_membership_handles_boundary_lengths",
+    "production_ranked_projection_v1::tests::indexed_atomic_membership_keeps_independent_inventories",
+    "production_ranked_projection_v1::tests::indexed_atomic_membership_matches_all_small_sorted_sets",
+    "production_ranked_projection_v1::tests::indexed_atomic_membership_preserves_duplicate_and_extreme_ids",
+    "production_ranked_projection_v1::tests::indexed_atomic_membership_preserves_guard_marker_and_escape_refusals",
+    "production_ranked_projection_v1::tests::indexed_atomic_membership_real_inventory_keeps_statement_binding"
+  ],
+  "numerical_acceptance": false,
+  "passed": false,
+  "performance_claim": false,
+  "phases": [
+    {
+      "adopted_reaped": [],
+      "command": {
+        "bytes": 7711,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-indexed-atomic-membership-lowering-v228-v1/compile.command.json",
+        "sha256": "825e8b893e324269765c8833710bc6596f82403f9375581d25605192c930a2bb"
+      },
+      "elapsed_ns": 117360707570,
+      "exception": null,
+      "exit_code": 1,
+      "forced_cleanup": false,
+      "label": "compile",
+      "minimum_free_bytes": 47144022016,
+      "natural_exit": true,
+      "observed_signals": [],
+      "peak_private_scratch_bytes": 1027912312,
+      "pgid": 2201939,
+      "pid": 2201939,
+      "process_group_absent": true,
+      "reaped": true,
+      "stderr": {
+        "bytes": 8519,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-indexed-atomic-membership-lowering-v228-v1/compile.stderr",
+        "sha256": "7dbc29c02010d6d2a34a20992381de9faccff678d5540aa0c1a2f5609e88cb6e"
+      },
+      "stdout": {
+        "bytes": 0,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-indexed-atomic-membership-lowering-v228-v1/compile.stdout",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "timed_out": false
+    }
+  ],
+  "postcheck_errors": [],
+  "production_authority": false,
+  "raw": {
+    "compile.command.json": {
+      "bytes": 7711,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-indexed-atomic-membership-lowering-v228-v1/compile.command.json",
+      "sha256": "825e8b893e324269765c8833710bc6596f82403f9375581d25605192c930a2bb"
+    },
+    "compile.result.json": {
+      "bytes": 1223,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-indexed-atomic-membership-lowering-v228-v1/compile.result.json",
+      "sha256": "8672ec4abe4ca4b186c9795542915336b62930e18b7385b8cd03bc5a0ae8abb1"
+    },
+    "compile.started.json": {
+      "bytes": 3633,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-indexed-atomic-membership-lowering-v228-v1/compile.started.json",
+      "sha256": "a1b9699deeeb8eefbe57daba60cb7d83e28e78a103c13c7afb0bd772afe5f2a5"
+    },
+    "compile.stderr": {
+      "bytes": 8519,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-indexed-atomic-membership-lowering-v228-v1/compile.stderr",
+      "sha256": "7dbc29c02010d6d2a34a20992381de9faccff678d5540aa0c1a2f5609e88cb6e"
+    },
+    "compile.stdout": {
+      "bytes": 0,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-indexed-atomic-membership-lowering-v228-v1/compile.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "configurations.json": {
+      "bytes": 3192,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-indexed-atomic-membership-lowering-v228-v1/configurations.json",
+      "sha256": "d3bbd5beee6bf43c1e28f17509014510523864c71f89c5f883462787bde44dec"
+    },
+    "inputs-after.json": {
+      "bytes": 86375,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-indexed-atomic-membership-lowering-v228-v1/inputs-after.json",
+      "sha256": "38aec9d6868852c1f9017f15adddb3051eea8a048aa519b6e1a1065b804a9012"
+    },
+    "inputs-before.json": {
+      "bytes": 84271,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-indexed-atomic-membership-lowering-v228-v1/inputs-before.json",
+      "sha256": "c90b18a33d3a976cc6982fa5480b513d3e59899b05621736dfb632da462e02a4"
+    },
+    "source-after.json": {
+      "bytes": 1979859,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-indexed-atomic-membership-lowering-v228-v1/source-after.json",
+      "sha256": "955e37e41e54df808221a7d3459f3f782ac7d0b6115ec35e48e14d5f834d4d78"
+    },
+    "source-before.json": {
+      "bytes": 1979859,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-indexed-atomic-membership-lowering-v228-v1/source-before.json",
+      "sha256": "955e37e41e54df808221a7d3459f3f782ac7d0b6115ec35e48e14d5f834d4d78"
+    }
+  },
+  "resource_admission_may_change": true,
+  "retained_handoff_or_llvm": false,
+  "schema": "ferric-guarded-mlp-indexed-atomic-membership-lowering-result-v1",
+  "semantic_predicates_changed": false,
+  "source_unchanged": true,
+  "structural_capacity_expansion": false,
+  "structural_limits_changed": false,
+  "tool_audit": {
+    "bytes": 145146,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-indexed-atomic-membership-compiler-tools-audit-v228-v1/complete.json",
+    "sha256": "96d58d8b82b306f9a27671e49f8887ce6c9a5ae6a0805078a2e00dc92eb171b8"
+  },
+  "vendor_complete": {
+    "bytes": 16064,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-vendor-v228-v3/evidence/complete.json",
+    "sha256": "187c8e82c98b6e8b43b0df4f692d8cc3eab5aa83e06db0a0d6c96d60047b3c0b"
+  }
+}

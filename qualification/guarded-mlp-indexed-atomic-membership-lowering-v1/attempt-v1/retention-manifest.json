@@ -1,0 +1,59 @@
+{
+  "artifact": null,
+  "artifact_bodies_retained": false,
+  "failure": "RuntimeError('natural successful/reaped leaf required')",
+  "files": {
+    "evidence/compile.command.json": {
+      "bytes": 7711,
+      "sha256": "825e8b893e324269765c8833710bc6596f82403f9375581d25605192c930a2bb"
+    },
+    "evidence/compile.result.json": {
+      "bytes": 1223,
+      "sha256": "8672ec4abe4ca4b186c9795542915336b62930e18b7385b8cd03bc5a0ae8abb1"
+    },
+    "evidence/compile.started.json": {
+      "bytes": 3633,
+      "sha256": "a1b9699deeeb8eefbe57daba60cb7d83e28e78a103c13c7afb0bd772afe5f2a5"
+    },
+    "evidence/compile.stderr": {
+      "bytes": 8519,
+      "sha256": "7dbc29c02010d6d2a34a20992381de9faccff678d5540aa0c1a2f5609e88cb6e"
+    },
+    "evidence/compile.stdout": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "evidence/configurations.json": {
+      "bytes": 3192,
+      "sha256": "d3bbd5beee6bf43c1e28f17509014510523864c71f89c5f883462787bde44dec"
+    },
+    "evidence/failed.json": {
+      "bytes": 10856,
+      "sha256": "914ba56097474530279206963c2a08268026cfc3ea389cce30a81157e653dfde"
+    },
+    "evidence/inputs-after.json": {
+      "bytes": 86375,
+      "sha256": "38aec9d6868852c1f9017f15adddb3051eea8a048aa519b6e1a1065b804a9012"
+    },
+    "evidence/inputs-before.json": {
+      "bytes": 84271,
+      "sha256": "c90b18a33d3a976cc6982fa5480b513d3e59899b05621736dfb632da462e02a4"
+    },
+    "evidence/source-after.json": {
+      "bytes": 1979859,
+      "sha256": "955e37e41e54df808221a7d3459f3f782ac7d0b6115ec35e48e14d5f834d4d78"
+    },
+    "evidence/source-before.json": {
+      "bytes": 1979859,
+      "sha256": "955e37e41e54df808221a7d3459f3f782ac7d0b6115ec35e48e14d5f834d4d78"
+    },
+    "lowering.py": {
+      "bytes": 47895,
+      "sha256": "fbd88e16acde7e885c48ea49a3cb530f9865e40a83d943b20e5f9bfa994d42b8"
+    }
+  },
+  "gpu_execution": false,
+  "passed": false,
+  "postcheck_errors": [],
+  "schema": "ferric-guarded-mlp-indexed-atomic-membership-lowering-retention-v1"
+}

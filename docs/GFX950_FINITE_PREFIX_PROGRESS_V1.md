@@ -6,7 +6,17 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Latest: [the bounded membership lookup passes full MI350 CPU qualification](../qualification/guarded-mlp-indexed-atomic-membership-v1/README.md).
+Latest: [the membership-qualified guarded compile reaches a new work-limit charge site](../qualification/guarded-mlp-indexed-atomic-membership-lowering-v1/README.md).
+The actual rejection is now in `indexed_atomic_temporary_unused_v1`, at
+`indexed_atomic_dead_cast_v1.rs:99:23`: a statement scan requests one work unit
+with the counter already at the unchanged 3,145,728 limit. The child exits
+naturally after 117.360708 seconds and is reaped with clean source/input
+postchecks. No HSACO or GPU result is produced. All 14 fresh loader inspections
+passed. A bounded local-mention census is being investigated to remove repeated
+whole-function scans; it is not yet implemented or qualified. All milestones
+remain open.
+
+Previously, [the bounded membership lookup passes full MI350 CPU qualification](../qualification/guarded-mlp-indexed-atomic-membership-v1/README.md).
 All 38 phases pass: 1,275 compiler tests and 1,507 Pliron tests, with focused
 repeats and extraction controls totaling 2,876 passing executions across 25
 scopes. The same 25 historical ignores remain explicit. Sources, dependencies
