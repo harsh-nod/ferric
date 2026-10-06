@@ -1,0 +1,22 @@
+test_actual_v2_stream_replays_without_relabeling_failed_qualification (__main__.FullSuiteProgressTests.test_actual_v2_stream_replays_without_relabeling_failed_qualification) ... ok
+test_duplicate_and_unknown_terminals_remain_refused (__main__.FullSuiteProgressTests.test_duplicate_and_unknown_terminals_remain_refused) ... ok
+test_duplicate_progress_notice_is_refused (__main__.FullSuiteProgressTests.test_duplicate_progress_notice_is_refused) ... ok
+test_failed_and_changed_ignored_statuses_remain_refused (__main__.FullSuiteProgressTests.test_failed_and_changed_ignored_statuses_remain_refused) ... ok
+test_ignored_progress_name_is_refused (__main__.FullSuiteProgressTests.test_ignored_progress_name_is_refused) ... ok
+test_independent_active_names_can_report_once (__main__.FullSuiteProgressTests.test_independent_active_names_can_report_once) ... ok
+test_invalid_expected_inventories_remain_refused (__main__.FullSuiteProgressTests.test_invalid_expected_inventories_remain_refused) ... ok
+test_malformed_final_status_remains_refused (__main__.FullSuiteProgressTests.test_malformed_final_status_remains_refused) ... ok
+test_malformed_progress_forms_are_refused (__main__.FullSuiteProgressTests.test_malformed_progress_forms_are_refused) ... ok
+test_no_progress_preserves_exact_result_shape (__main__.FullSuiteProgressTests.test_no_progress_preserves_exact_result_shape) ... ok
+test_one_progress_notice_does_not_add_an_outcome (__main__.FullSuiteProgressTests.test_one_progress_notice_does_not_add_an_outcome) ... ok
+test_progress_after_own_terminal_is_refused (__main__.FullSuiteProgressTests.test_progress_after_own_terminal_is_refused) ... ok
+test_progress_after_summary_is_refused_even_before_own_terminal (__main__.FullSuiteProgressTests.test_progress_after_summary_is_refused_even_before_own_terminal) ... ok
+test_progress_does_not_replace_missing_terminal (__main__.FullSuiteProgressTests.test_progress_does_not_replace_missing_terminal) ... ok
+test_should_panic_terminal_form_is_preserved (__main__.FullSuiteProgressTests.test_should_panic_terminal_form_is_preserved) ... ok
+test_summary_count_filter_and_duplicates_remain_refused (__main__.FullSuiteProgressTests.test_summary_count_filter_and_duplicates_remain_refused) ... ok
+test_unknown_progress_name_is_refused (__main__.FullSuiteProgressTests.test_unknown_progress_name_is_refused) ... ok
+
+----------------------------------------------------------------------
+Ran 17 tests in 0.012s
+
+OK

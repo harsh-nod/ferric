@@ -1,0 +1,144 @@
+{
+  "compiler_qualification": false,
+  "files": {
+    "actual-compiler-tests.stdout": {
+      "bytes": 164031,
+      "sha256": "77d8c1c15022e2addd6b1e2411ea1f6464b4e151528cd619941eea64f7a7d3d1"
+    },
+    "actual-failed.json": {
+      "bytes": 900004,
+      "sha256": "67f0792e4d90b33f939fa1df7af45024d27d0cdb184ff82b7762b89f0910a9dd"
+    },
+    "baseline-complete.json": {
+      "bytes": 1344193,
+      "sha256": "439d4b5bf10a1fe9f44d02fa1cbd28b03eec9601bb161806909b2f073beb9018"
+    },
+    "evidence/complete.json": {
+      "bytes": 9975,
+      "sha256": "3a1f5bb40dad4cb257cb6bf68b41fc595566e9e24c584ad7138ec527d4bce92b"
+    },
+    "evidence/parser-tests.command.json": {
+      "bytes": 881,
+      "sha256": "642c467d8ed3e54f3aae15418fdd97d2b5514736318329369aa7738e7ab4ce92"
+    },
+    "evidence/parser-tests.result.json": {
+      "bytes": 1549,
+      "sha256": "44f06076cfa16e8384e6aaf9268b82cafc56bfd827448511a612e0626d05e9c2"
+    },
+    "evidence/parser-tests.started.json": {
+      "bytes": 392,
+      "sha256": "c2a8f630510036fbf34c172636e073ea7331d14541735bea978a3a76e968f4b2"
+    },
+    "evidence/parser-tests.stderr": {
+      "bytes": 2454,
+      "sha256": "0b130d85de700ebe29af1d6410402763f1806e979a2b85e6af06f184e5e2ba0a"
+    },
+    "evidence/parser-tests.stdout": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "evidence/sources-after.json": {
+      "bytes": 2089,
+      "sha256": "0c3940fda4aabb2d29d08b7f6ca502dc9a3395bc71592f56dd9ad7b7b85bd1cd"
+    },
+    "evidence/sources-before.json": {
+      "bytes": 2089,
+      "sha256": "0c3940fda4aabb2d29d08b7f6ca502dc9a3395bc71592f56dd9ad7b7b85bd1cd"
+    },
+    "input-manifest.json": {
+      "bytes": 1441,
+      "sha256": "bfafe8e67500b9f395aa8a302dbb45c6515fad61cbc475352f79ee4f1b660776"
+    },
+    "qualification_helpers.py": {
+      "bytes": 4777,
+      "sha256": "ba127f1057546c0ce6e57fb78832c3e774c1108a4f7c5a2421f4aad7f51108be"
+    },
+    "run_parser_tests.py": {
+      "bytes": 7896,
+      "sha256": "c61be933c8f45b79a844964f1c61e3c0b56e9c29d3693e404563133f661cec92"
+    },
+    "supervisor.py": {
+      "bytes": 41485,
+      "sha256": "8824478a6415dee39d28ccefb0881fc0687ac724f5a9c5a4540310fb5196b9bc"
+    },
+    "test_qualification_helpers.py": {
+      "bytes": 10026,
+      "sha256": "1990d2dd7d03b6814ae96d88436d82e0e4241c730bfd405e3793e740f872005d"
+    }
+  },
+  "gpu_execution": false,
+  "named_outcomes": [
+    [
+      "__main__.FullSuiteProgressTests.test_actual_v2_stream_replays_without_relabeling_failed_qualification",
+      "ok"
+    ],
+    [
+      "__main__.FullSuiteProgressTests.test_duplicate_and_unknown_terminals_remain_refused",
+      "ok"
+    ],
+    [
+      "__main__.FullSuiteProgressTests.test_duplicate_progress_notice_is_refused",
+      "ok"
+    ],
+    [
+      "__main__.FullSuiteProgressTests.test_failed_and_changed_ignored_statuses_remain_refused",
+      "ok"
+    ],
+    [
+      "__main__.FullSuiteProgressTests.test_ignored_progress_name_is_refused",
+      "ok"
+    ],
+    [
+      "__main__.FullSuiteProgressTests.test_independent_active_names_can_report_once",
+      "ok"
+    ],
+    [
+      "__main__.FullSuiteProgressTests.test_invalid_expected_inventories_remain_refused",
+      "ok"
+    ],
+    [
+      "__main__.FullSuiteProgressTests.test_malformed_final_status_remains_refused",
+      "ok"
+    ],
+    [
+      "__main__.FullSuiteProgressTests.test_malformed_progress_forms_are_refused",
+      "ok"
+    ],
+    [
+      "__main__.FullSuiteProgressTests.test_no_progress_preserves_exact_result_shape",
+      "ok"
+    ],
+    [
+      "__main__.FullSuiteProgressTests.test_one_progress_notice_does_not_add_an_outcome",
+      "ok"
+    ],
+    [
+      "__main__.FullSuiteProgressTests.test_progress_after_own_terminal_is_refused",
+      "ok"
+    ],
+    [
+      "__main__.FullSuiteProgressTests.test_progress_after_summary_is_refused_even_before_own_terminal",
+      "ok"
+    ],
+    [
+      "__main__.FullSuiteProgressTests.test_progress_does_not_replace_missing_terminal",
+      "ok"
+    ],
+    [
+      "__main__.FullSuiteProgressTests.test_should_panic_terminal_form_is_preserved",
+      "ok"
+    ],
+    [
+      "__main__.FullSuiteProgressTests.test_summary_count_filter_and_duplicates_remain_refused",
+      "ok"
+    ],
+    [
+      "__main__.FullSuiteProgressTests.test_unknown_progress_name_is_refused",
+      "ok"
+    ]
+  ],
+  "parser_fixture_only": true,
+  "passed": true,
+  "schema": "ferric-libtest-progress-parser-tests-retention-v1",
+  "tests_passed": 17
+}

@@ -1,0 +1,45 @@
+{
+  "files": {
+    "actual-compiler-tests.stdout": {
+      "bytes": 164031,
+      "sha256": "77d8c1c15022e2addd6b1e2411ea1f6464b4e151528cd619941eea64f7a7d3d1"
+    },
+    "actual-failed.json": {
+      "bytes": 900004,
+      "sha256": "67f0792e4d90b33f939fa1df7af45024d27d0cdb184ff82b7762b89f0910a9dd"
+    },
+    "baseline-complete.json": {
+      "bytes": 1344193,
+      "sha256": "439d4b5bf10a1fe9f44d02fa1cbd28b03eec9601bb161806909b2f073beb9018"
+    },
+    "qualification_helpers.py": {
+      "bytes": 4777,
+      "sha256": "ba127f1057546c0ce6e57fb78832c3e774c1108a4f7c5a2421f4aad7f51108be"
+    },
+    "run_parser_tests.py": {
+      "bytes": 7896,
+      "sha256": "c61be933c8f45b79a844964f1c61e3c0b56e9c29d3693e404563133f661cec92"
+    },
+    "supervisor.py": {
+      "bytes": 41485,
+      "sha256": "8824478a6415dee39d28ccefb0881fc0687ac724f5a9c5a4540310fb5196b9bc"
+    },
+    "test_qualification_helpers.py": {
+      "bytes": 10026,
+      "sha256": "1990d2dd7d03b6814ae96d88436d82e0e4241c730bfd405e3793e740f872005d"
+    }
+  },
+  "schema": "ferric-libtest-progress-parser-tests-input-v1",
+  "tool_pins": {
+    "prlimit": {
+      "bytes": 27536,
+      "path": "/usr/bin/prlimit",
+      "sha256": "17064f67e650d6152a6902b013aab496b54c87587c8eea6f5023aafee6154069"
+    },
+    "python": {
+      "bytes": 8020928,
+      "path": "/usr/bin/python3.12",
+      "sha256": "e1efa562c2cc2e35521a5c9c9b9939921001ff8ca9708a13ef15ace68cc2ccd7"
+    }
+  }
+}

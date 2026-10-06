@@ -3,7 +3,8 @@
 Status: after the [fixture-only correction](proposal-v2/README.md), all 1,323
 compiler tests pass, with 24 unchanged ignores. The second MI350 qualification
 still fails because its harness rejects a legitimate long-running-test notice.
-A narrow parser correction and independent regression tests are being validated.
+A [narrow parser correction passes 17 independent regression tests on MI350](../guarded-mlp-libtest-progress-parser-v1/README.md).
+A fresh full qualification is running.
 No new compiler
 qualification, artifact, GPU execution, numerical acceptance or performance
 result is established.

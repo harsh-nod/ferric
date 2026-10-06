@@ -10,10 +10,11 @@ Current work: [all chain-fusion compiler tests now pass, but the harness rejects
 After a fixture-only correction, raw compiler results are 1,323 passed, zero
 failed and 24 ignored. Pliron passes 1,507 with one ignored. The qualification
 controller mistakes a valid 60-second progress notice for a malformed final
-result and stops before focused repeats and extraction controls. A narrow
-parser correction and 17 regression checks are being validated before another
-full MI350 qualification. Both failed attempts remain retained unchanged.
-The separate controller fixtures now pass 26/26 loader and 19/19 lowering tests.
+result and stops before focused repeats and extraction controls. The narrow
+[parser correction passes 17 MI350 regression checks](../qualification/guarded-mlp-libtest-progress-parser-v1/README.md),
+including the captured-output replay. A fresh full qualification is running.
+Both failed attempts remain retained unchanged.
+The separate V2 controller fixtures pass 26/26 loader and 19/19 lowering tests.
 No new compiler qualification, guarded HSACO, GPU or model acceptance follows
 from these results.
 
