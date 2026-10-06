@@ -1,0 +1,16 @@
+
+running 11 tests
+test engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::tests::retained_batch_checks_every_pair_before_any_reset ... ok
+test engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::tests::retained_batch_every_deadline_boundary_is_terminal ... ok
+test engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::tests::retained_batch_every_failure_boundary_is_terminal ... ok
+test engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::tests::retained_batch_refuses_invalid_bounds_or_any_generation_before_stores ... ok
+test engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::tests::retained_batch_uses_the_original_absolute_deadline ... ok
+test engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::tests::retained_binding_covers_every_ordered_role_kernel_and_image ... ok
+test engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::tests::retained_diagnostic_refuses_nonquiescent_or_empty_group_before_gpu ... ok
+test engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::tests::retained_exact_residual_binding_keeps_policy_and_roles_immutable ... ok
+test engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::tests::retained_exact_residual_constructor_refuses_invalid_custody ... ok
+test engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::tests::retained_native_refuses_before_gpu_and_quarantines_all_custody ... ok
+test engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::tests::retained_operation_drop_and_unwind_poison_all_pairs ... ok
+
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 1044 filtered out; finished in 0.00s
+

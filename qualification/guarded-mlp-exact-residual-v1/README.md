@@ -1,7 +1,8 @@
 # Exact own-residual lifetime policy
 
-This is a CPU-qualified private runtime policy needed by Ferric's existing
-buffer layout. It is not yet a native reuse result or an enabled model route.
+This checkpoint is a CPU-qualified private runtime policy needed by Ferric's
+existing buffer layout. A subsequent [native reuse qualification](../guarded-mlp-exact-residual-native-v1/README.md)
+now passes with its own CPU-qualified executable. Neither enables a model route.
 The preceding [checked-root GPU success](../guarded-mlp-shared-root-v1/README.md)
 uses a different executable and disjoint output buffers.
 
@@ -92,5 +93,6 @@ bank reset. Every selected owner and private retirement proof must validate
 before any reset; a separate Prefix reset followed by paired reset is not
 sufficient. The guarded layer route must not dispatch the old extra R2.
 
-Native exact-residual reuse, the model route, full-model correctness, sustained
-Qwen3-8B BF16 target-only 2,048/256, 700 tokens/s and M0-M7 remain open.
+The native fixture described above is now [qualified separately](../guarded-mlp-exact-residual-native-v1/README.md).
+The model route, full-model correctness, sustained Qwen3-8B BF16 target-only
+2,048/256, 700 tokens/s and M0-M7 remain open.

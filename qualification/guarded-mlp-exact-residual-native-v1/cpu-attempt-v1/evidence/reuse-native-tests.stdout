@@ -1,0 +1,8 @@
+
+running 3 tests
+test engineering_gfx950::peer::combined_mlp_state_v1::tests::native::paired::reuse::native_paired_guarded_mlp_reuse_v1 ... ignored, requires explicit two-device MI350 consecutive-generation diagnostic and three checked images
+test engineering_gfx950::peer::combined_mlp_state_v1::tests::native::paired::reuse::reuse_fixture_changes_every_final_word_and_preserves_exact_positive_zeros ... ok
+test engineering_gfx950::peer::combined_mlp_state_v1::tests::native::paired::reuse::reuse_fixture_doubles_only_up_matrix_coefficients ... ok
+
+test result: ok. 2 passed; 0 failed; 1 ignored; 0 measured; 1052 filtered out; finished in 0.11s
+

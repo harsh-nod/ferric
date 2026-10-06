@@ -1,0 +1,8 @@
+
+running 3 tests
+test engineering_gfx950::peer::combined_mlp_state_v1::paired::arena::retired::tests::retired_gate_accepts_intervening_completed_work_without_read_credit ... ok
+test engineering_gfx950::peer::combined_mlp_state_v1::paired::arena::retired::tests::retired_gate_refuses_busy_regressed_or_invented_frontiers ... ok
+test engineering_gfx950::peer::combined_mlp_state_v1::paired::arena::retired::tests::retired_gate_refuses_every_nonzero_signal_and_unknown_kind ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 1052 filtered out; finished in 0.00s
+
