@@ -1,0 +1,8 @@
+
+running 3 tests
+test production_ranked_projection_v1::tests::cfg_projected_block_limit_diagnostic_context_is_bounded ... ok
+test production_ranked_projection_v1::tests::cfg_projected_block_limit_diagnostic_exact_and_next_boundaries ... ok
+test production_ranked_projection_v1::tests::cfg_projected_block_limit_diagnostic_expansion_counts_and_identity ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 1326 filtered out; finished in 0.01s
+

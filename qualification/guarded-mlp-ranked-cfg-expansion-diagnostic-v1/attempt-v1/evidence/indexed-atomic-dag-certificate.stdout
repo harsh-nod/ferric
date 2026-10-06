@@ -1,0 +1,14 @@
+
+running 9 tests
+test production_ranked_projection_v1::tests::indexed_atomic_dag_certificate_accepts_chains_and_diamonds ... ok
+test production_ranked_projection_v1::tests::indexed_atomic_dag_certificate_bounds_large_acyclic_query_work ... ok
+test production_ranked_projection_v1::tests::indexed_atomic_dag_certificate_charges_exact_budget_and_never_caches_failed_queries ... ok
+test production_ranked_projection_v1::tests::indexed_atomic_dag_certificate_cycles_keep_per_definition_fallback ... ok
+test production_ranked_projection_v1::tests::indexed_atomic_dag_certificate_matches_reference_on_all_small_graphs ... ok
+test production_ranked_projection_v1::tests::indexed_atomic_dag_certificate_refuses_malformed_graph_without_publishing_cache ... ok
+test production_ranked_projection_v1::tests::indexed_atomic_dag_certificate_rejects_invalid_query_before_cache_hit ... ok
+test production_ranked_projection_v1::tests::indexed_atomic_dag_certificate_reuses_only_within_independent_proof_instances ... ok
+test production_ranked_projection_v1::tests::indexed_atomic_dag_certificate_unreachable_cycles_do_not_grant_global_certificate ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 1320 filtered out; finished in 0.00s
+

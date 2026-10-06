@@ -6,7 +6,28 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Latest: [the borrow-lookup-qualified guarded compile reaches a ranked block-limit refusal](../qualification/guarded-mlp-indexed-atomic-borrow-lookup-lowering-v1/README.md).
+Latest: [the guarded compile identifies the exact CFG expansion blocker](../qualification/guarded-mlp-ranked-cfg-expansion-diagnostic-lowering-v1/README.md).
+The state-guard kernel `ferric_qwen3_mlp_state_guard_v1` projects to 2,778
+blocks against the unchanged 2,048 limit; its declared semantic body has
+1,121 blocks. The child exits naturally with status 1 after 117.460291
+seconds, is reaped and leaves no process group. Sources and postchecks are
+clean; no HSACO is produced. This attribution comes from pinned raw stderr,
+not the controller's unchanged predeclared diagnostic-identification flags.
+The next investigation is compacting generated trapping-control blocks,
+preserving every bounds check and atomic effect, not raising the limit.
+
+The [bounded projected-CFG diagnostic passes full MI350 qualification](../qualification/guarded-mlp-ranked-cfg-expansion-diagnostic-v1/README.md).
+All 42 phases pass across 29 scopes: 1,305 compiler and 1,507 Pliron tests,
+with focused repeats and extraction controls totaling 2,936 passing
+executions and 25 unchanged ignores. The loader/lowering fixtures pass
+26/19 tests, and all 14 fresh binary-loader checks pass. Source, dependency
+and process cleanup checks remain clean. This diagnostic-only change reports
+the existing projected block count and root context without increasing the
+2,048-block limit or changing admission. This qualification and the failed
+guarded attempt establish no HSACO, GPU, model numerical or
+performance result. All milestones and the 700 tokens/s target remain open.
+
+Previously, [the borrow-lookup-qualified guarded compile reaches a ranked block-limit refusal](../qualification/guarded-mlp-indexed-atomic-borrow-lookup-lowering-v1/README.md).
 The [new compiler qualification](../qualification/guarded-mlp-indexed-atomic-borrow-lookup-v1/README.md)
 passes all 41 phases across 28 scopes: 1,302 compiler and 1,507 Pliron tests,
 with focused repeats and extraction controls totaling 2,930 passing

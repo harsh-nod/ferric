@@ -1,0 +1,97 @@
+{
+  "schema": "ferric-guarded-mlp-ranked-cfg-expansion-diagnostic-source-v1",
+  "source_only": true,
+  "diagnostic_only": true,
+  "cfg_expansion_diagnostics": true,
+  "diagnostic_changes_admission": false,
+  "semantic_predicates_changed": false,
+  "structural_limits_changed": false,
+  "resource_admission_may_change": false,
+  "actual_failure_caller_identified": false,
+  "static_failure_site_identified": true,
+  "actual_failure_block_count_observed": false,
+  "base_complete": {
+    "bytes": 1332506,
+    "sha256": "8d55b759a370369023c6692fd64511cfcd2610bf5917d8de23896d28eb2ea3cb"
+  },
+  "base_sources": {
+    "bytes": 2309973,
+    "sha256": "2cac3848055fb7d8cd41d22ba0e4fd29b0a6235e78a2fed179993ebc3c912d31"
+  },
+  "base_input": {
+    "bytes": 1122176,
+    "sha256": "0737513f341124c4bfaf817065ee831ae68165a2d8b17ec13c438fad24e38a5f"
+  },
+  "base_controller": {
+    "bytes": 72758,
+    "sha256": "6c794a2e277596d3ff6e9453a7ecb485cd90fd4260ba67fc946c26f95693c9b8"
+  },
+  "actual_failure": {
+    "bytes": 14686,
+    "sha256": "cb1def314b36717465478dbf88d521f094749b34d805b9f0e07ed5f3c5421778"
+  },
+  "actual_failure_stderr": {
+    "bytes": 8018,
+    "sha256": "646b7e35b6dbf8cd8b00e43f52008824ccc06634d636238fbc23fc33d9ccdb83"
+  },
+  "block_limit": 2048,
+  "edge_limit": 2048,
+  "graph_work_limit": 3145728,
+  "files": {
+    "crates/rustc-codegen-fe2o3/src/production_ranked_projection_v1.rs": {
+      "before": {
+        "bytes": 1652751,
+        "sha256": "a68eba52621e7dce2b11030b536e094584e0ea31a8241474bc5fda27a4390c61"
+      },
+      "after": {
+        "bytes": 1652819,
+        "sha256": "b48bc009418c476a46796a04c4e14ce1c24761656ff1e00ac846b6f35724d5df"
+      }
+    },
+    "crates/rustc-codegen-fe2o3/src/production_ranked_projection_v1/cfg_block_limit_diagnostic_v1.rs": {
+      "before": {
+        "bytes": 4080,
+        "sha256": "c7b8f30f3de7d4ea25e7f5e0345ca057c8352413d232675a4d9f0cf8cac7ff1f"
+      },
+      "after": {
+        "bytes": 4929,
+        "sha256": "bd386254ee0484b8d2c01d1843cae94d9a0961a60707dd39a94c7444bf38670f"
+      }
+    },
+    "crates/rustc-codegen-fe2o3/src/production_ranked_projection_v1/cfg_block_limit_diagnostic_v1_tests.rs": {
+      "before": {
+        "bytes": 11689,
+        "sha256": "511cd2a673b7eb7a92eac117416fcdea1911e46ec30b1fbc7788a6c5decea0dd"
+      },
+      "after": {
+        "bytes": 17746,
+        "sha256": "ba2fa5d12486f3ff554a2c91e1adcc98437248d03a2395c1d2fb15d924dc0869"
+      }
+    },
+    "crates/rustc-codegen-fe2o3/src/production_ranked_projection_v1/analysis_multi_split_v1_tests.rs": {
+      "before": {
+        "bytes": 3914,
+        "sha256": "8199756a05110c15a3669ca501a75e2a9e76c5e6185c7c4e5fb7019797292a1e"
+      },
+      "after": {
+        "bytes": 4148,
+        "sha256": "054eb4e16cb71ddc19d9dd652c9b2c3b2d5a41cd46633f116d1577dc3c8a7a00"
+      }
+    }
+  },
+  "filter": "production_ranked_projection_v1::tests::cfg_projected_block_limit_diagnostic_",
+  "test_names": [
+    "production_ranked_projection_v1::tests::cfg_projected_block_limit_diagnostic_context_is_bounded",
+    "production_ranked_projection_v1::tests::cfg_projected_block_limit_diagnostic_exact_and_next_boundaries",
+    "production_ranked_projection_v1::tests::cfg_projected_block_limit_diagnostic_expansion_counts_and_identity"
+  ],
+  "integration_patch": {
+    "bytes": 11346,
+    "sha256": "0150812f662f0cc7d9b9adcdc0f5280c28b386c8c38d0f99327bbe1d312b3202"
+  },
+  "base_source_count": 5803,
+  "source_count": 5803,
+  "source_file_additions": 0,
+  "new_test_count": 3,
+  "tests_executed": false
+}

@@ -1,0 +1,32 @@
+{
+  "adopted_reaped": [],
+  "command": {
+    "bytes": 7819,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-cfg-expansion-diagnostic-lowering-v228-v1/compile.command.json",
+    "sha256": "a37334649324b392daae38f600c710bbbb3a1a164b1a176214a6c7dd31c9b4be"
+  },
+  "elapsed_ns": 117460291312,
+  "exception": null,
+  "exit_code": 1,
+  "forced_cleanup": false,
+  "label": "compile",
+  "minimum_free_bytes": 58131128320,
+  "natural_exit": true,
+  "observed_signals": [],
+  "peak_private_scratch_bytes": 1027963928,
+  "pgid": 2883134,
+  "pid": 2883134,
+  "process_group_absent": true,
+  "reaped": true,
+  "stderr": {
+    "bytes": 8424,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-cfg-expansion-diagnostic-lowering-v228-v1/compile.stderr",
+    "sha256": "f806e763a124eb460d47de32531749744f9d24a03cd240115d9f744326ee374a"
+  },
+  "stdout": {
+    "bytes": 0,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-cfg-expansion-diagnostic-lowering-v228-v1/compile.stdout",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "timed_out": false
+}

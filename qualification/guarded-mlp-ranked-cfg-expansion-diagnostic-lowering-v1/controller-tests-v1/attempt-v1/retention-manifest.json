@@ -1,0 +1,70 @@
+{
+  "compiler_qualification": false,
+  "files": {
+    "evidence/complete.json": {
+      "bytes": 12957,
+      "sha256": "217f208452e7b91cfcb4e8e90ee1302fa73dd0d3c020f39b1729ae2dc85d600f"
+    },
+    "evidence/ranked-cfg-expansion-diagnostic-lowering-tests.command.json": {
+      "bytes": 925,
+      "sha256": "91c3626bf5d8add791ec348ac6d7a0e7a341c50efc7ea09f745cde33fa4baa0e"
+    },
+    "evidence/ranked-cfg-expansion-diagnostic-lowering-tests.result.json": {
+      "bytes": 1750,
+      "sha256": "627968170108a4fb33caaaa9577ee58366d8a188fd90a114168c38ba319051d0"
+    },
+    "evidence/ranked-cfg-expansion-diagnostic-lowering-tests.started.json": {
+      "bytes": 402,
+      "sha256": "72fae0b9e90ecb423107a35ab8cfd1342103c94389ed89a898da0ab735138347"
+    },
+    "evidence/ranked-cfg-expansion-diagnostic-lowering-tests.stderr": {
+      "bytes": 2886,
+      "sha256": "0d436e13198ba59562aa5209e4a277f4b1b39c717d60fb6f130934818c76eed9"
+    },
+    "evidence/ranked-cfg-expansion-diagnostic-lowering-tests.stdout": {
+      "bytes": 4065,
+      "sha256": "063cbbbc2c5ad2c2f016c07da33a816352477d297bb19c34b8b3e64159ed52dc"
+    },
+    "evidence/sources-after.json": {
+      "bytes": 1817,
+      "sha256": "6d5440e9cbfbe4a3bd4d6cfd009130f4a40be5e199cf0fc9407c7f21287c5a9a"
+    },
+    "evidence/sources-before.json": {
+      "bytes": 1817,
+      "sha256": "6d5440e9cbfbe4a3bd4d6cfd009130f4a40be5e199cf0fc9407c7f21287c5a9a"
+    },
+    "input-manifest.json": {
+      "bytes": 1273,
+      "sha256": "ee6e548e0aed43ef5ae0f30b72f7d5242432349479546b951e8f900c7d26b4f7"
+    },
+    "lowering.py": {
+      "bytes": 54874,
+      "sha256": "e151f6f5d34f19fe0b4bbd1a8b9647e52bb2bb921d8e64dab59b48800a6b24f4"
+    },
+    "lowering_test_entry.py": {
+      "bytes": 5903,
+      "sha256": "9b7481d640701ab0418ec5bf605f813992728af21ab33be39ad189a818f46ce1"
+    },
+    "run_tests.py": {
+      "bytes": 13547,
+      "sha256": "d83e92f9fded58fff817d5d4b47686473077b37472e54a6ed84855e892f9bfdb"
+    },
+    "supervisor.py": {
+      "bytes": 41485,
+      "sha256": "8824478a6415dee39d28ccefb0881fc0687ac724f5a9c5a4540310fb5196b9bc"
+    },
+    "test_lowering.py": {
+      "bytes": 32618,
+      "sha256": "949deb1a1814742495c7f7ff4438b8967e002f43cf8a25e2ffe118e5d0357b9c"
+    },
+    "test_normalization.py": {
+      "bytes": 6507,
+      "sha256": "6d4d91e24fa483e81d99ae1dd89a629eb3b7a17aaef94e8f46958123c292465f"
+    }
+  },
+  "gpu_execution": false,
+  "passed": true,
+  "schema": "ferric-ranked-cfg-expansion-diagnostic-lowering-tests-retention-v1",
+  "synthetic_lowering_only": true,
+  "tests_passed": 19
+}

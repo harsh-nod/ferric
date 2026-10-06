@@ -1,0 +1,245 @@
+{
+  "child_observation": {
+    "compiler_qualification": false,
+    "errors": 0,
+    "expected_failures": 0,
+    "failures": 0,
+    "gpu_execution": false,
+    "names": [
+      "test_audit_tools.CfgExpansionAdmissionTests.test_exact_cfg_expansion_generation_preserves_non_deployed_provenance",
+      "test_audit_tools.CfgExpansionAdmissionTests.test_pending_cfg_expansion_receipt_refuses_before_effects",
+      "test_audit_tools.CfgExpansionAdmissionTests.test_refuses_changed_independent_limit_or_inherited_cohort",
+      "test_audit_tools.CfgExpansionAdmissionTests.test_refuses_changed_non_overlay_body_or_preimage",
+      "test_audit_tools.CfgExpansionAdmissionTests.test_refuses_failed_admitting_or_wrong_generation",
+      "test_audit_tools.CfgExpansionAdmissionTests.test_refuses_lost_old_name_changed_ignore_or_cfg_expansion_status",
+      "test_audit_tools.CfgExpansionAdmissionTests.test_refuses_old_product_and_any_unchanged_tool_substitution",
+      "test_audit_tools.CfgExpansionAdmissionTests.test_refuses_phase_omission_reordering_and_cleanup",
+      "test_audit_tools.DriverAdmissionTests.test_each_unchanged_tool_and_old_driver_are_refused",
+      "test_audit_tools.DriverAdmissionTests.test_exact_focused_census_and_no_full_suite_claim",
+      "test_audit_tools.DriverAdmissionTests.test_failed_unreviewed_or_wrong_source_generation_refused",
+      "test_audit_tools.DriverAdmissionTests.test_missing_changed_or_relocated_source_map_refused",
+      "test_audit_tools.DriverAdmissionTests.test_only_new_driver_and_test_metadata_are_admitted",
+      "test_audit_tools.DriverAdmissionTests.test_pending_driver_binding_refuses_before_host_or_output_effects",
+      "test_audit_tools.DriverAdmissionTests.test_phase_cleanup_and_wrong_final_build_refused",
+      "test_audit_tools.DriverAdmissionTests.test_wrong_driver_or_test_cargo_role_refused",
+      "test_audit_tools.ProducerAdmissionTests.test_final_two_products_only_and_rlib_metadata",
+      "test_audit_tools.ProducerAdmissionTests.test_rejects_any_of_five_legacy_tool_changes",
+      "test_audit_tools.ProducerAdmissionTests.test_rejects_controller_helper_or_proposal_generation_drift",
+      "test_audit_tools.ProducerAdmissionTests.test_rejects_extra_tools_or_old_backend_replacement",
+      "test_audit_tools.ProducerAdmissionTests.test_rejects_failed_incomplete_or_diagnostic_producer",
+      "test_audit_tools.ProducerAdmissionTests.test_rejects_missing_or_changed_source_map",
+      "test_audit_tools.ProducerAdmissionTests.test_rejects_missing_rlib_or_test_product",
+      "test_audit_tools.ProducerAdmissionTests.test_rejects_old_or_failed_final_cargo_observation",
+      "test_audit_tools.ProducerAdmissionTests.test_rejects_phase_or_test_census_failure",
+      "test_audit_tools.ProducerAdmissionTests.test_rejects_product_outside_target_and_wrong_role"
+    ],
+    "passed": true,
+    "passing_names": [
+      "test_audit_tools.CfgExpansionAdmissionTests.test_exact_cfg_expansion_generation_preserves_non_deployed_provenance",
+      "test_audit_tools.CfgExpansionAdmissionTests.test_pending_cfg_expansion_receipt_refuses_before_effects",
+      "test_audit_tools.CfgExpansionAdmissionTests.test_refuses_changed_independent_limit_or_inherited_cohort",
+      "test_audit_tools.CfgExpansionAdmissionTests.test_refuses_changed_non_overlay_body_or_preimage",
+      "test_audit_tools.CfgExpansionAdmissionTests.test_refuses_failed_admitting_or_wrong_generation",
+      "test_audit_tools.CfgExpansionAdmissionTests.test_refuses_lost_old_name_changed_ignore_or_cfg_expansion_status",
+      "test_audit_tools.CfgExpansionAdmissionTests.test_refuses_old_product_and_any_unchanged_tool_substitution",
+      "test_audit_tools.CfgExpansionAdmissionTests.test_refuses_phase_omission_reordering_and_cleanup",
+      "test_audit_tools.DriverAdmissionTests.test_each_unchanged_tool_and_old_driver_are_refused",
+      "test_audit_tools.DriverAdmissionTests.test_exact_focused_census_and_no_full_suite_claim",
+      "test_audit_tools.DriverAdmissionTests.test_failed_unreviewed_or_wrong_source_generation_refused",
+      "test_audit_tools.DriverAdmissionTests.test_missing_changed_or_relocated_source_map_refused",
+      "test_audit_tools.DriverAdmissionTests.test_only_new_driver_and_test_metadata_are_admitted",
+      "test_audit_tools.DriverAdmissionTests.test_pending_driver_binding_refuses_before_host_or_output_effects",
+      "test_audit_tools.DriverAdmissionTests.test_phase_cleanup_and_wrong_final_build_refused",
+      "test_audit_tools.DriverAdmissionTests.test_wrong_driver_or_test_cargo_role_refused",
+      "test_audit_tools.ProducerAdmissionTests.test_final_two_products_only_and_rlib_metadata",
+      "test_audit_tools.ProducerAdmissionTests.test_rejects_any_of_five_legacy_tool_changes",
+      "test_audit_tools.ProducerAdmissionTests.test_rejects_controller_helper_or_proposal_generation_drift",
+      "test_audit_tools.ProducerAdmissionTests.test_rejects_extra_tools_or_old_backend_replacement",
+      "test_audit_tools.ProducerAdmissionTests.test_rejects_failed_incomplete_or_diagnostic_producer",
+      "test_audit_tools.ProducerAdmissionTests.test_rejects_missing_or_changed_source_map",
+      "test_audit_tools.ProducerAdmissionTests.test_rejects_missing_rlib_or_test_product",
+      "test_audit_tools.ProducerAdmissionTests.test_rejects_old_or_failed_final_cargo_observation",
+      "test_audit_tools.ProducerAdmissionTests.test_rejects_phase_or_test_census_failure",
+      "test_audit_tools.ProducerAdmissionTests.test_rejects_product_outside_target_and_wrong_role"
+    ],
+    "schema": "ferric-ranked-cfg-expansion-diagnostic-loader-tests-v1",
+    "skipped": 0,
+    "source_unchanged": true,
+    "sources": {
+      "audit_tools.py": {
+        "bytes": 82838,
+        "sha256": "79b30eb40c8f97957b4f301a786f261f4b088bb6264b9a89e2dc6554d3813cf8"
+      },
+      "test_audit_tools.py": {
+        "bytes": 74649,
+        "sha256": "ca99de2eb7c6d2e2b36d675a21f16e2b5a923fdb1f2acfd039ad299f364a5bec"
+      }
+    },
+    "synthetic_loader_only": true,
+    "tests_run": 26,
+    "unexpected_successes": 0
+  },
+  "compiler_qualification": false,
+  "controller": {
+    "bytes": 14251,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-cfg-expansion-diagnostic-loader-tests-v228-v1/run_tests.py",
+    "sha256": "af3d6f801933edebaaddf9e483706f363cd908b6bb9bf3841455aeef17f41402"
+  },
+  "elapsed_seconds": 44.902447544038296,
+  "failure": null,
+  "gpu_execution": false,
+  "input_manifest": {
+    "bytes": 1133,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-cfg-expansion-diagnostic-loader-tests-v228-v1/input-manifest.json",
+    "sha256": "863f10045f142b0c5d71990247f6ab819faf01d74c92a127c925a34720ffd604"
+  },
+  "limits": {
+    "address_space_bytes": 12884901888,
+    "affinity": [
+      8,
+      9
+    ],
+    "cleanup_reserve_seconds": 50,
+    "cpu_seconds_per_leaf": 1200,
+    "file_bytes": 1073741824,
+    "initial_free_bytes": 42949672960,
+    "leaf_seconds": 120,
+    "live_free_bytes": 40802189312,
+    "nice": 10,
+    "scratch_bytes": 6442450944,
+    "stream_bytes": 67108864,
+    "whole_seconds": 180
+  },
+  "passed": true,
+  "phases": [
+    {
+      "adopted_reaped": [],
+      "argv": [
+        "/usr/bin/prlimit",
+        "--as=12884901888",
+        "--cpu=1200",
+        "--fsize=1073741824",
+        "--core=0",
+        "--",
+        "/usr/bin/python3.12",
+        "-I",
+        "-S",
+        "-B",
+        "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-cfg-expansion-diagnostic-loader-tests-v228-v1/loader_test_entry.py"
+      ],
+      "command": {
+        "bytes": 917,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-cfg-expansion-diagnostic-loader-tests-v228-v1/evidence/ranked-cfg-expansion-diagnostic-loader-tests.command.json",
+        "sha256": "f1cb5d3dfbbde01bba118656e4ec71d8ffc59afc5f8ba691d8b3d6e01d084660"
+      },
+      "elapsed_ns": 44875372888,
+      "exception": null,
+      "exit_code": 0,
+      "forced_cleanup": false,
+      "label": "ranked-cfg-expansion-diagnostic-loader-tests",
+      "natural_exit": true,
+      "observed_signals": [],
+      "pgid": 2864612,
+      "pid": 2864612,
+      "process_group_absent": true,
+      "reaped": true,
+      "stderr": {
+        "bytes": 4144,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-cfg-expansion-diagnostic-loader-tests-v228-v1/evidence/ranked-cfg-expansion-diagnostic-loader-tests.stderr",
+        "sha256": "8fd77bc96997a2c695dea5a4dea037e9dac8d7985772094fe4d9ecf75f993669"
+      },
+      "stdout": {
+        "bytes": 5607,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-cfg-expansion-diagnostic-loader-tests-v228-v1/evidence/ranked-cfg-expansion-diagnostic-loader-tests.stdout",
+        "sha256": "c5caadc2df4e384b0860376f44425d59b9ddf8b978b6de01ff52723c3ef79dd4"
+      },
+      "storage_failure": null,
+      "timed_out": false
+    }
+  ],
+  "postcheck_errors": [],
+  "raw": {
+    "ranked-cfg-expansion-diagnostic-loader-tests.command.json": {
+      "bytes": 917,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-cfg-expansion-diagnostic-loader-tests-v228-v1/evidence/ranked-cfg-expansion-diagnostic-loader-tests.command.json",
+      "sha256": "f1cb5d3dfbbde01bba118656e4ec71d8ffc59afc5f8ba691d8b3d6e01d084660"
+    },
+    "ranked-cfg-expansion-diagnostic-loader-tests.result.json": {
+      "bytes": 1733,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-cfg-expansion-diagnostic-loader-tests-v228-v1/evidence/ranked-cfg-expansion-diagnostic-loader-tests.result.json",
+      "sha256": "37c14b9362fcacfb0a0846764aaac6c17ce88fa017d204c0a129559766343993"
+    },
+    "ranked-cfg-expansion-diagnostic-loader-tests.started.json": {
+      "bytes": 398,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-cfg-expansion-diagnostic-loader-tests-v228-v1/evidence/ranked-cfg-expansion-diagnostic-loader-tests.started.json",
+      "sha256": "5f1b8ba78d2ac1d0fe5cf5408d16c04e5b608844bd5e16494d5f95183b6795f6"
+    },
+    "ranked-cfg-expansion-diagnostic-loader-tests.stderr": {
+      "bytes": 4144,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-cfg-expansion-diagnostic-loader-tests-v228-v1/evidence/ranked-cfg-expansion-diagnostic-loader-tests.stderr",
+      "sha256": "8fd77bc96997a2c695dea5a4dea037e9dac8d7985772094fe4d9ecf75f993669"
+    },
+    "ranked-cfg-expansion-diagnostic-loader-tests.stdout": {
+      "bytes": 5607,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-cfg-expansion-diagnostic-loader-tests-v228-v1/evidence/ranked-cfg-expansion-diagnostic-loader-tests.stdout",
+      "sha256": "c5caadc2df4e384b0860376f44425d59b9ddf8b978b6de01ff52723c3ef79dd4"
+    },
+    "sources-after.json": {
+      "bytes": 1503,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-cfg-expansion-diagnostic-loader-tests-v228-v1/evidence/sources-after.json",
+      "sha256": "70ce57635cbef550efff7a5fc708c37900ee04883a291dae1a38f1d4c2703103"
+    },
+    "sources-before.json": {
+      "bytes": 1503,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-cfg-expansion-diagnostic-loader-tests-v228-v1/evidence/sources-before.json",
+      "sha256": "70ce57635cbef550efff7a5fc708c37900ee04883a291dae1a38f1d4c2703103"
+    }
+  },
+  "schema": "ferric-ranked-cfg-expansion-diagnostic-loader-test-cpu-v1",
+  "source_inputs": {
+    "audit_tools.py": {
+      "bytes": 82838,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-cfg-expansion-diagnostic-loader-tests-v228-v1/audit_tools.py",
+      "sha256": "79b30eb40c8f97957b4f301a786f261f4b088bb6264b9a89e2dc6554d3813cf8"
+    },
+    "loader_test_entry.py": {
+      "bytes": 6534,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-cfg-expansion-diagnostic-loader-tests-v228-v1/loader_test_entry.py",
+      "sha256": "5a0ee703217a7de83ab4eb0aecda0db44fef3a895bb2695e9d29a5de086f3b99"
+    },
+    "run_tests.py": {
+      "bytes": 14251,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-cfg-expansion-diagnostic-loader-tests-v228-v1/run_tests.py",
+      "sha256": "af3d6f801933edebaaddf9e483706f363cd908b6bb9bf3841455aeef17f41402"
+    },
+    "supervisor.py": {
+      "bytes": 41485,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-cfg-expansion-diagnostic-loader-tests-v228-v1/supervisor.py",
+      "sha256": "8824478a6415dee39d28ccefb0881fc0687ac724f5a9c5a4540310fb5196b9bc"
+    },
+    "test_audit_tools.py": {
+      "bytes": 74649,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-cfg-expansion-diagnostic-loader-tests-v228-v1/test_audit_tools.py",
+      "sha256": "ca99de2eb7c6d2e2b36d675a21f16e2b5a923fdb1f2acfd039ad299f364a5bec"
+    }
+  },
+  "source_unchanged": true,
+  "supervisor": {
+    "bytes": 41485,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-cfg-expansion-diagnostic-loader-tests-v228-v1/supervisor.py",
+    "sha256": "8824478a6415dee39d28ccefb0881fc0687ac724f5a9c5a4540310fb5196b9bc"
+  },
+  "synthetic_loader_only": true,
+  "tool_pins": {
+    "prlimit": {
+      "bytes": 27536,
+      "path": "/usr/bin/prlimit",
+      "sha256": "17064f67e650d6152a6902b013aab496b54c87587c8eea6f5023aafee6154069"
+    },
+    "python": {
+      "bytes": 8020928,
+      "path": "/usr/bin/python3.12",
+      "sha256": "e1efa562c2cc2e35521a5c9c9b9939921001ff8ca9708a13ef15ace68cc2ccd7"
+    }
+  }
+}

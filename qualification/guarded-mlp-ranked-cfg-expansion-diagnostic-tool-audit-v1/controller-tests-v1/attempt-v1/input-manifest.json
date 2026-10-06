@@ -1,0 +1,37 @@
+{
+  "files": {
+    "audit_tools.py": {
+      "bytes": 82838,
+      "sha256": "79b30eb40c8f97957b4f301a786f261f4b088bb6264b9a89e2dc6554d3813cf8"
+    },
+    "loader_test_entry.py": {
+      "bytes": 6534,
+      "sha256": "5a0ee703217a7de83ab4eb0aecda0db44fef3a895bb2695e9d29a5de086f3b99"
+    },
+    "run_tests.py": {
+      "bytes": 14251,
+      "sha256": "af3d6f801933edebaaddf9e483706f363cd908b6bb9bf3841455aeef17f41402"
+    },
+    "supervisor.py": {
+      "bytes": 41485,
+      "sha256": "8824478a6415dee39d28ccefb0881fc0687ac724f5a9c5a4540310fb5196b9bc"
+    },
+    "test_audit_tools.py": {
+      "bytes": 74649,
+      "sha256": "ca99de2eb7c6d2e2b36d675a21f16e2b5a923fdb1f2acfd039ad299f364a5bec"
+    }
+  },
+  "schema": "ferric-ranked-cfg-expansion-diagnostic-loader-test-input-v1",
+  "tool_pins": {
+    "prlimit": {
+      "bytes": 27536,
+      "path": "/usr/bin/prlimit",
+      "sha256": "17064f67e650d6152a6902b013aab496b54c87587c8eea6f5023aafee6154069"
+    },
+    "python": {
+      "bytes": 8020928,
+      "path": "/usr/bin/python3.12",
+      "sha256": "e1efa562c2cc2e35521a5c9c9b9939921001ff8ca9708a13ef15ace68cc2ccd7"
+    }
+  }
+}
