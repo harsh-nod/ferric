@@ -31,7 +31,15 @@ announcements and ancestry. This is a parser test, not another GPU run.
 Receipt SHA-256:
 `170ba440cdf33cd88fc55c2ddff709624fd819d3d461d54daad239a719efdf5a`.
 
-Separate data-only revalidation must check the previously skipped gates.
+The [separate V3 data-only revalidation](revalidation-v3/complete.json) now
+passes on MI350. It rehashes 127 inputs, rechecks all 76 original raw bodies,
+all eleven natural process leaves and six recorded idle snapshots, and
+validates the exact two-process ancestry. Three JSON round-trip regressions
+also pass, preserving 64-bit integers and rejecting changed values or types.
+This result closes the previously skipped observation checks without rerunning
+native code or changing the failed original receipt. Its SHA-256 is
+`d0551f310a57f63dfe98af8c887b5996752e3b62128a3087c4a03849082e6a3f`.
+
 The original whole-controller duration of 412.754826 seconds includes setup
 and audits and is not a decode-throughput measurement.
 
@@ -42,6 +50,8 @@ products. The [second reader](revalidation-v2/failed.json) completed payload
 validation but compared Python frontier tuples with JSON arrays directly.
 The serialized observations are identical. Neither failure launched native
 code, changed the original GPU evidence, or established numerical acceptance.
+The passing V3 reader retains both prior failures and fixes only those reader
+assumptions; GPU images, model arithmetic and observation rules are unchanged.
 
 ## First Preflight
 

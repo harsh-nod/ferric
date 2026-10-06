@@ -1,0 +1,8 @@
+test_changed_numbers_types_or_structure_refuse (roundtrip_tests.ObservationRoundtripTests.test_changed_numbers_types_or_structure_refuse) ... ok
+test_nonfinite_data_refuses (roundtrip_tests.ObservationRoundtripTests.test_nonfinite_data_refuses) ... ok
+test_tuple_frontiers_and_u64_survive_json (roundtrip_tests.ObservationRoundtripTests.test_tuple_frontiers_and_u64_survive_json) ... ok
+
+----------------------------------------------------------------------
+Ran 3 tests in 0.000s
+
+OK

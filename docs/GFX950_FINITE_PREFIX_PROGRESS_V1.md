@@ -12,9 +12,11 @@ The outer controller still records failure: its worker-announcement parser
 expected `finite engineering`, while the qualified parent prints
 `finite guarded`. Independent examination of the retained process ancestry
 and all 76 raw files confirms the worker identity and clean shutdown.
-The failed receipt is not being rewritten as a pass. Separate parser tests
-and data-only revalidation precede the fresh autoregressive case; independent
-model numerical acceptance and sustained throughput remain open.
+The failed receipt is not being rewritten as a pass. Six parser tests and
+[separate data-only revalidation](../qualification/guarded-mlp-model-runtime-v1/README.md)
+now pass on MI350, including three JSON round-trip regressions. A fresh
+autoregressive case follows; independent model numerical acceptance and
+sustained throughput remain open.
 
 Current integration: [the guarded parent passes 375 selected tests and all 54 CPU phases on MI350](../qualification/guarded-mlp-parent-cpu-v1/README.md).
 All five selected parent binaries build, with clean source, dependency, cache
