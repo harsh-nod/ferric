@@ -85,6 +85,8 @@ totaling 33,716,952 body bytes. Receipt SHA-256:
 The 5,546,057-byte archive SHA-256 is
 `1968bfb45c779e56236bd47d52fd7cb9cb47c56d7fe79da2595f69d13a0c7dc2`.
 
-Loader inspection, actual guarded gfx950 lowering, GPU execution, independent
-model numerics and sustained BF16 2,048/256 decode remain separate checks.
-All issue #42 milestones and the 700 tokens/s target remain open.
+The [fresh loader inspection passed](../guarded-mlp-indexed-atomic-dag-tool-audit-v1/README.md),
+but [actual guarded gfx950 lowering still reaches the graph-work limit](../guarded-mlp-indexed-atomic-dag-lowering-v1/README.md).
+Thus this optimization has not removed the measured blocker. GPU execution,
+independent model numerics and sustained BF16 2,048/256 decode remain separate
+checks. All issue #42 milestones and the 700 tokens/s target remain open.

@@ -1,0 +1,32 @@
+{
+  "adopted_reaped": [],
+  "command": {
+    "bytes": 7585,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-indexed-atomic-dag-lowering-v228-v1/compile.command.json",
+    "sha256": "fde9f8f7f736089aa55cddc19a71ed7cc9e0983ad64d5fed41f086a51214cdc6"
+  },
+  "elapsed_ns": 117555086031,
+  "exception": null,
+  "exit_code": 1,
+  "forced_cleanup": false,
+  "label": "compile",
+  "minimum_free_bytes": 66520829952,
+  "natural_exit": true,
+  "observed_signals": [],
+  "peak_private_scratch_bytes": 1027852498,
+  "pgid": 1856485,
+  "pid": 1856485,
+  "process_group_absent": true,
+  "reaped": true,
+  "stderr": {
+    "bytes": 7947,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-indexed-atomic-dag-lowering-v228-v1/compile.stderr",
+    "sha256": "7fc0c81cfe0149e728a52fc2ca34361cbe8c8cea8fb8852646ad87f948e71df5"
+  },
+  "stdout": {
+    "bytes": 0,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-indexed-atomic-dag-lowering-v228-v1/compile.stdout",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "timed_out": false
+}

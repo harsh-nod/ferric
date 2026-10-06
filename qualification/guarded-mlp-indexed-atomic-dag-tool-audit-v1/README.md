@@ -7,6 +7,23 @@ lineage and final build products. Only the extractor and compiler backend
 can replace the previously qualified seven-tool deployment's corresponding
 entries. The other five entries must remain unchanged.
 
+## Actual Loader Inspection
+
+The deployed seven-tool generation passed all 14 `readelf` and `ldd`
+inspections on `mi350` in 2.410962 seconds. Every child exited naturally with
+status zero, was reaped and left no process group. Input and tool postchecks
+were clean. The extractor's body is unchanged, but its provenance points to
+the new qualified build; the compiler backend is new. The other five
+deployment entries retain their exact previous provenance and bytes.
+
+The [actual evidence](attempt-v1) includes the receipt, deployed controller,
+input and tool manifests, producer/driver lineage and all 72 raw records.
+Its archive has 93 members, 92 manifest pins and 18,052,513 body bytes.
+Receipt SHA-256:
+`1d9b96c32dfbeb2bc562867b3a6eb96c65da615df64313c39269f5beaad08089`.
+Archive SHA-256:
+`d59e479fb3a89bac9b33a63b6598eeb01c0ed4df806e81515dcf943d82e16b9e`.
+
 ## Controller Tests
 
 All 26 synthetic admission tests passed on `mi350` in 12.364962 seconds.
@@ -23,6 +40,7 @@ archive contains 15 members with 191,501 body bytes. Receipt SHA-256:
 Archive SHA-256:
 `85cc3708b2467345e8b1568f304c77a14496fe78703ef7cc7d68b22a08c2953f`.
 
-An actual binary-loader inspection has not run for this generation yet.
-Synthetic fixtures do not establish successful guarded lowering, GPU
-execution, model correctness or performance. All issue #42 milestones remain open.
+Neither synthetic fixtures nor successful library inspection establish
+guarded lowering, GPU execution, model correctness or performance. The
+[actual guarded lowering result](../guarded-mlp-indexed-atomic-dag-lowering-v1/README.md)
+is recorded separately. All issue #42 milestones remain open.

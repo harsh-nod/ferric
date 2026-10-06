@@ -6,7 +6,15 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Latest: [the cached indexed-atomic DAG experiment passes full CPU qualification](../qualification/guarded-mlp-indexed-atomic-dag-v1/README.md).
+Latest: [the DAG-qualified guarded compile still reaches the graph-work limit](../qualification/guarded-mlp-indexed-atomic-dag-lowering-v1/README.md).
+The real compiler process exited naturally after 117.555086 seconds, with
+unchanged source and clean postchecks. No HSACO or GPU execution resulted.
+The [fresh deployment passed all 14 loader checks](../qualification/guarded-mlp-indexed-atomic-dag-tool-audit-v1/README.md),
+but the DAG cache did not remove the measured rejection. Its function and
+charge site remain unidentified. Bounded failure-path instrumentation is next;
+the work ceiling and safety predicates are not being relaxed.
+
+Previously, [the cached indexed-atomic DAG experiment passes full CPU qualification](../qualification/guarded-mlp-indexed-atomic-dag-v1/README.md).
 All 36 phases pass on MI350, including 1,257 compiler and 1,507 Pliron tests.
 Focused repeats and extraction controls bring the total to 2,840 passing
 executions; the 25 historical ignores remain explicit. Sources, dependencies

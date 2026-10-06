@@ -1,0 +1,30 @@
+{
+  "adopted_reaped": [],
+  "command": {
+    "bytes": 947,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-indexed-atomic-dag-compiler-tools-audit-v228-v1/librustc_codegen_fe2o3.so-ldd.command.json",
+    "sha256": "d8c9e9e5e58cf9b899784a9141790e5ae4dd814aed451c1417d68d7bb3fb4f64"
+  },
+  "elapsed_ns": 50706211,
+  "exception": null,
+  "exit_code": 0,
+  "forced_cleanup": false,
+  "label": "librustc_codegen_fe2o3.so-ldd",
+  "natural_exit": true,
+  "observed_signals": [],
+  "pgid": 1850878,
+  "pid": 1850878,
+  "process_group_absent": true,
+  "reaped": true,
+  "stderr": {
+    "bytes": 0,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-indexed-atomic-dag-compiler-tools-audit-v228-v1/librustc_codegen_fe2o3.so-ldd.stderr",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "stdout": {
+    "bytes": 939,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-indexed-atomic-dag-compiler-tools-audit-v228-v1/librustc_codegen_fe2o3.so-ldd.stdout",
+    "sha256": "d4e762d3d1bde65e48fdf5b4bfa125e7705b3939adb89e51fad1312bff0125f6"
+  },
+  "timed_out": false
+}
