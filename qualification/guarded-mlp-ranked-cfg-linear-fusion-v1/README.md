@@ -1,14 +1,49 @@
 # Ranked CFG Linear Fusion
 
-Status: after the [fixture-only correction](proposal-v2/README.md), all 1,323
-compiler tests pass, with 24 unchanged ignores. The second MI350 qualification
-still fails because its harness rejects a legitimate long-running-test notice.
-A [narrow parser correction passes 17 independent regression tests on MI350](../guarded-mlp-libtest-progress-parser-v1/README.md).
-A fresh full qualification is running.
-No new compiler
-qualification, artifact, GPU execution, numerical acceptance or performance
-result is established.
+Status: full MI350 CPU qualification passes all 44 phases, 31 test scopes,
+2,972 passing executions and 25 unchanged ignores. The
+[fixture correction](proposal-v2/README.md) and
+[17-test parser correction](../guarded-mlp-libtest-progress-parser-v1/README.md)
+are included. The earlier failed attempts remain intact below. This is compiler
+qualification, not guarded HSACO, GPU execution, numerical or performance acceptance.
 All issue #42 milestones and the 700 tokens/s target remain open.
+
+## Successful Qualification
+
+The [third receipt](attempt-v3/evidence/complete.json) reports all 44 phases
+completed naturally with exit zero. Every child is reaped and its process group
+is absent; no timeout, forced cleanup, storage failure or postcheck error occurs.
+The complete run takes 805.188878 seconds. Source and dependency checks remain clean.
+
+| Check | Passed | Failed | Ignored |
+| --- | ---: | ---: | ---: |
+| Compiler full suite | 1323 | 0 | 24 |
+| Pliron full suite | 1507 | 0 | 1 |
+| Focused repeats and extraction controls | 142 | 0 | 0 |
+| Total reported executions | 2972 | 0 | 25 |
+| Separate parser regression gate | 17 | 0 | 0 |
+| [V3 loader controller fixtures](../guarded-mlp-ranked-cfg-linear-fusion-tool-audit-v1/controller-tests-v1/attempt-v3/evidence/complete.json) | 26 | 0 | 0 |
+| [V3 lowering controller fixtures](../guarded-mlp-ranked-cfg-linear-fusion-lowering-v1/controller-tests-v1/attempt-v3/evidence/complete.json) | 19 | 0 | 0 |
+
+The aggregate includes focused repeats, not 2,972 unique tests. All prior 1,314
+compiler passes and 24 ignored identities are preserved, and all nine new fusion
+tests pass in both the full suite and the focused repeat. Atomic, unsafe-source
+rejection and matrix extraction controls also pass. The separate parser and
+controller-fixture counts are not added to the CPU receipt's aggregate.
+
+The 5,808-row before/after source maps are byte-identical: 5,806 compiler sources
+and two harness bodies. Only the four reviewed compiler-source rows differ from
+the qualified compaction baseline. The current parser helper is authenticated
+separately from its historical predecessor; historical evidence is not rewritten.
+
+The capsule has 249 members, 248 pinned bodies and 224 raw files: 5,654,487
+compressed bytes, SHA-256
+`9432e8af1d2e019997173f27e1a69ea5cdbad70f1cdfb705193fc05af2f28ec1`.
+The receipt is 1,354,241 bytes, SHA-256
+`7827d969f295a8a0ba709629b2679b71ecde9b93b1f0ad11c5b8be70f7259915`.
+Seven final build products are identified. Fresh binary-loader checks and the
+actual guarded compile remain separate gates; no graph-count, HSACO or model
+result is inferred from these CPU tests.
 
 ## Second Qualification
 

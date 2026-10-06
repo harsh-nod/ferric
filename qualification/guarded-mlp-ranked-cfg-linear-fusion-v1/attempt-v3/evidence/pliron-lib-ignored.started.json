@@ -1,0 +1,16 @@
+{
+  "argv": [
+    "/usr/bin/prlimit",
+    "--as=12884901888",
+    "--cpu=1200",
+    "--fsize=1073741824",
+    "--core=0",
+    "--",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-cfg-linear-fusion-cpu-v228-v3/target/debug/deps/fe2o3_pliron-bfbb58262805e3df",
+    "--ignored",
+    "--list",
+    "--format=terse"
+  ],
+  "pgid": 3402158,
+  "pid": 3402158
+}

@@ -36,5 +36,6 @@ input and tool postchecks are clean. The complete gate takes 0.124052 seconds.
 Its capsule has 17 members, 16 pins and seven raw files: 387,975 compressed bytes,
 SHA-256 `5883770fc65a81b0ede167425440cc40dc539b342f8fed02e5d3d55cde465589`.
 
-The fresh 44-phase compiler qualification is a separate gate. This passing parser
-test does not complete any issue #42 milestone or establish decode throughput.
+The [fresh 44-phase compiler qualification also passes](../guarded-mlp-ranked-cfg-linear-fusion-v1/README.md),
+as a separate gate. These results do not complete any issue #42 milestone or
+establish decode throughput.

@@ -6,17 +6,15 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Current work: [all chain-fusion compiler tests now pass, but the harness rejects a progress notice](../qualification/guarded-mlp-ranked-cfg-linear-fusion-v1/README.md).
-After a fixture-only correction, raw compiler results are 1,323 passed, zero
-failed and 24 ignored. Pliron passes 1,507 with one ignored. The qualification
-controller mistakes a valid 60-second progress notice for a malformed final
-result and stops before focused repeats and extraction controls. The narrow
-[parser correction passes 17 MI350 regression checks](../qualification/guarded-mlp-libtest-progress-parser-v1/README.md),
-including the captured-output replay. A fresh full qualification is running.
-Both failed attempts remain retained unchanged.
-The separate V2 controller fixtures pass 26/26 loader and 19/19 lowering tests.
-No new compiler qualification, guarded HSACO, GPU or model acceptance follows
-from these results.
+Current work: [bounded chain fusion passes full MI350 CPU qualification](../qualification/guarded-mlp-ranked-cfg-linear-fusion-v1/README.md).
+All 44 phases and 31 test scopes pass: 1,323 compiler and 1,507 Pliron tests,
+with focused repeats and extraction controls totaling 2,972 passing executions
+and 25 unchanged ignores. Sources, dependencies and process postchecks are clean.
+The [parser correction passes 17 separate MI350 checks](../qualification/guarded-mlp-libtest-progress-parser-v1/README.md);
+V3 controller fixtures pass 26 loader and 19 lowering tests. Both earlier failed
+CPU attempts remain retained unchanged. Fresh binary-loader checks and guarded
+lowering are the next gates. No guarded HSACO, GPU, model or performance
+acceptance is established by this compiler qualification.
 
 Latest guarded lowering: [the compacted guard reaches the structural-identity limit](../qualification/guarded-mlp-ranked-cfg-compaction-lowering-v1/README.md).
 The actual MI350 compile renders 1,675 blocks, down from the prior 2,778,
@@ -28,12 +26,12 @@ exits naturally with status 1 after 130.542604 seconds and is reaped, with
 213 unchanged input pins, unchanged sources and clean postchecks. No HSACO,
 GPU, model numerical or performance acceptance is established.
 
-Next, [single-predecessor chain fusion has passed source review](../qualification/guarded-mlp-ranked-cfg-linear-fusion-v1/README.md).
+The [single-predecessor chain fusion implementation is now CPU-qualified](../qualification/guarded-mlp-ranked-cfg-linear-fusion-v1/README.md).
 Independent analysis of the retained graph predicts 567 blocks and 1,122 raw
 edges while preserving the entry, every bounds predicate and all atomic
 effects. This is graph arithmetic, not a result from the new compiler pass.
 The implementation, nine tests and both failed qualifications are retained.
-Corrected full CPU qualification and guarded lowering remain pending; no
+Actual guarded lowering remains pending; no
 structural or resource limit is being raised for this change.
 
 The [CFG compaction change passes full MI350 CPU qualification](../qualification/guarded-mlp-ranked-cfg-compaction-v1/README.md).

@@ -1,0 +1,44 @@
+{
+  "adopted_reaped": [],
+  "argv": [
+    "/usr/bin/prlimit",
+    "--as=12884901888",
+    "--cpu=1200",
+    "--fsize=1073741824",
+    "--core=0",
+    "--",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-cfg-linear-fusion-cpu-v228-v3/target/debug/deps/production_extraction_driver_v1-cb9b8b5de4191776",
+    "optimized_inlined_source_origins_retain_source_safety_checks",
+    "--ignored",
+    "--exact",
+    "--test-threads=1"
+  ],
+  "command": {
+    "bytes": 2450,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-cfg-linear-fusion-cpu-v228-v3/evidence/source-safety-negative-1.command.json",
+    "sha256": "b1b3b0fdaf8811cc40776dbe14238250a5155d87e9fccb6f7de2a934a1b03b97"
+  },
+  "elapsed_ns": 30789154666,
+  "exception": null,
+  "exit_code": 0,
+  "forced_cleanup": false,
+  "label": "source-safety-negative-1",
+  "natural_exit": true,
+  "observed_signals": [],
+  "pgid": 3451766,
+  "pid": 3451766,
+  "process_group_absent": true,
+  "reaped": true,
+  "stderr": {
+    "bytes": 0,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-cfg-linear-fusion-cpu-v228-v3/evidence/source-safety-negative-1.stderr",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "stdout": {
+    "bytes": 187,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-ranked-cfg-linear-fusion-cpu-v228-v3/evidence/source-safety-negative-1.stdout",
+    "sha256": "ea4cfb60bc7bbea728fc2b1c329f2c0176d44c907e37f2ae231d35975880c757"
+  },
+  "storage_failure": null,
+  "timed_out": false
+}
