@@ -132,9 +132,10 @@ The actual CPU receipt is 1,143,535 bytes, SHA-256
 
 ## Remaining Integration
 
-A distinct private coordinator must now
-publish R1, MLP, validator, the both-validator barrier, and R2 on each rank.
-Its ten signals, queue frontiers, failure custody and owner lifecycle need
-separate tests. Ferric must consume that combined completion without calling
-its existing final residual step a second time. No such paired execution is
-claimed by this diagnostic.
+The [distinct private paired coordinator](../guarded-mlp-paired-v1/README.md)
+now compiles and passes CPU qualification on MI350. It prepares R1, MLP,
+validator, the both-validator barrier, and R2 on each rank, with separate
+tests for ten signals, queue frontiers, failure handling and owner lifecycle.
+Its actual paired GPU execution is still unqualified. Ferric must also consume
+that combined completion without calling its existing final residual step a
+second time. No such paired execution is claimed by this serial diagnostic.

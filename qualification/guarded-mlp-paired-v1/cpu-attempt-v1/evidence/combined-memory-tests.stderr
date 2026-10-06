@@ -1,0 +1,32 @@
+warning: unused import: `prefix::Transaction`
+ --> crates/fe2o3-kfd/src/engineering_gfx950_resident_layer_tp2_v1.rs:7:5
+  |
+7 | use prefix::Transaction as _;
+  |     ^^^^^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: method `rearm_quiescent` is never used
+   --> crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_state_v1.rs:266:26
+    |
+146 | impl CombinedMlpStateV1 {
+    | ----------------------- method in this implementation
+...
+266 |     pub(super) unsafe fn rearm_quiescent(
+    |                          ^^^^^^^^^^^^^^^
+    |
+    = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: field `0` is never read
+ --> crates/fe2o3-kfd/src/memory_linux_combined_mlp_state_v1_tests.rs:4:16
+  |
+4 | struct Storage([u8; 4096]);
+  |        ------- ^^^^^^^^^^
+  |        |
+  |        field in this struct
+  |
+  = help: consider removing this field
+
+warning: `fe2o3-kfd` (lib test) generated 3 warnings
+    Finished `test` profile [optimized] target(s) in 0.01s
+     Running unittests src/lib.rs (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-paired-cpu-v228-v1/target/debug/deps/fe2o3_kfd-11448a9880d552d9)
