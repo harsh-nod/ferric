@@ -1,0 +1,108 @@
+{
+  "schema": "ferric-guarded-mlp-ranked-cfg-linear-fusion-source-v1",
+  "source_only": true,
+  "cfg_linear_fusion_optimization": true,
+  "cfg_compaction_optimization": true,
+  "inherited_cfg_compaction_optimization": true,
+  "compiler_scratch_added": true,
+  "resource_admission_may_change": true,
+  "admission_changed": true,
+  "semantic_predicates_changed": false,
+  "structural_limits_changed": false,
+  "graph_analysis_optimization": false,
+  "inherited_graph_analysis_optimization": true,
+  "static_failure_site_identified": true,
+  "actual_failure_caller_identified": false,
+  "actual_failure_block_count_observed": false,
+  "baseline_failure_caller_identified": true,
+  "baseline_failure_block_count_observed": true,
+  "baseline_identity_first_refusal_blocks": 1025,
+  "baseline_identity_block_limit": 1024,
+  "baseline_rendered_blocks": 1675,
+  "baseline_rendered_edges": 2230,
+  "baseline_edge_verdict_observed": false,
+  "graph_work_limit": 3145728,
+  "block_limit": 2048,
+  "edge_limit": 2048,
+  "production_trigger_blocks_above": 1024,
+  "base_source_count": 5804,
+  "source_count": 5806,
+  "source_file_additions": 2,
+  "new_test_count": 9,
+  "filter": "production_ranked_projection_v1::tests::cfg_linear_fusion_",
+  "test_names": [
+    "production_ranked_projection_v1::tests::cfg_linear_fusion_chain_and_identity_boundaries",
+    "production_ranked_projection_v1::tests::cfg_linear_fusion_conditional_effect_traces",
+    "production_ranked_projection_v1::tests::cfg_linear_fusion_cycles_and_argument_fallback",
+    "production_ranked_projection_v1::tests::cfg_linear_fusion_duplicate_edges_and_entry_are_preserved",
+    "production_ranked_projection_v1::tests::cfg_linear_fusion_malformed_references_fail_closed",
+    "production_ranked_projection_v1::tests::cfg_linear_fusion_measured_guard_pattern",
+    "production_ranked_projection_v1::tests::cfg_linear_fusion_production_projection_route",
+    "production_ranked_projection_v1::tests::cfg_linear_fusion_source_wave_generated_coordinates",
+    "production_ranked_projection_v1::tests::cfg_linear_fusion_work_storage_and_failure_boundaries"
+  ],
+  "base_complete": {
+    "bytes": 1344193,
+    "sha256": "439d4b5bf10a1fe9f44d02fa1cbd28b03eec9601bb161806909b2f073beb9018"
+  },
+  "base_sources": {
+    "bytes": 2269778,
+    "sha256": "c00481ef4e62adf81ebce11b6a2a9ecb51823a709c28ccf87194c54c5fa7f420"
+  },
+  "base_input": {
+    "bytes": 1123027,
+    "sha256": "eee83b9d3f67eeb383b164e14ba4c8e5e8ee218d14492c3dbbde017135fff2ba"
+  },
+  "base_controller": {
+    "bytes": 82369,
+    "sha256": "f5dc942c8d6755d5abe8b2bf3e15881dbc303985b6255c723837b9c4b474d03d"
+  },
+  "actual_failure": {
+    "bytes": 16503,
+    "sha256": "1bf26b28162414dfb4afbf6dc5ba5a70a60d1c1fe1fd55624c251733840c560b"
+  },
+  "actual_failure_stderr": {
+    "bytes": 164209,
+    "sha256": "9a309b8f23c66ad29e98a464bcb3ed8480766e2c7fd807415616dc99d6121a05"
+  },
+  "integration_patch": {
+    "bytes": 43154,
+    "sha256": "eded577c0db3575c41b5d699c9e028009db664c87ce8f7e4bf02b08dd3079ea2"
+  },
+  "files": {
+    "crates/fe2o3-pliron/src/production/ranked.rs": {
+      "before": {
+        "bytes": 274903,
+        "sha256": "da227d20f3717f675544c65139d65185bf5d1db27d1f1e2a46943f952649f9f1"
+      },
+      "after": {
+        "bytes": 275256,
+        "sha256": "acf2cc2888f2aa4bcdcbd7c2c6975192c6cd88b99456f1b56f2aecc38d432974"
+      }
+    },
+    "crates/rustc-codegen-fe2o3/src/production_ranked_projection_v1.rs": {
+      "before": {
+        "bytes": 1656573,
+        "sha256": "7b722615198ef30ac7fab60229d5c36672763a1f7f64c25bc5cab3f51c2b600e"
+      },
+      "after": {
+        "bytes": 1656946,
+        "sha256": "ad80aa48fe7fd1c131a9f2bed49f3883ba489ee8402d16cf38e0ee27ded6a6ac"
+      }
+    },
+    "crates/rustc-codegen-fe2o3/src/production_ranked_projection_v1/cfg_linear_fusion_v1.rs": {
+      "before": null,
+      "after": {
+        "bytes": 16541,
+        "sha256": "548893fa5cff63cc076214474a4a7fcdb7a43ab41e4e54433c2c0e1e61285b82"
+      }
+    },
+    "crates/rustc-codegen-fe2o3/src/production_ranked_projection_v1/cfg_linear_fusion_v1_tests.rs": {
+      "before": null,
+      "after": {
+        "bytes": 23381,
+        "sha256": "f3d8bafdfafab9b22ae37bbfeccce631acebc5ad2260ff8728db5f7defdd2c36"
+      }
+    }
+  }
+}

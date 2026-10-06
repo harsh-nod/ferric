@@ -1,6 +1,7 @@
 # Ranked CFG Linear Fusion
 
-Status: implementation in progress. No new compiler qualification, artifact,
+Status: [source implementation independently reviewed](proposal-v1/README.md),
+with nine authored regression tests. No new compiler qualification, artifact,
 GPU execution, numerical acceptance or performance result is established.
 All issue #42 milestones and the 700 tokens/s target remain open.
 
@@ -18,11 +19,13 @@ is 164,209 bytes, SHA-256
 Its rendered guard contains 548 Acquire/System reads and four System writes,
 three Relaxed and one Release. All 552 bounds predicates remain obligations.
 
-## Proposed Change
+## Source Change
 
 Fuse an unconditional branch source with its target only when the target has
 one raw predecessor. Preserve the entry block and do not deduplicate successor
-occurrences. Independent data-only analysis of the retained graph identifies
+occurrences. The production hook runs only above the existing 1,024-block
+identity ceiling; smaller graphs keep their established layout. Independent
+data-only analysis of the retained graph identifies
 1,108 eligible branches: 556 empty sources and 552 atomic-effect sources.
 Removing these branches would produce 567 blocks and 1,122 raw edges. These
 are derived counts, not observed outputs from an implemented compiler pass.

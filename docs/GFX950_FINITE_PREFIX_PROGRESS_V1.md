@@ -16,12 +16,13 @@ exits naturally with status 1 after 130.542604 seconds and is reaped, with
 213 unchanged input pins, unchanged sources and clean postchecks. No HSACO,
 GPU, model numerical or performance acceptance is established.
 
-Next, [single-predecessor chain fusion is under implementation](../qualification/guarded-mlp-ranked-cfg-linear-fusion-v1/README.md).
+Next, [single-predecessor chain fusion has passed source review](../qualification/guarded-mlp-ranked-cfg-linear-fusion-v1/README.md).
 Independent analysis of the retained graph predicts 567 blocks and 1,122 raw
 edges while preserving the entry, every bounds predicate and all atomic
 effects. This is graph arithmetic, not a result from the new compiler pass.
-Implementation, full CPU qualification and guarded lowering remain pending;
-no structural or resource limit is being raised for this change.
+The implementation and nine tests are retained as a source-only checkpoint.
+Full CPU qualification and guarded lowering remain pending; no structural or
+resource limit is being raised for this change.
 
 The [CFG compaction change passes full MI350 CPU qualification](../qualification/guarded-mlp-ranked-cfg-compaction-v1/README.md).
 It shares eligible empty trap blocks and fuses successful accesses with their
