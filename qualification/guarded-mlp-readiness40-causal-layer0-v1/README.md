@@ -239,13 +239,28 @@ These results explain this observed residual boundary without requiring a
 missing BF16 materialization or changing outputs to force framework agreement.
 They do not establish a causal path to the position-five argmax difference.
 
+## Attention Conditional Check
+
+The [attention gate](attention-conditional-v1/RESULTS.md) passed on MI350 with
+eight passing tests and clean postchecks. All 12 native states and all 12
+framework states were compared against their own captured Q/K/V using the
+unchanged historical dense reference and conditional attention policy.
+All 49,152 output words passed; all four position-zero rank/side controls were
+exact. This covers the first six positions of layer zero, not the whole model.
+
+After reference narrowing, 24,572 native words match exactly and four are
+tolerated; 24,573 framework words match exactly and three are tolerated.
+Maximum encoding distances are four and ten steps, respectively. The existing
+policy also has an absolute cancellation bound, so these counts do not imply
+a failed component check. Separate 80/160-digit calculations agree on all six
+selected rounded words but are not rigorous rounding proofs or pass criteria.
+
 ## Remaining Gates
 
 Both native and framework instrumentation preserve their own prior histories
-and selected payloads. Exact Q/K dots and the position-zero residual join have
-now been checked. The remaining same-input attention differences need independent
-diagnosis. No arithmetic change or tolerance relaxation follows from these
-comparisons alone.
+and selected payloads. Exact Q/K dots, the position-zero residual join and the
+conditional attention check have now been completed. No arithmetic change or
+tolerance relaxation follows from these comparisons alone.
 
 The 39/40 argmax result is a prompt-position diagnostic, not a declared 40/40
 acceptance threshold. Both runs consume the same authentic prompt tokens and
@@ -254,6 +269,12 @@ Independent numerical acceptance remains unestablished, rather than a claimed
 failure against a tensor tolerance this diagnostic never declared. Actual
 generated-token agreement and full-model numerical acceptance need their own
 explicit gates.
+
+The next runtime work is a separately selected guarded Full2303 transport and
+native owner for the actual 2,048-prompt/256-generated request. Existing
+Readiness40 and four-forward autoregressive entry points remain unchanged.
+Source/CPU qualification, safe launch feasibility and actual long-workload
+completion are distinct gates; a new profile is not itself a passing GPU run.
 
 Full 2,048-prompt/256-generated megakernel correctness, sustained decode
 throughput, the 700 tokens/s target, and issue #42 milestones remain open.

@@ -1,0 +1,13 @@
+test_cache_permutation_preserves_token_head_channel (test_attention.AttentionTests.test_cache_permutation_preserves_token_head_channel) ... ok
+test_decimal_rounding_has_signed_ties_and_subnormal_boundaries (test_attention.AttentionTests.test_decimal_rounding_has_signed_ties_and_subnormal_boundaries) ... ok
+test_each_side_uses_its_own_inputs_not_the_other_outputs (test_attention.AttentionTests.test_each_side_uses_its_own_inputs_not_the_other_outputs) ... ok
+test_high_precision_zero_score_mean_is_independent_of_online_order (test_attention.AttentionTests.test_high_precision_zero_score_mean_is_independent_of_online_order) ... ok
+test_nonfinite_wrong_extent_and_future_words_refused (test_attention.AttentionTests.test_nonfinite_wrong_extent_and_future_words_refused) ... ok
+test_original_policy_and_native_scale_are_unchanged (test_attention.AttentionTests.test_original_policy_and_native_scale_are_unchanged) ... ok
+test_position_zero_is_exact_value_for_every_head_and_channel (test_attention.AttentionTests.test_position_zero_is_exact_value_for_every_head_and_channel) ... ok
+test_uniform_three_token_cancellation_and_corruption (test_attention.AttentionTests.test_uniform_three_token_cancellation_and_corruption) ... ok
+
+----------------------------------------------------------------------
+Ran 8 tests in 0.032s
+
+OK

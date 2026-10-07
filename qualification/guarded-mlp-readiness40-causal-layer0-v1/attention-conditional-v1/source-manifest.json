@@ -1,0 +1,60 @@
+{
+  "arithmetic_changed": false,
+  "attention_evaluated": false,
+  "copied_helper_asts": {
+    "observer.py": [
+      "cache_rows"
+    ],
+    "qkv.py": [
+      "normalized",
+      "envelope"
+    ]
+  },
+  "files": {
+    "README.md": {
+      "bytes": 8053,
+      "sha256": "d75ae33748e108c136ddff5e647897e8be881147d385dd15db0829fc1250f3ab"
+    },
+    "attention.py": {
+      "bytes": 11219,
+      "sha256": "6b1f6e765a1cd61f4eec6cf3ae8d0aa7535ab79ec212cbb1321b07c5bc9d8bf8"
+    },
+    "attention_reference.py": {
+      "bytes": 16398,
+      "sha256": "99d61a03e5ad31642f322dc614c9098b26a8374a3f83c55c8ccecce3ec92466c"
+    },
+    "head.py": {
+      "bytes": 7310,
+      "sha256": "9dbe5ff2ab24faf0bfb006973c15438cee4a887c7cf1a05d8aa1b788c3c03e11"
+    },
+    "run.py": {
+      "bytes": 13444,
+      "sha256": "82eb2dbd40584b51218a542cd26b321d9fa2a8d1a18fa1460e4389529969265e"
+    },
+    "test_attention.py": {
+      "bytes": 5650,
+      "sha256": "1488e40dff42b4b9a6b3ba8d572a8f82a9e4450d984db7997a7ba8a927502cbf"
+    }
+  },
+  "framework_state_count": 12,
+  "native_state_count": 12,
+  "numerical_acceptance": false,
+  "outputs_per_side": 24576,
+  "performance_claim": false,
+  "precision_diagnostic_scalar_count": 6,
+  "schema": "ferric-causal-attention-conditional-source-v1",
+  "source_only": true,
+  "test_names": [
+    "test_cache_permutation_preserves_token_head_channel",
+    "test_decimal_rounding_has_signed_ties_and_subnormal_boundaries",
+    "test_each_side_uses_its_own_inputs_not_the_other_outputs",
+    "test_high_precision_zero_score_mean_is_independent_of_online_order",
+    "test_nonfinite_wrong_extent_and_future_words_refused",
+    "test_original_policy_and_native_scale_are_unchanged",
+    "test_position_zero_is_exact_value_for_every_head_and_channel",
+    "test_uniform_three_token_cancellation_and_corruption"
+  ],
+  "tests_executed": false,
+  "unchanged_reference_policy": true,
+  "unchanged_reference_source": "/home/harsh/ferric-p227-integration/qualification/prefix-profile-numerical-v1/p227-prefix-numerical-sidecar-v1/attention_reference.py"
+}
