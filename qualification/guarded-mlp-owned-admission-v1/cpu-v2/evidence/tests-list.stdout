@@ -1,0 +1,12 @@
+tests::both_safe_loader_arms_refuse_malformed_object_before_timing: test
+tests::deadline_refuses_at_boundary_without_budget_extension: test
+tests::fixed_original_pins_are_distinct_bounded_and_lowercase_hex: test
+tests::image_authentication_requires_exact_extent_and_original_digest: test
+tests::incomplete_roster_refuses_without_indexing_or_looping: test
+tests::multiplicities_and_fixed_samples_are_not_user_tunable: test
+tests::nanoseconds_are_exact_integers_and_overflow_is_refused: test
+tests::pair_order_is_balanced_without_timing_dependent_selection: test
+tests::result_consumption_accounts_for_every_digest_byte_and_refuses_overflow: test
+tests::roster_preserves_two_prefix_then_each_rank_four_stages: test
+
+10 tests, 0 benchmarks

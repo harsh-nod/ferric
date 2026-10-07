@@ -1,0 +1,17 @@
+{
+  "archive": {
+    "bytes": 2857470,
+    "sha256": "8260cc77a586e13a7099f97fcf437da7f85dd2c9d1c68ff937e70716f610494c"
+  },
+  "archive_members_unchanged": true,
+  "expanded_bytes": 17200231,
+  "manifest_pins": 902,
+  "original_members": 903,
+  "project_execution": false,
+  "remote_dependencies_rehashed_locally": false,
+  "schema": "ferric-owned-admission-local-original-retention-v1",
+  "terminal": {
+    "bytes": 1905350,
+    "sha256": "33f13e8bbe3bafefc51611e4367994ec1542b1a2d5e080793cb819108d802a60"
+  }
+}

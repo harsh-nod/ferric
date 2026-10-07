@@ -1,0 +1,25 @@
+   Compiling typenum v1.20.1
+   Compiling proc-macro2 v1.0.107
+   Compiling quote v1.0.47
+   Compiling unicode-ident v1.0.26
+   Compiling hybrid-array v0.4.15
+   Compiling serde_core v1.0.229
+   Compiling crypto-common v0.2.2
+   Compiling block-buffer v0.12.1
+   Compiling fe2o3-target-spec v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/owned-kernel-admission-bench-v228-v2/runtime/crates/fe2o3-target-spec)
+   Compiling zmij v1.0.23
+   Compiling fe2o3-amd-target v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/owned-kernel-admission-bench-v228-v2/runtime/crates/fe2o3-amd-target)
+   Compiling digest v0.11.3
+   Compiling syn v3.0.6
+   Compiling cpufeatures v0.3.1
+   Compiling serde v1.0.229
+   Compiling cfg-if v1.0.5
+   Compiling serde_json v1.0.151
+   Compiling sha2 v0.11.0
+   Compiling serde_derive v1.0.229
+   Compiling fe2o3-hsaco v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/owned-kernel-admission-bench-v228-v2/runtime/crates/fe2o3-hsaco)
+   Compiling itoa v1.0.18
+   Compiling memchr v2.8.3
+   Compiling fe2o3-amdhsa-loader v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/owned-kernel-admission-bench-v228-v2/runtime/crates/fe2o3-amdhsa-loader)
+   Compiling ferric-owned-kernel-admission-bench-v1 v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/owned-kernel-admission-bench-v228-v2/bench)
+    Finished `release` profile [optimized] target(s) in 4.96s

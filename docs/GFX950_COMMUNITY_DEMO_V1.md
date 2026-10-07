@@ -96,6 +96,12 @@ parent files are integrated. The [full-route admission checker](../qualification
 passes 84 synthetic cases. Native Full2303 execution and numerical acceptance
 remain pending; these CPU results do not turn the short ablation into a decode demo.
 
+The [new loader-only experiment](../qualification/guarded-mlp-owned-admission-v1/README.md)
+provides another engineering example: 360 fresh admissions take a median
+16.81 ms versus 0.041 ms for retained access. Show its scope and raw table,
+not an inference-speedup claim. The larger native host costs are still being
+measured; this result does not demonstrate faster decode.
+
 ## Still Open
 
 The [independent position-5 diagnostic](../qualification/guarded-mlp-readiness40-position5-v1/README.md#captured-result)

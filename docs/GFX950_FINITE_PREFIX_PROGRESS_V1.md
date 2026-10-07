@@ -19,8 +19,15 @@ worker bodies. The [admission checker](../qualification/guarded-mlp-full2303-sco
 passed all 84 synthetic cases in 71.190 seconds. These add explicit worker and
 parent full-request selectors but do not demonstrate
 native Full2303 execution, one-hour feasibility or independent numerical
-acceptance. Repeated immutable kernel-admission work is the next host-overhead
-measurement candidate; no saving is asserted before measurement.
+acceptance.
+
+The [immutable kernel-admission CPU experiment](../qualification/guarded-mlp-owned-admission-v1/README.md)
+now passes ten tests and twelve fixed alternating sample pairs on MI350.
+Median time for 360 representative preparations is 16.8091955 ms with fresh
+validation versus 0.041175 ms for retained owned access. This is loader-only
+opportunity, not an inference speedup. The original harness failure is
+retained beside the successful retry. The runtime reuse change is deferred
+while the larger currentness costs are measured; no new GPU result is claimed.
 
 The preceding [opt-in scoped tail runtime and worker](../qualification/guarded-mlp-scoped-tail-v1/README.md)
 passed all 27 MI350 CPU phases in 173.159 seconds: 1,180 runtime passes and

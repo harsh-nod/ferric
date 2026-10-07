@@ -1,0 +1,14 @@
+{
+  "argv": [
+    "/usr/bin/prlimit",
+    "--as=12884901888",
+    "--cpu=600",
+    "--fsize=1073741824",
+    "--core=0",
+    "--",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/owned-kernel-admission-bench-v228-v2/target/release/deps/ferric_owned_kernel_admission_bench_v1-d773d99e0e74a712",
+    "--list"
+  ],
+  "pgid": 2719650,
+  "pid": 2719650
+}

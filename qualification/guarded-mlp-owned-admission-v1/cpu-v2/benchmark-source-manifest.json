@@ -1,0 +1,340 @@
+{
+  "claims": {
+    "benchmark_executed": false,
+    "end_to_end_gain": false,
+    "full_feasibility": false,
+    "image_bodies_loaded": false,
+    "native_execution": false,
+    "numerical_acceptance": false,
+    "runtime_optimization_qualified": false,
+    "source_api_review": false,
+    "tests_executed": false
+  },
+  "fixed_contract": {
+    "cpus": [
+      8,
+      9
+    ],
+    "external_address_space_bytes": 268435456,
+    "external_cpu_seconds": 45,
+    "first_arm_order": "alternating, six measured Fresh-first and six Owned-first",
+    "gpus_hidden": true,
+    "images": 4,
+    "layers_per_sample": 36,
+    "nice": 10,
+    "preparations_per_arm_sample": 360,
+    "profile": "Gfx950XnackOffCov6",
+    "rank_role_owners": 10,
+    "result_schema": "ferric-owned-kernel-admission-opportunity-v1",
+    "sample_pairs": 12,
+    "selected_symbols": 5,
+    "stderr_bytes": 65536,
+    "stdout_bytes": 131072,
+    "wall_seconds": 60,
+    "warmup_pairs": 2
+  },
+  "image_inputs": [
+    {
+      "body_locally_hashed": false,
+      "bytes": 54344,
+      "copy_name": "prefix.hsaco",
+      "original_remote_path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rope-indexed-checked-emission-v228-v1/emitted/artifact.hsaco",
+      "request_key": "prefix_image",
+      "sha256": "29fd58e7b09fee003ed31660e6201c20a7eb5da4b873d0b4d954993f7018f2f8"
+    },
+    {
+      "body_locally_hashed": false,
+      "bytes": 10864,
+      "copy_name": "projection.hsaco",
+      "original_remote_path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-residual-lowering-v228-v1/fe2o3-engineering-v1/3c3aec3598514f7f6c2b053ff0c6a8d489951ecb6cb8d95b1cae5ca31035b899/observation.hsaco",
+      "request_key": "projection_image",
+      "sha256": "25338beac39121cf81adfdc5c82c6f39bcfc82c0f7effaa2166bf8a2a9598a25"
+    },
+    {
+      "body_locally_hashed": false,
+      "bytes": 33320,
+      "copy_name": "mlp.hsaco",
+      "original_remote_path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-silu-materialized-checked-probe-v228-v1/emitted/artifact.hsaco",
+      "request_key": "tiles_image",
+      "sha256": "b0d1766fdb0fda17ab09496d1120ba3cee29100692b48fcc5b05cf0db0a8d589"
+    },
+    {
+      "body_locally_hashed": false,
+      "bytes": 28440,
+      "copy_name": "guarded.hsaco",
+      "original_remote_path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-gpu-v228-v1/guarded.hsaco",
+      "request_key": "guarded_image",
+      "sha256": "de880dcebf79425ccb555c1a2bdca3ff78b926f7b2062d06b918763da4de0f66"
+    }
+  ],
+  "new_test_names": [
+    "tests::roster_preserves_two_prefix_then_each_rank_four_stages",
+    "tests::multiplicities_and_fixed_samples_are_not_user_tunable",
+    "tests::pair_order_is_balanced_without_timing_dependent_selection",
+    "tests::image_authentication_requires_exact_extent_and_original_digest",
+    "tests::fixed_original_pins_are_distinct_bounded_and_lowercase_hex",
+    "tests::deadline_refuses_at_boundary_without_budget_extension",
+    "tests::nanoseconds_are_exact_integers_and_overflow_is_refused",
+    "tests::result_consumption_accounts_for_every_digest_byte_and_refuses_overflow",
+    "tests::both_safe_loader_arms_refuse_malformed_object_before_timing",
+    "tests::incomplete_roster_refuses_without_indexing_or_looping"
+  ],
+  "pending": {
+    "benchmark_lock": null,
+    "microbenchmark_terminal": null,
+    "qualified_benchmark_elf": null,
+    "test_terminal": null,
+    "timings": null
+  },
+  "requires": [
+    {
+      "bytes": 21905,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/guarded-mlp-model-interface-v228-v1/model-full-scoped-tail-v1/next-overhead-review.md",
+      "sha256": "6136f7bcab0b707dc67dcf5a52eb3d1bb999cd53f7836fd5f23b359c9bd49366"
+    },
+    {
+      "bytes": 2448697,
+      "path": "/home/harsh/ferric-p227-integration/qualification/guarded-mlp-scoped-tail-v1/cpu-attempt-v2/evidence/complete.json",
+      "sha256": "3c4fe3a6c4942b20ec61fd7ea5c3409526e2167c43d24a62fb8660c34b0e713e"
+    },
+    {
+      "bytes": 424416,
+      "path": "/home/harsh/ferric-p227-integration/qualification/guarded-mlp-scoped-tail-v1/cpu-attempt-v2/evidence/sources-after.json",
+      "sha256": "5de4929b2832eda55a53f99945fc4b64a9fbda28b4d4f8bef07f2e8d5e000d6a"
+    },
+    {
+      "bytes": 9171,
+      "path": "/home/harsh/ferric-p227-integration/qualification/guarded-mlp-scoped-tail-v1/matched-timing-gpu-v2/tail-request.json",
+      "sha256": "430c00268bd29dbd0861e0e75b5e4470f8041bc19849ec1d616f71f3864f0b11"
+    }
+  ],
+  "runtime_dependency_sources": [
+    {
+      "bytes": 9409,
+      "path": "/home/harsh/fe2o3-p228-runtime/Cargo.toml",
+      "sha256": "cb3099e0ebf7c6b04c21349d27569e7fcb7a2ec6199d6b9868421748263aa183"
+    },
+    {
+      "bytes": 94611,
+      "path": "/home/harsh/fe2o3-p228-runtime/Cargo.lock",
+      "sha256": "f0950d120a5decc8e52cd1160c31820f7703e72448d70061852d044fa925bcfc"
+    },
+    {
+      "bytes": 406,
+      "path": "/home/harsh/fe2o3-p228-runtime/crates/fe2o3-amdhsa-loader/Cargo.toml",
+      "sha256": "38d35b8d51b45e7f5ba4e7a8b36b6f316d6104b6962c1c9ec4c12a1b785b44a0"
+    },
+    {
+      "bytes": 11465,
+      "path": "/home/harsh/fe2o3-p228-runtime/crates/fe2o3-amdhsa-loader/README.md",
+      "sha256": "8aa1ceda3131ec2362af2637f2c6ec836c66dde949486661472e9d534674a66b"
+    },
+    {
+      "bytes": 31975,
+      "path": "/home/harsh/fe2o3-p228-runtime/crates/fe2o3-amdhsa-loader/src/kernel_closure.rs",
+      "sha256": "314dac96b9e7e4a36284dcf6caf768636f1b742cab3c7a6362ae0ad940bd4d5d"
+    },
+    {
+      "bytes": 59982,
+      "path": "/home/harsh/fe2o3-p228-runtime/crates/fe2o3-amdhsa-loader/src/lib.rs",
+      "sha256": "f5f10b1ad013bbcdd93ac05cbc07359d82ba4c01f4dc8422a8291c920a1c3953"
+    },
+    {
+      "bytes": 30152,
+      "path": "/home/harsh/fe2o3-p228-runtime/crates/fe2o3-amdhsa-loader/src/vecadd_cov6.rs",
+      "sha256": "9be8c79b2d897f9fe18370419d54d9a20054defa11bd93299f1a87db48c08183"
+    },
+    {
+      "bytes": 9966,
+      "path": "/home/harsh/fe2o3-p228-runtime/crates/fe2o3-amdhsa-loader/tests/kernel_closure.rs",
+      "sha256": "0253519dba6c5f338a183121ce958d4a726d3193e77f2e137958b0aa47de15a2"
+    },
+    {
+      "bytes": 25513,
+      "path": "/home/harsh/fe2o3-p228-runtime/crates/fe2o3-amdhsa-loader/tests/planner.rs",
+      "sha256": "1cfc5949bc055ffff6feed84ba77f19cc06e14a09186f5c831209ad12359480e"
+    },
+    {
+      "bytes": 4746,
+      "path": "/home/harsh/fe2o3-p228-runtime/crates/fe2o3-amdhsa-loader/tests/vecadd_cov6.rs",
+      "sha256": "0a0927c359cf957a51754363a2436c9bb0fe22fc2d589394db2dae28d163cef2"
+    },
+    {
+      "bytes": 420,
+      "path": "/home/harsh/fe2o3-p228-runtime/crates/fe2o3-hsaco/Cargo.toml",
+      "sha256": "fe6bbb73288d52d7fc14347bb008c9aad6ebd2a363f5f08ea9e6083a80a64da7"
+    },
+    {
+      "bytes": 7106,
+      "path": "/home/harsh/fe2o3-p228-runtime/crates/fe2o3-hsaco/README.md",
+      "sha256": "18cee75d052e39ccb4c5d2c353303442e7747c81d82068a337252c0223b613bb"
+    },
+    {
+      "bytes": 11679,
+      "path": "/home/harsh/fe2o3-p228-runtime/crates/fe2o3-hsaco/src/elf_inspection.rs",
+      "sha256": "ca4f57de6df6888d5952e8acda05ecadd7a9fa862bff46e3f15458de7904b5f8"
+    },
+    {
+      "bytes": 11468,
+      "path": "/home/harsh/fe2o3-p228-runtime/crates/fe2o3-hsaco/src/error.rs",
+      "sha256": "7634bb536a5aded3a4db0e26571cf66095c341244b74fb731650c0a5b90fdbbd"
+    },
+    {
+      "bytes": 46044,
+      "path": "/home/harsh/fe2o3-p228-runtime/crates/fe2o3-hsaco/src/kernel_binding.rs",
+      "sha256": "974ed816c38ade10cc962b6b2913148a971691d6bae7c59ac4a635a2839a4c99"
+    },
+    {
+      "bytes": 21257,
+      "path": "/home/harsh/fe2o3-p228-runtime/crates/fe2o3-hsaco/src/lib.rs",
+      "sha256": "b6c7de7c6186e5bf2c6395d91681d365f98f50b9b7682ef407895995d2fcdaa8"
+    },
+    {
+      "bytes": 20655,
+      "path": "/home/harsh/fe2o3-p228-runtime/crates/fe2o3-hsaco/src/messagepack.rs",
+      "sha256": "3a9dc0ba4c6e4cf719941549636a43b88b7c75cc3b122e1e0682d6a080eb9ddd"
+    },
+    {
+      "bytes": 42182,
+      "path": "/home/harsh/fe2o3-p228-runtime/crates/fe2o3-hsaco/src/metadata.rs",
+      "sha256": "7b20a9c10151b8825ca37b82e58c10cbe3f4df1de24a63e7f4a6fc1891cf65c3"
+    },
+    {
+      "bytes": 114443,
+      "path": "/home/harsh/fe2o3-p228-runtime/crates/fe2o3-hsaco/tests/inspection.rs",
+      "sha256": "406817d6748bde90c0aab39b711edf37df868c34c3877bc36b51dfa16b7db908"
+    },
+    {
+      "bytes": 342,
+      "path": "/home/harsh/fe2o3-p228-runtime/crates/fe2o3-amd-target/Cargo.toml",
+      "sha256": "a1ca0686c6e88d6a2011bd9ed5d09727b3608269f9a50725599e0d47be5edd02"
+    },
+    {
+      "bytes": 9188,
+      "path": "/home/harsh/fe2o3-p228-runtime/crates/fe2o3-amd-target/README.md",
+      "sha256": "03a1bdd9caab5cd328c7fd420ecfd96218ba08ec644916a54f9aad458acd73ba"
+    },
+    {
+      "bytes": 4378,
+      "path": "/home/harsh/fe2o3-p228-runtime/crates/fe2o3-amd-target/src/advanced_model.rs",
+      "sha256": "74616e19e65b68065b3393eef232bae0006acdae7b4d7e0488fb390dc8b8385e"
+    },
+    {
+      "bytes": 7656,
+      "path": "/home/harsh/fe2o3-p228-runtime/crates/fe2o3-amd-target/src/atomic_legalizability.rs",
+      "sha256": "0612c18477cf2e024f929141602f71c6cd20df1666795fb3543e3071edecece6"
+    },
+    {
+      "bytes": 27024,
+      "path": "/home/harsh/fe2o3-p228-runtime/crates/fe2o3-amd-target/src/capabilities.rs",
+      "sha256": "ee22d9424ee85beccb401bf8742f8c5e01c3c5d5fb19c3d3620550cc2d320210"
+    },
+    {
+      "bytes": 22211,
+      "path": "/home/harsh/fe2o3-p228-runtime/crates/fe2o3-amd-target/src/feature_capabilities.rs",
+      "sha256": "8938cfb2a22975affcb858a55bccde477b562f024e08de1e2a4e1ec11d855b7e"
+    },
+    {
+      "bytes": 45062,
+      "path": "/home/harsh/fe2o3-p228-runtime/crates/fe2o3-amd-target/src/lib.rs",
+      "sha256": "48f757f804b4624c1a6d3916bee16f9a75229c83cce254bcb3ad54a00acfac03"
+    },
+    {
+      "bytes": 23181,
+      "path": "/home/harsh/fe2o3-p228-runtime/crates/fe2o3-amd-target/src/resolved_target_v2.rs",
+      "sha256": "bd561849ae092399a9a4435c595e6ef1c16abe3bef01ddc78efb63f8ff5f0c8b"
+    },
+    {
+      "bytes": 31676,
+      "path": "/home/harsh/fe2o3-p228-runtime/crates/fe2o3-amd-target/tests/capabilities.rs",
+      "sha256": "52d098d9d11529a6cea438fcd4416049cdc9686aca16cf6e3bf97bbe62a29f0d"
+    },
+    {
+      "bytes": 15934,
+      "path": "/home/harsh/fe2o3-p228-runtime/crates/fe2o3-amd-target/tests/resolved_target_v2.rs",
+      "sha256": "1962a0e029588c60ff4f052bc3ffee3df9a1eed0b98d63024b1e0c3f8dc955f1"
+    },
+    {
+      "bytes": 303,
+      "path": "/home/harsh/fe2o3-p228-runtime/crates/fe2o3-target-spec/Cargo.toml",
+      "sha256": "950896784d7931a2100b5ac0804ce7706476f00dd96cfeeed1adbdf63653454c"
+    },
+    {
+      "bytes": 1671,
+      "path": "/home/harsh/fe2o3-p228-runtime/crates/fe2o3-target-spec/README.md",
+      "sha256": "a53c33f27eaf2199622cc4317c951c2934e1bae805242ec80d2211f84de6cebe"
+    },
+    {
+      "bytes": 24755,
+      "path": "/home/harsh/fe2o3-p228-runtime/crates/fe2o3-target-spec/src/lib.rs",
+      "sha256": "7cfd996cb8088edc27f541d16364592489e9e82e8e2c1c3506258ee7cfd2de42"
+    }
+  ],
+  "runtime_source_root": "/home/harsh/fe2o3-p228-runtime",
+  "schema": "ferric-owned-kernel-admission-benchmark-source-v1",
+  "source_only": true,
+  "sources": [
+    {
+      "bytes": 504,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/guarded-mlp-model-interface-v228-v1/model-owned-kernel-admission-bench-v1/bench/Cargo.toml",
+      "sha256": "42e4b9264c1d840211f5e021abf0d1d8791af13af8290ed67e93191a5d367e63"
+    },
+    {
+      "bytes": 14055,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/guarded-mlp-model-interface-v228-v1/model-owned-kernel-admission-bench-v1/bench/src/lib.rs",
+      "sha256": "bd5ae2c944abfa5ddebc6f47f3d18810976ab23f6ab1ac60eddcde77991a16e4"
+    },
+    {
+      "bytes": 621,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/guarded-mlp-model-interface-v228-v1/model-owned-kernel-admission-bench-v1/bench/src/main.rs",
+      "sha256": "3f84d6cf1df99cf715281417b12dbbdfabecdd13e0fe0fc92a9e8499746bd3fe"
+    },
+    {
+      "bytes": 3346,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/guarded-mlp-model-interface-v228-v1/model-owned-kernel-admission-bench-v1/bench/src/tests.rs",
+      "sha256": "06201db09044dc59b418b5b52ce1b4e836aca0214f1efb5e49423532a7cb3931"
+    },
+    {
+      "bytes": 8875,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/guarded-mlp-model-interface-v228-v1/model-owned-kernel-admission-bench-v1/README.md",
+      "sha256": "e5a1e9db01a88e99158f6df23a268d1618e18b5c1f5f19bf15463ee194ad0a37"
+    }
+  ],
+  "symbol_and_recipe_contracts": [
+    {
+      "bytes": 83574,
+      "path": "/home/harsh/fe2o3-p228-runtime/crates/fe2o3-kfd/src/engineering_gfx950.rs",
+      "sha256": "6906931207c551703d4e2ae15fd359ce233172e903fd481b84a3ba837e903538"
+    },
+    {
+      "bytes": 14956,
+      "path": "/home/harsh/fe2o3-p228-runtime/crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_profiles_v1.rs",
+      "sha256": "8119a2147f36e2eee48e7b007218fb706fd52a345e1e230ebabce487e67c526c"
+    },
+    {
+      "bytes": 13969,
+      "path": "/home/harsh/fe2o3-p228-runtime/crates/fe2o3-kfd/src/engineering_gfx950_peer_scoped_currentness_v1.rs",
+      "sha256": "fbc1433ae03e502e3a6c013afb8143b3f73de603e4de5b5a2d414b182313c345"
+    },
+    {
+      "bytes": 16001,
+      "path": "/home/harsh/fe2o3-p228-runtime/crates/fe2o3-kfd/src/engineering_gfx950_peer_wave_qkv_attention_output_tiles_v6.rs",
+      "sha256": "665dbf47b4bf7da8c028da168254218a97768bd502003468fa48eb6ccc34e6ec"
+    },
+    {
+      "bytes": 3196,
+      "path": "/home/harsh/ferric-p227-integration/adapters/tp-peer-finite-engineering-worker-v1/src/resident_layer/prefix_tiles_v6/artifacts.rs",
+      "sha256": "b750c7d31fc08636540e0381e65f4aaf606ce58b288fc7b70ad282c65405f751"
+    },
+    {
+      "bytes": 4183,
+      "path": "/home/harsh/ferric-p227-integration/adapters/tp-peer-finite-engineering-worker-v1/src/resident_layer/prefix_tiles_v6/projection_residual.rs",
+      "sha256": "16ae66b8630f354d461f96f4f73bf090195d58737879cba2f1e78b364644f59a"
+    },
+    {
+      "bytes": 5756,
+      "path": "/home/harsh/ferric-p227-integration/adapters/tp-peer-finite-engineering-worker-v1/src/resident_layer/mlp_tiles_v2/artifacts.rs",
+      "sha256": "b0e4357f26e37603a2de0a1afbdf19f89af957623c4ea38bc78b08647762297e"
+    }
+  ]
+}
