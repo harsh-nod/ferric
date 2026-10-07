@@ -19,7 +19,8 @@ fresh attempt are required. The original sources and failed result are immutable
   `0d365d7b5d1967a8895cce7175b03fde477a3d83e40390d80f80ed2f4dac9302`.
 
 All 36 archive originals are retained, with 35 manifest-pinned bodies.
-`retention.json` records the local custody check, not another test execution.
+Local retention checked the original archive and every member, without another
+test execution.
 The original source-only README describes the proposed diagnostic; it is not
 an observed outcome. There is no new numerical acceptance, arithmetic change,
 argmax explanation, Full2303 admission or performance result.

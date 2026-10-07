@@ -60,6 +60,7 @@ are a separate next step, not part of the measured Census result.
 | Runtime/worker CPU qualification | Passed: 1,180 runtime tests plus 8 ignores; 820 worker tests plus 4 ignores; 27 phases |
 | Strict data checker | Passed: 114 synthetic tests |
 | Parent CPU qualification | Passed on fresh retry: 68 phases, 568 selected tests; original failed attempt retained |
+| Final bound report tool | Passed: 13 synthetic tests; original evidence independently checked |
 | Fresh same-binary Census V3 / Tail V4 native pair | Pending; no result or gain predicted |
 | Tail report and independently checked publication | Pending actual pair |
 

@@ -27,7 +27,9 @@ is retained. The [test-only repair passed a fresh coupled qualification](cpu-att
 and is integrated with a complete canonical source postcheck. The
 [fresh parent retry](parent-cpu-v2/README.md) passed all 68 phases and 568
 selected tests; its seven actual postimages are integrated with a complete
-1,290-file source postcheck. The same-binary Census V3/Tail V4 GPU comparison
+1,290-file source postcheck. The [final bound report tool](matched-timing-report-cpu-v1/README.md)
+also passed all 13 synthetic tests on MI350, with independently checked
+original evidence. The same-binary Census V3/Tail V4 GPU comparison
 is next. No tail native
 result or speedup is claimed yet. This change does not
 add a Full2303 tail route, relax the one-hour bound, or resolve the independent

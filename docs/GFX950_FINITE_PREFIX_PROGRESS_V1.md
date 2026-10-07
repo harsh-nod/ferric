@@ -21,6 +21,9 @@ passed all 68 phases and 568 selected tests across 58 scopes in 416.482 seconds,
 with a 1,032-name library inventory and seven built executables. Its seven
 actual tested Rust files are integrated with a complete 1,290-file source
 postcheck, preserving all 228 worker bodies and the parent lockfile.
+The [final bound report tool](../qualification/guarded-mlp-scoped-tail-v1/matched-timing-report-cpu-v1/README.md)
+passed all 13 synthetic tests on MI350 in 0.221 seconds; independent review
+closed its original 16-member capsule and clean process retirement.
 No tail native result or speedup is claimed yet. A
 [community demo runbook](GFX950_COMMUNITY_DEMO_V1.md) covers the already retained
 Census experiment and its limits.

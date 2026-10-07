@@ -1,0 +1,18 @@
+test_bank_v2_control_cannot_be_relabelled_as_census_v3_candidate (test_paired_analysis.PairedAnalysisTests.test_bank_v2_control_cannot_be_relabelled_as_census_v3_candidate) ... ok
+test_both_original_policies_and_bank_ablation_scope_are_mandatory (test_paired_analysis.PairedAnalysisTests.test_both_original_policies_and_bank_ablation_scope_are_mandatory) ... ok
+test_census_subset_and_temporal_change_are_explicit_at_every_admission_layer (test_paired_analysis.PairedAnalysisTests.test_census_subset_and_temporal_change_are_explicit_at_every_admission_layer) ... ok
+test_csv_markdown_and_fixed_svg_preserve_original_values (test_paired_analysis.PairedAnalysisTests.test_csv_markdown_and_fixed_svg_preserve_original_values) ... ok
+test_disjoint_categories_positions_and_observed_ratio (test_paired_analysis.PairedAnalysisTests.test_disjoint_categories_positions_and_observed_ratio) ... ok
+test_forward_groups_reconcile_without_adding_overlapping_totals (test_paired_analysis.PairedAnalysisTests.test_forward_groups_reconcile_without_adding_overlapping_totals) ... ok
+test_integer_nanoseconds_beyond_float_precision_and_decimal_ties (test_paired_analysis.PairedAnalysisTests.test_integer_nanoseconds_beyond_float_precision_and_decimal_ties) ... ok
+test_no_nested_timers_and_sidecar_timeline_mismatch_refused (test_paired_analysis.PairedAnalysisTests.test_no_nested_timers_and_sidecar_timeline_mismatch_refused) ... ok
+test_rechecks_timeline_order_bool_gap_and_total (test_paired_analysis.PairedAnalysisTests.test_rechecks_timeline_order_bool_gap_and_total) ... ok
+test_refuses_missing_pair_parity_identity_or_false_authority (test_paired_analysis.PairedAnalysisTests.test_refuses_missing_pair_parity_identity_or_false_authority) ... ok
+test_tail_authority_and_independent_counters_required_at_each_layer (test_paired_analysis.PairedAnalysisTests.test_tail_authority_and_independent_counters_required_at_each_layer) ... ok
+test_tail_counters_are_closed_checked_diagnostics_not_time (test_paired_analysis.PairedAnalysisTests.test_tail_counters_are_closed_checked_diagnostics_not_time) ... ok
+test_zero_denominators_are_na_not_infinite_claims (test_paired_analysis.PairedAnalysisTests.test_zero_denominators_are_na_not_infinite_claims) ... ok
+
+----------------------------------------------------------------------
+Ran 13 tests in 0.070s
+
+OK
