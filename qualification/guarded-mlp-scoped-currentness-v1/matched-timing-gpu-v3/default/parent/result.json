@@ -1,0 +1,61 @@
+{
+  "cleanup_signalled": false,
+  "command": {
+    "bytes": 1114,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-scoped-matched-timing-gpu-v228-v3/default/parent/command.json",
+    "sha256": "b62008a97662d7710cd0371cb70bff9999519d48360c9a560b070945de572d20"
+  },
+  "elapsed_seconds": 938.381445781095,
+  "exit_code": 0,
+  "gpu_execution_requested": true,
+  "lineage": [
+    {
+      "event": "owned",
+      "identity": {
+        "pgid": 3898009,
+        "pid": 3898009,
+        "ppid": 3897901,
+        "sid": 3898009,
+        "starttime": 77250568,
+        "state": "R",
+        "uid": 9661
+      },
+      "reason": "spawned-parent"
+    },
+    {
+      "event": "owned",
+      "identity": {
+        "pgid": 3907208,
+        "pid": 3907208,
+        "ppid": 3898009,
+        "sid": 3898009,
+        "starttime": 77259815,
+        "state": "S",
+        "uid": 9661
+      },
+      "reason": "ancestry"
+    }
+  ],
+  "owned_groups": [
+    3898009,
+    3907208
+  ],
+  "owned_groups_absent": true,
+  "owned_processes_reaped": true,
+  "reason": null,
+  "started": {
+    "bytes": 282,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-scoped-matched-timing-gpu-v228-v3/default/parent/started.json",
+    "sha256": "b46f3502ac1d002aa10f161926e2fbc261446e0b95c2c4b2a1995fdd5cadab59"
+  },
+  "stderr": {
+    "bytes": 2427,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-scoped-matched-timing-gpu-v228-v3/default/parent/stderr",
+    "sha256": "a3fe2794a0503e9868fe8f1df3b04f27bfce0221339228273d532e19ad7909b8"
+  },
+  "stdout": {
+    "bytes": 22097,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-scoped-matched-timing-gpu-v228-v3/default/parent/stdout",
+    "sha256": "1f7ef325dcdbb1f6b38cbd026ea5fc246b2b659b93e40b460d911efc54b4f9ff"
+  }
+}

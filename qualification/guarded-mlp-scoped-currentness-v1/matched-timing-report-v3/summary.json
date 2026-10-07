@@ -1,0 +1,1462 @@
+{
+  "categories": [
+    {
+      "category": "Source preparation",
+      "change_percent": "-0.079798",
+      "default_ns": 92468043190,
+      "difference_ns": -73787635,
+      "scoped_ns": 92394255555,
+      "scoped_over_default": "0.999202"
+    },
+    {
+      "category": "Spawn through setup",
+      "change_percent": "-0.350362",
+      "default_ns": 223341398837,
+      "difference_ns": -782503966,
+      "scoped_ns": 222558894871,
+      "scoped_over_default": "0.996496"
+    },
+    {
+      "category": "Prepare/write",
+      "change_percent": "-13.142030",
+      "default_ns": 1605300,
+      "difference_ns": -210969,
+      "scoped_ns": 1394331,
+      "scoped_over_default": "0.868580"
+    },
+    {
+      "category": "Wait for frame",
+      "change_percent": "-61.057004",
+      "default_ns": 591557697531,
+      "difference_ns": -361187404497,
+      "scoped_ns": 230370293034,
+      "scoped_over_default": "0.389430"
+    },
+    {
+      "category": "Validate/retain/commit",
+      "change_percent": "-25.664018",
+      "default_ns": 30827028,
+      "difference_ns": -7911454,
+      "scoped_ns": 22915574,
+      "scoped_over_default": "0.743360"
+    },
+    {
+      "category": "Close and retirement",
+      "change_percent": "2.506919",
+      "default_ns": 29896179723,
+      "difference_ns": 749473004,
+      "scoped_ns": 30645652727,
+      "scoped_over_default": "1.025069"
+    },
+    {
+      "category": "Postcheck and publication",
+      "change_percent": "3.472619",
+      "default_ns": 757599509,
+      "difference_ns": 26308547,
+      "scoped_ns": 783908056,
+      "scoped_over_default": "1.034726"
+    }
+  ],
+  "checker_cpu": {
+    "bytes": 22359,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-scoped-warm-checker-cpu-v228-v2/evidence/complete.json",
+    "sha256": "61b595c1ebaa70337e7e6306fbf3ab89b4b11bcf6c63a116873ff58f61e18049"
+  },
+  "currentness_policy": "scoped_warm",
+  "decimal_rounding": "six_places_round_half_even",
+  "disjoint_spans_per_case": 124,
+  "exact_integer_nanoseconds": true,
+  "full2303_feasibility": false,
+  "general_speedup_claim": false,
+  "generated_tokens": 0,
+  "gpu_overlap_claim": false,
+  "gpu_timing": false,
+  "nested_timers_added": false,
+  "numerical_acceptance": false,
+  "one_ordered_pair": true,
+  "original_policy_bytes_retained": true,
+  "parent_host_measurement": true,
+  "performance_claim": false,
+  "positions": [
+    {
+      "captured": true,
+      "flush_to_frame_read": {
+        "change_percent": "-0.662087",
+        "default_ns": 13008147384,
+        "difference_ns": -86125274,
+        "scoped_ns": 12922022110,
+        "scoped_over_default": "0.993379"
+      },
+      "generation": 1,
+      "position": 0,
+      "prepare_write": {
+        "change_percent": "-4.486336",
+        "default_ns": 189910,
+        "difference_ns": -8520,
+        "scoped_ns": 181390,
+        "scoped_over_default": "0.955137"
+      },
+      "total": {
+        "change_percent": "-0.661693",
+        "default_ns": 13010939085,
+        "difference_ns": -86092463,
+        "scoped_ns": 12924846622,
+        "scoped_over_default": "0.993383"
+      },
+      "validate_retain_commit": {
+        "change_percent": "1.588560",
+        "default_ns": 2601791,
+        "difference_ns": 41331,
+        "scoped_ns": 2643122,
+        "scoped_over_default": "1.015886"
+      }
+    },
+    {
+      "captured": false,
+      "flush_to_frame_read": {
+        "change_percent": "0.308082",
+        "default_ns": 12875526022,
+        "difference_ns": 39667164,
+        "scoped_ns": 12915193186,
+        "scoped_over_default": "1.003081"
+      },
+      "generation": 2,
+      "position": 1,
+      "prepare_write": {
+        "change_percent": "-16.673792",
+        "default_ns": 46780,
+        "difference_ns": -7800,
+        "scoped_ns": 38980,
+        "scoped_over_default": "0.833262"
+      },
+      "total": {
+        "change_percent": "0.308458",
+        "default_ns": 12875892692,
+        "difference_ns": 39716724,
+        "scoped_ns": 12915609416,
+        "scoped_over_default": "1.003085"
+      },
+      "validate_retain_commit": {
+        "change_percent": "17.931164",
+        "default_ns": 319890,
+        "difference_ns": 57360,
+        "scoped_ns": 377250,
+        "scoped_over_default": "1.179312"
+      }
+    },
+    {
+      "captured": false,
+      "flush_to_frame_read": {
+        "change_percent": "-64.406374",
+        "default_ns": 14941874182,
+        "difference_ns": -9623519405,
+        "scoped_ns": 5318354777,
+        "scoped_over_default": "0.355936"
+      },
+      "generation": 3,
+      "position": 2,
+      "prepare_write": {
+        "change_percent": "11.342043",
+        "default_ns": 33680,
+        "difference_ns": 3820,
+        "scoped_ns": 37500,
+        "scoped_over_default": "1.113420"
+      },
+      "total": {
+        "change_percent": "-64.404284",
+        "default_ns": 14942154662,
+        "difference_ns": -9623387695,
+        "scoped_ns": 5318766967,
+        "scoped_over_default": "0.355957"
+      },
+      "validate_retain_commit": {
+        "change_percent": "51.819287",
+        "default_ns": 246800,
+        "difference_ns": 127890,
+        "scoped_ns": 374690,
+        "scoped_over_default": "1.518193"
+      }
+    },
+    {
+      "captured": false,
+      "flush_to_frame_read": {
+        "change_percent": "-64.467824",
+        "default_ns": 14930314135,
+        "difference_ns": -9625248656,
+        "scoped_ns": 5305065479,
+        "scoped_over_default": "0.355322"
+      },
+      "generation": 4,
+      "position": 3,
+      "prepare_write": {
+        "change_percent": "-4.807456",
+        "default_ns": 40770,
+        "difference_ns": -1960,
+        "scoped_ns": 38810,
+        "scoped_over_default": "0.951925"
+      },
+      "total": {
+        "change_percent": "-64.465181",
+        "default_ns": 14930744936,
+        "difference_ns": -9625131797,
+        "scoped_ns": 5305613139,
+        "scoped_over_default": "0.355348"
+      },
+      "validate_retain_commit": {
+        "change_percent": "30.463989",
+        "default_ns": 390031,
+        "difference_ns": 118819,
+        "scoped_ns": 508850,
+        "scoped_over_default": "1.304640"
+      }
+    },
+    {
+      "captured": false,
+      "flush_to_frame_read": {
+        "change_percent": "-64.417034",
+        "default_ns": 14931012675,
+        "difference_ns": -9618115451,
+        "scoped_ns": 5312897224,
+        "scoped_over_default": "0.355830"
+      },
+      "generation": 5,
+      "position": 4,
+      "prepare_write": {
+        "change_percent": "-28.625644",
+        "default_ns": 36890,
+        "difference_ns": -10560,
+        "scoped_ns": 26330,
+        "scoped_over_default": "0.713744"
+      },
+      "total": {
+        "change_percent": "-64.416090",
+        "default_ns": 14931309795,
+        "difference_ns": -9618165901,
+        "scoped_ns": 5313143894,
+        "scoped_over_default": "0.355839"
+      },
+      "validate_retain_commit": {
+        "change_percent": "-15.328748",
+        "default_ns": 260230,
+        "difference_ns": -39890,
+        "scoped_ns": 220340,
+        "scoped_over_default": "0.846713"
+      }
+    },
+    {
+      "captured": true,
+      "flush_to_frame_read": {
+        "change_percent": "-64.234521",
+        "default_ns": 14850951196,
+        "difference_ns": -9539437404,
+        "scoped_ns": 5311513792,
+        "scoped_over_default": "0.357655"
+      },
+      "generation": 6,
+      "position": 5,
+      "prepare_write": {
+        "change_percent": "-3.302181",
+        "default_ns": 32100,
+        "difference_ns": -1060,
+        "scoped_ns": 31040,
+        "scoped_over_default": "0.966978"
+      },
+      "total": {
+        "change_percent": "-64.222733",
+        "default_ns": 14853571838,
+        "difference_ns": -9539369804,
+        "scoped_ns": 5314202034,
+        "scoped_over_default": "0.357773"
+      },
+      "validate_retain_commit": {
+        "change_percent": "2.652458",
+        "default_ns": 2588542,
+        "difference_ns": 68660,
+        "scoped_ns": 2657202,
+        "scoped_over_default": "1.026525"
+      }
+    },
+    {
+      "captured": false,
+      "flush_to_frame_read": {
+        "change_percent": "-64.416012",
+        "default_ns": 14933665157,
+        "difference_ns": -9619671523,
+        "scoped_ns": 5313993634,
+        "scoped_over_default": "0.355840"
+      },
+      "generation": 7,
+      "position": 6,
+      "prepare_write": {
+        "change_percent": "-3.936773",
+        "default_ns": 33530,
+        "difference_ns": -1320,
+        "scoped_ns": 32210,
+        "scoped_over_default": "0.960632"
+      },
+      "total": {
+        "change_percent": "-64.414204",
+        "default_ns": 14933981157,
+        "difference_ns": -9619605063,
+        "scoped_ns": 5314376094,
+        "scoped_over_default": "0.355858"
+      },
+      "validate_retain_commit": {
+        "change_percent": "23.995469",
+        "default_ns": 282470,
+        "difference_ns": 67780,
+        "scoped_ns": 350250,
+        "scoped_over_default": "1.239955"
+      }
+    },
+    {
+      "captured": false,
+      "flush_to_frame_read": {
+        "change_percent": "-64.352269",
+        "default_ns": 14924417492,
+        "difference_ns": -9604201234,
+        "scoped_ns": 5320216258,
+        "scoped_over_default": "0.356477"
+      },
+      "generation": 8,
+      "position": 7,
+      "prepare_write": {
+        "change_percent": "-6.746139",
+        "default_ns": 36910,
+        "difference_ns": -2490,
+        "scoped_ns": 34420,
+        "scoped_over_default": "0.932539"
+      },
+      "total": {
+        "change_percent": "-64.350978",
+        "default_ns": 14924891642,
+        "difference_ns": -9604313664,
+        "scoped_ns": 5320577978,
+        "scoped_over_default": "0.356490"
+      },
+      "validate_retain_commit": {
+        "change_percent": "-25.144086",
+        "default_ns": 437240,
+        "difference_ns": -109940,
+        "scoped_ns": 327300,
+        "scoped_over_default": "0.748559"
+      }
+    },
+    {
+      "captured": false,
+      "flush_to_frame_read": {
+        "change_percent": "-64.329526",
+        "default_ns": 14910805783,
+        "difference_ns": -9592050636,
+        "scoped_ns": 5318755147,
+        "scoped_over_default": "0.356705"
+      },
+      "generation": 9,
+      "position": 8,
+      "prepare_write": {
+        "change_percent": "-16.519337",
+        "default_ns": 38010,
+        "difference_ns": -6279,
+        "scoped_ns": 31731,
+        "scoped_over_default": "0.834807"
+      },
+      "total": {
+        "change_percent": "-64.328156",
+        "default_ns": 14911164593,
+        "difference_ns": -9592077265,
+        "scoped_ns": 5319087328,
+        "scoped_over_default": "0.356718"
+      },
+      "validate_retain_commit": {
+        "change_percent": "-6.343516",
+        "default_ns": 320800,
+        "difference_ns": -20350,
+        "scoped_ns": 300450,
+        "scoped_over_default": "0.936565"
+      }
+    },
+    {
+      "captured": false,
+      "flush_to_frame_read": {
+        "change_percent": "-64.531426",
+        "default_ns": 14930938986,
+        "difference_ns": -9635147853,
+        "scoped_ns": 5295791133,
+        "scoped_over_default": "0.354686"
+      },
+      "generation": 10,
+      "position": 9,
+      "prepare_write": {
+        "change_percent": "10.322760",
+        "default_ns": 35940,
+        "difference_ns": 3710,
+        "scoped_ns": 39650,
+        "scoped_over_default": "1.103228"
+      },
+      "total": {
+        "change_percent": "-64.529993",
+        "default_ns": 14931280226,
+        "difference_ns": -9635154083,
+        "scoped_ns": 5296126143,
+        "scoped_over_default": "0.354700"
+      },
+      "validate_retain_commit": {
+        "change_percent": "-3.255814",
+        "default_ns": 305300,
+        "difference_ns": -9940,
+        "scoped_ns": 295360,
+        "scoped_over_default": "0.967442"
+      }
+    },
+    {
+      "captured": false,
+      "flush_to_frame_read": {
+        "change_percent": "-64.366243",
+        "default_ns": 14890361970,
+        "difference_ns": -9584366541,
+        "scoped_ns": 5305995429,
+        "scoped_over_default": "0.356338"
+      },
+      "generation": 11,
+      "position": 10,
+      "prepare_write": {
+        "change_percent": "10.314312",
+        "default_ns": 32770,
+        "difference_ns": 3380,
+        "scoped_ns": 36150,
+        "scoped_over_default": "1.103143"
+      },
+      "total": {
+        "change_percent": "-64.365452",
+        "default_ns": 14890643981,
+        "difference_ns": -9584430302,
+        "scoped_ns": 5306213679,
+        "scoped_over_default": "0.356345"
+      },
+      "validate_retain_commit": {
+        "change_percent": "-26.938184",
+        "default_ns": 249241,
+        "difference_ns": -67141,
+        "scoped_ns": 182100,
+        "scoped_over_default": "0.730618"
+      }
+    },
+    {
+      "captured": false,
+      "flush_to_frame_read": {
+        "change_percent": "-64.326650",
+        "default_ns": 14919581548,
+        "difference_ns": -9597266979,
+        "scoped_ns": 5322314569,
+        "scoped_over_default": "0.356734"
+      },
+      "generation": 12,
+      "position": 11,
+      "prepare_write": {
+        "change_percent": "-31.407767",
+        "default_ns": 41200,
+        "difference_ns": -12940,
+        "scoped_ns": 28260,
+        "scoped_over_default": "0.685922"
+      },
+      "total": {
+        "change_percent": "-64.324906",
+        "default_ns": 14919956328,
+        "difference_ns": -9597247879,
+        "scoped_ns": 5322708449,
+        "scoped_over_default": "0.356751"
+      },
+      "validate_retain_commit": {
+        "change_percent": "9.604892",
+        "default_ns": 333580,
+        "difference_ns": 32040,
+        "scoped_ns": 365620,
+        "scoped_over_default": "1.096049"
+      }
+    },
+    {
+      "captured": false,
+      "flush_to_frame_read": {
+        "change_percent": "-64.349017",
+        "default_ns": 14846689624,
+        "difference_ns": -9553698812,
+        "scoped_ns": 5292990812,
+        "scoped_over_default": "0.356510"
+      },
+      "generation": 13,
+      "position": 12,
+      "prepare_write": {
+        "change_percent": "-24.967558",
+        "default_ns": 38530,
+        "difference_ns": -9620,
+        "scoped_ns": 28910,
+        "scoped_over_default": "0.750324"
+      },
+      "total": {
+        "change_percent": "-64.348266",
+        "default_ns": 14847062114,
+        "difference_ns": -9553826962,
+        "scoped_ns": 5293235152,
+        "scoped_over_default": "0.356517"
+      },
+      "validate_retain_commit": {
+        "change_percent": "-35.492275",
+        "default_ns": 333960,
+        "difference_ns": -118530,
+        "scoped_ns": 215430,
+        "scoped_over_default": "0.645077"
+      }
+    },
+    {
+      "captured": false,
+      "flush_to_frame_read": {
+        "change_percent": "-64.250520",
+        "default_ns": 14846662323,
+        "difference_ns": -9539057723,
+        "scoped_ns": 5307604600,
+        "scoped_over_default": "0.357495"
+      },
+      "generation": 14,
+      "position": 13,
+      "prepare_write": {
+        "change_percent": "-26.644026",
+        "default_ns": 32390,
+        "difference_ns": -8630,
+        "scoped_ns": 23760,
+        "scoped_over_default": "0.733560"
+      },
+      "total": {
+        "change_percent": "-64.248707",
+        "default_ns": 14846976093,
+        "difference_ns": -9538990103,
+        "scoped_ns": 5307985990,
+        "scoped_over_default": "0.357513"
+      },
+      "validate_retain_commit": {
+        "change_percent": "27.098586",
+        "default_ns": 281380,
+        "difference_ns": 76250,
+        "scoped_ns": 357630,
+        "scoped_over_default": "1.270986"
+      }
+    },
+    {
+      "captured": false,
+      "flush_to_frame_read": {
+        "change_percent": "-63.969516",
+        "default_ns": 14846915484,
+        "difference_ns": -9497500048,
+        "scoped_ns": 5349415436,
+        "scoped_over_default": "0.360305"
+      },
+      "generation": 15,
+      "position": 14,
+      "prepare_write": {
+        "change_percent": "-3.914227",
+        "default_ns": 29380,
+        "difference_ns": -1150,
+        "scoped_ns": 28230,
+        "scoped_over_default": "0.960858"
+      },
+      "total": {
+        "change_percent": "-63.968478",
+        "default_ns": 14847342744,
+        "difference_ns": -9497619198,
+        "scoped_ns": 5349723546,
+        "scoped_over_default": "0.360315"
+      },
+      "validate_retain_commit": {
+        "change_percent": "-29.657183",
+        "default_ns": 397880,
+        "difference_ns": -118000,
+        "scoped_ns": 279880,
+        "scoped_over_default": "0.703428"
+      }
+    },
+    {
+      "captured": false,
+      "flush_to_frame_read": {
+        "change_percent": "-63.262843",
+        "default_ns": 14831511264,
+        "difference_ns": -9382835756,
+        "scoped_ns": 5448675508,
+        "scoped_over_default": "0.367372"
+      },
+      "generation": 16,
+      "position": 15,
+      "prepare_write": {
+        "change_percent": "-26.823665",
+        "default_ns": 34820,
+        "difference_ns": -9340,
+        "scoped_ns": 25480,
+        "scoped_over_default": "0.731763"
+      },
+      "total": {
+        "change_percent": "-63.283420",
+        "default_ns": 14841226800,
+        "difference_ns": -9392035842,
+        "scoped_ns": 5449190958,
+        "scoped_over_default": "0.367166"
+      },
+      "validate_retain_commit": {
+        "change_percent": "-94.938701",
+        "default_ns": 9680716,
+        "difference_ns": -9190746,
+        "scoped_ns": 489970,
+        "scoped_over_default": "0.050613"
+      }
+    },
+    {
+      "captured": true,
+      "flush_to_frame_read": {
+        "change_percent": "-63.436173",
+        "default_ns": 14853837738,
+        "difference_ns": -9422706181,
+        "scoped_ns": 5431131557,
+        "scoped_over_default": "0.365638"
+      },
+      "generation": 17,
+      "position": 16,
+      "prepare_write": {
+        "change_percent": "7.424199",
+        "default_ns": 35290,
+        "difference_ns": 2620,
+        "scoped_ns": 37910,
+        "scoped_over_default": "1.074242"
+      },
+      "total": {
+        "change_percent": "-63.425518",
+        "default_ns": 14856769669,
+        "difference_ns": -9422983100,
+        "scoped_ns": 5433786569,
+        "scoped_over_default": "0.365745"
+      },
+      "validate_retain_commit": {
+        "change_percent": "-9.650454",
+        "default_ns": 2896641,
+        "difference_ns": -279539,
+        "scoped_ns": 2617102,
+        "scoped_over_default": "0.903495"
+      }
+    },
+    {
+      "captured": false,
+      "flush_to_frame_read": {
+        "change_percent": "-63.729435",
+        "default_ns": 14933031957,
+        "difference_ns": -9516736840,
+        "scoped_ns": 5416295117,
+        "scoped_over_default": "0.362706"
+      },
+      "generation": 18,
+      "position": 17,
+      "prepare_write": {
+        "change_percent": "-31.162791",
+        "default_ns": 40850,
+        "difference_ns": -12730,
+        "scoped_ns": 28120,
+        "scoped_over_default": "0.688372"
+      },
+      "total": {
+        "change_percent": "-63.727724",
+        "default_ns": 14933400527,
+        "difference_ns": -9516716220,
+        "scoped_ns": 5416684307,
+        "scoped_over_default": "0.362723"
+      },
+      "validate_retain_commit": {
+        "change_percent": "10.176370",
+        "default_ns": 327720,
+        "difference_ns": 33350,
+        "scoped_ns": 361070,
+        "scoped_over_default": "1.101764"
+      }
+    },
+    {
+      "captured": false,
+      "flush_to_frame_read": {
+        "change_percent": "-63.502210",
+        "default_ns": 14904428420,
+        "difference_ns": -9464641408,
+        "scoped_ns": 5439787012,
+        "scoped_over_default": "0.364978"
+      },
+      "generation": 19,
+      "position": 18,
+      "prepare_write": {
+        "change_percent": "-7.727691",
+        "default_ns": 32610,
+        "difference_ns": -2520,
+        "scoped_ns": 30090,
+        "scoped_over_default": "0.922723"
+      },
+      "total": {
+        "change_percent": "-63.500045",
+        "default_ns": 14904793740,
+        "difference_ns": -9464550787,
+        "scoped_ns": 5440242953,
+        "scoped_over_default": "0.365000"
+      },
+      "validate_retain_commit": {
+        "change_percent": "27.994650",
+        "default_ns": 332710,
+        "difference_ns": 93141,
+        "scoped_ns": 425851,
+        "scoped_over_default": "1.279946"
+      }
+    },
+    {
+      "captured": false,
+      "flush_to_frame_read": {
+        "change_percent": "-63.507891",
+        "default_ns": 14923604011,
+        "difference_ns": -9477666216,
+        "scoped_ns": 5445937795,
+        "scoped_over_default": "0.364921"
+      },
+      "generation": 20,
+      "position": 19,
+      "prepare_write": {
+        "change_percent": "-31.836631",
+        "default_ns": 39420,
+        "difference_ns": -12550,
+        "scoped_ns": 26870,
+        "scoped_over_default": "0.681634"
+      },
+      "total": {
+        "change_percent": "-63.502172",
+        "default_ns": 14923952421,
+        "difference_ns": -9477033885,
+        "scoped_ns": 5446918536,
+        "scoped_over_default": "0.364978"
+      },
+      "validate_retain_commit": {
+        "change_percent": "208.706107",
+        "default_ns": 308990,
+        "difference_ns": 644881,
+        "scoped_ns": 953871,
+        "scoped_over_default": "3.087061"
+      }
+    },
+    {
+      "captured": false,
+      "flush_to_frame_read": {
+        "change_percent": "-63.562688",
+        "default_ns": 14908893352,
+        "difference_ns": -9476493374,
+        "scoped_ns": 5432399978,
+        "scoped_over_default": "0.364373"
+      },
+      "generation": 21,
+      "position": 20,
+      "prepare_write": {
+        "change_percent": "-16.662509",
+        "default_ns": 40090,
+        "difference_ns": -6680,
+        "scoped_ns": 33410,
+        "scoped_over_default": "0.833375"
+      },
+      "total": {
+        "change_percent": "-63.560788",
+        "default_ns": 14909208622,
+        "difference_ns": -9476410554,
+        "scoped_ns": 5432798068,
+        "scoped_over_default": "0.364392"
+      },
+      "validate_retain_commit": {
+        "change_percent": "32.524166",
+        "default_ns": 275180,
+        "difference_ns": 89500,
+        "scoped_ns": 364680,
+        "scoped_over_default": "1.325242"
+      }
+    },
+    {
+      "captured": false,
+      "flush_to_frame_read": {
+        "change_percent": "-63.584908",
+        "default_ns": 14919849879,
+        "difference_ns": -9486772781,
+        "scoped_ns": 5433077098,
+        "scoped_over_default": "0.364151"
+      },
+      "generation": 22,
+      "position": 21,
+      "prepare_write": {
+        "change_percent": "-16.083723",
+        "default_ns": 36310,
+        "difference_ns": -5840,
+        "scoped_ns": 30470,
+        "scoped_over_default": "0.839163"
+      },
+      "total": {
+        "change_percent": "-63.584346",
+        "default_ns": 14920124369,
+        "difference_ns": -9486863541,
+        "scoped_ns": 5433260828,
+        "scoped_over_default": "0.364157"
+      },
+      "validate_retain_commit": {
+        "change_percent": "-35.653707",
+        "default_ns": 238180,
+        "difference_ns": -84920,
+        "scoped_ns": 153260,
+        "scoped_over_default": "0.643463"
+      }
+    },
+    {
+      "captured": false,
+      "flush_to_frame_read": {
+        "change_percent": "-63.643520",
+        "default_ns": 14937551359,
+        "difference_ns": -9506783503,
+        "scoped_ns": 5430767856,
+        "scoped_over_default": "0.363565"
+      },
+      "generation": 23,
+      "position": 22,
+      "prepare_write": {
+        "change_percent": "1.934295",
+        "default_ns": 32570,
+        "difference_ns": 630,
+        "scoped_ns": 33200,
+        "scoped_over_default": "1.019343"
+      },
+      "total": {
+        "change_percent": "-63.641004",
+        "default_ns": 14937891000,
+        "difference_ns": -9506623823,
+        "scoped_ns": 5431267177,
+        "scoped_over_default": "0.363590"
+      },
+      "validate_retain_commit": {
+        "change_percent": "51.795839",
+        "default_ns": 307071,
+        "difference_ns": 159050,
+        "scoped_ns": 466121,
+        "scoped_over_default": "1.517958"
+      }
+    },
+    {
+      "captured": false,
+      "flush_to_frame_read": {
+        "change_percent": "-63.765049",
+        "default_ns": 14932162836,
+        "difference_ns": -9521500922,
+        "scoped_ns": 5410661914,
+        "scoped_over_default": "0.362350"
+      },
+      "generation": 24,
+      "position": 23,
+      "prepare_write": {
+        "change_percent": "-9.162222",
+        "default_ns": 31870,
+        "difference_ns": -2920,
+        "scoped_ns": 28950,
+        "scoped_over_default": "0.908378"
+      },
+      "total": {
+        "change_percent": "-63.764349",
+        "default_ns": 14932604856,
+        "difference_ns": -9521678272,
+        "scoped_ns": 5410926584,
+        "scoped_over_default": "0.362357"
+      },
+      "validate_retain_commit": {
+        "change_percent": "-42.528343",
+        "default_ns": 410150,
+        "difference_ns": -174430,
+        "scoped_ns": 235720,
+        "scoped_over_default": "0.574717"
+      }
+    },
+    {
+      "captured": false,
+      "flush_to_frame_read": {
+        "change_percent": "-63.899379",
+        "default_ns": 14943246063,
+        "difference_ns": -9548641399,
+        "scoped_ns": 5394604664,
+        "scoped_over_default": "0.361006"
+      },
+      "generation": 25,
+      "position": 24,
+      "prepare_write": {
+        "change_percent": "-5.862740",
+        "default_ns": 35990,
+        "difference_ns": -2110,
+        "scoped_ns": 33880,
+        "scoped_over_default": "0.941373"
+      },
+      "total": {
+        "change_percent": "-63.897388",
+        "default_ns": 14943514833,
+        "difference_ns": -9548515619,
+        "scoped_ns": 5394999214,
+        "scoped_over_default": "0.361026"
+      },
+      "validate_retain_commit": {
+        "change_percent": "54.940287",
+        "default_ns": 232780,
+        "difference_ns": 127890,
+        "scoped_ns": 360670,
+        "scoped_over_default": "1.549403"
+      }
+    },
+    {
+      "captured": false,
+      "flush_to_frame_read": {
+        "change_percent": "-63.681940",
+        "default_ns": 14922235841,
+        "difference_ns": -9502769251,
+        "scoped_ns": 5419466590,
+        "scoped_over_default": "0.363181"
+      },
+      "generation": 26,
+      "position": 25,
+      "prepare_write": {
+        "change_percent": "-28.830812",
+        "default_ns": 36350,
+        "difference_ns": -10480,
+        "scoped_ns": 25870,
+        "scoped_over_default": "0.711692"
+      },
+      "total": {
+        "change_percent": "-63.679860",
+        "default_ns": 14922569521,
+        "difference_ns": -9502671341,
+        "scoped_ns": 5419898180,
+        "scoped_over_default": "0.363201"
+      },
+      "validate_retain_commit": {
+        "change_percent": "36.454445",
+        "default_ns": 297330,
+        "difference_ns": 108390,
+        "scoped_ns": 405720,
+        "scoped_over_default": "1.364544"
+      }
+    },
+    {
+      "captured": false,
+      "flush_to_frame_read": {
+        "change_percent": "-63.824053",
+        "default_ns": 14955240050,
+        "difference_ns": -9545040276,
+        "scoped_ns": 5410199774,
+        "scoped_over_default": "0.361759"
+      },
+      "generation": 27,
+      "position": 26,
+      "prepare_write": {
+        "change_percent": "-9.762866",
+        "default_ns": 39640,
+        "difference_ns": -3870,
+        "scoped_ns": 35770,
+        "scoped_over_default": "0.902371"
+      },
+      "total": {
+        "change_percent": "-63.822355",
+        "default_ns": 14955541981,
+        "difference_ns": -9544979067,
+        "scoped_ns": 5410562914,
+        "scoped_over_default": "0.361776"
+      },
+      "validate_retain_commit": {
+        "change_percent": "24.811755",
+        "default_ns": 262291,
+        "difference_ns": 65079,
+        "scoped_ns": 327370,
+        "scoped_over_default": "1.248118"
+      }
+    },
+    {
+      "captured": false,
+      "flush_to_frame_read": {
+        "change_percent": "-63.520413",
+        "default_ns": 14818207325,
+        "difference_ns": -9412586514,
+        "scoped_ns": 5405620811,
+        "scoped_over_default": "0.364796"
+      },
+      "generation": 28,
+      "position": 27,
+      "prepare_write": {
+        "change_percent": "-38.903646",
+        "default_ns": 41410,
+        "difference_ns": -16110,
+        "scoped_ns": 25300,
+        "scoped_over_default": "0.610964"
+      },
+      "total": {
+        "change_percent": "-63.519519",
+        "default_ns": 14818469005,
+        "difference_ns": -9412620214,
+        "scoped_ns": 5405848791,
+        "scoped_over_default": "0.364805"
+      },
+      "validate_retain_commit": {
+        "change_percent": "-7.985654",
+        "default_ns": 220270,
+        "difference_ns": -17590,
+        "scoped_ns": 202680,
+        "scoped_over_default": "0.920143"
+      }
+    },
+    {
+      "captured": false,
+      "flush_to_frame_read": {
+        "change_percent": "-63.552473",
+        "default_ns": 14816943375,
+        "difference_ns": -9416533958,
+        "scoped_ns": 5400409417,
+        "scoped_over_default": "0.364475"
+      },
+      "generation": 29,
+      "position": 28,
+      "prepare_write": {
+        "change_percent": "42.259157",
+        "default_ns": 32490,
+        "difference_ns": 13730,
+        "scoped_ns": 46220,
+        "scoped_over_default": "1.422592"
+      },
+      "total": {
+        "change_percent": "-63.549815",
+        "default_ns": 14817259755,
+        "difference_ns": -9416341147,
+        "scoped_ns": 5400918608,
+        "scoped_over_default": "0.364502"
+      },
+      "validate_retain_commit": {
+        "change_percent": "63.081123",
+        "default_ns": 283890,
+        "difference_ns": 179081,
+        "scoped_ns": 462971,
+        "scoped_over_default": "1.630811"
+      }
+    },
+    {
+      "captured": false,
+      "flush_to_frame_read": {
+        "change_percent": "-63.592363",
+        "default_ns": 14830675624,
+        "difference_ns": -9431177127,
+        "scoped_ns": 5399498497,
+        "scoped_over_default": "0.364076"
+      },
+      "generation": 30,
+      "position": 29,
+      "prepare_write": {
+        "change_percent": "3.985198",
+        "default_ns": 35130,
+        "difference_ns": 1400,
+        "scoped_ns": 36530,
+        "scoped_over_default": "1.039852"
+      },
+      "total": {
+        "change_percent": "-63.591320",
+        "default_ns": 14830988934,
+        "difference_ns": -9431221697,
+        "scoped_ns": 5399767237,
+        "scoped_over_default": "0.364087"
+      },
+      "validate_retain_commit": {
+        "change_percent": "-16.525271",
+        "default_ns": 278180,
+        "difference_ns": -45970,
+        "scoped_ns": 232210,
+        "scoped_over_default": "0.834747"
+      }
+    },
+    {
+      "captured": false,
+      "flush_to_frame_read": {
+        "change_percent": "-63.426814",
+        "default_ns": 14813161972,
+        "difference_ns": -9395516664,
+        "scoped_ns": 5417645308,
+        "scoped_over_default": "0.365732"
+      },
+      "generation": 31,
+      "position": 30,
+      "prepare_write": {
+        "change_percent": "-19.953529",
+        "default_ns": 34430,
+        "difference_ns": -6870,
+        "scoped_ns": 27560,
+        "scoped_over_default": "0.800465"
+      },
+      "total": {
+        "change_percent": "-63.425942",
+        "default_ns": 14813505163,
+        "difference_ns": -9395605265,
+        "scoped_ns": 5417899898,
+        "scoped_over_default": "0.365741"
+      },
+      "validate_retain_commit": {
+        "change_percent": "-26.470636",
+        "default_ns": 308761,
+        "difference_ns": -81731,
+        "scoped_ns": 227030,
+        "scoped_over_default": "0.735294"
+      }
+    },
+    {
+      "captured": false,
+      "flush_to_frame_read": {
+        "change_percent": "-63.523401",
+        "default_ns": 14830499283,
+        "difference_ns": -9420837519,
+        "scoped_ns": 5409661764,
+        "scoped_over_default": "0.364766"
+      },
+      "generation": 32,
+      "position": 31,
+      "prepare_write": {
+        "change_percent": "-40.221217",
+        "default_ns": 39780,
+        "difference_ns": -16000,
+        "scoped_ns": 23780,
+        "scoped_over_default": "0.597788"
+      },
+      "total": {
+        "change_percent": "-63.521914",
+        "default_ns": 14830821373,
+        "difference_ns": -9420821609,
+        "scoped_ns": 5409999764,
+        "scoped_over_default": "0.364781"
+      },
+      "validate_retain_commit": {
+        "change_percent": "11.303177",
+        "default_ns": 282310,
+        "difference_ns": 31910,
+        "scoped_ns": 314220,
+        "scoped_over_default": "1.113032"
+      }
+    },
+    {
+      "captured": false,
+      "flush_to_frame_read": {
+        "change_percent": "-63.497985",
+        "default_ns": 14785072935,
+        "difference_ns": -9388223440,
+        "scoped_ns": 5396849495,
+        "scoped_over_default": "0.365020"
+      },
+      "generation": 33,
+      "position": 32,
+      "prepare_write": {
+        "change_percent": "-28.584310",
+        "default_ns": 33270,
+        "difference_ns": -9510,
+        "scoped_ns": 23760,
+        "scoped_over_default": "0.714157"
+      },
+      "total": {
+        "change_percent": "-63.496355",
+        "default_ns": 14785288155,
+        "difference_ns": -9388119109,
+        "scoped_ns": 5397169046,
+        "scoped_over_default": "0.365036"
+      },
+      "validate_retain_commit": {
+        "change_percent": "62.567189",
+        "default_ns": 181950,
+        "difference_ns": 113841,
+        "scoped_ns": 295791,
+        "scoped_over_default": "1.625672"
+      }
+    },
+    {
+      "captured": false,
+      "flush_to_frame_read": {
+        "change_percent": "-63.589785",
+        "default_ns": 14891571611,
+        "difference_ns": -9469518410,
+        "scoped_ns": 5422053201,
+        "scoped_over_default": "0.364102"
+      },
+      "generation": 34,
+      "position": 33,
+      "prepare_write": {
+        "change_percent": "-13.364181",
+        "default_ns": 36740,
+        "difference_ns": -4910,
+        "scoped_ns": 31830,
+        "scoped_over_default": "0.866358"
+      },
+      "total": {
+        "change_percent": "-63.588042",
+        "default_ns": 14891895182,
+        "difference_ns": -9469464591,
+        "scoped_ns": 5422430591,
+        "scoped_over_default": "0.364120"
+      },
+      "validate_retain_commit": {
+        "change_percent": "20.475123",
+        "default_ns": 286831,
+        "difference_ns": 58729,
+        "scoped_ns": 345560,
+        "scoped_over_default": "1.204751"
+      }
+    },
+    {
+      "captured": false,
+      "flush_to_frame_read": {
+        "change_percent": "-63.542339",
+        "default_ns": 14920071688,
+        "difference_ns": -9480562516,
+        "scoped_ns": 5439509172,
+        "scoped_over_default": "0.364577"
+      },
+      "generation": 35,
+      "position": 34,
+      "prepare_write": {
+        "change_percent": "-40.796915",
+        "default_ns": 38900,
+        "difference_ns": -15870,
+        "scoped_ns": 23030,
+        "scoped_over_default": "0.592031"
+      },
+      "total": {
+        "change_percent": "-63.540931",
+        "default_ns": 14920356469,
+        "difference_ns": -9480533337,
+        "scoped_ns": 5439823132,
+        "scoped_over_default": "0.364591"
+      },
+      "validate_retain_commit": {
+        "change_percent": "18.321464",
+        "default_ns": 245881,
+        "difference_ns": 45049,
+        "scoped_ns": 290930,
+        "scoped_over_default": "1.183215"
+      }
+    },
+    {
+      "captured": false,
+      "flush_to_frame_read": {
+        "change_percent": "-63.604190",
+        "default_ns": 14853118657,
+        "difference_ns": -9447205816,
+        "scoped_ns": 5405912841,
+        "scoped_over_default": "0.363958"
+      },
+      "generation": 36,
+      "position": 35,
+      "prepare_write": {
+        "change_percent": "12.050271",
+        "default_ns": 40580,
+        "difference_ns": 4890,
+        "scoped_ns": 45470,
+        "scoped_over_default": "1.120503"
+      },
+      "total": {
+        "change_percent": "-63.602445",
+        "default_ns": 14853430707,
+        "difference_ns": -9447145086,
+        "scoped_ns": 5406285621,
+        "scoped_over_default": "0.363976"
+      },
+      "validate_retain_commit": {
+        "change_percent": "20.569492",
+        "default_ns": 271470,
+        "difference_ns": 55840,
+        "scoped_ns": 327310,
+        "scoped_over_default": "1.205695"
+      }
+    },
+    {
+      "captured": false,
+      "flush_to_frame_read": {
+        "change_percent": "-63.490349",
+        "default_ns": 14842496261,
+        "difference_ns": -9423552692,
+        "scoped_ns": 5418943569,
+        "scoped_over_default": "0.365097"
+      },
+      "generation": 37,
+      "position": 36,
+      "prepare_write": {
+        "change_percent": "-30.032206",
+        "default_ns": 37260,
+        "difference_ns": -11190,
+        "scoped_ns": 26070,
+        "scoped_over_default": "0.699678"
+      },
+      "total": {
+        "change_percent": "-63.489550",
+        "default_ns": 14842823111,
+        "difference_ns": -9423641641,
+        "scoped_ns": 5419181470,
+        "scoped_over_default": "0.365104"
+      },
+      "validate_retain_commit": {
+        "change_percent": "-26.851411",
+        "default_ns": 289590,
+        "difference_ns": -77759,
+        "scoped_ns": 211831,
+        "scoped_over_default": "0.731486"
+      }
+    },
+    {
+      "captured": false,
+      "flush_to_frame_read": {
+        "change_percent": "-63.575795",
+        "default_ns": 14843092201,
+        "difference_ns": -9436613830,
+        "scoped_ns": 5406478371,
+        "scoped_over_default": "0.364242"
+      },
+      "generation": 38,
+      "position": 37,
+      "prepare_write": {
+        "change_percent": "-23.836231",
+        "default_ns": 35660,
+        "difference_ns": -8500,
+        "scoped_ns": 27160,
+        "scoped_over_default": "0.761638"
+      },
+      "total": {
+        "change_percent": "-63.573880",
+        "default_ns": 14843409801,
+        "difference_ns": -9436531580,
+        "scoped_ns": 5406878221,
+        "scoped_over_default": "0.364261"
+      },
+      "validate_retain_commit": {
+        "change_percent": "32.187700",
+        "default_ns": 281940,
+        "difference_ns": 90750,
+        "scoped_ns": 372690,
+        "scoped_over_default": "1.321877"
+      }
+    },
+    {
+      "captured": false,
+      "flush_to_frame_read": {
+        "change_percent": "-63.539324",
+        "default_ns": 14852301997,
+        "difference_ns": -9437052360,
+        "scoped_ns": 5415249637,
+        "scoped_over_default": "0.364607"
+      },
+      "generation": 39,
+      "position": 38,
+      "prepare_write": {
+        "change_percent": "-25.793651",
+        "default_ns": 32760,
+        "difference_ns": -8450,
+        "scoped_ns": 24310,
+        "scoped_over_default": "0.742063"
+      },
+      "total": {
+        "change_percent": "-63.538305",
+        "default_ns": 14852582487,
+        "difference_ns": -9437079220,
+        "scoped_ns": 5415503267,
+        "scoped_over_default": "0.364617"
+      },
+      "validate_retain_commit": {
+        "change_percent": "-7.431478",
+        "default_ns": 247730,
+        "difference_ns": -18410,
+        "scoped_ns": 229320,
+        "scoped_over_default": "0.925685"
+      }
+    },
+    {
+      "captured": true,
+      "flush_to_frame_read": {
+        "change_percent": "-63.726287",
+        "default_ns": 14907027871,
+        "difference_ns": -9499695369,
+        "scoped_ns": 5407332502,
+        "scoped_over_default": "0.362737"
+      },
+      "generation": 40,
+      "position": 39,
+      "prepare_write": {
+        "change_percent": "-19.727470",
+        "default_ns": 32290,
+        "difference_ns": -6370,
+        "scoped_ns": 25920,
+        "scoped_over_default": "0.802725"
+      },
+      "total": {
+        "change_percent": "-63.714145",
+        "default_ns": 14909789492,
+        "difference_ns": -9499644918,
+        "scoped_ns": 5410144574,
+        "scoped_over_default": "0.362859"
+      },
+      "validate_retain_commit": {
+        "change_percent": "2.081865",
+        "default_ns": 2729331,
+        "difference_ns": 56821,
+        "scoped_ns": 2786152,
+        "scoped_over_default": "1.020819"
+      }
+    }
+  ],
+  "production_authority": false,
+  "repeated_benchmark": false,
+  "same_elf_cpu_metadata": {
+    "parent": {
+      "bytes": 13953520,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-scoped-warm-parent-cpu-v228-v3/target/debug/ferric-qwen3-guarded-mlp-readiness-engineering",
+      "sha256": "1ef5d720029bd4d6dfc9f5ff9278b4fee7627240ee157ce7be91b7f44743f779"
+    },
+    "parent_cpu": {
+      "bytes": 4004899,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-scoped-warm-parent-cpu-v228-v3/evidence/complete.json",
+      "sha256": "6ca1454eb809ac2a4fa0eae74417ab1316032b00d769b85b30b5e386c0d27171"
+    },
+    "worker": {
+      "bytes": 6310216,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-scoped-currentness-cpu-v228-v3/target/debug/ferric-tp-peer-finite-engineering-worker-v1",
+      "sha256": "f6a788dbb297b68a2dddc255d7faf49165de9ee8fa4eccc062bfe8b65a6d360a"
+    },
+    "worker_cpu": {
+      "bytes": 2364691,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-scoped-currentness-cpu-v228-v3/evidence/complete.json",
+      "sha256": "335cf93cc109390f3b7590f7dbe35ed852adca223a042894dcc18418a738ffbd"
+    }
+  },
+  "schema": "ferric-readiness40-scoped-matched-parent-wall-analysis-v1",
+  "shared_full_currentness": false,
+  "sidecars": {
+    "default": {
+      "bytes": 14587,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-scoped-matched-timing-gpu-v228-v3/default/native/host-timing.json",
+      "sha256": "430dfbd903589ce3ce6c168dd228a9e041e3a865463ee216501e282f1c05cedc"
+    },
+    "scoped": {
+      "bytes": 14503,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-scoped-matched-timing-gpu-v228-v3/scoped/native/host-timing.json",
+      "sha256": "69374a5cf74d50a76836e218863b3e74e0380a6aecd70e6459acc25fa603c06b"
+    }
+  },
+  "temporal_equivalent_to_full": false,
+  "terminals": {
+    "default": {
+      "bytes": 432371,
+      "name": "complete.json",
+      "sha256": "ae0788ba6a695d60dd86f9a238332869704c4684dcd7738d941654b86767f05e"
+    },
+    "scoped": {
+      "bytes": 632756,
+      "name": "complete.json",
+      "sha256": "6c2885811def54b37bb968e73238e20a36a53278f6ed44e7d2b1b225f7644bd2"
+    }
+  },
+  "tokens_per_second_claim": false,
+  "total": {
+    "change_percent": "-38.513378",
+    "default_ns": 938053351118,
+    "difference_ns": -361276036970,
+    "scoped_ns": 576777314148,
+    "scoped_over_default": "0.614866"
+  },
+  "ttft_claim": false
+}

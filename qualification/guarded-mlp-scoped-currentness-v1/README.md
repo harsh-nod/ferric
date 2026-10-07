@@ -1,7 +1,8 @@
 # Scoped Warm-Layer Currentness
 
-This is an opt-in engineering optimization under development, not a qualified
-GPU route. It moves full topology discovery to entry and exit of a closed
+This opt-in engineering optimization has passed one matched forty-forward
+GPU comparison on `mi350`; it is not full-workload or numerical acceptance.
+It moves full topology discovery to entry and exit of a closed
 warm-layer call while retaining participant-local queue, signal, generation
 and ownership checks inside that call. The intended call includes Prefix,
 guarded MLP, hidden readbacks and final validation before publishing completion.
@@ -141,10 +142,38 @@ nanosecond and decimal-rounding checks, timeline consistency, claim rejection,
 and CSV/table/SVG rendering. This is a report-tool qualification only; the
 actual same-binary GPU pair and its measurements are separate gates.
 
+## Matched GPU Comparison
+
+The fresh V3 Default/scoped pair passed on `mi350` using the same qualified
+parent and worker executables, authentic prompt and model inputs. Both cases
+completed all 40 forwards, generated zero tokens, retained captures at
+positions 0/5/16/39, and exited naturally with their owned processes reaped.
+All 40 semantic records and four complete captured payloads matched each
+other and the retained baseline. Original scoped policy bytes and the
+unchanged ordinary policy were both validated.
+
+| Parent wall interval | Default seconds | Scoped seconds | Reduction |
+| --- | ---: | ---: | ---: |
+| All 40 frame waits | 591.557698 | 230.370293 | 61.057004% |
+| Entire measured parent interval | 938.053351 | 576.777314 | 38.513378% |
+
+![Parent frame waits for the matched Default and ScopedWarm cases](matched-timing-report-v3/waits.svg)
+
+The [full table](matched-timing-report-v3/table.md),
+[integer-nanosecond data](matched-timing-report-v3/summary.json), and
+[original evidence](matched-timing-gpu-v3/README.md) preserve the measurement
+scope. The exact reporting code had separately passed seven synthetic tests
+on `mi350`, and generated these outputs there after revalidating both cases.
+
+These are **one ordered pair's parent wall spans**, not GPU execution time,
+overlap, generated-token throughput, a repeated benchmark or a general speedup
+claim. Frame waits include worker execution, pipe waiting and framing. Setup
+and Close remain in the total. No unrelated cleanup or compilation ran between
+the two native cases. Scoped currentness still has the temporal-observation
+limitation described above. It is not the earlier SharedFull comparison.
+
 ## Remaining Gates
 
-A fresh same-binary Default/scoped GPU pair must pass before claiming this
-optimization runs end to end. Independent numerical
-acceptance, the full 2,048/256 workload
+Independent numerical acceptance, the full 2,048/256 workload
 and the 700 tokens/s target remain open. No issue #42 milestone is closed by
 these results.

@@ -1,0 +1,47 @@
+{
+  "cleanup_signalled": false,
+  "command": {
+    "bytes": 877,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-scoped-matched-timing-gpu-v228-v3/scoped/parent-readelf/command.json",
+    "sha256": "7f8bce12aeff19d4252ac5344e26bfbfcac291cb2498cf9cef9e314113b4c490"
+  },
+  "elapsed_seconds": 0.32566202199086547,
+  "exit_code": 0,
+  "gpu_execution_requested": false,
+  "lineage": [
+    {
+      "event": "owned",
+      "identity": {
+        "pgid": 4004669,
+        "pid": 4004669,
+        "ppid": 4004640,
+        "sid": 4004669,
+        "starttime": 77355876,
+        "state": "R",
+        "uid": 9661
+      },
+      "reason": "spawned-parent"
+    }
+  ],
+  "owned_groups": [
+    4004669
+  ],
+  "owned_groups_absent": true,
+  "owned_processes_reaped": true,
+  "reason": null,
+  "started": {
+    "bytes": 282,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-scoped-matched-timing-gpu-v228-v3/scoped/parent-readelf/started.json",
+    "sha256": "a0c10641db3954e542aa8c9d0f30bf888975ec55ac8b7850b9ca51b65f210e3c"
+  },
+  "stderr": {
+    "bytes": 0,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-scoped-matched-timing-gpu-v228-v3/scoped/parent-readelf/stderr",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "stdout": {
+    "bytes": 4713,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-scoped-matched-timing-gpu-v228-v3/scoped/parent-readelf/stdout",
+    "sha256": "09481fe3ea386f07298c8924d1377a09fd3c62c0ad1763b13ae4289973c2a7c8"
+  }
+}
