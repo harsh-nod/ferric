@@ -1,0 +1,53 @@
+{
+  "adopted_reaped": [],
+  "argv": [
+    "/usr/bin/prlimit",
+    "--as=12884901888",
+    "--cpu=1200",
+    "--fsize=1073741824",
+    "--core=0",
+    "--",
+    "/home/harmenon/.rustup/toolchains/1.97.1-x86_64-unknown-linux-gnu/bin/cargo",
+    "test",
+    "--offline",
+    "--locked",
+    "--jobs",
+    "2",
+    "--manifest-path",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness-cli-parent-cpu-v228-v1/ferric/adapters/m1-engineering-execution-v1/Cargo.toml",
+    "--features",
+    "guarded-mlp-readiness-engineering",
+    "--bin",
+    "ferric-qwen3-finite-mlp-tiles-comparison-engineering",
+    "--",
+    "--test-threads=2"
+  ],
+  "command": {
+    "bytes": 2572,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness-cli-parent-cpu-v228-v1/evidence/ferric-qwen3-finite-mlp-tiles-comparison-engineering-tests.command.json",
+    "sha256": "360636d6923c8f0b2701f67ec73120a26cc945c9ec0fc61fb984a48d274d2318"
+  },
+  "elapsed_ns": 427865545,
+  "exception": null,
+  "exit_code": 0,
+  "forced_cleanup": false,
+  "label": "ferric-qwen3-finite-mlp-tiles-comparison-engineering-tests",
+  "natural_exit": true,
+  "observed_signals": [],
+  "pgid": 890014,
+  "pid": 890014,
+  "process_group_absent": true,
+  "reaped": true,
+  "stderr": {
+    "bytes": 1771,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness-cli-parent-cpu-v228-v1/evidence/ferric-qwen3-finite-mlp-tiles-comparison-engineering-tests.stderr",
+    "sha256": "66fdc3cb437706a99a42aabb43e940087a71f1d41d2563fba79be250ba6ee9d6"
+  },
+  "stdout": {
+    "bytes": 192,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness-cli-parent-cpu-v228-v1/evidence/ferric-qwen3-finite-mlp-tiles-comparison-engineering-tests.stdout",
+    "sha256": "e33dc02a8968beb2ec4487eaf6853c20fc499090c9ac2c598fc839ba392727a5"
+  },
+  "storage_failure": null,
+  "timed_out": false
+}

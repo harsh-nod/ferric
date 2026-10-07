@@ -72,6 +72,9 @@ includes four-forward, 36-layer Qwen3-8B GPU bring-up on MI350 and
 The [paired-read experiment and executable routing fix](qualification/guarded-mlp-peer-read-pair-v1/README.md)
 retain the failed attempt, the corrected worker's 623 passing CPU tests, and a
 fresh four-run GPU comparison showing 71.9% lower hidden-read host time.
+The [bounded 40-position readiness route](qualification/guarded-mlp-readiness40-v1/README.md)
+passes MI350 CPU qualification: 658 worker tests, 428 selected parent tests,
+and 16 independent data-checker tests. Its first native GPU attempt is pending.
 These are engineering diagnostics, not an end-to-end speedup, sustained 2,048/256 decoding,
 independent full-model numerical acceptance, or a change to production status.
 

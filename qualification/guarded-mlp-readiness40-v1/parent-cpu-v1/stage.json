@@ -1,0 +1,27 @@
+{
+  "archive": {
+    "bytes": 1019938,
+    "sha256": "cff799d516dd321cae7c8558343698901b82fc8635480ecdfd0d2b8bb5ef708d"
+  },
+  "canonical_changed": false,
+  "controller": {
+    "bytes": 16187,
+    "sha256": "a85dc2b5941f2f9a24f6838af7dc10d81ddeef107df962514dfb0814c4b8c482"
+  },
+  "ferric_files": 1237,
+  "helpers": 3,
+  "inherited_worker_transitions": 10,
+  "input": {
+    "bytes": 257371,
+    "sha256": "aaf87fa7ce4cd6ddcdfaf986331cf85d28a9e147007e79edd5a624b17a44e05e"
+  },
+  "lineage_files": 104,
+  "lockfiles_changed": false,
+  "overlay_files": 23,
+  "passed": true,
+  "project_execution": false,
+  "root": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness-cli-parent-cpu-v228-v1",
+  "schema": "ferric-guarded-mlp-readiness-cli-parent-source-stage-v1",
+  "shared_cache_changed": false,
+  "source_files": 1240
+}

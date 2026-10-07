@@ -1,0 +1,6 @@
+
+running 1 test
+test tests::explicit_comparison_command_has_no_profile_or_count_fallback ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

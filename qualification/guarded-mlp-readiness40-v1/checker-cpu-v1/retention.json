@@ -1,0 +1,68 @@
+{
+  "archive": {
+    "bytes": 27743,
+    "sha256": "95cebdbd242abc0d5d8256cd7f7fa11ddc45f5aa18d36e4652baae7b549a8660"
+  },
+  "files": {
+    "evidence/complete.json": {
+      "bytes": 10645,
+      "sha256": "f639b7100ee8ec82f5442f0ae9136ea5f367793803ea78b6ca502328e7c69856"
+    },
+    "evidence/readiness-tests.command.json": {
+      "bytes": 1129,
+      "sha256": "3376d0953c976a48ba0e09677efbc5176723214bd056843ba345c1298eaf0c6b"
+    },
+    "evidence/readiness-tests.result.json": {
+      "bytes": 1746,
+      "sha256": "3f9c9118eca79dc1a70f8d2eeb3fd5bd336771b6fecf77cee0b13ea9e98e82e6"
+    },
+    "evidence/readiness-tests.started.json": {
+      "bytes": 593,
+      "sha256": "9f8ac483971e4a166ae1ca956b08a5b001dcd975ab089f80e337b043740ebad0"
+    },
+    "evidence/readiness-tests.stderr": {
+      "bytes": 2339,
+      "sha256": "aaff503029f69494369bfa7c5fcdc34c43e170a99383146f64e7ca3ac7b44ec7"
+    },
+    "evidence/readiness-tests.stdout": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "evidence/sources-after.json": {
+      "bytes": 1414,
+      "sha256": "d376a38ed67c38042e75e50d6d70b6bc840838a46b590a5e7cdb49f671d37c0d"
+    },
+    "evidence/sources-before.json": {
+      "bytes": 1414,
+      "sha256": "d376a38ed67c38042e75e50d6d70b6bc840838a46b590a5e7cdb49f671d37c0d"
+    },
+    "readiness_announcement.py": {
+      "bytes": 3246,
+      "sha256": "b974ac6b6e936d8239639ac0c595c7db36700e3b1e2cff101224699fd789a9b1"
+    },
+    "run_cpu.py": {
+      "bytes": 11647,
+      "sha256": "1b20b6c3ae0232c90f55bba9bfbbb074bde266c39c89eb713db80a443d4e85b9"
+    },
+    "supervisor.py": {
+      "bytes": 41485,
+      "sha256": "8824478a6415dee39d28ccefb0881fc0687ac724f5a9c5a4540310fb5196b9bc"
+    },
+    "test_readiness.py": {
+      "bytes": 17249,
+      "sha256": "9fd01fdd4db86b7dab0fbadb3c620c4339168d70e81ee4d15bd61f4672ea5ed1"
+    },
+    "validate_readiness.py": {
+      "bytes": 19451,
+      "sha256": "6fdbf93d72a6dd7bb4db0034b63dd94dde337db4408bf1a899cb350ed6a0abcf"
+    }
+  },
+  "native_execution": false,
+  "new_project_execution": false,
+  "numerical_acceptance": false,
+  "original_files": 13,
+  "original_terminal_unchanged": true,
+  "performance_claim": false,
+  "schema": "ferric-readiness40-checker-retention-v1",
+  "tests_passed": 16
+}

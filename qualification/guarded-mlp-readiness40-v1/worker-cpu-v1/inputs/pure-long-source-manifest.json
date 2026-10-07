@@ -1,0 +1,175 @@
+{
+  "base": {
+    "ferric_commit": "2705d08e8eaea087e360bc7467ac4b77fa8f61e8",
+    "parent_complete": {
+      "bytes": 3796001,
+      "sha256": "f24fab8b524afc87726d6aec918abce01dc39643f56c7ac7f323af4c4ce953f2"
+    },
+    "parent_sources": {
+      "bytes": 478221,
+      "sha256": "cfb44ac39c63ac14ef325c050c7d0fbb60ee0d9d6048d4ea02d366cba8cf0cbd"
+    },
+    "runtime_commit": "00e49fd8b0",
+    "runtime_complete": {
+      "bytes": 2187577,
+      "sha256": "032c4ac98bee0b6c551f1b98fb12d7966bd4f9fadc6b0b8570ab2488634c7814"
+    },
+    "worker_complete": {
+      "bytes": 1631185,
+      "sha256": "24feb83a0bde60dc9c6b8db28f2ce8252379b40d8e0d40483690f58038881b2a"
+    },
+    "worker_sources": {
+      "bytes": 406182,
+      "sha256": "4c49b12bd9d2dbcc7c504f72dd38818cec567317f2ffb3fda1f18f88f841a827"
+    }
+  },
+  "cpu_tests_executed": false,
+  "default_policy_changed": false,
+  "existing_ar4_limits_changed": false,
+  "files": [
+    {
+      "after": {
+        "bytes": 89962,
+        "sha256": "75c9bab4bd27206cb57156ef6c2c67095ca6fa8f552c6fa35a82460dfecdf11f"
+      },
+      "before": {
+        "bytes": 89616,
+        "sha256": "99d29baf566069b806de3847a57db2e11f27405b7591a8b74c0ff44d08cd568b"
+      },
+      "path": "adapters/m1-engineering-execution-v1/src/lib.rs",
+      "repository": "ferric"
+    },
+    {
+      "after": {
+        "bytes": 22932,
+        "sha256": "ad8e941f506952977a512da61db5c36def8a6144d3776234b9bc5991e7127f0b"
+      },
+      "before": null,
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/finite_guarded_mlp_long_wire_v2.rs",
+      "repository": "ferric"
+    },
+    {
+      "after": {
+        "bytes": 16429,
+        "sha256": "74ce9433cf90f80e5e827fcef334c7fc07a07981e18898616f40d2f480559d42"
+      },
+      "before": null,
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/finite_guarded_mlp_long_wire_v2_tests.rs",
+      "repository": "ferric"
+    },
+    {
+      "after": {
+        "bytes": 4703,
+        "sha256": "085e3acbff734bf1e2d865661aa4ace0c11e76d232ff61092ab533ebb0637d33"
+      },
+      "before": null,
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/guarded_mlp_long_sequence_v2.rs",
+      "repository": "ferric"
+    },
+    {
+      "after": {
+        "bytes": 9309,
+        "sha256": "34f07b5c2ecd67ad2101e3e6121d1898c1e799f0ec62af2a34069cca115a02c0"
+      },
+      "before": null,
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/guarded_mlp_long_sequence_v2_tests.rs",
+      "repository": "ferric"
+    },
+    {
+      "after": {
+        "bytes": 2586,
+        "sha256": "cb55f620f54e09ef71ec92d1a91cec838744043effddb8c9de2bb37d2bacde81"
+      },
+      "before": {
+        "bytes": 2507,
+        "sha256": "de016f8d3d618c50c0cc622ae379e5b0db254c2d8cc7bb4280714644342ddfe7"
+      },
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/lib.rs",
+      "repository": "ferric"
+    }
+  ],
+  "full_model_acceptance": false,
+  "gpu_execution": false,
+  "kernel_source_changed": false,
+  "native_route_wired": false,
+  "new_native_tests": 0,
+  "new_tests": {
+    "parent_bin": [],
+    "parent_lib": [
+      "finite_guarded_mlp_long_wire_v2::tests::long_bank_generations_and_page_edges_are_exact",
+      "finite_guarded_mlp_long_wire_v2::tests::long_bootstrap_identity_images_prompt_and_combined_budget_are_closed",
+      "finite_guarded_mlp_long_wire_v2::tests::long_control_decoder_preserves_ar4_predicates_and_long_generation",
+      "finite_guarded_mlp_long_wire_v2::tests::long_generated_input_must_be_the_committed_predecessor_not_a_reference_token",
+      "finite_guarded_mlp_long_wire_v2::tests::long_maximal_selected_2302_header_and_total_retention_fit_existing_caps",
+      "finite_guarded_mlp_long_wire_v2::tests::long_nonfinite_payload_wrong_argmax_and_selected_byte_mutation_are_refused",
+      "finite_guarded_mlp_long_wire_v2::tests::long_profiles_and_close_ids_are_domain_separated_and_ar4_stays_closed",
+      "finite_guarded_mlp_long_wire_v2::tests::long_record_refuses_oversize_truncation_unknown_fields_and_trailing_bytes",
+      "finite_guarded_mlp_long_wire_v2::tests::long_selected_and_unselected_frames_round_trip_with_derived_part_pins",
+      "finite_guarded_mlp_long_wire_v2::tests::long_selected_control_rehash_cannot_hide_invalid_terminal_or_frontiers",
+      "finite_guarded_mlp_long_wire_v2::tests::long_transcript_full_2303_commits_only_own_outputs_and_exact_close",
+      "finite_guarded_mlp_long_wire_v2::tests::long_transcript_refuses_prompt_pages_scope_pending_and_chain_mutations",
+      "guarded_mlp_long_sequence_v2::tests::long_sequence_bad_terminal_or_device_argmax_refuses_before_fence_and_commit",
+      "guarded_mlp_long_sequence_v2::tests::long_sequence_close_failure_deadline_and_second_close_remain_terminal",
+      "guarded_mlp_long_sequence_v2::tests::long_sequence_every_effect_failure_is_terminal_without_retry_or_commit",
+      "guarded_mlp_long_sequence_v2::tests::long_sequence_every_post_effect_deadline_stops_before_next_operation",
+      "guarded_mlp_long_sequence_v2::tests::long_sequence_full_2303_mock_preserves_order_banks_and_256_own_outputs",
+      "guarded_mlp_long_sequence_v2::tests::long_sequence_readiness40_is_prompt_only_with_distinct_healthy_close",
+      "guarded_mlp_long_sequence_v2::tests::long_sequence_unwind_and_publication_failure_quarantine_existing_work",
+      "guarded_mlp_long_sequence_v2::tests::long_sequence_wrong_scope_order_and_premature_close_never_touch_backend"
+    ],
+    "worker_lib": [
+      "finite_guarded_mlp_long_wire_v2::tests::long_bank_generations_and_page_edges_are_exact",
+      "finite_guarded_mlp_long_wire_v2::tests::long_bootstrap_identity_images_prompt_and_combined_budget_are_closed",
+      "finite_guarded_mlp_long_wire_v2::tests::long_control_decoder_preserves_ar4_predicates_and_long_generation",
+      "finite_guarded_mlp_long_wire_v2::tests::long_generated_input_must_be_the_committed_predecessor_not_a_reference_token",
+      "finite_guarded_mlp_long_wire_v2::tests::long_maximal_selected_2302_header_and_total_retention_fit_existing_caps",
+      "finite_guarded_mlp_long_wire_v2::tests::long_nonfinite_payload_wrong_argmax_and_selected_byte_mutation_are_refused",
+      "finite_guarded_mlp_long_wire_v2::tests::long_profiles_and_close_ids_are_domain_separated_and_ar4_stays_closed",
+      "finite_guarded_mlp_long_wire_v2::tests::long_record_refuses_oversize_truncation_unknown_fields_and_trailing_bytes",
+      "finite_guarded_mlp_long_wire_v2::tests::long_selected_and_unselected_frames_round_trip_with_derived_part_pins",
+      "finite_guarded_mlp_long_wire_v2::tests::long_selected_control_rehash_cannot_hide_invalid_terminal_or_frontiers",
+      "finite_guarded_mlp_long_wire_v2::tests::long_transcript_full_2303_commits_only_own_outputs_and_exact_close",
+      "finite_guarded_mlp_long_wire_v2::tests::long_transcript_refuses_prompt_pages_scope_pending_and_chain_mutations",
+      "guarded_mlp_long_sequence_v2::tests::long_sequence_bad_terminal_or_device_argmax_refuses_before_fence_and_commit",
+      "guarded_mlp_long_sequence_v2::tests::long_sequence_close_failure_deadline_and_second_close_remain_terminal",
+      "guarded_mlp_long_sequence_v2::tests::long_sequence_every_effect_failure_is_terminal_without_retry_or_commit",
+      "guarded_mlp_long_sequence_v2::tests::long_sequence_every_post_effect_deadline_stops_before_next_operation",
+      "guarded_mlp_long_sequence_v2::tests::long_sequence_full_2303_mock_preserves_order_banks_and_256_own_outputs",
+      "guarded_mlp_long_sequence_v2::tests::long_sequence_readiness40_is_prompt_only_with_distinct_healthy_close",
+      "guarded_mlp_long_sequence_v2::tests::long_sequence_unwind_and_publication_failure_quarantine_existing_work",
+      "guarded_mlp_long_sequence_v2::tests::long_sequence_wrong_scope_order_and_premature_close_never_touch_backend"
+    ]
+  },
+  "numerical_acceptance": false,
+  "parent_deadline_changed": false,
+  "performance_claim": false,
+  "profiles": {
+    "full2303": {
+      "captures": [
+        0,
+        2047,
+        2048,
+        2302
+      ],
+      "forwards": 2303,
+      "generated_tokens": 256,
+      "prompt_tokens": 2048
+    },
+    "readiness40": {
+      "captures": [
+        0,
+        15,
+        16,
+        39
+      ],
+      "forwards": 40,
+      "generated_tokens": 0,
+      "prompt_tokens_bound": 2048,
+      "prompt_tokens_consumed": 40
+    }
+  },
+  "runtime_source_changed": false,
+  "schema": "ferric-guarded-mlp-closed-long-pure-source-v2",
+  "source_only": true,
+  "test_names_per_crate": 20
+}

@@ -1,0 +1,130 @@
+{
+  "base": {
+    "ferric_commit": "56de92e691f1757775c4b29aaf7a1120e9ea3479",
+    "pure_integration_patch": {
+      "bytes": 57078,
+      "sha256": "40896d5d91878d256b25022ed914315fddd3da36c3f3894c2a6c72daa2958d01"
+    },
+    "pure_source_manifest": {
+      "bytes": 8538,
+      "sha256": "7e27f89d1258df78e955f820f72cee556f1905f4aa709030eac8cb1881e3d7a0"
+    },
+    "runtime_commit": "ee63881af18ae6d0be11242a156895fa40ebe839"
+  },
+  "capacity": {
+    "bank_local_final_generation": [
+      20,
+      20
+    ],
+    "bytes_per_cache": 2359296,
+    "cache_tokens": 144,
+    "elements_per_cache": 1179648,
+    "initial_allocation_counts": [
+      715,
+      711
+    ],
+    "layers_per_rank": 36,
+    "metadata_words": 145,
+    "pages_per_cache": 144,
+    "ranks": 2,
+    "reuse_plateau_counts": [
+      787,
+      783
+    ],
+    "rotary_words": 128
+  },
+  "cpu_tests_executed": false,
+  "default_policy_changed": false,
+  "existing_ar4_limits_changed": false,
+  "files": [
+    {
+      "after": {
+        "bytes": 18951,
+        "sha256": "14e7f2282c934ec77ded0c359db688ab69fa336afec048c207a2e24e72138bc1"
+      },
+      "before": {
+        "bytes": 18854,
+        "sha256": "439958c7de32b3ec9043a4b53c3fb0cbcb024b6c5f115832cd342a59b3b85c80"
+      },
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_guarded_mlp_decode_v1.rs",
+      "repository": "ferric"
+    },
+    {
+      "after": {
+        "bytes": 13203,
+        "sha256": "7887640b34c4ceed71f1a2a861d91bfe550cd1f2ab300bb5419a4ac380883d26"
+      },
+      "before": null,
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_guarded_mlp_readiness_v1.rs",
+      "repository": "ferric"
+    },
+    {
+      "after": {
+        "bytes": 4201,
+        "sha256": "d402b7859189fbb0a26cc0fa6bc3351660d82518f874456bf190e3aa8f8b54d2"
+      },
+      "before": null,
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_guarded_mlp_readiness_v1_tests.rs",
+      "repository": "ferric"
+    },
+    {
+      "after": {
+        "bytes": 15396,
+        "sha256": "0498f100671c5d224615af6eed40627e2c376e363894e654818a6d5f5f91c88c"
+      },
+      "before": {
+        "bytes": 11961,
+        "sha256": "6a2e1f52122a862c2ab3d129f4103df881450eeb9e4b6256cab0a483bf499ad0"
+      },
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/state_roster/guarded_mlp_decode_v1/tests.rs",
+      "repository": "ferric"
+    },
+    {
+      "after": {
+        "bytes": 17249,
+        "sha256": "7e2f9d0298f84942f8fdbff6d5dab3559bb91b016c83b705bdbffce29fe2cd6a"
+      },
+      "before": {
+        "bytes": 15933,
+        "sha256": "293ea576abc90d9dc191f6c7a394a2f0d388ae2b26969a9c5e52cce990a46c51"
+      },
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/state_roster/guarded_mlp_decode_v1.rs",
+      "repository": "ferric"
+    }
+  ],
+  "full_model_acceptance": false,
+  "gpu_execution": false,
+  "inherited_pure_test_names_per_crate": 20,
+  "kernel_source_changed": false,
+  "native_full2303_admitted": false,
+  "native_owner_adapter_added": true,
+  "native_readiness_forwards": 40,
+  "native_readiness_generated_tokens": 0,
+  "native_transport_wired": false,
+  "new_native_tests": 0,
+  "new_tests": {
+    "parent_bin": [],
+    "parent_lib": [],
+    "worker_lib": [
+      "native_catalog::forward::guarded_mlp_decode_v1::readiness::tests::readiness_cache_shapes_require_full_context_not_four_or_forty_tokens",
+      "native_catalog::forward::guarded_mlp_decode_v1::readiness::tests::readiness_deadline_is_fixed_and_cutoff_is_not_extended",
+      "native_catalog::forward::guarded_mlp_decode_v1::readiness::tests::readiness_native_input_keeps_all_144_pages_and_crosses_two_page_boundaries",
+      "native_catalog::forward::guarded_mlp_decode_v1::readiness::tests::readiness_profile_binds_actual_reusable_owner_and_rejects_full_workload",
+      "state_roster::guarded_mlp_decode_v1::tests::guarded_readiness_late_bank_failure_is_terminal_without_reset_retry",
+      "state_roster::guarded_mlp_decode_v1::tests::guarded_readiness_retains_72_pairs_through_exactly_40_forwards",
+      "state_roster::guarded_mlp_decode_v1::tests::guarded_readiness_selection_refuses_used_fresh_repeated_or_drifted_rosters"
+    ]
+  },
+  "numerical_acceptance": false,
+  "parent_deadline_changed": false,
+  "performance_claim": false,
+  "remaining_entry_work": [
+    "explicit Readiness40 worker entry and setup transport",
+    "parent prompt-only transcript, selected captures and real Close/retirement",
+    "CPU qualification of composed pure and native source",
+    "bounded actual forty-forward measurement before Full2303 admission"
+  ],
+  "runtime_source_changed": false,
+  "schema": "ferric-guarded-mlp-native-readiness-owner-source-v1",
+  "source_only": true
+}

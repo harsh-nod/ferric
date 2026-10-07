@@ -1,0 +1,11 @@
+warning: unused macro definition: `qwen_attention_emit_pair_v1`
+  --> /home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness-cli-parent-cpu-v228-v1/ferric/device/qwen3-tp-perf-kernels-v3/src/attention_online.rs:11:14
+   |
+11 | macro_rules! qwen_attention_emit_pair_v1 {
+   |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = note: `#[warn(unused_macros)]` (part of `#[warn(unused)]`) on by default
+
+warning: `ferric-qwen3-tp-perf-kernels-device-v3` (lib) generated 1 warning
+    Finished `test` profile [optimized] target(s) in 0.10s
+     Running unittests src/lib.rs (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness-cli-parent-cpu-v228-v1/target/debug/deps/ferric_m1_engineering_execution_v1-d7a13aa78a6f2db8)

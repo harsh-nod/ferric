@@ -6,6 +6,16 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
+The new [bounded 40-position readiness route](../qualification/guarded-mlp-readiness40-v1/README.md)
+passes MI350 CPU qualification: 658 worker tests with four unchanged ignores,
+428 selected parent tests across 51 scopes, and 16 independent synthetic
+data-checker tests. All nine worker and 60 parent supervised phases pass.
+The explicit route accepts the authentic full prompt and 144-page KV mapping,
+but executes only 40 prompt positions, generating zero tokens. Complete
+captures are selected at positions 0, 15, 16 and 39. Native execution is
+pending; full 2,303-forward native admission remains refused. This CPU result
+does not establish GPU correctness, full-workload acceptance, or performance.
+
 Current GPU bring-up: the guarded parent and worker completed both four-step
 teacher-forced and autoregressive runs on MI350, through all 36 layers and
 both ranks. The fresh autoregressive outer controller passes in one attempt,

@@ -1,0 +1,448 @@
+//! Private forty-forward owner. Full2303 and public transport are not enabled.
+use super::sequence::Backend as NativeBackend;
+use super::{Active, ForwardInput, Mode, Native, Phase};
+use crate::finite_guarded_mlp_decode_wire_v1::LayerObservation;
+use crate::finite_guarded_mlp_long_wire_v2::{BankStep, Bootstrap, Command, Profile, Request};
+use crate::guarded_mlp_long_sequence_v2::{Backend, Produced, Sequence, Tail};
+use crate::state_roster::guarded_mlp_decode_v1::{BOUND_COUNTS, REUSE_MAX_COUNTS};
+use std::{
+    io,
+    time::{Duration, Instant},
+};
+
+const CACHE_BYTES: u64 = 2304 * 512 * 2;
+const WHOLE_LIMIT: Duration = Duration::from_secs(3600);
+
+fn require(ok: bool, why: &str) -> io::Result<()> {
+    if ok {
+        Ok(())
+    } else {
+        Err(io::Error::other(why))
+    }
+}
+fn remaining(now: Instant, deadline: Instant) -> io::Result<()> {
+    require(now < deadline, "readiness fixed outer deadline")
+}
+fn admit_deadline(now: Instant, deadline: Instant) -> io::Result<()> {
+    remaining(now, deadline)?;
+    require(
+        deadline.duration_since(now) <= WHOLE_LIMIT,
+        "readiness refuses an enlarged outer deadline",
+    )
+}
+fn input(request: &Request) -> io::Result<ForwardInput> {
+    request.validate(Profile::Readiness40)?;
+    let Command::Forward {
+        generation,
+        token,
+        cache_metadata,
+        rotary_bits,
+    } = &request.command
+    else {
+        return Err(io::Error::other("readiness native input requires Forward"));
+    };
+    Ok(ForwardInput {
+        registration: request.registration,
+        generation: *generation,
+        token: *token,
+        cache_metadata: cache_metadata
+            .as_slice()
+            .try_into()
+            .map_err(io::Error::other)?,
+        rotary_bits: rotary_bits
+            .as_slice()
+            .try_into()
+            .map_err(io::Error::other)?,
+    })
+}
+fn profile_join(b: &Bootstrap, profile: &super::Profile) -> io::Result<()> {
+    b.validate(b.device_ids, b.timeout_ms, std::process::id())?;
+    require(
+        b.profile == Profile::Readiness40
+            && profile.reusable_arenas
+            && matches!(profile.mode, Mode::Autoregressive { first } if first == b.prompt_tokens[0])
+            && profile.scope == b.scope
+            && profile.registration == b.registration
+            && profile.prefix == b.prefix_image.sha256
+            && profile.mlp == b.mlp_image.sha256
+            && profile.projection == b.projection_image.sha256
+            && profile.timeout_ms == b.timeout_ms,
+        "readiness actual sealed profile/scope/images",
+    )?;
+    let original = crate::finite_guarded_mlp_decode_wire_v1::profile_sha256(
+        &b.scope,
+        b.registration,
+        b.prefix_image.sha256,
+        b.mlp_image.sha256,
+        b.projection_image.sha256,
+        true,
+        [b.prompt_tokens[0], 0, 0, 0],
+        b.timeout_ms,
+        b.device_ids,
+    );
+    require(
+        profile.sha256
+            == crate::finite_guarded_mlp_decode_wire_v1::reusable_profile_sha256(original),
+        "readiness exact original rank/device profile binding",
+    )
+}
+
+// Pure shape checks are not authority; the caller derives every row from owned
+// source records and actual opaque tokens before reaching this helper.
+fn cache_shapes(rows: &[(u32, u32, usize, u64, u64, u64)]) -> io::Result<()> {
+    require(rows.len() == 144, "readiness complete two-rank K/V roster")?;
+    let mut ids = std::collections::BTreeSet::new();
+    for (index, &(rank, layer, side, source_id, token_bytes, allocation_bytes)) in
+        rows.iter().enumerate()
+    {
+        require(
+            rank as usize == index / 72
+                && layer as usize == index / 2 % 36
+                && side == index % 2
+                && source_id != 0
+                && ids.insert((rank, source_id))
+                && token_bytes == CACHE_BYTES
+                && allocation_bytes == CACHE_BYTES,
+            "readiness actual 144-page cache role/extent/alias",
+        )?;
+    }
+    Ok(())
+}
+fn capacity(base: &mut super::Owner) -> io::Result<()> {
+    let owner = &mut base.owner;
+    owner.catalog.source.validate()?;
+    require(
+        owner.catalog.phase == Phase::LayersSealed && owner.layer_bindings.len() == 36,
+        "readiness sealed complete layer bindings",
+    )?;
+    let mut rows = Vec::with_capacity(144);
+    let mut tokens = Vec::with_capacity(144);
+    for source in &owner.catalog.source.layers {
+        let roots = &owner.layer_bindings[source.layer as usize];
+        let rank = source.rank as usize;
+        require(
+            roots.prefix[rank][4].bytes() == 128 * 4 && roots.prefix[rank][5].bytes() == 145 * 4,
+            "readiness actual rotary and complete page-map allocations",
+        )?;
+        for (side, cache) in source.caches.iter().enumerate() {
+            let key = crate::native_catalog::BindingKey::Source {
+                rank: cache.rank,
+                id: cache.id,
+            };
+            let record = owner
+                .catalog
+                .records
+                .iter()
+                .find(|r| r.facts.key == key)
+                .ok_or_else(|| io::Error::other("readiness retained KV record missing"))?;
+            let token = roots.prefix[rank][10 + side];
+            require(
+                record.token == token
+                    && token.owner_rank() == rank
+                    && record.facts.bytes == CACHE_BYTES
+                    && !record.facts.immutable
+                    && record.upload.is_none()
+                    && !tokens.contains(&token),
+                "readiness actual KV source/token custody",
+            )?;
+            rows.push((
+                source.rank,
+                source.layer,
+                side,
+                cache.id,
+                token.bytes(),
+                record.facts.allocation_bytes,
+            ));
+            tokens.push(token);
+        }
+    }
+    cache_shapes(&rows)?;
+    require(
+        owner
+            .catalog
+            .backend
+            .preflight_additional_allocations_v1(&[0, 0])
+            .map_err(io::Error::other)?
+            == BOUND_COUNTS,
+        "readiness actual unused reusable allocation census",
+    )
+}
+fn poison(base: &mut super::Owner) {
+    base.sequence.poison();
+    base.states.poison();
+    base.owner.catalog.phase = Phase::Terminal;
+}
+struct Admission<'a> {
+    base: &'a mut super::Owner,
+    committed: bool,
+}
+impl Drop for Admission<'_> {
+    fn drop(&mut self) {
+        if !self.committed {
+            poison(self.base);
+        }
+    }
+}
+
+pub(crate) struct Owner {
+    base: super::Owner,
+    sequence: Sequence,
+    deadline: Instant,
+}
+impl Owner {
+    /// Consumes a pristine genuine reusable owner, without resetting or replacing
+    /// any state. The separate transport must authenticate the bootstrap before
+    /// setup and cancel this owner if publication fails. No Full2303 constructor.
+    pub(crate) fn from_owner(
+        mut base: super::Owner,
+        b: Bootstrap,
+        deadline: Instant,
+    ) -> io::Result<Self> {
+        let mut admission = Admission {
+            base: &mut base,
+            committed: false,
+        };
+        let now = Instant::now();
+        admit_deadline(now, deadline)?;
+        profile_join(&b, &admission.base.profile)?;
+        require(
+            admission.base.sequence.pristine()
+                && admission.base.states.completed() == 0
+                && admission.base.states.between()
+                && !admission.base.states.readiness40()
+                && !admission.base.capture_enabled
+                && admission.base.captured_layer0.is_none()
+                && admission.base.observer.is_none(),
+            "readiness consumes pristine owner without diagnostics",
+        )?;
+        require(
+            b.begin.source_program.bytes
+                == admission.base.owner.catalog.source.source_program_bytes
+                && b.begin.source_program.sha256
+                    == admission.base.owner.catalog.source.source_program_sha256,
+            "readiness original source program custody",
+        )?;
+        capacity(admission.base)?;
+        remaining(Instant::now(), deadline)?;
+        let sequence = Sequence::new(b)?;
+        admission
+            .base
+            .states
+            .select_readiness40()
+            .map_err(io::Error::other)?;
+        remaining(Instant::now(), deadline)?;
+        admission.committed = true;
+        drop(admission);
+        Ok(Self {
+            base,
+            sequence,
+            deadline,
+        })
+    }
+    pub(crate) fn completed(&self) -> u32 {
+        self.sequence.completed()
+    }
+    pub(crate) fn digest(&self) -> [u8; 32] {
+        self.sequence.digest()
+    }
+    pub(crate) fn run(&mut self, request: &Request) -> io::Result<Produced> {
+        let mut backend = Driver {
+            base: &mut self.base,
+            deadline: self.deadline,
+            input: None,
+            hidden: Vec::with_capacity(36),
+        };
+        self.sequence.run(&mut backend, request)
+    }
+    pub(crate) fn close(mut self, request: &Request, digest: [u8; 32]) -> io::Result<()> {
+        let mut backend = Driver {
+            base: &mut self.base,
+            deadline: self.deadline,
+            input: None,
+            hidden: Vec::new(),
+        };
+        self.sequence.close(&mut backend, request, digest)
+    }
+    pub(crate) fn cancel(&mut self) {
+        let mut backend = Driver {
+            base: &mut self.base,
+            deadline: self.deadline,
+            input: None,
+            hidden: Vec::new(),
+        };
+        self.sequence.cancel(&mut backend);
+    }
+}
+impl Drop for Owner {
+    fn drop(&mut self) {
+        if !self.sequence.is_closed() {
+            poison(&mut self.base);
+        }
+    }
+}
+
+struct Driver<'a> {
+    base: &'a mut super::Owner,
+    deadline: Instant,
+    input: Option<ForwardInput>,
+    hidden: Vec<Vec<u8>>,
+}
+impl Driver<'_> {
+    fn native(&mut self) -> io::Result<Native<'_>> {
+        let input = self
+            .input
+            .as_ref()
+            .ok_or_else(|| io::Error::other("readiness metadata not admitted"))?;
+        Ok(Native {
+            base: Active {
+                owner: &mut self.base.owner,
+                timeout_ms: self.base.profile.timeout_ms,
+                layer_hidden: Vec::new(),
+                final_normalized: Vec::new(),
+                logits: Vec::new(),
+                capture: None,
+                captured_layer0: None,
+                reuse: None,
+            },
+            states: &mut self.base.states,
+            generation: input.generation,
+            position: input.cache_metadata[0],
+            observer: None,
+        })
+    }
+}
+impl Backend for Driver<'_> {
+    fn check_deadline(&mut self) -> io::Result<()> {
+        remaining(Instant::now(), self.deadline)
+    }
+    fn metadata(&mut self, request: &Request) -> io::Result<()> {
+        let input = input(request)?;
+        require(
+            self.base.owner.catalog.phase == Phase::LayersSealed
+                && self.input.is_none()
+                && self.hidden.is_empty(),
+            "readiness terminal or reused native driver",
+        )?;
+        self.input = Some(ForwardInput {
+            registration: input.registration,
+            generation: input.generation,
+            token: input.token,
+            cache_metadata: input.cache_metadata,
+            rotary_bits: input.rotary_bits,
+        });
+        self.native()?.metadata(&input).map_err(io::Error::other)
+    }
+    fn embedding(&mut self, token: u32) -> io::Result<[u64; 2]> {
+        self.native()?.embedding(token).map_err(io::Error::other)
+    }
+    fn begin(&mut self, step: BankStep) -> io::Result<()> {
+        let i = self
+            .input
+            .as_ref()
+            .ok_or_else(|| io::Error::other("readiness input missing"))?;
+        require(
+            step == BankStep::at(Profile::Readiness40, i.cache_metadata[0])?,
+            "readiness exact bank step",
+        )?;
+        self.base
+            .states
+            .begin(
+                &mut self.base.owner.catalog.backend,
+                i.registration,
+                self.base.owner.catalog.scope.model_id,
+                i.generation,
+                i.cache_metadata[0],
+                self.base.profile.timeout_ms,
+            )
+            .map_err(io::Error::other)
+    }
+    fn layer(&mut self, index: usize) -> io::Result<LayerObservation> {
+        require(
+            index == self.hidden.len() && index < 36,
+            "readiness exact hidden layer order",
+        )?;
+        let mut native = self.native()?;
+        let done = native.layer(index).map_err(io::Error::other)?;
+        let hidden = native
+            .base
+            .layer_hidden
+            .pop()
+            .ok_or_else(|| io::Error::other("readiness checked hidden missing"))?;
+        drop(native);
+        self.hidden.push(hidden);
+        Ok(LayerObservation {
+            prefix_states: done.prefix_states,
+            mlp_prefixes: done.guarded.prefixes,
+            guards: done.guarded.guards,
+            prefix_host_ns: done.prefix_ns,
+            segment_host_ns: done.guarded.segment_host_ns,
+            observed_queue_frontiers: done.guarded.observed_queue_frontiers,
+        })
+    }
+    fn tail(&mut self) -> io::Result<Tail> {
+        require(
+            self.hidden.len() == 36 && self.hidden.iter().all(|row| row.len() == 8192),
+            "readiness complete hidden output roster",
+        )?;
+        let mut native = self.native()?;
+        let (output_token, host_ns) = native.tail().map_err(io::Error::other)?;
+        let normalized = std::mem::take(&mut native.base.final_normalized);
+        let logits = std::mem::take(&mut native.base.logits);
+        drop(native);
+        require(
+            normalized.len() == 8192 && logits.len() == 303872,
+            "readiness actual tail readback extents",
+        )?;
+        let mut observation = Vec::with_capacity(crate::finite_forward_wire_v1::OBSERVATION_BYTES);
+        for row in self.hidden.drain(..) {
+            observation.extend_from_slice(&row);
+        }
+        observation.extend_from_slice(&normalized);
+        observation.extend_from_slice(&logits);
+        Ok(Tail {
+            output_token,
+            host_ns,
+            observation,
+        })
+    }
+    fn fence(&mut self) -> io::Result<()> {
+        self.native()?.fence().map_err(io::Error::other)
+    }
+    fn commit(&mut self, generation: u64) -> io::Result<()> {
+        require(
+            self.input
+                .as_ref()
+                .is_some_and(|i| i.generation == generation),
+            "readiness exact commit generation",
+        )?;
+        self.native()?.commit().map_err(io::Error::other)
+    }
+    fn close(&mut self) -> io::Result<()> {
+        require(
+            self.base.states.readiness40()
+                && self.base.states.between()
+                && self.base.states.completed() == 40
+                && self.base.states.counts() == REUSE_MAX_COUNTS,
+            "readiness Close requires all forty complete forwards",
+        )?;
+        require(
+            self.base
+                .owner
+                .catalog
+                .backend
+                .preflight_additional_allocations_v1(&[0, 0])
+                .map_err(io::Error::other)?
+                == REUSE_MAX_COUNTS,
+            "readiness Close allocation census",
+        )?;
+        self.check_deadline()?;
+        self.base.owner.close_setup().map_err(io::Error::other)
+    }
+    fn poison(&mut self) {
+        poison(self.base);
+    }
+}
+
+#[cfg(test)]
+#[path = "native_guarded_mlp_readiness_v1_tests.rs"]
+mod tests;

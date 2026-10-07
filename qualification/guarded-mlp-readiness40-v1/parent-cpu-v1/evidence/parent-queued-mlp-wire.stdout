@@ -1,0 +1,11 @@
+
+running 6 tests
+test finite_queued_mlp_comparison_wire_v1::tests::chain_binds_comparison_body_and_close_is_not_an_old_profile_completion ... ok
+test finite_queued_mlp_comparison_wire_v1::tests::comparison_report_rejects_wrong_finite_state_timing_stage_rank_and_claims ... ok
+test finite_queued_mlp_comparison_wire_v1::tests::explicit_bootstrap_binds_pid_devices_token_scope_and_exact_norm_object ... ok
+test finite_queued_mlp_comparison_wire_v1::tests::full_main_control_and_comparison_roundtrip_preserves_separate_provenance ... ok
+test finite_queued_mlp_comparison_wire_v1::tests::only_one_first_forward_and_explicit_close_are_admitted ... ok
+test finite_queued_mlp_comparison_wire_v1::tests::corruption_truncation_nonfinite_and_wrong_argmax_are_rejected ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 899 filtered out; finished in 0.01s
+
