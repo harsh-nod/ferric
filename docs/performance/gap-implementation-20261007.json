@@ -1,0 +1,159 @@
+{
+  "schema": "FerricPerformanceGapImplementationV1",
+  "date": "2026-10-07",
+  "ferric_base_main": "f25acda79bcfc9d2dc49af17b9f91f8392c35c0e",
+  "fe2o3_base_main": "630c01b0bb9b55b0f52084211869af8597f755f5",
+  "fe2o3_published_main": "179629a7310e31dde354afa6465f304f09ec87fb",
+  "implementation": {
+    "runtime_diagnostics": {
+      "repository": "fe2o3",
+      "feature": "engineering-native-wait-diagnostics",
+      "default_enabled": false,
+      "schema": "Fe2o3NativeWaitObservationV1",
+      "polling_policy_changed": false,
+      "completion_or_retirement_authority_changed": false,
+      "worker_linked": false,
+      "native_executed": false,
+      "gpu_time_measured": false,
+      "source_sha256": {
+        "engineering_gfx950_native_wait_diagnostic.rs": "70bd5104201ba7adde4378ac0b4e447a930b0cdfd8619771c805da11c6d12531",
+        "engineering_gfx950_token_program_native.rs": "7f7dd0089c122ad38ec52dec3bf674834c8bbedb8247526ee0a07f842d90b98f",
+        "engineering_native_wait_observation.rs": "e8d25c279494e98ea48e9fb8946e31324419d89e0f1fca50cadcb82311e867e9",
+        "engineering_native_wait_observation_tests.rs": "48ca457756125d1105b5746fa41744bdabac8ab74e0c84ae0677857257a6cfc5"
+      }
+    },
+    "prefill_qk_rmsnorm": {
+      "repository": "ferric",
+      "path": "experiments/prefill32-qk-rmsnorm-wave-a001",
+      "default_enabled": false,
+      "compiler_pin": "630c01b0bb9b55b0f52084211869af8597f755f5",
+      "width": 128,
+      "allowed_rows": [256, 1024],
+      "summation_association_changed": true,
+      "all_input_bitwise_equivalence_claimed": false,
+      "lockfile_resolved": false,
+      "device_emitted": false,
+      "generated_roster_test_executed": false,
+      "selector_integrated": false,
+      "native_parity_qualified": false
+    },
+    "compiler_checked_load_grouping": "design_only"
+  },
+  "validation": {
+    "ssh_host": "mi300x-2",
+    "hostname": "sharkmi300x-3",
+    "local_builds_or_tests": false,
+    "gpu_execution": false,
+    "diagnostic_fixtures": {
+      "tests_passed": 12,
+      "scope": "11 deterministic accumulator tests plus one actual JSON serializer smoke test; not full KFD tests",
+      "receipt_sha256": "229902ba66fa048cd52288416a4623289015bf4f15f2f0718b01d1422872ad91",
+      "outer_sha256": "d7aef34699f43be9f936e6f54048dd3da4ef8e7ffa29335ed71f28264dece1f0"
+    },
+    "prefill_host": {
+      "tests_passed": 18,
+      "scope": "Cached 55c device rlib, with BF16 and view source independently byte-equal to 630c; not whole-SDK qualification",
+      "receipt_sha256": "819233e1722a60b212440e51fced2a4f2370e801f13e190105c1112f8c3c0748",
+      "outer_sha256": "b88a7b70a4332412c73cd429ebadd2eb3c8fc8bb98b60a037aa06f8e857aa3d1"
+    },
+    "prefill_source_contract": {
+      "tests_passed": 7,
+      "tests_ignored": 0,
+      "rustfmt_check_passed": true,
+      "scope": "Direct Rust source-contract executable with cached syn/quote; no device crate link or generated roster test",
+      "post_validation_source_changes": "README alone clarifies that 630c is the tested pin, not the now-advanced main tip; executable sources and manifest unchanged",
+      "receipt_sha256": "e21f4891816b31be5716bcc893f1522246d0ebece0847ed11673a612f4bc458c",
+      "outer_sha256": "6fd2ac08687d594fb67b191ee601683b7faa86a218dcdd43ff6f8d261f5b64f1",
+      "archive_sha256": "322da927fb1a10c7cb6a48af6aaa4b0dad5e82a66c7f1d56046c891f118f4c66",
+      "test_stdout_sha256": "c0a625c1caae5aae0c0abfd4f00362ca30437ca4f69445f2d32d6ac1bf822898"
+    },
+    "current_core_matrix": {
+      "roles_passed": [
+        "cargo check: library, no defaults, diagnostic feature",
+        "cargo check: library, no defaults, no features",
+        "cargo check: engineering worker, no defaults, diagnostic feature",
+        "cargo clippy: diagnostic library, no-deps, -D warnings"
+      ],
+      "scope": "Checks, not linked workers or unit-test executions; dependency warnings excluded from scoped Clippy",
+      "ordinary_engineering_without_diagnostics_separately_checked": false,
+      "receipt_sha256": "e991d53771d4b82edba4bff308460c1613fcc3f156bb08c677677c412f67f9c4",
+      "outer_sha256": "c9bf710ed2d6fa8809b3e100cdc2fd05cfd7807b7f254893608892567fe56da5",
+      "source_archive_sha256": "00dabee6557d7e808a57094e344f796cc9371f1f23fc9aeea5c6280f80eaa5ed",
+      "source_files": 1598,
+      "source_bytes": 27977806,
+      "workspace_projection": "Only workspace members/default-members changed; exact 13-crate normal source closure plus seven resolver-only manifests and declared targets",
+      "lock_projection": {
+        "original_sha256": "713486402105af06826d70d145d0c0440ec34db726e55c1a78bfc3b6996d34b2",
+        "projected_sha256": "742736f445ed599eff6899ffcfd22ace21e9f0696117b57841d1fe27d6d51367",
+        "original_packages": 429,
+        "retained_packages": 55,
+        "package_identities_and_checksums_unchanged": true,
+        "resolved_dependency_edges_unchanged_or_pruned": true,
+        "applied_to_repository": false
+      }
+    },
+    "temporary_resource_profile": {
+      "name": "FerricCpuFourCore45GiBEmitterV1",
+      "previous_stage_cap_gib": 44,
+      "stage_cap_gib": 45,
+      "reserve_mib": 512,
+      "cpu_cores": 4,
+      "rss_limit_gib": 8,
+      "nice": 19,
+      "timeout_seconds": 1200,
+      "other_limits_and_cleanup_checks_unchanged": true,
+      "boundary_tests_passed": 8,
+      "outer_sha256": "1d4474ef21e1a8dafc86b9621830b92ebb02d0dc7e5aef825cfd36526286830a"
+    },
+    "site": {
+      "attempt": "a002",
+      "roles_passed": 5,
+      "scope": "Three JavaScript syntax checks, structured data/scope validation and seven-file static artifact staging on mi300x-2",
+      "receipt_sha256": "1a65cb69c38d993989c4e0d013ecaa0e413caeb371104e59b850c781f11e20b2",
+      "outer_sha256": "e613494d22f8006041b6ee38f73e00f56439607d954f20e7cdff8a5250289779",
+      "artifact_files": 7,
+      "artifact_bytes": 899104,
+      "browser_tested": false,
+      "deployed": false
+    },
+    "historical_snapshot_audit": {
+      "snapshot": "experiments/native-gate-up-a009",
+      "files_matched": 1441,
+      "repository_files": 1398,
+      "overlay_files": 43,
+      "bytes": 48762701,
+      "manifest_sha256": "72c41b7c31d01c741f93b6515dc5e299b34fa4851cb220bb780ae4ceb42bb62b"
+    },
+    "successful_cohorts_clean_reaped_unsignaled": true,
+    "earlier_failures": [
+      {"attempt": "core_a001", "status": 101, "reason": "Locked full-workspace graph needs pruning before projected check"},
+      {"attempt": "core_a002", "status": 1, "reason": "Raw dependency-string audit refused canonicalized references; no new package versions"},
+      {"attempt": "core_a003", "status": 125, "cleanup_ok": false, "reason": "Compilation finished but G44 reserve postcondition failed; not a clean pass"},
+      {"attempt": "guard45_a001", "status": 5, "reason": "Initial fixture copied an incorrect stage path; zero tests ran"},
+      {"attempt": "site_a001", "status": 1, "reason": "Syntax and data validation passed; artifact staging refused the helper's incorrect output-directory basename"}
+    ],
+    "earlier_failures_reclassified": false,
+    "independent_source_and_receipt_audit_passed": true,
+    "retained_root": "/home/harsh/.codex-tmp/ferric-gap-controls-20261007/retained"
+  },
+  "performance": {
+    "new_matched_comparison": false,
+    "new_ttft_ms": null,
+    "new_tpot_ms": null,
+    "speedup_claimed": false,
+    "latest_complete_comparison": "width55c-http-a001-independent-review.json",
+    "mi350_last_root_free_bytes": 43970928640,
+    "mi350_required_root_free_bytes": 68719476736,
+    "benchmark_disk_floor_changed": false,
+    "gpu_launch_attempted": false
+  },
+  "next_gates": [
+    "Same-compiler baseline/candidate device emission and generated roster test",
+    "Native component numerical checks on real Q/K inputs, then host-wall ABBA",
+    "Isolated prefill32 selector, exact whole-model token parity, native ABBA and fresh matched HTTP",
+    "Separately bounded diagnostic worker capture; never pool with latency samples",
+    "Implement and qualify conservative default-off checked-load grouping in fe2o3"
+  ],
+  "m1_open_gates": 33,
+  "defaults_or_proof_labels_changed": false
+}

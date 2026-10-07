@@ -3,6 +3,35 @@
 Updated: 2026-10-07 PDT. This is an implementation checkpoint, not a qualification
 receipt. The 33 M1 roadmap gates remain open.
 
+## Performance Gap Implementation
+
+The October 7 parallel follow-up implements two isolated, default-off changes:
+
+- fe2o3 KFD native-wait diagnostics separate raw signal observation, actual sleep,
+  post-read checks and signal retirement. They preserve the polling policy and
+  resource-release checks. Twelve focused CPU tests pass, followed by current
+  `630c01b0` library checks with and without diagnostics, a worker check and strict
+  scoped Clippy. These are not a newly linked worker or a native measurement.
+- Ferric's prefill32 Q/K Wave64 RMSNorm candidate covers width128 and exactly
+  256/1024 rows. Eighteen host fixtures and seven source-contract tests pass.
+  Formatting passes; device emission, the generated-roster test, native parity,
+  selector integration and latency measurement remain pending. The host model
+  uses a cached device library with independently matching BF16/view source;
+  it does not qualify the whole current compiler or SDK.
+
+All execution was on `mi300x-2`, with no local build or GPU dispatch. The final
+checks use a temporary 45 GiB aggregate private-stage cap after a 44 GiB attempt
+crossed its reserve. That failed attempt stays failed. Four cores, nice19,
+8 GiB RSS, 20-minute limit, 512 MiB reserve and host-space floors are unchanged;
+eight resource-profile boundary tests pass.
+
+No new speedup or vLLM comparison is available. MI350's last root-free-space
+observation was 43,970,928,640 bytes, below the unchanged 64 GiB benchmark floor.
+Compiler checked-load grouping remains design-only. No defaults, kernel images,
+measured runtime pins, proof labels or promotion gates changed. See the
+[implementation and validation record](performance/gap-implementation-20261007.json)
+and [prefill candidate](../experiments/prefill32-qk-rmsnorm-wave-a001/README.md).
+
 ## Main Integration
 
 The October 7 integration brings the engineering branch, local kernel and

@@ -1,0 +1,35 @@
+[package]
+name = "ferric-prefill32-qk-rmsnorm-wave-device-r1"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.94"
+publish = false
+
+[workspace]
+
+[features]
+default = []
+gfx950 = []
+prefill32-qk = ["gfx950"]
+
+[dependencies]
+fe2o3-device = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "630c01b0bb9b55b0f52084211869af8597f755f5", version = "=0.1.0" }
+
+[target.'cfg(not(target_arch = "amdgpu"))'.dependencies]
+fe2o3-host = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "630c01b0bb9b55b0f52084211869af8597f755f5", version = "=0.1.0" }
+
+[dev-dependencies]
+quote = "=1.0.47"
+syn = { version = "=2.0.119", features = ["full"] }
+
+[[test]]
+name = "host"
+required-features = ["prefill32-qk"]
+
+[[test]]
+name = "contract"
+required-features = ["prefill32-qk"]
+
+[[test]]
+name = "roster"
+required-features = ["prefill32-qk"]

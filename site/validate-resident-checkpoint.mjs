@@ -10,7 +10,7 @@ export function validateResidentCheckpoint(value, updated) {
   exactKeys(checkpoint, ["date", "scope", "implementationPrivate", "m1OpenGates",
     "nativeServingQualified", "fullAcceptanceCatchupImplemented", "newGpuObservation",
     "newPerformanceMeasurement", "currentCpuOverview", "nativeRedirectOverview", "overview", "earlierOverview", "integration", "followup", "selection", "host", "compiler", "remaining"]);
-  assert.equal(updated, "2026-10-06");
+  assert.equal(updated, "2026-10-07");
   assert.equal(checkpoint.date, "2026-09-18");
   assert.equal(checkpoint.implementationPrivate, true);
   assert.equal(checkpoint.m1OpenGates, 33);
@@ -18,7 +18,10 @@ export function validateResidentCheckpoint(value, updated) {
   assert.equal(checkpoint.newGpuObservation, true);
   assert.equal(checkpoint.nativeServingQualified, false);
   assert.equal(checkpoint.newPerformanceMeasurement, true);
-  const performanceSections = checkpoint.currentCpuOverview.split("Retained historical V4 checkpoint (September 29, 2026):\n\n");
+  const implementationLead = "October 7, 2026: the parallel follow-up adds default-off native wait-observation diagnostics in fe2o3 and an isolated Ferric prefill32 Q/K Wave64 RMSNorm candidate. Remote CPU validation passes 12 focused diagnostic tests, 18 host fixtures, seven source-contract tests, four current-source KFD check/lint roles and eight resource-profile tests. The diagnostic preserves polling and retirement checks; it is not GPU timing. The kernel has no emitted image, routed selector, native parity result or measured latency delta. The generated-roster test is still pending. Compiler checked-load grouping remains design-only. MI350 disk headroom is below the unchanged benchmark floor, so no new GPU benchmark or vendor comparison ran. Historical performance results below retain their original source pins and scopes.\n\n";
+  assert(checkpoint.currentCpuOverview.startsWith(implementationLead));
+  const performanceSections = checkpoint.currentCpuOverview.slice(implementationLead.length)
+    .split("Retained historical V4 checkpoint (September 29, 2026):\n\n");
   assert.equal(performanceSections.length, 2);
   const widthLead = "October 6, 2026: the Width55c same-plan matched HTTP comparison is complete. Ferric 55c native-prefill32 has median TTFT 431.033 ms and TPOT 53.119 ms, versus vLLM 0.28.0 at 18.969 ms and 4.352 ms. Finite output rates are 17.902 and 223.768 tokens/s, respectively. Ferric is 22.72 times slower on median TTFT and 12.20 times slower on median TPOT in this cohort; no vendor win or default promotion.\n\nEach engine has 30 measured requests after 10 excluded warmups and two untimed diagnostics, sequentially Ferric then vLLM, not cross-engine ABBA. Both use the same plan, monitor, client and frozen TP1/C1 128/128-token workload. Ferric matches all 42 requests and 5,376 output token IDs; vendor timed streams retain exact UTF-8 and usage, while token IDs are checked only in two untimed diagnostics. Both complete cleanly with retained raw archives. Current55c prefill32 uses unchanged 652-command decode and V19 KV; no split-K, paired-load or fence composition. Historical R6 results are not pooled, and this cross-revision comparison does not isolate a width speedup or establish a reliable decode gain. HTTP SSE metrics are not true token interarrival or shader durations; finite output rate includes drain and is not sustained throughput. Finite descriptor observations do not establish continuous isolation or clock, power, temperature and throttle equivalence. No formal proof or stable-tail claim. Independent paired review SHA-256 dd84f4503d4fbef3a0fd0eee2c7025a1bb910eac4fe81fd7f09bbb13a6d7b134.\n\nRetained R6 history:\n\n";
   assert(performanceSections[0].startsWith(widthLead));
@@ -3423,6 +3426,8 @@ export function testResidentCheckpointRejections(value, updated) {
     }
   }
   for (const mutate of [
+    (x) => { x.currentCpuOverview = x.currentCpuOverview.replace("seven source-contract tests", "eight source-contract tests"); },
+    (x) => { x.currentCpuOverview = x.currentCpuOverview.replace("no new GPU benchmark", "a new GPU benchmark"); },
     (x) => { x.currentCpuOverview = x.currentCpuOverview.replace("431.033", "unsupported claim"); },
     (x) => { x.currentCpuOverview = x.currentCpuOverview.replace("53.119", "unsupported claim"); },
     (x) => { x.currentCpuOverview = x.currentCpuOverview.replace("18.969", "unsupported claim"); },
