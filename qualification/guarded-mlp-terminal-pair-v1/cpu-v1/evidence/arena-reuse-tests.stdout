@@ -1,0 +1,12 @@
+
+running 7 tests
+test engineering_gfx950::peer::combined_mlp_state_v1::paired::arena::retired::reuse::tests::paired_reuse_checks_both_batches_before_writes_and_resets ... ok
+test engineering_gfx950::peer::combined_mlp_state_v1::paired::arena::retired::reuse::tests::paired_reuse_each_partial_failure_quarantines_without_retry_or_fallback ... ok
+test engineering_gfx950::peer::combined_mlp_state_v1::paired::arena::retired::reuse::tests::paired_reuse_rejects_each_pending_peer_signal_before_any_mutation ... ok
+test engineering_gfx950::peer::combined_mlp_state_v1::paired::arena::retired::reuse::tests::paired_reuse_rejects_zero_stale_skipped_and_exhausted_generation ... ok
+test engineering_gfx950::peer::combined_mlp_state_v1::paired::arena::retired::reuse::tests::paired_reuse_requires_real_consumption_and_unchanged_identity ... ok
+test engineering_gfx950::peer::combined_mlp_state_v1::paired::arena::retired::reuse::tests::paired_reuse_timeout_and_unwind_keep_terminal_quarantine ... ok
+test engineering_gfx950::peer::combined_mlp_state_v1::paired::arena::retired::reuse::tests::paired_reuse_transaction_stays_bounded_beyond_full_model_dispatch_count ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 1097 filtered out; finished in 0.01s
+

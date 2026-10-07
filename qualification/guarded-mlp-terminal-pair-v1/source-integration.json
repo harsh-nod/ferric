@@ -1,0 +1,161 @@
+{
+  "schema": "ferric-guarded-mlp-terminal-pair-qualified-integration-v1",
+  "runtime_base_commit": "ee63881af18ae6d0be11242a156895fa40ebe839",
+  "runtime_root": "/home/harsh/fe2o3-p228-runtime",
+  "source_manifest": {
+    "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/guarded-mlp-model-interface-v228-v1/model-terminal-pair-v1/source-manifest.json",
+    "bytes": 3892,
+    "sha256": "80959e1cecf23ec059231620e3ed8e7169c05f8b41d4cef208ca439dfd38f6a5"
+  },
+  "archive": {
+    "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/guarded-mlp-terminal-pair-cpu-evidence-v228-v1.tar.gz",
+    "bytes": 1941058,
+    "sha256": "9125eda8c1dba8d8ab91fa0f8be23e368e737acbb7d2e071f01c3b671835cfff"
+  },
+  "capsule_manifest": {
+    "bytes": 25233,
+    "sha256": "d51e7da4ac1f7c484b2dc92c3096da3db5f01daf97e6a16a5faf7ad869409061"
+  },
+  "terminal": {
+    "bytes": 2250677,
+    "sha256": "bf0fa20a37ff3bf748ef5984df0dceb5cd1c453ef5c05c7111779b31cda33720"
+  },
+  "final_sources": {
+    "bytes": 407038,
+    "sha256": "f8024397177d83cdd1d07040b55c97afc5190988676bb80f67a9af4ae0554718"
+  },
+  "preformat_sources": {
+    "bytes": 407038,
+    "sha256": "af899aa9cc4023846ae6c3858f3859f39c132b535fc89f4db7db039704018009"
+  },
+  "patch": {
+    "bytes": 28187,
+    "sha256": "8b080f2663057445301d81973c262d9c442c0e49ca0047661ecbd15e169ddd31"
+  },
+  "rows": [
+    {
+      "path": "crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_facade_v1.rs",
+      "before": {
+        "bytes": 12746,
+        "sha256": "ea9ae29ed1a4140947b0811a5f96a48ff6c72a65803fca92557aa363bda29af5"
+      },
+      "authored": {
+        "bytes": 14172,
+        "sha256": "9270e5f5e3c3e0a438a5bee5ab6b3e9acdadd1a73411326880f8c49bb6651104"
+      },
+      "qualified": {
+        "bytes": 14172,
+        "sha256": "9270e5f5e3c3e0a438a5bee5ab6b3e9acdadd1a73411326880f8c49bb6651104"
+      },
+      "retained_source": "/home/harsh/ferric-p227-integration/qualification/guarded-mlp-terminal-pair-v1/cpu-v1/fe2o3/crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_facade_v1.rs",
+      "formatter_changed": false
+    },
+    {
+      "path": "crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_retained_v1.rs",
+      "before": {
+        "bytes": 27358,
+        "sha256": "c17271359efdaa1ab28c4fd43ed9755656b653e58fc1196a276ff92068d99907"
+      },
+      "authored": {
+        "bytes": 28276,
+        "sha256": "eb2b71ca9c90d881417b72df7d78c5ca42713ea531b728201dd23d92954ff4aa"
+      },
+      "qualified": {
+        "bytes": 28265,
+        "sha256": "984bc6ecad796fc081b72cf35a724b06144a3a8f42776142346d947749f1715e"
+      },
+      "retained_source": "/home/harsh/ferric-p227-integration/qualification/guarded-mlp-terminal-pair-v1/cpu-v1/fe2o3/crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_retained_v1.rs",
+      "formatter_changed": true
+    },
+    {
+      "path": "crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_retained_v1_tests.rs",
+      "before": {
+        "bytes": 22746,
+        "sha256": "ebf59a5bacd2dbf619d9fcce922db2fb59fb0a111092c5881459c815fbd418f8"
+      },
+      "authored": {
+        "bytes": 24608,
+        "sha256": "26f56401f1eb5f466fd42bb6756ecc6d9a551fe203cb2a0941e8699c3e705f0a"
+      },
+      "qualified": {
+        "bytes": 24839,
+        "sha256": "202f8b8c22bb90c184fb60b76d218e2cfe2c505d45c946ed1b4490850d44fe38"
+      },
+      "retained_source": "/home/harsh/ferric-p227-integration/qualification/guarded-mlp-terminal-pair-v1/cpu-v1/fe2o3/crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_retained_v1_tests.rs",
+      "formatter_changed": true
+    },
+    {
+      "path": "crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_terminal_v1.rs",
+      "before": null,
+      "authored": {
+        "bytes": 6717,
+        "sha256": "df2062560ae3227671c34c97e6b7297337ba784a88d759d8f5e756201020afae"
+      },
+      "qualified": {
+        "bytes": 7035,
+        "sha256": "441f7cf878b4d2d2c8750ae55a9d49aec574160714bc0ef6cb02db4abb59b796"
+      },
+      "retained_source": "/home/harsh/ferric-p227-integration/qualification/guarded-mlp-terminal-pair-v1/cpu-v1/fe2o3/crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_terminal_v1.rs",
+      "formatter_changed": true
+    },
+    {
+      "path": "crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_terminal_v1_tests.rs",
+      "before": null,
+      "authored": {
+        "bytes": 10345,
+        "sha256": "cdb08ba46ab4c29f3b665506dfceab7377ffebca7c393c2098a978694fc1cff1"
+      },
+      "qualified": {
+        "bytes": 11072,
+        "sha256": "3fcf5944e090a6cfa0d88eeda75b69b699f344be9a9b395260f0c0456d105ae7"
+      },
+      "retained_source": "/home/harsh/ferric-p227-integration/qualification/guarded-mlp-terminal-pair-v1/cpu-v1/fe2o3/crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_terminal_v1_tests.rs",
+      "formatter_changed": true
+    },
+    {
+      "path": "crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_v1.rs",
+      "before": {
+        "bytes": 13231,
+        "sha256": "c6f724e0b8bf8e46e075a043de5c162e30a9c6e6d0276d0351f4b48abcc1db8e"
+      },
+      "authored": {
+        "bytes": 14524,
+        "sha256": "f9e5b0d5d4b0d626623295f8791127e557b4addefaa8a2ef032153694381ac78"
+      },
+      "qualified": {
+        "bytes": 14524,
+        "sha256": "f9e5b0d5d4b0d626623295f8791127e557b4addefaa8a2ef032153694381ac78"
+      },
+      "retained_source": "/home/harsh/ferric-p227-integration/qualification/guarded-mlp-terminal-pair-v1/cpu-v1/fe2o3/crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_v1.rs",
+      "formatter_changed": false
+    }
+  ],
+  "files": 6,
+  "replacements": 4,
+  "additions": 2,
+  "capsule_members": 158,
+  "capsule_pinned_bodies": 157,
+  "raw_files": 122,
+  "phases": 23,
+  "runtime_tests": {
+    "passed": 1119,
+    "failed": 0,
+    "ignored": 8
+  },
+  "worker_tests": {
+    "passed": 658,
+    "failed": 0,
+    "ignored": 4
+  },
+  "facade_docs": 10,
+  "source_map_rows": 1014,
+  "canonical_preimages_rechecked": true,
+  "patch_forward_and_reverse_reconstructed": true,
+  "canonical_edited": false,
+  "tests_executed_by_author": false,
+  "project_imports_executed_by_author": false,
+  "native_execution": false,
+  "numerical_acceptance": false,
+  "performance_claim": false,
+  "production_authority": false
+}

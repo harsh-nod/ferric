@@ -19,6 +19,13 @@ captures pass the qualified independent data checker. Full 2,303-forward
 native admission remains refused. Independent framework comparison,
 full-workload numerical acceptance and performance remain separate gates.
 
+The [opt-in paired-terminal runtime API](../qualification/guarded-mlp-terminal-pair-v1/README.md)
+is integrated after 1,119 KFD tests, 658 unchanged worker tests, ten facade
+doctests and 23 clean MI350 CPU phases. It coalesces terminal validation for
+retired reusable arenas while preserving queue/signal/ownership checks.
+The existing worker does not select it; native qualification and timing remain
+pending. Fewer source-level full checks are not a measured speedup.
+
 Current GPU bring-up: the guarded parent and worker completed both four-step
 teacher-forced and autoregressive runs on MI350, through all 36 layers and
 both ranks. The fresh autoregressive outer controller passes in one attempt,
