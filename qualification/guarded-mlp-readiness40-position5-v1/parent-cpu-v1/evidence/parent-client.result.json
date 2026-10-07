@@ -1,0 +1,53 @@
+{
+  "adopted_reaped": [],
+  "argv": [
+    "/usr/bin/prlimit",
+    "--as=12884901888",
+    "--cpu=1200",
+    "--fsize=1073741824",
+    "--core=0",
+    "--",
+    "/home/harmenon/.rustup/toolchains/1.97.1-x86_64-unknown-linux-gnu/bin/cargo",
+    "test",
+    "--offline",
+    "--locked",
+    "--jobs",
+    "2",
+    "--manifest-path",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-position5-parent-cpu-v228-v1/ferric/adapters/m1-engineering-execution-v1/Cargo.toml",
+    "--features",
+    "guarded-mlp-readiness-engineering",
+    "--lib",
+    "tp_finite_client::",
+    "--",
+    "--test-threads=2"
+  ],
+  "command": {
+    "bytes": 2586,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-position5-parent-cpu-v228-v1/evidence/parent-client.command.json",
+    "sha256": "d71aeb860900c92c99ead839e78fabb485397c20b118932682123cf0343e4bb8"
+  },
+  "elapsed_ns": 2924730013,
+  "exception": null,
+  "exit_code": 0,
+  "forced_cleanup": false,
+  "label": "parent-client",
+  "natural_exit": true,
+  "observed_signals": [],
+  "pgid": 1231217,
+  "pid": 1231217,
+  "process_group_absent": true,
+  "reaped": true,
+  "stderr": {
+    "bytes": 134327,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-position5-parent-cpu-v228-v1/evidence/parent-client.stderr",
+    "sha256": "25e3c03d75550bac73f26d004fe581bc7fd0ada3ce686ab186b421d29c24949e"
+  },
+  "stdout": {
+    "bytes": 28499,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-position5-parent-cpu-v228-v1/evidence/parent-client.stdout",
+    "sha256": "dd5277cbe763f7663cc5aede37807d7c68d8da0a546ff35fb6114ac0a2c305bc"
+  },
+  "storage_failure": null,
+  "timed_out": false
+}

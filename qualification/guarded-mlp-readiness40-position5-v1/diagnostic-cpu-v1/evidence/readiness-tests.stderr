@@ -1,0 +1,12 @@
+test_all40_logit_pins_must_agree_not_only_selected (test_compare.DiagnosticTests.test_all40_logit_pins_must_agree_not_only_selected) ... ok
+test_authentic_history_and_boolean_ids_refused (test_compare.DiagnosticTests.test_authentic_history_and_boolean_ids_refused) ... ok
+test_common_payload_bytes_and_selection_are_not_assumed (test_compare.DiagnosticTests.test_common_payload_bytes_and_selection_are_not_assumed) ... ok
+test_complete_parity_reports_no_acceptance (test_compare.DiagnosticTests.test_complete_parity_reports_no_acceptance) ... ok
+test_exact_bf16_integer_units_include_subnormal_and_signed_zero (test_compare.DiagnosticTests.test_exact_bf16_integer_units_include_subnormal_and_signed_zero) ... ok
+test_reference_all40_logits_and_repeats_must_agree (test_compare.DiagnosticTests.test_reference_all40_logits_and_repeats_must_agree) ... ok
+test_top_two_ties_use_lowest_token_and_zero_margin (test_compare.DiagnosticTests.test_top_two_ties_use_lowest_token_and_zero_margin) ... ok
+
+----------------------------------------------------------------------
+Ran 7 tests in 4.061s
+
+OK

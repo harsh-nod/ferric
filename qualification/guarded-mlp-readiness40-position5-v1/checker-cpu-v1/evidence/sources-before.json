@@ -1,0 +1,27 @@
+{
+  "readiness_announcement.py": {
+    "bytes": 3246,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-position5-checker-cpu-v228-v1/readiness_announcement.py",
+    "sha256": "b974ac6b6e936d8239639ac0c595c7db36700e3b1e2cff101224699fd789a9b1"
+  },
+  "run_cpu.py": {
+    "bytes": 11736,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-position5-checker-cpu-v228-v1/run_cpu.py",
+    "sha256": "56100ea1e087b36d56f1f401a5b2c954f9062e83748d2858bb117038f7e2a929"
+  },
+  "supervisor.py": {
+    "bytes": 41485,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-position5-checker-cpu-v228-v1/supervisor.py",
+    "sha256": "8824478a6415dee39d28ccefb0881fc0687ac724f5a9c5a4540310fb5196b9bc"
+  },
+  "test_readiness.py": {
+    "bytes": 17802,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-position5-checker-cpu-v228-v1/test_readiness.py",
+    "sha256": "4b644462a71120ee45b3351757ecb0d5867c9453daadb6a10c07bdbcd38e8bb5"
+  },
+  "validate_readiness.py": {
+    "bytes": 19525,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-position5-checker-cpu-v228-v1/validate_readiness.py",
+    "sha256": "57a7a8cfe5c1327df0f1c006b1c70fa6cdf860d441a057d3a6764669d89ccc40"
+  }
+}

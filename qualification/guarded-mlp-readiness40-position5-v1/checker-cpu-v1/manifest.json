@@ -1,0 +1,74 @@
+{
+  "actual_test_count": 17,
+  "files": {
+    "evidence/complete.json": {
+      "bytes": 10980,
+      "sha256": "7df4ccb245eae6f517182cc9cd04977ff2ec6180f5c16bb11e9269a5e4ae6468"
+    },
+    "evidence/readiness-tests.command.json": {
+      "bytes": 1149,
+      "sha256": "86281478dcf7f29c72bc62a0abb5b45ca63854df1d1c2d2170a6753502671905"
+    },
+    "evidence/readiness-tests.result.json": {
+      "bytes": 1788,
+      "sha256": "97585ae4d51a0087ba804781bdc2b4b05542706a77e352dceee2116482d216d3"
+    },
+    "evidence/readiness-tests.started.json": {
+      "bytes": 605,
+      "sha256": "ac4356999197be20039222cf0315ad016e56c9ade795f8c002fa9bb1e0f7d5ff"
+    },
+    "evidence/readiness-tests.stderr": {
+      "bytes": 2488,
+      "sha256": "41bd88aa7cf893c9af17cab8dc88f5b4c827557818402cab89e7939033bafb8a"
+    },
+    "evidence/readiness-tests.stdout": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "evidence/sources-after.json": {
+      "bytes": 1464,
+      "sha256": "1879332b7ade5be5574e5116a11283f4f9949fb77d0f8d1fc933231327ed4118"
+    },
+    "evidence/sources-before.json": {
+      "bytes": 1464,
+      "sha256": "1879332b7ade5be5574e5116a11283f4f9949fb77d0f8d1fc933231327ed4118"
+    },
+    "pure-evidence.py": {
+      "bytes": 15079,
+      "sha256": "71048139b433d903a37c2344491dfa098ac9e4326e1b8860f462ac80ab9d5145"
+    },
+    "readiness_announcement.py": {
+      "bytes": 3246,
+      "sha256": "b974ac6b6e936d8239639ac0c595c7db36700e3b1e2cff101224699fd789a9b1"
+    },
+    "run_cpu.py": {
+      "bytes": 11736,
+      "sha256": "56100ea1e087b36d56f1f401a5b2c954f9062e83748d2858bb117038f7e2a929"
+    },
+    "supervisor.py": {
+      "bytes": 41485,
+      "sha256": "8824478a6415dee39d28ccefb0881fc0687ac724f5a9c5a4540310fb5196b9bc"
+    },
+    "test_readiness.py": {
+      "bytes": 17802,
+      "sha256": "4b644462a71120ee45b3351757ecb0d5867c9453daadb6a10c07bdbcd38e8bb5"
+    },
+    "validate_readiness.py": {
+      "bytes": 19525,
+      "sha256": "57a7a8cfe5c1327df0f1c006b1c70fa6cdf860d441a057d3a6764669d89ccc40"
+    }
+  },
+  "mode": "checker",
+  "native_execution": false,
+  "new_project_execution": false,
+  "numerical_acceptance": false,
+  "original_files": 13,
+  "performance_claim": false,
+  "schema": "ferric-readiness40-position5-pure-cpu-export-v1",
+  "selected_files": 14,
+  "synthetic_only": true,
+  "terminal": {
+    "bytes": 10980,
+    "sha256": "7df4ccb245eae6f517182cc9cd04977ff2ec6180f5c16bb11e9269a5e4ae6468"
+  }
+}

@@ -1,0 +1,14 @@
+
+running 9 tests
+test finite_mlp_tiles_comparison_wire_v1::tests::actual_variable_image_bytes_and_pin_are_profile_bound ... ok
+test finite_mlp_tiles_comparison_wire_v1::tests::chain_binds_comparison_body_and_close_is_not_an_old_profile_completion ... ok
+test finite_mlp_tiles_comparison_wire_v1::tests::comparison_report_rejects_wrong_finite_state_timing_stage_rank_and_claims ... ok
+test finite_mlp_tiles_comparison_wire_v1::tests::every_typed548_word_and_length_is_checked_independently_of_v1_control ... ok
+test finite_mlp_tiles_comparison_wire_v1::tests::explicit_bootstrap_binds_pid_devices_token_scope_and_actual_image_pin ... ok
+test finite_mlp_tiles_comparison_wire_v1::tests::full_main_control_and_comparison_roundtrip_preserves_separate_provenance ... ok
+test finite_mlp_tiles_comparison_wire_v1::tests::maximum_valid_annex_fits_unchanged_sixteen_kib_budget ... ok
+test finite_mlp_tiles_comparison_wire_v1::tests::only_one_first_forward_and_explicit_close_are_admitted ... ok
+test finite_mlp_tiles_comparison_wire_v1::tests::corruption_truncation_nonfinite_and_wrong_argmax_are_rejected ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 896 filtered out; finished in 0.02s
+

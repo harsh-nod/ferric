@@ -1,0 +1,20 @@
+{
+  "argv": [
+    "/usr/bin/prlimit",
+    "--as=536870912",
+    "--cpu=120",
+    "--fsize=16777216",
+    "--core=0",
+    "--",
+    "/usr/bin/python3.12",
+    "-I",
+    "-B",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-numerical-report-cpu-v228-v1/render.py",
+    "--input",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-numerical-report-cpu-v228-v1/comparison.json",
+    "--output",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-numerical-report-cpu-v228-v1/report"
+  ],
+  "pgid": 1246270,
+  "pid": 1246270
+}

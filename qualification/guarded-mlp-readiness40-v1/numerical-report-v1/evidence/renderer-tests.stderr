@@ -1,0 +1,15 @@
+test_all40_argmax_and_uncaptured_mismatch_survive (test_render.ReportTests.test_all40_argmax_and_uncaptured_mismatch_survive) ... ok
+test_csv_preserves_all152_metrics_in_numeric_layer_order (test_render.ReportTests.test_csv_preserves_all152_metrics_in_numeric_layer_order) ... ok
+test_exact_input_pin_duplicate_keys_and_nonfinite_json_refused (test_render.ReportTests.test_exact_input_pin_duplicate_keys_and_nonfinite_json_refused) ... ok
+test_reader_refuses_symlink_and_oversized_file (test_render.ReportTests.test_reader_refuses_symlink_and_oversized_file) ... ok
+test_rejects_argmax_scope_history_and_mismatch_loss (test_render.ReportTests.test_rejects_argmax_scope_history_and_mismatch_loss) ... ok
+test_rejects_authority_identity_and_extra_fields (test_render.ReportTests.test_rejects_authority_identity_and_extra_fields) ... ok
+test_rejects_metric_shape_bool_negative_and_nonfinite (test_render.ReportTests.test_rejects_metric_shape_bool_negative_and_nonfinite) ... ok
+test_rejects_missing_reordered_or_duplicated_capture_roles (test_render.ReportTests.test_rejects_missing_reordered_or_duplicated_capture_roles) ... ok
+test_svg_four_distinct_series_stable_geometry_and_percent_axis (test_render.ReportTests.test_svg_four_distinct_series_stable_geometry_and_percent_axis) ... ok
+test_zero_curve_has_finite_nonclipped_axis (test_render.ReportTests.test_zero_curve_has_finite_nonclipped_axis) ... ok
+
+----------------------------------------------------------------------
+Ran 10 tests in 0.010s
+
+OK

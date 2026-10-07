@@ -1,0 +1,16 @@
+
+running 11 tests
+test guarded_mlp_host_observation_v1::tests::guarded_host_fixed_phase_roster_has_all_layer_and_forward_boundaries ... ok
+test guarded_mlp_host_observation_v1::tests::guarded_host_exact_parent_completion_join_rejects_other_worker_or_history ... ok
+test guarded_mlp_host_observation_v1::tests::guarded_host_identity_policy_epoch_and_baseline_drift_refuse ... ok
+test guarded_mlp_host_observation_v1::tests::guarded_host_missing_reordered_decreasing_or_forged_intervals_refuse ... ok
+test guarded_mlp_host_observation_v1::tests::guarded_host_tf_ar_and_high_u64_id_roundtrip_preserve_inclusive_counters ... ok
+test guarded_mlp_host_observation_v1::tests::guarded_host_requires_healthy_close_closed_schema_and_observational_scope ... ok
+test guarded_mlp_host_observation_v1::tests::guarded_paired_read_report_preserves_actual_identity_close_and_counter_checks ... ok
+test guarded_mlp_host_observation_v1::tests::guarded_shared_host_actual_parent_join_remains_mode_specific ... ok
+test guarded_mlp_host_observation_v1::tests::guarded_paired_read_report_is_fresh_ar4_only_and_old_parsers_stay_closed ... ok
+test guarded_mlp_host_observation_v1::tests::guarded_shared_host_preserves_identity_epoch_counters_and_closed_claims ... ok
+test guarded_mlp_host_observation_v1::tests::guarded_shared_host_parser_keeps_conservative_schema_and_policy_closed ... ok
+
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 894 filtered out; finished in 0.09s
+

@@ -27,6 +27,15 @@ unknown. The four captured positions show 0.30-0.69% logits relative L2 error;
 these are diagnostics, not an acceptance threshold. A separately scoped
 position-5 capture investigation is required before claiming correctness.
 
+The [position-5 diagnostic route](../qualification/guarded-mlp-readiness40-position5-v1/README.md)
+is now integrated after 663 worker passes, 433 selected parent passes and
+17/7 synthetic checker/comparator passes on MI350. Its independent BF16
+reference completes two repeatable fresh-cache passes. Native capture and
+cross-run diagnosis remain pending. The original comparison now has a
+[layer-by-layer error plot and complete tables](../qualification/guarded-mlp-readiness40-v1/numerical-report-v1/README.md),
+rendered on MI350 after ten passing tests. These add diagnostic visibility,
+not numerical acceptance or a performance claim.
+
 The [opt-in paired-terminal runtime API](../qualification/guarded-mlp-terminal-pair-v1/README.md)
 is integrated after 1,119 KFD tests, 658 unchanged worker tests, ten facade
 doctests and 23 clean MI350 CPU phases. It coalesces terminal validation for

@@ -1,0 +1,126 @@
+{
+  "acceptance_threshold": null,
+  "actual_reference_terminal": null,
+  "changed_owner_functions": [
+    "main"
+  ],
+  "files": {
+    "README.md": {
+      "bytes": 1621,
+      "sha256": "11ebb79a3c28cadf671fa304effcb9b034f8230253d8c7bb88b0d780f884e780"
+    },
+    "common.py": {
+      "bytes": 3172,
+      "sha256": "445c602dd0d237beb2ebef62446d1d2b34283367b68529736a890640ae185256"
+    },
+    "diagnostics.py": {
+      "bytes": 5084,
+      "sha256": "38cee89882d13dce81a992a64d4931c52a6f5b0b2dc77f5cddf1fc7cfe37ccaf"
+    },
+    "framework_reference.py": {
+      "bytes": 23768,
+      "sha256": "613579c7c84ed9b6f94abf6864c9934b72331dd001bf6badb973ab4576f4db97"
+    },
+    "inputs.json": {
+      "bytes": 3780,
+      "sha256": "22bdc4f09fa6f6eddc6e583a98d9c13caec56718ab2979612c0cf2e6eac5c592"
+    },
+    "launch.py": {
+      "bytes": 22083,
+      "sha256": "980977204c036815186a757865361340ff88b52004daf0a0d729ebff9dbdfa54"
+    },
+    "long_reference.py": {
+      "bytes": 23875,
+      "sha256": "242abaa1662372ec999d6d056272646ede14ed8285223bebb293d1a64c17c9cf"
+    },
+    "owned.py": {
+      "bytes": 30433,
+      "sha256": "ab41af455396322303bb8ebd4132e680affc3bdc5830608fad36736c92024583"
+    },
+    "prompt-workload.json": {
+      "bytes": 11462,
+      "sha256": "2fafb955e87c60c992e65922afc938d8dc14d9e6fbcd4d0d91d68eddcd73aee8"
+    },
+    "reference.py": {
+      "bytes": 11388,
+      "sha256": "466028fe6061de915bd852328030e9ea81a0b0874e4305563ecc78f0073b1d7b"
+    },
+    "run.py": {
+      "bytes": 16511,
+      "sha256": "00d35660cddb3df93ab78d0dd5753258a6e3e9b8a07490e65be77cb1761db7b9"
+    },
+    "test_reference.py": {
+      "bytes": 14785,
+      "sha256": "c6279daff8b22f8b831e4236d9832e9cd0abfd7c1b8a2ecb38dcdd970d21d0b3"
+    }
+  },
+  "framework_forward_calls_planned": 80,
+  "generated_tokens": 0,
+  "gpu_execution": false,
+  "native_captures": null,
+  "native_receipt": null,
+  "numerical_acceptance": false,
+  "performance_claim": false,
+  "positions_per_pass": 40,
+  "predecessor_owner": {
+    "bytes": 22034,
+    "sha256": "bdb381e6296b724a3deb2f98cca9f59a5e0844c0db149b4ad6cfac1d49bc5c26"
+  },
+  "predecessor_source_manifest": {
+    "bytes": 4695,
+    "sha256": "97dcb5a8dd5e6c986cd8fa792670ab184d77dfeaeb2c742d4a837d07723297ca"
+  },
+  "prompt_tokens": 2048,
+  "reference_passes": 2,
+  "schema": "ferric-readiness40-position5-reference-source-v1",
+  "selected_positions": [
+    0,
+    5,
+    16,
+    39
+  ],
+  "source_only": true,
+  "tests": [
+    "test_reference.ReferenceTests.test_authentic_prompt_roles_and_full_count",
+    "test_reference.ReferenceTests.test_boolean_ids_and_wrong_model_lineage_refused",
+    "test_reference.ReferenceTests.test_capture_hooks_removed_even_when_removal_fails",
+    "test_reference.ReferenceTests.test_capture_missing_duplicate_and_norm_join_refused",
+    "test_reference.ReferenceTests.test_container_exact_readonly_mounts_and_no_network",
+    "test_reference.ReferenceTests.test_container_named_user_offline_and_single_gpu",
+    "test_reference.ReferenceTests.test_forty_selected_positions_and_repeat_gate",
+    "test_reference.ReferenceTests.test_input_history_never_uses_previous_prediction",
+    "test_reference.ReferenceTests.test_metric_byte_difference_does_not_create_acceptance",
+    "test_reference.ReferenceTests.test_nonfinite_shape_and_argmax_refused",
+    "test_reference.ReferenceTests.test_prompt_mutation_and_workload_join_refused",
+    "test_reference.ReferenceTests.test_repeat_payload_logit_and_cache_drift_refused",
+    "test_reference.ReferenceTests.test_retirement_ignores_failed_workload_storage",
+    "test_reference.ReferenceTests.test_retirement_signal_deferred_and_recorded",
+    "test_reference.ReferenceTests.test_retirement_uses_separate_deadline",
+    "test_reference.ReferenceTests.test_selected_byte_hash_or_role_mismatch_refused",
+    "test_reference.ReferenceTests.test_unittest_census_accepts_both_supported_spellings",
+    "test_reference.ReferenceTests.test_work_signal_raises_between_cli_calls",
+    "test_reference.ReferenceTests.test_wrong_container_owner_or_image_refused",
+    "test_reference.ReferenceTests.test_wrong_selection_and_trailing_bytes_refused"
+  ],
+  "tests_executed": false,
+  "unchanged_helpers": [
+    "common.py",
+    "owned.py",
+    "long_reference.py",
+    "framework_reference.py",
+    "diagnostics.py"
+  ],
+  "unchanged_owner_functions": [
+    "OwnerSignals",
+    "build_command",
+    "command",
+    "container_environment",
+    "idle",
+    "leaf_guard",
+    "owned_container",
+    "test_census",
+    "topology",
+    "tree",
+    "writable_bounds"
+  ]
+}

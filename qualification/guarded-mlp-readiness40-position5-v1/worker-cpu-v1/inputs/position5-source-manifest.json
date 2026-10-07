@@ -1,0 +1,234 @@
+{
+  "base_commit": "b68a737335508493fbc469c48726ff21af27c002",
+  "conditional_parent": {
+    "library_inventory": 909,
+    "phases": 60,
+    "selected_passed": 433,
+    "selected_scopes": 51
+  },
+  "conditional_worker": {
+    "ignored": 4,
+    "inventory": 667,
+    "library_passed": 646,
+    "passed": 663,
+    "readiness_integration_passed": 2
+  },
+  "default_profile_changed": false,
+  "diagnostic_selected": [
+    0,
+    5,
+    16,
+    39
+  ],
+  "files": [
+    {
+      "after": {
+        "bytes": 3865,
+        "sha256": "c3e0592c0b4e1dd69e81f89079d65720cd73360c5e63a695fca0e359c14f309d"
+      },
+      "before": {
+        "bytes": 3098,
+        "sha256": "cbc2107d5ab6ead2c1681ccade3de88df1443bcd874c55785ec849c78c8a0382"
+      },
+      "path": "adapters/m1-engineering-execution-v1/src/bin/ferric-qwen3-guarded-mlp-readiness-engineering.rs",
+      "repository": "ferric"
+    },
+    {
+      "after": {
+        "bytes": 20857,
+        "sha256": "664e93f203c9166f9bb0c8f52f8873d73275d2305853bce5ea9e9908beb83dff"
+      },
+      "before": {
+        "bytes": 19279,
+        "sha256": "81b2e0cbbd0370cea7664e8cca51e8ddd24106eb28696ff11f30c61a4d323705"
+      },
+      "path": "adapters/m1-engineering-execution-v1/src/tp_finite_client/long/readiness.rs",
+      "repository": "ferric"
+    },
+    {
+      "after": {
+        "bytes": 12318,
+        "sha256": "2581e1d732f140e449dfd23af9637135c3bf5af3e780eacc87dbf2185a4328b3"
+      },
+      "before": {
+        "bytes": 12095,
+        "sha256": "d3c9dc373e623f1b82c0344896bb93fb27af437d301cd4f34cea58cc6adaae43"
+      },
+      "path": "adapters/m1-engineering-execution-v1/src/tp_finite_client/long/readiness_evidence.rs",
+      "repository": "ferric"
+    },
+    {
+      "after": {
+        "bytes": 14455,
+        "sha256": "01811444b5938c2146a7f53ec4b68e578559405edb394b71821d55619564311d"
+      },
+      "before": {
+        "bytes": 10100,
+        "sha256": "d494654fc3fcc6b17c1811c305ad0e8a1ea11791623319318e292e591853506d"
+      },
+      "path": "adapters/m1-engineering-execution-v1/src/tp_finite_client/long/readiness_tests.rs",
+      "repository": "ferric"
+    },
+    {
+      "after": {
+        "bytes": 27097,
+        "sha256": "b9bd7dde4d49e84599dd6a6b226118b0d3fc0f3bda936a7a4c46e69c70c26ad2"
+      },
+      "before": {
+        "bytes": 26955,
+        "sha256": "4b8108cd5f38063619350c20c243a98ab92299910bb0134a47549a934e36ba87"
+      },
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/finite_guarded_mlp_long_wire_v2.rs",
+      "repository": "ferric"
+    },
+    {
+      "after": {
+        "bytes": 18878,
+        "sha256": "4b30751189a724c14eea0a63bbb0f6dc53bec3a4130447fe51106f29097df91f"
+      },
+      "before": {
+        "bytes": 18001,
+        "sha256": "ddce15307726173077739403d92c8679b8c91bb51e0258a9f9e26efc4b953ea7"
+      },
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/finite_guarded_mlp_long_wire_v2_tests.rs",
+      "repository": "ferric"
+    },
+    {
+      "after": {
+        "bytes": 7653,
+        "sha256": "3c406c68acc402d902aa37fe8303a13ede9719e6db35b18a12d4de521249c35b"
+      },
+      "before": {
+        "bytes": 6266,
+        "sha256": "649454371c2060f77c432ccc8162fdcc9921ed4fee2061afa297ee1d9535e542"
+      },
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/finite_guarded_mlp_readiness_wire_v1.rs",
+      "repository": "ferric"
+    },
+    {
+      "after": {
+        "bytes": 3745,
+        "sha256": "b021b660430d56101f2d93f50d02c9af50b1acd963e1f57e4d68b9722515a5c1"
+      },
+      "before": {
+        "bytes": 2876,
+        "sha256": "4c0bc41316f16e37db3590aaaab8d1d08faac02c3c719e8eef44026dac6a29d6"
+      },
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/finite_guarded_mlp_readiness_wire_v1_tests.rs",
+      "repository": "ferric"
+    },
+    {
+      "after": {
+        "bytes": 17496,
+        "sha256": "7335c76446024cb0d619d91eeb8b4c9298fe35cc0f18da4217b52f85dc167a3a"
+      },
+      "before": {
+        "bytes": 16978,
+        "sha256": "6ceaa2f2a965e01db14131ff7046347d1812b03a7fb1050561262d1735a9be52"
+      },
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/main.rs",
+      "repository": "ferric"
+    },
+    {
+      "after": {
+        "bytes": 8238,
+        "sha256": "856fc6d43dfbf1ba156b684378f9f3846f0a482565fdc7e372d9ccf7e805f2b5"
+      },
+      "before": {
+        "bytes": 7017,
+        "sha256": "bed0bbdab37ceb0e9cf6747892f20080f2d43f03373f366379d3549cb64039c9"
+      },
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_guarded_mlp_readiness_cli_v1.rs",
+      "repository": "ferric"
+    },
+    {
+      "after": {
+        "bytes": 9282,
+        "sha256": "82e5ffa7b13d9b341d7e16728d6b8d66246d0ba46758371ce1f5b9b228f3049b"
+      },
+      "before": {
+        "bytes": 7599,
+        "sha256": "3c9bfcac61d096a45b6e310abe5e3bc0d242d4046647ce6e9b78966dd11e6698"
+      },
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_guarded_mlp_readiness_cli_v1_tests.rs",
+      "repository": "ferric"
+    },
+    {
+      "after": {
+        "bytes": 16560,
+        "sha256": "88ef194f01d31c2a6eb51616f128a3e2ca2b784636472287cb24d4a1825a164e"
+      },
+      "before": {
+        "bytes": 15649,
+        "sha256": "54eeb41fbe3bbf05c184962ee009ee3aeb1f5b735012cc657d7213dd00d98b59"
+      },
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_guarded_mlp_readiness_v1.rs",
+      "repository": "ferric"
+    },
+    {
+      "after": {
+        "bytes": 5303,
+        "sha256": "3909f985590802b097b90af003e73660c376ebe15ba84f492a3e29279713b042"
+      },
+      "before": {
+        "bytes": 4484,
+        "sha256": "6fae89644fb15077de157c102d15e420a3bd987abd90ef389698711f8f38da13"
+      },
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_guarded_mlp_readiness_v1_tests.rs",
+      "repository": "ferric"
+    },
+    {
+      "after": {
+        "bytes": 3660,
+        "sha256": "a98d4a6a4b2d918c8f5c1eceafbf649685bc4f1cda8960019f4e090ad712d712"
+      },
+      "before": {
+        "bytes": 1998,
+        "sha256": "eb502afa843f0eb74a587f4c5dbea07c7fffa90bc9d2c3f213e459f6aa88ea12"
+      },
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/tests/readiness_cli.rs",
+      "repository": "ferric"
+    }
+  ],
+  "forwards": 40,
+  "generated_tokens": 0,
+  "gpu_execution": false,
+  "kernels_changed": false,
+  "new_tests": {
+    "adapters/m1-engineering-execution-v1/src/bin/ferric-qwen3-guarded-mlp-readiness-engineering.rs": [
+      "position5_parent_cli_requires_distinct_exact_flag"
+    ],
+    "adapters/m1-engineering-execution-v1/src/tp_finite_client/long/readiness_tests.rs": [
+      "position5_parent_retention_keeps_distinct_profile_and_four_capture_bound",
+      "position5_parent_selector_refuses_cross_profile_before_any_io"
+    ],
+    "adapters/tp-peer-finite-engineering-worker-v1/src/finite_guarded_mlp_long_wire_v2_tests.rs": [
+      "position5_profile_preserves_scope_and_is_domain_separated"
+    ],
+    "adapters/tp-peer-finite-engineering-worker-v1/src/finite_guarded_mlp_readiness_wire_v1_tests.rs": [
+      "position5_wire_requires_matching_schema_entry_and_close"
+    ],
+    "adapters/tp-peer-finite-engineering-worker-v1/src/native_guarded_mlp_readiness_cli_v1_tests.rs": [
+      "position5_cli_is_explicit_and_streams_exactly_four_selected_captures"
+    ],
+    "adapters/tp-peer-finite-engineering-worker-v1/src/native_guarded_mlp_readiness_v1_tests.rs": [
+      "position5_owner_profile_is_explicit_and_keeps_same_native_inputs"
+    ],
+    "adapters/tp-peer-finite-engineering-worker-v1/tests/readiness_cli.rs": [
+      "position5_executable_routes_explicit_selector_to_bootstrap"
+    ]
+  },
+  "numerical_acceptance": false,
+  "old_selected": [
+    0,
+    15,
+    16,
+    39
+  ],
+  "performance_claim": false,
+  "runtime_changed": false,
+  "schema": "ferric-readiness40-position5-source-v1",
+  "scope_limits_changed": false,
+  "source_only": true,
+  "tests_executed": false
+}

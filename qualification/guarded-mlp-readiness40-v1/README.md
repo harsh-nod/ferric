@@ -136,10 +136,18 @@ hidden state. Both argmax values are recomputed from retained logits at the
 four captured positions; elsewhere they are authenticated original records.
 No acceptance tolerance is inferred from these errors or token agreement.
 
+The [layer-by-layer plot and raw tables](numerical-report-v1/README.md)
+show all 152 tensor comparisons and all 40 argmax records. The renderer passed
+ten tests on MI350; the original metric values are preserved, with no new
+acceptance or performance claim.
+
 The next diagnostic preserves the full 40-position schedule, arithmetic and
 limits, but explicitly captures position 5 in a separately named profile.
 Common-position payloads and all 40 input/logit records must first confirm
 that changing capture selection did not change execution results.
+The [position-5 reference](../guarded-mlp-readiness40-position5-v1/README.md)
+has now completed two repeatable fresh-cache passes; its matching native
+capture and cross-run numerical diagnosis are still pending.
 
 The next gates remain resolving the numerical discrepancy, full bounded
 request execution, independent numerical acceptance, and then sustained
