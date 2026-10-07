@@ -1,0 +1,61 @@
+{
+  "cleanup_signalled": false,
+  "command": {
+    "bytes": 1150,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-bank-scoped-census-matched-timing-gpu-v228-v1/bank/parent/command.json",
+    "sha256": "ae46bcc596ec5f1281b945bca2b492a8c03116aad41e5469606c33aabc63e57d"
+  },
+  "elapsed_seconds": 480.78698242397513,
+  "exit_code": 0,
+  "gpu_execution_requested": true,
+  "lineage": [
+    {
+      "event": "owned",
+      "identity": {
+        "pgid": 935170,
+        "pid": 935170,
+        "ppid": 935080,
+        "sid": 935170,
+        "starttime": 78377619,
+        "state": "R",
+        "uid": 9661
+      },
+      "reason": "spawned-parent"
+    },
+    {
+      "event": "owned",
+      "identity": {
+        "pgid": 940611,
+        "pid": 940611,
+        "ppid": 935170,
+        "sid": 935170,
+        "starttime": 78386742,
+        "state": "S",
+        "uid": 9661
+      },
+      "reason": "ancestry"
+    }
+  ],
+  "owned_groups": [
+    935170,
+    940611
+  ],
+  "owned_groups_absent": true,
+  "owned_processes_reaped": true,
+  "reason": null,
+  "started": {
+    "bytes": 277,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-bank-scoped-census-matched-timing-gpu-v228-v1/bank/parent/started.json",
+    "sha256": "a99959ae10588ab3243819d34643bf55c2d7e9ae863fb734a07fcdfc4ba2da47"
+  },
+  "stderr": {
+    "bytes": 2425,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-bank-scoped-census-matched-timing-gpu-v228-v1/bank/parent/stderr",
+    "sha256": "d4c379deead47a7cf054aca7a826d7a8247f752371fd869613eb327fa7ba40e1"
+  },
+  "stdout": {
+    "bytes": 24384,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-bank-scoped-census-matched-timing-gpu-v228-v1/bank/parent/stdout",
+    "sha256": "e0b9cf3eecad214c8384ea0f20eb49fabe746bf79eecd757a2eea782ee85db03"
+  }
+}

@@ -18,8 +18,18 @@ now passes all 67 phases and 535 selected tests across 57 scopes in 416.111
 seconds, with seven executables built. Its seven tested Rust files are
 integrated with a complete 1,279-body source postcheck, preserving all 220
 worker bodies. The strict checker passes all 98 synthetic tests. The fresh
-same-binary bank/census GPU comparison is still pending.
-It is not a measured speedup or a Full2303 admission.
+[same-binary bank/census GPU pair](../qualification/guarded-mlp-scoped-capacity-census-v1/matched-timing-gpu-v1/README.md)
+now passes in one attempt per mode: all 40 records and four complete payloads
+match each other and the historical baseline, with healthy Close and clean
+owned-process/device postchecks. Its
+[eleven-test-qualified report](../qualification/guarded-mlp-scoped-capacity-census-v1/matched-timing-report-v1/README.md)
+shows warm-forward parent wall totals of 109.162 versus 72.476 seconds
+(33.607% lower), first-use totals 0.752% higher, and complete parent time of
+480.326 versus 445.273 seconds (7.298% lower). All 243 original archive members
+and the original archive are retained with reproducible plots and tables.
+This is one ordered host-wall pair, not GPU timing, overlap, generated-token
+throughput, repeated benchmark evidence or Full2303 admission. Both actual
+products use optimization level 2 with assertions and overflow checks retained.
 
 The preceding
 [bank-scoped rearm path](../qualification/guarded-mlp-scoped-bank-rearm-v1/README.md)

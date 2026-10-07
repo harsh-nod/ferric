@@ -1,0 +1,2214 @@
+{
+  "allocation_preflights_changed": true,
+  "categories": [
+    {
+      "bank_ns": 91218519446,
+      "category": "Source preparation",
+      "census_ns": 91431435377,
+      "census_over_bank": "1.002334",
+      "change_percent": "0.233413",
+      "difference_ns": 212915931
+    },
+    {
+      "bank_ns": 223329915629,
+      "category": "Spawn through setup",
+      "census_ns": 224441977089,
+      "census_over_bank": "1.004979",
+      "change_percent": "0.497946",
+      "difference_ns": 1112061460
+    },
+    {
+      "bank_ns": 1206213,
+      "category": "Prepare/write",
+      "census_ns": 1232981,
+      "census_over_bank": "1.022192",
+      "change_percent": "2.219177",
+      "difference_ns": 26768
+    },
+    {
+      "bank_ns": 135140425622,
+      "category": "Wait for frame",
+      "census_ns": 98650155941,
+      "census_over_bank": "0.729983",
+      "change_percent": "-27.001742",
+      "difference_ns": -36490269681
+    },
+    {
+      "bank_ns": 19877530,
+      "category": "Validate/retain/commit",
+      "census_ns": 19096942,
+      "census_over_bank": "0.960730",
+      "change_percent": "-3.926987",
+      "difference_ns": -780588
+    },
+    {
+      "bank_ns": 30064116667,
+      "category": "Close and retirement",
+      "census_ns": 30114750648,
+      "census_over_bank": "1.001684",
+      "change_percent": "0.168420",
+      "difference_ns": 50633981
+    },
+    {
+      "bank_ns": 551579451,
+      "category": "Postcheck and publication",
+      "census_ns": 614666301,
+      "census_over_bank": "1.114375",
+      "change_percent": "11.437491",
+      "difference_ns": 63086850
+    }
+  ],
+  "census_counters_are_layer_subset": true,
+  "checker_cpu": {
+    "bytes": 29548,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-bank-scoped-census-checker-cpu-v228-v1/evidence/complete.json",
+    "sha256": "50d1268c73ea34d2ebfe98b995cf56900cd51255dd44234017bbb67f94cac729"
+  },
+  "currentness_policies": {
+    "bank": "bank_scoped_warm",
+    "census": "bank_scoped_census"
+  },
+  "decimal_rounding": "six_places_round_half_even",
+  "disjoint_spans_per_case": 124,
+  "exact_integer_nanoseconds": true,
+  "forward_groups": [
+    {
+      "first_position": 0,
+      "flush_to_frame_read": {
+        "bank_ns": 25995949375,
+        "census_ns": 26191529135,
+        "census_over_bank": "1.007523",
+        "change_percent": "0.752347",
+        "difference_ns": 195579760
+      },
+      "forwards": 2,
+      "group": "First use (0-1)",
+      "last_position": 1,
+      "prepare_write": {
+        "bank_ns": 220350,
+        "census_ns": 214110,
+        "census_over_bank": "0.971681",
+        "change_percent": "-2.831858",
+        "difference_ns": -6240
+      },
+      "total": {
+        "bank_ns": 25999121127,
+        "census_ns": 26194713787,
+        "census_over_bank": "1.007523",
+        "change_percent": "0.752305",
+        "difference_ns": 195592660
+      },
+      "validate_retain_commit": {
+        "bank_ns": 2951402,
+        "census_ns": 2970542,
+        "census_over_bank": "1.006485",
+        "change_percent": "0.648505",
+        "difference_ns": 19140
+      }
+    },
+    {
+      "first_position": 2,
+      "flush_to_frame_read": {
+        "bank_ns": 109144476247,
+        "census_ns": 72458626806,
+        "census_over_bank": "0.663878",
+        "change_percent": "-33.612191",
+        "difference_ns": -36685849441
+      },
+      "forwards": 38,
+      "group": "Warm (2-39)",
+      "last_position": 39,
+      "prepare_write": {
+        "bank_ns": 985863,
+        "census_ns": 1018871,
+        "census_over_bank": "1.033481",
+        "change_percent": "3.348133",
+        "difference_ns": 33008
+      },
+      "total": {
+        "bank_ns": 109162388238,
+        "census_ns": 72475772077,
+        "census_over_bank": "0.663926",
+        "change_percent": "-33.607378",
+        "difference_ns": -36686616161
+      },
+      "validate_retain_commit": {
+        "bank_ns": 16926128,
+        "census_ns": 16126400,
+        "census_over_bank": "0.952752",
+        "change_percent": "-4.724814",
+        "difference_ns": -799728
+      }
+    },
+    {
+      "first_position": 0,
+      "flush_to_frame_read": {
+        "bank_ns": 135140425622,
+        "census_ns": 98650155941,
+        "census_over_bank": "0.729983",
+        "change_percent": "-27.001742",
+        "difference_ns": -36490269681
+      },
+      "forwards": 40,
+      "group": "All forwards",
+      "last_position": 39,
+      "prepare_write": {
+        "bank_ns": 1206213,
+        "census_ns": 1232981,
+        "census_over_bank": "1.022192",
+        "change_percent": "2.219177",
+        "difference_ns": 26768
+      },
+      "total": {
+        "bank_ns": 135161509365,
+        "census_ns": 98670485864,
+        "census_over_bank": "0.730019",
+        "change_percent": "-26.998088",
+        "difference_ns": -36491023501
+      },
+      "validate_retain_commit": {
+        "bank_ns": 19877530,
+        "census_ns": 19096942,
+        "census_over_bank": "0.960730",
+        "change_percent": "-3.926987",
+        "difference_ns": -780588
+      }
+    }
+  ],
+  "full2303_feasibility": false,
+  "general_speedup_claim": false,
+  "generated_tokens": 0,
+  "gpu_overlap_claim": false,
+  "gpu_timing": false,
+  "nested_timers_added": false,
+  "numerical_acceptance": false,
+  "one_ordered_pair": true,
+  "original_policy_bytes_retained": true,
+  "parent_host_measurement": true,
+  "performance_claim": false,
+  "policy_records": {
+    "bank": {
+      "allocation_preflights_outside_windows": true,
+      "cache_kernel_admission": false,
+      "capture_positions": [
+        0,
+        5,
+        16,
+        39
+      ],
+      "child_pid": 940611,
+      "completed_forwards": 40,
+      "counts": {
+        "banks": {
+          "after_calls": 27588,
+          "before_calls": 27588,
+          "final_generations": [
+            20,
+            20
+          ],
+          "full_discoveries": 76,
+          "generation_probes": 27550,
+          "local_checkpoints": 13718,
+          "ordinary_initial_banks": 2,
+          "scoped_rearms": 38,
+          "scoped_rearms_by_forward": [
+            0,
+            0,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ]
+        },
+        "layers": {
+          "after_calls": 540364,
+          "before_calls": 540364,
+          "full_discoveries": 2736,
+          "generation_probes": 569092,
+          "local_checkpoints": 282494,
+          "ordinary_layers": 72,
+          "scoped_layers": 1368,
+          "scoped_layers_by_forward": [
+            0,
+            0,
+            36,
+            36,
+            36,
+            36,
+            36,
+            36,
+            36,
+            36,
+            36,
+            36,
+            36,
+            36,
+            36,
+            36,
+            36,
+            36,
+            36,
+            36,
+            36,
+            36,
+            36,
+            36,
+            36,
+            36,
+            36,
+            36,
+            36,
+            36,
+            36,
+            36,
+            36,
+            36,
+            36,
+            36,
+            36,
+            36,
+            36,
+            36
+          ]
+        }
+      },
+      "default_group_policy_unchanged": true,
+      "device_ids": [
+        16366993098680759275,
+        10838076764495710945
+      ],
+      "execution_profile": "Readiness40Position5BankScopedWarmCurrentnessV2",
+      "full_entry_exit_per_scoped_bank": true,
+      "full_entry_exit_per_scoped_layer": true,
+      "full_long_workload": false,
+      "generated_tokens": [],
+      "host_observer": false,
+      "native_closed": true,
+      "numerical_acceptance": false,
+      "operational_currentness": false,
+      "paired_hidden_reads": false,
+      "paired_terminal": false,
+      "participant_local_between_boundaries": true,
+      "performance_claim": false,
+      "production_authority": false,
+      "profile_sha256": [
+        14,
+        126,
+        211,
+        242,
+        139,
+        51,
+        146,
+        62,
+        76,
+        209,
+        199,
+        128,
+        18,
+        122,
+        121,
+        49,
+        140,
+        220,
+        197,
+        217,
+        31,
+        68,
+        238,
+        3,
+        175,
+        97,
+        37,
+        24,
+        222,
+        141,
+        30,
+        8
+      ],
+      "registration_sha256": [
+        182,
+        195,
+        214,
+        162,
+        116,
+        159,
+        130,
+        65,
+        199,
+        81,
+        219,
+        196,
+        147,
+        230,
+        7,
+        244,
+        206,
+        108,
+        92,
+        57,
+        200,
+        87,
+        0,
+        163,
+        237,
+        133,
+        167,
+        90,
+        102,
+        208,
+        80,
+        171
+      ],
+      "schema": "FerricReadiness40Position5BankScopedWarmPolicyV2",
+      "scope_includes_prefix_mlp_hidden": true,
+      "scoped_bank_rearm": true,
+      "scoped_warm_currentness": true,
+      "session": [
+        73,
+        12,
+        4,
+        19,
+        48,
+        198,
+        211,
+        151,
+        42,
+        240,
+        8,
+        174,
+        126,
+        103,
+        171,
+        189,
+        14,
+        250,
+        221,
+        127,
+        105,
+        58,
+        86,
+        60,
+        53,
+        207,
+        193,
+        240,
+        210,
+        105,
+        106,
+        44
+      ],
+      "shared_full_currentness": false,
+      "temporal_equivalent_to_full": false,
+      "transcript_sha256": [
+        22,
+        107,
+        111,
+        100,
+        91,
+        244,
+        94,
+        134,
+        242,
+        252,
+        183,
+        153,
+        59,
+        85,
+        178,
+        48,
+        69,
+        170,
+        124,
+        205,
+        246,
+        9,
+        148,
+        106,
+        46,
+        248,
+        108,
+        35,
+        129,
+        208,
+        198,
+        225
+      ],
+      "worker_sha256": [
+        0,
+        190,
+        184,
+        87,
+        253,
+        0,
+        145,
+        79,
+        31,
+        48,
+        95,
+        150,
+        70,
+        194,
+        8,
+        126,
+        32,
+        144,
+        27,
+        129,
+        243,
+        50,
+        215,
+        116,
+        184,
+        33,
+        18,
+        64,
+        73,
+        126,
+        111,
+        149
+      ]
+    },
+    "census": {
+      "allocation_preflights_changed": true,
+      "allocation_preflights_outside_windows": false,
+      "cache_kernel_admission": false,
+      "capture_positions": [
+        0,
+        5,
+        16,
+        39
+      ],
+      "child_pid": 990798,
+      "completed_forwards": 40,
+      "counts": {
+        "banks": {
+          "after_calls": 27588,
+          "before_calls": 27588,
+          "final_generations": [
+            20,
+            20
+          ],
+          "full_discoveries": 76,
+          "generation_probes": 27550,
+          "local_checkpoints": 13718,
+          "ordinary_initial_banks": 2,
+          "scoped_rearms": 38,
+          "scoped_rearms_by_forward": [
+            0,
+            0,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ]
+        },
+        "census": {
+          "owner_counts": [
+            787,
+            783
+          ],
+          "preflights": 2736,
+          "rank_checkpoints": 21888,
+          "warm_layers": 1368
+        },
+        "layers": {
+          "after_calls": 561112,
+          "before_calls": 561112,
+          "full_discoveries": 2736,
+          "generation_probes": 611728,
+          "local_checkpoints": 303812,
+          "ordinary_layers": 72,
+          "scoped_layers": 1368,
+          "scoped_layers_by_forward": [
+            0,
+            0,
+            36,
+            36,
+            36,
+            36,
+            36,
+            36,
+            36,
+            36,
+            36,
+            36,
+            36,
+            36,
+            36,
+            36,
+            36,
+            36,
+            36,
+            36,
+            36,
+            36,
+            36,
+            36,
+            36,
+            36,
+            36,
+            36,
+            36,
+            36,
+            36,
+            36,
+            36,
+            36,
+            36,
+            36,
+            36,
+            36,
+            36,
+            36
+          ]
+        }
+      },
+      "default_group_policy_unchanged": true,
+      "device_ids": [
+        16366993098680759275,
+        10838076764495710945
+      ],
+      "execution_profile": "Readiness40Position5BankScopedWarmCensusCurrentnessV3",
+      "full_entry_exit_per_scoped_bank": true,
+      "full_entry_exit_per_scoped_layer": true,
+      "full_long_workload": false,
+      "generated_tokens": [],
+      "host_observer": false,
+      "native_closed": true,
+      "numerical_acceptance": false,
+      "operational_currentness": false,
+      "paired_hidden_reads": false,
+      "paired_terminal": false,
+      "participant_local_between_boundaries": true,
+      "performance_claim": false,
+      "production_authority": false,
+      "profile_sha256": [
+        79,
+        102,
+        181,
+        167,
+        165,
+        153,
+        46,
+        148,
+        138,
+        190,
+        241,
+        9,
+        195,
+        52,
+        79,
+        45,
+        33,
+        214,
+        100,
+        41,
+        153,
+        72,
+        214,
+        91,
+        158,
+        142,
+        20,
+        105,
+        4,
+        73,
+        197,
+        228
+      ],
+      "registration_sha256": [
+        108,
+        141,
+        124,
+        78,
+        75,
+        134,
+        125,
+        122,
+        214,
+        72,
+        107,
+        205,
+        152,
+        91,
+        150,
+        198,
+        56,
+        97,
+        252,
+        163,
+        146,
+        71,
+        89,
+        88,
+        187,
+        37,
+        195,
+        83,
+        158,
+        228,
+        173,
+        153
+      ],
+      "schema": "FerricReadiness40Position5BankScopedWarmCensusPolicyV3",
+      "scope_includes_prefix_mlp_hidden": true,
+      "scoped_bank_rearm": true,
+      "scoped_capacity_census": true,
+      "scoped_warm_currentness": true,
+      "session": [
+        105,
+        230,
+        57,
+        73,
+        5,
+        234,
+        28,
+        125,
+        50,
+        166,
+        88,
+        39,
+        190,
+        207,
+        239,
+        84,
+        12,
+        107,
+        28,
+        167,
+        250,
+        10,
+        180,
+        193,
+        129,
+        67,
+        208,
+        98,
+        142,
+        143,
+        200,
+        106
+      ],
+      "shared_full_currentness": false,
+      "temporal_equivalent_to_full": false,
+      "transcript_sha256": [
+        37,
+        99,
+        235,
+        27,
+        112,
+        76,
+        138,
+        211,
+        148,
+        183,
+        180,
+        155,
+        94,
+        127,
+        162,
+        146,
+        59,
+        195,
+        196,
+        9,
+        89,
+        27,
+        202,
+        252,
+        239,
+        38,
+        212,
+        68,
+        71,
+        71,
+        86,
+        142
+      ],
+      "worker_sha256": [
+        0,
+        190,
+        184,
+        87,
+        253,
+        0,
+        145,
+        79,
+        31,
+        48,
+        95,
+        150,
+        70,
+        194,
+        8,
+        126,
+        32,
+        144,
+        27,
+        129,
+        243,
+        50,
+        215,
+        116,
+        184,
+        33,
+        18,
+        64,
+        73,
+        126,
+        111,
+        149
+      ]
+    }
+  },
+  "positions": [
+    {
+      "captured": true,
+      "flush_to_frame_read": {
+        "bank_ns": 13000128019,
+        "census_ns": 13159316907,
+        "census_over_bank": "1.012245",
+        "change_percent": "1.224518",
+        "difference_ns": 159188888
+      },
+      "generation": 1,
+      "position": 0,
+      "prepare_write": {
+        "bank_ns": 176050,
+        "census_ns": 175780,
+        "census_over_bank": "0.998466",
+        "change_percent": "-0.153366",
+        "difference_ns": -270
+      },
+      "total": {
+        "bank_ns": 13002875081,
+        "census_ns": 13162137729,
+        "census_over_bank": "1.012248",
+        "change_percent": "1.224826",
+        "difference_ns": 159262648
+      },
+      "validate_retain_commit": {
+        "bank_ns": 2571012,
+        "census_ns": 2645042,
+        "census_over_bank": "1.028794",
+        "change_percent": "2.879411",
+        "difference_ns": 74030
+      }
+    },
+    {
+      "captured": false,
+      "flush_to_frame_read": {
+        "bank_ns": 12995821356,
+        "census_ns": 13032212228,
+        "census_over_bank": "1.002800",
+        "change_percent": "0.280020",
+        "difference_ns": 36390872
+      },
+      "generation": 2,
+      "position": 1,
+      "prepare_write": {
+        "bank_ns": 44300,
+        "census_ns": 38330,
+        "census_over_bank": "0.865237",
+        "change_percent": "-13.476298",
+        "difference_ns": -5970
+      },
+      "total": {
+        "bank_ns": 12996246046,
+        "census_ns": 13032576058,
+        "census_over_bank": "1.002795",
+        "change_percent": "0.279542",
+        "difference_ns": 36330012
+      },
+      "validate_retain_commit": {
+        "bank_ns": 380390,
+        "census_ns": 325500,
+        "census_over_bank": "0.855701",
+        "change_percent": "-14.429927",
+        "difference_ns": -54890
+      }
+    },
+    {
+      "captured": false,
+      "flush_to_frame_read": {
+        "bank_ns": 2872874591,
+        "census_ns": 1904350171,
+        "census_over_bank": "0.662873",
+        "change_percent": "-33.712729",
+        "difference_ns": -968524420
+      },
+      "generation": 3,
+      "position": 2,
+      "prepare_write": {
+        "bank_ns": 42570,
+        "census_ns": 36470,
+        "census_over_bank": "0.856707",
+        "change_percent": "-14.329340",
+        "difference_ns": -6100
+      },
+      "total": {
+        "bank_ns": 2873154811,
+        "census_ns": 1904603941,
+        "census_over_bank": "0.662896",
+        "change_percent": "-33.710361",
+        "difference_ns": -968550870
+      },
+      "validate_retain_commit": {
+        "bank_ns": 237650,
+        "census_ns": 217300,
+        "census_over_bank": "0.914370",
+        "change_percent": "-8.563013",
+        "difference_ns": -20350
+      }
+    },
+    {
+      "captured": false,
+      "flush_to_frame_read": {
+        "bank_ns": 2873937071,
+        "census_ns": 1904850751,
+        "census_over_bank": "0.662802",
+        "change_percent": "-33.719817",
+        "difference_ns": -969086320
+      },
+      "generation": 4,
+      "position": 3,
+      "prepare_write": {
+        "bank_ns": 22670,
+        "census_ns": 39380,
+        "census_over_bank": "1.737097",
+        "change_percent": "73.709749",
+        "difference_ns": 16710
+      },
+      "total": {
+        "bank_ns": 2874185241,
+        "census_ns": 1905166681,
+        "census_over_bank": "0.662855",
+        "change_percent": "-33.714548",
+        "difference_ns": -969018560
+      },
+      "validate_retain_commit": {
+        "bank_ns": 225500,
+        "census_ns": 276550,
+        "census_over_bank": "1.226386",
+        "change_percent": "22.638581",
+        "difference_ns": 51050
+      }
+    },
+    {
+      "captured": false,
+      "flush_to_frame_read": {
+        "bank_ns": 2883884768,
+        "census_ns": 1905097241,
+        "census_over_bank": "0.660601",
+        "change_percent": "-33.939897",
+        "difference_ns": -978787527
+      },
+      "generation": 5,
+      "position": 4,
+      "prepare_write": {
+        "bank_ns": 26600,
+        "census_ns": 29610,
+        "census_over_bank": "1.113158",
+        "change_percent": "11.315789",
+        "difference_ns": 3010
+      },
+      "total": {
+        "bank_ns": 2884121648,
+        "census_ns": 1905309351,
+        "census_over_bank": "0.660620",
+        "change_percent": "-33.937969",
+        "difference_ns": -978812297
+      },
+      "validate_retain_commit": {
+        "bank_ns": 210280,
+        "census_ns": 182500,
+        "census_over_bank": "0.867890",
+        "change_percent": "-13.210957",
+        "difference_ns": -27780
+      }
+    },
+    {
+      "captured": true,
+      "flush_to_frame_read": {
+        "bank_ns": 2877484994,
+        "census_ns": 1899194407,
+        "census_over_bank": "0.660019",
+        "change_percent": "-33.998113",
+        "difference_ns": -978290587
+      },
+      "generation": 6,
+      "position": 5,
+      "prepare_write": {
+        "bank_ns": 23750,
+        "census_ns": 24860,
+        "census_over_bank": "1.046737",
+        "change_percent": "4.673684",
+        "difference_ns": 1110
+      },
+      "total": {
+        "bank_ns": 2880054016,
+        "census_ns": 1901730049,
+        "census_over_bank": "0.660311",
+        "change_percent": "-33.968945",
+        "difference_ns": -978323967
+      },
+      "validate_retain_commit": {
+        "bank_ns": 2545272,
+        "census_ns": 2510782,
+        "census_over_bank": "0.986449",
+        "change_percent": "-1.355061",
+        "difference_ns": -34490
+      }
+    },
+    {
+      "captured": false,
+      "flush_to_frame_read": {
+        "bank_ns": 2875182322,
+        "census_ns": 1903057060,
+        "census_over_bank": "0.661891",
+        "change_percent": "-33.810908",
+        "difference_ns": -972125262
+      },
+      "generation": 7,
+      "position": 6,
+      "prepare_write": {
+        "bank_ns": 25770,
+        "census_ns": 28240,
+        "census_over_bank": "1.095848",
+        "change_percent": "9.584789",
+        "difference_ns": 2470
+      },
+      "total": {
+        "bank_ns": 2875486382,
+        "census_ns": 1903342200,
+        "census_over_bank": "0.661920",
+        "change_percent": "-33.807991",
+        "difference_ns": -972144182
+      },
+      "validate_retain_commit": {
+        "bank_ns": 278290,
+        "census_ns": 256900,
+        "census_over_bank": "0.923138",
+        "change_percent": "-7.686227",
+        "difference_ns": -21390
+      }
+    },
+    {
+      "captured": false,
+      "flush_to_frame_read": {
+        "bank_ns": 2868238118,
+        "census_ns": 1898194597,
+        "census_over_bank": "0.661798",
+        "change_percent": "-33.820188",
+        "difference_ns": -970043521
+      },
+      "generation": 8,
+      "position": 7,
+      "prepare_write": {
+        "bank_ns": 24890,
+        "census_ns": 22670,
+        "census_over_bank": "0.910808",
+        "change_percent": "-8.919245",
+        "difference_ns": -2220
+      },
+      "total": {
+        "bank_ns": 2868549638,
+        "census_ns": 1898501417,
+        "census_over_bank": "0.661833",
+        "change_percent": "-33.816679",
+        "difference_ns": -970048221
+      },
+      "validate_retain_commit": {
+        "bank_ns": 286630,
+        "census_ns": 284150,
+        "census_over_bank": "0.991348",
+        "change_percent": "-0.865227",
+        "difference_ns": -2480
+      }
+    },
+    {
+      "captured": false,
+      "flush_to_frame_read": {
+        "bank_ns": 2873643642,
+        "census_ns": 1905036171,
+        "census_over_bank": "0.662934",
+        "change_percent": "-33.706597",
+        "difference_ns": -968607471
+      },
+      "generation": 9,
+      "position": 8,
+      "prepare_write": {
+        "bank_ns": 23830,
+        "census_ns": 25610,
+        "census_over_bank": "1.074696",
+        "change_percent": "7.469576",
+        "difference_ns": 1780
+      },
+      "total": {
+        "bank_ns": 2873940792,
+        "census_ns": 1905380531,
+        "census_over_bank": "0.662985",
+        "change_percent": "-33.701469",
+        "difference_ns": -968560261
+      },
+      "validate_retain_commit": {
+        "bank_ns": 273320,
+        "census_ns": 318750,
+        "census_over_bank": "1.166215",
+        "change_percent": "16.621543",
+        "difference_ns": 45430
+      }
+    },
+    {
+      "captured": false,
+      "flush_to_frame_read": {
+        "bank_ns": 2876566403,
+        "census_ns": 1911901225,
+        "census_over_bank": "0.664647",
+        "change_percent": "-33.535300",
+        "difference_ns": -964665178
+      },
+      "generation": 10,
+      "position": 9,
+      "prepare_write": {
+        "bank_ns": 22590,
+        "census_ns": 25960,
+        "census_over_bank": "1.149181",
+        "change_percent": "14.918105",
+        "difference_ns": 3370
+      },
+      "total": {
+        "bank_ns": 2876846863,
+        "census_ns": 1912159035,
+        "census_over_bank": "0.664672",
+        "change_percent": "-33.532818",
+        "difference_ns": -964687828
+      },
+      "validate_retain_commit": {
+        "bank_ns": 257870,
+        "census_ns": 231850,
+        "census_over_bank": "0.899096",
+        "change_percent": "-10.090356",
+        "difference_ns": -26020
+      }
+    },
+    {
+      "captured": false,
+      "flush_to_frame_read": {
+        "bank_ns": 2876130273,
+        "census_ns": 1906244482,
+        "census_over_bank": "0.662781",
+        "change_percent": "-33.721901",
+        "difference_ns": -969885791
+      },
+      "generation": 11,
+      "position": 10,
+      "prepare_write": {
+        "bank_ns": 22790,
+        "census_ns": 24870,
+        "census_over_bank": "1.091268",
+        "change_percent": "9.126810",
+        "difference_ns": 2080
+      },
+      "total": {
+        "bank_ns": 2876401093,
+        "census_ns": 1906485272,
+        "census_over_bank": "0.662802",
+        "change_percent": "-33.719770",
+        "difference_ns": -969915821
+      },
+      "validate_retain_commit": {
+        "bank_ns": 248030,
+        "census_ns": 215920,
+        "census_over_bank": "0.870540",
+        "change_percent": "-12.946015",
+        "difference_ns": -32110
+      }
+    },
+    {
+      "captured": false,
+      "flush_to_frame_read": {
+        "bank_ns": 2873688752,
+        "census_ns": 1902983310,
+        "census_over_bank": "0.662209",
+        "change_percent": "-33.779074",
+        "difference_ns": -970705442
+      },
+      "generation": 12,
+      "position": 11,
+      "prepare_write": {
+        "bank_ns": 30580,
+        "census_ns": 24870,
+        "census_over_bank": "0.813277",
+        "change_percent": "-18.672335",
+        "difference_ns": -5710
+      },
+      "total": {
+        "bank_ns": 2873994602,
+        "census_ns": 1903250930,
+        "census_over_bank": "0.662232",
+        "change_percent": "-33.776809",
+        "difference_ns": -970743672
+      },
+      "validate_retain_commit": {
+        "bank_ns": 275270,
+        "census_ns": 242750,
+        "census_over_bank": "0.881861",
+        "change_percent": "-11.813855",
+        "difference_ns": -32520
+      }
+    },
+    {
+      "captured": false,
+      "flush_to_frame_read": {
+        "bank_ns": 2875712982,
+        "census_ns": 1904028040,
+        "census_over_bank": "0.662106",
+        "change_percent": "-33.789358",
+        "difference_ns": -971684942
+      },
+      "generation": 13,
+      "position": 12,
+      "prepare_write": {
+        "bank_ns": 42140,
+        "census_ns": 26100,
+        "census_over_bank": "0.619364",
+        "change_percent": "-38.063598",
+        "difference_ns": -16040
+      },
+      "total": {
+        "bank_ns": 2875996342,
+        "census_ns": 1904306290,
+        "census_over_bank": "0.662138",
+        "change_percent": "-33.786206",
+        "difference_ns": -971690052
+      },
+      "validate_retain_commit": {
+        "bank_ns": 241220,
+        "census_ns": 252150,
+        "census_over_bank": "1.045311",
+        "change_percent": "4.531133",
+        "difference_ns": 10930
+      }
+    },
+    {
+      "captured": false,
+      "flush_to_frame_read": {
+        "bank_ns": 2868864468,
+        "census_ns": 1907625333,
+        "census_over_bank": "0.664941",
+        "change_percent": "-33.505910",
+        "difference_ns": -961239135
+      },
+      "generation": 14,
+      "position": 13,
+      "prepare_write": {
+        "bank_ns": 28161,
+        "census_ns": 27380,
+        "census_over_bank": "0.972267",
+        "change_percent": "-2.773339",
+        "difference_ns": -781
+      },
+      "total": {
+        "bank_ns": 2869099149,
+        "census_ns": 1907963743,
+        "census_over_bank": "0.665004",
+        "change_percent": "-33.499554",
+        "difference_ns": -961135406
+      },
+      "validate_retain_commit": {
+        "bank_ns": 206520,
+        "census_ns": 311030,
+        "census_over_bank": "1.506053",
+        "change_percent": "50.605268",
+        "difference_ns": 104510
+      }
+    },
+    {
+      "captured": false,
+      "flush_to_frame_read": {
+        "bank_ns": 2865604266,
+        "census_ns": 1911088175,
+        "census_over_bank": "0.666906",
+        "change_percent": "-33.309418",
+        "difference_ns": -954516091
+      },
+      "generation": 15,
+      "position": 14,
+      "prepare_write": {
+        "bank_ns": 23310,
+        "census_ns": 24980,
+        "census_over_bank": "1.071643",
+        "change_percent": "7.164307",
+        "difference_ns": 1670
+      },
+      "total": {
+        "bank_ns": 2865833047,
+        "census_ns": 1911378785,
+        "census_over_bank": "0.666954",
+        "change_percent": "-33.304601",
+        "difference_ns": -954454262
+      },
+      "validate_retain_commit": {
+        "bank_ns": 205471,
+        "census_ns": 265630,
+        "census_over_bank": "1.292786",
+        "change_percent": "29.278584",
+        "difference_ns": 60159
+      }
+    },
+    {
+      "captured": false,
+      "flush_to_frame_read": {
+        "bank_ns": 2861840434,
+        "census_ns": 1910416214,
+        "census_over_bank": "0.667548",
+        "change_percent": "-33.245188",
+        "difference_ns": -951424220
+      },
+      "generation": 16,
+      "position": 15,
+      "prepare_write": {
+        "bank_ns": 22050,
+        "census_ns": 23880,
+        "census_over_bank": "1.082993",
+        "change_percent": "8.299320",
+        "difference_ns": 1830
+      },
+      "total": {
+        "bank_ns": 2862079234,
+        "census_ns": 1910614984,
+        "census_over_bank": "0.667562",
+        "change_percent": "-33.243812",
+        "difference_ns": -951464250
+      },
+      "validate_retain_commit": {
+        "bank_ns": 216750,
+        "census_ns": 174890,
+        "census_over_bank": "0.806874",
+        "change_percent": "-19.312572",
+        "difference_ns": -41860
+      }
+    },
+    {
+      "captured": true,
+      "flush_to_frame_read": {
+        "bank_ns": 2865903536,
+        "census_ns": 1913402426,
+        "census_over_bank": "0.667644",
+        "change_percent": "-33.235631",
+        "difference_ns": -952501110
+      },
+      "generation": 17,
+      "position": 16,
+      "prepare_write": {
+        "bank_ns": 22260,
+        "census_ns": 23050,
+        "census_over_bank": "1.035490",
+        "change_percent": "3.548967",
+        "difference_ns": 790
+      },
+      "total": {
+        "bank_ns": 2868520988,
+        "census_ns": 1915996868,
+        "census_over_bank": "0.667939",
+        "change_percent": "-33.206106",
+        "difference_ns": -952524120
+      },
+      "validate_retain_commit": {
+        "bank_ns": 2595192,
+        "census_ns": 2571392,
+        "census_over_bank": "0.990829",
+        "change_percent": "-0.917081",
+        "difference_ns": -23800
+      }
+    },
+    {
+      "captured": false,
+      "flush_to_frame_read": {
+        "bank_ns": 2874915742,
+        "census_ns": 1913182146,
+        "census_over_bank": "0.665474",
+        "change_percent": "-33.452584",
+        "difference_ns": -961733596
+      },
+      "generation": 18,
+      "position": 17,
+      "prepare_write": {
+        "bank_ns": 22450,
+        "census_ns": 32480,
+        "census_over_bank": "1.446771",
+        "change_percent": "44.677060",
+        "difference_ns": 10030
+      },
+      "total": {
+        "bank_ns": 2875293462,
+        "census_ns": 1913486736,
+        "census_over_bank": "0.665493",
+        "change_percent": "-33.450733",
+        "difference_ns": -961806726
+      },
+      "validate_retain_commit": {
+        "bank_ns": 355270,
+        "census_ns": 272110,
+        "census_over_bank": "0.765925",
+        "change_percent": "-23.407549",
+        "difference_ns": -83160
+      }
+    },
+    {
+      "captured": false,
+      "flush_to_frame_read": {
+        "bank_ns": 2870395790,
+        "census_ns": 1906301502,
+        "census_over_bank": "0.664125",
+        "change_percent": "-33.587504",
+        "difference_ns": -964094288
+      },
+      "generation": 19,
+      "position": 18,
+      "prepare_write": {
+        "bank_ns": 25960,
+        "census_ns": 24330,
+        "census_over_bank": "0.937211",
+        "change_percent": "-6.278891",
+        "difference_ns": -1630
+      },
+      "total": {
+        "bank_ns": 2870714780,
+        "census_ns": 1906560662,
+        "census_over_bank": "0.664141",
+        "change_percent": "-33.585856",
+        "difference_ns": -964154118
+      },
+      "validate_retain_commit": {
+        "bank_ns": 293030,
+        "census_ns": 234830,
+        "census_over_bank": "0.801386",
+        "change_percent": "-19.861448",
+        "difference_ns": -58200
+      }
+    },
+    {
+      "captured": false,
+      "flush_to_frame_read": {
+        "bank_ns": 2867175347,
+        "census_ns": 1909338543,
+        "census_over_bank": "0.665930",
+        "change_percent": "-33.406984",
+        "difference_ns": -957836804
+      },
+      "generation": 20,
+      "position": 19,
+      "prepare_write": {
+        "bank_ns": 23670,
+        "census_ns": 22810,
+        "census_over_bank": "0.963667",
+        "change_percent": "-3.633291",
+        "difference_ns": -860
+      },
+      "total": {
+        "bank_ns": 2867445517,
+        "census_ns": 1909612074,
+        "census_over_bank": "0.665963",
+        "change_percent": "-33.403719",
+        "difference_ns": -957833443
+      },
+      "validate_retain_commit": {
+        "bank_ns": 246500,
+        "census_ns": 250721,
+        "census_over_bank": "1.017124",
+        "change_percent": "1.712373",
+        "difference_ns": 4221
+      }
+    },
+    {
+      "captured": false,
+      "flush_to_frame_read": {
+        "bank_ns": 2870514170,
+        "census_ns": 1910480404,
+        "census_over_bank": "0.665553",
+        "change_percent": "-33.444662",
+        "difference_ns": -960033766
+      },
+      "generation": 21,
+      "position": 20,
+      "prepare_write": {
+        "bank_ns": 24280,
+        "census_ns": 24750,
+        "census_over_bank": "1.019357",
+        "change_percent": "1.935750",
+        "difference_ns": 470
+      },
+      "total": {
+        "bank_ns": 2870838800,
+        "census_ns": 1910692174,
+        "census_over_bank": "0.665552",
+        "change_percent": "-33.444812",
+        "difference_ns": -960146626
+      },
+      "validate_retain_commit": {
+        "bank_ns": 300350,
+        "census_ns": 187020,
+        "census_over_bank": "0.622674",
+        "change_percent": "-37.732645",
+        "difference_ns": -113330
+      }
+    },
+    {
+      "captured": false,
+      "flush_to_frame_read": {
+        "bank_ns": 2874569112,
+        "census_ns": 1908996113,
+        "census_over_bank": "0.664098",
+        "change_percent": "-33.590182",
+        "difference_ns": -965572999
+      },
+      "generation": 22,
+      "position": 21,
+      "prepare_write": {
+        "bank_ns": 25190,
+        "census_ns": 22380,
+        "census_over_bank": "0.888448",
+        "change_percent": "-11.155220",
+        "difference_ns": -2810
+      },
+      "total": {
+        "bank_ns": 2874830372,
+        "census_ns": 1909221454,
+        "census_over_bank": "0.664116",
+        "change_percent": "-33.588379",
+        "difference_ns": -965608918
+      },
+      "validate_retain_commit": {
+        "bank_ns": 236070,
+        "census_ns": 202961,
+        "census_over_bank": "0.859749",
+        "change_percent": "-14.025077",
+        "difference_ns": -33109
+      }
+    },
+    {
+      "captured": false,
+      "flush_to_frame_read": {
+        "bank_ns": 2871430690,
+        "census_ns": 1904259540,
+        "census_over_bank": "0.663174",
+        "change_percent": "-33.682553",
+        "difference_ns": -967171150
+      },
+      "generation": 23,
+      "position": 22,
+      "prepare_write": {
+        "bank_ns": 24120,
+        "census_ns": 28320,
+        "census_over_bank": "1.174129",
+        "change_percent": "17.412935",
+        "difference_ns": 4200
+      },
+      "total": {
+        "bank_ns": 2871796110,
+        "census_ns": 1904542380,
+        "census_over_bank": "0.663189",
+        "change_percent": "-33.681142",
+        "difference_ns": -967253730
+      },
+      "validate_retain_commit": {
+        "bank_ns": 341300,
+        "census_ns": 254520,
+        "census_over_bank": "0.745737",
+        "change_percent": "-25.426311",
+        "difference_ns": -86780
+      }
+    },
+    {
+      "captured": false,
+      "flush_to_frame_read": {
+        "bank_ns": 2875382973,
+        "census_ns": 1899223977,
+        "census_over_bank": "0.660512",
+        "change_percent": "-33.948834",
+        "difference_ns": -976158996
+      },
+      "generation": 24,
+      "position": 23,
+      "prepare_write": {
+        "bank_ns": 24380,
+        "census_ns": 26260,
+        "census_over_bank": "1.077112",
+        "change_percent": "7.711239",
+        "difference_ns": 1880
+      },
+      "total": {
+        "bank_ns": 2875657443,
+        "census_ns": 1899499058,
+        "census_over_bank": "0.660544",
+        "change_percent": "-33.945573",
+        "difference_ns": -976158385
+      },
+      "validate_retain_commit": {
+        "bank_ns": 250090,
+        "census_ns": 248821,
+        "census_over_bank": "0.994926",
+        "change_percent": "-0.507417",
+        "difference_ns": -1269
+      }
+    },
+    {
+      "captured": false,
+      "flush_to_frame_read": {
+        "bank_ns": 2859357592,
+        "census_ns": 1911016954,
+        "census_over_bank": "0.668338",
+        "change_percent": "-33.166213",
+        "difference_ns": -948340638
+      },
+      "generation": 25,
+      "position": 24,
+      "prepare_write": {
+        "bank_ns": 24470,
+        "census_ns": 25140,
+        "census_over_bank": "1.027380",
+        "change_percent": "2.738047",
+        "difference_ns": 670
+      },
+      "total": {
+        "bank_ns": 2859688272,
+        "census_ns": 1911294394,
+        "census_over_bank": "0.668358",
+        "change_percent": "-33.164240",
+        "difference_ns": -948393878
+      },
+      "validate_retain_commit": {
+        "bank_ns": 306210,
+        "census_ns": 252300,
+        "census_over_bank": "0.823944",
+        "change_percent": "-17.605565",
+        "difference_ns": -53910
+      }
+    },
+    {
+      "captured": false,
+      "flush_to_frame_read": {
+        "bank_ns": 2873049751,
+        "census_ns": 1906877562,
+        "census_over_bank": "0.663712",
+        "change_percent": "-33.628801",
+        "difference_ns": -966172189
+      },
+      "generation": 26,
+      "position": 25,
+      "prepare_write": {
+        "bank_ns": 23930,
+        "census_ns": 23780,
+        "census_over_bank": "0.993732",
+        "change_percent": "-0.626828",
+        "difference_ns": -150
+      },
+      "total": {
+        "bank_ns": 2873383442,
+        "census_ns": 1907172523,
+        "census_over_bank": "0.663738",
+        "change_percent": "-33.626244",
+        "difference_ns": -966210919
+      },
+      "validate_retain_commit": {
+        "bank_ns": 309761,
+        "census_ns": 271181,
+        "census_over_bank": "0.875452",
+        "change_percent": "-12.454764",
+        "difference_ns": -38580
+      }
+    },
+    {
+      "captured": false,
+      "flush_to_frame_read": {
+        "bank_ns": 2867693117,
+        "census_ns": 1909840904,
+        "census_over_bank": "0.665985",
+        "change_percent": "-33.401489",
+        "difference_ns": -957852213
+      },
+      "generation": 27,
+      "position": 26,
+      "prepare_write": {
+        "bank_ns": 23180,
+        "census_ns": 33770,
+        "census_over_bank": "1.456859",
+        "change_percent": "45.685936",
+        "difference_ns": 10590
+      },
+      "total": {
+        "bank_ns": 2867955317,
+        "census_ns": 1910123644,
+        "census_over_bank": "0.666023",
+        "change_percent": "-33.397720",
+        "difference_ns": -957831673
+      },
+      "validate_retain_commit": {
+        "bank_ns": 239020,
+        "census_ns": 248970,
+        "census_over_bank": "1.041628",
+        "change_percent": "4.162832",
+        "difference_ns": 9950
+      }
+    },
+    {
+      "captured": false,
+      "flush_to_frame_read": {
+        "bank_ns": 2877958064,
+        "census_ns": 1906880132,
+        "census_over_bank": "0.662581",
+        "change_percent": "-33.741907",
+        "difference_ns": -971077932
+      },
+      "generation": 28,
+      "position": 27,
+      "prepare_write": {
+        "bank_ns": 25150,
+        "census_ns": 35540,
+        "census_over_bank": "1.413121",
+        "change_percent": "41.312127",
+        "difference_ns": 10390
+      },
+      "total": {
+        "bank_ns": 2878204384,
+        "census_ns": 1907131082,
+        "census_over_bank": "0.662611",
+        "change_percent": "-33.738858",
+        "difference_ns": -971073302
+      },
+      "validate_retain_commit": {
+        "bank_ns": 221170,
+        "census_ns": 215410,
+        "census_over_bank": "0.973957",
+        "change_percent": "-2.604332",
+        "difference_ns": -5760
+      }
+    },
+    {
+      "captured": false,
+      "flush_to_frame_read": {
+        "bank_ns": 2872270220,
+        "census_ns": 1901494029,
+        "census_over_bank": "0.662018",
+        "change_percent": "-33.798219",
+        "difference_ns": -970776191
+      },
+      "generation": 29,
+      "position": 28,
+      "prepare_write": {
+        "bank_ns": 23931,
+        "census_ns": 31410,
+        "census_over_bank": "1.312524",
+        "change_percent": "31.252351",
+        "difference_ns": 7479
+      },
+      "total": {
+        "bank_ns": 2872543951,
+        "census_ns": 1901788179,
+        "census_over_bank": "0.662057",
+        "change_percent": "-33.794288",
+        "difference_ns": -970755772
+      },
+      "validate_retain_commit": {
+        "bank_ns": 249800,
+        "census_ns": 262740,
+        "census_over_bank": "1.051801",
+        "change_percent": "5.180144",
+        "difference_ns": 12940
+      }
+    },
+    {
+      "captured": false,
+      "flush_to_frame_read": {
+        "bank_ns": 2870660790,
+        "census_ns": 1903188400,
+        "census_over_bank": "0.662979",
+        "change_percent": "-33.702080",
+        "difference_ns": -967472390
+      },
+      "generation": 30,
+      "position": 29,
+      "prepare_write": {
+        "bank_ns": 25550,
+        "census_ns": 25770,
+        "census_over_bank": "1.008611",
+        "change_percent": "0.861057",
+        "difference_ns": 220
+      },
+      "total": {
+        "bank_ns": 2870969520,
+        "census_ns": 1903437130,
+        "census_over_bank": "0.662995",
+        "change_percent": "-33.700546",
+        "difference_ns": -967532390
+      },
+      "validate_retain_commit": {
+        "bank_ns": 283180,
+        "census_ns": 222960,
+        "census_over_bank": "0.787344",
+        "change_percent": "-21.265626",
+        "difference_ns": -60220
+      }
+    },
+    {
+      "captured": false,
+      "flush_to_frame_read": {
+        "bank_ns": 2875809453,
+        "census_ns": 1904265860,
+        "census_over_bank": "0.662167",
+        "change_percent": "-33.783309",
+        "difference_ns": -971543593
+      },
+      "generation": 31,
+      "position": 30,
+      "prepare_write": {
+        "bank_ns": 23980,
+        "census_ns": 24250,
+        "census_over_bank": "1.011259",
+        "change_percent": "1.125938",
+        "difference_ns": 270
+      },
+      "total": {
+        "bank_ns": 2876077803,
+        "census_ns": 1904531890,
+        "census_over_bank": "0.662198",
+        "change_percent": "-33.780238",
+        "difference_ns": -971545913
+      },
+      "validate_retain_commit": {
+        "bank_ns": 244370,
+        "census_ns": 241780,
+        "census_over_bank": "0.989401",
+        "change_percent": "-1.059868",
+        "difference_ns": -2590
+      }
+    },
+    {
+      "captured": false,
+      "flush_to_frame_read": {
+        "bank_ns": 2873278351,
+        "census_ns": 1908492263,
+        "census_over_bank": "0.664221",
+        "change_percent": "-33.577885",
+        "difference_ns": -964786088
+      },
+      "generation": 32,
+      "position": 31,
+      "prepare_write": {
+        "bank_ns": 21920,
+        "census_ns": 27630,
+        "census_over_bank": "1.260493",
+        "change_percent": "26.049270",
+        "difference_ns": 5710
+      },
+      "total": {
+        "bank_ns": 2873553451,
+        "census_ns": 1908719344,
+        "census_over_bank": "0.664237",
+        "change_percent": "-33.576341",
+        "difference_ns": -964834107
+      },
+      "validate_retain_commit": {
+        "bank_ns": 253180,
+        "census_ns": 199451,
+        "census_over_bank": "0.787783",
+        "change_percent": "-21.221660",
+        "difference_ns": -53729
+      }
+    },
+    {
+      "captured": false,
+      "flush_to_frame_read": {
+        "bank_ns": 2877069023,
+        "census_ns": 1909631933,
+        "census_over_bank": "0.663742",
+        "change_percent": "-33.625787",
+        "difference_ns": -967437090
+      },
+      "generation": 33,
+      "position": 32,
+      "prepare_write": {
+        "bank_ns": 25500,
+        "census_ns": 27250,
+        "census_over_bank": "1.068627",
+        "change_percent": "6.862745",
+        "difference_ns": 1750
+      },
+      "total": {
+        "bank_ns": 2877306994,
+        "census_ns": 1909919253,
+        "census_over_bank": "0.663787",
+        "change_percent": "-33.621290",
+        "difference_ns": -967387741
+      },
+      "validate_retain_commit": {
+        "bank_ns": 212471,
+        "census_ns": 260070,
+        "census_over_bank": "1.224026",
+        "change_percent": "22.402587",
+        "difference_ns": 47599
+      }
+    },
+    {
+      "captured": false,
+      "flush_to_frame_read": {
+        "bank_ns": 2870563129,
+        "census_ns": 1909727114,
+        "census_over_bank": "0.665280",
+        "change_percent": "-33.472039",
+        "difference_ns": -960836015
+      },
+      "generation": 34,
+      "position": 33,
+      "prepare_write": {
+        "bank_ns": 24950,
+        "census_ns": 27600,
+        "census_over_bank": "1.106212",
+        "change_percent": "10.621242",
+        "difference_ns": 2650
+      },
+      "total": {
+        "bank_ns": 2870899739,
+        "census_ns": 1910084274,
+        "census_over_bank": "0.665326",
+        "change_percent": "-33.467399",
+        "difference_ns": -960815465
+      },
+      "validate_retain_commit": {
+        "bank_ns": 311660,
+        "census_ns": 329560,
+        "census_over_bank": "1.057434",
+        "change_percent": "5.743438",
+        "difference_ns": 17900
+      }
+    },
+    {
+      "captured": false,
+      "flush_to_frame_read": {
+        "bank_ns": 2871628620,
+        "census_ns": 1903805120,
+        "census_over_bank": "0.662971",
+        "change_percent": "-33.702948",
+        "difference_ns": -967823500
+      },
+      "generation": 35,
+      "position": 34,
+      "prepare_write": {
+        "bank_ns": 26850,
+        "census_ns": 29951,
+        "census_over_bank": "1.115493",
+        "change_percent": "11.549348",
+        "difference_ns": 3101
+      },
+      "total": {
+        "bank_ns": 2871949000,
+        "census_ns": 1904086961,
+        "census_over_bank": "0.662995",
+        "change_percent": "-33.700530",
+        "difference_ns": -967862039
+      },
+      "validate_retain_commit": {
+        "bank_ns": 293530,
+        "census_ns": 251890,
+        "census_over_bank": "0.858141",
+        "change_percent": "-14.185944",
+        "difference_ns": -41640
+      }
+    },
+    {
+      "captured": false,
+      "flush_to_frame_read": {
+        "bank_ns": 2865851326,
+        "census_ns": 1911346005,
+        "census_over_bank": "0.666938",
+        "change_percent": "-33.306170",
+        "difference_ns": -954505321
+      },
+      "generation": 36,
+      "position": 35,
+      "prepare_write": {
+        "bank_ns": 24051,
+        "census_ns": 24660,
+        "census_over_bank": "1.025321",
+        "change_percent": "2.532119",
+        "difference_ns": 609
+      },
+      "total": {
+        "bank_ns": 2866157727,
+        "census_ns": 1911597815,
+        "census_over_bank": "0.666955",
+        "change_percent": "-33.304514",
+        "difference_ns": -954559912
+      },
+      "validate_retain_commit": {
+        "bank_ns": 282350,
+        "census_ns": 227150,
+        "census_over_bank": "0.804498",
+        "change_percent": "-19.550204",
+        "difference_ns": -55200
+      }
+    },
+    {
+      "captured": false,
+      "flush_to_frame_read": {
+        "bank_ns": 2860250423,
+        "census_ns": 1910014884,
+        "census_over_bank": "0.667779",
+        "change_percent": "-33.222110",
+        "difference_ns": -950235539
+      },
+      "generation": 37,
+      "position": 36,
+      "prepare_write": {
+        "bank_ns": 24860,
+        "census_ns": 23780,
+        "census_over_bank": "0.956557",
+        "change_percent": "-4.344328",
+        "difference_ns": -1080
+      },
+      "total": {
+        "bank_ns": 2860566563,
+        "census_ns": 1910307024,
+        "census_over_bank": "0.667807",
+        "change_percent": "-33.219277",
+        "difference_ns": -950259539
+      },
+      "validate_retain_commit": {
+        "bank_ns": 291280,
+        "census_ns": 268360,
+        "census_over_bank": "0.921313",
+        "change_percent": "-7.868717",
+        "difference_ns": -22920
+      }
+    },
+    {
+      "captured": false,
+      "flush_to_frame_read": {
+        "bank_ns": 2878513375,
+        "census_ns": 1908524923,
+        "census_over_bank": "0.663025",
+        "change_percent": "-33.697549",
+        "difference_ns": -969988452
+      },
+      "generation": 38,
+      "position": 37,
+      "prepare_write": {
+        "bank_ns": 27510,
+        "census_ns": 22950,
+        "census_over_bank": "0.834242",
+        "change_percent": "-16.575791",
+        "difference_ns": -4560
+      },
+      "total": {
+        "bank_ns": 2878819695,
+        "census_ns": 1908766073,
+        "census_over_bank": "0.663038",
+        "change_percent": "-33.696227",
+        "difference_ns": -970053622
+      },
+      "validate_retain_commit": {
+        "bank_ns": 278810,
+        "census_ns": 218200,
+        "census_over_bank": "0.782612",
+        "change_percent": "-21.738819",
+        "difference_ns": -60610
+      }
+    },
+    {
+      "captured": false,
+      "flush_to_frame_read": {
+        "bank_ns": 2880693466,
+        "census_ns": 1905788102,
+        "census_over_bank": "0.661573",
+        "change_percent": "-33.842732",
+        "difference_ns": -974905364
+      },
+      "generation": 39,
+      "position": 38,
+      "prepare_write": {
+        "bank_ns": 24280,
+        "census_ns": 22030,
+        "census_over_bank": "0.907331",
+        "change_percent": "-9.266886",
+        "difference_ns": -2250
+      },
+      "total": {
+        "bank_ns": 2880947976,
+        "census_ns": 1906004452,
+        "census_over_bank": "0.661589",
+        "change_percent": "-33.841067",
+        "difference_ns": -974943524
+      },
+      "validate_retain_commit": {
+        "bank_ns": 230230,
+        "census_ns": 194320,
+        "census_over_bank": "0.844026",
+        "change_percent": "-15.597446",
+        "difference_ns": -35910
+      }
+    },
+    {
+      "captured": true,
+      "flush_to_frame_read": {
+        "bank_ns": 2875889103,
+        "census_ns": 1908480793,
+        "census_over_bank": "0.663614",
+        "change_percent": "-33.638582",
+        "difference_ns": -967408310
+      },
+      "generation": 40,
+      "position": 39,
+      "prepare_write": {
+        "bank_ns": 41740,
+        "census_ns": 24100,
+        "census_over_bank": "0.577384",
+        "change_percent": "-42.261620",
+        "difference_ns": -17640
+      },
+      "total": {
+        "bank_ns": 2878524074,
+        "census_ns": 1911003424,
+        "census_over_bank": "0.663883",
+        "change_percent": "-33.611692",
+        "difference_ns": -967520650
+      },
+      "validate_retain_commit": {
+        "bank_ns": 2593231,
+        "census_ns": 2498531,
+        "census_over_bank": "0.963482",
+        "change_percent": "-3.651815",
+        "difference_ns": -94700
+      }
+    }
+  ],
+  "production_authority": false,
+  "repeated_benchmark": false,
+  "same_elf_cpu_metadata": {
+    "parent": {
+      "bytes": 14117968,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-bank-scoped-census-parent-cpu-v228-v1/target/debug/ferric-qwen3-guarded-mlp-readiness-engineering",
+      "sha256": "f0d91a0413591b2c6f6b9c0420652ec418ca5377fc3d848b8d23ebd4b03c1021"
+    },
+    "parent_cpu": {
+      "bytes": 4095966,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-bank-scoped-census-parent-cpu-v228-v1/evidence/complete.json",
+      "sha256": "e3915ff3e15e7d52fb57675bda0cc0752ec349c1a8317b0ef826ddcdaed70d44"
+    },
+    "worker": {
+      "bytes": 6476504,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-scoped-capacity-census-cpu-v228-v1/target/debug/ferric-tp-peer-finite-engineering-worker-v1",
+      "sha256": "00beb857fd00914f1f305f9646c2087e20901b81f332d774b8211240497e6f95"
+    },
+    "worker_cpu": {
+      "bytes": 2442525,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-scoped-capacity-census-cpu-v228-v1/evidence/complete.json",
+      "sha256": "4d68df6862da654f9044cb08ad5ecedf008fb96f1fa72345d5382d6c96b89e41"
+    }
+  },
+  "schema": "ferric-readiness40-bank-scoped-census-matched-parent-wall-analysis-v1",
+  "shared_full_currentness": false,
+  "sidecars": {
+    "bank": {
+      "bytes": 14513,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-bank-scoped-census-matched-timing-gpu-v228-v1/bank/native/host-timing.json",
+      "sha256": "aed4841e165330cc536bb6d672485ba8c83af7ac1792bdf2dcae6846c144ba13"
+    },
+    "census": {
+      "bytes": 14512,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-bank-scoped-census-matched-timing-gpu-v228-v1/census/native/host-timing.json",
+      "sha256": "7782c6373bac60f0170d835a967241d5211ec2b96f885d8b0685e7559f0eb346"
+    }
+  },
+  "temporal_equivalent_to_full": false,
+  "terminals": {
+    "bank": {
+      "bytes": 462589,
+      "name": "complete.json",
+      "sha256": "00c43f92bb6ae20698e9034b92b971bfb64975ace5a1ab71aaffdb1fa31d907f"
+    },
+    "census": {
+      "bytes": 657840,
+      "name": "complete.json",
+      "sha256": "5b971bf12cd4521b56c8b267124b510c1656ff2cea512e4ea1f39b03710b3661"
+    }
+  },
+  "tokens_per_second_claim": false,
+  "total": {
+    "bank_ns": 480325640558,
+    "census_ns": 445273315279,
+    "census_over_bank": "0.927024",
+    "change_percent": "-7.297617",
+    "difference_ns": -35052325279
+  },
+  "ttft_claim": false
+}

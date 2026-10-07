@@ -1,0 +1,61 @@
+{
+  "cleanup_signalled": false,
+  "command": {
+    "bytes": 1154,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-bank-scoped-census-matched-timing-gpu-v228-v1/census/parent/command.json",
+    "sha256": "3dd967088275eb96ad522fd6672d5371752d3000ef7c32cca6d9a78aa9f5b162"
+  },
+  "elapsed_seconds": 445.7284690820379,
+  "exit_code": 0,
+  "gpu_execution_requested": true,
+  "lineage": [
+    {
+      "event": "owned",
+      "identity": {
+        "pgid": 983774,
+        "pid": 983774,
+        "ppid": 981784,
+        "sid": 983774,
+        "starttime": 78428310,
+        "state": "R",
+        "uid": 9661
+      },
+      "reason": "spawned-parent"
+    },
+    {
+      "event": "owned",
+      "identity": {
+        "pgid": 990798,
+        "pid": 990798,
+        "ppid": 983774,
+        "sid": 983774,
+        "starttime": 78437454,
+        "state": "S",
+        "uid": 9661
+      },
+      "reason": "ancestry"
+    }
+  ],
+  "owned_groups": [
+    983774,
+    990798
+  ],
+  "owned_groups_absent": true,
+  "owned_processes_reaped": true,
+  "reason": null,
+  "started": {
+    "bytes": 277,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-bank-scoped-census-matched-timing-gpu-v228-v1/census/parent/started.json",
+    "sha256": "f88abcdc5959f8bdcfe2950dc73ad940cd07b1506452a886a1acc682895448e2"
+  },
+  "stderr": {
+    "bytes": 2425,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-bank-scoped-census-matched-timing-gpu-v228-v1/census/parent/stderr",
+    "sha256": "5cb035103ef0c0f93ca04a87c31b648e1484eb606dfb5771f8bd553b384e601c"
+  },
+  "stdout": {
+    "bytes": 24588,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-bank-scoped-census-matched-timing-gpu-v228-v1/census/parent/stdout",
+    "sha256": "7991e8ec3731816b8e82b7e8cea27fde4a394097291ef175b6080b4874c87952"
+  }
+}
