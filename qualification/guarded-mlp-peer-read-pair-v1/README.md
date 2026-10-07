@@ -1,10 +1,10 @@
 # Paired Hidden-State Reads
 
-The narrow two-rank runtime read API and its opt-in Ferric worker caller have
-passed CPU qualification on MI350. The API is integrated in fe2o3 commit
-`ee63881af1`; the tested worker postimages are integrated here. The separate
-parent selector and native comparison remain pending. There is no new native
-performance result here.
+The narrow two-rank runtime read API, opt-in Ferric worker caller, and parent
+selector have passed CPU qualification on MI350. The API is integrated in
+fe2o3 commit `ee63881af1`; the tested worker and parent postimages are integrated
+here. The native comparison remains pending. There is no new native performance
+result here.
 
 ## Change
 
@@ -74,6 +74,23 @@ the worker executable is 5,946,240 bytes with SHA-256
 `4bbf99460ad3599248fabcbbc889139269a352e5801d434ba76d5f60b17bb8b3`.
 Its 72.66-second qualification wall time is not model throughput.
 
+## Parent Selector
+
+The [parent receipt](parent-cpu-v2/evidence/complete.json) records 55 naturally
+completed phases, 400 passing selected tests in 47 scopes, and 878 inventoried
+library tests. The full parent library suite was not executed. Five executable
+products were built and pinned, with clean source, dependency, cache and
+owned-process postchecks. The parent retains its prior locked Git dependencies;
+it is not represented as compiling against the worker's newer local runtime.
+
+`--observe-guarded-host-paired-read` selects the new worker mode explicitly.
+The [retention map](parent-cpu-v2/retention.json) authenticates 414 original
+bodies, including all 279 raw files, 116 lineage inputs, eleven compiled overlay
+bodies, and the qualification/staging helpers and receipts. The terminal SHA-256
+is `143132b2d4e147aec77865cd7a60a076e1f663088ee9fe4d69ede4cfbf0ed76c`.
+The selected parent executable is 13,854,240 bytes, SHA-256
+`975ec42dfd7cb39cbd2dce1315e01322a1d36e27309d184b0044d0edfa280750`.
+
 ## Measurement Gate
 
 The [data-only analyzer](analysis-cpu-v2/analyze_hidden_reads.py) and its
@@ -92,8 +109,14 @@ Three additional tests exercise complete command-line manifest admission and
 reject incorrect pins, missing/reordered/overlapping runs, and corrupted,
 missing, or symlinked payloads. All eight passed without GPU execution.
 
-Next: qualify the separate parent selector, execute the owned serial
-comparison, and retain exact outputs and
+The separate [comparison-harness CPU result](checker-cpu-v2/evidence/complete.json)
+records 26 passing synthetic tests: 14 host-report checks, eight serial-runner
+checks, and four topology checks. The isolated child completed naturally and
+was reaped. The exact eight input bodies and seven raw files are retained.
+Only explicit identity/plan bindings may differ from these tested templates
+when the GPU runner is prepared.
+
+Next: execute the owned serial comparison and retain exact outputs and
 cleanup evidence. A paired-read reduction would not establish sustained
 2,048/256 decoding, GPU overlap, full-model numerical acceptance, or 700 tok/s.
 All issue #42 milestones remain open.

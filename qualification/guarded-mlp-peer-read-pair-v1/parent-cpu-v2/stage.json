@@ -1,0 +1,19 @@
+{
+  "archive": {
+    "bytes": 9485521,
+    "sha256": "21368496d35a2a7e6d9ec97c0fefe6635856cfb090693ff89a0cb5c50d4fe872"
+  },
+  "cargo_execution": false,
+  "gpu_execution": false,
+  "input_manifest": {
+    "bytes": 255604,
+    "sha256": "0c4e28b4466e8a0ba0cd84f3840513b7388170947aca7fc55753c31b58f5a892"
+  },
+  "members": 1342,
+  "passed": true,
+  "project_code_executed": false,
+  "qualification_passed": false,
+  "root": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-paired-read-parent-cpu-v228-v2",
+  "schema": "ferric-guarded-mlp-paired-read-parent-source-stage-v2",
+  "source_files": 1225
+}

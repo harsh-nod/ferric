@@ -1,0 +1,259 @@
+{
+  "schema": "ferric-guarded-mlp-model-host-observation-source-v1",
+  "canonical_revision": "7f0d73ce594ee721576dc10e9d95dad973646bb0",
+  "base_composition": "canonical qualified and formatted capture integration; mechanical source-only rebase of host V1",
+  "source_only": true,
+  "files": [
+    {
+      "path": "adapters/m1-engineering-execution-v1/src/bin/ferric-qwen3-finite-guarded-mlp-decode-engineering.rs",
+      "preimage_source": "canonical-qualified-capture",
+      "before": {
+        "bytes": 3766,
+        "sha256": "e677febde4ef0c625a147f176efc25b187d003bf5bd4aa4634958e9a50ca6ff7"
+      },
+      "after": {
+        "bytes": 4551,
+        "sha256": "bf3bfb279e2018afe3e0ba1780b94b0dac12edba428775411439c63a197f0ff2"
+      }
+    },
+    {
+      "path": "adapters/m1-engineering-execution-v1/src/lib.rs",
+      "preimage_source": "canonical-qualified-capture",
+      "before": {
+        "bytes": 89431,
+        "sha256": "2456aa3648f1da10b92b6959f36bb2d2da1b5f8f0a962f29869d1b09743f5eb8"
+      },
+      "after": {
+        "bytes": 89616,
+        "sha256": "e973bb0b812d5abe46b894375293f5526baa9fe2576ea691411092dce557e370"
+      }
+    },
+    {
+      "path": "adapters/m1-engineering-execution-v1/src/tp_finite_client/prefix_decode/guarded.rs",
+      "preimage_source": "canonical-qualified-capture",
+      "before": {
+        "bytes": 25064,
+        "sha256": "6eef18690c49ba88a4af6841130ec1424ecb8df4cbed6d20cb993745ca305632"
+      },
+      "after": {
+        "bytes": 26124,
+        "sha256": "5128a5371a3d833e667d5291ba2edcabd89009f0f982be42c57c3cab1c1041ff"
+      }
+    },
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/guarded_mlp_host_observation_v1.rs",
+      "preimage_source": "new",
+      "before": null,
+      "after": {
+        "bytes": 6773,
+        "sha256": "162a85099d3ee43ac30f944fb5bd33be15baef8d7e66b7e0440bd259114e4859"
+      }
+    },
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/guarded_mlp_host_observation_v1_tests.rs",
+      "preimage_source": "new",
+      "before": null,
+      "after": {
+        "bytes": 8282,
+        "sha256": "28f220efec07099129b41f2987d361307cc687dc9c47469ec86667c170a7d929"
+      }
+    },
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/lib.rs",
+      "preimage_source": "canonical-qualified-capture",
+      "before": {
+        "bytes": 2434,
+        "sha256": "b1f93473c7e24f471efc4069a8a0968b005bfd9c118511348ab035f9908dcd6a"
+      },
+      "after": {
+        "bytes": 2507,
+        "sha256": "42be3364373ea6efcdc4d8f3540bc20952b2e70c3cdc73e9665094806e133a44"
+      }
+    },
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/main.rs",
+      "preimage_source": "canonical-qualified-capture",
+      "before": {
+        "bytes": 13569,
+        "sha256": "751a344415c46407ed17fe730b6e5a5ba40755a13454dc3e7c10f0b91e2eee87"
+      },
+      "after": {
+        "bytes": 14112,
+        "sha256": "8d67086e94ba864e6d13b004e76064bdc22f86765869eb8db448948fb3608bf8"
+      }
+    },
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_guarded_mlp_decode_cli_v1.rs",
+      "preimage_source": "canonical-qualified-capture",
+      "before": {
+        "bytes": 14356,
+        "sha256": "782ade38b186177127c52d09600da084586e3503ac56ddaf72f07dbbf895b40c"
+      },
+      "after": {
+        "bytes": 16833,
+        "sha256": "c162d6c9343b5779360c4ab468fa82d37f71f3537c8ac676ea0a52ae125a6ac7"
+      }
+    },
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_guarded_mlp_decode_cli_v1_tests.rs",
+      "preimage_source": "canonical-qualified-capture",
+      "before": {
+        "bytes": 12312,
+        "sha256": "6dcc72868de41e61f1495df5f2f71b565390ebcc080037cf7a42cda06c0772de"
+      },
+      "after": {
+        "bytes": 13144,
+        "sha256": "248eec3126c0564e89172f157dd5556e1765a285e2bb5702f109acccbedee720"
+      }
+    },
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_guarded_mlp_decode_v1.rs",
+      "preimage_source": "canonical-qualified-capture",
+      "before": {
+        "bytes": 12014,
+        "sha256": "8f0d8f578d23bb083f56209389763e883520eb13c283af58a964192010fbbead"
+      },
+      "after": {
+        "bytes": 15254,
+        "sha256": "447c72e8233c4322d77bfb1c19ccfb3cd340500295c0912bf4a3b04833363fad"
+      }
+    },
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_guarded_mlp_host_v1.rs",
+      "preimage_source": "new",
+      "before": null,
+      "after": {
+        "bytes": 6511,
+        "sha256": "7d1abf1c13e14319ba7f7de102fb17d0289e9f66df63931237a857eb0f91eef9"
+      }
+    },
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/resident_layer/guarded_mlp_decode_v1.rs",
+      "preimage_source": "canonical-qualified-capture",
+      "before": {
+        "bytes": 11172,
+        "sha256": "cbb1a995b06a7390c9bff30702a69ffc638a95ad177123ac58630747b27cb0dc"
+      },
+      "after": {
+        "bytes": 12405,
+        "sha256": "4df5b28a6d4db452877878cc54579e41bf4ad14997d8b5b9f9d1e500380d3e22"
+      }
+    },
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/resident_layer/guarded_mlp_decode_v1/tests.rs",
+      "preimage_source": "canonical-qualified-capture",
+      "before": {
+        "bytes": 8251,
+        "sha256": "8ef671f691c4fe30788bbc8add7b5590c097b7f467c47e9cf80155943704c9da"
+      },
+      "after": {
+        "bytes": 9403,
+        "sha256": "422126c09635b3fb7e33a847a707d063f98ddb2c1a26dc467fdf03f55347aa98"
+      }
+    }
+  ],
+  "new_tests": {
+    "worker_library": [
+      "guarded_mlp_host_observation_v1::tests::guarded_host_exact_parent_completion_join_rejects_other_worker_or_history",
+      "guarded_mlp_host_observation_v1::tests::guarded_host_fixed_phase_roster_has_all_layer_and_forward_boundaries",
+      "guarded_mlp_host_observation_v1::tests::guarded_host_identity_policy_epoch_and_baseline_drift_refuse",
+      "guarded_mlp_host_observation_v1::tests::guarded_host_missing_reordered_decreasing_or_forged_intervals_refuse",
+      "guarded_mlp_host_observation_v1::tests::guarded_host_requires_healthy_close_closed_schema_and_observational_scope",
+      "guarded_mlp_host_observation_v1::tests::guarded_host_tf_ar_and_high_u64_id_roundtrip_preserve_inclusive_counters",
+      "native_guarded_mlp_decode_cli_v1::tests::guarded_host_cli_is_explicit_exclusive_and_preserves_runtime_options",
+      "native_guarded_mlp_host_v1::tests::guarded_host_partial_or_panicking_close_never_publishes",
+      "native_guarded_mlp_host_v1::tests::guarded_host_report_publication_requires_actual_successful_close_once",
+      "resident_layer::guarded_mlp_decode_v1::tests::guarded_host_marks_prefix_and_complete_pair_without_tensor_capture_or_retries"
+    ],
+    "parent_library": [
+      "guarded_mlp_host_observation_v1::tests::guarded_host_exact_parent_completion_join_rejects_other_worker_or_history",
+      "guarded_mlp_host_observation_v1::tests::guarded_host_fixed_phase_roster_has_all_layer_and_forward_boundaries",
+      "guarded_mlp_host_observation_v1::tests::guarded_host_identity_policy_epoch_and_baseline_drift_refuse",
+      "guarded_mlp_host_observation_v1::tests::guarded_host_missing_reordered_decreasing_or_forged_intervals_refuse",
+      "guarded_mlp_host_observation_v1::tests::guarded_host_requires_healthy_close_closed_schema_and_observational_scope",
+      "guarded_mlp_host_observation_v1::tests::guarded_host_tf_ar_and_high_u64_id_roundtrip_preserve_inclusive_counters"
+    ],
+    "parent_guarded_binary": [
+      "tests::guarded_host_parent_cli_is_explicit_and_exclusive"
+    ]
+  },
+  "new_test_counts": {
+    "worker_library": 10,
+    "parent_library": 6,
+    "parent_guarded_binary": 1
+  },
+  "parent_cli_flag": "--observe-guarded-host",
+  "worker_cli_flag": "--engineering-native-guarded-mlp-host-observation-v1",
+  "report": {
+    "schema": "FerricGuardedMlpHostObservationV1",
+    "snapshots": 587,
+    "adjacent_intervals": 586,
+    "forwards": 4,
+    "layers_per_forward": 36,
+    "rank_counters": 19,
+    "shared_counters": 4,
+    "encoded_byte_limit": 2097152,
+    "transport": "existing-child-stderr.bin",
+    "native_close_required": true,
+    "inclusive_nested_host_scopes": true,
+    "paired_generic_dispatch_timers_complete": false,
+    "tensor_stage_capture": false
+  },
+  "default_wire_changed": false,
+  "performance_policy_changed": false,
+  "kernel_images_changed": false,
+  "runtime_sources_changed": false,
+  "gpu_time": false,
+  "gpu_overlap": false,
+  "numerical_acceptance": false,
+  "full_model_acceptance": false,
+  "performance_claim": false,
+  "production_authority": false,
+  "integration_patch": {
+    "bytes": 54198,
+    "sha256": "b3ff8836296f28ce4441eee242b3b8ed8e1db9cb61f7b762dc826949176aeb3f"
+  },
+  "base": {
+    "worker_complete": {
+      "path": "/home/harsh/ferric-p227-integration/qualification/guarded-mlp-model-stage-capture-v1/worker-cpu-v1/evidence/complete.json",
+      "bytes": 1607204,
+      "sha256": "64855967eb15f5b5b5fadb98cbc30e8e382968099ec439090562cacc174eec47"
+    },
+    "worker_sources": {
+      "path": "/home/harsh/ferric-p227-integration/qualification/guarded-mlp-model-stage-capture-v1/worker-cpu-v1/evidence/sources-after.json",
+      "bytes": 404284,
+      "sha256": "9c81071c17a973890ad683f9e36d12fce0b9b72185a08cead3348f8e887a5b03"
+    },
+    "parent_complete": {
+      "path": "/home/harsh/ferric-p227-integration/qualification/guarded-mlp-model-stage-capture-v1/parent-cpu-v1/evidence/complete.json",
+      "bytes": 3787634,
+      "sha256": "f1dd4cf50c704bc1f39472df3a8299872de5490fcf073160077888629192ee91"
+    },
+    "parent_sources": {
+      "path": "/home/harsh/ferric-p227-integration/qualification/guarded-mlp-model-stage-capture-v1/parent-cpu-v1/evidence/sources-after.json",
+      "bytes": 478151,
+      "sha256": "a2cfbb14261b712289c2486a8bea66f2f05e4b2c95cdac7634219153ce5c1c9e"
+    }
+  },
+  "base_host_manifest": {
+    "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/guarded-mlp-model-interface-v228-v1/model-host-observation-v1/source-manifest.json",
+    "bytes": 8972,
+    "sha256": "90ffa0dc8dc8b304d13fff8ee1700ec9aa3b0e90d3b9c712c45b9b24733943d0"
+  },
+  "base_host_patch": {
+    "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/guarded-mlp-model-interface-v228-v1/model-host-observation-v1/integration.patch",
+    "bytes": 53309,
+    "sha256": "e6212a894ae35fc4d581bbef9701c3b8e60a3f5cca84b5a48ee30fdac7016249"
+  },
+  "rebase_delta": {
+    "bytes": 9225,
+    "sha256": "d18212835f958b83d182ca30e6ca9b3bb555c642481edd9b499e93d68f8c959d"
+  },
+  "semantic_changes_relative_to_host_v1": false,
+  "cpu_qualification_executed": false,
+  "historical_authored_capture_manifest": {
+    "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/guarded-mlp-model-interface-v228-v1/model-stage-capture-v1/source-manifest.json",
+    "bytes": 7739,
+    "sha256": "2dc554b35f227180b1367f926d38e3332305f99666d9f9bd52b941240d1d899e"
+  }
+}

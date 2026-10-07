@@ -1,0 +1,42 @@
+{
+  "run_cpu.py": {
+    "bytes": 12818,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-peer-read-pair-checker-cpu-v228-v2/run_cpu.py",
+    "sha256": "1fb50389c9d56fc2272c4f0cf8f6f1c8b531587c92069f1a37426279fb98768e"
+  },
+  "run_model_gpu.py": {
+    "bytes": 41903,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-peer-read-pair-checker-cpu-v228-v2/run_model_gpu.py",
+    "sha256": "28c3cedb5477db7094a31eaa8817bdc52c016c10cb93044cfe3be55bbecf9d33"
+  },
+  "run_serial.py": {
+    "bytes": 15098,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-peer-read-pair-checker-cpu-v228-v2/run_serial.py",
+    "sha256": "9f6ad6463fbcfaec6ef4976917009a26604daa16b9f05db49206522db63060f7"
+  },
+  "supervisor.py": {
+    "bytes": 41485,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-peer-read-pair-checker-cpu-v228-v2/supervisor.py",
+    "sha256": "8824478a6415dee39d28ccefb0881fc0687ac724f5a9c5a4540310fb5196b9bc"
+  },
+  "test_host.py": {
+    "bytes": 12186,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-peer-read-pair-checker-cpu-v228-v2/test_host.py",
+    "sha256": "e8de51581c9e6edd4941c29f0796df75cb1c564574b6aea1252d38804ac3c385"
+  },
+  "test_serial.py": {
+    "bytes": 6506,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-peer-read-pair-checker-cpu-v228-v2/test_serial.py",
+    "sha256": "ce7ca385b0c0b8e05134cd01a6225702f097b9d874a1d58b633a0e98924cd01f"
+  },
+  "test_topology.py": {
+    "bytes": 2484,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-peer-read-pair-checker-cpu-v228-v2/test_topology.py",
+    "sha256": "62e846dff5ba99592dbfc3e5bd4cf9f7d663ee8383c8c9b9a2a3666526f612a1"
+  },
+  "validate_observation.py": {
+    "bytes": 13779,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-peer-read-pair-checker-cpu-v228-v2/validate_observation.py",
+    "sha256": "367d1904f15741138db708c1f10e5a777905b62d9440a961e952a6cc9125b055"
+  }
+}

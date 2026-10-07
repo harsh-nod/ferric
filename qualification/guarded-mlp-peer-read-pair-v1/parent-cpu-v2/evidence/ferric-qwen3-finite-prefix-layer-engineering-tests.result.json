@@ -1,0 +1,53 @@
+{
+  "adopted_reaped": [],
+  "argv": [
+    "/usr/bin/prlimit",
+    "--as=12884901888",
+    "--cpu=1200",
+    "--fsize=1073741824",
+    "--core=0",
+    "--",
+    "/home/harmenon/.rustup/toolchains/1.97.1-x86_64-unknown-linux-gnu/bin/cargo",
+    "test",
+    "--offline",
+    "--locked",
+    "--jobs",
+    "2",
+    "--manifest-path",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-paired-read-parent-cpu-v228-v2/ferric/adapters/m1-engineering-execution-v1/Cargo.toml",
+    "--features",
+    "guarded-mlp-model-engineering",
+    "--bin",
+    "ferric-qwen3-finite-prefix-layer-engineering",
+    "--",
+    "--test-threads=2"
+  ],
+  "command": {
+    "bytes": 2548,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-paired-read-parent-cpu-v228-v2/evidence/ferric-qwen3-finite-prefix-layer-engineering-tests.command.json",
+    "sha256": "86b6cdff5d09369989df86e8437f3739a4b3f0baf364285bc1114c35093aea49"
+  },
+  "elapsed_ns": 519589012,
+  "exception": null,
+  "exit_code": 0,
+  "forced_cleanup": false,
+  "label": "ferric-qwen3-finite-prefix-layer-engineering-tests",
+  "natural_exit": true,
+  "observed_signals": [],
+  "pgid": 595452,
+  "pid": 595452,
+  "process_group_absent": true,
+  "reaped": true,
+  "stderr": {
+    "bytes": 1749,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-paired-read-parent-cpu-v228-v2/evidence/ferric-qwen3-finite-prefix-layer-engineering-tests.stderr",
+    "sha256": "11a3c86f66cbb6f1c1c7b620e455684ce441a4a157514a6baea83d5c1383885b"
+  },
+  "stdout": {
+    "bytes": 162,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-paired-read-parent-cpu-v228-v2/evidence/ferric-qwen3-finite-prefix-layer-engineering-tests.stdout",
+    "sha256": "89785b89e67db5d7efea5109a4d78ca3e5b6b25e8ded40014be61eade9cd76e3"
+  },
+  "storage_failure": null,
+  "timed_out": false
+}
