@@ -30,7 +30,9 @@ passes all 68 phases and 549 selected tests across 58 scopes in 415.377
 seconds. Its six tested parent files are integrated with a complete
 1,284-body postcheck, preserving all 224 worker bodies. The parent selector
 is `--observe-guarded-full2303-bank-scoped-census-v1`. Strict data admission
-remains a separate gate.
+now has a [62-test MI350 CPU qualification](admission-cpu-v1/README.md),
+preserving all 42 prior comparison cases and adding 20 bank/census cases.
+This qualifies the checker, not an actual native full-workload result.
 
 Launch feasibility under the unchanged one-hour bound, exact independent
 256 IDs/raw decoded bytes, repeated equal-work performance, GPU overlap and

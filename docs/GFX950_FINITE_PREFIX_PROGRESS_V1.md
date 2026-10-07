@@ -37,8 +37,11 @@ and 799 worker passes, with the eight/four existing ignores unchanged.
 Its fifteen actual tested worker files are integrated with complete source
 postchecks. The parent also passes all 68 phases and 549 selected tests in
 415.377 seconds; its six tested files are integrated with a complete
-1,284-body source postcheck and all 224 workers preserved. Strict full-workload
-data admission remains pending; no native Full2303 execution or one-hour
+1,284-body source postcheck and all 224 workers preserved. The
+[strict full-workload checker](../qualification/guarded-mlp-full2303-bank-scoped-census-v1/admission-cpu-v1/README.md)
+now passes all 62 tests with no skips in a 50.382-second MI350 CPU run.
+All 28 original archive members are retained. This qualifies the comparison
+code, not a native/reference result: no native Full2303 execution or one-hour
 launch feasibility is claimed by these synthetic full-schedule tests.
 
 The preceding

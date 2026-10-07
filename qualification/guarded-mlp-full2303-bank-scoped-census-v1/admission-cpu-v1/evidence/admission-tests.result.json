@@ -1,0 +1,44 @@
+{
+  "adopted_reaped": [],
+  "argv": [
+    "/usr/bin/prlimit",
+    "--as=536870912",
+    "--cpu=120",
+    "--fsize=16777216",
+    "--core=0",
+    "--",
+    "/usr/bin/python3.12",
+    "-I",
+    "-B",
+    "-c",
+    "import sys,unittest;sys.path.insert(0,'/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-full2303-bank-scoped-census-admission-cpu-v228-v1');suite=unittest.TestSuite(unittest.defaultTestLoader.loadTestsFromName(name) for name in (\"test_full\",\"test_scoped_full\",\"test_compare_scoped_full\",\"test_bank_census_full\",\"test_compare_bank_census_full\"));result=unittest.TextTestRunner(verbosity=2).run(suite);sys.exit(not result.wasSuccessful())"
+  ],
+  "command": {
+    "bytes": 1269,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-full2303-bank-scoped-census-admission-cpu-v228-v1/evidence/admission-tests.command.json",
+    "sha256": "c7240bd0398071126594ad57f2d72109df3dbf61d4f30a8870224c43e69f9862"
+  },
+  "elapsed_ns": 50342282886,
+  "exception": null,
+  "exit_code": 0,
+  "forced_cleanup": false,
+  "label": "admission-tests",
+  "natural_exit": true,
+  "observed_signals": [],
+  "pgid": 1424635,
+  "pid": 1424635,
+  "process_group_absent": true,
+  "reaped": true,
+  "stderr": {
+    "bytes": 10937,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-full2303-bank-scoped-census-admission-cpu-v228-v1/evidence/admission-tests.stderr",
+    "sha256": "a2277b55a09b201cc8f19fc51a7d389d8f546d3469be4efdbbba6dd8d29d0864"
+  },
+  "stdout": {
+    "bytes": 0,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-full2303-bank-scoped-census-admission-cpu-v228-v1/evidence/admission-tests.stdout",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "storage_failure": null,
+  "timed_out": false
+}

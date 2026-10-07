@@ -1,0 +1,132 @@
+{
+  "admitted_test_count": 62,
+  "external_tools_rehashed_locally": false,
+  "files": {
+    "common.py": {
+      "bytes": 3172,
+      "sha256": "445c602dd0d237beb2ebef62446d1d2b34283367b68529736a890640ae185256"
+    },
+    "compare_bank_census_full.py": {
+      "bytes": 6614,
+      "sha256": "851c00b9aca60006bce85731f94ec41c9fd34ebf78990946ab5d3dc8d06c9af8"
+    },
+    "compare_full.py": {
+      "bytes": 13208,
+      "sha256": "f6ba7ed47d93a5b03562cf22c730ebebd64ddc01afd1910acc0c51f8b3c875b1"
+    },
+    "compare_scoped_full.py": {
+      "bytes": 6552,
+      "sha256": "6b22d458206759a0938893dbb61f4491316abc2bb1661a413dff5325a92f15de"
+    },
+    "diagnostics.py": {
+      "bytes": 5084,
+      "sha256": "38cee89882d13dce81a992a64d4931c52a6f5b0b2dc77f5cddf1fc7cfe37ccaf"
+    },
+    "evidence/admission-tests.command.json": {
+      "bytes": 1269,
+      "sha256": "c7240bd0398071126594ad57f2d72109df3dbf61d4f30a8870224c43e69f9862"
+    },
+    "evidence/admission-tests.result.json": {
+      "bytes": 1926,
+      "sha256": "6003c00862876ef7d1e1019afda6158a2cbf384582a242f4b4bc9bdae2e92f21"
+    },
+    "evidence/admission-tests.started.json": {
+      "bytes": 717,
+      "sha256": "329ee91587b7eda17e582caa93c4141575862ef20b1923c30747dbf26b856b5a"
+    },
+    "evidence/admission-tests.stderr": {
+      "bytes": 10937,
+      "sha256": "a2277b55a09b201cc8f19fc51a7d389d8f546d3469be4efdbbba6dd8d29d0864"
+    },
+    "evidence/admission-tests.stdout": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "evidence/complete.json": {
+      "bytes": 24697,
+      "sha256": "ea0209cc6dfe21497e94ace32d494cb47137f4d601b987e43fd35ef5be1afd67"
+    },
+    "evidence/sources-after.json": {
+      "bytes": 5465,
+      "sha256": "cdf97be3db3f641c2689dcfa10fdecba4448457491f56065c500cee319ff6b86"
+    },
+    "evidence/sources-before.json": {
+      "bytes": 5465,
+      "sha256": "cdf97be3db3f641c2689dcfa10fdecba4448457491f56065c500cee319ff6b86"
+    },
+    "full_announcement.py": {
+      "bytes": 3246,
+      "sha256": "66e97079ac1df7c56db159c86aede157907fdb817464311d96c3333c803a0621"
+    },
+    "full_reference.py": {
+      "bytes": 11342,
+      "sha256": "195ea81ab55e0523ca9b6a41680c654f7e99d7fb949b7d032a8f897d3620e471"
+    },
+    "pure-evidence.py": {
+      "bytes": 19538,
+      "sha256": "c2e03fc50e00e3a538de48954f526ff258edd03881555e317d029c771156487f"
+    },
+    "reference.py": {
+      "bytes": 11388,
+      "sha256": "466028fe6061de915bd852328030e9ea81a0b0874e4305563ecc78f0073b1d7b"
+    },
+    "run_cpu.py": {
+      "bytes": 17437,
+      "sha256": "82c855da02b1088cd5d9d42fec4345dcf1193e048a9ad42cb068224dbdb530c5"
+    },
+    "supervisor.py": {
+      "bytes": 41485,
+      "sha256": "8824478a6415dee39d28ccefb0881fc0687ac724f5a9c5a4540310fb5196b9bc"
+    },
+    "test_bank_census_full.py": {
+      "bytes": 13391,
+      "sha256": "6945143279d14655bdec67d774a7f4ac42f0345ad4834975e5cd2baa7e4f6efb"
+    },
+    "test_compare_bank_census_full.py": {
+      "bytes": 11703,
+      "sha256": "905c250b44e372c80c023ce201687cfabbbf7b8ad3eb6cc9e3a7e68790e24e11"
+    },
+    "test_compare_scoped_full.py": {
+      "bytes": 14248,
+      "sha256": "2f07034c65804053fcb04eb1f8cfbf0bd7fd58c319244d34be5ff707fed1d925"
+    },
+    "test_full.py": {
+      "bytes": 28057,
+      "sha256": "5acd7134ec8c4216a85a92d8629eb364e12d5af26fa8baf620ba87d19e56923f"
+    },
+    "test_scoped_full.py": {
+      "bytes": 10154,
+      "sha256": "74b98271ac65c1597dee0b786a2b7645623c99f65486ce7e3ecebfbe59b6384d"
+    },
+    "validate_bank_census_full.py": {
+      "bytes": 18720,
+      "sha256": "4fa914510d297a19b231085b20667d45084e85189495cc5e900cba81d0b7dc14"
+    },
+    "validate_full.py": {
+      "bytes": 22566,
+      "sha256": "e5c3f144d09fda62fface222659197c519dc260afb68751dfaad6503912176c1"
+    },
+    "validate_scoped_full.py": {
+      "bytes": 6696,
+      "sha256": "3e2eba79e769b12437958f510bd4255507ac834208529957a6544ddc5fbeeef9"
+    }
+  },
+  "mode": "admission",
+  "native_execution": false,
+  "new_project_execution": false,
+  "numerical_acceptance": false,
+  "original_failure": null,
+  "original_files": 26,
+  "original_postcheck_errors": [],
+  "original_tools_rehashed_at_export": true,
+  "passed": true,
+  "performance_claim": false,
+  "schema": "ferric-full2303-bank-scoped-census-admission-pure-cpu-export-v1",
+  "selected_files": 27,
+  "synthetic_only": true,
+  "terminal": {
+    "bytes": 24697,
+    "sha256": "ea0209cc6dfe21497e94ace32d494cb47137f4d601b987e43fd35ef5be1afd67"
+  },
+  "terminal_name": "complete.json"
+}

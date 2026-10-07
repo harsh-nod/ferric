@@ -1,0 +1,92 @@
+{
+  "common.py": {
+    "bytes": 3172,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-full2303-bank-scoped-census-admission-cpu-v228-v1/common.py",
+    "sha256": "445c602dd0d237beb2ebef62446d1d2b34283367b68529736a890640ae185256"
+  },
+  "compare_bank_census_full.py": {
+    "bytes": 6614,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-full2303-bank-scoped-census-admission-cpu-v228-v1/compare_bank_census_full.py",
+    "sha256": "851c00b9aca60006bce85731f94ec41c9fd34ebf78990946ab5d3dc8d06c9af8"
+  },
+  "compare_full.py": {
+    "bytes": 13208,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-full2303-bank-scoped-census-admission-cpu-v228-v1/compare_full.py",
+    "sha256": "f6ba7ed47d93a5b03562cf22c730ebebd64ddc01afd1910acc0c51f8b3c875b1"
+  },
+  "compare_scoped_full.py": {
+    "bytes": 6552,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-full2303-bank-scoped-census-admission-cpu-v228-v1/compare_scoped_full.py",
+    "sha256": "6b22d458206759a0938893dbb61f4491316abc2bb1661a413dff5325a92f15de"
+  },
+  "diagnostics.py": {
+    "bytes": 5084,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-full2303-bank-scoped-census-admission-cpu-v228-v1/diagnostics.py",
+    "sha256": "38cee89882d13dce81a992a64d4931c52a6f5b0b2dc77f5cddf1fc7cfe37ccaf"
+  },
+  "full_announcement.py": {
+    "bytes": 3246,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-full2303-bank-scoped-census-admission-cpu-v228-v1/full_announcement.py",
+    "sha256": "66e97079ac1df7c56db159c86aede157907fdb817464311d96c3333c803a0621"
+  },
+  "full_reference.py": {
+    "bytes": 11342,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-full2303-bank-scoped-census-admission-cpu-v228-v1/full_reference.py",
+    "sha256": "195ea81ab55e0523ca9b6a41680c654f7e99d7fb949b7d032a8f897d3620e471"
+  },
+  "reference.py": {
+    "bytes": 11388,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-full2303-bank-scoped-census-admission-cpu-v228-v1/reference.py",
+    "sha256": "466028fe6061de915bd852328030e9ea81a0b0874e4305563ecc78f0073b1d7b"
+  },
+  "run_cpu.py": {
+    "bytes": 17437,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-full2303-bank-scoped-census-admission-cpu-v228-v1/run_cpu.py",
+    "sha256": "82c855da02b1088cd5d9d42fec4345dcf1193e048a9ad42cb068224dbdb530c5"
+  },
+  "supervisor.py": {
+    "bytes": 41485,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-full2303-bank-scoped-census-admission-cpu-v228-v1/supervisor.py",
+    "sha256": "8824478a6415dee39d28ccefb0881fc0687ac724f5a9c5a4540310fb5196b9bc"
+  },
+  "test_bank_census_full.py": {
+    "bytes": 13391,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-full2303-bank-scoped-census-admission-cpu-v228-v1/test_bank_census_full.py",
+    "sha256": "6945143279d14655bdec67d774a7f4ac42f0345ad4834975e5cd2baa7e4f6efb"
+  },
+  "test_compare_bank_census_full.py": {
+    "bytes": 11703,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-full2303-bank-scoped-census-admission-cpu-v228-v1/test_compare_bank_census_full.py",
+    "sha256": "905c250b44e372c80c023ce201687cfabbbf7b8ad3eb6cc9e3a7e68790e24e11"
+  },
+  "test_compare_scoped_full.py": {
+    "bytes": 14248,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-full2303-bank-scoped-census-admission-cpu-v228-v1/test_compare_scoped_full.py",
+    "sha256": "2f07034c65804053fcb04eb1f8cfbf0bd7fd58c319244d34be5ff707fed1d925"
+  },
+  "test_full.py": {
+    "bytes": 28057,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-full2303-bank-scoped-census-admission-cpu-v228-v1/test_full.py",
+    "sha256": "5acd7134ec8c4216a85a92d8629eb364e12d5af26fa8baf620ba87d19e56923f"
+  },
+  "test_scoped_full.py": {
+    "bytes": 10154,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-full2303-bank-scoped-census-admission-cpu-v228-v1/test_scoped_full.py",
+    "sha256": "74b98271ac65c1597dee0b786a2b7645623c99f65486ce7e3ecebfbe59b6384d"
+  },
+  "validate_bank_census_full.py": {
+    "bytes": 18720,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-full2303-bank-scoped-census-admission-cpu-v228-v1/validate_bank_census_full.py",
+    "sha256": "4fa914510d297a19b231085b20667d45084e85189495cc5e900cba81d0b7dc14"
+  },
+  "validate_full.py": {
+    "bytes": 22566,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-full2303-bank-scoped-census-admission-cpu-v228-v1/validate_full.py",
+    "sha256": "e5c3f144d09fda62fface222659197c519dc260afb68751dfaad6503912176c1"
+  },
+  "validate_scoped_full.py": {
+    "bytes": 6696,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-full2303-bank-scoped-census-admission-cpu-v228-v1/validate_scoped_full.py",
+    "sha256": "3e2eba79e769b12437958f510bd4255507ac834208529957a6544ddc5fbeeef9"
+  }
+}
