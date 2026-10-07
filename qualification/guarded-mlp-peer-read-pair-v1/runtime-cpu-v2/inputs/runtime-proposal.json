@@ -1,0 +1,77 @@
+{
+  "schema": "ferric-engineering-peer-read-pair-runtime-source-v2",
+  "source_only": true,
+  "predecessor_proposal": {
+    "bytes": 6364,
+    "sha256": "36443c7c72e465d6530a4edb071cae9cbc4fc764f1bfefb2d4add10f1f594e05"
+  },
+  "base": {
+    "runtime_complete": {
+      "bytes": 2187577,
+      "sha256": "032c4ac98bee0b6c551f1b98fb12d7966bd4f9fadc6b0b8570ab2488634c7814"
+    },
+    "runtime_sources": {
+      "bytes": 401732,
+      "sha256": "efe370a940d49aaeb173fdf9a245c6a19f5561852d2fb535d929fae93db30da7"
+    },
+    "worker_complete": {
+      "bytes": 1631185,
+      "sha256": "24feb83a0bde60dc9c6b8db28f2ce8252379b40d8e0d40483690f58038881b2a"
+    },
+    "worker_sources": {
+      "bytes": 406182,
+      "sha256": "4c49b12bd9d2dbcc7c504f72dd38818cec567317f2ffb3fda1f18f88f841a827"
+    }
+  },
+  "files": [
+    {
+      "repository": "runtime",
+      "path": "crates/fe2o3-kfd/src/engineering_gfx950_peer.rs",
+      "before": {
+        "bytes": 33855,
+        "sha256": "75ec693c709b458c6ab145453dd3398199bc10b0861d0f7b334093393a38e68a"
+      },
+      "after": {
+        "bytes": 33926,
+        "sha256": "491675d2c16854f023ae530fa7374e2ef7184692eef28caf140edb0cffc3bf7d"
+      }
+    },
+    {
+      "repository": "runtime",
+      "path": "crates/fe2o3-kfd/src/engineering_gfx950_peer_read_pair_v1.rs",
+      "before": null,
+      "after": {
+        "bytes": 5231,
+        "sha256": "ad2951bc7ce184704b62f8b1853bd7601f2f8435949a6de10a65fa1492b0fd7f"
+      }
+    },
+    {
+      "repository": "runtime",
+      "path": "crates/fe2o3-kfd/src/engineering_gfx950_peer_read_pair_v1_tests.rs",
+      "before": null,
+      "after": {
+        "bytes": 6162,
+        "sha256": "14a0d5629f7528a99608879a5ee418be3491cbc7d749e0375dd2dd2d10f0ec51"
+      }
+    }
+  ],
+  "test_names": [
+    "engineering_gfx950::peer::read_pair_v1::tests::pair_read_each_boundary_failure_quarantines_without_data",
+    "engineering_gfx950::peer::read_pair_v1::tests::pair_read_headers_reject_foreign_rank_alias_extent_and_caps",
+    "engineering_gfx950::peer::read_pair_v1::tests::pair_read_native_invalid_roster_quarantines_and_ordinary_reads_stay_closed",
+    "engineering_gfx950::peer::read_pair_v1::tests::pair_read_orders_each_fresh_fence_before_publication",
+    "engineering_gfx950::peer::read_pair_v1::tests::pair_read_public_signature_returns_bytes_not_a_currentness_capability",
+    "engineering_gfx950::peer::read_pair_v1::tests::pair_read_second_bad_header_precedes_any_queue_or_copy",
+    "engineering_gfx950::peer::read_pair_v1::tests::pair_read_unwind_quarantines_after_partial_copy"
+  ],
+  "worker_source_changed": false,
+  "default_fresh_arena_policy_changed": false,
+  "global_currentness_policy_changed": false,
+  "method_local_currentness_cadence_changed": true,
+  "public_runtime_limits_changed": false,
+  "ordinary_read_api_changed": false,
+  "gpu_execution": false,
+  "cpu_qualification_executed": false,
+  "performance_claim": false,
+  "production_authority": false
+}
