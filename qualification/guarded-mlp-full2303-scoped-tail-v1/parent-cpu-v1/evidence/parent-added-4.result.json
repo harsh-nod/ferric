@@ -1,0 +1,54 @@
+{
+  "adopted_reaped": [],
+  "argv": [
+    "/usr/bin/prlimit",
+    "--as=12884901888",
+    "--cpu=1200",
+    "--fsize=1073741824",
+    "--core=0",
+    "--",
+    "/home/harmenon/.rustup/toolchains/1.97.1-x86_64-unknown-linux-gnu/bin/cargo",
+    "test",
+    "--offline",
+    "--locked",
+    "--jobs",
+    "2",
+    "--manifest-path",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-full2303-scoped-tail-parent-cpu-v228-v1/ferric/adapters/m1-engineering-execution-v1/Cargo.toml",
+    "--features",
+    "guarded-mlp-readiness-engineering,guarded-mlp-full2303-engineering",
+    "--lib",
+    "projection_residual_mlp_ordered_observation_v1::tests::ordered_configuration_is_outside_snapshot_intervals_and_no_accuracy_authority",
+    "--",
+    "--test-threads=2",
+    "--exact"
+  ],
+  "command": {
+    "bytes": 2742,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-full2303-scoped-tail-parent-cpu-v228-v1/evidence/parent-added-4.command.json",
+    "sha256": "37e01acf9c31874f40ce13715e1792298ff6a76716054a7436e97a8ec90d3cfd"
+  },
+  "elapsed_ns": 219500686,
+  "exception": null,
+  "exit_code": 0,
+  "forced_cleanup": false,
+  "label": "parent-added-4",
+  "natural_exit": true,
+  "observed_signals": [],
+  "pgid": 2582272,
+  "pid": 2582272,
+  "process_group_absent": true,
+  "reaped": true,
+  "stderr": {
+    "bytes": 1278,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-full2303-scoped-tail-parent-cpu-v228-v1/evidence/parent-added-4.stderr",
+    "sha256": "fa203f0f4dc26bde86dd7c682c10135b4d40f436aa3a3427d3d6a2d76cc5144f"
+  },
+  "stdout": {
+    "bytes": 260,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-full2303-scoped-tail-parent-cpu-v228-v1/evidence/parent-added-4.stdout",
+    "sha256": "810f2ce5bdf12763b82676e1984378ec3981e12bccffd436c97bc542a8ca8897"
+  },
+  "storage_failure": null,
+  "timed_out": false
+}

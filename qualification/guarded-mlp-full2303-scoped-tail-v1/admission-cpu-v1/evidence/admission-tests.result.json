@@ -1,0 +1,44 @@
+{
+  "adopted_reaped": [],
+  "argv": [
+    "/usr/bin/prlimit",
+    "--as=536870912",
+    "--cpu=120",
+    "--fsize=16777216",
+    "--core=0",
+    "--",
+    "/usr/bin/python3.12",
+    "-I",
+    "-B",
+    "-c",
+    "import sys,unittest;sys.path.insert(0,'/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-full2303-scoped-tail-admission-cpu-v228-v1');suite=unittest.TestSuite(unittest.defaultTestLoader.loadTestsFromName(name) for name in (\"test_full\",\"test_scoped_full\",\"test_compare_scoped_full\",\"test_bank_census_full\",\"test_compare_bank_census_full\",\"test_tail_full\",\"test_compare_tail_full\"));result=unittest.TextTestRunner(verbosity=2).run(suite);sys.exit(not result.wasSuccessful())"
+  ],
+  "command": {
+    "bytes": 1301,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-full2303-scoped-tail-admission-cpu-v228-v1/evidence/admission-tests.command.json",
+    "sha256": "ffa9bd587077451f45c52bd14701d1ee17bf2e1f3f5d18b768429bf9c01ae6ee"
+  },
+  "elapsed_ns": 71157016859,
+  "exception": null,
+  "exit_code": 0,
+  "forced_cleanup": false,
+  "label": "admission-tests",
+  "natural_exit": true,
+  "observed_signals": [],
+  "pgid": 2613733,
+  "pid": 2613733,
+  "process_group_absent": true,
+  "reaped": true,
+  "stderr": {
+    "bytes": 15211,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-full2303-scoped-tail-admission-cpu-v228-v1/evidence/admission-tests.stderr",
+    "sha256": "3df5078ec8b7aa73ccc71abd24a189fc3c441a51e379eed0172f6245327321bd"
+  },
+  "stdout": {
+    "bytes": 0,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-full2303-scoped-tail-admission-cpu-v228-v1/evidence/admission-tests.stdout",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "storage_failure": null,
+  "timed_out": false
+}

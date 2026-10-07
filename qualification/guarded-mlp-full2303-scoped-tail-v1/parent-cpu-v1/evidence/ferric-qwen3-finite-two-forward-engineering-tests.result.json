@@ -1,0 +1,53 @@
+{
+  "adopted_reaped": [],
+  "argv": [
+    "/usr/bin/prlimit",
+    "--as=12884901888",
+    "--cpu=1200",
+    "--fsize=1073741824",
+    "--core=0",
+    "--",
+    "/home/harmenon/.rustup/toolchains/1.97.1-x86_64-unknown-linux-gnu/bin/cargo",
+    "test",
+    "--offline",
+    "--locked",
+    "--jobs",
+    "2",
+    "--manifest-path",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-full2303-scoped-tail-parent-cpu-v228-v1/ferric/adapters/m1-engineering-execution-v1/Cargo.toml",
+    "--features",
+    "guarded-mlp-readiness-engineering,guarded-mlp-full2303-engineering",
+    "--bin",
+    "ferric-qwen3-finite-two-forward-engineering",
+    "--",
+    "--test-threads=2"
+  ],
+  "command": {
+    "bytes": 2638,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-full2303-scoped-tail-parent-cpu-v228-v1/evidence/ferric-qwen3-finite-two-forward-engineering-tests.command.json",
+    "sha256": "a185d39c1b269581717c2ab924b1f6c53221fef944d9f46a43f3fe6ed5738e8d"
+  },
+  "elapsed_ns": 419936920,
+  "exception": null,
+  "exit_code": 0,
+  "forced_cleanup": false,
+  "label": "ferric-qwen3-finite-two-forward-engineering-tests",
+  "natural_exit": true,
+  "observed_signals": [],
+  "pgid": 2580481,
+  "pid": 2580481,
+  "process_group_absent": true,
+  "reaped": true,
+  "stderr": {
+    "bytes": 2385,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-full2303-scoped-tail-parent-cpu-v228-v1/evidence/ferric-qwen3-finite-two-forward-engineering-tests.stderr",
+    "sha256": "587b4ee1e6453703c17f8dfae709631abf68ab3429f3d2a440e965427540d6b6"
+  },
+  "stdout": {
+    "bytes": 191,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-full2303-scoped-tail-parent-cpu-v228-v1/evidence/ferric-qwen3-finite-two-forward-engineering-tests.stdout",
+    "sha256": "6c9439098fc26222c642ebde9f3b528a1bc205c80088061e8c8d9526cda853f8"
+  },
+  "storage_failure": null,
+  "timed_out": false
+}

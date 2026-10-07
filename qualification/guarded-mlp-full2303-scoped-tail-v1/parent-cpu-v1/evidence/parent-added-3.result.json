@@ -1,0 +1,54 @@
+{
+  "adopted_reaped": [],
+  "argv": [
+    "/usr/bin/prlimit",
+    "--as=12884901888",
+    "--cpu=1200",
+    "--fsize=1073741824",
+    "--core=0",
+    "--",
+    "/home/harmenon/.rustup/toolchains/1.97.1-x86_64-unknown-linux-gnu/bin/cargo",
+    "test",
+    "--offline",
+    "--locked",
+    "--jobs",
+    "2",
+    "--manifest-path",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-full2303-scoped-tail-parent-cpu-v228-v1/ferric/adapters/m1-engineering-execution-v1/Cargo.toml",
+    "--features",
+    "guarded-mlp-readiness-engineering,guarded-mlp-full2303-engineering",
+    "--lib",
+    "finite_projection_residual_mlp_ordered_wire_v1::tests::ordered_profile_separates_projection_and_mode_domains",
+    "--",
+    "--test-threads=2",
+    "--exact"
+  ],
+  "command": {
+    "bytes": 2718,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-full2303-scoped-tail-parent-cpu-v228-v1/evidence/parent-added-3.command.json",
+    "sha256": "7045152a34de73b2b2ece293b0e68d621c249cdbad7b3f94f68bb59581de3c3c"
+  },
+  "elapsed_ns": 219316786,
+  "exception": null,
+  "exit_code": 0,
+  "forced_cleanup": false,
+  "label": "parent-added-3",
+  "natural_exit": true,
+  "observed_signals": [],
+  "pgid": 2582204,
+  "pid": 2582204,
+  "process_group_absent": true,
+  "reaped": true,
+  "stderr": {
+    "bytes": 1278,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-full2303-scoped-tail-parent-cpu-v228-v1/evidence/parent-added-3.stderr",
+    "sha256": "fa203f0f4dc26bde86dd7c682c10135b4d40f436aa3a3427d3d6a2d76cc5144f"
+  },
+  "stdout": {
+    "bytes": 236,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-full2303-scoped-tail-parent-cpu-v228-v1/evidence/parent-added-3.stdout",
+    "sha256": "ccf51ba8d8a4e4d3076955e1e9ca7f195076ab4c6b13f4d9a23033d0f3ff6b3c"
+  },
+  "storage_failure": null,
+  "timed_out": false
+}

@@ -1,0 +1,13 @@
+
+running 8 tests
+test finite_long_wire_v1::tests::all_request_boundaries_permutation_and_finite_rotary_are_checked ... ok
+test finite_long_wire_v1::tests::bootstrap_is_distinct_closed_profile_with_actual_pid_and_prompt_digest ... ok
+test finite_long_wire_v1::tests::chain_binds_each_checked_observation_and_ignores_claimed_chain ... ok
+test finite_long_wire_v1::tests::control_binary_roundtrip_retains_every_word_without_decimal_expansion ... ok
+test finite_long_wire_v1::tests::cumulative_budget_exact_one_short_overflow_and_malformed_frames_refuse ... ok
+test finite_long_wire_v1::tests::healthy_close_is_payload_free_and_has_no_numerical_or_performance_claim ... ok
+test finite_long_wire_v1::tests::selected_and_uncaptured_frames_verify_body_and_exact_schedule ... ok
+test finite_long_wire_v1::tests::full_2303_frame_shape_fits_existing_64mib_without_retaining_transcript ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 1024 filtered out; finished in 0.04s
+

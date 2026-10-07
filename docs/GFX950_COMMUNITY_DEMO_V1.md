@@ -90,8 +90,11 @@ remain visible. The report's data-only reproduction needs no new GPU launch.
 The [new full-request scoped-tail worker](../qualification/guarded-mlp-full2303-scoped-tail-v1/README.md)
 has since passed a separate 27-phase MI350 CPU qualification: 1,180 runtime
 and 838 worker tests, with existing skips unchanged. Its tested source is
-integrated. Parent qualification and native Full2303 execution are separate
-pending gates; this does not turn the short ablation into a decode demo.
+integrated. Its separate [parent qualification](../qualification/guarded-mlp-full2303-scoped-tail-v1/parent-cpu-v1/README.md)
+now passes 584 selected tests across 58 scopes and all 68 phases; six tested
+parent files are integrated. The [full-route admission checker](../qualification/guarded-mlp-full2303-scoped-tail-v1/admission-cpu-v1/README.md)
+passes 84 synthetic cases. Native Full2303 execution and numerical acceptance
+remain pending; these CPU results do not turn the short ablation into a decode demo.
 
 ## Still Open
 

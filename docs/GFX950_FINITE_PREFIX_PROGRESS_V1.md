@@ -10,8 +10,14 @@ Latest implementation: the [Full2303 scoped-tail worker](../qualification/guarde
 passes all 27 MI350 CPU phases in 186.074 seconds: 1,180 runtime and 838 worker
 passes, with eight/four existing ignores unchanged. Its twelve actual tested
 Rust postimages are integrated after independent original-data review and a
-complete 1,294-Ferric/825-runtime source postcheck. Parent qualification is
-pending. This adds an explicit full-request selector but does not demonstrate
+complete 1,294-Ferric/825-runtime source postcheck. The separate
+[parent qualification](../qualification/guarded-mlp-full2303-scoped-tail-v1/parent-cpu-v1/README.md)
+passed all 68 phases and 584 selected tests across 58 scopes in 419.208 seconds,
+with a 1,047-name library inventory and seven executables. Its six tested Rust
+files are integrated; the full 1,295-Ferric source postcheck preserves all 232
+worker bodies. The [admission checker](../qualification/guarded-mlp-full2303-scoped-tail-v1/admission-cpu-v1/README.md)
+passed all 84 synthetic cases in 71.190 seconds. These add explicit worker and
+parent full-request selectors but do not demonstrate
 native Full2303 execution, one-hour feasibility or independent numerical
 acceptance. Repeated immutable kernel-admission work is the next host-overhead
 measurement candidate; no saving is asserted before measurement.

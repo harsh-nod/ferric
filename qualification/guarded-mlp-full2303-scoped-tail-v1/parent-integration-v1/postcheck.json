@@ -1,0 +1,21 @@
+{
+  "actual_tested_parent_rows": 6,
+  "canonical_ferric_bodies_checked": 1295,
+  "cpu_execution_host": "mi350",
+  "full_launch_admitted": false,
+  "native_execution": false,
+  "numerical_acceptance": false,
+  "parent_lock_unchanged": true,
+  "passed": true,
+  "performance_claim": false,
+  "qualified_source_map": {
+    "bytes": 521263,
+    "sha256": "3f451da9914922109ffc0b232fe276f99aca98ecce3723fc7285faeb9fa6feea"
+  },
+  "qualified_terminal": {
+    "bytes": 4077579,
+    "sha256": "6e61fbbd1b1e82d97102e311272a947744858a7123ca7c73062b656bc8bdaea2"
+  },
+  "qualified_worker_bodies_preserved": 232,
+  "schema": "ferric-full2303-scoped-tail-parent-source-integration-v1"
+}
