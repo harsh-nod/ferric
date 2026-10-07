@@ -133,6 +133,14 @@ tests, not a native execution, numerical reference or performance result.
 | Passing V2 checker terminal | `61b595c1ebaa70337e7e6306fbf3ab89b4b11bcf6c63a116873ff58f61e18049` |
 | Passing V2 checker archive | `25f5d492e5fbe23f976c31c6e913a3d3d361c65ffc64cebf4a23376e86d9602a` |
 
+## Timing Report Qualification
+
+The exact bound reporting code passed all seven synthetic tests on `mi350`.
+[Original evidence](matched-timing-report-cpu-v1/README.md) includes integer
+nanosecond and decimal-rounding checks, timeline consistency, claim rejection,
+and CSV/table/SVG rendering. This is a report-tool qualification only; the
+actual same-binary GPU pair and its measurements are separate gates.
+
 ## Remaining Gates
 
 A fresh same-binary Default/scoped GPU pair must pass before claiming this
