@@ -6,7 +6,36 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Latest qualification: the
+Latest implementation: the
+[bank-scoped rearm path](../qualification/guarded-mlp-scoped-bank-rearm-v1/README.md)
+is integrated after a fresh coupled MI350 CPU qualification. All 26 phases
+passed in 166.963 seconds: 1,152 runtime tests with eight existing ignores,
+760 worker tests with four existing ignores, nine focused scopes, ten selected
+facade doctests and eight parser regressions. The original failed worker test
+build and the successful test-local repair are both retained. The 12 runtime
+and 11 worker actual Rust postimages were integrated with a 2,091-body source
+postcheck. The separate bank admission checker passes 82 tests. Host integration
+qualification and its matched native A/B run remain separate pending gates;
+allocation preflights are unchanged.
+
+The latest completed native comparison is the
+[Default/scoped warm-layer pair](../qualification/guarded-mlp-scoped-currentness-v1/matched-timing-gpu-v3/README.md).
+Both modes use the same parent/worker products and reproduce all 40 prompt
+records and four complete captured payloads, including the historical Position5
+baseline. Parent wall time was 938.053 seconds for Default and 576.777 seconds
+for scoped layers, 38.513% lower in this ordered pair. Frame waits totaled
+591.558 and 230.370 seconds, respectively. The
+[tables and plots](../qualification/guarded-mlp-scoped-currentness-v1/matched-timing-report-v3/README.md)
+separate disjoint parent spans; they are not GPU kernel time, an overlap trace,
+generated-token throughput or a repeated benchmark.
+
+The next community checkpoint is the same-binary bank-rearm ablation with
+first-use and warm-forward tables and plots, conditional on its actual GPU
+results. A correct sustained 2,048/256 demo additionally requires resolving the
+position-5 numerical discrepancy and exact independently generated ID/decoded-
+byte agreement. The 700 tokens/s performance demo is not yet ready.
+
+The earlier
 [Readiness40 SharedFull route](../qualification/guarded-mlp-readiness40-shared-full-v1/README.md)
 now passes a fresh same-binary timed Default/SharedFull pair on MI350, with
 all 40 semantic records and four complete payloads equal between modes and
@@ -19,7 +48,7 @@ now show parent timelines of 943.327/488.197 seconds, with frame-wait sums
 59.987% lower. Seven report tests pass on MI350. This is one
 ordered pair with intervening host work, not a repeated controlled benchmark.
 
-The next [scoped warm-layer currentness experiment](../qualification/guarded-mlp-scoped-currentness-v1/README.md)
+The [scoped warm-layer currentness implementation](../qualification/guarded-mlp-scoped-currentness-v1/README.md)
 passes its repaired 70-test synthetic checker and complete coupled CPU
 qualification on MI350. V3 passed all 26 phases in 151.522 seconds: 1,143
 runtime tests with eight existing ignores, 726 worker tests with four existing
@@ -29,14 +58,19 @@ phases and 492 selected tests across 55 scopes in 411.247 seconds. Its 483
 original evidence members are retained. The seven tested parent changes are
 integrated, with a complete 1,263-file source postcheck and all 209 worker
 bodies unchanged. The earlier module-path and test-type failures remain
-preserved as failures. A fresh same-binary Default/scoped GPU pair is still
-required before an end-to-end claim.
+preserved as failures. The subsequent same-binary Default/scoped GPU pair is
+described above; it establishes bounded prompt-forward parity, not full decode
+acceptance.
 
 The [Full2303 independent reference](../qualification/guarded-mlp-full2303-v1/README.md)
 has completed two fresh-cache BF16 framework passes of the 2,048/256 workload.
-Both independently generated 256 outputs agree. The separate full-request
-admission checker passes 25 synthetic tests. Neither result executes the
-Ferric Full2303 GPU route or resolves the earlier numerical discrepancy.
+Both independently generated 256 outputs agree. The scoped Full2303 admission
+and exact full-request comparison checker now passes 42 tests on MI350.
+The [scoped Full2303 worker and parent](../qualification/guarded-mlp-full2303-scoped-currentness-v1/README.md)
+are integrated after full coupled CPU qualification and 504 selected parent
+passes across 56 scopes. Neither CPU qualification nor the independent
+reference executes Ferric's Full2303 GPU route or resolves the earlier numerical
+discrepancy. Actual full-request comparison remains open.
 
 The new [bounded 40-position readiness route](../qualification/guarded-mlp-readiness40-v1/README.md)
 passes MI350 CPU qualification: 658 worker tests with four unchanged ignores,
