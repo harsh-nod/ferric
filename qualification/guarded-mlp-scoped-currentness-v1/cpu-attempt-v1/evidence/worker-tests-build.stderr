@@ -1,0 +1,27 @@
+   Compiling hybrid-array v0.4.15
+   Compiling unicode-ident v1.0.26
+   Compiling proc-macro2 v1.0.107
+   Compiling quote v1.0.47
+   Compiling block-buffer v0.12.1
+   Compiling crypto-common v0.2.2
+   Compiling const-oid v0.10.2
+   Compiling fe2o3-target-spec v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-scoped-currentness-cpu-v228-v1/fe2o3/crates/fe2o3-target-spec)
+   Compiling digest v0.11.3
+   Compiling fe2o3-amd-target v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-scoped-currentness-cpu-v228-v1/fe2o3/crates/fe2o3-amd-target)
+   Compiling syn v3.0.6
+   Compiling cfg-if v1.0.5
+   Compiling rustix v1.1.5
+   Compiling sha2 v0.11.0
+   Compiling serde_derive v1.0.229
+   Compiling fe2o3-hsaco v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-scoped-currentness-cpu-v228-v1/fe2o3/crates/fe2o3-hsaco)
+   Compiling bitflags v2.13.2
+   Compiling fe2o3-runtime-model v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-scoped-currentness-cpu-v228-v1/fe2o3/crates/fe2o3-runtime-model)
+   Compiling serde v1.0.229
+   Compiling fe2o3-amdhsa-loader v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-scoped-currentness-cpu-v228-v1/fe2o3/crates/fe2o3-amdhsa-loader)
+   Compiling fe2o3-drm-uapi v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-scoped-currentness-cpu-v228-v1/fe2o3/crates/fe2o3-drm-uapi)
+   Compiling fe2o3-aql v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-scoped-currentness-cpu-v228-v1/fe2o3/crates/fe2o3-aql)
+   Compiling fe2o3-kfd-uapi v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-scoped-currentness-cpu-v228-v1/fe2o3/crates/fe2o3-kfd-uapi)
+   Compiling fe2o3-kfd v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-scoped-currentness-cpu-v228-v1/fe2o3/crates/fe2o3-kfd)
+   Compiling ferric-tp-peer-finite-engineering-worker-v1 v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-scoped-currentness-cpu-v228-v1/ferric/adapters/tp-peer-finite-engineering-worker-v1)
+error: could not compile `ferric-tp-peer-finite-engineering-worker-v1` (lib) due to 1 previous error
+warning: build failed, waiting for other jobs to finish...

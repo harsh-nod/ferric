@@ -1,0 +1,106 @@
+{
+  "schema": "ferric-scoped-currentness-primitive-source-v1",
+  "status": "source-only-uncompiled-unexecuted",
+  "runtime_head": "686f9edd2e2292e093cadb955eb76d6a96a9341c",
+  "files": [
+    {
+      "repository": "fe2o3",
+      "path": "crates/fe2o3-kfd/src/device_gfx950.rs",
+      "before": {
+        "bytes": 27573,
+        "sha256": "ae3654b383e37a15095880d0b37741494fbe2ddcedcaf323eb114b5cbf015d5a"
+      },
+      "after": {
+        "bytes": 27801,
+        "sha256": "57e32f62c32a5813b8e480ca5309af84f30cafab960166eb668d6bc80b8305e6"
+      }
+    },
+    {
+      "repository": "fe2o3",
+      "path": "crates/fe2o3-kfd/src/device_gfx950_scoped_currentness_v1.rs",
+      "before": null,
+      "after": {
+        "bytes": 10458,
+        "sha256": "7dcb906ed732609d310499e4b0573a08711bb1b22749836c4075c611008f83c0"
+      }
+    },
+    {
+      "repository": "fe2o3",
+      "path": "crates/fe2o3-kfd/src/device_gfx950_scoped_currentness_v1_tests.rs",
+      "before": null,
+      "after": {
+        "bytes": 11363,
+        "sha256": "0756267f358da006c2036e3ba7e46f242f5555747b3914500a68247484e1d711"
+      }
+    },
+    {
+      "repository": "fe2o3",
+      "path": "crates/fe2o3-kfd/src/engineering_gfx950_peer.rs",
+      "before": {
+        "bytes": 33926,
+        "sha256": "491675d2c16854f023ae530fa7374e2ef7184692eef28caf140edb0cffc3bf7d"
+      },
+      "after": {
+        "bytes": 34012,
+        "sha256": "6b3e3a3da0131183a6a6f0987801efd29f606e4eb08e10aa2203e1fc649c7492"
+      }
+    },
+    {
+      "repository": "fe2o3",
+      "path": "crates/fe2o3-kfd/src/engineering_gfx950_peer_scoped_currentness_v1.rs",
+      "before": null,
+      "after": {
+        "bytes": 9342,
+        "sha256": "17e9c1d979f836037314ed96fd69c16958cc0aa7c17a8b8707f4a1f99cdc4f7e"
+      }
+    },
+    {
+      "repository": "fe2o3",
+      "path": "crates/fe2o3-kfd/src/topology.rs",
+      "before": {
+        "bytes": 119827,
+        "sha256": "d4e1209ac5551775f3e5df274949b64962e081a3914037454e2a30669b83eb3f"
+      },
+      "after": {
+        "bytes": 120344,
+        "sha256": "7d1f60ef7c11e6a56fa231ddf66f3f7bbd4dea0003fa447fd1d19ce37512f662"
+      }
+    }
+  ],
+  "new_tests": [
+    "scoped_checkpoint_keeps_local_checks_between_two_root_probes_without_discovery",
+    "scoped_entry_and_exit_each_discover_and_compare_both_retained_participants",
+    "every_scoped_engine_fault_poisons_both_and_stops_at_the_original_boundary",
+    "every_scoped_engine_unwind_poisons_both_without_later_observation",
+    "scoped_deadlines_refuse_entry_and_expiry_after_every_observed_effect",
+    "scoped_roster_count_duplicate_zero_and_substitution_are_terminal",
+    "scoped_root_or_generation_drift_rejects_before_local_predicates",
+    "scoped_persistent_content_change_without_generation_is_caught_at_full_exit",
+    "scoped_transient_content_change_and_revert_is_an_explicit_temporal_limitation",
+    "scoped_exit_is_bound_to_entry_even_if_retained_snapshots_are_replaced",
+    "scoped_closed_or_poisoned_windows_never_resume",
+    "scoped_counter_overflow_is_terminal_before_unaccounted_work",
+    "scoped_group_identity_rejects_each_substitution_without_native_contexts"
+  ],
+  "native_enablement": false,
+  "currentness_equivalence_claim": false,
+  "performance_claim": false,
+  "outer_owner_wiring_complete": false,
+  "individual_context_wiring_complete": false,
+  "readme": {
+    "bytes": 4764,
+    "sha256": "e674716067c440bebbad7d211b219853d919989048ed78030c03c615d177f0ad"
+  },
+  "native_wiring": {
+    "bytes": 16882,
+    "sha256": "0f3712a311be77a54ea38c9a6c48643e5d7d2d8fa5af1d0d379366633890308f"
+  },
+  "readset": {
+    "bytes": 6141,
+    "sha256": "555ad58749fe5ced8b201cce7f64841f0f864af93a858440e9acbfd493d61f5d"
+  },
+  "patch": {
+    "bytes": 34079,
+    "sha256": "c15bc72a3ce7721d9f87144e8501abf6cbbac15566a2a5a93034fc74ee3cd873"
+  }
+}

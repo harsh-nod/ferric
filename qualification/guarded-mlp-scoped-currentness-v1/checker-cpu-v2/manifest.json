@@ -1,0 +1,120 @@
+{
+  "admitted_test_count": 70,
+  "external_tools_rehashed_locally": false,
+  "files": {
+    "evidence/complete.json": {
+      "bytes": 22359,
+      "sha256": "61b595c1ebaa70337e7e6306fbf3ab89b4b11bcf6c63a116873ff58f61e18049"
+    },
+    "evidence/readiness-tests.command.json": {
+      "bytes": 1238,
+      "sha256": "9b4ebb6f85b32dd6bb30ff5cf213422a1befc1ec230aa81c357120d13dd60119"
+    },
+    "evidence/readiness-tests.result.json": {
+      "bytes": 1883,
+      "sha256": "69e7a82ca13f999d42418ecddcab73a1fbb2e6423b761b16a7a6ec39d2d9c2f1"
+    },
+    "evidence/readiness-tests.started.json": {
+      "bytes": 692,
+      "sha256": "cb8042b22c52167a4bdd8dbdee796bdf7d9ce91639e3d17b721ecfecaf5aae1b"
+    },
+    "evidence/readiness-tests.stderr": {
+      "bytes": 11019,
+      "sha256": "e5eac3611838016e0b3e7ee2c9f8e2808906f401e49fbff53115c087fa3b1f17"
+    },
+    "evidence/readiness-tests.stdout": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "evidence/sources-after.json": {
+      "bytes": 4413,
+      "sha256": "dcedc8cfb8998de56ec8261245c351ecd7b9896932db8825a22dac30d6a87361"
+    },
+    "evidence/sources-before.json": {
+      "bytes": 4413,
+      "sha256": "dcedc8cfb8998de56ec8261245c351ecd7b9896932db8825a22dac30d6a87361"
+    },
+    "pure-evidence.py": {
+      "bytes": 19037,
+      "sha256": "b2994050af3d9c6167840e9b336179d86be94cbb7b93c7dd8ec80a3994e5f8a4"
+    },
+    "readiness_announcement.py": {
+      "bytes": 3246,
+      "sha256": "b974ac6b6e936d8239639ac0c595c7db36700e3b1e2cff101224699fd789a9b1"
+    },
+    "run_cpu.py": {
+      "bytes": 17955,
+      "sha256": "a48cd1313ac4bdaffa1adbc2032a98b2a64b581da652d3e34cb6fa006cb5d6e9"
+    },
+    "supervisor.py": {
+      "bytes": 41485,
+      "sha256": "8824478a6415dee39d28ccefb0881fc0687ac724f5a9c5a4540310fb5196b9bc"
+    },
+    "test_matched.py": {
+      "bytes": 15400,
+      "sha256": "d5a6b522a1effe29e1ee08430754163cc217cf34c3713ce234926b7c860f9647"
+    },
+    "test_readiness.py": {
+      "bytes": 17802,
+      "sha256": "4b644462a71120ee45b3351757ecb0d5867c9453daadb6a10c07bdbcd38e8bb5"
+    },
+    "test_scoped.py": {
+      "bytes": 15936,
+      "sha256": "4c015cdfa072943960e0ffa1f25e0e604790e8dbe222875b4bed207be6563fdc"
+    },
+    "test_scoped_pair.py": {
+      "bytes": 3629,
+      "sha256": "aa95ff79fd3c72ee3658d66e4117738a06f7984a2a77dcc6712b28a272e57f8f"
+    },
+    "test_shared.py": {
+      "bytes": 10737,
+      "sha256": "a122f42f8a47a0213010f1812ef1f95fa7ff582db6a9ffa190356a35874f6b96"
+    },
+    "test_timing.py": {
+      "bytes": 10433,
+      "sha256": "630febf4d840081887692144cc570d70c1d67f9ad3bb5bab1fd6d7d1f61cedb1"
+    },
+    "validate_matched.py": {
+      "bytes": 9362,
+      "sha256": "d31c94a4dd1f254d166be185fe1cca10bc4eed26e500a0cb1fc3c5a74a574437"
+    },
+    "validate_readiness.py": {
+      "bytes": 19800,
+      "sha256": "0c319e99142b19909350d9a81404948b494c2e3ea0defbbc165c2e5529be032a"
+    },
+    "validate_scoped.py": {
+      "bytes": 9184,
+      "sha256": "c2541e11e534cf1e5a4faade31fe4a734726552171fed9617d6ea938f680b6fd"
+    },
+    "validate_scoped_pair.py": {
+      "bytes": 3233,
+      "sha256": "495fc476454e4052467810b55e177f9d2b91d86d3496a6b90876963f7f60ac62"
+    },
+    "validate_shared.py": {
+      "bytes": 8015,
+      "sha256": "6557fe5c082b2c92bae15274dd0d19bba3da8c3c36b9fc74757b4c1b74a87eca"
+    },
+    "validate_timing.py": {
+      "bytes": 10104,
+      "sha256": "27c652f5452676b4cc08a634241aff89b2653e85ee111133c1f1c4ab13efd93f"
+    }
+  },
+  "mode": "checker",
+  "native_execution": false,
+  "new_project_execution": false,
+  "numerical_acceptance": false,
+  "original_failure": null,
+  "original_files": 23,
+  "original_postcheck_errors": [],
+  "original_tools_rehashed_at_export": true,
+  "passed": true,
+  "performance_claim": false,
+  "schema": "ferric-readiness40-scoped-warm-pure-cpu-export-v1",
+  "selected_files": 24,
+  "synthetic_only": true,
+  "terminal": {
+    "bytes": 22359,
+    "sha256": "61b595c1ebaa70337e7e6306fbf3ab89b4b11bcf6c63a116873ff58f61e18049"
+  },
+  "terminal_name": "complete.json"
+}

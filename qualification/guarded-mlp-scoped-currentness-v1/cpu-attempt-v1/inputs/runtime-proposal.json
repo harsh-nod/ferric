@@ -1,0 +1,363 @@
+{
+  "schema": "ferric-scoped-currentness-routed-source-v1",
+  "status": "source-only-uncompiled-unexecuted",
+  "runtime_head": "686f9edd2e2292e093cadb955eb76d6a96a9341c",
+  "primitive_manifest": {
+    "bytes": 3820,
+    "sha256": "9abcd59d4c3fd23d532bd1b9e86592a191e62960d8a901fbd31d8e61974bdec7"
+  },
+  "files": [
+    {
+      "repository": "fe2o3",
+      "path": "crates/fe2o3-kfd/src/device_gfx950.rs",
+      "before": {
+        "bytes": 27573,
+        "sha256": "ae3654b383e37a15095880d0b37741494fbe2ddcedcaf323eb114b5cbf015d5a"
+      },
+      "primitive_postimage": {
+        "bytes": 27801,
+        "sha256": "57e32f62c32a5813b8e480ca5309af84f30cafab960166eb668d6bc80b8305e6"
+      },
+      "after": {
+        "bytes": 27801,
+        "sha256": "57e32f62c32a5813b8e480ca5309af84f30cafab960166eb668d6bc80b8305e6"
+      }
+    },
+    {
+      "repository": "fe2o3",
+      "path": "crates/fe2o3-kfd/src/device_gfx950_scoped_currentness_v1.rs",
+      "before": null,
+      "primitive_postimage": {
+        "bytes": 10458,
+        "sha256": "7dcb906ed732609d310499e4b0573a08711bb1b22749836c4075c611008f83c0"
+      },
+      "after": {
+        "bytes": 11802,
+        "sha256": "f1115856cbac4bf1bbe5200358d4c916925bfbf8ebfd077d782933937bb30129"
+      }
+    },
+    {
+      "repository": "fe2o3",
+      "path": "crates/fe2o3-kfd/src/device_gfx950_scoped_currentness_v1_tests.rs",
+      "before": null,
+      "primitive_postimage": {
+        "bytes": 11363,
+        "sha256": "0756267f358da006c2036e3ba7e46f242f5555747b3914500a68247484e1d711"
+      },
+      "after": {
+        "bytes": 16072,
+        "sha256": "cab0bf4f1f74fb4a327e0e99c4a724ee9ad0e9f675daea6f008b6b34fd71fdeb"
+      }
+    },
+    {
+      "repository": "fe2o3",
+      "path": "crates/fe2o3-kfd/src/engineering_gfx950.rs",
+      "before": {
+        "bytes": 80961,
+        "sha256": "4ebb285acb763831fea2dfa381289d3f921f34287c3e0379324d6ae36d6d2284"
+      },
+      "primitive_postimage": null,
+      "after": {
+        "bytes": 82941,
+        "sha256": "e0b36246c4333c6ea3c7f6c562eac67d627864e60978eed6e47923c43b1ef61f"
+      }
+    },
+    {
+      "repository": "fe2o3",
+      "path": "crates/fe2o3-kfd/src/engineering_gfx950_peer.rs",
+      "before": {
+        "bytes": 33926,
+        "sha256": "491675d2c16854f023ae530fa7374e2ef7184692eef28caf140edb0cffc3bf7d"
+      },
+      "primitive_postimage": {
+        "bytes": 34012,
+        "sha256": "6b3e3a3da0131183a6a6f0987801efd29f606e4eb08e10aa2203e1fc649c7492"
+      },
+      "after": {
+        "bytes": 35690,
+        "sha256": "24d68d009e2ce28ef195edb3a691553cdf53049af0238f7ae1ad372ea176f568"
+      }
+    },
+    {
+      "repository": "fe2o3",
+      "path": "crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_arena_v1.rs",
+      "before": {
+        "bytes": 20897,
+        "sha256": "2d2e856f93471207b480aa34d7fcf33602200d8126cea999bd5743a13f04d9da"
+      },
+      "primitive_postimage": null,
+      "after": {
+        "bytes": 21238,
+        "sha256": "2c58fc4e13466e18cfa27160e9a0ecba6e8727b38a890d97de0f46e890c58093"
+      }
+    },
+    {
+      "repository": "fe2o3",
+      "path": "crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_facade_v1.rs",
+      "before": {
+        "bytes": 14172,
+        "sha256": "9270e5f5e3c3e0a438a5bee5ab6b3e9acdadd1a73411326880f8c49bb6651104"
+      },
+      "primitive_postimage": null,
+      "after": {
+        "bytes": 15805,
+        "sha256": "3dcdde8668653f4bed9016f9d5a025355ea0050f645196ad42c6b6c888604b5a"
+      }
+    },
+    {
+      "repository": "fe2o3",
+      "path": "crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_profiles_v1.rs",
+      "before": {
+        "bytes": 14444,
+        "sha256": "01b4eb4064e148e3985455af7999b0796e55bcc18011ef99aa62f976db1b735d"
+      },
+      "primitive_postimage": null,
+      "after": {
+        "bytes": 14901,
+        "sha256": "a79b926b450d0a53bc0c84830ed64bf87c89191db8b313dfd853b257286f5292"
+      }
+    },
+    {
+      "repository": "fe2o3",
+      "path": "crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_retained_v1.rs",
+      "before": {
+        "bytes": 28265,
+        "sha256": "984bc6ecad796fc081b72cf35a724b06144a3a8f42776142346d947749f1715e"
+      },
+      "primitive_postimage": null,
+      "after": {
+        "bytes": 28414,
+        "sha256": "dee071df136739d34e9cddebce1db395943934cb9b7c242b847bda6d176c56cd"
+      }
+    },
+    {
+      "repository": "fe2o3",
+      "path": "crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_retired_v1.rs",
+      "before": {
+        "bytes": 4814,
+        "sha256": "f25a28a929ff464531885abafc11ae8fbeb621b869927fb77564feddad7a806d"
+      },
+      "primitive_postimage": null,
+      "after": {
+        "bytes": 5404,
+        "sha256": "90440bde6e3e9bcb0ae4d2013c00146d1c8fbf89329b39e6e83934fca4e5bfe8"
+      }
+    },
+    {
+      "repository": "fe2o3",
+      "path": "crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_reuse_v1.rs",
+      "before": {
+        "bytes": 6455,
+        "sha256": "5224902dc7b6062a4e908c4aa2843a85502f86f3395678399c01551dd7a57ad1"
+      },
+      "primitive_postimage": null,
+      "after": {
+        "bytes": 7185,
+        "sha256": "87d0a324ef9e7df1943667827ba9886551e3a1671b6bf1e3db93246209aff77c"
+      }
+    },
+    {
+      "repository": "fe2o3",
+      "path": "crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_session_v1.rs",
+      "before": {
+        "bytes": 9179,
+        "sha256": "a103c4fd3660d53d87d1c1fd54785bbfb82f45ea6c4003aa9962f7df6a44ba63"
+      },
+      "primitive_postimage": null,
+      "after": {
+        "bytes": 9247,
+        "sha256": "7bfaf82e23754c7f1ca3589f2f9ad6f5087ad4335fd978fdfb59517ba5ec3432"
+      }
+    },
+    {
+      "repository": "fe2o3",
+      "path": "crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_v1.rs",
+      "before": {
+        "bytes": 14524,
+        "sha256": "f9e5b0d5d4b0d626623295f8791127e557b4addefaa8a2ef032153694381ac78"
+      },
+      "primitive_postimage": null,
+      "after": {
+        "bytes": 15030,
+        "sha256": "130eb9cef3491d1470d3aece0659da2bd60a3f1fa7bc2050d76e3f33a551970e"
+      }
+    },
+    {
+      "repository": "fe2o3",
+      "path": "crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_state_v1.rs",
+      "before": {
+        "bytes": 15400,
+        "sha256": "c2282970db04d4bd6b8d27624a87fa3a86de723499b510c5232761f0e9027f29"
+      },
+      "primitive_postimage": null,
+      "after": {
+        "bytes": 16010,
+        "sha256": "b5a9487b3d6da8f2d0a9046fab1dcdda438b6ee1a56260fc53bed81d82f060a4"
+      }
+    },
+    {
+      "repository": "fe2o3",
+      "path": "crates/fe2o3-kfd/src/engineering_gfx950_peer_round.rs",
+      "before": {
+        "bytes": 16957,
+        "sha256": "39cb57403f18cd80df7edf3be595ff0059120c8c2f2c132d2682bb3bde9a0b90"
+      },
+      "primitive_postimage": null,
+      "after": {
+        "bytes": 21171,
+        "sha256": "700df60d5e38553b52ac9a89c693b77fe5b89301f5b6345a0f87cf73eae557eb"
+      }
+    },
+    {
+      "repository": "fe2o3",
+      "path": "crates/fe2o3-kfd/src/engineering_gfx950_peer_scoped_currentness_v1.rs",
+      "before": null,
+      "primitive_postimage": {
+        "bytes": 9342,
+        "sha256": "17e9c1d979f836037314ed96fd69c16958cc0aa7c17a8b8707f4a1f99cdc4f7e"
+      },
+      "after": {
+        "bytes": 12316,
+        "sha256": "c8a8440bf9e8b4ff7de84e7dcfe6d9d9b1b18a15c3067931d346d38f67a861c2"
+      }
+    },
+    {
+      "repository": "fe2o3",
+      "path": "crates/fe2o3-kfd/src/engineering_gfx950_peer_scoped_layer_v1.rs",
+      "before": null,
+      "primitive_postimage": null,
+      "after": {
+        "bytes": 11183,
+        "sha256": "63e099ab4d0e58ef309321a79f7d7ed00629da0c73da6f20716fd4a4f74e2a4f"
+      }
+    },
+    {
+      "repository": "fe2o3",
+      "path": "crates/fe2o3-kfd/src/engineering_gfx950_peer_scoped_layer_v1_tests.rs",
+      "before": null,
+      "primitive_postimage": null,
+      "after": {
+        "bytes": 5196,
+        "sha256": "8ffdd6c8bb9cb53d727e53d56781d50a53581e4962e039cdfbbcf4c147e1decd"
+      }
+    },
+    {
+      "repository": "fe2o3",
+      "path": "crates/fe2o3-kfd/src/engineering_gfx950_peer_wave_qkv_attention_output_tiles_state_v6.rs",
+      "before": {
+        "bytes": 15403,
+        "sha256": "51fd538a15ff6b793c7ad776d206c48b49476c8087805e522fce24798426ab0f"
+      },
+      "primitive_postimage": null,
+      "after": {
+        "bytes": 16102,
+        "sha256": "478b92b5a1b3c23bfc95519f45879474dd79af5a61725578fe1f86640fcab12a"
+      }
+    },
+    {
+      "repository": "fe2o3",
+      "path": "crates/fe2o3-kfd/src/engineering_gfx950_peer_wave_qkv_attention_output_tiles_v6.rs",
+      "before": {
+        "bytes": 14450,
+        "sha256": "7a9a1e7c8423f8e3210df57afcf3ada74034003fcdd01a562868e9e89e532190"
+      },
+      "primitive_postimage": null,
+      "after": {
+        "bytes": 15919,
+        "sha256": "4e11edaf80d7fa34972024ec5cb72298ba62ca64f996768f1b9dba7fb332407f"
+      }
+    },
+    {
+      "repository": "fe2o3",
+      "path": "crates/fe2o3-kfd/src/lib.rs",
+      "before": {
+        "bytes": 20902,
+        "sha256": "e66a1699a5784d0578ceef5bfbafd5cbf42a6f7d71ba3a087f02c4e44be9817b"
+      },
+      "primitive_postimage": null,
+      "after": {
+        "bytes": 21052,
+        "sha256": "962b0879e5ee30b9a8122e668af75e85d03e8a164775dc9c63a47040ff2a8e36"
+      }
+    },
+    {
+      "repository": "fe2o3",
+      "path": "crates/fe2o3-kfd/src/topology.rs",
+      "before": {
+        "bytes": 119827,
+        "sha256": "d4e1209ac5551775f3e5df274949b64962e081a3914037454e2a30669b83eb3f"
+      },
+      "primitive_postimage": {
+        "bytes": 120344,
+        "sha256": "7d1f60ef7c11e6a56fa231ddf66f3f7bbd4dea0003fa447fd1d19ce37512f662"
+      },
+      "after": {
+        "bytes": 120344,
+        "sha256": "7d1f60ef7c11e6a56fa231ddf66f3f7bbd4dea0003fa447fd1d19ce37512f662"
+      }
+    }
+  ],
+  "new_tests": [
+    "scoped_checkpoint_keeps_local_checks_between_two_root_probes_without_discovery",
+    "scoped_entry_and_exit_each_discover_and_compare_both_retained_participants",
+    "every_scoped_engine_fault_poisons_both_and_stops_at_the_original_boundary",
+    "every_scoped_engine_unwind_poisons_both_without_later_observation",
+    "scoped_deadlines_refuse_entry_and_expiry_after_every_observed_effect",
+    "scoped_roster_count_duplicate_zero_and_substitution_are_terminal",
+    "scoped_root_or_generation_drift_rejects_before_local_predicates",
+    "scoped_persistent_content_change_without_generation_is_caught_at_full_exit",
+    "scoped_transient_content_change_and_revert_is_an_explicit_temporal_limitation",
+    "scoped_exit_is_bound_to_entry_even_if_retained_snapshots_are_replaced",
+    "scoped_closed_or_poisoned_windows_never_resume",
+    "scoped_counter_overflow_is_terminal_before_unaccounted_work",
+    "scoped_rank_checkpoint_preserves_exact_one_rank_predicates_and_full_exit",
+    "scoped_rank_substitution_and_out_of_range_poison_window_and_selected_device",
+    "scoped_rank_every_fault_and_unwind_stops_and_invalidates_whole_window",
+    "scoped_rank_deadline_and_generation_drift_are_terminal_before_later_effects",
+    "scoped_group_identity_rejects_each_substitution_without_native_contexts",
+    "scoped_closed_layer_uses_one_native_and_fake_ordering_engine",
+    "scoped_closed_layer_every_boundary_failure_quarantines_before_publication",
+    "scoped_closed_layer_every_boundary_unwind_quarantines_before_publication",
+    "scoped_warm_admission_requires_ready_consumed_reuse_without_completed_proof",
+    "scoped_hidden_validation_requires_exact_finite_rank_pair",
+    "scoped_public_counts_are_data_only_and_preserve_rank_call_totals",
+    "scoped_closed_call_keeps_original_paired_timeout_cap"
+  ],
+  "new_tests_since_primitive": [
+    "scoped_rank_checkpoint_preserves_exact_one_rank_predicates_and_full_exit",
+    "scoped_rank_substitution_and_out_of_range_poison_window_and_selected_device",
+    "scoped_rank_every_fault_and_unwind_stops_and_invalidates_whole_window",
+    "scoped_rank_deadline_and_generation_drift_are_terminal_before_later_effects",
+    "scoped_closed_layer_uses_one_native_and_fake_ordering_engine",
+    "scoped_closed_layer_every_boundary_failure_quarantines_before_publication",
+    "scoped_closed_layer_every_boundary_unwind_quarantines_before_publication",
+    "scoped_warm_admission_requires_ready_consumed_reuse_without_completed_proof",
+    "scoped_hidden_validation_requires_exact_finite_rank_pair",
+    "scoped_public_counts_are_data_only_and_preserve_rank_call_totals",
+    "scoped_closed_call_keeps_original_paired_timeout_cap"
+  ],
+  "runtime_source_rows": 22,
+  "replacement_rows": 17,
+  "addition_rows": 5,
+  "runtime_ordinary_tests_added": 24,
+  "doctest_change": false,
+  "runtime_total_sources_conditional": 820,
+  "worker_selector_enabled": false,
+  "native_execution": false,
+  "currentness_equivalence_claim": false,
+  "performance_claim": false,
+  "runtime_outer_owner_wiring_present": true,
+  "individual_context_wiring_present": true,
+  "readme": {
+    "bytes": 6757,
+    "sha256": "aff9395d50d973228e8ca6930479cd557c968179373cf1d2d961a691046c69c3"
+  },
+  "cumulative_patch": {
+    "bytes": 97712,
+    "sha256": "3fe1f1f98610332f46016abd73d6cdc23bd7de2d4a709d690f1caea7db3ac6d1"
+  },
+  "incremental_patch": {
+    "bytes": 69078,
+    "sha256": "a70f753202fb46ce45591538600985bd97d17bad8982c30aef13ca4dc66a79a4"
+  }
+}
