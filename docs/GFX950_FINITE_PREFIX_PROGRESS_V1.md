@@ -11,8 +11,13 @@ passed all 27 MI350 CPU phases in 173.159 seconds: 1,180 runtime passes and
 820 worker passes, with the existing eight/four ignores unchanged. All nineteen
 actual tested Rust postimages are integrated with a complete 825-runtime and
 1,288-Ferric source postcheck. The strict Tail V4 checker also passed all 114
-synthetic tests in 70.690 seconds. Parent qualification and a fresh same-binary
-GPU comparison are next; no tail native result or speedup is claimed yet.
+synthetic tests in 70.690 seconds. The first parent qualification failed during
+test compilation because the shared sequence fixture referenced a worker-only
+module. The [original failed attempt](../qualification/guarded-mlp-scoped-tail-v1/parent-cpu-failed-v1/README.md)
+is retained; a test-only repair and fresh coupled/parent qualifications are next.
+No tail native result or speedup is claimed yet. A
+[community demo runbook](GFX950_COMMUNITY_DEMO_V1.md) covers the already retained
+Census experiment and its limits.
 The tail path remains Readiness40-only and does not resolve the independent
 position-5 discrepancy or admit Full2303 execution.
 

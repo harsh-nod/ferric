@@ -1,0 +1,8 @@
+
+running 3 tests
+test tests::full2303_bank_scoped_census_parent_cli_requires_one_distinct_selector ... ok
+test tests::full2303_parent_cli_requires_the_distinct_exact_opt_in ... ok
+test tests::full2303_scoped_parent_cli_has_one_closed_explicit_selector ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

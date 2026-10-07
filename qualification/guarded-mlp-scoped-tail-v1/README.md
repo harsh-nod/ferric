@@ -21,8 +21,11 @@ forwards remain ordinary; the following 38 use the new tail window after
 the existing bank/layer/census path. Tail counters are separate from layer
 and allocation counters. Errors and unwind are terminal, without fallback.
 
-Parent qualification and a fresh same-binary Census V3/Tail V4 GPU comparison
-are next. No tail native result or speedup is claimed yet. This change does not
+The first [parent qualification failed at test compilation](parent-cpu-failed-v1/README.md)
+because a shared test referenced a worker-only module. Its original evidence
+is retained. A test-only repair and fresh coupled/parent qualifications are
+required before the same-binary Census V3/Tail V4 GPU comparison. No tail native
+result or speedup is claimed yet. This change does not
 add a Full2303 tail route, relax the one-hour bound, or resolve the independent
 position-5 numerical discrepancy. Exact independent 256 output IDs/raw decoded
 bytes, repeated equal-work performance, GPU overlap and 700 tokens/s remain
