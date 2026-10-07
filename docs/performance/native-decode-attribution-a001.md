@@ -1,5 +1,11 @@
 # Native Decode Attribution
 
+Follow-up: the [October 7 native wait capture](native-wait-attribution-20261007.md)
+bounds post-signal observation/return delay at 0.123 ms per decode step on average,
+versus 45.62-45.72 ms before the final signal completes. This resolves that
+observation-delay question without establishing shader or kernel-family shares.
+The October 6 measurements below remain unchanged and are not pooled with it.
+
 Measured on MI350, 2026-10-06. Both arms completed exact 128-token/UTF8 replay,
 127 registered decode executions and clean unsignaled child/outer shutdown.
 One cold instrumented 128-input/128-output request per arm is diagnostic evidence,
