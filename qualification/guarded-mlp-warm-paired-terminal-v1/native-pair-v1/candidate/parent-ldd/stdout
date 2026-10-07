@@ -1,0 +1,5 @@
+	linux-vdso.so.1 (0x00007ffdff7a1000)
+	libgcc_s.so.1 => /lib/x86_64-linux-gnu/libgcc_s.so.1 (0x00007f459651e000)
+	libm.so.6 => /lib/x86_64-linux-gnu/libm.so.6 (0x00007f4595b17000)
+	libc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x00007f4595800000)
+	/lib64/ld-linux-x86-64.so.2 (0x00007f4596563000)

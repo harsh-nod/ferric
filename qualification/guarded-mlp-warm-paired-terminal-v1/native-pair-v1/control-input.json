@@ -1,0 +1,31 @@
+{
+  "case": "control",
+  "mode": "ar4",
+  "paired_terminal": false,
+  "parent": {
+    "bytes": 13920552,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-warm-paired-terminal-parent-cpu-v228-v3/target/debug/ferric-qwen3-finite-guarded-mlp-decode-engineering",
+    "sha256": "e82139705d4eb861ceecc75aba6036939a14ed4889f9dd616e57d08c8e8c0f15"
+  },
+  "parent_cpu": {
+    "bytes": 3901680,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-warm-paired-terminal-parent-cpu-v228-v3/evidence/complete.json",
+    "sha256": "29af2c2ef9e4eeb93bdc0f57a5ae463c2baf751f2824e86430260d8a29ce1f3c"
+  },
+  "request": {
+    "bytes": 9345,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-warm-paired-terminal-gpu-v228-v1/control-request.json",
+    "sha256": "c173559e545aa92881302f69ec518228e216c6d8144cbddba87e306eebe99f2b"
+  },
+  "schema": "ferric-guarded-mlp-warm-paired-terminal-gpu-input-v1",
+  "worker": {
+    "bytes": 6135752,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-warm-paired-terminal-worker-cpu-v228-v3/target/debug/ferric-tp-peer-finite-engineering-worker-v1",
+    "sha256": "240c62c1c3eca809ed63bb00f3612e0059df20786bd1a21d30e04aa628ad97c6"
+  },
+  "worker_cpu": {
+    "bytes": 1709799,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-warm-paired-terminal-worker-cpu-v228-v3/evidence/complete.json",
+    "sha256": "28e110ab7ebd6d28e9f31499165f364bac729e7e6d0a408b6cb3a369044a340b"
+  }
+}

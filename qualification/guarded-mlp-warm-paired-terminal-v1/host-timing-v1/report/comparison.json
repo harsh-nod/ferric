@@ -1,0 +1,2683 @@
+{
+  "controlled_benchmark": false,
+  "correlated_forwards_per_run": 4,
+  "end_to_end_speedup_claim": false,
+  "full_forward_time": false,
+  "gpu_timing": false,
+  "layers": [
+    {
+      "bank": 0,
+      "bank_generation": 1,
+      "layer": 0,
+      "mode": "control",
+      "phase": "first-use",
+      "position": 0,
+      "segment_host_ns": 174578448
+    },
+    {
+      "bank": 0,
+      "bank_generation": 1,
+      "layer": 0,
+      "mode": "candidate",
+      "phase": "first-use",
+      "position": 0,
+      "segment_host_ns": 178285641
+    },
+    {
+      "bank": 0,
+      "bank_generation": 1,
+      "layer": 1,
+      "mode": "control",
+      "phase": "first-use",
+      "position": 0,
+      "segment_host_ns": 173812618
+    },
+    {
+      "bank": 0,
+      "bank_generation": 1,
+      "layer": 1,
+      "mode": "candidate",
+      "phase": "first-use",
+      "position": 0,
+      "segment_host_ns": 178879491
+    },
+    {
+      "bank": 0,
+      "bank_generation": 1,
+      "layer": 2,
+      "mode": "control",
+      "phase": "first-use",
+      "position": 0,
+      "segment_host_ns": 176507220
+    },
+    {
+      "bank": 0,
+      "bank_generation": 1,
+      "layer": 2,
+      "mode": "candidate",
+      "phase": "first-use",
+      "position": 0,
+      "segment_host_ns": 180177962
+    },
+    {
+      "bank": 0,
+      "bank_generation": 1,
+      "layer": 3,
+      "mode": "control",
+      "phase": "first-use",
+      "position": 0,
+      "segment_host_ns": 173641848
+    },
+    {
+      "bank": 0,
+      "bank_generation": 1,
+      "layer": 3,
+      "mode": "candidate",
+      "phase": "first-use",
+      "position": 0,
+      "segment_host_ns": 177414940
+    },
+    {
+      "bank": 0,
+      "bank_generation": 1,
+      "layer": 4,
+      "mode": "control",
+      "phase": "first-use",
+      "position": 0,
+      "segment_host_ns": 176874149
+    },
+    {
+      "bank": 0,
+      "bank_generation": 1,
+      "layer": 4,
+      "mode": "candidate",
+      "phase": "first-use",
+      "position": 0,
+      "segment_host_ns": 176121699
+    },
+    {
+      "bank": 0,
+      "bank_generation": 1,
+      "layer": 5,
+      "mode": "control",
+      "phase": "first-use",
+      "position": 0,
+      "segment_host_ns": 177593510
+    },
+    {
+      "bank": 0,
+      "bank_generation": 1,
+      "layer": 5,
+      "mode": "candidate",
+      "phase": "first-use",
+      "position": 0,
+      "segment_host_ns": 177085560
+    },
+    {
+      "bank": 0,
+      "bank_generation": 1,
+      "layer": 6,
+      "mode": "control",
+      "phase": "first-use",
+      "position": 0,
+      "segment_host_ns": 175919769
+    },
+    {
+      "bank": 0,
+      "bank_generation": 1,
+      "layer": 6,
+      "mode": "candidate",
+      "phase": "first-use",
+      "position": 0,
+      "segment_host_ns": 175790988
+    },
+    {
+      "bank": 0,
+      "bank_generation": 1,
+      "layer": 7,
+      "mode": "control",
+      "phase": "first-use",
+      "position": 0,
+      "segment_host_ns": 175678679
+    },
+    {
+      "bank": 0,
+      "bank_generation": 1,
+      "layer": 7,
+      "mode": "candidate",
+      "phase": "first-use",
+      "position": 0,
+      "segment_host_ns": 176873690
+    },
+    {
+      "bank": 0,
+      "bank_generation": 1,
+      "layer": 8,
+      "mode": "control",
+      "phase": "first-use",
+      "position": 0,
+      "segment_host_ns": 175262999
+    },
+    {
+      "bank": 0,
+      "bank_generation": 1,
+      "layer": 8,
+      "mode": "candidate",
+      "phase": "first-use",
+      "position": 0,
+      "segment_host_ns": 178876661
+    },
+    {
+      "bank": 0,
+      "bank_generation": 1,
+      "layer": 9,
+      "mode": "control",
+      "phase": "first-use",
+      "position": 0,
+      "segment_host_ns": 174725098
+    },
+    {
+      "bank": 0,
+      "bank_generation": 1,
+      "layer": 9,
+      "mode": "candidate",
+      "phase": "first-use",
+      "position": 0,
+      "segment_host_ns": 177730240
+    },
+    {
+      "bank": 0,
+      "bank_generation": 1,
+      "layer": 10,
+      "mode": "control",
+      "phase": "first-use",
+      "position": 0,
+      "segment_host_ns": 174665868
+    },
+    {
+      "bank": 0,
+      "bank_generation": 1,
+      "layer": 10,
+      "mode": "candidate",
+      "phase": "first-use",
+      "position": 0,
+      "segment_host_ns": 179657131
+    },
+    {
+      "bank": 0,
+      "bank_generation": 1,
+      "layer": 11,
+      "mode": "control",
+      "phase": "first-use",
+      "position": 0,
+      "segment_host_ns": 174694368
+    },
+    {
+      "bank": 0,
+      "bank_generation": 1,
+      "layer": 11,
+      "mode": "candidate",
+      "phase": "first-use",
+      "position": 0,
+      "segment_host_ns": 177275830
+    },
+    {
+      "bank": 0,
+      "bank_generation": 1,
+      "layer": 12,
+      "mode": "control",
+      "phase": "first-use",
+      "position": 0,
+      "segment_host_ns": 175698609
+    },
+    {
+      "bank": 0,
+      "bank_generation": 1,
+      "layer": 12,
+      "mode": "candidate",
+      "phase": "first-use",
+      "position": 0,
+      "segment_host_ns": 173659748
+    },
+    {
+      "bank": 0,
+      "bank_generation": 1,
+      "layer": 13,
+      "mode": "control",
+      "phase": "first-use",
+      "position": 0,
+      "segment_host_ns": 175233798
+    },
+    {
+      "bank": 0,
+      "bank_generation": 1,
+      "layer": 13,
+      "mode": "candidate",
+      "phase": "first-use",
+      "position": 0,
+      "segment_host_ns": 178093221
+    },
+    {
+      "bank": 0,
+      "bank_generation": 1,
+      "layer": 14,
+      "mode": "control",
+      "phase": "first-use",
+      "position": 0,
+      "segment_host_ns": 176302029
+    },
+    {
+      "bank": 0,
+      "bank_generation": 1,
+      "layer": 14,
+      "mode": "candidate",
+      "phase": "first-use",
+      "position": 0,
+      "segment_host_ns": 175573329
+    },
+    {
+      "bank": 0,
+      "bank_generation": 1,
+      "layer": 15,
+      "mode": "control",
+      "phase": "first-use",
+      "position": 0,
+      "segment_host_ns": 176964550
+    },
+    {
+      "bank": 0,
+      "bank_generation": 1,
+      "layer": 15,
+      "mode": "candidate",
+      "phase": "first-use",
+      "position": 0,
+      "segment_host_ns": 177042840
+    },
+    {
+      "bank": 0,
+      "bank_generation": 1,
+      "layer": 16,
+      "mode": "control",
+      "phase": "first-use",
+      "position": 0,
+      "segment_host_ns": 175513509
+    },
+    {
+      "bank": 0,
+      "bank_generation": 1,
+      "layer": 16,
+      "mode": "candidate",
+      "phase": "first-use",
+      "position": 0,
+      "segment_host_ns": 180525382
+    },
+    {
+      "bank": 0,
+      "bank_generation": 1,
+      "layer": 17,
+      "mode": "control",
+      "phase": "first-use",
+      "position": 0,
+      "segment_host_ns": 175950689
+    },
+    {
+      "bank": 0,
+      "bank_generation": 1,
+      "layer": 17,
+      "mode": "candidate",
+      "phase": "first-use",
+      "position": 0,
+      "segment_host_ns": 174970478
+    },
+    {
+      "bank": 0,
+      "bank_generation": 1,
+      "layer": 18,
+      "mode": "control",
+      "phase": "first-use",
+      "position": 0,
+      "segment_host_ns": 175683039
+    },
+    {
+      "bank": 0,
+      "bank_generation": 1,
+      "layer": 18,
+      "mode": "candidate",
+      "phase": "first-use",
+      "position": 0,
+      "segment_host_ns": 174970909
+    },
+    {
+      "bank": 0,
+      "bank_generation": 1,
+      "layer": 19,
+      "mode": "control",
+      "phase": "first-use",
+      "position": 0,
+      "segment_host_ns": 174176358
+    },
+    {
+      "bank": 0,
+      "bank_generation": 1,
+      "layer": 19,
+      "mode": "candidate",
+      "phase": "first-use",
+      "position": 0,
+      "segment_host_ns": 178248231
+    },
+    {
+      "bank": 0,
+      "bank_generation": 1,
+      "layer": 20,
+      "mode": "control",
+      "phase": "first-use",
+      "position": 0,
+      "segment_host_ns": 176693920
+    },
+    {
+      "bank": 0,
+      "bank_generation": 1,
+      "layer": 20,
+      "mode": "candidate",
+      "phase": "first-use",
+      "position": 0,
+      "segment_host_ns": 176388199
+    },
+    {
+      "bank": 0,
+      "bank_generation": 1,
+      "layer": 21,
+      "mode": "control",
+      "phase": "first-use",
+      "position": 0,
+      "segment_host_ns": 178640821
+    },
+    {
+      "bank": 0,
+      "bank_generation": 1,
+      "layer": 21,
+      "mode": "candidate",
+      "phase": "first-use",
+      "position": 0,
+      "segment_host_ns": 175733909
+    },
+    {
+      "bank": 0,
+      "bank_generation": 1,
+      "layer": 22,
+      "mode": "control",
+      "phase": "first-use",
+      "position": 0,
+      "segment_host_ns": 173756888
+    },
+    {
+      "bank": 0,
+      "bank_generation": 1,
+      "layer": 22,
+      "mode": "candidate",
+      "phase": "first-use",
+      "position": 0,
+      "segment_host_ns": 177932881
+    },
+    {
+      "bank": 0,
+      "bank_generation": 1,
+      "layer": 23,
+      "mode": "control",
+      "phase": "first-use",
+      "position": 0,
+      "segment_host_ns": 176405510
+    },
+    {
+      "bank": 0,
+      "bank_generation": 1,
+      "layer": 23,
+      "mode": "candidate",
+      "phase": "first-use",
+      "position": 0,
+      "segment_host_ns": 173163707
+    },
+    {
+      "bank": 0,
+      "bank_generation": 1,
+      "layer": 24,
+      "mode": "control",
+      "phase": "first-use",
+      "position": 0,
+      "segment_host_ns": 177172930
+    },
+    {
+      "bank": 0,
+      "bank_generation": 1,
+      "layer": 24,
+      "mode": "candidate",
+      "phase": "first-use",
+      "position": 0,
+      "segment_host_ns": 176774200
+    },
+    {
+      "bank": 0,
+      "bank_generation": 1,
+      "layer": 25,
+      "mode": "control",
+      "phase": "first-use",
+      "position": 0,
+      "segment_host_ns": 175329939
+    },
+    {
+      "bank": 0,
+      "bank_generation": 1,
+      "layer": 25,
+      "mode": "candidate",
+      "phase": "first-use",
+      "position": 0,
+      "segment_host_ns": 176124279
+    },
+    {
+      "bank": 0,
+      "bank_generation": 1,
+      "layer": 26,
+      "mode": "control",
+      "phase": "first-use",
+      "position": 0,
+      "segment_host_ns": 176001259
+    },
+    {
+      "bank": 0,
+      "bank_generation": 1,
+      "layer": 26,
+      "mode": "candidate",
+      "phase": "first-use",
+      "position": 0,
+      "segment_host_ns": 174868238
+    },
+    {
+      "bank": 0,
+      "bank_generation": 1,
+      "layer": 27,
+      "mode": "control",
+      "phase": "first-use",
+      "position": 0,
+      "segment_host_ns": 176128750
+    },
+    {
+      "bank": 0,
+      "bank_generation": 1,
+      "layer": 27,
+      "mode": "candidate",
+      "phase": "first-use",
+      "position": 0,
+      "segment_host_ns": 174384408
+    },
+    {
+      "bank": 0,
+      "bank_generation": 1,
+      "layer": 28,
+      "mode": "control",
+      "phase": "first-use",
+      "position": 0,
+      "segment_host_ns": 173633568
+    },
+    {
+      "bank": 0,
+      "bank_generation": 1,
+      "layer": 28,
+      "mode": "candidate",
+      "phase": "first-use",
+      "position": 0,
+      "segment_host_ns": 175427838
+    },
+    {
+      "bank": 0,
+      "bank_generation": 1,
+      "layer": 29,
+      "mode": "control",
+      "phase": "first-use",
+      "position": 0,
+      "segment_host_ns": 176967540
+    },
+    {
+      "bank": 0,
+      "bank_generation": 1,
+      "layer": 29,
+      "mode": "candidate",
+      "phase": "first-use",
+      "position": 0,
+      "segment_host_ns": 174812919
+    },
+    {
+      "bank": 0,
+      "bank_generation": 1,
+      "layer": 30,
+      "mode": "control",
+      "phase": "first-use",
+      "position": 0,
+      "segment_host_ns": 173873318
+    },
+    {
+      "bank": 0,
+      "bank_generation": 1,
+      "layer": 30,
+      "mode": "candidate",
+      "phase": "first-use",
+      "position": 0,
+      "segment_host_ns": 177429060
+    },
+    {
+      "bank": 0,
+      "bank_generation": 1,
+      "layer": 31,
+      "mode": "control",
+      "phase": "first-use",
+      "position": 0,
+      "segment_host_ns": 175968799
+    },
+    {
+      "bank": 0,
+      "bank_generation": 1,
+      "layer": 31,
+      "mode": "candidate",
+      "phase": "first-use",
+      "position": 0,
+      "segment_host_ns": 175400589
+    },
+    {
+      "bank": 0,
+      "bank_generation": 1,
+      "layer": 32,
+      "mode": "control",
+      "phase": "first-use",
+      "position": 0,
+      "segment_host_ns": 176875480
+    },
+    {
+      "bank": 0,
+      "bank_generation": 1,
+      "layer": 32,
+      "mode": "candidate",
+      "phase": "first-use",
+      "position": 0,
+      "segment_host_ns": 174797458
+    },
+    {
+      "bank": 0,
+      "bank_generation": 1,
+      "layer": 33,
+      "mode": "control",
+      "phase": "first-use",
+      "position": 0,
+      "segment_host_ns": 175400429
+    },
+    {
+      "bank": 0,
+      "bank_generation": 1,
+      "layer": 33,
+      "mode": "candidate",
+      "phase": "first-use",
+      "position": 0,
+      "segment_host_ns": 176486259
+    },
+    {
+      "bank": 0,
+      "bank_generation": 1,
+      "layer": 34,
+      "mode": "control",
+      "phase": "first-use",
+      "position": 0,
+      "segment_host_ns": 176184990
+    },
+    {
+      "bank": 0,
+      "bank_generation": 1,
+      "layer": 34,
+      "mode": "candidate",
+      "phase": "first-use",
+      "position": 0,
+      "segment_host_ns": 176464109
+    },
+    {
+      "bank": 0,
+      "bank_generation": 1,
+      "layer": 35,
+      "mode": "control",
+      "phase": "first-use",
+      "position": 0,
+      "segment_host_ns": 176498640
+    },
+    {
+      "bank": 0,
+      "bank_generation": 1,
+      "layer": 35,
+      "mode": "candidate",
+      "phase": "first-use",
+      "position": 0,
+      "segment_host_ns": 175155408
+    },
+    {
+      "bank": 1,
+      "bank_generation": 1,
+      "layer": 0,
+      "mode": "control",
+      "phase": "first-use",
+      "position": 1,
+      "segment_host_ns": 176557049
+    },
+    {
+      "bank": 1,
+      "bank_generation": 1,
+      "layer": 0,
+      "mode": "candidate",
+      "phase": "first-use",
+      "position": 1,
+      "segment_host_ns": 175482179
+    },
+    {
+      "bank": 1,
+      "bank_generation": 1,
+      "layer": 1,
+      "mode": "control",
+      "phase": "first-use",
+      "position": 1,
+      "segment_host_ns": 175518419
+    },
+    {
+      "bank": 1,
+      "bank_generation": 1,
+      "layer": 1,
+      "mode": "candidate",
+      "phase": "first-use",
+      "position": 1,
+      "segment_host_ns": 175191428
+    },
+    {
+      "bank": 1,
+      "bank_generation": 1,
+      "layer": 2,
+      "mode": "control",
+      "phase": "first-use",
+      "position": 1,
+      "segment_host_ns": 177688100
+    },
+    {
+      "bank": 1,
+      "bank_generation": 1,
+      "layer": 2,
+      "mode": "candidate",
+      "phase": "first-use",
+      "position": 1,
+      "segment_host_ns": 175260119
+    },
+    {
+      "bank": 1,
+      "bank_generation": 1,
+      "layer": 3,
+      "mode": "control",
+      "phase": "first-use",
+      "position": 1,
+      "segment_host_ns": 174266118
+    },
+    {
+      "bank": 1,
+      "bank_generation": 1,
+      "layer": 3,
+      "mode": "candidate",
+      "phase": "first-use",
+      "position": 1,
+      "segment_host_ns": 175657889
+    },
+    {
+      "bank": 1,
+      "bank_generation": 1,
+      "layer": 4,
+      "mode": "control",
+      "phase": "first-use",
+      "position": 1,
+      "segment_host_ns": 177222060
+    },
+    {
+      "bank": 1,
+      "bank_generation": 1,
+      "layer": 4,
+      "mode": "candidate",
+      "phase": "first-use",
+      "position": 1,
+      "segment_host_ns": 173545757
+    },
+    {
+      "bank": 1,
+      "bank_generation": 1,
+      "layer": 5,
+      "mode": "control",
+      "phase": "first-use",
+      "position": 1,
+      "segment_host_ns": 175307348
+    },
+    {
+      "bank": 1,
+      "bank_generation": 1,
+      "layer": 5,
+      "mode": "candidate",
+      "phase": "first-use",
+      "position": 1,
+      "segment_host_ns": 177825910
+    },
+    {
+      "bank": 1,
+      "bank_generation": 1,
+      "layer": 6,
+      "mode": "control",
+      "phase": "first-use",
+      "position": 1,
+      "segment_host_ns": 175631249
+    },
+    {
+      "bank": 1,
+      "bank_generation": 1,
+      "layer": 6,
+      "mode": "candidate",
+      "phase": "first-use",
+      "position": 1,
+      "segment_host_ns": 175947949
+    },
+    {
+      "bank": 1,
+      "bank_generation": 1,
+      "layer": 7,
+      "mode": "control",
+      "phase": "first-use",
+      "position": 1,
+      "segment_host_ns": 175385869
+    },
+    {
+      "bank": 1,
+      "bank_generation": 1,
+      "layer": 7,
+      "mode": "candidate",
+      "phase": "first-use",
+      "position": 1,
+      "segment_host_ns": 175823219
+    },
+    {
+      "bank": 1,
+      "bank_generation": 1,
+      "layer": 8,
+      "mode": "control",
+      "phase": "first-use",
+      "position": 1,
+      "segment_host_ns": 173812517
+    },
+    {
+      "bank": 1,
+      "bank_generation": 1,
+      "layer": 8,
+      "mode": "candidate",
+      "phase": "first-use",
+      "position": 1,
+      "segment_host_ns": 175405878
+    },
+    {
+      "bank": 1,
+      "bank_generation": 1,
+      "layer": 9,
+      "mode": "control",
+      "phase": "first-use",
+      "position": 1,
+      "segment_host_ns": 174361108
+    },
+    {
+      "bank": 1,
+      "bank_generation": 1,
+      "layer": 9,
+      "mode": "candidate",
+      "phase": "first-use",
+      "position": 1,
+      "segment_host_ns": 175426038
+    },
+    {
+      "bank": 1,
+      "bank_generation": 1,
+      "layer": 10,
+      "mode": "control",
+      "phase": "first-use",
+      "position": 1,
+      "segment_host_ns": 175907799
+    },
+    {
+      "bank": 1,
+      "bank_generation": 1,
+      "layer": 10,
+      "mode": "candidate",
+      "phase": "first-use",
+      "position": 1,
+      "segment_host_ns": 173766078
+    },
+    {
+      "bank": 1,
+      "bank_generation": 1,
+      "layer": 11,
+      "mode": "control",
+      "phase": "first-use",
+      "position": 1,
+      "segment_host_ns": 176698439
+    },
+    {
+      "bank": 1,
+      "bank_generation": 1,
+      "layer": 11,
+      "mode": "candidate",
+      "phase": "first-use",
+      "position": 1,
+      "segment_host_ns": 175309688
+    },
+    {
+      "bank": 1,
+      "bank_generation": 1,
+      "layer": 12,
+      "mode": "control",
+      "phase": "first-use",
+      "position": 1,
+      "segment_host_ns": 175280108
+    },
+    {
+      "bank": 1,
+      "bank_generation": 1,
+      "layer": 12,
+      "mode": "candidate",
+      "phase": "first-use",
+      "position": 1,
+      "segment_host_ns": 175919259
+    },
+    {
+      "bank": 1,
+      "bank_generation": 1,
+      "layer": 13,
+      "mode": "control",
+      "phase": "first-use",
+      "position": 1,
+      "segment_host_ns": 177985380
+    },
+    {
+      "bank": 1,
+      "bank_generation": 1,
+      "layer": 13,
+      "mode": "candidate",
+      "phase": "first-use",
+      "position": 1,
+      "segment_host_ns": 176062619
+    },
+    {
+      "bank": 1,
+      "bank_generation": 1,
+      "layer": 14,
+      "mode": "control",
+      "phase": "first-use",
+      "position": 1,
+      "segment_host_ns": 174520178
+    },
+    {
+      "bank": 1,
+      "bank_generation": 1,
+      "layer": 14,
+      "mode": "candidate",
+      "phase": "first-use",
+      "position": 1,
+      "segment_host_ns": 177992670
+    },
+    {
+      "bank": 1,
+      "bank_generation": 1,
+      "layer": 15,
+      "mode": "control",
+      "phase": "first-use",
+      "position": 1,
+      "segment_host_ns": 175367479
+    },
+    {
+      "bank": 1,
+      "bank_generation": 1,
+      "layer": 15,
+      "mode": "candidate",
+      "phase": "first-use",
+      "position": 1,
+      "segment_host_ns": 175412328
+    },
+    {
+      "bank": 1,
+      "bank_generation": 1,
+      "layer": 16,
+      "mode": "control",
+      "phase": "first-use",
+      "position": 1,
+      "segment_host_ns": 177176200
+    },
+    {
+      "bank": 1,
+      "bank_generation": 1,
+      "layer": 16,
+      "mode": "candidate",
+      "phase": "first-use",
+      "position": 1,
+      "segment_host_ns": 176879030
+    },
+    {
+      "bank": 1,
+      "bank_generation": 1,
+      "layer": 17,
+      "mode": "control",
+      "phase": "first-use",
+      "position": 1,
+      "segment_host_ns": 175733949
+    },
+    {
+      "bank": 1,
+      "bank_generation": 1,
+      "layer": 17,
+      "mode": "candidate",
+      "phase": "first-use",
+      "position": 1,
+      "segment_host_ns": 177889180
+    },
+    {
+      "bank": 1,
+      "bank_generation": 1,
+      "layer": 18,
+      "mode": "control",
+      "phase": "first-use",
+      "position": 1,
+      "segment_host_ns": 173604227
+    },
+    {
+      "bank": 1,
+      "bank_generation": 1,
+      "layer": 18,
+      "mode": "candidate",
+      "phase": "first-use",
+      "position": 1,
+      "segment_host_ns": 174884698
+    },
+    {
+      "bank": 1,
+      "bank_generation": 1,
+      "layer": 19,
+      "mode": "control",
+      "phase": "first-use",
+      "position": 1,
+      "segment_host_ns": 175670849
+    },
+    {
+      "bank": 1,
+      "bank_generation": 1,
+      "layer": 19,
+      "mode": "candidate",
+      "phase": "first-use",
+      "position": 1,
+      "segment_host_ns": 176647410
+    },
+    {
+      "bank": 1,
+      "bank_generation": 1,
+      "layer": 20,
+      "mode": "control",
+      "phase": "first-use",
+      "position": 1,
+      "segment_host_ns": 178915420
+    },
+    {
+      "bank": 1,
+      "bank_generation": 1,
+      "layer": 20,
+      "mode": "candidate",
+      "phase": "first-use",
+      "position": 1,
+      "segment_host_ns": 176392689
+    },
+    {
+      "bank": 1,
+      "bank_generation": 1,
+      "layer": 21,
+      "mode": "control",
+      "phase": "first-use",
+      "position": 1,
+      "segment_host_ns": 175658429
+    },
+    {
+      "bank": 1,
+      "bank_generation": 1,
+      "layer": 21,
+      "mode": "candidate",
+      "phase": "first-use",
+      "position": 1,
+      "segment_host_ns": 176961750
+    },
+    {
+      "bank": 1,
+      "bank_generation": 1,
+      "layer": 22,
+      "mode": "control",
+      "phase": "first-use",
+      "position": 1,
+      "segment_host_ns": 175510059
+    },
+    {
+      "bank": 1,
+      "bank_generation": 1,
+      "layer": 22,
+      "mode": "candidate",
+      "phase": "first-use",
+      "position": 1,
+      "segment_host_ns": 176351379
+    },
+    {
+      "bank": 1,
+      "bank_generation": 1,
+      "layer": 23,
+      "mode": "control",
+      "phase": "first-use",
+      "position": 1,
+      "segment_host_ns": 175186079
+    },
+    {
+      "bank": 1,
+      "bank_generation": 1,
+      "layer": 23,
+      "mode": "candidate",
+      "phase": "first-use",
+      "position": 1,
+      "segment_host_ns": 178246781
+    },
+    {
+      "bank": 1,
+      "bank_generation": 1,
+      "layer": 24,
+      "mode": "control",
+      "phase": "first-use",
+      "position": 1,
+      "segment_host_ns": 174974868
+    },
+    {
+      "bank": 1,
+      "bank_generation": 1,
+      "layer": 24,
+      "mode": "candidate",
+      "phase": "first-use",
+      "position": 1,
+      "segment_host_ns": 175810419
+    },
+    {
+      "bank": 1,
+      "bank_generation": 1,
+      "layer": 25,
+      "mode": "control",
+      "phase": "first-use",
+      "position": 1,
+      "segment_host_ns": 175743119
+    },
+    {
+      "bank": 1,
+      "bank_generation": 1,
+      "layer": 25,
+      "mode": "candidate",
+      "phase": "first-use",
+      "position": 1,
+      "segment_host_ns": 177072700
+    },
+    {
+      "bank": 1,
+      "bank_generation": 1,
+      "layer": 26,
+      "mode": "control",
+      "phase": "first-use",
+      "position": 1,
+      "segment_host_ns": 177022700
+    },
+    {
+      "bank": 1,
+      "bank_generation": 1,
+      "layer": 26,
+      "mode": "candidate",
+      "phase": "first-use",
+      "position": 1,
+      "segment_host_ns": 177393230
+    },
+    {
+      "bank": 1,
+      "bank_generation": 1,
+      "layer": 27,
+      "mode": "control",
+      "phase": "first-use",
+      "position": 1,
+      "segment_host_ns": 174152887
+    },
+    {
+      "bank": 1,
+      "bank_generation": 1,
+      "layer": 27,
+      "mode": "candidate",
+      "phase": "first-use",
+      "position": 1,
+      "segment_host_ns": 175515219
+    },
+    {
+      "bank": 1,
+      "bank_generation": 1,
+      "layer": 28,
+      "mode": "control",
+      "phase": "first-use",
+      "position": 1,
+      "segment_host_ns": 177888030
+    },
+    {
+      "bank": 1,
+      "bank_generation": 1,
+      "layer": 28,
+      "mode": "candidate",
+      "phase": "first-use",
+      "position": 1,
+      "segment_host_ns": 177784590
+    },
+    {
+      "bank": 1,
+      "bank_generation": 1,
+      "layer": 29,
+      "mode": "control",
+      "phase": "first-use",
+      "position": 1,
+      "segment_host_ns": 177927390
+    },
+    {
+      "bank": 1,
+      "bank_generation": 1,
+      "layer": 29,
+      "mode": "candidate",
+      "phase": "first-use",
+      "position": 1,
+      "segment_host_ns": 176177699
+    },
+    {
+      "bank": 1,
+      "bank_generation": 1,
+      "layer": 30,
+      "mode": "control",
+      "phase": "first-use",
+      "position": 1,
+      "segment_host_ns": 172173166
+    },
+    {
+      "bank": 1,
+      "bank_generation": 1,
+      "layer": 30,
+      "mode": "candidate",
+      "phase": "first-use",
+      "position": 1,
+      "segment_host_ns": 176482259
+    },
+    {
+      "bank": 1,
+      "bank_generation": 1,
+      "layer": 31,
+      "mode": "control",
+      "phase": "first-use",
+      "position": 1,
+      "segment_host_ns": 179993742
+    },
+    {
+      "bank": 1,
+      "bank_generation": 1,
+      "layer": 31,
+      "mode": "candidate",
+      "phase": "first-use",
+      "position": 1,
+      "segment_host_ns": 176266360
+    },
+    {
+      "bank": 1,
+      "bank_generation": 1,
+      "layer": 32,
+      "mode": "control",
+      "phase": "first-use",
+      "position": 1,
+      "segment_host_ns": 176824110
+    },
+    {
+      "bank": 1,
+      "bank_generation": 1,
+      "layer": 32,
+      "mode": "candidate",
+      "phase": "first-use",
+      "position": 1,
+      "segment_host_ns": 178161750
+    },
+    {
+      "bank": 1,
+      "bank_generation": 1,
+      "layer": 33,
+      "mode": "control",
+      "phase": "first-use",
+      "position": 1,
+      "segment_host_ns": 174139168
+    },
+    {
+      "bank": 1,
+      "bank_generation": 1,
+      "layer": 33,
+      "mode": "candidate",
+      "phase": "first-use",
+      "position": 1,
+      "segment_host_ns": 174578169
+    },
+    {
+      "bank": 1,
+      "bank_generation": 1,
+      "layer": 34,
+      "mode": "control",
+      "phase": "first-use",
+      "position": 1,
+      "segment_host_ns": 174810828
+    },
+    {
+      "bank": 1,
+      "bank_generation": 1,
+      "layer": 34,
+      "mode": "candidate",
+      "phase": "first-use",
+      "position": 1,
+      "segment_host_ns": 176210379
+    },
+    {
+      "bank": 1,
+      "bank_generation": 1,
+      "layer": 35,
+      "mode": "control",
+      "phase": "first-use",
+      "position": 1,
+      "segment_host_ns": 173892087
+    },
+    {
+      "bank": 1,
+      "bank_generation": 1,
+      "layer": 35,
+      "mode": "candidate",
+      "phase": "first-use",
+      "position": 1,
+      "segment_host_ns": 177995190
+    },
+    {
+      "bank": 0,
+      "bank_generation": 2,
+      "layer": 0,
+      "mode": "control",
+      "phase": "warm",
+      "position": 2,
+      "segment_host_ns": 161346800
+    },
+    {
+      "bank": 0,
+      "bank_generation": 2,
+      "layer": 0,
+      "mode": "candidate",
+      "phase": "warm",
+      "position": 2,
+      "segment_host_ns": 123240476
+    },
+    {
+      "bank": 0,
+      "bank_generation": 2,
+      "layer": 1,
+      "mode": "control",
+      "phase": "warm",
+      "position": 2,
+      "segment_host_ns": 162449070
+    },
+    {
+      "bank": 0,
+      "bank_generation": 2,
+      "layer": 1,
+      "mode": "candidate",
+      "phase": "warm",
+      "position": 2,
+      "segment_host_ns": 122947436
+    },
+    {
+      "bank": 0,
+      "bank_generation": 2,
+      "layer": 2,
+      "mode": "control",
+      "phase": "warm",
+      "position": 2,
+      "segment_host_ns": 161480360
+    },
+    {
+      "bank": 0,
+      "bank_generation": 2,
+      "layer": 2,
+      "mode": "candidate",
+      "phase": "warm",
+      "position": 2,
+      "segment_host_ns": 121193745
+    },
+    {
+      "bank": 0,
+      "bank_generation": 2,
+      "layer": 3,
+      "mode": "control",
+      "phase": "warm",
+      "position": 2,
+      "segment_host_ns": 161104519
+    },
+    {
+      "bank": 0,
+      "bank_generation": 2,
+      "layer": 3,
+      "mode": "candidate",
+      "phase": "warm",
+      "position": 2,
+      "segment_host_ns": 120955635
+    },
+    {
+      "bank": 0,
+      "bank_generation": 2,
+      "layer": 4,
+      "mode": "control",
+      "phase": "warm",
+      "position": 2,
+      "segment_host_ns": 160935399
+    },
+    {
+      "bank": 0,
+      "bank_generation": 2,
+      "layer": 4,
+      "mode": "candidate",
+      "phase": "warm",
+      "position": 2,
+      "segment_host_ns": 122240895
+    },
+    {
+      "bank": 0,
+      "bank_generation": 2,
+      "layer": 5,
+      "mode": "control",
+      "phase": "warm",
+      "position": 2,
+      "segment_host_ns": 163644672
+    },
+    {
+      "bank": 0,
+      "bank_generation": 2,
+      "layer": 5,
+      "mode": "candidate",
+      "phase": "warm",
+      "position": 2,
+      "segment_host_ns": 118912494
+    },
+    {
+      "bank": 0,
+      "bank_generation": 2,
+      "layer": 6,
+      "mode": "control",
+      "phase": "warm",
+      "position": 2,
+      "segment_host_ns": 161293060
+    },
+    {
+      "bank": 0,
+      "bank_generation": 2,
+      "layer": 6,
+      "mode": "candidate",
+      "phase": "warm",
+      "position": 2,
+      "segment_host_ns": 120417304
+    },
+    {
+      "bank": 0,
+      "bank_generation": 2,
+      "layer": 7,
+      "mode": "control",
+      "phase": "warm",
+      "position": 2,
+      "segment_host_ns": 161029080
+    },
+    {
+      "bank": 0,
+      "bank_generation": 2,
+      "layer": 7,
+      "mode": "candidate",
+      "phase": "warm",
+      "position": 2,
+      "segment_host_ns": 121652085
+    },
+    {
+      "bank": 0,
+      "bank_generation": 2,
+      "layer": 8,
+      "mode": "control",
+      "phase": "warm",
+      "position": 2,
+      "segment_host_ns": 163320391
+    },
+    {
+      "bank": 0,
+      "bank_generation": 2,
+      "layer": 8,
+      "mode": "candidate",
+      "phase": "warm",
+      "position": 2,
+      "segment_host_ns": 121080285
+    },
+    {
+      "bank": 0,
+      "bank_generation": 2,
+      "layer": 9,
+      "mode": "control",
+      "phase": "warm",
+      "position": 2,
+      "segment_host_ns": 161300960
+    },
+    {
+      "bank": 0,
+      "bank_generation": 2,
+      "layer": 9,
+      "mode": "candidate",
+      "phase": "warm",
+      "position": 2,
+      "segment_host_ns": 120171204
+    },
+    {
+      "bank": 0,
+      "bank_generation": 2,
+      "layer": 10,
+      "mode": "control",
+      "phase": "warm",
+      "position": 2,
+      "segment_host_ns": 163936502
+    },
+    {
+      "bank": 0,
+      "bank_generation": 2,
+      "layer": 10,
+      "mode": "candidate",
+      "phase": "warm",
+      "position": 2,
+      "segment_host_ns": 121085555
+    },
+    {
+      "bank": 0,
+      "bank_generation": 2,
+      "layer": 11,
+      "mode": "control",
+      "phase": "warm",
+      "position": 2,
+      "segment_host_ns": 161912841
+    },
+    {
+      "bank": 0,
+      "bank_generation": 2,
+      "layer": 11,
+      "mode": "candidate",
+      "phase": "warm",
+      "position": 2,
+      "segment_host_ns": 118275803
+    },
+    {
+      "bank": 0,
+      "bank_generation": 2,
+      "layer": 12,
+      "mode": "control",
+      "phase": "warm",
+      "position": 2,
+      "segment_host_ns": 162775641
+    },
+    {
+      "bank": 0,
+      "bank_generation": 2,
+      "layer": 12,
+      "mode": "candidate",
+      "phase": "warm",
+      "position": 2,
+      "segment_host_ns": 121127725
+    },
+    {
+      "bank": 0,
+      "bank_generation": 2,
+      "layer": 13,
+      "mode": "control",
+      "phase": "warm",
+      "position": 2,
+      "segment_host_ns": 162703830
+    },
+    {
+      "bank": 0,
+      "bank_generation": 2,
+      "layer": 13,
+      "mode": "candidate",
+      "phase": "warm",
+      "position": 2,
+      "segment_host_ns": 120184495
+    },
+    {
+      "bank": 0,
+      "bank_generation": 2,
+      "layer": 14,
+      "mode": "control",
+      "phase": "warm",
+      "position": 2,
+      "segment_host_ns": 164828112
+    },
+    {
+      "bank": 0,
+      "bank_generation": 2,
+      "layer": 14,
+      "mode": "candidate",
+      "phase": "warm",
+      "position": 2,
+      "segment_host_ns": 121931505
+    },
+    {
+      "bank": 0,
+      "bank_generation": 2,
+      "layer": 15,
+      "mode": "control",
+      "phase": "warm",
+      "position": 2,
+      "segment_host_ns": 161842370
+    },
+    {
+      "bank": 0,
+      "bank_generation": 2,
+      "layer": 15,
+      "mode": "candidate",
+      "phase": "warm",
+      "position": 2,
+      "segment_host_ns": 122529006
+    },
+    {
+      "bank": 0,
+      "bank_generation": 2,
+      "layer": 16,
+      "mode": "control",
+      "phase": "warm",
+      "position": 2,
+      "segment_host_ns": 165316222
+    },
+    {
+      "bank": 0,
+      "bank_generation": 2,
+      "layer": 16,
+      "mode": "candidate",
+      "phase": "warm",
+      "position": 2,
+      "segment_host_ns": 118328573
+    },
+    {
+      "bank": 0,
+      "bank_generation": 2,
+      "layer": 17,
+      "mode": "control",
+      "phase": "warm",
+      "position": 2,
+      "segment_host_ns": 161279980
+    },
+    {
+      "bank": 0,
+      "bank_generation": 2,
+      "layer": 17,
+      "mode": "candidate",
+      "phase": "warm",
+      "position": 2,
+      "segment_host_ns": 119702154
+    },
+    {
+      "bank": 0,
+      "bank_generation": 2,
+      "layer": 18,
+      "mode": "control",
+      "phase": "warm",
+      "position": 2,
+      "segment_host_ns": 162215300
+    },
+    {
+      "bank": 0,
+      "bank_generation": 2,
+      "layer": 18,
+      "mode": "candidate",
+      "phase": "warm",
+      "position": 2,
+      "segment_host_ns": 120043444
+    },
+    {
+      "bank": 0,
+      "bank_generation": 2,
+      "layer": 19,
+      "mode": "control",
+      "phase": "warm",
+      "position": 2,
+      "segment_host_ns": 164901352
+    },
+    {
+      "bank": 0,
+      "bank_generation": 2,
+      "layer": 19,
+      "mode": "candidate",
+      "phase": "warm",
+      "position": 2,
+      "segment_host_ns": 121579115
+    },
+    {
+      "bank": 0,
+      "bank_generation": 2,
+      "layer": 20,
+      "mode": "control",
+      "phase": "warm",
+      "position": 2,
+      "segment_host_ns": 161968960
+    },
+    {
+      "bank": 0,
+      "bank_generation": 2,
+      "layer": 20,
+      "mode": "candidate",
+      "phase": "warm",
+      "position": 2,
+      "segment_host_ns": 120730514
+    },
+    {
+      "bank": 0,
+      "bank_generation": 2,
+      "layer": 21,
+      "mode": "control",
+      "phase": "warm",
+      "position": 2,
+      "segment_host_ns": 161251440
+    },
+    {
+      "bank": 0,
+      "bank_generation": 2,
+      "layer": 21,
+      "mode": "candidate",
+      "phase": "warm",
+      "position": 2,
+      "segment_host_ns": 121353965
+    },
+    {
+      "bank": 0,
+      "bank_generation": 2,
+      "layer": 22,
+      "mode": "control",
+      "phase": "warm",
+      "position": 2,
+      "segment_host_ns": 162560401
+    },
+    {
+      "bank": 0,
+      "bank_generation": 2,
+      "layer": 22,
+      "mode": "candidate",
+      "phase": "warm",
+      "position": 2,
+      "segment_host_ns": 121910465
+    },
+    {
+      "bank": 0,
+      "bank_generation": 2,
+      "layer": 23,
+      "mode": "control",
+      "phase": "warm",
+      "position": 2,
+      "segment_host_ns": 161863390
+    },
+    {
+      "bank": 0,
+      "bank_generation": 2,
+      "layer": 23,
+      "mode": "candidate",
+      "phase": "warm",
+      "position": 2,
+      "segment_host_ns": 122058386
+    },
+    {
+      "bank": 0,
+      "bank_generation": 2,
+      "layer": 24,
+      "mode": "control",
+      "phase": "warm",
+      "position": 2,
+      "segment_host_ns": 162200010
+    },
+    {
+      "bank": 0,
+      "bank_generation": 2,
+      "layer": 24,
+      "mode": "candidate",
+      "phase": "warm",
+      "position": 2,
+      "segment_host_ns": 121731896
+    },
+    {
+      "bank": 0,
+      "bank_generation": 2,
+      "layer": 25,
+      "mode": "control",
+      "phase": "warm",
+      "position": 2,
+      "segment_host_ns": 162900741
+    },
+    {
+      "bank": 0,
+      "bank_generation": 2,
+      "layer": 25,
+      "mode": "candidate",
+      "phase": "warm",
+      "position": 2,
+      "segment_host_ns": 119527824
+    },
+    {
+      "bank": 0,
+      "bank_generation": 2,
+      "layer": 26,
+      "mode": "control",
+      "phase": "warm",
+      "position": 2,
+      "segment_host_ns": 161201400
+    },
+    {
+      "bank": 0,
+      "bank_generation": 2,
+      "layer": 26,
+      "mode": "candidate",
+      "phase": "warm",
+      "position": 2,
+      "segment_host_ns": 121723566
+    },
+    {
+      "bank": 0,
+      "bank_generation": 2,
+      "layer": 27,
+      "mode": "control",
+      "phase": "warm",
+      "position": 2,
+      "segment_host_ns": 161908920
+    },
+    {
+      "bank": 0,
+      "bank_generation": 2,
+      "layer": 27,
+      "mode": "candidate",
+      "phase": "warm",
+      "position": 2,
+      "segment_host_ns": 118649423
+    },
+    {
+      "bank": 0,
+      "bank_generation": 2,
+      "layer": 28,
+      "mode": "control",
+      "phase": "warm",
+      "position": 2,
+      "segment_host_ns": 161935120
+    },
+    {
+      "bank": 0,
+      "bank_generation": 2,
+      "layer": 28,
+      "mode": "candidate",
+      "phase": "warm",
+      "position": 2,
+      "segment_host_ns": 120920295
+    },
+    {
+      "bank": 0,
+      "bank_generation": 2,
+      "layer": 29,
+      "mode": "control",
+      "phase": "warm",
+      "position": 2,
+      "segment_host_ns": 161401230
+    },
+    {
+      "bank": 0,
+      "bank_generation": 2,
+      "layer": 29,
+      "mode": "candidate",
+      "phase": "warm",
+      "position": 2,
+      "segment_host_ns": 120719225
+    },
+    {
+      "bank": 0,
+      "bank_generation": 2,
+      "layer": 30,
+      "mode": "control",
+      "phase": "warm",
+      "position": 2,
+      "segment_host_ns": 163526981
+    },
+    {
+      "bank": 0,
+      "bank_generation": 2,
+      "layer": 30,
+      "mode": "candidate",
+      "phase": "warm",
+      "position": 2,
+      "segment_host_ns": 121538686
+    },
+    {
+      "bank": 0,
+      "bank_generation": 2,
+      "layer": 31,
+      "mode": "control",
+      "phase": "warm",
+      "position": 2,
+      "segment_host_ns": 163235541
+    },
+    {
+      "bank": 0,
+      "bank_generation": 2,
+      "layer": 31,
+      "mode": "candidate",
+      "phase": "warm",
+      "position": 2,
+      "segment_host_ns": 120575595
+    },
+    {
+      "bank": 0,
+      "bank_generation": 2,
+      "layer": 32,
+      "mode": "control",
+      "phase": "warm",
+      "position": 2,
+      "segment_host_ns": 164207992
+    },
+    {
+      "bank": 0,
+      "bank_generation": 2,
+      "layer": 32,
+      "mode": "candidate",
+      "phase": "warm",
+      "position": 2,
+      "segment_host_ns": 120735115
+    },
+    {
+      "bank": 0,
+      "bank_generation": 2,
+      "layer": 33,
+      "mode": "control",
+      "phase": "warm",
+      "position": 2,
+      "segment_host_ns": 164994422
+    },
+    {
+      "bank": 0,
+      "bank_generation": 2,
+      "layer": 33,
+      "mode": "candidate",
+      "phase": "warm",
+      "position": 2,
+      "segment_host_ns": 120964235
+    },
+    {
+      "bank": 0,
+      "bank_generation": 2,
+      "layer": 34,
+      "mode": "control",
+      "phase": "warm",
+      "position": 2,
+      "segment_host_ns": 164391702
+    },
+    {
+      "bank": 0,
+      "bank_generation": 2,
+      "layer": 34,
+      "mode": "candidate",
+      "phase": "warm",
+      "position": 2,
+      "segment_host_ns": 121037385
+    },
+    {
+      "bank": 0,
+      "bank_generation": 2,
+      "layer": 35,
+      "mode": "control",
+      "phase": "warm",
+      "position": 2,
+      "segment_host_ns": 164069232
+    },
+    {
+      "bank": 0,
+      "bank_generation": 2,
+      "layer": 35,
+      "mode": "candidate",
+      "phase": "warm",
+      "position": 2,
+      "segment_host_ns": 121944115
+    },
+    {
+      "bank": 1,
+      "bank_generation": 2,
+      "layer": 0,
+      "mode": "control",
+      "phase": "warm",
+      "position": 3,
+      "segment_host_ns": 161629990
+    },
+    {
+      "bank": 1,
+      "bank_generation": 2,
+      "layer": 0,
+      "mode": "candidate",
+      "phase": "warm",
+      "position": 3,
+      "segment_host_ns": 118990463
+    },
+    {
+      "bank": 1,
+      "bank_generation": 2,
+      "layer": 1,
+      "mode": "control",
+      "phase": "warm",
+      "position": 3,
+      "segment_host_ns": 161393140
+    },
+    {
+      "bank": 1,
+      "bank_generation": 2,
+      "layer": 1,
+      "mode": "candidate",
+      "phase": "warm",
+      "position": 3,
+      "segment_host_ns": 120147034
+    },
+    {
+      "bank": 1,
+      "bank_generation": 2,
+      "layer": 2,
+      "mode": "control",
+      "phase": "warm",
+      "position": 3,
+      "segment_host_ns": 161527420
+    },
+    {
+      "bank": 1,
+      "bank_generation": 2,
+      "layer": 2,
+      "mode": "candidate",
+      "phase": "warm",
+      "position": 3,
+      "segment_host_ns": 120447265
+    },
+    {
+      "bank": 1,
+      "bank_generation": 2,
+      "layer": 3,
+      "mode": "control",
+      "phase": "warm",
+      "position": 3,
+      "segment_host_ns": 160191209
+    },
+    {
+      "bank": 1,
+      "bank_generation": 2,
+      "layer": 3,
+      "mode": "candidate",
+      "phase": "warm",
+      "position": 3,
+      "segment_host_ns": 120393505
+    },
+    {
+      "bank": 1,
+      "bank_generation": 2,
+      "layer": 4,
+      "mode": "control",
+      "phase": "warm",
+      "position": 3,
+      "segment_host_ns": 161242880
+    },
+    {
+      "bank": 1,
+      "bank_generation": 2,
+      "layer": 4,
+      "mode": "candidate",
+      "phase": "warm",
+      "position": 3,
+      "segment_host_ns": 119983534
+    },
+    {
+      "bank": 1,
+      "bank_generation": 2,
+      "layer": 5,
+      "mode": "control",
+      "phase": "warm",
+      "position": 3,
+      "segment_host_ns": 159956609
+    },
+    {
+      "bank": 1,
+      "bank_generation": 2,
+      "layer": 5,
+      "mode": "candidate",
+      "phase": "warm",
+      "position": 3,
+      "segment_host_ns": 120328875
+    },
+    {
+      "bank": 1,
+      "bank_generation": 2,
+      "layer": 6,
+      "mode": "control",
+      "phase": "warm",
+      "position": 3,
+      "segment_host_ns": 160891230
+    },
+    {
+      "bank": 1,
+      "bank_generation": 2,
+      "layer": 6,
+      "mode": "candidate",
+      "phase": "warm",
+      "position": 3,
+      "segment_host_ns": 119522914
+    },
+    {
+      "bank": 1,
+      "bank_generation": 2,
+      "layer": 7,
+      "mode": "control",
+      "phase": "warm",
+      "position": 3,
+      "segment_host_ns": 163435091
+    },
+    {
+      "bank": 1,
+      "bank_generation": 2,
+      "layer": 7,
+      "mode": "candidate",
+      "phase": "warm",
+      "position": 3,
+      "segment_host_ns": 120196365
+    },
+    {
+      "bank": 1,
+      "bank_generation": 2,
+      "layer": 8,
+      "mode": "control",
+      "phase": "warm",
+      "position": 3,
+      "segment_host_ns": 161187080
+    },
+    {
+      "bank": 1,
+      "bank_generation": 2,
+      "layer": 8,
+      "mode": "candidate",
+      "phase": "warm",
+      "position": 3,
+      "segment_host_ns": 120434834
+    },
+    {
+      "bank": 1,
+      "bank_generation": 2,
+      "layer": 9,
+      "mode": "control",
+      "phase": "warm",
+      "position": 3,
+      "segment_host_ns": 161613420
+    },
+    {
+      "bank": 1,
+      "bank_generation": 2,
+      "layer": 9,
+      "mode": "candidate",
+      "phase": "warm",
+      "position": 3,
+      "segment_host_ns": 120840075
+    },
+    {
+      "bank": 1,
+      "bank_generation": 2,
+      "layer": 10,
+      "mode": "control",
+      "phase": "warm",
+      "position": 3,
+      "segment_host_ns": 160097520
+    },
+    {
+      "bank": 1,
+      "bank_generation": 2,
+      "layer": 10,
+      "mode": "candidate",
+      "phase": "warm",
+      "position": 3,
+      "segment_host_ns": 121721645
+    },
+    {
+      "bank": 1,
+      "bank_generation": 2,
+      "layer": 11,
+      "mode": "control",
+      "phase": "warm",
+      "position": 3,
+      "segment_host_ns": 160974520
+    },
+    {
+      "bank": 1,
+      "bank_generation": 2,
+      "layer": 11,
+      "mode": "candidate",
+      "phase": "warm",
+      "position": 3,
+      "segment_host_ns": 120651025
+    },
+    {
+      "bank": 1,
+      "bank_generation": 2,
+      "layer": 12,
+      "mode": "control",
+      "phase": "warm",
+      "position": 3,
+      "segment_host_ns": 162853511
+    },
+    {
+      "bank": 1,
+      "bank_generation": 2,
+      "layer": 12,
+      "mode": "candidate",
+      "phase": "warm",
+      "position": 3,
+      "segment_host_ns": 121300955
+    },
+    {
+      "bank": 1,
+      "bank_generation": 2,
+      "layer": 13,
+      "mode": "control",
+      "phase": "warm",
+      "position": 3,
+      "segment_host_ns": 161040279
+    },
+    {
+      "bank": 1,
+      "bank_generation": 2,
+      "layer": 13,
+      "mode": "candidate",
+      "phase": "warm",
+      "position": 3,
+      "segment_host_ns": 120944435
+    },
+    {
+      "bank": 1,
+      "bank_generation": 2,
+      "layer": 14,
+      "mode": "control",
+      "phase": "warm",
+      "position": 3,
+      "segment_host_ns": 162534231
+    },
+    {
+      "bank": 1,
+      "bank_generation": 2,
+      "layer": 14,
+      "mode": "candidate",
+      "phase": "warm",
+      "position": 3,
+      "segment_host_ns": 121173175
+    },
+    {
+      "bank": 1,
+      "bank_generation": 2,
+      "layer": 15,
+      "mode": "control",
+      "phase": "warm",
+      "position": 3,
+      "segment_host_ns": 163147531
+    },
+    {
+      "bank": 1,
+      "bank_generation": 2,
+      "layer": 15,
+      "mode": "candidate",
+      "phase": "warm",
+      "position": 3,
+      "segment_host_ns": 122755986
+    },
+    {
+      "bank": 1,
+      "bank_generation": 2,
+      "layer": 16,
+      "mode": "control",
+      "phase": "warm",
+      "position": 3,
+      "segment_host_ns": 160348489
+    },
+    {
+      "bank": 1,
+      "bank_generation": 2,
+      "layer": 16,
+      "mode": "candidate",
+      "phase": "warm",
+      "position": 3,
+      "segment_host_ns": 121168005
+    },
+    {
+      "bank": 1,
+      "bank_generation": 2,
+      "layer": 17,
+      "mode": "control",
+      "phase": "warm",
+      "position": 3,
+      "segment_host_ns": 161399610
+    },
+    {
+      "bank": 1,
+      "bank_generation": 2,
+      "layer": 17,
+      "mode": "candidate",
+      "phase": "warm",
+      "position": 3,
+      "segment_host_ns": 122654386
+    },
+    {
+      "bank": 1,
+      "bank_generation": 2,
+      "layer": 18,
+      "mode": "control",
+      "phase": "warm",
+      "position": 3,
+      "segment_host_ns": 162398800
+    },
+    {
+      "bank": 1,
+      "bank_generation": 2,
+      "layer": 18,
+      "mode": "candidate",
+      "phase": "warm",
+      "position": 3,
+      "segment_host_ns": 118285813
+    },
+    {
+      "bank": 1,
+      "bank_generation": 2,
+      "layer": 19,
+      "mode": "control",
+      "phase": "warm",
+      "position": 3,
+      "segment_host_ns": 160820080
+    },
+    {
+      "bank": 1,
+      "bank_generation": 2,
+      "layer": 19,
+      "mode": "candidate",
+      "phase": "warm",
+      "position": 3,
+      "segment_host_ns": 121761946
+    },
+    {
+      "bank": 1,
+      "bank_generation": 2,
+      "layer": 20,
+      "mode": "control",
+      "phase": "warm",
+      "position": 3,
+      "segment_host_ns": 161424060
+    },
+    {
+      "bank": 1,
+      "bank_generation": 2,
+      "layer": 20,
+      "mode": "candidate",
+      "phase": "warm",
+      "position": 3,
+      "segment_host_ns": 118366513
+    },
+    {
+      "bank": 1,
+      "bank_generation": 2,
+      "layer": 21,
+      "mode": "control",
+      "phase": "warm",
+      "position": 3,
+      "segment_host_ns": 160894040
+    },
+    {
+      "bank": 1,
+      "bank_generation": 2,
+      "layer": 21,
+      "mode": "candidate",
+      "phase": "warm",
+      "position": 3,
+      "segment_host_ns": 122888706
+    },
+    {
+      "bank": 1,
+      "bank_generation": 2,
+      "layer": 22,
+      "mode": "control",
+      "phase": "warm",
+      "position": 3,
+      "segment_host_ns": 161778690
+    },
+    {
+      "bank": 1,
+      "bank_generation": 2,
+      "layer": 22,
+      "mode": "candidate",
+      "phase": "warm",
+      "position": 3,
+      "segment_host_ns": 119428564
+    },
+    {
+      "bank": 1,
+      "bank_generation": 2,
+      "layer": 23,
+      "mode": "control",
+      "phase": "warm",
+      "position": 3,
+      "segment_host_ns": 160931280
+    },
+    {
+      "bank": 1,
+      "bank_generation": 2,
+      "layer": 23,
+      "mode": "candidate",
+      "phase": "warm",
+      "position": 3,
+      "segment_host_ns": 122415396
+    },
+    {
+      "bank": 1,
+      "bank_generation": 2,
+      "layer": 24,
+      "mode": "control",
+      "phase": "warm",
+      "position": 3,
+      "segment_host_ns": 162166760
+    },
+    {
+      "bank": 1,
+      "bank_generation": 2,
+      "layer": 24,
+      "mode": "candidate",
+      "phase": "warm",
+      "position": 3,
+      "segment_host_ns": 122401176
+    },
+    {
+      "bank": 1,
+      "bank_generation": 2,
+      "layer": 25,
+      "mode": "control",
+      "phase": "warm",
+      "position": 3,
+      "segment_host_ns": 163530142
+    },
+    {
+      "bank": 1,
+      "bank_generation": 2,
+      "layer": 25,
+      "mode": "candidate",
+      "phase": "warm",
+      "position": 3,
+      "segment_host_ns": 120677845
+    },
+    {
+      "bank": 1,
+      "bank_generation": 2,
+      "layer": 26,
+      "mode": "control",
+      "phase": "warm",
+      "position": 3,
+      "segment_host_ns": 161901200
+    },
+    {
+      "bank": 1,
+      "bank_generation": 2,
+      "layer": 26,
+      "mode": "candidate",
+      "phase": "warm",
+      "position": 3,
+      "segment_host_ns": 121374875
+    },
+    {
+      "bank": 1,
+      "bank_generation": 2,
+      "layer": 27,
+      "mode": "control",
+      "phase": "warm",
+      "position": 3,
+      "segment_host_ns": 160635120
+    },
+    {
+      "bank": 1,
+      "bank_generation": 2,
+      "layer": 27,
+      "mode": "candidate",
+      "phase": "warm",
+      "position": 3,
+      "segment_host_ns": 119522704
+    },
+    {
+      "bank": 1,
+      "bank_generation": 2,
+      "layer": 28,
+      "mode": "control",
+      "phase": "warm",
+      "position": 3,
+      "segment_host_ns": 163758921
+    },
+    {
+      "bank": 1,
+      "bank_generation": 2,
+      "layer": 28,
+      "mode": "candidate",
+      "phase": "warm",
+      "position": 3,
+      "segment_host_ns": 121508255
+    },
+    {
+      "bank": 1,
+      "bank_generation": 2,
+      "layer": 29,
+      "mode": "control",
+      "phase": "warm",
+      "position": 3,
+      "segment_host_ns": 160940170
+    },
+    {
+      "bank": 1,
+      "bank_generation": 2,
+      "layer": 29,
+      "mode": "candidate",
+      "phase": "warm",
+      "position": 3,
+      "segment_host_ns": 122152826
+    },
+    {
+      "bank": 1,
+      "bank_generation": 2,
+      "layer": 30,
+      "mode": "control",
+      "phase": "warm",
+      "position": 3,
+      "segment_host_ns": 161575940
+    },
+    {
+      "bank": 1,
+      "bank_generation": 2,
+      "layer": 30,
+      "mode": "candidate",
+      "phase": "warm",
+      "position": 3,
+      "segment_host_ns": 120013065
+    },
+    {
+      "bank": 1,
+      "bank_generation": 2,
+      "layer": 31,
+      "mode": "control",
+      "phase": "warm",
+      "position": 3,
+      "segment_host_ns": 165593592
+    },
+    {
+      "bank": 1,
+      "bank_generation": 2,
+      "layer": 31,
+      "mode": "candidate",
+      "phase": "warm",
+      "position": 3,
+      "segment_host_ns": 121336916
+    },
+    {
+      "bank": 1,
+      "bank_generation": 2,
+      "layer": 32,
+      "mode": "control",
+      "phase": "warm",
+      "position": 3,
+      "segment_host_ns": 160613650
+    },
+    {
+      "bank": 1,
+      "bank_generation": 2,
+      "layer": 32,
+      "mode": "candidate",
+      "phase": "warm",
+      "position": 3,
+      "segment_host_ns": 122285726
+    },
+    {
+      "bank": 1,
+      "bank_generation": 2,
+      "layer": 33,
+      "mode": "control",
+      "phase": "warm",
+      "position": 3,
+      "segment_host_ns": 162940801
+    },
+    {
+      "bank": 1,
+      "bank_generation": 2,
+      "layer": 33,
+      "mode": "candidate",
+      "phase": "warm",
+      "position": 3,
+      "segment_host_ns": 120060675
+    },
+    {
+      "bank": 1,
+      "bank_generation": 2,
+      "layer": 34,
+      "mode": "control",
+      "phase": "warm",
+      "position": 3,
+      "segment_host_ns": 164249251
+    },
+    {
+      "bank": 1,
+      "bank_generation": 2,
+      "layer": 34,
+      "mode": "candidate",
+      "phase": "warm",
+      "position": 3,
+      "segment_host_ns": 118512863
+    },
+    {
+      "bank": 1,
+      "bank_generation": 2,
+      "layer": 35,
+      "mode": "control",
+      "phase": "warm",
+      "position": 3,
+      "segment_host_ns": 160513090
+    },
+    {
+      "bank": 1,
+      "bank_generation": 2,
+      "layer": 35,
+      "mode": "candidate",
+      "phase": "warm",
+      "position": 3,
+      "segment_host_ns": 119729064
+    }
+  ],
+  "numerical_acceptance": false,
+  "performance_claim": false,
+  "production_authority": false,
+  "runs_per_mode": 1,
+  "schema": "ferric-warm-paired-terminal-host-diagnostic-v1",
+  "summaries": [
+    {
+      "candidate_minus_control_ns": 33587496,
+      "candidate_ns": 6358597432,
+      "control_ns": 6325009936,
+      "intervals_per_mode": 36,
+      "positions": [
+        0
+      ],
+      "relative_change_denominator": 6325009936,
+      "relative_change_numerator": 3358749600,
+      "scope": "0"
+    },
+    {
+      "candidate_minus_control_ns": 15223362,
+      "candidate_ns": 6343729889,
+      "control_ns": 6328506527,
+      "intervals_per_mode": 36,
+      "positions": [
+        1
+      ],
+      "relative_change_denominator": 6328506527,
+      "relative_change_numerator": 1522336200,
+      "scope": "1"
+    },
+    {
+      "candidate_minus_control_ns": -1499514319,
+      "candidate_ns": 4353719624,
+      "control_ns": 5853233943,
+      "intervals_per_mode": 36,
+      "positions": [
+        2
+      ],
+      "relative_change_denominator": 5853233943,
+      "relative_change_numerator": -149951431900,
+      "scope": "2"
+    },
+    {
+      "candidate_minus_control_ns": -1475751943,
+      "candidate_ns": 4346377404,
+      "control_ns": 5822129347,
+      "intervals_per_mode": 36,
+      "positions": [
+        3
+      ],
+      "relative_change_denominator": 5822129347,
+      "relative_change_numerator": -147575194300,
+      "scope": "3"
+    },
+    {
+      "candidate_minus_control_ns": 48810858,
+      "candidate_ns": 12702327321,
+      "control_ns": 12653516463,
+      "intervals_per_mode": 72,
+      "positions": [
+        0,
+        1
+      ],
+      "relative_change_denominator": 12653516463,
+      "relative_change_numerator": 4881085800,
+      "scope": "first-use"
+    },
+    {
+      "candidate_minus_control_ns": -2975266262,
+      "candidate_ns": 8700097028,
+      "control_ns": 11675363290,
+      "intervals_per_mode": 72,
+      "positions": [
+        2,
+        3
+      ],
+      "relative_change_denominator": 11675363290,
+      "relative_change_numerator": -297526626200,
+      "scope": "warm"
+    }
+  ],
+  "throughput_claim": false
+}

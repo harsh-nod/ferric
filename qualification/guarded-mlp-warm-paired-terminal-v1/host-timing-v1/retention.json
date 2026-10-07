@@ -1,0 +1,67 @@
+{
+  "files": {
+    "report/comparison.json": {
+      "bytes": 55394,
+      "sha256": "4e8791d3f46ffaf63583135876c8bf6a0ff197e9aff994fd273b52c6da815c82"
+    },
+    "report/complete.json": {
+      "bytes": 49126,
+      "sha256": "c115b17240be9480ddf3ac27f06eed1e5804be01ca1c3ca9bfa33f35cf10fe73"
+    },
+    "report/layers.csv": {
+      "bytes": 10207,
+      "sha256": "c0f9de993c6f04e60afd37eb4fedc4c264beb4435c3f5046a31b329d670665d9"
+    },
+    "report/segments.svg": {
+      "bytes": 14933,
+      "sha256": "b90422c416a657e4d88a1418f8533b0f6b32daebc13c90ebbbd28ae7d08bce18"
+    },
+    "report/summary.csv": {
+      "bytes": 542,
+      "sha256": "1d8a68d0b9ae67fcf4896fa4e6b45a710940c6e4743e898bd0c3f64a8d68aba1"
+    },
+    "report/summary.md": {
+      "bytes": 1924,
+      "sha256": "a8e09172c23666366a44298639067044ca72e3dfdb9c463c0e9be3b25c9646c8"
+    },
+    "source/README.md": {
+      "bytes": 3736,
+      "sha256": "386674dcf27725b79c1d549bdb4eda2440271360948b0f40bc0a4e3ee1244b8e"
+    },
+    "source/render.py": {
+      "bytes": 18747,
+      "sha256": "eb75baf7174237b89752ca7525de10e88da8b4161e8084a06ec817760645daf5"
+    },
+    "source/test_render.py": {
+      "bytes": 7087,
+      "sha256": "3f6882ae9621a59046eedbe577ca04f717c2d24fbf98397421eab1570a06ae5a"
+    },
+    "tests/complete.json": {
+      "bytes": 1575,
+      "sha256": "b43ff6bd1f845c5277ea5029e0df7e08b29bb7f43c44ea9e7e69f13c6db4c389"
+    },
+    "tests/invocation.py": {
+      "bytes": 3212,
+      "sha256": "db33c067767f494aa0acc3b1a7f34444cb5a4b88f70b58d428df330541016d21"
+    },
+    "tests/tests.stderr": {
+      "bytes": 1141,
+      "sha256": "6bfee6bd9cfb98d2ae18f291bbb8678132c7132d049ef8a553abf0e964d0bc21"
+    }
+  },
+  "local_project_execution": false,
+  "original_files": 12,
+  "original_receipts_unchanged": true,
+  "performance_claim": false,
+  "report_rendered_on": "mi350",
+  "schema": "ferric-warm-terminal-host-report-retention-v1",
+  "source_report_terminal": {
+    "bytes": 49126,
+    "sha256": "c115b17240be9480ddf3ac27f06eed1e5804be01ca1c3ca9bfa33f35cf10fe73"
+  },
+  "source_tests_terminal": {
+    "bytes": 1575,
+    "sha256": "b43ff6bd1f845c5277ea5029e0df7e08b29bb7f43c44ea9e7e69f13c6db4c389"
+  },
+  "tests_executed_on": "mi350"
+}

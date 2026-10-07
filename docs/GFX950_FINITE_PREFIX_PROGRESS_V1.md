@@ -57,10 +57,15 @@ The new [warm-only worker caller](../qualification/guarded-mlp-warm-paired-termi
 now selects it through a separate reusable AR4 profile, after 673 passing
 worker tests and four unchanged ignores on MI350. The parent also passes
 438 selected tests across 51 scopes and 60 phases; its three changes are
-integrated. Twenty synthetic native comparison tests pass. Native qualification
-remains pending; the existing entries retain their behavior. Both earlier failed worker
-attempts are preserved. Fewer source-level full checks are not a measured
-speedup.
+integrated. Twenty synthetic native comparison tests pass. The matched native
+control/candidate pair now passes in one attempt per mode, with all four full
+payloads and histories equal, exact warm-only dispatch counts and healthy
+Close. The [per-layer host plot and tables](../qualification/guarded-mlp-warm-paired-terminal-v1/host-timing-v1/README.md)
+pass seven fixture tests and rendering on MI350. Warm segment sums are
+25.483% lower in this pair; first-use sums are 0.386% higher. This is not GPU
+timing, a repeated controlled benchmark or end-to-end throughput. Existing
+entries retain their behavior, and both earlier failed worker attempts remain
+preserved.
 
 The reviewed [700 tokens/s bandwidth budget](../qualification/guarded-mlp-terminal-pair-v1/roofline-v1/README.md)
 joins checkpoint bytes and actual TP2 weight/cache placement. Conditional on
@@ -1869,9 +1874,12 @@ alone is not a self-contained reproducer or proof.
 
 ## Next Gates
 
-1. Diagnose the remaining differences in the completed four-step own-output
-   autoregressive comparison. The checked BF16 RoPE image now runs on GPU;
-   its comparison is mixed, not accepted. Exact layer-zero QKV evaluation
+1. Diagnose the position-5 difference in the completed forty-position genuine
+   prompt comparison (39/40 argmax agreement). The exact two-row head check
+   confirms correct final BF16 rounding on each implementation's own input;
+   the inputs already differ. Capture genuine causal layer-zero operations
+   and used KV prefixes to locate the first differing boundary. The checked
+   BF16 RoPE image is already in use. Exact layer-zero QKV evaluation also
    shows that a framework disagreement need not be a native arithmetic bug.
    Distinguish reduction-order rounding from semantic errors at the remaining
    boundaries without fitting acceptance thresholds to the observations.
@@ -1881,7 +1889,8 @@ alone is not a self-contained reproducer or proof.
    do not equate native parity with an independent model reference.
 3. Extend the tiled runtime through a separately bounded long-request
    profile, retaining two-bank retirement, exact completion and terminal
-   failure behavior. The current tiled path executes only four forwards.
+   failure behavior. AR4 executes four forwards; the separate readiness
+   profile executes forty prompt forwards and generates zero tokens.
    The existing backend draft needs a distinct long parent/child wire and
    bounded capture selection: retaining every full control and payload would
    exceed 1.95 GB, outside the current 64 MiB finite-case cap.

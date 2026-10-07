@@ -1,8 +1,13 @@
 # Paired Terminal Validation
 
 The explicit gfx950 runtime API passed CPU qualification on `mi350` and is
-integrated in fe2o3 commit `686f9edd2e`. It has not been enabled by a Ferric
-worker selector or tested in a native comparison. No speedup is established.
+integrated in fe2o3 commit `686f9edd2e`. A separately qualified
+[warm-only Ferric caller](../guarded-mlp-warm-paired-terminal-v1/README.md)
+is now integrated after 673 worker and 438 selected parent test passes.
+Its matched native control/candidate comparison now passes on MI350 with
+complete payload/history parity. The linked caller report records a 25.483%
+lower warm segment host sum in one pair, not GPU timing or an end-to-end
+speedup.
 
 ## Change
 
@@ -66,10 +71,11 @@ over canonical workspace metadata.
 
 ## Remaining Gates
 
-A separately qualified opt-in Ferric caller and a matched native comparison
-must precede any performance claim. Both comparison modes must use identical
-reusable storage and currentness policies, preserve full payload/history
-equality, and retire cleanly. The independent Readiness40 numerical discrepancy
+A matched native comparison of the separately qualified opt-in Ferric caller
+now preserves full payload/history equality and clean retirement, using the
+same reusable storage and currentness policies. Repeated controlled timing,
+full-forward latency and sustained workload performance remain unmeasured
+for this route. The independent Readiness40 numerical discrepancy
 is a separate correctness investigation, not fixed or explained by this API.
 All issue #42 milestones and the 700 tokens/s target remain open.
 

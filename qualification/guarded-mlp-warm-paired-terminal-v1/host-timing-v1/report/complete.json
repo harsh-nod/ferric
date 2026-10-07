@@ -1,0 +1,756 @@
+{
+  "gpu_execution": false,
+  "input_pins": {
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-host-report-source-v1/render.py": {
+      "bytes": 18747,
+      "sha256": "eb75baf7174237b89752ca7525de10e88da8b4161e8084a06ec817760645daf5"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/RETENTION.md": {
+      "bytes": 4774,
+      "sha256": "21bab0e425421940bb3644017dbd41e995486c2a003f89dd5fd1b6a4647c6cb1"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/candidate-input.json": {
+      "bytes": 1643,
+      "sha256": "9490f915d3d71a575f8dd727f1afa1745a258e4ce05a2454b3ad613aff06fe7e"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/candidate-request.json": {
+      "bytes": 9359,
+      "sha256": "a6a70d0285f0680ecf03106d373456f8d92e4580068e21ecfb7fedc1d6bfb517"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/candidate/after-0-topology.json": {
+      "bytes": 2872,
+      "sha256": "63b2899b5d3d93df727ae82f0d98a750db686d30ac4a9844bd4f1be2ed7dd632"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/candidate/after-0/command.json": {
+      "bytes": 695,
+      "sha256": "b0a6b5b327184f44f4f77797153cc68669d12483fd95b0cea0f4528d2e146ff2"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/candidate/after-0/result.json": {
+      "bytes": 1658,
+      "sha256": "a76c01bb235e0eded70dff440470084d528ee68e140778a983de20ce4b4710df"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/candidate/after-0/started.json": {
+      "bytes": 282,
+      "sha256": "77131e728bfd02de80fb25873e4c6e11183de60e173b52e74eaf3d5dff43e9e1"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/candidate/after-0/stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/candidate/after-0/stdout": {
+      "bytes": 1275,
+      "sha256": "e70f2d7235dbd50455554f2a277613971e2fcdf117ec1bdcdf47644bcf49c422"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/candidate/after-1-topology.json": {
+      "bytes": 2872,
+      "sha256": "63b2899b5d3d93df727ae82f0d98a750db686d30ac4a9844bd4f1be2ed7dd632"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/candidate/after-1/command.json": {
+      "bytes": 695,
+      "sha256": "b0a6b5b327184f44f4f77797153cc68669d12483fd95b0cea0f4528d2e146ff2"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/candidate/after-1/result.json": {
+      "bytes": 1658,
+      "sha256": "27721b786538f881c9c490e7252ef37c0ab959b016577ea3f7b294bd21a03a3f"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/candidate/after-1/started.json": {
+      "bytes": 282,
+      "sha256": "a87d239e74ec4d0067ce3e2560eb83a9089601dc8718bd14efa223184c9174b5"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/candidate/after-1/stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/candidate/after-1/stdout": {
+      "bytes": 1275,
+      "sha256": "e70f2d7235dbd50455554f2a277613971e2fcdf117ec1bdcdf47644bcf49c422"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/candidate/after-2-topology.json": {
+      "bytes": 2872,
+      "sha256": "63b2899b5d3d93df727ae82f0d98a750db686d30ac4a9844bd4f1be2ed7dd632"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/candidate/after-2/command.json": {
+      "bytes": 695,
+      "sha256": "b0a6b5b327184f44f4f77797153cc68669d12483fd95b0cea0f4528d2e146ff2"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/candidate/after-2/result.json": {
+      "bytes": 1658,
+      "sha256": "be9f5ccf581a9e73f5bc14556b88a03637c4d65535585e26ac3ed5d1ccfffb9d"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/candidate/after-2/started.json": {
+      "bytes": 282,
+      "sha256": "82cf4d07ead1716f1231c2155fed3eba3601c904450faaaf57e633368a688fca"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/candidate/after-2/stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/candidate/after-2/stdout": {
+      "bytes": 1275,
+      "sha256": "e70f2d7235dbd50455554f2a277613971e2fcdf117ec1bdcdf47644bcf49c422"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/candidate/before-0-topology.json": {
+      "bytes": 2872,
+      "sha256": "63b2899b5d3d93df727ae82f0d98a750db686d30ac4a9844bd4f1be2ed7dd632"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/candidate/before-0/command.json": {
+      "bytes": 695,
+      "sha256": "b0a6b5b327184f44f4f77797153cc68669d12483fd95b0cea0f4528d2e146ff2"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/candidate/before-0/result.json": {
+      "bytes": 1661,
+      "sha256": "fd9719e61e3c587bb25aad1460fa0a3abb01fe9e140a6dde307529a963ed0f43"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/candidate/before-0/started.json": {
+      "bytes": 282,
+      "sha256": "506cd194b285a2beca9e1c702dcd71b0956fe916e5ee62d2c607d58b67e5993d"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/candidate/before-0/stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/candidate/before-0/stdout": {
+      "bytes": 1275,
+      "sha256": "e70f2d7235dbd50455554f2a277613971e2fcdf117ec1bdcdf47644bcf49c422"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/candidate/before-1-topology.json": {
+      "bytes": 2872,
+      "sha256": "63b2899b5d3d93df727ae82f0d98a750db686d30ac4a9844bd4f1be2ed7dd632"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/candidate/before-1/command.json": {
+      "bytes": 695,
+      "sha256": "b0a6b5b327184f44f4f77797153cc68669d12483fd95b0cea0f4528d2e146ff2"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/candidate/before-1/result.json": {
+      "bytes": 1662,
+      "sha256": "f4ae8b1ddfa2b75bce52a77266c48693fe926df30d9241f7ddd243b945e9d054"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/candidate/before-1/started.json": {
+      "bytes": 282,
+      "sha256": "10d8b1939d63795b6c9bc0c4acc382f3509bcaa1d88cf23e18195f0d15eeb538"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/candidate/before-1/stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/candidate/before-1/stdout": {
+      "bytes": 1275,
+      "sha256": "e70f2d7235dbd50455554f2a277613971e2fcdf117ec1bdcdf47644bcf49c422"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/candidate/before-2-topology.json": {
+      "bytes": 2872,
+      "sha256": "63b2899b5d3d93df727ae82f0d98a750db686d30ac4a9844bd4f1be2ed7dd632"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/candidate/before-2/command.json": {
+      "bytes": 695,
+      "sha256": "b0a6b5b327184f44f4f77797153cc68669d12483fd95b0cea0f4528d2e146ff2"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/candidate/before-2/result.json": {
+      "bytes": 1662,
+      "sha256": "b2bd5764c023961bc28f1459d6a1850b32929f93b49eb8f0ec96fc4df07790c3"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/candidate/before-2/started.json": {
+      "bytes": 282,
+      "sha256": "2eadaae16f3947c4d6bdceded741333329566a0ccb511bd716082175583b39af"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/candidate/before-2/stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/candidate/before-2/stdout": {
+      "bytes": 1275,
+      "sha256": "e70f2d7235dbd50455554f2a277613971e2fcdf117ec1bdcdf47644bcf49c422"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/candidate/complete.json": {
+      "bytes": 153791,
+      "sha256": "73402c9aefb001090a2fea8b69e569b4b1a262cd1e706d5f8520782b75d8c128"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/candidate/initial-topology.json": {
+      "bytes": 2872,
+      "sha256": "63b2899b5d3d93df727ae82f0d98a750db686d30ac4a9844bd4f1be2ed7dd632"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/candidate/native/child-stderr.bin": {
+      "bytes": 905,
+      "sha256": "c3df791bc753924153de974c3817e416ff9471b78f63a70232a53b18c70eebff"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/candidate/native/complete.json": {
+      "bytes": 40952,
+      "sha256": "a6d9a58202e48cd66293bd017b61de88fbe6d0c513f570d1d6712be022a198fe"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/candidate/native/control-0.bin": {
+      "bytes": 242824,
+      "sha256": "b66a8359cb0316c8a793a1ae7e077511870328cc1322f2771f225392487d1f6b"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/candidate/native/control-1.bin": {
+      "bytes": 242824,
+      "sha256": "f730e7ec94b18b3549b26f86ecb026eaf4f9dee3e66594bd6033ccd4d30125c4"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/candidate/native/control-2.bin": {
+      "bytes": 242824,
+      "sha256": "1087d5de2cd98f0d9b6e8f2fbe591a01f5ec7b995b66195a0ae3c346a5af4438"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/candidate/native/control-3.bin": {
+      "bytes": 242824,
+      "sha256": "396c46851c5d40f0e90e4533e3cb1f100d91c0e6fd2a47b2cec59f3168ce54c2"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/candidate/native/observation-0.bin": {
+      "bytes": 606976,
+      "sha256": "1324a6056ea6c0308e912c63ed1b6a6d27e103c915c6dde11ff600d97cf9b1b0"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/candidate/native/observation-1.bin": {
+      "bytes": 606976,
+      "sha256": "61f56a5b97e4f35922bf7733a74b36b8dec9544a15d66980757bf9ef5aefc6e4"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/candidate/native/observation-2.bin": {
+      "bytes": 606976,
+      "sha256": "87d3799724693386909e97fd3ea31fab065de021824dea276218614f2a0fc85a"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/candidate/native/observation-3.bin": {
+      "bytes": 606976,
+      "sha256": "7c40126b76a7eeb7a64ef67950636359ba951cafcdce2ddc42636388de3c5588"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/candidate/native/request-0.json": {
+      "bytes": 1848,
+      "sha256": "e8d75298af411231af5635ba606956b68739df117cabc5824c576d1318c011ba"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/candidate/native/request-1.json": {
+      "bytes": 2383,
+      "sha256": "66b25dc4095914f28dbe9b0f9f0f4912d26839d2f6f8f5264f6b0111fce972aa"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/candidate/native/request-2.json": {
+      "bytes": 2387,
+      "sha256": "d1939e2b42b89c496d2ab7a8568af33f8a9050b224135240787d2ae9f81e5cec"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/candidate/native/request-3.json": {
+      "bytes": 2388,
+      "sha256": "f696e97dfbf2b9ad88d1923c6f2ce3276d076d033cb88574e6e91277a2e53508"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/candidate/observation.json": {
+      "bytes": 29044,
+      "sha256": "fd73af504028d0a5cf3ff7b56ecba8a2f7d152d4f9e75004a58ef70b5e76bd5f"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/candidate/parent-ldd/command.json": {
+      "bytes": 854,
+      "sha256": "1a3657887a8844156501edd2fb016688dbc1f7a06aa9537a2d884e39d70d4df7"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/candidate/parent-ldd/result.json": {
+      "bytes": 1669,
+      "sha256": "3fb9877abfcf74b16e6c45c356c273fcf969eb43a964091cfcdbab1aaf5995ae"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/candidate/parent-ldd/started.json": {
+      "bytes": 282,
+      "sha256": "ccbf5eb3335710f2140a2177e99a42151fd93d1fd03a1a9e59dad5f1c86152c7"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/candidate/parent-ldd/stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/candidate/parent-ldd/stdout": {
+      "bytes": 297,
+      "sha256": "996f06c9fedb09b83007c998985b9dfc6fa8925ad9d7dc1927894d9e25da53bb"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/candidate/parent-readelf/command.json": {
+      "bytes": 878,
+      "sha256": "1fb719fc02081e605e9069c1d93f8eba1dd1e045eb8f54e1b73fff46fec81d49"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/candidate/parent-readelf/result.json": {
+      "bytes": 1687,
+      "sha256": "ce813cb6b6b8d839615613b72c105e16d261ef572c226afb15069eda12516e4d"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/candidate/parent-readelf/started.json": {
+      "bytes": 282,
+      "sha256": "5f13eb52e752fad85663867df2c2b1b1f86e0129ddc2c538e0d50484b926ecfa"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/candidate/parent-readelf/stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/candidate/parent-readelf/stdout": {
+      "bytes": 4714,
+      "sha256": "f769e938a0be30c3060d2d58747f64682917c007a604bf6ad3d7c21655ac1352"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/candidate/parent/command.json": {
+      "bytes": 1095,
+      "sha256": "008b3f0417319d47355880110bf887e3eb191d4d3ce33f5416f682007b148d0c"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/candidate/parent/result.json": {
+      "bytes": 1933,
+      "sha256": "8f87256ca124f999c05d82b3626e37a4abcf2c6324ea8d4d5bd89f8097444af3"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/candidate/parent/started.json": {
+      "bytes": 282,
+      "sha256": "dfe2a5851f5af614dbcfd7e0b3b787ccc1aed9f158c4879bfe8c3793929b4690"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/candidate/parent/stderr": {
+      "bytes": 226,
+      "sha256": "5ed54556cae218013c212eff088e4a162f7554259cc29b079254cef8b38c7ee9"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/candidate/parent/stdout": {
+      "bytes": 40952,
+      "sha256": "a6d9a58202e48cd66293bd017b61de88fbe6d0c513f570d1d6712be022a198fe"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/candidate/payload-comparison.json": {
+      "bytes": 7306,
+      "sha256": "3051e2cb0dc8421d0d2e6deaf7ed98d7eec69430036fb21b6c89f71a24004026"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/candidate/worker-ldd/command.json": {
+      "bytes": 847,
+      "sha256": "b501e03d667d74bf841f3b327dbc14b964aca514956ec9c8874a5742e64cbc0a"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/candidate/worker-ldd/result.json": {
+      "bytes": 1669,
+      "sha256": "56791de0e50e01acc2cfc03df498aaf5583d0c08ff9c193846fcaa0b1bc2d946"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/candidate/worker-ldd/started.json": {
+      "bytes": 282,
+      "sha256": "dcee03049eeca7a842736a87183ea46dceb1a9728f5b94783e7b628b22276b7d"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/candidate/worker-ldd/stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/candidate/worker-ldd/stdout": {
+      "bytes": 230,
+      "sha256": "fc610350bfcce4a8a4eb49096c38b09dee5113a6af0f1d6ded05de66c0766e16"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/candidate/worker-readelf/command.json": {
+      "bytes": 871,
+      "sha256": "451ec4710632b51e4f0c395c563f3070d8c7cf5fbf48c948d33f6069805a5434"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/candidate/worker-readelf/result.json": {
+      "bytes": 1685,
+      "sha256": "8331817dbb178027584e622d2dcf2be01872333f2e546814040aabecf3f85952"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/candidate/worker-readelf/started.json": {
+      "bytes": 282,
+      "sha256": "32f3021b54f7c9fb9c4a1897f35fc7699d62f674fdfdc7f52767d534c7521efb"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/candidate/worker-readelf/stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/candidate/worker-readelf/stdout": {
+      "bytes": 4310,
+      "sha256": "453592a1d54a3db13cb0b74fb5e1213b6bbeed7d7d0c10e951f702b87e942308"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/control-input.json": {
+      "bytes": 1640,
+      "sha256": "c8e2b42a1a16d98e2d0fdb10b7fbefcbdf22e6b559582e41d158d157953c3c9d"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/control-request.json": {
+      "bytes": 9345,
+      "sha256": "c173559e545aa92881302f69ec518228e216c6d8144cbddba87e306eebe99f2b"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/control/after-0-topology.json": {
+      "bytes": 2872,
+      "sha256": "63b2899b5d3d93df727ae82f0d98a750db686d30ac4a9844bd4f1be2ed7dd632"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/control/after-0/command.json": {
+      "bytes": 695,
+      "sha256": "b0a6b5b327184f44f4f77797153cc68669d12483fd95b0cea0f4528d2e146ff2"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/control/after-0/result.json": {
+      "bytes": 1650,
+      "sha256": "3d1dc64670f3585a21de7293d48c2c08418b4a5ef1e0e856f06fdde6c0ba6377"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/control/after-0/started.json": {
+      "bytes": 282,
+      "sha256": "fa211522270e3bfe906d48117010fba1b010bbf3d45a8204b9dd45c8015366b4"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/control/after-0/stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/control/after-0/stdout": {
+      "bytes": 1275,
+      "sha256": "e70f2d7235dbd50455554f2a277613971e2fcdf117ec1bdcdf47644bcf49c422"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/control/after-1-topology.json": {
+      "bytes": 2872,
+      "sha256": "63b2899b5d3d93df727ae82f0d98a750db686d30ac4a9844bd4f1be2ed7dd632"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/control/after-1/command.json": {
+      "bytes": 695,
+      "sha256": "b0a6b5b327184f44f4f77797153cc68669d12483fd95b0cea0f4528d2e146ff2"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/control/after-1/result.json": {
+      "bytes": 1650,
+      "sha256": "e73dd0aac6554d33dd2febfead401af3a7f78c0cd7be8c3106d2d7769f1af823"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/control/after-1/started.json": {
+      "bytes": 282,
+      "sha256": "ed5cd9f9765abc8e5005ada4feb7071bf43722987d3238a0c127ec5486de1f9f"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/control/after-1/stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/control/after-1/stdout": {
+      "bytes": 1275,
+      "sha256": "e70f2d7235dbd50455554f2a277613971e2fcdf117ec1bdcdf47644bcf49c422"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/control/after-2-topology.json": {
+      "bytes": 2872,
+      "sha256": "63b2899b5d3d93df727ae82f0d98a750db686d30ac4a9844bd4f1be2ed7dd632"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/control/after-2/command.json": {
+      "bytes": 695,
+      "sha256": "b0a6b5b327184f44f4f77797153cc68669d12483fd95b0cea0f4528d2e146ff2"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/control/after-2/result.json": {
+      "bytes": 1650,
+      "sha256": "4ce54fa6d10e59726fc30ab19eafa5b379dac0af43a41b20dd685248d6f0fa85"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/control/after-2/started.json": {
+      "bytes": 282,
+      "sha256": "0dd57b125735586368f16b17ad24594063fcb63db1e0851a265bc4e1f3b3fcc3"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/control/after-2/stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/control/after-2/stdout": {
+      "bytes": 1275,
+      "sha256": "e70f2d7235dbd50455554f2a277613971e2fcdf117ec1bdcdf47644bcf49c422"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/control/before-0-topology.json": {
+      "bytes": 2872,
+      "sha256": "63b2899b5d3d93df727ae82f0d98a750db686d30ac4a9844bd4f1be2ed7dd632"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/control/before-0/command.json": {
+      "bytes": 695,
+      "sha256": "b0a6b5b327184f44f4f77797153cc68669d12483fd95b0cea0f4528d2e146ff2"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/control/before-0/result.json": {
+      "bytes": 1654,
+      "sha256": "817aef9ce7a2e34133d31373e099da2592e48818587d0c472e45e439ce69aee8"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/control/before-0/started.json": {
+      "bytes": 282,
+      "sha256": "10852dd9042a11f964afccd1ed695aadc6078eba292d79806df896aaea8080cc"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/control/before-0/stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/control/before-0/stdout": {
+      "bytes": 1275,
+      "sha256": "e70f2d7235dbd50455554f2a277613971e2fcdf117ec1bdcdf47644bcf49c422"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/control/before-1-topology.json": {
+      "bytes": 2872,
+      "sha256": "63b2899b5d3d93df727ae82f0d98a750db686d30ac4a9844bd4f1be2ed7dd632"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/control/before-1/command.json": {
+      "bytes": 695,
+      "sha256": "b0a6b5b327184f44f4f77797153cc68669d12483fd95b0cea0f4528d2e146ff2"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/control/before-1/result.json": {
+      "bytes": 1654,
+      "sha256": "402dfca577f413d81fb37621d4d5873aa900d957816a4c4f5675c562cb853987"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/control/before-1/started.json": {
+      "bytes": 282,
+      "sha256": "2548a2b96e9df68017edec6ffd5e545c1f9e20f0d9396430fe07a0c3bec62f2c"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/control/before-1/stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/control/before-1/stdout": {
+      "bytes": 1275,
+      "sha256": "e70f2d7235dbd50455554f2a277613971e2fcdf117ec1bdcdf47644bcf49c422"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/control/before-2-topology.json": {
+      "bytes": 2872,
+      "sha256": "63b2899b5d3d93df727ae82f0d98a750db686d30ac4a9844bd4f1be2ed7dd632"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/control/before-2/command.json": {
+      "bytes": 695,
+      "sha256": "b0a6b5b327184f44f4f77797153cc68669d12483fd95b0cea0f4528d2e146ff2"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/control/before-2/result.json": {
+      "bytes": 1654,
+      "sha256": "876e4b4ddc04719ac33687070bc3b09c0bd156ebc94c98f1b5e426221c2390a1"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/control/before-2/started.json": {
+      "bytes": 282,
+      "sha256": "aee3233f6c422cb7d660e614b8d1a17c90cff518cf2601b662ae6c1126073d8d"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/control/before-2/stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/control/before-2/stdout": {
+      "bytes": 1275,
+      "sha256": "e70f2d7235dbd50455554f2a277613971e2fcdf117ec1bdcdf47644bcf49c422"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/control/complete.json": {
+      "bytes": 114220,
+      "sha256": "37f638f85a493f78376a919217816b8a080cd4c320b82b421e710aea427f3940"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/control/initial-topology.json": {
+      "bytes": 2872,
+      "sha256": "63b2899b5d3d93df727ae82f0d98a750db686d30ac4a9844bd4f1be2ed7dd632"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/control/native/child-stderr.bin": {
+      "bytes": 640,
+      "sha256": "832bb4797818e768fd09aecc76c60a52886579a0f3867fe6386e005cd015540b"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/control/native/complete.json": {
+      "bytes": 40956,
+      "sha256": "11bccfeeff42d0af2ac9ebc9fea1d36091c703e563c87e66b0630210fba662af"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/control/native/control-0.bin": {
+      "bytes": 242824,
+      "sha256": "2a4d9f5987687d9d86d390f1736e752da2f2d7e5acc239df01cea5d15d93adc6"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/control/native/control-1.bin": {
+      "bytes": 242824,
+      "sha256": "7751a905b730507d15462049b99b2e4f7cfeb80abc13c78aa3fd65fbb1cf4276"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/control/native/control-2.bin": {
+      "bytes": 242824,
+      "sha256": "031e396eac1bf02ff91cd0c51d9fcca8f6ca2baac66e6868ba914d773bfd9425"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/control/native/control-3.bin": {
+      "bytes": 242824,
+      "sha256": "703f4f7a80e676c3df768b0f4a79174ccada51f93b558c5ddede217f0fdd5e67"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/control/native/observation-0.bin": {
+      "bytes": 606976,
+      "sha256": "1324a6056ea6c0308e912c63ed1b6a6d27e103c915c6dde11ff600d97cf9b1b0"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/control/native/observation-1.bin": {
+      "bytes": 606976,
+      "sha256": "61f56a5b97e4f35922bf7733a74b36b8dec9544a15d66980757bf9ef5aefc6e4"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/control/native/observation-2.bin": {
+      "bytes": 606976,
+      "sha256": "87d3799724693386909e97fd3ea31fab065de021824dea276218614f2a0fc85a"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/control/native/observation-3.bin": {
+      "bytes": 606976,
+      "sha256": "7c40126b76a7eeb7a64ef67950636359ba951cafcdce2ddc42636388de3c5588"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/control/native/request-0.json": {
+      "bytes": 1856,
+      "sha256": "5e52631218421df4d217e074ebd8714da0b162eb2f50d3cdf79207144e439aa5"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/control/native/request-1.json": {
+      "bytes": 2391,
+      "sha256": "56e338b8541d8aa8f76379fbdc90a0e205ab607971317403f797c62c6b9e28c8"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/control/native/request-2.json": {
+      "bytes": 2395,
+      "sha256": "2f67afe18030cf16d8617b67ec3a7af0a96c6041af902b897d1beded589d0150"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/control/native/request-3.json": {
+      "bytes": 2396,
+      "sha256": "6143e8ad032a2bfed3b051e8a801bb031171feb013067f21c93c5d7a02cc9c32"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/control/observation.json": {
+      "bytes": 28428,
+      "sha256": "996ce7c20004b7b13c506403fbdc5be295161191e0b92ed6bca7db6c4bee7008"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/control/parent-ldd/command.json": {
+      "bytes": 854,
+      "sha256": "1a3657887a8844156501edd2fb016688dbc1f7a06aa9537a2d884e39d70d4df7"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/control/parent-ldd/result.json": {
+      "bytes": 1662,
+      "sha256": "cc07a886df1fd418ecaf0c01773f8f00d92ae69046069d4325a75d145e0a5a72"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/control/parent-ldd/started.json": {
+      "bytes": 282,
+      "sha256": "aaca792080d9062ea3e0d715e3fb48a24bf3aa778ad1a8c3b71a141cd10b0acc"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/control/parent-ldd/stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/control/parent-ldd/stdout": {
+      "bytes": 297,
+      "sha256": "1a3c20af86211be7c29bb9a20170efccb04a90a4165133ffbf29d1eaf267a725"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/control/parent-readelf/command.json": {
+      "bytes": 878,
+      "sha256": "1fb719fc02081e605e9069c1d93f8eba1dd1e045eb8f54e1b73fff46fec81d49"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/control/parent-readelf/result.json": {
+      "bytes": 1679,
+      "sha256": "664c60e263a29c89849e6e9a0aa4469f3dba2018abefd6637946b0ff5b21b3fb"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/control/parent-readelf/started.json": {
+      "bytes": 282,
+      "sha256": "6566ef2a900739e0af982e8f99388c5866dd47dc16a39adb228a81e3d8c21648"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/control/parent-readelf/stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/control/parent-readelf/stdout": {
+      "bytes": 4714,
+      "sha256": "f769e938a0be30c3060d2d58747f64682917c007a604bf6ad3d7c21655ac1352"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/control/parent/command.json": {
+      "bytes": 1081,
+      "sha256": "3b3b1cdc2e0ec9e2936514f81cc229cf84653850f44cf7da11ac5d2c9a95838f"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/control/parent/result.json": {
+      "bytes": 1926,
+      "sha256": "6e9d7dacdff0189ec53f3754f234d902bfb4c4df896d6bf8e9ae8491b9cc02e5"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/control/parent/started.json": {
+      "bytes": 282,
+      "sha256": "59c506cf79c8c698eda426ca508f946392d2da0f23dc0c66411dff956276589f"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/control/parent/stderr": {
+      "bytes": 226,
+      "sha256": "04b56706558e61b8aad069d31759589079427525b3298670477842cfbd1b62c3"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/control/parent/stdout": {
+      "bytes": 40956,
+      "sha256": "11bccfeeff42d0af2ac9ebc9fea1d36091c703e563c87e66b0630210fba662af"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/control/payload-comparison.json": {
+      "bytes": 3618,
+      "sha256": "5712740bb06b0f83fb30c99821d8523a4523fa1fd305b1abbf6770181155b921"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/control/worker-ldd/command.json": {
+      "bytes": 847,
+      "sha256": "b501e03d667d74bf841f3b327dbc14b964aca514956ec9c8874a5742e64cbc0a"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/control/worker-ldd/result.json": {
+      "bytes": 1662,
+      "sha256": "1213ac659b0fbaf1d3b32cb824a61e0da3a4335858eb04b0e9a64735fc05061c"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/control/worker-ldd/started.json": {
+      "bytes": 282,
+      "sha256": "d524ea1823f7b217a6ddcc88e01ade00f0dc283d40b5a54add324c6b155e5eb1"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/control/worker-ldd/stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/control/worker-ldd/stdout": {
+      "bytes": 230,
+      "sha256": "a67d3b0a37b59b9b7aa6bb0e6f81d6435bc6ce400080cff9255698e0119da367"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/control/worker-readelf/command.json": {
+      "bytes": 871,
+      "sha256": "451ec4710632b51e4f0c395c563f3070d8c7cf5fbf48c948d33f6069805a5434"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/control/worker-readelf/result.json": {
+      "bytes": 1678,
+      "sha256": "f054e21b1f29ecade8025559bb9a4ab001b02a0a7d1e5fdc59f059f88920e832"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/control/worker-readelf/started.json": {
+      "bytes": 282,
+      "sha256": "0892d817ff5d5cac075983056046dd6b79b60c290f33d29f6acf2113df03388d"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/control/worker-readelf/stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/control/worker-readelf/stdout": {
+      "bytes": 4310,
+      "sha256": "453592a1d54a3db13cb0b74fb5e1213b6bbeed7d7d0c10e951f702b87e942308"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/frozen_owned.py": {
+      "bytes": 30433,
+      "sha256": "ab41af455396322303bb8ebd4132e680affc3bdc5830608fad36736c92024583"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/guarded_announcement.py": {
+      "bytes": 3251,
+      "sha256": "96f84389071ef2c1a9e354705ebb7144e9ff97e30c242bd9b494f03d2aea6b80"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/library_audit.py": {
+      "bytes": 25872,
+      "sha256": "b26d60ef6dbe24f2182b52b2e0eb44632848061b7a4a1735fc4e1d26b8ee638d"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/manifest.json": {
+      "bytes": 123774,
+      "sha256": "8ec5d3c5007a64864784ad0242894fbb683ec7e94b264f24e345b91d5ed22d9a"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/prepare_model_inputs.py": {
+      "bytes": 15592,
+      "sha256": "648f1e1d910121152bfe03743fde53b2a618e0750e87737079e19268e00466b5"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/prepared-inputs.json": {
+      "bytes": 14481,
+      "sha256": "a29a53e9935cc80984049fdbdf1acd55c82436ccac6c3a8cbc0dcc05bb9ba675"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/reference/ordinary-ar4/complete.json": {
+      "bytes": 93497,
+      "sha256": "edf05cf2dd19a9934dab9762b328ea3e6160cf01c15606a3df3299ce967e4991"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/reference/ordinary-ar4/observation-0.bin": {
+      "bytes": 606976,
+      "sha256": "1324a6056ea6c0308e912c63ed1b6a6d27e103c915c6dde11ff600d97cf9b1b0"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/reference/ordinary-ar4/observation-1.bin": {
+      "bytes": 606976,
+      "sha256": "61f56a5b97e4f35922bf7733a74b36b8dec9544a15d66980757bf9ef5aefc6e4"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/reference/ordinary-ar4/observation-2.bin": {
+      "bytes": 606976,
+      "sha256": "87d3799724693386909e97fd3ea31fab065de021824dea276218614f2a0fc85a"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/reference/ordinary-ar4/observation-3.bin": {
+      "bytes": 606976,
+      "sha256": "7c40126b76a7eeb7a64ef67950636359ba951cafcdce2ddc42636388de3c5588"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/retention_tool.py": {
+      "bytes": 35074,
+      "sha256": "9fc9b80e46cf3e54d85f9d3206653664e5235a91ae65ff6d758465858bff0605"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/run_model_gpu.py": {
+      "bytes": 43699,
+      "sha256": "3ce5be14d4c4024aed049a8884165cd84d57f63852412bf3a57014322aa8352c"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/warm-paired-terminal-native-report-capsule-v1/validate_observation.py": {
+      "bytes": 17983,
+      "sha256": "7224877439ec966254d7604317f1f47b5d6345af698e47e332f6cb36c3abc19b"
+    }
+  },
+  "numerical_acceptance": false,
+  "outputs": {
+    "comparison.json": {
+      "bytes": 55394,
+      "sha256": "4e8791d3f46ffaf63583135876c8bf6a0ff197e9aff994fd273b52c6da815c82"
+    },
+    "layers.csv": {
+      "bytes": 10207,
+      "sha256": "c0f9de993c6f04e60afd37eb4fedc4c264beb4435c3f5046a31b329d670665d9"
+    },
+    "segments.svg": {
+      "bytes": 14933,
+      "sha256": "b90422c416a657e4d88a1418f8533b0f6b32daebc13c90ebbbd28ae7d08bce18"
+    },
+    "summary.csv": {
+      "bytes": 542,
+      "sha256": "1d8a68d0b9ae67fcf4896fa4e6b45a710940c6e4743e898bd0c3f64a8d68aba1"
+    },
+    "summary.md": {
+      "bytes": 1924,
+      "sha256": "a8e09172c23666366a44298639067044ca72e3dfdb9c463c0e9be3b25c9646c8"
+    }
+  },
+  "passed": true,
+  "performance_claim": false,
+  "postcheck_errors": [],
+  "project_execution": false,
+  "runs_per_mode": 1,
+  "schema": "ferric-warm-paired-terminal-host-render-v1",
+  "terminals": {
+    "candidate": {
+      "name": "complete.json",
+      "sha256": "73402c9aefb001090a2fea8b69e569b4b1a262cd1e706d5f8520782b75d8c128"
+    },
+    "control": {
+      "name": "complete.json",
+      "sha256": "37f638f85a493f78376a919217816b8a080cd4c320b82b421e710aea427f3940"
+    }
+  }
+}

@@ -1,0 +1,43 @@
+{
+  "errors": 0,
+  "failures": 0,
+  "gpu_execution": false,
+  "host": "smci350-rck-g03-b19-03",
+  "invocation": {
+    "bytes": 3212,
+    "sha256": "db33c067767f494aa0acc3b1a7f34444cb5a4b88f70b58d428df330541016d21"
+  },
+  "passed": true,
+  "performance_claim": false,
+  "postcheck_errors": [],
+  "python": "3.12.3 (main, Mar 23 2026, 19:04:32) [GCC 13.3.0]",
+  "schema": "ferric-warm-terminal-host-report-tests-v1",
+  "skipped": 0,
+  "sources": {
+    "render.py": {
+      "bytes": 18747,
+      "sha256": "eb75baf7174237b89752ca7525de10e88da8b4161e8084a06ec817760645daf5"
+    },
+    "test_render.py": {
+      "bytes": 7087,
+      "sha256": "3f6882ae9621a59046eedbe577ca04f717c2d24fbf98397421eab1570a06ae5a"
+    }
+  },
+  "stderr": {
+    "bytes": 1141,
+    "sha256": "6bfee6bd9cfb98d2ae18f291bbb8678132c7132d049ef8a553abf0e964d0bc21"
+  },
+  "subprocesses_started": 0,
+  "synthetic_tests_only": true,
+  "test_names": [
+    "test_render.RenderTests.test_csv_preserves_all_original_unsigned_nanoseconds",
+    "test_render.RenderTests.test_exact_integer_layers_positions_and_first_use_warm_sums",
+    "test_render.RenderTests.test_failure_policy_cadence_and_authority_mutations_refuse",
+    "test_render.RenderTests.test_same_elf_payload_history_and_timer_joins_are_required",
+    "test_render.RenderTests.test_structured_svg_has_four_panels_eight_lines_and_scope_notes",
+    "test_render.RenderTests.test_wrong_extent_boolean_negative_and_u64_overflow_refuse",
+    "test_render.RenderTests.test_zero_denominator_and_decimal_ties_are_explicit"
+  ],
+  "tests_run": 7,
+  "uid": 9661
+}

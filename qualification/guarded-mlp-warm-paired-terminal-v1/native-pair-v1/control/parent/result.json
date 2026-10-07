@@ -1,0 +1,61 @@
+{
+  "cleanup_signalled": false,
+  "command": {
+    "bytes": 1081,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-warm-paired-terminal-gpu-v228-v1/control/parent/command.json",
+    "sha256": "3b3b1cdc2e0ec9e2936514f81cc229cf84653850f44cf7da11ac5d2c9a95838f"
+  },
+  "elapsed_seconds": 402.14614550501574,
+  "exit_code": 0,
+  "gpu_execution_requested": true,
+  "lineage": [
+    {
+      "event": "owned",
+      "identity": {
+        "pgid": 1584075,
+        "pid": 1584075,
+        "ppid": 1583905,
+        "sid": 1584075,
+        "starttime": 74854842,
+        "state": "R",
+        "uid": 9661
+      },
+      "reason": "spawned-parent"
+    },
+    {
+      "event": "owned",
+      "identity": {
+        "pgid": 1593128,
+        "pid": 1593128,
+        "ppid": 1584075,
+        "sid": 1584075,
+        "starttime": 74863975,
+        "state": "S",
+        "uid": 9661
+      },
+      "reason": "ancestry"
+    }
+  ],
+  "owned_groups": [
+    1584075,
+    1593128
+  ],
+  "owned_groups_absent": true,
+  "owned_processes_reaped": true,
+  "reason": null,
+  "started": {
+    "bytes": 282,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-warm-paired-terminal-gpu-v228-v1/control/parent/started.json",
+    "sha256": "59c506cf79c8c698eda426ca508f946392d2da0f23dc0c66411dff956276589f"
+  },
+  "stderr": {
+    "bytes": 226,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-warm-paired-terminal-gpu-v228-v1/control/parent/stderr",
+    "sha256": "04b56706558e61b8aad069d31759589079427525b3298670477842cfbd1b62c3"
+  },
+  "stdout": {
+    "bytes": 40956,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-warm-paired-terminal-gpu-v228-v1/control/parent/stdout",
+    "sha256": "11bccfeeff42d0af2ac9ebc9fea1d36091c703e563c87e66b0630210fba662af"
+  }
+}

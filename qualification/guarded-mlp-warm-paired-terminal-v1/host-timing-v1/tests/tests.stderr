@@ -1,0 +1,12 @@
+test_csv_preserves_all_original_unsigned_nanoseconds (test_render.RenderTests.test_csv_preserves_all_original_unsigned_nanoseconds) ... ok
+test_exact_integer_layers_positions_and_first_use_warm_sums (test_render.RenderTests.test_exact_integer_layers_positions_and_first_use_warm_sums) ... ok
+test_failure_policy_cadence_and_authority_mutations_refuse (test_render.RenderTests.test_failure_policy_cadence_and_authority_mutations_refuse) ... ok
+test_same_elf_payload_history_and_timer_joins_are_required (test_render.RenderTests.test_same_elf_payload_history_and_timer_joins_are_required) ... ok
+test_structured_svg_has_four_panels_eight_lines_and_scope_notes (test_render.RenderTests.test_structured_svg_has_four_panels_eight_lines_and_scope_notes) ... ok
+test_wrong_extent_boolean_negative_and_u64_overflow_refuse (test_render.RenderTests.test_wrong_extent_boolean_negative_and_u64_overflow_refuse) ... ok
+test_zero_denominator_and_decimal_ties_are_explicit (test_render.RenderTests.test_zero_denominator_and_decimal_ties_are_explicit) ... ok
+
+----------------------------------------------------------------------
+Ran 7 tests in 0.005s
+
+OK

@@ -65,8 +65,30 @@ differences between the worker inputs compiled by the parent and the separately
 qualified worker postimages. The retained parent capsule includes every raw
 test/command/result body and all six original product pins.
 
-The matched same-ELF native control/candidate run is pending.
-The candidate must preserve all four complete control payloads,
-the own-output recurrence, exact allocation/call census and healthy Close.
-Host timing brackets are not GPU timings or tokens/s. Full-model numerical
+## Native Result
+
+The matched same-ELF [control](native-pair-v1/control/complete.json) and
+[candidate](native-pair-v1/candidate/complete.json) both pass on `mi350` in
+one attempt each. Each completes eleven supervised phases, all four full-model
+forwards, healthy Close and clean owned-process/device postchecks. Six idle
+observations per run cover all eight devices. The candidate authenticates
+the complete successful control before starting its own native execution.
+
+All four 606,976-byte candidate payloads equal the control and the original
+ordinary AR4 payloads, including all 36 layer outputs, final normalization
+and logits. Both follow `9112 -> 67 -> 25 -> 576 -> 2701` with genuine own-output
+recurrence. Control counts are `[0,0,0,0]`; candidate counts are `[0,0,36,36]`.
+Both have the exact allocation plateau listed above. This is implementation
+parity, not an independent accuracy reference.
+
+The [original evidence capsule](native-pair-v1/manifest.json) retains 177
+members, including all 156 raw case bodies, both original terminals, plans,
+requests, helpers and four ordinary-reference payloads. No GPU execution is
+repeated by retention, and neither original receipt is rewritten.
+
+The [host-timing tables and per-layer plot](host-timing-v1/README.md) now pass
+seven fixture tests and actual rendering on MI350. Warm segment sums fall
+from 11,675.363 to 8,700.097 ms (-25.483%) in this pair; first-use sums rise
+0.386%. These are one-pair host observations, not GPU timings, a controlled
+repeated benchmark, end-to-end speedup or tokens/s. Full-model numerical
 acceptance and all issue #42 M0-M7 milestones remain open.
