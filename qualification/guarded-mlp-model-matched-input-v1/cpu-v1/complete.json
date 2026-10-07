@@ -1,0 +1,32 @@
+{
+  "elapsed_seconds": 0.8205495580332354,
+  "error": null,
+  "gpu_executed": false,
+  "passed": true,
+  "source_manifest": {
+    "bytes": 3580,
+    "sha256": "4c3df6c7a6068681c9415caa4ded85ce5999c168f62d7da8d75d0ec366fc8bef"
+  },
+  "test_names": [
+    "test_all_actual_hook_handles_removed_in_reverse",
+    "test_boolean_or_outside_rank_refused",
+    "test_changed_source_pin_and_symlink_refused",
+    "test_container_exact_readonly_mounts_and_no_network",
+    "test_container_named_user_offline_and_single_gpu",
+    "test_control_difference_retains_gate_without_comparisons",
+    "test_diagnostic_authority_and_partial_exclusion",
+    "test_exact_rank_half_byte_units",
+    "test_four_calls_and_six_rank_comparisons",
+    "test_hook_duplicate_and_closed_extent",
+    "test_missing_stage_and_call_order_refused",
+    "test_product_not_silu_compared_to_activation",
+    "test_repeated_native_difference_withholds_comparisons",
+    "test_retirement_ignores_failed_workload_storage",
+    "test_retirement_signal_deferred_and_recorded",
+    "test_retirement_uses_separate_deadline",
+    "test_stage_extent_finiteness_and_semantic_joins",
+    "test_swapped_native_control_input_refused",
+    "test_work_signal_raises_between_cli_calls",
+    "test_wrong_container_owner_or_image_refused"
+  ]
+}

@@ -1,0 +1,91 @@
+{
+  "acceptance_threshold": null,
+  "actual_terminal": null,
+  "files": {
+    "README.md": {
+      "bytes": 7868,
+      "sha256": "d1205c56c52267ab40549cba3f1693e31adc9bbf783a8a2eedfeba77bac20ac6"
+    },
+    "capture.py": {
+      "bytes": 6716,
+      "sha256": "ab101bd82fad89c889880c77c6c7fdaf2bfcf0ac97322fb6c937ddc600ef38b1"
+    },
+    "common.py": {
+      "bytes": 3172,
+      "sha256": "445c602dd0d237beb2ebef62446d1d2b34283367b68529736a890640ae185256"
+    },
+    "diagnostics.py": {
+      "bytes": 5084,
+      "sha256": "38cee89882d13dce81a992a64d4931c52a6f5b0b2dc77f5cddf1fc7cfe37ccaf"
+    },
+    "framework_reference.py": {
+      "bytes": 23768,
+      "sha256": "613579c7c84ed9b6f94abf6864c9934b72331dd001bf6badb973ab4576f4db97"
+    },
+    "historical_capture.py": {
+      "bytes": 22450,
+      "sha256": "646ffc536f50610a4c3e790a4cb8fa945e5e1501bc2466c59ba8f6d5e92b8d32"
+    },
+    "inputs.json": {
+      "bytes": 18981,
+      "sha256": "5abbd4e093df6cef4a02eb6e499d7c95dba39e6423a51f5a6ed2ad36dd423d5b"
+    },
+    "launch.py": {
+      "bytes": 20299,
+      "sha256": "c0813dcba2117c81c0c63358779f0c491d4c09f856e0efd0378f2695b8c50c51"
+    },
+    "long_reference.py": {
+      "bytes": 23875,
+      "sha256": "242abaa1662372ec999d6d056272646ede14ed8285223bebb293d1a64c17c9cf"
+    },
+    "mlp.py": {
+      "bytes": 11090,
+      "sha256": "49c3a948aa978e410bdc7b7e01e49c716ccff10eaf480168f85c85490b0e6792"
+    },
+    "owned.py": {
+      "bytes": 30433,
+      "sha256": "ab41af455396322303bb8ebd4132e680affc3bdc5830608fad36736c92024583"
+    },
+    "run.py": {
+      "bytes": 13811,
+      "sha256": "d2208a9f5e1562934784415ed235d362df2a1464959a1c57e473115b51fc6587"
+    },
+    "test_mlp.py": {
+      "bytes": 11191,
+      "sha256": "1325d6455c89b30b5db78e7cdb3eb9c76e0df06f981b106c5dc673a6c21102f3"
+    }
+  },
+  "gpu_execution": false,
+  "local_test_execution": false,
+  "numerical_acceptance": false,
+  "original_input_bodies": 31,
+  "performance_claim": false,
+  "planned_full_model_calls": 0,
+  "planned_module_calls": 4,
+  "production_authority": false,
+  "schema": "ferric-guarded-mlp-matched-input-source-v1",
+  "source_only": true,
+  "test_count": 20,
+  "test_names": [
+    "test_mlp.MlpTests.test_all_actual_hook_handles_removed_in_reverse",
+    "test_mlp.MlpTests.test_boolean_or_outside_rank_refused",
+    "test_mlp.MlpTests.test_changed_source_pin_and_symlink_refused",
+    "test_mlp.MlpTests.test_container_exact_readonly_mounts_and_no_network",
+    "test_mlp.MlpTests.test_container_named_user_offline_and_single_gpu",
+    "test_mlp.MlpTests.test_control_difference_retains_gate_without_comparisons",
+    "test_mlp.MlpTests.test_diagnostic_authority_and_partial_exclusion",
+    "test_mlp.MlpTests.test_exact_rank_half_byte_units",
+    "test_mlp.MlpTests.test_four_calls_and_six_rank_comparisons",
+    "test_mlp.MlpTests.test_hook_duplicate_and_closed_extent",
+    "test_mlp.MlpTests.test_missing_stage_and_call_order_refused",
+    "test_mlp.MlpTests.test_product_not_silu_compared_to_activation",
+    "test_mlp.MlpTests.test_repeated_native_difference_withholds_comparisons",
+    "test_mlp.MlpTests.test_retirement_ignores_failed_workload_storage",
+    "test_mlp.MlpTests.test_retirement_signal_deferred_and_recorded",
+    "test_mlp.MlpTests.test_retirement_uses_separate_deadline",
+    "test_mlp.MlpTests.test_stage_extent_finiteness_and_semantic_joins",
+    "test_mlp.MlpTests.test_swapped_native_control_input_refused",
+    "test_mlp.MlpTests.test_work_signal_raises_between_cli_calls",
+    "test_mlp.MlpTests.test_wrong_container_owner_or_image_refused"
+  ]
+}

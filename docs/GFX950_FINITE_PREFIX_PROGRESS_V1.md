@@ -70,8 +70,13 @@ uses actual layer-zero, position-zero Down partials and first residuals,
 with 24 clean input posthashes and no GPU/model rerun. An initial malformed
 test-fixture failure remains retained; only that fixture and the fresh output
 namespace changed for the successful attempt. This does not replay the Down
-dot products or establish full-model numerical acceptance. Matched-input MLP
-comparison is the next diagnostic.
+dot products or establish full-model numerical acceptance. The new
+[matched-input MLP diagnostic](../qualification/guarded-mlp-model-matched-input-v1/README.md)
+passes all 20 CPU regressions on MI350. Its private container environment imports
+successfully with all four historical Python implementation sources byte-exact;
+different PyTorch/Python/NumPy versions are recorded explicitly. Actual framework
+GPU replay is still pending and must reproduce the historical control before
+its matched-input differences can be interpreted.
 
 The [historical O-projection replay](../qualification/o-projection-exact-replay-v1/README.md)
 now completes on MI350 with 18 passing tests. All 8,192 captured FP32 partials
