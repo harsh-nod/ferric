@@ -1,0 +1,31 @@
+test_actual_worker_bootstrap_profile_pid_and_completion_joins_refuse (test_host.HostTests.test_actual_worker_bootstrap_profile_pid_and_completion_joins_refuse) ... ok
+test_conservative_schema_and_cross_mode_policy_refuse (test_host.HostTests.test_conservative_schema_and_cross_mode_policy_refuse) ... ok
+test_exact_report_hash_and_extent_refuse (test_host.HostTests.test_exact_report_hash_and_extent_refuse) ... ok
+test_forward_wall_bound_and_sum_overflow_refuse (test_host.HostTests.test_forward_wall_bound_and_sum_overflow_refuse) ... ok
+test_fresh_baseline_counter_monotonicity_and_exact_deltas_refuse (test_host.HostTests.test_fresh_baseline_counter_monotonicity_and_exact_deltas_refuse) ... ok
+test_group_epoch_device_and_policy_drift_refuse (test_host.HostTests.test_group_epoch_device_and_policy_drift_refuse) ... ok
+test_healthy_close_and_all_nonclaims_required (test_host.HostTests.test_healthy_close_and_all_nonclaims_required) ... ok
+test_output_comparison_reports_differences_and_history_without_acceptance (test_host.HostTests.test_output_comparison_reports_differences_and_history_without_acceptance) ... ok
+test_paired_report_keeps_close_counter_policy_and_identity_refusals (test_host.HostTests.test_paired_report_keeps_close_counter_policy_and_identity_refusals) ... ok
+test_paired_report_refuses_tf_and_reusable_bootstrap (test_host.HostTests.test_paired_report_refuses_tf_and_reusable_bootstrap) ... ok
+test_paired_report_requires_exact_selected_mode_and_preserves_intervals (test_host.HostTests.test_paired_report_requires_exact_selected_mode_and_preserves_intervals) ... ok
+test_snapshot_and_interval_rosters_refuse (test_host.HostTests.test_snapshot_and_interval_rosters_refuse) ... ok
+test_strict_u64_vectors_and_closed_nested_fields_refuse (test_host.HostTests.test_strict_u64_vectors_and_closed_nested_fields_refuse) ... ok
+test_valid_closed_report_preserves_u64_and_layer_interval_indices (test_host.HostTests.test_valid_closed_report_preserves_u64_and_layer_interval_indices) ... ok
+test_case_restores_signal_handlers_and_outer_timer_on_postcheck_exception (test_serial.SerialTests.test_case_restores_signal_handlers_and_outer_timer_on_postcheck_exception) ... ok
+test_expired_case_deadline_refuses_without_disabling_or_rearming_timer (test_serial.SerialTests.test_expired_case_deadline_refuses_without_disabling_or_rearming_timer) ... ok
+test_first_case_failure_or_admission_error_stops_without_retry (test_serial.SerialTests.test_first_case_failure_or_admission_error_stops_without_retry) ... ok
+test_four_plans_keep_same_elf_inputs_and_distinct_sessions (test_serial.SerialTests.test_four_plans_keep_same_elf_inputs_and_distinct_sessions) ... ok
+test_nonmonotonic_or_noninteger_clocks_refuse (test_serial.SerialTests.test_nonmonotonic_or_noninteger_clocks_refuse) ... ok
+test_only_declared_literal_bindings_may_change_tested_source (test_serial.SerialTests.test_only_declared_literal_bindings_may_change_tested_source) ... ok
+test_plan_roster_policy_history_and_same_input_drift_refuse (test_serial.SerialTests.test_plan_roster_policy_history_and_same_input_drift_refuse) ... ok
+test_serial_admits_before_next_case_and_records_real_order (test_serial.SerialTests.test_serial_admits_before_next_case_and_records_real_order) ... ok
+test_actual_kfd_handles_are_not_unique_ids (test_topology.TopologyTests.test_actual_kfd_handles_are_not_unique_ids) ... ok
+test_malformed_or_duplicate_properties_refuse (test_topology.TopologyTests.test_malformed_or_duplicate_properties_refuse) ... ok
+test_swapped_or_small_unique_ids_refuse (test_topology.TopologyTests.test_swapped_or_small_unique_ids_refuse) ... ok
+test_wrong_gfx_and_invalid_handle_refuse (test_topology.TopologyTests.test_wrong_gfx_and_invalid_handle_refuse) ... ok
+
+----------------------------------------------------------------------
+Ran 26 tests in 1.454s
+
+OK

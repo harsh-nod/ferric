@@ -116,6 +116,15 @@ was reaped. The exact eight input bodies and seven raw files are retained.
 Only explicit identity/plan bindings may differ from these tested templates
 when the GPU runner is prepared.
 
+The [report generator](report-cpu-v1/render.py) passed all
+[seven synthetic tests on MI350](report-cpu-v1/evidence/complete.json).
+It requires the complete validated analysis and four original run receipts,
+and emits a host-interval plot, per-forward/per-layer CSV tables, and a summary.
+Its labels distinguish independent runs from correlated forward observations.
+This is a reporting-tool test only: no actual comparison chart or GPU overlap
+claim is present. The failed native attempt below cannot be rendered as a
+successful comparison.
+
 ## First Native Attempt
 
 The [serial failure receipt](gpu-attempt-v2/serial-failed.json) preserves the
@@ -129,9 +138,8 @@ timing analysis, or performance chart was produced.
 The paired selector was parsed, but the legacy-parser fallback omitted its
 `is_none()` condition. This sent a valid paired invocation into the legacy CLI
 parser before the paired branch could execute. The passing parser unit tests
-did not cover actual executable dispatch. A correction and real-worker EOF
-dispatch regression tests are being qualified separately; the failed attempt
-is not relabeled as a success.
+did not cover actual executable dispatch. The separately qualified correction
+below does not relabel this failed attempt as a success.
 
 Both executed cases retained all 11 owned phases. Every owned process was
 reaped, process groups were absent, and the post-run idle checks passed without
@@ -140,7 +148,31 @@ all 164 original files, including both case terminals and their raw evidence.
 The passing control prefix alone is not a paired-read comparison or independent
 full-model numerical acceptance.
 
-Next: qualify the dispatch correction and execute a new owned serial comparison
-in a fresh namespace. A paired-read reduction would not establish sustained
+## Qualified Dispatch Correction
+
+The [corrected worker receipt](worker-cpu-v3/evidence/complete.json) records
+623 passing tests and four unchanged ignored native tests, with 627 inventoried
+names and nine clean phases. All previous outcomes are preserved. Two new tests
+launch the actual Cargo-built worker: all six guarded modes must reach the
+bootstrap-absent refusal, while invalid paired mode, opt-in, and extra arguments
+remain refused. EOF stops these probes before any GPU can be opened.
+
+The worker binary was hashed before and after the tests and matched the final
+Cargo build product: 5,941,704 bytes, SHA-256
+`7687abc11d2c4847584dcfe35d5a8d4ef02256e7d42e6ca15223620a8b417c15`.
+The terminal is 1,641,412 bytes, SHA-256
+`f69a1d54adba68602a2bc33a1802a71310cd4a63a8f64cdfd234558e47674d98`.
+Its 72.77-second CPU qualification is not model latency. The runtime suite was
+not rerun. The [retention map](worker-cpu-v3/retention.json) covers all 64 original
+bodies, including 50 raw files and the two tested source postimages integrated
+here. Executable bodies are not included; their recorded identities are retained.
+
+The [fresh comparison harness receipt](checker-cpu-v3/evidence/complete.json)
+records all 26 synthetic tests passing. It admits only the corrected worker and
+the unchanged qualified parent. Fresh v3 directories preserve the earlier failed
+experiment; measurement and payload semantics are unchanged.
+
+Next: complete the new owned serial comparison and retain its actual outcome.
+A paired-read reduction would not establish sustained
 2,048/256 decoding, GPU overlap, full-model numerical acceptance, or 700 tok/s.
 All issue #42 milestones remain open.

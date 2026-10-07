@@ -1,0 +1,67 @@
+{
+  "affinity": [
+    8,
+    9
+  ],
+  "controller": {
+    "bytes": 6318,
+    "sha256": "1678b65ca8b5c3af044ae2539d7b88cb46801a4af1deb6e9fdd1fc15c4650832"
+  },
+  "elapsed_seconds": 0.05301785294432193,
+  "error": null,
+  "errors": 0,
+  "failures": 0,
+  "gpu_execution": false,
+  "model_execution": false,
+  "numerical_acceptance": false,
+  "passed": true,
+  "performance_claim": false,
+  "schema": "ferric-peer-read-report-cpu-v1",
+  "skipped": 0,
+  "source_unchanged": true,
+  "sources_after": {
+    "render.py": {
+      "bytes": 23281,
+      "sha256": "2534f8c96ecbc52e4d2579e1781ba8a14631bcc500ba9d34281af0cbc8e3345f"
+    },
+    "run_tests.py": {
+      "bytes": 6318,
+      "sha256": "1678b65ca8b5c3af044ae2539d7b88cb46801a4af1deb6e9fdd1fc15c4650832"
+    },
+    "test_render.py": {
+      "bytes": 9348,
+      "sha256": "0b15b42203cf035558f58cee47f513b020d582cc1daf22d89b0e73c63d128efd"
+    }
+  },
+  "sources_before": {
+    "render.py": {
+      "bytes": 23281,
+      "sha256": "2534f8c96ecbc52e4d2579e1781ba8a14631bcc500ba9d34281af0cbc8e3345f"
+    },
+    "run_tests.py": {
+      "bytes": 6318,
+      "sha256": "1678b65ca8b5c3af044ae2539d7b88cb46801a4af1deb6e9fdd1fc15c4650832"
+    },
+    "test_render.py": {
+      "bytes": 9348,
+      "sha256": "0b15b42203cf035558f58cee47f513b020d582cc1daf22d89b0e73c63d128efd"
+    }
+  },
+  "stdout": {
+    "bytes": 1029,
+    "sha256": "4f546adae6085c7760f0a0cba05b680d1506a04bc8c54ed91bff66c7dbfebe6c"
+  },
+  "subprocesses_started": 0,
+  "synthetic_fixtures_only": true,
+  "test_names": [
+    "test_bad_wall_order_overflow_and_drift_refuse",
+    "test_csv_plot_and_caption_keep_run_and_forward_units",
+    "test_duplicate_fields_strict_integers_and_decimal_rounding",
+    "test_exact_full_census_and_integer_forward_totals",
+    "test_failure_payload_identity_and_claims_refuse",
+    "test_incomplete_order_and_independence_refuse",
+    "test_wrong_mode_counts_or_hidden_effects_refuse"
+  ],
+  "tests_run": 7,
+  "whole_seconds": 30
+}

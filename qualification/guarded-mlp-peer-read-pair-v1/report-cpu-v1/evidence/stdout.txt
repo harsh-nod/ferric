@@ -1,0 +1,12 @@
+test_bad_wall_order_overflow_and_drift_refuse (test_render.RenderTests.test_bad_wall_order_overflow_and_drift_refuse) ... ok
+test_csv_plot_and_caption_keep_run_and_forward_units (test_render.RenderTests.test_csv_plot_and_caption_keep_run_and_forward_units) ... ok
+test_duplicate_fields_strict_integers_and_decimal_rounding (test_render.RenderTests.test_duplicate_fields_strict_integers_and_decimal_rounding) ... ok
+test_exact_full_census_and_integer_forward_totals (test_render.RenderTests.test_exact_full_census_and_integer_forward_totals) ... ok
+test_failure_payload_identity_and_claims_refuse (test_render.RenderTests.test_failure_payload_identity_and_claims_refuse) ... ok
+test_incomplete_order_and_independence_refuse (test_render.RenderTests.test_incomplete_order_and_independence_refuse) ... ok
+test_wrong_mode_counts_or_hidden_effects_refuse (test_render.RenderTests.test_wrong_mode_counts_or_hidden_effects_refuse) ... ok
+
+----------------------------------------------------------------------
+Ran 7 tests in 0.039s
+
+OK

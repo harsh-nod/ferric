@@ -1,0 +1,27 @@
+{
+  "files": {
+    "evidence/complete.json": {
+      "bytes": 1970,
+      "sha256": "caa019884910d1cbd0e15f4961fea337efc63abbaaddca70bf41dfa1e7a40d9d"
+    },
+    "evidence/stdout.txt": {
+      "bytes": 1029,
+      "sha256": "4f546adae6085c7760f0a0cba05b680d1506a04bc8c54ed91bff66c7dbfebe6c"
+    },
+    "render.py": {
+      "bytes": 23281,
+      "sha256": "2534f8c96ecbc52e4d2579e1781ba8a14631bcc500ba9d34281af0cbc8e3345f"
+    },
+    "run_tests.py": {
+      "bytes": 6318,
+      "sha256": "1678b65ca8b5c3af044ae2539d7b88cb46801a4af1deb6e9fdd1fc15c4650832"
+    },
+    "test_render.py": {
+      "bytes": 9348,
+      "sha256": "0b15b42203cf035558f58cee47f513b020d582cc1daf22d89b0e73c63d128efd"
+    }
+  },
+  "performance_claim": false,
+  "schema": "ferric-paired-read-report-retention-v1",
+  "synthetic_tests_only": true
+}

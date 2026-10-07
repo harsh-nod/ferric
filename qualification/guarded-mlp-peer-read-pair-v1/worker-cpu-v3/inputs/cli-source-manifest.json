@@ -1,0 +1,43 @@
+{
+  "base_worker_terminal": {
+    "bytes": 1641609,
+    "sha256": "1078bf7fc8a1359d8144f786dd32e270a5a736ea995e3f52b97d7e905581d863"
+  },
+  "files": [
+    {
+      "after": {
+        "bytes": 16428,
+        "sha256": "995f98874c0073792574e85b5bd189a7b7af7e2954860014c8f2058a209b3c98"
+      },
+      "before": {
+        "bytes": 16374,
+        "sha256": "02313e3bd3d7d1e0fac2f293e9529faa20a55dad9718843b39c0987b09bf6e1c"
+      },
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/main.rs",
+      "repository": "ferric"
+    },
+    {
+      "after": {
+        "bytes": 3228,
+        "sha256": "f5f02f225583de61cc6561a1b46022d1d355fff837129337941d6dc9820f0f9d"
+      },
+      "before": {
+        "bytes": 394,
+        "sha256": "f0e83d4d46ad8f926020f3bfc0e61db3904067381c316e79f9d6365fb704d30b"
+      },
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/tests/shared_wire.rs",
+      "repository": "ferric"
+    }
+  ],
+  "gpu_execution": false,
+  "new_tests": {
+    "worker_integration": [
+      "guarded_executable_routes_reach_bootstrap_without_legacy_fallback",
+      "paired_executable_route_preserves_mode_and_opt_in_refusals"
+    ],
+    "worker_library": []
+  },
+  "numerical_acceptance": false,
+  "performance_claim": false,
+  "schema": "ferric-peer-read-pair-cli-dispatch-source-v3"
+}
