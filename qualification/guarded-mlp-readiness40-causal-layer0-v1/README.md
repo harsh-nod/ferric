@@ -123,6 +123,30 @@ This establishes repeatability and unchanged reference behavior, not agreement
 with Ferric. Native causal capture and the cross-framework comparison remain
 separate gates.
 
+## Comparison Tests And Launch Preflight
+
+`comparison-cpu-v1` contains the 14 original files from the MI350 comparison
+test run. All ten named tests passed, covering rank slicing, KV cache layout,
+finite encodings, propagated differences and deliberately noncomparable
+projection partials. The process exited naturally and all postchecks passed.
+Its terminal is `fb9c982ac824eab32f8b1d35f9ee5ab54eb3eaba5feda38e7efb13aa8dc7e981`;
+the original archive is 28,080 bytes with SHA-256
+`4d0eff0a66f7d43cf2e6b2e1bbb2460f167bb7cea8b78c6633cfe2242e937bd4`.
+These are synthetic comparison tests, not results from actual native captures.
+
+`native-preflight-v2` preserves ten original deployment/preparation files from
+an unsuccessful launcher invocation. It exited with
+`RuntimeError: actual readiness CPU/ELF bindings remain pending`: the root
+agent supplied path-bearing pins where this API requires only `bytes` and
+`sha256`. Admission refused them before case-directory creation, owned child
+launch or GPU work. There is no successful native receipt for this attempt.
+The unchanged ten-file archive is 43,361 bytes with SHA-256
+`f5ab79a5ae62865f3b0c3d5575206ec857ebda975a291631f900771aff07f5e3`.
+
+The corrected V3 deployment uses a fresh directory, compact CPU/product pins
+and a fresh request. Worker/parent binaries, validators, kernel images and
+acceptance checks are unchanged. Native results remain pending.
+
 ## Remaining Gates
 
 The CPU prerequisites have passed; native diagnostic validation is still

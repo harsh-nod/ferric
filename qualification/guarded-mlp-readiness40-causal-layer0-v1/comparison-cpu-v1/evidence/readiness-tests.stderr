@@ -1,0 +1,15 @@
+test_closed204_rows_and_no_acceptance_or_partial_synthesis (test_compare.ComparisonTests.test_closed204_rows_and_no_acceptance_or_partial_synthesis) ... ok
+test_closed_scope_extents_finiteness_and_cache_ancestry (test_compare.ComparisonTests.test_closed_scope_extents_finiteness_and_cache_ancestry) ... ok
+test_earliest_stage_groups_parallel_qkv_and_preserves_record_order (test_compare.ComparisonTests.test_earliest_stage_groups_parallel_qkv_and_preserves_record_order) ... ok
+test_framework_head_major_cache_permutation_and_current_row (test_compare.ComparisonTests.test_framework_head_major_cache_permutation_and_current_row) ... ok
+test_frozen_metrics_keep_zero_norm_signed_zero_and_exact_word_counts (test_compare.ComparisonTests.test_frozen_metrics_keep_zero_norm_signed_zero_and_exact_word_counts) ... ok
+test_product_is_composite_and_requires_both_gate_and_up (test_compare.ComparisonTests.test_product_is_composite_and_requires_both_gate_and_up) ... ok
+test_qkv_rank_slices_and_gate_up_halves_are_not_interleaved (test_compare.ComparisonTests.test_qkv_rank_slices_and_gate_up_halves_are_not_interleaved) ... ok
+test_same_captured_inputs_are_distinct_from_propagation (test_compare.ComparisonTests.test_same_captured_inputs_are_distinct_from_propagation) ... ok
+test_tp_composite_dependencies_include_both_ranks (test_compare.ComparisonTests.test_tp_composite_dependencies_include_both_ranks) ... ok
+test_unavailable_rotary_and_partial_rows_never_become_full_projections (test_compare.ComparisonTests.test_unavailable_rotary_and_partial_rows_never_become_full_projections) ... ok
+
+----------------------------------------------------------------------
+Ran 10 tests in 4.235s
+
+OK
