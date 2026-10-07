@@ -1,0 +1,20 @@
+{
+  "controller": {
+    "bytes": 15361,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-peer-read-pair-gpu-v228-v3/run_serial.py",
+    "sha256": "95b8130f792ccce31a9e968158c44e365ebdeb09d1dbc5d03b3b579c0afe63c0"
+  },
+  "order": [
+    "control-0",
+    "paired-0",
+    "paired-1",
+    "control-1"
+  ],
+  "runner": {
+    "bytes": 43063,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-peer-read-pair-gpu-v228-v3/run_model_gpu.py",
+    "sha256": "5b86dcf87b5ce317d34a017eef7abe6c974b58319052d54758d02eaf5f9cdc9d"
+  },
+  "started_monotonic_ns": 739575469932619,
+  "whole_seconds": 17320
+}

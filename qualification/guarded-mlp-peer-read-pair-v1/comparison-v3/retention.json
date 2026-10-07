@@ -1,0 +1,35 @@
+{
+  "end_to_end_speedup": false,
+  "files": {
+    "analysis.json": {
+      "bytes": 72449,
+      "sha256": "a62d50e641ba5be633000042ec5f69886169e65dea305b414f11bb798be7ff1b"
+    },
+    "complete.json": {
+      "bytes": 6333,
+      "sha256": "82b5c82ff06c267635af92b0c7648f9aa13271678903a087be49d525ae9af6d8"
+    },
+    "forward-intervals.csv": {
+      "bytes": 377,
+      "sha256": "ffae2ca09d9e10a8bbacd3bf39af5490e61bbbf8bc0a8607fa9cfa7bf582bb3d"
+    },
+    "hidden-read-host-wall.svg": {
+      "bytes": 6120,
+      "sha256": "577168f7c397e6c12354013bd0e95a3073d4e9d5d7c1a86c7332dc28a3e1003d"
+    },
+    "layer-counts.csv": {
+      "bytes": 24759,
+      "sha256": "677216ccedeea53b8cf8aa4f92e7077a4bf5728b47d1ab3930a2c68a248ea37a"
+    },
+    "summary.md": {
+      "bytes": 1766,
+      "sha256": "138c0faa0f047e3cfd54df7053cbcb94545883b68a5fc284140ffe4792c0878f"
+    }
+  },
+  "gpu_overlap": false,
+  "gpu_time": false,
+  "original_render_inputs_rehashed": true,
+  "performance_scope": "outer-hidden-read-host-wall-only",
+  "schema": "ferric-paired-read-comparison-report-retention-v3",
+  "sustained_tokens_per_second": false
+}

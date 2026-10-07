@@ -4,7 +4,9 @@ The narrow two-rank runtime read API, opt-in Ferric worker caller, and parent
 selector have passed CPU qualification on MI350. The API is integrated in
 fe2o3 commit `ee63881af1`; the tested worker and parent postimages are integrated
 here. The first native comparison failed at worker CLI dispatch after a passing
-control case. There is no paired-read native performance result here.
+control case. After the separately tested correction, a fresh four-run native
+comparison passed: the outer hidden-read host interval was 71.9% shorter.
+This is a read-phase diagnostic, not an end-to-end decode speedup.
 
 ## Change
 
@@ -121,9 +123,9 @@ The [report generator](report-cpu-v1/render.py) passed all
 It requires the complete validated analysis and four original run receipts,
 and emits a host-interval plot, per-forward/per-layer CSV tables, and a summary.
 Its labels distinguish independent runs from correlated forward observations.
-This is a reporting-tool test only: no actual comparison chart or GPU overlap
-claim is present. The failed native attempt below cannot be rendered as a
-successful comparison.
+The synthetic tests qualify the reporting tool only. The actual chart below
+comes from the separately completed fresh comparison, not the failed attempt.
+No GPU-overlap claim is made.
 
 ## First Native Attempt
 
@@ -172,7 +174,50 @@ records all 26 synthetic tests passing. It admits only the corrected worker and
 the unchanged qualified parent. Fresh v3 directories preserve the earlier failed
 experiment; measurement and payload semantics are unchanged.
 
-Next: complete the new owned serial comparison and retain its actual outcome.
-A paired-read reduction would not establish sustained
+## Native Comparison
+
+The [fresh serial receipt](gpu-comparison-v3/serial-complete.json) records all
+four cases passing in control/paired/paired/control order, with identical worker
+and parent executables, model inputs, images, and fresh-arena policy. Each case
+executed four forwards through all 36 layers and both ranks. All 16 complete
+606,976-byte payloads matched by position, and every input/output history was
+`9112 -> 67 -> 25 -> 576 -> 2701`. Healthy Close, all 44 supervised phases,
+process retirement, source postchecks, and device-idle postchecks passed.
+
+The [retention map](gpu-comparison-v3/retention.json) covers all 347 original
+bodies. The failed v2 attempt remains unchanged and separate. This comparison
+checks that instrumentation preserves the ordinary AR4 outputs; it does not
+replace an independent model reference.
+
+![Outer hidden-read host intervals](comparison-v3/hidden-read-host-wall.svg)
+
+| Mode | Independent runs | Mean hidden-read time per four-forward run |
+| --- | ---: | ---: |
+| Two ordinary rank reads | 2 | 2,053.659 ms |
+| Paired rank read | 2 | 576.163 ms |
+
+The observed reduction is **71.9%**, or a **3.56x ratio for this host interval**.
+Each run contains four correlated forward observations, not four independent
+samples. The [per-forward table](comparison-v3/summary.md),
+[exact timing CSV](comparison-v3/forward-intervals.csv), and
+[576-row counter CSV](comparison-v3/layer-counts.csv) retain the observations.
+Each hidden-read interval now has two full-group checks instead of four and
+zero individual full checks instead of two per rank. Both modes still perform
+one complete 8,192-byte read per rank, with no hidden writes or dispatches.
+
+The analyzed outer interval includes host execution and blocking/completion
+waits. Internal inclusive timer counters are not added together. Two runs per
+mode are a small diagnostic, not a controlled repeated throughput benchmark.
+The [analysis](comparison-v3/analysis.json) and [render receipt](comparison-v3/complete.json)
+were produced on MI350 after the native run; all ten recorded render inputs
+were rehashed again during retention. To replay the data-only analysis:
+
+```sh
+python3 qualification/guarded-mlp-peer-read-pair-v1/analysis-cpu-v2/analyze_hidden_reads.py \
+  qualification/guarded-mlp-peer-read-pair-v1/gpu-comparison-v3 \
+  ed6e6a4741e959b1134d020b3feb60ae240ba2c4d4d58b2b1dd5988c1cfa7425
+```
+
+This result does not establish sustained
 2,048/256 decoding, GPU overlap, full-model numerical acceptance, or 700 tok/s.
 All issue #42 milestones remain open.

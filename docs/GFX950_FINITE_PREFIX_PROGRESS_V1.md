@@ -111,8 +111,13 @@ bootstrap because of a CLI fallback routing omission. That failure and clean
 shutdown evidence remain retained. The correction passes 623 worker tests
 with four unchanged ignores, including two actual-executable routing tests.
 The fresh comparison harness passes 26 tests and its graph generator passes
-seven synthetic tests. A new serial comparison is pending; no paired-read
-speedup is claimed from the completed control prefix or CPU tests.
+seven synthetic tests. A fresh native ABBA comparison now passes all four cases,
+all 16 complete payload comparisons, and all 44 supervised phases. The
+[plot and tables](../qualification/guarded-mlp-peer-read-pair-v1/README.md#native-comparison)
+show a 71.9% reduction in outer hidden-read host wall time: 2,053.659 to
+576.163 ms per four-forward run, averaging two independent runs per mode.
+This is a host read-phase diagnostic, not GPU time, kernel overlap, sustained
+decode or an end-to-end speedup. No result is inferred from the failed prefix.
 
 The [historical O-projection replay](../qualification/o-projection-exact-replay-v1/README.md)
 now completes on MI350 with 18 passing tests. All 8,192 captured FP32 partials

@@ -1,0 +1,50 @@
+{
+  "controller": {
+    "bytes": 15361,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-peer-read-pair-gpu-v228-v3/run_serial.py",
+    "sha256": "95b8130f792ccce31a9e968158c44e365ebdeb09d1dbc5d03b3b579c0afe63c0"
+  },
+  "runs": [
+    {
+      "finished_monotonic_ns": 739859101656899,
+      "name": "control-0",
+      "started_monotonic_ns": 739577856565828,
+      "terminal": {
+        "bytes": 615922,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-peer-read-pair-gpu-v228-v3/control-0/complete.json",
+        "sha256": "fca9a05111c0223c6090fa35a0a45e5cae0eb6022657effef685c61507d12eff"
+      }
+    },
+    {
+      "finished_monotonic_ns": 740139372325725,
+      "name": "paired-0",
+      "started_monotonic_ns": 739859104050410,
+      "terminal": {
+        "bytes": 613622,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-peer-read-pair-gpu-v228-v3/paired-0/complete.json",
+        "sha256": "50ddb1f5f2077083eaf208b6b9066f6b33d202364bfcc856f43edb64e599e997"
+      }
+    },
+    {
+      "finished_monotonic_ns": 740420070926287,
+      "name": "paired-1",
+      "started_monotonic_ns": 740139374685286,
+      "terminal": {
+        "bytes": 613622,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-peer-read-pair-gpu-v228-v3/paired-1/complete.json",
+        "sha256": "05665ed539ca2c43bb2dfb480f7f847a15b467200ba93bcb2eb899562c5f1b75"
+      }
+    },
+    {
+      "finished_monotonic_ns": 740701477586567,
+      "name": "control-1",
+      "started_monotonic_ns": 740420073421768,
+      "terminal": {
+        "bytes": 615922,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-peer-read-pair-gpu-v228-v3/control-1/complete.json",
+        "sha256": "d93cf28658f1738946762916d641caff29d278e82dcaf61b943a11d1d8f19db0"
+      }
+    }
+  ],
+  "schema": "ferric-peer-read-supervised-abba-v1"
+}

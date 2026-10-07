@@ -70,8 +70,9 @@ The [current finite-runtime engineering checkpoint](docs/GFX950_FINITE_PREFIX_PR
 includes four-forward, 36-layer Qwen3-8B GPU bring-up on MI350 and
 [measured reusable-arena allocation plateaus](qualification/guarded-mlp-reusable-ar4-v1/README.md).
 The [paired-read experiment and executable routing fix](qualification/guarded-mlp-peer-read-pair-v1/README.md)
-retain both the failed native attempt and the corrected worker's 623 passing
-CPU tests. These are engineering diagnostics, not sustained 2,048/256 decoding,
+retain the failed attempt, the corrected worker's 623 passing CPU tests, and a
+fresh four-run GPU comparison showing 71.9% lower hidden-read host time.
+These are engineering diagnostics, not an end-to-end speedup, sustained 2,048/256 decoding,
 independent full-model numerical acceptance, or a change to production status.
 
 ## First Product Milestone
