@@ -1,0 +1,53 @@
+{
+  "adopted_reaped": [],
+  "argv": [
+    "/usr/bin/prlimit",
+    "--as=12884901888",
+    "--cpu=1200",
+    "--fsize=1073741824",
+    "--core=0",
+    "--",
+    "/home/harmenon/.rustup/toolchains/1.97.1-x86_64-unknown-linux-gnu/bin/cargo",
+    "test",
+    "--offline",
+    "--locked",
+    "--jobs",
+    "2",
+    "--manifest-path",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-full2303-bank-scoped-census-parent-cpu-v228-v1/ferric/adapters/m1-engineering-execution-v1/Cargo.toml",
+    "--features",
+    "guarded-mlp-readiness-engineering,guarded-mlp-full2303-engineering",
+    "--lib",
+    "finite_guarded_mlp_full2303_scoped_v1::tests",
+    "--",
+    "--test-threads=1"
+  ],
+  "command": {
+    "bytes": 2681,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-full2303-bank-scoped-census-parent-cpu-v228-v1/evidence/parent-full2303-scoped-policy.command.json",
+    "sha256": "347edaf0ec7f6a5d747f5da56e775ed49e8e604c542f44d43d2892ba13e912fb"
+  },
+  "elapsed_ns": 242603651,
+  "exception": null,
+  "exit_code": 0,
+  "forced_cleanup": false,
+  "label": "parent-full2303-scoped-policy",
+  "natural_exit": true,
+  "observed_signals": [],
+  "pgid": 1385441,
+  "pid": 1385441,
+  "process_group_absent": true,
+  "reaped": true,
+  "stderr": {
+    "bytes": 1292,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-full2303-bank-scoped-census-parent-cpu-v228-v1/evidence/parent-full2303-scoped-policy.stderr",
+    "sha256": "c7cba7787de057161078a8305f1a46789616e44c85b9ca23958327bb286a0613"
+  },
+  "stdout": {
+    "bytes": 770,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-full2303-bank-scoped-census-parent-cpu-v228-v1/evidence/parent-full2303-scoped-policy.stdout",
+    "sha256": "5e092782bbcd05df40a200bc0b6e404c7b063b0ee6252a85d5b37fd22cff7b91"
+  },
+  "storage_failure": null,
+  "timed_out": false
+}

@@ -1,0 +1,20 @@
+{
+  "cpu_execution_host": "mi350",
+  "ferric_bodies_checked": 1283,
+  "full_launch_admitted": false,
+  "full_parent_library_suite": false,
+  "native_execution": false,
+  "parent_rows": 6,
+  "passed": true,
+  "qualified_worker_bodies_preserved": 224,
+  "schema": "ferric-full2303-bank-census-parent-integration-v1",
+  "source_map": {
+    "bytes": 525041,
+    "sha256": "cf69d8bb33a1c9bf2fa0238e18da01ef70bba182a488388de378d1f611bc35fb"
+  },
+  "stage": "pre",
+  "terminal": {
+    "bytes": 4092678,
+    "sha256": "6580942cb6b39d69b6fdac91a48ac6e0a25cd4e7648c4175152f3620ff7bacb6"
+  }
+}

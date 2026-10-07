@@ -25,7 +25,12 @@ scoped discovery is not temporally equivalent to repeated full discovery.
 The prior [40-forward same-binary experiment](../guarded-mlp-scoped-capacity-census-v1/matched-timing-report-v1/README.md)
 is measured host-wall evidence only. It does not qualify this longer route.
 CPU tests exercise the full schedule synthetically; no native Full2303 run
-has been completed. Parent qualification and strict data admission are next.
+has been completed. The [parent qualification](parent-cpu-v1/README.md) now
+passes all 68 phases and 549 selected tests across 58 scopes in 415.377
+seconds. Its six tested parent files are integrated with a complete
+1,284-body postcheck, preserving all 224 worker bodies. The parent selector
+is `--observe-guarded-full2303-bank-scoped-census-v1`. Strict data admission
+remains a separate gate.
 
 Launch feasibility under the unchanged one-hour bound, exact independent
 256 IDs/raw decoded bytes, repeated equal-work performance, GPU overlap and

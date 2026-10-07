@@ -1,0 +1,321 @@
+{
+  "schema": "ferric-full2303-bank-scoped-census-parent-source-v1",
+  "canonical_changed": false,
+  "compiled": false,
+  "tested": false,
+  "native_execution": false,
+  "default_routes_changed": false,
+  "default_group_policy_changed": false,
+  "temporal_equivalent_to_full": false,
+  "full2303_launch_admitted": false,
+  "runtime_api_changed": false,
+  "deadline_changed": false,
+  "reference_feedback": false,
+  "performance_claim": false,
+  "numerical_acceptance": false,
+  "base": {
+    "repository": "ferric",
+    "commit": "86aae13afe3831f52648664f5da727d72d98d346",
+    "parent_receipt": {
+      "path": "qualification/guarded-mlp-scoped-capacity-census-v1/parent-cpu-v1/evidence/complete.json",
+      "bytes": 4095966,
+      "sha256": "e3915ff3e15e7d52fb57675bda0cc0752ec349c1a8317b0ef826ddcdaed70d44"
+    },
+    "parent_sources": {
+      "path": "qualification/guarded-mlp-scoped-capacity-census-v1/parent-cpu-v1/evidence/sources-after.json",
+      "bytes": 526507,
+      "sha256": "0ab51eeff901cd2405faf7dbe63197539ae6173346456d9dabd1833366aab2ff"
+    },
+    "canonical_bodies_joined": 1279,
+    "qualified_worker_bodies": 220,
+    "selected_passes": 535,
+    "library_inventory": 1001
+  },
+  "requires": {
+    "worker_source_manifest": {
+      "path": "../worker-v1/source-manifest.json",
+      "bytes": 26569,
+      "sha256": "67d92d767311cb5a7e508c3f489e26fa14d3e0f38c77117cb1503a30dd68b51c"
+    },
+    "interface": {
+      "path": "../worker-v1/INTERFACE.md",
+      "bytes": 8316,
+      "sha256": "d2e9705243037fda625d83b56a693ce0107af01c7c4e35eeb35179d522bf1efd"
+    },
+    "imported_policy_rows": [
+      {
+        "repository": "ferric",
+        "path": "adapters/tp-peer-finite-engineering-worker-v1/src/finite_guarded_mlp_full2303_bank_scoped_census_v1.rs",
+        "before": null,
+        "after": {
+          "bytes": 9594,
+          "sha256": "e939e2203359a209ff589a3d25696b30a6733c3346ec078432a109c6ef8d6171"
+        }
+      },
+      {
+        "repository": "ferric",
+        "path": "adapters/tp-peer-finite-engineering-worker-v1/src/finite_guarded_mlp_full2303_bank_scoped_census_v1_tests.rs",
+        "before": null,
+        "after": {
+          "bytes": 10218,
+          "sha256": "4386be21daa54f4e825637150a1b4657487a977a0c4850d2525fca3042ab1da9"
+        }
+      }
+    ]
+  },
+  "files": [
+    {
+      "repository": "ferric",
+      "path": "adapters/m1-engineering-execution-v1/src/bin/ferric-qwen3-guarded-mlp-full2303-engineering.rs",
+      "before": {
+        "bytes": 5560,
+        "sha256": "f55d339997234e172ddfd025d6cffccdd671aa1f38991198197569cb32b89ddf"
+      },
+      "after": {
+        "bytes": 7886,
+        "sha256": "fc474962c5df45b49f70f43b6999712d261ef323e85e73318213b79312bf47e3"
+      },
+      "preimage_path": "preimages/ferric/adapters/m1-engineering-execution-v1/src/bin/ferric-qwen3-guarded-mlp-full2303-engineering.rs"
+    },
+    {
+      "repository": "ferric",
+      "path": "adapters/m1-engineering-execution-v1/src/lib.rs",
+      "before": {
+        "bytes": 91385,
+        "sha256": "e8b8f1ac16433789e2b580a273a68713558c8fc10e9aa1817ec83ef0b3375ebc"
+      },
+      "after": {
+        "bytes": 91610,
+        "sha256": "578f35f0fe854ac132e0c79fcec6455aa83ae82675f91ca569bde9c262b64f7e"
+      },
+      "preimage_path": "preimages/ferric/adapters/m1-engineering-execution-v1/src/lib.rs"
+    },
+    {
+      "repository": "ferric",
+      "path": "adapters/m1-engineering-execution-v1/src/tp_finite_client/long/full2303.rs",
+      "before": {
+        "bytes": 21505,
+        "sha256": "8d7e5e06b693545d9dd8bcb09c7879f05dc7bc17766ae99c99efb9f379315a1b"
+      },
+      "after": {
+        "bytes": 22366,
+        "sha256": "816977d75210bead77a259a25779bf3979a3712c066072681b6778575841c74d"
+      },
+      "preimage_path": "preimages/ferric/adapters/m1-engineering-execution-v1/src/tp_finite_client/long/full2303.rs"
+    },
+    {
+      "repository": "ferric",
+      "path": "adapters/m1-engineering-execution-v1/src/tp_finite_client/long/full2303_bank_scoped_census.rs",
+      "before": null,
+      "after": {
+        "bytes": 3080,
+        "sha256": "815d7f6fd34e25bbf515b7261bdc2ff849f2435e5f92df7a7031be6f57dc8d6e"
+      },
+      "preimage_path": null
+    },
+    {
+      "repository": "ferric",
+      "path": "adapters/m1-engineering-execution-v1/src/tp_finite_client/long/full2303_evidence.rs",
+      "before": {
+        "bytes": 16092,
+        "sha256": "5473059637579aaa7c7831dd7ccfb69b1375f87ef3c07ef0dce5e2d9739721ee"
+      },
+      "after": {
+        "bytes": 16713,
+        "sha256": "3bd972a6a7078a4aabb30a15d787b9bddda1d0f351f8dc06d82efdb6966bb8ad"
+      },
+      "preimage_path": "preimages/ferric/adapters/m1-engineering-execution-v1/src/tp_finite_client/long/full2303_evidence.rs"
+    },
+    {
+      "repository": "ferric",
+      "path": "adapters/m1-engineering-execution-v1/src/tp_finite_client/long/full2303_tests.rs",
+      "before": {
+        "bytes": 24489,
+        "sha256": "9111a9309398081e01f2528f4021352f5d3258f4f132585a40037949fdd714f5"
+      },
+      "after": {
+        "bytes": 37279,
+        "sha256": "246ec3c4544ac5ab5f8ba7535b5c9243c2b63b1bb9db9d3c4a4b802e9c1cc909"
+      },
+      "preimage_path": "preimages/ferric/adapters/m1-engineering-execution-v1/src/tp_finite_client/long/full2303_tests.rs"
+    }
+  ],
+  "unchanged_contracts": [
+    {
+      "path": "Cargo.toml",
+      "bytes": 3361,
+      "sha256": "6ffa0ddb997b73f2068d139fb29cbe32134993815afc1bdfd3f40b2e3f1c6adb"
+    },
+    {
+      "path": "Cargo.lock",
+      "bytes": 50999,
+      "sha256": "13493453a96b5f6891404021192152e6fc7ccf7351fa9c4d65abeea9ac069759"
+    },
+    {
+      "path": "adapters/m1-engineering-execution-v1/Cargo.toml",
+      "bytes": 14110,
+      "sha256": "2aeaa576d3cd649ad879db99446a971a993d08ff213e56b315f0c0dd41600edb"
+    },
+    {
+      "path": "adapters/m1-engineering-execution-v1/Cargo.lock",
+      "bytes": 51664,
+      "sha256": "ec06e964ed72dc9b97d9f5769bd867bf05398781b6e17a9f605137742d6e19ea"
+    },
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/finite_guarded_mlp_full2303_wire_v1.rs",
+      "bytes": 7526,
+      "sha256": "1d05e9ad662af455c9b77a1be2fa702ec88f3afd6ff2e7f045cef3b1d52e210b"
+    },
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/finite_guarded_mlp_long_wire_v2.rs",
+      "bytes": 27097,
+      "sha256": "b9bd7dde4d49e84599dd6a6b226118b0d3fc0f3bda936a7a4c46e69c70c26ad2"
+    },
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/guarded_mlp_long_sequence_v2.rs",
+      "bytes": 5231,
+      "sha256": "eba088151e6cd5aaa684be44652db93acb578f2a7272c95263d257f1e4de1e44"
+    },
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/finite_guarded_mlp_full2303_scoped_v1.rs",
+      "bytes": 7495,
+      "sha256": "2ed3963b5d502a943eceba2b5ec8a4a27f730e7a15a4511c581c6b0434aca35e"
+    },
+    {
+      "path": "adapters/m1-engineering-execution-v1/src/tp_finite_client/long/full2303_scoped.rs",
+      "bytes": 2993,
+      "sha256": "33a06987760c12d1f9c938451b1df8862cf40142311cbf33ec990564b4d3bb91"
+    },
+    {
+      "path": "adapters/m1-engineering-execution-v1/src/tp_finite_client/long/readiness.rs",
+      "bytes": 28376,
+      "sha256": "fef3b7cab3a3f6c4685b3d6fe68914f2542e4dbdd86b078b275ba4f6d1a45cc6"
+    },
+    {
+      "path": "adapters/m1-engineering-execution-v1/src/tp_finite_client/long/readiness_host_timing.rs",
+      "bytes": 20663,
+      "sha256": "4072c91136647534a3dfeb0f0eed7b25f9510029f5e739163c35764b70cce7fb"
+    }
+  ],
+  "new_tests": {
+    "parent_library": [
+      "full2303_bank_scoped_census_parent_entry_preserves_ordinary_signature_and_closed_opt_in",
+      "full2303_bank_scoped_census_parent_publication_requires_original_policy_and_healthy_own_history",
+      "full2303_bank_scoped_census_parent_rechecks_original_policy_file_and_own_256_outputs",
+      "full2303_bank_scoped_census_parent_refuses_missing_duplicate_malformed_and_oversized_policy",
+      "full2303_bank_scoped_census_parent_refuses_rehashed_extent_counter_and_authority_drift",
+      "full2303_bank_scoped_census_parent_refuses_valid_totals_with_invalid_census_residue",
+      "full_bank_census_policy_checks_all_window_counts_and_checked_arithmetic_overflow",
+      "full_bank_census_policy_compact_closed_record_and_exact_own_history_roundtrip",
+      "full_bank_census_policy_compact_record_retains_all_own_history_without_vector",
+      "full_bank_census_policy_refuses_bank_extent_census_owner_and_subset_drift",
+      "full_bank_census_policy_refuses_every_policy_and_authority_drift",
+      "full_bank_census_policy_refuses_scope_identity_extent_and_transcript_drift",
+      "full_bank_census_policy_requires_canonical_single_record_and_refuses_write_flush_failures"
+    ],
+    "parent_direct_library": [
+      "full2303_bank_scoped_census_parent_entry_preserves_ordinary_signature_and_closed_opt_in",
+      "full2303_bank_scoped_census_parent_publication_requires_original_policy_and_healthy_own_history",
+      "full2303_bank_scoped_census_parent_rechecks_original_policy_file_and_own_256_outputs",
+      "full2303_bank_scoped_census_parent_refuses_missing_duplicate_malformed_and_oversized_policy",
+      "full2303_bank_scoped_census_parent_refuses_rehashed_extent_counter_and_authority_drift",
+      "full2303_bank_scoped_census_parent_refuses_valid_totals_with_invalid_census_residue"
+    ],
+    "imported_policy_library": [
+      "full_bank_census_policy_checks_all_window_counts_and_checked_arithmetic_overflow",
+      "full_bank_census_policy_compact_closed_record_and_exact_own_history_roundtrip",
+      "full_bank_census_policy_compact_record_retains_all_own_history_without_vector",
+      "full_bank_census_policy_refuses_bank_extent_census_owner_and_subset_drift",
+      "full_bank_census_policy_refuses_every_policy_and_authority_drift",
+      "full_bank_census_policy_refuses_scope_identity_extent_and_transcript_drift",
+      "full_bank_census_policy_requires_canonical_single_record_and_refuses_write_flush_failures"
+    ],
+    "parent_full_binary": [
+      "full2303_bank_scoped_census_parent_cli_requires_one_distinct_selector"
+    ]
+  },
+  "qualified_new_tests": {
+    "parent-client": [
+      "tp_finite_client::long::full2303::tests::full2303_bank_scoped_census_parent_entry_preserves_ordinary_signature_and_closed_opt_in",
+      "tp_finite_client::long::full2303::tests::full2303_bank_scoped_census_parent_publication_requires_original_policy_and_healthy_own_history",
+      "tp_finite_client::long::full2303::tests::full2303_bank_scoped_census_parent_rechecks_original_policy_file_and_own_256_outputs",
+      "tp_finite_client::long::full2303::tests::full2303_bank_scoped_census_parent_refuses_missing_duplicate_malformed_and_oversized_policy",
+      "tp_finite_client::long::full2303::tests::full2303_bank_scoped_census_parent_refuses_rehashed_extent_counter_and_authority_drift",
+      "tp_finite_client::long::full2303::tests::full2303_bank_scoped_census_parent_refuses_valid_totals_with_invalid_census_residue"
+    ],
+    "full-bank-census-policy": [
+      "finite_guarded_mlp_full2303_bank_scoped_census_v1::tests::full_bank_census_policy_checks_all_window_counts_and_checked_arithmetic_overflow",
+      "finite_guarded_mlp_full2303_bank_scoped_census_v1::tests::full_bank_census_policy_compact_closed_record_and_exact_own_history_roundtrip",
+      "finite_guarded_mlp_full2303_bank_scoped_census_v1::tests::full_bank_census_policy_compact_record_retains_all_own_history_without_vector",
+      "finite_guarded_mlp_full2303_bank_scoped_census_v1::tests::full_bank_census_policy_refuses_bank_extent_census_owner_and_subset_drift",
+      "finite_guarded_mlp_full2303_bank_scoped_census_v1::tests::full_bank_census_policy_refuses_every_policy_and_authority_drift",
+      "finite_guarded_mlp_full2303_bank_scoped_census_v1::tests::full_bank_census_policy_refuses_scope_identity_extent_and_transcript_drift",
+      "finite_guarded_mlp_full2303_bank_scoped_census_v1::tests::full_bank_census_policy_requires_canonical_single_record_and_refuses_write_flush_failures"
+    ],
+    "full2303-bin": [
+      "tests::full2303_bank_scoped_census_parent_cli_requires_one_distinct_selector"
+    ]
+  },
+  "preserved_inline_tests": {
+    "adapters/m1-engineering-execution-v1/src/bin/ferric-qwen3-guarded-mlp-full2303-engineering.rs": [
+      "full2303_scoped_parent_cli_has_one_closed_explicit_selector",
+      "full2303_parent_cli_requires_the_distinct_exact_opt_in"
+    ],
+    "adapters/m1-engineering-execution-v1/src/lib.rs": [
+      "engine_admission_mapping_retains_exact_source_allocation_and_lineage",
+      "explicit_mfma_manifest_and_descriptor_rosters_reject_cross_strategy_inputs",
+      "current_canonical_manifest_schema_decodes_exactly",
+      "unknown_reordered_noncanonical_and_non_ascii_fields_fail_closed",
+      "every_authority_profile_and_replay_claim_is_fail_closed",
+      "identity_bounds_and_lowercase_digests_are_exact",
+      "cargo_vendor_digest_source_bounds_and_canonical_order_are_exact",
+      "missing_extra_duplicate_and_substituted_kernel_names_fail_closed",
+      "provider_kinds_duplicates_order_and_total_are_exact",
+      "artifact_digest_mismatch_precedes_structural_inspection",
+      "matching_identity_non_hsaco_reaches_finalized_inspection_rejection",
+      "exact_directory_roster_and_no_follow_policy_reject_substitution",
+      "non_regular_files_and_size_boundaries_fail_closed",
+      "post_read_snapshot_rejects_deterministic_file_mutation",
+      "content_directory_identity_binds_manifest_and_hsaco",
+      "public_surface_requires_explicit_adapter_owned_execution_consent",
+      "descriptor_roster_accepts_compiler_id_order_and_rejects_hostile_coordinates",
+      "configured_real_engineering_observation_admits_lexical_catalog_only",
+      "tp_profile_does_not_broaden_original_aggregate_admission"
+    ],
+    "adapters/m1-engineering-execution-v1/src/tp_finite_client/long/full2303.rs": [],
+    "adapters/m1-engineering-execution-v1/src/tp_finite_client/long/full2303_bank_scoped_census.rs": [],
+    "adapters/m1-engineering-execution-v1/src/tp_finite_client/long/full2303_evidence.rs": [
+      "full2303_scoped_publication_refuses_expired_post_write_deadline"
+    ],
+    "adapters/m1-engineering-execution-v1/src/tp_finite_client/long/full2303_tests.rs": [
+      "full2303_parent_request_is_closed_and_keeps_authentic_full_prompt",
+      "full2303_parent_schedule_uses_prompt_then_actual_outputs_without_early_eos",
+      "full2303_parent_page_rows_commit_all_2303_with_exact_144_page_mapping",
+      "full2303_parent_retention_reconstructs_all_frames_tokens_and_original_captures",
+      "full2303_parent_retention_refuses_partial_reordered_and_changed_captures",
+      "full2303_parent_compact_bound_does_not_require_all_logit_payloads",
+      "full2303_scoped_parent_entry_preserves_ordinary_signature_and_closed_opt_in",
+      "full2303_scoped_parent_rechecks_original_policy_file_and_own_256_outputs",
+      "full2303_scoped_parent_refuses_missing_duplicate_malformed_and_oversized_policy",
+      "full2303_scoped_parent_refuses_rehashed_extent_counter_and_authority_drift",
+      "full2303_scoped_parent_publication_requires_original_policy_and_healthy_own_history"
+    ]
+  },
+  "conditional_census": {
+    "selected_passes": 549,
+    "library_inventory": 1014,
+    "new_library_tests": 13,
+    "new_binary_tests": 1,
+    "phase_scope_counts": null
+  },
+  "patch": {
+    "path": "integration.patch",
+    "bytes": 25833,
+    "sha256": "ce44f6f9a01ebfe093a8417cab02c15ad2cbb50e2f20bda230c0d562a5ffbdf4"
+  },
+  "readme": {
+    "path": "README.md",
+    "bytes": 6436,
+    "sha256": "d41dacccde36bfa00429353407b1a145e26157ba963d61efd3c7916e73083d80"
+  }
+}

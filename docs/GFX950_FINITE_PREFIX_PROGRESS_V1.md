@@ -35,9 +35,11 @@ The separate [Full2303 bank/census worker](../qualification/guarded-mlp-full2303
 now passes all 26 MI350 CPU phases in 172.933 seconds: 1,165 runtime passes
 and 799 worker passes, with the eight/four existing ignores unchanged.
 Its fifteen actual tested worker files are integrated with complete source
-postchecks. Parent qualification and strict full-workload data admission
-remain pending; no native Full2303 execution or one-hour launch feasibility
-is claimed by these synthetic full-schedule tests.
+postchecks. The parent also passes all 68 phases and 549 selected tests in
+415.377 seconds; its six tested files are integrated with a complete
+1,284-body source postcheck and all 224 workers preserved. Strict full-workload
+data admission remains pending; no native Full2303 execution or one-hour
+launch feasibility is claimed by these synthetic full-schedule tests.
 
 The preceding
 [bank-scoped rearm path](../qualification/guarded-mlp-scoped-bank-rearm-v1/README.md)

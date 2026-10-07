@@ -1,0 +1,21 @@
+
+running 16 tests
+test projection_residual_decode_host_observation_v1::tests::projection_host_report_bounds_run_and_serialization_by_distinct_intervals ... ok
+test projection_residual_decode_host_observation_v1::tests::projection_host_report_rejects_trajectory_or_chain_mutation ... ok
+test projection_residual_decode_host_observation_v1::tests::projection_host_report_rejects_unknown_fields_and_missing_serialization ... ok
+test projection_residual_decode_host_observation_v1::tests::projection_host_report_requires_ar_and_selected_image_profile ... ok
+test projection_residual_decode_host_observation_v1::tests::projection_host_report_requires_close_roster_and_false_claims ... ok
+test projection_residual_decode_host_observation_v1::tests::projection_host_report_retains_full_currentness_and_rank_epoch_policy ... ok
+test projection_residual_decode_host_observation_v1::tests::projection_host_report_roundtrips_and_rejects_legacy_schema ... ok
+test projection_residual_decode_host_observation_v1::tests::projection_host_report_rejects_counter_delta_drift ... ok
+test projection_residual_decode_host_observation_v1::tests::projection_shared_report_configuration_time_is_outside_snapshot_intervals ... ok
+test projection_residual_decode_host_observation_v1::tests::projection_shared_report_keeps_close_extent_and_non_authority_checks ... ok
+test projection_residual_decode_host_observation_v1::tests::projection_shared_report_preserves_zero_baseline_and_checked_deltas ... ok
+test projection_residual_decode_host_observation_v1::tests::projection_shared_report_checks_every_snapshot_rank_and_full_policy ... ok
+test projection_residual_decode_host_observation_v1::tests::projection_shared_report_requires_fixed_policy_and_both_schemas ... ok
+test projection_residual_decode_host_observation_v1::tests::projection_shared_report_rejects_unknown_fields_and_non_u64_configuration ... ok
+test projection_residual_decode_host_observation_v1::tests::projection_shared_report_roundtrips_without_relaxing_v1 ... ok
+test projection_residual_decode_host_observation_v1::tests::projection_shared_report_retains_own_recurrence_projection_and_transcript ... ok
+
+test result: ok. 16 passed; 0 failed; 0 ignored; 0 measured; 985 filtered out; finished in 0.94s
+
