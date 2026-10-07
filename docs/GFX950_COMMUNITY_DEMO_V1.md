@@ -6,6 +6,14 @@ service, accepted full-model decode or a 700 tokens/s result. The measured
 workload is 40 authentic prompt forwards through all 36 layers, with **zero
 generated tokens**.
 
+The next measurement checkpoint is
+[optional currentness-duration instrumentation](../qualification/guarded-mlp-currentness-duration-v1/README.md).
+Its runtime and worker sources are integrated after separate MI350 CPU
+qualifications with the feature off and on, and its strict checker passes
+126 synthetic tests. Parent qualification and the instrumented GPU run are
+still pending. The demo below therefore continues to use only the previously
+retained native measurements; the new instrumentation has no measured result yet.
+
 ## Show Now
 
 Open the published [Census ablation report](../qualification/guarded-mlp-scoped-capacity-census-v1/matched-timing-report-v1/README.md).

@@ -6,7 +6,18 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Latest implementation: the [Full2303 scoped-tail worker](../qualification/guarded-mlp-full2303-scoped-tail-v1/README.md)
+Latest implementation: optional
+[currentness-duration instrumentation](../qualification/guarded-mlp-currentness-duration-v1/README.md)
+passes separate MI350 CPU builds: 1,180 runtime / 838 worker tests with the
+feature off, and 1,192 runtime / 853 worker tests with it enabled. Each build
+passed all 27 phases; existing ignores are unchanged. All 22 actual tested
+runtime/worker files are integrated with a complete 827-runtime / 1,299-Ferric
+source postcheck. The strict independent checker passes 126 synthetic tests.
+Both initial failed attempts remain retained. Parent qualification and an
+instrumented native run are pending; no duration breakdown, numerical
+acceptance or new inference performance result is claimed.
+
+The preceding [Full2303 scoped-tail worker](../qualification/guarded-mlp-full2303-scoped-tail-v1/README.md)
 passes all 27 MI350 CPU phases in 186.074 seconds: 1,180 runtime and 838 worker
 passes, with eight/four existing ignores unchanged. Its twelve actual tested
 Rust postimages are integrated after independent original-data review and a

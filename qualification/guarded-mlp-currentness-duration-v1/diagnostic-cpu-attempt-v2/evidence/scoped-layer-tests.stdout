@@ -1,0 +1,19 @@
+
+running 14 tests
+test engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::scoped_layer::census::tests::scoped_census_closed_engine_preserves_all_four_rank_ordered_fences ... ok
+test engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::scoped_layer::census::tests::scoped_census_complete_snapshot_drift_refuses_before_exit_even_with_equal_lengths ... ok
+test engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::scoped_layer::census::tests::scoped_census_every_rank_queue_and_commit_boundary_failure_is_terminal ... ok
+test engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::scoped_layer::census::tests::scoped_census_every_rank_queue_and_commit_boundary_unwind_is_terminal ... ok
+test engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::scoped_layer::census::tests::scoped_census_ledger_assertion_is_reject_only_and_owner_order_is_exact ... ok
+test engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::scoped_layer::census::tests::scoped_census_malformed_observed_checkpoint_counts_never_reach_commit ... ok
+test engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::scoped_layer::census::tests::scoped_census_old_closed_backend_keeps_its_original_trace_and_zero_subset ... ok
+test engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::scoped_layer::tests::scoped_closed_call_keeps_original_paired_timeout_cap ... ok
+test engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::scoped_layer::tests::scoped_closed_layer_every_boundary_failure_quarantines_before_publication ... ok
+test engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::scoped_layer::tests::scoped_closed_layer_every_boundary_unwind_quarantines_before_publication ... ok
+test engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::scoped_layer::tests::scoped_closed_layer_uses_one_native_and_fake_ordering_engine ... ok
+test engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::scoped_layer::tests::scoped_hidden_validation_requires_exact_finite_rank_pair ... ok
+test engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::scoped_layer::tests::scoped_public_counts_are_data_only_and_preserve_rank_call_totals ... ok
+test engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::scoped_layer::tests::scoped_warm_admission_requires_ready_consumed_reuse_without_completed_proof ... ok
+
+test result: ok. 14 passed; 0 failed; 0 ignored; 0 measured; 1163 filtered out; finished in 0.00s
+

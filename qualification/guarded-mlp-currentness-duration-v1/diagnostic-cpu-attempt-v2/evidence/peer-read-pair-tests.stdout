@@ -1,0 +1,12 @@
+
+running 7 tests
+test engineering_gfx950::peer::read_pair_v1::tests::pair_read_each_boundary_failure_quarantines_without_data ... ok
+test engineering_gfx950::peer::read_pair_v1::tests::pair_read_headers_reject_foreign_rank_alias_extent_and_caps ... ok
+test engineering_gfx950::peer::read_pair_v1::tests::pair_read_native_invalid_roster_quarantines_and_ordinary_reads_stay_closed ... ok
+test engineering_gfx950::peer::read_pair_v1::tests::pair_read_orders_each_fresh_fence_before_publication ... ok
+test engineering_gfx950::peer::read_pair_v1::tests::pair_read_public_signature_returns_bytes_not_a_currentness_capability ... ok
+test engineering_gfx950::peer::read_pair_v1::tests::pair_read_second_bad_header_precedes_any_queue_or_copy ... ok
+test engineering_gfx950::peer::read_pair_v1::tests::pair_read_unwind_quarantines_after_partial_copy ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 1170 filtered out; finished in 0.00s
+

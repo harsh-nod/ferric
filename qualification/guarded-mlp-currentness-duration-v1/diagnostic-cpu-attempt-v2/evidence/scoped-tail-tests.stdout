@@ -1,0 +1,20 @@
+
+running 15 tests
+test engineering_gfx950::peer::scoped_tail_v1::tests::scoped_tail_argmax_plan_equals_pinned_original_worker_bytes_and_roles ... ok
+test engineering_gfx950::peer::scoped_tail_v1::tests::scoped_tail_closed_engine_preserves_serial_retirement_and_original_read_order ... ok
+test engineering_gfx950::peer::scoped_tail_v1::tests::scoped_tail_closed_route_counts_zero_and_extra_periodic_checks_not_raw_polls ... ok
+test engineering_gfx950::peer::scoped_tail_v1::tests::scoped_tail_counts_close_every_original_boundary_and_checked_poll_addition ... ok
+test engineering_gfx950::peer::scoped_tail_v1::tests::scoped_tail_each_fallible_boundary_quarantines_without_output_or_later_dispatch ... ok
+test engineering_gfx950::peer::scoped_tail_v1::tests::scoped_tail_each_unwind_boundary_quarantines_including_after_full_exit ... ok
+test engineering_gfx950::peer::scoped_tail_v1::tests::scoped_tail_finalnorm_plan_equals_pinned_original_worker_bytes_and_roles ... ok
+test engineering_gfx950::peer::scoped_tail_v1::tests::scoped_tail_head_plan_equals_pinned_original_worker_bytes_and_roles ... ok
+test engineering_gfx950::peer::scoped_tail_v1::tests::scoped_tail_keeps_per_dispatch_cap_and_uses_inherited_absolute_deadline ... ok
+test engineering_gfx950::peer::scoped_tail_v1::tests::scoped_tail_kernels_refuse_foreign_rank_alias_and_permuted_roles ... ok
+test engineering_gfx950::peer::scoped_tail_v1::tests::scoped_tail_production_routes_keep_the_audited_group_and_rank_boundaries ... ok
+test engineering_gfx950::peer::scoped_tail_v1::tests::scoped_tail_public_signature_has_fixed_inputs_and_no_callback_or_borrowed_result ... ok
+test engineering_gfx950::peer::scoped_tail_v1::tests::scoped_tail_return_preserves_original_bytes_without_replacing_worker_argmax ... ok
+test engineering_gfx950::peer::scoped_tail_v1::tests::scoped_tail_return_refuses_wrong_extents_before_guard_disarm ... ok
+test engineering_gfx950::peer::scoped_tail_v1::tests::scoped_tail_roots_refuse_each_group_rank_extent_and_alias_substitution ... ok
+
+test result: ok. 15 passed; 0 failed; 0 ignored; 0 measured; 1162 filtered out; finished in 0.00s
+

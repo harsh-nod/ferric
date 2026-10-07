@@ -1,0 +1,28 @@
+{
+  "archive": {
+    "bytes": 647945,
+    "sha256": "80db87ac1d3fb897eb45ca9d9bb3c43fab6ace6b3ad1b451c4699aa209868213"
+  },
+  "canonical_changed": false,
+  "controller": {
+    "bytes": 20665,
+    "sha256": "a23e217f4f79e145802d40e04a0b19259197ba7fa10b695399d99575fe5e3677"
+  },
+  "copied_unchanged_files": 1043,
+  "helpers": 4,
+  "input": {
+    "bytes": 221580,
+    "sha256": "1e9e450a2aa3502ddd6bab7918e63a8e2cf549012381102a93b08504896b037e"
+  },
+  "lockfiles_changed": false,
+  "overlay_files": 22,
+  "passed": true,
+  "project_execution": false,
+  "qualification_mode": "default",
+  "root": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-default-cpu-v228-v2",
+  "runtime_files": 829,
+  "schema": "ferric-guarded-mlp-currentness-duration-stage-v1",
+  "shared_cache_changed": false,
+  "source_files": 1069,
+  "worker_files": 236
+}

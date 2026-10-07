@@ -1,0 +1,21 @@
+
+running 1 test
+test crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_facade_v1.rs - engineering_gfx950::peer::combined_mlp_state_v1::paired::facade::Gfx950EngineeringPeerGroupV1::bind_guarded_mlp_pair_exact_own_residual_reusable_unchecked_v1 (line 205) - compile ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 9 tests
+test crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_facade_v1.rs - engineering_gfx950::peer::combined_mlp_state_v1::paired::facade::Gfx950EngineeringPeerRetainedGuardedMlpPairV1 (line 43) - compile fail ... ok
+test crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_facade_v1.rs - engineering_gfx950::peer::combined_mlp_state_v1::paired::facade::Gfx950EngineeringPeerRetainedGuardedMlpPairV1 (line 47) - compile fail ... ok
+test crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_facade_v1.rs - engineering_gfx950::peer::combined_mlp_state_v1::paired::facade::Gfx950EngineeringPeerRetainedGuardedMlpPairV1 (line 52) - compile fail ... ok
+test crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_facade_v1.rs - engineering_gfx950::peer::combined_mlp_state_v1::paired::facade::Gfx950EngineeringPeerRetainedGuardedMlpPairV1 (line 57) - compile fail ... ok
+test crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_facade_v1.rs - engineering_gfx950::peer::combined_mlp_state_v1::paired::facade::Gfx950EngineeringPeerRetainedGuardedMlpPairV1 (line 65) - compile fail ... ok
+test crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_facade_v1.rs - engineering_gfx950::peer::combined_mlp_state_v1::paired::facade::Gfx950EngineeringPeerUnboundGuardedMlpPairV1 (line 12) - compile fail ... ok
+test crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_facade_v1.rs - engineering_gfx950::peer::combined_mlp_state_v1::paired::facade::Gfx950EngineeringPeerUnboundGuardedMlpPairV1 (line 17) - compile fail ... ok
+test crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_facade_v1.rs - engineering_gfx950::peer::combined_mlp_state_v1::paired::facade::Gfx950EngineeringPeerUnboundGuardedMlpPairV1 (line 26) - compile fail ... ok
+test crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_facade_v1.rs - engineering_gfx950::peer::combined_mlp_state_v1::paired::facade::Gfx950EngineeringPeerUnboundGuardedMlpPairV1 (line 8) - compile fail ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 47 filtered out; finished in 0.21s
+
+all doctests ran in 0.31s; merged doctests compilation took 0.09s

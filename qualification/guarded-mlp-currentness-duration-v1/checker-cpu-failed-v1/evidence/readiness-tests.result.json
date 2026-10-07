@@ -1,0 +1,44 @@
+{
+  "adopted_reaped": [],
+  "argv": [
+    "/usr/bin/prlimit",
+    "--as=536870912",
+    "--cpu=120",
+    "--fsize=16777216",
+    "--core=0",
+    "--",
+    "/usr/bin/python3.12",
+    "-I",
+    "-B",
+    "-c",
+    "import sys,unittest;sys.path.insert(0,'/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-tail-currentness-duration-checker-cpu-v228-v1');suite=unittest.TestSuite(unittest.defaultTestLoader.loadTestsFromName(name) for name in (\"test_readiness\",\"test_shared\",\"test_timing\",\"test_matched\",\"test_scoped\",\"test_scoped_pair\",\"test_bank_scoped\",\"test_census\",\"test_tail\",\"test_duration\"));result=unittest.TextTestRunner(verbosity=2).run(suite);sys.exit(not result.wasSuccessful())"
+  ],
+  "command": {
+    "bytes": 1335,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-tail-currentness-duration-checker-cpu-v228-v1/evidence/readiness-tests.command.json",
+    "sha256": "be82b3fe4bcf8f32df0e939e63e254ef5becdefff6c281ea1d05aca9db56e9e1"
+  },
+  "elapsed_ns": 71653747957,
+  "exception": null,
+  "exit_code": 1,
+  "forced_cleanup": false,
+  "label": "readiness-tests",
+  "natural_exit": true,
+  "observed_signals": [],
+  "pgid": 2940033,
+  "pid": 2940033,
+  "process_group_absent": true,
+  "reaped": true,
+  "stderr": {
+    "bytes": 27294,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-tail-currentness-duration-checker-cpu-v228-v1/evidence/readiness-tests.stderr",
+    "sha256": "9cb3ecee943c86c931eff06792a6d47c2a3cb3ad7e2015000cbdcaceda4c17a7"
+  },
+  "stdout": {
+    "bytes": 0,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-tail-currentness-duration-checker-cpu-v228-v1/evidence/readiness-tests.stdout",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "storage_failure": null,
+  "timed_out": false
+}
