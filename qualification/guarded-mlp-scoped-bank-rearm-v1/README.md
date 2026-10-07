@@ -17,6 +17,7 @@ failed build is retained separately, as is the successful repaired attempt.
 - [Integration postcheck](integration-v1/postcheck.json).
 - [519-test host integration qualification](parent-cpu-attempt-v2/README.md).
 - [Parent integration postcheck](parent-integration-v1/postcheck.json).
+- [Nine-test report qualification](matched-timing-report-cpu-v1/README.md).
 
 Host integration passed all 67 phases, and its seven tested Rust files are
 integrated with a complete 1,273-body source postcheck. A same-binary scoped-layer
