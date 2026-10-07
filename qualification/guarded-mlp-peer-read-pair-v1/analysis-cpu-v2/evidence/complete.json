@@ -1,0 +1,48 @@
+{
+  "affinity": [
+    8,
+    9
+  ],
+  "controller": {
+    "bytes": 4716,
+    "sha256": "b4c75eb25d4124d018060d34b5bb050f3587d3da9abf22e05f3c47d252676775"
+  },
+  "elapsed_seconds": 0.5246645859442651,
+  "error": null,
+  "errors": 0,
+  "failures": 0,
+  "gpu_execution": false,
+  "host": "smci350-rck-g03-b19-03",
+  "numerical_acceptance": false,
+  "passed": true,
+  "performance_claim": false,
+  "python": "3.12.3 (main, Mar 23 2026, 19:04:32) [GCC 13.3.0]",
+  "schema": "ferric-peer-read-analysis-cpu-v2",
+  "sources_after": {
+    "analyze_hidden_reads.py": {
+      "bytes": 11498,
+      "sha256": "f9e3ee4f8072532b71ddf7172f4b7b90725b4d824b511a186d37d094ce17b8ca"
+    },
+    "test_hidden_reads.py": {
+      "bytes": 11308,
+      "sha256": "84a0440ad8f00baf15aaa638532b23fc5b076fb6eda10ca4bcbd27b4c09353a3"
+    }
+  },
+  "sources_before": {
+    "analyze_hidden_reads.py": {
+      "bytes": 11498,
+      "sha256": "f9e3ee4f8072532b71ddf7172f4b7b90725b4d824b511a186d37d094ce17b8ca"
+    },
+    "test_hidden_reads.py": {
+      "bytes": 11308,
+      "sha256": "84a0440ad8f00baf15aaa638532b23fc5b076fb6eda10ca4bcbd27b4c09353a3"
+    }
+  },
+  "stdout": {
+    "bytes": 1340,
+    "sha256": "8241f6bc041405e2ca97c76ba049ac2a6b496499996ba87bd711d6b142daf4c3"
+  },
+  "subprocesses_started": 0,
+  "synthetic_fixtures_only": true,
+  "tests_run": 8
+}

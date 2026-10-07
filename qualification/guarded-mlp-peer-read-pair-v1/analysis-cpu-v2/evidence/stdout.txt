@@ -1,0 +1,13 @@
+test_cli_authenticates_complete_four_run_capsule (test_hidden_reads.HiddenReadTests.test_cli_authenticates_complete_four_run_capsule) ... ok
+test_cli_rejects_corrupt_missing_or_symlinked_payload (test_hidden_reads.HiddenReadTests.test_cli_rejects_corrupt_missing_or_symlinked_payload) ... ok
+test_cli_rejects_manifest_pin_terminal_pin_order_and_chronology (test_hidden_reads.HiddenReadTests.test_cli_rejects_manifest_pin_terminal_pin_order_and_chronology) ... ok
+test_comparison_requires_same_inputs_histories_payloads_and_executables (test_hidden_reads.HiddenReadTests.test_comparison_requires_same_inputs_histories_payloads_and_executables) ... ok
+test_mode_counter_and_cleanup_drift_are_refused (test_hidden_reads.HiddenReadTests.test_mode_counter_and_cleanup_drift_are_refused) ... ok
+test_partial_reordered_or_nonpositive_comparison_is_refused (test_hidden_reads.HiddenReadTests.test_partial_reordered_or_nonpositive_comparison_is_refused) ... ok
+test_payload_corruption_or_missing_frame_is_refused (test_hidden_reads.HiddenReadTests.test_payload_corruption_or_missing_frame_is_refused) ... ok
+test_scoped_abba_analysis_has_no_end_to_end_claim (test_hidden_reads.HiddenReadTests.test_scoped_abba_analysis_has_no_end_to_end_claim) ... ok
+
+----------------------------------------------------------------------
+Ran 8 tests in 0.490s
+
+OK

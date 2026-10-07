@@ -1,9 +1,10 @@
 # Paired Hidden-State Reads
 
-The narrow two-rank runtime read API has passed CPU qualification on MI350.
-It is integrated in fe2o3 commit `ee63881af1`. The Ferric opt-in caller is a
-separate source proposal and is not yet qualified or integrated. There is no
-new native performance result here.
+The narrow two-rank runtime read API and its opt-in Ferric worker caller have
+passed CPU qualification on MI350. The API is integrated in fe2o3 commit
+`ee63881af1`; the tested worker postimages are integrated here. The separate
+parent selector and native comparison remain pending. There is no new native
+performance result here.
 
 ## Change
 
@@ -50,10 +51,33 @@ match canonical fe2o3. They are not substituted into the canonical workspace.
 The terminal is 2,198,619 bytes, SHA-256
 `61f255e100b486418723dc51d36dc400a66945c9412c04f8e8024eb93065014d`.
 
+## Worker Caller
+
+The [worker receipt](worker-cpu-v2/evidence/complete.json) records nine naturally
+completed phases, 621 passing tests, four unchanged ignored native tests, and
+625 inventoried names. Six new tests cover the explicit route, report schema,
+paired hidden-state validation, ordinary read order, and healthy Close gate.
+All source, cache, dependency and owned-process postchecks passed. Four Cargo
+products were built and pinned. The runtime suite was not rerun in this worker
+qualification; it uses the exact runtime sources qualified above.
+
+The opt-in `--engineering-native-guarded-mlp-host-paired-read-v1` route uses fresh
+AR4 arenas with shared-full currentness and rejects teacher-forced or reusable
+arena modes before setup. The ordinary route is unchanged. Both paths require
+equal, complete, finite BF16 hidden outputs from the two ranks.
+
+The [retention map](worker-cpu-v2/retention.json) covers 71 original bodies,
+including all 50 raw files, the nine tested worker postimages, lineage and
+staging receipts. The terminal SHA-256 is
+`1078bf7fc8a1359d8144f786dd32e270a5a736ea995e3f52b97d7e905581d863`;
+the worker executable is 5,946,240 bytes with SHA-256
+`4bbf99460ad3599248fabcbbc889139269a352e5801d434ba76d5f60b17bb8b3`.
+Its 72.66-second qualification wall time is not model throughput.
+
 ## Measurement Gate
 
-The [data-only analyzer](analysis-cpu-v1/analyze_hidden_reads.py) and its
-[five synthetic tests](analysis-cpu-v1/evidence/complete.json) ran on MI350.
+The [data-only analyzer](analysis-cpu-v2/analyze_hidden_reads.py) and its
+[eight synthetic tests](analysis-cpu-v2/evidence/complete.json) ran on MI350.
 It requires complete payload equality, identical model inputs and executables,
 four independent sessions, and an authenticated serial control/paired/paired/
 control run manifest. The expected per-layer read counters are four versus two
@@ -63,11 +87,13 @@ Both modes must still read all 8,192 bytes from each rank.
 The planned comparison uses fresh AR4 arenas and the same shared-full policy
 in both modes. Its primary measurement is the outer hidden-read wall interval.
 The runtime's nested `read_ns` scope changes, so comparing that counter alone
-would overstate the benefit. The five current tests cover parsed-case analysis,
-not command-line manifest admission; that additional gate remains open.
+would overstate the benefit. The original five tests cover parsed-case analysis.
+Three additional tests exercise complete command-line manifest admission and
+reject incorrect pins, missing/reordered/overlapping runs, and corrupted,
+missing, or symlinked payloads. All eight passed without GPU execution.
 
-Next: qualify the separate Ferric worker and parent selectors, test manifest
-admission, execute the owned serial comparison, and retain exact outputs and
+Next: qualify the separate parent selector, execute the owned serial
+comparison, and retain exact outputs and
 cleanup evidence. A paired-read reduction would not establish sustained
 2,048/256 decoding, GPU overlap, full-model numerical acceptance, or 700 tok/s.
 All issue #42 milestones remain open.
