@@ -38,8 +38,11 @@ equivalent to full discovery at every internal checkpoint.
 
 ## Remaining Gates
 
-The composed parent and strict data-admission tests are separate qualification
-steps. Native launch additionally needs a feasible bounded execution budget
+The [strict data-admission suite](../guarded-mlp-full2303-v1/scoped-warm-admission-cpu-v1/README.md)
+passed all 34 synthetic tests on MI350, preserving the 25 earlier cases and
+adding nine scoped-policy cases. The composed parent is a separate qualification
+step; a scoped comparison adapter is still required. Native launch additionally
+needs a feasible bounded execution budget
 and actual larger-context coverage. Independent 256-generated-ID/decoded-byte
 agreement, sustained BF16 target-only 2,048/256 decoding, 700 tokens/s and all
 issue #42 milestones remain open.
