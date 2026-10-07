@@ -1,0 +1,202 @@
+{
+  "base": {
+    "qualified_shared_worker_complete": {
+      "bytes": 1649375,
+      "sha256": "0e7f73d69fd2d3efef901f62ee90fac54cfdddbae60661314d222f25aa2ae82a"
+    },
+    "qualified_shared_worker_sources": {
+      "bytes": 415508,
+      "sha256": "f898efd3843b2bb01625124514c9d5f437d7c3bbac5f5f61ec789bb455f04ad4"
+    },
+    "runtime_source_count": 807
+  },
+  "currentness_policy_changed": false,
+  "default_fresh_arena_policy_changed": false,
+  "expected_doctests": {
+    "inherited_compile_fail": 9,
+    "new_no_run": 1,
+    "total": 10
+  },
+  "expected_runtime_library_and_integration": {
+    "ignored": 8,
+    "inventory": 1109,
+    "passed": 1101
+  },
+  "ferric_long_wire_draft_included": false,
+  "files": [
+    {
+      "after": {
+        "bytes": 20897,
+        "sha256": "2d2e856f93471207b480aa34d7fcf33602200d8126cea999bd5743a13f04d9da"
+      },
+      "before": {
+        "bytes": 20655,
+        "sha256": "f673fff6de704f575eb4f9fc2727d553efbbad55dfcf0e68fa46f339de22c26e"
+      },
+      "path": "crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_arena_v1.rs"
+    },
+    {
+      "after": {
+        "bytes": 12726,
+        "sha256": "d1f03437a308a8a2667b042f9bbf64b26ce352ea74a5b77e8cf4100311f8b844"
+      },
+      "before": {
+        "bytes": 10551,
+        "sha256": "549dbb7559b04074d6355b3d37903b400dfbbe04c3db8c718d01b78e287166c2"
+      },
+      "path": "crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_facade_v1.rs"
+    },
+    {
+      "after": {
+        "bytes": 15592,
+        "sha256": "d58eb67efd99706f1d7791097e0b96a4729322e84d3a65fc4c56ca11f4cd144c"
+      },
+      "before": {
+        "bytes": 15340,
+        "sha256": "d15239d4d1b57517e9a227967a38f58534dd933c76699bb37d426e7bd69d6199"
+      },
+      "path": "crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_mixed_bank_v1.rs"
+    },
+    {
+      "after": {
+        "bytes": 21293,
+        "sha256": "7cae8ab448a3d913ad12927287a0a719bffd19395fc37f47937a04ae402b9484"
+      },
+      "before": {
+        "bytes": 20404,
+        "sha256": "af2b80b65e2c610e053b5fb9173d3a2d21030072e73952f68d09179902e4058d"
+      },
+      "path": "crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_mixed_bank_v1_tests.rs"
+    },
+    {
+      "after": {
+        "bytes": 27319,
+        "sha256": "d62863003492e2c794009d127edd1b8b4cdb6af9896a3b00917cec04fdb669c8"
+      },
+      "before": {
+        "bytes": 24957,
+        "sha256": "ca8191a82d7c70f653f80c5bb7743aa5366c2f54c45066581b50f3dd5049defc"
+      },
+      "path": "crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_retained_v1.rs"
+    },
+    {
+      "after": {
+        "bytes": 22289,
+        "sha256": "93d193eba08c4141ed409c90f92eebcd1ce33df56e2ca7347d7baed4c4c0de69"
+      },
+      "before": {
+        "bytes": 19338,
+        "sha256": "afec0abbf4531e1383ce8de60cf9eeefb365ca7cac04e7a2e55ec1a57b4f9e48"
+      },
+      "path": "crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_retained_v1_tests.rs"
+    },
+    {
+      "after": {
+        "bytes": 4814,
+        "sha256": "f25a28a929ff464531885abafc11ae8fbeb621b869927fb77564feddad7a806d"
+      },
+      "before": {
+        "bytes": 4689,
+        "sha256": "9bd3821fe1f69b93e617a12630d7112047d537c0a6db3aea2ca8c7dea23a1fb1"
+      },
+      "path": "crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_retired_v1.rs"
+    },
+    {
+      "after": {
+        "bytes": 6082,
+        "sha256": "94b794259f6a9940b2050c7a153cec0683ccbf28c48a2d2488b3a3388fd79417"
+      },
+      "before": null,
+      "path": "crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_reuse_v1.rs"
+    },
+    {
+      "after": {
+        "bytes": 7966,
+        "sha256": "c9e09795da105616fb93ffc7316deb832ebee3e5a71d0d876584b7bb936b174c"
+      },
+      "before": null,
+      "path": "crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_reuse_v1_tests.rs"
+    },
+    {
+      "after": {
+        "bytes": 9179,
+        "sha256": "a103c4fd3660d53d87d1c1fd54785bbfb82f45ea6c4003aa9962f7df6a44ba63"
+      },
+      "before": {
+        "bytes": 9147,
+        "sha256": "7ba0a2b29f8e3155ad69c192bf90a5e641ea9a82bd27d5e99893142fd2cb76fd"
+      },
+      "path": "crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_session_v1.rs"
+    },
+    {
+      "after": {
+        "bytes": 13231,
+        "sha256": "c6f724e0b8bf8e46e075a043de5c162e30a9c6e6d0276d0351f4b48abcc1db8e"
+      },
+      "before": {
+        "bytes": 12995,
+        "sha256": "7f87a0509472250cfdb050f793dedaff3181074e484704cb4cc225c4fb35264d"
+      },
+      "path": "crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_v1.rs"
+    },
+    {
+      "after": {
+        "bytes": 81388,
+        "sha256": "2b0d667f5a8b879b4c8d2f47ee326e2731853309f6a406b87003e76178d7ce0b"
+      },
+      "before": {
+        "bytes": 81271,
+        "sha256": "e4adf9a38df31ec1cce6e7be6eb998a0655fc5b85e3754ac860db16ef836d4f4"
+      },
+      "path": "crates/fe2o3-kfd/src/memory_linux.rs"
+    },
+    {
+      "after": {
+        "bytes": 1967,
+        "sha256": "8fec146ae5f0d709317ba70323f5032e0cc707cff5f66d42f5b453f350c82686"
+      },
+      "before": null,
+      "path": "crates/fe2o3-kfd/src/memory_linux_paired_arena_reuse_v1.rs"
+    },
+    {
+      "after": {
+        "bytes": 3891,
+        "sha256": "c0786033eba93b2ea8b400d531f7ea6a0fd44cf8e5a28702898bdf42e0d3bce6"
+      },
+      "before": null,
+      "path": "crates/fe2o3-kfd/src/memory_linux_paired_arena_reuse_v1_tests.rs"
+    }
+  ],
+  "full_model_long_request_enabled": false,
+  "gpu_qualified": false,
+  "inherited_ordinary_tests_removed": false,
+  "integration_patch": {
+    "bytes": 37793,
+    "sha256": "dfb7a543a76bec18746e044bbabaa484d326f4b4748fb944ded6670a6201d7c8"
+  },
+  "new_ordinary_tests": 13,
+  "opt_in_retired_arena_reuse_added": true,
+  "post_overlay_runtime_source_count": 811,
+  "public_runtime_limits_changed": false,
+  "read_credit_fabricated": false,
+  "runtime_compiled": false,
+  "runtime_cpu_qualified": false,
+  "schema": "ferric-guarded-mlp-paired-arena-reuse-source-v1",
+  "signal_page_ordinary_mutable_access_added": false,
+  "test_names": [
+    "engineering_gfx950::peer::combined_mlp_state_v1::paired::arena::retired::reuse::tests::paired_reuse_checks_both_batches_before_writes_and_resets",
+    "engineering_gfx950::peer::combined_mlp_state_v1::paired::arena::retired::reuse::tests::paired_reuse_each_partial_failure_quarantines_without_retry_or_fallback",
+    "engineering_gfx950::peer::combined_mlp_state_v1::paired::arena::retired::reuse::tests::paired_reuse_rejects_each_pending_peer_signal_before_any_mutation",
+    "engineering_gfx950::peer::combined_mlp_state_v1::paired::arena::retired::reuse::tests::paired_reuse_rejects_zero_stale_skipped_and_exhausted_generation",
+    "engineering_gfx950::peer::combined_mlp_state_v1::paired::arena::retired::reuse::tests::paired_reuse_requires_real_consumption_and_unchanged_identity",
+    "engineering_gfx950::peer::combined_mlp_state_v1::paired::arena::retired::reuse::tests::paired_reuse_timeout_and_unwind_keep_terminal_quarantine",
+    "engineering_gfx950::peer::combined_mlp_state_v1::paired::arena::retired::reuse::tests::paired_reuse_transaction_stays_bounded_beyond_full_model_dispatch_count",
+    "engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::mixed_bank::tests::mixed_bank_reuse_custody_is_unavailable_until_all_36_pairs_pass",
+    "engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::tests::retained_arena_policy_preserves_fresh_default_and_requires_rearm_custody",
+    "engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::tests::retained_reusable_missing_proof_is_terminal_not_a_fresh_fallback",
+    "engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::tests::retained_reusable_public_bind_consumes_invalid_storage_without_allocating",
+    "memory_linux::paired_arena_reuse_v1::tests::paired_reuse_memory_refuses_extent_shape_and_mapping_before_any_write",
+    "memory_linux::paired_arena_reuse_v1::tests::paired_reuse_memory_writes_only_four_kernarg_ranges_and_keeps_atomics_live"
+  ],
+  "worker_source_changed": false
+}

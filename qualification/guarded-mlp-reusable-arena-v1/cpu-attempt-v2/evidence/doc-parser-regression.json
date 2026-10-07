@@ -1,0 +1,41 @@
+{
+  "cases": [
+    {
+      "name": "actual_two_sections",
+      "outcome": "ok"
+    },
+    {
+      "name": "historical_one_section",
+      "outcome": "ok"
+    },
+    {
+      "name": "missing_named_result",
+      "outcome": "ok"
+    },
+    {
+      "name": "duplicate_named_result",
+      "outcome": "ok"
+    },
+    {
+      "name": "wrong_section_subtotal",
+      "outcome": "ok"
+    },
+    {
+      "name": "failed_named_result",
+      "outcome": "ok"
+    },
+    {
+      "name": "duplicate_section_summary",
+      "outcome": "ok"
+    },
+    {
+      "name": "missing_final_summary",
+      "outcome": "ok"
+    }
+  ],
+  "failed": 0,
+  "gpu_execution": false,
+  "passed": 8,
+  "project_execution": false,
+  "source": "pinned actual failed-v1 and historical raw stdout"
+}

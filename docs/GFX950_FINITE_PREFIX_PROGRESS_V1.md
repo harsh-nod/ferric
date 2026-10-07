@@ -82,6 +82,18 @@ isolate input propagation from arithmetic differences, not a performance gain.
 All source/input postchecks and container retirement pass. Different
 PyTorch/Python/NumPy versions remain explicit; this is not full-model acceptance.
 
+The new [opt-in reusable-arena runtime](../qualification/guarded-mlp-reusable-arena-v1/README.md)
+passes all 21 MI350 CPU phases: 1,101 KFD tests with eight unchanged ignores,
+ten facade doctests, and 607 unchanged-worker tests with four unchanged ignores.
+Its 14 tested postimages are integrated in fe2o3 `00e49fd8b0`. Private consuming
+retirement proofs permit completed signal/kernarg arenas to be reused without
+raising allocation limits or changing the fresh default. The initial Rustdoc
+parser failure remains retained; eight parser regressions and a fresh full rerun
+pass. This removes the runtime implementation blocker behind the fresh path's
+forward-38 allocation limit, but native reuse and its expected 787/783 allocation
+plateau are not yet demonstrated. The opt-in worker route, full request and
+sustained performance remain separate gates.
+
 The [historical O-projection replay](../qualification/o-projection-exact-replay-v1/README.md)
 now completes on MI350 with 18 passing tests. All 8,192 captured FP32 partials
 match the pinned kernel's modeled accumulation order. The derived native BF16

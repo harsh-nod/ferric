@@ -1,0 +1,27 @@
+{
+  "archive": {
+    "bytes": 726448,
+    "sha256": "41378e7d72f22c41da2eeae3cde8ed7e62929073460e00b0e7bf7b9d94800085"
+  },
+  "canonical_changed": false,
+  "controller": {
+    "bytes": 14563,
+    "sha256": "5c1f8cb0b216d420a9e927df000aa9ead8257dc354d493bb5d353ffe114fec07"
+  },
+  "copied_unchanged_files": 981,
+  "helpers": 4,
+  "input": {
+    "bytes": 205607,
+    "sha256": "b3a8928dddd67317ff7b094c3d41fc535adb6bf3cfb51ed1c9ac102fd2272e04"
+  },
+  "lockfiles_changed": false,
+  "overlay_files": 14,
+  "passed": true,
+  "project_execution": false,
+  "root": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-reusable-arena-cpu-v228-v1",
+  "runtime_files": 811,
+  "schema": "ferric-guarded-mlp-reusable-arena-stage-v1",
+  "shared_cache_changed": false,
+  "source_files": 999,
+  "worker_files": 184
+}
