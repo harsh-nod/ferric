@@ -1,0 +1,383 @@
+[
+    {
+        "Id": "e1f8d6b9c3cec2e8ef9503d03dac5a844caa06d8e9e77a01995309c68d81f8ec",
+        "Created": "2026-10-07T08:04:47.101753596Z",
+        "Path": "/usr/bin/timeout",
+        "Args": [
+            "--signal=TERM",
+            "--kill-after=15s",
+            "900s",
+            "/usr/bin/python3",
+            "-I",
+            "-B",
+            "/source/run.py"
+        ],
+        "State": {
+            "Status": "created",
+            "Running": false,
+            "Paused": false,
+            "Restarting": false,
+            "OOMKilled": false,
+            "Dead": false,
+            "Pid": 0,
+            "ExitCode": 0,
+            "Error": "",
+            "StartedAt": "0001-01-01T00:00:00Z",
+            "FinishedAt": "0001-01-01T00:00:00Z"
+        },
+        "Image": "sha256:c5f9efa2623d9c8b2e483d2a139202e496baf5a04900a4f32907149f41a42dba",
+        "ResolvConfPath": "",
+        "HostnamePath": "",
+        "HostsPath": "",
+        "LogPath": "",
+        "Name": "/ferric-full2303-reference-v228-v1",
+        "RestartCount": 0,
+        "Driver": "overlay2",
+        "Platform": "linux",
+        "MountLabel": "",
+        "ProcessLabel": "",
+        "AppArmorProfile": "",
+        "ExecIDs": null,
+        "HostConfig": {
+            "Binds": null,
+            "ContainerIDFile": "",
+            "LogConfig": {
+                "Type": "none",
+                "Config": {}
+            },
+            "NetworkMode": "none",
+            "PortBindings": {},
+            "RestartPolicy": {
+                "Name": "no",
+                "MaximumRetryCount": 0
+            },
+            "AutoRemove": false,
+            "VolumeDriver": "",
+            "VolumesFrom": null,
+            "ConsoleSize": [
+                0,
+                0
+            ],
+            "CapAdd": null,
+            "CapDrop": [
+                "ALL"
+            ],
+            "CgroupnsMode": "private",
+            "Dns": null,
+            "DnsOptions": [],
+            "DnsSearch": [],
+            "ExtraHosts": null,
+            "GroupAdd": [
+                "993"
+            ],
+            "IpcMode": "private",
+            "Cgroup": "",
+            "Links": null,
+            "OomScoreAdj": 0,
+            "PidMode": "",
+            "Privileged": false,
+            "PublishAllPorts": false,
+            "ReadonlyRootfs": true,
+            "SecurityOpt": [
+                "no-new-privileges"
+            ],
+            "UTSMode": "",
+            "UsernsMode": "",
+            "ShmSize": 1073741824,
+            "Runtime": "runc",
+            "Isolation": "",
+            "CpuShares": 0,
+            "Memory": 68719476736,
+            "NanoCpus": 2000000000,
+            "CgroupParent": "",
+            "BlkioWeight": 0,
+            "BlkioWeightDevice": [],
+            "BlkioDeviceReadBps": [],
+            "BlkioDeviceWriteBps": [],
+            "BlkioDeviceReadIOps": [],
+            "BlkioDeviceWriteIOps": [],
+            "CpuPeriod": 0,
+            "CpuQuota": 0,
+            "CpuRealtimePeriod": 0,
+            "CpuRealtimeRuntime": 0,
+            "CpusetCpus": "8,9",
+            "CpusetMems": "",
+            "Devices": [
+                {
+                    "PathOnHost": "/dev/kfd",
+                    "PathInContainer": "/dev/kfd",
+                    "CgroupPermissions": "rwm"
+                },
+                {
+                    "PathOnHost": "/dev/dri/renderD128",
+                    "PathInContainer": "/dev/dri/renderD128",
+                    "CgroupPermissions": "rwm"
+                }
+            ],
+            "DeviceCgroupRules": null,
+            "DeviceRequests": null,
+            "MemoryReservation": 0,
+            "MemorySwap": 68719476736,
+            "MemorySwappiness": null,
+            "OomKillDisable": false,
+            "PidsLimit": 256,
+            "Ulimits": [
+                {
+                    "Name": "core",
+                    "Hard": 0,
+                    "Soft": 0
+                },
+                {
+                    "Name": "fsize",
+                    "Hard": 1073741824,
+                    "Soft": 1073741824
+                }
+            ],
+            "CpuCount": 0,
+            "CpuPercent": 0,
+            "IOMaximumIOps": 0,
+            "IOMaximumBandwidth": 0,
+            "Mounts": [
+                {
+                    "Type": "bind",
+                    "Source": "/home/harmenon/ferric-mi350-model-b968-c189-r1.kUjwIKs0/model/target",
+                    "Target": "/model",
+                    "ReadOnly": true
+                },
+                {
+                    "Type": "bind",
+                    "Source": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-full2303-reference-v228-v1/source",
+                    "Target": "/source",
+                    "ReadOnly": true
+                },
+                {
+                    "Type": "bind",
+                    "Source": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-full2303-reference-v228-v1/inputs",
+                    "Target": "/inputs",
+                    "ReadOnly": true
+                },
+                {
+                    "Type": "bind",
+                    "Source": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-matched-framework-env-v228-v2/packages",
+                    "Target": "/packages",
+                    "ReadOnly": true
+                },
+                {
+                    "Type": "bind",
+                    "Source": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-full2303-reference-v228-v1/output",
+                    "Target": "/output"
+                },
+                {
+                    "Type": "bind",
+                    "Source": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-full2303-reference-v228-v1/scratch",
+                    "Target": "/scratch"
+                },
+                {
+                    "Type": "bind",
+                    "Source": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-full2303-reference-v228-v1/scratch/tmp",
+                    "Target": "/tmp"
+                }
+            ],
+            "MaskedPaths": [
+                "/proc/acpi",
+                "/proc/asound",
+                "/proc/interrupts",
+                "/proc/kcore",
+                "/proc/keys",
+                "/proc/latency_stats",
+                "/proc/sched_debug",
+                "/proc/scsi",
+                "/proc/timer_list",
+                "/proc/timer_stats",
+                "/sys/devices/virtual/powercap",
+                "/sys/firmware"
+            ],
+            "ReadonlyPaths": [
+                "/proc/bus",
+                "/proc/fs",
+                "/proc/irq",
+                "/proc/sys",
+                "/proc/sysrq-trigger"
+            ]
+        },
+        "GraphDriver": {
+            "Data": {
+                "ID": "e1f8d6b9c3cec2e8ef9503d03dac5a844caa06d8e9e77a01995309c68d81f8ec",
+                "LowerDir": "/var/lib/docker/overlay2/38c97743a50bd1b3015bdd2f925bd42f466ab3989f8fd5e3636d13c44508df05-init/diff:/var/lib/docker/overlay2/e5b5ce084102ea64222fbcac766ab2424f99b036f3a9265b39f255ec68f2188d/diff:/var/lib/docker/overlay2/34f7a5d171bc81cf9244353c3612bf050f1e145b196946a54e7d3a808b5b2137/diff:/var/lib/docker/overlay2/7c5b9a04596bf04db9cfefccf83790bacf03e4128acf855af351983a26a78602/diff:/var/lib/docker/overlay2/658b377c79291663ecfa95ab906e3fc354bc2c1b2b9e06c4c6274faefde159e8/diff:/var/lib/docker/overlay2/44aa9c9e32ded1d93769741e6cae53267552f304f1743468679e3385a1387c06/diff:/var/lib/docker/overlay2/95de2ca907f14e48e1a5d037fcc32ad68a465782b88d9d42d81729c70551f9f0/diff:/var/lib/docker/overlay2/e53aa3eb6d5579d82a4a436c1ee1f7ceda68dd853319f204ca2c097479b4d22a/diff:/var/lib/docker/overlay2/78cfd2024652ebaec917b39b4db94df8787f7d565aba8abbb8c8907ab7beae68/diff:/var/lib/docker/overlay2/81cf2bef50713dcbe9a699cee7b2a05559a317d18712fb1f015e712b2c0b743f/diff:/var/lib/docker/overlay2/1628aa341078f3c93f824df8cdb14d7b247ce86ba239ff1e4f4335c5f0ab66f4/diff:/var/lib/docker/overlay2/70a4716fd131b44eebcaa8bb2c0faae353b103b2decf63f5baa88ca21a40e04e/diff:/var/lib/docker/overlay2/bd9e00d86571584aa4c56ca698678b9ae00efa5e02d382ff99095efe923c3cca/diff:/var/lib/docker/overlay2/82c4ec3735a4c4b73d1d6a91754a4571dd095c081cfcac3aeda6b42badf57456/diff:/var/lib/docker/overlay2/35235502e2b0d9ae2e7c4670cc8728749e7a65c2a338e73e2ba10fade6435593/diff:/var/lib/docker/overlay2/bcb6bdfe890c36c05ec05117a3c6ba31bb3d1fdab0b1cf2b6aa945767ad06211/diff:/var/lib/docker/overlay2/0f4b33f32907e5c567ee7dab163a45400e38a1256af257009ebf62ca3e368584/diff:/var/lib/docker/overlay2/8e0f7cd73bce14176ddf524515517946aaf6f8b874047d148f52614bff07a2f4/diff:/var/lib/docker/overlay2/8c7a8cd314b8866411fa5ccfc7fa787ac2fdffb26262b789a43d4fccb6371622/diff:/var/lib/docker/overlay2/91925ce179f899e1074b6c0e758031fde0925d29685cde96fa6a506c3f933f4d/diff:/var/lib/docker/overlay2/e87d15b1f17a674cd4f5a35db6eb90b889e9f3181aceedd2916a1c0193158b46/diff:/var/lib/docker/overlay2/3bf08a4c94655511f478570dbf92b0db39bca9ebbfb4b110034c0698210eedc1/diff:/var/lib/docker/overlay2/0bc8bb48099cea89c7c92c6bdc12424be910fd0fc87e450549986c564e4b19ec/diff:/var/lib/docker/overlay2/5968969ff5a69b2a3d49eb1d70db7a20da67235053a19ef981efd7c0e7c37e1e/diff:/var/lib/docker/overlay2/7644f14a97167f7e42b302db8e7359b8429434b4744832db30be5a64f0743a47/diff:/var/lib/docker/overlay2/2ece618f5fcec85065748efd55a98a8f1361cb7b9c51e80f644bd5f4786c4c6b/diff:/var/lib/docker/overlay2/21f0c44a17548821f53fdf31aee16d2e5abdae586e482b466040f479af4609f5/diff:/var/lib/docker/overlay2/462210d3e42695022045fdd8fe83411cbbd67338c729eac635d06e60bf282a5f/diff:/var/lib/docker/overlay2/0d00375012490be03077f24e008a18b40aa363f621c47c00e37631bacb09cfd2/diff:/var/lib/docker/overlay2/4fa3722e7a13d69b723dc622ba44ce527a9fdac04bc8a1e616f3bdb9df9effb7/diff:/var/lib/docker/overlay2/4a37fd9f57ba89727e230e9bbe4ef9ceabd727b813bb0b06cdddaa5e38475349/diff:/var/lib/docker/overlay2/397978862bb9ad3082eeb8292216f6a32353b6a73888705668af511c8cb57405/diff",
+                "MergedDir": "/var/lib/docker/overlay2/38c97743a50bd1b3015bdd2f925bd42f466ab3989f8fd5e3636d13c44508df05/merged",
+                "UpperDir": "/var/lib/docker/overlay2/38c97743a50bd1b3015bdd2f925bd42f466ab3989f8fd5e3636d13c44508df05/diff",
+                "WorkDir": "/var/lib/docker/overlay2/38c97743a50bd1b3015bdd2f925bd42f466ab3989f8fd5e3636d13c44508df05/work"
+            },
+            "Name": "overlay2"
+        },
+        "Mounts": [
+            {
+                "Type": "bind",
+                "Source": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-matched-framework-env-v228-v2/packages",
+                "Destination": "/packages",
+                "Mode": "",
+                "RW": false,
+                "Propagation": "rprivate"
+            },
+            {
+                "Type": "bind",
+                "Source": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-full2303-reference-v228-v1/output",
+                "Destination": "/output",
+                "Mode": "",
+                "RW": true,
+                "Propagation": "rprivate"
+            },
+            {
+                "Type": "bind",
+                "Source": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-full2303-reference-v228-v1/scratch",
+                "Destination": "/scratch",
+                "Mode": "",
+                "RW": true,
+                "Propagation": "rprivate"
+            },
+            {
+                "Type": "bind",
+                "Source": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-full2303-reference-v228-v1/scratch/tmp",
+                "Destination": "/tmp",
+                "Mode": "",
+                "RW": true,
+                "Propagation": "rprivate"
+            },
+            {
+                "Type": "bind",
+                "Source": "/home/harmenon/ferric-mi350-model-b968-c189-r1.kUjwIKs0/model/target",
+                "Destination": "/model",
+                "Mode": "",
+                "RW": false,
+                "Propagation": "rprivate"
+            },
+            {
+                "Type": "bind",
+                "Source": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-full2303-reference-v228-v1/source",
+                "Destination": "/source",
+                "Mode": "",
+                "RW": false,
+                "Propagation": "rprivate"
+            },
+            {
+                "Type": "bind",
+                "Source": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-full2303-reference-v228-v1/inputs",
+                "Destination": "/inputs",
+                "Mode": "",
+                "RW": false,
+                "Propagation": "rprivate"
+            }
+        ],
+        "Config": {
+            "Hostname": "e1f8d6b9c3ce",
+            "Domainname": "",
+            "User": "9661:9661",
+            "AttachStdin": false,
+            "AttachStdout": true,
+            "AttachStderr": true,
+            "Tty": false,
+            "OpenStdin": false,
+            "StdinOnce": false,
+            "Env": [
+                "HF_DATASETS_OFFLINE=1",
+                "TORCHINDUCTOR_CACHE_DIR=/scratch/inductor",
+                "OMP_NUM_THREADS=1",
+                "MKL_NUM_THREADS=1",
+                "TMPDIR=/scratch/tmp",
+                "OPENBLAS_NUM_THREADS=1",
+                "PYTHONUNBUFFERED=1",
+                "XDG_CACHE_HOME=/scratch/cache",
+                "HF_HOME=/scratch/huggingface",
+                "MIOPEN_USER_DB_PATH=/scratch/miopen",
+                "HOME=/scratch/home",
+                "PYTHONDONTWRITEBYTECODE=1",
+                "TOKENIZERS_PARALLELISM=false",
+                "LC_ALL=C.UTF-8",
+                "HF_HUB_OFFLINE=1",
+                "TRANSFORMERS_OFFLINE=1",
+                "TORCH_EXTENSIONS_DIR=/scratch/extensions",
+                "DO_NOT_TRACK=1",
+                "USER=harmenon",
+                "LOGNAME=harmenon",
+                "TZ=UTC",
+                "HF_HUB_DISABLE_TELEMETRY=1",
+                "CUBLAS_WORKSPACE_CONFIG=:4096:8",
+                "TORCH_HOME=/scratch/torch",
+                "TRITON_CACHE_DIR=/scratch/triton",
+                "MAX_JOBS=2",
+                "TORCHINDUCTOR_COMPILE_THREADS=2",
+                "LANG=C.UTF-8",
+                "HIP_VISIBLE_DEVICES=0",
+                "PATH=/opt/rocm/llvm/bin:/opt/rocm/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+                "ROCM_PATH=/opt/rocm",
+                "LD_LIBRARY_PATH=/opt/rocm/lib:/usr/local/lib:",
+                "PYTORCH_ROCM_ARCH=gfx90a;gfx942;gfx950;gfx1100;gfx1101;gfx1200;gfx1201;gfx1150;gfx1151",
+                "AITER_ROCM_ARCH=gfx942;gfx950",
+                "HSA_NO_SCRATCH_RECLAIM=1",
+                "PYTHON_VERSION=3.12",
+                "DEBIAN_FRONTEND=noninteractive",
+                "SCCACHE_BUCKET=",
+                "SCCACHE_REGION=",
+                "SCCACHE_S3_NO_CREDENTIALS=",
+                "SCCACHE_IDLE_TIMEOUT=",
+                "UV_HTTP_TIMEOUT=500",
+                "UV_INDEX_STRATEGY=unsafe-best-match",
+                "UV_LINK_MODE=copy",
+                "CCACHE_DIR=/root/.cache/ccache",
+                "CCACHE_COMPILERCHECK=content",
+                "SCCACHE_ENDPOINT=",
+                "HSA_ENABLE_IPC_MODE_LEGACY=1",
+                "UCX_RMA_PPLN_ENABLE=y",
+                "UCX_ROCM_COPY_SIGPOOL_MAX_ELEMS=inf",
+                "SAFETENSORS_FAST_GPU=1",
+                "HIP_FORCE_DEV_KERNARG=1",
+                "PYTORCH_NVML_BASED_CUDA_CHECK=1",
+                "KINETO_CONFIG=/app/libkineto.conf"
+            ],
+            "Cmd": [
+                "--signal=TERM",
+                "--kill-after=15s",
+                "900s",
+                "/usr/bin/python3",
+                "-I",
+                "-B",
+                "/source/run.py"
+            ],
+            "Image": "sha256:c5f9efa2623d9c8b2e483d2a139202e496baf5a04900a4f32907149f41a42dba",
+            "Volumes": null,
+            "WorkingDir": "/source",
+            "Entrypoint": [
+                "/usr/bin/timeout"
+            ],
+            "Labels": {
+                "ferric.readiness.reference.owner": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-full2303-reference-v228-v1",
+                "maintainer": "dl.mlsedevops@amd.com",
+                "org.opencontainers.image.version": "22.04"
+            }
+        },
+        "NetworkSettings": {
+            "SandboxID": "",
+            "SandboxKey": "",
+            "Ports": {},
+            "Networks": {
+                "none": {
+                    "IPAMConfig": null,
+                    "Links": null,
+                    "Aliases": null,
+                    "DriverOpts": null,
+                    "GwPriority": 0,
+                    "NetworkID": "",
+                    "EndpointID": "",
+                    "Gateway": "",
+                    "IPAddress": "",
+                    "MacAddress": "",
+                    "IPPrefixLen": 0,
+                    "IPv6Gateway": "",
+                    "GlobalIPv6Address": "",
+                    "GlobalIPv6PrefixLen": 0,
+                    "DNSNames": null
+                }
+            }
+        }
+    }
+]

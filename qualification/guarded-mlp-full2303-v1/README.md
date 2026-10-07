@@ -1,8 +1,9 @@
 # Guarded Full2303 Request
 
 The explicit full-request worker and parent client are CPU-qualified on MI350.
-No full-request GPU execution or numerical acceptance is claimed by this
-evidence.
+An independent BF16 framework reference also completed two full 2,048/256
+passes on MI350. Full-request Ferric GPU execution and numerical acceptance
+remain open.
 
 ## Scope
 
@@ -104,6 +105,54 @@ applied and rehashed.
 | Tested parent source map | `2d6613ee1d0267416adcc496d7806e9fdad9317b641a96e900d4b04a5a697df4` |
 | Full parent ELF | `1110ecc3ee4c5ff511b0a87170e4a7ce46dcd448f0f3003b548a4fae261eb7a5` |
 | Retained parent archive | `f1d7cd2add4ead1cadcb428f366d99a6a9ed990a20bd72d9e43e00e8d45e0338` |
+
+## Full-Request Reference
+
+The independent reference completed on `mi350` with 20 passing pure checks,
+17 naturally retired owned command phases, six idle-device observations and
+clean source, package, tokenizer and topology postchecks. The private offline
+container was removed after exit. Its owner took 78.465 seconds, including
+setup and audits; this is not a decode throughput benchmark.
+
+Each of two fresh passes used one actual 2,048-token matrix prefill followed
+by 255 one-token calls driven by its own preceding greedy choices. This yields
+256 outputs per pass and processes 2,303 positions. The final output is not fed
+back. Across both passes there were 512 model calls and 512 generated choices.
+No Ferric hidden states, logits, KV cache or generated tokens were supplied.
+
+Both 256-token vectors and decoded byte strings repeated exactly. The reference
+uses BF16, deterministic math-only SDPA, FP32 rotary values, no autocast, and
+disabled reduced-precision matmul/SDPA reductions. Equal BF16 maxima select the
+lowest token ID; EOS does not truncate the requested length.
+
+| Output per pass | Bytes | SHA-256 |
+| --- | ---: | --- |
+| 256 token IDs, u32 little-endian | 1,024 | `198ad03410c23eeff68c503c721eb3b4235b63d568ecbac0ed2b5728e9bc5221` |
+| Decoded bytes | 1,405 | `383ac0bbd750d53433fd263f5a1d3792721bb3d98b757f94f01d00d4ab974909` |
+
+`reference-v1` retains 131 original archive members plus a local retention
+record: all source/input files, 85 command records, eight full payloads at
+positions 0/2,047/2,048/2,302, compact per-choice records, both output vectors
+and both skip-special/preserve-special decoded representations. Position zero
+is a diagnostic prefill slice, not a generated token. All 36 actual KV caches
+were checked for shape, dtype, device and length at every call.
+
+The exporter and local retainer rechecked both own-token histories, exact repeat,
+selected raw payloads, argmaxes and evidence identity. Unselected raw logits,
+model shards, package bulk and the 11.4 MB tokenizer are not retained. Their
+execution/posthash evidence is authenticated metadata, not local recomputation.
+The V1 exporter refused before archive creation because it expected a nonexistent
+tokenizer `path` field. V2 checks the producer's actual `stat`/`bytes`/`sha256`
+record. Original receipts are unchanged; the model was not rerun for retention.
+
+| Artifact | SHA-256 |
+| --- | --- |
+| Reference owner terminal | `e862ba7fc32df915c22867063f5cba48e9f776fbf36d2639cba786043bfe685d` |
+| Framework terminal | `876678fa2815a109546c2ff01db33fe80c2da66d9d00e0d8bb53e108ed2ed006` |
+| Retained archive | `85bf81ee0bac1f743a3d74eae3ae84c8b83397ff0c8e4a81da78b136b65c8aaa` |
+| Executed V2 collector | `874dce584128bab37aa63f64abaef9cdebf270e4d0878ed618439b8b0269a71a` |
+
+Reference repeatability does not establish Ferric correctness or a speedup.
 
 ## Remaining Gates
 

@@ -1,0 +1,159 @@
+{
+  "acceptance_threshold": null,
+  "actual_reference_terminal": null,
+  "changed_owner_functions": [
+    "main"
+  ],
+  "changed_run_functions": [
+    "source_contract",
+    "load_inputs",
+    "run_pass",
+    "execute"
+  ],
+  "environment": {
+    "bytes": 1987,
+    "sha256": "54851b5bccdf6f7d65e67ffa7ffa1e3ad1b7d591200e9ef9448ffb06ee485fae"
+  },
+  "files": {
+    "README.md": {
+      "bytes": 8691,
+      "sha256": "2fa83276f466684ba1ab1e3bf4e7096ddcec97ba181cffe66313d0a2355defe2"
+    },
+    "common.py": {
+      "bytes": 3172,
+      "sha256": "445c602dd0d237beb2ebef62446d1d2b34283367b68529736a890640ae185256"
+    },
+    "diagnostics.py": {
+      "bytes": 5084,
+      "sha256": "38cee89882d13dce81a992a64d4931c52a6f5b0b2dc77f5cddf1fc7cfe37ccaf"
+    },
+    "framework_reference.py": {
+      "bytes": 23768,
+      "sha256": "613579c7c84ed9b6f94abf6864c9934b72331dd001bf6badb973ab4576f4db97"
+    },
+    "full_reference.py": {
+      "bytes": 11342,
+      "sha256": "195ea81ab55e0523ca9b6a41680c654f7e99d7fb949b7d032a8f897d3620e471"
+    },
+    "inputs.json": {
+      "bytes": 3767,
+      "sha256": "d138e56a871c75c87b9a5f59a9ae5168efd320bd5d145b040b55078bcc2d8418"
+    },
+    "launch.py": {
+      "bytes": 23799,
+      "sha256": "1ee64c3c267e67b69205da2cabb26c38e4dcedcd3f595174d5102e47e5b1dd30"
+    },
+    "long_reference.py": {
+      "bytes": 23875,
+      "sha256": "242abaa1662372ec999d6d056272646ede14ed8285223bebb293d1a64c17c9cf"
+    },
+    "owned.py": {
+      "bytes": 30433,
+      "sha256": "ab41af455396322303bb8ebd4132e680affc3bdc5830608fad36736c92024583"
+    },
+    "prompt-workload.json": {
+      "bytes": 11462,
+      "sha256": "2fafb955e87c60c992e65922afc938d8dc14d9e6fbcd4d0d91d68eddcd73aee8"
+    },
+    "reference.py": {
+      "bytes": 11388,
+      "sha256": "466028fe6061de915bd852328030e9ea81a0b0874e4305563ecc78f0073b1d7b"
+    },
+    "run.py": {
+      "bytes": 19947,
+      "sha256": "feab733151e55ffa30245b296df72c34596dff0341058cf3b297fe3c2570ebf7"
+    },
+    "test_reference.py": {
+      "bytes": 15762,
+      "sha256": "d33e6572ad7a9e2befc2605b3ab423096bbf10cadf4244d0cb8b949a83c29063"
+    }
+  },
+  "framework_calls_per_pass": 256,
+  "framework_forward_calls_planned": 512,
+  "full_model_acceptance": false,
+  "gpu_execution": false,
+  "ignore_eos": true,
+  "native_captures": null,
+  "native_receipt": null,
+  "numerical_acceptance": false,
+  "output_cap_bytes": 33554432,
+  "output_files_on_success": 21,
+  "output_tokens_per_pass": 256,
+  "performance_claim": false,
+  "predecessor_actual_inner": {
+    "bytes": 222675,
+    "sha256": "d256b149229d4ba94a1e4f9a3aa2d6f9354c56a721bfe1dc0cb69bbb7c49674f"
+  },
+  "predecessor_actual_owner": {
+    "bytes": 4508,
+    "sha256": "36365edf95b99eeac27ec91973862959f8b354d876258e29467b19753bd802ae"
+  },
+  "predecessor_owner": {
+    "bytes": 22083,
+    "sha256": "980977204c036815186a757865361340ff88b52004daf0a0d729ebff9dbdfa54"
+  },
+  "predecessor_source_manifest": {
+    "bytes": 4576,
+    "sha256": "47278b4c53f95a2b47c7d594a897b9ff29e055de4d2c9e151d6c592920225d26"
+  },
+  "processed_positions_per_pass": 2303,
+  "prompt_tokens": 2048,
+  "raw_decoded_special_token_policy": "skip",
+  "reference_passes": 2,
+  "reference_prefill": "one full2048-token independent matrix-model call per pass",
+  "retained_payload_bytes": 4855808,
+  "schema": "ferric-full2303-reference-source-v1",
+  "selected_positions": [
+    0,
+    2047,
+    2048,
+    2302
+  ],
+  "source_only": true,
+  "tests": [
+    "test_reference.ReferenceTests.test_authentic_full_prompt_and_model_roles",
+    "test_reference.ReferenceTests.test_capture_matrix_slices_and_norm_hook_custody",
+    "test_reference.ReferenceTests.test_capture_selection_and_position0_not_output",
+    "test_reference.ReferenceTests.test_container_exact_readonly_mounts_and_no_network",
+    "test_reference.ReferenceTests.test_container_named_user_offline_and_single_gpu",
+    "test_reference.ReferenceTests.test_decoded_bytes_and_token_pin_mismatch_refused",
+    "test_reference.ReferenceTests.test_evidence_bounds_and_closed_metadata",
+    "test_reference.ReferenceTests.test_exact_prefill_and_own_choice_recurrence",
+    "test_reference.ReferenceTests.test_nonfinite_shape_and_invalid_token_refused",
+    "test_reference.ReferenceTests.test_raw_decode_skip_special_and_invalid_utf8_preserved",
+    "test_reference.ReferenceTests.test_reference_or_prompt_feedback_is_refused",
+    "test_reference.ReferenceTests.test_repeat_stream_row_cache_and_decoded_drift_not_accepted",
+    "test_reference.ReferenceTests.test_retirement_ignores_failed_workload_storage",
+    "test_reference.ReferenceTests.test_retirement_signal_deferred_and_recorded",
+    "test_reference.ReferenceTests.test_retirement_uses_separate_deadline",
+    "test_reference.ReferenceTests.test_tie_lowest_id_signed_zero_and_exact_margin",
+    "test_reference.ReferenceTests.test_two_full_passes_exact_lengths_and_last_output_unconsumed",
+    "test_reference.ReferenceTests.test_unittest_census_accepts_both_supported_spellings",
+    "test_reference.ReferenceTests.test_work_signal_raises_between_cli_calls",
+    "test_reference.ReferenceTests.test_wrong_container_owner_or_image_refused"
+  ],
+  "tests_executed": false,
+  "unchanged_child_deadline_seconds": 900,
+  "unchanged_helpers": [
+    "common.py",
+    "owned.py",
+    "long_reference.py",
+    "framework_reference.py",
+    "diagnostics.py",
+    "reference.py"
+  ],
+  "unchanged_owner_deadline_seconds": 1800,
+  "unchanged_owner_functions": [
+    "OwnerSignals",
+    "build_command",
+    "command",
+    "container_environment",
+    "idle",
+    "leaf_guard",
+    "owned_container",
+    "test_census",
+    "topology",
+    "tree",
+    "writable_bounds"
+  ]
+}

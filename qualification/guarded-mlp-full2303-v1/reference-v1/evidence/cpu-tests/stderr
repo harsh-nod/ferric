@@ -1,0 +1,25 @@
+test_authentic_full_prompt_and_model_roles (test_reference.ReferenceTests.test_authentic_full_prompt_and_model_roles) ... ok
+test_capture_matrix_slices_and_norm_hook_custody (test_reference.ReferenceTests.test_capture_matrix_slices_and_norm_hook_custody) ... ok
+test_capture_selection_and_position0_not_output (test_reference.ReferenceTests.test_capture_selection_and_position0_not_output) ... ok
+test_container_exact_readonly_mounts_and_no_network (test_reference.ReferenceTests.test_container_exact_readonly_mounts_and_no_network) ... ok
+test_container_named_user_offline_and_single_gpu (test_reference.ReferenceTests.test_container_named_user_offline_and_single_gpu) ... ok
+test_decoded_bytes_and_token_pin_mismatch_refused (test_reference.ReferenceTests.test_decoded_bytes_and_token_pin_mismatch_refused) ... ok
+test_evidence_bounds_and_closed_metadata (test_reference.ReferenceTests.test_evidence_bounds_and_closed_metadata) ... ok
+test_exact_prefill_and_own_choice_recurrence (test_reference.ReferenceTests.test_exact_prefill_and_own_choice_recurrence) ... ok
+test_nonfinite_shape_and_invalid_token_refused (test_reference.ReferenceTests.test_nonfinite_shape_and_invalid_token_refused) ... ok
+test_raw_decode_skip_special_and_invalid_utf8_preserved (test_reference.ReferenceTests.test_raw_decode_skip_special_and_invalid_utf8_preserved) ... ok
+test_reference_or_prompt_feedback_is_refused (test_reference.ReferenceTests.test_reference_or_prompt_feedback_is_refused) ... ok
+test_repeat_stream_row_cache_and_decoded_drift_not_accepted (test_reference.ReferenceTests.test_repeat_stream_row_cache_and_decoded_drift_not_accepted) ... ok
+test_retirement_ignores_failed_workload_storage (test_reference.ReferenceTests.test_retirement_ignores_failed_workload_storage) ... ok
+test_retirement_signal_deferred_and_recorded (test_reference.ReferenceTests.test_retirement_signal_deferred_and_recorded) ... ok
+test_retirement_uses_separate_deadline (test_reference.ReferenceTests.test_retirement_uses_separate_deadline) ... ok
+test_tie_lowest_id_signed_zero_and_exact_margin (test_reference.ReferenceTests.test_tie_lowest_id_signed_zero_and_exact_margin) ... ok
+test_two_full_passes_exact_lengths_and_last_output_unconsumed (test_reference.ReferenceTests.test_two_full_passes_exact_lengths_and_last_output_unconsumed) ... ok
+test_unittest_census_accepts_both_supported_spellings (test_reference.ReferenceTests.test_unittest_census_accepts_both_supported_spellings) ... ok
+test_work_signal_raises_between_cli_calls (test_reference.ReferenceTests.test_work_signal_raises_between_cli_calls) ... ok
+test_wrong_container_owner_or_image_refused (test_reference.ReferenceTests.test_wrong_container_owner_or_image_refused) ... ok
+
+----------------------------------------------------------------------
+Ran 20 tests in 1.959s
+
+OK

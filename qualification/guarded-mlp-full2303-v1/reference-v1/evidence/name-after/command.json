@@ -1,0 +1,23 @@
+{
+  "argv": [
+    "/usr/bin/docker",
+    "ps",
+    "-aq",
+    "--filter",
+    "name=^/ferric-full2303-reference-v228-v1$"
+  ],
+  "env": {
+    "CUDA_VISIBLE_DEVICES": "",
+    "HIP_VISIBLE_DEVICES": "",
+    "HOME": "/home/harmenon",
+    "LANG": "C.UTF-8",
+    "LC_ALL": "C.UTF-8",
+    "LOGNAME": "harmenon",
+    "PATH": "/usr/bin:/bin",
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "ROCR_VISIBLE_DEVICES": "",
+    "TZ": "UTC",
+    "USER": "harmenon"
+  },
+  "seconds": 30
+}

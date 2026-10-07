@@ -1,0 +1,130 @@
+{
+  "archive": {
+    "bytes": 4090619,
+    "sha256": "85bf81ee0bac1f743a3d74eae3ae84c8b83397ff0c8e4a81da78b136b65c8aaa"
+  },
+  "gpu_execution": false,
+  "manifest": {
+    "bytes": 22493,
+    "sha256": "5a0564e78e6b4ab769af2c56eb7865e36fca4afc18bda7196ce1321b47ea3233"
+  },
+  "original_receipts_modified": false,
+  "project_execution": false,
+  "schema": "ferric-full2303-reference-local-retention-v1",
+  "verification": {
+    "decoded_semantics_locally_recomputed": false,
+    "decoder_authority": "original authenticated owner/inner execution and pinned decoder/tokenizer metadata",
+    "external_model_and_package_rehash_performed": false,
+    "external_posthash_authority": "original authenticated owner/inner receipts only",
+    "full_logit_stream_recomputed": false,
+    "full_model_acceptance": false,
+    "full_model_forward_calls": 512,
+    "generated_ids_and_decoded_repeat_rechecked": true,
+    "input_files": 7,
+    "model_and_overlay_bodies_retained": false,
+    "native_receipt_authenticated": false,
+    "numerical_acceptance": false,
+    "original_files": 129,
+    "output_files": 21,
+    "owner_name": "complete.json",
+    "owner_terminal": {
+      "bytes": 4910,
+      "sha256": "e862ba7fc32df915c22867063f5cba48e9f776fbf36d2639cba786043bfe685d"
+    },
+    "passed": true,
+    "performance_claim": false,
+    "phases": {
+      "after-0": {
+        "clean": true,
+        "exit_code": 0,
+        "result_present": true
+      },
+      "after-1": {
+        "clean": true,
+        "exit_code": 0,
+        "result_present": true
+      },
+      "after-2": {
+        "clean": true,
+        "exit_code": 0,
+        "result_present": true
+      },
+      "before-0": {
+        "clean": true,
+        "exit_code": 0,
+        "result_present": true
+      },
+      "before-1": {
+        "clean": true,
+        "exit_code": 0,
+        "result_present": true
+      },
+      "before-2": {
+        "clean": true,
+        "exit_code": 0,
+        "result_present": true
+      },
+      "cleanup-inspect": {
+        "clean": true,
+        "exit_code": 0,
+        "result_present": true
+      },
+      "cpu-tests": {
+        "clean": true,
+        "exit_code": 0,
+        "result_present": true
+      },
+      "create": {
+        "clean": true,
+        "exit_code": 0,
+        "result_present": true
+      },
+      "created": {
+        "clean": true,
+        "exit_code": 0,
+        "result_present": true
+      },
+      "execute": {
+        "clean": true,
+        "exit_code": 0,
+        "result_present": true
+      },
+      "exited": {
+        "clean": true,
+        "exit_code": 0,
+        "result_present": true
+      },
+      "final-inspect": {
+        "clean": true,
+        "exit_code": 0,
+        "result_present": true
+      },
+      "image": {
+        "clean": true,
+        "exit_code": 0,
+        "result_present": true
+      },
+      "name-after": {
+        "clean": true,
+        "exit_code": 0,
+        "result_present": true
+      },
+      "name-before": {
+        "clean": true,
+        "exit_code": 0,
+        "result_present": true
+      },
+      "remove": {
+        "clean": true,
+        "exit_code": 0,
+        "result_present": true
+      }
+    },
+    "raw_files": 85,
+    "repeat_gate_rechecked": true,
+    "retained_inner_readset_rows": 25,
+    "selected_raw_argmax_recomputed": 8,
+    "source_files": 14,
+    "unselected_logit_rows_recomputed": false
+  }
+}

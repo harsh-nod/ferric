@@ -1,0 +1,149 @@
+{
+  "acceptance_threshold": null,
+  "container_removed": true,
+  "elapsed_seconds": 78.46477727999445,
+  "errors": [],
+  "final_container_state": {
+    "Dead": false,
+    "Error": "",
+    "ExitCode": 0,
+    "FinishedAt": "2026-10-07T08:05:56.316338051Z",
+    "OOMKilled": false,
+    "Paused": false,
+    "Pid": 0,
+    "Restarting": false,
+    "Running": false,
+    "StartedAt": "2026-10-07T08:04:47.691632372Z",
+    "Status": "exited"
+  },
+  "framework_attempts": 1,
+  "framework_report": {
+    "bytes": 572152,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-full2303-reference-v228-v1/output/complete.json",
+    "sha256": "876678fa2815a109546c2ff01db33fe80c2da66d9d00e0d8bb53e108ed2ed006"
+  },
+  "full_model_acceptance": false,
+  "input_files": {
+    "environment.json": {
+      "bytes": 1987,
+      "sha256": "54851b5bccdf6f7d65e67ffa7ffa1e3ad1b7d591200e9ef9448ffb06ee485fae"
+    },
+    "prompt-manifest.json": {
+      "bytes": 21318,
+      "sha256": "30d047aafbd7de2b94647154680b0b9d9fb75aae2fd90b081afe0de595a88600"
+    },
+    "prompt.txt": {
+      "bytes": 11224,
+      "sha256": "a43ef3619cb96c9c23d020e07630493ced7a588088033a53f1d612448375751a"
+    },
+    "prompt.u32le": {
+      "bytes": 8192,
+      "sha256": "2e81cc60562760f972450ef9205a4e764fa3cce6289d85754e7dfbd7de4d4d02"
+    },
+    "qualified-model-record.json": {
+      "bytes": 45474,
+      "sha256": "568754e0716d165b977d0462f1c67cdb797a869ed5a8db2ae75e2c206497dc44"
+    },
+    "qualified-owner.json": {
+      "bytes": 8303,
+      "sha256": "2e63e5f8436edaf247249a33b40cd5d0171c0566816f2198a73ca2b6a9683cbb"
+    },
+    "workload.json": {
+      "bytes": 11462,
+      "sha256": "2fafb955e87c60c992e65922afc938d8dc14d9e6fbcd4d0d91d68eddcd73aee8"
+    }
+  },
+  "native_execution": false,
+  "numerical_acceptance": false,
+  "observed_signals": [],
+  "operational_cutoff_seconds": 1200,
+  "overlay_manifest": {
+    "bytes": 742156,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-matched-framework-env-v228-v2/overlay-manifest.json",
+    "sha256": "3630f4bdb5cd44300fa64cf76d51f937f7d652b4eb256f319c64a91f2a4ece3a"
+  },
+  "passed": true,
+  "performance_claim": false,
+  "plan": {
+    "bytes": 1092,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-full2303-reference-v228-v1/launch-plan.json",
+    "sha256": "9510bd779cad5f39f0f6fc49e28efde60c1fb7804df08f85123354bc299d3ba6"
+  },
+  "postcheck_errors": [],
+  "production_authority": false,
+  "retirement_reserve_seconds": 600,
+  "retries": 0,
+  "schema": "ferric-full2303-reference-owned-v1",
+  "source_files": {
+    "README.md": {
+      "bytes": 8691,
+      "sha256": "2fa83276f466684ba1ab1e3bf4e7096ddcec97ba181cffe66313d0a2355defe2"
+    },
+    "common.py": {
+      "bytes": 3172,
+      "sha256": "445c602dd0d237beb2ebef62446d1d2b34283367b68529736a890640ae185256"
+    },
+    "diagnostics.py": {
+      "bytes": 5084,
+      "sha256": "38cee89882d13dce81a992a64d4931c52a6f5b0b2dc77f5cddf1fc7cfe37ccaf"
+    },
+    "framework_reference.py": {
+      "bytes": 23768,
+      "sha256": "613579c7c84ed9b6f94abf6864c9934b72331dd001bf6badb973ab4576f4db97"
+    },
+    "full_reference.py": {
+      "bytes": 11342,
+      "sha256": "195ea81ab55e0523ca9b6a41680c654f7e99d7fb949b7d032a8f897d3620e471"
+    },
+    "inputs.json": {
+      "bytes": 3767,
+      "sha256": "d138e56a871c75c87b9a5f59a9ae5168efd320bd5d145b040b55078bcc2d8418"
+    },
+    "launch.py": {
+      "bytes": 23799,
+      "sha256": "1ee64c3c267e67b69205da2cabb26c38e4dcedcd3f595174d5102e47e5b1dd30"
+    },
+    "long_reference.py": {
+      "bytes": 23875,
+      "sha256": "242abaa1662372ec999d6d056272646ede14ed8285223bebb293d1a64c17c9cf"
+    },
+    "owned.py": {
+      "bytes": 30433,
+      "sha256": "ab41af455396322303bb8ebd4132e680affc3bdc5830608fad36736c92024583"
+    },
+    "prompt-workload.json": {
+      "bytes": 11462,
+      "sha256": "2fafb955e87c60c992e65922afc938d8dc14d9e6fbcd4d0d91d68eddcd73aee8"
+    },
+    "reference.py": {
+      "bytes": 11388,
+      "sha256": "466028fe6061de915bd852328030e9ea81a0b0874e4305563ecc78f0073b1d7b"
+    },
+    "run.py": {
+      "bytes": 19947,
+      "sha256": "feab733151e55ffa30245b296df72c34596dff0341058cf3b297fe3c2570ebf7"
+    },
+    "source-manifest.json": {
+      "bytes": 5679,
+      "sha256": "7818b5f6c70be5d2f0655c3031872ddca283ced348f06cf27280991a23c8fe4c"
+    },
+    "test_reference.py": {
+      "bytes": 15762,
+      "sha256": "d33e6572ad7a9e2befc2605b3ab423096bbf10cadf4244d0cb8b949a83c29063"
+    }
+  },
+  "tokenizer_sources": {
+    "tokenizer.json": {
+      "bytes": 11422654,
+      "sha256": "aeb13307a71acd8fe81861d94ad54ab689df773318809eed3cbe794b4492dae4",
+      "stat": [
+        66307,
+        110541491,
+        11422654,
+        1787465814000000000,
+        1789675775986034477
+      ]
+    }
+  },
+  "whole_deadline_seconds": 1800
+}

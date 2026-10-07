@@ -1,0 +1,37 @@
+{
+  "cleanup_signalled": false,
+  "elapsed_seconds": 2.356644731014967,
+  "exit_code": 0,
+  "lineage": [
+    {
+      "event": "owned",
+      "identity": {
+        "pgid": 2712924,
+        "pid": 2712924,
+        "ppid": 2712814,
+        "sid": 2712924,
+        "starttime": 76035962,
+        "state": "R",
+        "uid": 9661
+      },
+      "reason": "spawned-parent"
+    }
+  ],
+  "observed_signals": [],
+  "owned_groups": [
+    2712924
+  ],
+  "owned_groups_absent": true,
+  "owned_processes_reaped": true,
+  "reason": null,
+  "stderr": {
+    "bytes": 2813,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-full2303-reference-v228-v1/evidence/cpu-tests/stderr",
+    "sha256": "1261b0e08e160d2363d11839bd898f411fc5bc3cf7ce1b6e11aeae5d477a7fcc"
+  },
+  "stdout": {
+    "bytes": 0,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-full2303-reference-v228-v1/evidence/cpu-tests/stdout",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  }
+}
