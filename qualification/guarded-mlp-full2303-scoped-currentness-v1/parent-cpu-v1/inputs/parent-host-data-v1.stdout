@@ -1,0 +1,12 @@
+
+running 7 tests
+test prefix_decode_host_observation_v1::tests::prefix_host_data_binds_complete_four_trajectory_and_control_payload_digests ... ok
+test prefix_decode_host_observation_v1::tests::prefix_host_data_closed_json_schema_and_extent ... ok
+test prefix_decode_host_observation_v1::tests::prefix_host_data_nested_host_scopes_are_not_summed_into_gpu_time ... ok
+test prefix_decode_host_observation_v1::tests::prefix_host_data_rejects_every_rank_policy_identity_and_epoch_change ... ok
+test prefix_decode_host_observation_v1::tests::prefix_host_data_rejects_snapshot_roster_order_and_missing_close ... ok
+test prefix_decode_host_observation_v1::tests::prefix_host_data_roundtrip_tf_ar_exact_counters_and_bound ... ok
+test prefix_decode_host_observation_v1::tests::prefix_host_data_checked_delta_rejects_every_counter_mutation_and_underflow ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 954 filtered out; finished in 0.93s
+

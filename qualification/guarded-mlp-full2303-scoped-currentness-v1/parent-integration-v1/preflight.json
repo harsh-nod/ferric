@@ -1,0 +1,79 @@
+{
+  "canonical_preimages_checked": 1266,
+  "files": {
+    "adapters/m1-engineering-execution-v1/src/bin/ferric-qwen3-guarded-mlp-full2303-engineering.rs": {
+      "after": {
+        "bytes": 5560,
+        "sha256": "f55d339997234e172ddfd025d6cffccdd671aa1f38991198197569cb32b89ddf"
+      },
+      "before": {
+        "bytes": 3245,
+        "sha256": "e0268dea8d9a9a34f6f7c936c65fd4ddb5e01a5307ebcb87feec332334270fea"
+      }
+    },
+    "adapters/m1-engineering-execution-v1/src/lib.rs": {
+      "after": {
+        "bytes": 90953,
+        "sha256": "40a5e87ee207c957684602488aee3b9217dc8ef239be45ea1e48159a13165411"
+      },
+      "before": {
+        "bytes": 90752,
+        "sha256": "0d0d8d291209f5016d9d3b1a8ccbaa78ea8f45d2ba87b4734e840b2f4069300e"
+      }
+    },
+    "adapters/m1-engineering-execution-v1/src/tp_finite_client/long/full2303.rs": {
+      "after": {
+        "bytes": 21505,
+        "sha256": "8d7e5e06b693545d9dd8bcb09c7879f05dc7bc17766ae99c99efb9f379315a1b"
+      },
+      "before": {
+        "bytes": 20607,
+        "sha256": "bad5e5a097394cec6779063136405c50911a36b920e80fc9125513a22f3f3838"
+      }
+    },
+    "adapters/m1-engineering-execution-v1/src/tp_finite_client/long/full2303_evidence.rs": {
+      "after": {
+        "bytes": 16092,
+        "sha256": "5473059637579aaa7c7831dd7ccfb69b1375f87ef3c07ef0dce5e2d9739721ee"
+      },
+      "before": {
+        "bytes": 13163,
+        "sha256": "db700e1f73182080408c8235f7da8608fb20a68524ed6af451d8851a81f2b6d6"
+      }
+    },
+    "adapters/m1-engineering-execution-v1/src/tp_finite_client/long/full2303_scoped.rs": {
+      "after": {
+        "bytes": 2993,
+        "sha256": "33a06987760c12d1f9c938451b1df8862cf40142311cbf33ec990564b4d3bb91"
+      },
+      "before": null
+    },
+    "adapters/m1-engineering-execution-v1/src/tp_finite_client/long/full2303_tests.rs": {
+      "after": {
+        "bytes": 24489,
+        "sha256": "9111a9309398081e01f2528f4021352f5d3258f4f132585a40037949fdd714f5"
+      },
+      "before": {
+        "bytes": 14804,
+        "sha256": "a7c16d0c37d13ffd3c10e1131b1e229e54aa97448dc4fea08dd0381c1c9f3adc"
+      }
+    }
+  },
+  "native_execution": false,
+  "passed": true,
+  "proposal": {
+    "bytes": 12617,
+    "sha256": "16fc3d017e0accc3bf70b8beb88be89771650f746684e5f4a4cb8f68c622574e"
+  },
+  "qualified_worker_bodies_checked": 212,
+  "schema": "ferric-full2303-scoped-parent-integration-preflight-v1",
+  "source_copy_applied": false,
+  "sources": {
+    "bytes": 508077,
+    "sha256": "50e41ee555b648ccf93aec5aae95b1b1040b936ce426d56cd620dd524106f5b9"
+  },
+  "terminal": {
+    "bytes": 3997921,
+    "sha256": "c145839bb36b2dc437590bb1bcdc6e4977f0fabc74c4889cfcb5345b57f5b6d8"
+  }
+}

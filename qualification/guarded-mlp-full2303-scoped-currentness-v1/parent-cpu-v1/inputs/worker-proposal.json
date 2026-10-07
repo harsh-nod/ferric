@@ -1,0 +1,268 @@
+{
+  "schema": "ferric-full2303-scoped-warm-worker-source-v1",
+  "canonical_changed": false,
+  "compiled": false,
+  "tested": false,
+  "native_execution": false,
+  "runtime_changed": false,
+  "default_group_policy_changed": false,
+  "currentness_temporal_equivalence_claim": false,
+  "performance_claim": false,
+  "numerical_acceptance": false,
+  "full_launch_admitted": false,
+  "base": {
+    "repository": "ferric",
+    "commit": "bf5557207c65e0d455f062d050532aafcc8882ef",
+    "worker_receipt": {
+      "path": "qualification/guarded-mlp-scoped-currentness-v1/cpu-attempt-v3/evidence/complete.json",
+      "bytes": 2364691,
+      "sha256": "335cf93cc109390f3b7590f7dbe35ed852adca223a042894dcc18418a738ffbd"
+    },
+    "worker_sources": {
+      "path": "qualification/guarded-mlp-scoped-currentness-v1/cpu-attempt-v3/evidence/sources-after.json",
+      "bytes": 420283,
+      "sha256": "e5ca47a688908d4c78d1e3157211aee4c29bf12f626c01258f06a8ca8eefbda3"
+    },
+    "worker_files": 209,
+    "passed": 726,
+    "ignored": 4,
+    "inventory": 730,
+    "all_worker_bodies_joined": true
+  },
+  "files": [
+    {
+      "repository": "ferric",
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/finite_guarded_mlp_full2303_scoped_v1.rs",
+      "before": null,
+      "after": {
+        "bytes": 7499,
+        "sha256": "42d702b47ddca928cb92ee0f02071c3958a4db969213b2d6f4f1087d84bbd3ff"
+      }
+    },
+    {
+      "repository": "ferric",
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/finite_guarded_mlp_full2303_scoped_v1_tests.rs",
+      "before": null,
+      "after": {
+        "bytes": 6310,
+        "sha256": "1c19bc02b6f040b0b1a574af6ddf2a72c3e4f9ad7706499d33db0ae25f0f4fcb"
+      }
+    },
+    {
+      "repository": "ferric",
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/lib.rs",
+      "before": {
+        "bytes": 2862,
+        "sha256": "f9454bf41a4cac0a828f7ad43e905b05d3508629cc0b8491923e97d32a9b26c6"
+      },
+      "after": {
+        "bytes": 2909,
+        "sha256": "1f4a948c634df69c90a8fd41f7714a641956d932dc352baff08b00c159d832f6"
+      }
+    },
+    {
+      "repository": "ferric",
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/main.rs",
+      "before": {
+        "bytes": 20823,
+        "sha256": "6d36f46e68172917deda29dc2a9d78994b0a9ddfb17bd011ec4dd05c3b8f9322"
+      },
+      "after": {
+        "bytes": 21428,
+        "sha256": "41cfde62772f6840403ebc0d754dafe91bec3467be5f1e5ea2635490b6eb95fb"
+      }
+    },
+    {
+      "repository": "ferric",
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_guarded_mlp_full2303_cli_v1.rs",
+      "before": {
+        "bytes": 7782,
+        "sha256": "e5d8a23f949b5476dbdc3e8e2e04aa0cce9ebb266a6b9fb8403e583dd92ae95d"
+      },
+      "after": {
+        "bytes": 11162,
+        "sha256": "735ef86b8b396f7deca8cc24376414d91f62fc95cee5ccc7d45fb61faa93014d"
+      }
+    },
+    {
+      "repository": "ferric",
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_guarded_mlp_full2303_cli_v1_tests.rs",
+      "before": {
+        "bytes": 8571,
+        "sha256": "45bcccbd2603bccd8a46361173c6e948578f00ddfc2998be3fa2a76d6df65b7a"
+      },
+      "after": {
+        "bytes": 12546,
+        "sha256": "6f89a118cf810e07899c5bfc265d92ee6fff7f00215b58808689de304cd56c68"
+      }
+    },
+    {
+      "repository": "ferric",
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_guarded_mlp_full2303_scoped_v1.rs",
+      "before": null,
+      "after": {
+        "bytes": 9516,
+        "sha256": "85205f616aa8c4efcd788f37246f052e352e31c3fd4159e6d8df0457cbffcc13"
+      }
+    },
+    {
+      "repository": "ferric",
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_guarded_mlp_full2303_v1.rs",
+      "before": {
+        "bytes": 5370,
+        "sha256": "bfe05e8efec4bf8cd1d26b9d3e478d56d3abd65cf3cc776ba04e4b05227fb9e3"
+      },
+      "after": {
+        "bytes": 6421,
+        "sha256": "1738f54fadf2aabe54f0d7b387ddbd7cde8a720bb8319ec8e7ff4c948d91a813"
+      }
+    },
+    {
+      "repository": "ferric",
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_guarded_mlp_readiness_v1.rs",
+      "before": {
+        "bytes": 24319,
+        "sha256": "46085e135f4f822c536d9616698e0d905b44ab07132c84cd7ebd22a92e917195"
+      },
+      "after": {
+        "bytes": 25551,
+        "sha256": "bf63d710bf60ecbdbb3845dfe6ffea7e17393c4b8660239125a344a91d9cfb87"
+      }
+    },
+    {
+      "repository": "ferric",
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/resident_layer/guarded_mlp_decode_v1.rs",
+      "before": {
+        "bytes": 15737,
+        "sha256": "693e7993b611f5ac87cb8b7dd5e835d7796c5d394a0f5164141eaf7fb53edf02"
+      },
+      "after": {
+        "bytes": 17118,
+        "sha256": "6755c5731340fb106fc0021f6a1be8aa39d488f27939a309e3e8398101b23718"
+      }
+    },
+    {
+      "repository": "ferric",
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/state_roster/guarded_mlp_decode_v1/scoped_currentness_v1.rs",
+      "before": {
+        "bytes": 10342,
+        "sha256": "99298a897b89074791e2a960f88bd84bd279908fe3ebde42bc0a53563453c459"
+      },
+      "after": {
+        "bytes": 16532,
+        "sha256": "beb08474592e2fa74fd28ee919dbbf92a9ec4d0ed92899e1f5c0270c70f60acb"
+      }
+    },
+    {
+      "repository": "ferric",
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/tests/readiness_cli.rs",
+      "before": {
+        "bytes": 10380,
+        "sha256": "3fe0c95a3fa40825d04889c4aaf6262ceed508b63fa0de2775eee41c541cea0b"
+      },
+      "after": {
+        "bytes": 11739,
+        "sha256": "a0aaf31f56d8f249e3af6a27703b9cb4cb8ae20b95211fed4a0ca29336d1903c"
+      }
+    }
+  ],
+  "new_tests": {
+    "worker_library": [
+      "finite_guarded_mlp_full2303_scoped_v1::tests::full_scoped_policy_checks_all_window_counts_and_checked_arithmetic_overflow",
+      "finite_guarded_mlp_full2303_scoped_v1::tests::full_scoped_policy_compact_closed_record_and_exact_own_history_roundtrip",
+      "finite_guarded_mlp_full2303_scoped_v1::tests::full_scoped_policy_refuses_every_policy_and_authority_drift",
+      "finite_guarded_mlp_full2303_scoped_v1::tests::full_scoped_policy_refuses_scope_identity_extent_and_transcript_drift",
+      "finite_guarded_mlp_full2303_scoped_v1::tests::full_scoped_policy_requires_canonical_single_record_and_refuses_write_flush_failures",
+      "native_catalog::forward::guarded_mlp_decode_v1::full2303::scoped::tests::scoped_route_calls_every_layer_with_two_ordinary_first_uses_and_no_fallback",
+      "native_catalog::forward::guarded_mlp_decode_v1::full2303::scoped::tests::scoped_route_post_runtime_completion_counter_rejection_cannot_retry_or_commit",
+      "native_catalog::forward::guarded_mlp_decode_v1::full2303::scoped::tests::scoped_route_rejects_first_use_scoped_and_warm_ordinary_results_fatally",
+      "native_catalog::forward::guarded_mlp_decode_v1::full2303::scoped::tests::scoped_route_rejects_wrong_profile_causal_order_and_incomplete_close",
+      "native_catalog::forward::guarded_mlp_decode_v1::full2303::scoped::tests::scoped_route_runtime_error_and_unwind_keep_original_failure_terminal",
+      "native_guarded_mlp_full2303_cli_v1::tests::full_scoped_cli_closed_route_joins_all_own_outputs_and_compact_policy",
+      "native_guarded_mlp_full2303_cli_v1::tests::full_scoped_cli_selector_deadline_and_concrete_entry_signatures_are_distinct",
+      "state_roster::guarded_mlp_decode_v1::scoped_currentness_v1::tests::full_scoped_roster_keeps_real_slot_generations_through_all_2303_forwards",
+      "state_roster::guarded_mlp_decode_v1::scoped_currentness_v1::tests::full_scoped_roster_refuses_other_extents_stale_late_generations_and_unwind"
+    ],
+    "worker_readiness_binary": [
+      "full2303_scoped_executable_routes_explicit_selector_without_fallback_or_stdin_relock"
+    ]
+  },
+  "test_roster": [
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/finite_guarded_mlp_full2303_scoped_v1_tests.rs",
+      "target": "lib",
+      "names": [
+        "finite_guarded_mlp_full2303_scoped_v1::tests::full_scoped_policy_checks_all_window_counts_and_checked_arithmetic_overflow",
+        "finite_guarded_mlp_full2303_scoped_v1::tests::full_scoped_policy_compact_closed_record_and_exact_own_history_roundtrip",
+        "finite_guarded_mlp_full2303_scoped_v1::tests::full_scoped_policy_refuses_every_policy_and_authority_drift",
+        "finite_guarded_mlp_full2303_scoped_v1::tests::full_scoped_policy_refuses_scope_identity_extent_and_transcript_drift",
+        "finite_guarded_mlp_full2303_scoped_v1::tests::full_scoped_policy_requires_canonical_single_record_and_refuses_write_flush_failures"
+      ]
+    },
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_guarded_mlp_full2303_cli_v1_tests.rs",
+      "target": "lib",
+      "names": [
+        "native_guarded_mlp_full2303_cli_v1::tests::full_scoped_cli_closed_route_joins_all_own_outputs_and_compact_policy",
+        "native_guarded_mlp_full2303_cli_v1::tests::full_scoped_cli_selector_deadline_and_concrete_entry_signatures_are_distinct"
+      ]
+    },
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_guarded_mlp_full2303_scoped_v1.rs",
+      "target": "lib",
+      "names": [
+        "native_catalog::forward::guarded_mlp_decode_v1::full2303::scoped::tests::scoped_route_calls_every_layer_with_two_ordinary_first_uses_and_no_fallback",
+        "native_catalog::forward::guarded_mlp_decode_v1::full2303::scoped::tests::scoped_route_post_runtime_completion_counter_rejection_cannot_retry_or_commit",
+        "native_catalog::forward::guarded_mlp_decode_v1::full2303::scoped::tests::scoped_route_rejects_first_use_scoped_and_warm_ordinary_results_fatally",
+        "native_catalog::forward::guarded_mlp_decode_v1::full2303::scoped::tests::scoped_route_rejects_wrong_profile_causal_order_and_incomplete_close",
+        "native_catalog::forward::guarded_mlp_decode_v1::full2303::scoped::tests::scoped_route_runtime_error_and_unwind_keep_original_failure_terminal"
+      ]
+    },
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/state_roster/guarded_mlp_decode_v1/scoped_currentness_v1.rs",
+      "target": "lib",
+      "names": [
+        "state_roster::guarded_mlp_decode_v1::scoped_currentness_v1::tests::full_scoped_roster_keeps_real_slot_generations_through_all_2303_forwards",
+        "state_roster::guarded_mlp_decode_v1::scoped_currentness_v1::tests::full_scoped_roster_refuses_other_extents_stale_late_generations_and_unwind"
+      ]
+    },
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/tests/readiness_cli.rs",
+      "target": "readiness_cli",
+      "names": [
+        "full2303_scoped_executable_routes_explicit_selector_without_fallback_or_stdin_relock"
+      ]
+    }
+  ],
+  "conditional": {
+    "worker_files": 212,
+    "worker_passed": 741,
+    "worker_ignored": 4,
+    "worker_inventory": 745
+  },
+  "policy": {
+    "module": "finite_guarded_mlp_full2303_scoped_v1",
+    "schema": "FerricFull2303ScopedWarmPolicyV1",
+    "worker_flag": "--engineering-native-guarded-mlp-full2303-scoped-warm-v1",
+    "execution_profile": "Full2303ScopedWarmCurrentnessV1",
+    "max_bytes": 4096,
+    "ordinary_layers": 72,
+    "scoped_layers": 82836,
+    "scoped_window_full_discoveries": 165672,
+    "whole_route_discovery_count_claimed": false,
+    "generated_token_count": 256,
+    "history_pin_encoding": "256 ordered u32 little-endian, SHA256"
+  },
+  "interface": {
+    "bytes": 9112,
+    "sha256": "df13d6e4b6fdcd3e63f5c8bf41c0bee36a3f16a789ab082aff886222ec369155"
+  },
+  "readme": {
+    "bytes": 5335,
+    "sha256": "816af8b9e0207f87a824774bdccb71f05c518cff128de57ca7b609f5ef1a3d95"
+  },
+  "patch": {
+    "bytes": 58662,
+    "sha256": "7f4371de7fedb6c0c42a952cc9bbe44cca2b250e70e24df7bbba3652cb05cf19"
+  }
+}

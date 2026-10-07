@@ -1,0 +1,331 @@
+{
+  "schema": "ferric-full2303-scoped-warm-parent-source-v1",
+  "canonical_changed": false,
+  "compiled": false,
+  "tested": false,
+  "native_execution": false,
+  "default_routes_changed": false,
+  "default_group_policy_changed": false,
+  "temporal_equivalent_to_full": false,
+  "full2303_launch_admitted": false,
+  "performance_claim": false,
+  "numerical_acceptance": false,
+  "base": {
+    "repository": "ferric",
+    "commit": "bf5557207c65e0d455f062d050532aafcc8882ef",
+    "parent_receipt": {
+      "path": "qualification/guarded-mlp-scoped-currentness-v1/parent-cpu-attempt-v3/evidence/complete.json",
+      "bytes": 4004899,
+      "sha256": "6ca1454eb809ac2a4fa0eae74417ab1316032b00d769b85b30b5e386c0d27171"
+    },
+    "parent_sources": {
+      "path": "qualification/guarded-mlp-scoped-currentness-v1/parent-cpu-attempt-v3/evidence/sources-after.json",
+      "bytes": 510083,
+      "sha256": "4204d078441b5cd78f6f44e8172c626f6b8d6b3d21bb6a2df960702217deee4d"
+    },
+    "canonical_bodies_joined": 1263,
+    "qualified_worker_bodies": 209,
+    "selected_passes": 492,
+    "library_inventory": 961
+  },
+  "requires": {
+    "worker_source_manifest": {
+      "path": "../scoped-full2303-v1/source-manifest.json",
+      "bytes": 11870,
+      "sha256": "3f78f99a7655c9f85579b9beb2c351371a7763adbe15d7cd6d5b3670ecccde31"
+    },
+    "interface": {
+      "path": "../scoped-full2303-v1/INTERFACE.md",
+      "bytes": 9112,
+      "sha256": "df13d6e4b6fdcd3e63f5c8bf41c0bee36a3f16a789ab082aff886222ec369155"
+    },
+    "imported_policy_rows": [
+      {
+        "repository": "ferric",
+        "path": "adapters/tp-peer-finite-engineering-worker-v1/src/finite_guarded_mlp_full2303_scoped_v1.rs",
+        "before": null,
+        "after": {
+          "bytes": 7499,
+          "sha256": "42d702b47ddca928cb92ee0f02071c3958a4db969213b2d6f4f1087d84bbd3ff"
+        }
+      },
+      {
+        "repository": "ferric",
+        "path": "adapters/tp-peer-finite-engineering-worker-v1/src/finite_guarded_mlp_full2303_scoped_v1_tests.rs",
+        "before": null,
+        "after": {
+          "bytes": 6310,
+          "sha256": "1c19bc02b6f040b0b1a574af6ddf2a72c3e4f9ad7706499d33db0ae25f0f4fcb"
+        }
+      }
+    ]
+  },
+  "files": [
+    {
+      "repository": "ferric",
+      "path": "adapters/m1-engineering-execution-v1/src/bin/ferric-qwen3-guarded-mlp-full2303-engineering.rs",
+      "before": {
+        "bytes": 3245,
+        "sha256": "e0268dea8d9a9a34f6f7c936c65fd4ddb5e01a5307ebcb87feec332334270fea"
+      },
+      "after": {
+        "bytes": 5364,
+        "sha256": "91d3dc4a3d59f99bbc55915bc6813534864df178b1882fa4fc25cadf77757a34"
+      },
+      "preimage_path": "preimages/ferric/adapters/m1-engineering-execution-v1/src/bin/ferric-qwen3-guarded-mlp-full2303-engineering.rs"
+    },
+    {
+      "repository": "ferric",
+      "path": "adapters/m1-engineering-execution-v1/src/lib.rs",
+      "before": {
+        "bytes": 90752,
+        "sha256": "0d0d8d291209f5016d9d3b1a8ccbaa78ea8f45d2ba87b4734e840b2f4069300e"
+      },
+      "after": {
+        "bytes": 90953,
+        "sha256": "40a5e87ee207c957684602488aee3b9217dc8ef239be45ea1e48159a13165411"
+      },
+      "preimage_path": "preimages/ferric/adapters/m1-engineering-execution-v1/src/lib.rs"
+    },
+    {
+      "repository": "ferric",
+      "path": "adapters/m1-engineering-execution-v1/src/tp_finite_client/long/full2303.rs",
+      "before": {
+        "bytes": 20607,
+        "sha256": "bad5e5a097394cec6779063136405c50911a36b920e80fc9125513a22f3f3838"
+      },
+      "after": {
+        "bytes": 21505,
+        "sha256": "8d7e5e06b693545d9dd8bcb09c7879f05dc7bc17766ae99c99efb9f379315a1b"
+      },
+      "preimage_path": "preimages/ferric/adapters/m1-engineering-execution-v1/src/tp_finite_client/long/full2303.rs"
+    },
+    {
+      "repository": "ferric",
+      "path": "adapters/m1-engineering-execution-v1/src/tp_finite_client/long/full2303_evidence.rs",
+      "before": {
+        "bytes": 13163,
+        "sha256": "db700e1f73182080408c8235f7da8608fb20a68524ed6af451d8851a81f2b6d6"
+      },
+      "after": {
+        "bytes": 16018,
+        "sha256": "0fa15a2f83525f1e1ac52fa3eda25c5c4afce92e2d2cc0757fc441cc04f793f7"
+      },
+      "preimage_path": "preimages/ferric/adapters/m1-engineering-execution-v1/src/tp_finite_client/long/full2303_evidence.rs"
+    },
+    {
+      "repository": "ferric",
+      "path": "adapters/m1-engineering-execution-v1/src/tp_finite_client/long/full2303_scoped.rs",
+      "before": null,
+      "after": {
+        "bytes": 2938,
+        "sha256": "e288247bf1483d4b85abbd09b8776a2507e00d12f1f7ae68a8d056dfd990f20c"
+      },
+      "preimage_path": null
+    },
+    {
+      "repository": "ferric",
+      "path": "adapters/m1-engineering-execution-v1/src/tp_finite_client/long/full2303_tests.rs",
+      "before": {
+        "bytes": 14804,
+        "sha256": "a7c16d0c37d13ffd3c10e1131b1e229e54aa97448dc4fea08dd0381c1c9f3adc"
+      },
+      "after": {
+        "bytes": 24122,
+        "sha256": "e2b8db7cf748b5cad411f755ca81da676e86b0178dbaab636927a08592d5ed68"
+      },
+      "preimage_path": "preimages/ferric/adapters/m1-engineering-execution-v1/src/tp_finite_client/long/full2303_tests.rs"
+    }
+  ],
+  "unchanged_contracts": [
+    {
+      "path": "Cargo.toml",
+      "bytes": 3361,
+      "sha256": "6ffa0ddb997b73f2068d139fb29cbe32134993815afc1bdfd3f40b2e3f1c6adb"
+    },
+    {
+      "path": "Cargo.lock",
+      "bytes": 50999,
+      "sha256": "13493453a96b5f6891404021192152e6fc7ccf7351fa9c4d65abeea9ac069759"
+    },
+    {
+      "path": "adapters/m1-engineering-execution-v1/Cargo.toml",
+      "bytes": 14110,
+      "sha256": "2aeaa576d3cd649ad879db99446a971a993d08ff213e56b315f0c0dd41600edb"
+    },
+    {
+      "path": "adapters/m1-engineering-execution-v1/Cargo.lock",
+      "bytes": 51664,
+      "sha256": "ec06e964ed72dc9b97d9f5769bd867bf05398781b6e17a9f605137742d6e19ea"
+    },
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/finite_guarded_mlp_full2303_wire_v1.rs",
+      "bytes": 7526,
+      "sha256": "1d05e9ad662af455c9b77a1be2fa702ec88f3afd6ff2e7f045cef3b1d52e210b"
+    },
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/finite_guarded_mlp_long_wire_v2.rs",
+      "bytes": 27097,
+      "sha256": "b9bd7dde4d49e84599dd6a6b226118b0d3fc0f3bda936a7a4c46e69c70c26ad2"
+    },
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/guarded_mlp_long_sequence_v2.rs",
+      "bytes": 5231,
+      "sha256": "eba088151e6cd5aaa684be44652db93acb578f2a7272c95263d257f1e4de1e44"
+    },
+    {
+      "path": "adapters/m1-engineering-execution-v1/src/tp_finite_client/long/readiness.rs",
+      "bytes": 26757,
+      "sha256": "ae16b0abe97940a262d16d5eafd4136a8bcbf6112e7fe88d0e5a9cdae9f45891"
+    },
+    {
+      "path": "adapters/m1-engineering-execution-v1/src/tp_finite_client/long/readiness_host_timing.rs",
+      "bytes": 17740,
+      "sha256": "69aff692108c7f04f6e6bfbddda3c7dc6cf30ca51a7dba55e99cd823504f4eed"
+    }
+  ],
+  "new_tests": {
+    "parent_library": [
+      "full2303_scoped_parent_entry_preserves_ordinary_signature_and_closed_opt_in",
+      "full2303_scoped_parent_publication_requires_original_policy_and_healthy_own_history",
+      "full2303_scoped_parent_rechecks_original_policy_file_and_own_256_outputs",
+      "full2303_scoped_parent_refuses_missing_duplicate_malformed_and_oversized_policy",
+      "full2303_scoped_parent_refuses_rehashed_extent_counter_and_authority_drift",
+      "full2303_scoped_publication_refuses_expired_post_write_deadline",
+      "full_scoped_policy_checks_all_window_counts_and_checked_arithmetic_overflow",
+      "full_scoped_policy_compact_closed_record_and_exact_own_history_roundtrip",
+      "full_scoped_policy_refuses_every_policy_and_authority_drift",
+      "full_scoped_policy_refuses_scope_identity_extent_and_transcript_drift",
+      "full_scoped_policy_requires_canonical_single_record_and_refuses_write_flush_failures"
+    ],
+    "parent_full2303_binary": [
+      "full2303_scoped_parent_cli_has_one_closed_explicit_selector"
+    ]
+  },
+  "test_roster": [
+    {
+      "name": "full2303_scoped_parent_cli_has_one_closed_explicit_selector",
+      "path": "adapters/m1-engineering-execution-v1/src/bin/ferric-qwen3-guarded-mlp-full2303-engineering.rs",
+      "target": "parent_full2303_binary",
+      "imported": false
+    },
+    {
+      "name": "full2303_scoped_publication_refuses_expired_post_write_deadline",
+      "path": "adapters/m1-engineering-execution-v1/src/tp_finite_client/long/full2303_evidence.rs",
+      "target": "parent_library",
+      "imported": false
+    },
+    {
+      "name": "full2303_scoped_parent_entry_preserves_ordinary_signature_and_closed_opt_in",
+      "path": "adapters/m1-engineering-execution-v1/src/tp_finite_client/long/full2303_tests.rs",
+      "target": "parent_library",
+      "imported": false
+    },
+    {
+      "name": "full2303_scoped_parent_publication_requires_original_policy_and_healthy_own_history",
+      "path": "adapters/m1-engineering-execution-v1/src/tp_finite_client/long/full2303_tests.rs",
+      "target": "parent_library",
+      "imported": false
+    },
+    {
+      "name": "full2303_scoped_parent_rechecks_original_policy_file_and_own_256_outputs",
+      "path": "adapters/m1-engineering-execution-v1/src/tp_finite_client/long/full2303_tests.rs",
+      "target": "parent_library",
+      "imported": false
+    },
+    {
+      "name": "full2303_scoped_parent_refuses_missing_duplicate_malformed_and_oversized_policy",
+      "path": "adapters/m1-engineering-execution-v1/src/tp_finite_client/long/full2303_tests.rs",
+      "target": "parent_library",
+      "imported": false
+    },
+    {
+      "name": "full2303_scoped_parent_refuses_rehashed_extent_counter_and_authority_drift",
+      "path": "adapters/m1-engineering-execution-v1/src/tp_finite_client/long/full2303_tests.rs",
+      "target": "parent_library",
+      "imported": false
+    },
+    {
+      "name": "full_scoped_policy_compact_closed_record_and_exact_own_history_roundtrip",
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/finite_guarded_mlp_full2303_scoped_v1_tests.rs",
+      "target": "parent_library",
+      "imported": true
+    },
+    {
+      "name": "full_scoped_policy_refuses_every_policy_and_authority_drift",
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/finite_guarded_mlp_full2303_scoped_v1_tests.rs",
+      "target": "parent_library",
+      "imported": true
+    },
+    {
+      "name": "full_scoped_policy_refuses_scope_identity_extent_and_transcript_drift",
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/finite_guarded_mlp_full2303_scoped_v1_tests.rs",
+      "target": "parent_library",
+      "imported": true
+    },
+    {
+      "name": "full_scoped_policy_requires_canonical_single_record_and_refuses_write_flush_failures",
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/finite_guarded_mlp_full2303_scoped_v1_tests.rs",
+      "target": "parent_library",
+      "imported": true
+    },
+    {
+      "name": "full_scoped_policy_checks_all_window_counts_and_checked_arithmetic_overflow",
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/finite_guarded_mlp_full2303_scoped_v1_tests.rs",
+      "target": "parent_library",
+      "imported": true
+    }
+  ],
+  "old_test_names_preserved_in_changed_files": 25,
+  "conditional_census": {
+    "new_direct_library_tests": 6,
+    "new_imported_library_tests": 5,
+    "new_binary_tests": 1,
+    "selected_passes": 504,
+    "library_inventory": 972,
+    "phases": 66,
+    "selected_scopes": 56,
+    "products": 7,
+    "parent_source_additions": 1,
+    "qualified_worker_files": 212,
+    "canonical_ferric_files": 1267,
+    "parent_source_map_files": 1270
+  },
+  "selectors": [
+    "--observe-guarded-full2303-scoped-warm"
+  ],
+  "wrapper_schemas": [
+    "FerricFull2303ScopedWarmObservationV1"
+  ],
+  "limits": {
+    "absolute_child_deadline_ms": 3600000,
+    "dispatch_timeout_ms": 10000,
+    "stdout_bytes": 131072,
+    "policy_bytes": 4096,
+    "wire_stream_bytes": 67108864,
+    "evidence_bytes": 33554432
+  },
+  "generated_history": {
+    "prompt_tokens": 2048,
+    "forwards": 2303,
+    "generated_tokens": 256,
+    "decode_forwards": 255,
+    "retained_capture_positions": [
+      0,
+      2047,
+      2048,
+      2302
+    ],
+    "unchanged_raw_decoded_byte_gate": true
+  },
+  "artifacts": {
+    "README.md": {
+      "bytes": 7558,
+      "sha256": "cb0aa53a705a0b57565bd66f5fbeece5b90bf19723be8304ac1aca9c849056c9"
+    },
+    "integration.patch": {
+      "bytes": 25554,
+      "sha256": "193024cfc2b77f44223ea27b40f9272f7172108907e528e53244d662404eeabc"
+    }
+  }
+}

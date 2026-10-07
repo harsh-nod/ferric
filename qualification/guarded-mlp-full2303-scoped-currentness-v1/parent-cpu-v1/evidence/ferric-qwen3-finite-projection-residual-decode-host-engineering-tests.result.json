@@ -1,0 +1,53 @@
+{
+  "adopted_reaped": [],
+  "argv": [
+    "/usr/bin/prlimit",
+    "--as=12884901888",
+    "--cpu=1200",
+    "--fsize=1073741824",
+    "--core=0",
+    "--",
+    "/home/harmenon/.rustup/toolchains/1.97.1-x86_64-unknown-linux-gnu/bin/cargo",
+    "test",
+    "--offline",
+    "--locked",
+    "--jobs",
+    "2",
+    "--manifest-path",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-full2303-scoped-warm-parent-cpu-v228-v2/ferric/adapters/m1-engineering-execution-v1/Cargo.toml",
+    "--features",
+    "guarded-mlp-readiness-engineering,guarded-mlp-full2303-engineering",
+    "--bin",
+    "ferric-qwen3-finite-projection-residual-decode-host-engineering",
+    "--",
+    "--test-threads=2"
+  ],
+  "command": {
+    "bytes": 2658,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-full2303-scoped-warm-parent-cpu-v228-v2/evidence/ferric-qwen3-finite-projection-residual-decode-host-engineering-tests.command.json",
+    "sha256": "6774eb8423f27979abd301d0a9ae37a3ad3059435aae64399440a5ecd66bf4e0"
+  },
+  "elapsed_ns": 530087829,
+  "exception": null,
+  "exit_code": 0,
+  "forced_cleanup": false,
+  "label": "ferric-qwen3-finite-projection-residual-decode-host-engineering-tests",
+  "natural_exit": true,
+  "observed_signals": [],
+  "pgid": 52970,
+  "pid": 52970,
+  "process_group_absent": true,
+  "reaped": true,
+  "stderr": {
+    "bytes": 2425,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-full2303-scoped-warm-parent-cpu-v228-v2/evidence/ferric-qwen3-finite-projection-residual-decode-host-engineering-tests.stderr",
+    "sha256": "3dd714b2659a145d0300ca025f1d9a7f90c5563c6f75e92345c286f65cb07fca"
+  },
+  "stdout": {
+    "bytes": 197,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-full2303-scoped-warm-parent-cpu-v228-v2/evidence/ferric-qwen3-finite-projection-residual-decode-host-engineering-tests.stdout",
+    "sha256": "c07fcccadb129b4bc33d32176d59583956f3a071d00f256bb5934a21de5fa777"
+  },
+  "storage_failure": null,
+  "timed_out": false
+}

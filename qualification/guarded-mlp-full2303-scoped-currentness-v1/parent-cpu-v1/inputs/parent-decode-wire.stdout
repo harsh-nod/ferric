@@ -1,0 +1,15 @@
+
+running 10 tests
+test finite_tiles_decode_wire_v1::tests::tiles_admission_keeps_baseline_hashes_and_separates_cached_modes ... ok
+test finite_tiles_decode_wire_v1::tests::tiles_wire_bootstrap_exact_modes_image_and_frame_roundtrip ... ok
+test finite_tiles_decode_wire_v1::tests::tiles_wire_chain_binds_every_forward_identity_and_body_digest ... ok
+test finite_tiles_decode_wire_v1::tests::tiles_wire_close_has_no_body_or_authority_and_budget_is_cumulative ... ok
+test finite_tiles_decode_wire_v1::tests::tiles_applied_admission_is_closed_and_absent_on_legacy_responses ... ok
+test finite_tiles_decode_wire_v1::tests::tiles_wire_completion_roundtrip_and_partial_eof_refusal ... ok
+test finite_tiles_decode_wire_v1::tests::tiles_wire_control_payload_hash_finite_and_argmax_refusals ... ok
+test finite_tiles_decode_wire_v1::tests::tiles_wire_exact_all_layer_terminal_states_and_no_v1_control ... ok
+test finite_tiles_decode_wire_v1::tests::tiles_wire_mode_identity_and_own_output_trajectory_are_distinct ... ok
+test finite_tiles_decode_wire_v1::tests::tiles_wire_request_order_metadata_rotary_and_closed_schema ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 951 filtered out; finished in 0.01s
+

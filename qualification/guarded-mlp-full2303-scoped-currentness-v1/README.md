@@ -36,13 +36,23 @@ are not evidence of a completed GPU run. Ordinary routes and kernel
 arithmetic remain unchanged. Scoped topology observation is not temporally
 equivalent to full discovery at every internal checkpoint.
 
+## Parent Qualification
+
+The composed parent passed [fresh MI350 CPU qualification](parent-cpu-v1/README.md):
+66 phases, 504 selected tests across 56 scopes, 972 library inventory names
+and seven executable products. The six actual tested parent postimages are
+integrated; all 1,267 Ferric bodies and all 212 unchanged worker bodies match
+the qualified source map. The new selector is
+`--observe-guarded-full2303-scoped-warm`. Original policy bytes and the exact
+256-token history are checked before observation publication. Ordinary routes
+are unchanged. This qualification did not execute the model or GPU.
+
 ## Remaining Gates
 
 The [strict data-admission suite](../guarded-mlp-full2303-v1/scoped-warm-admission-cpu-v1/README.md)
 passed all 34 synthetic tests on MI350, preserving the 25 earlier cases and
-adding nine scoped-policy cases. The composed parent is a separate qualification
-step; a scoped comparison adapter is still required. Native launch additionally
-needs a feasible bounded execution budget
+adding nine scoped-policy cases. A scoped comparison adapter is still required.
+Native launch additionally needs a feasible bounded execution budget
 and actual larger-context coverage. Independent 256-generated-ID/decoded-byte
 agreement, sustained BF16 target-only 2,048/256 decoding, 700 tokens/s and all
 issue #42 milestones remain open.

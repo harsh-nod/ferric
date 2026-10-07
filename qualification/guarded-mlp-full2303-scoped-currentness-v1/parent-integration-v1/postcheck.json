@@ -1,0 +1,16 @@
+{
+  "all1267_ferric_bodies_equal_qualified_postimages": true,
+  "native_execution": false,
+  "numerical_acceptance": false,
+  "passed": true,
+  "performance_claim": false,
+  "runtime_changed": false,
+  "schema": "ferric-full2303-scoped-parent-integration-postcheck-v1",
+  "sources": {
+    "bytes": 508077,
+    "sha256": "50e41ee555b648ccf93aec5aae95b1b1040b936ce426d56cd620dd524106f5b9"
+  },
+  "tested_parent_postimages_copied": 6,
+  "unchanged_other_ferric_bodies": 1261,
+  "unchanged_qualified_worker_bodies": 212
+}
