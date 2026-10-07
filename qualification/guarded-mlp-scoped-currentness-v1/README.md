@@ -59,6 +59,35 @@ must preserve both original proposals and their separate repair lineage.
 | V2 coupled failed terminal | `da226a70faa41176cf98df9ab6f3fd2e9bc5ab3f06c38ee522d142cda5b54ceb` |
 | V2 coupled failed archive | `447fa3fdb95351f22977512dd88414c678a58ae83dc10d75fbce9d14b12c1f1d` |
 
+## Passing Coupled CPU Retry
+
+V3 passed all 26 supervised phases on `mi350` in 151.522 seconds. The full
+runtime suite passed 1,143 tests with eight existing ignores; the full worker
+suite passed 726 with four existing ignores. Nine focused runtime scopes, ten
+facade doctests and eight doctest-parser checks also passed. All phases exited
+naturally, with their owned processes reaped and no postcheck errors.
+
+The original result records eleven executable products and verifies that the
+real worker executable is unchanged across its CLI tests. The retained
+`cpu-attempt-v3` capsule has 207 original members, including 137 raw bodies,
+both repair histories and all 35 actual formatted source postimages. Both
+earlier failed attempts remain separate and unchanged.
+
+This qualifies the coupled CPU build and tests, not a scoped GPU execution.
+Parent qualification and a fresh same-binary native comparison remain required.
+
+The 22 runtime and 13 worker changes are integrated from those exact tested
+postimages. The [integration record](integration-v1/integration.json) and
+[read-only postcheck](integration-v1/postcheck.json) verify all 816 nonfixture
+runtime bodies, 209 worker bodies and both original Cargo identities. Reduced
+qualification workspace fixtures were not copied into the repositories.
+
+| Artifact | SHA-256 |
+| --- | --- |
+| Passing V3 terminal | `335cf93cc109390f3b7590f7dbe35ed852adca223a042894dcc18418a738ffbd` |
+| Passing V3 archive | `8c0160d5017c72e981d78f54cb66a68fcdad63e261d5c261460aa2ffb9e77b0f` |
+| Qualified worker executable | `f6a788dbb297b68a2dddc255d7faf49165de9ee8fa4eccc062bfe8b65a6d360a` |
+
 ## Synthetic Data Checker
 
 The first checker attempt recorded 69 successful tests and one fixture error:
@@ -86,8 +115,8 @@ tests, not a native execution, numerical reference or performance result.
 
 ## Remaining Gates
 
-The corrected coupled runtime/worker build, parent qualification and fresh
-same-binary Default/scoped GPU pair must pass before claiming this optimization
-runs end to end. Independent numerical acceptance, the full 2,048/256 workload
+Parent qualification and a fresh same-binary Default/scoped GPU pair must pass
+before claiming this optimization runs end to end. Independent numerical
+acceptance, the full 2,048/256 workload
 and the 700 tokens/s target remain open. No issue #42 milestone is closed by
 these results.

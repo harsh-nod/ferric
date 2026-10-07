@@ -1,0 +1,1 @@
+{"canonical_changed_by_this_command": false, "counts": {"cargo": 2, "runtime": 816, "worker": 209}, "integration_map": {"bytes": 408931, "sha256": "127179d23f6ed66f39e8b21cdb3f9d48e3d8ef6645fababd52b02ad51322a01d"}, "mode": "read-only-postcheck", "native_execution": false, "passed": true, "schema": "ferric-scoped-currentness-v3-qualified-source-integration-v1"}

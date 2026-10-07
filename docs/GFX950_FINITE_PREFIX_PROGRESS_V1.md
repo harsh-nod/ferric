@@ -20,12 +20,13 @@ now show parent timelines of 943.327/488.197 seconds, with frame-wait sums
 ordered pair with intervening host work, not a repeated controlled benchmark.
 
 The next [scoped warm-layer currentness experiment](../qualification/guarded-mlp-scoped-currentness-v1/README.md)
-passes its repaired 70-test synthetic checker on MI350. Both coupled
-runtime/worker attempts remain failed: each passed 1,143 runtime tests and ten
-selected doctests. V1 stopped at a wrong module path; V2 compiled that repair
-but found two function-pointer type errors in a new CLI test. Both original
-failed evidence capsules are retained. A test-only repair requires a fresh
-full qualification before integration or any scoped native launch.
+passes its repaired 70-test synthetic checker and complete coupled CPU
+qualification on MI350. V3 passed all 26 phases in 151.522 seconds: 1,143
+runtime tests with eight existing ignores, 726 worker tests with four existing
+ignores, nine focused runtime scopes and ten facade doctests. All 207 original
+evidence members are retained. The earlier module-path and test-type failures
+remain preserved as failures. Parent qualification and a fresh same-binary
+Default/scoped GPU pair are still required before an end-to-end claim.
 
 The [Full2303 independent reference](../qualification/guarded-mlp-full2303-v1/README.md)
 has completed two fresh-cache BF16 framework passes of the 2,048/256 workload.

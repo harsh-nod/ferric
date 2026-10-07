@@ -1,0 +1,364 @@
+{
+  "schema": "ferric-scoped-warm-readiness40-worker-selector-source-v1",
+  "canonical_changed": false,
+  "compiled": false,
+  "tested": false,
+  "native_execution": false,
+  "profile_enabled": true,
+  "old_routes_preserved": true,
+  "default_group_policy_changed": false,
+  "full2303_profile_enabled": false,
+  "performance_claim": false,
+  "numerical_acceptance": false,
+  "base": {
+    "repository": "ferric",
+    "commit": "dcceccf58f1b0f54a2bc5bb1435a52f40693af1c",
+    "worker_receipt": {
+      "path": "qualification/guarded-mlp-readiness40-shared-full-v1/worker-cpu-v1/evidence/complete.json",
+      "bytes": 1746409,
+      "sha256": "4a016b7e09b0cc6f9b4bd32c98a5713f24709bd6509564a589c29b0478f7e337"
+    },
+    "worker_sources": {
+      "path": "qualification/guarded-mlp-readiness40-shared-full-v1/worker-cpu-v1/evidence/sources-after.json",
+      "bytes": 428240,
+      "sha256": "2566997ffb73fb40812688178f4494e48c1db4c8e7522717d54b9176994fd3e1"
+    },
+    "worker_files": 205,
+    "passed": 704,
+    "ignored": 4,
+    "inventory": 708,
+    "all_worker_bodies_joined": true
+  },
+  "requires": {
+    "consumer": {
+      "path": "../scoped-worker-v1/source-manifest.json",
+      "bytes": 1677,
+      "sha256": "6b4dffbe4032e52f6dddb80f255553c420e95a3fb7af84f2b1da311daf1168bb",
+      "files": [
+        {
+          "repository": "ferric",
+          "after": {
+            "bytes": 18328,
+            "sha256": "b9637b56b7ea897bf7eb23cb40699ff5eeae1ed4d5c0f0d13f8451315a28580e"
+          },
+          "before": {
+            "bytes": 18317,
+            "sha256": "42e0cc4ad0a7fcee2a080a234168af9d34edb60331c00ece7322a1b600af3a20"
+          },
+          "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_forward.rs"
+        },
+        {
+          "repository": "ferric",
+          "after": {
+            "bytes": 15678,
+            "sha256": "fb5783a3126ff8ff56480ab55e43dcd49bf5f45274d44f83eac7978249cb07ea"
+          },
+          "before": {
+            "bytes": 13786,
+            "sha256": "b89cd45f48c2992fb05bfd5bb2a9ed9f8c615d092699d60a944d0d732ebacb27"
+          },
+          "path": "adapters/tp-peer-finite-engineering-worker-v1/src/resident_layer/guarded_mlp_decode_v1.rs"
+        },
+        {
+          "repository": "ferric",
+          "after": {
+            "bytes": 9505,
+            "sha256": "d8e3c3b3fe9d262f2d168b834a9bf13af5c4654c1fcd2c02cecc5612ca52f937"
+          },
+          "before": null,
+          "path": "adapters/tp-peer-finite-engineering-worker-v1/src/state_roster/guarded_mlp_decode_v1/scoped_currentness_v1.rs"
+        },
+        {
+          "repository": "ferric",
+          "after": {
+            "bytes": 22243,
+            "sha256": "579ed781741571167475686c1f0c3253b714f362c8f4003522bc87fc99d2daad"
+          },
+          "before": {
+            "bytes": 22136,
+            "sha256": "835d048f10929d8be05d27bf254d1cd5daabc7fba0411b3f915c817f4f9e749c"
+          },
+          "path": "adapters/tp-peer-finite-engineering-worker-v1/src/state_roster/guarded_mlp_decode_v1.rs"
+        }
+      ]
+    },
+    "runtime": {
+      "path": "../scoped-currentness-routed-v1/source-manifest.json",
+      "bytes": 13373,
+      "sha256": "437948cd334c9f95dcf77de4e3217c92f4d8e6d4cabbcf5010aff182f53ae5b2",
+      "source_qualified": false
+    }
+  },
+  "files": [
+    {
+      "repository": "ferric",
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/finite_guarded_mlp_readiness_scoped_v1.rs",
+      "before": null,
+      "after": {
+        "bytes": 6372,
+        "sha256": "c6810cfdf44d40a414ffdb027b90593b26ff77d84d657d483092503a1695142e"
+      },
+      "preimage_path": null
+    },
+    {
+      "repository": "ferric",
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/finite_guarded_mlp_readiness_scoped_v1_tests.rs",
+      "before": null,
+      "after": {
+        "bytes": 6782,
+        "sha256": "091cc582d172418f5a1a972eff53e9d1e0f62a627cec330f58a1b9a1dcca5b65"
+      },
+      "preimage_path": null
+    },
+    {
+      "repository": "ferric",
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/lib.rs",
+      "before": {
+        "bytes": 2814,
+        "sha256": "f33c09f17e719c23ec8f04b808652c18cf19c188e6042f2473260d3592b54b9a"
+      },
+      "after": {
+        "bytes": 2862,
+        "sha256": "b9be9e0fe49133dbb988bca39ba9098250e9a83b151d60527d2ec6f261e00893"
+      },
+      "preimage_path": "preimages/ferric/adapters/tp-peer-finite-engineering-worker-v1/src/lib.rs"
+    },
+    {
+      "repository": "ferric",
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/main.rs",
+      "before": {
+        "bytes": 20171,
+        "sha256": "a16431ab146458cc1b9381ce6c6f080fdf243aed625ccdfc5c41ac747e2179b9"
+      },
+      "after": {
+        "bytes": 20775,
+        "sha256": "bc46077309d57fe983f596bb083035c9518d1e33b2487e1ada5dff0d1cd53440"
+      },
+      "preimage_path": "preimages/ferric/adapters/tp-peer-finite-engineering-worker-v1/src/main.rs"
+    },
+    {
+      "repository": "ferric",
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_guarded_mlp_readiness_cli_v1.rs",
+      "before": {
+        "bytes": 14661,
+        "sha256": "a0b5785d1f42a2b3a70f9efb0b732e01c42787b46df2209391c3803de5d43faf"
+      },
+      "after": {
+        "bytes": 17521,
+        "sha256": "b3e86b2822811b19d01c246bd3dda14bd74f6ce2d29f8ee16fa4914be0abe1e1"
+      },
+      "preimage_path": "preimages/ferric/adapters/tp-peer-finite-engineering-worker-v1/src/native_guarded_mlp_readiness_cli_v1.rs"
+    },
+    {
+      "repository": "ferric",
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_guarded_mlp_readiness_cli_v1_tests.rs",
+      "before": {
+        "bytes": 14911,
+        "sha256": "798b3bc8ac061e980904eea7e0a85764ab02fed85103ced5df1a0d769211f22f"
+      },
+      "after": {
+        "bytes": 17174,
+        "sha256": "5f4e9c6f32518f8402c1441007e50f7825271b4eafad5611e8233e591eae5a17"
+      },
+      "preimage_path": "preimages/ferric/adapters/tp-peer-finite-engineering-worker-v1/src/native_guarded_mlp_readiness_cli_v1_tests.rs"
+    },
+    {
+      "repository": "ferric",
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_guarded_mlp_readiness_scoped_v1.rs",
+      "before": null,
+      "after": {
+        "bytes": 8894,
+        "sha256": "b855ed943ea8d71dab1603d893468a88a6b4a526dbae91c795ffec861af55f71"
+      },
+      "preimage_path": null
+    },
+    {
+      "repository": "ferric",
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_guarded_mlp_readiness_v1.rs",
+      "before": {
+        "bytes": 20060,
+        "sha256": "b3390e923e5ca22275afdeb809ae706b268f433671222c37a52013e43bcd889c"
+      },
+      "after": {
+        "bytes": 23749,
+        "sha256": "03f386d9cff65f1e670a53cd74fef4198dffedfe816dc98c753625dcb58fa894"
+      },
+      "preimage_path": "preimages/ferric/adapters/tp-peer-finite-engineering-worker-v1/src/native_guarded_mlp_readiness_v1.rs"
+    },
+    {
+      "repository": "ferric",
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/tests/readiness_cli.rs",
+      "before": {
+        "bytes": 8694,
+        "sha256": "7d01af4e9b88915e4bb60daa6c9b9cebb4a1562cdad8f447e761e47637a4b376"
+      },
+      "after": {
+        "bytes": 10380,
+        "sha256": "3fe0c95a3fa40825d04889c4aaf6262ceed508b63fa0de2775eee41c541cea0b"
+      },
+      "preimage_path": "preimages/ferric/adapters/tp-peer-finite-engineering-worker-v1/tests/readiness_cli.rs"
+    }
+  ],
+  "new_tests": {
+    "worker-lib": [
+      "finite_guarded_mlp_readiness_scoped_v1::tests::scoped_warm_policy_checks_every_call_count_and_unbounded_counter_overflow",
+      "finite_guarded_mlp_readiness_scoped_v1::tests::scoped_warm_policy_exact_closed_record_roundtrips",
+      "finite_guarded_mlp_readiness_scoped_v1::tests::scoped_warm_policy_refuses_boolean_integer_substitution",
+      "finite_guarded_mlp_readiness_scoped_v1::tests::scoped_warm_policy_refuses_every_policy_and_authority_drift",
+      "finite_guarded_mlp_readiness_scoped_v1::tests::scoped_warm_policy_refuses_other_profiles_and_missing_identity",
+      "finite_guarded_mlp_readiness_scoped_v1::tests::scoped_warm_policy_refuses_scope_worker_transcript_and_counts_drift",
+      "finite_guarded_mlp_readiness_scoped_v1::tests::scoped_warm_policy_requires_one_exact_bounded_record",
+      "native_catalog::forward::guarded_mlp_decode_v1::readiness::scoped::tests::scoped_route_calls_every_layer_with_two_ordinary_first_uses_and_no_fallback",
+      "native_catalog::forward::guarded_mlp_decode_v1::readiness::scoped::tests::scoped_route_post_runtime_completion_counter_rejection_cannot_retry_or_commit",
+      "native_catalog::forward::guarded_mlp_decode_v1::readiness::scoped::tests::scoped_route_rejects_first_use_scoped_and_warm_ordinary_results_fatally",
+      "native_catalog::forward::guarded_mlp_decode_v1::readiness::scoped::tests::scoped_route_rejects_wrong_profile_causal_order_and_incomplete_close",
+      "native_catalog::forward::guarded_mlp_decode_v1::readiness::scoped::tests::scoped_route_runtime_error_and_unwind_keep_original_failure_terminal",
+      "native_guarded_mlp_readiness_cli_v1::tests::scoped_warm_cli_is_explicit_and_refuses_other_profiles_and_policy_combinations",
+      "native_guarded_mlp_readiness_cli_v1::tests::scoped_warm_publication_deadline_requires_both_pre_and_post_write_to_be_inside"
+    ],
+    "worker-bin-test": [],
+    "worker-readiness-test": [
+      "scoped_warm_executable_routes_selector_without_fallback_or_stdin_relock"
+    ],
+    "worker-wire-test": []
+  },
+  "consumer_tests": {
+    "worker-lib": [
+      "state_roster::guarded_mlp_decode_v1::scoped_currentness_v1::tests::scoped_warm_last_layer_advances_to_tail_not_the_next_forward",
+      "state_roster::guarded_mlp_decode_v1::scoped_currentness_v1::tests::scoped_warm_slot_commits_only_after_closed_call_and_keeps_allocation_plateau",
+      "state_roster::guarded_mlp_decode_v1::scoped_currentness_v1::tests::scoped_warm_slot_error_leaves_no_commit_or_reusable_ledger",
+      "state_roster::guarded_mlp_decode_v1::scoped_currentness_v1::tests::scoped_warm_slot_missing_owner_roster_refuses_without_execution",
+      "state_roster::guarded_mlp_decode_v1::scoped_currentness_v1::tests::scoped_warm_slot_refuses_first_use_fresh_extent_and_paired_mode_before_dispatch",
+      "state_roster::guarded_mlp_decode_v1::scoped_currentness_v1::tests::scoped_warm_slot_refuses_stale_bank_generation_and_wrong_layer",
+      "state_roster::guarded_mlp_decode_v1::scoped_currentness_v1::tests::scoped_warm_slot_unwind_quarantines_ledger_without_advancing_generation"
+    ],
+    "worker-bin-test": [],
+    "worker-readiness-test": [],
+    "worker-wire-test": []
+  },
+  "composed_new_tests": {
+    "worker-lib": [
+      "finite_guarded_mlp_readiness_scoped_v1::tests::scoped_warm_policy_checks_every_call_count_and_unbounded_counter_overflow",
+      "finite_guarded_mlp_readiness_scoped_v1::tests::scoped_warm_policy_exact_closed_record_roundtrips",
+      "finite_guarded_mlp_readiness_scoped_v1::tests::scoped_warm_policy_refuses_boolean_integer_substitution",
+      "finite_guarded_mlp_readiness_scoped_v1::tests::scoped_warm_policy_refuses_every_policy_and_authority_drift",
+      "finite_guarded_mlp_readiness_scoped_v1::tests::scoped_warm_policy_refuses_other_profiles_and_missing_identity",
+      "finite_guarded_mlp_readiness_scoped_v1::tests::scoped_warm_policy_refuses_scope_worker_transcript_and_counts_drift",
+      "finite_guarded_mlp_readiness_scoped_v1::tests::scoped_warm_policy_requires_one_exact_bounded_record",
+      "native_catalog::forward::guarded_mlp_decode_v1::readiness::scoped::tests::scoped_route_calls_every_layer_with_two_ordinary_first_uses_and_no_fallback",
+      "native_catalog::forward::guarded_mlp_decode_v1::readiness::scoped::tests::scoped_route_post_runtime_completion_counter_rejection_cannot_retry_or_commit",
+      "native_catalog::forward::guarded_mlp_decode_v1::readiness::scoped::tests::scoped_route_rejects_first_use_scoped_and_warm_ordinary_results_fatally",
+      "native_catalog::forward::guarded_mlp_decode_v1::readiness::scoped::tests::scoped_route_rejects_wrong_profile_causal_order_and_incomplete_close",
+      "native_catalog::forward::guarded_mlp_decode_v1::readiness::scoped::tests::scoped_route_runtime_error_and_unwind_keep_original_failure_terminal",
+      "native_guarded_mlp_readiness_cli_v1::tests::scoped_warm_cli_is_explicit_and_refuses_other_profiles_and_policy_combinations",
+      "native_guarded_mlp_readiness_cli_v1::tests::scoped_warm_publication_deadline_requires_both_pre_and_post_write_to_be_inside",
+      "state_roster::guarded_mlp_decode_v1::scoped_currentness_v1::tests::scoped_warm_last_layer_advances_to_tail_not_the_next_forward",
+      "state_roster::guarded_mlp_decode_v1::scoped_currentness_v1::tests::scoped_warm_slot_commits_only_after_closed_call_and_keeps_allocation_plateau",
+      "state_roster::guarded_mlp_decode_v1::scoped_currentness_v1::tests::scoped_warm_slot_error_leaves_no_commit_or_reusable_ledger",
+      "state_roster::guarded_mlp_decode_v1::scoped_currentness_v1::tests::scoped_warm_slot_missing_owner_roster_refuses_without_execution",
+      "state_roster::guarded_mlp_decode_v1::scoped_currentness_v1::tests::scoped_warm_slot_refuses_first_use_fresh_extent_and_paired_mode_before_dispatch",
+      "state_roster::guarded_mlp_decode_v1::scoped_currentness_v1::tests::scoped_warm_slot_refuses_stale_bank_generation_and_wrong_layer",
+      "state_roster::guarded_mlp_decode_v1::scoped_currentness_v1::tests::scoped_warm_slot_unwind_quarantines_ledger_without_advancing_generation"
+    ],
+    "worker-bin-test": [],
+    "worker-readiness-test": [
+      "scoped_warm_executable_routes_selector_without_fallback_or_stdin_relock"
+    ],
+    "worker-wire-test": []
+  },
+  "conditional_composition": {
+    "worker_overlay_rows": 13,
+    "worker_added_files": 4,
+    "worker_files": 209,
+    "selector_library_tests": 14,
+    "selector_integration_tests": 1,
+    "consumer_library_tests": 7,
+    "passed": 726,
+    "ignored": 4,
+    "inventory": 730,
+    "runtime_files": 820,
+    "coupled_helpers": 4,
+    "coupled_source_files": 1033,
+    "coupled_phases": 26,
+    "coupled_elf_products": 11,
+    "not_executed": true
+  },
+  "route": {
+    "worker_flag": "--engineering-native-guarded-mlp-readiness40-position5-scoped-warm-v1",
+    "schema": "FerricReadiness40Position5ScopedWarmPolicyV1",
+    "execution_profile": "Readiness40Position5ScopedWarmCurrentnessV1",
+    "wire_profile": "Readiness40Position5",
+    "ordinary_layers": 72,
+    "scoped_layers": 1368,
+    "scoped_full_discoveries": 2736,
+    "captures": [
+      0,
+      5,
+      16,
+      39
+    ],
+    "forwards": 40,
+    "generated_tokens": 0,
+    "temporal_equivalent_to_full": false,
+    "fallback": false,
+    "shared_full": false,
+    "paired_read": false,
+    "paired_terminal": false
+  },
+  "artifacts": {
+    "integration.patch": {
+      "bytes": 45101,
+      "sha256": "326395be31826d4131260681a4255faa319baea003dc2558f846b5124851b212"
+    },
+    "README.md": {
+      "bytes": 4094,
+      "sha256": "76d4b1d1da24ae514a20cb2ecc3afcd394861ee3f25461b5f1d44b12a6deac64"
+    }
+  },
+  "source_generation": "scoped-selector-v2-owned-reader-signature-repair",
+  "predecessor_manifest": {
+    "path": "../scoped-worker-selector-v1/source-manifest.json",
+    "bytes": 15169,
+    "sha256": "cfec625935042c416a329cfb0e02c1fc8836f12820967e1d3c0257ed2d6a8235"
+  },
+  "repair": {
+    "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_guarded_mlp_readiness_cli_v1_tests.rs",
+    "before_reader": "&mut &[u8]",
+    "after_reader": "&mut io::Cursor<Vec<u8>>",
+    "changed_occurrences": 2,
+    "changed_test": "scoped_warm_publication_deadline_requires_both_pre_and_post_write_to_be_inside",
+    "other_eight_postimages_unchanged": true,
+    "production_bodies_unchanged": true,
+    "test_names_unchanged": true,
+    "original_consumer_requirement_unchanged": true
+  },
+  "observed_original_failure": {
+    "archive": {
+      "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/guarded-mlp-scoped-currentness-cpu-evidence-v228-v2.tar.gz",
+      "bytes": 2039169,
+      "sha256": "447fa3fdb95351f22977512dd88414c678a58ae83dc10d75fbce9d14b12c1f1d"
+    },
+    "terminal": {
+      "bytes": 2125565,
+      "sha256": "da226a70faa41176cf98df9ab6f3fd2e9bc5ab3f06c38ee522d142cda5b54ceb"
+    },
+    "worker-tests-build.stdout": {
+      "bytes": 141882,
+      "sha256": "6159007719ad84f15840f62826279357274c3c469d935141000555a77e3eeb7e"
+    },
+    "worker-tests-build.stderr": {
+      "bytes": 2498,
+      "sha256": "2139a0ff1672d43ca7ebcc485dbf2f5e0d9e16cdb2cf325e769ad846e5d0b0aa"
+    },
+    "phase": "worker-tests-build",
+    "exit_code": 101,
+    "natural_exit": true,
+    "reaped": true,
+    "process_group_absent": true,
+    "postcheck_errors": [],
+    "compiler_errors": [
+      "E0308",
+      "E0308"
+    ]
+  }
+}
