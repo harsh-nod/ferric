@@ -1,0 +1,129 @@
+{
+  "archive": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/matched-mlp-inputs-v1.tar.gz",
+  "files": {
+    "capture_checked.json": {
+      "bytes": 817,
+      "sha256": "5e7e77d4bacc68fdae238d9af98c9b55e1b03c571f567e5d789712e08353b6cd"
+    },
+    "controller.json": {
+      "bytes": 34531,
+      "sha256": "afa4d007153179533136ae7a5be4de860407522cb6b92ebcde12441b2eabe175"
+    },
+    "envelope.json": {
+      "bytes": 911296,
+      "sha256": "f28715ef219057de6d425f4de7f090d7f5f79e6867be4b8197bf3c80f7b8ded4"
+    },
+    "framework-pass1-down-projection.bf16": {
+      "bytes": 8192,
+      "sha256": "a02ed8d749722e1901119ba5849e6425f27d8a86a4d0da5494b6f9896df7f786"
+    },
+    "framework-pass1-gate-input.bf16": {
+      "bytes": 8192,
+      "sha256": "086a1aa7b7e1ab15671526dc4372dd88cbb33f88fdfdadc719154c7d4d784b21"
+    },
+    "framework-pass1-gate.bf16": {
+      "bytes": 24576,
+      "sha256": "a92654d72089de8e8a589934fcb970a705a95202bb7122ac8408b90877b2be0d"
+    },
+    "framework-pass1-mlp-output.bf16": {
+      "bytes": 8192,
+      "sha256": "a02ed8d749722e1901119ba5849e6425f27d8a86a4d0da5494b6f9896df7f786"
+    },
+    "framework-pass1-post-norm.bf16": {
+      "bytes": 8192,
+      "sha256": "086a1aa7b7e1ab15671526dc4372dd88cbb33f88fdfdadc719154c7d4d784b21"
+    },
+    "framework-pass1-product.bf16": {
+      "bytes": 24576,
+      "sha256": "f26e8d72ce28731ad599ea624948ed497a70f52e484b1ec8bc564d4cedbe0438"
+    },
+    "framework-pass1-silu-input.bf16": {
+      "bytes": 24576,
+      "sha256": "a92654d72089de8e8a589934fcb970a705a95202bb7122ac8408b90877b2be0d"
+    },
+    "framework-pass1-silu.bf16": {
+      "bytes": 24576,
+      "sha256": "93c85ddadb168fbeaa9fabc752a3335933656c88066b45ce9a5a60f32358401a"
+    },
+    "framework-pass1-up-input.bf16": {
+      "bytes": 8192,
+      "sha256": "086a1aa7b7e1ab15671526dc4372dd88cbb33f88fdfdadc719154c7d4d784b21"
+    },
+    "framework-pass1-up.bf16": {
+      "bytes": 24576,
+      "sha256": "6d9eb5e855f2e3d9380954204a46fc5e567f09fa9f34a9401bb1585ca96e3dfd"
+    },
+    "framework-pass2-down-projection.bf16": {
+      "bytes": 8192,
+      "sha256": "a02ed8d749722e1901119ba5849e6425f27d8a86a4d0da5494b6f9896df7f786"
+    },
+    "framework-pass2-gate-input.bf16": {
+      "bytes": 8192,
+      "sha256": "086a1aa7b7e1ab15671526dc4372dd88cbb33f88fdfdadc719154c7d4d784b21"
+    },
+    "framework-pass2-gate.bf16": {
+      "bytes": 24576,
+      "sha256": "a92654d72089de8e8a589934fcb970a705a95202bb7122ac8408b90877b2be0d"
+    },
+    "framework-pass2-mlp-output.bf16": {
+      "bytes": 8192,
+      "sha256": "a02ed8d749722e1901119ba5849e6425f27d8a86a4d0da5494b6f9896df7f786"
+    },
+    "framework-pass2-post-norm.bf16": {
+      "bytes": 8192,
+      "sha256": "086a1aa7b7e1ab15671526dc4372dd88cbb33f88fdfdadc719154c7d4d784b21"
+    },
+    "framework-pass2-product.bf16": {
+      "bytes": 24576,
+      "sha256": "f26e8d72ce28731ad599ea624948ed497a70f52e484b1ec8bc564d4cedbe0438"
+    },
+    "framework-pass2-silu-input.bf16": {
+      "bytes": 24576,
+      "sha256": "a92654d72089de8e8a589934fcb970a705a95202bb7122ac8408b90877b2be0d"
+    },
+    "framework-pass2-silu.bf16": {
+      "bytes": 24576,
+      "sha256": "93c85ddadb168fbeaa9fabc752a3335933656c88066b45ce9a5a60f32358401a"
+    },
+    "framework-pass2-up-input.bf16": {
+      "bytes": 8192,
+      "sha256": "086a1aa7b7e1ab15671526dc4372dd88cbb33f88fdfdadc719154c7d4d784b21"
+    },
+    "framework-pass2-up.bf16": {
+      "bytes": 24576,
+      "sha256": "6d9eb5e855f2e3d9380954204a46fc5e567f09fa9f34a9401bb1585ca96e3dfd"
+    },
+    "framework_aliases.json": {
+      "bytes": 35122,
+      "sha256": "f69fff0120cd8b25cf8350b246631a88e504de387b685c1b7c92f181d1d0bd3f"
+    },
+    "framework_capture.json": {
+      "bytes": 43427,
+      "sha256": "cf7512025bb469e06f87c32f788da807b4e6607297b98bb0b33c4135d1e2c78e"
+    },
+    "framework_owner.json": {
+      "bytes": 17449,
+      "sha256": "46fd9acbca798f05bc737a651e6fba54e65c78688e2d425a8287eef402065edc"
+    },
+    "native.json": {
+      "bytes": 40930,
+      "sha256": "f209351327570827a1360e61ba754ec07a1f77ab9ea8b4a921c6b9b408722a5c"
+    },
+    "numerical.json": {
+      "bytes": 176352,
+      "sha256": "0a8905b7bf2990cff03a8113b17a70c53d08fd1a80f00cfcdc2e1360d98c0b0c"
+    },
+    "observation0.json": {
+      "bytes": 606976,
+      "sha256": "1324a6056ea6c0308e912c63ed1b6a6d27e103c915c6dde11ff600d97cf9b1b0"
+    },
+    "request0.json": {
+      "bytes": 1863,
+      "sha256": "e20bf87f3c02fde34c9445c7b66c2ab161ae0fb83ea49cd951559d7941edabd5"
+    },
+    "terminal.json": {
+      "bytes": 97034,
+      "sha256": "324b40f7dcee931c856aec8b353bd35176e02570290aca5376c0075cfdf3be12"
+    }
+  }
+}

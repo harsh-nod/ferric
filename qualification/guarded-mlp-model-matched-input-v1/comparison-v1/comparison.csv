@@ -1,0 +1,7 @@
+stage,rank,original_different_words,matched_different_words,matched_max_bf16_steps,matched_relative_l2
+gate,0,233,0,0,0.0
+up,0,217,3,1,5.361790847058336e-08
+product,0,378,3,1,1.4338378875057228e-08
+gate,1,186,3,1,2.5649615980268902e-05
+up,1,240,2,1,5.390804971862574e-05
+product,1,367,5,2,1.1325215013082087e-05

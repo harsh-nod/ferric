@@ -1,7 +1,7 @@
 # Finite Qwen3 Prefix Progress
 
 This is an engineering checkpoint for [issue #42](https://github.com/harsh-nod/ferric/issues/42),
-updated on 2026-10-06 UTC. It is not a production admission, a sustained decode
+updated on 2026-10-07 UTC. It is not a production admission, a sustained decode
 benchmark, or a claim that the 700 tokens/s target has been reached. All issue #42 M0-M7
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
@@ -72,11 +72,15 @@ test-fixture failure remains retained; only that fixture and the fresh output
 namespace changed for the successful attempt. This does not replay the Down
 dot products or establish full-model numerical acceptance. The new
 [matched-input MLP diagnostic](../qualification/guarded-mlp-model-matched-input-v1/README.md)
-passes all 20 CPU regressions on MI350. Its private container environment imports
-successfully with all four historical Python implementation sources byte-exact;
-different PyTorch/Python/NumPy versions are recorded explicitly. Actual framework
-GPU replay is still pending and must reproduce the historical control before
-its matched-input differences can be interpreted.
+passes all 20 CPU regressions and four actual framework MLP calls on MI350
+gfx950. Both original-input calls reproduce all ten historical stages byte-for-byte;
+both native-input calls also repeat exactly. With identical MLP inputs,
+36,848/36,864 native gate/up/product BF16 words match the framework. Eight gate/up
+words differ by one BF16 step and eight product words by at most two. The
+[table and plot](../qualification/guarded-mlp-model-matched-input-v1/README.md#actual-gpu-result)
+isolate input propagation from arithmetic differences, not a performance gain.
+All source/input postchecks and container retirement pass. Different
+PyTorch/Python/NumPy versions remain explicit; this is not full-model acceptance.
 
 The [historical O-projection replay](../qualification/o-projection-exact-replay-v1/README.md)
 now completes on MI350 with 18 passing tests. All 8,192 captured FP32 partials

@@ -1,9 +1,11 @@
 # Matched-Input MLP Qualification
 
-The new diagnostic passes all **20 CPU regression tests on MI350**. The
-[actual receipt](cpu-v1/complete.json) records a natural, clean test exit and
-unchanged source bodies. This checkpoint does not include a new framework GPU
-run, numerical acceptance, or a performance result.
+The diagnostic now passes on **MI350 gfx950**, including all **20 CPU regression
+tests** and four actual framework MLP calls. The [CPU receipt](cpu-v1/complete.json),
+[GPU owner receipt](gpu-v1/complete.json) and
+[framework receipt](gpu-v1/output/complete.json) retain the tests, execution,
+source/input postchecks and clean container retirement. This is an isolated
+layer-zero module comparison, not full-model numerical acceptance or performance.
 
 The separate [actual-data admission](data-v1/complete.json) also passes on
 MI350: all 31 original bodies, eight native MLP slices and ten historical
@@ -30,6 +32,48 @@ The [source specification](source/README.md) and
 [source manifest](source/source-manifest.json) are retained unchanged from review.
 The 31 original input bodies are authenticated by [logical pins and physical
 aliases](source/inputs.json); original receipts are not rewritten.
+
+## Actual GPU Result
+
+Both original-input calls reproduce all ten historical framework stages
+byte-for-byte, despite the recorded environment differences. Both native-input
+calls also repeat exactly across all ten stages. The actual device reports
+`gfx950:sramecc+:xnack-`; all 40 captured stage files are retained in `gpu-v1/output/`.
+
+The native and historical MLP inputs differ at only **2/4,096 BF16 words**.
+Holding the input fixed removes most downstream differences: **36,848/36,864**
+native gate/up/product words match the framework, leaving 16 differences.
+
+| Stage | TP Rank | Different Words, Original Chain | Different Words, Identical Input | Max BF16 Steps, Identical Input | Relative L2, Identical Input |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Gate | 0 | 233 | 0 | 0 | 0 |
+| Up | 0 | 217 | 3 | 1 | 5.361791e-8 |
+| Product | 0 | 378 | 3 | 1 | 1.433838e-8 |
+| Gate | 1 | 186 | 3 | 1 | 2.564962e-5 |
+| Up | 1 | 240 | 2 | 1 | 5.390805e-5 |
+| Product | 1 | 367 | 5 | 2 | 1.132522e-5 |
+
+Each row contains 6,144 BF16 words. Relative L2 is a ratio, not a percentage.
+The [raw diagnostic](gpu-v1/output/diagnostic.json) also retains absolute errors,
+RMSE and the separate framework input-effect comparison.
+
+![Different BF16 words with original versus identical MLP inputs](comparison-v1/different-words.svg)
+
+This is a **numerical isolation experiment, not an optimization ablation**: no
+native kernel was changed or rerun. Gate/up use identical input vectors; product
+differences can include propagated gate/up error and do not isolate standalone
+SiLU. The eight gate/up differences are one BF16 step each; the eight product
+differences are at most two. Native FP32 Down partials are deliberately excluded
+from comparison with the full framework BF16 Down projection. Exact agreement
+with one framework is not itself proof of correctly rounded arithmetic.
+
+The reproducible [chart renderer](comparison-v1/render.py) consumes only the raw
+diagnostic, after checking its pinned hash. It does not run a model or measure
+latency. From this directory:
+
+```sh
+python3 -B comparison-v1/render.py
+```
 
 ## Environment
 

@@ -1,0 +1,3529 @@
+{
+  "admission": {
+    "parent": {
+      "bytes": 13673168,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-stage-capture-parent-cpu-v228-v1/target/debug/ferric-qwen3-finite-guarded-mlp-decode-engineering",
+      "sha256": "f77b78a963d20fac64d4ce0c7ffd6f0d028d2d147aa4957dc47160abb4cfe25d"
+    },
+    "parent_cpu": {
+      "bytes": 3787634,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-stage-capture-parent-cpu-v228-v1/evidence/complete.json",
+      "sha256": "f1dd4cf50c704bc1f39472df3a8299872de5490fcf073160077888629192ee91"
+    },
+    "worker": {
+      "bytes": 5785096,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-stage-capture-worker-cpu-v228-v1/target/debug/ferric-tp-peer-finite-engineering-worker-v1",
+      "sha256": "c747212d88ef54532194792bdcc2d2dbe35610abdd54d39ce2affe6ec57653e7"
+    },
+    "worker_cpu": {
+      "bytes": 1607204,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-stage-capture-worker-cpu-v228-v1/evidence/complete.json",
+      "sha256": "64855967eb15f5b5b5fadb98cbc30e8e382968099ec439090562cacc174eec47"
+    }
+  },
+  "capture_observation": {
+    "generation": 1,
+    "independent_framework_comparison": false,
+    "layer": 0,
+    "native_close_confirmed": true,
+    "numerical_acceptance": false,
+    "parts": 34,
+    "payload_bytes": 256136,
+    "payload_sha256": "d0dce4f4632717fbf1fefbcca85e2d0f83ff4728951559accd1de232c35c938f",
+    "performance_claim": false,
+    "position": 0,
+    "production_authority": false,
+    "same_run_request_and_layer_output_joined": true,
+    "sampling": "prefix-boundaries-and-post-paired-retained",
+    "schema": "ferric-guarded-mlp-model-stage-capture-checked-v1",
+    "source": {
+      "bytes": 911296,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/ar4/native/child-stderr.bin",
+      "sha256": "f28715ef219057de6d425f4de7f090d7f5f79e6867be4b8197bf3c80f7b8ded4"
+    }
+  },
+  "capture_requested": true,
+  "capture_verified": true,
+  "controller": {
+    "bytes": 34531,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/run_model_gpu.py",
+    "sha256": "afa4d007153179533136ae7a5be4de860407522cb6b92ebcde12441b2eabe175"
+  },
+  "dependencies": {
+    "parent": {
+      "all_needed_resolved": true,
+      "interpreter": {
+        "pin": {
+          "bytes": 236616,
+          "path": "/usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2",
+          "sha256": "1cd555ac46b7887edeaf3c42aac5408c8135e52f6b37870da2cf82d5fe14e829"
+        },
+        "reported_path": "/lib64/ld-linux-x86-64.so.2"
+      },
+      "libraries": {
+        "ld-linux-x86-64.so.2": {
+          "pin": {
+            "bytes": 236616,
+            "path": "/usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2",
+            "sha256": "1cd555ac46b7887edeaf3c42aac5408c8135e52f6b37870da2cf82d5fe14e829"
+          },
+          "reported_path": "/lib64/ld-linux-x86-64.so.2"
+        },
+        "libc.so.6": {
+          "pin": {
+            "bytes": 2125328,
+            "path": "/usr/lib/x86_64-linux-gnu/libc.so.6",
+            "sha256": "d8db8739a1633c972cec6a4fe0566bdcec6fd088f98723492ab0361f66238f75"
+          },
+          "reported_path": "/lib/x86_64-linux-gnu/libc.so.6"
+        },
+        "libgcc_s.so.1": {
+          "pin": {
+            "bytes": 183024,
+            "path": "/usr/lib/x86_64-linux-gnu/libgcc_s.so.1",
+            "sha256": "d93224d2b0dab4247598be683adca02f5cf00586f99c187579cd7e92058fb7cb"
+          },
+          "reported_path": "/lib/x86_64-linux-gnu/libgcc_s.so.1"
+        },
+        "libm.so.6": {
+          "pin": {
+            "bytes": 952616,
+            "path": "/usr/lib/x86_64-linux-gnu/libm.so.6",
+            "sha256": "1b87a1a50b496cfead2b0ad134c2ff536705c82608db240c7e8aa48d6c0e4217"
+          },
+          "reported_path": "/lib/x86_64-linux-gnu/libm.so.6"
+        }
+      },
+      "needed": [
+        "libgcc_s.so.1",
+        "libm.so.6",
+        "libc.so.6",
+        "ld-linux-x86-64.so.2"
+      ],
+      "virtual_objects": [
+        "linux-vdso.so.1"
+      ]
+    },
+    "worker": {
+      "all_needed_resolved": true,
+      "interpreter": {
+        "pin": {
+          "bytes": 236616,
+          "path": "/usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2",
+          "sha256": "1cd555ac46b7887edeaf3c42aac5408c8135e52f6b37870da2cf82d5fe14e829"
+        },
+        "reported_path": "/lib64/ld-linux-x86-64.so.2"
+      },
+      "libraries": {
+        "ld-linux-x86-64.so.2": {
+          "pin": {
+            "bytes": 236616,
+            "path": "/usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2",
+            "sha256": "1cd555ac46b7887edeaf3c42aac5408c8135e52f6b37870da2cf82d5fe14e829"
+          },
+          "reported_path": "/lib64/ld-linux-x86-64.so.2"
+        },
+        "libc.so.6": {
+          "pin": {
+            "bytes": 2125328,
+            "path": "/usr/lib/x86_64-linux-gnu/libc.so.6",
+            "sha256": "d8db8739a1633c972cec6a4fe0566bdcec6fd088f98723492ab0361f66238f75"
+          },
+          "reported_path": "/lib/x86_64-linux-gnu/libc.so.6"
+        },
+        "libgcc_s.so.1": {
+          "pin": {
+            "bytes": 183024,
+            "path": "/usr/lib/x86_64-linux-gnu/libgcc_s.so.1",
+            "sha256": "d93224d2b0dab4247598be683adca02f5cf00586f99c187579cd7e92058fb7cb"
+          },
+          "reported_path": "/lib/x86_64-linux-gnu/libgcc_s.so.1"
+        }
+      },
+      "needed": [
+        "libgcc_s.so.1",
+        "libc.so.6",
+        "ld-linux-x86-64.so.2"
+      ],
+      "virtual_objects": [
+        "linux-vdso.so.1"
+      ]
+    }
+  },
+  "elapsed_seconds": 411.23899908189196,
+  "errors": [],
+  "full_long_workload": false,
+  "full_model_acceptance": false,
+  "gpu_execution": true,
+  "gpu_execution_confirmed": true,
+  "gpu_execution_requested": true,
+  "independent_full_model_reference": false,
+  "limits": {
+    "address_space_bytes": 34359738368,
+    "affinity": [
+      8,
+      9
+    ],
+    "case_bytes": 67108864,
+    "case_members": 256,
+    "native_seconds": 4000,
+    "stream_bytes": 8388608,
+    "whole_seconds": 4300
+  },
+  "mode": "ar4",
+  "model_source_authenticated_by_qualified_parent": true,
+  "native_attempts": 1,
+  "native_spawn_observed": true,
+  "native_started": {
+    "bytes": 282,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/ar4/parent/started.json",
+    "sha256": "6caa2bf366f0219846f6f1417690cb577290363199c3b9d9bd5683b7ee06f4fd"
+  },
+  "numerical_acceptance": false,
+  "observation": {
+    "actual_lowest_index_argmax_checked": true,
+    "captured_bf16_words": 1213952,
+    "child_pid": 3264097,
+    "final_queue_frontiers": [
+      [
+        [
+          217,
+          215
+        ],
+        [
+          217,
+          215
+        ]
+      ],
+      [
+        [
+          437,
+          435
+        ],
+        [
+          434,
+          431
+        ]
+      ],
+      [
+        [
+          657,
+          655
+        ],
+        [
+          651,
+          647
+        ]
+      ],
+      [
+        [
+          877,
+          875
+        ],
+        [
+          868,
+          863
+        ]
+      ]
+    ],
+    "full_model_acceptance": false,
+    "guards": [
+      [
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ]
+      ],
+      [
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
+        ]
+      ],
+      [
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ]
+      ],
+      [
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        [
+          [
+            2,
+            0,
+            1,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0
+          ]
+        ]
+      ]
+    ],
+    "independent_full_model_reference": false,
+    "input_tokens": [
+      9112,
+      67,
+      25,
+      576
+    ],
+    "layer_observations": 144,
+    "local_bank_generations": [
+      1,
+      1,
+      2,
+      2
+    ],
+    "mode": "autoregressive",
+    "numerical_acceptance": false,
+    "output_tokens": [
+      67,
+      25,
+      576,
+      2701
+    ],
+    "performance_claim": false,
+    "production_authority": false,
+    "rank_guard_observations": 288,
+    "retained_parent_files": 14
+  },
+  "outer_model_shards_rehashed": false,
+  "parser_cpu": {
+    "bytes": 8872,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-announcement-cpu-v228-v1/evidence/complete.json",
+    "sha256": "170ba440cdf33cd88fc55c2ddff709624fd819d3d461d54daad239a719efdf5a"
+  },
+  "partial_gpu_execution_possible": false,
+  "passed": true,
+  "performance_claim": false,
+  "phases": [
+    {
+      "cleanup_signalled": false,
+      "command": {
+        "bytes": 871,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/ar4/parent-readelf/command.json",
+        "sha256": "bd477f34c555ea9da032246680e5ec41777bc857b4180eea7302b4b03e015acf"
+      },
+      "elapsed_seconds": 0.3145456250058487,
+      "exit_code": 0,
+      "gpu_execution_requested": false,
+      "label": "parent-readelf",
+      "lineage": [
+        {
+          "event": "owned",
+          "identity": {
+            "pgid": 3257614,
+            "pid": 3257614,
+            "ppid": 3257600,
+            "sid": 3257614,
+            "starttime": 72014075,
+            "state": "R",
+            "uid": 9661
+          },
+          "reason": "spawned-parent"
+        }
+      ],
+      "owned_groups": [
+        3257614
+      ],
+      "owned_groups_absent": true,
+      "owned_processes_reaped": true,
+      "reason": null,
+      "started": {
+        "bytes": 282,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/ar4/parent-readelf/started.json",
+        "sha256": "e46ab94cb6b9d195e3cc371b0738930edda442c79536592d18a1436437b5af4b"
+      },
+      "stderr": {
+        "bytes": 0,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/ar4/parent-readelf/stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "stdout": {
+        "bytes": 4714,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/ar4/parent-readelf/stdout",
+        "sha256": "0e500b24a5a6223dd248ec51b9f0968eacaa98b55b418351d17162bb0c2209a4"
+      }
+    },
+    {
+      "cleanup_signalled": false,
+      "command": {
+        "bytes": 847,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/ar4/parent-ldd/command.json",
+        "sha256": "aa234337dd769398a280a240a93299a35ecc62845600f4fc13d8969a6496664c"
+      },
+      "elapsed_seconds": 0.2939934319583699,
+      "exit_code": 0,
+      "gpu_execution_requested": false,
+      "label": "parent-ldd",
+      "lineage": [
+        {
+          "event": "owned",
+          "identity": {
+            "pgid": 3257647,
+            "pid": 3257647,
+            "ppid": 3257600,
+            "sid": 3257647,
+            "starttime": 72014111,
+            "state": "R",
+            "uid": 9661
+          },
+          "reason": "spawned-parent"
+        }
+      ],
+      "owned_groups": [
+        3257647
+      ],
+      "owned_groups_absent": true,
+      "owned_processes_reaped": true,
+      "reason": null,
+      "started": {
+        "bytes": 282,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/ar4/parent-ldd/started.json",
+        "sha256": "45d90b76d77a5d904fdd7d79c9a92e8d1c6331ed76ea418aee0a5567b79a43ba"
+      },
+      "stderr": {
+        "bytes": 0,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/ar4/parent-ldd/stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "stdout": {
+        "bytes": 297,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/ar4/parent-ldd/stdout",
+        "sha256": "ffbca9d6599eec01609f7ec3e9dff3452589432055ccca5cef8b9e3ecf2808dd"
+      }
+    },
+    {
+      "cleanup_signalled": false,
+      "command": {
+        "bytes": 864,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/ar4/worker-readelf/command.json",
+        "sha256": "adda12391dd299fdf6fb4699c56feccba05b97348c20ca7236a28bbe56cae2dd"
+      },
+      "elapsed_seconds": 0.29772275499999523,
+      "exit_code": 0,
+      "gpu_execution_requested": false,
+      "label": "worker-readelf",
+      "lineage": [
+        {
+          "event": "owned",
+          "identity": {
+            "pgid": 3257683,
+            "pid": 3257683,
+            "ppid": 3257600,
+            "sid": 3257683,
+            "starttime": 72014146,
+            "state": "R",
+            "uid": 9661
+          },
+          "reason": "spawned-parent"
+        }
+      ],
+      "owned_groups": [
+        3257683
+      ],
+      "owned_groups_absent": true,
+      "owned_processes_reaped": true,
+      "reason": null,
+      "started": {
+        "bytes": 282,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/ar4/worker-readelf/started.json",
+        "sha256": "d7fc4a242bd1d239a85f59b59901bf77288dd71f317305e11119f23c8f19dfd5"
+      },
+      "stderr": {
+        "bytes": 0,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/ar4/worker-readelf/stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "stdout": {
+        "bytes": 4310,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/ar4/worker-readelf/stdout",
+        "sha256": "e1d45ba1d449fc4090d0c75f5acfca568a361714e1256ba47a3ae18c5f7b9511"
+      }
+    },
+    {
+      "cleanup_signalled": false,
+      "command": {
+        "bytes": 840,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/ar4/worker-ldd/command.json",
+        "sha256": "093d43db826417b28d1c51b779fca631f9d72f95acb20d11eb3e47c21ec4fd01"
+      },
+      "elapsed_seconds": 0.2927915019681677,
+      "exit_code": 0,
+      "gpu_execution_requested": false,
+      "label": "worker-ldd",
+      "lineage": [
+        {
+          "event": "owned",
+          "identity": {
+            "pgid": 3257720,
+            "pid": 3257720,
+            "ppid": 3257600,
+            "sid": 3257720,
+            "starttime": 72014181,
+            "state": "R",
+            "uid": 9661
+          },
+          "reason": "spawned-parent"
+        }
+      ],
+      "owned_groups": [
+        3257720
+      ],
+      "owned_groups_absent": true,
+      "owned_processes_reaped": true,
+      "reason": null,
+      "started": {
+        "bytes": 282,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/ar4/worker-ldd/started.json",
+        "sha256": "b698a3dd4cbb30b37cb4fb427ddb5906232feef81cd2f59efe2f98effcda54af"
+      },
+      "stderr": {
+        "bytes": 0,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/ar4/worker-ldd/stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "stdout": {
+        "bytes": 230,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/ar4/worker-ldd/stdout",
+        "sha256": "ed7e85e68111001c41c95ce06e15817d1d38d70a5c0ffddc726ad697eb6eb32f"
+      }
+    },
+    {
+      "cleanup_signalled": false,
+      "command": {
+        "bytes": 695,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/ar4/before-0/command.json",
+        "sha256": "b0a6b5b327184f44f4f77797153cc68669d12483fd95b0cea0f4528d2e146ff2"
+      },
+      "elapsed_seconds": 0.5530847130576149,
+      "exit_code": 0,
+      "gpu_execution_requested": false,
+      "label": "before-0",
+      "lineage": [
+        {
+          "event": "owned",
+          "identity": {
+            "pgid": 3257746,
+            "pid": 3257746,
+            "ppid": 3257600,
+            "sid": 3257746,
+            "starttime": 72014215,
+            "state": "R",
+            "uid": 9661
+          },
+          "reason": "spawned-parent"
+        }
+      ],
+      "owned_groups": [
+        3257746
+      ],
+      "owned_groups_absent": true,
+      "owned_processes_reaped": true,
+      "reason": null,
+      "started": {
+        "bytes": 282,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/ar4/before-0/started.json",
+        "sha256": "dd7c37669d3749caa07939440a2706afa9a2ec561765badd6a362533f7e9b2ad"
+      },
+      "stderr": {
+        "bytes": 0,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/ar4/before-0/stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "stdout": {
+        "bytes": 1275,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/ar4/before-0/stdout",
+        "sha256": "e70f2d7235dbd50455554f2a277613971e2fcdf117ec1bdcdf47644bcf49c422"
+      }
+    },
+    {
+      "cleanup_signalled": false,
+      "command": {
+        "bytes": 695,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/ar4/before-1/command.json",
+        "sha256": "b0a6b5b327184f44f4f77797153cc68669d12483fd95b0cea0f4528d2e146ff2"
+      },
+      "elapsed_seconds": 0.5493367799790576,
+      "exit_code": 0,
+      "gpu_execution_requested": false,
+      "label": "before-1",
+      "lineage": [
+        {
+          "event": "owned",
+          "identity": {
+            "pgid": 3257819,
+            "pid": 3257819,
+            "ppid": 3257600,
+            "sid": 3257819,
+            "starttime": 72014297,
+            "state": "R",
+            "uid": 9661
+          },
+          "reason": "spawned-parent"
+        }
+      ],
+      "owned_groups": [
+        3257819
+      ],
+      "owned_groups_absent": true,
+      "owned_processes_reaped": true,
+      "reason": null,
+      "started": {
+        "bytes": 282,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/ar4/before-1/started.json",
+        "sha256": "ba8cff07396d3f36c10e00e6a243ed8ad11cc3f87aa2c6ea18631d7fb2753e84"
+      },
+      "stderr": {
+        "bytes": 0,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/ar4/before-1/stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "stdout": {
+        "bytes": 1275,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/ar4/before-1/stdout",
+        "sha256": "e70f2d7235dbd50455554f2a277613971e2fcdf117ec1bdcdf47644bcf49c422"
+      }
+    },
+    {
+      "cleanup_signalled": false,
+      "command": {
+        "bytes": 695,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/ar4/before-2/command.json",
+        "sha256": "b0a6b5b327184f44f4f77797153cc68669d12483fd95b0cea0f4528d2e146ff2"
+      },
+      "elapsed_seconds": 0.5541021329117939,
+      "exit_code": 0,
+      "gpu_execution_requested": false,
+      "label": "before-2",
+      "lineage": [
+        {
+          "event": "owned",
+          "identity": {
+            "pgid": 3257885,
+            "pid": 3257885,
+            "ppid": 3257600,
+            "sid": 3257885,
+            "starttime": 72014377,
+            "state": "R",
+            "uid": 9661
+          },
+          "reason": "spawned-parent"
+        }
+      ],
+      "owned_groups": [
+        3257885
+      ],
+      "owned_groups_absent": true,
+      "owned_processes_reaped": true,
+      "reason": null,
+      "started": {
+        "bytes": 282,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/ar4/before-2/started.json",
+        "sha256": "bd9bf38d00b5a6a2bbc92baad5c5c56a92afcf90c3d0a8f0f662b512eea79da7"
+      },
+      "stderr": {
+        "bytes": 0,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/ar4/before-2/stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "stdout": {
+        "bytes": 1275,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/ar4/before-2/stdout",
+        "sha256": "e70f2d7235dbd50455554f2a277613971e2fcdf117ec1bdcdf47644bcf49c422"
+      }
+    },
+    {
+      "cleanup_signalled": false,
+      "command": {
+        "bytes": 1067,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/ar4/parent/command.json",
+        "sha256": "cf245032d335959f42adc4394c20ae9252aea1a33c43d11d6e3190dc090cff71"
+      },
+      "elapsed_seconds": 405.0675248869229,
+      "exit_code": 0,
+      "gpu_execution_requested": true,
+      "label": "parent",
+      "lineage": [
+        {
+          "event": "owned",
+          "identity": {
+            "pgid": 3257976,
+            "pid": 3257976,
+            "ppid": 3257600,
+            "sid": 3257976,
+            "starttime": 72014437,
+            "state": "R",
+            "uid": 9661
+          },
+          "reason": "spawned-parent"
+        },
+        {
+          "event": "owned",
+          "identity": {
+            "pgid": 3264097,
+            "pid": 3264097,
+            "ppid": 3257976,
+            "sid": 3257976,
+            "starttime": 72023550,
+            "state": "S",
+            "uid": 9661
+          },
+          "reason": "ancestry"
+        }
+      ],
+      "owned_groups": [
+        3257976,
+        3264097
+      ],
+      "owned_groups_absent": true,
+      "owned_processes_reaped": true,
+      "reason": null,
+      "started": {
+        "bytes": 282,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/ar4/parent/started.json",
+        "sha256": "6caa2bf366f0219846f6f1417690cb577290363199c3b9d9bd5683b7ee06f4fd"
+      },
+      "stderr": {
+        "bytes": 226,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/ar4/parent/stderr",
+        "sha256": "af2e2faae61e463b68b879ae3919c64aeace75245d01d4e794084a562cbbd5c8"
+      },
+      "stdout": {
+        "bytes": 40930,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/ar4/parent/stdout",
+        "sha256": "f209351327570827a1360e61ba754ec07a1f77ab9ea8b4a921c6b9b408722a5c"
+      }
+    },
+    {
+      "cleanup_signalled": false,
+      "command": {
+        "bytes": 695,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/ar4/after-0/command.json",
+        "sha256": "b0a6b5b327184f44f4f77797153cc68669d12483fd95b0cea0f4528d2e146ff2"
+      },
+      "elapsed_seconds": 0.5618139390135184,
+      "exit_code": 0,
+      "gpu_execution_requested": false,
+      "label": "after-0",
+      "lineage": [
+        {
+          "event": "owned",
+          "identity": {
+            "pgid": 3284023,
+            "pid": 3284023,
+            "ppid": 3257600,
+            "sid": 3284023,
+            "starttime": 72054962,
+            "state": "R",
+            "uid": 9661
+          },
+          "reason": "spawned-parent"
+        }
+      ],
+      "owned_groups": [
+        3284023
+      ],
+      "owned_groups_absent": true,
+      "owned_processes_reaped": true,
+      "reason": null,
+      "started": {
+        "bytes": 282,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/ar4/after-0/started.json",
+        "sha256": "29a3d63ae20e2f849bed273262a74f8aa1d53e8bebfe18ff250672d71f81655e"
+      },
+      "stderr": {
+        "bytes": 0,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/ar4/after-0/stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "stdout": {
+        "bytes": 1275,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/ar4/after-0/stdout",
+        "sha256": "e70f2d7235dbd50455554f2a277613971e2fcdf117ec1bdcdf47644bcf49c422"
+      }
+    },
+    {
+      "cleanup_signalled": false,
+      "command": {
+        "bytes": 695,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/ar4/after-1/command.json",
+        "sha256": "b0a6b5b327184f44f4f77797153cc68669d12483fd95b0cea0f4528d2e146ff2"
+      },
+      "elapsed_seconds": 0.5628099889727309,
+      "exit_code": 0,
+      "gpu_execution_requested": false,
+      "label": "after-1",
+      "lineage": [
+        {
+          "event": "owned",
+          "identity": {
+            "pgid": 3285385,
+            "pid": 3285385,
+            "ppid": 3257600,
+            "sid": 3285385,
+            "starttime": 72055043,
+            "state": "R",
+            "uid": 9661
+          },
+          "reason": "spawned-parent"
+        }
+      ],
+      "owned_groups": [
+        3285385
+      ],
+      "owned_groups_absent": true,
+      "owned_processes_reaped": true,
+      "reason": null,
+      "started": {
+        "bytes": 282,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/ar4/after-1/started.json",
+        "sha256": "2d26f07700f938e2ca4d91aba9f8f0ede7fd5d65b8dd69f6425de75db7f4d095"
+      },
+      "stderr": {
+        "bytes": 0,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/ar4/after-1/stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "stdout": {
+        "bytes": 1275,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/ar4/after-1/stdout",
+        "sha256": "e70f2d7235dbd50455554f2a277613971e2fcdf117ec1bdcdf47644bcf49c422"
+      }
+    },
+    {
+      "cleanup_signalled": false,
+      "command": {
+        "bytes": 695,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/ar4/after-2/command.json",
+        "sha256": "b0a6b5b327184f44f4f77797153cc68669d12483fd95b0cea0f4528d2e146ff2"
+      },
+      "elapsed_seconds": 0.5503772310912609,
+      "exit_code": 0,
+      "gpu_execution_requested": false,
+      "label": "after-2",
+      "lineage": [
+        {
+          "event": "owned",
+          "identity": {
+            "pgid": 3285828,
+            "pid": 3285828,
+            "ppid": 3257600,
+            "sid": 3285828,
+            "starttime": 72055125,
+            "state": "R",
+            "uid": 9661
+          },
+          "reason": "spawned-parent"
+        }
+      ],
+      "owned_groups": [
+        3285828
+      ],
+      "owned_groups_absent": true,
+      "owned_processes_reaped": true,
+      "reason": null,
+      "started": {
+        "bytes": 282,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/ar4/after-2/started.json",
+        "sha256": "198441163adadd585afb80a49aec00135b7d300c3ced0511e8bbe09fa72f6437"
+      },
+      "stderr": {
+        "bytes": 0,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/ar4/after-2/stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "stdout": {
+        "bytes": 1275,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/ar4/after-2/stdout",
+        "sha256": "e70f2d7235dbd50455554f2a277613971e2fcdf117ec1bdcdf47644bcf49c422"
+      }
+    }
+  ],
+  "plan": {
+    "bytes": 1557,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/ar4-input.json",
+    "sha256": "43123ddac94fed45726e4b977b43ec53b038b79bf11b23bc973c9357e8d0fff1"
+  },
+  "platform": {
+    "boot": "2dbbbc5a-d8b7-46ac-bd1f-236e5847e24a",
+    "devices": [
+      {
+        "gpu_id": 39903,
+        "node": 2,
+        "properties": {
+          "array_count": "32",
+          "caches_count": "552",
+          "capability": "2889327232",
+          "capability2": "1",
+          "cpu_core_id_base": "0",
+          "cpu_cores_count": "0",
+          "cu_per_simd_array": "9",
+          "debug_prop": "1494",
+          "device_id": "30112",
+          "domain": "0",
+          "drm_render_minor": "128",
+          "fw_version": "41",
+          "gds_size_in_kb": "0",
+          "gfx_target_version": "90500",
+          "hive_id": "4409598424993686390",
+          "io_links_count": "8",
+          "lds_size_in_kb": "160",
+          "local_mem_size": "0",
+          "location_id": "1280",
+          "max_engine_clk_ccompute": "3300",
+          "max_engine_clk_fcompute": "2200",
+          "max_slots_scratch_cu": "32",
+          "max_waves_per_simd": "8",
+          "mem_banks_count": "1",
+          "num_cp_queues": "24",
+          "num_gws": "64",
+          "num_sdma_engines": "2",
+          "num_sdma_queues_per_engine": "8",
+          "num_sdma_xgmi_engines": "14",
+          "num_xcc": "8",
+          "p2p_links_count": "1",
+          "sdma_fw_version": "12",
+          "simd_arrays_per_engine": "1",
+          "simd_count": "1024",
+          "simd_id_base": "2147487744",
+          "simd_per_cu": "4",
+          "unique_id": "16366993098680759275",
+          "vendor_id": "4098",
+          "wave_front_size": "64"
+        }
+      },
+      {
+        "gpu_id": 22482,
+        "node": 3,
+        "properties": {
+          "array_count": "32",
+          "caches_count": "546",
+          "capability": "2889327232",
+          "capability2": "1",
+          "cpu_core_id_base": "0",
+          "cpu_cores_count": "0",
+          "cu_per_simd_array": "9",
+          "debug_prop": "1494",
+          "device_id": "30112",
+          "domain": "0",
+          "drm_render_minor": "136",
+          "fw_version": "41",
+          "gds_size_in_kb": "0",
+          "gfx_target_version": "90500",
+          "hive_id": "4409598424993686390",
+          "io_links_count": "8",
+          "lds_size_in_kb": "160",
+          "local_mem_size": "0",
+          "location_id": "5376",
+          "max_engine_clk_ccompute": "3300",
+          "max_engine_clk_fcompute": "2200",
+          "max_slots_scratch_cu": "32",
+          "max_waves_per_simd": "8",
+          "mem_banks_count": "1",
+          "num_cp_queues": "24",
+          "num_gws": "64",
+          "num_sdma_engines": "2",
+          "num_sdma_queues_per_engine": "8",
+          "num_sdma_xgmi_engines": "14",
+          "num_xcc": "8",
+          "p2p_links_count": "1",
+          "sdma_fw_version": "12",
+          "simd_arrays_per_engine": "1",
+          "simd_count": "1024",
+          "simd_id_base": "2147487780",
+          "simd_per_cu": "4",
+          "unique_id": "10838076764495710945",
+          "vendor_id": "4098",
+          "wave_front_size": "64"
+        }
+      }
+    ],
+    "host": "smci350-rck-g03-b19-03"
+  },
+  "production_authority": false,
+  "raw": {
+    "after-0-topology.json": {
+      "bytes": 2872,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/ar4/after-0-topology.json",
+      "sha256": "63b2899b5d3d93df727ae82f0d98a750db686d30ac4a9844bd4f1be2ed7dd632"
+    },
+    "after-0/command.json": {
+      "bytes": 695,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/ar4/after-0/command.json",
+      "sha256": "b0a6b5b327184f44f4f77797153cc68669d12483fd95b0cea0f4528d2e146ff2"
+    },
+    "after-0/result.json": {
+      "bytes": 1630,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/ar4/after-0/result.json",
+      "sha256": "1977c74e3be51bb66cecde0508f96cfffe8e1248209590bb82f6ac3821012258"
+    },
+    "after-0/started.json": {
+      "bytes": 282,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/ar4/after-0/started.json",
+      "sha256": "29a3d63ae20e2f849bed273262a74f8aa1d53e8bebfe18ff250672d71f81655e"
+    },
+    "after-0/stderr": {
+      "bytes": 0,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/ar4/after-0/stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "after-0/stdout": {
+      "bytes": 1275,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/ar4/after-0/stdout",
+      "sha256": "e70f2d7235dbd50455554f2a277613971e2fcdf117ec1bdcdf47644bcf49c422"
+    },
+    "after-1-topology.json": {
+      "bytes": 2872,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/ar4/after-1-topology.json",
+      "sha256": "63b2899b5d3d93df727ae82f0d98a750db686d30ac4a9844bd4f1be2ed7dd632"
+    },
+    "after-1/command.json": {
+      "bytes": 695,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/ar4/after-1/command.json",
+      "sha256": "b0a6b5b327184f44f4f77797153cc68669d12483fd95b0cea0f4528d2e146ff2"
+    },
+    "after-1/result.json": {
+      "bytes": 1630,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/ar4/after-1/result.json",
+      "sha256": "c4ffec6df8c4dd4bae85c0ee7022f5a38bfff5dfa3ce2fcd0a23a90391beadf7"
+    },
+    "after-1/started.json": {
+      "bytes": 282,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/ar4/after-1/started.json",
+      "sha256": "2d26f07700f938e2ca4d91aba9f8f0ede7fd5d65b8dd69f6425de75db7f4d095"
+    },
+    "after-1/stderr": {
+      "bytes": 0,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/ar4/after-1/stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "after-1/stdout": {
+      "bytes": 1275,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/ar4/after-1/stdout",
+      "sha256": "e70f2d7235dbd50455554f2a277613971e2fcdf117ec1bdcdf47644bcf49c422"
+    },
+    "after-2-topology.json": {
+      "bytes": 2872,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/ar4/after-2-topology.json",
+      "sha256": "63b2899b5d3d93df727ae82f0d98a750db686d30ac4a9844bd4f1be2ed7dd632"
+    },
+    "after-2/command.json": {
+      "bytes": 695,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/ar4/after-2/command.json",
+      "sha256": "b0a6b5b327184f44f4f77797153cc68669d12483fd95b0cea0f4528d2e146ff2"
+    },
+    "after-2/result.json": {
+      "bytes": 1630,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/ar4/after-2/result.json",
+      "sha256": "cd0b6e2b8e47aced5afb4640eb96a334793dbd13becc2fd128be3a00da749c17"
+    },
+    "after-2/started.json": {
+      "bytes": 282,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/ar4/after-2/started.json",
+      "sha256": "198441163adadd585afb80a49aec00135b7d300c3ced0511e8bbe09fa72f6437"
+    },
+    "after-2/stderr": {
+      "bytes": 0,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/ar4/after-2/stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "after-2/stdout": {
+      "bytes": 1275,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/ar4/after-2/stdout",
+      "sha256": "e70f2d7235dbd50455554f2a277613971e2fcdf117ec1bdcdf47644bcf49c422"
+    },
+    "before-0-topology.json": {
+      "bytes": 2872,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/ar4/before-0-topology.json",
+      "sha256": "63b2899b5d3d93df727ae82f0d98a750db686d30ac4a9844bd4f1be2ed7dd632"
+    },
+    "before-0/command.json": {
+      "bytes": 695,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/ar4/before-0/command.json",
+      "sha256": "b0a6b5b327184f44f4f77797153cc68669d12483fd95b0cea0f4528d2e146ff2"
+    },
+    "before-0/result.json": {
+      "bytes": 1634,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/ar4/before-0/result.json",
+      "sha256": "05f41e7a5e7d32366b951dde71aa91b9eb022df8cbe0da41afe925a910ab3d66"
+    },
+    "before-0/started.json": {
+      "bytes": 282,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/ar4/before-0/started.json",
+      "sha256": "dd7c37669d3749caa07939440a2706afa9a2ec561765badd6a362533f7e9b2ad"
+    },
+    "before-0/stderr": {
+      "bytes": 0,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/ar4/before-0/stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "before-0/stdout": {
+      "bytes": 1275,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/ar4/before-0/stdout",
+      "sha256": "e70f2d7235dbd50455554f2a277613971e2fcdf117ec1bdcdf47644bcf49c422"
+    },
+    "before-1-topology.json": {
+      "bytes": 2872,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/ar4/before-1-topology.json",
+      "sha256": "63b2899b5d3d93df727ae82f0d98a750db686d30ac4a9844bd4f1be2ed7dd632"
+    },
+    "before-1/command.json": {
+      "bytes": 695,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/ar4/before-1/command.json",
+      "sha256": "b0a6b5b327184f44f4f77797153cc68669d12483fd95b0cea0f4528d2e146ff2"
+    },
+    "before-1/result.json": {
+      "bytes": 1634,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/ar4/before-1/result.json",
+      "sha256": "414e526ff6e19877324b8c1830c168d982fcdae41baed33e255e89519fdfc27d"
+    },
+    "before-1/started.json": {
+      "bytes": 282,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/ar4/before-1/started.json",
+      "sha256": "ba8cff07396d3f36c10e00e6a243ed8ad11cc3f87aa2c6ea18631d7fb2753e84"
+    },
+    "before-1/stderr": {
+      "bytes": 0,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/ar4/before-1/stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "before-1/stdout": {
+      "bytes": 1275,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/ar4/before-1/stdout",
+      "sha256": "e70f2d7235dbd50455554f2a277613971e2fcdf117ec1bdcdf47644bcf49c422"
+    },
+    "before-2-topology.json": {
+      "bytes": 2872,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/ar4/before-2-topology.json",
+      "sha256": "63b2899b5d3d93df727ae82f0d98a750db686d30ac4a9844bd4f1be2ed7dd632"
+    },
+    "before-2/command.json": {
+      "bytes": 695,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/ar4/before-2/command.json",
+      "sha256": "b0a6b5b327184f44f4f77797153cc68669d12483fd95b0cea0f4528d2e146ff2"
+    },
+    "before-2/result.json": {
+      "bytes": 1634,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/ar4/before-2/result.json",
+      "sha256": "54ef46a77ebd2346c73fb6defba033a5ff24ac1407ff7e46daaaf417a016f84b"
+    },
+    "before-2/started.json": {
+      "bytes": 282,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/ar4/before-2/started.json",
+      "sha256": "bd9bf38d00b5a6a2bbc92baad5c5c56a92afcf90c3d0a8f0f662b512eea79da7"
+    },
+    "before-2/stderr": {
+      "bytes": 0,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/ar4/before-2/stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "before-2/stdout": {
+      "bytes": 1275,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/ar4/before-2/stdout",
+      "sha256": "e70f2d7235dbd50455554f2a277613971e2fcdf117ec1bdcdf47644bcf49c422"
+    },
+    "capture-observation.json": {
+      "bytes": 817,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/ar4/capture-observation.json",
+      "sha256": "5e7e77d4bacc68fdae238d9af98c9b55e1b03c571f567e5d789712e08353b6cd"
+    },
+    "initial-topology.json": {
+      "bytes": 2872,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/ar4/initial-topology.json",
+      "sha256": "63b2899b5d3d93df727ae82f0d98a750db686d30ac4a9844bd4f1be2ed7dd632"
+    },
+    "native/child-stderr.bin": {
+      "bytes": 911296,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/ar4/native/child-stderr.bin",
+      "sha256": "f28715ef219057de6d425f4de7f090d7f5f79e6867be4b8197bf3c80f7b8ded4"
+    },
+    "native/complete.json": {
+      "bytes": 40930,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/ar4/native/complete.json",
+      "sha256": "f209351327570827a1360e61ba754ec07a1f77ab9ea8b4a921c6b9b408722a5c"
+    },
+    "native/control-0.bin": {
+      "bytes": 242824,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/ar4/native/control-0.bin",
+      "sha256": "2834770ace90a94aab9aa5f79ec4170ce24ded30535b4d7d63747a0ae794f6b3"
+    },
+    "native/control-1.bin": {
+      "bytes": 242824,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/ar4/native/control-1.bin",
+      "sha256": "20d108d9468dfa15f5accfef952392bcf6ae9f82981825152d7b8ed2dec96de7"
+    },
+    "native/control-2.bin": {
+      "bytes": 242824,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/ar4/native/control-2.bin",
+      "sha256": "6f839506718d72040bcd9cb7e10f302ffaa1900a8375276b30190e703f2b62e8"
+    },
+    "native/control-3.bin": {
+      "bytes": 242824,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/ar4/native/control-3.bin",
+      "sha256": "8929fd1ceb1184d8adeb5264de327211bd61a26208326db8f555e422d793b68c"
+    },
+    "native/observation-0.bin": {
+      "bytes": 606976,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/ar4/native/observation-0.bin",
+      "sha256": "1324a6056ea6c0308e912c63ed1b6a6d27e103c915c6dde11ff600d97cf9b1b0"
+    },
+    "native/observation-1.bin": {
+      "bytes": 606976,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/ar4/native/observation-1.bin",
+      "sha256": "61f56a5b97e4f35922bf7733a74b36b8dec9544a15d66980757bf9ef5aefc6e4"
+    },
+    "native/observation-2.bin": {
+      "bytes": 606976,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/ar4/native/observation-2.bin",
+      "sha256": "87d3799724693386909e97fd3ea31fab065de021824dea276218614f2a0fc85a"
+    },
+    "native/observation-3.bin": {
+      "bytes": 606976,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/ar4/native/observation-3.bin",
+      "sha256": "7c40126b76a7eeb7a64ef67950636359ba951cafcdce2ddc42636388de3c5588"
+    },
+    "native/request-0.json": {
+      "bytes": 1863,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/ar4/native/request-0.json",
+      "sha256": "e20bf87f3c02fde34c9445c7b66c2ab161ae0fb83ea49cd951559d7941edabd5"
+    },
+    "native/request-1.json": {
+      "bytes": 2398,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/ar4/native/request-1.json",
+      "sha256": "3add72bca01d30736cdd37c0894de8853989e8670a1b92c9b006ffb1fee88147"
+    },
+    "native/request-2.json": {
+      "bytes": 2402,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/ar4/native/request-2.json",
+      "sha256": "93420269edd0e93506bcd69d1cf19a5e035f199440024f946220ee59904f15d0"
+    },
+    "native/request-3.json": {
+      "bytes": 2403,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/ar4/native/request-3.json",
+      "sha256": "3579d6857562c087067e236eef66d9d8a3d0c232cf931c23f20a7ed509010106"
+    },
+    "observation.json": {
+      "bytes": 24108,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/ar4/observation.json",
+      "sha256": "2c40018478a1c197d44eedecd91579fdef092789fc1546715be6ffd50bc37c0d"
+    },
+    "parent-ldd/command.json": {
+      "bytes": 847,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/ar4/parent-ldd/command.json",
+      "sha256": "aa234337dd769398a280a240a93299a35ecc62845600f4fc13d8969a6496664c"
+    },
+    "parent-ldd/result.json": {
+      "bytes": 1641,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/ar4/parent-ldd/result.json",
+      "sha256": "4474e28fcc32c06f836c4c6efaef784723d2f51999b05a8bd497eafcea1479e4"
+    },
+    "parent-ldd/started.json": {
+      "bytes": 282,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/ar4/parent-ldd/started.json",
+      "sha256": "45d90b76d77a5d904fdd7d79c9a92e8d1c6331ed76ea418aee0a5567b79a43ba"
+    },
+    "parent-ldd/stderr": {
+      "bytes": 0,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/ar4/parent-ldd/stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "parent-ldd/stdout": {
+      "bytes": 297,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/ar4/parent-ldd/stdout",
+      "sha256": "ffbca9d6599eec01609f7ec3e9dff3452589432055ccca5cef8b9e3ecf2808dd"
+    },
+    "parent-readelf/command.json": {
+      "bytes": 871,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/ar4/parent-readelf/command.json",
+      "sha256": "bd477f34c555ea9da032246680e5ec41777bc857b4180eea7302b4b03e015acf"
+    },
+    "parent-readelf/result.json": {
+      "bytes": 1658,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/ar4/parent-readelf/result.json",
+      "sha256": "09c554dd9c1f6d96311c37e33b73f01c0e4b25ae232ee82561c875b097d64563"
+    },
+    "parent-readelf/started.json": {
+      "bytes": 282,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/ar4/parent-readelf/started.json",
+      "sha256": "e46ab94cb6b9d195e3cc371b0738930edda442c79536592d18a1436437b5af4b"
+    },
+    "parent-readelf/stderr": {
+      "bytes": 0,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/ar4/parent-readelf/stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "parent-readelf/stdout": {
+      "bytes": 4714,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/ar4/parent-readelf/stdout",
+      "sha256": "0e500b24a5a6223dd248ec51b9f0968eacaa98b55b418351d17162bb0c2209a4"
+    },
+    "parent/command.json": {
+      "bytes": 1067,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/ar4/parent/command.json",
+      "sha256": "cf245032d335959f42adc4394c20ae9252aea1a33c43d11d6e3190dc090cff71"
+    },
+    "parent/result.json": {
+      "bytes": 1905,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/ar4/parent/result.json",
+      "sha256": "7c5c91fa75b020dbd9aad8f897e2abdd2a4be357b5c3018e440483ed7f8c8ec8"
+    },
+    "parent/started.json": {
+      "bytes": 282,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/ar4/parent/started.json",
+      "sha256": "6caa2bf366f0219846f6f1417690cb577290363199c3b9d9bd5683b7ee06f4fd"
+    },
+    "parent/stderr": {
+      "bytes": 226,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/ar4/parent/stderr",
+      "sha256": "af2e2faae61e463b68b879ae3919c64aeace75245d01d4e794084a562cbbd5c8"
+    },
+    "parent/stdout": {
+      "bytes": 40930,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/ar4/parent/stdout",
+      "sha256": "f209351327570827a1360e61ba754ec07a1f77ab9ea8b4a921c6b9b408722a5c"
+    },
+    "worker-ldd/command.json": {
+      "bytes": 840,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/ar4/worker-ldd/command.json",
+      "sha256": "093d43db826417b28d1c51b779fca631f9d72f95acb20d11eb3e47c21ec4fd01"
+    },
+    "worker-ldd/result.json": {
+      "bytes": 1641,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/ar4/worker-ldd/result.json",
+      "sha256": "f8258f0ab740a7808635202945d42f51bf7ed4596c887b3c5c9e6ad5e7a11165"
+    },
+    "worker-ldd/started.json": {
+      "bytes": 282,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/ar4/worker-ldd/started.json",
+      "sha256": "b698a3dd4cbb30b37cb4fb427ddb5906232feef81cd2f59efe2f98effcda54af"
+    },
+    "worker-ldd/stderr": {
+      "bytes": 0,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/ar4/worker-ldd/stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "worker-ldd/stdout": {
+      "bytes": 230,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/ar4/worker-ldd/stdout",
+      "sha256": "ed7e85e68111001c41c95ce06e15817d1d38d70a5c0ffddc726ad697eb6eb32f"
+    },
+    "worker-readelf/command.json": {
+      "bytes": 864,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/ar4/worker-readelf/command.json",
+      "sha256": "adda12391dd299fdf6fb4699c56feccba05b97348c20ca7236a28bbe56cae2dd"
+    },
+    "worker-readelf/result.json": {
+      "bytes": 1659,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/ar4/worker-readelf/result.json",
+      "sha256": "9d468f8d72304b99e222115772ee1340f4ad2951ba99b998bded6d5864d9208a"
+    },
+    "worker-readelf/started.json": {
+      "bytes": 282,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/ar4/worker-readelf/started.json",
+      "sha256": "d7fc4a242bd1d239a85f59b59901bf77288dd71f317305e11119f23c8f19dfd5"
+    },
+    "worker-readelf/stderr": {
+      "bytes": 0,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/ar4/worker-readelf/stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "worker-readelf/stdout": {
+      "bytes": 4310,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/ar4/worker-readelf/stdout",
+      "sha256": "e1d45ba1d449fc4090d0c75f5acfca568a361714e1256ba47a3ae18c5f7b9511"
+    }
+  },
+  "readset": {
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-announcement-cpu-v228-v1/evidence/complete.json": {
+      "bytes": 8872,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-announcement-cpu-v228-v1/evidence/complete.json",
+      "sha256": "170ba440cdf33cd88fc55c2ddff709624fd819d3d461d54daad239a719efdf5a"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-gpu-v228-v1/guarded.hsaco": {
+      "bytes": 28440,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-interface-gpu-v228-v1/guarded.hsaco",
+      "sha256": "de880dcebf79425ccb555c1a2bdca3ff78b926f7b2062d06b918763da4de0f66"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/ar4-input.json": {
+      "bytes": 1557,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/ar4-input.json",
+      "sha256": "43123ddac94fed45726e4b977b43ec53b038b79bf11b23bc973c9357e8d0fff1"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/ar4-request.json": {
+      "bytes": 9335,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/ar4-request.json",
+      "sha256": "69c299f5f8c33353817d4515d065447152a9268b6e139e92fededb2d96caf7ef"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/frozen_owned.py": {
+      "bytes": 30433,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/frozen_owned.py",
+      "sha256": "ab41af455396322303bb8ebd4132e680affc3bdc5830608fad36736c92024583"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/guarded_announcement.py": {
+      "bytes": 3251,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/guarded_announcement.py",
+      "sha256": "96f84389071ef2c1a9e354705ebb7144e9ff97e30c242bd9b494f03d2aea6b80"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/library_audit.py": {
+      "bytes": 25872,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/library_audit.py",
+      "sha256": "b26d60ef6dbe24f2182b52b2e0eb44632848061b7a4a1735fc4e1d26b8ee638d"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/run_model_gpu.py": {
+      "bytes": 34531,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/run_model_gpu.py",
+      "sha256": "afa4d007153179533136ae7a5be4de860407522cb6b92ebcde12441b2eabe175"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/validate_observation.py": {
+      "bytes": 13779,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-stage-capture-gpu-v228-v1/validate_observation.py",
+      "sha256": "367d1904f15741138db708c1f10e5a777905b62d9440a961e952a6cc9125b055"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-tf4-revalidation-v228-v3/complete.json": {
+      "bytes": 79327,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-tf4-revalidation-v228-v3/complete.json",
+      "sha256": "d0551f310a57f63dfe98af8c887b5996752e3b62128a3087c4a03849082e6a3f"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-stage-capture-parent-cpu-v228-v1/evidence/complete.json": {
+      "bytes": 3787634,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-stage-capture-parent-cpu-v228-v1/evidence/complete.json",
+      "sha256": "f1dd4cf50c704bc1f39472df3a8299872de5490fcf073160077888629192ee91"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-stage-capture-parent-cpu-v228-v1/evidence/sources-after.json": {
+      "bytes": 478151,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-stage-capture-parent-cpu-v228-v1/evidence/sources-after.json",
+      "sha256": "a2cfbb14261b712289c2486a8bea66f2f05e4b2c95cdac7634219153ce5c1c9e"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-stage-capture-parent-cpu-v228-v1/input-manifest.json": {
+      "bytes": 253096,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-stage-capture-parent-cpu-v228-v1/input-manifest.json",
+      "sha256": "0f8380cbe010f8dd1ee723a1f59c890905b91fb6f07ab6ac92a8ec9078273b03"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-stage-capture-parent-cpu-v228-v1/run_cpu.py": {
+      "bytes": 36055,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-stage-capture-parent-cpu-v228-v1/run_cpu.py",
+      "sha256": "a87370ceecb7c49db7433a3f46204bda7dc866134e66ecf00c5af2f50980719b"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-stage-capture-parent-cpu-v228-v1/target/debug/ferric-qwen3-finite-guarded-mlp-decode-engineering": {
+      "bytes": 13673168,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-stage-capture-parent-cpu-v228-v1/target/debug/ferric-qwen3-finite-guarded-mlp-decode-engineering",
+      "sha256": "f77b78a963d20fac64d4ce0c7ffd6f0d028d2d147aa4957dc47160abb4cfe25d"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-stage-capture-worker-cpu-v228-v1/evidence/complete.json": {
+      "bytes": 1607204,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-stage-capture-worker-cpu-v228-v1/evidence/complete.json",
+      "sha256": "64855967eb15f5b5b5fadb98cbc30e8e382968099ec439090562cacc174eec47"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-stage-capture-worker-cpu-v228-v1/evidence/sources-after.json": {
+      "bytes": 404284,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-stage-capture-worker-cpu-v228-v1/evidence/sources-after.json",
+      "sha256": "9c81071c17a973890ad683f9e36d12fce0b9b72185a08cead3348f8e887a5b03"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-stage-capture-worker-cpu-v228-v1/input-manifest.json": {
+      "bytes": 205000,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-stage-capture-worker-cpu-v228-v1/input-manifest.json",
+      "sha256": "91564acc34bcf0008a93cba01102eac7be8fe256a4c217a2e5c1e6fe5f66afdb"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-stage-capture-worker-cpu-v228-v1/run_cpu.py": {
+      "bytes": 36610,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-stage-capture-worker-cpu-v228-v1/run_cpu.py",
+      "sha256": "4b290e97c620cd69c924778a43c3172e3198d6a64cb0d61c1c157b7aa54c6726"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-stage-capture-worker-cpu-v228-v1/target/debug/ferric-tp-peer-finite-engineering-worker-v1": {
+      "bytes": 5785096,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-stage-capture-worker-cpu-v228-v1/target/debug/ferric-tp-peer-finite-engineering-worker-v1",
+      "sha256": "c747212d88ef54532194792bdcc2d2dbe35610abdd54d39ce2affe6ec57653e7"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-residual-lowering-v228-v1/fe2o3-engineering-v1/3c3aec3598514f7f6c2b053ff0c6a8d489951ecb6cb8d95b1cae5ca31035b899/observation.hsaco": {
+      "bytes": 10864,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/projection-residual-lowering-v228-v1/fe2o3-engineering-v1/3c3aec3598514f7f6c2b053ff0c6a8d489951ecb6cb8d95b1cae5ca31035b899/observation.hsaco",
+      "sha256": "25338beac39121cf81adfdc5c82c6f39bcfc82c0f7effaa2166bf8a2a9598a25"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rope-indexed-checked-emission-v228-v1/emitted/artifact.hsaco": {
+      "bytes": 54344,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rope-indexed-checked-emission-v228-v1/emitted/artifact.hsaco",
+      "sha256": "29fd58e7b09fee003ed31660e6201c20a7eb5da4b873d0b4d954993f7018f2f8"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-silu-materialized-checked-probe-v228-v1/emitted/artifact.hsaco": {
+      "bytes": 33320,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-silu-materialized-checked-probe-v228-v1/emitted/artifact.hsaco",
+      "sha256": "b0d1766fdb0fda17ab09496d1120ba3cee29100692b48fcc5b05cf0db0a8d589"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-two-forward-v223/p224-prompt-v1/prompt-manifest.json": {
+      "bytes": 21318,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-two-forward-v223/p224-prompt-v1/prompt-manifest.json",
+      "sha256": "30d047aafbd7de2b94647154680b0b9d9fb75aae2fd90b081afe0de595a88600"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-two-forward-v223/p224-prompt-v1/prompt.txt": {
+      "bytes": 11224,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-two-forward-v223/p224-prompt-v1/prompt.txt",
+      "sha256": "a43ef3619cb96c9c23d020e07630493ced7a588088033a53f1d612448375751a"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-two-forward-v223/p224-prompt-v1/prompt.u32le": {
+      "bytes": 8192,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-two-forward-v223/p224-prompt-v1/prompt.u32le",
+      "sha256": "2e81cc60562760f972450ef9205a4e764fa3cce6289d85754e7dfbd7de4d4d02"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/p223-runtime-v1/mlp.hsaco": {
+      "bytes": 29656,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/p223-runtime-v1/mlp.hsaco",
+      "sha256": "decdb15e92318fb289306e98f53010b125d81d8898baf191be1fb9641597cb21"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/p223-runtime-v1/prefix.hsaco": {
+      "bytes": 48584,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/p223-runtime-v1/prefix.hsaco",
+      "sha256": "4d0fe835eef3b76bc1b60ca560e6a8028f85bb9ce292bac77ccf6c6da65e6285"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/p223-runtime-v1/residual.hsaco": {
+      "bytes": 14624,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/p223-runtime-v1/residual.hsaco",
+      "sha256": "8436c1861dcc14f0346aeecc136e4187c459ac1c0b31778265c88b3d8c63396d"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/p223-runtime-v1/tail.hsaco": {
+      "bytes": 112872,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/p223-runtime-v1/tail.hsaco",
+      "sha256": "11f53cfe2d18668f191af9f998f48627211aa09a36d5483e516946032ad54d8e"
+    },
+    "/opt/rocm-7.2.1/libexec/amdsmi_cli/amdsmi_cli.py": {
+      "bytes": 9752,
+      "path": "/opt/rocm-7.2.1/libexec/amdsmi_cli/amdsmi_cli.py",
+      "sha256": "c6185991e96dc45b3ae930eace23869f070fce2afab5e061a336c0a7e2e9fa4a"
+    },
+    "/usr/bin/ldd": {
+      "bytes": 5382,
+      "path": "/usr/bin/ldd",
+      "sha256": "91ff41f256c1b168518fcac7ec850a6036584747660db9d8c5a13be9b63b72eb"
+    },
+    "/usr/bin/python3.12": {
+      "bytes": 8020928,
+      "path": "/usr/bin/python3.12",
+      "sha256": "e1efa562c2cc2e35521a5c9c9b9939921001ff8ca9708a13ef15ace68cc2ccd7"
+    },
+    "/usr/bin/x86_64-linux-gnu-readelf": {
+      "bytes": 789280,
+      "path": "/usr/bin/x86_64-linux-gnu-readelf",
+      "sha256": "64c58e15274bbbb5153f31078e455e9e77ee5f51489e709bba5bb788ce9df2b0"
+    },
+    "/usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2": {
+      "bytes": 236616,
+      "path": "/usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2",
+      "sha256": "1cd555ac46b7887edeaf3c42aac5408c8135e52f6b37870da2cf82d5fe14e829"
+    },
+    "/usr/lib/x86_64-linux-gnu/libc.so.6": {
+      "bytes": 2125328,
+      "path": "/usr/lib/x86_64-linux-gnu/libc.so.6",
+      "sha256": "d8db8739a1633c972cec6a4fe0566bdcec6fd088f98723492ab0361f66238f75"
+    },
+    "/usr/lib/x86_64-linux-gnu/libgcc_s.so.1": {
+      "bytes": 183024,
+      "path": "/usr/lib/x86_64-linux-gnu/libgcc_s.so.1",
+      "sha256": "d93224d2b0dab4247598be683adca02f5cf00586f99c187579cd7e92058fb7cb"
+    },
+    "/usr/lib/x86_64-linux-gnu/libm.so.6": {
+      "bytes": 952616,
+      "path": "/usr/lib/x86_64-linux-gnu/libm.so.6",
+      "sha256": "1b87a1a50b496cfead2b0ad134c2ff536705c82608db240c7e8aa48d6c0e4217"
+    }
+  },
+  "retries": 0,
+  "schema": "ferric-guarded-mlp-model-stage-capture-gpu-v1",
+  "tf4_data_revalidation": {
+    "bytes": 79327,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-model-tf4-revalidation-v228-v3/complete.json",
+    "sha256": "d0551f310a57f63dfe98af8c887b5996752e3b62128a3087c4a03849082e6a3f"
+  }
+}

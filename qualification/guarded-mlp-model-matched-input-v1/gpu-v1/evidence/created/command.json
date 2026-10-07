@@ -1,0 +1,21 @@
+{
+  "argv": [
+    "/usr/bin/docker",
+    "inspect",
+    "e7cf84db7b4d8d7eb731d2e8f6d1ae921615be3411bb42d1ca7b774be335a241"
+  ],
+  "env": {
+    "CUDA_VISIBLE_DEVICES": "",
+    "HIP_VISIBLE_DEVICES": "",
+    "HOME": "/home/harmenon",
+    "LANG": "C.UTF-8",
+    "LC_ALL": "C.UTF-8",
+    "LOGNAME": "harmenon",
+    "PATH": "/usr/bin:/bin",
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "ROCR_VISIBLE_DEVICES": "",
+    "TZ": "UTC",
+    "USER": "harmenon"
+  },
+  "seconds": 30
+}
