@@ -1,0 +1,13 @@
+
+running 8 tests
+test guarded_mlp_long_sequence_v2::tests::long_sequence_bad_terminal_or_device_argmax_refuses_before_fence_and_commit ... ok
+test guarded_mlp_long_sequence_v2::tests::long_sequence_every_effect_failure_is_terminal_without_retry_or_commit ... ok
+test guarded_mlp_long_sequence_v2::tests::long_sequence_every_post_effect_deadline_stops_before_next_operation ... ok
+test guarded_mlp_long_sequence_v2::tests::long_sequence_close_failure_deadline_and_second_close_remain_terminal ... ok
+test guarded_mlp_long_sequence_v2::tests::long_sequence_readiness40_is_prompt_only_with_distinct_healthy_close ... ok
+test guarded_mlp_long_sequence_v2::tests::long_sequence_unwind_and_publication_failure_quarantine_existing_work ... ok
+test guarded_mlp_long_sequence_v2::tests::long_sequence_wrong_scope_order_and_premature_close_never_touch_backend ... ok
+test guarded_mlp_long_sequence_v2::tests::long_sequence_full_2303_mock_preserves_order_banks_and_256_own_outputs ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 964 filtered out; finished in 2.17s
+

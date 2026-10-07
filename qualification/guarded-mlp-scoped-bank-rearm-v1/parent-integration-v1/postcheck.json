@@ -1,0 +1,23 @@
+{
+  "apply_patch": {
+    "bytes": 365163,
+    "sha256": "efbb6a5a30370418b09ae7e95279a1f796ad5c877ce44b1daabacb6d75fb75cc"
+  },
+  "canonical_postimages": 1273,
+  "native_execution": false,
+  "numerical_acceptance": false,
+  "original_parent_lock_preserved": true,
+  "parent_rust_postimages": 7,
+  "passed": true,
+  "performance_claim": false,
+  "schema": "ferric-bank-scoped-parent-source-integration-postcheck-v1",
+  "source_map": {
+    "bytes": 521077,
+    "sha256": "eff4a213ae2f20dcf470fd12ff57e834ebcc1b560f707b6e8cc8a3374e5e3ad4"
+  },
+  "terminal": {
+    "bytes": 4068597,
+    "sha256": "2ca0982858dfdb4e774a13d5b5c607403cd92a1d9d016e9da58eff41453b6daf"
+  },
+  "unchanged_worker_bodies": 216
+}

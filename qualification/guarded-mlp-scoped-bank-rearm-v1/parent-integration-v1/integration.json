@@ -1,0 +1,98 @@
+{
+  "actual_worker_sources": {
+    "bytes": 423235,
+    "sha256": "73e3ad534a3d48bddd717780215142dd588f4a776dd25f003305854f70d7c285"
+  },
+  "actual_worker_terminal": {
+    "bytes": 2395639,
+    "sha256": "e522aafde4204c24be8fac9b1ecf8d49f8e3389819ad8cfda765f2145647c432"
+  },
+  "canonical_postimages": 1273,
+  "canonical_preimages": 1271,
+  "input": {
+    "bytes": 268173,
+    "sha256": "a438ac9cdbc883005270579a97d850971dee4d13cd059ee9e54c7b56770448b0"
+  },
+  "native_execution": false,
+  "numerical_acceptance": false,
+  "original_parent_lock_preserved": true,
+  "parent_rows": {
+    "ferric/adapters/m1-engineering-execution-v1/src/bin/ferric-qwen3-guarded-mlp-readiness-engineering.rs": {
+      "after": {
+        "bytes": 17851,
+        "sha256": "bbdb7dbd105fc26fa8f20a21c03052cfb73856c1d5b6df410f6d2a15e59507f6"
+      },
+      "before": {
+        "bytes": 14723,
+        "sha256": "5113905ab04e722c07c1ca1b07b3e4d3996da5c89e9e96b0e044f11918d8847d"
+      }
+    },
+    "ferric/adapters/m1-engineering-execution-v1/src/lib.rs": {
+      "after": {
+        "bytes": 91162,
+        "sha256": "386274d42bed73946236cd334e474e17afcf997a9a06d89153efede24efb3e45"
+      },
+      "before": {
+        "bytes": 90953,
+        "sha256": "40a5e87ee207c957684602488aee3b9217dc8ef239be45ea1e48159a13165411"
+      }
+    },
+    "ferric/adapters/m1-engineering-execution-v1/src/tp_finite_client/long/readiness.rs": {
+      "after": {
+        "bytes": 27528,
+        "sha256": "7774a717e35e365be15d40ee56faef02bb672416bdc51fc54f02d53d4693c66e"
+      },
+      "before": {
+        "bytes": 26757,
+        "sha256": "ae16b0abe97940a262d16d5eafd4136a8bcbf6112e7fe88d0e5a9cdae9f45891"
+      }
+    },
+    "ferric/adapters/m1-engineering-execution-v1/src/tp_finite_client/long/readiness_bank_scoped.rs": {
+      "after": {
+        "bytes": 1518,
+        "sha256": "1c410f9e3464a222144b5ce6ef1ff676a87b57bbc6f87d8f016391c84827cc07"
+      },
+      "before": null
+    },
+    "ferric/adapters/m1-engineering-execution-v1/src/tp_finite_client/long/readiness_bank_scoped_tests.rs": {
+      "after": {
+        "bytes": 7015,
+        "sha256": "a0fed9e55e8fffa30bb7adc68b3a47d3de624553841ba0d8f60b40d75af7df7e"
+      },
+      "before": null
+    },
+    "ferric/adapters/m1-engineering-execution-v1/src/tp_finite_client/long/readiness_host_timing.rs": {
+      "after": {
+        "bytes": 19212,
+        "sha256": "6de6ca6524893b7d541492c844e04d353bc23d03e3c9f486074a17542000ff32"
+      },
+      "before": {
+        "bytes": 17740,
+        "sha256": "69aff692108c7f04f6e6bfbddda3c7dc6cf30ca51a7dba55e99cd823504f4eed"
+      }
+    },
+    "ferric/adapters/m1-engineering-execution-v1/src/tp_finite_client/long/readiness_host_timing_tests.rs": {
+      "after": {
+        "bytes": 22401,
+        "sha256": "f6632219714cf358b9015908fa3f7e93c96b70beadc9ced74b1a668cdf5dec89"
+      },
+      "before": {
+        "bytes": 17878,
+        "sha256": "ace0af960fa875639141670dff4d3787e84b30ac75eb4e6d3da861702264d395"
+      }
+    }
+  },
+  "passed": true,
+  "patch_applied": false,
+  "performance_claim": false,
+  "schema": "ferric-bank-scoped-parent-source-integration-plan-v1",
+  "sources": {
+    "bytes": 521077,
+    "sha256": "eff4a213ae2f20dcf470fd12ff57e834ebcc1b560f707b6e8cc8a3374e5e3ad4"
+  },
+  "terminal": {
+    "bytes": 4068597,
+    "sha256": "2ca0982858dfdb4e774a13d5b5c607403cd92a1d9d016e9da58eff41453b6daf"
+  },
+  "unchanged_worker_bodies": 216
+}

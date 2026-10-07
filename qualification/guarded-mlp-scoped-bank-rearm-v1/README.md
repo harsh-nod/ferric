@@ -15,8 +15,11 @@ failed build is retained separately, as is the successful repaired attempt.
 - [Original worker test-build failure](cpu-attempt-v1/README.md).
 - [82-test admission-checker qualification](checker-cpu-v1/README.md).
 - [Integration postcheck](integration-v1/postcheck.json).
+- [519-test host integration qualification](parent-cpu-attempt-v2/README.md).
+- [Parent integration postcheck](parent-integration-v1/postcheck.json).
 
-Host integration qualification and a same-binary scoped-layer versus
-bank-plus-layer GPU comparison are still pending. CPU qualification does not
+Host integration passed all 67 phases, and its seven tested Rust files are
+integrated with a complete 1,273-body source postcheck. A same-binary scoped-layer
+versus bank-plus-layer GPU comparison is still pending. CPU qualification does not
 establish a numerical model result, throughput improvement, GPU overlap,
 Full2303 launch feasibility or the 700 tokens/s target.

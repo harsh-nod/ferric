@@ -1,0 +1,29 @@
+{
+  "archive": {
+    "bytes": 1145481,
+    "sha256": "8931bc520dff2350d1c5b00da4c3652e4c77e9f5e8eef4cdbc6621b9030d57a9"
+  },
+  "canonical_changed": false,
+  "controller": {
+    "bytes": 26643,
+    "sha256": "6467922db92bc76d65e25d575d62a24046e7cd46ae1df7f9cfec4a86ac727124"
+  },
+  "ferric_files": 1273,
+  "helpers": 3,
+  "input": {
+    "bytes": 268173,
+    "sha256": "a438ac9cdbc883005270579a97d850971dee4d13cd059ee9e54c7b56770448b0"
+  },
+  "lineage_files": 122,
+  "lockfiles_changed": false,
+  "overlay_files": 18,
+  "parent_format_paths": 7,
+  "passed": true,
+  "project_execution": false,
+  "qualified_worker_files": 216,
+  "qualified_worker_sources_preserved": true,
+  "root": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-bank-scoped-warm-parent-cpu-v228-v2",
+  "schema": "ferric-guarded-mlp-readiness40-bank-scoped-warm-parent-source-stage-v1",
+  "shared_cache_changed": false,
+  "source_files": 1276
+}

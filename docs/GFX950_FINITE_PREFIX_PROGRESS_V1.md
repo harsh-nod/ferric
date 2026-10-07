@@ -15,8 +15,9 @@ facade doctests and eight parser regressions. The original failed worker test
 build and the successful test-local repair are both retained. The 12 runtime
 and 11 worker actual Rust postimages were integrated with a 2,091-body source
 postcheck. The separate bank admission checker passes 82 tests. Host integration
-qualification and its matched native A/B run remain separate pending gates;
-allocation preflights are unchanged.
+now also passes all 67 phases and 519 selected tests across 57 scopes; its seven
+qualified Rust files are integrated with a complete 1,273-body source postcheck.
+The matched native A/B run remains pending. Allocation preflights are unchanged.
 
 The latest completed native comparison is the
 [Default/scoped warm-layer pair](../qualification/guarded-mlp-scoped-currentness-v1/matched-timing-gpu-v3/README.md).

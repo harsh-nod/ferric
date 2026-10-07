@@ -1,0 +1,9 @@
+
+running 4 tests
+test finite_guarded_mlp_full2303_wire_v1::tests::full2303_close_factory_refuses_unclosed_and_readiness_transcripts ... ok
+test finite_guarded_mlp_full2303_wire_v1::tests::full2303_close_requires_all_actual_generated_ids_and_false_authority ... ok
+test finite_guarded_mlp_full2303_wire_v1::tests::full2303_wire_is_separate_and_keeps_original_setup_and_caps ... ok
+test finite_guarded_mlp_full2303_wire_v1::tests::full2303_wire_refuses_unknown_fields_truncated_and_unpinned_images ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 968 filtered out; finished in 0.00s
+

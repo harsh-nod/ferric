@@ -1,0 +1,13 @@
+
+running 8 tests
+test finite_guarded_mlp_readiness_bank_scoped_v2::tests::bank_scoped_policy_checks_every_call_count_and_unbounded_counter_overflow ... ok
+test finite_guarded_mlp_readiness_bank_scoped_v2::tests::bank_scoped_policy_checks_separate_bank_census_generations_and_overflow ... ok
+test finite_guarded_mlp_readiness_bank_scoped_v2::tests::bank_scoped_policy_exact_closed_record_roundtrips ... ok
+test finite_guarded_mlp_readiness_bank_scoped_v2::tests::bank_scoped_policy_refuses_boolean_integer_substitution ... ok
+test finite_guarded_mlp_readiness_bank_scoped_v2::tests::bank_scoped_policy_refuses_every_policy_and_authority_drift ... ok
+test finite_guarded_mlp_readiness_bank_scoped_v2::tests::bank_scoped_policy_refuses_other_profiles_and_missing_identity ... ok
+test finite_guarded_mlp_readiness_bank_scoped_v2::tests::bank_scoped_policy_refuses_scope_worker_transcript_and_counts_drift ... ok
+test finite_guarded_mlp_readiness_bank_scoped_v2::tests::bank_scoped_policy_requires_one_exact_bounded_record ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 978 filtered out; finished in 0.00s
+
