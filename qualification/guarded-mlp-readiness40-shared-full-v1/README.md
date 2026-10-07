@@ -2,9 +2,10 @@
 
 This opt-in experiment shares a fresh topology discovery across the full
 per-rank currentness checks. The worker, parent and independent data checker
-are CPU-qualified on `mi350`. The native probe completed all 40 forwards and
-preserved same-side model parity. There is no matched speedup or independent
-numerical-acceptance claim yet.
+are CPU-qualified on `mi350`. The native probe and a subsequent same-binary
+timed Default/SharedFull pair completed all 40 forwards and preserved same-side
+model parity. Independent numerical acceptance and sustained throughput remain
+open; the matched pair is one ordered observation, not a repeated benchmark.
 
 ## Optimization Boundary
 
@@ -203,12 +204,52 @@ do not execute a model or establish native parity or performance.
 | Matched checker terminal | `a8f05bbbb73f76f6912cc9b61d94a999d5e34943f06a77ef4b48b5b0dfff2ffd` |
 | Matched checker archive | `5f96d3a86960d227ebd06f468ffe79796c857e7ad651b4c38da0276e4849d620` |
 
+## Matched Native Pair
+
+Both timed modes completed on `mi350` using the same qualified parent
+`3bd47134` and worker `9dbebbb0`. Each executed all 40 prompt forwards through
+36 layers on both ranks, generated zero tokens, and closed cleanly. All 11
+owned phases in each case exited naturally and were reaped. All 40 semantic
+records and all four complete selected payloads match between the two cases
+and the original Position5 baseline. Original worker stderr and both 124-span
+parent timing sidecars are retained without normalization.
+
+The Default outer controller took 950.197 seconds; SharedFull took 495.231
+seconds. These include setup and audits and are not decode throughput or GPU
+time. A separate tested report will partition the original parent wall spans.
+Do not compare these outer totals with per-kernel timings or the 700 tokens/s
+target.
+
+`matched-timing-gpu-v1` retains exactly 238 original archive members, with
+237 manifest pins, 147 current raw bodies and 13,817,922 expanded bytes. Export
+and local retention independently revalidate both owned lineages, original
+policy records, timing accounting and all selected payloads without rerunning
+the model. Both native cases also rehash their actual executable inputs.
+
+| Artifact | SHA-256 |
+| --- | --- |
+| Default terminal | `80c4a0dee66548dde7de90d33e10feb8ff6ee3a97cfa32999ebf9e681e033daa` |
+| SharedFull terminal | `b20a02956a54e1652d98e36ac0ac7eaf4000594db097044fb174b135b79992d5` |
+| Original pair archive | `8cb6796e8caf56c5829ab77fc3ec41a9941176c50867501b050516673dd3a84e` |
+| Pair collector | `abdbf838f194e15108ae43ca6fa1e7583d876c5fd1000adf23678256572e0e4c` |
+
+Default ran first. SharedFull's first invocation refused the initial 40 GiB
+free-space floor before creating a case directory or launching a child.
+Completed disposable build intermediates and test harnesses were removed,
+preserving qualified products, sources and original evidence. The exact-dot
+Gate/Up CPU diagnostic also ran between cases. The explicit SharedFull retry
+then passed. Thus this is one ordered pair with intervening host work, not an
+alternating or repeated controlled experiment. The original preflight log and
+cleanup receipts remain separately backed up; they are not rewritten native
+results or members of the original pair capsule.
+
 ## Remaining Gates
 
-Same-side parity is not independent framework accuracy. A fair timing comparison
-also requires the same newly qualified parent/worker ELF pair and equal
-instrumentation in fresh default and SharedFull runs. The historical timing
-probe is not a matched control for this new executable generation.
+Same-side parity is not independent framework accuracy. The new matched pair
+has the same executable pair and instrumentation, but repeated performance
+measurements, GPU timing and independent numerical acceptance remain separate
+gates. The historical timing probe is not a matched control for this executable
+generation.
 
 Full-request Ferric 2,048/256 acceptance, sustained BF16 target-only throughput,
 700 tokens/s and M0-M7 remain open.

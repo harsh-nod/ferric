@@ -8,12 +8,14 @@ engineering branch; it does not change the production execution path.
 
 Latest qualification: the
 [Readiness40 SharedFull route](../qualification/guarded-mlp-readiness40-shared-full-v1/README.md)
-passes one native MI350 run with all 40 semantic records and four complete
-payloads matching the historical Position5 run. Its timed parent successor
-passes 478 selected tests and the combined timing/parity checker passes 53
-synthetic tests. The untimed 495.289-second run used different binaries from
-the old Default timing probe, so those elapsed times are not a matched speedup.
-A fresh same-binary timed comparison is the next measurement gate.
+now passes a fresh same-binary timed Default/SharedFull pair on MI350, with
+all 40 semantic records and four complete payloads equal between modes and
+the historical Position5 run. Both cases close cleanly with 11 naturally
+retired phases. The timed parent passes 478 selected tests and the combined
+timing/parity checker passes 53 synthetic tests. All 238 original pair members
+are retained. The 950.197/495.231-second outer totals include setup and audits,
+not decode throughput; a separate tested wall-span report is next. This is one
+ordered pair with intervening host work, not a repeated controlled benchmark.
 
 The [Full2303 independent reference](../qualification/guarded-mlp-full2303-v1/README.md)
 has completed two fresh-cache BF16 framework passes of the 2,048/256 workload.
