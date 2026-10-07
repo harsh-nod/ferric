@@ -1,0 +1,564 @@
+{
+  "actual_tests": {
+    "failed": 0,
+    "ignored": 4,
+    "passed": 694
+  },
+  "archive": {
+    "bytes": 1574469,
+    "sha256": "aaf720a12d17b36e63921dc94e04aa915ed19d94f9485b098538dfb366c40403"
+  },
+  "artifacts": {
+    "worker": {
+      "cargo_artifact": {
+        "executable": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-full2303-worker-cpu-v228-v1/target/debug/ferric-tp-peer-finite-engineering-worker-v1",
+        "features": [],
+        "filenames": [
+          "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-full2303-worker-cpu-v228-v1/target/debug/ferric-tp-peer-finite-engineering-worker-v1"
+        ],
+        "fresh": true,
+        "manifest_path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-full2303-worker-cpu-v228-v1/ferric/adapters/tp-peer-finite-engineering-worker-v1/Cargo.toml",
+        "package_id": "path+file:///home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-full2303-worker-cpu-v228-v1/ferric/adapters/tp-peer-finite-engineering-worker-v1#ferric-tp-peer-finite-engineering-worker-v1@0.1.0",
+        "profile": {
+          "debug_assertions": true,
+          "debuginfo": 0,
+          "opt_level": "2",
+          "overflow_checks": true,
+          "test": false
+        },
+        "reason": "compiler-artifact",
+        "target": {
+          "crate_types": [
+            "bin"
+          ],
+          "doc": true,
+          "doctest": false,
+          "edition": "2024",
+          "kind": [
+            "bin"
+          ],
+          "name": "ferric-tp-peer-finite-engineering-worker-v1",
+          "src_path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-full2303-worker-cpu-v228-v1/ferric/adapters/tp-peer-finite-engineering-worker-v1/src/main.rs",
+          "test": true
+        }
+      },
+      "pin": {
+        "bytes": 6239440,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-full2303-worker-cpu-v228-v1/target/debug/ferric-tp-peer-finite-engineering-worker-v1",
+        "sha256": "4e95b834aba1441b4b6a48085eb1f4fc28f9ee4a3fd04dff04d45c7de82c27f0"
+      }
+    },
+    "worker-bin-test": {
+      "cargo_artifact": {
+        "executable": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-full2303-worker-cpu-v228-v1/target/debug/deps/ferric_tp_peer_finite_engineering_worker_v1-c07cf9bdab16287c",
+        "features": [],
+        "filenames": [
+          "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-full2303-worker-cpu-v228-v1/target/debug/deps/ferric_tp_peer_finite_engineering_worker_v1-c07cf9bdab16287c"
+        ],
+        "fresh": false,
+        "manifest_path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-full2303-worker-cpu-v228-v1/ferric/adapters/tp-peer-finite-engineering-worker-v1/Cargo.toml",
+        "package_id": "path+file:///home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-full2303-worker-cpu-v228-v1/ferric/adapters/tp-peer-finite-engineering-worker-v1#ferric-tp-peer-finite-engineering-worker-v1@0.1.0",
+        "profile": {
+          "debug_assertions": true,
+          "debuginfo": 0,
+          "opt_level": "2",
+          "overflow_checks": true,
+          "test": true
+        },
+        "reason": "compiler-artifact",
+        "target": {
+          "crate_types": [
+            "bin"
+          ],
+          "doc": true,
+          "doctest": false,
+          "edition": "2024",
+          "kind": [
+            "bin"
+          ],
+          "name": "ferric-tp-peer-finite-engineering-worker-v1",
+          "src_path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-full2303-worker-cpu-v228-v1/ferric/adapters/tp-peer-finite-engineering-worker-v1/src/main.rs",
+          "test": true
+        }
+      },
+      "pin": {
+        "bytes": 1051648,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-full2303-worker-cpu-v228-v1/target/debug/deps/ferric_tp_peer_finite_engineering_worker_v1-c07cf9bdab16287c",
+        "sha256": "96fdd4d42cc76d1ba4e0b16a1af62e5e5693fd5a3210d5a4f18bc758dcf1754c"
+      }
+    },
+    "worker-lib": {
+      "cargo_artifact": {
+        "executable": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-full2303-worker-cpu-v228-v1/target/debug/deps/ferric_tp_peer_finite_engineering_worker_v1-870f5f0a65ebefe8",
+        "features": [],
+        "filenames": [
+          "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-full2303-worker-cpu-v228-v1/target/debug/deps/ferric_tp_peer_finite_engineering_worker_v1-870f5f0a65ebefe8"
+        ],
+        "fresh": false,
+        "manifest_path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-full2303-worker-cpu-v228-v1/ferric/adapters/tp-peer-finite-engineering-worker-v1/Cargo.toml",
+        "package_id": "path+file:///home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-full2303-worker-cpu-v228-v1/ferric/adapters/tp-peer-finite-engineering-worker-v1#ferric-tp-peer-finite-engineering-worker-v1@0.1.0",
+        "profile": {
+          "debug_assertions": true,
+          "debuginfo": 0,
+          "opt_level": "2",
+          "overflow_checks": true,
+          "test": true
+        },
+        "reason": "compiler-artifact",
+        "target": {
+          "crate_types": [
+            "lib"
+          ],
+          "doc": true,
+          "doctest": true,
+          "edition": "2024",
+          "kind": [
+            "lib"
+          ],
+          "name": "ferric_tp_peer_finite_engineering_worker_v1",
+          "src_path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-full2303-worker-cpu-v228-v1/ferric/adapters/tp-peer-finite-engineering-worker-v1/src/lib.rs",
+          "test": true
+        }
+      },
+      "pin": {
+        "bytes": 11197480,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-full2303-worker-cpu-v228-v1/target/debug/deps/ferric_tp_peer_finite_engineering_worker_v1-870f5f0a65ebefe8",
+        "sha256": "a1cfdc4b42cd0acb7e7bc40b03d2a8b06a07861f5f2122b5aa54f0eb95381695"
+      }
+    },
+    "worker-readiness-test": {
+      "cargo_artifact": {
+        "executable": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-full2303-worker-cpu-v228-v1/target/debug/deps/readiness_cli-5881cdadb227d1e1",
+        "features": [],
+        "filenames": [
+          "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-full2303-worker-cpu-v228-v1/target/debug/deps/readiness_cli-5881cdadb227d1e1"
+        ],
+        "fresh": false,
+        "manifest_path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-full2303-worker-cpu-v228-v1/ferric/adapters/tp-peer-finite-engineering-worker-v1/Cargo.toml",
+        "package_id": "path+file:///home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-full2303-worker-cpu-v228-v1/ferric/adapters/tp-peer-finite-engineering-worker-v1#ferric-tp-peer-finite-engineering-worker-v1@0.1.0",
+        "profile": {
+          "debug_assertions": true,
+          "debuginfo": 0,
+          "opt_level": "2",
+          "overflow_checks": true,
+          "test": true
+        },
+        "reason": "compiler-artifact",
+        "target": {
+          "crate_types": [
+            "bin"
+          ],
+          "doc": false,
+          "doctest": false,
+          "edition": "2024",
+          "kind": [
+            "test"
+          ],
+          "name": "readiness_cli",
+          "src_path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-full2303-worker-cpu-v228-v1/ferric/adapters/tp-peer-finite-engineering-worker-v1/tests/readiness_cli.rs",
+          "test": true
+        }
+      },
+      "pin": {
+        "bytes": 1097672,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-full2303-worker-cpu-v228-v1/target/debug/deps/readiness_cli-5881cdadb227d1e1",
+        "sha256": "1a77d2b97a98d25fb6a2d7acd6c95e14c7d8c86286e75f90c19e35ea17d26045"
+      }
+    },
+    "worker-wire-test": {
+      "cargo_artifact": {
+        "executable": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-full2303-worker-cpu-v228-v1/target/debug/deps/shared_wire-8d141a48b17bf572",
+        "features": [],
+        "filenames": [
+          "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-full2303-worker-cpu-v228-v1/target/debug/deps/shared_wire-8d141a48b17bf572"
+        ],
+        "fresh": false,
+        "manifest_path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-full2303-worker-cpu-v228-v1/ferric/adapters/tp-peer-finite-engineering-worker-v1/Cargo.toml",
+        "package_id": "path+file:///home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-full2303-worker-cpu-v228-v1/ferric/adapters/tp-peer-finite-engineering-worker-v1#ferric-tp-peer-finite-engineering-worker-v1@0.1.0",
+        "profile": {
+          "debug_assertions": true,
+          "debuginfo": 0,
+          "opt_level": "2",
+          "overflow_checks": true,
+          "test": true
+        },
+        "reason": "compiler-artifact",
+        "target": {
+          "crate_types": [
+            "bin"
+          ],
+          "doc": false,
+          "doctest": false,
+          "edition": "2024",
+          "kind": [
+            "test"
+          ],
+          "name": "shared_wire",
+          "src_path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-full2303-worker-cpu-v228-v1/ferric/adapters/tp-peer-finite-engineering-worker-v1/tests/shared_wire.rs",
+          "test": true
+        }
+      },
+      "pin": {
+        "bytes": 2383160,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-full2303-worker-cpu-v228-v1/target/debug/deps/shared_wire-8d141a48b17bf572",
+        "sha256": "a2727d47ae5b463b9d8620d0065a6c78386aeaa9eae1b4fb8b4be45d0ae2cb2b"
+      }
+    }
+  },
+  "binary_bodies_retained": false,
+  "external_inputs_rehashed_locally": false,
+  "files": {
+    "cache-transport.py": {
+      "bytes": 12795,
+      "sha256": "4b521a67879d6cf24af5b7f37903a911f4a7a92a649e186bab8ef541f6a66320"
+    },
+    "cargo-cache-manifest.json": {
+      "bytes": 26511,
+      "sha256": "28ba8dcd2578688231204408baa0cfb7eb658c8de6cb0a0b77c123156d80ea00"
+    },
+    "cargo-cache-stage-complete.json": {
+      "bytes": 14967,
+      "sha256": "8dfe7008fb77cbb1e8d588f42583a7c5837ae5d0de775f7d62cbf2ba8a12b5ef"
+    },
+    "evidence.py": {
+      "bytes": 40349,
+      "sha256": "51a2f63371dff6285e0f1deb46f0112e4a04dac936b1cd7f05bf85d8d5c3c562"
+    },
+    "evidence/complete.json": {
+      "bytes": 1691615,
+      "sha256": "0b91b220824f093b0297134ff21e4ddc2dde64fd17909439bb15421fb862e55f"
+    },
+    "evidence/dependencies-after.json": {
+      "bytes": 866870,
+      "sha256": "b6dbeff5716db519b41d06bf6107361652b7368724a26f29a7d5956dd719c955"
+    },
+    "evidence/dependencies-before.json": {
+      "bytes": 866870,
+      "sha256": "b6dbeff5716db519b41d06bf6107361652b7368724a26f29a7d5956dd719c955"
+    },
+    "evidence/metadata.command.json": {
+      "bytes": 2415,
+      "sha256": "83938857ca14b78d01b59d463209aa7a9490395df2bd564445be0f626a5a5c6a"
+    },
+    "evidence/metadata.result.json": {
+      "bytes": 1673,
+      "sha256": "b4310ec8f588b432ab9432dc94da62dea83a756e5b952e72db0486e94d5bf756"
+    },
+    "evidence/metadata.started.json": {
+      "bytes": 559,
+      "sha256": "5edafde7036584a76e93d6e0e8108c74e9df7b96ff02be9eb3d6b82d30fa9177"
+    },
+    "evidence/metadata.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "evidence/metadata.stdout": {
+      "bytes": 188491,
+      "sha256": "3fa756746067394dd44c2d249a8053c7bb8f60b9dcb0c30c277fe0e6687bcc16"
+    },
+    "evidence/rustc-version.command.json": {
+      "bytes": 2158,
+      "sha256": "ad4b5069877d4c494a72b41a95fb4819898acc9bce9611bd913cb4a4153870e3"
+    },
+    "evidence/rustc-version.result.json": {
+      "bytes": 1434,
+      "sha256": "92f7eef9dcfa0078bf912c52ff132f4a74a479425017b10cf773bc3315ccfe1e"
+    },
+    "evidence/rustc-version.started.json": {
+      "bytes": 303,
+      "sha256": "37fa21b39ee4c86c84793ab272357f6a6d0eabb7e9b540a4f2b2a2311213f29e"
+    },
+    "evidence/rustc-version.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "evidence/rustc-version.stdout": {
+      "bytes": 212,
+      "sha256": "580dbecb7627e4e8ad67fd0b1d539727ba8d2651d04035c907b406d83200b4e2"
+    },
+    "evidence/rustfmt-check.command.json": {
+      "bytes": 4950,
+      "sha256": "d0020418abbad9b544bdfaae51b980e0972edc6b290b0c148414218154c7a14d"
+    },
+    "evidence/rustfmt-check.result.json": {
+      "bytes": 4223,
+      "sha256": "30b81142adf5673ab97ead4d7dd36b6b7215fcaa76f3eafa208977056b811f82"
+    },
+    "evidence/rustfmt-check.started.json": {
+      "bytes": 3094,
+      "sha256": "f412b450d267433faa8dbfdef937d2d76055c442600c355e277b01dcec8a0648"
+    },
+    "evidence/rustfmt-check.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "evidence/rustfmt-check.stdout": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "evidence/rustfmt.command.json": {
+      "bytes": 4935,
+      "sha256": "f2d2e2a550bc2abbd609d3a85362ad8f3fc78ff8b7b4b3ffd60045fdd2f48f46"
+    },
+    "evidence/rustfmt.result.json": {
+      "bytes": 4184,
+      "sha256": "e1d9d3bdec4db1e849b59ee112e43fb01ed43f94c019b29f6f0ba537faf64d8c"
+    },
+    "evidence/rustfmt.started.json": {
+      "bytes": 3079,
+      "sha256": "a8c6dd0e325d2bd54b7cccc2574af5832b50379c4cd64915cf67b0808745f26e"
+    },
+    "evidence/rustfmt.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "evidence/rustfmt.stdout": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "evidence/sources-after.json": {
+      "bytes": 412019,
+      "sha256": "0fc0a33c61dd0e6f70903bb246654bfeb99095fd515be53c828d8d91f646e7cb"
+    },
+    "evidence/sources-before.json": {
+      "bytes": 412019,
+      "sha256": "0fc0a33c61dd0e6f70903bb246654bfeb99095fd515be53c828d8d91f646e7cb"
+    },
+    "evidence/sources-preformat.json": {
+      "bytes": 412019,
+      "sha256": "daa50b541f8821328dc24481f7ab7029295b34ade55f2f13837635b73162c288"
+    },
+    "evidence/worker-build.command.json": {
+      "bytes": 2496,
+      "sha256": "fddd7733b5c7fad6510ec3d8e79c3cbb8753278d55560c1556160f7481feebfb"
+    },
+    "evidence/worker-build.result.json": {
+      "bytes": 1770,
+      "sha256": "563deac406207b016293a412d2eeed6d839a83f4c6551c2503ec676173da98e8"
+    },
+    "evidence/worker-build.started.json": {
+      "bytes": 639,
+      "sha256": "9862a6557646da50d67aff02918616a92c3d641a17bc4bab919462645fa77734"
+    },
+    "evidence/worker-build.stderr": {
+      "bytes": 58,
+      "sha256": "b0a8cef3b872385967298afd2328e179f1671de6275e91e7c4108318896ef181"
+    },
+    "evidence/worker-build.stdout": {
+      "bytes": 117449,
+      "sha256": "10cc0e94626d5fc801ce5cffd9679fa92e0357091dfeb70c9ff019b1ec29146d"
+    },
+    "evidence/worker-ignored.command.json": {
+      "bytes": 2609,
+      "sha256": "08aa293e96233252de4851d789d5b38d94afd306a4ac8500fcbaa6c642432c03"
+    },
+    "evidence/worker-ignored.result.json": {
+      "bytes": 1892,
+      "sha256": "a282f069f4a4fa35d7b6709e56ded1673e0ec068ef9ae5eaa7bdb9f57a46824f"
+    },
+    "evidence/worker-ignored.started.json": {
+      "bytes": 753,
+      "sha256": "8e48e2ebbc7a0823990a89b03f3ba83c1cf7d5a376038f4e6d7479fbaea078d3"
+    },
+    "evidence/worker-ignored.stderr": {
+      "bytes": 12172,
+      "sha256": "a1dc8438a880459eb88297213918e1cb64711026af4333249c4b4aa6291e6a0e"
+    },
+    "evidence/worker-ignored.stdout": {
+      "bytes": 382,
+      "sha256": "499e016b32ac4ef526cb0721680cca8afdffa461019705b2e7d097616bac169a"
+    },
+    "evidence/worker-list.command.json": {
+      "bytes": 2592,
+      "sha256": "26d82bf7f1a4fd8b8c17046503b1582e543f6ba9e810cbed304f993c233ccf67"
+    },
+    "evidence/worker-list.result.json": {
+      "bytes": 1865,
+      "sha256": "603dc526710582f98f9f21f9da73c939c57ca32452b394c28659ab1483d3eeac"
+    },
+    "evidence/worker-list.started.json": {
+      "bytes": 736,
+      "sha256": "1dfc17f4450174fe813f8dd10830fe40ac03872857c852580360ddffd33a11de"
+    },
+    "evidence/worker-list.stderr": {
+      "bytes": 12172,
+      "sha256": "a1dc8438a880459eb88297213918e1cb64711026af4333249c4b4aa6291e6a0e"
+    },
+    "evidence/worker-list.stdout": {
+      "bytes": 77918,
+      "sha256": "14d36535a139c68caaf270a5babae451e5693ee4d7051a9b6e4289b6ea64d45c"
+    },
+    "evidence/worker-tests-build.command.json": {
+      "bytes": 2592,
+      "sha256": "c67b0e8ab44af433ea20aeee69c6413312decac63a3c33a5c46328d04e891264"
+    },
+    "evidence/worker-tests-build.result.json": {
+      "bytes": 1894,
+      "sha256": "17a7ed1036f6a916936866b441a4c9a1c7de1377e51f565a617d7bbdf5782250"
+    },
+    "evidence/worker-tests-build.started.json": {
+      "bytes": 735,
+      "sha256": "fab5baa125b8497f35c4cc2446adcbf02cd023ca3796d9be347386eed52eca2d"
+    },
+    "evidence/worker-tests-build.stderr": {
+      "bytes": 2684,
+      "sha256": "1c1b71d53ea6918ace6786ebf70402bc9dfce23ac125bf9657c2632ccd178566"
+    },
+    "evidence/worker-tests-build.stdout": {
+      "bytes": 126325,
+      "sha256": "865ca3dda39bf4eb3f4d091b72ae5dc0b197c297ee3d8d0cb017df4a3c6ae1cb"
+    },
+    "evidence/worker-tests.command.json": {
+      "bytes": 2581,
+      "sha256": "c82b0c4b60d537607527899b10ea1a05ed588ab8d290b061e83f6904ea222326"
+    },
+    "evidence/worker-tests.result.json": {
+      "bytes": 1859,
+      "sha256": "a520fdd1b5fc7d6c0bdbbfd67e2f12918b9d3bf3c5d84e2d9213bf527f06a220"
+    },
+    "evidence/worker-tests.started.json": {
+      "bytes": 724,
+      "sha256": "a3ab9bee252e37d9b33f89d4d7af15fd0ee7f905c12a3b0378284061fc3be14c"
+    },
+    "evidence/worker-tests.stderr": {
+      "bytes": 12172,
+      "sha256": "a1dc8438a880459eb88297213918e1cb64711026af4333249c4b4aa6291e6a0e"
+    },
+    "evidence/worker-tests.stdout": {
+      "bytes": 82848,
+      "sha256": "31340fef08f1bb4d225a4ccbf33f5169fef6e47db3dc5c9c111aeaf53cd3a594"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/finite_guarded_mlp_full2303_wire_v1.rs": {
+      "bytes": 7526,
+      "sha256": "1d05e9ad662af455c9b77a1be2fa702ec88f3afd6ff2e7f045cef3b1d52e210b"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/finite_guarded_mlp_full2303_wire_v1_tests.rs": {
+      "bytes": 4144,
+      "sha256": "1bcc603b3152138d44fd047d02da24264e34d9b8be4706eb93074f0d9d3d171f"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/lib.rs": {
+      "bytes": 2766,
+      "sha256": "f7ca0368b21c305739195e19d699efb618866cbddcb0ccf3891fb4ff032cbb76"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/main.rs": {
+      "bytes": 19519,
+      "sha256": "1d24ff765c8396272c516588b2553d587a3ecda342f60d9a86b8c45629d7ad3f"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/native_guarded_mlp_decode_v1.rs": {
+      "bytes": 21859,
+      "sha256": "7ad357c3cc32c9417e390c467f363c1f8339902e36c550b45249de083cc08a09"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/native_guarded_mlp_full2303_cli_v1.rs": {
+      "bytes": 7782,
+      "sha256": "e5d8a23f949b5476dbdc3e8e2e04aa0cce9ebb266a6b9fb8403e583dd92ae95d"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/native_guarded_mlp_full2303_cli_v1_tests.rs": {
+      "bytes": 8571,
+      "sha256": "45bcccbd2603bccd8a46361173c6e948578f00ddfc2998be3fa2a76d6df65b7a"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/native_guarded_mlp_full2303_v1.rs": {
+      "bytes": 5370,
+      "sha256": "bfe05e8efec4bf8cd1d26b9d3e478d56d3abd65cf3cc776ba04e4b05227fb9e3"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/native_guarded_mlp_full2303_v1_tests.rs": {
+      "bytes": 2138,
+      "sha256": "c93aa9a7c092003ccb9eae3e09262210a0cc1b309dc1beed39c0753406af15a4"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/native_guarded_mlp_readiness_v1.rs": {
+      "bytes": 20060,
+      "sha256": "b3390e923e5ca22275afdeb809ae706b268f433671222c37a52013e43bcd889c"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/state_roster/guarded_mlp_decode_v1.rs": {
+      "bytes": 22136,
+      "sha256": "835d048f10929d8be05d27bf254d1cd5daabc7fba0411b3f915c817f4f9e749c"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/state_roster/guarded_mlp_decode_v1/tests.rs": {
+      "bytes": 26476,
+      "sha256": "abefc75e58a1dadbe3fe2eb73c4eaf4851b7fc9fbbcfebebca46548d598e054c"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/tests/readiness_cli.rs": {
+      "bytes": 7008,
+      "sha256": "e1e276285d58891b9b57c11c373b2e3a4879553e74dda7e768c5a23a42f41c15"
+    },
+    "input-manifest.json": {
+      "bytes": 212671,
+      "sha256": "9acfe04ae820bfba95e08d8ce3433c5528554da9bb869911cb1649f5c064df1a"
+    },
+    "inputs/full-source-manifest.json": {
+      "bytes": 11547,
+      "sha256": "8472f1749c10257cadb01f585c18e39fb76c195381ded1408be8254a01627a6b"
+    },
+    "inputs/runtime-complete.json": {
+      "bytes": 2250677,
+      "sha256": "bf0fa20a37ff3bf748ef5984df0dceb5cd1c453ef5c05c7111779b31cda33720"
+    },
+    "inputs/runtime-sources.json": {
+      "bytes": 407038,
+      "sha256": "f8024397177d83cdd1d07040b55c97afc5190988676bb80f67a9af4ae0554718"
+    },
+    "inputs/worker-complete.json": {
+      "bytes": 1731960,
+      "sha256": "5c4ffff4b06c7ad1d73c6985c6bcb0193b596ab6618bbda44010347a9b26aa1a"
+    },
+    "inputs/worker-list.stdout": {
+      "bytes": 76241,
+      "sha256": "1479ba2f5144ae5b4915580e9082bdf26c4189512f5825651ce4acde6ee4a6fe"
+    },
+    "inputs/worker-sources.json": {
+      "bytes": 426647,
+      "sha256": "00b15b5478ebbeb6fbd00a2de68e24bb6381a6f28a521fc566b95539aa3e35a5"
+    },
+    "inputs/worker-tests.stdout": {
+      "bytes": 81087,
+      "sha256": "42658d3dbbacb92c373341f55108fa1f42b30b13d6b544f50cec8946ed2a0ce9"
+    },
+    "manifest.json": {
+      "bytes": 14617,
+      "sha256": "6ff681d460fceccffd2d7f2508a6acb1eb0d379b0ea1fbf99259984ed46e7af8"
+    },
+    "run_cpu.py": {
+      "bytes": 41023,
+      "sha256": "632ff5c657469cb6ad3b6daf62c87e13688b03b99c0d84e11e9e65d70275dff9"
+    },
+    "source-transport.py": {
+      "bytes": 19974,
+      "sha256": "ed99f9303c43264968fbd203a298fa4e1fdc1af2e45c5999d6c60d57e3a4874d"
+    },
+    "stage-complete.json": {
+      "bytes": 847,
+      "sha256": "936a2af326f7c6cf064fc5978ff1be338eed5100aa2076cc9882714306d6f8dc"
+    },
+    "supervisor.py": {
+      "bytes": 41485,
+      "sha256": "8824478a6415dee39d28ccefb0881fc0687ac724f5a9c5a4540310fb5196b9bc"
+    }
+  },
+  "formatted_overlay_files": 13,
+  "full_long_workload": false,
+  "new_native_execution": false,
+  "new_project_execution": false,
+  "numerical_acceptance": false,
+  "observed_formatter_changes": [
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/finite_guarded_mlp_full2303_wire_v1.rs",
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/finite_guarded_mlp_full2303_wire_v1_tests.rs",
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/lib.rs",
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/main.rs",
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/native_guarded_mlp_decode_v1.rs",
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/native_guarded_mlp_full2303_cli_v1.rs",
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/native_guarded_mlp_full2303_cli_v1_tests.rs",
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/native_guarded_mlp_full2303_v1.rs",
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/native_guarded_mlp_full2303_v1_tests.rs",
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/native_guarded_mlp_readiness_v1.rs",
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/state_roster/guarded_mlp_decode_v1/tests.rs"
+  ],
+  "original_files": 81,
+  "original_terminal_unchanged": true,
+  "passed": true,
+  "performance_claim": false,
+  "schema": "ferric-full2303-worker-cpu-retention-v1",
+  "terminal": {
+    "bytes": 1691615,
+    "sha256": "0b91b220824f093b0297134ff21e4ddc2dde64fd17909439bb15421fb862e55f"
+  },
+  "terminal_name": "evidence/complete.json"
+}
