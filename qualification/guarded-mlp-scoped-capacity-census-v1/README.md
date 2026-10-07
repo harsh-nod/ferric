@@ -24,6 +24,7 @@ full discovery is not claimed.
 - [Exact tested-source integration postcheck](integration-v1/postcheck.json).
 - [Parent qualification](parent-cpu-v1/README.md) and [source postcheck](parent-integration-v1/postcheck.json).
 - [Strict data-checker qualification](checker-cpu-v1/README.md).
+- [Final bound report qualification](matched-timing-report-cpu-v1/README.md), 11 passing synthetic tests.
 - [Previous bank-rearm GPU comparison](../guarded-mlp-scoped-bank-rearm-v1/matched-timing-report-v1/README.md).
 
 All 26 CPU phases passed: 1,165 runtime tests with eight existing ignores,

@@ -1,0 +1,233 @@
+{
+  "actual_pair_report_rendered": false,
+  "controller": {
+    "bytes": 11731,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-bank-scoped-census-matched-timing-report-cpu-v228-v1/run_cpu.py",
+    "sha256": "70a8fcf75c22929ec28f82ff04309b12400bf024c7ca803e5b5cc892f7d583be"
+  },
+  "elapsed_seconds": 0.22124697803519666,
+  "environment": {
+    "CUDA_VISIBLE_DEVICES": "",
+    "HIP_VISIBLE_DEVICES": "",
+    "HOME": "/home/harmenon",
+    "LANG": "C.UTF-8",
+    "LC_ALL": "C.UTF-8",
+    "MKL_NUM_THREADS": "1",
+    "OMP_NUM_THREADS": "1",
+    "OPENBLAS_NUM_THREADS": "1",
+    "PATH": "/usr/bin:/bin",
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "PYTHONNOUSERSITE": "1",
+    "PYTHONPATH": "",
+    "ROCR_VISIBLE_DEVICES": "",
+    "TZ": "UTC"
+  },
+  "failure": null,
+  "full_model_acceptance": false,
+  "gpu_execution": false,
+  "limits": {
+    "address_space_bytes": 536870912,
+    "affinity": [
+      8,
+      9
+    ],
+    "cleanup_reserve_seconds": 50,
+    "nice": 10,
+    "stream_bytes": 4194304,
+    "test_seconds": 120,
+    "whole_seconds": 180
+  },
+  "model_execution": false,
+  "native_parent_execution": false,
+  "numerical_acceptance": false,
+  "passed": true,
+  "performance_claim": false,
+  "phases": [
+    {
+      "adopted_reaped": [],
+      "argv": [
+        "/usr/bin/prlimit",
+        "--as=536870912",
+        "--cpu=120",
+        "--fsize=16777216",
+        "--core=0",
+        "--",
+        "/usr/bin/python3.12",
+        "-I",
+        "-B",
+        "-c",
+        "import sys,unittest;sys.path.insert(0,'/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-bank-scoped-census-matched-timing-report-cpu-v228-v1');suite=unittest.TestSuite(unittest.defaultTestLoader.loadTestsFromName(name) for name in (\"test_paired_analysis\",));result=unittest.TextTestRunner(verbosity=2).run(suite);sys.exit(not result.wasSuccessful())"
+      ],
+      "command": {
+        "bytes": 1201,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-bank-scoped-census-matched-timing-report-cpu-v228-v1/evidence/report-tests.command.json",
+        "sha256": "8f5b7bcaa57ad4d3344eb81fec12dde5ddb50db7578d32814c388bea41a19055"
+      },
+      "elapsed_ns": 200792884,
+      "exception": null,
+      "exit_code": 0,
+      "forced_cleanup": false,
+      "label": "report-tests",
+      "natural_exit": true,
+      "observed_signals": [],
+      "pgid": 931410,
+      "pid": 931410,
+      "process_group_absent": true,
+      "reaped": true,
+      "stderr": {
+        "bytes": 1983,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-bank-scoped-census-matched-timing-report-cpu-v228-v1/evidence/report-tests.stderr",
+        "sha256": "b719c27ef9a9ebd28490066f9317528d168e1caf2088a26da728e4a559ff6a23"
+      },
+      "stdout": {
+        "bytes": 0,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-bank-scoped-census-matched-timing-report-cpu-v228-v1/evidence/report-tests.stdout",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "storage_failure": null,
+      "timed_out": false
+    }
+  ],
+  "postcheck_errors": [],
+  "production_authority": false,
+  "raw": {
+    "report-tests.command.json": {
+      "bytes": 1201,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-bank-scoped-census-matched-timing-report-cpu-v228-v1/evidence/report-tests.command.json",
+      "sha256": "8f5b7bcaa57ad4d3344eb81fec12dde5ddb50db7578d32814c388bea41a19055"
+    },
+    "report-tests.result.json": {
+      "bytes": 1871,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-bank-scoped-census-matched-timing-report-cpu-v228-v1/evidence/report-tests.result.json",
+      "sha256": "08403b5f2e14a5fdedec829e728bc2f3891da9a010c4f258676d052c0613d509"
+    },
+    "report-tests.started.json": {
+      "bytes": 632,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-bank-scoped-census-matched-timing-report-cpu-v228-v1/evidence/report-tests.started.json",
+      "sha256": "a48113425dcfecbe104365c9fc33daae0b2eaa4447b5695c0bebbd607b962a4a"
+    },
+    "report-tests.stderr": {
+      "bytes": 1983,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-bank-scoped-census-matched-timing-report-cpu-v228-v1/evidence/report-tests.stderr",
+      "sha256": "b719c27ef9a9ebd28490066f9317528d168e1caf2088a26da728e4a559ff6a23"
+    },
+    "report-tests.stdout": {
+      "bytes": 0,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-bank-scoped-census-matched-timing-report-cpu-v228-v1/evidence/report-tests.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "sources-after.json": {
+      "bytes": 1895,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-bank-scoped-census-matched-timing-report-cpu-v228-v1/evidence/sources-after.json",
+      "sha256": "5fe8689e48ec57f29f94f3b0699c59a1c9ac885597f93d8421250738f04e67e8"
+    },
+    "sources-before.json": {
+      "bytes": 1895,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-bank-scoped-census-matched-timing-report-cpu-v228-v1/evidence/sources-before.json",
+      "sha256": "5fe8689e48ec57f29f94f3b0699c59a1c9ac885597f93d8421250738f04e67e8"
+    }
+  },
+  "schema": "ferric-guarded-mlp-readiness40-bank-scoped-census-matched-timing-report-cpu-v1",
+  "source_unchanged": true,
+  "sources_after": {
+    "paired_analysis.py": {
+      "bytes": 24744,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-bank-scoped-census-matched-timing-report-cpu-v228-v1/paired_analysis.py",
+      "sha256": "bdf61482dba71a3e07736ea9f33762e809f96c945f572944275b7055ea1bb21e"
+    },
+    "run_cpu.py": {
+      "bytes": 11731,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-bank-scoped-census-matched-timing-report-cpu-v228-v1/run_cpu.py",
+      "sha256": "70a8fcf75c22929ec28f82ff04309b12400bf024c7ca803e5b5cc892f7d583be"
+    },
+    "supervisor.py": {
+      "bytes": 41485,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-bank-scoped-census-matched-timing-report-cpu-v228-v1/supervisor.py",
+      "sha256": "8824478a6415dee39d28ccefb0881fc0687ac724f5a9c5a4540310fb5196b9bc"
+    },
+    "test_paired_analysis.py": {
+      "bytes": 15886,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-bank-scoped-census-matched-timing-report-cpu-v228-v1/test_paired_analysis.py",
+      "sha256": "00549832ff02a2788d3bab93455a0ad06a61417b0d3ebbf53ad750d169fc8fb9"
+    },
+    "validate_readiness.py": {
+      "bytes": 19800,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-bank-scoped-census-matched-timing-report-cpu-v228-v1/validate_readiness.py",
+      "sha256": "0c319e99142b19909350d9a81404948b494c2e3ea0defbbc165c2e5529be032a"
+    },
+    "validate_timing.py": {
+      "bytes": 10104,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-bank-scoped-census-matched-timing-report-cpu-v228-v1/validate_timing.py",
+      "sha256": "27c652f5452676b4cc08a634241aff89b2653e85ee111133c1f1c4ab13efd93f"
+    }
+  },
+  "sources_before": {
+    "paired_analysis.py": {
+      "bytes": 24744,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-bank-scoped-census-matched-timing-report-cpu-v228-v1/paired_analysis.py",
+      "sha256": "bdf61482dba71a3e07736ea9f33762e809f96c945f572944275b7055ea1bb21e"
+    },
+    "run_cpu.py": {
+      "bytes": 11731,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-bank-scoped-census-matched-timing-report-cpu-v228-v1/run_cpu.py",
+      "sha256": "70a8fcf75c22929ec28f82ff04309b12400bf024c7ca803e5b5cc892f7d583be"
+    },
+    "supervisor.py": {
+      "bytes": 41485,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-bank-scoped-census-matched-timing-report-cpu-v228-v1/supervisor.py",
+      "sha256": "8824478a6415dee39d28ccefb0881fc0687ac724f5a9c5a4540310fb5196b9bc"
+    },
+    "test_paired_analysis.py": {
+      "bytes": 15886,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-bank-scoped-census-matched-timing-report-cpu-v228-v1/test_paired_analysis.py",
+      "sha256": "00549832ff02a2788d3bab93455a0ad06a61417b0d3ebbf53ad750d169fc8fb9"
+    },
+    "validate_readiness.py": {
+      "bytes": 19800,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-bank-scoped-census-matched-timing-report-cpu-v228-v1/validate_readiness.py",
+      "sha256": "0c319e99142b19909350d9a81404948b494c2e3ea0defbbc165c2e5529be032a"
+    },
+    "validate_timing.py": {
+      "bytes": 10104,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-bank-scoped-census-matched-timing-report-cpu-v228-v1/validate_timing.py",
+      "sha256": "27c652f5452676b4cc08a634241aff89b2653e85ee111133c1f1c4ab13efd93f"
+    }
+  },
+  "supervisor": {
+    "bytes": 41485,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-bank-scoped-census-matched-timing-report-cpu-v228-v1/supervisor.py",
+    "sha256": "8824478a6415dee39d28ccefb0881fc0687ac724f5a9c5a4540310fb5196b9bc"
+  },
+  "synthetic_data_tests_only": true,
+  "tests": {
+    "errors": 0,
+    "failed": 0,
+    "names": [
+      "test_paired_analysis.PairedAnalysisTests.test_bank_v2_control_cannot_be_relabelled_as_census_v3_candidate",
+      "test_paired_analysis.PairedAnalysisTests.test_both_original_policies_and_bank_ablation_scope_are_mandatory",
+      "test_paired_analysis.PairedAnalysisTests.test_census_subset_and_temporal_change_are_explicit_at_every_admission_layer",
+      "test_paired_analysis.PairedAnalysisTests.test_csv_markdown_and_fixed_svg_preserve_original_values",
+      "test_paired_analysis.PairedAnalysisTests.test_disjoint_categories_positions_and_observed_ratio",
+      "test_paired_analysis.PairedAnalysisTests.test_forward_groups_reconcile_without_adding_overlapping_totals",
+      "test_paired_analysis.PairedAnalysisTests.test_integer_nanoseconds_beyond_float_precision_and_decimal_ties",
+      "test_paired_analysis.PairedAnalysisTests.test_no_nested_timers_and_sidecar_timeline_mismatch_refused",
+      "test_paired_analysis.PairedAnalysisTests.test_rechecks_timeline_order_bool_gap_and_total",
+      "test_paired_analysis.PairedAnalysisTests.test_refuses_missing_pair_parity_identity_or_false_authority",
+      "test_paired_analysis.PairedAnalysisTests.test_zero_denominators_are_na_not_infinite_claims"
+    ],
+    "passed": 11,
+    "skipped": 0
+  },
+  "tool_pins": {
+    "prlimit": {
+      "bytes": 27536,
+      "path": "/usr/bin/prlimit",
+      "sha256": "17064f67e650d6152a6902b013aab496b54c87587c8eea6f5023aafee6154069"
+    },
+    "python": {
+      "bytes": 8020928,
+      "path": "/usr/bin/python3.12",
+      "sha256": "e1efa562c2cc2e35521a5c9c9b9939921001ff8ca9708a13ef15ace68cc2ccd7"
+    }
+  }
+}

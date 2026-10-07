@@ -1,0 +1,84 @@
+{
+  "actual_pair_report_rendered": false,
+  "admitted_tests": 11,
+  "archive": {
+    "bytes": 40436,
+    "sha256": "565e16dc54f9526e789a2bcbb9b4877774dfaa28e59e36b750d3cb2bf3d2e76e"
+  },
+  "external_tools_rehashed_locally": false,
+  "files": {
+    "evidence/complete.json": {
+      "bytes": 11878,
+      "sha256": "73395625e7d28fda2b69418274f68cdebeea6ceeccb347a0320d5b0c6a9e97c6"
+    },
+    "evidence/report-tests.command.json": {
+      "bytes": 1201,
+      "sha256": "8f5b7bcaa57ad4d3344eb81fec12dde5ddb50db7578d32814c388bea41a19055"
+    },
+    "evidence/report-tests.result.json": {
+      "bytes": 1871,
+      "sha256": "08403b5f2e14a5fdedec829e728bc2f3891da9a010c4f258676d052c0613d509"
+    },
+    "evidence/report-tests.started.json": {
+      "bytes": 632,
+      "sha256": "a48113425dcfecbe104365c9fc33daae0b2eaa4447b5695c0bebbd607b962a4a"
+    },
+    "evidence/report-tests.stderr": {
+      "bytes": 1983,
+      "sha256": "b719c27ef9a9ebd28490066f9317528d168e1caf2088a26da728e4a559ff6a23"
+    },
+    "evidence/report-tests.stdout": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "evidence/sources-after.json": {
+      "bytes": 1895,
+      "sha256": "5fe8689e48ec57f29f94f3b0699c59a1c9ac885597f93d8421250738f04e67e8"
+    },
+    "evidence/sources-before.json": {
+      "bytes": 1895,
+      "sha256": "5fe8689e48ec57f29f94f3b0699c59a1c9ac885597f93d8421250738f04e67e8"
+    },
+    "manifest.json": {
+      "bytes": 2903,
+      "sha256": "bdd599d155fb7f614cdc6b0b319484d7d92b3ca142eaee5712699f9ef738a586"
+    },
+    "paired_analysis.py": {
+      "bytes": 24744,
+      "sha256": "bdf61482dba71a3e07736ea9f33762e809f96c945f572944275b7055ea1bb21e"
+    },
+    "pure-evidence.py": {
+      "bytes": 18149,
+      "sha256": "d506015b8b0e002f9e690485e3311fc15f62d15de9c0eda6546797578b3dc5b5"
+    },
+    "run_cpu.py": {
+      "bytes": 11731,
+      "sha256": "70a8fcf75c22929ec28f82ff04309b12400bf024c7ca803e5b5cc892f7d583be"
+    },
+    "supervisor.py": {
+      "bytes": 41485,
+      "sha256": "8824478a6415dee39d28ccefb0881fc0687ac724f5a9c5a4540310fb5196b9bc"
+    },
+    "test_paired_analysis.py": {
+      "bytes": 15886,
+      "sha256": "00549832ff02a2788d3bab93455a0ad06a61417b0d3ebbf53ad750d169fc8fb9"
+    },
+    "validate_readiness.py": {
+      "bytes": 19800,
+      "sha256": "0c319e99142b19909350d9a81404948b494c2e3ea0defbbc165c2e5529be032a"
+    },
+    "validate_timing.py": {
+      "bytes": 10104,
+      "sha256": "27c652f5452676b4cc08a634241aff89b2653e85ee111133c1f1c4ab13efd93f"
+    }
+  },
+  "mode": "report",
+  "native_execution": false,
+  "new_project_execution": false,
+  "numerical_acceptance": false,
+  "original_files": 14,
+  "original_terminal_unchanged": true,
+  "passed": true,
+  "performance_claim": false,
+  "schema": "ferric-readiness40-bank-scoped-census-matched-timing-report-pure-cpu-retention-v1"
+}
