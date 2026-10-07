@@ -104,6 +104,16 @@ show measured capacity reuse, not throughput. The four-forward sequence limit,
 bounded long-request transport, numerical acceptance and sustained performance
 remain separate gates; no full 2,048/256 or 700 tokens/s claim is made.
 
+The [paired hidden-read experiment](../qualification/guarded-mlp-peer-read-pair-v1/README.md)
+now has an MI350-qualified runtime, parent, and corrected worker. The first
+native comparison passed its control case, then failed before paired worker
+bootstrap because of a CLI fallback routing omission. That failure and clean
+shutdown evidence remain retained. The correction passes 623 worker tests
+with four unchanged ignores, including two actual-executable routing tests.
+The fresh comparison harness passes 26 tests and its graph generator passes
+seven synthetic tests. A new serial comparison is pending; no paired-read
+speedup is claimed from the completed control prefix or CPU tests.
+
 The [historical O-projection replay](../qualification/o-projection-exact-replay-v1/README.md)
 now completes on MI350 with 18 passing tests. All 8,192 captured FP32 partials
 match the pinned kernel's modeled accumulation order. The derived native BF16

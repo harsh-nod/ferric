@@ -67,9 +67,12 @@ These diagnostics do not complete the production milestone, demonstrate GPU
 overlap, or establish a 700 tokens/s result.
 
 The [current finite-runtime engineering checkpoint](docs/GFX950_FINITE_PREFIX_PROGRESS_V1.md)
-includes CPU-qualified autoregressive projection-residual decoding: 1,037 tests
-passed on ASROCK, with four unchanged ignores. Its matching GPU AR4 validation
-remains pending; it does not change the production status above.
+includes four-forward, 36-layer Qwen3-8B GPU bring-up on MI350 and
+[measured reusable-arena allocation plateaus](qualification/guarded-mlp-reusable-ar4-v1/README.md).
+The [paired-read experiment and executable routing fix](qualification/guarded-mlp-peer-read-pair-v1/README.md)
+retain both the failed native attempt and the corrected worker's 623 passing
+CPU tests. These are engineering diagnostics, not sustained 2,048/256 decoding,
+independent full-model numerical acceptance, or a change to production status.
 
 ## First Product Milestone
 
