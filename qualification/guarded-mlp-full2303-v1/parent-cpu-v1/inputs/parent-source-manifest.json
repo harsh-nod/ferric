@@ -1,0 +1,116 @@
+{
+  "schema": "ferric-guarded-full2303-parent-source-proposal-v1",
+  "source_only": true,
+  "base_revision": "b61588712af31738d3a744fae81b6afcfdd9ea9a",
+  "files": [
+    {
+      "repository": "ferric",
+      "path": "adapters/m1-engineering-execution-v1/Cargo.toml",
+      "before": {
+        "bytes": 13854,
+        "sha256": "4fff504c0fc6390ec0af16046b0bb1cafe2254826de13cf70c6171720d3b7bef"
+      },
+      "after": {
+        "bytes": 14110,
+        "sha256": "2aeaa576d3cd649ad879db99446a971a993d08ff213e56b315f0c0dd41600edb"
+      }
+    },
+    {
+      "repository": "ferric",
+      "path": "adapters/m1-engineering-execution-v1/src/bin/ferric-qwen3-guarded-mlp-full2303-engineering.rs",
+      "before": null,
+      "after": {
+        "bytes": 3252,
+        "sha256": "5d7102a1030d6073cb83c2267ee2b7c3442a557a31562ffa50843f831a198912"
+      }
+    },
+    {
+      "repository": "ferric",
+      "path": "adapters/m1-engineering-execution-v1/src/lib.rs",
+      "before": {
+        "bytes": 90157,
+        "sha256": "19736ba49e7d46ce2e1ab7c7c80e2a9a3ae95ddc0090e4653ea2d20062124da7"
+      },
+      "after": {
+        "bytes": 90354,
+        "sha256": "668e79e3402c8431150a6b126a94c2dbfc2f433e1a148728da61886e1494b4da"
+      }
+    },
+    {
+      "repository": "ferric",
+      "path": "adapters/m1-engineering-execution-v1/src/tp_finite_client/long/full2303.rs",
+      "before": null,
+      "after": {
+        "bytes": 20462,
+        "sha256": "208a2e1d1fb5ca7079272e7ef4529e639df1386bec801eb80b4f0374d37ae888"
+      }
+    },
+    {
+      "repository": "ferric",
+      "path": "adapters/m1-engineering-execution-v1/src/tp_finite_client/long/full2303_evidence.rs",
+      "before": null,
+      "after": {
+        "bytes": 13056,
+        "sha256": "46d035d808bb4250826d7758f17fb3ea376f34151bd9454918e6dacbeb94c988"
+      }
+    },
+    {
+      "repository": "ferric",
+      "path": "adapters/m1-engineering-execution-v1/src/tp_finite_client/long/full2303_tests.rs",
+      "before": null,
+      "after": {
+        "bytes": 13755,
+        "sha256": "12defd14f2092222e4ad12051a804111f9038bc945093fc3d52b6bf2b525069d"
+      }
+    },
+    {
+      "repository": "ferric",
+      "path": "adapters/m1-engineering-execution-v1/src/tp_finite_client/long.rs",
+      "before": {
+        "bytes": 24203,
+        "sha256": "955156f26e3660c45403396cb520a0d30bf0468ce05fa18509fd6be83766afa1"
+      },
+      "after": {
+        "bytes": 24303,
+        "sha256": "d603d5bba2c48fd1458a9df3736ac82d25d20e6ed1492b26d8c996d957ddf2fd"
+      }
+    }
+  ],
+  "worker_wire_api": {
+    "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/guarded-mlp-model-interface-v228-v1/model-guarded-full2303-v1/worker-v1/ferric/adapters/tp-peer-finite-engineering-worker-v1/src/finite_guarded_mlp_full2303_wire_v1.rs",
+    "pin": {
+      "bytes": 7479,
+      "sha256": "0323d96ccd9c463f813463b389635e6d05b3073fd67cf29db61d5427954d6c9a"
+    }
+  },
+  "new_tests": {
+    "parent_library": [
+      "tp_finite_client::long::full2303::tests::full2303_parent_request_is_closed_and_keeps_authentic_full_prompt",
+      "tp_finite_client::long::full2303::tests::full2303_parent_schedule_uses_prompt_then_actual_outputs_without_early_eos",
+      "tp_finite_client::long::full2303::tests::full2303_parent_page_rows_commit_all_2303_with_exact_144_page_mapping",
+      "tp_finite_client::long::full2303::tests::full2303_parent_retention_reconstructs_all_frames_tokens_and_original_captures",
+      "tp_finite_client::long::full2303::tests::full2303_parent_retention_refuses_partial_reordered_and_changed_captures",
+      "tp_finite_client::long::full2303::tests::full2303_parent_compact_bound_does_not_require_all_logit_payloads"
+    ],
+    "parent_binary": [
+      "tests::full2303_parent_cli_requires_the_distinct_exact_opt_in"
+    ]
+  },
+  "unchanged_contracts": {
+    "pure_long_wire": true,
+    "pure_long_sequence": true,
+    "readiness40_native_entries": true,
+    "ar4_entries": true,
+    "stream_bytes": 67108864,
+    "evidence_bytes": 33554432,
+    "full_deadline_ms": 3600000,
+    "launch_feasibility_established": false
+  },
+  "claims": {
+    "tests_executed": false,
+    "native_execution": false,
+    "numerical_acceptance": false,
+    "performance_claim": false,
+    "production_authority": false
+  }
+}

@@ -1,0 +1,53 @@
+{
+  "adopted_reaped": [],
+  "argv": [
+    "/usr/bin/prlimit",
+    "--as=12884901888",
+    "--cpu=1200",
+    "--fsize=1073741824",
+    "--core=0",
+    "--",
+    "/home/harmenon/.rustup/toolchains/1.97.1-x86_64-unknown-linux-gnu/bin/cargo",
+    "test",
+    "--offline",
+    "--locked",
+    "--jobs",
+    "2",
+    "--manifest-path",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-full2303-parent-cpu-v228-v1/ferric/adapters/m1-engineering-execution-v1/Cargo.toml",
+    "--features",
+    "guarded-mlp-readiness-engineering,guarded-mlp-full2303-engineering",
+    "--bin",
+    "ferric-qwen3-finite-prefix-layer-engineering",
+    "--",
+    "--test-threads=2"
+  ],
+  "command": {
+    "bytes": 2567,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-full2303-parent-cpu-v228-v1/evidence/ferric-qwen3-finite-prefix-layer-engineering-tests.command.json",
+    "sha256": "dfaa2cd0da77447b3c9a238867ae6bd4697b7f64cce975825f54e1c6142b7f5f"
+  },
+  "elapsed_ns": 520006462,
+  "exception": null,
+  "exit_code": 0,
+  "forced_cleanup": false,
+  "label": "ferric-qwen3-finite-prefix-layer-engineering-tests",
+  "natural_exit": true,
+  "observed_signals": [],
+  "pgid": 2443651,
+  "pid": 2443651,
+  "process_group_absent": true,
+  "reaped": true,
+  "stderr": {
+    "bytes": 2351,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-full2303-parent-cpu-v228-v1/evidence/ferric-qwen3-finite-prefix-layer-engineering-tests.stderr",
+    "sha256": "d22102488ed37d3183edf0129c8af33108a4af815e20eb10dc67ac655eec8d96"
+  },
+  "stdout": {
+    "bytes": 162,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-full2303-parent-cpu-v228-v1/evidence/ferric-qwen3-finite-prefix-layer-engineering-tests.stdout",
+    "sha256": "89785b89e67db5d7efea5109a4d78ca3e5b6b25e8ded40014be61eade9cd76e3"
+  },
+  "storage_failure": null,
+  "timed_out": false
+}

@@ -1,0 +1,3 @@
+tests::causal_parent_cli_has_a_separate_closed_mode: test
+tests::position5_parent_cli_requires_distinct_exact_flag: test
+tests::readiness_parent_cli_is_explicit_and_has_no_long_or_ar4_fallback: test

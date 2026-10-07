@@ -1,8 +1,8 @@
 # Guarded Full2303 Request
 
-The explicit full-request worker is CPU-qualified on MI350. The parent client
-is under qualification. No full-request GPU execution or numerical acceptance
-is claimed by this evidence.
+The explicit full-request worker and parent client are CPU-qualified on MI350.
+No full-request GPU execution or numerical acceptance is claimed by this
+evidence.
 
 ## Scope
 
@@ -62,12 +62,54 @@ state. All planned postimages have subsequently been applied and rehashed.
 | Worker ELF | `4e95b834aba1441b4b6a48085eb1f4fc28f9ee4a3fd04dff04d45c7de82c27f0` |
 | Retained archive | `aaf720a12d17b36e63921dc94e04aa915ed19d94f9485b098538dfb366c40403` |
 
+## Parent CPU Result
+
+The actual MI350 parent run completed all 63 phases in 405.70 seconds. All 455
+selected tests passed across 53 scopes, with no failures or ignored selections.
+All 444 prior selected outcomes are preserved. The eleven additions cover six
+parent behaviors, four imported Full wire contracts and the new binary selector.
+The full library inventory contains 928 names; this is not a claim that all
+928 were selected for execution.
+
+The seven Cargo-selected binaries include the six existing parent products and
+`ferric-qwen3-guarded-mlp-full2303-engineering`. Both the existing readiness and
+new Full features were enabled. The locked dependency graph is unchanged after
+accounting for the new feature and binary. Every phase exited naturally and was
+reaped, with clean source, dependency, private-cache, tool and product postchecks.
+
+The new parent entry authenticates the full prompt, uses 144 physical cache
+pages, retains all 2,303 compact records and four full captures, independently
+reconstructs the 256-token history, and retains decoded output. Its aggregate
+evidence limits and the existing generated-output acceptance requirements are
+not relaxed. CPU fixtures do not constitute model execution.
+
+The source map contains 1,251 Ferric bodies and three harness bodies. All 203
+worker bodies are identical to the separately qualified worker, before and after
+parent compilation. Five of the six permitted parent Rust paths changed under
+rustfmt. Integration uses the actual tested postimages for all seven parent
+files: three replacements and four additions.
+
+`parent-cpu-v1` retains 451 original archive members, including 319 raw bodies,
+and a separate retention record. Its executed V2 evidence collector corrects a
+formatter-list ordering assumption in V1: duplicate-free exact names are compared
+after sorting. The original CPU receipt and source are unchanged. The initial
+V1 export refused before archive creation; no test was rerun or relabeled.
+`parent-source-integration.json` preserves the original integration plan, whose
+`patch_applied=false` describes plan creation; its postimages were subsequently
+applied and rehashed.
+
+| Artifact | SHA-256 |
+| --- | --- |
+| Parent CPU terminal | `67949bbd5a662efc4d56a65df8b9988dbaf56cbd10b0e006981bed7f4fffbf13` |
+| Tested parent source map | `2d6613ee1d0267416adcc496d7806e9fdad9317b641a96e900d4b04a5a697df4` |
+| Full parent ELF | `1110ecc3ee4c5ff511b0a87170e4a7ce46dcd448f0f3003b548a4fae261eb7a5` |
+| Retained parent archive | `f1d7cd2add4ead1cadcb428f366d99a6a9ed990a20bd72d9e43e00e8d45e0338` |
+
 ## Remaining Gates
 
-Parent compilation and regression tests must join this exact worker source.
 Measured launch feasibility must precede a full GPU run. Actual completion must
 then pass the independent generated-ID and decoded-byte comparison described
 in the [decode-gate inventory](../guarded-mlp-readiness40-causal-layer0-v1/DECODE-GATES.md).
 Sustained BF16 target-only performance on the requested 2,048/256 workload is
-still unmeasured for this route. This CPU result does not close M0-M7, establish
+still unmeasured for this route. These CPU results do not close M0-M7, establish
 700 tokens/s, or qualify a community performance demo.
