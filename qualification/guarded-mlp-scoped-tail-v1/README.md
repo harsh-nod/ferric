@@ -24,8 +24,11 @@ and allocation counters. Errors and unwind are terminal, without fallback.
 The first [parent qualification failed at test compilation](parent-cpu-failed-v1/README.md)
 because a shared test referenced a worker-only module. Its original evidence
 is retained. The [test-only repair passed a fresh coupled qualification](cpu-attempt-v2/README.md)
-and is integrated with a complete canonical source postcheck. A fresh parent
-qualification is still required before the same-binary Census V3/Tail V4 GPU comparison. No tail native
+and is integrated with a complete canonical source postcheck. The
+[fresh parent retry](parent-cpu-v2/README.md) passed all 68 phases and 568
+selected tests; its seven actual postimages are integrated with a complete
+1,290-file source postcheck. The same-binary Census V3/Tail V4 GPU comparison
+is next. No tail native
 result or speedup is claimed yet. This change does not
 add a Full2303 tail route, relax the one-hour bound, or resolve the independent
 position-5 numerical discrepancy. Exact independent 256 output IDs/raw decoded

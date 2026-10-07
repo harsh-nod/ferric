@@ -1,0 +1,54 @@
+{
+  "adopted_reaped": [],
+  "argv": [
+    "/usr/bin/prlimit",
+    "--as=12884901888",
+    "--cpu=1200",
+    "--fsize=1073741824",
+    "--core=0",
+    "--",
+    "/home/harmenon/.rustup/toolchains/1.97.1-x86_64-unknown-linux-gnu/bin/cargo",
+    "test",
+    "--offline",
+    "--locked",
+    "--jobs",
+    "2",
+    "--manifest-path",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-bank-scoped-census-tail-parent-cpu-v228-v2/ferric/adapters/m1-engineering-execution-v1/Cargo.toml",
+    "--features",
+    "guarded-mlp-readiness-engineering,guarded-mlp-full2303-engineering",
+    "--lib",
+    "projection_residual_mlp_ordered_observation_v1::tests::ordered_report_requires_shared_policy_on_all_seven_snapshots",
+    "--",
+    "--test-threads=2",
+    "--exact"
+  ],
+  "command": {
+    "bytes": 2815,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-bank-scoped-census-tail-parent-cpu-v228-v2/evidence/parent-added-7.command.json",
+    "sha256": "aecc0aa5eceebb8b09bcb1db73ba40dd5a76001b698b6c34b97566f3c2820ea9"
+  },
+  "elapsed_ns": 229000492,
+  "exception": null,
+  "exit_code": 0,
+  "forced_cleanup": false,
+  "label": "parent-added-7",
+  "natural_exit": true,
+  "observed_signals": [],
+  "pgid": 1866371,
+  "pid": 1866371,
+  "process_group_absent": true,
+  "reaped": true,
+  "stderr": {
+    "bytes": 1308,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-bank-scoped-census-tail-parent-cpu-v228-v2/evidence/parent-added-7.stderr",
+    "sha256": "a3c0ed49cd15add3fab2c6f6d59e455c91daaf8a2c768d241ada5f353e9a9c37"
+  },
+  "stdout": {
+    "bytes": 243,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-bank-scoped-census-tail-parent-cpu-v228-v2/evidence/parent-added-7.stdout",
+    "sha256": "39be3907c387493676d8193f4b0b264aedb8edaedd038c7d23f21a5fc47c8936"
+  },
+  "storage_failure": null,
+  "timed_out": false
+}

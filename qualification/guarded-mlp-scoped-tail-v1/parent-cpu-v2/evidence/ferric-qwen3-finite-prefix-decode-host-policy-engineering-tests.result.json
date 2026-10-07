@@ -1,0 +1,53 @@
+{
+  "adopted_reaped": [],
+  "argv": [
+    "/usr/bin/prlimit",
+    "--as=12884901888",
+    "--cpu=1200",
+    "--fsize=1073741824",
+    "--core=0",
+    "--",
+    "/home/harmenon/.rustup/toolchains/1.97.1-x86_64-unknown-linux-gnu/bin/cargo",
+    "test",
+    "--offline",
+    "--locked",
+    "--jobs",
+    "2",
+    "--manifest-path",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-bank-scoped-census-tail-parent-cpu-v228-v2/ferric/adapters/m1-engineering-execution-v1/Cargo.toml",
+    "--features",
+    "guarded-mlp-readiness-engineering,guarded-mlp-full2303-engineering",
+    "--bin",
+    "ferric-qwen3-finite-prefix-decode-host-policy-engineering",
+    "--",
+    "--test-threads=2"
+  ],
+  "command": {
+    "bytes": 2742,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-bank-scoped-census-tail-parent-cpu-v228-v2/evidence/ferric-qwen3-finite-prefix-decode-host-policy-engineering-tests.command.json",
+    "sha256": "4caf76b00723d9d0eee3177ac25c3fb102cd95a95b165e9c940b0fb2749671f8"
+  },
+  "elapsed_ns": 527170677,
+  "exception": null,
+  "exit_code": 0,
+  "forced_cleanup": false,
+  "label": "ferric-qwen3-finite-prefix-decode-host-policy-engineering-tests",
+  "natural_exit": true,
+  "observed_signals": [],
+  "pgid": 1865984,
+  "pid": 1865984,
+  "process_group_absent": true,
+  "reaped": true,
+  "stderr": {
+    "bytes": 2458,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-bank-scoped-census-tail-parent-cpu-v228-v2/evidence/ferric-qwen3-finite-prefix-decode-host-policy-engineering-tests.stderr",
+    "sha256": "e91d3c22c94acaef63f3f0cedc5a21dfa539880138e8dccf10f69a8a27020479"
+  },
+  "stdout": {
+    "bytes": 197,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-bank-scoped-census-tail-parent-cpu-v228-v2/evidence/ferric-qwen3-finite-prefix-decode-host-policy-engineering-tests.stdout",
+    "sha256": "cf8ebfd61fa202231439c8d9e1bcb6244a69fcd5e6cbf0e84fb81270a44c3a8b"
+  },
+  "storage_failure": null,
+  "timed_out": false
+}

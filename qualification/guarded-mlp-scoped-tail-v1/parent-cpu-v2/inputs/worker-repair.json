@@ -1,0 +1,108 @@
+{
+  "schema": "ferric-scoped-tail-shared-test-repair-v2",
+  "source_generation": "scoped-tail-shared-test-repair-v2",
+  "status": "source-only-uncompiled-unexecuted",
+  "base": {
+    "terminal": {
+      "bytes": 2449865,
+      "sha256": "a2e3d99f94b5b01223f42f3d8917c2cf6a1fc25f9227d4c341bc2b9a7cc9285c"
+    },
+    "sources": {
+      "bytes": 424416,
+      "sha256": "a2a74ed023e9b2aac224621d37f328d097838c317c901a361c1496064e162ec4"
+    },
+    "runtime_files": 827,
+    "worker_files": 228
+  },
+  "requires": {
+    "worker-v1/source-manifest.json": {
+      "bytes": 27229,
+      "sha256": "96463bf9a70d6020e28c2d44260f589c38e7f61229f8c8e77f28242f1893ca71"
+    },
+    "runtime-v1/source-manifest.json": {
+      "bytes": 10858,
+      "sha256": "71da4afd43eb9f7de8fa1cac47cf8e9b2f0ececc86cfb98877b94678d500df83"
+    },
+    "INTERFACE.md": {
+      "bytes": 24881,
+      "sha256": "749fd470a27cf7630f292b04c5464567e4e7d398ee7855b1fbd152824421a8e4"
+    }
+  },
+  "original_parent_failure": {
+    "terminal": {
+      "bytes": 3644095,
+      "sha256": "086ec9aa9972605cb2cb6e63239b8dfb44a5e78d2b8b0077301e507e1927c183"
+    },
+    "phase": "parent-lib-list",
+    "exit_code": 101,
+    "diagnostic": "E0433: crate::native_catalog unavailable in the parent-imported shared test module"
+  },
+  "files": [
+    {
+      "repository": "ferric",
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/guarded_mlp_long_sequence_v2_tests.rs",
+      "before": {
+        "bytes": 12831,
+        "sha256": "b3abb591fbd04f3166a93cbd6ccc1150b14c4e795d1f47d11c6a306e82355d18"
+      },
+      "after": {
+        "bytes": 12613,
+        "sha256": "231a971b2daf8812e61c5a86b9ccd73396e98e5a68cc1d51f95e8389b520a95b"
+      }
+    }
+  ],
+  "replacement": {
+    "before": "            // Device work has completed; the production byte checker refuses\n            // its malformed normalized row before the outer fence/commit.\n            crate::native_catalog::forward::checked_scoped_tail_bytes(\n                &0u32.to_le_bytes(),\n                &[0; 8191],\n                &vec![0; 303872],\n            )\n            .map_err(io::Error::other)?;",
+    "after": "            // Model worker validation rejecting an already completed tail.\n            return Err(io::Error::other(\"modeled post-tail validation rejection\"));"
+  },
+  "unchanged_contracts": {
+    "adapters/tp-peer-finite-engineering-worker-v1/src/guarded_mlp_long_sequence_v2.rs": {
+      "bytes": 5231,
+      "sha256": "eba088151e6cd5aaa684be44652db93acb578f2a7272c95263d257f1e4de1e44"
+    },
+    "adapters/tp-peer-finite-engineering-worker-v1/src/native_forward.rs": {
+      "bytes": 22454,
+      "sha256": "e7b3b593a4554a478e2979f9e9f85394ae853f206222c73d66eb8c1a56d63ce2"
+    },
+    "adapters/m1-engineering-execution-v1/src/lib.rs": {
+      "bytes": 91610,
+      "sha256": "578f35f0fe854ac132e0c79fcec6455aa83ae82675f91ca569bde9c262b64f7e"
+    }
+  },
+  "unchanged_test_names": [
+    "long_sequence_full_2303_mock_preserves_order_banks_and_256_own_outputs",
+    "long_sequence_readiness40_is_prompt_only_with_distinct_healthy_close",
+    "long_sequence_every_effect_failure_is_terminal_without_retry_or_commit",
+    "long_sequence_every_post_effect_deadline_stops_before_next_operation",
+    "long_sequence_unwind_and_publication_failure_quarantine_existing_work",
+    "long_sequence_bad_terminal_or_device_argmax_refuses_before_fence_and_commit",
+    "long_sequence_wrong_scope_order_and_premature_close_never_touch_backend",
+    "long_sequence_close_failure_deadline_and_second_close_remain_terminal",
+    "long_sequence_completed_warm_tail_then_worker_reject_is_terminal_without_commit_or_close"
+  ],
+  "new_test_names": [],
+  "patch": {
+    "bytes": 791,
+    "sha256": "14ef80bc4a6732b65d614be659863bb46a4214951aedb7044c4dfacd497e0b33"
+  },
+  "conditional_qualification": {
+    "runtime_files": 827,
+    "worker_files": 228,
+    "sources": 1059,
+    "phases": 27,
+    "runtime_passed": 1180,
+    "runtime_ignored": 8,
+    "worker_passed": 820,
+    "worker_ignored": 4,
+    "products": 11,
+    "qualified": false
+  },
+  "production_changed": false,
+  "runtime_changed": false,
+  "test_assertions_changed": false,
+  "tests_executed": false,
+  "canonical_changed": false,
+  "native_execution": false,
+  "numerical_acceptance": false,
+  "performance_claim": false
+}

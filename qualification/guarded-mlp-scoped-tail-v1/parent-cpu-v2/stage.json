@@ -1,0 +1,29 @@
+{
+  "archive": {
+    "bytes": 1654343,
+    "sha256": "0b0a11cb08f3a16f6240b920287d1affd8e15f20ae88ee4f88b60d260029dcd4"
+  },
+  "canonical_changed": false,
+  "controller": {
+    "bytes": 36394,
+    "sha256": "bdbc7b376038f054e07251af8a500b997fc2099e09e1fdc79af6c968be9b9774"
+  },
+  "ferric_files": 1290,
+  "helpers": 3,
+  "input": {
+    "bytes": 273483,
+    "sha256": "537f133a1588b1dc5c615b796b1ce597bf6ae53f6cb5fc6d8c802f4069a7853a"
+  },
+  "lineage_files": 131,
+  "lockfiles_changed": false,
+  "overlay_files": 20,
+  "parent_format_paths": 7,
+  "passed": true,
+  "project_execution": false,
+  "qualified_worker_files": 228,
+  "qualified_worker_sources_preserved": true,
+  "root": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-bank-scoped-census-tail-parent-cpu-v228-v2",
+  "schema": "ferric-guarded-mlp-readiness40-bank-scoped-census-tail-parent-source-stage-v1",
+  "shared_cache_changed": false,
+  "source_files": 1293
+}

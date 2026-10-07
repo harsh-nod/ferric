@@ -59,13 +59,14 @@ are a separate next step, not part of the measured Census result.
 | --- | --- |
 | Runtime/worker CPU qualification | Passed: 1,180 runtime tests plus 8 ignores; 820 worker tests plus 4 ignores; 27 phases |
 | Strict data checker | Passed: 114 synthetic tests |
-| Parent CPU qualification | Not qualified: first attempt failed during compilation at phase 5; no V4 GPU run |
+| Parent CPU qualification | Passed on fresh retry: 68 phases, 568 selected tests; original failed attempt retained |
 | Fresh same-binary Census V3 / Tail V4 native pair | Pending; no result or gain predicted |
 | Tail report and independently checked publication | Pending actual pair |
 
 The parent failure is a shared test's backend-specific module reference. The
 [test-only repair passed a fresh complete runtime/worker qualification](../qualification/guarded-mlp-scoped-tail-v1/cpu-attempt-v2/README.md)
-and is integrated; the fresh parent retry remains pending.
+and is integrated. The [fresh parent retry also passed](../qualification/guarded-mlp-scoped-tail-v1/parent-cpu-v2/README.md),
+and its seven tested source files are integrated. No V4 GPU result is claimed yet.
 CPU tests and synthetic admission do not establish native correctness or
 performance. Tail is a distinct Readiness40 route, not Full2303 activation.
 Keep pending entries until original receipts and actual comparisons are

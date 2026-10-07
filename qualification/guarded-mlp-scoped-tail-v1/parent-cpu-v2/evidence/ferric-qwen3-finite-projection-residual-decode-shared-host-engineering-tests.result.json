@@ -1,0 +1,53 @@
+{
+  "adopted_reaped": [],
+  "argv": [
+    "/usr/bin/prlimit",
+    "--as=12884901888",
+    "--cpu=1200",
+    "--fsize=1073741824",
+    "--core=0",
+    "--",
+    "/home/harmenon/.rustup/toolchains/1.97.1-x86_64-unknown-linux-gnu/bin/cargo",
+    "test",
+    "--offline",
+    "--locked",
+    "--jobs",
+    "2",
+    "--manifest-path",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-bank-scoped-census-tail-parent-cpu-v228-v2/ferric/adapters/m1-engineering-execution-v1/Cargo.toml",
+    "--features",
+    "guarded-mlp-readiness-engineering,guarded-mlp-full2303-engineering",
+    "--bin",
+    "ferric-qwen3-finite-projection-residual-decode-shared-host-engineering",
+    "--",
+    "--test-threads=2"
+  ],
+  "command": {
+    "bytes": 2755,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-bank-scoped-census-tail-parent-cpu-v228-v2/evidence/ferric-qwen3-finite-projection-residual-decode-shared-host-engineering-tests.command.json",
+    "sha256": "13a73904ace83e0d4c6c112527a54f4cdcfa098a0a0e41d18663b648d23e0a9f"
+  },
+  "elapsed_ns": 524247405,
+  "exception": null,
+  "exit_code": 0,
+  "forced_cleanup": false,
+  "label": "ferric-qwen3-finite-projection-residual-decode-shared-host-engineering-tests",
+  "natural_exit": true,
+  "observed_signals": [],
+  "pgid": 1866176,
+  "pid": 1866176,
+  "process_group_absent": true,
+  "reaped": true,
+  "stderr": {
+    "bytes": 2484,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-bank-scoped-census-tail-parent-cpu-v228-v2/evidence/ferric-qwen3-finite-projection-residual-decode-shared-host-engineering-tests.stderr",
+    "sha256": "8665ab041cc76f08a371ef1b508d8c6cc19216dc40293023445977f9cfdd2122"
+  },
+  "stdout": {
+    "bytes": 204,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-bank-scoped-census-tail-parent-cpu-v228-v2/evidence/ferric-qwen3-finite-projection-residual-decode-shared-host-engineering-tests.stdout",
+    "sha256": "92565bcf6696a81ff0f06b63334c2f17e018af7a1d502f8ea5fbc829cec3dd86"
+  },
+  "storage_failure": null,
+  "timed_out": false
+}

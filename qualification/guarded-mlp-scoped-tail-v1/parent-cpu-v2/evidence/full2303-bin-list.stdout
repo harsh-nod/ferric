@@ -1,0 +1,3 @@
+tests::full2303_bank_scoped_census_parent_cli_requires_one_distinct_selector: test
+tests::full2303_parent_cli_requires_the_distinct_exact_opt_in: test
+tests::full2303_scoped_parent_cli_has_one_closed_explicit_selector: test

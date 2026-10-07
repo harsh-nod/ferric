@@ -1,0 +1,14 @@
+
+running 9 tests
+test tests::bank_scoped_census_parent_cli_is_timed_only_and_preserves_old_selectors ... ok
+test tests::bank_scoped_warm_parent_cli_is_timed_only_and_preserves_old_selectors ... ok
+test tests::causal_parent_cli_has_a_separate_closed_mode ... ok
+test tests::position5_parent_cli_requires_distinct_exact_flag ... ok
+test tests::readiness_parent_cli_is_explicit_and_has_no_long_or_ar4_fallback ... ok
+test tests::readiness_parent_host_timing_has_one_explicit_position5_selector ... ok
+test tests::scoped_warm_parent_cli_has_two_closed_selectors_without_combination ... ok
+test tests::shared_full_host_timing_parent_cli_is_one_separate_opt_in ... ok
+test tests::shared_full_parent_selector_is_separate_from_default_timing_and_full ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

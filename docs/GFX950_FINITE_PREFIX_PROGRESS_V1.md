@@ -16,7 +16,11 @@ test compilation because the shared sequence fixture referenced a worker-only
 module. The [original failed attempt](../qualification/guarded-mlp-scoped-tail-v1/parent-cpu-failed-v1/README.md)
 is retained. The [test-only repair passed a fresh 27-phase coupled qualification](../qualification/guarded-mlp-scoped-tail-v1/cpu-attempt-v2/README.md)
 in 173.070 seconds with the same test outcomes, and is integrated after full
-canonical source checks. The fresh parent retry is next.
+canonical source checks. The [fresh parent retry](../qualification/guarded-mlp-scoped-tail-v1/parent-cpu-v2/README.md)
+passed all 68 phases and 568 selected tests across 58 scopes in 416.482 seconds,
+with a 1,032-name library inventory and seven built executables. Its seven
+actual tested Rust files are integrated with a complete 1,290-file source
+postcheck, preserving all 228 worker bodies and the parent lockfile.
 No tail native result or speedup is claimed yet. A
 [community demo runbook](GFX950_COMMUNITY_DEMO_V1.md) covers the already retained
 Census experiment and its limits.

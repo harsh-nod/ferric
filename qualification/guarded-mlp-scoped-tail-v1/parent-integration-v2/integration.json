@@ -1,0 +1,179 @@
+{
+  "actual_worker_sources": {
+    "bytes": 424416,
+    "sha256": "5de4929b2832eda55a53f99945fc4b64a9fbda28b4d4f8bef07f2e8d5e000d6a"
+  },
+  "actual_worker_terminal": {
+    "bytes": 2448697,
+    "sha256": "3c4fe3a6c4942b20ec61fd7ea5c3409526e2167c43d24a62fb8660c34b0e713e"
+  },
+  "canonical_postimages": 1290,
+  "canonical_preimages": 1288,
+  "input": {
+    "bytes": 273483,
+    "sha256": "537f133a1588b1dc5c615b796b1ce597bf6ae53f6cb5fc6d8c802f4069a7853a"
+  },
+  "native_execution": false,
+  "numerical_acceptance": false,
+  "original_parent_lock_preserved": true,
+  "parent_rows": {
+    "ferric/adapters/m1-engineering-execution-v1/src/bin/ferric-qwen3-guarded-mlp-readiness-engineering.rs": {
+      "after": {
+        "bytes": 25729,
+        "sha256": "30596eca485cb60a4fe090726e875643721783130b527addb626c45102843159"
+      },
+      "before": {
+        "bytes": 21510,
+        "sha256": "5820495fa2aeee5c6c2dbdb618311fb8509e179f58b726ee09311c9b325ffe05"
+      }
+    },
+    "ferric/adapters/m1-engineering-execution-v1/src/lib.rs": {
+      "after": {
+        "bytes": 91843,
+        "sha256": "fe4192dd447d0bb1cd7809d345aacb71d93ab20252d6f49bfa52a065ef81ecdf"
+      },
+      "before": {
+        "bytes": 91610,
+        "sha256": "578f35f0fe854ac132e0c79fcec6455aa83ae82675f91ca569bde9c262b64f7e"
+      }
+    },
+    "ferric/adapters/m1-engineering-execution-v1/src/tp_finite_client/long/readiness.rs": {
+      "after": {
+        "bytes": 29279,
+        "sha256": "98c8dfefc3bcedef6f5371373f9d4d83fb22d9ff9b7e2df2a588fbbf1517cc38"
+      },
+      "before": {
+        "bytes": 28376,
+        "sha256": "fef3b7cab3a3f6c4685b3d6fe68914f2542e4dbdd86b078b275ba4f6d1a45cc6"
+      }
+    },
+    "ferric/adapters/m1-engineering-execution-v1/src/tp_finite_client/long/readiness_bank_scoped_census_tail.rs": {
+      "after": {
+        "bytes": 1571,
+        "sha256": "d425a4f1fe9c69b6fee9f685db05a14122454d148916df2f71f30fa177939777"
+      },
+      "before": null
+    },
+    "ferric/adapters/m1-engineering-execution-v1/src/tp_finite_client/long/readiness_bank_scoped_census_tail_tests.rs": {
+      "after": {
+        "bytes": 11191,
+        "sha256": "716de3197a1095def848bcda6a5f09231665a9d528381abd7c96c027a40bc8cc"
+      },
+      "before": null
+    },
+    "ferric/adapters/m1-engineering-execution-v1/src/tp_finite_client/long/readiness_host_timing.rs": {
+      "after": {
+        "bytes": 22187,
+        "sha256": "c88d4cb4657349b2fb31310716e2a92ab3d48af067072eb5c0c6df0a3ccb4afc"
+      },
+      "before": {
+        "bytes": 20663,
+        "sha256": "4072c91136647534a3dfeb0f0eed7b25f9510029f5e739163c35764b70cce7fb"
+      }
+    },
+    "ferric/adapters/m1-engineering-execution-v1/src/tp_finite_client/long/readiness_host_timing_tests.rs": {
+      "after": {
+        "bytes": 32584,
+        "sha256": "720dfec179db7f128cbb07ab9fc99b3f176db5f8bcc99cc805f10d0046823020"
+      },
+      "before": {
+        "bytes": 27300,
+        "sha256": "76478df7df0057d628c638ccc5a2e5ddd9c2047dd2b5bdae001895f6c0938914"
+      }
+    }
+  },
+  "passed": true,
+  "patch_applied": false,
+  "performance_claim": false,
+  "repair": {
+    "bytes": 4324,
+    "sha256": "8e5ffe3f2b4d87b9967ef993e31385c42461dbdd92a49c1f63a2578e1b8e6128"
+  },
+  "replacement_hunk_proofs": {
+    "ferric/adapters/m1-engineering-execution-v1/src/bin/ferric-qwen3-guarded-mlp-readiness-engineering.rs": {
+      "end_of_file_anchor": true,
+      "matching_old_starts": [
+        0
+      ],
+      "new_file": {
+        "bytes": 25729,
+        "sha256": "30596eca485cb60a4fe090726e875643721783130b527addb626c45102843159"
+      },
+      "old_file": {
+        "bytes": 21510,
+        "sha256": "5820495fa2aeee5c6c2dbdb618311fb8509e179f58b726ee09311c9b325ffe05"
+      },
+      "old_lines": 531
+    },
+    "ferric/adapters/m1-engineering-execution-v1/src/lib.rs": {
+      "end_of_file_anchor": true,
+      "matching_old_starts": [
+        0
+      ],
+      "new_file": {
+        "bytes": 91843,
+        "sha256": "fe4192dd447d0bb1cd7809d345aacb71d93ab20252d6f49bfa52a065ef81ecdf"
+      },
+      "old_file": {
+        "bytes": 91610,
+        "sha256": "578f35f0fe854ac132e0c79fcec6455aa83ae82675f91ca569bde9c262b64f7e"
+      },
+      "old_lines": 2363
+    },
+    "ferric/adapters/m1-engineering-execution-v1/src/tp_finite_client/long/readiness.rs": {
+      "end_of_file_anchor": true,
+      "matching_old_starts": [
+        0
+      ],
+      "new_file": {
+        "bytes": 29279,
+        "sha256": "98c8dfefc3bcedef6f5371373f9d4d83fb22d9ff9b7e2df2a588fbbf1517cc38"
+      },
+      "old_file": {
+        "bytes": 28376,
+        "sha256": "fef3b7cab3a3f6c4685b3d6fe68914f2542e4dbdd86b078b275ba4f6d1a45cc6"
+      },
+      "old_lines": 771
+    },
+    "ferric/adapters/m1-engineering-execution-v1/src/tp_finite_client/long/readiness_host_timing.rs": {
+      "end_of_file_anchor": true,
+      "matching_old_starts": [
+        0
+      ],
+      "new_file": {
+        "bytes": 22187,
+        "sha256": "c88d4cb4657349b2fb31310716e2a92ab3d48af067072eb5c0c6df0a3ccb4afc"
+      },
+      "old_file": {
+        "bytes": 20663,
+        "sha256": "4072c91136647534a3dfeb0f0eed7b25f9510029f5e739163c35764b70cce7fb"
+      },
+      "old_lines": 598
+    },
+    "ferric/adapters/m1-engineering-execution-v1/src/tp_finite_client/long/readiness_host_timing_tests.rs": {
+      "end_of_file_anchor": true,
+      "matching_old_starts": [
+        0
+      ],
+      "new_file": {
+        "bytes": 32584,
+        "sha256": "720dfec179db7f128cbb07ab9fc99b3f176db5f8bcc99cc805f10d0046823020"
+      },
+      "old_file": {
+        "bytes": 27300,
+        "sha256": "76478df7df0057d628c638ccc5a2e5ddd9c2047dd2b5bdae001895f6c0938914"
+      },
+      "old_lines": 755
+    }
+  },
+  "schema": "ferric-tail-parent-source-integration-plan-v2",
+  "sources": {
+    "bytes": 538263,
+    "sha256": "f8b92a7b220c9733e75aa7745498d915217241369ea2a003edfbdda55f52d4b2"
+  },
+  "terminal": {
+    "bytes": 4163125,
+    "sha256": "a59c39cfa2be0ec11d0ffa6a352576814917243627ce9a73aca1d4f6501266e9"
+  },
+  "unchanged_worker_bodies": 228
+}
