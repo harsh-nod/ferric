@@ -1,0 +1,55 @@
+{
+  "adopted_reaped": [],
+  "argv": [
+    "/usr/bin/prlimit",
+    "--as=12884901888",
+    "--cpu=1200",
+    "--fsize=1073741824",
+    "--core=0",
+    "--",
+    "/home/harmenon/.rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/bin/cargo",
+    "test",
+    "--offline",
+    "--locked",
+    "--jobs",
+    "2",
+    "--manifest-path",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-scoped-tail-cpu-v228-v2/fe2o3/Cargo.toml",
+    "-p",
+    "fe2o3-kfd",
+    "--features",
+    "engineering-gfx950",
+    "--lib",
+    "engineering_gfx950::peer::scoped_tail_v1::tests::",
+    "--",
+    "--test-threads=1"
+  ],
+  "command": {
+    "bytes": 2458,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-scoped-tail-cpu-v228-v2/evidence/scoped-tail-tests.command.json",
+    "sha256": "cbb00a41641cf2495ea6edba92cd4726ed68af741b12b1a47c93e98dff33c36c"
+  },
+  "elapsed_ns": 123767386,
+  "exception": null,
+  "exit_code": 0,
+  "forced_cleanup": false,
+  "label": "scoped-tail-tests",
+  "natural_exit": true,
+  "observed_signals": [],
+  "pgid": 1777920,
+  "pid": 1777920,
+  "process_group_absent": true,
+  "reaped": true,
+  "stderr": {
+    "bytes": 3953,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-scoped-tail-cpu-v228-v2/evidence/scoped-tail-tests.stderr",
+    "sha256": "0edd82e059f795459366c371958fdadca13b29bc6a3d2a982b10a9205bbe8fc6"
+  },
+  "stdout": {
+    "bytes": 2124,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-scoped-tail-cpu-v228-v2/evidence/scoped-tail-tests.stdout",
+    "sha256": "7691412071b0c145ed06725fbcd0c2e8a9b096287f90d5694add767d2b6fc683"
+  },
+  "storage_failure": null,
+  "timed_out": false
+}

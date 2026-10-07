@@ -63,9 +63,9 @@ are a separate next step, not part of the measured Census result.
 | Fresh same-binary Census V3 / Tail V4 native pair | Pending; no result or gain predicted |
 | Tail report and independently checked publication | Pending actual pair |
 
-The parent failure is a shared test's backend-specific module reference. A
-test-only repair, fresh complete runtime/worker qualification and parent retry
-are pending; the earlier passing gates do not qualify those future sources.
+The parent failure is a shared test's backend-specific module reference. The
+[test-only repair passed a fresh complete runtime/worker qualification](../qualification/guarded-mlp-scoped-tail-v1/cpu-attempt-v2/README.md)
+and is integrated; the fresh parent retry remains pending.
 CPU tests and synthetic admission do not establish native correctness or
 performance. Tail is a distinct Readiness40 route, not Full2303 activation.
 Keep pending entries until original receipts and actual comparisons are

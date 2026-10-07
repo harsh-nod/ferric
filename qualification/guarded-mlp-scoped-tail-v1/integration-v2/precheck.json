@@ -1,0 +1,22 @@
+{
+  "canonical_bodies_checked": {
+    "fe2o3": 825,
+    "ferric": 1288
+  },
+  "cpu_execution_host": "mi350",
+  "full_launch_admitted": false,
+  "gpu_execution": false,
+  "passed": true,
+  "qualified_source_map": {
+    "bytes": 424416,
+    "sha256": "5de4929b2832eda55a53f99945fc4b64a9fbda28b4d4f8bef07f2e8d5e000d6a"
+  },
+  "qualified_terminal": {
+    "bytes": 2448697,
+    "sha256": "3c4fe3a6c4942b20ec61fd7ea5c3409526e2167c43d24a62fb8660c34b0e713e"
+  },
+  "runtime_rows": 0,
+  "schema": "ferric-scoped-tail-source-integration-v2",
+  "stage": "pre",
+  "worker_test_rows": 1
+}

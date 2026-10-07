@@ -14,7 +14,9 @@ actual tested Rust postimages are integrated with a complete 825-runtime and
 synthetic tests in 70.690 seconds. The first parent qualification failed during
 test compilation because the shared sequence fixture referenced a worker-only
 module. The [original failed attempt](../qualification/guarded-mlp-scoped-tail-v1/parent-cpu-failed-v1/README.md)
-is retained; a test-only repair and fresh coupled/parent qualifications are next.
+is retained. The [test-only repair passed a fresh 27-phase coupled qualification](../qualification/guarded-mlp-scoped-tail-v1/cpu-attempt-v2/README.md)
+in 173.070 seconds with the same test outcomes, and is integrated after full
+canonical source checks. The fresh parent retry is next.
 No tail native result or speedup is claimed yet. A
 [community demo runbook](GFX950_COMMUNITY_DEMO_V1.md) covers the already retained
 Census experiment and its limits.

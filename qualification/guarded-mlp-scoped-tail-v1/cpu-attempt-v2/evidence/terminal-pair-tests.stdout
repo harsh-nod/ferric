@@ -1,0 +1,14 @@
+
+running 9 tests
+test engineering_gfx950::peer::combined_mlp_state_v1::paired::terminal_pair::tests::terminal_pair_all_ten_actual_signals_and_lagging_read_credit_are_preserved ... ok
+test engineering_gfx950::peer::combined_mlp_state_v1::paired::terminal_pair::tests::terminal_pair_both_full_fences_and_queue_errors_are_mandatory ... ok
+test engineering_gfx950::peer::combined_mlp_state_v1::paired::terminal_pair::tests::terminal_pair_every_deadline_including_commit_adjacent_refuses_publication ... ok
+test engineering_gfx950::peer::combined_mlp_state_v1::paired::terminal_pair::tests::terminal_pair_every_failure_before_and_after_effect_quarantines_both ... ok
+test engineering_gfx950::peer::combined_mlp_state_v1::paired::terminal_pair::tests::terminal_pair_every_unwind_and_partial_commit_quarantines_both ... ok
+test engineering_gfx950::peer::combined_mlp_state_v1::paired::terminal_pair::tests::terminal_pair_keeps_six_queue_probes_and_three_snapshots_until_full_exit ... ok
+test engineering_gfx950::peer::combined_mlp_state_v1::paired::terminal_pair::tests::terminal_pair_public_signature_keeps_borrow_free_pair_and_short_group_borrow ... ok
+test engineering_gfx950::peer::combined_mlp_state_v1::paired::terminal_pair::tests::terminal_pair_rank_one_identity_retirement_generation_and_guard_are_required ... ok
+test engineering_gfx950::peer::combined_mlp_state_v1::paired::terminal_pair::tests::terminal_pair_second_and_final_atomic_readback_drift_refuse ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 1156 filtered out; finished in 0.00s
+

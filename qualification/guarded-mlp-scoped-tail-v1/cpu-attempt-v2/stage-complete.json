@@ -1,0 +1,27 @@
+{
+  "archive": {
+    "bytes": 588992,
+    "sha256": "73f1cbbe6b9fbbbd33b6ace45e4d10a954811a28551eb66240392334e086a620"
+  },
+  "canonical_changed": false,
+  "controller": {
+    "bytes": 19372,
+    "sha256": "be89a3833e75bf7efdd7061dcefff97cc4ef741b32f70ac1460370f7cdc3cb10"
+  },
+  "copied_unchanged_files": 1054,
+  "helpers": 4,
+  "input": {
+    "bytes": 217550,
+    "sha256": "585b7d53ef89682a36a1ef4f2f511a32f4568d7622988ac028e0ff5b087f232e"
+  },
+  "lockfiles_changed": false,
+  "overlay_files": 1,
+  "passed": true,
+  "project_execution": false,
+  "root": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-scoped-tail-cpu-v228-v2",
+  "runtime_files": 827,
+  "schema": "ferric-guarded-mlp-scoped-tail-stage-v1",
+  "shared_cache_changed": false,
+  "source_files": 1059,
+  "worker_files": 228
+}
