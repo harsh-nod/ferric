@@ -1,0 +1,13 @@
+{
+  "command_sha256": "75ee730f6b11872024cddb8ca4a2bbbdec8d5612262f21abcb22a43fcdcdb677",
+  "parent": {
+    "pgid": 643323,
+    "pid": 643323,
+    "ppid": 643283,
+    "sid": 643323,
+    "starttime": 73835576,
+    "state": "R",
+    "uid": 9661
+  },
+  "supervisor_pid": 643283
+}

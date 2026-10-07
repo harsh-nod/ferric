@@ -1,0 +1,236 @@
+"""Bounded data-only four-case same-ELF AR4 request generation; no native execution."""
+import copy
+import hashlib
+import json
+import os
+from pathlib import Path
+import re
+import resource
+import signal
+import stat
+import sys
+import time
+
+E = Path('/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220')
+ROOT = E / 'guarded-mlp-peer-read-pair-gpu-v228-v2'
+WORKER_ROOT = E / 'guarded-mlp-peer-read-pair-worker-cpu-v228-v2'
+ORDER = ('control-0', 'paired-0', 'paired-1', 'control-1')
+PARENT_NAME = 'ferric-qwen3-finite-guarded-mlp-decode-engineering'
+OLD_REQUEST = (8818, '44e9a717750c70ea4c6316df1aae4fcd9abd386759188fb59b443f04a6a6c3ab')
+WORKER_CPU = (1641609, '1078bf7fc8a1359d8144f786dd32e270a5a736ea995e3f52b97d7e905581d863')
+WORKER_ELF = (5946240, '4bbf99460ad3599248fabcbbc889139269a352e5801d434ba76d5f60b17bb8b3')
+PARENT_CPU = (3792547, '143132b2d4e147aec77865cd7a60a076e1f663088ee9fe4d69ede4cfbf0ed76c')
+PARENT_ELF = (13854240, '975ec42dfd7cb39cbd2dce1315e01322a1d36e27309d184b0044d0edfa280750')
+IMAGES = {
+    'projection_image': (10864, '25338beac39121cf81adfdc5c82c6f39bcfc82c0f7effaa2166bf8a2a9598a25'),
+    'guarded_image': (28440, 'de880dcebf79425ccb555c1a2bdca3ff78b926f7b2062d06b918763da4de0f66'),
+    'prefix_image': (54344, '29fd58e7b09fee003ed31660e6201c20a7eb5da4b873d0b4d954993f7018f2f8'),
+    'tiles_image': (33320, 'b0d1766fdb0fda17ab09496d1120ba3cee29100692b48fcc5b05cf0db0a8d589'),
+}
+INPUTS = {}
+DEADLINE = float('inf')
+
+
+def require(ok, message):
+    if not ok:
+        raise RuntimeError(message)
+
+
+def parse(raw):
+    def pairs(rows):
+        value = {}
+        for key, item in rows:
+            require(key not in value, 'duplicate JSON key')
+            value[key] = item
+        return value
+    return json.loads(raw, object_pairs_hook=pairs,
+                      parse_constant=lambda _: require(False, 'nonfinite JSON'))
+
+
+def read(path, expected=None, limit=16 << 20, retain=True):
+    path = Path(path)
+    require(path.is_absolute() and path.resolve(strict=True) == path, 'canonical data input')
+    before = path.lstat()
+    require(stat.S_ISREG(before.st_mode) and before.st_size <= limit, 'bounded ordinary data input')
+    stamp = lambda s: (s.st_dev, s.st_ino, s.st_mode, s.st_size, s.st_mtime_ns, s.st_ctime_ns)
+    digest = hashlib.sha256(); parts = []
+    fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_CLOEXEC)
+    with os.fdopen(fd, 'rb') as stream:
+        require(stamp(os.fstat(stream.fileno())) == stamp(before), 'input changed at open')
+        while True:
+            require(time.monotonic() < DEADLINE, 'data-only whole deadline')
+            chunk = stream.read(1 << 20)
+            if not chunk: break
+            digest.update(chunk)
+            if retain: parts.append(chunk)
+        require(stamp(os.fstat(stream.fileno())) == stamp(before), 'input changed while read')
+    require(stamp(path.lstat()) == stamp(before), 'input changed after read')
+    pin = dict(path=str(path), bytes=before.st_size, sha256=digest.hexdigest())
+    if expected is not None:
+        require(pin == expected, 'exact data input pin')
+    require(str(path) not in INPUTS or INPUTS[str(path)] == pin, 'conflicting data pin')
+    INPUTS[str(path)] = pin
+    return b''.join(parts), pin
+
+
+def extent(pin, expected):
+    require((pin['bytes'], pin['sha256']) == expected, 'qualified extent/hash')
+
+
+def rust(pin):
+    return dict(path=pin['path'], bytes=pin['bytes'], sha256=list(bytes.fromhex(pin['sha256'])))
+
+
+def from_rust(value):
+    require(type(value) is dict and set(value) == {'path', 'bytes', 'sha256'}
+            and type(value['bytes']) is int and value['bytes'] > 0
+            and type(value['sha256']) is list and len(value['sha256']) == 32
+            and all(type(v) is int and 0 <= v <= 255 for v in value['sha256']), 'Rust FilePin')
+    return dict(path=value['path'], bytes=value['bytes'], sha256=bytes(value['sha256']).hex())
+
+
+def cpu(value, schema, phases):
+    require(value['schema'] == schema and value['passed'] is True and value['failure'] is None
+            and value['postcheck_errors'] == [] and value['source_unchanged'] is True
+            and value['input_sources'] == value['final_sources'] and value['gpu_execution'] is False
+            and len(value['phases']) == phases, 'actual successful qualified CPU receipt')
+    for row in value['phases']:
+        require(type(row['exit_code']) is int and row['exit_code'] == 0 and row['natural_exit'] is True
+                and row['reaped'] is True and row['process_group_absent'] is True
+                and row['forced_cleanup'] is False and row['timed_out'] is False
+                and row['exception'] is None and row['storage_failure'] is None, 'CPU natural clean lifecycle')
+    for name in ('controller', 'input_manifest'):
+        read(value[name]['path'], value[name], retain=False)
+    pin = value['raw']['sources-after.json']
+    require(parse(read(pin['path'], pin)[0]) == value['final_sources'], 'actual CPU source body join')
+
+
+def bytes_json(value):
+    return (json.dumps(value, sort_keys=True, indent=2, allow_nan=False) + '\n').encode()
+
+
+def write(path, raw):
+    require(len(raw) <= 65536, 'bounded generated data body')
+    with path.open('xb') as stream:
+        stream.write(raw); stream.flush(); os.fsync(stream.fileno())
+    pin = dict(path=str(path), bytes=len(raw), sha256=hashlib.sha256(raw).hexdigest())
+    read(path, pin)
+    return pin
+
+
+def main():
+    global DEADLINE
+    start = time.monotonic(); DEADLINE = start + 120
+    require(__debug__ and sys.dont_write_bytecode and len(sys.argv) == 6,
+            'python3 -B prepare_model_inputs.py PARENT_RECEIPT SHA PARENT_ELF HISTORICAL_REQUEST GUARDED_IMAGE')
+    require(Path(__file__).resolve().parent == ROOT and ROOT.resolve(strict=True) == ROOT
+            and os.getuid() == os.geteuid() == 9661
+            and os.uname().nodename == 'smci350-rck-g03-b19-03', 'exact unprivileged deployment root')
+    os.umask(0o077); os.sched_setaffinity(0, {8, 9})
+    priority = os.getpriority(os.PRIO_PROCESS, 0); require(priority in (0, 10), 'unexpected nice')
+    if priority == 0: os.nice(10)
+    for kind, cap in ((resource.RLIMIT_AS, 512 << 20), (resource.RLIMIT_FSIZE, 1 << 20), (resource.RLIMIT_CORE, 0)):
+        soft, hard = resource.getrlimit(kind)
+        ceiling = min([cap] + [v for v in (soft, hard) if v != resource.RLIM_INFINITY])
+        resource.setrlimit(kind, (ceiling, ceiling))
+    def timeout(_number, _frame): raise RuntimeError('data-only input preparation deadline')
+    signal.signal(signal.SIGALRM, timeout); signal.setitimer(signal.ITIMER_REAL, 120)
+    require(all(type(pin) is tuple and len(pin) == 2 for pin in
+                (WORKER_CPU, WORKER_ELF, PARENT_CPU, PARENT_ELF)), 'actual paired-read route CPU/ELF pins remain pending')
+    require(re.fullmatch('[0-9a-f]{64}', sys.argv[2]), 'observed parent terminal SHA')
+    output_names = [mode + suffix for mode in ORDER for suffix in ('-request.json', '-input.json')]
+    require(not any(os.path.lexists(ROOT / name) for name in (*output_names, 'prepared-inputs.json', *ORDER, 'comparison-input.json', 'serial-complete.json', 'serial-failed.json')),
+            'fresh requests, plans and unopened case directories')
+    parent_raw, parent_cpu_pin = read(sys.argv[1]); require(parent_cpu_pin['sha256'] == sys.argv[2], 'actual parent receipt SHA')
+    extent(parent_cpu_pin, PARENT_CPU)
+    parent = parse(parent_raw); cpu(parent, 'ferric-guarded-mlp-paired-read-parent-cpu-v2', 55)
+    require(len(parent['tests']) == 47 and len(parent['inventory']) == 878
+            and sum(row['passed'] for row in parent['tests'].values()) == 400
+            and all(row['failed'] == row['ignored'] == 0 for row in parent['tests'].values())
+            and parent['all_selected_parent_tests_executed'] is True
+            and parent['full_parent_library_suite_executed'] is False and len(parent['artifacts']) == 5,
+            'actual paired-read route parent selected400-pass/47-scope qualification')
+    require(parent['paired_read_parent_route_added'] is True and parent['paired_read_native_execution'] is False
+            and parent['inherited_reusable_arena_parent_route_added'] is True
+            and parent['method_local_currentness_cadence_changed'] is True
+            and parent['inherited_host_observation_source_added'] is True
+            and parent['inherited_capture_source_added'] is True and parent['performance_policy_changed'] is False
+            and parent['default_policy_changed'] is False,
+            'fresh paired-read route parent source qualification')
+    artifact = parent['artifacts'][PARENT_NAME]
+    require(artifact['pin']['path'] == str(Path(sys.argv[3]))
+            and artifact['cargo_artifact']['target']['name'] == PARENT_NAME
+            and artifact['cargo_artifact']['target']['kind'] == ['bin']
+            and artifact['cargo_artifact']['profile']['test'] is False
+            and artifact['cargo_artifact']['executable'] == artifact['pin']['path'], 'supplied parent is qualified Cargo ELF')
+    elf, parent_pin = read(sys.argv[3], artifact['pin'], limit=128 << 20)
+    extent(parent_pin, PARENT_ELF)
+    require(elf[:6] == b'\x7fELF\x02\x01' and elf[18:20] == b'\x3e\x00', 'actual parent ELF header')
+    worker_raw, worker_cpu_pin = read(WORKER_ROOT / 'evidence/complete.json'); extent(worker_cpu_pin, WORKER_CPU)
+    worker = parse(worker_raw); cpu(worker, 'ferric-guarded-mlp-peer-read-pair-worker-cpu-v2', 9)
+    require(len(worker['inventory']) == 625 and worker['tests']['worker-tests']['passed'] == 621 and worker['tests']['worker-tests']['ignored'] == 4
+            and worker['tests']['worker-tests']['failed'] == 0 and worker['full_worker_tests_executed'] is True,
+            'exact paired-read route worker census')
+    require(worker['paired_read_worker_route_added'] is True and worker['paired_read_native_execution'] is False
+            and worker['inherited_reusable_arena_worker_route_preserved'] is True
+            and worker['method_local_currentness_cadence_changed'] is True
+            and worker['inherited_host_observation_source_added'] is True
+            and worker['inherited_capture_source_added'] is True and worker['performance_policy_changed'] is False
+            and worker['default_policy_changed'] is False,
+            'fresh paired-read route worker source qualification')
+    _, worker_pin = read(worker['artifacts']['worker']['pin']['path'], worker['artifacts']['worker']['pin'], retain=False)
+    extent(worker_pin, WORKER_ELF)
+    old_raw, old_pin = read(sys.argv[4], limit=16384); extent(old_pin, OLD_REQUEST)
+    old = parse(old_raw)
+    require(set(old) == {'schema', 'decode', 'projection_residual_image'}
+            and old['schema'] == 'FerricFiniteProjectionResidualMlpOrderedRequestV1', 'historical ordered request')
+    source = Path(old['decode']['source'])
+    require(source.is_dir() and source.resolve(strict=True) == source, 'existing canonical model source')
+    for row in [*old['decode']['images'].values(), *old['decode']['prompt'].values(),
+                old['decode']['prefix_image'], old['decode']['tiles_image'], old['projection_residual_image']]:
+        pin = from_rust(row); read(pin['path'], pin, retain=False)
+    for name, row in [('prefix_image', old['decode']['prefix_image']), ('tiles_image', old['decode']['tiles_image']),
+                      ('projection_image', old['projection_residual_image'])]:
+        extent(from_rust(row), IMAGES[name])
+    _, guarded_pin = read(sys.argv[5], retain=False); extent(guarded_pin, IMAGES['guarded_image'])
+    generator_pin = read(Path(__file__).resolve(), retain=False)[1]
+    prepared = {}; sessions = set()
+    for mode in ORDER:
+        wire_mode = 'autoregressive'
+        session = os.urandom(32)
+        require(session != bytes(32) and session not in sessions and list(session) != old['decode']['session'],
+                'distinct fresh nonzero diagnostic session')
+        sessions.add(session)
+        decode = copy.deepcopy(old['decode'])
+        decode.update(worker=rust(worker_pin), mode=wire_mode, session=list(session), evidence_directory=str(ROOT / mode / 'native'))
+        require({key: value for key, value in decode.items() if key not in ('worker', 'mode', 'session', 'evidence_directory')}
+                == {key: value for key, value in old['decode'].items() if key not in ('worker', 'mode', 'session', 'evidence_directory')},
+                'historical source/prompt/setup inputs unchanged')
+        request = dict(schema='FerricFiniteGuardedMlpDecodeRequestV1', decode=decode,
+                       projection_image=old['projection_residual_image'], guarded_image=rust(guarded_pin))
+        request_raw = bytes_json(request); require(len(request_raw) <= 16384, 'parent request bound')
+        request_path = ROOT / (mode + '-request.json')
+        request_pin = dict(path=str(request_path), bytes=len(request_raw), sha256=hashlib.sha256(request_raw).hexdigest())
+        plan = dict(schema='ferric-guarded-mlp-peer-read-pair-gpu-input-v2', mode='ar4',
+                    case=mode, paired_read=mode.startswith('paired-'), parent_cpu=parent_cpu_pin,
+                    worker_cpu=worker_cpu_pin, parent=parent_pin, worker=worker_pin, request=request_pin)
+        prepared[mode] = dict(request=request_pin, request_body=request_raw, plan_body=bytes_json(plan), session=list(session))
+    for pin in list(INPUTS.values()): read(pin['path'], pin, retain=False)
+    generated = {}
+    for mode, value in prepared.items():
+        generated[mode] = dict(request=write(Path(value['request']['path']), value['request_body']),
+            plan=write(ROOT / (mode + '-input.json'), value['plan_body']), session=value['session'])
+    for pin in list(INPUTS.values()): read(pin['path'], pin, retain=False)
+    receipt = dict(schema='ferric-guarded-mlp-peer-read-pair-input-preparation-v2', passed=True,
+        controller=generator_pin, historical_request=old_pin, parent_cpu=parent_cpu_pin, worker_cpu=worker_cpu_pin,
+        readset=INPUTS, generated=generated, run_order=list(ORDER), same_executables=True, elapsed_seconds=time.monotonic() - start,
+        data_only=True, cpu_tests_executed=False, native_execution=False, gpu_execution=False,
+        numerical_acceptance=False, full_model_acceptance=False, performance_claim=False, production_authority=False)
+    pin = write(ROOT / 'prepared-inputs.json', bytes_json(receipt))
+    signal.setitimer(signal.ITIMER_REAL, 0)
+    print(json.dumps(dict(receipt=pin, generated=generated), sort_keys=True))
+    return 0
+
+
+if __name__ == '__main__':
+    raise SystemExit(main())

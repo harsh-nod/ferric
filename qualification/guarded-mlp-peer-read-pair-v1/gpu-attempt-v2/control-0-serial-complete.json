@@ -1,0 +1,10 @@
+{
+  "finished_monotonic_ns": 738634035077585,
+  "name": "control-0",
+  "started_monotonic_ns": 738351917941304,
+  "terminal": {
+    "bytes": 615923,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-peer-read-pair-gpu-v228-v2/control-0/complete.json",
+    "sha256": "d512fca51be782d712830beee22ac1e95965fadf674e9cd994103c307cc411e7"
+  }
+}

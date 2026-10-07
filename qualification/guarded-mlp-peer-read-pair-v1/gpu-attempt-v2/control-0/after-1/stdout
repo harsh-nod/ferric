@@ -1,0 +1,66 @@
+[
+    {
+        "gpu": 0,
+        "process_list": [
+            {
+                "process_info": "No running processes detected"
+            }
+        ]
+    },
+    {
+        "gpu": 1,
+        "process_list": [
+            {
+                "process_info": "No running processes detected"
+            }
+        ]
+    },
+    {
+        "gpu": 2,
+        "process_list": [
+            {
+                "process_info": "No running processes detected"
+            }
+        ]
+    },
+    {
+        "gpu": 3,
+        "process_list": [
+            {
+                "process_info": "No running processes detected"
+            }
+        ]
+    },
+    {
+        "gpu": 4,
+        "process_list": [
+            {
+                "process_info": "No running processes detected"
+            }
+        ]
+    },
+    {
+        "gpu": 5,
+        "process_list": [
+            {
+                "process_info": "No running processes detected"
+            }
+        ]
+    },
+    {
+        "gpu": 6,
+        "process_list": [
+            {
+                "process_info": "No running processes detected"
+            }
+        ]
+    },
+    {
+        "gpu": 7,
+        "process_list": [
+            {
+                "process_info": "No running processes detected"
+            }
+        ]
+    }
+]

@@ -3,8 +3,8 @@
 The narrow two-rank runtime read API, opt-in Ferric worker caller, and parent
 selector have passed CPU qualification on MI350. The API is integrated in
 fe2o3 commit `ee63881af1`; the tested worker and parent postimages are integrated
-here. The native comparison remains pending. There is no new native performance
-result here.
+here. The first native comparison failed at worker CLI dispatch after a passing
+control case. There is no paired-read native performance result here.
 
 ## Change
 
@@ -116,7 +116,31 @@ was reaped. The exact eight input bodies and seven raw files are retained.
 Only explicit identity/plan bindings may differ from these tested templates
 when the GPU runner is prepared.
 
-Next: execute the owned serial comparison and retain exact outputs and
-cleanup evidence. A paired-read reduction would not establish sustained
+## First Native Attempt
+
+The [serial failure receipt](gpu-attempt-v2/serial-failed.json) preserves the
+actual control/paired/paired/control attempt. The first control case passed:
+all four payloads and token histories matched the ordinary AR4 reference.
+The first paired case exited before bootstrap acknowledgement, reporting
+`unsupported finite invocation or missing engineering opt-in`. The serial
+runner stopped; the remaining two cases were not started. No comparison input,
+timing analysis, or performance chart was produced.
+
+The paired selector was parsed, but the legacy-parser fallback omitted its
+`is_none()` condition. This sent a valid paired invocation into the legacy CLI
+parser before the paired branch could execute. The passing parser unit tests
+did not cover actual executable dispatch. A correction and real-worker EOF
+dispatch regression tests are being qualified separately; the failed attempt
+is not relabeled as a success.
+
+Both executed cases retained all 11 owned phases. Every owned process was
+reaped, process groups were absent, and the post-run idle checks passed without
+forced cleanup. The [retention map](gpu-attempt-v2/retention.json) authenticates
+all 164 original files, including both case terminals and their raw evidence.
+The passing control prefix alone is not a paired-read comparison or independent
+full-model numerical acceptance.
+
+Next: qualify the dispatch correction and execute a new owned serial comparison
+in a fresh namespace. A paired-read reduction would not establish sustained
 2,048/256 decoding, GPU overlap, full-model numerical acceptance, or 700 tok/s.
 All issue #42 milestones remain open.
