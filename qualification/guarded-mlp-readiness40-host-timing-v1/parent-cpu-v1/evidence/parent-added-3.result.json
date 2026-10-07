@@ -1,0 +1,54 @@
+{
+  "adopted_reaped": [],
+  "argv": [
+    "/usr/bin/prlimit",
+    "--as=12884901888",
+    "--cpu=1200",
+    "--fsize=1073741824",
+    "--core=0",
+    "--",
+    "/home/harmenon/.rustup/toolchains/1.97.1-x86_64-unknown-linux-gnu/bin/cargo",
+    "test",
+    "--offline",
+    "--locked",
+    "--jobs",
+    "2",
+    "--manifest-path",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-host-timing-parent-cpu-v228-v1/ferric/adapters/m1-engineering-execution-v1/Cargo.toml",
+    "--features",
+    "guarded-mlp-readiness-engineering,guarded-mlp-full2303-engineering",
+    "--lib",
+    "finite_projection_residual_mlp_ordered_wire_v1::tests::ordered_profile_separates_projection_and_mode_domains",
+    "--",
+    "--test-threads=2",
+    "--exact"
+  ],
+  "command": {
+    "bytes": 2736,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-host-timing-parent-cpu-v228-v1/evidence/parent-added-3.command.json",
+    "sha256": "cdcaa770d4589457c8f4a42d97f6f75fe11613bb058bc8739b38d30d72966338"
+  },
+  "elapsed_ns": 228327102,
+  "exception": null,
+  "exit_code": 0,
+  "forced_cleanup": false,
+  "label": "parent-added-3",
+  "natural_exit": true,
+  "observed_signals": [],
+  "pgid": 2539919,
+  "pid": 2539919,
+  "process_group_absent": true,
+  "reaped": true,
+  "stderr": {
+    "bytes": 1284,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-host-timing-parent-cpu-v228-v1/evidence/parent-added-3.stderr",
+    "sha256": "feca2558f4739552094f2875830222fb72fd8ad2df51cc700891989cf7082b96"
+  },
+  "stdout": {
+    "bytes": 235,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-host-timing-parent-cpu-v228-v1/evidence/parent-added-3.stdout",
+    "sha256": "c1bb22d762ad8130f8076cec7c50a5d1c056f002de40c972a5296c829f012334"
+  },
+  "storage_failure": null,
+  "timed_out": false
+}

@@ -1,0 +1,53 @@
+{
+  "adopted_reaped": [],
+  "argv": [
+    "/usr/bin/prlimit",
+    "--as=12884901888",
+    "--cpu=1200",
+    "--fsize=1073741824",
+    "--core=0",
+    "--",
+    "/home/harmenon/.rustup/toolchains/1.97.1-x86_64-unknown-linux-gnu/bin/cargo",
+    "test",
+    "--offline",
+    "--locked",
+    "--jobs",
+    "2",
+    "--manifest-path",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-host-timing-parent-cpu-v228-v1/ferric/adapters/m1-engineering-execution-v1/Cargo.toml",
+    "--features",
+    "guarded-mlp-readiness-engineering,guarded-mlp-full2303-engineering",
+    "--lib",
+    "finite_projection_residual_decode_wire_v1::tests::",
+    "--",
+    "--test-threads=2"
+  ],
+  "command": {
+    "bytes": 2663,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-host-timing-parent-cpu-v228-v1/evidence/parent-projection-residual-decode-wire.command.json",
+    "sha256": "a7e687b73fb551d65a79cbf5bfdf73262e485e5e1be14193e26b64c4f885c18c"
+  },
+  "elapsed_ns": 220634927,
+  "exception": null,
+  "exit_code": 0,
+  "forced_cleanup": false,
+  "label": "parent-projection-residual-decode-wire",
+  "natural_exit": true,
+  "observed_signals": [],
+  "pgid": 2541859,
+  "pid": 2541859,
+  "process_group_absent": true,
+  "reaped": true,
+  "stderr": {
+    "bytes": 1284,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-host-timing-parent-cpu-v228-v1/evidence/parent-projection-residual-decode-wire.stderr",
+    "sha256": "feca2558f4739552094f2875830222fb72fd8ad2df51cc700891989cf7082b96"
+  },
+  "stdout": {
+    "bytes": 1063,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-host-timing-parent-cpu-v228-v1/evidence/parent-projection-residual-decode-wire.stdout",
+    "sha256": "f56d93a978635889ef487e82486dd5efa15fdf422269d418e4a2e639ae603857"
+  },
+  "storage_failure": null,
+  "timed_out": false
+}

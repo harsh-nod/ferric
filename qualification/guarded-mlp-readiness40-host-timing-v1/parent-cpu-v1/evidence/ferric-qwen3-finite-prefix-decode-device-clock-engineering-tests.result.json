@@ -1,0 +1,53 @@
+{
+  "adopted_reaped": [],
+  "argv": [
+    "/usr/bin/prlimit",
+    "--as=12884901888",
+    "--cpu=1200",
+    "--fsize=1073741824",
+    "--core=0",
+    "--",
+    "/home/harmenon/.rustup/toolchains/1.97.1-x86_64-unknown-linux-gnu/bin/cargo",
+    "test",
+    "--offline",
+    "--locked",
+    "--jobs",
+    "2",
+    "--manifest-path",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-host-timing-parent-cpu-v228-v1/ferric/adapters/m1-engineering-execution-v1/Cargo.toml",
+    "--features",
+    "guarded-mlp-readiness-engineering,guarded-mlp-full2303-engineering",
+    "--bin",
+    "ferric-qwen3-finite-prefix-decode-device-clock-engineering",
+    "--",
+    "--test-threads=2"
+  ],
+  "command": {
+    "bytes": 2671,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-host-timing-parent-cpu-v228-v1/evidence/ferric-qwen3-finite-prefix-decode-device-clock-engineering-tests.command.json",
+    "sha256": "c6a8c3de3907423ebdf9d388f58eff0476adf416bc097d20d8be6ff32faf43a5"
+  },
+  "elapsed_ns": 520010963,
+  "exception": null,
+  "exit_code": 0,
+  "forced_cleanup": false,
+  "label": "ferric-qwen3-finite-prefix-decode-device-clock-engineering-tests",
+  "natural_exit": true,
+  "observed_signals": [],
+  "pgid": 2539456,
+  "pid": 2539456,
+  "process_group_absent": true,
+  "reaped": true,
+  "stderr": {
+    "bytes": 2424,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-host-timing-parent-cpu-v228-v1/evidence/ferric-qwen3-finite-prefix-decode-device-clock-engineering-tests.stderr",
+    "sha256": "aaf841b83220fc9da9efefbefd3e117e52e94d49f36f1ec3125f7d1ab315c5b0"
+  },
+  "stdout": {
+    "bytes": 203,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-host-timing-parent-cpu-v228-v1/evidence/ferric-qwen3-finite-prefix-decode-device-clock-engineering-tests.stdout",
+    "sha256": "eb373173fed2e0f5d3f48973a70b9019b6844a1e94df36231d0ac97416440cde"
+  },
+  "storage_failure": null,
+  "timed_out": false
+}

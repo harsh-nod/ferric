@@ -1,0 +1,53 @@
+{
+  "adopted_reaped": [],
+  "argv": [
+    "/usr/bin/prlimit",
+    "--as=12884901888",
+    "--cpu=1200",
+    "--fsize=1073741824",
+    "--core=0",
+    "--",
+    "/home/harmenon/.rustup/toolchains/1.97.1-x86_64-unknown-linux-gnu/bin/cargo",
+    "test",
+    "--offline",
+    "--locked",
+    "--jobs",
+    "2",
+    "--manifest-path",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-host-timing-parent-cpu-v228-v1/ferric/adapters/m1-engineering-execution-v1/Cargo.toml",
+    "--features",
+    "guarded-mlp-readiness-engineering,guarded-mlp-full2303-engineering",
+    "--bin",
+    "ferric-qwen3-finite-projection-residual-decode-ordered-host-engineering",
+    "--",
+    "--test-threads=2"
+  ],
+  "command": {
+    "bytes": 2684,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-host-timing-parent-cpu-v228-v1/evidence/ferric-qwen3-finite-projection-residual-decode-ordered-host-engineering-tests.command.json",
+    "sha256": "0988d094497c50196509097bd8ed0f94a33be7555407aadd4f8b0a3cc4c5ac30"
+  },
+  "elapsed_ns": 723501578,
+  "exception": null,
+  "exit_code": 0,
+  "forced_cleanup": false,
+  "label": "ferric-qwen3-finite-projection-residual-decode-ordered-host-engineering-tests",
+  "natural_exit": true,
+  "observed_signals": [],
+  "pgid": 2539652,
+  "pid": 2539652,
+  "process_group_absent": true,
+  "reaped": true,
+  "stderr": {
+    "bytes": 2450,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-host-timing-parent-cpu-v228-v1/evidence/ferric-qwen3-finite-projection-residual-decode-ordered-host-engineering-tests.stderr",
+    "sha256": "41c22a8c13e394f3463c87cc61ef0415b1f91b68a981390645039b4eda2c9d1a"
+  },
+  "stdout": {
+    "bytes": 200,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-host-timing-parent-cpu-v228-v1/evidence/ferric-qwen3-finite-projection-residual-decode-ordered-host-engineering-tests.stdout",
+    "sha256": "279c62fb1c4ae80937288d976acb07ad1d3f2bbebddff94aa06ed661595a375c"
+  },
+  "storage_failure": null,
+  "timed_out": false
+}

@@ -1,0 +1,12 @@
+
+running 7 tests
+test prefix_decode_device_clock_observation_v2::tests::clock_schema_checks_host_brackets_but_does_not_infer_counter_domains ... ok
+test prefix_decode_device_clock_observation_v2::tests::clock_schema_refuses_authority_flags_and_invalid_inner_raw_report ... ok
+test prefix_decode_device_clock_observation_v2::tests::clock_schema_refuses_kfd_identity_and_frequency_changes ... ok
+test prefix_decode_device_clock_observation_v2::tests::clock_schema_refuses_missing_extra_duplicate_and_reordered_samples ... ok
+test prefix_decode_device_clock_observation_v2::tests::clock_schema_retains_exact_control_join_and_bounds ... ok
+test prefix_decode_device_clock_observation_v2::tests::clock_schema_roundtrip_preserves_raw_report_and_sixteen_samples ... ok
+test prefix_decode_device_clock_observation_v2::tests::clock_schema_refuses_endpoint_boundary_and_native_identity_drift ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 931 filtered out; finished in 0.13s
+

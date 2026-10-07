@@ -1,0 +1,34 @@
+test_all144_pages_and_page_boundary_are_closed (test_readiness.ReadinessTests.test_all144_pages_and_page_boundary_are_closed) ... ok
+test_authentic_prompt_only_not_argmax_feedback (test_readiness.ReadinessTests.test_authentic_prompt_only_not_argmax_feedback) ... ok
+test_bank_retirement_local_generation_and_bool_are_checked (test_readiness.ReadinessTests.test_bank_retirement_local_generation_and_bool_are_checked) ... ok
+test_capture_path_digest_order_and_truncation (test_readiness.ReadinessTests.test_capture_path_digest_order_and_truncation) ... ok
+test_close_generated_tokens_and_native_retirement (test_readiness.ReadinessTests.test_close_generated_tokens_and_native_retirement) ... ok
+test_complete40_original_chain_and_four_selected_payloads (test_readiness.ReadinessTests.test_complete40_original_chain_and_four_selected_payloads) ... ok
+test_extra_fields_authority_and_observer_stderr_refused (test_readiness.ReadinessTests.test_extra_fields_authority_and_observer_stderr_refused) ... ok
+test_frame_order_missing_and_extra_are_refused (test_readiness.ReadinessTests.test_frame_order_missing_and_extra_are_refused) ... ok
+test_full2303_and_legacy_profiles_are_refused (test_readiness.ReadinessTests.test_full2303_and_legacy_profiles_are_refused) ... ok
+test_marker_alone_never_substitutes_owned_lineage (test_readiness.ReadinessTests.test_marker_alone_never_substitutes_owned_lineage) ... ok
+test_original_readiness_profile_and_schema_are_refused (test_readiness.ReadinessTests.test_original_readiness_profile_and_schema_are_refused) ... ok
+test_payload_finite_lowest_tie_and_signed_zero (test_readiness.ReadinessTests.test_payload_finite_lowest_tie_and_signed_zero) ... ok
+test_readiness_marker_is_distinct_and_unique (test_readiness.ReadinessTests.test_readiness_marker_is_distinct_and_unique) ... ok
+test_selected_guard_and_queue_words_are_independently_checked (test_readiness.ReadinessTests.test_selected_guard_and_queue_words_are_independently_checked) ... ok
+test_stream_and_retention_accounting_are_exact (test_readiness.ReadinessTests.test_stream_and_retention_accounting_are_exact) ... ok
+test_strict_json_scalars_and_boolean_identity (test_readiness.ReadinessTests.test_strict_json_scalars_and_boolean_identity) ... ok
+test_unselected_hashes_and_chains_remain_authenticated (test_readiness.ReadinessTests.test_unselected_hashes_and_chains_remain_authenticated) ... ok
+test_close_and_false_authority_are_required (test_timing.TimingTests.test_close_and_false_authority_are_required) ... ok
+test_complete_timeline_zero_spans_and_large_integer_precision (test_timing.TimingTests.test_complete_timeline_zero_spans_and_large_integer_precision) ... ok
+test_exact_retention_accounting_and_unchanged_bound (test_timing.TimingTests.test_exact_retention_accounting_and_unchanged_bound) ... ok
+test_gaps_overlap_regression_and_duration_are_refused (test_timing.TimingTests.test_gaps_overlap_regression_and_duration_are_refused) ... ok
+test_order_extent_and_forward_sum_are_closed (test_timing.TimingTests.test_order_extent_and_forward_sum_are_closed) ... ok
+test_parity_accepts_distinct_sessions_and_rejects_any_record_change (test_timing.TimingTests.test_parity_accepts_distinct_sessions_and_rejects_any_record_change) ... ok
+test_parity_compares_payload_not_control_timer_bytes (test_timing.TimingTests.test_parity_compares_payload_not_control_timer_bytes) ... ok
+test_parity_rejects_same_session_model_drift_and_authority (test_timing.TimingTests.test_parity_rejects_same_session_model_drift_and_authority) ... ok
+test_report_hashes_scope_and_capture_set_are_joined (test_timing.TimingTests.test_report_hashes_scope_and_capture_set_are_joined) ... ok
+test_sidecar_actual_body_path_hash_and_size_are_joined (test_timing.TimingTests.test_sidecar_actual_body_path_hash_and_size_are_joined) ... ok
+test_strict_u64_refuses_bool_float_negative_and_overflow (test_timing.TimingTests.test_strict_u64_refuses_bool_float_negative_and_overflow) ... ok
+test_wrapper_and_ordinary_admission_are_not_interchangeable (test_timing.TimingTests.test_wrapper_and_ordinary_admission_are_not_interchangeable) ... ok
+
+----------------------------------------------------------------------
+Ran 29 tests in 1.383s
+
+OK

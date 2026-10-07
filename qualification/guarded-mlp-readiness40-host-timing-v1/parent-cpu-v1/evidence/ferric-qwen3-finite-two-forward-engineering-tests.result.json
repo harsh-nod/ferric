@@ -1,0 +1,53 @@
+{
+  "adopted_reaped": [],
+  "argv": [
+    "/usr/bin/prlimit",
+    "--as=12884901888",
+    "--cpu=1200",
+    "--fsize=1073741824",
+    "--core=0",
+    "--",
+    "/home/harmenon/.rustup/toolchains/1.97.1-x86_64-unknown-linux-gnu/bin/cargo",
+    "test",
+    "--offline",
+    "--locked",
+    "--jobs",
+    "2",
+    "--manifest-path",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-host-timing-parent-cpu-v228-v1/ferric/adapters/m1-engineering-execution-v1/Cargo.toml",
+    "--features",
+    "guarded-mlp-readiness-engineering,guarded-mlp-full2303-engineering",
+    "--bin",
+    "ferric-qwen3-finite-two-forward-engineering",
+    "--",
+    "--test-threads=2"
+  ],
+  "command": {
+    "bytes": 2656,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-host-timing-parent-cpu-v228-v1/evidence/ferric-qwen3-finite-two-forward-engineering-tests.command.json",
+    "sha256": "64be21d93388a54cec0fa015e866adc6fa4af2edd361b02de0f6c26b89617861"
+  },
+  "elapsed_ns": 429574797,
+  "exception": null,
+  "exit_code": 0,
+  "forced_cleanup": false,
+  "label": "ferric-qwen3-finite-two-forward-engineering-tests",
+  "natural_exit": true,
+  "observed_signals": [],
+  "pgid": 2539884,
+  "pid": 2539884,
+  "process_group_absent": true,
+  "reaped": true,
+  "stderr": {
+    "bytes": 2394,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-host-timing-parent-cpu-v228-v1/evidence/ferric-qwen3-finite-two-forward-engineering-tests.stderr",
+    "sha256": "916bab4ea848d82870c1a57b4617d74c1c94feb138d068ff2914c620978f92e3"
+  },
+  "stdout": {
+    "bytes": 191,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-host-timing-parent-cpu-v228-v1/evidence/ferric-qwen3-finite-two-forward-engineering-tests.stdout",
+    "sha256": "6c9439098fc26222c642ebde9f3b528a1bc205c80088061e8c8d9526cda853f8"
+  },
+  "storage_failure": null,
+  "timed_out": false
+}
