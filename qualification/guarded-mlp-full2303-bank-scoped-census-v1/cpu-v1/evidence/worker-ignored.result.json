@@ -1,0 +1,58 @@
+{
+  "adopted_reaped": [],
+  "argv": [
+    "/usr/bin/prlimit",
+    "--as=12884901888",
+    "--cpu=1200",
+    "--fsize=1073741824",
+    "--core=0",
+    "--",
+    "/home/harmenon/.rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/bin/cargo",
+    "test",
+    "--offline",
+    "--locked",
+    "--jobs",
+    "2",
+    "--manifest-path",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-full2303-bank-scoped-census-cpu-v228-v1/ferric/adapters/tp-peer-finite-engineering-worker-v1/Cargo.toml",
+    "--lib",
+    "--bin",
+    "ferric-tp-peer-finite-engineering-worker-v1",
+    "--test",
+    "readiness_cli",
+    "--test",
+    "shared_wire",
+    "--",
+    "--ignored",
+    "--list",
+    "--format=terse"
+  ],
+  "command": {
+    "bytes": 2681,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-full2303-bank-scoped-census-cpu-v228-v1/evidence/worker-ignored.command.json",
+    "sha256": "9ddfb8d271429005d8794f0dbcf0567ec83c4d98cc3d11ff0d7e71e940def166"
+  },
+  "elapsed_ns": 129734351,
+  "exception": null,
+  "exit_code": 0,
+  "forced_cleanup": false,
+  "label": "worker-ignored",
+  "natural_exit": true,
+  "observed_signals": [],
+  "pgid": 1296945,
+  "pid": 1296945,
+  "process_group_absent": true,
+  "reaped": true,
+  "stderr": {
+    "bytes": 15209,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-full2303-bank-scoped-census-cpu-v228-v1/evidence/worker-ignored.stderr",
+    "sha256": "669634fa84281529b8c30dd3d9d3896fed91b9f78d8fa3a606ad448b06a6eb64"
+  },
+  "stdout": {
+    "bytes": 382,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-full2303-bank-scoped-census-cpu-v228-v1/evidence/worker-ignored.stdout",
+    "sha256": "499e016b32ac4ef526cb0721680cca8afdffa461019705b2e7d097616bac169a"
+  },
+  "storage_failure": null,
+  "timed_out": false
+}

@@ -1,0 +1,27 @@
+{
+  "archive": {
+    "bytes": 611245,
+    "sha256": "b297596e3bcfc3ded0660951e986a34f36a43a05c4e17b9097b81ce4d90b6a5b"
+  },
+  "canonical_changed": false,
+  "controller": {
+    "bytes": 18359,
+    "sha256": "1c9af97b3618107c16c7d95db61359350d8a0c60ff227febd7d683cc48e4e8e4"
+  },
+  "copied_unchanged_files": 1034,
+  "helpers": 4,
+  "input": {
+    "bytes": 217467,
+    "sha256": "76e4df124840f96f0a2e2ffd6736f72bb6e297b3ac2aad0d0cdd5204a38257cf"
+  },
+  "lockfiles_changed": false,
+  "overlay_files": 15,
+  "passed": true,
+  "project_execution": false,
+  "root": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-full2303-bank-scoped-census-cpu-v228-v1",
+  "runtime_files": 825,
+  "schema": "ferric-guarded-mlp-full2303-bank-scoped-census-stage-v1",
+  "shared_cache_changed": false,
+  "source_files": 1053,
+  "worker_files": 224
+}

@@ -1,0 +1,22 @@
+{
+  "cpu_execution_host": "mi350",
+  "ferric_bodies_checked": 1279,
+  "full_launch_admitted": false,
+  "native_execution": false,
+  "passed": true,
+  "qualified_source_map": {
+    "bytes": 438675,
+    "sha256": "5372e185504d11ed89d45cfb3d3e32672f93e8d1bbf3d04e44932b280300528c"
+  },
+  "qualified_terminal": {
+    "bytes": 2475794,
+    "sha256": "a7fcea3f09cfcda84ba556f60b5f1578ed378a45fc84bb81fbfa6ed31273cd64"
+  },
+  "runtime_bodies_checked": 823,
+  "runtime_changed": false,
+  "schema": "ferric-full2303-bank-census-worker-integration-v1",
+  "stage": "pre",
+  "unchanged_nonworker_ferric_bodies": 1059,
+  "worker_files": 220,
+  "worker_rows": 15
+}

@@ -1,0 +1,112 @@
+warning: unused import: `prefix::Transaction`
+ --> crates/fe2o3-kfd/src/engineering_gfx950_resident_layer_tp2_v1.rs:7:5
+  |
+7 | use prefix::Transaction as _;
+  |     ^^^^^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: variable does not need to be mutable
+   --> crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_reuse_v1.rs:181:9
+    |
+181 |         mut self,
+    |         ----^^^^
+    |         |
+    |         help: remove this `mut`
+    |
+    = note: `#[warn(unused_mut)]` (part of `#[warn(unused)]`) on by default
+
+warning: variable does not need to be mutable
+  --> crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_retired_v1.rs:48:9
+   |
+48 |         mut self,
+   |         ----^^^^
+   |         |
+   |         help: remove this `mut`
+
+warning: value assigned to `reported` is never read
+   --> crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_session_v1_tests.rs:230:5
+    |
+230 |     reported.states[0].guard[0] = 99;
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = help: maybe it is overwritten before being read?
+    = note: `#[warn(unused_assignments)]` (part of `#[warn(unused)]`) on by default
+
+warning: variable does not need to be mutable
+   --> crates/fe2o3-kfd/src/engineering_gfx950_peer_scoped_bank_rearm_v1.rs:322:21
+    |
+322 |                 let mut backend = ScopedNative {
+    |                     ----^^^^^^^
+    |                     |
+    |                     help: remove this `mut`
+
+warning: variable does not need to be mutable
+   --> crates/fe2o3-kfd/src/engineering_gfx950.rs:817:9
+    |
+817 |         mut bytes: Vec<u8>,
+    |         ----^^^^^
+    |         |
+    |         help: remove this `mut`
+
+warning: method `complete_quiescent` is never used
+   --> crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_state_v1.rs:253:26
+    |
+146 | impl CombinedMlpStateV1 {
+    | ----------------------- method in this implementation
+...
+253 |     pub(super) unsafe fn complete_quiescent(
+    |                          ^^^^^^^^^^^^^^^^^^
+    |
+    = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: method `publish` is never used
+   --> crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_arena_v1.rs:465:19
+    |
+319 | impl Staged {
+    | ----------- method in this implementation
+...
+465 |     pub(super) fn publish(
+    |                   ^^^^^^^
+
+warning: method `recheck` is never used
+  --> crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_retired_v1.rs:91:29
+   |
+83 | impl Retired {
+   | ------------ method in this implementation
+...
+91 |     pub(in super::super) fn recheck(
+   |                             ^^^^^^^
+
+warning: method `prepare` is never used
+   --> crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_reuse_v1.rs:180:36
+    |
+168 | impl Reusable {
+    | ------------- method in this implementation
+...
+180 |     pub(in super::super::super) fn prepare(
+    |                                    ^^^^^^^
+
+warning: field `0` is never read
+ --> crates/fe2o3-kfd/src/memory_linux_combined_mlp_state_v1_tests.rs:4:16
+  |
+4 | struct Storage([u8; 4096]);
+  |        ------- ^^^^^^^^^^
+  |        |
+  |        field in this struct
+  |
+  = help: consider removing this field
+
+warning: field `0` is never read
+ --> crates/fe2o3-kfd/src/memory_linux_paired_arena_reuse_v1_tests.rs:4:16
+  |
+4 | struct Storage([u8; EXTENT]);
+  |        ------- ^^^^^^^^^^^^
+  |        |
+  |        field in this struct
+  |
+  = help: consider removing this field
+
+warning: `fe2o3-kfd` (lib test) generated 12 warnings (run `cargo fix --lib -p fe2o3-kfd --tests` to apply 4 suggestions)
+    Finished `test` profile [optimized] target(s) in 0.01s
+     Running unittests src/lib.rs (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-full2303-bank-scoped-census-cpu-v228-v1/target/debug/deps/fe2o3_kfd-11448a9880d552d9)

@@ -31,6 +31,14 @@ This is one ordered host-wall pair, not GPU timing, overlap, generated-token
 throughput, repeated benchmark evidence or Full2303 admission. Both actual
 products use optimization level 2 with assertions and overflow checks retained.
 
+The separate [Full2303 bank/census worker](../qualification/guarded-mlp-full2303-bank-scoped-census-v1/README.md)
+now passes all 26 MI350 CPU phases in 172.933 seconds: 1,165 runtime passes
+and 799 worker passes, with the eight/four existing ignores unchanged.
+Its fifteen actual tested worker files are integrated with complete source
+postchecks. Parent qualification and strict full-workload data admission
+remain pending; no native Full2303 execution or one-hour launch feasibility
+is claimed by these synthetic full-schedule tests.
+
 The preceding
 [bank-scoped rearm path](../qualification/guarded-mlp-scoped-bank-rearm-v1/README.md)
 is integrated after a fresh coupled MI350 CPU qualification. All 26 phases
