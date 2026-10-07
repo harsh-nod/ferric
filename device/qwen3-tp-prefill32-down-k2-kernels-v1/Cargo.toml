@@ -1,0 +1,27 @@
+[package]
+name = "ferric-qwen3-tp-prefill32-down-k2-kernels-device-v1"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.94"
+publish = false
+
+[workspace]
+
+[features]
+default = []
+gfx950 = []
+paired-prefill32-down-k16-r1 = ["gfx950"]
+
+[dependencies]
+fe2o3-device = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "1736eff451d445f1f194abe145af242cf51ec322", version = "=0.1.0" }
+
+[target.'cfg(not(target_arch = "amdgpu"))'.dependencies]
+fe2o3-host = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "1736eff451d445f1f194abe145af242cf51ec322", version = "=0.1.0" }
+
+[dev-dependencies]
+quote = "=1.0.47"
+syn = { version = "=2.0.119", features = ["full"] }
+
+[lib]
+name = "ferric_qwen3_tp_prefill32_down_k2_kernels_device_v1"
+path = "src/lib.rs"
