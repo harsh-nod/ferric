@@ -184,6 +184,25 @@ untimed run has neither the 124-span parent sidecar nor GPU kernel timings.
 Its historical comparator used different executable builds. The elapsed value
 therefore establishes neither a controlled speedup nor decode throughput.
 
+## Matched Timing Checker
+
+The combined checker passed all 53 synthetic tests on `mi350` in 6.331 seconds:
+17 ordinary, 12 SharedFull, 12 timing and 12 matched-pair checks. The one
+GPU-hidden child exited naturally and was reaped, with no failed, errored or
+skipped tests and clean source/tool postchecks. Original wrapper, policy,
+timeline, Close, every semantic record and complete selected payload checks
+remain mandatory. A pair must use the same CPU-qualified parent/worker binaries
+and distinct sessions; relabelled modes or mismatched executable pins refuse.
+
+`matched-timing-checker-cpu-v1` retains 21 archive members: 11 deployed sources,
+seven raw bodies, the original terminal, collector and manifest. These tests
+do not execute a model or establish native parity or performance.
+
+| Artifact | SHA-256 |
+| --- | --- |
+| Matched checker terminal | `a8f05bbbb73f76f6912cc9b61d94a999d5e34943f06a77ef4b48b5b0dfff2ffd` |
+| Matched checker archive | `5f96d3a86960d227ebd06f468ffe79796c857e7ad651b4c38da0276e4849d620` |
+
 ## Remaining Gates
 
 Same-side parity is not independent framework accuracy. A fair timing comparison
